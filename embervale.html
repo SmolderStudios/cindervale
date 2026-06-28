@@ -1548,6 +1548,14 @@ header h1 .flame{color:var(--ember)}
 .offline-item.rare .oi-name{color:#ffd700}
 .offline-item.rare .oi-qty{color:#ffd700}
 .offline-item .oi-star{color:#ffd700;font-size:11px}
+/* Reworked welcome-back summary (1.0.11) — totals strip + cap note */
+.off-totals{display:grid;grid-template-columns:repeat(auto-fit,minmax(70px,1fr));gap:6px;margin-bottom:12px}
+.off-tot{background:var(--raised-s);border:1px solid var(--trim-d);border-radius:7px;padding:7px 4px;text-align:center}
+.off-tot .ot-v{display:block;font-family:'Courier New',monospace;font-size:15px;font-weight:bold;color:var(--green)}
+.off-tot .ot-l{display:block;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-top:2px}
+.off-rows{max-height:46vh;overflow-y:auto;border-top:1px solid var(--trim-d);padding-top:4px}
+.off-capnote{margin-top:12px;padding:8px 10px;background:#1f1408;border:1px solid #5a3e18;border-radius:6px;
+  font-size:12px;color:#e0a36f;line-height:1.5}
 .stat-section-label{font-size:11px;color:var(--ember);text-transform:uppercase;letter-spacing:2px;padding:3px 8px 1px;}
 
 /* compendium card text — see [CSS-22] for active rules */
@@ -2231,7 +2239,7 @@ header h1 .flame{color:var(--ember)}
   <div class="mm-btns">
     <button class="mm-btn mm-primary" id="mmPlay">▶ Play</button>
   </div>
-  <div class="mm-ver">v1.0.10</div>
+  <div class="mm-ver">v1.0.11</div>
 </div>
 
 <!-- ===== CHARACTER SELECT (added) ===== -->
@@ -2583,9 +2591,9 @@ header h1 .flame{color:var(--ember)}
    DATA
    ================================================================= */
 const MAX_LEVEL = 99;
-const OFFLINE_CAP_MS   = 24 * 3600 * 1000; // 24h max offline time
-const OFFLINE_RATE     = 0.40;              // 40% efficiency while offline (base)
-const OFFLINE_XP_RATE  = 120;              // offline skill earns 120 xp per minute away (base)
+const OFFLINE_CAP_MS   = 24 * 3600 * 1000; // 24h base offline cap (extendable via the Offline tree)
+const OFFLINE_RATE     = 0.30;              // 1.0.11 nerf: 40% -> 30% base offline efficiency
+const OFFLINE_XP_RATE  = 90;                // 1.0.11 nerf: 120 -> 90 offline-skill xp/min (base)
 const SAVE_KEY = 'embervale_save_v2';
 
 /* Device-local save isolation
@@ -10135,18 +10143,18 @@ function offlineAvailPoints(){ return Math.max(0,offlineEarnedPoints()-offlineSp
 /* Computed offline bonuses */
 function offlineMods(){
   const r=id=>offlineTreeRank(id);
-  // Efficiency: base 40% + tree. Hard cap: 80% (85% with gm_peak). NEVER reaches 100%.
-  let rawRate = OFFLINE_RATE + r('of_rate')*0.05 + r('of_gm_rate')*0.04;
-  const EFFICIENCY_CEIL = r('of_gm_peak')>0 ? 0.85 : 0.80;
-  if(r('of_master1')>0) rawRate = Math.max(0.60, rawRate);
+  // 1.0.11 rebalance — base 30% + tree, hard cap 60% (65% with gm_peak). Never near 100%.
+  let rawRate = OFFLINE_RATE + r('of_rate')*0.04 + r('of_gm_rate')*0.03;
+  const EFFICIENCY_CEIL = r('of_gm_peak')>0 ? 0.65 : 0.60;
+  if(r('of_master1')>0) rawRate = Math.max(0.48, rawRate);
   const flooredRate = Math.min(rawRate, EFFICIENCY_CEIL);
-  // Cap hours
-  let capHours = 24 + r('of_cap')*3;
-  if(r('of_master2')>0) capHours = Math.max(capHours, 72);
-  if(r('of_gm_cap')>0)  capHours = Math.max(capHours, 96);
-  const xpRate    = OFFLINE_XP_RATE * (1 + r('of_xp')*0.10 + r('of_gm_xp')*0.15);
-  const allSkillXp= r('of_multi')*0.03;
-  const lootBonus = r('of_loot')*0.10;
+  // Cap hours — 24 base, tree extends to a hard 60h (was 96h).
+  let capHours = 24 + r('of_cap')*2;
+  if(r('of_master2')>0) capHours = Math.max(capHours, 48);
+  if(r('of_gm_cap')>0)  capHours = Math.max(capHours, 60);
+  const xpRate    = OFFLINE_XP_RATE * (1 + r('of_xp')*0.08 + r('of_gm_xp')*0.12);
+  const allSkillXp= r('of_multi')*0.02;
+  const lootBonus = r('of_loot')*0.08;
   const dualSkill = r('of_master3')>0;
   return {rate:flooredRate, capHours, xpRate, allSkillXp, lootBonus, dualSkill};
 }
@@ -12588,6 +12596,8 @@ function grantOffline(){
   const away=Math.min(awayRaw, capMs);
   if(away<10000) return; // less than 10s — ignore
 
+  const capped=awayRaw>capMs+1000;     // away longer than the cap? (1.0.11)
+  const coinsBefore=state.coins||0;    // for the gold-gained total
   const awayMin=away/60000;
   const summary=[]; // lines for the summary modal
 
@@ -12663,30 +12673,60 @@ function grantOffline(){
 
   // 4. All-skill XP bonus (of_multi node)
   if(om.allSkillXp>0){
+    let allBonus=0;
     for(const sk in SKILLS){
       if(state.action&&state.action.skill===sk) continue; // already handled above
       const bonus=Math.round(state.xp[sk]*om.allSkillXp*(away/3600000));
-      if(bonus>0) state.xp[sk]+=bonus;
+      if(bonus>0){ state.xp[sk]+=bonus; allBonus+=bonus; }
     }
+    if(allBonus>0) summary.push({icon:'✨',label:'All-Skill XP bonus',xp:allBonus});
   }
 
   state.actionStart=Date.now();
 
-  // Show welcome back summary
-  if(summary.length) showOfflineSummary(away,summary);
+  // Totals + meta for the reworked welcome-back summary (1.0.11)
+  const meta={
+    awayRaw, capped, capMs,
+    efficiency:om.rate,
+    coinsGained:(state.coins||0)-coinsBefore,
+    totalXp:summary.reduce((s,l)=>s+(l.xp||0),0),
+    totalItems:summary.reduce((s,l)=>s+((l.items||[]).reduce((a,it)=>a+(it.qty||0),0)),0),
+    totalLevels:summary.reduce((s,l)=>s+(l.lvlUp?1:0),0)
+  };
+  if(summary.length) showOfflineSummary(away,summary,meta);
 }
 
-function showOfflineSummary(awayMs, lines){
-  const h=Math.floor(awayMs/3600000);
-  const m=Math.floor((awayMs%3600000)/60000);
-  const timeStr=h>0?`${h}h ${m}m`:`${m}m`;
-  const box=$('offlineSummaryBody');
-  if(!box){ // fallback if modal not rendered yet
-    toast(`Welcome back! Away for ${timeStr}.`);
-    return;
+function showOfflineSummary(awayMs, lines, meta){
+  meta=meta||{};
+  function fmtDur(ms){
+    const t=Math.max(0,Math.floor(ms/1000));
+    const d=Math.floor(t/86400), h=Math.floor((t%86400)/3600), mn=Math.floor((t%3600)/60);
+    if(d>0) return `${d}d ${h}h`;
+    if(h>0) return `${h}h ${mn}m`;
+    return `${mn}m`;
   }
-  $('offlineAwayTime').textContent=`You were away for ${timeStr}`;
-  box.innerHTML=lines.map(l=>{
+  const box=$('offlineSummaryBody');
+  if(!box){ toast(`Welcome back! Away for ${fmtDur(awayMs)}.`); return; }
+
+  // ── Header: actual away time, cap note (if capped), offline efficiency ──
+  const eff=Math.round((meta.efficiency||OFFLINE_RATE)*100);
+  let head=`Away <b style="color:var(--text)">${fmtDur(meta.awayRaw||awayMs)}</b>`;
+  if(meta.capped) head+=` · <span style="color:var(--ember)">capped at ${fmtDur(meta.capMs||awayMs)}</span>`;
+  head+=` · <span style="color:var(--blue)">${eff}% rate</span>`;
+  $('offlineAwayTime').innerHTML=head;
+
+  // ── Totals strip ──
+  const totals=[
+    {v:'+'+(meta.totalXp||0).toLocaleString(), l:'XP'},
+    {v:(meta.totalLevels||0), l:meta.totalLevels===1?'level':'levels'},
+    {v:'+'+(meta.totalItems||0).toLocaleString(), l:'items'}
+  ];
+  if(meta.coinsGained>0) totals.push({v:'+'+fmtCoins(meta.coinsGained,true), l:'gold'});
+  const totHtml=`<div class="off-totals">`+totals.map(t=>
+    `<div class="off-tot"><span class="ot-v">${t.v}</span><span class="ot-l">${t.l}</span></div>`).join('')+`</div>`;
+
+  // ── Per-skill rows ──
+  const rowsHtml=lines.map(l=>{
     var itemsHtml='';
     if(l.items&&l.items.length){
       itemsHtml='<div class="offline-items">'+l.items.map(function(it){
@@ -12707,6 +12747,9 @@ function showOfflineSummary(awayMs, lines){
       ${l.lvlUp?`<span class="offline-lvlup">→ Lv ${l.lvlUp}!</span>`:''}
     </div>${itemsHtml}`;
   }).join('');
+
+  box.innerHTML=totHtml+`<div class="off-rows">${rowsHtml}</div>`
+    +(meta.capped?`<div class="off-capnote">⏳ You were away longer than your offline cap — gains shown cover the first ${fmtDur(meta.capMs||awayMs)}. Extend it in the Offline skill tree.</div>`:'');
   $('offlineModal').classList.remove('hidden');
 }
 
