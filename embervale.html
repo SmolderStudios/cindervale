@@ -1649,20 +1649,24 @@ header h1 .flame{color:var(--ember)}
 .comp-search{width:100%;background:#0d0905;color:var(--text);border:1px solid var(--trim-d);
   border-radius:4px;padding:5px 8px;font-size:14px;margin-bottom:8px;font-family:'Courier New',monospace}
 .comp-search:focus{border-color:var(--trim);outline:none}
-.comp-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
-.comp-card{background:var(--raised);border:1px solid var(--trim-d);border-radius:5px;padding:5px 6px;
-  cursor:pointer;transition:border-color .15s;
-  display:flex;flex-direction:column;
-  height:142px;box-sizing:border-box;overflow:hidden}
-@media(max-width:600px){.comp-grid{grid-template-columns:repeat(2,1fr)}}
-.comp-card:hover{border-color:var(--trim)}
-.comp-card.undiscovered{opacity:0.5;filter:grayscale(0.6)}
-.comp-card.rare-item{border-color:#ffd70044}
-.comp-card.rare-item:hover{border-color:#ffd700}
-.comp-card .comp-icon{text-align:center}
-.comp-card .comp-name{text-align:center;word-break:break-word}
-.comp-card .comp-sell{text-align:center}
-.comp-card .comp-sources{margin-top:auto}
+/* Collection Log (1.0.9) — dense icon grid; details live in the hover tooltip. */
+.comp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(54px,1fr));gap:6px}
+@media(max-width:600px){.comp-grid{grid-template-columns:repeat(auto-fill,minmax(48px,1fr))}}
+.comp-card.comp-tile{position:relative;background:var(--raised);border:1px solid var(--trim-d);
+  border-radius:7px;padding:0;height:auto;aspect-ratio:1;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:border-color .12s,background .12s,transform .12s;overflow:visible}
+.comp-card.comp-tile:hover{border-color:var(--trim);background:#231811;transform:translateY(-1px);z-index:5}
+.comp-card.comp-tile .ctile-ic{display:flex;align-items:center;justify-content:center;font-size:30px;line-height:1}
+.comp-card.comp-tile .ctile-ic svg{width:30px;height:30px}
+.comp-card.comp-tile .ctile-q{font-family:'Cinzel',serif;color:#5a4a32;font-size:24px;font-weight:600}
+.comp-card.comp-tile.undiscovered{background:#120c07;border-style:dashed;opacity:1;filter:none}
+.comp-card.comp-tile.rare-item{border-color:#ffd70055;box-shadow:inset 0 0 10px #ffd70014}
+.comp-card.comp-tile.rare-item:hover{border-color:#ffd700}
+.comp-card.comp-tile .ctile-rare{position:absolute;top:-4px;left:-2px;font-size:10px;color:#ffd24e;text-shadow:0 0 4px #000;pointer-events:none}
+.comp-card.comp-tile .ctile-ct{position:absolute;bottom:1px;right:2px;font-size:10px;font-weight:700;color:#e7d8b4;
+  background:#0d0905cc;border-radius:3px;padding:0 3px;font-family:'Courier New',monospace;line-height:1.45;pointer-events:none}
+.comp-card.comp-tile .ctile-newdot{position:absolute;top:-3px;right:-3px;width:8px;height:8px;border-radius:50%;
+  background:#ff4444;box-shadow:0 0 6px #ff4444;pointer-events:none}
 /* Pagination row for compendium */
 .comp-pagi{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:10px}
 .comp-pagi button{background:var(--raised);border:1px solid var(--trim-d);color:var(--text);
@@ -2227,7 +2231,7 @@ header h1 .flame{color:var(--ember)}
   <div class="mm-btns">
     <button class="mm-btn mm-primary" id="mmPlay">▶ Play</button>
   </div>
-  <div class="mm-ver">v1.0.8</div>
+  <div class="mm-ver">v1.0.9</div>
 </div>
 
 <!-- ===== CHARACTER SELECT (added) ===== -->
@@ -2287,7 +2291,7 @@ header h1 .flame{color:var(--ember)}
   <div class="hdr-nav">
     <button class="hdr-menu-btn" id="tabShop"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M3 7v1a3 3 0 0 0 6 0a3 3 0 0 0 6 0a3 3 0 0 0 6 0v-1l-2-4H5z"/><path d="M5 21v-10"/><path d="M19 21v-10"/><path d="M9 21v-4a2 2 0 0 1 4 0v4"/></svg>Shop</button>
     <button class="hdr-menu-btn" id="tabMastery"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6"/><path d="M10 3v6l-4 8a1 1 0 0 0 1 1.4h10a1 1 0 0 0 1-1.4l-4-8V3"/><path d="M6.5 14h11"/></svg>Mastery</button>
-    <button class="hdr-menu-btn" id="tabComp"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 19a9 9 0 0 1 9 0a9 9 0 0 1 9 0"/><path d="M3 6a9 9 0 0 1 9 0a9 9 0 0 1 9 0"/><path d="M3 6v13"/><path d="M12 6v13"/><path d="M21 6v13"/></svg>Compendium</button>
+    <button class="hdr-menu-btn" id="tabComp"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 19a9 9 0 0 1 9 0a9 9 0 0 1 9 0"/><path d="M3 6a9 9 0 0 1 9 0a9 9 0 0 1 9 0"/><path d="M3 6v13"/><path d="M12 6v13"/><path d="M21 6v13"/></svg>Collection Log</button>
   </div>
   <div class="stat-pill">
     <span class="coins-wrap">🪙 <b id="coins">0</b></span>
@@ -16860,7 +16864,7 @@ document.addEventListener('click',e=>{
    ================================================================= */
 let compCat='all', compSearch='';
 let compPage=0;
-const COMP_PAGE_SIZE=12;
+const COMP_PAGE_SIZE=120;  // 1.0.9: collection-log tiles are tiny — fit far more per page
 
 const COMP_CATEGORIES=[
   {id:'all',   label:'All'},
@@ -16976,71 +16980,27 @@ function renderCompendium(){
     const usages=um[id]||[];
 
     const card=document.createElement('div');
-    card.className='comp-card'
+    card.className='comp-card comp-tile'
       +(isDiscovered?'':' undiscovered')
       +(isRare?' rare-item':'')
       +(isNew?' is-new':'');
 
     if(!isDiscovered){
-      const hint=sources.length?`Found while ${sources[0].skName.toLowerCase()}`:'Source unknown';
-      const rareMark=isRare?`<span style="color:var(--ember);font-size:12px;font-family:'Courier New',monospace;display:block;margin-top:2px">✦ Rare drop</span>`:'';
-      card.innerHTML=`<div class="comp-icon">❓</div>
-        <div class="comp-name undiscovered">???</div>
-        ${rareMark}
-        <div class="comp-hint">${hint}</div>`;
+      // Locked: a silhouette "?" plus a one-line where-hint (no full reveal). (1.0.9)
+      card.innerHTML=`<div class="ctile-ic ctile-q">?</div>`+(isRare?'<span class="ctile-rare">✦</span>':'');
+      card.title=(isRare?'✦ Rare · ':'')+'Undiscovered'+(sources.length?` — found while ${sources[0].skName.toLowerCase()}`:'');
     } else {
-      // Sources
-      let srcHtml='';
-      for(const s of sources.slice(0,3)){
-        const pct=s.chance>=1?'100%':(s.chance>=0.01?(s.chance*100).toFixed(1)+'%':(s.chance*100).toFixed(2)+'%');
-        const color=s.chance>=1?'var(--green)':s.chance>=0.01?'var(--trim)':'var(--ember)';
-        srcHtml+=`<div>${s.skIcon} ${s.actName} <span class="comp-chance" style="color:${color}">${pct}</span></div>`;
-      }
-      if(sources.length>3) srcHtml+=`<div style="color:#6e552c">+${sources.length-3} more</div>`;
-
-      // Unique skill icons — source skills (green) and usage skills (blue)
-      const sourceSkills=new Set(sources.map(s=>s.skKey).filter(Boolean));
-      const usageSkills=new Set(usages.map(u=>u.skKey).filter(k=>!sourceSkills.has(k)));
-      let skillIconsHtml='';
-      if(sourceSkills.size||usageSkills.size){
-        skillIconsHtml='<div class="comp-skill-icons">';
-        for(const sk of sourceSkills){
-          if(SKILLS[sk]) skillIconsHtml+=`<span class="csi src" title="From ${SKILLS[sk].name}">${SKILLS[sk].icon}</span>`;
-        }
-        for(const sk of usageSkills){
-          if(SKILLS[sk]) skillIconsHtml+=`<span class="csi use" title="Used in ${SKILLS[sk].name}">${SKILLS[sk].icon}</span>`;
-        }
-        skillIconsHtml+='</div>';
-      }
-
+      // Discovered (1.0.9): item icon only — name, sources, sell, drop rates and
+      // usage all live in the rich hover tooltip (attachTooltip). Corner badges:
+      // satchel count, rare star, new-discovery dot.
       const inSatchel=state.items[id]||0;
-      const rareBadge=isRare?`<span style="font-size:11px;color:var(--ember);font-family:'Courier New',monospace;letter-spacing:1px;text-transform:uppercase">✦ Rare</span> `:'';
-      card.innerHTML=`<div class="comp-icon">${iconHTML(id)}</div>
-        <div class="comp-name">${rareBadge}${it.name}</div>
-        ${it.sell>0?`<div class="comp-sell">💰 ${fmtCoins(effectiveItemSell(id),true)}</div>`:''}
-        ${it.potion?`<div style="font-size:12px;color:var(--ember)">${
-          [it.potion.speed?'+'+Math.round(it.potion.speed*100)+'% spd':'',
-           it.potion.xp?'+'+Math.round(it.potion.xp*100)+'% xp':'',
-           it.potion.gp?'+'+Math.round(it.potion.gp*100)+'% gp':'',
-           it.potion.doubleChance?'+'+Math.round(it.potion.doubleChance*100)+'% yield':'',
-           it.potion.atk?'+'+it.potion.atk+' atk':'',
-           it.potion.str?'+'+it.potion.str+' str':'',
-           it.potion.def?'+'+it.potion.def+' def':'',
-           it.potion.heal?'+'+it.potion.heal+' hp':'']
-          .filter(Boolean).join(' · ')
-        }</div>`:''}
-        ${skillIconsHtml}
-        <div class="comp-sources">${srcHtml||'<span style="color:#6e552c">No known source</span>'}</div>
-        ${inSatchel?`<div style="font-size:12px;color:var(--trim);margin-top:3px">In satchel: ${inSatchel}</div>`:''}`;
+      card.innerHTML=`<div class="ctile-ic">${iconHTML(id)}</div>`
+        +(isRare?'<span class="ctile-rare">✦</span>':'')
+        +(inSatchel?`<span class="ctile-ct">${inSatchel>9999?'9999+':inSatchel}</span>`:'')
+        +(isNew?'<span class="ctile-newdot"></span>':'');
       attachTooltip(card, id);
-
-      // Acknowledge new discovery on hover
       if(isNew){
-        const ack=()=>{
-          ackDiscovery(id);
-          card.classList.remove('is-new');
-        };
-        card.addEventListener('mouseenter',ack,{once:true});
+        card.addEventListener('mouseenter',()=>{ ackDiscovery(id); card.classList.remove('is-new'); },{once:true});
       }
     }
     return card;
