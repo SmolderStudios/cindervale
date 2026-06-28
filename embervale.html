@@ -2231,7 +2231,7 @@ header h1 .flame{color:var(--ember)}
   <div class="mm-btns">
     <button class="mm-btn mm-primary" id="mmPlay">▶ Play</button>
   </div>
-  <div class="mm-ver">v1.0.9</div>
+  <div class="mm-ver">v1.0.10</div>
 </div>
 
 <!-- ===== CHARACTER SELECT (added) ===== -->
@@ -10646,7 +10646,7 @@ function openGearModal(){
    XP per damage: styleStat += dmg*4   hp += dmg*1.33
    Kill XP:      mon.xp split 75/25 between style and HP.                     */
 const COMBAT_STATS={
-  attack:    {name:'Attack',    icon:'⚔️', desc:'Raises your hit chance against foes.\nEach Attack level adds +1 to Accuracy.\nGear atk adds +2 per point.\nHit chance = your accuracy ÷ (your accuracy + foe defence).'},
+  attack:    {name:'Attack',    icon:'⚔️', desc:'Pushes your damage rolls toward your max hit.\nEach Attack level adds +1 to Attack.\nGear atk adds +2 per point.\nHigher Attack vs the foe Defence means higher rolls — every swing lands, there are no misses.'},
   strength:  {name:'Strength',  icon:'💪', desc:'Raises your maximum damage roll.\nEach Strength level adds +0.13 to Max Hit.\nGear str adds +0.5 per point.\nWhen you land a hit, damage = random 1…Max Hit.'},
   defence:   {name:'Defence',   icon:'🛡️', desc:'Reduces how often foes connect with you.\nEach Defence level adds +1 to your Defence stat.\nGear def adds +1 per point.\nFoe hit chance = foe attack ÷ (foe attack + your defence).'},
   hitpoints: {name:'Hitpoints', icon:'❤️', desc:'Your health pool. Reach 0 and you retreat.\nMax HP = 10 + Hitpoints level + ¼ × gear def.\nGains XP from every point of damage you deal, and a share of every kill.\nStarts at level 10.'},
@@ -14998,6 +14998,23 @@ const MONSTERS=[
   {id:'demon_lord',   zone:'demon_sanctum', name:'Demon Lord',     icon:'👑', lvl:99, hp:13500, atk:1020, str:920, def:720, coins:7000, xp:10000, swingMs:2800, boss:true, bossReq:'infernal_crest', dmgType:'slash', weakTo:'slash', resistTo:'crush'},
 ];
 
+/* ════ COMBAT REBALANCE (1.0.10) ═══════════════════════════════════════════════
+   Every monster's hp / max-hit (str) / defence / attack is DERIVED from its level
+   so the whole 1-99 roster is coherent. The player's max hit caps around ~50 and
+   max HP around ~150, so a monster's max-hit is kept survivable (no one-shots) and
+   its HP is sized to the player's real damage output (no thousand-HP slogs). Bosses
+   get a multiplier. coins / xp / swingMs / damage-types stay as authored.
+   The literal hp/atk/str/def values above are now just placeholders — this governs. */
+(function rebalanceMonsters(){
+  for(const m of MONSTERS){
+    const L=Math.max(1, m.lvl||1), boss=!!m.boss;
+    m.hp  = Math.round((6 + L + L*L*0.075) * (boss?2.2:1));  // sized to player maxhit × a fair hit-count
+    m.str = Math.round((1 + L*0.32)        * (boss?1.4:1));  // foe MAX HIT — survivable at every bracket
+    m.def = Math.round((2 + L*0.78)        * (boss?1.3:1));  // sets your attack-advantage (damage scaling)
+    m.atk = Math.round((2 + L*0.78)        * (boss?1.3:1));  // foe attack-advantage vs your defence
+  }
+})();
+
 /* Zones — picker tabs. `unlockLvl` is the soft Combat Lv gate (locked tile until
    the player reaches it). `keyItem` (if present) is the rare drop that opens the
    zone's boss tile. */
@@ -18799,11 +18816,14 @@ function combatTick(){
   // ── Player swing — only when their own swing timer has elapsed ───────────
   if(now-combat.youSwingStart>=combat.youSwingMs){
     combat.youSwingStart=now;
-    const hitChancePlayer=combat.youAcc/(combat.youAcc+mon.def);
-    let youDmg=0;
+    // 1.0.10 combat rework — no binary miss. Your Attack (accuracy) biases the
+    // damage roll within the Strength-defined range: high attack vs the foe's
+    // defence pushes the roll toward your max hit; low attack rolls nearer the
+    // floor. Every swing lands for at least 1 — "missing" is gone.
+    const accAdv=combat.youAcc/(combat.youAcc+mon.def);           // 0..1 attack advantage
+    let youDmg=Math.max(1, Math.round(combat.youMaxHit*(0.20+0.80*accAdv)*(0.55+0.45*Math.random())));
     let didCrit=false;
-    if(Math.random()<hitChancePlayer){
-      youDmg=1+Math.floor(Math.random()*combat.youMaxHit);
+    {
       // ── Damage-type matchup (1.0.93) — equipped weapon's dmgType vs foe's
       // weakTo/resistTo. ±15% multiplier; applied BEFORE crit so a critical
       // landed on a weak foe still doubles the post-modifier damage. Skipped
@@ -18951,17 +18971,12 @@ function combatTick(){
   // ── Monster swing — only when foe's own swing timer has elapsed ──────────
   if(now-combat.foeSwingStart>=combat.foeSwingMs){
     combat.foeSwingStart=now;
-    const hitChanceFoe=mon.atk/(mon.atk+combat.youDef);
-    let foeDmg=0;
-    if(Math.random()<hitChanceFoe){
-      foeDmg=1+Math.floor(Math.random()*mon.str);
-    }
+    // 1.0.10 — foe uses the same no-miss model: its Attack biases its roll within
+    // its Strength-defined max hit, weighted against your Defence. Always lands ≥1.
+    const foeAccAdv=mon.atk/(mon.atk+combat.youDef);
+    let foeDmg=Math.max(1, Math.round(mon.str*(0.20+0.80*foeAccAdv)*(0.55+0.45*Math.random())));
     combat.youHp=Math.max(0,combat.youHp-foeDmg);
-    if(foeDmg>0){
-      cmbLog(`${mon.name} hits you for ${foeDmg}.`,'hit');
-    } else {
-      cmbLog(`${mon.name} misses.`,'');
-    }
+    cmbLog(`${mon.name} hits you for ${foeDmg}.`,'hit');
 
     if(combat.youHp<=0){
       cmbLog('💀 You were defeated and retreat to safety.','lose');
@@ -19965,9 +19980,9 @@ function renderCombat(){
           <div class="cmb-swbar foe" title="${mon.name}'s next swing"><i id="cmbFoeSwing" style="width:0%"></i></div>
         </div>
         <div class="cmb-scd foe">
-          <div class="cmb-srow" data-tip="${mon.name}'s accuracy — its hit chance roll against your defence."><span class="lbl">Accuracy</span><span class="val">${mon.atk}</span></div>
+          <div class="cmb-srow" data-tip="${mon.name}'s attack — biases its damage rolls upward against your defence."><span class="lbl">Attack</span><span class="val">${mon.atk}</span></div>
           <div class="cmb-srow" data-tip="${mon.name}'s max hit — the damage cap when it lands a swing."><span class="lbl">Max Hit</span><span class="val">${mon.str}</span></div>
-          <div class="cmb-srow" data-tip="${mon.name}'s defence — its evasion roll against your accuracy."><span class="lbl">Defence</span><span class="val">${mon.def}</span></div>
+          <div class="cmb-srow" data-tip="${mon.name}'s defence — resists your attack, pulling your damage rolls down."><span class="lbl">Defence</span><span class="val">${mon.def}</span></div>
           <div class="cmb-srow" data-tip="${mon.name}'s swing speed — how often it gets to attack."><span class="lbl">Speed</span><span class="val">${(mon.swingMs/1000).toFixed(2)}s</span></div>
         </div>
         <div class="cmb-fighter you">
@@ -19980,7 +19995,7 @@ function renderCombat(){
           <div class="cmb-swbar you" title="Your next swing"><i id="cmbYouSwing" style="width:0%"></i></div>
         </div>
         <div class="cmb-scd you">
-          <div class="cmb-srow" data-tip="From Attack lvl ${aLvl}${accGear>0?` + ${accGear} from gear`:''}"><span class="lbl">Accuracy</span><span class="val">${accBase+accGear}${accGear>0?`<span class="gear">+${accGear}</span>`:''}</span></div>
+          <div class="cmb-srow" data-tip="From Attack lvl ${aLvl}${accGear>0?` + ${accGear} from gear`:''}"><span class="lbl">Attack</span><span class="val">${accBase+accGear}${accGear>0?`<span class="gear">+${accGear}</span>`:''}</span></div>
           <div class="cmb-srow" data-tip="From Strength lvl ${sLvl}${hitGear>0?` + ${hitGear} from gear`:''}"><span class="lbl">Max Hit</span><span class="val">${hitBase+hitGear}${hitGear>0?`<span class="gear">+${hitGear}</span>`:''}</span></div>
           <div class="cmb-srow" data-tip="From Defence lvl ${dLvl}${defGear>0?` + ${defGear} from gear`:''}"><span class="lbl">Defence</span><span class="val">${defBase+defGear}${defGear>0?`<span class="gear">+${defGear}</span>`:''}</span></div>
           <div class="cmb-srow" data-tip="From Hitpoints lvl ${hLvl}${hpGear>0?` + ${hpGear} from gear`:''}"><span class="lbl">Health</span><span class="val">${hpBase+hpGear}${hpGear>0?`<span class="gear">+${hpGear}</span>`:''}</span></div>
