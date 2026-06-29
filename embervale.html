@@ -2286,7 +2286,7 @@ header h1 .flame{color:var(--ember)}
   <div class="mm-btns">
     <button class="mm-btn mm-primary" id="mmPlay">▶ Play</button>
   </div>
-  <div class="mm-ver">v1.0.20</div>
+  <div class="mm-ver">v1.0.21</div>
 </div>
 
 <!-- ===== CHARACTER SELECT (added) ===== -->
@@ -2736,14 +2736,16 @@ const ITEMS={
   raw_shark:     {name:'Raw Shark',        icon:'🦈',sell:792},
   raw_voideel:   {name:'Raw Void Eel',     icon:'🐍',sell:1265},
   // Fishing (cooked)
-  cooked_minnow:    {name:'Cooked Minnow',    icon:'🍢',sell:44},
-  cooked_sardine:   {name:'Cooked Sardine',   icon:'🍢',sell:99},
-  cooked_trout:     {name:'Cooked Trout',     icon:'🍢',sell:198},
-  cooked_tuna:      {name:'Cooked Tuna',      icon:'🍢',sell:330},
-  cooked_salmon:    {name:'Cooked Salmon',    icon:'🍢',sell:550},
-  cooked_swordfish: {name:'Cooked Swordfish', icon:'🍱',sell:880},
-  cooked_shark:     {name:'Cooked Shark',     icon:'🍱',sell:1408},
-  cooked_voideel:   {name:'Cooked Void Eel',  icon:'🍱',sell:2255},
+  // Cooked fish double as combat food — instant heal scaled by cook level (1.0.21).
+  // Cheap, spammable sustain; the dedicated Healing Draughts out-heal them tier-for-tier.
+  cooked_minnow:    {name:'Cooked Minnow',    icon:'🍢',sell:44,  potion:{heal:6}},
+  cooked_sardine:   {name:'Cooked Sardine',   icon:'🍢',sell:99,  potion:{heal:12}},
+  cooked_trout:     {name:'Cooked Trout',     icon:'🍢',sell:198, potion:{heal:18}},
+  cooked_tuna:      {name:'Cooked Tuna',      icon:'🍢',sell:330, potion:{heal:26}},
+  cooked_salmon:    {name:'Cooked Salmon',    icon:'🍢',sell:550, potion:{heal:36}},
+  cooked_swordfish: {name:'Cooked Swordfish', icon:'🍱',sell:880, potion:{heal:48}},
+  cooked_shark:     {name:'Cooked Shark',     icon:'🍱',sell:1408,potion:{heal:62}},
+  cooked_voideel:   {name:'Cooked Void Eel',  icon:'🍱',sell:2255,potion:{heal:80}},
   // Smithing bars
   bronze_bar:    {name:'Bronze Bar',       icon:'🟫',sell:77},
   iron_bar:      {name:'Iron Bar',         icon:'⬜',sell:176},
@@ -2782,17 +2784,21 @@ const ITEMS={
   warriors_brew: {name:"Warrior's Triple Brew", icon:'🏺',sell:17600,rare:true,potion:{atk:3,str:3,def:3,dur:300}},
   // ─── Monster-drop consumables (1.0.6) — heal in combat like draughts. Cooked
   // from beast parts / bound from silk; tier-local early-game sustain. ─────────
-  marrow_broth:    {name:'Marrow Broth',    icon:'🍲',sell:40,  potion:{heal:10}, desc:'Bones boiled down to a rich, restorative broth. Cheap, warm, and just enough.'},
-  ratmeat_skewer:  {name:'Ratmeat Skewer',  icon:'🍢',sell:70,  potion:{heal:16}, desc:'Charred warren-rat on a splinter of bone. Gamey, but it puts you back on your feet.'},
-  goblin_jerky:    {name:'Goblin Jerky',    icon:'🥓',sell:120, potion:{heal:24}, desc:'Strips of cured hide smoked over a goblin fire. Tough, salty, surprisingly filling.'},
-  silk_poultice:   {name:'Silk Poultice',   icon:'🩹',sell:90,  potion:{heal:14}, desc:'A wound-dressing of spider-silk and crushed venom sac — knits cuts closed fast.'},
-  // ─── Monster-drop heal foods, mid→endgame tiers (1.0.7) ─────────────────────
-  bone_stew:       {name:'Bone Marrow Stew', icon:'🍲',sell:180, potion:{heal:34}, desc:'Ancient bones simmered grey. Grim fare, but it knits you back together.'},
-  wolf_jerky:      {name:'Wolf Jerky',       icon:'🥓',sell:280, potion:{heal:46}, desc:'Smoke-cured strips of dire-wolf. Chewy, fatty, and warming against the cold.'},
-  ogre_roast:      {name:'Ogre Roast',       icon:'🍖',sell:420, potion:{heal:64}, desc:'A slab of ogre haunch roasted over coals. Coarse and enormous — a whole meal.'},
-  troll_stew:      {name:'Troll Stew',       icon:'🍲',sell:640, potion:{heal:88}, desc:'Troll meat and regenerative blood, stewed thick. You can feel the wounds closing.'},
-  drake_roast:     {name:'Drake Roast',      icon:'🍖',sell:950, potion:{heal:120}, desc:'Seared drake flank, still faintly smoking. Rich enough to mend deep wounds.'},
-  infernal_roast:  {name:'Infernal Roast',   icon:'🍖',sell:1500,potion:{heal:160}, desc:'Demon-flesh roasted in brimstone. It burns going down — then the pain is gone.'},
+  // Monster-drop foods come in three flavours (1.0.21): INSTANT (burst heal, like
+  // a draught), REGEN (heal-over-time — same total spread over seconds, great for
+  // sustained idle fights), and FEAST (smaller instant heal + a short combat buff).
+  // potion.regen = total HP, potion.regenDur = seconds. potion.buff = {str/def/atk,dur}.
+  marrow_broth:    {name:'Marrow Broth',    icon:'🍲',sell:40,  potion:{regen:18, regenDur:6}, desc:'Bones boiled down to a rich, restorative broth. Mends you slowly — 18 HP over 6s.'},
+  ratmeat_skewer:  {name:'Ratmeat Skewer',  icon:'🍢',sell:70,  potion:{heal:10, buff:{str:1,dur:30}}, desc:'Charred warren-rat on a splinter of bone. Restores 10 HP and fires you up — +1 Strength for 30s.'},
+  silk_poultice:   {name:'Silk Poultice',   icon:'🩹',sell:90,  potion:{heal:16}, desc:'A wound-dressing of spider-silk and crushed venom sac — knits cuts closed fast. Instant 16 HP.'},
+  goblin_jerky:    {name:'Goblin Jerky',    icon:'🥓',sell:120, potion:{heal:24}, desc:'Strips of cured hide smoked over a goblin fire. Tough, salty, and filling. Instant 24 HP.'},
+  // ─── Monster-drop foods, mid→endgame tiers (1.0.7, reworked 1.0.21) ─────────
+  bone_stew:       {name:'Bone Marrow Stew', icon:'🍲',sell:180, potion:{regen:40, regenDur:8}, desc:'Ancient bones simmered grey. Grim fare that knits you back together — 40 HP over 8s.'},
+  wolf_jerky:      {name:'Wolf Jerky',       icon:'🥓',sell:280, potion:{heal:50}, desc:'Smoke-cured strips of dire-wolf. Chewy, fatty, warming. Instant 50 HP.'},
+  ogre_roast:      {name:'Ogre Roast',       icon:'🍖',sell:420, potion:{heal:40, buff:{str:2,dur:60}}, desc:'A slab of ogre haunch roasted over coals. Restores 40 HP and bolsters you — +2 Strength for 60s.'},
+  troll_stew:      {name:'Troll Stew',       icon:'🍲',sell:640, potion:{regen:96, regenDur:8}, desc:'Troll meat and regenerative blood, stewed thick. You feel the wounds closing — 96 HP over 8s.'},
+  drake_roast:     {name:'Drake Roast',      icon:'🍖',sell:950, potion:{heal:120}, desc:'Seared drake flank, still faintly smoking. Rich enough to mend deep wounds. Instant 120 HP.'},
+  infernal_roast:  {name:'Infernal Roast',   icon:'🍖',sell:1500,potion:{heal:80, buff:{str:3,def:3,dur:90}}, desc:'Demon-flesh roasted in brimstone. Restores 80 HP and steels you — +3 Strength & +3 Defence for 90s.'},
   // Rare drops
   birds_nest:      {name:"Bird's Nest",       icon:'🪹',sell:990,  rare:true},
   ancient_seed:    {name:'Ancient Seed',       icon:'🌱',sell:825,  rare:true},
@@ -11298,19 +11304,34 @@ function useHealPotion(itemId){
     toast(`${it.icon} ${it.name} — save for combat (HP refills between fights).`);
     return false;
   }
-  // Already full → reject (don't waste a brew on overheal).
+  // Buff foods (1.0.21) carry potion.buff — they're worth eating even at full HP
+  // for the combat buff, so only pure heals reject on overheal.
+  const buff=it.potion.buff;
+  const hasBuff=!!(buff&&(buff.atk||buff.str||buff.def));
   const missing=(combat.youMaxHp||0)-(combat.youHp||0);
-  if(missing<=0){
+  if(missing<=0&&!hasBuff){
     toast(`${it.icon} ${it.name} — HP already full.`);
     return false;
   }
   // Consume and heal (capped at maxHp so excess heal isn't logged).
   const heal=it.potion.heal;
-  const actualHeal=Math.min(heal,missing);
+  const actualHeal=Math.max(0,Math.min(heal,missing));
   combat.youHp=Math.min(combat.youMaxHp, combat.youHp+heal);
   state.items[itemId]--;
-  if(typeof cmbLog==='function'){
+  if(typeof cmbLog==='function'&&actualHeal>0){
     cmbLog(`${it.icon} ${it.name} restored ${actualHeal} HP.`,'sys');
+  }
+  // Apply the food buff as a timed effect — flows through activePotionCombatStats
+  // → combatStats → refreshCombatStats just like a buff potion.
+  if(hasBuff){
+    if(!Array.isArray(state.effects)) state.effects=[];
+    const dur=(buff.dur||30)*1000;
+    state.effects.push({atk:buff.atk||0,str:buff.str||0,def:buff.def||0,expires:Date.now()+dur,name:it.name,food:true});
+    if(typeof refreshCombatStats==='function') refreshCombatStats();
+    if(typeof cmbLog==='function'){
+      const tag=[buff.atk?`+${buff.atk} Atk`:'',buff.str?`+${buff.str} Str`:'',buff.def?`+${buff.def} Def`:''].filter(Boolean).join(', ');
+      cmbLog(`${it.icon} ${it.name} — ${tag} for ${buff.dur||30}s.`,'sys');
+    }
   }
   if(typeof updateCombatBars==='function') updateCombatBars();
   if(typeof renderCombat==='function') renderCombat();
@@ -11339,10 +11360,53 @@ function autoUseHealPotion(){
   return useHealPotion(pick.id);
 }
 
+/* All owned heal-over-time regen foods (1.0.21) — items with potion.regen.
+   Drives the regen hotbar group; kept out of combatHealItems so the instant
+   auto-heal logic never picks a slow-ticking food in an emergency. */
+function combatRegenFoods(){
+  const out=[];
+  for(const id in ITEMS){
+    const it=ITEMS[id]; if(!it||!it.potion) continue;
+    const total=it.potion.regen||0;
+    if(total<=0) continue;
+    const cnt=(state.items&&state.items[id])||0;
+    if(cnt>0) out.push({id,it,cnt,total,dur:it.potion.regenDur||6});
+  }
+  out.sort((a,b)=>a.total-b.total);
+  return out;
+}
+
+/* Eat a regen food — queues a heal-over-time effect on the active combat.
+   Combat-only (HP refills between fights, so there's nothing to regen otherwise). */
+function useRegenFood(itemId){
+  if(!(state.items[itemId]>0)) return false;
+  const it=ITEMS[itemId];
+  if(!it||!it.potion||!it.potion.regen) return false;
+  if(typeof combat==='undefined'||!combat.active){
+    toast(`${it.icon} ${it.name} — save for combat (HP refills between fights).`);
+    return false;
+  }
+  const total=it.potion.regen;
+  const dur=it.potion.regenDur||6;
+  if(!Array.isArray(combat.regens)) combat.regens=[];
+  const now=Date.now();
+  combat.regens.push({rate: total/dur, until: now+dur*1000, last: now, acc:0});
+  state.items[itemId]--;
+  if(typeof cmbLog==='function') cmbLog(`${it.icon} ${it.name} — regenerating ${total} HP over ${dur}s.`,'sys');
+  if(typeof updateCombatBars==='function') updateCombatBars();
+  if(typeof renderCombat==='function') renderCombat();
+  if(typeof renderRightPanel==='function') renderRightPanel();
+  saveGame();
+  return true;
+}
+
 function usePotion(itemId){
   if(!(state.items[itemId]>0)) return;
   const it=ITEMS[itemId];
   if(!it||!it.potion) return;
+
+  // Regen-only foods (no instant heal) route to the heal-over-time path. (1.0.21)
+  if(it.potion.regen&&!it.potion.heal){ useRegenFood(itemId); return; }
 
   // ── Healing draughts: instant on-use, separate path (no effect bar) ─────
   // Heals lack a `dur` field, so they bypass the duration/conflict logic
@@ -14812,11 +14876,13 @@ function renderInventory(){
 
   // Filter + search — explicit category map; rare items go into their natural skill category
   function itemCat(id){
+    // Cooked fish carry potion.heal (1.0.21) but still belong in the Food tab,
+    // so this prefix check must precede the generic potion bucket below.
+    if(id.startsWith('cooked_')) return 'cooked';
     if(ITEMS[id]&&ITEMS[id].potion) return 'potions';
     if(id.endsWith('_log')||id==='ancient_log') return 'logs';
     if(id.endsWith('_ore')||id==='coal') return 'ores';
     if(id.startsWith('raw_')) return 'fish';
-    if(id.startsWith('cooked_')) return 'cooked';
     if(id.endsWith('_bar')) return 'bars';
     // gems — includes rare gem drops from mining
     if(['sapphire','emerald','ruby','diamond','amethyst','dragon_gem','bloodstone','void_crystal','void_shard','gem_dust','pearl','abyssal_scale','arcane_dust','mana_essence','rune_fragment','cut_sapphire','cut_emerald','cut_ruby','cut_diamond','cut_amethyst','cut_dragon','cut_bloodstone','cut_void'].includes(id)) return 'gems';
@@ -14931,8 +14997,8 @@ function renderInventory(){
     if(isPotion){
       const BONUS_TYPES=['speed','xp','gp','doubleChance','atk','str','def'];
       const nowCheck=Date.now();
-      // Heal potions have no duration — skip the duration/conflict preview.
-      const isHealOnly=!!it.potion.heal&&!it.potion.dur;
+      // Heal / regen foods have no duration — skip the duration/conflict preview.
+      const isHealOnly=(!!it.potion.heal||!!it.potion.regen)&&!it.potion.dur;
       const durMult=potionDurMult();
       const powMult=potionPowerMult();
       const addedDurInv=isHealOnly?0:it.potion.dur*1000*durMult;
@@ -15928,6 +15994,7 @@ const combat={
   youSwingMs:1100,  // player swing interval — shortened by agility
   foeSwingStart:0,  // timestamp of foe's current swing
   foeSwingMs:1100,  // foe swing interval — pulled from monster.swingMs on engage
+  regens:[],        // (1.0.21) active heal-over-time food effects: {rate,until,last,acc}
   log:[],
 };
 let _combatTimer=null;
@@ -16892,8 +16959,14 @@ function showItemTooltip(itemId, x, y){
     if(it.potion.str)  parts.push(`+${it.potion.str} Str`);
     if(it.potion.def)  parts.push(`+${it.potion.def} Def`);
     if(it.potion.heal) parts.push(`Restores ${it.potion.heal} HP (combat only)`);
-    // Heal potions are instant — no duration suffix; combat buffs use dur.
-    const suffix=it.potion.heal&&!it.potion.dur?'':` · ${fmtTime((it.potion.dur||0)*1000)}`;
+    if(it.potion.regen) parts.push(`Regenerates ${it.potion.regen} HP over ${it.potion.regenDur||6}s (combat only)`);
+    if(it.potion.buff){
+      const b=it.potion.buff;
+      const bt=[b.atk?`+${b.atk} Atk`:'',b.str?`+${b.str} Str`:'',b.def?`+${b.def} Def`:''].filter(Boolean).join(' · ');
+      if(bt) parts.push(`${bt} for ${b.dur||30}s`);
+    }
+    // Heal/regen foods are instant on-use — no top-level duration suffix; buff potions use dur.
+    const suffix=(it.potion.heal||it.potion.regen)&&!it.potion.dur?'':` · ${fmtTime((it.potion.dur||0)*1000)}`;
     html+=`<div class="tt-sub">${parts.join(' · ')}${suffix}</div>`;
     if(it.potion.dur){
       html+=`<div class="tt-sub" style="color:#e0762f88;font-size:12px;margin-top:2px">⚠ Same type blocks others · same potion stacks ×3 (duration only)</div>`;
@@ -18926,6 +18999,7 @@ function engageCombat(){
   combat.active=true;
   combat.foeHp=effMon.hp;
   combat.youHp=combat.youMaxHp;
+  combat.regens=[];   // (1.0.21) fresh fight — no carried-over food regen
   combat.foeSwingMs=mon.swingMs||COMBAT_BASE_SWING_MS;
   // Both sides start their first swing cycle now — no opener advantage.
   combat.youSwingStart=Date.now();
@@ -18945,6 +19019,7 @@ function fleeCombat(){
   stopCombatTimer();
   combat.active=false;
   combat.rare=false;  // disengage clears rare — re-engaging rerolls (1.0.70)
+  combat.regens=[];   // (1.0.21) drop any active food regen on disengage
   combat.youSwingStart=0;
   combat.foeSwingStart=0;
   cmbLog('🏃 You disengage.','sys');
@@ -18972,6 +19047,25 @@ function combatTick(){
   const mon=rareModify(baseMon,combat.rare);
   const style=(state.combatStyle==='strength'||state.combatStyle==='defence')?state.combatStyle:'attack';
   const now=Date.now();
+
+  // ── Food regen (1.0.21) — heal-over-time from stews/broths. Each active
+  // effect heals at `rate` HP/sec; fractional accumulation carries over ticks so
+  // the full total lands across its duration. Overheal past max HP is discarded.
+  if(combat.regens&&combat.regens.length){
+    for(const rg of combat.regens){
+      const dt=Math.max(0,(now-rg.last)/1000);
+      rg.last=now;
+      rg.acc=(rg.acc||0)+rg.rate*dt;
+      const whole=Math.floor(rg.acc);
+      if(whole>0){
+        rg.acc-=whole;
+        if(combat.youHp<combat.youMaxHp){
+          combat.youHp=Math.min(combat.youMaxHp, combat.youHp+whole);
+        }
+      }
+    }
+    combat.regens=combat.regens.filter(rg=>now<rg.until);
+  }
 
   // ── Player swing — only when their own swing timer has elapsed ───────────
   if(now-combat.youSwingStart>=combat.youSwingMs){
@@ -19142,6 +19236,7 @@ function combatTick(){
       cmbLog('💀 You were defeated and retreat to safety.','lose');
       combat.active=false;
       combat.rare=false;  // death clears rare encounter (1.0.70)
+      combat.regens=[];   // (1.0.21) wipe food regen on death
       combat.youHp=combat.youMaxHp;
       stopCombatTimer();
       renderCombat();
@@ -20049,16 +20144,29 @@ function renderCombat(){
     // Dynamic (1.0.8): every owned heal — draughts, cooked food, poultices —
     // not just the 4 draughts. Biggest heal first so strongest is leftmost.
     const owned=combatHealItems().sort((a,b)=>b.heal-a.heal);
-    if(!owned.length) return '';
+    const regens=combatRegenFoods().sort((a,b)=>b.total-a.total);
+    if(!owned.length&&!regens.length) return '';
     const buttons=owned.map(o=>{
       const disabled=!active;
-      const tip=`${o.it.name} — restores ${o.heal} HP`;
+      const b=o.it.potion&&o.it.potion.buff;
+      const buffTag=(b&&(b.atk||b.str||b.def))
+        ? ` · +${[b.atk?b.atk+' Atk':'',b.str?b.str+' Str':'',b.def?b.def+' Def':''].filter(Boolean).join('/')} ${b.dur||30}s`:'';
+      const tip=`${o.it.name} — restores ${o.heal} HP${buffTag}`;
       return `<button class="cmb-slot cmb-pot-btn" data-heal="${o.id}" data-tip="${tip.replace(/"/g,'&quot;')}"${disabled?' disabled':''}>
         <span class="cmb-pot-ic">${iconHTML(o.id)}</span>
         <span class="ct">${o.cnt}</span>
       </button>`;
     }).join('');
-    return `<div class="cmb-hbgrp">${buttons}</div>`;
+    // Regen foods (1.0.21) — heal-over-time; distinct data-regen handler.
+    const regenButtons=regens.map(o=>{
+      const disabled=!active;
+      const tip=`${o.it.name} — regenerates ${o.total} HP over ${o.dur}s`;
+      return `<button class="cmb-slot cmb-pot-btn cmb-food-regen" data-regen="${o.id}" data-tip="${tip.replace(/"/g,'&quot;')}"${disabled?' disabled':''}>
+        <span class="cmb-pot-ic">${iconHTML(o.id)}</span>
+        <span class="ct">${o.cnt}</span>
+      </button>`;
+    }).join('');
+    return `<div class="cmb-hbgrp">${buttons}${regenButtons}</div>`;
   })();
 
   // ── Auto-heal pill (v1.0.82) ─────────────────────────────────────────────────
@@ -20297,6 +20405,13 @@ function renderCombat(){
     b.addEventListener('click',function(){
       const id=b.getAttribute('data-heal');
       useHealPotion(id);
+    });
+  });
+  // Regen foods (1.0.21) — heal-over-time, separate use path.
+  panel.querySelectorAll('.cmb-pot-btn[data-regen]').forEach(b=>{
+    if(b.disabled) return;
+    b.addEventListener('click',function(){
+      useRegenFood(b.getAttribute('data-regen'));
     });
   });
   // Buff potions — route through usePotion so conflict + stacking logic runs.
