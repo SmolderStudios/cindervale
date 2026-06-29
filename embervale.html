@@ -1476,16 +1476,37 @@ header h1 .flame{color:var(--ember)}
 .mastery-bar{flex:1;height:3px;background:#0d090566;border-radius:2px;overflow:hidden}
 .mastery-bar i{display:block;height:100%;border-radius:2px}
 
-/* mastery log page */
-.mlog-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px}
-.mlog-card{background:var(--raised);border:1px solid var(--trim-d);border-radius:6px;padding:10px}
-.mlog-card.mb-bronze{border-color:#cd7f3266}
-.mlog-card.mb-silver{border-color:#aab8c266}
-.mlog-card.mb-gold  {border-color:#ffd70066}
-.mlog-card.mb-plat  {border-color:#b0f6;box-shadow:0 0 12px #b0f2}
-.mlog-skill{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}
-.mlog-name{font-size:14px;color:var(--text);margin-bottom:4px}
-.mlog-foot{display:flex;align-items:center;justify-content:space-between;margin-top:6px}
+/* Mastery Log (1.0.18) — compact, modern */
+.mlog-head{background:var(--raised);border:1px solid var(--trim-d);border-radius:7px;padding:10px 12px;margin-bottom:12px}
+.mlog-title{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:15px;color:var(--trim);font-variant:small-caps;letter-spacing:.5px}
+.mlog-title .mlog-sub{font-size:12px;color:var(--muted);font-variant:normal;letter-spacing:0}
+.mlog-title .mlog-platbonus{margin-left:auto;font-size:12px;color:var(--green);font-family:'Courier New',monospace}
+.mlog-tiers{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.mt-chip{font-size:12px;padding:3px 9px;border-radius:20px;font-weight:500}
+.mt-chip.bronze{background:#3d2a1a;color:#cd7f32;border:1px solid #cd7f3244}
+.mt-chip.silver{background:#22262a;color:#aab8c2;border:1px solid #aab8c244}
+.mt-chip.gold{background:#2a2410;color:#ffd700;border:1px solid #ffd70044}
+.mt-chip.plat{background:#1a1a2e;color:#b0f;border:1px solid #b0f4}
+.mlog-legend{margin-top:9px;padding-top:8px;border-top:1px solid var(--trim-d);font-size:11px;color:var(--muted);line-height:1.6}
+.mlog-sec{margin-bottom:6px;border:1px solid var(--trim-d);border-radius:7px;overflow:hidden}
+.mlog-sechdr{width:100%;display:flex;align-items:center;gap:9px;padding:8px 11px;background:var(--raised-s);border:none;cursor:pointer;text-align:left}
+.mlog-sechdr:hover{background:#231811}
+.mlog-sechdr .mlh-ic{font-size:18px;line-height:1;display:flex}
+.mlog-sechdr .mlh-ic svg{width:18px;height:18px}
+.mlog-sechdr .mlh-nm{flex:1;font-size:14px;color:var(--trim);font-variant:small-caps;letter-spacing:.5px}
+.mlog-sechdr .mlh-cnt{font-size:12px;color:var(--muted);font-family:'Courier New',monospace}
+.mlog-sechdr .mlh-chev{font-size:11px;color:var(--muted);transition:transform .2s}
+.mlog-sechdr.open .mlh-chev{transform:rotate(90deg)}
+.mlog-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(192px,1fr));gap:5px;padding:8px}
+.ma-tile{display:flex;align-items:center;gap:8px;background:var(--raised);border:1px solid var(--trim-d);border-radius:6px;padding:5px 8px;cursor:help}
+.ma-tile.mb-bronze{border-color:#cd7f3255}.ma-tile.mb-silver{border-color:#aab8c255}.ma-tile.mb-gold{border-color:#ffd70066}.ma-tile.mb-plat{border-color:#b0f6;box-shadow:inset 0 0 8px #b0f2}
+.ma-tile .ma-ic{font-size:18px;line-height:1;flex:0 0 20px;display:flex;align-items:center;justify-content:center}
+.ma-tile .ma-ic svg{width:18px;height:18px}
+.ma-tile .ma-body{flex:1;min-width:0}
+.ma-tile .ma-nm{font-size:12px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ma-tile .ma-bar{height:3px;background:#0d090566;border-radius:2px;overflow:hidden;margin-top:3px}
+.ma-tile .ma-bar i{display:block;height:100%;border-radius:2px}
+.ma-tile .ma-lvl{font-size:13px;font-weight:bold;font-family:'Courier New',monospace;flex:0 0 auto;min-width:16px;text-align:right}
 .mlog-xp{font-family:'Courier New',monospace;font-size:13px;color:var(--muted)}
 .mlog-prog{height:4px;background:#0d0905;border-radius:2px;overflow:hidden;margin-top:5px}
 .mlog-prog i{display:block;height:100%;border-radius:2px}
@@ -2254,7 +2275,7 @@ header h1 .flame{color:var(--ember)}
   <div class="mm-btns">
     <button class="mm-btn mm-primary" id="mmPlay">▶ Play</button>
   </div>
-  <div class="mm-ver">v1.0.17</div>
+  <div class="mm-ver">v1.0.18</div>
 </div>
 
 <!-- ===== CHARACTER SELECT (added) ===== -->
@@ -17415,89 +17436,56 @@ function renderMastery(){
 
   // Header summary
   const hdr=document.createElement('div');
-  hdr.style.cssText='margin-bottom:14px;padding:12px;background:var(--raised);border-radius:6px;border:1px solid var(--trim-d)';
+  hdr.className='mlog-head';
   const platBonus=plat*1;
   hdr.innerHTML=`
-    <div style="font-size:14px;color:var(--trim);font-variant:small-caps;letter-spacing:1px;margin-bottom:8px">Mastery Log &nbsp;—&nbsp; ${earned} of ${totalActs} activities ranked</div>
-    <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:14px;margin-bottom:10px">
-      <span style="color:#cd7f32">★ Bronze &nbsp;${bronze}</span>
-      <span style="color:#aab8c2">★ Silver &nbsp;${silver}</span>
-      <span style="color:#ffd700">★ Gold &nbsp;${gold}</span>
-      <span style="color:#bb00ff">★ Platinum &nbsp;${plat}</span>
-      ${platBonus>0?`<span style="color:var(--green);margin-left:auto;font-size:14px">+${platBonus}% XP (all skills)</span>`:''}
+    <div class="mlog-title">Mastery Log<span class="mlog-sub">${earned} / ${totalActs} activities ranked</span>${platBonus>0?`<span class="mlog-platbonus">+${platBonus}% XP · all skills</span>`:''}</div>
+    <div class="mlog-tiers">
+      <span class="mt-chip bronze">★ Bronze ${bronze}</span>
+      <span class="mt-chip silver">★ Silver ${silver}</span>
+      <span class="mt-chip gold">★ Gold ${gold}</span>
+      <span class="mt-chip plat">★ Platinum ${plat}</span>
     </div>
-    <div style="font-size:14px;color:var(--muted);line-height:1.9;border-top:1px solid var(--trim-d);padding-top:8px">
-      Complete actions to earn <b style="color:var(--text)">mastery points</b> for that activity (1 point per action).<br>
-      Points fill a level bar — reach these mastery levels to unlock permanent XP bonuses for that activity:<br>
-      <span style="color:#cd7f32">★ Bronze</span> <span style="color:var(--muted)">— reach Mastery Level 10 &nbsp;→&nbsp;</span><b style="color:var(--text)">+1% XP</b> &nbsp;&nbsp;
-      <span style="color:#aab8c2">★ Silver</span> <span style="color:var(--muted)">— Level 25 &nbsp;→&nbsp;</span><b style="color:var(--text)">+2.5% XP</b><br>
-      <span style="color:#ffd700">★ Gold</span> <span style="color:var(--muted)">— reach Mastery Level 50 &nbsp;→&nbsp;</span><b style="color:var(--text)">+5% XP</b> &nbsp;&nbsp;
-      <span style="color:#bb00ff">★ Platinum</span> <span style="color:var(--muted)">— Level 100 (MAX) &nbsp;→&nbsp;</span><b style="color:var(--text)">+10% XP</b><br>
-      <span style="color:#bb00ff">✦ Each Platinum also grants <b>+1% XP to every skill globally</b>${platBonus>0?' (currently +'+platBonus+'%)':''}.</span>
-    </div>`;
+    <div class="mlog-legend">Rank an activity by doing it · <b style="color:#cd7f32">Bronze</b> L10 +1% · <b style="color:#aab8c2">Silver</b> L25 +2.5% · <b style="color:#ffd700">Gold</b> L50 +5% · <b style="color:#bb00ff">Platinum</b> L100 +10% xp · each Platinum also +1% to every skill</div>`;
   box.appendChild(hdr);
 
   for(const [skKey,sk] of Object.entries(SKILLS)){
     const isOpen=!!_masteryOpen[skKey];
 
-    const sec=document.createElement('div');
-    sec.style.cssText='margin-bottom:10px;border:1px solid var(--trim-d);border-radius:6px;overflow:hidden';
+    let skEarned=0, skTotal=0;
+    for(const act of sk.acts){ skTotal++; if(masteryTier(masteryLevel(act.id))!=='none') skEarned++; }
 
-    // Compute this skill's mastery summary for the header
-    let skEarned=0, skTotal=0, skBonus=0;
-    for(const act of sk.acts){
-      skTotal++;
-      if(masteryTier(masteryLevel(act.id))!=='none') skEarned++;
-      skBonus+=masteryXpBonus(act.id)*100;
-    }
+    const sec=document.createElement('div');
+    sec.className='mlog-sec';
 
     const secHdr=document.createElement('button');
-    secHdr.style.cssText='width:100%;text-align:left;font-size:14px;color:var(--ember);text-transform:uppercase;letter-spacing:1px;padding:10px 12px;display:flex;align-items:center;gap:8px;background:var(--raised-s);border:none;cursor:pointer';
-    secHdr.innerHTML=`<span style="font-size:18px">${iconHTML(skKey)}</span>`
-      +`<span style="flex:1;color:var(--trim)">${sk.name}</span>`
-      +`<span style="font-size:13px;color:var(--muted);text-transform:none;letter-spacing:0">${skEarned}/${skTotal} ranked</span>`
-      +`<span style="font-size:14px;color:var(--muted);transition:transform .2s;transform:rotate(${isOpen?'90':'0'}deg)">▶</span>`;
+    secHdr.className='mlog-sechdr'+(isOpen?' open':'');
+    secHdr.innerHTML=`<span class="mlh-ic">${iconHTML(skKey)}</span>`
+      +`<span class="mlh-nm">${sk.name}</span>`
+      +`<span class="mlh-cnt">${skEarned}/${skTotal}</span>`
+      +`<span class="mlh-chev">▶</span>`;
     secHdr.addEventListener('click',(function(k){return function(){ _masteryOpen[k]=!_masteryOpen[k]; renderMastery(); };})(skKey));
     sec.appendChild(secHdr);
 
     if(isOpen){
       const grid=document.createElement('div');
       grid.className='mlog-grid';
-      grid.style.cssText='max-height:400px;overflow-y:auto;padding:10px';
-
       for(const act of sk.acts){
         const mb=masteryBadgeHtml(act.id);
         const tier=mb.tier;
         const actions=state.mastery[act.id]||0;
         const toNext=mb.lvl<MAX_MASTERY?mb.nextXp-actions:0;
-
-        const outNames=Object.keys(act.out||{}).map(id=>ITEMS[id]?iconHTML(id)+' '+ITEMS[id].name:id).join(', ')||'Coins';
-
-        let rankLabel='Not started';
-        let rankColor='var(--muted)';
-        if(tier==='plat'){rankLabel='★ Platinum — MAX';rankColor='#bb00ff';}
-        else if(tier==='gold'){rankLabel=`★ Gold ${mb.lvl}`;rankColor='#ffd700';}
-        else if(tier==='silver'){rankLabel=`★ Silver ${mb.lvl}`;rankColor='#aab8c2';}
-        else if(tier==='bronze'){rankLabel=`★ Bronze ${mb.lvl}`;rankColor='#cd7f32';}
-        else if(actions>0){rankLabel=`${actions} actions`;rankColor='var(--muted)';}
-
+        const outIc=Object.keys(act.out||{})[0];
         const xpBonus=masteryXpBonus(act.id)*100;
-
-        const card=document.createElement('div');
-        card.className=`mlog-card${tier!=='none'?' mb-'+tier:''}`;
-        card.innerHTML=`
-          <div style="font-size:14px;color:var(--text);font-weight:600;margin-bottom:3px">${act.name}</div>
-          <div style="font-size:13px;color:var(--muted);margin-bottom:6px">${outNames}</div>
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
-            <span style="font-size:14px;color:${rankColor};font-weight:bold">${rankLabel}</span>
-            ${xpBonus>0?`<span style="font-size:13px;color:var(--ember);font-family:'Courier New',monospace">+${xpBonus.toFixed(1)}% xp</span>`:''}
-          </div>
-          <div class="mlog-prog"><i style="width:${mb.pct}%;background:${mb.barColor}"></i></div>
-          <div style="font-size:13px;color:var(--muted);margin-top:4px;display:flex;justify-content:space-between">
-            <span>${actions.toLocaleString()} actions done</span>
-            ${tier!=='plat'&&mb.lvl<MAX_MASTERY?`<span>${toNext.toLocaleString()} to next rank</span>`:''}
-          </div>`;
-        grid.appendChild(card);
+        const rankLabel = tier==='plat'?'★ Platinum (MAX)':tier==='gold'?`★ Gold ${mb.lvl}`:tier==='silver'?`★ Silver ${mb.lvl}`:tier==='bronze'?`★ Bronze ${mb.lvl}`:(actions>0?`Mastery ${mb.lvl}`:'Not started');
+        const tip=`${act.name} — ${rankLabel}`+(xpBonus>0?` · +${xpBonus.toFixed(1)}% xp`:'')+` · ${actions.toLocaleString()} done`+(tier!=='plat'&&mb.lvl<MAX_MASTERY?` · ${toNext.toLocaleString()} to next`:'');
+        const tile=document.createElement('div');
+        tile.className=`ma-tile${tier!=='none'?' mb-'+tier:''}`;
+        tile.title=tip;
+        tile.innerHTML=`<span class="ma-ic">${outIc?iconHTML(outIc):'🪙'}</span>`
+          +`<div class="ma-body"><div class="ma-nm">${act.name}</div><div class="ma-bar"><i style="width:${mb.pct}%;background:${mb.barColor}"></i></div></div>`
+          +`<span class="ma-lvl" style="color:${mb.barColor}">${mb.lvl||'·'}</span>`;
+        grid.appendChild(tile);
       }
       sec.appendChild(grid);
     }
