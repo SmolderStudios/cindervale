@@ -2417,7 +2417,7 @@ header h1 .flame{color:var(--ember)}
   <div class="mm-btns">
     <button class="mm-btn mm-primary" id="mmPlay">▶ Play</button>
   </div>
-  <div class="mm-ver">v1.0.29</div>
+  <div class="mm-ver">v1.0.30</div>
 </div>
 
 <!-- ===== CHARACTER SELECT (added) ===== -->
@@ -9667,6 +9667,7 @@ function defaultState(){
     // potion when HP drops to/below `thresholdPct` of max. Disabled by default
     // so new players don't accidentally burn early brews.
     autoHeal:{enabled:false, thresholdPct:30, itemId:''},
+    autoBuff:{enabled:false}, // (1.0.30) keep combat buff potions topped up in combat
     // Combat Mastery (v1.0.69) — separate from the activity-card mastery system.
     //   cmast            — {nodeId: rank} allocated ranks on combat mastery nodes
     //   cmastGranted     — running total of points granted (combat lvl + milestones + bosses + zones)
@@ -9835,6 +9836,9 @@ function normalizeState(){
     if(!isFinite(t)||t<5||t>95) state.autoHeal.thresholdPct=30;
     if(typeof state.autoHeal.itemId!=='string') state.autoHeal.itemId=''; // auto-eat pick (1.0.8)
   }
+  // Auto-buff config default (1.0.30).
+  if(!state.autoBuff||typeof state.autoBuff!=='object') state.autoBuff={enabled:false};
+  else if(typeof state.autoBuff.enabled!=='boolean') state.autoBuff.enabled=false;
   // 1.0.20 — trimmed redundant potions: migrate any held copies to the kept equivalent
   // so saves never carry a now-undefined item. (Swiftness/Wisdom/Bountiful II -> I,
   // Elixir of Mastery -> Vitality, Void Elixir -> Philosopher's Drop, Bountiful Brew -> III.)
@@ -11717,7 +11721,46 @@ function useRegenFood(itemId){
   return true;
 }
 
-function usePotion(itemId){
+/* Combat buff potions owned (timed atk/str/def brews), strongest total first.
+   Used by the auto-buff system and the food-menu auto-buff dropdown. */
+function combatBuffItems(){
+  const out=[];
+  for(const id in ITEMS){
+    const it=ITEMS[id]; if(!it||!it.potion||!it.potion.dur) continue;
+    const p=it.potion;
+    const total=(p.atk||0)+(p.str||0)+(p.def||0);
+    if(total<=0) continue;
+    const cnt=(state.items&&state.items[id])||0;
+    if(cnt>0) out.push({id,it,total});
+  }
+  out.sort((a,b)=>b.total-a.total);
+  return out;
+}
+/* Auto-buff (1.0.30) — when enabled & in combat, keep owned combat buff potions
+   topped up: refresh the active brew as it nears expiry, and fill any stat that
+   isn't covered yet. Conservative — it won't strip an active multi-stat buff to
+   apply a single-stat one (only fills genuinely-uncovered stats). Strongest brew
+   first so the best available buff wins each slot. */
+function autoApplyBuffs(){
+  if(typeof combat==='undefined'||!combat.active) return;
+  if(!state.autoBuff||!state.autoBuff.enabled) return;
+  const now=Date.now();
+  const REFRESH_AT=3500;
+  for(const b of combatBuffItems()){
+    if(!(state.items[b.id]>0)) continue;
+    const types=['atk','str','def'].filter(t=>b.it.potion[t]);
+    const own=state.effects.find(e=>e.expires>now&&e._itemId===b.id);
+    if(own){
+      if((own.expires-now)>REFRESH_AT) continue;       // still healthy → leave it
+    } else {
+      const allCovered=types.every(t=>state.effects.some(e=>e.expires>now&&(e[t]||0)>0));
+      if(allCovered) continue;                          // don't override existing coverage
+    }
+    usePotion(b.id, true);                               // silent apply / top-up
+  }
+}
+
+function usePotion(itemId,silent){
   if(!(state.items[itemId]>0)) return;
   const it=ITEMS[itemId];
   if(!it||!it.potion) return;
@@ -11771,7 +11814,7 @@ function usePotion(itemId){
     const remaining=Math.max(0,existing.expires-now);
     // Already essentially full — don't waste a potion for ~zero gain
     if(remaining>=cap-1500){
-      toast(`${it.name} already at max duration (${fmtTime(remaining)} left).`);
+      if(!silent) toast(`${it.name} already at max duration (${fmtTime(remaining)} left).`);
       return;
     }
     existing.expires=now+Math.min(remaining+addedDur, cap);
@@ -11782,7 +11825,8 @@ function usePotion(itemId){
     }
     state.items[itemId]--;
     renderEffectsBar(); renderRightPanel();
-    toast(`${it.icon} ${it.name} refreshed — ${fmtTime(existing.expires-now)} left (×${existing._stacks})`);
+    if(!silent) toast(`${it.icon} ${it.name} refreshed — ${fmtTime(existing.expires-now)} left (×${existing._stacks})`);
+    if((existing.atk||existing.str||existing.def)&&typeof refreshCombatStats==='function') refreshCombatStats();
     saveGame();
     return;
   }
@@ -11799,7 +11843,7 @@ function usePotion(itemId){
         const isFlat=(type==='atk'||type==='str'||type==='def');
         const fmt=v=>isFlat?('+'+Math.round(v||0)):('+'+Math.round((v||0)*100)+'%');
         const oldIt=ITEMS[old._itemId];
-        toast(`${it.icon} ${it.name} blocked — ${oldIt?oldIt.name:'Active potion'} already gives a stronger ${statLabel} boost (${fmt(old[type])} vs ${fmt(effect[type])}).`);
+        if(!silent) toast(`${it.icon} ${it.name} blocked — ${oldIt?oldIt.name:'Active potion'} already gives a stronger ${statLabel} boost (${fmt(old[type])} vs ${fmt(effect[type])}).`);
         return;
       }
     }
@@ -11830,7 +11874,7 @@ function usePotion(itemId){
   if(effect.str) parts.push(`+${effect.str} Str`);
   if(effect.def) parts.push(`+${effect.def} Def`);
   if(hasMaster1Xp) parts.push(`+3% XP Gain (Alchemist's Insight)`);
-  toast(`${it.icon} ${it.name} used! ${parts.join(' · ')} · ${fmtTime(addedDur)} remaining`);
+  if(!silent) toast(`${it.icon} ${it.name} used! ${parts.join(' · ')} · ${fmtTime(addedDur)} remaining`);
   // Combat buff potions feed combatStats() → refresh the cached combat numbers
   // so a mid-fight buff immediately changes hit chance / max hit / defence.
   if((effect.atk||effect.str||effect.def)&&typeof refreshCombatStats==='function'){
@@ -19377,6 +19421,9 @@ function combatTick(){
   const style=(state.combatStyle==='strength'||state.combatStyle==='defence')?state.combatStyle:'attack';
   const now=Date.now();
 
+  // ── Auto-buff (1.0.30) — keep combat buff potions topped up while fighting ──
+  autoApplyBuffs();
+
   // ── Food regen (1.0.21) — heal-over-time from stews/broths. Each active
   // effect heals at `rate` HP/sec; fractional accumulation carries over ticks so
   // the full total lands across its duration. Overheal past max HP is discarded.
@@ -20560,7 +20607,16 @@ function renderCombat(){
     const status=activeBuffs.length>0
       ? `<span class="cmb-pot-active">✦ ${activeBuffs.length} active</span>`
       : (owned.length>0 ? `<span class="cmb-pot-active dim">no active buffs</span>` : '');
-    return `<div class="cmb-buffbar">${buttons}${status}</div>`;
+    // Auto-buff toggle (1.0.30) — keeps owned buff potions topped up while fighting.
+    const autoBuffOn=state.autoBuff&&state.autoBuff.enabled;
+    const autoToggle=owned.length?`<div class="cmb-slot cmb-auto cmb-autobuff${autoBuffOn?' on':''}" data-tip="Auto-drink your buff potions to keep them topped up while fighting">
+      <label class="cmb-pot-toggle">
+        <input type="checkbox" id="cmbAutoBuffChk"${autoBuffOn?' checked':''}/>
+        <span class="lbltxt">Auto-buff</span>
+        <span class="dot"></span>
+      </label>
+    </div>`:'';
+    return `<div class="cmb-buffbar">${buttons}${autoToggle}${status}</div>`;
   })();
 
   // ── Arena body (v1.0.82) ─────────────────────────────────────────────────────
@@ -20784,6 +20840,14 @@ function renderCombat(){
     state.autoHeal.itemId=ahItem.value||'';
     const it=ITEMS[ahItem.value];
     toast(ahItem.value?('🍖 Auto-eating '+(it?it.name:ahItem.value)+'.'):'🩸 Auto-heal set to Smart.');
+    saveGame();
+  });
+  const abChk=$('cmbAutoBuffChk');
+  if(abChk) abChk.addEventListener('change',function(){
+    if(!state.autoBuff) state.autoBuff={enabled:false};
+    state.autoBuff.enabled=abChk.checked;
+    toast(abChk.checked?'⚗️ Auto-buff enabled — brews kept topped up.':'⚗️ Auto-buff disabled.');
+    if(abChk.checked) autoApplyBuffs();   // apply immediately on enable
     saveGame();
   });
 
