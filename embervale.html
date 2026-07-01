@@ -2443,7 +2443,7 @@ header h1 .flame{color:var(--ember)}
   <div class="mm-btns">
     <button class="mm-btn mm-primary" id="mmPlay">▶ Play</button>
   </div>
-  <div class="mm-ver">v1.0.37</div>
+  <div class="mm-ver">v1.0.38</div>
 </div>
 
 <!-- ===== CHARACTER SELECT (added) ===== -->
@@ -3270,7 +3270,8 @@ const ITEMS={
   // ─── Socket Gems ─── (5 colors × 3 tiers — chipped / polished / flawless)
   // Mapping: sanguine=combat ATK, verdant=combat HP, azure=combat DEF,
   //          topaz=SKILLING gpBoost, onyx=SKILLING speed/xpBoost.
-  // Crafted from gem_dust at the Gem Exchange (Socket tab); combat drops will supplement later.
+  // Two sources: crafted from gem_dust at the Gem Exchange (Socket tab), OR dropped
+  // by slain foes (tier scales with monster level — see rollSocketGemDrop).
   sanguine_chip:    {name:'Chipped Sanguine',  icon:'🔴',sell:200,  rare:true, socketGem:true},
   sanguine_polish:  {name:'Polished Sanguine', icon:'🔴',sell:800,  rare:true, socketGem:true},
   sanguine_flaw:    {name:'Flawless Sanguine', icon:'🔴',sell:3200, rare:true, socketGem:true},
@@ -15886,6 +15887,34 @@ function rollDrops(monId, isRare){
   return out;
 }
 
+/* ── Socket-gem combat drops (v1.0.38) ─────────────────────────────────────────
+   Slain foes have a small chance to drop a socket gem. Tier scales with monster
+   level (bosses bump +1); combat colors (sanguine/verdant/azure) drop a bit more
+   often than skilling colors (topaz/onyx). The gem_dust Gem Exchange stays the
+   beginner / guaranteed path — this is the "earn them from combat" supplement. */
+const SGEM_COLORS_COMBAT=['sanguine','verdant','azure'];
+const SGEM_COLORS_SKILL=['topaz','onyx'];
+const SGEM_TIER_SUFFIX={1:'chip',2:'polish',3:'flaw'};
+function rollSocketGemDrop(mon, wasRare){
+  if(!mon) return null;
+  const lvl=mon.lvl||1, boss=!!mon.boss;
+  let chance=boss?0.08:(0.008+lvl*0.0002);   // ~0.8% low mobs → ~2.6% Lv90 · 8% bosses
+  chance*=charDropMult();
+  if(wasRare) chance=Math.min(RARE_DROP_CAP, chance*RARE_DROP_MUL);
+  if(Math.random()>=chance) return null;
+  // Tier: level-gated, higher tiers rarer; bosses bump one tier.
+  let tier;
+  const r=Math.random();
+  if(lvl>=55) tier=r<0.5?2:3;
+  else if(lvl>=25) tier=r<0.7?1:2;
+  else tier=1;
+  if(boss) tier=Math.min(3,tier+1);
+  const pool=Math.random()<0.65?SGEM_COLORS_COMBAT:SGEM_COLORS_SKILL;
+  const color=pool[Math.floor(Math.random()*pool.length)];
+  const id=color+'_'+SGEM_TIER_SUFFIX[tier];
+  return SOCKET_GEMS[id]?{id:id,qty:1}:null;
+}
+
 /* ════ RARE MONSTERS & PETS (1.0.70) ═══════════════════════════════════════════
    Every non-boss monster has a small chance to spawn as a "rare" variant. Rare
    foes hit harder, take more to kill, and pay out richer rewards — and they're
@@ -18822,6 +18851,9 @@ function combatTick(){
       // ── Roll drops & log them in the combat ticker ──
       // wasRare boosts each drop's chance by RARE_DROP_MUL (capped) — see rollDrops.
       const drops=rollDrops(baseMon.id, wasRare);
+      // Socket gems can drop from any foe (tier scales with level; see rollSocketGemDrop).
+      const gemDrop=rollSocketGemDrop(baseMon, wasRare);
+      if(gemDrop) drops.push(gemDrop);
       // ── Monster Log tracking (1.0.76) — kill counter + per-drop counters.
       // Increment before applying the drops so the Log re-render on rare-kill
       // pet acquisition reflects the latest numbers.
