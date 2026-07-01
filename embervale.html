@@ -1376,21 +1376,44 @@ header h1 .flame{color:var(--ember)}
 .sk-banner-running-time{font-size:11px;color:var(--muted);font-family:'Courier New',monospace;white-space:nowrap}
 
 /* ════════ [CSS-11] DEV TOOL PANEL ═══════════════════════════════════════════════ */
-/* dev tool panel */
-.dev-panel{position:fixed;bottom:60px;right:16px;background:var(--panel);border:1px solid var(--ember);
-  border-radius:8px;padding:12px;z-index:90;box-shadow:0 8px 24px #000;min-width:220px;}
-.dev-panel h4{color:var(--ember);font-size:14px;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;
-  display:flex;align-items:center;justify-content:space-between}
-.dev-panel h4 button{background:transparent;border:none;color:var(--muted);font-size:15px;padding:0 2px}
-.dev-row{display:flex;gap:6px;align-items:center;margin-bottom:6px;font-size:14px}
-.dev-row label{color:var(--muted);min-width:36px}
-.dev-row select,.dev-row input{background:#0d0905;color:var(--text);border:1px solid var(--trim-d);
-  border-radius:3px;padding:3px 5px;font-family:'Courier New',monospace;font-size:14px}
-.dev-row select{flex:1}
-.dev-row input{width:80px}
+/* dev tool panel — modernized: sectioned card w/ live item search */
+.dev-panel{position:fixed;bottom:60px;right:16px;width:300px;max-height:min(78vh,620px);
+  display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--ember);
+  border-radius:10px;z-index:90;box-shadow:0 10px 34px #000c;overflow:hidden}
+.dev-head{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;
+  background:linear-gradient(180deg,#2a1608,#1a0e05);border-bottom:1px solid var(--trim-d);flex:none}
+.dev-title{color:var(--ember);font-size:13px;letter-spacing:2px;text-transform:uppercase;font-weight:700}
+.dev-x{background:transparent;border:none;color:var(--muted);font-size:15px;cursor:pointer;padding:0 2px}
+.dev-x:hover{color:var(--text)}
+.dev-body{padding:10px 12px;overflow-y:auto}
+.dev-sec{margin-bottom:12px}
+.dev-sec:last-child{margin-bottom:0}
+.dev-sec-lbl{font-size:10px;color:var(--ember);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:5px}
+.dev-row{display:flex;gap:6px;align-items:center;margin-bottom:6px}
+.dev-input{background:#0d0905;color:var(--text);border:1px solid var(--trim-d);border-radius:5px;
+  padding:5px 8px;font-family:'Courier New',monospace;font-size:13px;min-width:0}
+.dev-input:focus{outline:none;border-color:var(--ember)}
 .dev-btn{background:var(--raised-s);border:1px solid var(--ember);color:var(--ember);
-  border-radius:4px;padding:4px 10px;font-size:14px;width:100%;margin-top:2px}
+  border-radius:5px;padding:5px 10px;font-size:13px;cursor:pointer;white-space:nowrap}
 .dev-btn:hover{background:#e0762f22}
+.dev-btn.ghost{border-color:var(--trim-d);color:var(--muted)}
+.dev-btn.ghost:hover{border-color:var(--trim);color:var(--text)}
+.dev-chips{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
+.dev-qtylbl{font-size:11px;color:var(--muted);margin-right:2px}
+.dev-chip{background:#0d0905;border:1px solid var(--trim-d);color:var(--muted);border-radius:12px;
+  padding:2px 10px;font-size:12px;cursor:pointer;font-family:'Courier New',monospace}
+.dev-chip:hover{border-color:var(--trim);color:var(--text)}
+.dev-chip.qty.on{border-color:var(--ember);color:var(--ember);background:#e0762f18}
+.dev-results{margin-top:7px;max-height:230px;overflow-y:auto;border:1px solid var(--trim-d);
+  border-radius:6px;background:#0d0905}
+.dev-res-row{display:flex;align-items:center;gap:8px;padding:5px 8px;cursor:pointer;
+  border-bottom:1px solid #1a120977;font-size:13px;color:var(--text)}
+.dev-res-row:last-child{border-bottom:none}
+.dev-res-row:hover{background:#e0762f18}
+.dev-res-row .ic{width:18px;flex:none;display:flex;align-items:center;justify-content:center;font-size:15px}
+.dev-res-row .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dev-res-row .have{font-family:'Courier New',monospace;font-size:11px;color:var(--muted)}
+.dev-res-empty{padding:10px;font-size:12px;color:var(--muted);font-style:italic;text-align:center}
 .dev-toggle{position:fixed;bottom:16px;right:16px;background:var(--panel);border:1px solid var(--ember);
   border-radius:20px;padding:5px 12px;font-size:14px;color:var(--ember);z-index:91;
   box-shadow:0 4px 12px #000}
@@ -2420,7 +2443,7 @@ header h1 .flame{color:var(--ember)}
   <div class="mm-btns">
     <button class="mm-btn mm-primary" id="mmPlay">▶ Play</button>
   </div>
-  <div class="mm-ver">v1.0.36</div>
+  <div class="mm-ver">v1.0.37</div>
 </div>
 
 <!-- ===== CHARACTER SELECT (added) ===== -->
@@ -2572,33 +2595,53 @@ header h1 .flame{color:var(--ember)}
 <!-- Dev Tool — no visible button; open via secret click action -->
 <button class="dev-toggle hidden" id="devToggle" aria-hidden="true">🛠 Dev</button>
 <div class="dev-panel hidden" id="devPanel">
-  <h4>Dev Tools <button id="devClose">✕</button></h4>
-  <div class="dev-row">
-    <label>Skill</label>
-    <select id="devSkill"></select>
+  <div class="dev-head">
+    <span class="dev-title">🛠 Dev Tools</span>
+    <button class="dev-x" id="devClose" title="Close">✕</button>
   </div>
-  <div class="dev-row">
-    <label>XP</label>
-    <input id="devXp" type="number" value="1000" min="0">
+  <div class="dev-body">
+
+    <div class="dev-sec">
+      <div class="dev-sec-lbl">Experience</div>
+      <div class="dev-row">
+        <select id="devSkill" class="dev-input" style="flex:1"></select>
+      </div>
+      <div class="dev-row">
+        <input id="devXp" class="dev-input" type="number" value="1000" min="0" style="flex:1" title="XP to add, or target level for Set Lv">
+        <button class="dev-btn" id="devAddXp">+ XP</button>
+        <button class="dev-btn ghost" id="devSetLevel">Set Lv</button>
+      </div>
+    </div>
+
+    <div class="dev-sec">
+      <div class="dev-sec-lbl">Gold</div>
+      <div class="dev-row">
+        <input id="devGold" class="dev-input" type="number" value="10000" min="0" style="flex:1">
+        <button class="dev-btn" id="devAddGold">+ Gold</button>
+      </div>
+      <div class="dev-chips">
+        <button class="dev-chip" data-gold="10000">+10k</button>
+        <button class="dev-chip" data-gold="100000">+100k</button>
+        <button class="dev-chip" data-gold="1000000">+1M</button>
+      </div>
+    </div>
+
+    <div class="dev-sec">
+      <div class="dev-sec-lbl">Spawn Item</div>
+      <div class="dev-row">
+        <input id="devItemSearch" class="dev-input" type="text" placeholder="Search items…" autocomplete="off" style="flex:1">
+      </div>
+      <div class="dev-chips">
+        <span class="dev-qtylbl">Qty</span>
+        <button class="dev-chip qty on" data-qty="1">1</button>
+        <button class="dev-chip qty" data-qty="10">10</button>
+        <button class="dev-chip qty" data-qty="100">100</button>
+        <button class="dev-chip qty" data-qty="1000">1k</button>
+      </div>
+      <div class="dev-results" id="devItemResults"></div>
+    </div>
+
   </div>
-  <button class="dev-btn" id="devAddXp">+ Add XP</button>
-  <button class="dev-btn" style="margin-top:4px" id="devSetLevel">Set Level</button>
-  <hr style="border-color:var(--trim-d);margin:8px 0">
-  <div class="dev-row">
-    <label>Gold</label>
-    <input id="devGold" type="number" value="1000" min="0">
-  </div>
-  <button class="dev-btn" id="devAddGold">+ Add Gold</button>
-  <hr style="border-color:var(--trim-d);margin:8px 0">
-  <div class="dev-row">
-    <label>Item</label>
-    <select id="devItem" style="flex:1;max-width:130px"></select>
-  </div>
-  <div class="dev-row">
-    <label>Qty</label>
-    <input id="devItemQty" type="number" value="10" min="1">
-  </div>
-  <button class="dev-btn" id="devAddItem">+ Add Item</button>
 </div>
 
 <!-- Confirm modal (respec / destructive actions) -->
@@ -20478,31 +20521,24 @@ $('tabComp').addEventListener('click',()=>{ closeCombatPanel(); viewTab='comp'; 
 $('tabEnchant').addEventListener('click',()=>{ closeCombatPanel(); viewTab='enchant'; renderCenter(); });
 $('tabSocket').addEventListener('click',()=>{ closeCombatPanel(); viewTab='socket'; renderCenter(); });
 
-/* dev tool */
+/* dev tool — modernized: sectioned panel with a live item search */
 (()=>{
   const sel=$('devSkill');
-  // Skilling skills group
   const sg=document.createElement('optgroup'); sg.label='Skills';
   for(const k in SKILLS){ const o=document.createElement('option'); o.value=k; o.textContent=SKILLS[k].name; sg.appendChild(o); }
   sel.appendChild(sg);
-  // Combat stats group (atk / str / def / hp — magic & ranged not wired yet)
   const cg=document.createElement('optgroup'); cg.label='Combat';
   for(const k in COMBAT_STATS){ const o=document.createElement('option'); o.value=k; o.textContent=COMBAT_STATS[k].name; cg.appendChild(o); }
   sel.appendChild(cg);
 
-  // Populate item dropdown — all items sorted by name
-  const itemSel=$('devItem');
-  Object.entries(ITEMS).sort(([,a],[,b])=>a.name.localeCompare(b.name)).forEach(([id,it])=>{
-    const o=document.createElement('option'); o.value=id; o.textContent=it.icon+' '+it.name; itemSel.appendChild(o);
-  });
-
-  $('devToggle').addEventListener('click',()=>$('devPanel').classList.toggle('hidden'));
+  const searchEl=$('devItemSearch'), resultsEl=$('devItemResults');
+  $('devToggle').addEventListener('click',()=>{ $('devPanel').classList.toggle('hidden'); if(!$('devPanel').classList.contains('hidden')) renderResults(); });
   $('devClose').addEventListener('click',()=>$('devPanel').classList.add('hidden'));
+
   $('devAddXp').addEventListener('click',()=>{
     const key=sel.value, amt=Math.max(0,parseInt($('devXp').value)||0);
     if(!amt) return;
     if(COMBAT_STATS[key]){
-      // grantCombatXp handles level-up toasts, mastery point grants, and stat refresh.
       grantCombatXp(key,amt);
       renderAll(); saveGame(); toast(`+${amt.toLocaleString()} XP added to ${COMBAT_STATS[key].name}`);
     } else if(SKILLS[key]){
@@ -20523,20 +20559,43 @@ $('tabSocket').addEventListener('click',()=>{ closeCombatPanel(); viewTab='socke
       renderAll(); saveGame(); toast(`${SKILLS[key].name} set to level ${lvl}`);
     }
   });
-  $('devAddGold').addEventListener('click',()=>{
-    const amt=Math.max(0,parseInt($('devGold').value)||0);
-    if(!amt) return;
-    state.coins+=amt*SILVER_PER_GOLD; renderHeader(); renderShop(); saveGame();
-    toast(`+${amt.toLocaleString()} gold added`);
-  });
-  $('devAddItem').addEventListener('click',()=>{
-    const id=itemSel.value, qty=Math.max(1,parseInt($('devItemQty').value)||1);
+
+  function addGold(amt){ amt=Math.max(0,amt|0); if(!amt) return; state.coins+=amt*SILVER_PER_GOLD; renderHeader(); if(viewTab==='shop') renderShop(); saveGame(); toast(`+${amt.toLocaleString()} gold added`); }
+  $('devAddGold').addEventListener('click',()=>addGold(parseInt($('devGold').value)||0));
+  document.querySelectorAll('#devPanel .dev-chip[data-gold]').forEach(b=>b.addEventListener('click',()=>addGold(parseInt(b.dataset.gold))));
+
+  // ── Item spawner: live search + qty chips ──
+  let devQty=1;
+  const qChips=document.querySelectorAll('#devPanel .dev-chip.qty');
+  qChips.forEach(b=>b.addEventListener('click',()=>{ devQty=parseInt(b.dataset.qty)||1; qChips.forEach(x=>x.classList.toggle('on',x===b)); }));
+
+  const ALL_ITEM_IDS=Object.keys(ITEMS).sort((a,b)=>((ITEMS[a].name||a)+'').localeCompare(ITEMS[b].name||b));
+  function addDevItem(id,qty){
     if(!ITEMS[id]) return;
-    state.items[id]=(state.items[id]||0)+qty;
-    markDiscovered(id);
-    renderRightPanel(); saveGame();
-    toast(`+${qty}× ${ITEMS[id].name} added to satchel`);
-  });
+    const it=ITEMS[id];
+    // Route tools & skilling-gear through grantItem so they land in the right
+    // collection; plain stock goes straight to the satchel (bypasses cap — dev tool).
+    if(it.tool||it.skillGear){ grantItem(id,qty); }
+    else { state.items[id]=(state.items[id]||0)+qty; markDiscovered(id); }
+    renderRightPanel(); if(viewTab==='socket') renderCenter(); saveGame();
+    toast(`+${qty}× ${it.name}`);
+    renderResults();
+  }
+  function renderResults(){
+    const q=(searchEl.value||'').trim().toLowerCase();
+    let ids=ALL_ITEM_IDS;
+    if(q) ids=ids.filter(id=>((ITEMS[id].name||'')+' '+id).toLowerCase().indexOf(q)>=0);
+    const shown=ids.slice(0,60);
+    if(!shown.length){ resultsEl.innerHTML='<div class="dev-res-empty">No items match “'+mmEsc(q)+'”</div>'; return; }
+    resultsEl.innerHTML=shown.map(id=>{
+      const have=(state.items[id]||0);
+      return '<div class="dev-res-row" data-id="'+id+'"><span class="ic">'+iconHTML(id)+'</span><span class="nm">'+ITEMS[id].name+'</span>'+(have?'<span class="have">×'+have.toLocaleString()+'</span>':'')+'</div>';
+    }).join('')+(ids.length>shown.length?'<div class="dev-res-empty">+'+(ids.length-shown.length)+' more — refine search</div>':'');
+    resultsEl.querySelectorAll('.dev-res-row').forEach(row=>row.addEventListener('click',()=>addDevItem(row.dataset.id,devQty)));
+  }
+  searchEl.addEventListener('input',renderResults);
+  searchEl.addEventListener('focus',renderResults);
+  renderResults();
 })();
 
 /* ===== MAIN MENU LOGIC (added) ===== */
