@@ -2443,7 +2443,7 @@ header h1 .flame{color:var(--ember)}
   <div class="mm-btns">
     <button class="mm-btn mm-primary" id="mmPlay">▶ Play</button>
   </div>
-  <div class="mm-ver">v1.0.38</div>
+  <div class="mm-ver">v1.0.39</div>
 </div>
 
 <!-- ===== CHARACTER SELECT (added) ===== -->
@@ -18245,7 +18245,8 @@ function renderSockets(){
   const intro=document.createElement('div');
   intro.style.cssText='margin-bottom:10px;padding:7px 10px;background:var(--raised);border-radius:6px;border:1px solid var(--trim-d);font-size:13px;color:var(--muted);line-height:1.5';
   intro.innerHTML='<b style="color:var(--trim)">Socketing</b> — Drill sockets in combat gear &amp; jewelry, slot gems for bonuses while equipped. '
-    +'<span style="color:var(--text)">Caps:</span> Helmet 1 · Chest 2 · Legs 2 · Boots 1 · Jewelry 1.';
+    +'<span style="color:var(--text)">Caps:</span> Helmet 1 · Chest 2 · Legs 2 · Boots 1 · Jewelry 1.'
+    +'<br><span style="color:var(--muted);font-size:12px">Gems drop from combat (better tiers from tougher foes) or craft them from Gem Dust below.</span>';
   box.appendChild(intro);
 
   // ── Materials chips ──
@@ -18345,6 +18346,17 @@ function renderSockets(){
   renderGemExchange(box);
 }
 
+/* Owned socket gems, ordered color→tier, as {id,name,desc,qty} — for the slot dropdown. */
+function _ownedSocketGems(){
+  var out=[]; var order=['sanguine','verdant','azure','topaz','onyx'];
+  for(var ci=0;ci<order.length;ci++){ for(var t=1;t<=3;t++){
+    for(var key in SOCKET_GEMS){ var g=SOCKET_GEMS[key];
+      if(g.color===order[ci]&&g.tier===t){ var q=state.items[key]||0; if(q>0) out.push({id:key,name:g.name,desc:g.desc,qty:q}); break; }
+    }
+  }}
+  return out;
+}
+
 /* Detail card: drill + per-socket gem swap UI for one selected gear item. */
 function renderSocketDetail(box, itemId){
   if(!itemId) return;
@@ -18398,77 +18410,27 @@ function renderSocketDetail(box, itemId){
           });
           slotCard.appendChild(remBtn);
         } else {
-          var isPicking=_socketSlotPicker && _socketSlotPicker.itemId===itemId && _socketSlotPicker.slotIdx===slotIdx;
-          slotCard.innerHTML=label
-            +'<div style="font-size:14px;color:var(--muted);font-style:italic">empty</div>';
-          var fillBtn=document.createElement('button');
-          fillBtn.style.cssText='margin-top:4px;font-size:12px;padding:3px 8px;border-radius:4px;cursor:pointer;'
-            +'background:'+(isPicking?'var(--ember)':'var(--raised)')+';'
-            +'border:1px solid '+(isPicking?'var(--ember)':'var(--trim-d)')+';'
-            +'color:'+(isPicking?'#fff':'var(--text)');
-          fillBtn.textContent=isPicking?'Cancel':'Slot a gem';
-          fillBtn.addEventListener('click',function(){
-            if(isPicking){ _socketSlotPicker=null; }
-            else { _socketSlotPicker={itemId:itemId, slotIdx:slotIdx}; }
-            renderSockets();
-          });
-          slotCard.appendChild(fillBtn);
+          // Empty socket — a dropdown of owned gems slots one instantly on pick.
+          slotCard.innerHTML=label;
+          var ownedGems=_ownedSocketGems();
+          if(!ownedGems.length){
+            slotCard.innerHTML+='<div style="font-size:12px;color:var(--muted);font-style:italic">empty — no gems yet</div>';
+          } else {
+            var gsel=document.createElement('select');
+            gsel.style.cssText='width:100%;margin-top:2px;background:#0d0905;color:var(--text);border:1px solid var(--trim-d);border-radius:5px;padding:4px 6px;font-size:12px;cursor:pointer';
+            var opt0=document.createElement('option'); opt0.value=''; opt0.textContent='＋ Slot a gem…'; gsel.appendChild(opt0);
+            ownedGems.forEach(function(g){ var o=document.createElement('option'); o.value=g.id; o.textContent=g.name+' ×'+g.qty+' · '+g.desc; gsel.appendChild(o); });
+            (function(sIdx){ gsel.addEventListener('change',function(){
+              var gid=this.value; if(!gid) return;
+              if(setSocketGem(itemId,sIdx,gid)){ toast('✦ Slotted '+(SOCKET_GEMS[gid]?SOCKET_GEMS[gid].name:'gem')+'!'); hideTooltip(); renderSockets(); renderGear(); }
+            }); })(slotIdx);
+            slotCard.appendChild(gsel);
+          }
         }
         slotsRow.appendChild(slotCard);
       })(si);
     }
     card.appendChild(slotsRow);
-  }
-
-  // ── Gem-picker panel (shown when player clicked "Slot a gem") ──
-  if(_socketSlotPicker && _socketSlotPicker.itemId===itemId){
-    var picker=document.createElement('div');
-    picker.style.cssText='margin:8px 0 10px;padding:10px;border:1px dashed var(--ember);border-radius:6px;background:var(--raised-s)';
-    picker.innerHTML='<div style="font-size:12px;color:var(--ember);text-transform:uppercase;letter-spacing:2px;margin-bottom:8px">Select Gem for Socket '+(_socketSlotPicker.slotIdx+1)+'</div>';
-    var anyOwned=false;
-    var pickRow=document.createElement('div');
-    pickRow.style.cssText='display:flex;flex-wrap:wrap;gap:6px';
-    var GEM_ORDER=['sanguine','verdant','azure','topaz','onyx'];
-    var TIER_ORDER=[1,2,3];
-    for(var ci=0;ci<GEM_ORDER.length;ci++){
-      for(var tj=0;tj<TIER_ORDER.length;tj++){
-        var color=GEM_ORDER[ci], tier=TIER_ORDER[tj];
-        var gid=null;
-        for(var key in SOCKET_GEMS){
-          if(SOCKET_GEMS[key].color===color&&SOCKET_GEMS[key].tier===tier){ gid=key; break; }
-        }
-        if(!gid) continue;
-        var qty=state.items[gid]||0;
-        if(qty<=0) continue;
-        anyOwned=true;
-        var gIt=ITEMS[gid];
-        var gem=SOCKET_GEMS[gid];
-        (function(gemId, gemName, gemDesc, gemIcon, gemQty){
-          var pTile=document.createElement('button');
-          pTile.style.cssText='display:flex;flex-direction:column;align-items:flex-start;gap:2px;'
-            +'padding:6px 9px;border-radius:5px;cursor:pointer;text-align:left;'
-            +'background:var(--raised);border:1px solid var(--trim-d);min-width:150px';
-          pTile.innerHTML='<div style="font-size:13px;color:var(--ember)"><span style="font-size:16px;vertical-align:middle">'+gemIcon+'</span> '+gemName+' <span style="color:var(--muted)">x'+gemQty+'</span></div>'
-            +'<div style="font-size:11px;color:var(--muted);line-height:1.3">'+gemDesc+'</div>';
-          attachTooltip(pTile, gemId);
-          pTile.addEventListener('click',function(){
-            var ok=setSocketGem(_socketSlotPicker.itemId, _socketSlotPicker.slotIdx, gemId);
-            if(ok){
-              toast('\u2726 Slotted '+gemName+'!');
-              _socketSlotPicker=null;
-              hideTooltip();
-              renderSockets(); renderGear();
-            }
-          });
-          pickRow.appendChild(pTile);
-        })(gid, gem.name, gem.desc, iconHTML(gid), qty);
-      }
-    }
-    if(!anyOwned){
-      pickRow.innerHTML='<div style="font-size:13px;color:var(--muted);font-style:italic">You don\'t have any socket gems yet — craft some at the Gem Exchange below.</div>';
-    }
-    picker.appendChild(pickRow);
-    card.appendChild(picker);
   }
 
   // ── Drill next socket ──
