@@ -2443,7 +2443,7 @@ header h1 .flame{color:var(--ember)}
   <div class="mm-btns">
     <button class="mm-btn mm-primary" id="mmPlay">▶ Play</button>
   </div>
-  <div class="mm-ver">v1.0.42</div>
+  <div class="mm-ver">v1.0.43</div>
 </div>
 
 <!-- ===== CHARACTER SELECT (added) ===== -->
@@ -16000,6 +16000,7 @@ var _gearToolsOpen=false;
 var _gearSetsOpen=false;
 var _enchantSel=null;   // currently-selected jewelry item id in the Enchant grid
 var _socketSel=null;    // currently-selected gear item id in the Socket grid
+var _socketHideSocketed=false; // collapse the "already socketed" gear box in the Socket picker
 var _socketSlotPicker=null; // {itemId, slotIdx} for the gem-picker modal
 var _gearSelectedSetKey=null; // which skill set is shown in the sets dropdown
 var _gearInteractAt=0;       // last time user interacted with a gear panel <select>
@@ -16084,14 +16085,11 @@ function updateNotifBadge(){
   const tab=$('tabNotifs'); if(!tab) return;
   const notifs=state.notifications||[];
   const unread=notifs.filter(n=>!n.seen).length;
+  // Highlight the Alerts tab (ember pulse) when there are unread alerts instead of
+  // appending a number — a growing count badge widened the tab and pushed Presets
+  // past the panel border. Per-alert detail still lives inside the Alerts list.
   const existing=tab.querySelector('.notif-badge'); if(existing) existing.remove();
-  // Pulse only when not on the Alerts tab — but the count badge persists either
-  // way so the player always knows how many unhovered alerts remain.
   tab.classList.toggle('has-new', unread>0 && rightTab!=='notifs');
-  if(unread>0){
-    const b=document.createElement('span'); b.className='notif-badge'; b.textContent=unread>99?'99+':String(unread);
-    tab.appendChild(b);
-  }
 }
 
 let notifFilter='all';
@@ -18288,40 +18286,68 @@ function renderSockets(){
   } else {
     if(!_socketSel || owned.indexOf(_socketSel)<0) _socketSel=owned[0];
 
-    // ── Gear selector — a single dropdown (grouped combat/jewelry) replaces the
-    // old tile grid, so you pick a piece and its sockets appear right below. ──
-    var selWrap=document.createElement('div');
-    selWrap.style.cssText='margin-bottom:10px';
-    var lbl=document.createElement('div');
-    lbl.style.cssText='font-size:11px;color:var(--ember);text-transform:uppercase;letter-spacing:2px;margin-bottom:5px';
-    lbl.textContent='Select Gear';
-    selWrap.appendChild(lbl);
-    var gearSel=document.createElement('select');
-    gearSel.style.cssText='width:100%;background:#0d0905;color:var(--text);border:1px solid var(--trim-d);border-radius:6px;padding:7px 9px;font-size:14px;cursor:pointer';
-    var groups=[['combat','Combat Gear'],['jewelry','Jewelry']];
-    for(var gi=0;gi<groups.length;gi++){
-      var gtype=groups[gi][0], glabel=groups[gi][1];
-      var inGroup=owned.filter(function(id){return _socketGroupOf(id)===gtype;});
-      if(!inGroup.length) continue;
-      var og=document.createElement('optgroup'); og.label=glabel;
-      for(var ti=0;ti<inGroup.length;ti++){
-        var id=inGroup[ti];
-        var sd=(state.sockets&&state.sockets[id])||null;
-        var slotN=sd?sd.slots:0, filledN=sd?sd.gems.filter(function(g){return !!g;}).length:0;
-        var isEq=(state.combatEquipped&&Object.values(state.combatEquipped).indexOf(id)>=0)||(state.skillingEquipped&&Object.values(state.skillingEquipped).indexOf(id)>=0);
-        var socketStr=slotN>0?(' · '+filledN+'/'+slotN+' gems'):(' · no sockets ('+maxSocketsFor(id)+' max)');
-        var o=document.createElement('option'); o.value=id;
-        o.textContent=(ITEMS[id]?ITEMS[id].name:id)+socketStr+(isEq?' ★':'');
-        if(id===_socketSel) o.selected=true;
-        og.appendChild(o);
+    // ── Gear grid — image tiles (hover tooltip, equipped badge, socket dots).
+    // Un-socketed gear sits up top; already-socketed pieces go in a collapsible
+    // box you can hide with a click so the picker stays focused. ──
+    var _eqNow=function(id){ return (state.combatEquipped&&Object.values(state.combatEquipped).indexOf(id)>=0)||(state.skillingEquipped&&Object.values(state.skillingEquipped).indexOf(id)>=0); };
+    var _EQCHECK='<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="#8ede63" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>';
+    function _mkSocketTile(id){
+      var it=ITEMS[id];
+      var sd=(state.sockets&&state.sockets[id])||null;
+      var slotN=sd?sd.slots:0;
+      var seld=_socketSel===id;
+      var tile=document.createElement('div');
+      tile.className='socket-tile';
+      tile.style.cssText='position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;'
+        +'width:72px;height:70px;padding:4px;border-radius:8px;cursor:pointer;text-align:center;'
+        +'background:'+(seld?'var(--raised-s)':'var(--raised)')+';'
+        +'border:1px solid '+(seld?'var(--ember)':(slotN>0?'#7a5c2a':'var(--trim-d)'))+';'
+        +(seld?'box-shadow:0 0 0 1px var(--ember) inset;':'');
+      var dots='';
+      if(slotN>0){
+        dots='<div style="position:absolute;top:3px;right:4px;display:flex;gap:2px">';
+        for(var di=0;di<slotN;di++){ dots+='<span style="width:6px;height:6px;border-radius:50%;background:'+(sd.gems[di]?'var(--ember)':'var(--trim-d)')+';border:1px solid #0d0905"></span>'; }
+        dots+='</div>';
       }
-      gearSel.appendChild(og);
+      var eqBadge=_eqNow(id)?'<div title="Equipped" style="position:absolute;top:2px;left:3px;display:flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;background:#0d1a08;border:1px solid #3a5018">'+_EQCHECK+'</div>':'';
+      var shortName=(it?it.name:id).replace(/'s /,'’s ').replace(/ (Ring|Amulet|Pendant|Jewel|Helm|Helmet|Chest|Legs|Gloves|Boots|Sword|Shield|Cape|Hat|Jacket|Trews|Vest|Trousers|Waders|Tunic|Leggings)$/,'');
+      tile.innerHTML=dots+eqBadge
+        +'<div style="font-size:23px;line-height:1">'+iconHTML(id)+'</div>'
+        +'<div style="font-size:10px;color:'+(seld?'var(--trim)':'var(--muted)')+';line-height:1.05;margin-top:3px;max-width:66px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+shortName+'</div>';
+      attachTooltip(tile, id);
+      (function(pickId){ tile.addEventListener('click',function(){ _socketSel=pickId; hideTooltip(); renderSockets(); }); })(id);
+      return tile;
     }
-    gearSel.addEventListener('change',function(){ _socketSel=this.value; hideTooltip(); renderSockets(); });
-    selWrap.appendChild(gearSel);
-    box.appendChild(selWrap);
+    var _unsock=owned.filter(function(id){ var s=state.sockets&&state.sockets[id]; return !s||s.slots===0; });
+    var _sock=owned.filter(function(id){ var s=state.sockets&&state.sockets[id]; return s&&s.slots>0; });
 
-        // ── Detail panel for selected item ──
+    var lbl=document.createElement('div');
+    lbl.style.cssText='font-size:11px;color:var(--ember);text-transform:uppercase;letter-spacing:2px;margin-bottom:6px';
+    lbl.textContent='Select Gear';
+    box.appendChild(lbl);
+
+    var grid=document.createElement('div');
+    grid.style.cssText='display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px';
+    if(_unsock.length){ _unsock.forEach(function(id){ grid.appendChild(_mkSocketTile(id)); }); }
+    else { grid.innerHTML='<div style="font-size:13px;color:var(--muted);font-style:italic;padding:2px 0">Every piece is socketed — see below.</div>'; }
+    box.appendChild(grid);
+
+    // Collapsible box of already-socketed gear
+    if(_sock.length){
+      var secHdr=document.createElement('button');
+      secHdr.style.cssText='width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--raised-s);border:1px solid var(--trim-d);border-radius:6px;padding:6px 10px;cursor:pointer;color:var(--muted);font-size:12px;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px';
+      secHdr.innerHTML='<span>Socketed ('+_sock.length+')</span><span style="font-size:11px">'+(_socketHideSocketed?'▶ show':'▼ hide')+'</span>';
+      secHdr.addEventListener('click',function(){ _socketHideSocketed=!_socketHideSocketed; hideTooltip(); renderSockets(); });
+      box.appendChild(secHdr);
+      if(!_socketHideSocketed){
+        var grid2=document.createElement('div');
+        grid2.style.cssText='display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px';
+        _sock.forEach(function(id){ grid2.appendChild(_mkSocketTile(id)); });
+        box.appendChild(grid2);
+      }
+    }
+
+    // ── Detail panel for selected item ──
     renderSocketDetail(box, _socketSel);
   }
 
