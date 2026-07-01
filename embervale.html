@@ -2391,14 +2391,14 @@ header h1 .flame{color:var(--ember)}
   padding:10px 0 6px;border-bottom:1px dashed var(--trim-d);margin-bottom:6px}
 .mlog-dropmod{display:inline-block;font-size:10px;letter-spacing:.5px;color:#1a1006;border-radius:8px;
   padding:1px 7px;margin-left:6px;vertical-align:middle;font-family:'Courier New',monospace}
-.mlog-drops{display:flex;flex-direction:column;gap:4px}
-.mlog-drop{display:grid;grid-template-columns:22px minmax(0,1fr) 86px 50px 14px;gap:8px;
-  align-items:center;padding:6px 9px;background:#0f0a08;border:1px solid #2a2018;
+.mlog-drops{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}
+.mlog-drop{display:grid;grid-template-columns:20px minmax(0,1fr) auto 30px 12px;gap:6px;
+  align-items:center;padding:5px 8px;background:#0f0a08;border:1px solid #2a2018;
   border-radius:4px;font-family:'Crimson Pro',serif;opacity:.55;transition:opacity .15s}
 .mlog-drop.got{opacity:1;background:#0f1408;border-color:#3a5018}
 .mlog-drop .mld-ic{font-size:16px;line-height:1;display:flex;align-items:center;justify-content:center}
 .mlog-drop .mld-ic svg{width:18px;height:18px}
-.mlog-drop .mld-nm{font-size:13px;color:var(--text);letter-spacing:.2px}
+.mlog-drop .mld-nm{font-size:13px;color:var(--text);letter-spacing:.2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mlog-drop .mld-qty{color:var(--muted);font-family:'Courier New',monospace;font-size:11px;margin-left:4px}
 .mlog-drop .mld-rate{font-family:'Courier New',monospace;font-size:12px;color:var(--muted);text-align:right}
 .mlog-drop .mld-cnt{font-family:'Courier New',monospace;font-size:12px;text-align:right;color:#5a4838}
@@ -2443,7 +2443,7 @@ header h1 .flame{color:var(--ember)}
   <div class="mm-btns">
     <button class="mm-btn mm-primary" id="mmPlay">▶ Play</button>
   </div>
-  <div class="mm-ver">v1.0.39</div>
+  <div class="mm-ver">v1.0.40</div>
 </div>
 
 <!-- ===== CHARACTER SELECT (added) ===== -->
