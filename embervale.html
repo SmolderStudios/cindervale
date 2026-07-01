@@ -2443,7 +2443,7 @@ header h1 .flame{color:var(--ember)}
   <div class="mm-btns">
     <button class="mm-btn mm-primary" id="mmPlay">▶ Play</button>
   </div>
-  <div class="mm-ver">v1.0.43</div>
+  <div class="mm-ver">v1.0.44</div>
 </div>
 
 <!-- ===== CHARACTER SELECT (added) ===== -->
@@ -18286,68 +18286,37 @@ function renderSockets(){
   } else {
     if(!_socketSel || owned.indexOf(_socketSel)<0) _socketSel=owned[0];
 
-    // ── Gear grid — image tiles (hover tooltip, equipped badge, socket dots).
-    // Un-socketed gear sits up top; already-socketed pieces go in a collapsible
-    // box you can hide with a click so the picker stays focused. ──
-    var _eqNow=function(id){ return (state.combatEquipped&&Object.values(state.combatEquipped).indexOf(id)>=0)||(state.skillingEquipped&&Object.values(state.skillingEquipped).indexOf(id)>=0); };
-    var _EQCHECK='<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="#8ede63" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>';
-    function _mkSocketTile(id){
-      var it=ITEMS[id];
-      var sd=(state.sockets&&state.sockets[id])||null;
-      var slotN=sd?sd.slots:0;
-      var seld=_socketSel===id;
-      var tile=document.createElement('div');
-      tile.className='socket-tile';
-      tile.style.cssText='position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;'
-        +'width:72px;height:70px;padding:4px;border-radius:8px;cursor:pointer;text-align:center;'
-        +'background:'+(seld?'var(--raised-s)':'var(--raised)')+';'
-        +'border:1px solid '+(seld?'var(--ember)':(slotN>0?'#7a5c2a':'var(--trim-d)'))+';'
-        +(seld?'box-shadow:0 0 0 1px var(--ember) inset;':'');
-      var dots='';
-      if(slotN>0){
-        dots='<div style="position:absolute;top:3px;right:4px;display:flex;gap:2px">';
-        for(var di=0;di<slotN;di++){ dots+='<span style="width:6px;height:6px;border-radius:50%;background:'+(sd.gems[di]?'var(--ember)':'var(--trim-d)')+';border:1px solid #0d0905"></span>'; }
-        dots+='</div>';
-      }
-      var eqBadge=_eqNow(id)?'<div title="Equipped" style="position:absolute;top:2px;left:3px;display:flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;background:#0d1a08;border:1px solid #3a5018">'+_EQCHECK+'</div>':'';
-      var shortName=(it?it.name:id).replace(/'s /,'’s ').replace(/ (Ring|Amulet|Pendant|Jewel|Helm|Helmet|Chest|Legs|Gloves|Boots|Sword|Shield|Cape|Hat|Jacket|Trews|Vest|Trousers|Waders|Tunic|Leggings)$/,'');
-      tile.innerHTML=dots+eqBadge
-        +'<div style="font-size:23px;line-height:1">'+iconHTML(id)+'</div>'
-        +'<div style="font-size:10px;color:'+(seld?'var(--trim)':'var(--muted)')+';line-height:1.05;margin-top:3px;max-width:66px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+shortName+'</div>';
-      attachTooltip(tile, id);
-      (function(pickId){ tile.addEventListener('click',function(){ _socketSel=pickId; hideTooltip(); renderSockets(); }); })(id);
-      return tile;
-    }
-    var _unsock=owned.filter(function(id){ var s=state.sockets&&state.sockets[id]; return !s||s.slots===0; });
-    var _sock=owned.filter(function(id){ var s=state.sockets&&state.sockets[id]; return s&&s.slots>0; });
-
+    // ── Gear selector — a compact dropdown themed to match the panel (warm
+    // brown, not a black input). Pick a piece and its sockets appear below. ──
     var lbl=document.createElement('div');
     lbl.style.cssText='font-size:11px;color:var(--ember);text-transform:uppercase;letter-spacing:2px;margin-bottom:6px';
     lbl.textContent='Select Gear';
     box.appendChild(lbl);
-
-    var grid=document.createElement('div');
-    grid.style.cssText='display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px';
-    if(_unsock.length){ _unsock.forEach(function(id){ grid.appendChild(_mkSocketTile(id)); }); }
-    else { grid.innerHTML='<div style="font-size:13px;color:var(--muted);font-style:italic;padding:2px 0">Every piece is socketed — see below.</div>'; }
-    box.appendChild(grid);
-
-    // Collapsible box of already-socketed gear
-    if(_sock.length){
-      var secHdr=document.createElement('button');
-      secHdr.style.cssText='width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--raised-s);border:1px solid var(--trim-d);border-radius:6px;padding:6px 10px;cursor:pointer;color:var(--muted);font-size:12px;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px';
-      secHdr.innerHTML='<span>Socketed ('+_sock.length+')</span><span style="font-size:11px">'+(_socketHideSocketed?'▶ show':'▼ hide')+'</span>';
-      secHdr.addEventListener('click',function(){ _socketHideSocketed=!_socketHideSocketed; hideTooltip(); renderSockets(); });
-      box.appendChild(secHdr);
-      if(!_socketHideSocketed){
-        var grid2=document.createElement('div');
-        grid2.style.cssText='display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px';
-        _sock.forEach(function(id){ grid2.appendChild(_mkSocketTile(id)); });
-        box.appendChild(grid2);
+    var gearSel=document.createElement('select');
+    gearSel.style.cssText='width:100%;background:var(--raised-s);color:var(--text);border:1px solid var(--trim-d);border-radius:6px;padding:7px 9px;font-size:14px;cursor:pointer;margin-bottom:10px';
+    var groups=[['combat','Combat Gear'],['jewelry','Jewelry']];
+    for(var gi=0;gi<groups.length;gi++){
+      var gtype=groups[gi][0], glabel=groups[gi][1];
+      var inGroup=owned.filter(function(id){return _socketGroupOf(id)===gtype;});
+      if(!inGroup.length) continue;
+      var og=document.createElement('optgroup'); og.label=glabel;
+      for(var ti=0;ti<inGroup.length;ti++){
+        var id=inGroup[ti];
+        var sd=(state.sockets&&state.sockets[id])||null;
+        var slotN=sd?sd.slots:0, filledN=sd?sd.gems.filter(function(g){return !!g;}).length:0;
+        var isEq=(state.combatEquipped&&Object.values(state.combatEquipped).indexOf(id)>=0)||(state.skillingEquipped&&Object.values(state.skillingEquipped).indexOf(id)>=0);
+        var socketStr=slotN>0?(' · '+filledN+'/'+slotN+' gems'):(' · no sockets yet');
+        var o=document.createElement('option'); o.value=id;
+        o.textContent=(isEq?'✓ ':'')+(ITEMS[id]?ITEMS[id].name:id)+socketStr;
+        if(id===_socketSel) o.selected=true;
+        og.appendChild(o);
       }
+      gearSel.appendChild(og);
     }
+    gearSel.addEventListener('change',function(){ _socketSel=this.value; hideTooltip(); renderSockets(); });
+    box.appendChild(gearSel);
 
-    // ── Detail panel for selected item ──
+        // ── Detail panel for selected item ──
     renderSocketDetail(box, _socketSel);
   }
 
@@ -18375,41 +18344,41 @@ function renderSocketDetail(box, itemId){
   var cap=maxSocketsFor(itemId);
 
   var card=document.createElement('div');
-  card.style.cssText='border:1px solid '+(sd.slots>0?'var(--ember)':'var(--trim-d)')+';border-radius:6px;padding:10px 12px;margin-top:4px;background:var(--raised)';
+  card.style.cssText='border:1px solid '+(sd.slots>0?'var(--ember)':'var(--trim-d)')+';border-radius:6px;padding:8px 10px;margin-top:4px;background:var(--raised)';
 
   var eqNote=equipped
-    ?'<span style="font-size:12px;color:var(--green)">● equipped — bonuses active</span>'
-    :'<span style="font-size:12px;color:var(--muted)">not equipped — bonuses apply once worn</span>';
+    ?'<span style="font-size:11px;color:var(--green)">● equipped</span>'
+    :'<span style="font-size:11px;color:var(--muted)">not equipped</span>';
 
   var header=document.createElement('div');
-  header.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:10px';
-  header.innerHTML='<span style="font-size:26px">'+iconHTML(itemId)+'</span>'
-    +'<div><div style="font-size:14px;color:var(--trim)">'+(it?it.name:'Unknown')+'  '+eqNote+'</div>'
-    +'<div style="font-size:13px;color:var(--muted)">'+sd.slots+' / '+cap+' sockets</div></div>';
+  header.style.cssText='display:flex;align-items:center;gap:7px;margin-bottom:8px';
+  header.innerHTML='<span style="font-size:21px">'+iconHTML(itemId)+'</span>'
+    +'<div style="flex:1;min-width:0"><div style="font-size:13px;color:var(--trim)">'+(it?it.name:'Unknown')+'  '+eqNote+'</div>'
+    +'<div style="font-size:12px;color:var(--muted)">'+sd.slots+' / '+cap+' sockets</div></div>';
   card.appendChild(header);
 
   // ── Existing sockets ──
   if(sd.slots>0){
     var slotsRow=document.createElement('div');
-    slotsRow.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px';
+    slotsRow.style.cssText='display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px';
     for(var si=0;si<sd.slots;si++){
       (function(slotIdx){
         var gemId=sd.gems[slotIdx];
         var gem=gemId?SOCKET_GEMS[gemId]:null;
         var gemItem=gemId?ITEMS[gemId]:null;
         var slotCard=document.createElement('div');
-        slotCard.style.cssText='display:flex;flex-direction:column;align-items:flex-start;gap:4px;'
-          +'padding:8px 10px;border-radius:6px;min-width:160px;'
+        slotCard.style.cssText='display:flex;flex-direction:column;align-items:flex-start;gap:2px;'
+          +'padding:5px 7px;border-radius:5px;min-width:130px;flex:1;'
           +'background:var(--raised-s);'
           +'border:1px solid '+(gem?'var(--ember)':'var(--trim-d)');
-        var label='<div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px">Socket '+(slotIdx+1)+'</div>';
+        var label='<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px">Socket '+(slotIdx+1)+'</div>';
         if(gem){
           slotCard.innerHTML=label
-            +'<div style="font-size:14px;color:var(--text)"><span style="font-size:18px;vertical-align:middle">'+iconHTML(gemId)+'</span> <b style="color:var(--ember)">'+gem.name+'</b></div>'
-            +'<div style="font-size:12px;color:var(--muted);line-height:1.4">'+gem.desc+'</div>';
+            +'<div style="font-size:13px;color:var(--text);line-height:1.2"><span style="font-size:15px;vertical-align:middle">'+iconHTML(gemId)+'</span> <b style="color:var(--ember)">'+gem.name+'</b></div>'
+            +'<div style="font-size:11px;color:var(--muted);line-height:1.25">'+gem.desc+'</div>';
           var remBtn=document.createElement('button');
-          remBtn.style.cssText='margin-top:4px;font-size:12px;padding:3px 8px;border-radius:4px;background:var(--raised);border:1px solid var(--trim-d);color:var(--muted);cursor:pointer';
-          remBtn.textContent='Remove gem';
+          remBtn.style.cssText='margin-top:3px;font-size:11px;padding:2px 7px;border-radius:4px;background:var(--panel);border:1px solid var(--trim-d);color:var(--muted);cursor:pointer';
+          remBtn.textContent='✕ Remove';
           remBtn.title='Pop the gem out — returned to your satchel';
           remBtn.addEventListener('click',function(){
             removeSocketGem(itemId, slotIdx);
@@ -18423,10 +18392,10 @@ function renderSocketDetail(box, itemId){
           slotCard.innerHTML=label;
           var ownedGems=_ownedSocketGems();
           if(!ownedGems.length){
-            slotCard.innerHTML+='<div style="font-size:12px;color:var(--muted);font-style:italic">empty — no gems yet</div>';
+            slotCard.innerHTML+='<div style="font-size:11px;color:var(--muted);font-style:italic">empty — no gems yet</div>';
           } else {
             var gsel=document.createElement('select');
-            gsel.style.cssText='width:100%;margin-top:2px;background:#0d0905;color:var(--text);border:1px solid var(--trim-d);border-radius:5px;padding:4px 6px;font-size:12px;cursor:pointer';
+            gsel.style.cssText='width:100%;margin-top:2px;background:var(--panel);color:var(--text);border:1px solid var(--trim-d);border-radius:5px;padding:3px 5px;font-size:12px;cursor:pointer';
             var opt0=document.createElement('option'); opt0.value=''; opt0.textContent='＋ Slot a gem…'; gsel.appendChild(opt0);
             ownedGems.forEach(function(g){ var o=document.createElement('option'); o.value=g.id; o.textContent=g.name+' ×'+g.qty+' · '+g.desc; gsel.appendChild(o); });
             (function(sIdx){ gsel.addEventListener('change',function(){
