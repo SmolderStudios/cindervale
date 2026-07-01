@@ -2431,7 +2431,7 @@ header h1 .flame{color:var(--ember)}
   <div class="mm-btns">
     <button class="mm-btn mm-primary" id="mmPlay">▶ Play</button>
   </div>
-  <div class="mm-ver">v1.0.31</div>
+  <div class="mm-ver">v1.0.32</div>
 </div>
 
 <!-- ===== CHARACTER SELECT (added) ===== -->
@@ -6028,7 +6028,9 @@ function rollSkillingGear(skill, actLvl, cycles){
   var baseChance=actLvl>=75?0.0006:actLvl>=50?0.0004:actLvl>=25?0.0002:0.0001;
   // Character-type global drop dial applies to rare skilling-gear drops too.
   baseChance*=charDropMult();
-  // Build pool of missing pieces
+  // Build pool of missing pieces. Owned pieces (state.skillingGear) and equipped
+  // pieces (state.equipped mirrors state.skillingEquipped) are both excluded — so
+  // a piece can never drop twice, and a completed set drops nothing at all.
   var pool=[];
   for(var pi=0;pi<def.pieces.length;pi++){
     var pid=def.pieces[pi];
@@ -6037,13 +6039,13 @@ function rollSkillingGear(skill, actLvl, cycles){
     for(var s in state.equipped){ if(state.equipped[s]===pid){equipped=true;break;} }
     if(!have&&!equipped) pool.push(pid);
   }
-  if(!pool.length) return; // set complete — nothing to drop
-  // Roll once per missing piece
-  for(var qi=0;qi<pool.length;qi++){
-    if(binom(cycles,baseChance)>0){
-      grantItem(pool[qi],1);
-      return; // only one piece can drop per batch of cycles
-    }
+  if(!pool.length) return; // set complete — nothing left to drop
+  // One roll per batch at the flat base chance (rate no longer scales with how
+  // many pieces are still missing), then award a uniformly-random missing piece
+  // so no single slot — e.g. the helmet — is favoured over the others.
+  if(binom(cycles,baseChance)>0){
+    var pick=pool[Math.floor(Math.random()*pool.length)];
+    grantItem(pick,1);
   }
 }
 
