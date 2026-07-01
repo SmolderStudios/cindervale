@@ -2431,7 +2431,7 @@ header h1 .flame{color:var(--ember)}
   <div class="mm-btns">
     <button class="mm-btn mm-primary" id="mmPlay">▶ Play</button>
   </div>
-  <div class="mm-ver">v1.0.32</div>
+  <div class="mm-ver">v1.0.33</div>
 </div>
 
 <!-- ===== CHARACTER SELECT (added) ===== -->
@@ -9994,6 +9994,18 @@ function normalizeState(){
   for(const id in state.items){
     if(ITEMS[id]&&ITEMS[id].skillGear&&(state.items[id]||0)>0){
       state.skillingGear[id]=true;
+      delete state.items[id];
+    }
+  }
+  // Migration: skilling tools are one-time unlocks that belong in state.gear (the
+  // tool-slot equip picker only sees state.gear). Legacy saves — from before tools
+  // were routed there — could leave a tool stuck in the satchel where it can't be
+  // equipped (equipItem needs state.gear) OR sold (tools are sell:0). Relocate any
+  // such tool into state.gear so it becomes usable in its skill's tool slot.
+  if(!Array.isArray(state.gear)) state.gear=[];
+  for(const id in state.items){
+    if(ITEMS[id]&&ITEMS[id].tool&&(state.items[id]||0)>0){
+      if(state.gear.indexOf(id)<0) state.gear.push(id);
       delete state.items[id];
     }
   }
