@@ -2443,7 +2443,7 @@ header h1 .flame{color:var(--ember)}
   <div class="mm-btns">
     <button class="mm-btn mm-primary" id="mmPlay">▶ Play</button>
   </div>
-  <div class="mm-ver">v1.0.46</div>
+  <div class="mm-ver">v1.0.47</div>
 </div>
 
 <!-- ===== CHARACTER SELECT (added) ===== -->
@@ -3644,6 +3644,17 @@ const ENCHANT_COST_BY_TIER={
   6:{arcane_dust:100,rune_fragment:40,mana_essence:20,gem_dust:10},                // dragon
   7:{arcane_dust:150,rune_fragment:60,mana_essence:34,gem_dust:15,void_cinder:3},  // bloodstone
   8:{arcane_dust:200,rune_fragment:80,mana_essence:50,gem_dust:20,void_cinder:5},  // void
+};
+
+/* Where each enchanting material comes from — shared by the material chips and
+   the per-enchant cost tooltips so the player never has to guess. Plain text
+   only (used in title attributes, which can't render SVG). */
+const ENCHANT_MAT_SOURCES={
+  arcane_dust:'Craft in Alchemy (gem dust + wildberries + ash) — coming soon',
+  rune_fragment:'Rare drop from mining any ore',
+  mana_essence:'Rare drop from foraging moonpetal / voidmoss',
+  gem_dust:'Byproduct of cutting jewelry (Jeweler), or mine Gem Rocks (Mining Lv 40)',
+  void_cinder:'From burning ancient logs (Firemaking)'
 };
 
 /* Compute total SKILLING enchantment bonuses from all equipped+enchanted jewelry.
@@ -18059,13 +18070,6 @@ function renderEnchanting(){
   right.style.cssText='flex:1.5 1 300px;min-width:270px';
 
   // LEFT — materials chips (source info lives in the tooltip, not a footer wall)
-  var MAT_SRC={
-    arcane_dust:'Craft in Alchemy (gem dust + wildberries + ash) — coming soon',
-    rune_fragment:'Rare drop from mining any ore',
-    mana_essence:'Rare drop from foraging moonpetal / voidmoss',
-    gem_dust:'Byproduct of cutting jewelry, or mine Gem Rocks (Mining Lv 40)',
-    void_cinder:'From burning ancient logs (Firemaking)'
-  };
   var matRow=document.createElement('div');
   matRow.style.cssText='display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px';
   ['arcane_dust','rune_fragment','mana_essence','gem_dust','void_cinder'].forEach(function(mid){
@@ -18074,7 +18078,7 @@ function renderEnchanting(){
     var chip=document.createElement('div');
     chip.style.cssText='background:var(--raised-s);border:1px solid var(--trim-d);border-radius:5px;padding:3px 9px;font-size:13px;cursor:help;'+(qty>0?'color:var(--text)':'color:var(--muted);opacity:0.55');
     chip.innerHTML=iconHTML(mid)+' '+qty.toLocaleString();
-    chip.title=it.name+' — '+(MAT_SRC[mid]||'');
+    chip.title=it.name+' — '+(ENCHANT_MAT_SOURCES[mid]||'');
     matRow.appendChild(chip);
   });
   left.appendChild(matRow);
@@ -18157,14 +18161,25 @@ function renderEnchantDetail(box, itemId){
     +'</div>';
   card.appendChild(header);
 
-  // Cost line — one compact row, red where short
-  var costStr=Object.entries(cost).map(function(e2){
-    var have=state.items[e2[0]]||0, need=e2[1];
-    return '<span style="color:'+(have>=need?'var(--green)':'var(--red)')+'">'+(ITEMS[e2[0]]?iconHTML(e2[0])+' '+need:'?'+need)+'</span>';
-  }).join('  ');
+  // Cost line — each material is a hoverable chip: "Name — you have X, need Y —
+  // where to get it". Red where short, green where covered. cursor:help signals
+  // the tooltip so nobody is left guessing what the bare icons mean.
   var costRow=document.createElement('div');
-  costRow.style.cssText='font-size:12px;color:var(--muted);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--trim-d)';
-  costRow.innerHTML='Cost per enchant:  '+costStr;
+  costRow.style.cssText='display:flex;align-items:center;gap:5px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--trim-d)';
+  var costLbl=document.createElement('span');
+  costLbl.textContent='Cost per enchant:';
+  costRow.appendChild(costLbl);
+  Object.entries(cost).forEach(function(e2){
+    var mid=e2[0], need=e2[1], have=state.items[mid]||0, mIt=ITEMS[mid];
+    var ok=have>=need;
+    var chip=document.createElement('span');
+    chip.style.cssText='display:inline-flex;align-items:center;gap:3px;padding:1px 7px;border-radius:4px;cursor:help;'
+      +'background:var(--raised-s);border:1px solid '+(ok?'#3a5018':'#5a2020')+';'
+      +'color:'+(ok?'var(--green)':'var(--red)');
+    chip.innerHTML=(mIt?iconHTML(mid):'?')+' '+have.toLocaleString()+'/'+need.toLocaleString();
+    chip.title=(mIt?mIt.name:mid)+' — you have '+have.toLocaleString()+', need '+need.toLocaleString()+'.\n'+(ENCHANT_MAT_SOURCES[mid]||'');
+    costRow.appendChild(chip);
+  });
   card.appendChild(costRow);
 
   // ── Shared helpers ──
