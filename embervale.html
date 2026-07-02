@@ -1843,9 +1843,16 @@ header h1 .flame{color:var(--ember)}
 .comp-cat{background:#0d0905;border:1px solid var(--trim-d);color:var(--muted);border-radius:10px;
   padding:3px 9px;font-size:13px;cursor:pointer}
 .comp-cat.on{background:var(--raised-s);border-color:var(--trim);color:var(--trim)}
-.comp-search{width:100%;background:#0d0905;color:var(--text);border:1px solid var(--trim-d);
-  border-radius:4px;padding:5px 8px;font-size:14px;margin-bottom:8px;font-family:'Courier New',monospace}
-.comp-search:focus{border-color:var(--trim);outline:none}
+.comp-search{flex:1;min-width:0;background:var(--raised-s);color:var(--text);border:1px solid var(--trim-d);
+  border-radius:6px;padding:6px 10px;font-size:14px;font-family:inherit}
+.comp-search::placeholder{color:var(--muted)}
+.comp-search:focus{border-color:var(--ember);outline:none}
+.comp-searchrow{display:flex;gap:6px;align-items:center;margin-bottom:8px}
+.comp-clearnew{flex:none;background:var(--raised-s);border:1px solid var(--trim-d);color:var(--muted);
+  border-radius:6px;padding:6px 11px;font-size:13px;cursor:pointer;white-space:nowrap;font-family:inherit}
+.comp-clearnew:hover{border-color:var(--trim);color:var(--text)}
+.comp-clearnew.has-new{border-color:#ffd70066;color:#ffd700}
+.comp-clearnew.has-new:hover{border-color:#ffd700}
 /* Collection Log (1.0.13) — icon + name + source tiles; details in the hover tooltip. */
 .comp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:7px}
 @media(max-width:600px){.comp-grid{grid-template-columns:repeat(auto-fill,minmax(76px,1fr))}}
@@ -2444,7 +2451,7 @@ header h1 .flame{color:var(--ember)}
   <div class="mm-btns">
     <button class="mm-btn mm-primary" id="mmPlay">▶ Play</button>
   </div>
-  <div class="mm-ver">v1.0.57</div>
+  <div class="mm-ver">v1.0.58</div>
 </div>
 
 <!-- ===== CHARACTER SELECT (added) ===== -->
@@ -17179,7 +17186,7 @@ document.addEventListener('click',e=>{
    ================================================================= */
 let compCat='all', compSearch='';
 let compPage=0;
-const COMP_PAGE_SIZE=42;  // 1.0.56: one fewer row (6×7 at the common width) to tighten the grid — more pages, but shorter
+const COMP_PAGE_SIZE=35;  // 1.0.58: 5 rows (×7 at the common width) — tighter grid, more pages
 
 const COMP_CATEGORIES=[
   {id:'all',   label:'All'},
@@ -17260,12 +17267,30 @@ function renderCompendium(){
     for(const dd of MONSTER_DROPS[monId]){ if(!dropSrc[dd.id]) dropSrc[dd.id]={monId:monId, monName:mObj.name}; }
   }
 
-  // Search
+  // Search row — themed input + a "clear new" button that acknowledges every
+  // pending discovery (kills the NEW badges/dots) in one click.
+  const srchRow=document.createElement('div'); srchRow.className='comp-searchrow';
   const srch=document.createElement('input');
   srch.type='text'; srch.className='comp-search'; srch.placeholder='Search items…';
   srch.value=compSearch;
   srch.addEventListener('input',e=>{ compSearch=e.target.value; compPage=0; renderCompendium(); });
-  box.appendChild(srch);
+  srchRow.appendChild(srch);
+
+  const pendingNew=state.newlyDiscovered?Object.keys(state.newlyDiscovered).filter(k=>state.newlyDiscovered[k]).length:0;
+  const clearBtn=document.createElement('button');
+  clearBtn.className='comp-clearnew'+(pendingNew>0?' has-new':'');
+  clearBtn.textContent=pendingNew>0?('✦ Clear New ('+pendingNew+')'):'✦ Clear New';
+  clearBtn.title=pendingNew>0?('Mark all '+pendingNew+' newly-found item'+(pendingNew!==1?'s':'')+' as seen'):'No new discoveries to clear';
+  clearBtn.disabled=pendingNew===0;
+  if(pendingNew===0) clearBtn.style.opacity='0.5';
+  clearBtn.addEventListener('click',()=>{
+    if(pendingNew===0) return;
+    ackAllDiscoveries();
+    renderCompendium();
+    toast('✦ Cleared '+pendingNew+' new discovery notification'+(pendingNew!==1?'s':'')+'.');
+  });
+  srchRow.appendChild(clearBtn);
+  box.appendChild(srchRow);
 
   // Category tabs (with new-count badge on Rare tab when there are newly-discovered rares)
   const cats=document.createElement('div'); cats.className='comp-cats';
