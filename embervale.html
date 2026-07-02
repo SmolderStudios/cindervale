@@ -2443,7 +2443,7 @@ header h1 .flame{color:var(--ember)}
   <div class="mm-btns">
     <button class="mm-btn mm-primary" id="mmPlay">▶ Play</button>
   </div>
-  <div class="mm-ver">v1.0.47</div>
+  <div class="mm-ver">v1.0.48</div>
 </div>
 
 <!-- ===== CHARACTER SELECT (added) ===== -->
@@ -3017,9 +3017,9 @@ const ITEMS={
   golden_spore:    {name:'Golden Spore',       icon:'✨',sell:1485, rare:true},
   void_essence:    {name:'Void Essence',       icon:'💜',sell:7480, rare:true},
   // Enchanting materials
-  arcane_dust:     {name:'Arcane Dust',        icon:'🌟',sell:165},
-  mana_essence:    {name:'Mana Essence',       icon:'🫧',sell:990},
-  rune_fragment:   {name:'Rune Fragment',      icon:'🗿',sell:330},
+  arcane_dust:     {name:'Arcane Dust',        icon:'🌟',sell:165, desc:'Powdered residue of raw magic — the core enchanting reagent. Crafted in Alchemy (coming soon).'},
+  mana_essence:    {name:'Mana Essence',       icon:'🫧',sell:990, desc:'A trembling bead of liquid mana. Rare drop while foraging moonpetal or voidmoss.'},
+  rune_fragment:   {name:'Rune Fragment',      icon:'🗿',sell:330, desc:'A chipped shard of old rune-stone, still humming faintly. Rare drop from mining any ore.'},
   // Rare potions
   philosophers_drop:{name:"Philosopher's Drop", icon:'💎',sell:24750,rare:true, potion:{xp:0.45,speed:0.25,gp:0.25,dur:900}},
   // Firemaking outputs
@@ -3063,7 +3063,7 @@ const ITEMS={
   dragon_pendant:  {name:'Dragon Pendant',      icon:'📿',sell:23100},
   bloodstone_pendant:{name:'Bloodstone Pendant',icon:'📿',sell:34100},
   void_jewel:      {name:'Void Jewel',          icon:'💜',sell:57200},
-  gem_dust:        {name:'Gem Dust',            icon:'✨',sell:55},
+  gem_dust:        {name:'Gem Dust',            icon:'✨',sell:55, desc:'Glittering powder from cutting gems (Jeweler) or Gem Rocks (Mining Lv 40). Fuels socket drilling, gem crafting and high-tier enchants.'},
   // Farming outputs — seeds and produce
   wildberry_seed:{name:'Wildberry Seed',icon:'🌱',sell:33},
   bloodcap_seed:{name:'Bloodcap Seed',icon:'🌱',sell:50},
@@ -3360,7 +3360,7 @@ const ITEMS={
   // ─── Combat drops · Demon Sanctum (1.0.5) ─── infernal hide, brimstone, void cinder
   demonhide:        {name:'Demonhide',         icon:'🟥',sell:1400, desc:'Scorched crimson skin that smokes faintly when touched. It never truly cools.'},
   brimstone:        {name:'Brimstone',         icon:'🔥',sell:1800, desc:'A nugget of hell-rock that smoulders without fuel. Alchemists chip it into volatile powders.'},
-  void_cinder:      {name:'Void Cinder',       icon:'🟣',sell:2400, desc:'An ember of pure corruption, cold and violet. It drinks the light around it.'},
+  void_cinder:      {name:'Void Cinder',       icon:'🟣',sell:2400, desc:'An ember of pure corruption, cold and violet. It drinks the light around it. From burning ancient logs (Firemaking).'},
   infernal_crest:   {name:'Infernal Crest',    icon:'🔱',sell:28000,rare:true, desc:"A sigil-branded crest torn from a dread knight. Raise it in the Sanctum and the Demon Lord deigns to notice you."},
   hellheart:        {name:'Hellheart',         icon:'💎',sell:55000,rare:true, desc:"The black-cored heart of the Demon Lord, wreathed in fire that answers to no one now."},
   doomblade:        {name:'Doomblade',         icon:'🗡️',sell:24000,cgear:true,ctier:8,cslot:'weapon', dmgType:'slash', desc:'A jagged greatsword forged in the Sanctum, its black edge running with a seam of live hellfire.'},
@@ -3644,17 +3644,6 @@ const ENCHANT_COST_BY_TIER={
   6:{arcane_dust:100,rune_fragment:40,mana_essence:20,gem_dust:10},                // dragon
   7:{arcane_dust:150,rune_fragment:60,mana_essence:34,gem_dust:15,void_cinder:3},  // bloodstone
   8:{arcane_dust:200,rune_fragment:80,mana_essence:50,gem_dust:20,void_cinder:5},  // void
-};
-
-/* Where each enchanting material comes from — shared by the material chips and
-   the per-enchant cost tooltips so the player never has to guess. Plain text
-   only (used in title attributes, which can't render SVG). */
-const ENCHANT_MAT_SOURCES={
-  arcane_dust:'Craft in Alchemy (gem dust + wildberries + ash) — coming soon',
-  rune_fragment:'Rare drop from mining any ore',
-  mana_essence:'Rare drop from foraging moonpetal / voidmoss',
-  gem_dust:'Byproduct of cutting jewelry (Jeweler), or mine Gem Rocks (Mining Lv 40)',
-  void_cinder:'From burning ancient logs (Firemaking)'
 };
 
 /* Compute total SKILLING enchantment bonuses from all equipped+enchanted jewelry.
@@ -17006,6 +16995,12 @@ function showItemTooltip(itemId, x, y){
       html+=`<div class="tt-sub" style="color:#e0762f88;font-size:12px;margin-top:2px">⚠ Same type blocks others · same potion stacks ×3 (duration only)</div>`;
     }
   }
+  // Item flavor / info text — many items (esp. enchanting materials) explain
+  // what they are and where they come from here. Previously never shown on
+  // hover, which left icon-only UI (like the enchant cost row) unreadable.
+  if(it.desc){
+    html+=`<div class="tt-sub" style="color:var(--muted);font-style:italic;line-height:1.4">${it.desc}</div>`;
+  }
   if(sources.length){
     html+=`<div style="margin-bottom:3px;font-size:12px;color:#a08a64;text-transform:uppercase;letter-spacing:1px">Sources</div>`;
     for(const s of sources.slice(0,5)){
@@ -18078,7 +18073,7 @@ function renderEnchanting(){
     var chip=document.createElement('div');
     chip.style.cssText='background:var(--raised-s);border:1px solid var(--trim-d);border-radius:5px;padding:3px 9px;font-size:13px;cursor:help;'+(qty>0?'color:var(--text)':'color:var(--muted);opacity:0.55');
     chip.innerHTML=iconHTML(mid)+' '+qty.toLocaleString();
-    chip.title=it.name+' — '+(ENCHANT_MAT_SOURCES[mid]||'');
+    attachTooltip(chip, mid);  // rich item tooltip — name, desc (incl. source), sell value
     matRow.appendChild(chip);
   });
   left.appendChild(matRow);
@@ -18176,8 +18171,10 @@ function renderEnchantDetail(box, itemId){
     chip.style.cssText='display:inline-flex;align-items:center;gap:3px;padding:1px 7px;border-radius:4px;cursor:help;'
       +'background:var(--raised-s);border:1px solid '+(ok?'#3a5018':'#5a2020')+';'
       +'color:'+(ok?'var(--green)':'var(--red)');
-    chip.innerHTML=(mIt?iconHTML(mid):'?')+' '+have.toLocaleString()+'/'+need.toLocaleString();
-    chip.title=(mIt?mIt.name:mid)+' — you have '+have.toLocaleString()+', need '+need.toLocaleString()+'.\n'+(ENCHANT_MAT_SOURCES[mid]||'');
+    // Name shown inline so the material is identifiable at a glance; the game's
+    // rich tooltip (attachTooltip) carries the desc + source on hover.
+    chip.innerHTML=(mIt?iconHTML(mid):'?')+' '+(mIt?mIt.name:mid)+' '+have.toLocaleString()+'/'+need.toLocaleString();
+    attachTooltip(chip, mid);
     costRow.appendChild(chip);
   });
   card.appendChild(costRow);
