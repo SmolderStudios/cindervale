@@ -2443,7 +2443,7 @@ header h1 .flame{color:var(--ember)}
   <div class="mm-btns">
     <button class="mm-btn mm-primary" id="mmPlay">▶ Play</button>
   </div>
-  <div class="mm-ver">v1.0.49</div>
+  <div class="mm-ver">v1.0.50</div>
 </div>
 
 <!-- ===== CHARACTER SELECT (added) ===== -->
@@ -2927,14 +2927,16 @@ const ITEMS={
   // Fishing (cooked)
   // Cooked fish double as combat food — instant heal scaled by cook level (1.0.21).
   // Cheap, spammable sustain; the dedicated Healing Draughts out-heal them tier-for-tier.
-  cooked_minnow:    {name:'Cooked Minnow',    icon:'🍢',sell:44,  potion:{heal:60}},
-  cooked_sardine:   {name:'Cooked Sardine',   icon:'🍢',sell:99,  potion:{heal:120}},
-  cooked_trout:     {name:'Cooked Trout',     icon:'🍢',sell:198, potion:{heal:180}},
-  cooked_tuna:      {name:'Cooked Tuna',      icon:'🍢',sell:330, potion:{heal:260}},
-  cooked_salmon:    {name:'Cooked Salmon',    icon:'🍢',sell:550, potion:{heal:360}},
-  cooked_swordfish: {name:'Cooked Swordfish', icon:'🍱',sell:880, potion:{heal:480}},
-  cooked_shark:     {name:'Cooked Shark',     icon:'🍱',sell:1408,potion:{heal:620}},
-  cooked_voideel:   {name:'Cooked Void Eel',  icon:'🍱',sell:2255,potion:{heal:800}},
+  // Heal curve rebalanced (1.0.50): anchored to ~25-70% of expected max HP at the
+  // unlock level so low-tier food no longer near-full-heals a fresh character.
+  cooked_minnow:    {name:'Cooked Minnow',    icon:'🍢',sell:44,  potion:{heal:25}},
+  cooked_sardine:   {name:'Cooked Sardine',   icon:'🍢',sell:99,  potion:{heal:60}},
+  cooked_trout:     {name:'Cooked Trout',     icon:'🍢',sell:198, potion:{heal:110}},
+  cooked_tuna:      {name:'Cooked Tuna',      icon:'🍢',sell:330, potion:{heal:180}},
+  cooked_salmon:    {name:'Cooked Salmon',    icon:'🍢',sell:550, potion:{heal:270}},
+  cooked_swordfish: {name:'Cooked Swordfish', icon:'🍱',sell:880, potion:{heal:380}},
+  cooked_shark:     {name:'Cooked Shark',     icon:'🍱',sell:1408,potion:{heal:520}},
+  cooked_voideel:   {name:'Cooked Void Eel',  icon:'🍱',sell:2255,potion:{heal:700}},
   // Smithing bars
   bronze_bar:    {name:'Bronze Bar',       icon:'🟫',sell:77},
   iron_bar:      {name:'Iron Bar',         icon:'⬜',sell:176},
@@ -2957,10 +2959,10 @@ const ITEMS={
   // Healing draughts — instant restore mid-combat. No `dur` field; the use
   // handler currently gates these with a "coming soon" toast so the inert
   // brew can't be wasted before combat consumes it.
-  heal_draught_1:{name:'Lesser Healing Draught',icon:'❤️',sell:250,  potion:{heal:150}},
-  heal_draught_2:{name:'Healing Draught',       icon:'❤️',sell:1200, potion:{heal:350}},
-  heal_draught_3:{name:'Greater Healing Draught',icon:'❤️',sell:4400,potion:{heal:700}},
-  heal_draught_4:{name:'Master Healing Elixir', icon:'❤️',sell:11000,rare:true,potion:{heal:1400}},
+  heal_draught_1:{name:'Lesser Healing Draught',icon:'❤️',sell:250,  potion:{heal:80}},
+  heal_draught_2:{name:'Healing Draught',       icon:'❤️',sell:1200, potion:{heal:200}},
+  heal_draught_3:{name:'Greater Healing Draught',icon:'❤️',sell:4400,potion:{heal:450}},
+  heal_draught_4:{name:'Master Healing Elixir', icon:'❤️',sell:11000,rare:true,potion:{heal:900}},
   // Buff potions — duration buffs to combat stats. atk/str/def get added to
   // the active gear contribution while the effect window is open (eventual).
   honed_edge_1:  {name:'Honed Edge Potion I',   icon:'⚔️',sell:600,  potion:{atk:2,dur:120}},
@@ -2977,17 +2979,17 @@ const ITEMS={
   // a draught), REGEN (heal-over-time — same total spread over seconds, great for
   // sustained idle fights), and FEAST (smaller instant heal + a short combat buff).
   // potion.regen = total HP, potion.regenDur = seconds. potion.buff = {str/def/atk,dur}.
-  marrow_broth:    {name:'Marrow Broth',    icon:'🍲',sell:40,  potion:{regen:180, regenDur:6}, desc:'Bones boiled down to a rich, restorative broth. Mends you slowly — 180 HP over 6s.'},
-  ratmeat_skewer:  {name:'Ratmeat Skewer',  icon:'🍢',sell:70,  potion:{heal:100, buff:{str:1,dur:30}}, desc:'Charred warren-rat on a splinter of bone. Restores 100 HP and fires you up — +1 Strength for 30s.'},
-  silk_poultice:   {name:'Silk Poultice',   icon:'🩹',sell:90,  potion:{heal:160}, desc:'A wound-dressing of spider-silk and crushed venom sac — knits cuts closed fast. Instant 160 HP.'},
-  goblin_jerky:    {name:'Goblin Jerky',    icon:'🥓',sell:120, potion:{heal:240}, desc:'Strips of cured hide smoked over a goblin fire. Tough, salty, and filling. Instant 240 HP.'},
+  marrow_broth:    {name:'Marrow Broth',    icon:'🍲',sell:40,  potion:{regen:40, regenDur:6}, desc:'Bones boiled down to a rich, restorative broth. Mends you slowly — 40 HP over 6s.'},
+  ratmeat_skewer:  {name:'Ratmeat Skewer',  icon:'🍢',sell:70,  potion:{heal:45, buff:{str:1,dur:30}}, desc:'Charred warren-rat on a splinter of bone. Restores 45 HP and fires you up — +1 Strength for 30s.'},
+  silk_poultice:   {name:'Silk Poultice',   icon:'🩹',sell:90,  potion:{heal:75}, desc:'A wound-dressing of spider-silk and crushed venom sac — knits cuts closed fast. Instant 75 HP.'},
+  goblin_jerky:    {name:'Goblin Jerky',    icon:'🥓',sell:120, potion:{heal:70}, desc:'Strips of cured hide smoked over a goblin fire. Tough, salty, and filling. Instant 70 HP.'},
   // ─── Monster-drop foods, mid→endgame tiers (1.0.7, reworked 1.0.21) ─────────
-  bone_stew:       {name:'Bone Marrow Stew', icon:'🍲',sell:180, potion:{regen:400, regenDur:8}, desc:'Ancient bones simmered grey. Grim fare that knits you back together — 400 HP over 8s.'},
-  wolf_jerky:      {name:'Wolf Jerky',       icon:'🥓',sell:280, potion:{heal:500}, desc:'Smoke-cured strips of dire-wolf. Chewy, fatty, warming. Instant 500 HP.'},
-  ogre_roast:      {name:'Ogre Roast',       icon:'🍖',sell:420, potion:{heal:400, buff:{str:2,dur:60}}, desc:'A slab of ogre haunch roasted over coals. Restores 400 HP and bolsters you — +2 Strength for 60s.'},
-  troll_stew:      {name:'Troll Stew',       icon:'🍲',sell:640, potion:{regen:960, regenDur:8}, desc:'Troll meat and regenerative blood, stewed thick. You feel the wounds closing — 960 HP over 8s.'},
-  drake_roast:     {name:'Drake Roast',      icon:'🍖',sell:950, potion:{heal:1200}, desc:'Seared drake flank, still faintly smoking. Rich enough to mend deep wounds. Instant 1200 HP.'},
-  infernal_roast:  {name:'Infernal Roast',   icon:'🍖',sell:1500,potion:{heal:800, buff:{str:3,def:3,dur:90}}, desc:'Demon-flesh roasted in brimstone. Restores 800 HP and steels you — +3 Strength & +3 Defence for 90s.'},
+  bone_stew:       {name:'Bone Marrow Stew', icon:'🍲',sell:180, potion:{regen:150, regenDur:8}, desc:'Ancient bones simmered grey. Grim fare that knits you back together — 150 HP over 8s.'},
+  wolf_jerky:      {name:'Wolf Jerky',       icon:'🥓',sell:280, potion:{heal:200}, desc:'Smoke-cured strips of dire-wolf. Chewy, fatty, warming. Instant 200 HP.'},
+  ogre_roast:      {name:'Ogre Roast',       icon:'🍖',sell:420, potion:{heal:240, buff:{str:2,dur:60}}, desc:'A slab of ogre haunch roasted over coals. Restores 240 HP and bolsters you — +2 Strength for 60s.'},
+  troll_stew:      {name:'Troll Stew',       icon:'🍲',sell:640, potion:{regen:430, regenDur:8}, desc:'Troll meat and regenerative blood, stewed thick. You feel the wounds closing — 430 HP over 8s.'},
+  drake_roast:     {name:'Drake Roast',      icon:'🍖',sell:950, potion:{heal:560}, desc:'Seared drake flank, still faintly smoking. Rich enough to mend deep wounds. Instant 560 HP.'},
+  infernal_roast:  {name:'Infernal Roast',   icon:'🍖',sell:1500,potion:{heal:620, buff:{str:3,def:3,dur:90}}, desc:'Demon-flesh roasted in brimstone. Restores 620 HP and steels you — +3 Strength & +3 Defence for 90s.'},
   // Rare drops
   birds_nest:      {name:"Bird's Nest",       icon:'🪹',sell:990,  rare:true},
   ancient_seed:    {name:'Ancient Seed',       icon:'🌱',sell:825,  rare:true},
@@ -4118,25 +4120,27 @@ const SKILLS={
   farming:{name:'Farming',icon:'🌾',acts:[]}, // Farming uses patch system — see renderFarming
 
   cooking:{name:'Cooking',icon:'🍳',acts:[
-    {id:'co1',name:'Cook minnow',       lvl:1, ms:4200, xp:38,  spdMult:0.500, minMs:720,  inp:{raw_minnow:1},    out:{cooked_minnow:1}},
-    {id:'co2',name:'Cook sardine',      lvl:15,ms:5400, xp:62,  spdMult:0.594, minMs:885,  inp:{raw_sardine:1},   out:{cooked_sardine:1}},
-    {id:'co3',name:'Cook trout',        lvl:25,ms:6900, xp:100, spdMult:0.640, minMs:1065, inp:{raw_trout:1},     out:{cooked_trout:1}},
-    {id:'co4',name:'Cook tuna',         lvl:38,ms:8700, xp:155, spdMult:0.667, minMs:1275, inp:{raw_tuna:1},      out:{cooked_tuna:1}},
-    {id:'co5',name:'Cook salmon',       lvl:50,ms:10500,xp:227, spdMult:0.693, minMs:1470, inp:{raw_salmon:1},    out:{cooked_salmon:1}},
-    {id:'co6',name:'Cook swordfish',    lvl:62,ms:12800,xp:331, spdMult:0.735, minMs:1680, inp:{raw_swordfish:1}, out:{cooked_swordfish:1}},
-    {id:'co7',name:'Cook shark',        lvl:75,ms:15300,xp:466, spdMult:0.765, minMs:1920, inp:{raw_shark:1},     out:{cooked_shark:1}},
-    {id:'co8',name:'Cook void eel',     lvl:90,ms:18800,xp:655, spdMult:0.790, minMs:2220, inp:{raw_voideel:1},   out:{cooked_voideel:1}},
-    // ─── Monster-part heal foods (1.0.6) — early-game combat sustain from drops ───
-    {id:'co_mb',name:'Boil Marrow Broth',  lvl:4, ms:4400, xp:42, spdMult:0.510, minMs:740, inp:{gnawed_bone:3},          out:{marrow_broth:1}},
-    {id:'co_rs',name:'Grill Ratmeat Skewer',lvl:8,ms:4800, xp:55, spdMult:0.530, minMs:800, inp:{rat_tail:3,ratskin:1},    out:{ratmeat_skewer:1}},
-    {id:'co_gj',name:'Cure Goblin Jerky',  lvl:14,ms:5400, xp:70, spdMult:0.590, minMs:885, inp:{tanned_hide:2,bone_charm:1}, out:{goblin_jerky:1}},
-    // mid→endgame heal foods (1.0.7)
-    {id:'co_bs',name:'Simmer Bone Stew',   lvl:28,ms:6900, xp:100, spdMult:0.640, minMs:1065, inp:{ancient_bone:2,rib_plate:1}, out:{bone_stew:1}},
-    {id:'co_wj',name:'Smoke Wolf Jerky',   lvl:38,ms:8700, xp:155, spdMult:0.667, minMs:1275, inp:{wolf_pelt:2,frostfur:1},     out:{wolf_jerky:1}},
-    {id:'co_or',name:'Roast Ogre Haunch',  lvl:48,ms:10500,xp:227, spdMult:0.693, minMs:1470, inp:{ogre_hide:2,ogre_tusk:1},    out:{ogre_roast:1}},
-    {id:'co_ts',name:'Stew Troll Meat',    lvl:60,ms:12800,xp:331, spdMult:0.735, minMs:1680, inp:{troll_hide:2,troll_blood:1}, out:{troll_stew:1}},
-    {id:'co_dr',name:'Sear Drake Flank',   lvl:72,ms:15300,xp:466, spdMult:0.765, minMs:1920, inp:{wyrmscale:2,cinder_gland:1}, out:{drake_roast:1}},
-    {id:'co_ir',name:'Roast Demon Flesh',  lvl:86,ms:18800,xp:655, spdMult:0.790, minMs:2220, inp:{demonhide:2,brimstone:1},    out:{infernal_roast:1}},
+    // ONE ladder, sorted by level (1.0.50) — fish and monster-part heal foods
+    // interleave. Array order drives both display order and the T{n} tier badge
+    // (tierIndexForAct uses array position), so a Lv-8 recipe must never sit
+    // after a Lv-90 one or it renders as "T10" at the bottom of the list.
+    {id:'co1',  name:'Cook minnow',         lvl:1, ms:4200, xp:38,  spdMult:0.500, minMs:720,  inp:{raw_minnow:1},               out:{cooked_minnow:1}},
+    {id:'co_mb',name:'Boil Marrow Broth',   lvl:4, ms:4400, xp:42,  spdMult:0.510, minMs:740,  inp:{gnawed_bone:3},              out:{marrow_broth:1}},
+    {id:'co_rs',name:'Grill Ratmeat Skewer',lvl:8, ms:4800, xp:55,  spdMult:0.530, minMs:800,  inp:{rat_tail:3,ratskin:1},       out:{ratmeat_skewer:1}},
+    {id:'co_gj',name:'Cure Goblin Jerky',   lvl:14,ms:5400, xp:70,  spdMult:0.590, minMs:885,  inp:{tanned_hide:2,bone_charm:1}, out:{goblin_jerky:1}},
+    {id:'co2',  name:'Cook sardine',        lvl:15,ms:5400, xp:62,  spdMult:0.594, minMs:885,  inp:{raw_sardine:1},              out:{cooked_sardine:1}},
+    {id:'co3',  name:'Cook trout',          lvl:25,ms:6900, xp:100, spdMult:0.640, minMs:1065, inp:{raw_trout:1},                out:{cooked_trout:1}},
+    {id:'co_bs',name:'Simmer Bone Stew',    lvl:28,ms:6900, xp:100, spdMult:0.640, minMs:1065, inp:{ancient_bone:2,rib_plate:1}, out:{bone_stew:1}},
+    {id:'co4',  name:'Cook tuna',           lvl:38,ms:8700, xp:155, spdMult:0.667, minMs:1275, inp:{raw_tuna:1},                 out:{cooked_tuna:1}},
+    {id:'co_wj',name:'Smoke Wolf Jerky',    lvl:38,ms:8700, xp:155, spdMult:0.667, minMs:1275, inp:{wolf_pelt:2,frostfur:1},     out:{wolf_jerky:1}},
+    {id:'co_or',name:'Roast Ogre Haunch',   lvl:48,ms:10500,xp:227, spdMult:0.693, minMs:1470, inp:{ogre_hide:2,ogre_tusk:1},    out:{ogre_roast:1}},
+    {id:'co5',  name:'Cook salmon',         lvl:50,ms:10500,xp:227, spdMult:0.693, minMs:1470, inp:{raw_salmon:1},               out:{cooked_salmon:1}},
+    {id:'co_ts',name:'Stew Troll Meat',     lvl:60,ms:12800,xp:331, spdMult:0.735, minMs:1680, inp:{troll_hide:2,troll_blood:1}, out:{troll_stew:1}},
+    {id:'co6',  name:'Cook swordfish',      lvl:62,ms:12800,xp:331, spdMult:0.735, minMs:1680, inp:{raw_swordfish:1},            out:{cooked_swordfish:1}},
+    {id:'co_dr',name:'Sear Drake Flank',    lvl:72,ms:15300,xp:466, spdMult:0.765, minMs:1920, inp:{wyrmscale:2,cinder_gland:1}, out:{drake_roast:1}},
+    {id:'co7',  name:'Cook shark',          lvl:75,ms:15300,xp:466, spdMult:0.765, minMs:1920, inp:{raw_shark:1},                out:{cooked_shark:1}},
+    {id:'co_ir',name:'Roast Demon Flesh',   lvl:86,ms:18800,xp:655, spdMult:0.790, minMs:2220, inp:{demonhide:2,brimstone:1},    out:{infernal_roast:1}},
+    {id:'co8',  name:'Cook void eel',       lvl:90,ms:18800,xp:655, spdMult:0.790, minMs:2220, inp:{raw_voideel:1},              out:{cooked_voideel:1}},
   ]},
   crafting:{name:'Crafting',icon:'🛠️',acts:[
     /* Tier 1 — Bronze (Lv 1) — bar+log baseline. Helm/gloves/boots use 1 bar; legs uses 2; chest/sword/shield use the heavier counts. */
