@@ -2443,7 +2443,7 @@ header h1 .flame{color:var(--ember)}
   <div class="mm-btns">
     <button class="mm-btn mm-primary" id="mmPlay">▶ Play</button>
   </div>
-  <div class="mm-ver">v1.0.50</div>
+  <div class="mm-ver">v1.0.51</div>
 </div>
 
 <!-- ===== CHARACTER SELECT (added) ===== -->
@@ -8398,8 +8398,6 @@ var _farmSeedSel={};
 var _farmInteractAt=0;
 var _farmerTiersOpen=false; // collapsible tier list in the Farmer-for-Hire panel
 var _farmerGuideOpen=false; // whether "How hired farmers work" guide is expanded
-// Crop guide pagination — index of currently visible page (0-based)
-var _farmCropGuidePage=0;
 // Alchemy tab — 'skilling' shows speed/xp/gp/yield brews; 'combat' shows
 // heal + atk/str/def brews. Persists across re-renders.
 var _alchTab='skilling';
@@ -8603,91 +8601,75 @@ function renderFarming(){
   box.style.display='block';
   // Two-layer guard: skip rebuild if a select inside this panel is focused,
   // OR if the user interacted with any farming select in the last 3 seconds.
-  // The second check handles native dropdowns that steal focus from the document.
   var _af=document.activeElement;
   if(_af && _af.tagName==='SELECT' && box.contains(_af)) return;
   if(Date.now()-_farmInteractAt<3000) return;
   box.innerHTML='';
-  // Parent .activity-grid is itself a CSS grid; override to block so our inner grids span full width
   box.style.display='block';
   var lvl=farmingLvl();
+  var availSeeds=CROPS.filter(function(c){ return lvl>=c.lvl&&(state.items[c.id]||0)>0; });
 
-  // Info bar — full width, sits above patches
-  var hdr=document.createElement('div');
-  hdr.style.cssText='margin-bottom:10px;font-size:13px;color:var(--muted);line-height:1.5;'
-    +'padding:6px 10px;background:transparent;border-bottom:1px solid var(--trim-d);display:flex;align-items:center;gap:8px';
-  hdr.innerHTML='<span style="font-size:17px">🌾</span>'
-    +'<span>Plant seeds, tend to speed growth, harvest when ready. Patches grow passively.</span>';
-  box.appendChild(hdr);
-
-  // ── Farmer for Hire panel ──
-  box.appendChild(buildFarmerPanel());
-
-  // Harvest All / Tend All / Plant All action bar
-  var bulkBar=document.createElement('div');
-  bulkBar.style.cssText='display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap';
+  // ── Toolbar — one row: Harvest All · Tend All · [seed picker] Plant All ──
+  // Replaces the old header sentence + two separate button rows. The seed picker
+  // doubles as the "click an empty patch to plant" seed, so per-patch dropdowns
+  // are gone and patch tiles can be half the size.
+  var bar=document.createElement('div');
+  bar.style.cssText='display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;align-items:center';
 
   var harvAllBtn=document.createElement('button');
-  harvAllBtn.className='tab on';
-  harvAllBtn.style.cssText='flex:1;min-width:90px;padding:6px 10px;font-size:14px;text-align:center;background:var(--raised-s);border-color:var(--green);color:var(--green)';
+  harvAllBtn.className='tab';
+  harvAllBtn.style.cssText='padding:5px 12px;font-size:13px;background:var(--raised-s);border-color:var(--green);color:var(--green);white-space:nowrap';
   harvAllBtn.textContent='✓ Harvest All';
   harvAllBtn.addEventListener('click',function(){
-    var anyHarvested=false;
+    var any=false;
     if(!state.patches) return;
     for(var pid in state.patches){
       var pss=state.patches[pid];
-      if(pss&&patchReady(pss)&&patchUnlocked(pid)){
-        harvestPatch(pid);
-        anyHarvested=true;
-      }
+      if(pss&&patchReady(pss)&&patchUnlocked(pid)){ harvestPatch(pid); any=true; }
     }
-    if(!anyHarvested) toast('No patches are ready to harvest.');
+    if(!any) toast('No patches are ready to harvest.');
   });
-  bulkBar.appendChild(harvAllBtn);
+  bar.appendChild(harvAllBtn);
 
   var tendAllBtn=document.createElement('button');
   tendAllBtn.className='tab';
-  tendAllBtn.style.cssText='flex:1;min-width:90px;padding:6px 10px;font-size:14px;text-align:center;background:var(--raised-s);border-color:var(--ember);color:var(--ember)';
-  tendAllBtn.textContent='🌱 Tend All';
+  tendAllBtn.style.cssText='padding:5px 12px;font-size:13px;background:var(--raised-s);border-color:var(--ember);color:var(--ember);white-space:nowrap';
+  tendAllBtn.textContent='💧 Tend All';
   tendAllBtn.addEventListener('click',function(){
-    var anyTended=false;
+    var any=false;
     if(!state.patches) return;
     for(var pid in state.patches){
       var pss=state.patches[pid];
       if(pss&&!patchReady(pss)&&patchUnlocked(pid)){
-        try{ tendPatch(pid); anyTended=true; }catch(e){}
+        try{ tendPatch(pid); any=true; }catch(e){}
       }
     }
-    if(!anyTended) toast('No patches available to tend.');
+    if(!any) toast('No patches available to tend.');
   });
-  bulkBar.appendChild(tendAllBtn);
-  box.appendChild(bulkBar);
+  bar.appendChild(tendAllBtn);
 
-  // Plant All row — seed dropdown + button
-  var plantBar=document.createElement('div');
-  plantBar.style.cssText='display:flex;gap:8px;margin-bottom:12px;align-items:center';
-  var availSeeds=CROPS.filter(function(c){ return farmingLvl()>=c.lvl&&(state.items[c.id]||0)>0; });
   if(availSeeds.length>0){
     var seedSel=document.createElement('select');
     seedSel.id='farmPlantAllSeed';
-    seedSel.style.cssText='flex:1;background:#0d0905;color:var(--text);border:1px solid var(--trim-d);border-radius:4px;padding:4px 8px;font-size:14px;font-family:inherit';
-    var _savedAllSeed=_farmSeedSel.plantAll;
-    var _foundIdx=-1;
+    seedSel.style.cssText='flex:1;min-width:150px;background:var(--raised-s);color:var(--text);border:1px solid var(--trim-d);border-radius:5px;padding:5px 8px;font-size:13px;font-family:inherit;cursor:pointer';
+    var _saved=_farmSeedSel.plantAll, _found=-1;
     for(var si=0;si<availSeeds.length;si++){
       var sc=availSeeds[si];
       var opt=document.createElement('option');
       opt.value=sc.id;
       opt.textContent=sc.icon+' '+sc.name+' (×'+(state.items[sc.id]||0)+')';
       seedSel.appendChild(opt);
-      if(_savedAllSeed===sc.id) _foundIdx=si;
+      if(_saved===sc.id) _found=si;
     }
-    if(_foundIdx>=0) seedSel.selectedIndex=_foundIdx;
+    if(_found>=0) seedSel.selectedIndex=_found;
     seedSel.addEventListener('change',function(){ _farmSeedSel.plantAll=this.value; _farmInteractAt=Date.now(); });
     _wireFarmSelInteraction(seedSel);
-    plantBar.appendChild(seedSel);
+    seedSel.title='Selected seed — used by Plant All AND when you click an empty patch';
+    bar.appendChild(seedSel);
+
     var plantAllBtn=document.createElement('button');
     plantAllBtn.className='tab';
-    plantAllBtn.style.cssText='padding:6px 12px;font-size:14px;background:var(--raised-s);border-color:var(--blue);color:var(--blue);white-space:nowrap';
+    plantAllBtn.style.cssText='padding:5px 12px;font-size:13px;background:var(--raised-s);border-color:var(--blue);color:var(--blue);white-space:nowrap';
     plantAllBtn.textContent='🌾 Plant All';
     plantAllBtn.addEventListener('click',function(){
       var selSeed=$('farmPlantAllSeed');
@@ -8695,56 +8677,41 @@ function renderFarming(){
       var seedId=selSeed.value;
       var crop=getCrop(seedId);
       if(!crop) return;
-
-      // Pre-flight: count empty unlocked patches and available seeds
-      var emptyPatches=PATCHES.filter(function(pt){
-        return patchUnlocked(pt.id)&&!getPatchState(pt.id);
-      });
+      var emptyPatches=PATCHES.filter(function(pt){ return patchUnlocked(pt.id)&&!getPatchState(pt.id); });
       var seedsAvail=state.items[seedId]||0;
-
-      if(emptyPatches.length===0){
-        toast('All unlocked patches are already occupied.');
-        return;
-      }
-      if(seedsAvail===0){
-        toast('No '+crop.name+' seeds in satchel — nothing to plant.');
-        return;
-      }
-
-      // Plant silently — no per-patch toasts or re-renders
+      if(emptyPatches.length===0){ toast('All unlocked patches are already occupied.'); return; }
+      if(seedsAvail===0){ toast('No '+crop.name+' seeds in satchel — nothing to plant.'); return; }
       var planted=0;
       for(var pi2=0;pi2<emptyPatches.length;pi2++){
-        if((state.items[seedId]||0)<1) break; // ran out of seeds
+        if((state.items[seedId]||0)<1) break;
         if(plantPatch(emptyPatches[pi2].id,seedId,true)) planted++;
       }
-
-      // Single render + save after all planting is done
       renderFarming(); saveGame();
-
-      // Summary toast telling player exactly what happened
-      if(planted===0){
-        toast('Could not plant any patches.');
-      } else {
+      if(planted===0){ toast('Could not plant any patches.'); }
+      else{
         var msg=crop.icon+' Planted '+planted+' patch'+(planted!==1?'es':'')+' with '+crop.name;
         var leftEmpty=emptyPatches.length-planted;
-        if(leftEmpty>0){
-          msg+=' · ran out of seeds ('+leftEmpty+' patch'+(leftEmpty!==1?'es':'')+' left empty)';
-        }
+        if(leftEmpty>0) msg+=' · ran out of seeds ('+leftEmpty+' patch'+(leftEmpty!==1?'es':'')+' left empty)';
         toast(msg);
       }
     });
-    plantBar.appendChild(plantAllBtn);
+    bar.appendChild(plantAllBtn);
   } else {
-    var noSeedMsg=document.createElement('span');
-    noSeedMsg.style.cssText='font-size:14px;color:var(--muted);font-style:italic;padding:4px 0';
-    noSeedMsg.textContent='No seeds in satchel — forage or buy some to get started.';
-    plantBar.appendChild(noSeedMsg);
+    var noSeed=document.createElement('span');
+    noSeed.style.cssText='font-size:12px;color:var(--muted);font-style:italic';
+    noSeed.textContent='No seeds — forage or buy some to get started.';
+    bar.appendChild(noSeed);
   }
-  box.appendChild(plantBar);
+  box.appendChild(bar);
 
-  // Patch grid — uniform columns so all patches are the same width/height baseline
+  // ── Patch grid — compact click-driven tiles. The whole tile IS the action:
+  //    empty → plant the toolbar seed · growing → tend (when off cooldown) ·
+  //    ready → harvest. Roughly half the old card size. ──
+  var farmM=mods('farming');
+  var farmSpd=1-Math.min(0.70,farmM.speed);
   var patchGrid=document.createElement('div');
-  patchGrid.style.cssText='display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:7px;margin-bottom:12px';
+  patchGrid.style.cssText='display:grid;grid-template-columns:repeat(auto-fill,minmax(122px,1fr));gap:6px;margin-bottom:12px';
+  var selectedSeedId=(availSeeds.length>0)?((_farmSeedSel.plantAll&&availSeeds.some(function(s){return s.id===_farmSeedSel.plantAll;}))?_farmSeedSel.plantAll:availSeeds[0].id):null;
 
   for(var pi=0;pi<PATCHES.length;pi++){
     var patch=PATCHES[pi];
@@ -8752,223 +8719,118 @@ function renderFarming(){
     var ps=getPatchState(patch.id);
     var ready=ps&&patchReady(ps);
     var growing=ps&&!ready;
+    var now=Date.now();
 
-    var card=document.createElement('div');
-    var isPatchNotified=ready&&state.patchNotified&&state.patchNotified[patch.id];
-    // Fixed min-height so all cards are the same size regardless of state
-    card.style.cssText='border:1px solid '+(ready?'var(--green)':growing?'var(--ember)':'var(--trim-d)')
-      +';border-radius:6px;padding:8px;background:var(--raised);'
-      +'display:flex;flex-direction:column;gap:4px;min-height:96px;'
-      +(unlocked?'':'opacity:0.45');
-    if(isPatchNotified) card.classList.add('farm-patch-ready-alert');
-
-    // Patch label row
-    var labelRow='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px">'
-      +'<span style="font-size:14px;color:var(--trim);font-variant:small-caps;letter-spacing:1px">'+patch.label+'</span>';
-
-    if(!unlocked){
-      labelRow+='<span style="font-size:12px;color:var(--muted)">Lv '+patch.unlockLvl+'</span></div>'
-        +'<div style="flex:1;display:flex;align-items:center;justify-content:center">'
-        +'<span style="font-size:13px;color:var(--muted);font-style:italic">Locked</span></div>';
-      card.innerHTML=labelRow;
-      patchGrid.appendChild(card);
-      continue;
-    }
-
-    if(ready){
-      labelRow+='<span style="font-size:12px;color:var(--green);font-weight:bold">✓ Ready!</span>';
-    } else if(growing){
-      var pct=patchGrowthPct(ps);
-      var remaining2=Math.max(0,ps.growMs-(Date.now()-ps.plantedAt+ps.tendedMs));
-      labelRow+='<span style="font-size:12px;color:var(--ember)">'+pct+'%</span>';
-    } else {
-      labelRow+='<span style="font-size:12px;color:var(--muted)">Empty</span>';
-    }
-    labelRow+='</div>';
-
-    // Crop display area — always same height via flex spacer
-    var cropArea='<div style="flex:1;display:flex;align-items:center;gap:7px;min-height:36px">';
-    if(growing&&ps){
+    var tile=document.createElement('button');
+    tile.className='farm-tile';
+    var border='var(--trim-d)', cursor='pointer', extra='';
+    var canTend=false;
+    if(!unlocked){ cursor='default'; extra='opacity:0.4;'; }
+    else if(ready){ border='var(--green)'; }
+    else if(growing){
       var cr=getCrop(ps.seedId);
-      var pct2=patchGrowthPct(ps);
-      var rem2=Math.max(0,ps.growMs-(Date.now()-ps.plantedAt+ps.tendedMs));
-      var crIcoId=cropDisplayIconId(cr);
-      cropArea+='<span style="font-size:28px;line-height:1;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;flex-shrink:0">'+(crIcoId?iconHTML(crIcoId):'🌱')+'</span>'
-        +'<div style="flex:1;min-width:0">'
-        +'<div style="font-size:13px;color:var(--text);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(cr?cr.name:ps.seedId)+'</div>'
-        +'<div class="xp-detail-bar" style="margin-bottom:3px"><div class="xp-detail-fill" style="width:'+pct2+'%;background:linear-gradient(90deg,var(--green),#b0e060)"></div></div>'
-        +'<div style="font-size:11px;color:var(--muted);font-family:\'Courier New\',monospace">'+fmtTime(rem2)+' left</div>'
-        +'</div>';
-    } else if(ready&&ps){
-      var crR=getCrop(ps.seedId);
-      var crRIcoId=cropDisplayIconId(crR);
-      cropArea+='<span style="font-size:34px;line-height:1;display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;flex-shrink:0">'+(crRIcoId?iconHTML(crRIcoId):'🌱')+'</span>'
-        +'<div style="min-width:0">'
-        +'<div style="font-size:14px;color:var(--green);font-weight:bold;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(crR?crR.name:'Crop')+'</div>'
-        +'<div style="font-size:12px;color:var(--muted)">Ready to harvest</div>'
-        +'</div>';
-    } else {
-      // Empty patch — seed selector is in the button row below
-      var availSeedsCheck=CROPS.filter(function(c){return lvl>=c.lvl&&(state.items[c.id]||0)>0;});
-      if(availSeedsCheck.length===0){
-        cropArea+='<span style="font-size:12px;color:var(--muted);font-style:italic">No seeds available</span>';
-      } else {
-        cropArea+='<span style="font-size:12px;color:var(--muted);font-style:italic">Select a seed to plant</span>';
-      }
+      var effInt=Math.max(15000,Math.round((cr&&cr.tendInterval||120000)*farmSpd));
+      canTend=(now-(ps.lastTended||ps.plantedAt))>=effInt;
+      border=canTend?'var(--ember)':'#4a3a20';
+      if(!canTend) cursor='default';
     }
-    cropArea+='</div>';
+    else{ extra='border-style:dashed;'; if(!selectedSeedId) cursor='default'; }
+    tile.style.cssText='display:flex;flex-direction:column;gap:3px;padding:6px 7px;min-height:76px;text-align:left;'
+      +'background:var(--raised);border:1px solid '+border+';border-radius:6px;cursor:'+cursor+';'
+      +'font-family:inherit;color:var(--text);'+extra;
+    if(ready&&state.patchNotified&&state.patchNotified[patch.id]) tile.classList.add('farm-patch-ready-alert');
 
-    card.innerHTML=labelRow+cropArea;
+    // header: patch number + status
+    var status;
+    if(!unlocked) status='<span style="color:var(--muted)">🔒 Lv '+patch.unlockLvl+'</span>';
+    else if(ready) status='<span style="color:var(--green);font-weight:bold">✓ Ready</span>';
+    else if(growing) status='<span style="color:var(--ember)">'+patchGrowthPct(ps)+'%</span>';
+    else status='<span style="color:var(--muted)">empty</span>';
+    var html='<div style="display:flex;justify-content:space-between;align-items:center;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted)">'
+      +'<span>'+patch.label.replace('Patch ','P')+'</span>'+status+'</div>';
 
-    // Action button row — always at the bottom
-    var btnRow=document.createElement('div');
-    btnRow.style.cssText='display:flex;gap:6px;flex-wrap:wrap;margin-top:auto';
-
-    if(ready){
-      var harvBtn=document.createElement('button');
-      harvBtn.className='m-btn primary';
-      harvBtn.style.cssText='font-size:13px;padding:4px 10px';
-      harvBtn.textContent='Harvest';
-      (function(pid){harvBtn.addEventListener('click',function(){harvestPatch(pid);});})(patch.id);
-      btnRow.appendChild(harvBtn);
-    } else if(growing){
-      var cr3=getCrop(ps.seedId);
-      var now3=Date.now();
-      var farmM=mods('farming');
-      var farmSpd=1-Math.min(0.70,farmM.speed);
-      var effInt3=Math.max(15000,Math.round((cr3&&cr3.tendInterval||120000)*farmSpd));
-      var canTend3=ps&&(now3-(ps.lastTended||ps.plantedAt))>=effInt3;
-      var tendBtn=document.createElement('button');
-      tendBtn.className='m-btn'+(canTend3?'':' disabled');
-      tendBtn.disabled=!canTend3;
-      tendBtn.style.cssText='font-size:13px;padding:4px 10px';
-      var tendWait=canTend3?0:Math.ceil((effInt3-(now3-(ps.lastTended||ps.plantedAt)))/1000);
-      tendBtn.textContent=canTend3?'Tend (+'+Math.round((cr3&&cr3.tendBoost||0.25)*100)+'%)':'Tend in '+tendWait+'s';
-      (function(pid){tendBtn.addEventListener('click',function(){tendPatch(pid);});})(patch.id);
-      btnRow.appendChild(tendBtn);
-    } else {
-      var availSeeds2=CROPS.filter(function(c){return lvl>=c.lvl&&(state.items[c.id]||0)>0;});
-      if(availSeeds2.length===0){
-        var noSeed=document.createElement('span');
-        noSeed.style.cssText='font-size:13px;color:var(--muted);font-style:italic';
-        noSeed.textContent='Gather seeds from Foraging';
-        btnRow.appendChild(noSeed);
+    if(growing||ready){
+      var crD=getCrop(ps.seedId);
+      var icoId=cropDisplayIconId(crD);
+      var rem=growing?Math.max(0,ps.growMs-(now-ps.plantedAt+ps.tendedMs)):0;
+      html+='<div style="display:flex;align-items:center;gap:5px;min-width:0">'
+        +'<span style="font-size:18px;line-height:1;flex:none;width:20px;display:inline-flex;justify-content:center">'+(icoId?iconHTML(icoId):'🌱')+'</span>'
+        +'<span style="flex:1;min-width:0;font-size:12px;color:'+(ready?'var(--green)':'var(--text)')+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(crD?crD.name:ps.seedId)+'</span>'
+        +'</div>';
+      if(growing){
+        html+='<div class="xp-detail-bar" style="height:4px;margin:0"><div class="xp-detail-fill" style="width:'+patchGrowthPct(ps)+'%;background:linear-gradient(90deg,var(--green),#b0e060)"></div></div>'
+          +'<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);font-family:\'Courier New\',monospace">'
+          +'<span>'+fmtTime(rem)+'</span>'
+          +(canTend?'<span style="color:var(--ember)">💧 tend</span>':'')
+          +'</div>';
+        tile.title=canTend?('Click to tend — +'+Math.round((getCrop(ps.seedId).tendBoost||0.25)*100)+'% growth'):'Growing — tend available later';
       } else {
-        var patchSel=document.createElement('select');
-        patchSel.style.cssText='flex:1;min-width:0;background:#0d0905;color:var(--text);border:1px solid var(--trim-d);border-radius:4px;padding:3px 6px;font-size:13px;font-family:inherit;cursor:pointer';
-        var _savedPatchSeed=_farmSeedSel[patch.id];
-        var _patchFoundIdx=-1;
-        for(var si3=0;si3<availSeeds2.length;si3++){
-          var seed2=availSeeds2[si3];
-          var patchOpt=document.createElement('option');
-          patchOpt.value=seed2.id;
-          patchOpt.textContent=seed2.icon+' '+seed2.name+' ('+((state.items[seed2.id])||0)+')';
-          patchSel.appendChild(patchOpt);
-          if(_savedPatchSeed===seed2.id) _patchFoundIdx=si3;
-        }
-        if(_patchFoundIdx>=0) patchSel.selectedIndex=_patchFoundIdx;
-        (function(pid3){ patchSel.addEventListener('change',function(){ _farmSeedSel[pid3]=this.value; _farmInteractAt=Date.now(); }); })(patch.id);
-        _wireFarmSelInteraction(patchSel);
-        btnRow.style.cssText='display:flex;gap:6px;flex-wrap:nowrap;margin-top:auto;align-items:center';
-        btnRow.appendChild(patchSel);
-        var plantBtn2=document.createElement('button');
-        plantBtn2.className='m-btn primary';
-        plantBtn2.style.cssText='font-size:13px;padding:4px 8px;white-space:nowrap;flex-shrink:0';
-        plantBtn2.textContent='Plant';
-        (function(pid2,sel2){ plantBtn2.addEventListener('click',function(){_farmInteractAt=0; plantPatch(pid2,sel2.value);}); })(patch.id,patchSel);
-        btnRow.appendChild(plantBtn2);
+        html+='<div style="font-size:11px;color:var(--green);margin-top:auto">click to harvest</div>';
+        tile.title='Click to harvest';
       }
+    } else if(unlocked){
+      // empty
+      if(selectedSeedId){
+        var selCrop=getCrop(selectedSeedId);
+        html+='<div style="flex:1;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--muted)">＋ plant '+(selCrop?selCrop.icon:'')+'</div>';
+        tile.title='Click to plant '+(selCrop?selCrop.name:'')+' (seed from the toolbar picker)';
+      } else {
+        html+='<div style="flex:1;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--muted);font-style:italic">no seeds</div>';
+      }
+    } else {
+      html+='<div style="flex:1;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--muted);font-style:italic">locked</div>';
     }
-    card.appendChild(btnRow);
-    patchGrid.appendChild(card);
+    tile.innerHTML=html;
+
+    // one click handler per state
+    (function(pid,isReady,isGrowing,tendOk,isUnlocked,seedId){
+      tile.addEventListener('click',function(){
+        if(!isUnlocked) return;
+        if(isReady){ harvestPatch(pid); return; }
+        if(isGrowing){ if(tendOk) tendPatch(pid); return; }
+        if(seedId){ _farmInteractAt=0; plantPatch(pid,seedId); }
+      });
+    })(patch.id,ready,growing,canTend,unlocked,selectedSeedId);
+
+    patchGrid.appendChild(tile);
   }
   box.appendChild(patchGrid);
 
-  // Crop guide — at the bottom, with tabs grouping crops by tier so the list
-  // stays manageable. Tiers: Early (1-25), Mid (26-50), Late (51-99).
+  // ── Farmer for Hire — below the patches so crops come first ──
+  box.appendChild(buildFarmerPanel());
+
+  // ── Crop guide — compact table, every crop on one line, no pagination ──
   var guideLabel=document.createElement('div');
-  guideLabel.style.cssText='font-size:12px;color:var(--ember);text-transform:uppercase;letter-spacing:2px;margin-bottom:8px';
+  guideLabel.style.cssText='font-size:11px;color:var(--ember);text-transform:uppercase;letter-spacing:2px;margin:12px 0 6px';
   guideLabel.textContent='Crops & Grow Times';
   box.appendChild(guideLabel);
 
-  // Pagination — top tab slot is reserved for future category tabs (Herbs,
-  // Food, etc.), so pagination goes as a small control below the grid instead.
-  var CROPS_PER_PAGE=6;
-  var pagedCrops=CROPS.slice().sort(function(a,b){return a.lvl-b.lvl;});
-  var pageCount=Math.max(1,Math.ceil(pagedCrops.length/CROPS_PER_PAGE));
-  if(_farmCropGuidePage<0||_farmCropGuidePage>=pageCount) _farmCropGuidePage=0;
-
-  var cropGrid=document.createElement('div');
-  cropGrid.style.cssText='display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:7px';
-  var farmMods=mods('farming');
-  var farmSpeedMult=1-Math.min(0.70,farmMods.speed);
-  var pageStart=_farmCropGuidePage*CROPS_PER_PAGE;
-  var visibleCrops=pagedCrops.slice(pageStart,pageStart+CROPS_PER_PAGE);
-  cropGrid.innerHTML=visibleCrops.map(function(c){
+  var farmXpMult=farmM.xpMult;
+  var rows=CROPS.slice().sort(function(a,b){return a.lvl-b.lvl;}).map(function(c){
     var locked=lvl<c.lvl;
-    var effInterval=Math.max(15000,Math.round(c.tendInterval*farmSpeedMult));
-    var effXp=Math.round(c.xp*farmMods.xpMult);
-    var tendLabel=farmMods.speed>0
-      ?fmtTime(effInterval)+' <span style="color:var(--green);font-size:11px">(↓'+Math.round(farmMods.speed*100)+'%)</span>'
-      :fmtTime(effInterval);
-    var xpLabel=farmMods.xpMult>1
-      ?effXp+' <span style="color:var(--green);font-size:11px">(×'+farmMods.xpMult.toFixed(2)+')</span>'
-      :effXp+'';
+    var effInterval=Math.max(15000,Math.round(c.tendInterval*farmSpd));
+    var effXp=Math.round(c.xp*farmXpMult);
     var icoId=cropDisplayIconId(c);
-    var icoHTML=icoId?iconHTML(icoId):(c.icon||'🌱');
-    // Fixed-height card — long output / rareDrops lines on later pages would
-    // otherwise wrap and grow the card; we clamp each text row to a single
-    // line with ellipsis so all crop cards stay at the same compact size.
-    var outListHTML=Object.keys(c.out).map(function(id){return (ITEMS[id]?ITEMS[id].name:id)+' ×'+c.out[id];}).join(', ')
+    var outList=Object.keys(c.out).map(function(id){return (ITEMS[id]?ITEMS[id].name:id)+' ×'+c.out[id];}).join(', ')
       +(c.rareDrops?' · '+c.rareDrops.map(function(rd){return (ITEMS[rd.id]?ITEMS[rd.id].name:rd.id)+' '+_fmtMonChance(effDropChance(rd.chance));}).join(', '):'');
-    var outTitle=(c.name+' produces: '+outListHTML).replace(/"/g,'&quot;');
-    return '<div style="background:var(--raised);border:1px solid var(--trim-d);border-radius:6px;padding:7px 8px;'
-      +'display:flex;flex-direction:column;gap:3px;height:78px;overflow:hidden;'+(locked?'opacity:0.5':'')+'\">'
-      +'<div style="display:flex;align-items:center;gap:6px;min-width:0">'
-      +'<span style="font-size:22px;line-height:1;display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;flex-shrink:0">'+icoHTML+'</span>'
-      +'<span style="font-size:14px;color:var(--trim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0">'+c.name+(locked?' <span style="font-size:11px;color:var(--muted)">(Lv '+c.lvl+')</span>':'')+'</span>'
-      +'</div>'
-      +'<div style="font-size:12px;color:var(--muted);font-family:\'Courier New\',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">⏱ '+fmtTime(c.growMs)+' · tend/'+tendLabel+'</div>'
-      +'<div style="font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+outTitle+'">'+xpLabel+' xp · '+outListHTML+'</div>'
+    return '<div style="display:grid;grid-template-columns:130px 62px 62px 52px minmax(0,1fr);gap:8px;align-items:center;'
+      +'padding:3px 8px;border-radius:4px;font-size:12px;'+(locked?'opacity:0.45;':'')
+      +'background:var(--raised);border:1px solid var(--trim-d);margin-bottom:3px" title="'+(c.name+' → '+outList).replace(/"/g,'&quot;')+'">'
+      +'<span style="display:flex;align-items:center;gap:5px;min-width:0"><span style="font-size:15px;line-height:1;flex:none;width:18px;display:inline-flex;justify-content:center">'+(icoId?iconHTML(icoId):(c.icon||'🌱'))+'</span>'
+      +'<span style="color:var(--trim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+c.name+'</span>'
+      +(locked?'<span style="flex:none;color:var(--muted);font-size:10px">Lv'+c.lvl+'</span>':'')+'</span>'
+      +'<span style="color:var(--muted);font-family:\'Courier New\',monospace">'+fmtTime(c.growMs)+'</span>'
+      +'<span style="color:var(--muted);font-family:\'Courier New\',monospace">💧'+fmtTime(effInterval)+'</span>'
+      +'<span style="color:var(--muted);font-family:\'Courier New\',monospace">'+effXp+'xp</span>'
+      +'<span style="color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+outList+'</span>'
       +'</div>';
   }).join('');
-  box.appendChild(cropGrid);
-
-  // Compact page nav — only shows when there's more than one page. Centered,
-  // small, sits just under the grid. Prev / "Page X / Y" / Next.
-  if(pageCount>1){
-    var pageNav=document.createElement('div');
-    pageNav.style.cssText='display:flex;justify-content:center;align-items:center;gap:8px;margin-top:8px';
-
-    var prevBtn=document.createElement('button');
-    prevBtn.className='m-btn';
-    var atStart=_farmCropGuidePage<=0;
-    prevBtn.disabled=atStart;
-    prevBtn.style.cssText='font-size:13px;padding:3px 10px;min-width:32px'+(atStart?';opacity:0.4':'');
-    prevBtn.textContent='‹';
-    prevBtn.addEventListener('click',function(){
-      if(_farmCropGuidePage>0){ _farmCropGuidePage--; renderFarming(); }
-    });
-    pageNav.appendChild(prevBtn);
-
-    var pageLabel=document.createElement('span');
-    pageLabel.style.cssText='font-size:12px;color:var(--muted);font-variant:small-caps;letter-spacing:1.5px;min-width:80px;text-align:center';
-    pageLabel.textContent='Page '+(_farmCropGuidePage+1)+' / '+pageCount;
-    pageNav.appendChild(pageLabel);
-
-    var nextBtn=document.createElement('button');
-    nextBtn.className='m-btn';
-    var atEnd=_farmCropGuidePage>=pageCount-1;
-    nextBtn.disabled=atEnd;
-    nextBtn.style.cssText='font-size:13px;padding:3px 10px;min-width:32px'+(atEnd?';opacity:0.4':'');
-    nextBtn.textContent='›';
-    nextBtn.addEventListener('click',function(){
-      if(_farmCropGuidePage<pageCount-1){ _farmCropGuidePage++; renderFarming(); }
-    });
-    pageNav.appendChild(nextBtn);
-
-    box.appendChild(pageNav);
-  }
+  var tbl=document.createElement('div');
+  // header line for the table columns
+  tbl.innerHTML='<div style="display:grid;grid-template-columns:130px 62px 62px 52px minmax(0,1fr);gap:8px;padding:0 8px 3px;'
+    +'font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px">'
+    +'<span>Crop</span><span>Grow</span><span>Tend</span><span>XP</span><span>Yields</span></div>'+rows;
+  box.appendChild(tbl);
 }
 
 /* ════════ [JS-07] BODY SLOTS — equipment paper-doll slots ═══════════════════════ */
