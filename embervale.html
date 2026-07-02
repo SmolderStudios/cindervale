@@ -2497,47 +2497,52 @@ header h1 .flame{color:var(--ember)}
 .raid-panel{display:flex;flex-direction:column;gap:12px;padding:4px 0}
 .raid-intro{font-size:12.5px;line-height:1.55;color:var(--muted);background:linear-gradient(180deg,#171f1e,#101615);border:1px solid var(--trim-d);border-left:3px solid #4a9a8a;border-radius:7px;padding:10px 13px}
 .raid-intro b{color:#bfe6db}
-.raid-list{display:flex;flex-direction:column;gap:12px}
-.raid-card{background:linear-gradient(180deg,#161c1b,#0e1312);border:1px solid var(--trim-d);border-radius:10px;padding:13px 15px;position:relative;overflow:hidden}
+.raid-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(430px,1fr));gap:12px;align-items:start}
+.raid-card{background:linear-gradient(180deg,#161c1b,#0e1312);border:1px solid var(--trim-d);border-radius:10px;padding:13px 15px 13px 17px;position:relative;overflow:hidden}
 .raid-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--raid-accent,#4a9a8a)}
 .raid-card.locked{opacity:.62;filter:saturate(.5)}
-.rc-head{display:flex;align-items:center;gap:11px;margin-bottom:7px}
-.rc-ic{font-size:34px;line-height:1;filter:drop-shadow(0 2px 4px rgba(0,0,0,.6))}
+/* 2-column body — description on the left, gauntlet/relics/action on the right.
+   Both flex to ~240px so a single wide card splits cleanly, and a narrow one stacks. */
+.rc-body{display:flex;flex-wrap:wrap;gap:8px 18px}
+.rc-left{flex:1 1 230px;min-width:0;display:flex;flex-direction:column}
+.rc-right{flex:1 1 220px;min-width:0;display:flex;flex-direction:column;gap:2px;justify-content:center}
+.rc-head{display:flex;align-items:center;gap:11px;margin-bottom:8px}
+.rc-ic{font-size:38px;line-height:1;filter:drop-shadow(0 2px 4px rgba(0,0,0,.6))}
 .rc-title{display:flex;flex-direction:column;flex:1;min-width:0}
 .rc-nm{font-family:'Cinzel',serif;font-size:18px;color:#e7efe9;letter-spacing:.4px}
 .rc-lv{font-size:11px;color:var(--muted);letter-spacing:.6px}
-.rc-clears{font-size:11px;color:#8fbfb2;font-family:'Courier New',monospace;white-space:nowrap}
-.rc-blurb{font-size:12px;line-height:1.5;color:var(--muted);font-style:italic;margin-bottom:9px}
-.rc-row{display:flex;align-items:center;gap:8px;margin:5px 0;flex-wrap:wrap}
-.rc-lbl{font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:#6d8079;min-width:58px}
+.rc-blurb{font-size:12px;line-height:1.5;color:var(--muted);font-style:italic}
+.rc-row{display:flex;align-items:center;gap:8px;margin-top:5px}
+.rc-lbl{font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:#6d8079;min-width:52px}
 .rc-dots{display:inline-flex;gap:5px;align-items:center}
 .rd-dot{width:13px;height:13px;border-radius:50%;background:#31403c;border:1px solid #5a736c;display:inline-flex;align-items:center;justify-content:center;font-size:9px;color:#0e1312;cursor:default}
 .rd-dot.mini{background:#c9a24a;border-color:#f0d59a;width:15px;height:15px}
 .rd-dot.boss{background:#c44a45;border-color:#ffb0aa;width:17px;height:17px;font-size:10px}
 .rc-gicons{display:inline-flex;gap:4px}
 .rd-gi{font-size:22px;line-height:1;cursor:default;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))}
-.rc-meta{font-size:10.5px;color:#6d8079;margin-left:auto}
-.rc-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;padding-top:9px;border-top:1px solid var(--trim-d)}
-.rc-best{font-size:12px;color:#a9c4bc;font-family:'Courier New',monospace}
+.rc-note{font-size:10px;color:#6d8079;margin:1px 0 3px 60px}
+.rc-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:8px;padding-top:9px;border-top:1px solid var(--trim-d)}
+.rc-best{font-size:11.5px;color:#a9c4bc;font-family:'Courier New',monospace;line-height:1.35}
 .raid-enter{background:linear-gradient(180deg,#2c4a44,#183029);color:#dff2ec;border:1px solid #4a9a8a;border-radius:6px;padding:8px 16px;font-family:'Cinzel',serif;font-size:14px;letter-spacing:.6px;cursor:pointer;white-space:nowrap;transition:filter .12s}
 .raid-enter:hover:not(:disabled){filter:brightness(1.22)}
 .raid-enter:disabled{opacity:.5;cursor:default}
 .raid-enter.locked{background:#20201c;border-color:#4a4438;color:#8a8270}
-/* Result box */
-.raid-result{border-radius:9px;padding:11px 14px;font-size:12.5px}
+/* Result box — horizontal: big rank letter, then a 2-line body (title/time + loot). */
+.raid-result{border-radius:9px;padding:10px 14px;font-size:12.5px}
 .raid-result.fail{background:linear-gradient(180deg,#241416,#180d0e);border:1px solid #5a2c2c;color:#e0b0aa}
-.raid-result.win{background:linear-gradient(180deg,#1c2320,#12100a);border:1px solid var(--rr-col,#ffe27a);box-shadow:inset 0 0 22px rgba(255,226,122,.07)}
-.rr-top{display:flex;align-items:center;gap:11px;margin-bottom:8px}
-.rr-rank{font-family:'Cinzel',serif;font-size:30px;font-weight:700;color:var(--rr-col,#ffe27a);line-height:1;text-shadow:0 0 12px rgba(255,226,122,.4);min-width:34px;text-align:center}
-.rr-h{font-family:'Cinzel',serif;font-size:16px;color:#eef2ea;flex:1}
-.rr-time{font-family:'Courier New',monospace;font-size:14px;color:#bcd0c8}
-.rr-loot{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:5px}
+.raid-result.win{display:flex;align-items:center;gap:14px;background:linear-gradient(180deg,#1c2320,#12100a);border:1px solid var(--rr-col,#ffe27a);box-shadow:inset 0 0 22px rgba(255,226,122,.07)}
+.rr-rank{font-family:'Cinzel',serif;font-size:34px;font-weight:700;color:var(--rr-col,#ffe27a);line-height:1;text-shadow:0 0 12px rgba(255,226,122,.4);min-width:36px;text-align:center;flex:none}
+.rr-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.rr-line{display:flex;align-items:baseline;gap:10px}
+.rr-h{font-family:'Cinzel',serif;font-size:15px;color:#eef2ea;flex:1;min-width:0}
+.rr-time{font-family:'Courier New',monospace;font-size:13px;color:#bcd0c8}
+.rr-loot{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
 .rr-gold{color:#fbd24e;font-weight:700;font-family:'Courier New',monospace}
-.rr-mat{font-size:22px;line-height:1;position:relative;display:inline-flex;align-items:flex-end}
+.rr-mat{font-size:21px;line-height:1;position:relative;display:inline-flex;align-items:flex-end}
 .rr-mat i{font-style:normal;font-size:11px;color:#cfe0d8;margin-left:1px}
-.rr-gear{margin-top:5px;font-size:13px;color:#ffe27a;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.rr-gear{font-size:12.5px;color:#ffe27a;display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap}
 .rr-gear span{display:inline-flex;align-items:center;gap:3px}
-.rr-nogear{margin-top:4px;font-size:11.5px;color:#7d8f88;font-style:italic}
+.rr-nogear{font-size:11.5px;color:#7d8f88;font-style:italic}
 /* Active-run progress strip */
 .raid-progress{background:linear-gradient(180deg,#1a2422,#0e1614);border:1px solid var(--raid-accent,#4a9a8a);border-radius:9px;padding:9px 13px;margin-bottom:10px;box-shadow:inset 0 0 18px rgba(74,154,138,.09)}
 .rp-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
@@ -2554,6 +2559,19 @@ header h1 .flame{color:var(--ember)}
 .rp-dot.mini.cur,.rp-dot.mini.todo{border-color:#c9a24a}
 .rp-dot.boss.cur,.rp-dot.boss.todo{border-color:#c44a45}
 .rp-warn{font-size:11px;color:#d9a86a;letter-spacing:.3px}
+/* Raid entries inside the Monster Log */
+.mlog-raid-tab{--zone-accent:#4a9a8a}
+.mlog-raid-tab .mlz-nm{color:#9fd8ca}
+.mlog-raid-tab.on .mlz-nm{color:#c8f4e8}
+.mlog-raidfx{display:flex;align-items:flex-start;gap:8px;margin:8px 0 2px;padding:8px 10px;background:rgba(201,162,74,.1);border:1px solid #7a5f2a;border-radius:7px;font-size:12px;color:#e6d3a4;line-height:1.45}
+.mlog-raidfx .mrfx-ic{color:#f0d59a;font-size:14px;line-height:1.2}
+.mlog-raidfx b{color:#f6e3b4}
+.mlog-raidnote{margin:8px 0 4px;padding:8px 11px;background:linear-gradient(180deg,#171f1e,#101615);border:1px solid var(--trim-d);border-left:3px solid #4a9a8a;border-radius:7px;font-size:11.5px;line-height:1.5;color:var(--muted)}
+.mlog-raidnote b{color:#bfe6db}
+.mlog-subhead{font-size:10px;font-variant:normal;letter-spacing:0;color:#6d8079;text-transform:none;font-weight:normal}
+.mlog-tierrow{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.mlog-tierchip{display:inline-flex;flex-direction:column;align-items:center;gap:1px;min-width:52px;padding:5px 8px;background:var(--raised-s);border:1px solid var(--tc,#888);border-radius:6px;font-family:'Cinzel',serif;font-size:16px;font-weight:700;color:var(--tc,#ccc);cursor:default;line-height:1}
+.mlog-tierchip i{font-style:normal;font-family:'Courier New',monospace;font-size:9.5px;color:var(--muted);letter-spacing:0}
 /* ════════ [CSS-32 END] RAIDS ══════════════════════════════════════════════════════ */
 </style>
 </head>
@@ -2575,7 +2593,7 @@ header h1 .flame{color:var(--ember)}
   <div class="mm-btns">
     <button class="mm-btn mm-primary" id="mmPlay">▶ Play</button>
   </div>
-  <div class="mm-ver">v1.0.66</div>
+  <div class="mm-ver">v1.0.67</div>
 </div>
 
 <!-- ===== CHARACTER SELECT (added) ===== -->
@@ -10360,8 +10378,18 @@ function normalizeState(){
     if(!state.monDrops[k]||typeof state.monDrops[k]!=='object'||Array.isArray(state.monDrops[k])){ state.monDrops[k]={}; continue; }
     for(const it in state.monDrops[k]){ if(typeof state.monDrops[k][it]!=='number'||state.monDrops[k][it]<0) state.monDrops[k][it]=0; }
   }
-  if(typeof state.monLogZone!=='string'||!(typeof ZONES!=='undefined'&&ZONES.find(z=>z.id===state.monLogZone))) state.monLogZone='rat_warrens';
-  if(typeof state.monLogSel!=='string'||!(typeof MONSTERS!=='undefined'&&MONSTERS.find(m=>m.id===state.monLogSel))) state.monLogSel='rat';
+  // monLogZone accepts a normal zone id OR a raid id (raids appear as Log tabs, 1.0.66).
+  {
+    const _zOk=(typeof ZONES!=='undefined'&&ZONES.find(z=>z.id===state.monLogZone));
+    const _rOk=(typeof RAID_BY_ID!=='undefined'&&RAID_BY_ID[state.monLogZone]);
+    if(typeof state.monLogZone!=='string'||(!_zOk&&!_rOk)) state.monLogZone='rat_warrens';
+  }
+  // monLogSel accepts a normal monster id OR a raid stage id.
+  {
+    const _mOk=(typeof MONSTERS!=='undefined'&&MONSTERS.find(m=>m.id===state.monLogSel));
+    const _rmOk=(typeof RAID_MON_BY_ID!=='undefined'&&RAID_MON_BY_ID[state.monLogSel]);
+    if(typeof state.monLogSel!=='string'||(!_mOk&&!_rmOk)) state.monLogSel='rat';
+  }
   // Pets (1.0.70) — ensure container exists and entries are well-formed.
   if(!state.pets||typeof state.pets!=='object'||Array.isArray(state.pets)) state.pets={};
   for(const pid in state.pets){
@@ -14826,16 +14854,10 @@ function _fmtMonChance(c){
 function buildMonLogHTML(){
   // Resolve current selection — fall back if state points at a stale id.
   let zid = state.monLogZone || 'rat_warrens';
-  if(!ZONES.find(z=>z.id===zid)) zid='rat_warrens';
-  const zoneMons = monstersInZone(zid);
-  let selId = state.monLogSel || (zoneMons[0]&&zoneMons[0].id);
-  // If the saved selection isn't in the current zone (e.g. zone switched), pick first.
-  if(!zoneMons.find(m=>m.id===selId)) selId = zoneMons[0]?zoneMons[0].id:'rat';
-  const sel = MONSTERS.find(m=>m.id===selId) || MONSTERS[0];
-  const selZone = getZone(sel.zone);
-  const bossLocked = sel.boss && !bossUnlocked(sel);
+  const isRaid = !!(typeof RAID_BY_ID!=='undefined' && RAID_BY_ID[zid]);
+  if(!isRaid && !ZONES.find(z=>z.id===zid)) zid='rat_warrens';
 
-  // Zone tabs (top strip) — locked zones are visible but disabled.
+  // Zone tabs (top strip) — normal zones, then raid entries. Locked = disabled.
   const zoneTabs = ZONES.map(z=>{
     const unlocked = zoneUnlocked(z);
     const onZ = z.id===zid;
@@ -14843,7 +14865,30 @@ function buildMonLogHTML(){
       <span class="mlz-ic">${iconHTML(z.id)}</span>
       <span class="mlz-nm">${z.name}</span>
     </button>`;
-  }).join('');
+  }).join('') + ((typeof RAIDS!=='undefined')?RAIDS.map(r=>{
+    const unlocked = raidUnlocked(r);
+    const onZ = r.id===zid;
+    return `<button class="mlog-zone-tab mlog-raid-tab${onZ?' on':''}${unlocked?'':' locked'}" data-mlog-zone="${r.id}" ${unlocked?'':'disabled'} style="--zone-accent:${r.accent}">
+      <span class="mlz-ic">${iconHTML(r.icon)}</span>
+      <span class="mlz-nm">${r.name}</span>
+    </button>`;
+  }).join(''):'');
+
+  // Raid entries use a dedicated body (raid-wide clear loot, not per-monster drops).
+  if(isRaid){
+    return `<div class="mlog-wrap">
+      <div class="mlog-zonetabs">${zoneTabs}</div>
+      ${buildRaidLogBody(RAID_BY_ID[zid])}
+    </div>`;
+  }
+
+  const zoneMons = monstersInZone(zid);
+  let selId = state.monLogSel || (zoneMons[0]&&zoneMons[0].id);
+  // If the saved selection isn't in the current zone (e.g. zone switched), pick first.
+  if(!zoneMons.find(m=>m.id===selId)) selId = zoneMons[0]?zoneMons[0].id:'rat';
+  const sel = MONSTERS.find(m=>m.id===selId) || MONSTERS[0];
+  const selZone = getZone(sel.zone);
+  const bossLocked = sel.boss && !bossUnlocked(sel);
 
   // Left monster list — kill count badge per row. Boss tiles get a gold accent.
   const monRows = zoneMons.map(m=>{
@@ -14940,6 +14985,103 @@ function buildMonLogHTML(){
         <div class="mlog-drops">${dropList}</div>
         ${petBlock}
       </div>
+    </div>
+  </div>`;
+}
+
+/* Monster-Log body for a RAID (1.0.66). Left = the gauntlet's stages (selectable
+   for stats), right = selected stage stats + the raid-WIDE clear loot: rating
+   tiers, relic gear with chance ranges (D→S), and the material pool. Reuses the
+   .mlog-* drop rows + tooltip wiring (data-mldrop/data-disc) so hovers behave
+   exactly like normal monster drops. */
+function buildRaidLogBody(raid){
+  const dm=charDropMult();
+  const tiers=raid.ratingTiers;
+  const maxMult=tiers[0].mult, minMult=tiers[tiers.length-1].mult;   // S best, D worst
+  // Selected stage — default to stage 1 if the saved selection isn't in this raid.
+  let selId=state.monLogSel;
+  if(!raid.stages.find(s=>s.id===selId)) selId=raid.stages[0].id;
+  const sel=raid.stages.find(s=>s.id===selId)||raid.stages[0];
+  const idx=raid.stages.indexOf(sel);
+
+  const stageRows=raid.stages.map((s,i)=>{
+    const kills=(state.monKills&&state.monKills[s.id])||0;
+    const isSel=s.id===selId;
+    const role=s.raidBoss?'Final Boss':(s.miniBoss?'Mini-Boss':'Stage '+(i+1));
+    return `<button class="mlog-mon${isSel?' on':''}${s.raidBoss?' boss':''}${kills>0?' seen':''}" data-mlog-mon="${s.id}">
+      <span class="mlm-ic">${iconHTML(s.id)}</span>
+      <span class="mlm-nm">${s.name}<span class="mlm-meta">${role} · Lv ${s.lvl}</span></span>
+      <span class="mlm-kc${kills>0?'':' zero'}">${kills>0?kills.toLocaleString():'—'}</span>
+    </button>`;
+  }).join('');
+
+  const sKills=(state.monKills&&state.monKills[sel.id])||0;
+  const headSub=`${sel.raidBoss?'Final Boss':(sel.miniBoss?'Mini-Boss':'Stage '+(idx+1)+'/'+raid.stages.length)} · Lv ${sel.lvl} · ${raid.name}`;
+  const _wIco=t=>iconHTML('bronze_'+(t==='slash'?'sword':t==='stab'?'dagger':'hammer'));
+  const dmgTags=(sel.weakTo||sel.resistTo)?`<div class="mlog-dmgtype">
+      ${sel.weakTo?`<span class="mldt-tag weak"><span class="mldt-icon">${_wIco(sel.weakTo)}</span><span class="mldt-lbl">Weak to ${sel.weakTo}</span><span class="mldt-val">+15% dmg</span></span>`:''}
+      ${sel.resistTo?`<span class="mldt-tag resist"><span class="mldt-icon">${_wIco(sel.resistTo)}</span><span class="mldt-lbl">Resists ${sel.resistTo}</span><span class="mldt-val">−15% dmg</span></span>`:''}
+    </div>`:'';
+  const curse=sel.raidfx?`<div class="mlog-raidfx"><span class="mrfx-ic">✦</span><div><b>${sel.raidfx.name}</b> — ${sel.raidfx.desc}</div></div>`:'';
+
+  const tierChips=tiers.map(t=>{
+    const bound=(t.maxMs===Infinity)?'any time':'≤ '+_fmtRaidTime(t.maxMs);
+    return `<span class="mlog-tierchip" style="--tc:${t.col}" data-tip="${bound} · ${t.mats} materials · ${Math.round(t.mult*100)}% relic odds · +${t.gold}g">${t.key}<i>${(t.maxMs===Infinity)?'slow':'≤'+_fmtRaidTime(t.maxMs)}</i></span>`;
+  }).join('');
+
+  const pctf=x=>{ x=Math.min(0.6,x); return (x*100).toFixed(x<0.1?1:0)+'%'; };
+  const gearRows=raid.gearDrops.map(g=>{
+    const it=ITEMS[g.id];
+    const lo=g.chance*minMult*dm, hi=g.chance*maxMult*dm;
+    const disc=!!(state.discovered&&state.discovered[g.id]);
+    const owned=disc||(state.items&&state.items[g.id]>0)||(typeof anyLoadoutHas==='function'&&anyLoadoutHas(g.id));
+    return `<div class="mlog-drop${owned?' got':''}" data-mldrop="${g.id}" data-disc="${disc?1:0}" style="cursor:help">
+      <span class="mld-ic">${iconHTML(g.id)}</span>
+      <span class="mld-nm">${it?it.name:g.id}${g.id==='grave_cleaver'?' <span class="mld-qty">2H</span>':''}</span>
+      <span class="mld-rate">${pctf(lo)}–${pctf(hi)}</span>
+      <span class="mld-cnt">${owned?'✓':'—'}</span>
+      <span class="mld-mark">${owned?'✓':'✗'}</span>
+    </div>`;
+  }).join('');
+
+  const matRows=(raid.matPool||[]).map(m=>{
+    const it=ITEMS[m.id];
+    const disc=!!(state.discovered&&state.discovered[m.id]);
+    const owned=disc||(state.items&&state.items[m.id]>0);
+    const q=Array.isArray(m.qty)?`×${m.qty[0]}–${m.qty[1]}`:'';
+    return `<div class="mlog-drop${owned?' got':''}" data-mldrop="${m.id}" data-disc="${disc?1:0}" style="cursor:help">
+      <span class="mld-ic">${iconHTML(m.id)}</span>
+      <span class="mld-nm">${it?it.name:m.id}${q?` <span class="mld-qty">${q}</span>`:''}</span>
+      <span class="mld-rate">pool</span>
+      <span class="mld-cnt">${owned?'✓':'—'}</span>
+      <span class="mld-mark">${owned?'✓':'✗'}</span>
+    </div>`;
+  }).join('');
+
+  return `<div class="mlog-cols">
+    <div class="mlog-monlist">${stageRows}</div>
+    <div class="mlog-details">
+      <div class="mlog-head${sel.raidBoss?' boss':''}">
+        <span class="mlh-face">${iconHTML(sel.id)}</span>
+        <div class="mlh-title">${sel.name}<span class="mlh-sub">${headSub}</span></div>
+      </div>
+      <div class="mlog-stats">
+        <div class="mls-row"><span>HP</span><b>${sel.hp}</b></div>
+        <div class="mls-row"><span>Atk</span><b>${sel.atk}</b></div>
+        <div class="mls-row"><span>Str</span><b>${sel.str}</b></div>
+        <div class="mls-row"><span>Def</span><b>${sel.def}</b></div>
+        <div class="mls-row wide"><span>Swing</span><b>${(sel.swingMs/1000).toFixed(2)}s</b></div>
+      </div>
+      ${dmgTags}
+      ${curse}
+      <div class="mlog-kills"><span class="mlk-label">Times Slain</span><span class="mlk-value">${sKills.toLocaleString()}</span></div>
+      <div class="mlog-raidnote">🗝 Raid spoils drop <b>only on a full clear</b> — none of these stages drop loot alone. Faster clears raise the rating: more materials and better relic odds.</div>
+      <div class="mlog-section-head">Clear Rating${dm!==1?` <span class="mlog-dropmod" style="background:${charTypeDef().col}">${charTypeDef().name} rates</span>`:''}</div>
+      <div class="mlog-tierrow">${tierChips}</div>
+      <div class="mlog-section-head">Relic Gear <span class="mlog-subhead">chance per clear · slowest (D) → fastest (S)</span></div>
+      <div class="mlog-drops">${gearRows}</div>
+      <div class="mlog-section-head">Materials <span class="mlog-subhead">${minMult===maxMult?tiers[0].mats:tiers[tiers.length-1].mats+'–'+tiers[0].mats} random picks per clear</span></div>
+      <div class="mlog-drops">${matRows}</div>
     </div>
   </div>`;
 }
@@ -20359,21 +20501,30 @@ function buildRaidsPanelHTML(){
     const dots=r.stages.map(s=>`<span class="rd-dot${s.raidBoss?' boss':s.miniBoss?' mini':''}" data-tip="${esc(s.name)} · Lv ${s.lvl} · ${s.hp} HP${s.raidfx?' · '+esc(s.raidfx.name):''}">${s.raidBoss?'★':s.miniBoss?'◆':''}</span>`).join('');
     const gearIcons=r.gearDrops.map(g=>`<span class="rd-gi" data-tip="${esc(ITEMS[g.id]?ITEMS[g.id].name:g.id)}${g.id==='grave_cleaver'?' — super rare 2H':' — rare'}">${iconHTML(g.id)}</span>`).join('');
     const tierCol=best?((r.ratingTiers.find(t=>t.key===best.rating)||{}).col||'#ccc'):'#ccc';
-    const bestLine=best?`Best <b style="color:${tierCol}">${best.rating}</b> · ${_fmtRaidTime(best.timeMs)}`:'Not yet cleared';
+    const bestLine=best
+      ? `Best <b style="color:${tierCol}">${best.rating}</b> · ${_fmtRaidTime(best.timeMs)}${clears?` · ${clears}× cleared`:''}`
+      : 'Not yet cleared';
     return `<div class="raid-card${unlocked?'':' locked'}" style="--raid-accent:${r.accent}">
-      <div class="rc-head">
-        <span class="rc-ic">${iconHTML(r.icon)}</span>
-        <div class="rc-title"><span class="rc-nm">${r.name}</span><span class="rc-lv">Combat Lv ${r.unlockLvl}+</span></div>
-        <span class="rc-clears">${clears?clears+'× cleared':''}</span>
-      </div>
-      <div class="rc-blurb">${r.blurb}</div>
-      <div class="rc-row"><span class="rc-lbl">Gauntlet</span><span class="rc-dots">${dots}</span><span class="rc-meta">${n} stages · ${nMini} mini-boss + final</span></div>
-      <div class="rc-row"><span class="rc-lbl">Relics</span><span class="rc-gicons">${gearIcons}</span><span class="rc-meta">rare drops · faster clear = better odds</span></div>
-      <div class="rc-foot">
-        <span class="rc-best">${bestLine}</span>
-        ${unlocked
-          ? `<button class="raid-enter" data-raid="${r.id}"${(active||inRaid)?' disabled':''}>${inRaid?'In progress…':'⚔ Enter Raid'}</button>`
-          : `<button class="raid-enter locked" disabled>🔒 Combat Lv ${r.unlockLvl}</button>`}
+      <div class="rc-body">
+        <div class="rc-left">
+          <div class="rc-head">
+            <span class="rc-ic">${iconHTML(r.icon)}</span>
+            <div class="rc-title"><span class="rc-nm">${r.name}</span><span class="rc-lv">Combat Lv ${r.unlockLvl}+</span></div>
+          </div>
+          <div class="rc-blurb">${r.blurb}</div>
+        </div>
+        <div class="rc-right">
+          <div class="rc-row"><span class="rc-lbl">Gauntlet</span><span class="rc-dots">${dots}</span></div>
+          <div class="rc-note">${n} stages · ${nMini} mini-boss + final</div>
+          <div class="rc-row"><span class="rc-lbl">Relics</span><span class="rc-gicons">${gearIcons}</span></div>
+          <div class="rc-note">rare drops · faster clear = better odds</div>
+          <div class="rc-foot">
+            <span class="rc-best">${bestLine}</span>
+            ${unlocked
+              ? `<button class="raid-enter" data-raid="${r.id}"${(active||inRaid)?' disabled':''}>${inRaid?'In progress…':'⚔ Enter'}</button>`
+              : `<button class="raid-enter locked" disabled>🔒 Lv ${r.unlockLvl}</button>`}
+          </div>
+        </div>
       </div>
     </div>`;
   }).join('');
@@ -20386,17 +20537,19 @@ function buildRaidsPanelHTML(){
       const tier=raid.ratingTiers.find(t=>t.key===R.rating)||{};
       const mats=R.mats.map(m=>`<span class="rr-mat" data-tip="${esc(ITEMS[m.id]?ITEMS[m.id].name:m.id)}">${iconHTML(m.id)}${m.qty>1?'<i>×'+m.qty+'</i>':''}</span>`).join('');
       const gear=R.gear.length
-        ? `<div class="rr-gear">★ Relic${R.gear.length>1?'s':''}: ${R.gear.map(id=>`<span data-tip="${esc(ITEMS[id]?ITEMS[id].name:id)}">${iconHTML(id)} ${ITEMS[id]?ITEMS[id].name:id}</span>`).join(' · ')}</div>`
-        : `<div class="rr-nogear">No relic gear this run — push for a faster rank.</div>`;
+        ? `<span class="rr-gear">★ ${R.gear.map(id=>`<span data-tip="${esc(ITEMS[id]?ITEMS[id].name:id)}">${iconHTML(id)} ${ITEMS[id]?ITEMS[id].name:id}</span>`).join(' · ')}</span>`
+        : `<span class="rr-nogear">no relic this run</span>`;
       resultBox=`<div class="raid-result win" style="--rr-col:${tier.col||'#ffe27a'}">
-        <div class="rr-top"><span class="rr-rank">${R.rating}</span><span class="rr-h">${raid.name} cleared</span><span class="rr-time">${_fmtRaidTime(R.timeMs)}</span></div>
-        <div class="rr-loot"><span class="rr-gold">+${R.gold}g</span>${mats}</div>
-        ${gear}
+        <span class="rr-rank">${R.rating}</span>
+        <div class="rr-body">
+          <div class="rr-line"><span class="rr-h">${raid.name} cleared</span><span class="rr-time">${_fmtRaidTime(R.timeMs)}</span></div>
+          <div class="rr-loot"><span class="rr-gold">+${R.gold}g</span>${mats}${gear}</div>
+        </div>
       </div>`;
     }
   }
   return `<div class="raid-panel">
-    <div class="raid-intro">🗝 <b>Raids</b> — a no-retreat gauntlet fought on <b>one health bar</b>. Food &amp; auto-eat still work, but there's no full heal between stages, and <b>no loot unless you clear the final boss</b>. Mini-bosses and the boss lay a mild curse on you. Clear faster for a higher rating — and better relic odds.</div>
+    <div class="raid-intro">🗝 <b>Raids</b> — a no-retreat gauntlet fought on <b>one health bar</b>. Food &amp; auto-eat still work, but there's no full heal between stages, and <b>no loot unless you clear the final boss</b>. Mini-bosses and the boss lay a mild curse on you. Clear faster for a higher rating — and better relic odds. See the <b>Log</b> tab for full drop rates.</div>
     ${resultBox}
     <div class="raid-list">${cards}</div>
   </div>`;
