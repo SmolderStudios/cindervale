@@ -2511,7 +2511,7 @@ header h1 .flame{color:var(--ember)}
   <div class="mm-btns">
     <button class="mm-btn mm-primary" id="mmPlay">▶ Play</button>
   </div>
-  <div class="mm-ver">v1.0.63</div>
+  <div class="mm-ver">v1.0.64</div>
 </div>
 
 <!-- ===== CHARACTER SELECT (added) ===== -->
@@ -19003,7 +19003,7 @@ function combatTick(){
       // weakTo/resistTo. ±15% multiplier; applied BEFORE crit so a critical
       // landed on a weak foe still doubles the post-modifier damage. Skipped
       // if the player has no weapon equipped (bare hands = no type bonus).
-      const _wepId=(state.equipped&&state.equipped.weapon)||'';
+      const _wepId=(typeof eqCombatWeapon==='function')?eqCombatWeapon():((state.combatEquipped&&state.combatEquipped.weapon)||'');
       const _wepType=(_wepId&&ITEMS[_wepId]&&ITEMS[_wepId].dmgType)||null;
       if(_wepType){
         if(mon.weakTo===_wepType){ youDmg=Math.max(1, Math.round(youDmg*1.15)); }
@@ -19033,7 +19033,7 @@ function combatTick(){
       // ── Weapon on-hit effects (1.0.60) — poison / stun procs ─────────────
       // The equipped weapon may carry a `wfx` proc. Poison stacks a bleed;
       // stun delays the foe's next swing. Both roll only on a landed hit.
-      const _fxId=(state.equipped&&state.equipped.weapon)||'';
+      const _fxId=(typeof eqCombatWeapon==='function')?eqCombatWeapon():((state.combatEquipped&&state.combatEquipped.weapon)||'');
       const _wfx=_fxId&&ITEMS[_fxId]&&ITEMS[_fxId].wfx;
       if(_wfx){
         if(!combat.foeStatus) combat.foeStatus={};
@@ -19210,7 +19210,7 @@ function combatTick(){
     // Only on a landed hit; clamped so it never lands the kill (kills stay in
     // the player-swing path).
     if(foeDmg>0){
-      const _shId=(state.equipped&&state.equipped.shield)||'';
+      const _shId=(typeof eqCombatShield==='function')?eqCombatShield():((state.combatEquipped&&state.combatEquipped.shield)||'');
       const _shfx=_shId&&ITEMS[_shId]&&ITEMS[_shId].wfx;
       if(_shfx&&_shfx.reflect&&Math.random()<_shfx.reflect.chance&&combat.foeHp>REFLECT_CLAMP_MIN){
         const _rfl=Math.min(Math.max(1,Math.round(foeDmg*_shfx.reflect.pct)), combat.foeHp-REFLECT_CLAMP_MIN);
