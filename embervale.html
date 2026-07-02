@@ -2443,7 +2443,7 @@ header h1 .flame{color:var(--ember)}
   <div class="mm-btns">
     <button class="mm-btn mm-primary" id="mmPlay">▶ Play</button>
   </div>
-  <div class="mm-ver">v1.0.53</div>
+  <div class="mm-ver">v1.0.54</div>
 </div>
 
 <!-- ===== CHARACTER SELECT (added) ===== -->
@@ -6153,8 +6153,10 @@ function showGearTip(html,x,y){
   var W=window.innerWidth/z,H=window.innerHeight/z;
   var tw=el.offsetWidth||240,th=el.offsetHeight||100;
   var cx=x/z,cy=y/z;
+  // Always to the RIGHT of the cursor — clamp on-screen near the edge instead
+  // of flipping to the left, so tooltips never switch sides.
   var tx=cx+14,ty=cy-10;
-  if(tx+tw>W-10) tx=cx-tw-14;
+  if(tx+tw>W-10) tx=Math.max(10, W-tw-10);
   if(ty+th>H-10) ty=H-th-10;
   if(ty<10) ty=10;
   el.style.left=tx+'px'; el.style.top=ty+'px';
@@ -8481,15 +8483,18 @@ function buildFarmerPanel(){
 
   // ── How Farmers Work guide (collapsible) ──
   var guideWrap=document.createElement('div');
-  guideWrap.style.cssText='margin-bottom:7px';
+  guideWrap.style.cssText='margin-bottom:7px;position:relative';
   var guideToggle=document.createElement('button');
   guideToggle.style.cssText='background:none;border:none;color:var(--muted);font-size:12px;font-family:inherit;'
     +'cursor:pointer;padding:0;letter-spacing:0.5px;display:flex;align-items:center;gap:4px';
   guideToggle.innerHTML='<span id="farmerGuideArrow">'+(_farmerGuideOpen?'▼':'▶')+'</span> How hired farmers work';
   var guideBody=document.createElement('div');
   guideBody.id='farmerGuideBody';
-  guideBody.style.cssText='display:'+(_farmerGuideOpen?'block':'none')+';margin-top:6px;font-size:12px;color:var(--muted);line-height:1.6;'
-    +'background:#1a0e07;border:1px solid var(--trim-d);border-radius:5px;padding:8px 10px';
+  // Floating overlay (position:absolute) so opening it pops OVER the tier cards
+  // instead of pushing the whole panel down.
+  guideBody.style.cssText='display:'+(_farmerGuideOpen?'block':'none')+';position:absolute;left:0;top:100%;margin-top:4px;'
+    +'z-index:60;width:320px;max-width:calc(100vw - 40px);font-size:12px;color:var(--muted);line-height:1.6;'
+    +'background:#1a0e07;border:1px solid var(--trim-d);border-radius:5px;padding:9px 11px;box-shadow:0 8px 22px #000c';
   guideBody.innerHTML=
     'Farmers work your patches <b style="color:var(--text)">automatically while offline</b> and between your actions.<br><br>'
     +'<b style="color:var(--green)">Apprentice</b> — harvests ready patches. You still plant manually.<br>'
@@ -17057,8 +17062,11 @@ function positionTooltip(tt, x, y){
   const W=window.innerWidth/z, H=window.innerHeight/z;
   const tw=tt.offsetWidth||260, th=tt.offsetHeight||120;
   const cx=x/z, cy=y/z;
+  // Always sit to the RIGHT of the cursor. Near the right edge we clamp the
+  // tooltip onto the screen rather than flipping it to the left of the cursor,
+  // so hovers never jump sides depending on mouse position.
   let tx=cx+14, ty=cy-10;
-  if(tx+tw>W-10) tx=cx-tw-14;
+  if(tx+tw>W-10) tx=Math.max(10, W-tw-10);
   if(ty+th>H-10) ty=H-th-10;
   if(ty<10) ty=10;
   tt.style.left=tx+'px'; tt.style.top=ty+'px';
@@ -20278,11 +20286,12 @@ function renderCombat(){
         cmastTip.classList.add('on');
       });
       g.addEventListener('mousemove',(e)=>{
-        // Position tip near cursor — right by default, flip left if near right edge.
+        // Always to the RIGHT of the cursor — clamp on-screen near the edge
+        // rather than flipping left, so the tip never switches sides.
         const vw=window.innerWidth, vh=window.innerHeight;
         const tw=cmastTip.offsetWidth||220, th=cmastTip.offsetHeight||120;
         let lx=e.clientX+14, ly=e.clientY+14;
-        if(lx+tw>vw-8) lx=e.clientX-tw-14;
+        if(lx+tw>vw-8) lx=Math.max(8, vw-tw-8);
         if(ly+th>vh-8) ly=e.clientY-th-14;
         if(lx<8) lx=8;
         if(ly<8) ly=8;
