@@ -541,9 +541,10 @@ header h1 .flame{color:var(--ember)}
 .cmb-slot[data-tip]:hover::after{min-width:0;max-width:220px;white-space:nowrap;font-size:13px;padding:5px 9px}
 /* Status chip tooltips — compact, sit right under the small chip (1.0.60) */
 .st-ic[data-tip]{cursor:help}
-.st-ic[data-tip]:hover::after,
 .fm-icon[data-tip]:hover::after{min-width:0;max-width:260px;white-space:pre;font-size:13px;padding:5px 9px}
-.cmb-fighter.foe .st-ic[data-tip]:hover::after{left:auto;right:0}
+/* Buff/debuff chip tips open to the RIGHT of the chip so they never run off the
+   left screen edge (the combat cards sit near the left margin). (1.0.65) */
+.st-ic[data-tip]:hover::after{left:calc(100% + 8px);right:auto;top:50%;bottom:auto;transform:translateY(-50%);min-width:0;max-width:240px;white-space:pre;font-size:13px;padding:5px 9px}
 /* Right-edge slots (auto-heal pill at the end of the hotbar) anchor their tip
    to the right edge so it doesn't spill past the panel. */
 .cmb-slot.cmb-auto[data-tip]:hover::after{left:auto;right:0}
@@ -2511,7 +2512,7 @@ header h1 .flame{color:var(--ember)}
   <div class="mm-btns">
     <button class="mm-btn mm-primary" id="mmPlay">▶ Play</button>
   </div>
-  <div class="mm-ver">v1.0.64</div>
+  <div class="mm-ver">v1.0.65</div>
 </div>
 
 <!-- ===== CHARACTER SELECT (added) ===== -->
@@ -6340,15 +6341,15 @@ function wfxTipHTML(itemId){
   if(!it||!it.wfx) return '';
   var fx=it.wfx, parts=[];
   if(fx.poison)
-    parts.push('<span style="color:#8fd44a">☠ '+Math.round(POISON_CHANCE*100)+'% on hit to <b>poison</b></span> — stacking bleed (to ×'+POISON_MAX_STACKS+') that ticks damage and shreds the foe’s defence; falls off after '+(POISON_DUR_MS/1000)+'s without a fresh hit.');
+    parts.push('<span style="color:#8fd44a">☠ '+Math.round(POISON_CHANCE*100)+'% chance to poison on hit</span> <span style="color:var(--muted)">(stacks · lowers defence)</span>');
   if(fx.burn)
-    parts.push('<span style="color:#ff8a3a">🔥 '+Math.round(BURN_CHANCE*100)+'% on hit to <b>burn</b></span> — a hotter damage-over-time than poison; pure damage, no defence shred.');
+    parts.push('<span style="color:#ff8a3a">🔥 '+Math.round(BURN_CHANCE*100)+'% chance to burn foes on hit</span>');
   if(fx.stun){ var s=fx.stun;
-    parts.push('<span style="color:#ffd24a">💫 '+Math.round(s.chance*100)+'% on hit to <b>stun</b></span> — the foe skips its next '+s.dur+'s of attacks.'); }
+    parts.push('<span style="color:#ffd24a">💫 '+Math.round(s.chance*100)+'% chance to stun on hit</span>'); }
   if(fx.reflect){ var r=fx.reflect;
-    parts.push('<span style="color:#e88">🛡️ '+Math.round(r.chance*100)+'% to <b>reflect</b></span> — bounces '+Math.round(r.pct*100)+'% of a landed blow back at the attacker.'); }
+    parts.push('<span style="color:#e88">🛡️ '+Math.round(r.chance*100)+'% chance to reflect '+Math.round(r.pct*100)+'% of damage taken</span>'); }
   if(!parts.length) return '';
-  return '<div style="font-size:12px;line-height:1.5;margin-top:6px;padding-top:6px;border-top:1px solid #3a2a18">'+parts.join('<br>')+'</div>';
+  return '<div style="font-size:12.5px;line-height:1.5;margin-top:6px;padding-top:6px;border-top:1px solid #3a2a18">'+parts.join('<br>')+'</div>';
 }
 
 /* Build a reusable enchant/gem block for gem-tier jewelry (ring/amulet/pendant/jewel).
@@ -11131,7 +11132,9 @@ const COMBAT_BASE_SWING_MS=2400;
 const COMBAT_MIN_SWING_MS=1200;
 function playerSwingMs(){
   const agi=levelFromXp((state&&state.xp&&state.xp.agility)||0);
-  const base=Math.max(COMBAT_MIN_SWING_MS, COMBAT_BASE_SWING_MS - agi*12);
+  // Agility trims swing time by 6ms/level (1.0.65 — halved from 12ms so agility
+  // has a gentler pull on combat pace).
+  const base=Math.max(COMBAT_MIN_SWING_MS, COMBAT_BASE_SWING_MS - agi*6);
   // Rogue class — 6% faster swings. Still floored so bars stay readable.
   return Math.max(COMBAT_MIN_SWING_MS, Math.round(base*classSwingMult()));
 }
