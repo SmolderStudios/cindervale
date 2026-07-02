@@ -2443,7 +2443,7 @@ header h1 .flame{color:var(--ember)}
   <div class="mm-btns">
     <button class="mm-btn mm-primary" id="mmPlay">▶ Play</button>
   </div>
-  <div class="mm-ver">v1.0.45</div>
+  <div class="mm-ver">v1.0.46</div>
 </div>
 
 <!-- ===== CHARACTER SELECT (added) ===== -->
@@ -3515,55 +3515,70 @@ const COMBAT_GEAR_STATS={
    Skilling bonus keys: speed, xpBoost, gpBoost, doubleYield.
    Combat  bonus keys: atkBoost, hpBoost, defBoost, critChance, lifesteal. */
 const ENCHANTS={
-  // ── Tier 1 · Sapphire ── global ladder
-  swift_i:     {name:'Swift I',       tier:1, gem:'sapphire', cat:'global', bonus:{speed:0.03},          desc:'+3% speed to all skills'},
-  fortune_i:   {name:'Fortune I',     tier:1, gem:'sapphire', cat:'global', bonus:{gpBoost:0.04},         desc:'+4% sell value all items'},
-  scholar_i:   {name:'Scholar I',     tier:1, gem:'sapphire', cat:'global', bonus:{xpBoost:0.04},         desc:'+4% XP all skills'},
+  // ── Tier 1 · Sapphire ──
+  swift_i:     {name:'Swift I',       tier:1, gem:'sapphire', cat:'global', bonus:{speed:0.03},           desc:'+3% action speed, all skills'},
+  fortune_i:   {name:'Fortune I',     tier:1, gem:'sapphire', cat:'global', bonus:{gpBoost:0.04},         desc:'+4% sell value, all items'},
+  scholar_i:   {name:'Scholar I',     tier:1, gem:'sapphire', cat:'global', bonus:{xpBoost:0.04},         desc:'+4% XP, all skills'},
+  squire_i:    {name:'Squire',        tier:1, gem:'sapphire', cat:'combat', bonus:{atkBoost:0.04,defBoost:0.04}, desc:'Combat: +4% Attack · +4% Defence'},
   // ── Tier 2 · Emerald ──
-  swift_ii:    {name:'Swift II',      tier:2, gem:'emerald',  cat:'global', bonus:{speed:0.06},          desc:'+6% speed to all skills'},
-  fortune_ii:  {name:'Fortune II',    tier:2, gem:'emerald',  cat:'global', bonus:{gpBoost:0.08},         desc:'+8% sell value all items'},
-  scholar_ii:  {name:'Scholar II',    tier:2, gem:'emerald',  cat:'global', bonus:{xpBoost:0.08},         desc:'+8% XP all skills'},
-  gatherer_ii: {name:'Gatherer II',   tier:2, gem:'emerald',  cat:'global', bonus:{doubleYield:0.05},     desc:'+5% chance double resource'},
+  swift_ii:    {name:'Swift II',      tier:2, gem:'emerald',  cat:'global', bonus:{speed:0.06},           desc:'+6% action speed, all skills'},
+  fortune_ii:  {name:'Fortune II',    tier:2, gem:'emerald',  cat:'global', bonus:{gpBoost:0.08},         desc:'+8% sell value, all items'},
+  scholar_ii:  {name:'Scholar II',    tier:2, gem:'emerald',  cat:'global', bonus:{xpBoost:0.08},         desc:'+8% XP, all skills'},
+  gatherer_ii: {name:'Gatherer II',   tier:2, gem:'emerald',  cat:'global', bonus:{doubleYield:0.05},     desc:'+5% chance to double resources'},
   // ── Tier 3 · Ruby ──
-  swift_iii:   {name:'Swift III',     tier:3, gem:'ruby',     cat:'global', bonus:{speed:0.10},          desc:'+10% speed to all skills'},
-  fortune_iii: {name:'Fortune III',   tier:3, gem:'ruby',     cat:'global', bonus:{gpBoost:0.14},         desc:'+14% sell value all items'},
-  scholar_iii: {name:'Scholar III',   tier:3, gem:'ruby',     cat:'global', bonus:{xpBoost:0.14},         desc:'+14% XP all skills'},
-  gatherer_iii:{name:'Gatherer III',  tier:3, gem:'ruby',     cat:'global', bonus:{doubleYield:0.10},     desc:'+10% chance double resource'},
+  swift_iii:   {name:'Swift III',     tier:3, gem:'ruby',     cat:'global', bonus:{speed:0.10},           desc:'+10% action speed, all skills'},
+  fortune_iii: {name:'Fortune III',   tier:3, gem:'ruby',     cat:'global', bonus:{gpBoost:0.14},         desc:'+14% sell value, all items'},
+  scholar_iii: {name:'Scholar III',   tier:3, gem:'ruby',     cat:'global', bonus:{xpBoost:0.14},         desc:'+14% XP, all skills'},
+  gatherer_iii:{name:'Gatherer III',  tier:3, gem:'ruby',     cat:'global', bonus:{doubleYield:0.10},     desc:'+10% chance to double resources'},
+  soldier_iii: {name:'Soldier',       tier:3, gem:'ruby',     cat:'combat', bonus:{atkBoost:0.08,hpBoost:0.05}, desc:'Combat: +8% Attack · +5% Max HP'},
   // ── Tier 4 · Diamond ──
-  swift_iv:    {name:'Swift IV',      tier:4, gem:'diamond',  cat:'global', bonus:{speed:0.15},          desc:'+15% speed to all skills'},
-  fortune_iv:  {name:'Fortune IV',    tier:4, gem:'diamond',  cat:'global', bonus:{gpBoost:0.22},         desc:'+22% sell value all items'},
-  scholar_iv:  {name:'Scholar IV',    tier:4, gem:'diamond',  cat:'global', bonus:{xpBoost:0.22},         desc:'+22% XP all skills'},
-  hoarder_iv:  {name:'Hoarder IV',    tier:4, gem:'diamond',  cat:'global', bonus:{doubleYield:0.16,gpBoost:0.08},desc:'+16% double + +8% sell'},
+  swift_iv:    {name:'Swift IV',      tier:4, gem:'diamond',  cat:'global', bonus:{speed:0.15},           desc:'+15% action speed, all skills'},
+  fortune_iv:  {name:'Fortune IV',    tier:4, gem:'diamond',  cat:'global', bonus:{gpBoost:0.22},         desc:'+22% sell value, all items'},
+  scholar_iv:  {name:'Scholar IV',    tier:4, gem:'diamond',  cat:'global', bonus:{xpBoost:0.22},         desc:'+22% XP, all skills'},
+  hoarder_iv:  {name:'Hoarder',       tier:4, gem:'diamond',  cat:'global', bonus:{doubleYield:0.16,gpBoost:0.08}, desc:'+16% double resources · +8% sell value'},
+  knight_iv:   {name:'Knight',        tier:4, gem:'diamond',  cat:'combat', bonus:{defBoost:0.12,hpBoost:0.08}, desc:'Combat: +12% Defence · +8% Max HP'},
 
-  // ── Tier 5 · Amethyst ── the SPECIALIST gem: global ladder + skill-UNIQUE enchants
-  swift_am:    {name:'Swift V',       tier:5, gem:'amethyst', cat:'global', bonus:{speed:0.18},          desc:'+18% speed to all skills'},
-  fortune_am:  {name:'Fortune V',     tier:5, gem:'amethyst', cat:'global', bonus:{gpBoost:0.27},         desc:'+27% sell value all items'},
-  scholar_am:  {name:'Scholar V',     tier:5, gem:'amethyst', cat:'global', bonus:{xpBoost:0.27},         desc:'+27% XP all skills'},
-  gatherer_am: {name:'Gatherer V',    tier:5, gem:'amethyst', cat:'global', bonus:{doubleYield:0.13},     desc:'+13% chance double resource'},
-  // skill-unique — strong single-skill speed + XP (only affect their own skill)
-  uq_wc:       {name:'Woodsong',      tier:5, gem:'amethyst', cat:'skill', skill:'woodcutting', bonus:{speed:0.25,xpBoost:0.20}, desc:'Woodcutting only: +25% speed, +20% XP'},
-  uq_mi:       {name:'Deepvein',      tier:5, gem:'amethyst', cat:'skill', skill:'mining',      bonus:{speed:0.25,xpBoost:0.20}, desc:'Mining only: +25% speed, +20% XP'},
-  uq_fi:       {name:'Tidecaller',    tier:5, gem:'amethyst', cat:'skill', skill:'fishing',     bonus:{speed:0.25,xpBoost:0.20}, desc:'Fishing only: +25% speed, +20% XP'},
-  uq_fo:       {name:'Wildward',      tier:5, gem:'amethyst', cat:'skill', skill:'foraging',    bonus:{speed:0.25,xpBoost:0.20}, desc:'Foraging only: +25% speed, +20% XP'},
+  // ── Tier 5 · Amethyst ── the SPECIALIST gem: global ladder + skill-focus enchants
+  swift_am:    {name:'Swift V',       tier:5, gem:'amethyst', cat:'global', bonus:{speed:0.18},           desc:'+18% action speed, all skills'},
+  fortune_am:  {name:'Fortune V',     tier:5, gem:'amethyst', cat:'global', bonus:{gpBoost:0.27},         desc:'+27% sell value, all items'},
+  scholar_am:  {name:'Scholar V',     tier:5, gem:'amethyst', cat:'global', bonus:{xpBoost:0.27},         desc:'+27% XP, all skills'},
+  gatherer_am: {name:'Gatherer V',    tier:5, gem:'amethyst', cat:'global', bonus:{doubleYield:0.18},     desc:'+18% chance to double resources'},
+  duelist_am:  {name:'Duelist',       tier:5, gem:'amethyst', cat:'combat', bonus:{atkBoost:0.12,critChance:0.05}, desc:'Combat: +12% Attack · +5% crit chance'},
+  // skill-focus — strong single-skill speed + XP (one enchant per skill; only affects its own skill)
+  uq_wc:       {name:'Woodsong',      tier:5, gem:'amethyst', cat:'skill', skill:'woodcutting', bonus:{speed:0.25,xpBoost:0.20}, desc:'Woodcutting only: +25% speed · +20% XP'},
+  uq_mi:       {name:'Deepvein',      tier:5, gem:'amethyst', cat:'skill', skill:'mining',      bonus:{speed:0.25,xpBoost:0.20}, desc:'Mining only: +25% speed · +20% XP'},
+  uq_fi:       {name:'Tidecaller',    tier:5, gem:'amethyst', cat:'skill', skill:'fishing',     bonus:{speed:0.25,xpBoost:0.20}, desc:'Fishing only: +25% speed · +20% XP'},
+  uq_fo:       {name:'Wildward',      tier:5, gem:'amethyst', cat:'skill', skill:'foraging',    bonus:{speed:0.25,xpBoost:0.20}, desc:'Foraging only: +25% speed · +20% XP'},
+  uq_sm:       {name:'Forgehymn',     tier:5, gem:'amethyst', cat:'skill', skill:'smithing',    bonus:{speed:0.25,xpBoost:0.20}, desc:'Smithing only: +25% speed · +20% XP'},
+  uq_co:       {name:'Hearthflame',   tier:5, gem:'amethyst', cat:'skill', skill:'cooking',     bonus:{speed:0.25,xpBoost:0.20}, desc:'Cooking only: +25% speed · +20% XP'},
+  uq_al:       {name:'Catalyst',      tier:5, gem:'amethyst', cat:'skill', skill:'alchemy',     bonus:{speed:0.25,xpBoost:0.20}, desc:'Alchemy only: +25% speed · +20% XP'},
+  uq_fm:       {name:'Emberdance',    tier:5, gem:'amethyst', cat:'skill', skill:'firemaking',  bonus:{speed:0.25,xpBoost:0.20}, desc:'Firemaking only: +25% speed · +20% XP'},
+  uq_ag:       {name:'Windstride',    tier:5, gem:'amethyst', cat:'skill', skill:'agility',     bonus:{speed:0.25,xpBoost:0.20}, desc:'Agility only: +25% speed · +20% XP'},
+  uq_jw:       {name:'Facetlight',    tier:5, gem:'amethyst', cat:'skill', skill:'jeweler',     bonus:{speed:0.25,xpBoost:0.20}, desc:'Jeweler only: +25% speed · +20% XP'},
+  uq_fa:       {name:'Verdant Pact',  tier:5, gem:'amethyst', cat:'skill', skill:'farming',     bonus:{speed:0.25,xpBoost:0.20}, desc:'Farming only: +25% speed · +20% XP'},
+  uq_cr:       {name:'Artificer',     tier:5, gem:'amethyst', cat:'skill', skill:'crafting',    bonus:{speed:0.25,xpBoost:0.20}, desc:'Crafting only: +25% speed · +20% XP'},
 
-  // ── Tier 6 · Dragon ──
-  swift_v:     {name:'Swift VI',      tier:6, gem:'dragon',   cat:'global', bonus:{speed:0.22},          desc:'+22% speed to all skills'},
-  fortune_v:   {name:'Fortune VI',    tier:6, gem:'dragon',   cat:'global', bonus:{gpBoost:0.32},         desc:'+32% sell value all items'},
-  scholar_v:   {name:'Scholar VI',    tier:6, gem:'dragon',   cat:'global', bonus:{xpBoost:0.32},         desc:'+32% XP all skills'},
+  // ── Tier 6 · Dragon ── the WAR gem: globals + heavier combat picks
+  swift_v:     {name:'Swift VI',      tier:6, gem:'dragon',   cat:'global', bonus:{speed:0.22},           desc:'+22% action speed, all skills'},
+  fortune_v:   {name:'Fortune VI',    tier:6, gem:'dragon',   cat:'global', bonus:{gpBoost:0.32},         desc:'+32% sell value, all items'},
+  scholar_v:   {name:'Scholar VI',    tier:6, gem:'dragon',   cat:'global', bonus:{xpBoost:0.32},         desc:'+32% XP, all skills'},
+  gatherer_vi: {name:'Gatherer VI',   tier:6, gem:'dragon',   cat:'global', bonus:{doubleYield:0.22},     desc:'+22% chance to double resources'},
+  dragonhide:  {name:'Dragonhide',    tier:6, gem:'dragon',   cat:'combat', bonus:{defBoost:0.18,hpBoost:0.12}, desc:'Combat: +18% Defence · +12% Max HP'},
+  dragonfury:  {name:'Dragonfury',    tier:6, gem:'dragon',   cat:'combat', bonus:{atkBoost:0.16,critChance:0.08}, desc:'Combat: +16% Attack · +8% crit chance'},
 
-  // ── Tier 7 · Bloodstone ── the WARRIOR gem: light global ladder + COMBAT enchants
-  swift_bs:    {name:'Swift VII',     tier:7, gem:'bloodstone', cat:'global', bonus:{speed:0.26},        desc:'+26% speed to all skills'},
-  fortune_bs:  {name:'Fortune VII',   tier:7, gem:'bloodstone', cat:'global', bonus:{gpBoost:0.38},       desc:'+38% sell value all items'},
-  scholar_bs:  {name:'Scholar VII',   tier:7, gem:'bloodstone', cat:'global', bonus:{xpBoost:0.38},       desc:'+38% XP all skills'},
-  // combat enchants — wired into Combat in a future pass
-  warlord:     {name:'Warlord',       tier:7, gem:'bloodstone', cat:'combat', bonus:{atkBoost:0.20,hpBoost:0.10}, desc:'Combat: +20% Attack, +10% Max HP'},
-  bulwark:     {name:'Bulwark',       tier:7, gem:'bloodstone', cat:'combat', bonus:{defBoost:0.25,hpBoost:0.20}, desc:'Combat: +25% Defence, +20% Max HP'},
-  bloodthirst: {name:'Bloodthirst',   tier:7, gem:'bloodstone', cat:'combat', bonus:{lifesteal:0.15,atkBoost:0.10},desc:'Combat: +15% Lifesteal, +10% Attack'},
-  executioner: {name:'Executioner',   tier:7, gem:'bloodstone', cat:'combat', bonus:{critChance:0.18,atkBoost:0.12},desc:'Combat: +18% Crit chance, +12% Attack'},
+  // ── Tier 7 · Bloodstone ── the WARRIOR gem: light global ladder + signature combat enchants
+  swift_bs:    {name:'Swift VII',     tier:7, gem:'bloodstone', cat:'global', bonus:{speed:0.26},         desc:'+26% action speed, all skills'},
+  fortune_bs:  {name:'Fortune VII',   tier:7, gem:'bloodstone', cat:'global', bonus:{gpBoost:0.38},       desc:'+38% sell value, all items'},
+  scholar_bs:  {name:'Scholar VII',   tier:7, gem:'bloodstone', cat:'global', bonus:{xpBoost:0.38},       desc:'+38% XP, all skills'},
+  warlord:     {name:'Warlord',       tier:7, gem:'bloodstone', cat:'combat', bonus:{atkBoost:0.20,hpBoost:0.10},  desc:'Combat: +20% Attack · +10% Max HP'},
+  bulwark:     {name:'Bulwark',       tier:7, gem:'bloodstone', cat:'combat', bonus:{defBoost:0.25,hpBoost:0.20},  desc:'Combat: +25% Defence · +20% Max HP'},
+  bloodthirst: {name:'Bloodthirst',   tier:7, gem:'bloodstone', cat:'combat', bonus:{lifesteal:0.15,atkBoost:0.10},desc:'Combat: +15% lifesteal · +10% Attack'},
+  executioner: {name:'Executioner',   tier:7, gem:'bloodstone', cat:'combat', bonus:{critChance:0.18,atkBoost:0.12},desc:'Combat: +18% crit chance · +12% Attack'},
 
   // ── Tier 8 · Void ──
-  void_surge:  {name:'Void Surge',    tier:8, gem:'void',     cat:'global', bonus:{speed:0.30,xpBoost:0.15},desc:'+30% speed +15% XP'},
-  void_greed:  {name:'Void Greed',    tier:8, gem:'void',     cat:'global', bonus:{gpBoost:0.45,doubleYield:0.20},desc:'+45% sell +20% double yield'},
+  void_surge:  {name:'Void Surge',    tier:8, gem:'void',     cat:'global', bonus:{speed:0.30,xpBoost:0.15},      desc:'+30% action speed · +15% XP, all skills'},
+  void_greed:  {name:'Void Greed',    tier:8, gem:'void',     cat:'global', bonus:{gpBoost:0.45,doubleYield:0.20},desc:'+45% sell value · +20% double resources'},
+  void_hunger: {name:'Void Hunger',   tier:8, gem:'void',     cat:'combat', bonus:{atkBoost:0.12,lifesteal:0.20,critChance:0.10}, desc:'Combat: +12% Attack · +20% lifesteal · +10% crit'},
 };
 
 /* Set bonuses — triggered when ring+amulet of same gem tier are both enchanted
@@ -3609,14 +3624,14 @@ const JEWELRY_GEM_TIER={
 
 /* Which enchants are valid for each gem tier */
 const ENCHANTS_BY_GEM={
-  sapphire:['swift_i','fortune_i','scholar_i'],
+  sapphire:['swift_i','fortune_i','scholar_i','squire_i'],
   emerald: ['swift_ii','fortune_ii','scholar_ii','gatherer_ii'],
-  ruby:    ['swift_iii','fortune_iii','scholar_iii','gatherer_iii'],
-  diamond: ['swift_iv','fortune_iv','scholar_iv','hoarder_iv'],
-  amethyst:['swift_am','fortune_am','scholar_am','gatherer_am','uq_wc','uq_mi','uq_fi','uq_fo'],
-  dragon:  ['swift_v','fortune_v','scholar_v'],
+  ruby:    ['swift_iii','fortune_iii','scholar_iii','gatherer_iii','soldier_iii'],
+  diamond: ['swift_iv','fortune_iv','scholar_iv','hoarder_iv','knight_iv'],
+  amethyst:['swift_am','fortune_am','scholar_am','gatherer_am','duelist_am','uq_wc','uq_mi','uq_fi','uq_fo','uq_sm','uq_co','uq_al','uq_fm','uq_ag','uq_jw','uq_fa','uq_cr'],
+  dragon:  ['swift_v','fortune_v','scholar_v','gatherer_vi','dragonhide','dragonfury'],
   bloodstone:['swift_bs','fortune_bs','scholar_bs','warlord','bulwark','bloodthirst','executioner'],
-  void:    ['void_surge','void_greed'],
+  void:    ['void_surge','void_greed','void_hunger'],
 };
 
 /* Enchanting material costs per tier (1=sapphire … 8=void) */
@@ -17994,39 +18009,12 @@ function openOfflineOverlay(){
 function renderEnchanting(){
   const box=$('enchantView'); box.innerHTML='';
 
-  // Header
+  // ── One-line intro ──
   const intro=document.createElement('div');
-  intro.style.cssText='margin-bottom:14px;padding:10px 12px;background:var(--raised);border-radius:6px;border:1px solid var(--trim-d);font-size:14px;color:var(--muted);line-height:1.7';
-  intro.innerHTML='<b style="color:var(--trim)">Enchanting</b> — Apply magical bonuses to <b style="color:var(--text)">any jewelry you own</b> — it doesn\'t need to be equipped. '
-    +'Costs <b style="color:var(--text)">Arcane Dust</b>, <b style="color:var(--text)">Rune Fragments</b> and <b style="color:var(--text)">Mana Essence</b>. An enchant\'s bonus only applies while the piece is <b style="color:var(--text)">equipped</b>.<br>'
-    +'<b style="color:var(--trim)">Global</b> enchants boost every skill; <b style="color:#b886e6">Amethyst</b> also holds <b style="color:#b886e6">skill-unique</b> enchants (one skill, stronger); <b style="color:#ffb4a0">Bloodstone</b> holds <b style="color:#ffb4a0">combat</b> enchants (active once Combat unlocks).<br>'
-    +'Equip a matching ring and amulet of the same gem tier (both enchanted) to activate a <b style="color:var(--ember)">Set Bonus</b>.';
+  intro.style.cssText='margin-bottom:10px;padding:7px 10px;background:var(--raised);border-radius:6px;border:1px solid var(--trim-d);font-size:13px;color:var(--muted);line-height:1.5';
+  intro.innerHTML='<b style="color:var(--trim)">Enchanting</b> — Bind one enchant per jewelry piece; the bonus applies while it\'s <b style="color:var(--text)">equipped</b>. '
+    +'A matching enchanted ring + amulet of the same gem awakens a <b style="color:var(--ember)">Set Bonus</b>.';
   box.appendChild(intro);
-
-  // Materials on hand
-  const mats=['arcane_dust','rune_fragment','mana_essence','gem_dust','void_cinder'];
-  const matRow=document.createElement('div');
-  matRow.style.cssText='display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px';
-  for(const mid of mats){
-    const qty=state.items[mid]||0;
-    const it=ITEMS[mid];
-    if(!it) continue;
-    const chip=document.createElement('div');
-    chip.style.cssText='background:var(--raised-s);border:1px solid var(--trim-d);border-radius:5px;padding:4px 10px;font-size:14px;'+(qty>0?'color:var(--text)':'color:var(--muted);opacity:0.55');
-    chip.innerHTML=iconHTML(mid)+' '+it.name+': '+qty.toLocaleString();
-    matRow.appendChild(chip);
-  }
-  box.appendChild(matRow);
-
-  // Active set bonuses
-  const activeSets=activeSetBonuses();
-  if(activeSets.length){
-    const setBox=document.createElement('div');
-    setBox.style.cssText='margin-bottom:14px;padding:10px 12px;background:#1a2a0a;border:1px solid var(--green);border-radius:6px';
-    setBox.innerHTML='<div style="font-size:12px;color:var(--green);text-transform:uppercase;letter-spacing:2px;margin-bottom:6px">&#10024; Active Set Bonuses</div>'
-      +activeSets.map(function(s){return '<div style="font-size:14px;color:var(--text);margin-bottom:3px"><b style="color:var(--ember)">'+s.name+'</b> — '+s.desc+'</div>';}).join('');
-    box.appendChild(setBox);
-  }
 
   // ── Build list of owned jewelry (in satchel and/or equipped) ──
   var GEM_ORDER=['sapphire','emerald','ruby','diamond','amethyst','dragon','bloodstone','void'];
@@ -18038,13 +18026,11 @@ function renderEnchanting(){
   }
   function ownedCount(id){
     var c=state.items[id]||0;
-    // equipped pieces still live in state.items (equip doesn't consume), but guard anyway
     if(Object.values(state.equipped).indexOf(id)>=0) c=Math.max(c,1);
     return c;
   }
   var owned=[];
   for(var jid in JEWELRY_GEM_TIER){ if(ownedCount(jid)>0) owned.push(jid); }
-  // sort: by type group order, then gem tier, then name
   var TYPE_ORDER={ring:0,amulet:1,pendant:2,other:3};
   owned.sort(function(a,b){
     var ta=TYPE_ORDER[jewelryType(a)], tb=TYPE_ORDER[jewelryType(b)];
@@ -18059,77 +18045,90 @@ function renderEnchanting(){
     emp.style.cssText='font-size:14px;color:var(--muted);font-style:italic;padding:10px 0';
     emp.textContent='No jewelry yet. Craft rings, amulets or pendants in the Jeweler — you can enchant them straight from your satchel.';
     box.appendChild(emp);
+    return;
+  }
+  if(!_enchantSel || owned.indexOf(_enchantSel)<0) _enchantSel=owned[0];
+
+  // Two-column layout: LEFT = materials + jewelry picker + set bonuses,
+  // RIGHT = the selected piece's enchant list. Mirrors the Socket panel.
+  var cols=document.createElement('div');
+  cols.style.cssText='display:flex;gap:12px;flex-wrap:wrap;align-items:flex-start';
+  var left=document.createElement('div');
+  left.style.cssText='flex:1 1 230px;min-width:210px';
+  var right=document.createElement('div');
+  right.style.cssText='flex:1.5 1 300px;min-width:270px';
+
+  // LEFT — materials chips (source info lives in the tooltip, not a footer wall)
+  var MAT_SRC={
+    arcane_dust:'Craft in Alchemy (gem dust + wildberries + ash) — coming soon',
+    rune_fragment:'Rare drop from mining any ore',
+    mana_essence:'Rare drop from foraging moonpetal / voidmoss',
+    gem_dust:'Byproduct of cutting jewelry, or mine Gem Rocks (Mining Lv 40)',
+    void_cinder:'From burning ancient logs (Firemaking)'
+  };
+  var matRow=document.createElement('div');
+  matRow.style.cssText='display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px';
+  ['arcane_dust','rune_fragment','mana_essence','gem_dust','void_cinder'].forEach(function(mid){
+    var it=ITEMS[mid]; if(!it) return;
+    var qty=state.items[mid]||0;
+    var chip=document.createElement('div');
+    chip.style.cssText='background:var(--raised-s);border:1px solid var(--trim-d);border-radius:5px;padding:3px 9px;font-size:13px;cursor:help;'+(qty>0?'color:var(--text)':'color:var(--muted);opacity:0.55');
+    chip.innerHTML=iconHTML(mid)+' '+qty.toLocaleString();
+    chip.title=it.name+' — '+(MAT_SRC[mid]||'');
+    matRow.appendChild(chip);
+  });
+  left.appendChild(matRow);
+
+  // LEFT — jewelry picker dropdown (themed, grouped by type)
+  var lbl=document.createElement('div');
+  lbl.style.cssText='font-size:11px;color:var(--ember);text-transform:uppercase;letter-spacing:2px;margin-bottom:5px';
+  lbl.textContent='Select Jewelry';
+  left.appendChild(lbl);
+  var jSel=document.createElement('select');
+  jSel.style.cssText='width:100%;background:var(--raised-s);color:var(--text);border:1px solid var(--trim-d);border-radius:6px;padding:7px 9px;font-size:14px;cursor:pointer;margin-bottom:10px';
+  [['ring','Rings'],['amulet','Amulets'],['pendant','Pendants'],['other','Other']].forEach(function(g){
+    var inGroup=owned.filter(function(id){return jewelryType(id)===g[0];});
+    if(!inGroup.length) return;
+    var og=document.createElement('optgroup'); og.label=g[1];
+    inGroup.forEach(function(id){
+      var ench=state.enchantments[id]?ENCHANTS[state.enchantments[id]]:null;
+      var isEq=Object.values(state.equipped).indexOf(id)>=0;
+      var o=document.createElement('option'); o.value=id;
+      o.textContent=(isEq?'✓ ':'')+(ITEMS[id]?ITEMS[id].name:id)+(ench?' · ✦ '+ench.name:' · unenchanted');
+      if(id===_enchantSel) o.selected=true;
+      og.appendChild(o);
+    });
+    jSel.appendChild(og);
+  });
+  jSel.addEventListener('change',function(){ _enchantSel=this.value; hideTooltip(); renderEnchanting(); });
+  left.appendChild(jSel);
+
+  // LEFT — active set bonuses (compact)
+  var activeSets=activeSetBonuses();
+  if(activeSets.length){
+    var setBox=document.createElement('div');
+    setBox.style.cssText='padding:7px 9px;background:#16220a66;border:1px solid #3a5018;border-radius:6px;margin-bottom:8px';
+    setBox.innerHTML='<div style="font-size:10px;color:var(--green);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:4px">✦ Active Set Bonus</div>'
+      +activeSets.map(function(s){return '<div style="font-size:12px;color:var(--text);line-height:1.4"><b style="color:var(--ember)">'+s.name+'</b><br><span style="color:var(--muted)">'+s.desc.replace(/^[^:]*: */,'')+'</span></div>';}).join('');
+    left.appendChild(setBox);
   } else {
-    // keep selection valid
-    if(!_enchantSel || owned.indexOf(_enchantSel)<0) _enchantSel=owned[0];
-
-    // ── Grid title ──
-    const gridTitle=document.createElement('div');
-    gridTitle.style.cssText='font-size:12px;color:var(--ember);text-transform:uppercase;letter-spacing:2px;margin-bottom:8px';
-    gridTitle.textContent='Select Jewelry';
-    box.appendChild(gridTitle);
-
-    // ── Grouped grid ──
-    var groups=[['ring','Rings'],['amulet','Amulets'],['pendant','Pendants'],['other','Other']];
-    for(var gi=0;gi<groups.length;gi++){
-      var gtype=groups[gi][0], glabel=groups[gi][1];
-      var inGroup=owned.filter(function(id){return jewelryType(id)===gtype;});
-      if(!inGroup.length) continue;
-
-      var gLab=document.createElement('div');
-      gLab.style.cssText='font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin:4px 0 6px';
-      gLab.textContent=glabel;
-      box.appendChild(gLab);
-
-      var grid=document.createElement('div');
-      grid.style.cssText='display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px';
-
-      for(var ti=0;ti<inGroup.length;ti++){
-        var id=inGroup[ti];
-        var it=ITEMS[id];
-        var ench=state.enchantments[id];
-        var enchDef=ench?ENCHANTS[ench]:null;
-        var sel=_enchantSel===id;
-        var equipped=Object.values(state.equipped).indexOf(id)>=0;
-        var qty=ownedCount(id);
-
-        var tile=document.createElement('div');
-        tile.style.cssText='position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;'
-          +'width:66px;height:64px;padding:4px;border-radius:7px;cursor:pointer;text-align:center;'
-          +'background:'+(sel?'var(--raised-s)':'var(--raised)')+';'
-          +'border:1px solid '+(sel?'var(--ember)':(enchDef?'#7a5c2a':'var(--trim-d)'))+';'
-          +(sel?'box-shadow:0 0 0 1px var(--ember) inset;':'');
-        var enchMark=enchDef?'<div style="position:absolute;top:2px;right:4px;font-size:11px;color:var(--ember)">\u2726</div>':'';
-        var eqMark=equipped?'<div style="position:absolute;top:2px;left:4px;font-size:10px;color:var(--green);font-weight:700;letter-spacing:.5px">EQ</div>':'';
-        var qtyMark=qty>1?'<div style="position:absolute;bottom:2px;right:4px;font-size:11px;color:var(--muted)">x'+qty+'</div>':'';
-        tile.innerHTML=enchMark+eqMark+qtyMark
-          +'<div style="font-size:24px;line-height:1">'+(it?iconHTML(id):'?')+'</div>'
-          +'<div style="font-size:10px;color:'+(sel?'var(--trim)':'var(--muted)')+';line-height:1.05;margin-top:2px;max-width:60px;overflow:hidden">'+(it?it.name.replace(/ (Ring|Amulet|Pendant|Jewel)$/,''):id)+'</div>';
-        tile.title=(it?it.name:id)+(enchDef?' — \u2726 '+enchDef.name:' — not enchanted')+(equipped?' (equipped)':'');
-        (function(pickId){ tile.addEventListener('click',function(){ _enchantSel=pickId; renderEnchanting(); }); })(id);
-        grid.appendChild(tile);
-      }
-      box.appendChild(grid);
-    }
-
-    // ── Detail panel for the selected item ──
-    renderEnchantDetail(box, _enchantSel);
+    var setHint=document.createElement('div');
+    setHint.style.cssText='font-size:11px;color:var(--muted);font-style:italic;line-height:1.5';
+    setHint.textContent='No set bonus active — equip an enchanted ring + amulet of the same gem.';
+    left.appendChild(setHint);
   }
 
-  // How to get materials section
-  const matGuide=document.createElement('div');
-  matGuide.style.cssText='margin-top:14px;border-top:1px solid var(--trim-d);padding-top:10px;font-size:13px;color:var(--muted);line-height:1.8';
-  matGuide.innerHTML='<b style="color:var(--text)">How to get enchanting materials:</b><br>'
-    +'<b style="color:var(--text)">Arcane Dust</b> — craft in Alchemy (gem dust + wildberries + ash) <i>coming soon</i><br>'
-    +'<b style="color:var(--text)">Rune Fragment</b> — rare drop from mining any ore<br>'
-    +'<b style="color:var(--text)">Mana Essence</b> — rare drop from foraging moonpetal / voidmoss<br>'
-    +'<b style="color:var(--text)">Gem Dust</b> — byproduct of cutting jewelry (Jeweler), or drops from mining Gem Rocks (Mining Lv 40)<br>'
-    +'<b style="color:var(--text)">Void Cinder</b> — from burning ancient logs (Firemaking)';
-  box.appendChild(matGuide);
+  // RIGHT — enchant list for the selected piece
+  renderEnchantDetail(right, _enchantSel);
+
+  cols.appendChild(left); cols.appendChild(right);
+  box.appendChild(cols);
 }
 
-/* Detail panel: enchant options for one selected jewelry item id. Enchants are written
-   per item id; the bonus applies only while the piece is equipped. */
+/* Detail panel: enchant options for one selected jewelry item id. Enchants are
+   written per item id; the bonus applies only while the piece is equipped.
+   Layout: header (piece + current enchant) → cost line → rows grouped
+   GLOBAL / COMBAT / SKILL FOCUS with inline descriptions (no hover needed). */
 function renderEnchantDetail(box, itemId){
   if(!itemId) return;
   var it=ITEMS[itemId];
@@ -18140,69 +18139,123 @@ function renderEnchantDetail(box, itemId){
   var availEnchants=ENCHANTS_BY_GEM[gemTier]||[];
   var tier=availEnchants.length?ENCHANTS[availEnchants[0]].tier:1;
   var cost=ENCHANT_COST_BY_TIER[tier]||ENCHANT_COST_BY_TIER[1];
-  var canAffordEnch=Object.keys(cost).every(function(mid){return (state.items[mid]||0)>=cost[mid];});
+  var canAfford=Object.keys(cost).every(function(mid){return (state.items[mid]||0)>=cost[mid];});
 
   var card=document.createElement('div');
-  card.style.cssText='border:1px solid '+(currentEnch?'var(--ember)':'var(--trim-d)')+';border-radius:6px;padding:10px 12px;margin-top:4px;background:var(--raised)';
+  card.style.cssText='border:1px solid '+(currentEnch?'var(--ember)':'var(--trim-d)')+';border-radius:6px;padding:8px 10px;background:var(--raised)';
 
-  var costStr=Object.entries(cost).map(function(e){
-    var have=state.items[e[0]]||0, need=e[1];
-    var col=have>=need?'var(--green)':'var(--red)';
-    return '<span style="color:'+col+'">'+(ITEMS[e[0]]?iconHTML(e[0])+' '+e[1]:'?'+e[1])+'</span>';
-  }).join('  ');
   var eqNote=equipped
-    ?'<span style="font-size:12px;color:var(--green)">● equipped — bonus active</span>'
-    :'<span style="font-size:12px;color:var(--muted)">not equipped — enchant now, bonus applies once worn</span>';
+    ?'<span style="font-size:11px;color:var(--green)">● equipped</span>'
+    :'<span style="font-size:11px;color:var(--muted)">not equipped</span>';
+  var header=document.createElement('div');
+  header.style.cssText='display:flex;align-items:center;gap:7px;margin-bottom:6px';
+  header.innerHTML='<span style="font-size:21px">'+(it?iconHTML(itemId):'?')+'</span>'
+    +'<div style="flex:1;min-width:0"><div style="font-size:13px;color:var(--trim)">'+(it?it.name:'Unknown')+'  '+eqNote+'</div>'
+    +(currentEnchDef
+      ?'<div style="font-size:12px;color:var(--ember)">✦ '+currentEnchDef.name+' <span style="color:var(--muted)">— '+currentEnchDef.desc+'</span></div>'
+      :'<div style="font-size:12px;color:var(--muted)">Not enchanted</div>')
+    +'</div>';
+  card.appendChild(header);
 
-  card.innerHTML='<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">'
-    +'<span style="font-size:24px">'+(it?iconHTML(itemId):'?')+'</span>'
-    +'<div><div style="font-size:14px;color:var(--trim)">'+(it?it.name:'Unknown')+'  '+eqNote+'</div>'
-    +(currentEnchDef?'<div style="font-size:13px;color:var(--ember)">\u2726 '+currentEnchDef.name+' — '+currentEnchDef.desc+'</div>':'<div style="font-size:13px;color:var(--muted)">Not enchanted</div>')
-    +'</div></div>'
-    +'<div style="font-size:13px;color:var(--muted);margin-bottom:8px">Cost per enchant: '+costStr+'</div>';
+  // Cost line — one compact row, red where short
+  var costStr=Object.entries(cost).map(function(e2){
+    var have=state.items[e2[0]]||0, need=e2[1];
+    return '<span style="color:'+(have>=need?'var(--green)':'var(--red)')+'">'+(ITEMS[e2[0]]?iconHTML(e2[0])+' '+need:'?'+need)+'</span>';
+  }).join('  ');
+  var costRow=document.createElement('div');
+  costRow.style.cssText='font-size:12px;color:var(--muted);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--trim-d)';
+  costRow.innerHTML='Cost per enchant:  '+costStr;
+  card.appendChild(costRow);
 
-  var btnRow=document.createElement('div');
-  btnRow.style.cssText='display:flex;flex-wrap:wrap;gap:6px';
-
-  for(var ei=0;ei<availEnchants.length;ei++){
-    var enchId=availEnchants[ei];
-    var ench=ENCHANTS[enchId];
-    var isActive=currentEnch===enchId;
-    var accent=ench.cat==='combat'?'var(--red)':(ench.skill?'#9b6bd6':'var(--trim-d)');
-    var btn=document.createElement('button');
-    btn.style.cssText='font-size:13px;padding:4px 10px;border-radius:4px;cursor:pointer;'
-      +'background:'+(isActive?'var(--ember)':'var(--raised-s)')+';'
-      +'border:1px solid '+(isActive?'var(--ember)':accent)+';'
-      +'color:'+(isActive?'#fff':'var(--text)')+';'
-      +(canAffordEnch||isActive?'':'opacity:0.5;');
-    btn.textContent=(isActive?'\u2713 ':'')+ench.name;
-    var catTag=ench.cat==='combat'?' [Combat]':(ench.skill?' ['+ench.skill+' only]':'');
-    btn.title=ench.desc+catTag+(isActive?' (active)':canAffordEnch?'':' — not enough materials');
-    if(!isActive){
-      (function(eid, eitem, ecost){
-        btn.addEventListener('click',function(){
-          for(var mid in ecost){
-            if((state.items[mid]||0)<ecost[mid]){ toast('Not enough '+((ITEMS[mid]&&ITEMS[mid].name)||mid)+'.'); return; }
-          }
-          for(var mid2 in ecost) state.items[mid2]=(state.items[mid2]||0)-ecost[mid2];
-          state.enchantments[eitem]=eid;
-          saveGame(); renderEnchanting(); renderGear();
-          toast('\u2726 Enchanted with '+ENCHANTS[eid].name+'!');
-        });
-      })(enchId, itemId, cost);
-    } else {
-      btn.title='Remove this enchantment (no refund)';
-      (function(eitem){
-        btn.addEventListener('click',function(){
-          delete state.enchantments[eitem];
-          saveGame(); renderEnchanting(); renderGear();
-          toast('Enchantment removed.');
-        });
-      })(itemId);
+  // ── Shared helpers ──
+  function payAndApply(eid){
+    for(var mid in cost){
+      if((state.items[mid]||0)<cost[mid]){ toast('Not enough '+((ITEMS[mid]&&ITEMS[mid].name)||mid)+'.'); return; }
     }
-    btnRow.appendChild(btn);
+    for(var mid2 in cost) state.items[mid2]=(state.items[mid2]||0)-cost[mid2];
+    state.enchantments[itemId]=eid;
+    saveGame(); renderEnchanting(); renderGear();
+    toast('✦ Enchanted with '+ENCHANTS[eid].name+'!');
   }
-  card.appendChild(btnRow);
+  function removeEnch(){
+    delete state.enchantments[itemId];
+    saveGame(); renderEnchanting(); renderGear();
+    toast('Enchantment removed.');
+  }
+  function mkBtn(active){
+    var b=document.createElement('button');
+    b.style.cssText='flex:none;font-size:11px;padding:3px 9px;border-radius:4px;cursor:pointer;'
+      +(active
+        ?'background:var(--panel);border:1px solid var(--trim-d);color:var(--muted)'
+        :'background:var(--raised-s);border:1px solid '+(canAfford?'var(--ember)':'var(--trim-d)')+';color:'+(canAfford?'var(--ember)':'var(--muted)')+';'+(canAfford?'':'opacity:0.55'));
+    b.textContent=active?'✕ Remove':'Apply';
+    return b;
+  }
+  function mkRow(eid,accent){
+    var en=ENCHANTS[eid];
+    var active=currentEnch===eid;
+    var row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;gap:8px;padding:4px 7px;border-radius:5px;margin-bottom:3px;'
+      +'background:'+(active?'#2a1a0866':'var(--raised-s)')+';'
+      +'border:1px solid '+(active?'var(--ember)':'var(--trim-d)');
+    row.innerHTML='<span style="flex:none;min-width:86px;font-size:12px;color:'+(active?'var(--ember)':accent)+'">'+(active?'✦ ':'')+en.name+'</span>'
+      +'<span style="flex:1;min-width:0;font-size:12px;color:var(--muted);line-height:1.3">'+en.desc+'</span>';
+    var b=mkBtn(active);
+    b.addEventListener('click', active?removeEnch:function(){ payAndApply(eid); });
+    row.appendChild(b);
+    return row;
+  }
+  function secLabel(txt,color){
+    var l=document.createElement('div');
+    l.style.cssText='font-size:10px;color:'+color+';text-transform:uppercase;letter-spacing:1.5px;margin:7px 0 4px';
+    l.textContent=txt;
+    return l;
+  }
+
+  // ── Grouped rows: GLOBAL / COMBAT / SKILL FOCUS ──
+  var globals=availEnchants.filter(function(eid){return ENCHANTS[eid].cat==='global';});
+  var combats=availEnchants.filter(function(eid){return ENCHANTS[eid].cat==='combat';});
+  var skills =availEnchants.filter(function(eid){return ENCHANTS[eid].cat==='skill';});
+
+  if(globals.length){
+    card.appendChild(secLabel('Global — all skills','var(--trim)'));
+    globals.forEach(function(eid){ card.appendChild(mkRow(eid,'var(--text)')); });
+  }
+  if(combats.length){
+    card.appendChild(secLabel('Combat','#ff8f7a'));
+    combats.forEach(function(eid){ card.appendChild(mkRow(eid,'#ffb4a0')); });
+  }
+  if(skills.length){
+    // One compact row: pick a skill from the dropdown, Apply binds that skill's focus enchant.
+    card.appendChild(secLabel('Skill Focus — one skill, stronger','#b886e6'));
+    var curIsSkill=currentEnchDef&&currentEnchDef.cat==='skill';
+    var row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;gap:8px;padding:4px 7px;border-radius:5px;margin-bottom:3px;'
+      +'background:'+(curIsSkill?'#2a1a0866':'var(--raised-s)')+';'
+      +'border:1px solid '+(curIsSkill?'var(--ember)':'var(--trim-d)');
+    var info=document.createElement('span');
+    info.style.cssText='flex:none;font-size:12px;color:'+(curIsSkill?'var(--ember)':'#b886e6');
+    info.textContent=curIsSkill?('✦ '+currentEnchDef.name):'+25% speed · +20% XP';
+    row.appendChild(info);
+    var sSel=document.createElement('select');
+    sSel.style.cssText='flex:1;min-width:0;background:var(--panel);color:var(--text);border:1px solid var(--trim-d);border-radius:4px;padding:3px 5px;font-size:12px;cursor:pointer';
+    skills.forEach(function(eid){
+      var en=ENCHANTS[eid];
+      var o=document.createElement('option'); o.value=eid;
+      o.textContent=(SKILLS[en.skill]?SKILLS[en.skill].name:en.skill)+' — '+en.name;
+      if(currentEnch===eid) o.selected=true;
+      sSel.appendChild(o);
+    });
+    row.appendChild(sSel);
+    var b2=mkBtn(curIsSkill);
+    b2.addEventListener('click',function(){
+      if(curIsSkill){ removeEnch(); return; }
+      payAndApply(sSel.value);
+    });
+    row.appendChild(b2);
+    card.appendChild(row);
+  }
+
   box.appendChild(card);
 }
 
