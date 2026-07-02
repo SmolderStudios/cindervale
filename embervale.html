@@ -883,11 +883,15 @@ header h1 .flame{color:var(--ember)}
 .cmb-swbar.foe i{background:linear-gradient(90deg,#a02818,#d87858)}
 .cmb-swbar.you i{background:linear-gradient(90deg,#5a8028,#a8c868)}
 /* Buff/debuff chip row under each health bar (1.0.60) */
-.cmb-status{display:flex;gap:3px;flex-wrap:wrap;margin-top:4px;min-height:0}
+.cmb-status{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px;min-height:0}
 .cmb-status:empty{display:none}
-.cmb-status .st-ic{width:18px;height:18px;border:1px solid #555;border-radius:4px;
-  background:#0e0906;display:inline-flex;align-items:center;justify-content:center;
-  cursor:help;box-shadow:inset 0 0 4px rgba(0,0,0,.5);animation:st-ic-in .18s ease}
+.cmb-status .st-ic{width:20px;height:20px;border:1px solid #555;border-radius:5px;
+  background:radial-gradient(circle at 50% 35%,#1c1410,#0b0705);display:inline-flex;align-items:center;justify-content:center;
+  cursor:help;box-shadow:inset 0 0 5px rgba(0,0,0,.6),0 1px 2px rgba(0,0,0,.4);animation:st-ic-in .18s ease}
+.cmb-status .st-ic svg{width:15px;height:15px;display:block}
+.cmb-status .st-ic .st-ct{position:absolute;bottom:-5px;right:-5px;min-width:13px;height:13px;padding:0 2px;
+  font-size:9px;line-height:12px;text-align:center;background:#120b06;border:1px solid currentColor;
+  border-radius:7px;color:#f0e0b0;font-family:'Courier New',monospace;font-weight:700}
 @keyframes st-ic-in{from{transform:scale(.5);opacity:0}to{transform:scale(1);opacity:1}}
 .cmb-fighter .rareBadge{position:absolute;top:-7px;left:11px;right:auto;background:#1a0e04;
   border:1px solid #c89b4e;color:#fbd24e;font-size:10px;letter-spacing:1.4px;
@@ -2507,7 +2511,7 @@ header h1 .flame{color:var(--ember)}
   <div class="mm-btns">
     <button class="mm-btn mm-primary" id="mmPlay">▶ Play</button>
   </div>
-  <div class="mm-ver">v1.0.61</div>
+  <div class="mm-ver">v1.0.62</div>
 </div>
 
 <!-- ===== CHARACTER SELECT (added) ===== -->
@@ -3279,6 +3283,8 @@ const ITEMS={
   starsteel_boots:  {name:'Starsteel Boots',   icon:'👢',sell:4380, cgear:true,ctier:7,cslot:'boots'},
   starsteel_sword:  {name:'Starsteel Sword',   icon:'⚔️',sell:13180,cgear:true,ctier:7,cslot:'weapon',dmgType:'slash'},
   starsteel_shield: {name:'Starsteel Shield',  icon:'🛡️',sell:11700,cgear:true,ctier:7,cslot:'shield'},
+  // Warlord's Bulwark (1.0.62) — custom reflect shield, drops from the Ogre Warlord.
+  warlord_bulwark:  {name:"Warlord's Bulwark", icon:'🛡️',sell:7400, cgear:true,ctier:6,cslot:'shield', wfx:{reflect:{chance:0.25, pct:0.30}}, desc:"A slab of iron-banded oak studded with jagged tusk-spikes, torn from an ogre warlord's arm. Blows that land on it come back bloody."},
   // ─── Crafted combat weapons · Daggers (T1-T7, 1.0.93) — stab variant ─
   // Same total stat budget as the equivalent sword (atk+str) but shifted toward
   // accuracy: +1 atk, -1 str. dmgType='stab' for damage-type matchups.
@@ -3313,7 +3319,7 @@ const ITEMS={
   // Each weapon sits between two standard tiers, granted ~10-20% stat advantage
   // over the lower tier as a reward for grinding the source zone. Tagged with
   // dmgType so the damage-type matchup system works; subcat handled in recipe.
-  plague_fang_dagger:{name:'Plague Fang Dagger', icon:'🗡️', sell:280,  cgear:true, ctier:2, cslot:'weapon', dmgType:'stab',  wfx:{poison:{chance:0.35, dmg:2, every:2, dur:8}}, desc:'A rat fang the length of a finger, lashed to a rough iron tang. The wounds it leaves sour and weep — every cut carries the warren\'s rot.'},
+  plague_fang_dagger:{name:'Plague Fang Dagger', icon:'🗡️', sell:280,  cgear:true, ctier:2, cslot:'weapon', dmgType:'stab',  wfx:{poison:{mult:0.10}}, desc:'A rat fang the length of a finger, lashed to a rough iron tang. The wounds it leaves sour and weep — every cut carries the warren\'s rot.'},
   chitin_maul:       {name:'Chitin Maul',        icon:'🔨', sell:720,  cgear:true, ctier:3, cslot:'weapon', dmgType:'crush', desc:'A weighted ball of jagged spider plates bound in spinneret silk. Sounds like crunching shell when it lands.'},
   warcleaver:        {name:'Warcleaver',         icon:'⚔️', sell:1400, cgear:true, ctier:4, cslot:'weapon', dmgType:'slash', desc:'A crude goblin cleaver, reforged proper around a steel core and wrapped in tanned hide. Still smells faintly of the cave.'},
   bone_reaper:       {name:'Bone Reaper',        icon:'⚔️', sell:2800, cgear:true, ctier:4, cslot:'weapon', dmgType:'slash', desc:'A curved blade carved from a single rib plate, edged with ground bone-shard and steel. Hums when undead are near.'},
@@ -3429,7 +3435,7 @@ const ITEMS={
   void_cinder:      {name:'Void Cinder',       icon:'🟣',sell:2400, desc:'An ember of pure corruption, cold and violet. It drinks the light around it. From burning ancient logs (Firemaking).'},
   infernal_crest:   {name:'Infernal Crest',    icon:'🔱',sell:28000,rare:true, desc:"A sigil-branded crest torn from a dread knight. Raise it in the Sanctum and the Demon Lord deigns to notice you."},
   hellheart:        {name:'Hellheart',         icon:'💎',sell:55000,rare:true, desc:"The black-cored heart of the Demon Lord, wreathed in fire that answers to no one now."},
-  doomblade:        {name:'Doomblade',         icon:'🗡️',sell:24000,cgear:true,ctier:8,cslot:'weapon', dmgType:'slash', desc:'A jagged greatsword forged in the Sanctum, its black edge running with a seam of live hellfire.'},
+  doomblade:        {name:'Doomblade',         icon:'🗡️',sell:24000,cgear:true,ctier:8,cslot:'weapon', dmgType:'slash', wfx:{burn:{mult:0.16}}, desc:'A jagged greatsword forged in the Sanctum, its black edge running with a seam of live hellfire — every wound it opens catches alight.'},
   demonlord_skull:  {name:"Demon Lord's Skull",icon:'💀',sell:175000,rare:true, cgear:true,ctier:9,cslot:'helmet', desc:"The horned, fire-eyed skull of the Demon Lord himself — the ultimate trophy of Embervale."},
 };
 
@@ -3495,6 +3501,7 @@ const COMBAT_GEAR_STATS={
   starsteel_boots:  {atk:0, str:0, def:20},
   starsteel_sword:  {atk:30,str:24,def:0},
   starsteel_shield: {atk:0, str:0, def:43},
+  warlord_bulwark:  {atk:0, str:0, def:30},   // T6 reflect shield — just under runite (34); the thorns proc is the draw
   // ─── Daggers (1.0.93) — stab variant ── atk+1, str-1 from the sword baseline.
   // Same atk+str total so DPS budget stays identical to the sword; the spread
   // tilts toward landing hits over big crits, complementing high-DEF foes.
@@ -5652,6 +5659,28 @@ const ICONS = {
   starsteel_boots:  _bootsSVG(CR_PAL.starsteel),
   starsteel_sword:  _swordSVGwpn(CR_PAL.starsteel),
   starsteel_shield: _shieldSVG(CR_PAL.starsteel),
+  warlord_bulwark: '<svg class="ev-icon" viewBox="0 0 64 64"><defs>'
+    +'<linearGradient id="wbk_wood" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6a4a28"/><stop offset="0.5" stop-color="#432c16"/><stop offset="1" stop-color="#22160a"/></linearGradient>'
+    +'<linearGradient id="wbk_iron" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a8a96"/><stop offset="0.5" stop-color="#4a4a54"/><stop offset="1" stop-color="#1c1c24"/></linearGradient>'
+    +'<linearGradient id="wbk_tusk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f0e6c8"/><stop offset="1" stop-color="#9a8458"/></linearGradient>'
+    +'<radialGradient id="wbk_boss" cx="0.4" cy="0.35" r="0.7"><stop offset="0" stop-color="#b0b0bc"/><stop offset="0.5" stop-color="#5a5a66"/><stop offset="1" stop-color="#20202a"/></radialGradient>'
+    +'<radialGradient id="wbk_glow" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#ff5030" stop-opacity="0.5"/><stop offset="1" stop-color="#ff5030" stop-opacity="0"/></radialGradient>'
+    +'</defs>'
+    +'<path d="M6 25 L19 30 L10 34 Z" fill="url(#wbk_tusk)" stroke="#3a2a18" stroke-width="0.5"/>'
+    +'<path d="M58 25 L45 30 L54 34 Z" fill="url(#wbk_tusk)" stroke="#3a2a18" stroke-width="0.5"/>'
+    +'<path d="M25 5 L30 16 L21 13 Z" fill="url(#wbk_tusk)" stroke="#3a2a18" stroke-width="0.5"/>'
+    +'<path d="M39 5 L34 16 L43 13 Z" fill="url(#wbk_tusk)" stroke="#3a2a18" stroke-width="0.5"/>'
+    +'<path d="M32 8 L52 14 L52 34 Q52 50 32 58 Q12 50 12 34 L12 14 Z" fill="url(#wbk_wood)" stroke="#20140a" stroke-width="1.5"/>'
+    +'<path d="M32 8 L52 14 L52 34 Q52 50 32 58 Q12 50 12 34 L12 14 Z" fill="none" stroke="url(#wbk_iron)" stroke-width="2.4"/>'
+    +'<rect x="30" y="12" width="4" height="43" fill="url(#wbk_iron)" opacity="0.9"/>'
+    +'<path d="M14 26 L50 26" stroke="url(#wbk_iron)" stroke-width="3.4"/>'
+    +'<circle cx="16" cy="16" r="1.3" fill="#2a2a32"/><circle cx="48" cy="16" r="1.3" fill="#2a2a32"/><circle cx="18" cy="43" r="1.3" fill="#2a2a32"/><circle cx="46" cy="43" r="1.3" fill="#2a2a32"/>'
+    +'<circle cx="32" cy="30" r="14" fill="url(#wbk_glow)"/>'
+    +'<circle cx="32" cy="30" r="8" fill="url(#wbk_boss)" stroke="#15151c" stroke-width="1"/>'
+    +'<circle cx="29.5" cy="27.5" r="2.3" fill="#d8d8e0" opacity="0.6"/>'
+    +'<path d="M32 19 L34.6 30 L29.4 30 Z" fill="url(#wbk_tusk)" stroke="#3a2a18" stroke-width="0.4"/>'
+    +'<path d="M8 27 L12 28 M56 27 L52 28" stroke="#c02818" stroke-width="1" stroke-linecap="round" opacity="0.7"/>'
+    +'</svg>',
   // ── Gathering tools (1.0.15) — generator + palette swap per tier ──
   bronze_axe:_axeSVG(CR_PAL.bronze), iron_axe:_axeSVG(CR_PAL.iron), steel_axe:_axeSVG(CR_PAL.steel), cobalt_axe:_axeSVG(CR_PAL.cobalt), eclipse_axe:_axeSVG(CR_PAL.eclipse),
   bronze_pick:_pickSVG(CR_PAL.bronze), iron_pick:_pickSVG(CR_PAL.iron), steel_pick:_pickSVG(CR_PAL.steel), cobalt_pick:_pickSVG(CR_PAL.cobalt), eclipse_pick:_pickSVG(CR_PAL.eclipse),
@@ -6303,19 +6332,23 @@ function combatGearStatBlock(itemId){
     +'<div style="font-size:14px;line-height:1.7">'+statLine+'</div>'+fxLine+reqLine;
 }
 
-/* Human-readable on-hit effect block for a weapon's `wfx` (poison / stun).
-   Returns '' if the item has no proc. Shared by every gear/inventory tooltip
-   and the combat drop hover so any debuff weapon advertises what it does. */
+/* Human-readable on-hit effect block for an item's `wfx` (poison / burn / stun
+   on weapons, reflect on shields). Returns '' if the item has no proc. Shared by
+   every gear/inventory tooltip so any debuff item advertises what it does. */
 function wfxTipHTML(itemId){
   var it=ITEMS[itemId];
   if(!it||!it.wfx) return '';
   var fx=it.wfx, parts=[];
-  if(fx.poison){ var p=fx.poison;
-    parts.push('<span style="color:#8fd44a">☠ '+Math.round(p.chance*100)+'% on hit to <b>poison</b> — '+p.dmg+' dmg every '+(p.every||2)+'s for '+p.dur+'s</span>'); }
+  if(fx.poison)
+    parts.push('<span style="color:#8fd44a">☠ '+Math.round(POISON_CHANCE*100)+'% on hit to <b>poison</b></span> — stacking bleed (to ×'+POISON_MAX_STACKS+') that ticks damage and shreds the foe’s defence; falls off after '+(POISON_DUR_MS/1000)+'s without a fresh hit.');
+  if(fx.burn)
+    parts.push('<span style="color:#ff8a3a">🔥 '+Math.round(BURN_CHANCE*100)+'% on hit to <b>burn</b></span> — a hotter damage-over-time than poison; pure damage, no defence shred.');
   if(fx.stun){ var s=fx.stun;
-    parts.push('<span style="color:#ffd24a">💫 '+Math.round(s.chance*100)+'% on hit to <b>stun</b> — skips its next '+s.dur+'s of attacks</span>'); }
+    parts.push('<span style="color:#ffd24a">💫 '+Math.round(s.chance*100)+'% on hit to <b>stun</b></span> — the foe skips its next '+s.dur+'s of attacks.'); }
+  if(fx.reflect){ var r=fx.reflect;
+    parts.push('<span style="color:#e88">🛡️ '+Math.round(r.chance*100)+'% to <b>reflect</b></span> — bounces '+Math.round(r.pct*100)+'% of a landed blow back at the attacker.'); }
   if(!parts.length) return '';
-  return '<div style="font-size:12.5px;line-height:1.5;margin-top:6px;padding-top:6px;border-top:1px solid #3a2a18">'+parts.join('<br>')+'</div>';
+  return '<div style="font-size:12px;line-height:1.5;margin-top:6px;padding-top:6px;border-top:1px solid #3a2a18">'+parts.join('<br>')+'</div>';
 }
 
 /* Build a reusable enchant/gem block for gem-tier jewelry (ring/amulet/pendant/jewel).
@@ -11040,6 +11073,23 @@ function combatLevel(){
 const COMBAT_P={ HIT_LVL:1.6, HIT_GEAR:5.0, ACC_LVL:1.5, ACC_GEAR:3.5,
                  DEF_LVL:1.2, DEF_GEAR:1.0, HP_LVL:10, HP_GEAR:0.5,
                  HIT_MIN:0.5, HP_BOOST_FACTOR:0.3 };
+
+// ── Weapon status-effect tuning (1.0.62) ─────────────────────────────────────
+// Poison: a stacking bleed (up to 10) that both ticks damage AND shreds the
+// foe's defence. Each stack refreshes the whole effect to 10s, so a dry streak
+// (25%/hit) lets it fall off. Tick damage scales with the player's max hit.
+// Burn: a hotter pure-DoT (no defence shred), preferred for raw damage.
+const POISON_MAX_STACKS=10;   // hard cap on stacks
+const POISON_CHANCE=0.25;     // per landed hit
+const POISON_DUR_MS=10000;    // refreshed on each application; 10s ceiling
+const POISON_DEF_PER_STK=0.03;// −3% foe defence per stack (−30% at 10)
+const POISON_TICK_MS=2000;    // damage cadence
+const POISON_TICK_MULT=0.10;  // per-tick dmg = round(youMaxHit × this)
+const BURN_CHANCE=0.30;       // per landed hit
+const BURN_DUR_MS=8000;       // burn duration (no refresh-stacking)
+const BURN_TICK_MS=2000;
+const BURN_TICK_MULT=0.16;    // hotter than poison; no defence shred
+const REFLECT_CLAMP_MIN=1;    // reflected/DoT damage never lands the kill (min 1 HP)
 
 /* Player accuracy: (attack lvl ×1.5 + gear atk ×3.5) × (1+atkBoost) × class. */
 function playerAccuracy(){
@@ -15867,6 +15917,7 @@ const MONSTER_DROPS={
                     {id:'shade_ember',      chance:0.015},
                     {id:'voidheart',        chance:0.0011}], // ~1 in 900
   ogre_warlord:    [{id:'warlord_skull',    chance:1.0, once:true},  // trophy (first kill only)
+                    {id:'warlord_bulwark',  chance:0.030},           // gear · reflect shield (1.0.62)
                     {id:'splintered_club',  chance:0.85, qty:[2,4]}, // boss table
                     {id:'ogre_hide',        chance:0.80, qty:[2,4]},
                     {id:'warhound_fang',    chance:0.65, qty:[2,3]},
@@ -18901,23 +18952,33 @@ function combatTick(){
     combat.regens=combat.regens.filter(rg=>now<rg.until);
   }
 
-  // ── Foe poison damage-over-time (1.0.60) ────────────────────────────────
-  // Poison weapons (e.g. Plague Fang Dagger) stack a bleed on the foe. It ticks
-  // `dmg` every `every` seconds until `until`. Poison never lands the killing
-  // blow (clamped to min 1 HP) so all kill/reward logic stays in the swing path.
+  // ── Foe damage-over-time (1.0.62) — poison & burn ───────────────────────────
+  // Both tick a stored `tickDmg` on their own cadence until they expire. Neither
+  // lands the killing blow (clamped to min 1 HP) so all kill/reward logic stays
+  // in the swing path. Poison also shreds defence via its stack count (applied
+  // in the player hit-chance calc below); burn is pure damage.
   if(!combat.foeStatus) combat.foeStatus={};
   const _psn=combat.foeStatus.poison;
   if(_psn){
     if(now>=_psn.until){ delete combat.foeStatus.poison; }
-    else {
-      const stepMs=(_psn.every||2)*1000;
-      while(now-_psn.last>=stepMs){
-        _psn.last+=stepMs;
-        if(combat.foeHp>1){
-          const pd=Math.min(_psn.dmg, combat.foeHp-1);
-          combat.foeHp-=pd;
-          cmbLog(`☠ Poison saps the ${mon.name} for ${pd}.`,'');
-        }
+    else while(now-_psn.last>=POISON_TICK_MS){
+      _psn.last+=POISON_TICK_MS;
+      if(combat.foeHp>REFLECT_CLAMP_MIN){
+        const pd=Math.min(_psn.tickDmg, combat.foeHp-REFLECT_CLAMP_MIN);
+        combat.foeHp-=pd;
+        cmbLog(`☠ Poison saps the ${mon.name} for ${pd}.`,'');
+      }
+    }
+  }
+  const _brn=combat.foeStatus.burn;
+  if(_brn){
+    if(now>=_brn.until){ delete combat.foeStatus.burn; }
+    else while(now-_brn.last>=BURN_TICK_MS){
+      _brn.last+=BURN_TICK_MS;
+      if(combat.foeHp>REFLECT_CLAMP_MIN){
+        const bd=Math.min(_brn.tickDmg, combat.foeHp-REFLECT_CLAMP_MIN);
+        combat.foeHp-=bd;
+        cmbLog(`🔥 Flames scorch the ${mon.name} for ${bd}.`,'');
       }
     }
   }
@@ -18928,7 +18989,11 @@ function combatTick(){
     // 1.0.26 combat math v2 — hit/miss is back. Hit chance = acc/(acc+foeDef);
     // a lost roll deals 0 (a real miss). On a hit, damage rolls HIT_MIN..1.0 of
     // your max hit. Low accuracy vs a high-defence foe = lots of 0s.
-    const hitChance=Math.max(0.03, Math.min(0.97, combat.youAcc/(combat.youAcc+mon.def)));
+    // Poison stacks shred the foe's effective defence (−3% per stack, −30% at 10),
+    // raising your hit chance the longer the bleed is kept up.
+    const _pStk=(combat.foeStatus&&combat.foeStatus.poison)?combat.foeStatus.poison.stacks:0;
+    const _effDef=Math.max(1, mon.def*(1-POISON_DEF_PER_STK*_pStk));
+    const hitChance=Math.max(0.03, Math.min(0.97, combat.youAcc/(combat.youAcc+_effDef)));
     let youDmg = (Math.random()<hitChance)
       ? Math.max(1, Math.round(combat.youMaxHit*(COMBAT_P.HIT_MIN+(1-COMBAT_P.HIT_MIN)*Math.random())))
       : 0;
@@ -18972,11 +19037,31 @@ function combatTick(){
       const _wfx=_fxId&&ITEMS[_fxId]&&ITEMS[_fxId].wfx;
       if(_wfx){
         if(!combat.foeStatus) combat.foeStatus={};
-        if(_wfx.poison&&Math.random()<_wfx.poison.chance){
-          const fresh=!combat.foeStatus.poison;
-          combat.foeStatus.poison={dmg:_wfx.poison.dmg, every:_wfx.poison.every||2,
-            until:now+_wfx.poison.dur*1000, last:now, acc:0};
-          if(fresh) cmbLog(`☠ The ${mon.name} is poisoned!`,'hit');
+        // Poison — stacking bleed + defence shred. Each proc adds a stack (cap 10)
+        // and refreshes the 10s timer; tick damage scales with the player's max hit.
+        if(_wfx.poison&&Math.random()<POISON_CHANCE){
+          const _pp=combat.foeStatus.poison;
+          const _stk=Math.min(POISON_MAX_STACKS,(_pp?_pp.stacks:0)+1);
+          const _mult=_wfx.poison.mult||POISON_TICK_MULT;
+          combat.foeStatus.poison={
+            stacks:_stk,
+            tickDmg:Math.max(1,Math.round(combat.youMaxHit*_mult)),
+            until:now+POISON_DUR_MS,
+            last:_pp?_pp.last:now
+          };
+          if(!_pp) cmbLog(`☠ The ${mon.name} is poisoned!`,'hit');
+          else if(_stk>_pp.stacks) cmbLog(`☠ Poison deepens on the ${mon.name} (×${_stk}).`,'');
+        }
+        // Burn — hotter pure DoT, no defence shred, no stacking (refreshes).
+        if(_wfx.burn&&Math.random()<BURN_CHANCE){
+          const _bmult=_wfx.burn.mult||BURN_TICK_MULT;
+          const _fresh=!combat.foeStatus.burn;
+          combat.foeStatus.burn={
+            tickDmg:Math.max(1,Math.round(combat.youMaxHit*_bmult)),
+            until:now+BURN_DUR_MS,
+            last:combat.foeStatus.burn?combat.foeStatus.burn.last:now
+          };
+          if(_fresh) cmbLog(`🔥 The ${mon.name} bursts into flame!`,'hit');
         }
         if(_wfx.stun&&Math.random()<_wfx.stun.chance){
           combat.foeStatus.stun={until:now+_wfx.stun.dur*1000};
@@ -19121,6 +19206,19 @@ function combatTick(){
     combat.youHp=Math.max(0,combat.youHp-foeDmg);
     cmbLog(foeDmg>0?`${mon.name} hits you for ${foeDmg}.`:`${mon.name} misses.`, foeDmg>0?'hit':'');
 
+    // ── Reflect (1.0.62) — a thorns shield bounces a share of the blow back.
+    // Only on a landed hit; clamped so it never lands the kill (kills stay in
+    // the player-swing path).
+    if(foeDmg>0){
+      const _shId=(state.equipped&&state.equipped.shield)||'';
+      const _shfx=_shId&&ITEMS[_shId]&&ITEMS[_shId].wfx;
+      if(_shfx&&_shfx.reflect&&Math.random()<_shfx.reflect.chance&&combat.foeHp>REFLECT_CLAMP_MIN){
+        const _rfl=Math.min(Math.max(1,Math.round(foeDmg*_shfx.reflect.pct)), combat.foeHp-REFLECT_CLAMP_MIN);
+        combat.foeHp-=_rfl;
+        cmbLog(`🛡️ Your bulwark reflects ${_rfl} back at the ${mon.name}!`,'hit');
+      }
+    }
+
     if(combat.youHp<=0){
       cmbLog('💀 You were defeated and retreat to safety.','lose');
       combat.active=false;
@@ -19185,18 +19283,36 @@ function grantCombatXp(stat,amount){
 }
 
 /* Lightweight per-tick DOM refresh — avoids rebuilding the whole panel each second. */
-/* Small inline status glyph — reuses the 16×16 CMAST_ICON_SVG path set so the
-   buff/debuff chips share the game's icon language (no emoji). (1.0.60) */
-function _statusGlyph(key,color){
-  const p=CMAST_ICON_SVG[key]||'';
-  return `<svg viewBox="0 0 16 16" width="12" height="12" fill="${color}" stroke="${color}" stroke-linecap="round" stroke-linejoin="round" pointer-events="none">${p}</svg>`;
-}
+/* Dedicated, gradient-rich SVG icons for the combat status chips (1.0.62) —
+   poison / burn / stun / regen. Buff chips (atk/str/def) reuse the real skill
+   icons via iconHTML so a buff shows the stat it boosts. 64×64 like ICONS. */
+const STATUS_ICONS={
+  poison:'<svg viewBox="0 0 64 64" class="ev-icon"><defs><radialGradient id="psn_g" cx="0.5" cy="0.62" r="0.62"><stop offset="0" stop-color="#d4f584"/><stop offset="0.5" stop-color="#6aa82c"/><stop offset="1" stop-color="#274d10"/></radialGradient></defs>'
+    +'<path d="M32 5 Q19 30 19 43 Q19 57 32 57 Q45 57 45 43 Q45 30 32 5 Z" fill="url(#psn_g)" stroke="#173007" stroke-width="2.4"/>'
+    +'<path d="M25 22 Q21 32 23 43" stroke="#eaffb4" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.55"/>'
+    +'<circle cx="27" cy="42" r="3.4" fill="#12280a"/><circle cx="38" cy="45" r="2.6" fill="#12280a"/></svg>',
+  burn:'<svg viewBox="0 0 64 64" class="ev-icon"><defs>'
+    +'<radialGradient id="brn_g" cx="0.5" cy="0.72" r="0.7"><stop offset="0" stop-color="#e0762f" stop-opacity="0.4"/><stop offset="1" stop-color="#e0762f" stop-opacity="0"/></radialGradient>'
+    +'<linearGradient id="brn_o" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#a01810"/><stop offset="0.4" stop-color="#e0762f"/><stop offset="0.8" stop-color="#fbd24e"/><stop offset="1" stop-color="#fff8dc"/></linearGradient>'
+    +'<linearGradient id="brn_i" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#e0762f"/><stop offset="0.6" stop-color="#fbd24e"/><stop offset="1" stop-color="#fff"/></linearGradient></defs>'
+    +'<circle cx="32" cy="42" r="24" fill="url(#brn_g)"/>'
+    +'<path d="M32 4 Q22 18 20 32 Q16 46 24 54 Q28 58 32 58 Q36 58 40 54 Q48 46 44 32 Q42 18 32 4 Z" fill="url(#brn_o)"/>'
+    +'<path d="M32 21 Q27 30 26 40 Q25 50 30 54 Q32 56 34 54 Q39 50 38 40 Q37 30 32 21 Z" fill="url(#brn_i)"/>'
+    +'<ellipse cx="32" cy="46" rx="3.6" ry="7" fill="#fff8dc" opacity="0.9"/></svg>',
+  stun:'<svg viewBox="0 0 64 64" class="ev-icon"><defs><radialGradient id="stn_g" cx="0.5" cy="0.45" r="0.62"><stop offset="0" stop-color="#fffce0"/><stop offset="0.5" stop-color="#fbd24e"/><stop offset="1" stop-color="#c07810"/></radialGradient></defs>'
+    +'<path d="M32 7 L39 26 L59 26 L43 38 L49 58 L32 46 L15 58 L21 38 L5 26 L25 26 Z" fill="url(#stn_g)" stroke="#6a4408" stroke-width="1.8" stroke-linejoin="round"/>'
+    +'<circle cx="12" cy="14" r="2.6" fill="#fff8c0"/><circle cx="55" cy="49" r="2.2" fill="#fff8c0"/></svg>',
+  regen:'<svg viewBox="0 0 64 64" class="ev-icon"><defs><radialGradient id="rgn_g" cx="0.5" cy="0.4" r="0.72"><stop offset="0" stop-color="#c0f5a4"/><stop offset="0.5" stop-color="#5aa838"/><stop offset="1" stop-color="#1e4a12"/></radialGradient></defs>'
+    +'<path d="M32 56 C 8 40 8 15 24 15 C 30 15 32 22 32 24 C 32 22 34 15 40 15 C 56 15 56 40 32 56 Z" fill="url(#rgn_g)" stroke="#12300a" stroke-width="2.4"/>'
+    +'<path d="M32 27 L32 45 M23 36 L41 36" stroke="#eaffd8" stroke-width="4.2" stroke-linecap="round"/></svg>'
+};
+function _fxIcon(name){ return STATUS_ICONS[name] || iconHTML(name); }
 
-/* Buff/debuff chip DATA for a fighter (1.0.60). Returns an array of
-   {key,glyph,color,tip}. `key` identifies the effect TYPE (not its countdown)
-   so updateCombatBars can tell when the SET of chips changes vs. just the
+/* Buff/debuff chip DATA for a fighter (1.0.60/1.0.62). Returns an array of
+   {key,glyph,color,tip,stacks?}. `key` identifies the effect state (type +
+   stack count) so updateCombatBars rebuilds only when it changes vs. the
    seconds ticking — the fix for the chip row flickering every tick.
-   'foe' → poison / stun debuffs; 'you' → potion buffs + food regen. */
+   'foe' → poison / burn / stun; 'you' → potion buffs + food regen. */
 function statusChips(side){
   if(!combat.active) return [];
   const now=Date.now();
@@ -19204,27 +19320,33 @@ function statusChips(side){
   const secs=ms=>Math.max(0,Math.ceil(ms/1000))+'s';
   if(side==='foe'){
     const fs=combat.foeStatus||{};
-    if(fs.poison&&fs.poison.until>now)
-      out.push({key:'poison',glyph:'blood',color:'#8fd44a',tip:`Poisoned — ${fs.poison.dmg} dmg / ${fs.poison.every||2}s · ${secs(fs.poison.until-now)} left`});
+    if(fs.poison&&fs.poison.until>now){
+      const st=fs.poison.stacks||1;
+      out.push({key:'poison:'+st,glyph:'poison',color:'#8fd44a',stacks:st,
+        tip:`Poisoned ×${st} — ${fs.poison.tickDmg} dmg / ${POISON_TICK_MS/1000}s · −${Math.round(POISON_DEF_PER_STK*st*100)}% def · ${secs(fs.poison.until-now)} left`});
+    }
+    if(fs.burn&&fs.burn.until>now)
+      out.push({key:'burn',glyph:'burn',color:'#ff8a3a',tip:`Burning — ${fs.burn.tickDmg} dmg / ${BURN_TICK_MS/1000}s · ${secs(fs.burn.until-now)} left`});
     if(fs.stun&&fs.stun.until>now)
-      out.push({key:'stun',glyph:'bolt',color:'#ffd24a',tip:`Stunned — skipping attacks · ${secs(fs.stun.until-now)} left`});
+      out.push({key:'stun',glyph:'stun',color:'#ffd24a',tip:`Stunned — skipping attacks · ${secs(fs.stun.until-now)} left`});
   } else {
     for(const e of (state.effects||[])){
       if(e.expires<=now) continue;
-      const t=secs(e.expires-now);
-      if(e.atk) out.push({key:'atk:'+(e._itemId||''),glyph:'sword',color:'#6fa8ff',tip:`Attack +${e.atk} · ${t}`});
-      if(e.str) out.push({key:'str:'+(e._itemId||''),glyph:'flame',color:'#ff8a5c',tip:`Strength +${e.str} · ${t}`});
-      if(e.def) out.push({key:'def:'+(e._itemId||''),glyph:'shield',color:'#7bd88a',tip:`Defence +${e.def} · ${t}`});
+      const t=secs(e.expires-now), id=e._itemId||'';
+      if(e.atk) out.push({key:'atk:'+id,glyph:'attack',color:'#d04848',tip:`Attack +${e.atk} · ${t}`});
+      if(e.str) out.push({key:'str:'+id,glyph:'strength',color:'#e0762f',tip:`Strength +${e.str} · ${t}`});
+      if(e.def) out.push({key:'def:'+id,glyph:'defence',color:'#5478c8',tip:`Defence +${e.def} · ${t}`});
     }
     if(combat.regens&&combat.regens.length){
       const until=Math.max.apply(null,combat.regens.map(r=>r.until));
-      if(until>now) out.push({key:'regen',glyph:'heart',color:'#8fe08f',tip:`Regenerating HP · ${secs(until-now)}`});
+      if(until>now) out.push({key:'regen',glyph:'regen',color:'#7da33f',tip:`Regenerating HP · ${secs(until-now)}`});
     }
   }
   return out;
 }
 function _chipHTML(c){
-  return `<span class="st-ic" style="border-color:${c.color}" data-tip="${c.tip}">${_statusGlyph(c.glyph,c.color)}</span>`;
+  const badge=(c.stacks&&c.stacks>1)?`<b class="st-ct">${c.stacks}</b>`:'';
+  return `<span class="st-ic" style="border-color:${c.color}" data-tip="${c.tip}">${_fxIcon(c.glyph)}${badge}</span>`;
 }
 function statusIconsHTML(side){
   return statusChips(side).map(_chipHTML).join('');
