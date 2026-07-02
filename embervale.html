@@ -2443,7 +2443,7 @@ header h1 .flame{color:var(--ember)}
   <div class="mm-btns">
     <button class="mm-btn mm-primary" id="mmPlay">▶ Play</button>
   </div>
-  <div class="mm-ver">v1.0.54</div>
+  <div class="mm-ver">v1.0.55</div>
 </div>
 
 <!-- ===== CHARACTER SELECT (added) ===== -->
@@ -13071,16 +13071,13 @@ function resetXphTracker(skill){
 
 function renderSkillList(){
   const box=$('skillList'); box.innerHTML='';
-  // Active skill first, selected skill second, rest alphabetical
+  // Active (currently-running) skill pinned to the top; everyone else stays in a
+  // fixed alphabetical order. The SELECTED skill is only highlighted in place —
+  // clicking a skill no longer yanks it to the top (that reorder was confusing).
   const activeKey=(state.action&&state.action.skill)||null;
-  function skillSortRank(k){
-    if(k===activeKey) return 0;
-    if(k===selectedSkill) return 1;
-    return 2;
-  }
   const sortedKeys=Object.keys(SKILLS).sort(function(a,b){
-    const ra=skillSortRank(a), rb=skillSortRank(b);
-    if(ra!==rb) return ra-rb;
+    const aActive=a===activeKey, bActive=b===activeKey;
+    if(aActive!==bActive) return aActive?-1:1;
     return SKILLS[a].name.localeCompare(SKILLS[b].name);
   });
   for(const key of sortedKeys){
