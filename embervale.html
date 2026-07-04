@@ -2593,7 +2593,7 @@ header h1 .flame{color:var(--ember)}
   <div class="mm-btns">
     <button class="mm-btn mm-primary" id="mmPlay">▶ Play</button>
   </div>
-  <div class="mm-ver">v1.0.68</div>
+  <div class="mm-ver">v1.0.69</div>
 </div>
 
 <!-- ===== CHARACTER SELECT (added) ===== -->
@@ -3444,7 +3444,9 @@ const ITEMS={
   // ─── Combat drops · Rat Warrens ─── misc materials (reserved for future crafting/alchemy uses)
   rat_tail:         {name:'Rat Tail',          icon:'〰️',sell:6,    desc:'Tough sinewy tail. Crafters and alchemists may want these later.'},
   gnawed_bone:      {name:'Gnawed Bone',       icon:'🦴',sell:10,   desc:'A small bone worried smooth by rodent teeth.'},
-  ratskin:          {name:'Ratskin',           icon:'🟫',sell:22,   desc:'Coarse pelt — could be cured into rough leather (coming soon).'},
+  ratskin:          {name:'Ratskin',           icon:'🟫',sell:22,   desc:'Coarse pelt — stitched into Roughhide leather armour at the Crafting bench.'},
+  chitin:           {name:'Chitin Plating',    icon:'🟪',sell:65,   desc:'Overlapping plates prised from a cave spider. Light, glossy, and stubbornly hard — the makings of Chitinweave leather armour.'},
+  drake_hide:       {name:'Drake Hide',        icon:'🟧',sell:760,  desc:'Supple wyrm-leather beneath the scales, still warm. The finest hide a crafter can work into Drakehide armour.'},
   rat_fang:         {name:'Rat Fang',          icon:'🦷',sell:48,   desc:'A wickedly sharp incisor. Sought after for alchemy reagents (coming soon).'},
   royal_rat_sigil:  {name:'Royal Rat Sigil',   icon:'🔱',sell:4500, rare:true, desc:"A grim emblem of the Warren court. Hold this and the Queen's Lair will open to you."},
   rat_queen_crown:  {name:"Rat Queen's Crown", icon:'👑',sell:22000,rare:true, cgear:true,ctier:2,cslot:'helmet', desc:'The blackened circlet of the fallen Queen — proof of conquest.'},
@@ -3476,7 +3478,7 @@ const ITEMS={
   lich_crown:       {name:"Lich's Crown",      icon:'👑',sell:48000,rare:true, cgear:true,ctier:4,cslot:'helmet', desc:'A blackened diadem of bone and iron, taken from a king who refused to die — until now.'},
   crown_jewel:      {name:'Crown Jewel',       icon:'💎',sell:14000,rare:true, desc:'A flawless sanguine gem pried from the Lich\'s crown — the only thing left of whatever it once was.'},
   // ─── Combat drops · Wolf Den ─── beast hides, fangs, primal trinkets (recipes coming soon)
-  wolf_pelt:        {name:'Wolf Pelt',         icon:'🟫',sell:90,   desc:'A thick winter-grade pelt. Tougher than any hide a goblin ever wore — armor crafters will pay (coming soon).'},
+  wolf_pelt:        {name:'Wolf Pelt',         icon:'🟫',sell:90,   desc:'A thick winter-grade pelt, tougher than any hide a goblin ever wore. Cures into Wolfhide leather armour.'},
   wolf_fang:        {name:'Wolf Fang',         icon:'🦷',sell:140,  desc:'A curved canine, longer than a finger. Weapon component for blades and necklaces (coming soon).'},
   frostfur:         {name:'Frostfur',          icon:'❄️',sell:240,  desc:'Silver-tipped fur from a frost-bound pelt. Cold to the touch, even in summer (coming soon).'},
   alpha_claw:       {name:'Alpha Claw',        icon:'🦅',sell:420,  desc:'A black, curved claw the length of a knife. Edges weapons and trinkets alike (coming soon).'},
@@ -4844,6 +4846,70 @@ function _crCapeSVG(p){
   return `<svg class="ev-icon" viewBox="0 0 64 64">${_crGlow(p,32,40,24,18)}${_crShadow(32,58,18)}<path d="M16 14 L24 10 L40 10 L48 14 L52 56 L40 54 L32 58 L24 54 L12 56 Z" fill="${p.mid}" stroke="${p.edge}" stroke-width="1" stroke-linejoin="round"/><path d="M16 14 L24 10 L32 12 L32 58 L24 54 L12 56 Z" fill="${p.light}"/><path d="M20 18 L24 50 M28 16 L28 56 M36 16 L36 56 M40 18 L44 50" stroke="${p.dark}" stroke-width="0.6" opacity="0.55" fill="none"/><path d="M14 18 L50 18" stroke="${p.hl}" stroke-width="0.8" opacity="0.7"/><path d="M14 22 L50 22" stroke="${p.dark}" stroke-width="0.5" opacity="0.5"/><path d="M22 10 L28 14 L36 14 L42 10 L42 16 L22 16 Z" fill="${p.dark}" stroke="${p.edge}" stroke-width="0.7" stroke-linejoin="round"/><path d="M22 11 L42 11" stroke="${p.hl}" stroke-width="0.4" opacity="0.6"/><circle cx="32" cy="20" r="2.6" fill="${p.accent}" stroke="${p.edge}" stroke-width="0.6"/><circle cx="32" cy="19" r="1.5" fill="${p.hl}"/><circle cx="31.4" cy="18.5" r="0.6" fill="#fff" opacity="0.85"/><path d="M16 54 L20 56 L12 56 Z M52 54 L48 56 L56 56 Z" fill="${p.dark}" opacity="0.7"/>${_crSparkles(p)}</svg>`;
 }
 
+/* ════ [JS-ICONS-LTH] leather armour generators (1.0.69) — 5 pieces × 8 hide palettes ═══
+   Light-armour counterpart to the plate generators above. Matte (no metal glow /
+   sparkle), built from soft rounded hide shapes, dashed stitching, and strap
+   buckles instead of rivets — so leather reads as clearly NOT plate at a glance.
+   Palette contract: {light, mid, dark, edge, hl, stitch, buckle}. */
+function _lStitch(p, d){ return `<path d="${d}" stroke="${p.stitch}" stroke-width="0.7" stroke-dasharray="1.6 1.6" fill="none" opacity="0.85"/>`; }
+function _lBuckle(p, cx, cy){ return `<circle cx="${cx}" cy="${cy}" r="2" fill="${p.buckle}" stroke="${p.edge}" stroke-width="0.5"/><circle cx="${cx}" cy="${cy}" r="0.8" fill="${p.edge}"/>`; }
+function _lHelmSVG(p){
+  return `<svg class="ev-icon" viewBox="0 0 64 64">${_crShadow(32,56,17)}`
+    +`<path d="M13 36 Q11 14 32 9 Q53 14 51 36 L47 47 Q40 51 32 51 Q24 51 17 47 Z" fill="${p.mid}" stroke="${p.edge}" stroke-width="1.2" stroke-linejoin="round"/>`
+    +`<path d="M13 36 Q11 14 32 9 Q41 12 39 36 L37 47 Q29 49 19 46 Z" fill="${p.light}"/>`
+    +`<path d="M23 47 Q32 53 41 47 L44 40 Q32 47 20 40 Z" fill="${p.dark}"/>`
+    +`<path d="M32 9 Q34 11 34 15 L33 30 L31 30 L30 15 Q30 11 32 9 Z" fill="${p.dark}" opacity="0.5"/>`
+    +_lStitch(p,'M18 30 Q32 25 46 30')+_lStitch(p,'M17 45 Q32 51 47 45')
+    +_lBuckle(p,20,43)+_lBuckle(p,44,43)+`</svg>`;
+}
+function _lChestSVG(p){
+  return `<svg class="ev-icon" viewBox="0 0 64 64">${_crShadow(32,58,20)}`
+    +`<path d="M14 22 L10 30 L6 26 L12 18 Q20 14 24 15 L40 15 Q44 14 52 18 L58 26 L54 30 L50 22 Z" fill="${p.dark}" stroke="${p.edge}" stroke-width="0.9" stroke-linejoin="round"/>`
+    +`<path d="M14 21 Q22 16 32 16 Q42 16 50 21 L54 54 Q46 60 32 60 Q18 60 10 54 Z" fill="${p.mid}" stroke="${p.edge}" stroke-width="1.1" stroke-linejoin="round"/>`
+    +`<path d="M14 21 Q22 16 32 16 Q35 16 37 17 L36 57 Q28 58 20 55 L12 50 Z" fill="${p.light}"/>`
+    +`<path d="M26 18 Q32 15 38 18 L37 30 Q32 27 27 30 Z" fill="${p.dark}"/>`
+    +`<path d="M32 20 L32 56" stroke="${p.dark}" stroke-width="1.4" opacity="0.7"/>`
+    +`<path d="M28 26 L36 26 M28 32 L36 32 M28 38 L36 38 M28 44 L36 44" stroke="${p.stitch}" stroke-width="0.7" opacity="0.8"/>`
+    +`<path d="M32 24 L28 26 M32 24 L36 26 M32 30 L28 32 M32 30 L36 32 M32 36 L28 38 M32 36 L36 38 M32 42 L28 44 M32 42 L36 44" stroke="${p.stitch}" stroke-width="0.6" opacity="0.7"/>`
+    +_lStitch(p,'M17 50 Q32 56 47 50')+_lBuckle(p,15,26)+_lBuckle(p,49,26)+`</svg>`;
+}
+function _lLegsSVG(p){
+  return `<svg class="ev-icon" viewBox="0 0 64 64">${_crShadow(32,58,18)}`
+    +`<path d="M11 12 L53 12 L53 19 L11 19 Z" fill="${p.dark}" stroke="${p.edge}" stroke-width="0.8"/>`
+    +`<rect x="28" y="12" width="8" height="7" fill="${p.buckle}" stroke="${p.edge}" stroke-width="0.5"/><rect x="30" y="14" width="4" height="3" fill="${p.edge}"/>`
+    +`<path d="M13 19 L30 19 L27 58 L16 58 Z" fill="${p.mid}" stroke="${p.edge}" stroke-width="1" stroke-linejoin="round"/>`
+    +`<path d="M13 19 L22 19 L20 58 L16 58 Z" fill="${p.light}"/>`
+    +`<path d="M34 19 L51 19 L48 58 L37 58 Z" fill="${p.mid}" stroke="${p.edge}" stroke-width="1" stroke-linejoin="round"/>`
+    +`<path d="M34 19 L40 19 L38 34 L36 19 Z" fill="${p.light}"/>`
+    +`<ellipse cx="21" cy="36" rx="4.5" ry="4" fill="${p.dark}" opacity="0.7"/><ellipse cx="43" cy="36" rx="4.5" ry="4" fill="${p.dark}" opacity="0.7"/>`
+    +_lStitch(p,'M15 24 L28 24')+_lStitch(p,'M36 24 L49 24')+_lStitch(p,'M17 50 L26 50')+_lStitch(p,'M38 50 L47 50')+`</svg>`;
+}
+function _lGlovesSVG(p){
+  return `<svg class="ev-icon" viewBox="0 0 64 64">${_crShadow(32,56,22)}`
+    +`<path d="M8 20 L26 16 L28 26 L24 52 L10 52 Z" fill="${p.mid}" stroke="${p.edge}" stroke-width="1" stroke-linejoin="round"/>`
+    +`<path d="M8 20 L20 18 L22 26 L18 50 L10 50 Z" fill="${p.light}"/>`
+    +`<path d="M7 18 Q17 14 27 17 L28 23 Q17 20 8 24 Z" fill="${p.dark}" stroke="${p.edge}" stroke-width="0.7"/>`
+    +_lStitch(p,'M11 30 L23 28')+_lStitch(p,'M11 38 L23 36')+_lStitch(p,'M12 45 L22 43')+_lBuckle(p,13,22)
+    +`<path d="M56 20 L38 16 L36 26 L40 52 L54 52 Z" fill="${p.mid}" stroke="${p.edge}" stroke-width="1" stroke-linejoin="round"/>`
+    +`<path d="M56 20 L44 18 L42 26 L46 50 L54 50 Z" fill="${p.light}" opacity="0.6"/>`
+    +`<path d="M57 18 Q47 14 37 17 L36 23 Q47 20 56 24 Z" fill="${p.dark}" stroke="${p.edge}" stroke-width="0.7"/>`
+    +_lStitch(p,'M41 30 L53 28')+_lStitch(p,'M41 38 L53 36')+_lStitch(p,'M42 45 L52 43')+_lBuckle(p,51,22)+`</svg>`;
+}
+function _lBootsSVG(p){
+  return `<svg class="ev-icon" viewBox="0 0 64 64">${_crShadow(32,56,24)}`
+    +`<path d="M10 16 L24 14 L26 38 L30 40 L30 50 L8 50 L7 38 Z" fill="${p.mid}" stroke="${p.edge}" stroke-width="1" stroke-linejoin="round"/>`
+    +`<path d="M10 16 L20 14 L22 38 L24 40 L24 48 L10 48 L8 38 Z" fill="${p.light}"/>`
+    +`<path d="M7 43 L30 43 L30 50 L8 50 L6 46 Z" fill="${p.dark}" stroke="${p.edge}" stroke-width="0.7" stroke-linejoin="round"/>`
+    +`<path d="M12 20 L24 19 M12 26 L25 25 M12 32 L25 31" stroke="${p.stitch}" stroke-width="0.65" opacity="0.8"/>`
+    +`<path d="M14 22 L20 21 M14 28 L21 27" stroke="${p.buckle}" stroke-width="0.9" opacity="0.9"/>`
+    +`<path d="M40 16 L54 14 L57 38 L56 50 L34 50 L34 40 L38 38 Z" fill="${p.mid}" stroke="${p.edge}" stroke-width="1" stroke-linejoin="round"/>`
+    +`<path d="M40 16 L50 14 L53 38 L42 38 L40 36 Z" fill="${p.light}" opacity="0.65"/>`
+    +`<path d="M34 43 L57 43 L56 50 L34 50 Z" fill="${p.dark}" stroke="${p.edge}" stroke-width="0.7" stroke-linejoin="round"/>`
+    +`<path d="M42 20 L54 19 M42 26 L55 25 M42 32 L55 31" stroke="${p.stitch}" stroke-width="0.65" opacity="0.8"/>`
+    +`<path d="M44 22 L50 21 M44 28 L51 27" stroke="${p.buckle}" stroke-width="0.9" opacity="0.9"/></svg>`;
+}
+const _LEATHER_GEN={helm:_lHelmSVG, chest:_lChestSVG, legs:_lLegsSVG, gloves:_lGlovesSVG, boots:_lBootsSVG};
+
 /* ════ [JS-ICONS-SK] skilling gear sets — 12 sets × 4 pieces (48 SVG icons) ═══
    Per-set palette + unique hat/chest/legs/boots silhouettes. Each set has a
    distinct profession aesthetic so the four pieces of one set read as a
@@ -6042,6 +6108,8 @@ const ICONS = {
   emberwyrm_skull: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><radialGradient id="wes_e" cx="0.5" cy="0.5" r="0.6"><stop offset="0" stop-color="#ff6018" stop-opacity="0.85"/><stop offset="1" stop-color="#5a1808" stop-opacity="0"/></radialGradient><radialGradient id="wes_b" cx="0.5" cy="0.4" r="0.6"><stop offset="0" stop-color="#efe6cc"/><stop offset="0.6" stop-color="#a89878"/><stop offset="1" stop-color="#2e2418"/></radialGradient><linearGradient id="wes_h" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a2a1a"/><stop offset="1" stop-color="#100a06"/></linearGradient></defs><circle cx="32" cy="34" r="27" fill="url(#wes_e)"/><path d="M14 18 L8 4 L20 12 Z M50 18 L56 4 L44 12 Z" fill="url(#wes_h)"/><path d="M16 22 Q12 10 24 7 L30 12 L34 12 L40 7 Q52 10 48 22 L50 30 L44 28 L46 40 L40 46 L40 52 L34 47 L32 52 L30 47 L24 52 L24 46 L18 40 L20 28 L14 30 Z" fill="url(#wes_b)" stroke="#1a1208" stroke-width="1" stroke-linejoin="round"/><path d="M18 26 L26 30 L18 33 Z M46 26 L38 30 L46 33 Z" fill="#0a0604"/><circle cx="24" cy="29" r="2" fill="#ff6018"/><circle cx="40" cy="29" r="2" fill="#ff6018"/><circle cx="24" cy="28.4" r="0.7" fill="#fff"/><circle cx="40" cy="28.4" r="0.7" fill="#fff"/><path d="M28 38 L30 40 L32 38 L34 40 L36 38 L34 43 L30 43 Z" fill="#1a1006"/><path d="M27 44 L25 49 L29 47 Z M37 44 L39 49 L35 47 Z" fill="#e8dcc0" stroke="#2a1e10" stroke-width="0.4"/></svg>',
 
   /* ─── Combat: Demon Sanctum drop/gear icons (7, 1.0.5) ─── */
+  chitin: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="chtn1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9878b8"/><stop offset="0.5" stop-color="#54386a"/><stop offset="1" stop-color="#241634"/></linearGradient></defs><path d="M8 20 L18 12 L24 16 L32 8 L40 16 L46 12 L56 20 L52 38 L46 50 L36 58 L28 58 L18 50 L12 38 Z" fill="url(#chtn1)" stroke="#160c22" stroke-width="1" stroke-linejoin="round"/><path d="M14 22 Q32 26 50 22 M13 32 Q32 37 51 32 M16 44 Q32 49 48 44" stroke="#1c1030" stroke-width="0.9" fill="none" opacity="0.8"/><path d="M22 18 L22 54 M32 12 L32 58 M42 18 L42 54" stroke="#2c1c44" stroke-width="0.6" fill="none" opacity="0.5"/><path d="M18 24 Q22 22 26 24 M38 24 Q42 22 46 24" stroke="#c8a8e8" stroke-width="0.7" fill="none" opacity="0.55"/><circle cx="27" cy="30" r="1.2" fill="#c8a8e8" opacity="0.5"/></svg>',
+  drake_hide: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="drkh1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e0954a"/><stop offset="0.5" stop-color="#9a5424"/><stop offset="1" stop-color="#3a1e0c"/></linearGradient></defs><path d="M8 20 L18 12 L24 16 L32 8 L40 16 L46 12 L56 20 L52 38 L46 50 L36 58 L28 58 L18 50 L12 38 Z" fill="url(#drkh1)" stroke="#2a1408" stroke-width="1" stroke-linejoin="round"/><path d="M16 20 Q20 24 16 28 Q20 32 16 36 M24 18 Q28 22 24 26 Q28 30 24 34 M32 16 Q36 20 32 24 Q36 28 32 32 M40 18 Q44 22 40 26 M48 20 Q44 24 48 28" stroke="#5a2e12" stroke-width="0.8" fill="none" opacity="0.7"/><path d="M18 22 Q22 21 20 25 M34 20 Q38 19 36 23" stroke="#ffce90" stroke-width="0.7" fill="none" opacity="0.6"/><circle cx="26" cy="42" r="1.4" fill="#ff8030" opacity="0.5"/></svg>',
   demonhide: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="ddh1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a82818"/><stop offset="0.5" stop-color="#5a1008"/><stop offset="1" stop-color="#1a0404"/></linearGradient></defs><path d="M8 20 L18 12 L24 16 L32 8 L40 16 L46 12 L56 20 L52 38 L46 50 L36 58 L28 58 L18 50 L12 38 Z" fill="url(#ddh1)" stroke="#160202" stroke-width="1" stroke-linejoin="round"/><path d="M22 22 L26 30 L22 38 L26 46 M42 22 L38 30 L42 38 L38 46" stroke="#3a0808" stroke-width="0.8" fill="none" opacity="0.7"/><path d="M28 18 L30 24 L34 18" stroke="#ff5810" stroke-width="0.7" fill="none" opacity="0.5"/><circle cx="26" cy="30" r="1.4" fill="#ff5810" opacity="0.5"/><circle cx="38" cy="40" r="1.2" fill="#ff5810" opacity="0.45"/></svg>',
   brimstone: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><radialGradient id="dbs_a" cx="0.5" cy="0.5" r="0.6"><stop offset="0" stop-color="#ff6010" stop-opacity="0.45"/><stop offset="1" stop-color="#ff6010" stop-opacity="0"/></radialGradient><linearGradient id="dbs1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a2a1a"/><stop offset="0.5" stop-color="#201410"/><stop offset="1" stop-color="#0c0606"/></linearGradient></defs><circle cx="32" cy="34" r="25" fill="url(#dbs_a)"/><ellipse cx="32" cy="56" rx="15" ry="2.4" fill="#000" opacity="0.35"/><path d="M16 26 L28 14 L46 18 L52 34 L44 50 L24 50 L12 36 Z" fill="url(#dbs1)" stroke="#0c0604" stroke-width="1" stroke-linejoin="round"/><path d="M22 30 L30 36 L24 44 M38 26 L34 36 L42 42 M30 22 L32 30" stroke="#ff6010" stroke-width="1.3" fill="none" opacity="0.8" stroke-linecap="round"/><circle cx="28" cy="32" r="1.4" fill="#ffd060"/><circle cx="38" cy="38" r="1.6" fill="#ffae30"/><circle cx="32" cy="44" r="1.2" fill="#ff6010"/></svg>',
   void_cinder: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><radialGradient id="dvc_a" cx="0.5" cy="0.5" r="0.6"><stop offset="0" stop-color="#a040ff" stop-opacity="0.45"/><stop offset="1" stop-color="#a040ff" stop-opacity="0"/></radialGradient><radialGradient id="dvc1" cx="0.42" cy="0.4" r="0.7"><stop offset="0" stop-color="#e8c8ff"/><stop offset="0.4" stop-color="#9038e0"/><stop offset="0.8" stop-color="#3a0c70"/><stop offset="1" stop-color="#0e0420"/></radialGradient></defs><circle cx="32" cy="33" r="27" fill="url(#dvc_a)"/><path d="M32 10 Q40 22 38 34 Q44 30 44 40 Q44 54 32 56 Q20 54 20 40 Q20 30 26 34 Q24 22 32 10 Z" fill="url(#dvc1)" stroke="#1a0838" stroke-width="1" stroke-linejoin="round"/><path d="M30 24 Q27 34 30 44 M35 28 Q39 36 35 44" stroke="#5a1aa0" stroke-width="0.9" fill="none" opacity="0.6"/><circle cx="28" cy="30" r="1.4" fill="#f0d8ff" opacity="0.8"/><circle cx="12" cy="16" r="0.9" fill="#c890ff" opacity="0.7"/><circle cx="52" cy="22" r="1" fill="#c890ff" opacity="0.6"/></svg>',
@@ -6425,12 +6493,17 @@ function combatGearStatBlock(itemId){
   var s=COMBAT_GEAR_STATS[itemId]||{atk:0,str:0,def:0};
   var tierNames={1:'Bronze',2:'Iron',3:'Steel',4:'Mithril',5:'Cobalt',6:'Runite',7:'Starsteel',8:'Void'};
   var slotLabels={helmet:'Helmet',chest:'Chest',legs:'Legs',gloves:'Gloves',boots:'Boots',weapon:'Weapon',shield:'Shield',cape:'Cape'};
-  var tierName=tierNames[it.ctier]||('Tier '+it.ctier);
+  var isLeather=!!it.light;   // (1.0.69) leather = light armour with crit/dodge/aspd perks
+  var tierName=isLeather?'Leather':(tierNames[it.ctier]||('Tier '+it.ctier));
   var slotLabel=slotLabels[it.cslot]||it.cslot;
   var parts=[];
   if(s.atk) parts.push('<span style="color:#d04848"><span style="display:inline-block;font-size:14px;line-height:1;vertical-align:-2px;margin-right:2px">'+iconHTML('attack')+'</span>+'+s.atk+' Atk</span>');
   if(s.str) parts.push('<span style="color:#e0762f"><span style="display:inline-block;font-size:14px;line-height:1;vertical-align:-2px;margin-right:2px">'+iconHTML('strength')+'</span>+'+s.str+' Str</span>');
   if(s.def) parts.push('<span style="color:#5478c8"><span style="display:inline-block;font-size:14px;line-height:1;vertical-align:-2px;margin-right:2px">'+iconHTML('defence')+'</span>+'+s.def+' Def</span>');
+  // Leather secondary perks — crit / dodge / attack-speed (fractions → %).
+  if(s.crit)  parts.push('<span style="color:#ffd24a">✦ +'+Math.round(s.crit*100)+'% Crit</span>');
+  if(s.dodge) parts.push('<span style="color:#7fd8c8">💨 +'+Math.round(s.dodge*100)+'% Dodge</span>');
+  if(s.aspd)  parts.push('<span style="color:#9be89b">⚡ +'+Math.round(s.aspd*100)+'% Atk Speed</span>');
   var statLine=parts.length?parts.join(' &nbsp; '):'<span style="color:var(--muted)">No combat stats</span>';
   // Equip requirement (1.0.26) — green if met, red lock if not.
   var reqLine='';
@@ -11063,15 +11136,38 @@ function activePotionCombatStats(){
 /* Combined % combat bonuses from jewelry enchants + socket gems. Returns
    {atkBoost, hpBoost, defBoost, critChance, lifesteal} — all multipliers
    stack additively (e.g. 10% from set + 8% from socket = 18% combined). */
+/* Leather-armour secondary perks (1.0.69) — sum crit / dodge / attack-speed from
+   every worn COMBAT loadout piece that carries them. Plate pieces have none, so
+   this is zero unless the player is (partly) in leather. */
+function armorPerkBonuses(){
+  let crit=0, dodge=0, aspd=0;
+  const ce=state&&state.combatEquipped;
+  if(ce){
+    for(const itemId of Object.values(ce)){
+      const cs=COMBAT_GEAR_STATS[itemId];
+      if(!cs) continue;
+      crit  += cs.crit||0;
+      dodge += cs.dodge||0;
+      aspd  += cs.aspd||0;
+    }
+  }
+  // Clamp so a full offense set can't trivialise combat.
+  return { crit:Math.min(0.25,crit), dodge:Math.min(0.30,dodge), aspd:Math.min(0.20,aspd) };
+}
 function combatBonusesAll(){
   const e=(typeof combatEnchantBonuses==='function')?combatEnchantBonuses():{atkBoost:0,hpBoost:0,defBoost:0,critChance:0,lifesteal:0};
   const s=(typeof combatSocketBonuses==='function')?combatSocketBonuses():{atkBoost:0,hpBoost:0,defBoost:0,critChance:0,lifesteal:0};
+  const a=armorPerkBonuses();
   return {
     atkBoost:  (e.atkBoost||0)  + (s.atkBoost||0),
     hpBoost:   (e.hpBoost||0)   + (s.hpBoost||0),
     defBoost:  (e.defBoost||0)  + (s.defBoost||0),
-    critChance:(e.critChance||0)+ (s.critChance||0),
+    // Leather crit stacks on top of enchant/socket crit — all flow through the
+    // single crit roll in combatTick.
+    critChance:(e.critChance||0)+ (s.critChance||0) + a.crit,
     lifesteal: (e.lifesteal||0) + (s.lifesteal||0),
+    dodge:     a.dodge,   // chance to fully avoid a foe's landed hit
+    aspd:      a.aspd,    // fractional swing-time reduction
   };
 }
 
@@ -11297,6 +11393,11 @@ function refreshCombatStats(){
   combat.youMaxHit=playerMaxHit();
   combat.youDef=playerDefence();
   combat.youSwingMs=playerSwingMs();
+  // ── Leather attack-speed (1.0.69) — worn leather trims swing time. Applied to
+  // the freshly computed base and floored so bars stay readable. Dodge/crit are
+  // read live in combatTick from combatBonusesAll(); only aspd touches swing time.
+  const _apb=(typeof combatBonusesAll==='function')?combatBonusesAll():null;
+  if(_apb&&_apb.aspd>0){ combat.youSwingMs=Math.max(COMBAT_MIN_SWING_MS, Math.round(combat.youSwingMs*(1-_apb.aspd))); }
   // ── Raid debuffs (1.0.66) — a mini-boss / boss curse applied for the current
   // raid stage. Idempotent: always re-derived from the freshly computed base, so
   // repeated refreshes mid-stage don't stack. Cleared automatically when the raid
@@ -13498,7 +13599,10 @@ function tierIndexForAct(sk,act){
   if(act&&act.cat){
     let n=0;
     for(const a of sk.acts){
-      if(a.cat===act.cat){ n++; if(a===act) return n; }
+      // Count within the same cat AND same subcat group so parallel lines
+      // (weapon sword/dagger/hammer; armour plate/leather) each number T1-T7
+      // independently instead of interleaving into T1-T21.
+      if(a.cat===act.cat && (a.subcat||null)===(act.subcat||null)){ n++; if(a===act) return n; }
     }
   }
   const i=sk.acts.indexOf(act);
@@ -13765,6 +13869,7 @@ let _crToolSubTab='woodcutting';
    the three weapon types don't pile into one flat 21-item grid. Mirrors the
    tools sub-tab pattern. Each weapon recipe carries a `subcat` field. */
 let _crWeaponSubTab='sword';
+let _crArmorSubTab='plate';   // (1.0.69) Plate | Leather split within armour categories
 /* Lookup of crafting tool recipe id → owning skill. Built lazily on first call
    so SHOP and SKILLS are fully populated. Resolves via each recipe's primary
    output id (e.g. cr_tl_bronze_axe → bronze_axe → SHOP entry → woodcutting). */
@@ -13827,7 +13932,7 @@ function renderCrafting(){
   // Intro banner
   const intro=document.createElement('div');
   intro.style.cssText='margin-bottom:12px;font-size:14px;color:var(--muted);line-height:1.7;padding:10px 12px;background:var(--raised);border-radius:6px;border:1px solid var(--trim-d)';
-  intro.innerHTML='<b style="color:var(--trim)">Crafting</b> — combine smelted <b style="color:var(--ember)">bars</b> with <b style="color:var(--ember)">logs</b> to forge combat gear. Each piece grants Attack, Strength, or Defence when worn. Pick a category to see all seven tiers — bronze through starsteel.';
+  intro.innerHTML='<b style="color:var(--trim)">Crafting</b> — forge combat gear from raw materials. In each armour category, choose <b style="color:var(--ember)">Plate</b> (smelted <b style="color:var(--ember)">bars</b> + logs — heavy Defence) or <b style="color:var(--ember)">Leather</b> (mob-dropped <b style="color:var(--ember)">hides</b> + logs — lighter Defence, but crit, dodge &amp; attack-speed). Plate tanks; leather bites.';
   grid.appendChild(intro);
 
   const activeCat=(state.action&&state.action.skill==='crafting')
@@ -13929,6 +14034,37 @@ function renderCrafting(){
     grid.appendChild(subBar);
     // Filter visible weapons to the selected subcat.
     acts=acts.filter(a=>a.subcat===_crWeaponSubTab);
+  }
+
+  // Armour tabs (helm/chest/legs/gloves/boots) get a Plate | Leather sub-tab
+  // (1.0.69). Plate = the classic bar+log line (no subcat); Leather = the
+  // hide-crafted light-armour line (subcat:'leather'). Same pattern as weapons.
+  if(['helm','chest','legs','gloves','boots'].includes(cat.key)){
+    const ARMOR_SUBCATS=[
+      {key:'plate',   label:'Plate',   icon:'🛡️', note:'bar + log · heavy Defence'},
+      {key:'leather', label:'Leather', icon:'🟫', note:'hide + log · Def− · crit/dodge/speed'},
+    ];
+    if(!ARMOR_SUBCATS.some(a=>a.key===_crArmorSubTab)) _crArmorSubTab='plate';
+    const subBar=document.createElement('div');
+    subBar.style.cssText='display:flex;gap:5px;margin-bottom:10px;flex-wrap:wrap;padding:6px 8px;background:var(--raised);border:1px solid var(--trim-d);border-radius:6px';
+    const mLbl=document.createElement('span');
+    mLbl.style.cssText='font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;align-self:center;margin-right:4px';
+    mLbl.textContent='Material:';
+    subBar.appendChild(mLbl);
+    for(const ac of ARMOR_SUBCATS){
+      const isSel=_crArmorSubTab===ac.key;
+      const sub=document.createElement('button');
+      sub.style.cssText='padding:5px 11px;border:1px solid '+(isSel?'var(--ember)':'var(--trim-d)')
+        +';border-radius:5px;background:'+(isSel?'#2a1a0866':'var(--raised-s)')
+        +';color:'+(isSel?'var(--trim)':'var(--muted)')
+        +';cursor:pointer;font-variant:small-caps;letter-spacing:1px;font-size:13px;display:flex;align-items:center;gap:5px';
+      sub.innerHTML='<span style="font-size:14px;line-height:1">'+ac.icon+'</span><span>'+ac.label+'</span>'
+        +'<span style="font-size:10px;color:var(--muted);opacity:0.7;text-transform:none;letter-spacing:0.3px;margin-left:2px">·'+ac.note+'</span>';
+      (function(k){ sub.addEventListener('click',function(){ _crArmorSubTab=k; renderCrafting(); }); })(ac.key);
+      subBar.appendChild(sub);
+    }
+    grid.appendChild(subBar);
+    acts=(_crArmorSubTab==='leather') ? acts.filter(a=>a.subcat==='leather') : acts.filter(a=>!a.subcat);
   }
 
   const desc=document.createElement('div');
@@ -16292,6 +16428,87 @@ const MONSTER_DROPS={
                    {id:'shade_ember',    chance:0.080},
                    {id:'voidheart',      chance:0.036}],          // ~1 in 28 · apex source in the game
 };
+
+/* ════ LEATHER ARMOUR (1.0.69) — hunt & tan, phase 1 ═══════════════════════════════
+   A light-armour line crafted from mob-dropped hides. Identity: LESS Defence than
+   the same-tier plate, but a small Attack bonus plus three secondary perks that
+   plate never grants — crit chance, dodge chance, and attack-speed. A real trade,
+   not a downgrade: tanks stay in plate, damage/rogue builds slip into leather.
+
+   Built at load time from a compact table (mirrors the plate icon generators):
+   each tier×slot injects an ITEM, a COMBAT_GEAR_STATS block (with crit/dodge/aspd),
+   an ICON (via _LEATHER_GEN), and a one-step Crafting recipe (hide + log → piece).
+   Hides: ratskin/wolf_pelt/ogre_hide/troll_hide/demonhide already drop; chitin +
+   drake_hide are added to Spider Hollow / Wyvern Roost below.                      */
+const LEATHER_PAL={
+  rough:  {light:'#c08a4e',mid:'#7a5228',dark:'#3a2410',edge:'#1c1006',hl:'#e0b070',stitch:'#e8c898',buckle:'#c8a03a'},
+  chitin: {light:'#9a7cc0',mid:'#563e78',dark:'#281a3c',edge:'#140c22',hl:'#c8ace8',stitch:'#d8c4ec',buckle:'#a07a34'},
+  wolf:   {light:'#a89680',mid:'#645446',dark:'#2e2620',edge:'#16100a',hl:'#d0c4b0',stitch:'#dccdb6',buckle:'#8a7040'},
+  ogre:   {light:'#9a9a5a',mid:'#585834',dark:'#282814',edge:'#12120a',hl:'#c4c47e',stitch:'#cccb96',buckle:'#82702c'},
+  troll:  {light:'#94968a',mid:'#565850',dark:'#282a22',edge:'#12140e',hl:'#b8bcac',stitch:'#c2c6b4',buckle:'#7c7250'},
+  drake:  {light:'#d0864a',mid:'#824c22',dark:'#3c2410',edge:'#1e1006',hl:'#f0b068',stitch:'#eabf82',buckle:'#d0a03c'},
+  demon:  {light:'#b04c38',mid:'#6e281e',dark:'#301208',edge:'#180604',hl:'#e28468',stitch:'#d09378',buckle:'#b06a3a'},
+  wraith: {light:'#88a096',mid:'#4a5a52',dark:'#22302a',edge:'#101814',hl:'#b0e0d0',stitch:'#bce6d6',buckle:'#8aa89a'},
+};
+const _LSLOTS=['helm','chest','legs','gloves','boots'];
+const _LSLOT_NOUN={helm:'Cowl',chest:'Jerkin',legs:'Chaps',gloves:'Bracers',boots:'Boots'};
+const _LHIDE_N={helm:2,chest:4,legs:3,gloves:2,boots:2};
+// per ctier (1..7): [ms, spdMult, minMs, binder log] — mirrors the plate recipe pacing.
+const _LCRAFT=[
+  [4500,0.510,540,'pine_log'],[7000,0.595,980,'oak_log'],[9500,0.640,1330,'ironbark_log'],
+  [12500,0.700,1750,'ember_log'],[15500,0.745,2170,'frost_log'],[18500,0.775,2590,'shadow_log'],
+  [21500,0.790,3010,'ancient_log'],
+];
+// secondary perks by band → slot → {crit,dodge,aspd} (decimal fractions).
+const _LPERK={
+  lo:    {helm:{dodge:0.01}, chest:{crit:0.01}, legs:{dodge:0.01}, gloves:{crit:0.01,aspd:0.01}, boots:{}},
+  hi:    {helm:{dodge:0.01}, chest:{crit:0.02}, legs:{dodge:0.01}, gloves:{crit:0.02,aspd:0.01}, boots:{dodge:0.01,aspd:0.01}},
+  wraith:{helm:{dodge:0.01}, chest:{crit:0.02}, legs:{dodge:0.01}, gloves:{crit:0.03,aspd:0.01}, boots:{dodge:0.02,aspd:0.02}},
+};
+// def/atk per piece are [helm,chest,legs,gloves,boots]; ~58% of plate DEF, +small ATK.
+const LEATHER_TIERS=[
+ {key:'rough', set:'Roughhide',  hide:'ratskin',    ctier:1, lv:1,  def:[1,3,2,1,1],    atk:[1,1,1,2,1],  band:'lo'},
+ {key:'chitin',set:'Chitinweave',hide:'chitin',     ctier:2, lv:12, def:[2,6,4,1,2],    atk:[1,1,1,3,1],  band:'lo'},
+ {key:'wolf',  set:'Wolfhide',   hide:'wolf_pelt',  ctier:3, lv:27, def:[4,10,6,2,3],   atk:[1,2,1,4,2],  band:'lo'},
+ {key:'ogre',  set:'Ogrehide',   hide:'ogre_hide',  ctier:4, lv:40, def:[6,14,9,3,5],   atk:[2,2,2,5,2],  band:'hi'},
+ {key:'troll', set:'Trollhide',  hide:'troll_hide', ctier:5, lv:55, def:[8,19,12,5,6],  atk:[2,3,2,7,3],  band:'hi'},
+ {key:'drake', set:'Drakehide',  hide:'drake_hide', ctier:6, lv:68, def:[11,25,15,7,9], atk:[3,4,3,9,4],  band:'hi'},
+ {key:'demon', set:'Demonhide',  hide:'demonhide',  ctier:7, lv:82, def:[14,32,19,10,12],atk:[4,5,4,11,4],band:'hi'},
+ {key:'wraith',set:'Wraithhide', hide:'wraithcloth',ctier:7, lv:75, def:[10,24,14,6,9], atk:[6,7,6,13,6],band:'wraith'},
+];
+LEATHER_TIERS.forEach(function(t,ti){
+  const pal=LEATHER_PAL[t.key]||LEATHER_PAL.rough;
+  const craft=_LCRAFT[t.ctier-1];
+  _LSLOTS.forEach(function(slot,si){
+    const id=t.key+'_'+slot;
+    const def=t.def[si], atk=t.atk[si];
+    const perk=_LPERK[t.band][slot]||{};
+    const nm=t.set+' '+_LSLOT_NOUN[slot];
+    ITEMS[id]={name:nm, icon:'🟫', sell:Math.round(def*7+atk*12+(ti+1)*14), cgear:true, ctier:t.ctier, cslot:slot, light:true,
+      desc:'Supple '+t.set.toLowerCase()+' worked into light armour — less guard than plate, but quicker and keener. '+
+        (perk.crit?'Sharpens your crit. ':'')+(perk.dodge?'Helps you slip a blow. ':'')+(perk.aspd?'Frees the swing. ':'')};
+    const cs={atk:atk, str:0, def:def};
+    if(perk.crit) cs.crit=perk.crit;
+    if(perk.dodge) cs.dodge=perk.dodge;
+    if(perk.aspd) cs.aspd=perk.aspd;
+    COMBAT_GEAR_STATS[id]=cs;
+    ICONS[id]=_LEATHER_GEN[slot](pal);
+    const inp={}; inp[t.hide]=_LHIDE_N[slot]; inp[craft[3]]=1;
+    const out={}; out[id]=1;
+    SKILLS.crafting.acts.push({id:'cr_l_'+id, name:nm, cat:slot, subcat:'leather', lvl:t.lv,
+      ms:craft[0], xp:Math.round((30+def*4+atk*5)*(0.8+(ti+1)*0.35)), spdMult:craft[1], minMs:craft[2],
+      inp:inp, out:out});
+  });
+});
+// New hides feed the two leather tiers whose zones didn't already drop a hide.
+(function(){
+  const add=function(mon,id,chance,qty){ if(!MONSTER_DROPS[mon]) MONSTER_DROPS[mon]=[]; const e={id:id,chance:chance}; if(qty) e.qty=qty; MONSTER_DROPS[mon].push(e); };
+  [['spider',0.30],['web_weaver',0.28],['venomfang',0.24],['brood_matron',0.22]].forEach(function(p){ add(p[0],'chitin',p[1]); });
+  add('silkweaver_queen','chitin',0.70,[2,3]);
+  [['drake',0.30],['wyvern',0.28],['cinder_drake',0.26],['magma_wyrm',0.22]].forEach(function(p){ add(p[0],'drake_hide',p[1]); });
+  add('emberwyrm','drake_hide',0.70,[2,4]);
+})();
+
 /* Roll the drop table for one kill. Returns array of {id, qty} actually granted.
    `once:true` drops only fire if the player has never received that item before
    (used for the Rat Queen's Crown so it doesn't pile up on farm).
@@ -19702,8 +19919,16 @@ function combatTick(){
     let foeDmg = (Math.random()<foeHitChance)
       ? Math.max(1, Math.round(mon.str*(COMBAT_P.HIT_MIN+(1-COMBAT_P.HIT_MIN)*Math.random())))
       : 0;
+    // ── Dodge (1.0.69) — leather's evasion perk. A landed blow can be slipped
+    // entirely, taking zero damage. Rolled after the foe's own hit/miss so it
+    // reads as a distinct "you dodge" beat and never fires on an outright miss.
+    let _dodged=false;
+    if(foeDmg>0){
+      const _db=(typeof combatBonusesAll==='function')?combatBonusesAll():null;
+      if(_db&&_db.dodge>0&&Math.random()<_db.dodge){ foeDmg=0; _dodged=true; }
+    }
     combat.youHp=Math.max(0,combat.youHp-foeDmg);
-    cmbLog(foeDmg>0?`${mon.name} hits you for ${foeDmg}.`:`${mon.name} misses.`, foeDmg>0?'hit':'');
+    cmbLog(_dodged?`💨 You dodge the ${mon.name}!`:(foeDmg>0?`${mon.name} hits you for ${foeDmg}.`:`${mon.name} misses.`), foeDmg>0?'hit':(_dodged?'':''));
 
     // ── Reflect (1.0.62) — a thorns shield bounces a share of the blow back.
     // Only on a landed hit; clamped so it never lands the kill (kills stay in
