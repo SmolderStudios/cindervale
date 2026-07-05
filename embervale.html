@@ -2594,7 +2594,7 @@ header h1 .flame{color:var(--ember)}
   <div class="mm-btns">
     <button class="mm-btn mm-primary" id="mmPlay">▶ Play</button>
   </div>
-  <div class="mm-ver">v1.0.71</div>
+  <div class="mm-ver">v1.0.72</div>
 </div>
 
 <!-- ===== CHARACTER SELECT (added) ===== -->
@@ -9562,7 +9562,10 @@ function anyLoadoutHas(id){
    armour/shields/etc on Defence level, by crafted tier. Derived from ctier+cslot
    so monster-drop weapons & armour are covered automatically. Returns
    {stat:'attack'|'defence', level} or null for non-combat / unranked items. */
-const COMBAT_GEAR_REQ={1:1,2:10,3:20,4:30,5:40,6:55,7:70,8:90};
+// ctier → wield level. Extended past T7 (1.0.72) so post-starsteel gear gates
+// correctly: T8=Lv90 (Doomblade / Emberwyrm Skull), T9=Lv95 (Demon Lord's Skull —
+// was falling through to Lv1!), T10=Lv99 reserved for the Lv99 raid tier.
+const COMBAT_GEAR_REQ={1:1,2:10,3:20,4:30,5:40,6:55,7:70,8:90,9:95,10:99};
 function combatGearReq(id){
   const it=ITEMS[id];
   if(!it||!it.cgear||!it.ctier) return null;
