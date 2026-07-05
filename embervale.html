@@ -407,15 +407,15 @@ header h1 .flame{color:var(--ember)}
 .cmb-engage-btn.flee{border-color:#6e552c;color:#ecdcb6;background:linear-gradient(180deg,#2c1e11,#1d1409)}
 .cmb-engage-btn.flee:hover{border-color:var(--trim);color:#fff;transform:translateY(-1px)}
 /* Log + Food row */
-.cmb-logfood{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(212px,1fr);
+.cmb-logfood{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(210px,0.95fr);
   gap:9px;align-items:stretch;margin-bottom:8px}
 /* Fixed-height scroll box — NOT height:auto, or it grows with content and pushes
    the panel off-screen instead of scrolling. Stretch makes the food menu match it. */
-.cmb-logfood .cmb-log{height:200px;max-height:200px;margin:0;overflow-y:auto}
-.cmb-foodmenu{display:flex;flex-direction:column;gap:6px;min-width:0;border:1px solid var(--trim-d);
-  border-radius:5px;padding:8px 9px;background:linear-gradient(180deg,#2a0e0a40,#150c05)}
-.cmb-foodmenu-head{font-size:12px;color:var(--trim);font-variant:small-caps;letter-spacing:1.5px;
-  padding-bottom:5px;border-bottom:1px dashed var(--trim-d)}
+.cmb-logfood .cmb-log{height:176px;max-height:176px;margin:0;overflow-y:auto}
+.cmb-foodmenu{display:flex;flex-direction:column;gap:5px;min-width:0;border:1px solid var(--trim-d);
+  border-radius:5px;padding:7px 9px 8px;background:linear-gradient(180deg,#2a0e0a40,#150c05)}
+.cmb-foodmenu-head{font-size:11.5px;color:var(--trim);font-variant:small-caps;letter-spacing:1.3px;
+  padding-bottom:4px;margin-bottom:1px;border-bottom:1px dashed var(--trim-d)}
 /* Dropdown pickers (1.0.31) — replace the old food/buff button grids */
 .cmb-foodmenu .fm-row{display:flex;align-items:center;gap:6px}
 .cmb-foodmenu .fm-sel{flex:1;min-width:0;background:#0d0905;color:var(--text);border:1px solid var(--trim-d);
@@ -436,8 +436,8 @@ header h1 .flame{color:var(--ember)}
 .cmb-foodmenu .fm-div{height:1px;background:var(--trim-d);opacity:.5;margin:4px 0}
 .cmb-foodmenu .fm-empty{font-size:12px;color:var(--muted);font-style:italic;line-height:1.4}
 /* Icon-grid food/potion picker (1.0.60) — replaces the confusing dropdowns */
-.cmb-foodmenu .fm-sub{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin:2px 0 3px}
-.cmb-foodmenu .fm-icons{display:flex;flex-wrap:wrap;gap:4px;max-height:88px;overflow-y:auto;padding:1px;align-content:flex-start}
+.cmb-foodmenu .fm-sub{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin:1px 0 2px}
+.cmb-foodmenu .fm-icons{display:flex;flex-wrap:wrap;gap:4px 5px;max-height:120px;overflow-y:auto;padding:2px 5px 6px 2px;align-content:flex-start;scrollbar-width:thin}
 .cmb-foodmenu .fm-icon{position:relative;width:34px;height:34px;padding:0;flex:none;display:inline-flex;
   align-items:center;justify-content:center;background:#241410;border:1px solid var(--trim-d);border-radius:5px;cursor:pointer}
 .cmb-foodmenu .fm-icon:hover:not(:disabled){border-color:#c89b4e;background:#33240f}
@@ -2594,7 +2594,7 @@ header h1 .flame{color:var(--ember)}
   <div class="mm-btns">
     <button class="mm-btn mm-primary" id="mmPlay">▶ Play</button>
   </div>
-  <div class="mm-ver">v1.0.70</div>
+  <div class="mm-ver">v1.0.71</div>
 </div>
 
 <!-- ===== CHARACTER SELECT (added) ===== -->
@@ -4910,6 +4910,20 @@ function _lBootsSVG(p){
     +`<path d="M44 22 L50 21 M44 28 L51 27" stroke="${p.buckle}" stroke-width="0.9" opacity="0.9"/></svg>`;
 }
 const _LEATHER_GEN={helm:_lHelmSVG, chest:_lChestSVG, legs:_lLegsSVG, gloves:_lGlovesSVG, boots:_lBootsSVG};
+/* Cured-leather roll (1.0.71) — the tanned output of a raw hide. Palette-swapped
+   per hide tier like the armour, so a stack of "leather" reads as its source. */
+function _curedLeatherSVG(p){
+  return `<svg class="ev-icon" viewBox="0 0 64 64">${_crShadow(32,56,20)}`
+    +`<path d="M8 24 Q32 16 56 24 L56 44 Q32 52 8 44 Z" fill="${p.mid}" stroke="${p.edge}" stroke-width="1.1" stroke-linejoin="round"/>`
+    +`<path d="M8 24 Q32 16 56 24 L56 30 Q32 22 8 30 Z" fill="${p.light}"/>`
+    +`<path d="M8 44 Q32 52 56 44 L56 38 Q32 46 8 38 Z" fill="${p.dark}"/>`
+    +`<ellipse cx="14" cy="34" rx="5" ry="10" fill="${p.dark}" stroke="${p.edge}" stroke-width="1"/>`
+    +`<ellipse cx="14" cy="34" rx="2.4" ry="6" fill="${p.mid}"/>`
+    +`<ellipse cx="50" cy="34" rx="5" ry="10" fill="${p.mid}" stroke="${p.edge}" stroke-width="1"/>`
+    +`<ellipse cx="50" cy="34" rx="2.4" ry="6" fill="${p.dark}"/>`
+    +_lStitch(p,'M20 30 Q32 27 44 30')+_lStitch(p,'M20 38 Q32 41 44 38')
+    +`<path d="M31 24 L33 44" stroke="${p.buckle}" stroke-width="1.4" opacity="0.6"/></svg>`;
+}
 
 /* ════ [JS-ICONS-SK] skilling gear sets — 12 sets × 4 pieces (48 SVG icons) ═══
    Per-set palette + unique hat/chest/legs/boots silhouettes. Each set has a
@@ -6517,8 +6531,21 @@ function combatGearStatBlock(itemId){
   }
   // On-hit effect (1.0.60) — poison / stun procs from the weapon's wfx field.
   var fxLine=(typeof wfxTipHTML==='function')?wfxTipHTML(itemId):'';
+  // Set-bonus block (1.0.71) — for pieces that belong to a COMBAT_SETS set, show
+  // the set name, how many pieces are worn, and the full-set effect (lit when complete).
+  var setLine='';
+  if(it.setKey && typeof COMBAT_SETS!=='undefined' && COMBAT_SETS[it.setKey]){
+    var st=COMBAT_SETS[it.setKey];
+    var worn=0, ce=(state&&state.combatEquipped)||{}; var wornSet={};
+    for(var k in ce) wornSet[ce[k]]=1;
+    for(var i=0;i<st.pieces.length;i++){ if(wornSet[st.pieces[i]]) worn++; }
+    var complete=worn>=st.pieces.length;
+    setLine='<div style="margin-top:7px;padding-top:6px;border-top:1px solid var(--trim-d);font-size:12px">'
+      +'<span style="color:'+(complete?'#7fd8c8':'#9c8c72')+';letter-spacing:.5px">✦ '+st.name+' set · '+worn+'/'+st.pieces.length+(complete?' — ACTIVE':'')+'</span>'
+      +'<div style="color:'+(complete?'#bfe6db':'var(--muted)')+';font-size:11.5px;line-height:1.45;margin-top:2px">'+st.desc+'</div></div>';
+  }
   return '<div style="color:var(--ember);font-size:12px;letter-spacing:.5px;margin-bottom:6px">⚔ '+tierName+' · Tier '+it.ctier+' · '+slotLabel+'</div>'
-    +'<div style="font-size:14px;line-height:1.7">'+statLine+'</div>'+fxLine+reqLine;
+    +'<div style="font-size:14px;line-height:1.7">'+statLine+'</div>'+fxLine+setLine+reqLine;
 }
 
 /* Human-readable on-hit effect block for an item's `wfx` (poison / burn / stun
@@ -11204,18 +11231,48 @@ function armorPerkBonuses(){
   // Clamp so a full offense build can't trivialise combat.
   return { crit:Math.min(0.25,crit), dodge:Math.min(0.30,dodge), aspd:Math.min(0.20,aspd) };
 }
+
+/* ── Combat armour SET bonuses (1.0.71) ─────────────────────────────────────────
+   Wearing every piece of a set unlocks a signature effect. First set: the raid's
+   Barrow Warden's armour. Bonuses reuse the existing combatBonusesAll channels
+   (lifesteal / critChance / hpBoost) so they flow through the normal combat math. */
+const COMBAT_SETS={
+  barrow_warden:{
+    name:"Warden's Vigil",
+    pieces:['barrow_helm','barrow_chest','barrow_legs','barrow_gloves','barrow_boots'],
+    bonus:{ lifesteal:0.12, critChance:0.05, hpBoost:0.10 },
+    desc:'Leech 12% of damage dealt, +5% crit, and +10% max HP. The dead warden does not tire.'
+  },
+};
+/* Which full sets are currently worn (combat loadout). */
+function activeCombatSets(){
+  const ce=state&&state.combatEquipped; if(!ce) return [];
+  const worn=new Set(Object.values(ce)); const out=[];
+  for(const k in COMBAT_SETS){ if(COMBAT_SETS[k].pieces.every(p=>worn.has(p))) out.push(k); }
+  return out;
+}
+/* Aggregate bonus from every full set worn. */
+function combatSetBonus(){
+  const b={atkBoost:0,hpBoost:0,defBoost:0,critChance:0,lifesteal:0};
+  for(const k of activeCombatSets()){
+    const bn=COMBAT_SETS[k].bonus||{};
+    for(const key in bn) b[key]=(b[key]||0)+bn[key];
+  }
+  return b;
+}
 function combatBonusesAll(){
   const e=(typeof combatEnchantBonuses==='function')?combatEnchantBonuses():{atkBoost:0,hpBoost:0,defBoost:0,critChance:0,lifesteal:0};
   const s=(typeof combatSocketBonuses==='function')?combatSocketBonuses():{atkBoost:0,hpBoost:0,defBoost:0,critChance:0,lifesteal:0};
   const a=armorPerkBonuses();
+  const st=combatSetBonus();
   return {
-    atkBoost:  (e.atkBoost||0)  + (s.atkBoost||0),
-    hpBoost:   (e.hpBoost||0)   + (s.hpBoost||0),
-    defBoost:  (e.defBoost||0)  + (s.defBoost||0),
-    // Leather crit stacks on top of enchant/socket crit — all flow through the
+    atkBoost:  (e.atkBoost||0)  + (s.atkBoost||0) + (st.atkBoost||0),
+    hpBoost:   (e.hpBoost||0)   + (s.hpBoost||0)  + (st.hpBoost||0),
+    defBoost:  (e.defBoost||0)  + (s.defBoost||0) + (st.defBoost||0),
+    // Leather crit stacks on top of enchant/socket/set crit — all flow through the
     // single crit roll in combatTick.
-    critChance:(e.critChance||0)+ (s.critChance||0) + a.crit,
-    lifesteal: (e.lifesteal||0) + (s.lifesteal||0),
+    critChance:(e.critChance||0)+ (s.critChance||0) + a.crit + (st.critChance||0),
+    lifesteal: (e.lifesteal||0) + (s.lifesteal||0) + (st.lifesteal||0),
     dodge:     a.dodge,   // chance to fully avoid a foe's landed hit
     aspd:      a.aspd,    // fractional swing-time reduction
   };
@@ -13956,6 +14013,7 @@ const CR_CAT_ICONS=(function(){
     shield: `<svg class="ev-icon" viewBox="0 0 64 64"><path d="M10 8 L54 8 L52 32 Q48 50 32 60 Q16 50 12 32 Z" fill="${P.mid}" stroke="${P.edge}" stroke-width="1.5" stroke-linejoin="round"/><path d="M10 8 L32 8 L32 58 Q16 50 12 32 Z" fill="${P.light}"/><path d="M14 12 L50 12" stroke="${P.gold}" stroke-width="1.6"/><circle cx="32" cy="32" r="9" fill="${P.dark}" stroke="${P.edge}" stroke-width="1.2"/><circle cx="32" cy="31" r="6" fill="${P.gold}" stroke="${P.edge}" stroke-width="0.6"/><circle cx="32" cy="30" r="3.2" fill="${P.goldHl}"/><circle cx="31" cy="29" r="1.3" fill="#fff" opacity="0.7"/><circle cx="14" cy="14" r="1.4" fill="${P.gold}" stroke="${P.edge}" stroke-width="0.3"/><circle cx="50" cy="14" r="1.4" fill="${P.gold}" stroke="${P.edge}" stroke-width="0.3"/></svg>`,
     cape:   `<svg class="ev-icon" viewBox="0 0 64 64"><path d="M16 12 L24 8 L40 8 L48 12 L52 56 L40 54 L32 58 L24 54 L12 56 Z" fill="${P.mid}" stroke="${P.edge}" stroke-width="1.4" stroke-linejoin="round"/><path d="M16 12 L24 8 L32 10 L32 58 L24 54 L12 56 Z" fill="${P.light}"/><path d="M22 8 L28 12 L36 12 L42 8 L42 14 L22 14 Z" fill="${P.dark}" stroke="${P.edge}" stroke-width="0.9"/><circle cx="32" cy="18" r="3.4" fill="${P.gold}" stroke="${P.edge}" stroke-width="0.8"/><circle cx="31" cy="17" r="1.4" fill="${P.goldHl}"/><path d="M20 18 L24 50 M28 16 L28 56 M36 16 L36 56 M40 18 L44 50" stroke="${P.dark}" stroke-width="0.7" opacity="0.6"/></svg>`,
     tool: `<svg class="ev-icon" viewBox="0 0 64 64"><g transform="rotate(-45 32 32)"><rect x="30" y="6" width="4" height="52" rx="0.6" fill="${P.wood}" stroke="${P.edge}" stroke-width="0.8"/><path d="M14 14 L50 14 L46 22 L42 18 L22 18 L18 22 Z" fill="${P.mid}" stroke="${P.edge}" stroke-width="0.9" stroke-linejoin="round"/><path d="M14 14 L50 14 L48 16 L16 16 Z" fill="${P.light}"/></g><g transform="rotate(45 32 32)"><rect x="30" y="6" width="4" height="52" rx="0.6" fill="${P.wood}" stroke="${P.edge}" stroke-width="0.8"/><rect x="18" y="10" width="28" height="14" rx="1.5" fill="${P.dark}" stroke="${P.edge}" stroke-width="1"/><rect x="18" y="10" width="28" height="4" fill="${P.mid}"/><rect x="22" y="14" width="20" height="2" fill="${P.gold}" opacity="0.7"/></g></svg>`,
+    tannery: `<svg class="ev-icon" viewBox="0 0 64 64"><path d="M8 20 L18 12 L24 16 L32 8 L40 16 L46 12 L56 20 L52 40 L44 52 L32 58 L20 52 L12 40 Z" fill="#7a5228" stroke="${P.edge}" stroke-width="1.2" stroke-linejoin="round"/><path d="M8 20 L18 12 L24 16 L32 8 L32 58 L20 52 L12 40 Z" fill="#8a6034"/><path d="M18 24 Q32 30 46 24 M16 34 Q32 40 48 34 M20 44 Q32 49 44 44" stroke="#4a3018" stroke-width="0.9" fill="none" opacity="0.7"/><circle cx="14" cy="15" r="1.6" fill="#c79b4e"/><circle cx="50" cy="15" r="1.6" fill="#c79b4e"/><circle cx="32" cy="10" r="1.6" fill="#c79b4e"/></svg>`,
   };
 })();
 const CR_CATS=[
@@ -13967,6 +14025,7 @@ const CR_CATS=[
   {key:'cape',   label:'Capes',   icon:CR_CAT_ICONS.cape,   desc:'Bar + 2 logs → cape. Back-slot piece — modest Defence with a touch of Attack from mid-tiers up.'},
   {key:'weapon', label:'Weapons', icon:CR_CAT_ICONS.weapon, desc:'2 bars + log → one-handed weapon. Swords slash, daggers stab, hammers crush. Damage type matters against foes with weaknesses.'},
   {key:'shield', label:'Shields', icon:CR_CAT_ICONS.shield, desc:'2 bars + log → shield. Heavy Defence in the shield slot.'},
+  {key:'tannery',label:'Tannery', icon:CR_CAT_ICONS.tannery, desc:'Tan raw mob-dropped hides into cured leather — the material for the Leather armour lines. Quick, and worth a bit of Crafting XP on its own.'},
   {key:'tool',   label:'Tools',   icon:CR_CAT_ICONS.tool,   desc:'Bar + log → skilling tool. One-time unlock — equips into its skill slot for a permanent speed bonus. Used to be sold in the Shop.'},
 ];
 function renderCrafting(){
@@ -16537,6 +16596,17 @@ const LEATHER_TIERS=[
 LEATHER_TIERS.forEach(function(t,ti){
   const pal=LEATHER_PAL[t.key]||LEATHER_PAL.rough;
   const craft=_LCRAFT[t.ctier-1];
+  // ── Tanning step (1.0.71) — raw hide → cured leather. A quick Crafting action
+  // for extra XP; the armour recipes below then consume the cured leather.
+  // Higher-tier hides need a higher Crafting level (t.lv), so tanning gates too.
+  const curedId=t.key+'_leather';
+  ITEMS[curedId]={name:t.set+' Leather', icon:'🟫', sell:Math.round((ITEMS[t.hide]?ITEMS[t.hide].sell:20)*1.4+6),
+    desc:'Raw '+(ITEMS[t.hide]?ITEMS[t.hide].name.toLowerCase():'hide')+' cured and softened at the tanning rack — ready to stitch into '+t.set+' armour.'};
+  ICONS[curedId]=_curedLeatherSVG(pal);
+  const tanInp={}; tanInp[t.hide]=1;                 // 1 raw hide → 1 cured (fast, cheap)
+  SKILLS.crafting.acts.push({id:'cr_tan_'+t.key, name:'Tan '+t.set+' Leather', cat:'tannery', lvl:t.lv,
+    ms:Math.round(craft[0]*0.5), xp:Math.round((22+(ti+1)*10)), spdMult:Math.min(0.85,craft[1]+0.1),
+    minMs:Math.round(craft[2]*0.55), inp:tanInp, out:(function(){const o={};o[curedId]=1;return o;})()});
   _LSLOTS.forEach(function(slot,si){
     const id=t.key+'_'+slot;
     const def=t.def[si], atk=t.atk[si];
@@ -16551,7 +16621,7 @@ LEATHER_TIERS.forEach(function(t,ti){
     if(perk.aspd) cs.aspd=perk.aspd;
     COMBAT_GEAR_STATS[id]=cs;
     ICONS[id]=_LEATHER_GEN[slot](pal);
-    const inp={}; inp[t.hide]=_LHIDE_N[slot]; inp[craft[3]]=1;
+    const inp={}; inp[curedId]=_LHIDE_N[slot]; inp[craft[3]]=1;   // cured leather + log
     const out={}; out[id]=1;
     SKILLS.crafting.acts.push({id:'cr_l_'+id, name:nm, cat:slot, subcat:'leather', lvl:t.lv,
       ms:craft[0], xp:Math.round((30+def*4+atk*5)*(0.8+(ti+1)*0.35)), spdMult:craft[1], minMs:craft[2],
@@ -16565,6 +16635,35 @@ LEATHER_TIERS.forEach(function(t,ti){
   add('silkweaver_queen','chitin',0.70,[2,3]);
   [['drake',0.30],['wyvern',0.28],['cinder_drake',0.26],['magma_wyrm',0.22]].forEach(function(p){ add(p[0],'drake_hide',p[1]); });
   add('emberwyrm','drake_hide',0.70,[2,4]);
+})();
+
+/* ════ RAID ARMOUR SET — Barrow Warden's (1.0.71) ══════════════════════════════════
+   A 5-piece plate set that DROPS (rarely) from The Sunken Barrow, so the raid's
+   reward is a set to chase — not just loose weapons. Full set → the "Warden's
+   Vigil" bonus (see COMBAT_SETS). Icons reuse the plate generators with a haunted
+   bone-and-spectral palette so they read as barrow-grave armour. Def-heavy with a
+   little Attack (a warden's kit); above starsteel, fitting a Lv70 raid clear. */
+(function(){
+  const pal={light:'#dcd4c0', mid:'#8c8a7c', dark:'#3e4a44', edge:'#141c18', hl:'#efe9d6', accent:'#4a9a8a', glow:'#4a9a8a'};
+  const GEN={helmet:_helmSVG, chest:_chestSVG, legs:_legsSVG, gloves:_glovesSVG, boots:_bootsSVG};
+  const NOUN={helmet:'Helm', chest:'Cuirass', legs:'Greaves', gloves:'Gauntlets', boots:'Sabatons'};
+  // [slot, def, atk, sell]
+  const PIECES=[
+    ['helmet', 27, 2, 21000],
+    ['chest',  57, 3, 30000],
+    ['legs',   34, 2, 24000],
+    ['gloves', 17, 7, 15000],
+    ['boots',  22, 2, 16000],
+  ];
+  PIECES.forEach(function(p){
+    const slot=p[0], def=p[1], atk=p[2];
+    const id='barrow_'+(slot==='helmet'?'helm':slot);
+    ITEMS[id]={name:"Barrow Warden's "+NOUN[slot], icon:'🛡️', sell:p[3], rare:true, cgear:true, ctier:7, cslot:slot,
+      setKey:'barrow_warden',
+      desc:"Grave-cold plate stripped from the Warden's honour guard, veined with the same drowned light as his blade. Part of the "+"<b>Warden's Vigil</b> set — gather all five."};
+    COMBAT_GEAR_STATS[id]={atk:atk, str:0, def:def};
+    ICONS[id]=GEN[slot](pal);
+  });
 })();
 
 /* Roll the drop table for one kill. Returns array of {id, qty} actually granted.
@@ -16703,7 +16802,7 @@ function hasPet(petId){ return !!(state && state.pets && state.pets[petId]); }
 const RAID_MAT_POOL=[
   {id:'grave_iron',  qty:[1,3]},
   {id:'barrow_dust', qty:[1,3]},
-  {id:'wraithcloth', qty:[1,2]},
+  {id:'wraithcloth', qty:[2,4]},   // (1.0.71) the raid's leather hide — bumped so runs feed Wraithhide armour
   {id:'runed_bone',  qty:[1,1]},
 ];
 const RAIDS=[
@@ -16732,13 +16831,20 @@ const RAIDS=[
       {key:'C', maxMs:390000,   mult:1.3, gold:2100, mats:4, col:'#d8c8a0'},
       {key:'D', maxMs:Infinity, mult:1.0, gold:1500, mats:3, col:'#b0a494'},
     ],
-    // Gear table — base chance PER PIECE, multiplied by the clear-rating mult and
-    // clamped. The 2H Grave Cleaver is the marquee super-rare.
+    // Gear table — base chance PER PIECE × the clear-rating mult, clamped. Rates
+    // lowered in 1.0.71 (the loot pool grew): weapons + the 5-piece Barrow Warden's
+    // armour set (its full-set "Warden's Vigil" bonus is the real chase). The 2H
+    // Grave Cleaver stays the marquee super-rare.
     gearDrops:[
-      {id:'barrow_blade',  chance:0.05},
-      {id:'barrow_shield', chance:0.05},
-      {id:'barrow_dagger', chance:0.05},
-      {id:'grave_cleaver', chance:0.008},
+      {id:'barrow_blade',   chance:0.030},
+      {id:'barrow_shield',  chance:0.030},
+      {id:'barrow_dagger',  chance:0.030},
+      {id:'grave_cleaver',  chance:0.005},
+      {id:'barrow_helm',    chance:0.040, set:true},
+      {id:'barrow_chest',   chance:0.035, set:true},
+      {id:'barrow_legs',    chance:0.040, set:true},
+      {id:'barrow_gloves',  chance:0.040, set:true},
+      {id:'barrow_boots',   chance:0.040, set:true},
     ],
     matPool:RAID_MAT_POOL,
   },
@@ -16858,7 +16964,7 @@ function handleRaidKill(baseMon){
     stopCombatTimer();
     cmbLog(`🏆 ${raid.name} CLEARED — ${res.rating} rank · ${_fmtRaidTime(res.timeMs)}`,'rare-win');
     cmbLog(`   Spoils: +${res.gold}g${res.mats.length?' · '+res.mats.map(m=>(m.qty>1?m.qty+'× ':'')+(ITEMS[m.id]?ITEMS[m.id].name:m.id)).join(', '):''}`,'win');
-    if(res.gear.length) res.gear.forEach(id=>{ cmbLog(`   ★ ${ITEMS[id]?ITEMS[id].name:id} recovered!`,'rare-win'); if(typeof toast==='function') toast(`★ ${ITEMS[id]?ITEMS[id].name:id}!`); });
+    if(res.gear.length){ cmbLog(`   ★ Relic${res.gear.length>1?'s':''}: ${res.gear.map(id=>ITEMS[id]?ITEMS[id].name:id).join(', ')}`,'rare-win'); if(typeof toast==='function') toast(`★ ${res.gear.map(id=>ITEMS[id]?ITEMS[id].name:id).join(', ')}!`); }
     else cmbLog('   No relic gear this run — a faster clear improves the odds.','');
     if(typeof toast==='function') toast(`🏆 ${raid.name} cleared — ${res.rating} rank!`);
     if(typeof logNotification==='function') logNotification('rare','🏆',`Cleared ${raid.name} — ${res.rating} rank in ${_fmtRaidTime(timeMs)}.`);
@@ -21144,7 +21250,7 @@ function renderCombat(){
     const regenIco=r=>`<button class="fm-icon cmb-pot-btn" data-regen="${r.id}" data-tip="${_fmEsc(r.it.name)}&#10;+${r.total} HP over ${r.dur}s&#10;${r.cnt} in satchel"${active?'':' disabled'}><span class="fm-ic">${iconHTML(r.id)}</span><span class="ct">${r.cnt}</span></button>`;
     const icons=heals.map(healIco).join('')+regens.map(regenIco).join('');
     const thr=[10,20,30,40,50,60,75].map(t=>`<option value="${t}"${t===ah.thresholdPct?' selected':''}>≤ ${t}%</option>`).join('');
-    return `<div class="fm-sub">Food &amp; Heals</div>
+    return `<div class="fm-sub">Food &amp; Heals — tap to eat</div>
       <div class="fm-icons">${icons}</div>
       <div class="fm-row fm-auto">
         <label class="fm-toggle"><input type="checkbox" id="cmbAutoHealChk"${ah.enabled?' checked':''}/><span>Auto-eat</span></label>
@@ -21216,8 +21322,8 @@ function renderCombat(){
         <div class="cmb-scd you">
           <div class="cmb-srow" data-tip="ACCURACY — how often your blows land.&#10;Rolled against the foe's Defence: more Attack = fewer misses.&#10;It does NOT raise your damage.&#10;&#10;From Attack lvl ${aLvl}${accGear>0?` + ${accGear} from gear`:''}"><span class="lbl">Attack</span><span class="val">${accBase+accGear}${accGear>0?`<span class="gear">+${accGear}</span>`:''}</span></div>
           <div class="cmb-srow" data-tip="DAMAGE CEILING — the most a single blow can deal.&#10;Every landed hit rolls from a floor up to this cap.&#10;Raised by Strength (and Str-heavy weapons).&#10;&#10;From Strength lvl ${sLvl}${hitGear>0?` + ${hitGear} from gear`:''}"><span class="lbl">Max Hit</span><span class="val">${hitBase+hitGear}${hitGear>0?`<span class="gear">+${hitGear}</span>`:''}</span></div>
-          <div class="cmb-srow" data-tip="EVASION — how often the foe MISSES you.&#10;More Defence = fewer of their blows land.&#10;It does NOT reduce the damage of a blow that connects — Health &amp; Dodge do that.&#10;&#10;From Defence lvl ${dLvl}${defGear>0?` + ${defGear} from gear`:''}"><span class="lbl">Defence</span><span class="val">${defBase+defGear}${defGear>0?`<span class="gear">+${defGear}</span>`:''}</span></div>
-          <div class="cmb-srow" data-tip="HIT POINTS — your health pool.&#10;A blow that lands subtracts its damage; reach 0 and you're defeated.&#10;Grows with the Hitpoints level.&#10;&#10;From Hitpoints lvl ${hLvl}${hpGear>0?` + ${hpGear} from gear`:''}"><span class="lbl">Health</span><span class="val">${hpBase+hpGear}${hpGear>0?`<span class="gear">+${hpGear}</span>`:''}</span></div>
+          <div class="cmb-srow" data-tip="GUARD — how often the foe's blow glances off instead of landing.&#10;More Defence = fewer of their hits get through (they 'miss' more often).&#10;It doesn't shrink a hit that DOES land — it just makes them rarer.&#10;&#10;From Defence lvl ${dLvl}${defGear>0?` + ${defGear} from gear`:''}"><span class="lbl">Defence</span><span class="val">${defBase+defGear}${defGear>0?`<span class="gear">+${defGear}</span>`:''}</span></div>
+          <div class="cmb-srow" data-tip="HIT POINTS — the pool a landed blow eats into.&#10;Reach 0 and you're defeated and retreat to safety.&#10;Grows with the Hitpoints level.&#10;&#10;(Leather Dodge is separate: a flat chance to duck a blow entirely, for zero damage.)&#10;&#10;From Hitpoints lvl ${hLvl}${hpGear>0?` + ${hpGear} from gear`:''}"><span class="lbl">Health</span><span class="val">${hpBase+hpGear}${hpGear>0?`<span class="gear">+${hpGear}</span>`:''}</span></div>
           <div class="cmb-srow" data-tip="SWING SPEED — seconds between your attacks.&#10;Lower is faster = more hits per fight.&#10;Trimmed by Agility, the Rogue class, and leather gear.&#10;&#10;Agility lvl ${agiLvl} from 2.40s base${speedReductionPct?` (-${speedReductionPct}%)`:''}"><span class="lbl">Speed</span><span class="val">${speedDisplay}</span></div>
         </div>
       </div>
@@ -21242,7 +21348,7 @@ function renderCombat(){
     <div class="cmb-logfood">
       <div class="cmb-log" id="cmbLog">${combat.log.map(l=>`<div class="ln ${l.c}">${l.t}</div>`).join('')||'<div class="ln sys">The arena is quiet…</div>'}</div>
       <div class="cmb-foodmenu">
-        <div class="cmb-foodmenu-head">🍖 Food &amp; Healing</div>
+        <div class="cmb-foodmenu-head">🍖 Food &amp; Potions</div>
         ${healPickHTML}
         ${buffPickHTML}
       </div>
