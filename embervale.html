@@ -2229,6 +2229,7 @@ header h1 .flame{color:var(--ember)}
 .cmb-subtab:hover{background:var(--raised-s);color:var(--text)}
 .cmb-subtab.on{background:#2a1a10;color:var(--ember);border-color:var(--ember)}
 .cmb-subtab .badge{display:inline-block;margin-left:6px;font-family:'Courier New',monospace;font-size:12px;color:var(--ember)}
+.cmb-subtab .badge.soon{color:#9c7d5a;font-size:9px;letter-spacing:1px;text-transform:uppercase}
 
 /* Mastery view wrapper */
 .cmast{padding:8px 4px 16px}
@@ -2593,7 +2594,7 @@ header h1 .flame{color:var(--ember)}
   <div class="mm-btns">
     <button class="mm-btn mm-primary" id="mmPlay">▶ Play</button>
   </div>
-  <div class="mm-ver">v1.0.69</div>
+  <div class="mm-ver">v1.0.70</div>
 </div>
 
 <!-- ===== CHARACTER SELECT (added) ===== -->
@@ -10428,7 +10429,7 @@ function normalizeState(){
   if(!state.cmastMilestones||typeof state.cmastMilestones!=='object'||Array.isArray(state.cmastMilestones)) state.cmastMilestones={};
   if(!state.cmastBossKills||typeof state.cmastBossKills!=='object'||Array.isArray(state.cmastBossKills)) state.cmastBossKills={};
   if(!state.cmastZoneClears||typeof state.cmastZoneClears!=='object'||Array.isArray(state.cmastZoneClears)) state.cmastZoneClears={};
-  if(state.cmbSubTab!=='arena'&&state.cmbSubTab!=='mastery'&&state.cmbSubTab!=='pets'&&state.cmbSubTab!=='log') state.cmbSubTab='arena';
+  if(state.cmbSubTab!=='arena'&&state.cmbSubTab!=='mastery'&&state.cmbSubTab!=='pets'&&state.cmbSubTab!=='log'&&state.cmbSubTab!=='slayer') state.cmbSubTab='arena';
   if(typeof state.cmbStatsOpen!=='boolean') state.cmbStatsOpen=false;
   // (1.0.85, renamed 1.0.86) zoneMode migration — Dungeons / Raids tabs. Old
   // saves may have 'zones' (the now-renamed value); roll them forward to
@@ -11139,6 +11140,51 @@ function activePotionCombatStats(){
 /* Leather-armour secondary perks (1.0.69) — sum crit / dodge / attack-speed from
    every worn COMBAT loadout piece that carries them. Plate pieces have none, so
    this is zero unless the player is (partly) in leather. */
+/* ── Class ↔ armour synergy (1.0.70) ────────────────────────────────────────────
+   Leather perks are authored LOW; a matching class boosts them back up. Rogue is
+   the leather/finesse class (crit·dodge·speed), Berserker a lighter offense nudge.
+   Nobody is locked out — the "wrong" class just gets the plain lowered numbers. */
+function classPerkMult(){
+  const c=charClass();
+  if(c==='rogue')     return 1.35;   // finesse — sharpens every leather perk
+  if(c==='berserker') return 1.15;   // offense-minded, but leather isn't its home
+  return 1;
+}
+/* Split worn armour into leather-attack and plate-defence pools so class synergy
+   can reward the right pairing (rogue+leather attack, guardian+plate defence). */
+function armorSplit(){
+  let leatherAtk=0, plateDef=0;
+  const ce=state&&state.combatEquipped;
+  const ARMOR=['helmet','chest','legs','gloves','boots'];
+  if(ce){
+    for(const id of Object.values(ce)){
+      const it=ITEMS[id], cs=COMBAT_GEAR_STATS[id];
+      if(!it||!it.cgear||!cs||ARMOR.indexOf(it.cslot)<0) continue;
+      if(it.light){ leatherAtk += cs.atk||0; }
+      else { plateDef += cs.def||0; }
+    }
+  }
+  return {leatherAtk, plateDef};
+}
+/* Flat Attack / Defence a class earns from its favoured armour (slight). Guardian
+   hardens plate; Rogue/Berserker sharpen leather. Added on top in combatStats. */
+function classArmorStatBonus(){
+  const c=charClass(), s=armorSplit();
+  let atk=0, def=0;
+  if(c==='rogue')     atk += Math.round(s.leatherAtk*0.15);
+  if(c==='berserker') atk += Math.round(s.leatherAtk*0.10);
+  if(c==='guardian')  def += Math.round(s.plateDef*0.08);
+  return {atk, def};
+}
+/* Crit chance an equipped LIGHT weapon (dagger, and future bows) grants — the
+   finesse-weapon trade: less raw max-hit than a sword/hammer, but it crits.
+   Scales gently with the weapon's tier. Rogue amplifies it via classPerkMult. */
+function lightWeaponCrit(){
+  const wep=(typeof eqCombatWeapon==='function')?eqCombatWeapon():'';
+  if(!wep || (typeof weaponClass==='function' && weaponClass(wep)!=='light')) return 0;
+  const t=(ITEMS[wep]&&ITEMS[wep].ctier)||1;
+  return 0.03 + t*0.004;   // ~3.4% (bronze) → ~5.8% (starsteel)
+}
 function armorPerkBonuses(){
   let crit=0, dodge=0, aspd=0;
   const ce=state&&state.combatEquipped;
@@ -11151,7 +11197,11 @@ function armorPerkBonuses(){
       aspd  += cs.aspd||0;
     }
   }
-  // Clamp so a full offense set can't trivialise combat.
+  // Light-weapon crit joins the leather crit pool; class synergy scales all perks.
+  crit += lightWeaponCrit();
+  const cm=classPerkMult();
+  crit*=cm; dodge*=cm; aspd*=cm;
+  // Clamp so a full offense build can't trivialise combat.
   return { crit:Math.min(0.25,crit), dodge:Math.min(0.30,dodge), aspd:Math.min(0.20,aspd) };
 }
 function combatBonusesAll(){
@@ -11201,6 +11251,9 @@ function combatStats(){
   atk += pot.atk;
   str += pot.str;
   def += pot.def;
+  // Class ↔ armour synergy (1.0.70) — a small Attack/Defence bonus for wearing the
+  // armour your class favours (rogue/berserker→leather atk, guardian→plate def).
+  try{ const cab=classArmorStatBonus(); atk+=cab.atk; def+=cab.def; }catch(e){}
   return {atk, str, def};
 }
 
@@ -16460,21 +16513,26 @@ const _LCRAFT=[
   [21500,0.790,3010,'ancient_log'],
 ];
 // secondary perks by band → slot → {crit,dodge,aspd} (decimal fractions).
+// Secondary perks — LOWERED base (1.0.70); class synergy boosts them back for the
+// matching class (rogue → leather). Set totals: lo crit1/dodge1/aspd1,
+// hi crit3/dodge2/aspd2, wraith crit4/dodge3/aspd3. Rogue restores ~old values.
 const _LPERK={
-  lo:    {helm:{dodge:0.01}, chest:{crit:0.01}, legs:{dodge:0.01}, gloves:{crit:0.01,aspd:0.01}, boots:{}},
-  hi:    {helm:{dodge:0.01}, chest:{crit:0.02}, legs:{dodge:0.01}, gloves:{crit:0.02,aspd:0.01}, boots:{dodge:0.01,aspd:0.01}},
-  wraith:{helm:{dodge:0.01}, chest:{crit:0.02}, legs:{dodge:0.01}, gloves:{crit:0.03,aspd:0.01}, boots:{dodge:0.02,aspd:0.02}},
+  lo:    {helm:{}, chest:{crit:0.01}, legs:{dodge:0.01}, gloves:{aspd:0.01}, boots:{}},
+  hi:    {helm:{dodge:0.01}, chest:{crit:0.02}, legs:{}, gloves:{crit:0.01,aspd:0.01}, boots:{dodge:0.01,aspd:0.01}},
+  wraith:{helm:{dodge:0.01}, chest:{crit:0.02}, legs:{}, gloves:{crit:0.02,aspd:0.01}, boots:{dodge:0.02,aspd:0.02}},
 };
-// def/atk per piece are [helm,chest,legs,gloves,boots]; ~58% of plate DEF, +small ATK.
+// def/atk per piece are [helm,chest,legs,gloves,boots]; ~58% of plate DEF, +ATK.
+// ATK nudged up (1.0.70) — leather leans a touch harder into offense; gloves stay
+// the signature offense piece. Still a clear trade: plate keeps ~1.7× the Defence.
 const LEATHER_TIERS=[
- {key:'rough', set:'Roughhide',  hide:'ratskin',    ctier:1, lv:1,  def:[1,3,2,1,1],    atk:[1,1,1,2,1],  band:'lo'},
- {key:'chitin',set:'Chitinweave',hide:'chitin',     ctier:2, lv:12, def:[2,6,4,1,2],    atk:[1,1,1,3,1],  band:'lo'},
- {key:'wolf',  set:'Wolfhide',   hide:'wolf_pelt',  ctier:3, lv:27, def:[4,10,6,2,3],   atk:[1,2,1,4,2],  band:'lo'},
- {key:'ogre',  set:'Ogrehide',   hide:'ogre_hide',  ctier:4, lv:40, def:[6,14,9,3,5],   atk:[2,2,2,5,2],  band:'hi'},
- {key:'troll', set:'Trollhide',  hide:'troll_hide', ctier:5, lv:55, def:[8,19,12,5,6],  atk:[2,3,2,7,3],  band:'hi'},
- {key:'drake', set:'Drakehide',  hide:'drake_hide', ctier:6, lv:68, def:[11,25,15,7,9], atk:[3,4,3,9,4],  band:'hi'},
- {key:'demon', set:'Demonhide',  hide:'demonhide',  ctier:7, lv:82, def:[14,32,19,10,12],atk:[4,5,4,11,4],band:'hi'},
- {key:'wraith',set:'Wraithhide', hide:'wraithcloth',ctier:7, lv:75, def:[10,24,14,6,9], atk:[6,7,6,13,6],band:'wraith'},
+ {key:'rough', set:'Roughhide',  hide:'ratskin',    ctier:1, lv:1,  def:[1,3,2,1,1],    atk:[1,2,1,3,1],  band:'lo'},
+ {key:'chitin',set:'Chitinweave',hide:'chitin',     ctier:2, lv:12, def:[2,6,4,1,2],    atk:[1,2,1,4,1],  band:'lo'},
+ {key:'wolf',  set:'Wolfhide',   hide:'wolf_pelt',  ctier:3, lv:27, def:[4,10,6,2,3],   atk:[2,3,2,5,2],  band:'lo'},
+ {key:'ogre',  set:'Ogrehide',   hide:'ogre_hide',  ctier:4, lv:40, def:[6,14,9,3,5],   atk:[2,3,2,6,2],  band:'hi'},
+ {key:'troll', set:'Trollhide',  hide:'troll_hide', ctier:5, lv:55, def:[8,19,12,5,6],  atk:[3,4,3,8,3],  band:'hi'},
+ {key:'drake', set:'Drakehide',  hide:'drake_hide', ctier:6, lv:68, def:[11,25,15,7,9], atk:[3,5,4,10,4], band:'hi'},
+ {key:'demon', set:'Demonhide',  hide:'demonhide',  ctier:7, lv:82, def:[14,32,19,10,12],atk:[4,6,5,12,5],band:'hi'},
+ {key:'wraith',set:'Wraithhide', hide:'wraithcloth',ctier:7, lv:75, def:[10,24,14,6,9], atk:[6,8,6,14,6],band:'wraith'},
 ];
 LEATHER_TIERS.forEach(function(t,ti){
   const pal=LEATHER_PAL[t.key]||LEATHER_PAL.rough;
@@ -20714,6 +20772,40 @@ function buildCmastViewHTML(){
    result box (session-only), and one card per raid (gauntlet dots + relic
    preview + best rating/time + Enter button). buildRaidProgressHTML — the live
    run strip shown atop the arena during a raid (stage dots, curse, timer). */
+/* Slayer preview (1.0.70) — the skill isn't built yet, but this gives it its home
+   in the combat panel (its own sub-tab) and shows the player what's coming: the
+   task loop, a mock bounty card, and the planned perk branches. */
+function buildSlayerPreviewHTML(){
+  const sl='#c05149';
+  const card=(icon,title,body)=>`<div style="flex:1 1 190px;background:linear-gradient(180deg,#1e1712,#140e0a);border:1px solid var(--trim-d);border-radius:9px;padding:11px 13px">`
+    +`<div style="font-family:'Cinzel',serif;font-size:15px;color:#e7dcc4;margin-bottom:4px">${icon} ${title}</div>`
+    +`<div style="font-size:12px;color:var(--muted);line-height:1.5">${body}</div></div>`;
+  return `<div style="display:flex;flex-direction:column;gap:12px;padding:4px 0">
+    <div style="display:flex;align-items:center;gap:12px;background:linear-gradient(180deg,#241614,#160c0a);border:1px solid #5a2c28;border-left:3px solid ${sl};border-radius:8px;padding:12px 15px">
+      <span style="font-size:32px;line-height:1">🗡</span>
+      <div><div style="font-family:'Cinzel',serif;font-size:20px;color:#f0d8d0">The Slayer's Guild</div>
+        <div style="font-size:12.5px;color:var(--muted)">A 13th skill — take a bounty, hunt the mark, spend the points. <b style="color:${sl}">In development.</b></div></div>
+    </div>
+    <div style="font-size:13px;color:var(--muted);line-height:1.6">Right now you kill what you like. Soon a <b style="color:#e7dcc4">Slayer Master</b> will hand you a <b style="color:#e7dcc4">task</b> — "slay N of a monster" — and on-task kills will pay <b style="color:${sl}">Slayer XP</b> + <b style="color:${sl}">Slayer Points</b>. Level up for tougher masters, superior monster variants (more XP &amp; drops), and a perk tree.</div>
+    <div style="background:linear-gradient(180deg,#1a1310,#120c08);border:1px dashed #5a463a;border-radius:9px;padding:13px 16px">
+      <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:${sl};margin-bottom:8px">Current bounty · preview</div>
+      <div style="display:flex;align-items:center;gap:13px">
+        <span style="font-size:30px;line-height:1">${iconHTML('wolf')}</span>
+        <div style="flex:1;min-width:0"><div style="font-family:'Cinzel',serif;font-size:17px;color:#e7dcc4">Slay Dire Wolves</div>
+          <div style="height:7px;background:#0d0905;border-radius:4px;margin-top:6px;overflow:hidden"><i style="display:block;height:100%;width:35%;background:${sl}"></i></div>
+          <div style="font-size:12px;color:var(--muted);margin-top:3px">14 / 40 slain</div></div>
+        <div style="text-align:right;font-size:12px;color:var(--muted);white-space:nowrap">Reward<br><b style="color:${sl}">+10 pts</b> · <b style="color:#9be89b">+2.4k xp</b></div>
+      </div>
+    </div>
+    <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#6d6058">Planned perk tree</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      ${card('🎯','Tracker','+hide &amp; rare drops, double-hide chance, richer loot while on-task.')}
+      ${card('⚔','Executioner','+damage &amp; accuracy vs your task target, +combat XP while on-task.')}
+      ${card('🎖','Quartermaster','+Slayer points &amp; XP, cheaper task skips, superior-variant chance.')}
+    </div>
+    <div style="font-size:12px;color:${sl};text-align:center;padding:9px;border:1px solid #5a2c28;border-radius:7px;background:#1a0e0c">🗡 Slayer is coming in a future update — this tab is its home.</div>
+  </div>`;
+}
 function buildRaidsPanelHTML(){
   const esc=s=>String(s==null?'':s).replace(/"/g,'&quot;');
   const active=combat.active, inRaid=!!combat.raid;
@@ -21013,7 +21105,7 @@ function renderCombat(){
   // Tab choice persists in state.cmbSubTab — but is forced back to 'arena' the
   // moment the player engages a fight so they aren't accidentally on the wrong
   // view while taking damage. See selectMonster / engageCombat for that part.
-  const subTab=(state.cmbSubTab==='mastery'||state.cmbSubTab==='pets'||state.cmbSubTab==='log')?state.cmbSubTab:'arena';
+  const subTab=(state.cmbSubTab==='mastery'||state.cmbSubTab==='pets'||state.cmbSubTab==='log'||state.cmbSubTab==='slayer')?state.cmbSubTab:'arena';
   const cmastAvail=cmastPtsAvail();
   const cmastGranted=cmastPtsGranted();
   // Pets count for the sub-tab badge — small, unobtrusive "owned/total" pill.
@@ -21030,6 +21122,7 @@ function renderCombat(){
       <button class="cmb-subtab${subTab==='mastery'?' on':''}" data-sub="mastery">✦ MASTERY <span class="badge">${cmastAvail}/${cmastGranted}</span></button>
       <button class="cmb-subtab${subTab==='pets'?' on':''}" data-sub="pets">🐾 PETS <span class="badge">${_petOwned}/${_petTotal}</span></button>
       <button class="cmb-subtab${subTab==='log'?' on':''}" data-sub="log">🗒 LOG <span class="badge">${_monLogSeen}/${_monLogTotal}</span></button>
+      <button class="cmb-subtab${subTab==='slayer'?' on':''}" data-sub="slayer">🗡 SLAYER <span class="badge soon">soon</span></button>
     </div>
   `;
 
@@ -21121,11 +21214,11 @@ function renderCombat(){
           <div class="cmb-status" id="cmbYouStatus">${statusIconsHTML('you')}</div>
         </div>
         <div class="cmb-scd you">
-          <div class="cmb-srow" data-tip="From Attack lvl ${aLvl}${accGear>0?` + ${accGear} from gear`:''}"><span class="lbl">Attack</span><span class="val">${accBase+accGear}${accGear>0?`<span class="gear">+${accGear}</span>`:''}</span></div>
-          <div class="cmb-srow" data-tip="From Strength lvl ${sLvl}${hitGear>0?` + ${hitGear} from gear`:''}"><span class="lbl">Max Hit</span><span class="val">${hitBase+hitGear}${hitGear>0?`<span class="gear">+${hitGear}</span>`:''}</span></div>
-          <div class="cmb-srow" data-tip="From Defence lvl ${dLvl}${defGear>0?` + ${defGear} from gear`:''}"><span class="lbl">Defence</span><span class="val">${defBase+defGear}${defGear>0?`<span class="gear">+${defGear}</span>`:''}</span></div>
-          <div class="cmb-srow" data-tip="From Hitpoints lvl ${hLvl}${hpGear>0?` + ${hpGear} from gear`:''}"><span class="lbl">Health</span><span class="val">${hpBase+hpGear}${hpGear>0?`<span class="gear">+${hpGear}</span>`:''}</span></div>
-          <div class="cmb-srow" data-tip="Agility lvl ${agiLvl} trims swing time from 2.40s base${speedReductionPct?` (-${speedReductionPct}%)`:''}"><span class="lbl">Speed</span><span class="val">${speedDisplay}</span></div>
+          <div class="cmb-srow" data-tip="ACCURACY — how often your blows land.&#10;Rolled against the foe's Defence: more Attack = fewer misses.&#10;It does NOT raise your damage.&#10;&#10;From Attack lvl ${aLvl}${accGear>0?` + ${accGear} from gear`:''}"><span class="lbl">Attack</span><span class="val">${accBase+accGear}${accGear>0?`<span class="gear">+${accGear}</span>`:''}</span></div>
+          <div class="cmb-srow" data-tip="DAMAGE CEILING — the most a single blow can deal.&#10;Every landed hit rolls from a floor up to this cap.&#10;Raised by Strength (and Str-heavy weapons).&#10;&#10;From Strength lvl ${sLvl}${hitGear>0?` + ${hitGear} from gear`:''}"><span class="lbl">Max Hit</span><span class="val">${hitBase+hitGear}${hitGear>0?`<span class="gear">+${hitGear}</span>`:''}</span></div>
+          <div class="cmb-srow" data-tip="EVASION — how often the foe MISSES you.&#10;More Defence = fewer of their blows land.&#10;It does NOT reduce the damage of a blow that connects — Health &amp; Dodge do that.&#10;&#10;From Defence lvl ${dLvl}${defGear>0?` + ${defGear} from gear`:''}"><span class="lbl">Defence</span><span class="val">${defBase+defGear}${defGear>0?`<span class="gear">+${defGear}</span>`:''}</span></div>
+          <div class="cmb-srow" data-tip="HIT POINTS — your health pool.&#10;A blow that lands subtracts its damage; reach 0 and you're defeated.&#10;Grows with the Hitpoints level.&#10;&#10;From Hitpoints lvl ${hLvl}${hpGear>0?` + ${hpGear} from gear`:''}"><span class="lbl">Health</span><span class="val">${hpBase+hpGear}${hpGear>0?`<span class="gear">+${hpGear}</span>`:''}</span></div>
+          <div class="cmb-srow" data-tip="SWING SPEED — seconds between your attacks.&#10;Lower is faster = more hits per fight.&#10;Trimmed by Agility, the Rogue class, and leather gear.&#10;&#10;Agility lvl ${agiLvl} from 2.40s base${speedReductionPct?` (-${speedReductionPct}%)`:''}"><span class="lbl">Speed</span><span class="val">${speedDisplay}</span></div>
         </div>
       </div>
       <div class="cmb-skillcard">${statsCard}</div>
@@ -21185,6 +21278,7 @@ function renderCombat(){
     ${subTab==='mastery' ? buildCmastViewHTML() : ''}
     ${subTab==='pets' ? buildPetsViewHTML() : ''}
     ${subTab==='log' ? buildMonLogHTML() : ''}
+    ${subTab==='slayer' ? buildSlayerPreviewHTML() : ''}
     ${arenaBodyHTML}
   `;
 
@@ -21350,7 +21444,7 @@ function renderCombat(){
   panel.querySelectorAll('.cmb-subtab').forEach(b=>{
     b.addEventListener('click',()=>{
       const sub=b.getAttribute('data-sub');
-      if(sub!=='arena'&&sub!=='mastery'&&sub!=='pets'&&sub!=='log') return;
+      if(sub!=='arena'&&sub!=='mastery'&&sub!=='pets'&&sub!=='log'&&sub!=='slayer') return;
       state.cmbSubTab=sub;
       saveGame();
       renderCombat();
