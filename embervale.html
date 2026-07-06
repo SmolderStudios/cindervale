@@ -2618,7 +2618,7 @@ header h1 .flame{color:var(--ember)}
   <div class="mm-btns">
     <button class="mm-btn mm-primary" id="mmPlay">▶ Play</button>
   </div>
-  <div class="mm-ver">v1.0.84</div>
+  <div class="mm-ver">v1.0.85</div>
 </div>
 
 <!-- ===== CHARACTER SELECT (added) ===== -->
@@ -17138,7 +17138,8 @@ const RAIDS=[
       {id:'ashbound_brute', zone:'emberforge', name:'Ashbound Brute',  icon:'ashbound_brute', lvl:80, hp:1520, atk:268, str:224, def:150, coins:0, xp:3400, swingMs:2500, dmgType:'slash', weakTo:'stab'},
       {id:'ember_colossus', zone:'emberforge', name:'Emberforged Colossus', icon:'ember_colossus', lvl:82, hp:1750, atk:288, str:250, def:168, coins:0, xp:3900, swingMs:2700, dmgType:'crush', weakTo:'slash'},
       {id:'ignar', zone:'emberforge', name:'Ignar, the Forge-Tyrant', icon:'ignar', lvl:84, hp:4400, atk:400, str:330, def:225, coins:0, xp:8000, swingMs:2800, dmgType:'crush', weakTo:'slash', boss:true, raidBoss:true,
-        raidfx:{name:"Tyrant's Wrath", desc:'His forge-heat saps you — −20% Defence and your strikes drag 15% slower.', defMult:0.80, swingMult:1.15}},
+        raidfx:{name:"Tyrant's Wrath", desc:'His forge-heat saps you — −20% Defence and your strikes drag 15% slower.', defMult:0.80, swingMult:1.15},
+        bossfx:{kind:'burn', tickMs:2600, frac:0.05, label:"Tyrant's Fire", desc:'The Tyrant sets you alight — you burn for 5% max HP every 2.6s until the fight ends.'}},
     ],
     ratingTiers:[
       {key:'S', maxMs:210000,   mult:3.0, gold:9000, mats:9, col:'#ffe27a'},
@@ -17224,6 +17225,7 @@ function startRaid(id){
   state.zoneMode='raids';
   combat.rare=false;
   combat.raid={ id:raid.id, stage:0, startMs:Date.now(), n:raid.stages.length };
+  combat.cheatDeathReady=true;   // (1.0.85) one cheat-death per raid run (if gear worn)
   _raidResult=null;
   refreshCombatStats();
   _beginRaidStage(raid, 0, true);
@@ -17249,9 +17251,75 @@ function _beginRaidStage(raid, stage, fullHeal){
   const now=Date.now();
   combat.youSwingStart=now;
   combat.foeSwingStart=now;
+  // Active boss mechanic (1.0.85) — set only on stages that carry `bossfx`.
+  combat.bossfx = mon.bossfx ? Object.assign({}, mon.bossfx, {nextAt: now+(mon.bossfx.everyMs||mon.bossfx.tickMs||3000), acc:0}) : null;
   const tag=mon.raidBoss?'★ FINAL BOSS':(mon.miniBoss?'◆ MINI-BOSS':`Stage ${stage+1}/${raid.stages.length}`);
   cmbLog(`— ${tag}: ${mon.name} rises to meet you. —`, (mon.raidBoss||mon.miniBoss)?'rare-spawn':'sys');
   if(mon.raidfx){ cmbLog(`✦ ${mon.raidfx.name} — ${mon.raidfx.desc}`,'hit'); }
+  if(mon.bossfx){ cmbLog(`✦ ${mon.bossfx.label} — ${mon.bossfx.desc||'an active hazard; stay sharp.'}`,'rare-spawn'); }
+}
+
+/* ── Active boss mechanics + cheat-death (1.0.85) ───────────────────────────────
+   `bossfx` on a raid boss stage drives an ACTIVE per-tick hazard (distinct from the
+   passive `raidfx` stat curse): `burn` ticks a % of max HP; `voidbomb` detonates for
+   a % of max HP unless you dealt `reqDmg` to the boss in the window (a DPS check).
+   Cheat-death: a unique with `cheatDeath:true` survives one lethal blow per fight/run
+   at 15% HP. */
+function hasCheatDeathGear(){
+  const ce=state&&state.combatEquipped; if(!ce) return false;
+  for(const id of Object.values(ce)){ if(ITEMS[id]&&ITEMS[id].cheatDeath) return true; }
+  return false;
+}
+function _tryCheatDeath(){
+  if(combat.cheatDeathReady && hasCheatDeathGear()){
+    combat.cheatDeathReady=false;
+    combat.youHp=Math.max(1, Math.round(combat.youMaxHp*0.15));
+    cmbLog('✨ Death denied — your relic drags you back from the brink at 15% HP!','rare-win');
+    if(typeof toast==='function') toast('✨ Cheated death!');
+    return true;
+  }
+  return false;
+}
+/* Full death resolution (raid forfeit or normal retreat) + combat cleanup. Returns
+   true so callers can `return` straight out of the tick. */
+function _resolvePlayerDeath(){
+  if(combat.raid){ handleRaidFail(); }
+  else cmbLog('💀 You were defeated and retreat to safety.','lose');
+  combat.active=false; combat.rare=false; combat.regens=[]; combat.foeStatus={};
+  combat.bossfx=null; combat.cheatDeathReady=false;
+  combat.youHp=combat.youMaxHp;
+  stopCombatTimer(); renderCombat(); refreshCombatTabIndicator();
+  if(!combatMode && typeof toast==='function'){ toast('💀 You were defeated in combat.'); }
+  return true;
+}
+/* Tick a raid boss's active mechanic. Returns true if it killed you and death was
+   resolved (after a cheat-death check) — the caller should then return. */
+function tickBossMechanic(now){
+  const bf=combat.bossfx; if(!bf) return false;
+  if(bf.kind==='burn'){
+    // One tick per call, reset relative to `now` — no catch-up burst if the tab
+    // was backgrounded and combatTick fell behind.
+    if(now>=bf.nextAt){ bf.nextAt=now+(bf.tickMs||2600);
+      const dmg=Math.max(1,Math.round(combat.youMaxHp*(bf.frac||0.05)));
+      combat.youHp=Math.max(0,combat.youHp-dmg);
+      cmbLog(`🔥 ${bf.label||'Burning'} sears you for ${dmg}.`,'hit');
+      if(combat.youHp<=0 && !_tryCheatDeath()) return _resolvePlayerDeath();
+    }
+  } else if(bf.kind==='voidbomb'){
+    if(now>=bf.nextAt){ bf.nextAt=now+(bf.everyMs||8000);
+      if((bf.acc||0) < (bf.reqDmg||500)){
+        const dmg=Math.max(1,Math.round(combat.youMaxHp*(bf.frac||0.30)));
+        combat.youHp=Math.max(0,combat.youHp-dmg);
+        cmbLog(`🌀 ${bf.label||'Void'} ruptures for ${dmg}! Keep your damage up — needed ${bf.reqDmg||500} in the window.`,'lose');
+        bf.acc=0;
+        if(combat.youHp<=0 && !_tryCheatDeath()) return _resolvePlayerDeath();
+      } else {
+        cmbLog(`🌀 You suppress the ${bf.label||'void'} — dealt ${bf.acc} this window.`,'');
+        bf.acc=0;
+      }
+    }
+  }
+  return false;
 }
 
 /* Called from combatTick when a raid foe dies (before normal loot logic runs).
@@ -17269,7 +17337,7 @@ function handleRaidKill(baseMon){
     const timeMs=Date.now()-combat.raid.startMs;
     const res=grantRaidRewards(raid, timeMs);
     _raidResult=res;
-    combat.active=false; combat.raid=null; combat.raidDebuff=null;
+    combat.active=false; combat.raid=null; combat.raidDebuff=null; combat.bossfx=null;
     combat.foeStatus={}; combat.regens=[];
     combat.youHp=combat.youMaxHp;
     _resetCombatTargetAfterRaid();
@@ -20204,6 +20272,8 @@ function engageCombat(){
   combat.active=true;
   combat.foeHp=effMon.hp;
   combat.youHp=combat.youMaxHp;
+  combat.bossfx=null;             // (1.0.85) normal fights carry no active boss mechanic
+  combat.cheatDeathReady=true;    // (1.0.85) one cheat-death per fight (if gear worn)
   combat.regens=[];   // (1.0.21) fresh fight — no carried-over food regen
   combat.foeStatus={}; // (1.0.60) clean foe — no carried-over poison/stun
   combat.foeSwingMs=mon.swingMs||COMBAT_BASE_SWING_MS;
@@ -20227,7 +20297,7 @@ function fleeCombat(){
     const raid=getRaid(combat.raid.id); const stage=combat.raid.stage;
     _raidResult={ raidId:combat.raid.id, failed:true, forfeit:true, stage:stage+1, n:combat.raid.n };
     cmbLog(`🏳 You withdraw from ${raid?raid.name:'the raid'} at stage ${stage+1}/${combat.raid.n} — the run is forfeit.`,'lose');
-    combat.raid=null; combat.raidDebuff=null;
+    combat.raid=null; combat.raidDebuff=null; combat.bossfx=null;
     _resetCombatTargetAfterRaid();
   }
   stopCombatTimer();
@@ -20316,6 +20386,10 @@ function combatTick(){
     }
   }
 
+  // ── Active boss mechanic (1.0.85) — burn / void-bomb on raid final bosses.
+  // Ticks independently of swings; may resolve player death (cheat-death aware).
+  if(combat.raid && combat.bossfx && tickBossMechanic(now)){ updateCombatBars(); return; }
+
   // ── Player swing — only when their own swing timer has elapsed ───────────
   if(now-combat.youSwingStart>=combat.youSwingMs){
     combat.youSwingStart=now;
@@ -20360,6 +20434,8 @@ function combatTick(){
       if(_clfx&&_clfx.cleave&&Math.random()<_clfx.cleave.chance){ _cleaveDmg=youDmg; }
     }
     combat.foeHp=Math.max(0,combat.foeHp-youDmg-_cleaveDmg);
+    // Void-bomb DPS check (1.0.85) — accumulate damage dealt to the boss this window.
+    if(combat.bossfx&&combat.bossfx.kind==='voidbomb') combat.bossfx.acc=(combat.bossfx.acc||0)+youDmg+_cleaveDmg;
     if(youDmg>0){
       cmbLog(`You ${didCrit?'<span style="color:#ffd700">crit</span> ':''}hit the ${mon.name} for ${youDmg}.`,'hit');
       if(_cleaveDmg>0) cmbLog(`🪓 Reaping Arc cleaves again for ${_cleaveDmg}!`,'hit');
@@ -20587,22 +20663,10 @@ function combatTick(){
     }
 
     if(combat.youHp<=0){
-      // (1.0.66) A death mid-raid forfeits the whole run — handleRaidFail logs it
-      // and clears the raid state; the standard cleanup below still runs.
-      if(combat.raid){ handleRaidFail(); }
-      else cmbLog('💀 You were defeated and retreat to safety.','lose');
-      combat.active=false;
-      combat.rare=false;  // death clears rare encounter (1.0.70)
-      combat.regens=[];   // (1.0.21) wipe food regen on death
-      combat.foeStatus={}; // (1.0.60) wipe foe poison/stun on death
-      combat.youHp=combat.youMaxHp;
-      stopCombatTimer();
-      renderCombat();
-      refreshCombatTabIndicator();
-      // If the panel was hidden when we died, surface a toast so the player
-      // notices the fight ended without having to switch tabs.
-      if(!combatMode && typeof toast==='function'){ toast('💀 You were defeated in combat.'); }
-      return;
+      // (1.0.85) Cheat-death first — a `cheatDeath` unique averts one lethal blow
+      // per fight/run (15% HP). Otherwise resolve death: a raid death forfeits the
+      // run (handleRaidFail), a normal death retreats. _resolvePlayerDeath cleans up.
+      if(!_tryCheatDeath()){ _resolvePlayerDeath(); return; }
     }
 
     // ── Auto-heal check (1.0.63) ─────────────────────────────────────────
