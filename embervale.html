@@ -2603,7 +2603,7 @@ header h1 .flame{color:var(--ember)}
   <div class="mm-btns">
     <button class="mm-btn mm-primary" id="mmPlay">▶ Play</button>
   </div>
-  <div class="mm-ver">v1.0.75</div>
+  <div class="mm-ver">v1.0.76</div>
 </div>
 
 <!-- ===== CHARACTER SELECT (added) ===== -->
@@ -17174,6 +17174,20 @@ function slayerBlockCurrent(){
   state.slayer.blocked[t.monId]=1; state.slayer.streak=0; state.slayer.task=null;
   toast('Monster blocked from future bounties.'); saveGame(); if(combatMode&&typeof renderCombat==='function') renderCombat();
 }
+/* Jump the Arena straight to the active bounty's target: switch to the correct
+   combat mode (Hunt vs Dungeons), select the target's zone + monster tile, and
+   flip to the Arena view so the player can engage in one click. No-op mid-fight. */
+function slayerGoToTask(){
+  const t=state.slayer&&state.slayer.task; if(!t) return;
+  const mon=getMonster(t.monId); if(!mon) return;
+  if(combat.active){ toast('Finish the current fight first.'); return; }
+  const z=getZone(mon.zone);
+  state.zoneMode=(z&&z.type==='hunt')?'hunt':'dungeons';
+  state.zone=mon.zone;
+  combat.monId=mon.id; combat.rare=false;
+  state.cmbSubTab='arena';
+  saveGame(); if(typeof renderCombat==='function') renderCombat();
+}
 function buySlayerPerk(id){
   const perk=SLAYER_PERKS.find(p=>p.id===id); if(!perk) return;
   const lvl=slayerPerkLevel(id);
@@ -21144,7 +21158,7 @@ function buildSlayerHTML(){
       </div>
       <div style="display:flex;gap:8px;margin-top:11px;flex-wrap:wrap">
         ${complete?`<button class="sl-btn primary" data-sl-newtask="${t.master}">🗡 Claim &amp; new bounty</button>`
-          :`<button class="sl-btn" data-sl-skip="1">Skip · ${SLAYER_SKIP_COST} pts</button><button class="sl-btn" data-sl-block="1">Never assign · ${SLAYER_BLOCK_COST} pts</button>`}
+          :`<button class="sl-btn primary" data-sl-goto="1">⚔ Go to task</button>`}
       </div></div>`;
   } else {
     bounty=`<div style="background:linear-gradient(180deg,#1a1310,#120c08);border:1px dashed #5a463a;border-radius:9px;padding:15px;text-align:center;color:var(--muted);font-size:13px">No active bounty — take one from a Slayer Master below.</div>`;
@@ -21169,12 +21183,31 @@ function buildSlayerHTML(){
     </div>`;
   }).join('');
   const blockedIds=Object.keys(S.blocked||{});
-  const blockedRow=blockedIds.length?`<div style="font-size:11px;color:var(--muted)">Blocked from bounties: ${blockedIds.map(id=>{const m=getMonster(id);return m?m.name:id;}).join(', ')} · <button class="sl-btn tiny" data-sl-unblockall="1">clear all</button></div>`:'';
+  // ── Rewards Shop: task-management actions (skip / block / unblock). Skip & block
+  // act on the active bounty; unblock restores the blocked pool. Buttons stay
+  // visible but disable when they can't apply (no bounty / not enough pts / none
+  // blocked) so the shop always reads as a full menu. (1.0.76)
+  const canSkip=active&&pts>=SLAYER_SKIP_COST, canBlock=active&&pts>=SLAYER_BLOCK_COST;
+  const nBlocked=blockedIds.length;
+  const shopCard=(title,desc,btn)=>`<div style="flex:1 1 225px;background:linear-gradient(180deg,#1e1712,#140e0a);border:1px solid var(--trim-d);border-radius:9px;padding:11px 13px">
+    <div style="font-family:'Cinzel',serif;font-size:14px;color:#e7dcc4">${title}</div>
+    <div style="font-size:12px;color:var(--muted);line-height:1.4;margin:4px 0 8px">${desc}</div>${btn}</div>`;
+  const taskActions=[
+    shopCard('Skip Bounty','Abandon the current bounty and reset your streak, then take a fresh one from any master.',
+      `<button class="sl-btn ${canSkip?'primary':''}" data-sl-skip="1" ${canSkip?'':'disabled'}>${active?`Skip · ${SLAYER_SKIP_COST} pts`:'No active bounty'}</button>`),
+    shopCard('Block Monster',`Never assign ${active?getMonster(t.monId).name:'this monster'} again — removed from every future bounty pool.`,
+      `<button class="sl-btn ${canBlock?'primary':''}" data-sl-block="1" ${canBlock?'':'disabled'}>${active?`Block · ${SLAYER_BLOCK_COST} pts`:'No active bounty'}</button>`),
+    shopCard('Unblock All',`Return ${nBlocked?`${nBlocked} blocked monster${nBlocked===1?'':'s'}`:'blocked monsters'} to the assignable pool. Free.`,
+      `<button class="sl-btn" data-sl-unblockall="1" ${nBlocked?'':'disabled'}>${nBlocked?`Clear ${nBlocked} block${nBlocked===1?'':'s'}`:'None blocked'}</button>`),
+  ].join('');
+  const blockedRow=nBlocked?`<div style="font-size:11px;color:var(--muted)">Blocked from bounties: ${blockedIds.map(id=>{const m=getMonster(id);return m?m.name:id;}).join(', ')}</div>`:'';
   return `<div style="display:flex;flex-direction:column;gap:12px;padding:2px 0">
     ${header}${bounty}
     <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#6d6058;margin-top:2px">Slayer Masters</div>
     <div style="display:flex;gap:10px;flex-wrap:wrap">${masters}</div>
-    <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#6d6058;margin-top:2px">Perks — spend Slayer Points</div>
+    <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#6d6058;margin-top:2px">Rewards Shop — task actions</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">${taskActions}</div>
+    <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#6d6058;margin-top:2px">Rewards Shop — perks</div>
     <div style="display:flex;gap:10px;flex-wrap:wrap">${perks}</div>
     ${blockedRow}
     <div style="font-size:11.5px;color:var(--muted);line-height:1.5;background:linear-gradient(180deg,#1a1310,#12100a);border:1px solid var(--trim-d);border-left:3px solid ${sl};border-radius:7px;padding:9px 12px">🗡 Take a bounty, then kill that monster anywhere in the Arena. On-task kills pay <b style="color:#e7dcc4">Slayer XP</b>; finishing pays <b style="color:#ffd24a">Slayer Points</b>. Bounties rotate across all 9 zones — no more farming rats twenty times.</div>
@@ -21828,7 +21861,8 @@ function renderCombat(){
 
   // ── Slayer tab wiring (1.0.73) ───────────────────────────────────────────────
   panel.querySelectorAll('[data-sl-newtask]').forEach(b=>{ if(b.disabled) return; b.addEventListener('click',()=>assignSlayerTask(b.getAttribute('data-sl-newtask'))); });
-  panel.querySelectorAll('[data-sl-skip]').forEach(b=>b.addEventListener('click',slayerSkipTask));
+  panel.querySelectorAll('[data-sl-goto]').forEach(b=>{ if(b.disabled) return; b.addEventListener('click',slayerGoToTask); });
+  panel.querySelectorAll('[data-sl-skip]').forEach(b=>{ if(b.disabled) return; b.addEventListener('click',slayerSkipTask); });
   panel.querySelectorAll('[data-sl-block]').forEach(b=>b.addEventListener('click',slayerBlockCurrent));
   panel.querySelectorAll('[data-sl-perk]').forEach(b=>{ if(b.disabled) return; b.addEventListener('click',()=>buySlayerPerk(b.getAttribute('data-sl-perk'))); });
   panel.querySelectorAll('[data-sl-unblockall]').forEach(b=>b.addEventListener('click',()=>{ state.slayer.blocked={}; saveGame(); renderCombat(); }));
