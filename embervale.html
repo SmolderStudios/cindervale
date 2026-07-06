@@ -2618,7 +2618,7 @@ header h1 .flame{color:var(--ember)}
   <div class="mm-btns">
     <button class="mm-btn mm-primary" id="mmPlay">▶ Play</button>
   </div>
-  <div class="mm-ver">v1.0.85</div>
+  <div class="mm-ver">v1.0.86</div>
 </div>
 
 <!-- ===== CHARACTER SELECT (added) ===== -->
@@ -3579,6 +3579,13 @@ const ITEMS={
   molten_bar:        {name:'Molten Bar',        icon:'🟧',sell:2100, desc:'An ingot of moltensteel drawn glowing from the Emberforge. Still warm to the touch. The T8 smithing metal — forge it into Moltensteel gear.'},
   emberweave:        {name:'Emberweave',        icon:'🧵',sell:1600, desc:'Fireproof cloth woven from the ash of the forge-thralls, threaded with living embers. A T8 leathercrafting hide.'},
   drakeforged_rune:  {name:'Drakeforged Rune',  icon:'🔥',sell:3400, rare:true, desc:'A rune-scored fragment of the anvil itself, humming with trapped heat. A rare T8 reagent.'},
+  // ─── RAID: The Abyssal Throne (1.0.86) — T9 relics + void mats ───
+  voidrend:      {name:'Voidrend',       icon:'🗡️',sell:88000,rare:true, cgear:true,ctier:9,cslot:'weapon', dmgType:'stab',  desc:"A sliver of the rift itself, held in a hilt of null-iron. Where its edge passes, the world briefly forgets to exist."},
+  nullward:      {name:'Nullward',        icon:'🛡️',sell:70000,rare:true, cgear:true,ctier:9,cslot:'shield', desc:"A shield of solid absence. Blows land on it and simply stop being. The finest guard in all Embervale."},
+  voidcleaver:   {name:'Voidcleaver',     icon:'🪓',sell:150000,rare:true, cgear:true,ctier:9,cslot:'weapon', dmgType:'slash', twoHanded:true, wfx:{cleave:{chance:0.28}}, desc:"A greatsword torn from Xor'Vael's own grip, its edge a seam of raw void. Its Rift Echo strikes twice on the backswing. The deadliest weapon a mortal has ever carried."},
+  voidsteel_bar: {name:'Voidsteel Bar',   icon:'🟪',sell:4200, desc:'An ingot of null-forged metal, cold as the space between stars. The T9 smithing metal — forge it into Voidsteel gear.'},
+  voidweave:     {name:'Voidweave',       icon:'🧵',sell:3200, desc:'Cloth spun from unravelled rift-thread; it drinks the light that touches it. A T9 leathercrafting hide.'},
+  riftshard:     {name:'Riftshard',       icon:'🔮',sell:6800, rare:true, desc:'A splinter of a sealed rift, still humming with the void it once opened. A rare T9 reagent.'},
 };
 
 /* ════════ COMBAT GEAR STATS ════════════════════════════════════════════════════
@@ -3719,6 +3726,10 @@ const COMBAT_GEAR_STATS={
   emberforged_blade: {atk:54,str:46,def:0},   // T8 slash sword — budget 100, above doomblade (89); burn proc; warrior staple of the tier
   cinderguard:       {atk:0, str:0, def:58},  // T8 shield — best shield in the game (above barrow 47)
   forgebreaker:      {atk:70,str:65,def:0},   // 2H crush greataxe — budget 135, well past grave_cleaver (88); marquee, heavy burn, no shield
+  // ─── RAID gear · The Abyssal Throne (1.0.86) — T9 relics (Lv90), near-BIS ───
+  voidrend:          {atk:72,str:60,def:0},   // T9 stab sword — budget 132, BIS 1H for tier
+  nullward:          {atk:0, str:0, def:78},  // T9 shield — new best shield (above cinderguard 58)
+  voidcleaver:       {atk:92,str:85,def:0},   // T9 2H slash greatsword — budget 177, marquee; Rift Echo cleave; no shield
 };
 
 /* ---- skills ---- */
@@ -6239,6 +6250,21 @@ const ICONS = {
   molten_bar: _barSVG({top:'#ff8a30', front:'#c8461a', edge:'#3a1004', stamp:'#1a0800', hl:'#ffd080', glow:'#ff6020'}),
   emberweave: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="ew_g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffb060"/><stop offset="0.5" stop-color="#e8641c"/><stop offset="1" stop-color="#7a2408"/></linearGradient></defs><ellipse cx="32" cy="57" rx="13" ry="2.6" fill="#000" opacity="0.3"/><rect x="16" y="20" width="4" height="28" rx="1.5" fill="#3a2c22" stroke="#160e08" stroke-width="0.6"/><rect x="44" y="20" width="4" height="28" rx="1.5" fill="#3a2c22" stroke="#160e08" stroke-width="0.6"/><path d="M20 24 Q32 30 44 24 M20 30 Q32 24 44 30 M20 36 Q32 42 44 36 M20 42 Q32 36 44 42" stroke="url(#ew_g)" stroke-width="3.2" fill="none"/><path d="M22 27 Q32 32 42 27" stroke="#ffe6a0" stroke-width="0.7" fill="none" opacity="0.7"/><path d="M44 40 Q52 42 50 50" stroke="#ff7a1e" stroke-width="1.6" fill="none"/></svg>',
   drakeforged_rune: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="dr_stone" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a453e"/><stop offset="0.5" stop-color="#2a251f"/><stop offset="1" stop-color="#12100c"/></linearGradient><radialGradient id="dr_glow" cx="0.5" cy="0.5" r="0.6"><stop offset="0" stop-color="#ff9a30" stop-opacity="0.7"/><stop offset="1" stop-color="#ff5a08" stop-opacity="0"/></radialGradient></defs><ellipse cx="32" cy="58" rx="12" ry="2.4" fill="#000" opacity="0.35"/><circle cx="32" cy="30" r="22" fill="url(#dr_glow)"/><path d="M20 8 L44 8 L46 48 L18 48 Z" fill="url(#dr_stone)" stroke="#0a0806" stroke-width="1" stroke-linejoin="round"/><path d="M44 8 L46 20 L40 14 Z" fill="#12100c" opacity="0.6"/><g stroke="#ff8a20" stroke-width="1.6" fill="none" opacity="0.95" stroke-linecap="round"><path d="M26 16 L38 16 M32 16 L32 28 M27 40 L32 34 L37 40 M27 34 L37 34"/></g><circle cx="32" cy="30" r="1.6" fill="#ffe6a0"/></svg>',
+  /* ─── RAID: The Abyssal Throne (1.0.86) — void zone, 7 foes, 3 relics, mats ─── */
+  abyssal_throne: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><radialGradient id="at_glow" cx="0.5" cy="0.5" r="0.6"><stop offset="0" stop-color="#8040c0" stop-opacity="0.85"/><stop offset="1" stop-color="#160830" stop-opacity="0"/></radialGradient><linearGradient id="at_thr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a2458"/><stop offset="0.5" stop-color="#20103a"/><stop offset="1" stop-color="#0e0420"/></linearGradient><linearGradient id="at_rift" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e0b0ff"/><stop offset="0.5" stop-color="#8040c0"/><stop offset="1" stop-color="#2a1048"/></linearGradient></defs><circle cx="32" cy="32" r="28" fill="url(#at_glow)"/><path d="M14 20 L20 16 L20 10 L24 14 L28 10 L28 16 L36 16 L36 10 L40 14 L44 10 L44 16 L50 20 L48 52 L16 52 Z" fill="url(#at_thr)" stroke="#0a0418" stroke-width="0.9" stroke-linejoin="round"/><path d="M30 18 Q32 14 34 18 Q40 32 34 46 Q32 50 30 46 Q24 32 30 18 Z" fill="url(#at_rift)"/><path d="M32 16 L32 48" stroke="#fff" stroke-width="0.5" opacity="0.7"/><circle cx="32" cy="30" r="2.2" fill="#fff" opacity="0.9"/><path d="M16 52 L48 52 L46 56 L18 56 Z" fill="#160830" stroke="#0a0418" stroke-width="0.6"/></svg>',
+  void_wretch: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="vw_body" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a2c70"/><stop offset="0.5" stop-color="#281448"/><stop offset="1" stop-color="#100420"/></linearGradient></defs><ellipse cx="32" cy="58" rx="12" ry="2.6" fill="#000" opacity="0.4"/><path d="M20 32 Q32 22 44 32 Q46 50 40 54 Q32 58 24 54 Q18 50 20 32 Z" fill="url(#vw_body)" stroke="#0a0418" stroke-width="0.9" stroke-linejoin="round"/><path d="M24 30 Q32 12 40 30 Q32 26 24 30 Z" fill="url(#vw_body)" stroke="#0a0418" stroke-width="0.9"/><circle cx="28.5" cy="24" r="1.8" fill="#c890ff"/><circle cx="35.5" cy="24" r="1.8" fill="#c890ff"/><circle cx="28.5" cy="24" r="0.7" fill="#fff"/><circle cx="35.5" cy="24" r="0.7" fill="#fff"/><path d="M26 38 L30 44 M38 36 L34 42 M32 34 L32 50" stroke="#8040c0" stroke-width="1.1" fill="none" opacity="0.8"/><path d="M18 38 Q14 46 18 52 M46 38 Q50 46 46 52" stroke="#3a2458" stroke-width="1.4" fill="none"/></svg>',
+  rift_stalker: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="rst_body" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5a3488"/><stop offset="0.5" stop-color="#2a1450"/><stop offset="1" stop-color="#0e0420"/></linearGradient></defs><ellipse cx="32" cy="56" rx="18" ry="3" fill="#000" opacity="0.4"/><path d="M10 34 Q20 26 34 28 Q48 30 54 26 Q50 38 40 40 L36 52 L32 40 Q22 42 18 50 L16 40 Q10 40 10 34 Z" fill="url(#rst_body)" stroke="#0a0418" stroke-width="0.9" stroke-linejoin="round"/><path d="M50 26 L58 22 L54 30 Z" fill="url(#rst_body)" stroke="#0a0418" stroke-width="0.7"/><circle cx="50" cy="30" r="1.6" fill="#c890ff"/><path d="M20 32 L28 34 M34 32 L42 32" stroke="#8040c0" stroke-width="0.9" opacity="0.7" fill="none"/><path d="M24 44 L24 54 M40 42 L42 52" stroke="#2a1450" stroke-width="2"/></svg>',
+  null_warden: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="nwr_ir" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6a4a9a"/><stop offset="0.5" stop-color="#301a54"/><stop offset="1" stop-color="#100628"/></linearGradient><radialGradient id="nwr_c" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#e0b0ff"/><stop offset="1" stop-color="#6028a0" stop-opacity="0"/></radialGradient></defs><ellipse cx="32" cy="59" rx="13" ry="2.8" fill="#000" opacity="0.4"/><path d="M26 44 L24 58 L29 58 L30 44 Z M38 44 L40 58 L35 58 L34 44 Z" fill="url(#nwr_ir)" stroke="#0a0418" stroke-width="0.7"/><path d="M20 26 L44 26 L46 44 Q32 50 18 44 Z" fill="url(#nwr_ir)" stroke="#0a0418" stroke-width="0.9" stroke-linejoin="round"/><path d="M18 27 L8 24 L16 31 Z M46 27 L56 24 L48 31 Z" fill="url(#nwr_ir)" stroke="#0a0418" stroke-width="0.7"/><path d="M25 10 L39 10 L41 24 L23 24 Z" fill="url(#nwr_ir)" stroke="#0a0418" stroke-width="0.8"/><path d="M32 10 L32 4" stroke="#8040c0" stroke-width="2"/><rect x="26" y="15" width="12" height="3" rx="1.5" fill="#c890ff"/><circle cx="32" cy="35" r="5" fill="url(#nwr_c)"/><circle cx="32" cy="35" r="2" fill="#e0b0ff"/></svg>',
+  abyssal_maw: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><radialGradient id="am_g" cx="0.5" cy="0.5" r="0.55"><stop offset="0" stop-color="#1a0a30"/><stop offset="0.7" stop-color="#3a1c60"/><stop offset="1" stop-color="#0e0420"/></radialGradient><radialGradient id="am_gl" cx="0.5" cy="0.5" r="0.6"><stop offset="0" stop-color="#8040c0" stop-opacity="0.7"/><stop offset="1" stop-color="#8040c0" stop-opacity="0"/></radialGradient></defs><circle cx="32" cy="32" r="28" fill="url(#am_gl)"/><circle cx="32" cy="32" r="20" fill="url(#am_g)" stroke="#4a2c70" stroke-width="1.2"/><g fill="#e0d0f8"><path d="M18 24 L22 30 L16 30 Z"/><path d="M26 20 L30 28 L22 28 Z"/><path d="M36 20 L42 28 L34 28 Z"/><path d="M46 24 L48 30 L42 30 Z"/><path d="M18 40 L24 36 L22 42 Z"/><path d="M30 44 L34 36 L38 44 Z"/><path d="M44 40 L46 36 L48 42 Z"/></g><circle cx="32" cy="32" r="6" fill="#000"/><circle cx="32" cy="30" r="1.6" fill="#c890ff"/></svg>',
+  void_herald: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="vhd_robe" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a2c78"/><stop offset="0.5" stop-color="#241044"/><stop offset="1" stop-color="#0e0420"/></linearGradient></defs><ellipse cx="32" cy="58" rx="14" ry="2.6" fill="#000" opacity="0.4"/><path d="M22 26 Q32 16 42 26 L48 56 L16 56 Z" fill="url(#vhd_robe)" stroke="#0a0418" stroke-width="0.9" stroke-linejoin="round"/><path d="M24 26 Q32 12 40 26 Q32 24 24 26 Z" fill="url(#vhd_robe)" stroke="#0a0418" stroke-width="0.9"/><ellipse cx="32" cy="26" rx="5" ry="6" fill="#0a0418"/><circle cx="30" cy="26" r="1.3" fill="#c890ff"/><circle cx="34" cy="26" r="1.3" fill="#c890ff"/><path d="M32 34 L32 54 M26 40 L26 54 M38 40 L38 54" stroke="#160830" stroke-width="0.7" opacity="0.6"/><circle cx="47" cy="30" r="4" fill="none" stroke="#8040c0" stroke-width="1"/><circle cx="47" cy="30" r="1.6" fill="#c890ff"/></svg>',
+  riftbound_colossus: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="rbc_ir" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5a3a8a"/><stop offset="0.5" stop-color="#2a1450"/><stop offset="1" stop-color="#100628"/></linearGradient><radialGradient id="rbc_c" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#e0b0ff"/><stop offset="0.4" stop-color="#8040c0"/><stop offset="1" stop-color="#6028a0" stop-opacity="0"/></radialGradient></defs><ellipse cx="32" cy="59" rx="15" ry="3" fill="#000" opacity="0.4"/><rect x="23" y="45" width="8" height="13" fill="url(#rbc_ir)" stroke="#0a0418" stroke-width="0.8"/><rect x="33" y="45" width="8" height="13" fill="url(#rbc_ir)" stroke="#0a0418" stroke-width="0.8"/><rect x="18" y="22" width="28" height="26" rx="3" fill="url(#rbc_ir)" stroke="#0a0418" stroke-width="0.9"/><rect x="11" y="24" width="8" height="15" rx="2" fill="url(#rbc_ir)" stroke="#0a0418" stroke-width="0.8"/><rect x="45" y="24" width="8" height="15" rx="2" fill="url(#rbc_ir)" stroke="#0a0418" stroke-width="0.8"/><rect x="26" y="12" width="12" height="11" rx="2" fill="url(#rbc_ir)" stroke="#0a0418" stroke-width="0.8"/><rect x="28" y="16" width="8" height="2.6" rx="1" fill="#c890ff"/><ellipse cx="32" cy="35" rx="9" ry="9" fill="url(#rbc_c)"/><circle cx="32" cy="35" r="3.4" fill="#fff" opacity="0.9"/><path d="M20 24 L22 46 M44 24 L42 46" stroke="#8040c0" stroke-width="0.8" opacity="0.5"/></svg>',
+  xorvael: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><radialGradient id="xv_glow" cx="0.5" cy="0.5" r="0.6"><stop offset="0" stop-color="#8040c0" stop-opacity="0.9"/><stop offset="1" stop-color="#6028a0" stop-opacity="0"/></radialGradient><linearGradient id="xv_body" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a2c78"/><stop offset="0.5" stop-color="#22103e"/><stop offset="1" stop-color="#0c0320"/></linearGradient><radialGradient id="xv_eye" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#fff"/><stop offset="0.35" stop-color="#e0b0ff"/><stop offset="1" stop-color="#6028a0"/></radialGradient></defs><circle cx="32" cy="32" r="30" fill="url(#xv_glow)"/><path d="M12 22 L8 6 L18 14 L24 6 L28 14 L32 4 L36 14 L40 6 L46 14 L56 6 L52 22 Z" fill="url(#xv_body)" stroke="#0a0418" stroke-width="0.8" stroke-linejoin="round"/><path d="M16 22 Q32 14 48 22 Q52 40 42 52 Q32 58 22 52 Q12 40 16 22 Z" fill="url(#xv_body)" stroke="#0a0418" stroke-width="1" stroke-linejoin="round"/><ellipse cx="32" cy="34" rx="12" ry="10" fill="#0a0418"/><circle cx="32" cy="34" r="7" fill="url(#xv_eye)"/><path d="M32 27 Q34 34 32 41 Q30 34 32 27 Z" fill="#160830"/><circle cx="32" cy="34" r="2" fill="#160830"/><path d="M14 12 L18 18 M50 12 L46 18 M32 6 L32 12" stroke="#c890ff" stroke-width="0.8" opacity="0.7"/></svg>',
+  voidrend: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="vrd_bl" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8a6ab0"/><stop offset="0.5" stop-color="#3a2458"/><stop offset="1" stop-color="#140828"/></linearGradient><linearGradient id="vrd_h" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6028a0"/><stop offset="1" stop-color="#2a1048"/></linearGradient></defs><ellipse cx="32" cy="59" rx="8" ry="2" fill="#000" opacity="0.4"/><path d="M32 4 L37 12 L36 44 L32 48 L28 44 L27 12 Z" fill="url(#vrd_bl)" stroke="#0a0418" stroke-width="0.8" stroke-linejoin="round"/><path d="M32 8 L32 44" stroke="#c890ff" stroke-width="1.6" opacity="0.9"/><path d="M32 8 L32 44" stroke="#fff" stroke-width="0.5" opacity="0.7"/><path d="M20 46 L44 46 L41 50 L23 50 Z" fill="url(#vrd_h)" stroke="#140828" stroke-width="0.7"/><circle cx="20" cy="46" r="2.2" fill="#c890ff"/><circle cx="44" cy="46" r="2.2" fill="#c890ff"/><rect x="30" y="50" width="4" height="9" rx="1" fill="url(#vrd_h)"/><circle cx="32" cy="60" r="2.4" fill="#8040c0"/></svg>',
+  nullward: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="nwd_f" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a3470"/><stop offset="0.5" stop-color="#251444"/><stop offset="1" stop-color="#100628"/></linearGradient><radialGradient id="nwd_c" cx="0.5" cy="0.42" r="0.5"><stop offset="0" stop-color="#e0b0ff"/><stop offset="0.6" stop-color="#8040c0"/><stop offset="1" stop-color="#2a1048"/></radialGradient></defs><ellipse cx="32" cy="60" rx="9" ry="1.8" fill="#000" opacity="0.35"/><path d="M32 4 L54 12 L52 38 Q50 54 32 62 Q14 54 12 38 L10 12 Z" fill="url(#nwd_f)" stroke="#0a0418" stroke-width="1.4" stroke-linejoin="round"/><path d="M32 9 L49 15 L47 37 Q45 49 32 56 Q19 49 17 37 L15 15 Z" fill="none" stroke="#a880e0" stroke-width="0.7" opacity="0.5"/><circle cx="32" cy="30" r="8" fill="url(#nwd_c)"/><path d="M32 22 Q34 30 32 38 Q30 30 32 22 Z" fill="#160830"/><circle cx="32" cy="30" r="2" fill="#fff" opacity="0.9"/></svg>',
+  voidcleaver: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="vcl_h" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a2458"/><stop offset="1" stop-color="#140828"/></linearGradient><linearGradient id="vcl_hd" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8a6ab0"/><stop offset="0.5" stop-color="#3a2458"/><stop offset="1" stop-color="#140828"/></linearGradient><linearGradient id="vcl_e" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e0b0ff"/><stop offset="1" stop-color="#8040c0"/></linearGradient></defs><ellipse cx="32" cy="60" rx="7" ry="1.8" fill="#000" opacity="0.4"/><rect x="30.5" y="8" width="3" height="52" rx="1.4" fill="url(#vcl_h)" stroke="#0a0418" stroke-width="0.5"/><path d="M31 14 Q14 16 10 30 Q20 30 31 26 Z" fill="url(#vcl_hd)" stroke="#0a0418" stroke-width="0.9" stroke-linejoin="round"/><path d="M31 14 Q14 16 10 30" stroke="url(#vcl_e)" stroke-width="1.6" fill="none"/><path d="M33 14 Q50 16 54 30 Q44 30 33 26 Z" fill="url(#vcl_hd)" stroke="#0a0418" stroke-width="0.9" stroke-linejoin="round"/><path d="M33 14 Q50 16 54 30" stroke="url(#vcl_e)" stroke-width="1.6" fill="none"/><circle cx="32" cy="21" r="3.4" fill="url(#vcl_e)"/><circle cx="32" cy="21" r="1.3" fill="#fff"/><path d="M30.5 8 L32 2 L33.5 8 Z" fill="url(#vcl_e)"/><circle cx="32" cy="59" r="2.4" fill="#3a2458"/></svg>',
+  voidsteel_bar: _barSVG({top:'#a878e0', front:'#5a2c98', edge:'#1a0a34', stamp:'#0c0420', hl:'#e0b0ff', glow:'#8040c0'}),
+  voidweave: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="vwv_g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#a880e0"/><stop offset="0.5" stop-color="#5a2c98"/><stop offset="1" stop-color="#1e0a3c"/></linearGradient></defs><ellipse cx="32" cy="57" rx="13" ry="2.6" fill="#000" opacity="0.35"/><rect x="16" y="20" width="4" height="28" rx="1.5" fill="#1e1030" stroke="#0a0418" stroke-width="0.6"/><rect x="44" y="20" width="4" height="28" rx="1.5" fill="#1e1030" stroke="#0a0418" stroke-width="0.6"/><path d="M20 24 Q32 30 44 24 M20 30 Q32 24 44 30 M20 36 Q32 42 44 36 M20 42 Q32 36 44 42" stroke="url(#vwv_g)" stroke-width="3.2" fill="none"/><path d="M22 27 Q32 32 42 27" stroke="#e0b0ff" stroke-width="0.7" fill="none" opacity="0.7"/><path d="M44 40 Q52 42 50 50" stroke="#8040c0" stroke-width="1.6" fill="none"/></svg>',
+  riftshard: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="rsh_g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e0b0ff"/><stop offset="0.5" stop-color="#8040c0"/><stop offset="1" stop-color="#2a1048"/></linearGradient><radialGradient id="rsh_gl" cx="0.5" cy="0.5" r="0.6"><stop offset="0" stop-color="#8040c0" stop-opacity="0.7"/><stop offset="1" stop-color="#8040c0" stop-opacity="0"/></radialGradient></defs><ellipse cx="32" cy="58" rx="10" ry="2.4" fill="#000" opacity="0.4"/><circle cx="32" cy="30" r="22" fill="url(#rsh_gl)"/><path d="M32 6 L44 26 L36 54 L28 54 L20 26 Z" fill="url(#rsh_g)" stroke="#160830" stroke-width="1" stroke-linejoin="round"/><path d="M32 6 L32 54 M20 26 L44 26" stroke="#160830" stroke-width="0.6" opacity="0.5"/><circle cx="32" cy="24" r="2" fill="#fff" opacity="0.9"/></svg>',
 
   /* ─── HUNTING GROUNDS (1.0.74) — 3 zones + 12 beasts ─── */
   thornwood: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="thw1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8ac24e"/><stop offset="0.5" stop-color="#4a7a26"/><stop offset="1" stop-color="#1e380f"/></linearGradient></defs><ellipse cx="32" cy="58" rx="22" ry="4" fill="#000" opacity="0.3"/><path d="M32 54 L30 30 L34 30 L32 54 Z" fill="#5a3a1c"/><path d="M32 44 Q18 40 12 26 Q26 30 32 40 Q38 30 52 26 Q46 40 32 44 Z" fill="url(#thw1)"/><path d="M32 34 Q22 30 16 18 Q28 22 32 30 Q36 22 48 18 Q42 30 32 34 Z" fill="url(#thw1)"/><path d="M32 24 Q26 18 24 8 Q32 14 32 22 Q32 14 40 8 Q38 18 32 24 Z" fill="url(#thw1)"/><path d="M18 28 L14 24 M46 28 L50 24 M24 20 L20 15 M40 20 L44 15" stroke="#2e4a15" stroke-width="0.9" opacity="0.6"/><circle cx="24" cy="34" r="1.4" fill="#c84040"/><circle cx="42" cy="32" r="1.4" fill="#c84040"/></svg>',
@@ -16701,6 +16727,7 @@ const LEATHER_PAL={
   demon:  {light:'#b04c38',mid:'#6e281e',dark:'#301208',edge:'#180604',hl:'#e28468',stitch:'#d09378',buckle:'#b06a3a'},
   wraith: {light:'#88a096',mid:'#4a5a52',dark:'#22302a',edge:'#101814',hl:'#b0e0d0',stitch:'#bce6d6',buckle:'#8aa89a'},
   ember:  {light:'#e8944a',mid:'#9a4e1e',dark:'#42200e',edge:'#1e0e06',hl:'#ffcf88',stitch:'#ffb060',buckle:'#c86a24'},
+  void:   {light:'#a878d8',mid:'#5a2c98',dark:'#26123e',edge:'#0e0420',hl:'#e0b8ff',stitch:'#c890ff',buckle:'#8040c0'},
 };
 const _LSLOTS=['helm','chest','legs','gloves','boots'];
 const _LSLOT_NOUN={helm:'Cowl',chest:'Jerkin',legs:'Chaps',gloves:'Bracers',boots:'Boots'};
@@ -16711,6 +16738,7 @@ const _LCRAFT=[
   [12500,0.700,1750,'ember_log'],[15500,0.745,2170,'frost_log'],[18500,0.775,2590,'shadow_log'],
   [21500,0.790,3010,'ancient_log'],
   [23000,0.790,3200,'ancient_log'],   // T8 (1.0.83) — Emberhide, raid-crafted
+  [24500,0.790,3400,'ancient_log'],   // T9 (1.0.86) — Voidhide, raid-crafted
 ];
 // secondary perks by band → slot → {crit,dodge,aspd} (decimal fractions).
 // Secondary perks — LOWERED base (1.0.70); class synergy boosts them back for the
@@ -16721,6 +16749,7 @@ const _LPERK={
   hi:    {helm:{dodge:0.01}, chest:{crit:0.02}, legs:{}, gloves:{crit:0.01,aspd:0.01}, boots:{dodge:0.01,aspd:0.01}},
   wraith:{helm:{dodge:0.01}, chest:{crit:0.02}, legs:{}, gloves:{crit:0.02,aspd:0.01}, boots:{dodge:0.02,aspd:0.02}},
   ember: {helm:{dodge:0.01}, chest:{crit:0.02}, legs:{aspd:0.01}, gloves:{crit:0.02,aspd:0.02}, boots:{dodge:0.02,aspd:0.02}},
+  void:  {helm:{dodge:0.02}, chest:{crit:0.03}, legs:{aspd:0.01}, gloves:{crit:0.03,aspd:0.02}, boots:{dodge:0.02,aspd:0.03}},
 };
 // def/atk per piece are [helm,chest,legs,gloves,boots]; ~58% of plate DEF, +ATK.
 // ATK nudged up (1.0.70) — leather leans a touch harder into offense; gloves stay
@@ -16735,6 +16764,7 @@ const LEATHER_TIERS=[
  {key:'demon', set:'Demonhide',  hide:'demonhide',  ctier:7, lv:82, def:[14,32,19,10,12],atk:[4,6,5,12,5],band:'hi'},
  {key:'wraith',set:'Wraithhide', hide:'wraithcloth',ctier:7, lv:75, def:[10,24,14,6,9], atk:[6,8,6,14,6],band:'wraith'},
  {key:'ember', set:'Emberhide',  hide:'emberweave', ctier:8, lv:84, def:[15,34,20,11,13],atk:[7,11,7,18,7],band:'ember'},  // (1.0.83) T8 raid leather from Emberforge
+ {key:'void',  set:'Voidhide',   hide:'voidweave',  ctier:9, lv:90, def:[18,40,24,13,16],atk:[8,13,8,21,8],band:'void'},   // (1.0.86) T9 raid leather from Abyssal Throne
 ];
 LEATHER_TIERS.forEach(function(t,ti){
   const pal=LEATHER_PAL[t.key]||LEATHER_PAL.rough;
@@ -16855,6 +16885,30 @@ LEATHER_TIERS.forEach(function(t,ti){
   });
 })();
 
+/* ════ RAID UNIQUES — The Abyssal Throne (1.0.86) ══════════════════════════════════
+   Two plate + two leather T9 uniques. Abyssal Aegis is the marquee: it carries the
+   `cheatDeath` flag (survive one lethal blow per fight at 15% HP). Bigger ubonus than
+   the T8 raid. Icons: plate/leather generators with void palettes. */
+(function(){
+  const PLATE={light:'#b88ae0', mid:'#6a3ab0', dark:'#2a1450', edge:'#100428', hl:'#e8c8ff', accent:'#8040c0', glow:'#8040c0'};
+  const HIDE ={light:'#a878d8', mid:'#5a2c98', dark:'#26123e', edge:'#0e0420', hl:'#e0b8ff', stitch:'#c890ff', buckle:'#8040c0'};
+  // [id, name, generator, palette, slot, def, atk, sell, ubonus, effectText, cheatDeath]
+  const U=[
+    ['abyssal_aegis',    'Abyssal Aegis',    _chestSVG, PLATE, 'chest',  90, 4, 90000, {lifesteal:0.10,hpBoost:0.10},  '+10% lifesteal, +10% max HP · cheats death once per fight', true],
+    ['voidforged_greaves','Voidforged Greaves',_legsSVG, PLATE, 'legs',   68, 3, 62000, {defBoost:0.08,hpBoost:0.06},   '+8% Defence, +6% max HP', false],
+    ['riftshadow_cowl',  'Riftshadow Cowl',  _lHelmSVG, HIDE,  'helmet', 30,14, 52000, {critChance:0.06,atkBoost:0.05},'+6% crit, +5% Attack', false],
+    ['voidheart_shroud', 'Voidheart Shroud', _lChestSVG,HIDE,  'chest',  44,18, 58000, {lifesteal:0.07,critChance:0.05},'+7% lifesteal, +5% crit', false],
+  ];
+  U.forEach(function(u){
+    const id=u[0];
+    ITEMS[id]={name:u[1], icon:'🔮', sell:u[7], rare:true, cgear:true, ctier:9, cslot:u[4], ubonus:u[8],
+      desc:'A unique relic of The Abyssal Throne — worn power, no set required. <b>'+u[9]+'</b> while equipped.'};
+    if(u[10]) ITEMS[id].cheatDeath=true;
+    COMBAT_GEAR_STATS[id]={atk:u[6], str:0, def:u[5]};
+    ICONS[id]=u[2](u[3]);
+  });
+})();
+
 /* ════ RAID-CRAFTED METAL LINES (1.0.82) ═══════════════════════════════════════════
    Two full craftable gear tiers smithed from raid metals, sitting ALONGSIDE the mined
    ladder and slightly stronger at the same tier (the raid premium):
@@ -16866,6 +16920,7 @@ LEATHER_TIERS.forEach(function(t,ti){
 (function(){
   CR_PAL.gravesteel ={light:'#a8b4ac', mid:'#5a645e', dark:'#28302c', edge:'#0e1512', hl:'#d8e4dc', accent:'#1a201c', glow:'#8ff0d8'};
   CR_PAL.moltensteel={light:'#ffa850', mid:'#c85423', dark:'#5e2410', edge:'#280e04', hl:'#ffd890', accent:'#7a2c0c', glow:'#ff6a1e'};
+  CR_PAL.voidsteel  ={light:'#b88ae0', mid:'#6a3ab0', dark:'#2a1450', edge:'#100428', hl:'#e8c8ff', accent:'#160830', glow:'#8040c0'};
   const P={
     helm:  {cat:'helm',  slot:'helmet', gen:_helmSVG,     bars:1, lvlOff:0, noun:'Helm'},
     chest: {cat:'chest', slot:'chest',  gen:_chestSVG,    bars:3, lvlOff:4, noun:'Chest'},
@@ -16886,6 +16941,9 @@ LEATHER_TIERS.forEach(function(t,ti){
     {key:'moltensteel', name:'Moltensteel', ctier:8, bar:'molten_bar', log:'ancient_log', baseLvl:93, ms:23000, spd:0.790, minMs:3200, sellMul:3.4,
      blurb:'Smithed from moltensteel bars quenched in the Emberforge Deep — the hottest metal a mortal ever worked.',
      stats:{helm:{def:31},chest:{def:66},legs:{def:44},gloves:{atk:9,def:20},boots:{def:26},sword:{atk:40,str:33},shield:{def:55},dagger:{atk:41,str:31},hammer:{atk:38,str:36}}},
+    {key:'voidsteel', name:'Voidsteel', ctier:9, bar:'voidsteel_bar', log:'ancient_log', baseLvl:96, ms:24500, spd:0.790, minMs:3400, sellMul:4.6,
+     blurb:'Null-forged from voidsteel bars drawn out of the Abyssal Throne — metal quenched in the space between worlds.',
+     stats:{helm:{def:38},chest:{def:82},legs:{def:56},gloves:{atk:10,def:24},boots:{def:32},sword:{atk:52,str:44},shield:{def:68},dagger:{atk:53,str:42},hammer:{atk:50,str:47}}},
   ];
   TIERS.forEach(function(T){
     ORDER.forEach(function(pk){
@@ -17083,6 +17141,13 @@ const EMBERFORGE_MAT_POOL=[
   {id:'emberweave',       qty:[2,4]},
   {id:'drakeforged_rune', qty:[1,1]},
 ];
+/* Abyssal Throne (1.0.86) — Voidsteel Bars are the common drop (2× + high qty). */
+const VOID_MAT_POOL=[
+  {id:'voidsteel_bar', qty:[3,6]},
+  {id:'voidsteel_bar', qty:[3,6]},
+  {id:'voidweave',     qty:[2,4]},
+  {id:'riftshard',     qty:[1,1]},
+];
 const RAIDS=[
   {
     id:'sunken_barrow', name:'The Sunken Barrow', icon:'sunken_barrow',
@@ -17160,6 +17225,43 @@ const RAIDS=[
       {id:'emberhide_vest',      chance:0.018},
     ],
     matPool:EMBERFORGE_MAT_POOL,
+  },
+  {
+    id:'abyssal_throne', name:'The Abyssal Throne', icon:'abyssal_throne',
+    accent:'#8040c0', unlockLvl:90,
+    blurb:"Past the Sanctum, reality thins to nothing. On a throne of unmade world sits Xor'Vael, the Void Sovereign — and everything between the door and the dais wants you erased.",
+    // 7 stages · ~19,300 total HP on one bar · the true endgame gauntlet.
+    stages:[
+      {id:'void_wretch',  zone:'abyssal_throne', name:'Void Wretch',   icon:'void_wretch',  lvl:88, hp:1700, atk:470, str:390, def:270, coins:0, xp:5200, swingMs:2200, dmgType:'stab',  weakTo:'slash'},
+      {id:'rift_stalker', zone:'abyssal_throne', name:'Rift Stalker',  icon:'rift_stalker', lvl:89, hp:1850, atk:485, str:405, def:280, coins:0, xp:5500, swingMs:1700, dmgType:'slash', weakTo:'stab'},
+      {id:'null_warden',  zone:'abyssal_throne', name:'Null Warden',   icon:'null_warden',  lvl:92, hp:3400, atk:560, str:470, def:330, coins:0, xp:8600, swingMs:2500, dmgType:'crush', weakTo:'slash', miniBoss:true,
+        raidfx:{name:'Unmaking', desc:'Your form frays at the edges — −25% Defence.', defMult:0.75}},
+      {id:'abyssal_maw',  zone:'abyssal_throne', name:'Abyssal Maw',   icon:'abyssal_maw',  lvl:90, hp:1950, atk:500, str:420, def:290, coins:0, xp:5800, swingMs:2400, dmgType:'crush', weakTo:'slash'},
+      {id:'void_herald',  zone:'abyssal_throne', name:'Void Herald',   icon:'void_herald',  lvl:91, hp:2100, atk:515, str:435, def:300, coins:0, xp:6100, swingMs:2100, dmgType:'stab',  weakTo:'crush'},
+      {id:'riftbound_colossus', zone:'abyssal_throne', name:'Riftbound Colossus', icon:'riftbound_colossus', lvl:92, hp:2400, atk:530, str:455, def:315, coins:0, xp:6600, swingMs:2700, dmgType:'crush', weakTo:'slash'},
+      {id:'xorvael', zone:'abyssal_throne', name:"Xor'Vael, the Void Sovereign", icon:'xorvael', lvl:94, hp:5600, atk:620, str:520, def:360, coins:0, xp:12000, swingMs:2700, dmgType:'slash', weakTo:'stab', boss:true, raidBoss:true,
+        raidfx:{name:'Erasure', desc:'The Sovereign unwrites you — −28% Defence and your strikes drag 20% slower.', defMult:0.72, swingMult:1.20},
+        bossfx:{kind:'voidbomb', everyMs:8500, reqDmg:800, frac:0.32, label:'Void Rupture', desc:'A void mark ruptures every 8.5s — deal 800 damage in the window or take 32% max HP. Keep your damage up.'}},
+    ],
+    ratingTiers:[
+      {key:'S', maxMs:240000,   mult:3.0, gold:14000, mats:10, col:'#ffe27a'},
+      {key:'A', maxMs:320000,   mult:2.2, gold:11000, mats:8,  col:'#a8e0ff'},
+      {key:'B', maxMs:400000,   mult:1.7, gold:8500,  mats:7,  col:'#9be89b'},
+      {key:'C', maxMs:500000,   mult:1.3, gold:6500,  mats:6,  col:'#d8c8a0'},
+      {key:'D', maxMs:Infinity, mult:1.0, gold:4800,  mats:5,  col:'#b0a494'},
+    ],
+    // Weapons rarer than gear; Voidcleaver (2H) super-rare; Abyssal Aegis (cheat-death)
+    // is the rarest armour chase.
+    gearDrops:[
+      {id:'voidrend',          chance:0.010},
+      {id:'nullward',          chance:0.010},
+      {id:'voidcleaver',       chance:0.0020},
+      {id:'abyssal_aegis',     chance:0.012},   // marquee — carries cheat-death
+      {id:'voidforged_greaves',chance:0.018},
+      {id:'riftshadow_cowl',   chance:0.018},
+      {id:'voidheart_shroud',  chance:0.018},
+    ],
+    matPool:VOID_MAT_POOL,
   },
 ];
 const RAID_BY_ID=(function(){ const m={}; for(const r of RAIDS) m[r.id]=r; return m; })();
