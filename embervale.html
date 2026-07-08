@@ -2669,7 +2669,7 @@ header h1 .flame{color:var(--ember)}
   <div class="mm-btns">
     <button class="mm-btn mm-primary" id="mmPlay">▶ Play</button>
   </div>
-  <div class="mm-ver">v1.0.90</div>
+  <div class="mm-ver">v1.0.91</div>
 </div>
 
 <!-- ===== CHARACTER SELECT (added) ===== -->
@@ -3923,6 +3923,42 @@ const JEWELRY_GEM_TIER={
   void_ring:'void', void_amulet:'void', void_jewel:'void',
 };
 
+/* Jewelry type — ring / amulet / pendant (1.0.91). Pendants and amulets share the neck
+   slot but drive DIFFERENT enchant sets: amulet = skilling (ENCHANT_SETS), pendant =
+   combat offence (PENDANT_SETS). */
+function _jwType(id){
+  if(!id) return null;
+  if(id.indexOf('_amulet')>=0||id==='moon_amulet') return 'amulet';
+  if(id.indexOf('_pendant')>=0||id==='void_jewel')  return 'pendant';
+  if(id.indexOf('_ring')>=0||id==='ember_ring')     return 'ring';
+  return null;
+}
+/* Pendant sets — ring + PENDANT of the same gem, both enchanted → OFFENCE (atk / lifesteal
+   / crit). The combat counterpart to the amulet's skilling sets; the neck holds one or the
+   other. Bonuses flow through combatEnchantBonuses (atkBoost/lifesteal/critChance). */
+const PENDANT_SETS={
+  sapphire:  {name:'Sapphire Fang',   slots:['ring_l','amulet'], gemMatch:'sapphire',  bonus:{atkBoost:0.03,lifesteal:0.02},              desc:'Sapphire Ring + Sapphire Pendant both enchanted: +3% Attack, +2% lifesteal'},
+  emerald:   {name:'Emerald Fang',    slots:['ring_l','amulet'], gemMatch:'emerald',   bonus:{atkBoost:0.05,lifesteal:0.03},              desc:'Emerald Ring + Emerald Pendant both enchanted: +5% Attack, +3% lifesteal'},
+  ruby:      {name:'Ruby Fang',       slots:['ring_l','amulet'], gemMatch:'ruby',      bonus:{atkBoost:0.07,lifesteal:0.04,critChance:0.02}, desc:'Ruby Ring + Ruby Pendant both enchanted: +7% Attack, +4% lifesteal, +2% crit'},
+  diamond:   {name:'Diamond Fang',    slots:['ring_l','amulet'], gemMatch:'diamond',   bonus:{atkBoost:0.09,lifesteal:0.05,critChance:0.03}, desc:'Diamond Ring + Diamond Pendant both enchanted: +9% Attack, +5% lifesteal, +3% crit'},
+  amethyst:  {name:"Reaver's Fang",   slots:['ring_l','amulet'], gemMatch:'amethyst',  bonus:{atkBoost:0.11,lifesteal:0.06,critChance:0.04}, desc:'Amethyst Ring + Amethyst Pendant both enchanted: +11% Attack, +6% lifesteal, +4% crit'},
+  dragon:    {name:'Dragon Fang',     slots:['ring_l','amulet'], gemMatch:'dragon',    bonus:{atkBoost:0.14,lifesteal:0.07,critChance:0.05}, desc:'Dragon Ring + Dragon Pendant both enchanted: +14% Attack, +7% lifesteal, +5% crit'},
+  bloodstone:{name:'Bloodfang',       slots:['ring_l','amulet'], gemMatch:'bloodstone',bonus:{atkBoost:0.17,lifesteal:0.09,critChance:0.06}, desc:'Bloodstone Ring + Bloodstone Pendant both enchanted: +17% Attack, +9% lifesteal, +6% crit'},
+  void:      {name:'Void Fang',       slots:['ring_l','amulet'], gemMatch:'void',      bonus:{atkBoost:0.22,lifesteal:0.12,critChance:0.08}, desc:'Void Ring + Void Pendant both enchanted: +22% Attack, +12% lifesteal, +8% crit'},
+};
+/* Is a set active in `loadout`? For the neck (amulet) slot, the equipped item's TYPE must
+   match `neckType` — so amulet sets need an amulet on the neck, pendant sets need a pendant. */
+function _enchantSetActive(setDef, loadout, neckType){
+  return setDef.slots.every(function(slot){
+    var eq=loadout[slot];
+    if(!eq) return false;
+    if(JEWELRY_GEM_TIER[eq]!==setDef.gemMatch) return false;
+    if(!state.enchantments[eq]) return false;
+    if(slot==='amulet' && neckType && _jwType(eq)!==neckType) return false;
+    return true;
+  });
+}
+
 /* Which enchants are valid for each gem tier */
 const ENCHANTS_BY_GEM={
   sapphire:['swift_i','fortune_i','scholar_i','squire_i'],
@@ -3966,15 +4002,10 @@ function enchantBonuses(skill){
     for(var k in ench.bonus){ if(k in SKILL_KEYS) total[k]+=ench.bonus[k]; }
   }
   // Set bonuses — check each set (skilling keys only)
-  for(var setKey in ENCHANT_SETS){
-    var setDef=ENCHANT_SETS[setKey];
-    var allSlotsFilled=setDef.slots.every(function(slot){
-      var equippedId=state.equipped[slot];
-      if(!equippedId) return false;
-      if(JEWELRY_GEM_TIER[equippedId]!==setDef.gemMatch) return false;
-      return !!state.enchantments[equippedId];
-    });
-    if(allSlotsFilled){
+  // (1.0.91) Skilling amulet sets — require an AMULET on the neck (a pendant there drives
+  // the combat PENDANT_SETS instead, which carry no skilling keys).
+  for(var setKey in ENCHANT_SETS){ var setDef=ENCHANT_SETS[setKey];
+    if(_enchantSetActive(setDef, state.equipped, 'amulet')){
       for(var bk in setDef.bonus){ if(bk in SKILL_KEYS) total[bk]+=setDef.bonus[bk]; }
     }
   }
@@ -3993,32 +4024,21 @@ function combatEnchantBonuses(){
     if(!ench||!ench.bonus) continue;
     for(var k in ench.bonus){ if(k in CK) total[k]+=ench.bonus[k]; }
   }
-  for(var setKey in ENCHANT_SETS){
-    var setDef=ENCHANT_SETS[setKey];
-    var active=setDef.slots.every(function(slot){
-      var eq=ce[slot];
-      if(!eq) return false;
-      if(JEWELRY_GEM_TIER[eq]!==setDef.gemMatch) return false;
-      return !!state.enchantments[eq];
-    });
-    if(active){ for(var bk in setDef.bonus){ if(bk in CK) total[bk]+=setDef.bonus[bk]; } }
-  }
+  // (1.0.91) Amulet sets need an AMULET on the neck; pendant sets need a PENDANT. Both
+  // can carry combat keys (amulet sets: only bloodstone; pendant sets: all of them).
+  for(var setKey in ENCHANT_SETS){ var sd=ENCHANT_SETS[setKey];
+    if(_enchantSetActive(sd, ce, 'amulet')){ for(var bk in sd.bonus){ if(bk in CK) total[bk]+=sd.bonus[bk]; } } }
+  for(var pk in PENDANT_SETS){ var pd=PENDANT_SETS[pk];
+    if(_enchantSetActive(pd, ce, 'pendant')){ for(var bk2 in pd.bonus){ if(bk2 in CK) total[bk2]+=pd.bonus[bk2]; } } }
   return total;
 }
 
-/* What set bonuses are currently active */
+/* What set bonuses are currently active (reads the SKILLING loadout for the Enchant UI).
+   Returns both amulet (skilling) and pendant (combat) sets, gated by the neck item type. */
 function activeSetBonuses(){
   var active=[];
-  for(var setKey in ENCHANT_SETS){
-    var setDef=ENCHANT_SETS[setKey];
-    var allSlotsFilled=setDef.slots.every(function(slot){
-      var equippedId=state.equipped[slot];
-      if(!equippedId) return false;
-      if(JEWELRY_GEM_TIER[equippedId]!==setDef.gemMatch) return false;
-      return !!state.enchantments[equippedId];
-    });
-    if(allSlotsFilled) active.push(setDef);
-  }
+  for(var setKey in ENCHANT_SETS){ if(_enchantSetActive(ENCHANT_SETS[setKey], state.equipped, 'amulet')) active.push(ENCHANT_SETS[setKey]); }
+  for(var pk in PENDANT_SETS){ if(_enchantSetActive(PENDANT_SETS[pk], state.equipped, 'pendant')) active.push(PENDANT_SETS[pk]); }
   return active;
 }
 
@@ -9627,11 +9647,12 @@ const ITEM_BODY_SLOTS={
   sapphire_ring:['ring_l','ring_r'], emerald_ring:['ring_l','ring_r'], ruby_ring:['ring_l','ring_r'],
   diamond_ring:['ring_l','ring_r'], dragon_ring:['ring_l','ring_r'], void_ring:['ring_l','ring_r'],
   amethyst_ring:['ring_l','ring_r'], bloodstone_ring:['ring_l','ring_r'],
-  // Pendants → either hand (small ornaments)
-  sapphire_pendant:['ring_l','ring_r'], emerald_pendant:['ring_l','ring_r'],
-  ruby_pendant:['ring_l','ring_r'], diamond_pendant:['ring_l','ring_r'],
-  dragon_pendant:['ring_l','ring_r'], void_jewel:['ring_l','ring_r'],
-  amethyst_pendant:['ring_l','ring_r'], bloodstone_pendant:['ring_l','ring_r'],
+  // Pendants → NECK slot (1.0.91) — share the amulet slot; pick a pendant (combat) OR
+  // an amulet (skilling). Distinct enchant Set roles; see _jwType + PENDANT_SETS.
+  sapphire_pendant:['amulet'], emerald_pendant:['amulet'],
+  ruby_pendant:['amulet'], diamond_pendant:['amulet'],
+  dragon_pendant:['amulet'], void_jewel:['amulet'],
+  amethyst_pendant:['amulet'], bloodstone_pendant:['amulet'],
   // Amulets → neck slot only
   sapphire_amulet:['amulet'], emerald_amulet:['amulet'], ruby_amulet:['amulet'],
   diamond_amulet:['amulet'], dragon_amulet:['amulet'], void_amulet:['amulet'],
@@ -10478,6 +10499,19 @@ function normalizeState(){
   _migIronBoot(state.combatEquipped);
   _migIronBoot(state.skillingEquipped);
   for(var _gpKey in state.gearPresets) _migIronBoot(state.gearPresets[_gpKey]);
+  // (1.0.91) Pendants moved from the hand slots to the NECK. Any pendant equipped in
+  // ring_l/ring_r moves to the amulet(neck) slot if it's free, else it's just unequipped
+  // (the item stays owned in the satchel — jewelry equip doesn't consume it).
+  function _migPendantToNeck(lo){
+    if(!lo||typeof lo!=='object') return;
+    ['ring_l','ring_r'].forEach(function(rs){
+      var id=lo[rs];
+      if(id && typeof _jwType==='function' && _jwType(id)==='pendant'){ delete lo[rs]; if(!lo.amulet) lo.amulet=id; }
+    });
+  }
+  _migPendantToNeck(state.combatEquipped);
+  _migPendantToNeck(state.skillingEquipped);
+  for(var _gpKey2 in state.gearPresets) _migPendantToNeck(state.gearPresets[_gpKey2]);
   if(!state.mastery||typeof state.mastery!=='object'||Array.isArray(state.mastery)) state.mastery={};
   if(!Array.isArray(state.effects)) state.effects=[];
   // Migrate old multi-object stacks: merge same-variant effects into one object with _stacks
@@ -20062,7 +20096,7 @@ function renderEnchanting(){
   // ── One-line intro ──
   const intro=document.createElement('div');
   intro.className='skill-intro';
-  intro.innerHTML='<b>Enchanting</b> — bind one enchant per jewelry piece; the bonus works while it\'s equipped. A matching ring + amulet of the same gem unlocks a <span class="k">Set Bonus</span>.';
+  intro.innerHTML='<b>Enchanting</b> — bind one enchant per jewelry piece; the bonus works while it\'s equipped. Pendants &amp; amulets share the neck slot: a ring + <span class="k">amulet</span> unlocks a skilling <span class="k">Set Bonus</span>, a ring + <span class="k">pendant</span> unlocks a combat one (atk / lifesteal / crit).';
   box.appendChild(intro);
 
   // ── Build list of owned jewelry (in satchel and/or equipped) ──
@@ -20156,7 +20190,7 @@ function renderEnchanting(){
   } else {
     var setHint=document.createElement('div');
     setHint.style.cssText='font-size:11px;color:var(--muted);font-style:italic;line-height:1.5';
-    setHint.textContent='No set bonus active — equip an enchanted ring + amulet of the same gem.';
+    setHint.textContent='No set bonus active — enchant a matching ring + amulet (skilling) or ring + pendant (combat) of the same gem.';
     left.appendChild(setHint);
   }
 
