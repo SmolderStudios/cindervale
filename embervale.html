@@ -1184,8 +1184,11 @@ header h1 .flame{color:var(--ember)}
 .act{position:relative;background:var(--raised);border:1px solid var(--trim-d);border-radius:6px;
   padding:7px 9px 7px 12px;text-align:left;color:var(--text);
   display:flex;flex-direction:row;gap:9px;align-items:flex-start;}
-.act:hover:not(:disabled){border-color:var(--trim)}
-.act:disabled{opacity:.45;cursor:not-allowed}
+.act:hover:not(.dis){border-color:var(--trim)}
+/* (1.0.88) `.dis` class instead of the native `disabled` attr — a disabled <button>
+   swallows pointer events for its whole subtree, which blocked the material-chip
+   tooltips. Class-based lets chips stay hoverable while the card still reads as locked. */
+.act.dis{opacity:.45;cursor:not-allowed}
 .act .act-stripe{position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--trim-d);
   border-radius:6px 0 0 6px;pointer-events:none}
 .act .act-icon{width:40px;height:40px;background:#1a0e08;border:1px solid var(--trim-d);
@@ -1197,8 +1200,28 @@ header h1 .flame{color:var(--ember)}
 .act .act-tier{font-size:10px;color:var(--muted);font-family:'Courier New',monospace;letter-spacing:1px;flex-shrink:0}
 .act .name{font-size:14px;color:var(--trim)}
 .act .meta{font-size:12px;color:var(--muted);font-family:'Courier New',monospace;line-height:1.35}
-.act .needs{font-size:12px;color:var(--muted)}
-.act .needs .miss{color:var(--red)}
+/* Material requirements (1.0.88 QoL redesign) — compact icon chips instead of a
+   wordy "Needs: 3× Copper Ore (3), …" line. Each chip = [icon] have/need, tinted
+   red when short. Name + per-craft cost live in the data-tip tooltip. */
+.act .needs{display:flex;flex-wrap:wrap;gap:4px 5px;align-items:center;font-size:11.5px;
+  font-family:'Courier New',monospace;margin-top:1px}
+.act .needs .mat{position:relative;display:inline-flex;align-items:center;gap:3px;color:var(--text);
+  background:#1a0e08;border:1px solid var(--trim-d);border-radius:3px;padding:1px 5px 1px 4px;line-height:1.5;cursor:help}
+.act .needs .mat svg{width:14px;height:14px;display:block;flex-shrink:0}
+.act .needs .mat b{font-weight:600}
+.act .needs .mat .sl{color:var(--muted)}
+.act .needs .mat.miss{color:#ff9a78;border-color:#7a2f1e;background:#2a0f08}
+.act .needs .mat.miss b{color:#ffb499}
+/* Chip tooltip — name + counts on hover. Sits ABOVE the chip so it isn't clipped by
+   the row below, and works even when the card can't be crafted (see the .dis class:
+   cards use a class, not the native `disabled` attr, so chips still receive hover). */
+.act .needs .mat[data-tip]:hover::after{content:attr(data-tip);position:absolute;left:0;bottom:calc(100% + 6px);
+  background:linear-gradient(180deg,#231711,#13090a);border:1px solid var(--trim);border-radius:5px;
+  padding:6px 9px;font-size:12.5px;color:var(--text);line-height:1.4;white-space:nowrap;pointer-events:none;
+  z-index:500;box-shadow:0 6px 18px rgba(0,0,0,.9),inset 0 1px 0 rgba(199,155,78,.2);
+  font-family:'Crimson Pro',Georgia,'Times New Roman',serif;font-weight:400;letter-spacing:.02em}
+.act .needs .runs{font-size:11px;color:var(--muted);margin-left:auto;white-space:nowrap;letter-spacing:.5px}
+.act .needs .runs.miss{color:var(--red);font-weight:600}
 .act.active{border-color:var(--ember);box-shadow:0 0 14px #e0762f44,inset 0 0 8px #e0762f22;
   animation:pulse 1.8s ease-in-out infinite;}
 @keyframes pulse{0%,100%{box-shadow:0 0 10px #e0762f33,inset 0 0 6px #e0762f1a}
@@ -2618,7 +2641,7 @@ header h1 .flame{color:var(--ember)}
   <div class="mm-btns">
     <button class="mm-btn mm-primary" id="mmPlay">▶ Play</button>
   </div>
-  <div class="mm-ver">v1.0.87</div>
+  <div class="mm-ver">v1.0.88</div>
 </div>
 
 <!-- ===== CHARACTER SELECT (added) ===== -->
@@ -13907,18 +13930,21 @@ function fmtDuration(ms){
 function needsHtml(act,m){
   if(!act.inp) return '';
   const runsLeft=canAfford(act,Infinity,m);
-  const parts=Object.entries(act.inp).map(([id,q])=>{
-    let cost=q; if(id==='coal') cost=Math.max(0,q-m.coalSave);
+  // Compact material chips: [icon] have/need, tinted red when short. The material
+  // name + per-craft cost sit in the tooltip so the row stays tight and scannable.
+  const chips=Object.entries(act.inp).map(([id,q])=>{
+    let need=q; if(id==='coal') need=Math.max(0,q-m.coalSave);
+    if(need<=0) return '';
     const have=state.items[id]||0;
-    const cls=have>=cost?'':`class="miss"`;
-    return `<span ${cls}>${cost}× ${iconHTML(id)} ${ITEMS[id].name} (${have})</span>`;
-  });
-  const runsLabel=runsLeft===0
-    ? `<span class="miss" style="font-weight:bold">⚠ No materials</span>`
-    : runsLeft===Infinity
-    ? ''
-    : `<span style="color:var(--muted)">${runsLeft} run${runsLeft===1?'':'s'} left</span>`;
-  return `<div class="needs">Needs: ${parts.join(', ')}${runsLabel?'  ·  '+runsLabel:''}</div>`;
+    const it=ITEMS[id];
+    const nm=it?it.name:id;
+    return `<span class="mat${have>=need?'':' miss'}" data-tip="${nm} — have ${have}, need ${need} per craft">`
+      +`${iconHTML(id)}<b>${have}</b><span class="sl">/${need}</span></span>`;
+  }).filter(Boolean).join('');
+  const runs=runsLeft===Infinity ? ''
+    : runsLeft<=0 ? `<span class="runs miss">can't craft</span>`
+    : `<span class="runs">${runsLeft>999?'999+':runsLeft} run${runsLeft===1?'':'s'}</span>`;
+  return `<div class="needs">${chips}${runs}</div>`;
 }
 
 /* Tier helpers — used by buildActBtn (1.0.88 iconic-card layout) for the
@@ -13972,8 +13998,13 @@ function buildActBtn(act,reqLvl,lvl,m,bestXph,bestRph){
   });
 
   const btn=document.createElement('button');
-  btn.className='act'+(isActive?' active':'')+(depleted||toolOwned?' depleted':'');
-  btn.disabled=locked||depleted||toolOwned;
+  const nonInteractive=locked||depleted||toolOwned;
+  // Use a `.dis` class instead of the native `disabled` attribute (1.0.88): a disabled
+  // <button> blocks pointer events across its whole subtree, which killed the hover
+  // tooltips on the material chips. Clicks are already gated below (listener only added
+  // when interactive), so nothing becomes clickable that shouldn't be.
+  btn.className='act'+(isActive?' active':'')+(depleted||toolOwned?' depleted':'')+(nonInteractive?' dis':'');
+  if(nonInteractive) btn.setAttribute('aria-disabled','true');
 
   // Tier stripe color (left-edge accent) + small "T{n} · Lv X" tier badge.
   // Alchemy standalone potions (singletons like Vitality, Void, Mastery, etc.)
@@ -13998,7 +14029,9 @@ function buildActBtn(act,reqLvl,lvl,m,bestXph,bestRph){
     const effCoins=Math.round(act.coins*coinMult);
     coinDisplay=`🪙 ${fmtCoins(effCoins)} per lap`;
   }
-  const metaExtra=IS_AGILITY_SKILL[selectedSkill]?coinDisplay:outName;
+  // (1.0.88) Drop the output name from meta for material skills — it's redundant with
+  // the act name + output icon, and the tighter meta reads cleaner. Agility keeps coins.
+  const metaExtra=IS_AGILITY_SKILL[selectedSkill]?coinDisplay:'';
 
   let statsHtml='';
   if(!locked){
@@ -14010,10 +14043,13 @@ function buildActBtn(act,reqLvl,lvl,m,bestXph,bestRph){
     </div>`;
   }
 
+  // Meta line no longer carries the "no materials" warning — the needs row's red
+  // chips + "can't craft" own that now (removes the old double-warning). Fire-out is
+  // kept here because it's a cooking blocker the needs row doesn't cover.
   const metaText = locked?`Unlocks at Lv ${reqLvl}`
                  : toolOwned?`✓ Already owned`
-                 : depleted?(fireOut?`⚠ Fire is out — load logs`:`⚠ No materials to start`)
-                 : `${(ms/1000).toFixed(1)}s · ${act.xp} base XP${metaExtra?' · '+metaExtra:''}`;
+                 : (fireOut&&!isActive)?`⚠ Fire is out — load logs`
+                 : `${(ms/1000).toFixed(1)}s · ${act.xp} XP${metaExtra?' · '+metaExtra:''}`;
 
   let masteryHtml='';
   if(!locked){
