@@ -2676,7 +2676,7 @@ header h1 .flame{color:var(--ember)}
   <div class="mm-btns">
     <button class="mm-btn mm-primary" id="mmPlay">▶ Play</button>
   </div>
-  <div class="mm-ver">v1.0.103</div>
+  <div class="mm-ver">v1.0.104</div>
 </div>
 
 <!-- ===== CHARACTER SELECT (added) ===== -->
@@ -11673,6 +11673,22 @@ function cmastBonuses(){
   }
   return b;
 }
+/* (1.0.104) Conditional damage procs from the Combat Mastery tree — evaluated per hit with
+   the current foe HP-fraction, player HP-fraction and boss flag. Returns a damage multiplier
+   applied to the player's landed blow. Covers Executioner, Giant Slayer, Berserker, Warlord,
+   Savage Edge. (Warmonger's kill-timed stacks + the bespoke bleed/second-wind procs remain
+   deferred.) */
+function cmastDamageMult(mon, foeFrac, youFrac){
+  if(!state||!state.cmast) return 1;
+  const R=id=>state.cmast[id]||0;
+  let m=1;
+  if(R('m_t5_l')>0 && foeFrac<0.25)          m+=0.25;              // Executioner — foe under 25% HP
+  if(R('g_t5_r')>0 && mon && mon.boss)        m+=0.20;              // Giant Slayer — vs bosses
+  if(R('r_t3_r')>0 && youFrac<0.30)           m+=0.15;              // Berserker — you under 30% HP
+  if(R('mr_t4')>0 && youFrac>0.80)            m+=0.08;              // Warlord — you above 80% HP
+  if(R('m_t4_l')>0 && foeFrac>0.80)           m+=0.02*R('m_t4_l');  // Savage Edge — foe above 80% HP (opener)
+  return m;
+}
 function combatBonusesAll(){
   const e=(typeof combatEnchantBonuses==='function')?combatEnchantBonuses():{atkBoost:0,hpBoost:0,defBoost:0,critChance:0,lifesteal:0};
   const s=(typeof combatSocketBonuses==='function')?combatSocketBonuses():{atkBoost:0,hpBoost:0,defBoost:0,critChance:0,lifesteal:0};
@@ -17916,6 +17932,7 @@ function _beginRaidStage(raid, stage, fullHeal){
   combat.monId=mon.id;
   combat.active=true;
   combat.foeHp=mon.hp;
+  combat.foeMaxHp=mon.hp;   // (1.0.104) cmast HP-conditional procs
   combat.foeStatus={};
   combat.foeSwingMs=mon.swingMs||COMBAT_BASE_SWING_MS;
   combat.raidDebuff=mon.raidfx||null;
@@ -20955,6 +20972,7 @@ function engageCombat(){
   const effMon=rareModify(mon,combat.rare);
   combat.active=true;
   combat.foeHp=effMon.hp;
+  combat.foeMaxHp=effMon.hp;   // (1.0.104) for cmast HP-conditional procs (Executioner/Savage Edge)
   combat.youHp=combat.youMaxHp;
   combat.bossfx=null;             // (1.0.85) normal fights carry no active boss mechanic
   combat.cheatDeathReady=true;    // (1.0.85) one cheat-death per fight (if gear worn)
@@ -21106,6 +21124,14 @@ function combatTick(){
       if(cb&&cb.critChance>0&&Math.random()<cb.critChance){
         youDmg*=2;
         didCrit=true;
+      }
+      // ── Combat Mastery conditional damage procs (1.0.104) — Executioner/Giant Slayer/
+      // Berserker/Warlord/Savage Edge. Applied after crit so multipliers compound.
+      if(youDmg>0 && typeof cmastDamageMult==='function'){
+        const _foeFrac=combat.foeMaxHp>0?combat.foeHp/combat.foeMaxHp:1;
+        const _youFrac=combat.youMaxHp>0?combat.youHp/combat.youMaxHp:1;
+        const _dm=cmastDamageMult(mon,_foeFrac,_youFrac);
+        if(_dm!==1) youDmg=Math.max(1,Math.round(youDmg*_dm));
       }
     }
     // ── Cleave (1.0.66) — the Grave Cleaver's Reaping Arc: a landed hit has a
@@ -21286,6 +21312,7 @@ function combatTick(){
       combat.rare=rollRare(baseMon);
       const nextEff=rareModify(baseMon,combat.rare);
       combat.foeHp=nextEff.hp;
+      combat.foeMaxHp=nextEff.hp;   // (1.0.104) cmast HP-conditional procs
       combat.foeStatus={};   // (1.0.60) fresh foe — poison/stun don't carry to the respawn
       if(combat.rare){
         cmbLog(`⚡ A rare ${baseMon.name} materializes from the shadows!`,'rare-spawn');
@@ -21339,6 +21366,8 @@ function combatTick(){
     // ── Combat Mastery damage reduction (1.0.101) — Bulwark's Ironhide/Stonewall/Shield
     // Wall soak a further flat %, applied after shield block. Clamped so it can't zero a hit.
     if(foeDmg>0){ const _cdr=(typeof cmastBonuses==='function')?Math.min(0.60,cmastBonuses().dmgReduce||0):0; if(_cdr>0) foeDmg=Math.max(1,Math.round(foeDmg*(1-_cdr))); }
+    // Berserker downside (1.0.104) — +5% damage taken while below 30% HP (the trade for its +15% dealt).
+    if(foeDmg>0 && state.cmast && state.cmast['r_t3_r']>0 && combat.youMaxHp>0 && (combat.youHp/combat.youMaxHp)<0.30){ foeDmg=Math.round(foeDmg*1.05); }
     combat.youHp=Math.max(0,combat.youHp-foeDmg);
     cmbLog(_dodged?`💨 You dodge the ${mon.name}!`:(foeDmg>0?`${mon.name} hits you for ${foeDmg}.`:`${mon.name} misses.`), foeDmg>0?'hit':(_dodged?'':''));
 
@@ -22095,7 +22124,7 @@ function buildCmastViewHTML(){
         <div class="cmast-tree-h ranged">🛡 BULWARK</div>
         <div class="cmast-tree-h magic">⚑ WARFARE</div>
       </div>
-      <div class="cmast-soon-note">Three mastery disciplines. Always-on node effects (damage, crit, max HP, damage reduction, lifesteal, XP &amp; gold) now apply to combat — a few advanced procs are still being wired. Ranged &amp; Magic trees arrive later; surplus points bank as Mastery Shards.</div>
+      <div class="cmast-soon-note">Three mastery disciplines. Always-on effects (damage, crit, max HP, damage reduction, lifesteal, XP &amp; gold) <b>and</b> conditional procs (Executioner, Giant Slayer, Berserker, Warlord, Savage Edge) now apply to combat. A few bespoke procs (bleed, Second Wind, Cleaving Edge, Last Stand) are still being wired. Ranged &amp; Magic trees arrive later; surplus points bank as Mastery Shards.</div>
       <div class="cmast-detail">
         ${_cmastDetailHTML()}
       </div>
