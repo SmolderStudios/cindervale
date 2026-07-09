@@ -2676,7 +2676,7 @@ header h1 .flame{color:var(--ember)}
   <div class="mm-btns">
     <button class="mm-btn mm-primary" id="mmPlay">▶ Play</button>
   </div>
-  <div class="mm-ver">v1.0.105</div>
+  <div class="mm-ver">v1.0.106</div>
 </div>
 
 <!-- ===== CHARACTER SELECT (added) ===== -->
@@ -14855,14 +14855,16 @@ function renderActivities(){
     const dbl=state.mineDoubleAct;
     const dblPanel=document.createElement('div');
     dblPanel.style.cssText='grid-column:1/-1;margin-top:10px;border:1px solid var(--ember);border-radius:7px;padding:8px 9px;background:#1c0e0566;';
-    let dblInnerHtml=`<div style="font-size:13px;letter-spacing:2px;text-transform:uppercase;color:var(--ember);margin-bottom:6px">⚡ Double Action <span style="color:var(--muted);font-size:12px;letter-spacing:0;text-transform:none">— second ore bar at 50% speed</span></div>`;
+    let dblInnerHtml=`<div style="font-size:13px;letter-spacing:2px;text-transform:uppercase;color:var(--ember);margin-bottom:6px">${iconHTML('ui_bolt')} Double Action <span style="color:var(--muted);font-size:12px;letter-spacing:0;text-transform:none">— second ore bar at 50% speed</span></div>`;
     if(!primaryRunning){
       dblInnerHtml+=`<div style="font-size:13px;color:var(--muted);font-style:italic">Start mining a primary ore above to activate Double Action.</div>`;
     } else {
-      dblInnerHtml+=`<div style="font-size:13px;color:var(--muted);margin-bottom:7px">Select a second ore to mine simultaneously at 50% speed:</div>`;
+      const secActive=dbl&&dbl.actId;   // (1.0.106) when already double-mining, collapse the panel
+      if(!secActive) dblInnerHtml+=`<div style="font-size:13px;color:var(--muted);margin-bottom:7px">Select a second ore to mine simultaneously at 50% speed:</div>`;
       dblInnerHtml+=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:8px;">`;
       for(const act of sk.acts){
         if(act.id===state.action.actId) continue;
+        if(secActive && dbl.actId!==act.id) continue;   // show only the active bar, hide the rest
         const actLvl=act.lvl||1;
         if(lvl<actLvl) continue;
         const isSecActive=dbl&&dbl.actId===act.id;
@@ -14903,14 +14905,16 @@ function renderActivities(){
     const dbl=state.wcDoubleAct;
     const dblPanel=document.createElement('div');
     dblPanel.style.cssText='grid-column:1/-1;margin-top:10px;border:1px solid var(--ember);border-radius:7px;padding:8px 9px;background:#0e1c0866;';
-    let dblInnerHtml=`<div style="font-size:13px;letter-spacing:2px;text-transform:uppercase;color:var(--ember);margin-bottom:6px">⚡ Double Action <span style="color:var(--muted);font-size:12px;letter-spacing:0;text-transform:none">— second woodcutting bar at 50% speed</span></div>`;
+    let dblInnerHtml=`<div style="font-size:13px;letter-spacing:2px;text-transform:uppercase;color:var(--ember);margin-bottom:6px">${iconHTML('ui_bolt')} Double Action <span style="color:var(--muted);font-size:12px;letter-spacing:0;text-transform:none">— second woodcutting bar at 50% speed</span></div>`;
     if(!primaryRunning){
       dblInnerHtml+=`<div style="font-size:13px;color:var(--muted);font-style:italic">Start chopping a primary tree above to activate Double Action.</div>`;
     } else {
-      dblInnerHtml+=`<div style="font-size:13px;color:var(--muted);margin-bottom:7px">Select a second tree to chop simultaneously at 50% speed:</div>`;
+      const secActive=dbl&&dbl.actId;   // (1.0.106) when already double-chopping, collapse the panel
+      if(!secActive) dblInnerHtml+=`<div style="font-size:13px;color:var(--muted);margin-bottom:7px">Select a second tree to chop simultaneously at 50% speed:</div>`;
       dblInnerHtml+=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:8px;">`;
       for(const act of sk.acts){
         if(act.id===state.action.actId) continue;
+        if(secActive && dbl.actId!==act.id) continue;   // show only the active bar, hide the rest
         const actLvl=act.lvl||1;
         if(lvl<actLvl) continue;
         const isSecActive=dbl&&dbl.actId===act.id;
@@ -14950,15 +14954,17 @@ function renderActivities(){
     const primaryRunning=state.action&&state.action.skill==='fishing';
     const dbl=state.fishDoubleAct;
     const dblPanel=document.createElement('div');
-    dblPanel.style.cssText='grid-column:1/-1;margin-top:12px;border:1px solid var(--ember);border-radius:7px;padding:12px;background:#0e1a2266;';
-    let dblInnerHtml=`<div style="font-size:14px;letter-spacing:2px;text-transform:uppercase;color:var(--ember);margin-bottom:8px">⚡ Double Action <span style="color:var(--muted);font-size:13px;letter-spacing:0;text-transform:none">— second fishing bar at 50% speed</span></div>`;
+    dblPanel.style.cssText='grid-column:1/-1;margin-top:10px;border:1px solid var(--ember);border-radius:7px;padding:8px 9px;background:#0e1a2266;';
+    let dblInnerHtml=`<div style="font-size:13px;letter-spacing:2px;text-transform:uppercase;color:var(--ember);margin-bottom:6px">${iconHTML('ui_bolt')} Double Action <span style="color:var(--muted);font-size:12px;letter-spacing:0;text-transform:none">— second fishing bar at 50% speed</span></div>`;
     if(!primaryRunning){
       dblInnerHtml+=`<div style="font-size:14px;color:var(--muted);font-style:italic">Start fishing a primary spot above to activate Double Action.</div>`;
     } else {
-      dblInnerHtml+=`<div style="font-size:14px;color:var(--muted);margin-bottom:8px">Select a second spot to fish simultaneously at 50% speed:</div>`;
+      const secActive=dbl&&dbl.actId;   // (1.0.106) when already double-fishing, collapse the panel
+      if(!secActive) dblInnerHtml+=`<div style="font-size:14px;color:var(--muted);margin-bottom:8px">Select a second spot to fish simultaneously at 50% speed:</div>`;
       dblInnerHtml+=`<div style="display:flex;flex-wrap:wrap;gap:8px;">`;
       for(const act of sk.acts){
         if(act.id===state.action.actId) continue;
+        if(secActive && dbl.actId!==act.id) continue;   // show only the active bar, hide the rest
         const actLvl=act.lvl||1;
         if(lvl<actLvl) continue;
         const isSecActive=dbl&&dbl.actId===act.id;
