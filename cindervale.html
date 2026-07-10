@@ -1834,21 +1834,35 @@ select.dev-input{padding-right:26px}
 .cr-list .cr-copy{-webkit-user-select:text;user-select:text;cursor:var(--cur-text);
   color:#c79b4e;font-size:12.5px;letter-spacing:.4px}
 .cr-list .cr-ver{color:#6e552c}
+/* Bug report dialog (0.9.29) */
+#mmReportModal .mm-card{max-width:480px}
+.rep-ta{width:100%;min-height:104px;resize:vertical;background:#0d0905;color:#ead9b5;
+  border:1px solid #6e552c;border-radius:5px;padding:10px 11px;font-family:'Crimson Pro',serif;
+  font-size:15px;line-height:1.4;margin-bottom:10px}
+.rep-ta:focus{outline:none;border-color:#c79b4e}
+.rep-ctx{background:#1a120b;border:1px solid #3a2c18;border-radius:6px;padding:9px 11px;
+  font-family:'Courier New',monospace;font-size:11px;color:#8a7a60;line-height:1.55;
+  white-space:pre-wrap;word-break:break-word;max-height:120px;overflow-y:auto;margin-bottom:12px}
+.rep-ctx b{color:#a89470;font-weight:normal}
+.rep-note{font-size:11.5px;color:#7a6048;margin:0 0 12px;line-height:1.4}
+.rep-msg{font-size:13px;margin-top:10px;min-height:18px}
+.rep-msg.ok{color:var(--green)}
+.rep-msg.err{color:var(--red)}
 /* align-items:normal + overflow-y:auto + card margin:auto (not align-items:center)
    so that when root zoom makes a card taller than the window, the modal SCROLLS
    instead of clipping the title and the Done button off-screen. align-items:center
    would pin an over-tall card centred, hiding its top with no way to scroll up —
    that stranded users on "a brown screen that just says On" (0.9.25). */
-#mmNameModal,#mmImportModal,#mmExportModal,#mmSettingsModal,#mmCreditsModal,#gameMenuModal{position:fixed;inset:0;z-index:10000;display:flex;align-items:normal;overflow-y:auto;
+#mmNameModal,#mmImportModal,#mmExportModal,#mmSettingsModal,#mmCreditsModal,#gameMenuModal,#mmReportModal{position:fixed;inset:0;z-index:10000;display:flex;align-items:normal;overflow-y:auto;
   justify-content:center;padding:18px;background:#000a;font-family:'Crimson Pro',serif}
-#mmNameModal.mm-hidden,#mmImportModal.mm-hidden,#mmExportModal.mm-hidden,#mmSettingsModal.mm-hidden,#mmCreditsModal.mm-hidden,#gameMenuModal.mm-hidden{display:none}
-#mmNameModal .mm-card,#mmImportModal .mm-card,#mmExportModal .mm-card,#mmSettingsModal .mm-card,#mmCreditsModal .mm-card,#gameMenuModal .mm-card{background:#251a10;border:1px solid #c79b4e;border-radius:8px;
+#mmNameModal.mm-hidden,#mmImportModal.mm-hidden,#mmExportModal.mm-hidden,#mmSettingsModal.mm-hidden,#mmCreditsModal.mm-hidden,#gameMenuModal.mm-hidden,#mmReportModal.mm-hidden{display:none}
+#mmNameModal .mm-card,#mmImportModal .mm-card,#mmExportModal .mm-card,#mmSettingsModal .mm-card,#mmCreditsModal .mm-card,#gameMenuModal .mm-card,#mmReportModal .mm-card{background:#251a10;border:1px solid #c79b4e;border-radius:8px;
   padding:20px;max-width:360px;width:100%;margin:auto;box-shadow:var(--sh-3)}
-#mmNameModal h3,#mmImportModal h3,#mmExportModal h3,#mmSettingsModal h3,#mmCreditsModal h3,#gameMenuModal h3{color:#c79b4e;font-variant:small-caps;letter-spacing:1px;font-size:19px;margin:0 0 6px}
-#mmNameModal p,#mmImportModal p,#mmExportModal p,#mmSettingsModal p,#mmCreditsModal p{color:#a08a64;font-size:14px;margin:0 0 12px}
+#mmNameModal h3,#mmImportModal h3,#mmExportModal h3,#mmSettingsModal h3,#mmCreditsModal h3,#gameMenuModal h3,#mmReportModal h3{color:#c79b4e;font-variant:small-caps;letter-spacing:1px;font-size:19px;margin:0 0 6px}
+#mmNameModal p,#mmImportModal p,#mmExportModal p,#mmSettingsModal p,#mmCreditsModal p,#mmReportModal p{color:#a08a64;font-size:14px;margin:0 0 12px}
 #mmNameModal input{width:100%;background:#0d0905;color:#ead9b5;border:1px solid #6e552c;
   border-radius:4px;padding:9px 11px;font-family:inherit;font-size:16px;margin-bottom:14px}
-#mmNameModal .mm-row,#mmImportModal .mm-row,#mmExportModal .mm-row,#mmSettingsModal .mm-row,#mmCreditsModal .mm-row,#gameMenuModal .mm-row{display:flex;gap:8px;justify-content:flex-end}
+#mmNameModal .mm-row,#mmImportModal .mm-row,#mmExportModal .mm-row,#mmSettingsModal .mm-row,#mmCreditsModal .mm-row,#gameMenuModal .mm-row,#mmReportModal .mm-row{display:flex;gap:8px;justify-content:flex-end}
 .mm-mini{background:#322415;border:1px solid #6e552c;color:#ead9b5;border-radius:4px;
   padding:7px 15px;font-family:inherit;font-size:14px;cursor:var(--cur-pointer)}
 .mm-mini.mm-primary{border-color:#c79b4e;color:#f0c772}
@@ -3100,7 +3114,7 @@ select.dev-input{padding-right:26px}
       <button class="mm-btn" id="mmCredits">Credits</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.28</div>
+  <div class="mm-ver">v0.9.29</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -3168,6 +3182,15 @@ select.dev-input{padding-right:26px}
       </div>
     </div>
 
+    <div class="set-row" id="mmReportRow" hidden>
+      <div class="set-lbl">Report a bug
+        <small>Send a report straight to the dev's Discord</small>
+      </div>
+      <div class="set-ctl">
+        <button class="mm-mini" id="mmSetReport">Report</button>
+      </div>
+    </div>
+
     <div class="mm-row" style="margin-top:16px">
       <button class="mm-mini mm-primary" id="mmSettingsClose">Done</button>
     </div>
@@ -3184,6 +3207,7 @@ select.dev-input{padding-right:26px}
     <div class="gm-rows">
       <button class="gm-row" id="gmSettings">Settings<span>Scale, fullscreen, cursor</span></button>
       <button class="gm-row" id="gmCredits">Credits<span>Who made this</span></button>
+      <button class="gm-row" id="gmReport" hidden>Report a bug<span>Send a report to the dev</span></button>
       <button class="gm-row" id="gmTutorial">Replay the tutorial<span>Run the intro tour again</span></button>
       <button class="gm-row" id="gmExport">Export save<span>Copy a backup code</span></button>
       <button class="gm-row gm-danger" id="gmQuit">Return to title<span>Back to the main menu</span></button>
@@ -3191,6 +3215,22 @@ select.dev-input{padding-right:26px}
     <div class="mm-row" style="margin-top:14px">
       <button class="mm-mini mm-primary" id="gmClose">Close</button>
     </div>
+  </div>
+</div>
+
+<!-- ===== REPORT A BUG ===== -->
+<div id="mmReportModal" class="mm-hidden">
+  <div class="mm-card">
+    <h3>Report a bug</h3>
+    <p>Tell me what went wrong. Sent straight to the dev's Discord.</p>
+    <textarea class="rep-ta" id="mmReportText" maxlength="1400" placeholder="What happened? What were you doing when it broke?"></textarea>
+    <div class="rep-note">Auto-attached so I can reproduce it:</div>
+    <div class="rep-ctx" id="mmReportCtx"></div>
+    <div class="mm-row" style="margin-top:4px">
+      <button class="mm-mini" id="mmReportCancel">Cancel</button>
+      <button class="mm-mini mm-primary" id="mmReportSend">Send report</button>
+    </div>
+    <div class="rep-msg" id="mmReportMsg"></div>
   </div>
 </div>
 
@@ -3669,6 +3709,29 @@ const MM_SLOTS = 3;
 let mmSlot = 0;        // 0 = none chosen yet
 let mmAtMenu = true;   // pause game logic + autosave while on the menu
 let mmStarted = false; // start gameplay loops only once
+
+/* ── Bug reporting (0.9.29) ──────────────────────────────────────────────────
+   Posts to a Discord webhook. This URL ships inside the public client, so treat
+   it as disposable: if it ever gets spammed, delete it in Discord
+   (Channel → Integrations → Webhooks) and paste a fresh one below. One-way —
+   players can only post, never read the channel. Leave BUG_WEBHOOK empty to
+   hide the Report-a-bug buttons entirely. */
+const BUG_WEBHOOK = '';   // <-- paste your Discord webhook URL between the quotes
+const BUG_COOLDOWN_MS = 30000;
+let _bugLastSent = 0;
+const _bugErrors = [];
+function _logBugError(msg){
+  try{
+    _bugErrors.push({t:Date.now(), m:String(msg).slice(0,240)});
+    if(_bugErrors.length>12) _bugErrors.shift();
+  }catch(e){}
+}
+window.addEventListener('error', function(e){
+  _logBugError((e.message||'error')+' @ '+String(e.filename||'').split('/').pop()+':'+(e.lineno||'?'));
+});
+window.addEventListener('unhandledrejection', function(e){
+  _logBugError('promise: '+((e.reason&&e.reason.message)||e.reason||'?'));
+});
 function mmKey(n){ return DEVICE_SAVE_KEY + '_c' + n; }
 
 /* Non-destructive recovery: pull saves from every key scheme this game has
@@ -25164,6 +25227,71 @@ function mmToggleFullscreen(){
 }
 $('mmSettings').addEventListener('click', mmOpenSettings);
 $('mmSettingsClose').addEventListener('click', function(){ $('mmSettingsModal').classList.add('mm-hidden'); });
+
+// ── Bug report dialog (0.9.29) ──────────────────────────────────────────────
+function mmBugContext(){
+  const g=(fn,d)=>{try{const v=fn();return (v===undefined||v===null||v==='')?d:v;}catch(e){return d;}};
+  const ver=g(()=>document.querySelector('.mm-ver').textContent.trim(),'?');
+  const loaded=!mmAtMenu && !!mmSlot;
+  const who=loaded
+    ? g(()=>((state.charName||'—')+' · '+(state.charType||'')+' '+(state.charClass||'')+' · CmbLv '+combatLevel()).replace(/\s+/g,' ').trim(),'(character)')
+    : 'At menu (no character loaded)';
+  const zoneName=()=>g(()=>{const z=ZONES.find(z=>z.id===state.zone);return z?z.name:state.zone;},'—');
+  let where='—';
+  if(loaded){
+    if(g(()=>state.action&&state.action.skill,null)) where='Skilling: '+g(()=>SKILLS[state.action.skill].name,state.action.skill);
+    else if(g(()=>typeof combatMode!=='undefined'&&combatMode,false)) where='Combat: '+zoneName();
+    else where='Idle / '+zoneName();
+  }
+  const plat=(/electron/i.test(navigator.userAgent)?'Electron':'Browser')+' · '+innerWidth+'×'+innerHeight
+    +' · dpr '+(window.devicePixelRatio||1)+' · zoom '+(document.documentElement.style.zoom||'1');
+  const errs=_bugErrors.length?_bugErrors.map(e=>'• '+e.m).join('\n'):'(none)';
+  return {ver,who,where,plat,errs};
+}
+function mmOpenReport(){
+  const c=mmBugContext();
+  $('mmReportCtx').textContent='Version:  '+c.ver+'\nCharacter: '+c.who+'\nLocation:  '+c.where+'\nPlatform:  '+c.plat+'\nRecent errors:\n'+c.errs;
+  $('mmReportText').value='';
+  const msg=$('mmReportMsg'); msg.textContent=''; msg.className='rep-msg';
+  const btn=$('mmReportSend'); btn.disabled=false; btn.textContent='Send report';
+  $('mmReportModal').classList.remove('mm-hidden');
+  setTimeout(function(){ try{$('mmReportText').focus();}catch(e){} },30);
+}
+async function mmSendReport(){
+  const msg=$('mmReportMsg'), btn=$('mmReportSend');
+  const text=$('mmReportText').value.trim();
+  if(!BUG_WEBHOOK){ msg.className='rep-msg err'; msg.textContent='Bug reporting is not set up yet.'; return; }
+  if(text.length<4){ msg.className='rep-msg err'; msg.textContent='Please describe the bug first.'; return; }
+  const wait=BUG_COOLDOWN_MS-(Date.now()-_bugLastSent);
+  if(wait>0){ msg.className='rep-msg err'; msg.textContent='Please wait '+Math.ceil(wait/1000)+'s before sending another.'; return; }
+  btn.disabled=true; btn.textContent='Sending…'; msg.className='rep-msg'; msg.textContent='';
+  const c=mmBugContext();
+  const payload={username:'Cindervale Bug Report',embeds:[{title:'Bug report',description:text.slice(0,1400),color:0xc05149,
+    fields:[
+      {name:'Version',value:c.ver,inline:true},
+      {name:'Character',value:c.who.slice(0,256),inline:true},
+      {name:'Location',value:c.where.slice(0,256),inline:true},
+      {name:'Platform',value:c.plat.slice(0,256),inline:false},
+      {name:'Recent errors',value:('```'+c.errs+'```').slice(0,1024),inline:false}
+    ]}]};
+  try{
+    const res=await fetch(BUG_WEBHOOK,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    if(!(res.ok||res.status===204)) throw new Error('HTTP '+res.status);
+    _bugLastSent=Date.now();
+    msg.className='rep-msg ok'; msg.textContent='Thank you — report sent!';
+    btn.textContent='Sent';
+    setTimeout(function(){ $('mmReportModal').classList.add('mm-hidden'); },1400);
+  }catch(err){
+    msg.className='rep-msg err';
+    msg.textContent='Could not send ('+String(err.message||err).slice(0,50)+'). Please post in Discord instead.';
+    btn.disabled=false; btn.textContent='Try again';
+  }
+}
+if(BUG_WEBHOOK){ ['gmReport','mmReportRow'].forEach(function(id){ var el=$(id); if(el) el.hidden=false; }); }
+$('gmReport').addEventListener('click', function(){ gmClose(); mmOpenReport(); });
+$('mmSetReport').addEventListener('click', function(){ $('mmSettingsModal').classList.add('mm-hidden'); mmOpenReport(); });
+$('mmReportCancel').addEventListener('click', function(){ $('mmReportModal').classList.add('mm-hidden'); });
+$('mmReportSend').addEventListener('click', mmSendReport);
 $('mmScale').addEventListener('input', function(e){
   const pct = parseInt(e.target.value,10) || 100;
   $('mmScaleVal').textContent = pct + '%';
@@ -25201,7 +25329,7 @@ window.addEventListener('keydown', function(e){
 // Scoped to the read-only dialogs — input flows (name/import/export) keep their
 // own explicit buttons. Pairs with the scroll fix: even if a card overflows the
 // window, you can always dismiss it.
-var MM_DISMISSABLE = ['gameMenuModal','mmSettingsModal','mmCreditsModal'];
+var MM_DISMISSABLE = ['gameMenuModal','mmSettingsModal','mmCreditsModal','mmReportModal'];
 window.addEventListener('keydown', function(e){
   if(e.key !== 'Escape') return;
   for(var i=0;i<MM_DISMISSABLE.length;i++){
