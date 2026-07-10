@@ -2735,7 +2735,7 @@ header h1 .flame{color:var(--ember)}
   <div class="mm-btns">
     <button class="mm-btn mm-primary" id="mmPlay">▶ Play</button>
   </div>
-  <div class="mm-ver">v0.9.10</div>
+  <div class="mm-ver">v0.9.11</div>
 </div>
 
 <!-- ===== CHARACTER SELECT (added) ===== -->
@@ -3209,18 +3209,52 @@ function mmRecover(){
 }
 
 /* XP curve: snappy 1-20 (hooked in minutes), clear mid-game 20-60, substantial late 60-99
-   lv1→2: ~50xp | lv5→6: ~450xp | lv10→11: ~1.8k | lv20→21: ~9k | lv30→31: ~23k
+   lv1→2: ~160xp | lv5→6: ~770xp | lv10→11: ~2.0k | lv20→21: ~9k | lv30→31: ~23k
    lv50→51: ~80k | lv70→71: ~200k | lv98→99: ~520k
-   Total to 99 ≈ 16M — quick hook, meaningful grind at high levels, won't hit 99 overnight */
+   Total to 99 ≈ 13.2M — quick hook, meaningful grind at high levels, won't hit 99 overnight
+
+   Early band stretched in 0.9.11. It used to be 28*n^1.85+20, which made lv1→2
+   cost 48xp while a single pine sapling grants 55 — the very first action handed
+   you a level. 60*n^1.5+100 costs 160 (about three actions) and still lands on
+   ~2.0k at n=10, so it meets the mid band where it always did. Levels 11+ are
+   untouched in shape; they simply sit ~1.4k xp higher because the early band
+   below them got bigger. normalizeState migrates old saves so nobody is demoted. */
 function xpToNext(n){
-  // Blend: very fast early (quadratic-ish), scaling exponentially in mid/late
-  if(n<=10)  return Math.floor(28 * Math.pow(n, 1.85) + 20);
+  // Blend: fast early (sub-quadratic), scaling exponentially in mid/late
+  if(n<=10)  return Math.floor(60 * Math.pow(n, 1.5) + 100);
   if(n<=30)  return Math.floor(18 * Math.pow(n, 2.05) + 60);
   return     Math.floor(22 * Math.pow(n, 2.15) + 100);
 }
 const XP_CUM=[0,0];
 for(let l=2;l<=MAX_LEVEL;l++) XP_CUM[l]=XP_CUM[l-1]+xpToNext(l-1);
 function levelFromXp(xp){ let l=1; while(l<MAX_LEVEL&&xp>=XP_CUM[l+1])l++; return l; }
+
+/* The pre-0.9.11 curve, kept ONLY so normalizeState can work out what level a
+   save used to hold. Raising the early band lifts XP_CUM at every level from 11
+   up, so a character parked just under a boundary would silently drop a level —
+   including 99→98, which strips a skill cape. Never delete this. */
+function xpToNextLegacy(n){
+  if(n<=10)  return Math.floor(28 * Math.pow(n, 1.85) + 20);
+  if(n<=30)  return Math.floor(18 * Math.pow(n, 2.05) + 60);
+  return     Math.floor(22 * Math.pow(n, 2.15) + 100);
+}
+const XP_CUM_LEGACY=[0,0];
+for(let l=2;l<=MAX_LEVEL;l++) XP_CUM_LEGACY[l]=XP_CUM_LEGACY[l-1]+xpToNextLegacy(l-1);
+function legacyLevelFromXp(xp){ let l=1; while(l<MAX_LEVEL&&xp>=XP_CUM_LEGACY[l+1])l++; return l; }
+
+/* Post-99 XP ceiling. Purely a personal-milestone chase — nothing gates on it,
+   there is no achievement for it, and levelFromXp still stops at 99. It exists
+   so the XP panel keeps showing progress after max level instead of going blank. */
+const XP_CAP = 200000000;
+/* Single funnel for every XP grant, so the cap can't be bypassed by one stray
+   `state.xp[k] +=` site. Returns the amount actually granted (0 at the cap). */
+function addSkillXp(skill, amt){
+  if(!(amt>0)) return 0;
+  const before=state.xp[skill]||0;
+  const after=Math.min(XP_CAP, before+amt);
+  state.xp[skill]=after;
+  return after-before;
+}
 
 /* ════ [JS-01b] items table ══════════════════════════════════════════════════════ */
 /* ---- items ---- */
@@ -10564,6 +10598,22 @@ function normalizeState(){
   // the one-time tour only fires for brand-new characters (defaultState sets it false).
   if(typeof state.tutorialSeen!=='boolean') state.tutorialSeen=true;
   for(const s in SKILLS) if(typeof state.xp[s]!=='number') state.xp[s]=0;
+  /* XP curve v2 (0.9.11) — the early band was stretched, which lifts XP_CUM at
+     every level from 11 up. Read literally, a save parked just under a boundary
+     would be silently demoted on load — worst case 99→98, which strips a skill
+     cape. So: work out the level the save USED to hold under the old curve, and
+     if the new curve would grade it lower, top the XP up to the floor of that
+     level. This only ever raises XP, never lowers it, and runs exactly once. */
+  if(!state.xpCurveV2){
+    for(const s in SKILLS){
+      const had=legacyLevelFromXp(state.xp[s]);
+      if(levelFromXp(state.xp[s])<had) state.xp[s]=Math.max(state.xp[s], XP_CUM[had]);
+    }
+    state.xpCurveV2=1;
+  }
+  // Post-99 chase ceiling. Clamp here too, so a save edited or migrated from an
+  // uncapped build can never sit above the cap and render a >100% bar.
+  for(const s in SKILLS) if(state.xp[s]>XP_CAP) state.xp[s]=XP_CAP;
   if(!state.items||typeof state.items!=='object'||Array.isArray(state.items)) state.items={};
   if(typeof state.coins!=='number') state.coins=0;
   // Silver migration. Coins are stored in SILVER at 100s = 1g.
@@ -13623,7 +13673,7 @@ function completeAction(act,skillKey,times){
           markDiscovered(logId);
           showItemPop(logId,reborn);
           const rebXp=Math.round(act.xp*reborn*m.xpMult*(1+masteryXpBonus(act.id)));
-          if(rebXp>0){ state.xp[skillKey]+=rebXp; recordXpGain(skillKey,rebXp); showXpPop(skillKey,rebXp); }
+          if(rebXp>0){ const g=addSkillXp(skillKey,rebXp); if(g>0){ recordXpGain(skillKey,g); showXpPop(skillKey,g); } }
         }
       }
     }
@@ -13654,18 +13704,21 @@ function completeAction(act,skillKey,times){
   const before=levelFromXp(state.xp[skillKey]);
   const mastBonus=masteryXpBonus(act.id);
   const xpGained=Math.round(act.xp*times*m.xpMult*(1+mastBonus));
-  state.xp[skillKey]+=xpGained;
-  recordXpGain(skillKey,xpGained);
-  showXpPop(skillKey,xpGained);
+  // Report only what was actually granted, so at the XP cap the rate readout and
+  // the floating pop both go quiet instead of claiming XP that was never banked.
+  const xpBanked=addSkillXp(skillKey,xpGained);
+  if(xpBanked>0){ recordXpGain(skillKey,xpBanked); showXpPop(skillKey,xpBanked); }
   // Runner's High (Lv99): the free bonus laps also grant their full XP.
   if(agBonusLaps>0){
     const lapXp=Math.round(act.xp*agBonusLaps*m.xpMult*(1+mastBonus));
-    if(lapXp>0){ state.xp[skillKey]+=lapXp; recordXpGain(skillKey,lapXp); showXpPop(skillKey,lapXp); }
+    const g=addSkillXp(skillKey,lapXp);
+    if(g>0){ recordXpGain(skillKey,g); showXpPop(skillKey,g); }
   }
   // Verdant Pyre: grant +50% base XP per burned log (separate pop so it's visible)
   if(wcBurned>0){
     const burnXp=Math.round(act.xp*wcBurned*0.5*m.xpMult*(1+mastBonus));
-    if(burnXp>0){ state.xp[skillKey]+=burnXp; recordXpGain(skillKey,burnXp); showXpPop(skillKey,burnXp); }
+    const g=addSkillXp(skillKey,burnXp);
+    if(g>0){ recordXpGain(skillKey,g); showXpPop(skillKey,g); }
   }
   // Mastery
   recordMastery(act.id, times);
@@ -14045,7 +14098,7 @@ function grantOffline(){
     for(const sk in SKILLS){
       if(state.action&&state.action.skill===sk) continue; // already handled above
       const bonus=Math.round(state.xp[sk]*om.allSkillXp*(away/3600000));
-      if(bonus>0){ state.xp[sk]+=bonus; allBonus+=bonus; }
+      if(bonus>0) allBonus+=addSkillXp(sk,bonus);
     }
     if(allBonus>0) summary.push({icon:'✨',label:'All-Skill XP bonus',xp:allBonus});
   }
@@ -20114,24 +20167,15 @@ function renderXpDetail(){
   const lvl=levelFromXp(xp);
   box.className='sk-banner-wrap';
 
-  if(lvl>=MAX_LEVEL){
-    box.innerHTML='<div class="sk-banner">'
-      +'<div class="sk-banner-top">'
-        +'<div class="sk-banner-icon">'+iconHTML(skill)+'</div>'
-        +'<div class="sk-banner-info">'
-          +'<div class="sk-banner-head">'
-            +'<span class="sk-banner-name">'+sk.name+'</span>'
-            +'<span class="sk-banner-lvl" style="color:var(--trim)">MAX LEVEL</span>'
-          +'</div>'
-          +'<div class="sk-banner-bar"><div class="sk-banner-fill" style="width:100%"></div></div>'
-        +'</div>'
-      +'</div>'
-    +'</div>';
-    return;
-  }
-
-  const lo=XP_CUM[lvl], hi=XP_CUM[lvl+1];
-  const pct=Math.round((xp-lo)/(hi-lo)*100);
+  /* At 99 this used to early-return a stripped banner: no XP numbers, no xp/hr,
+     no action bar — everything the player was watching just vanished. Instead the
+     normal banner keeps rendering, with the bar re-based onto the post-99 chase
+     (XP_CUM[99] → XP_CAP). Every element ID survives, so animate() keeps updating
+     live without a special case. */
+  const atMax=lvl>=MAX_LEVEL;
+  const lo=atMax?XP_CUM[MAX_LEVEL]:XP_CUM[lvl];
+  const hi=atMax?XP_CAP:XP_CUM[lvl+1];
+  const pct=Math.max(0,Math.min(100,Math.round((xp-lo)/(hi-lo)*100)));
   const isRunning=state.action&&state.action.skill===skill;
   // Show action bar for ANY running action, even if viewing a different skill's xp bar
   const anyRunning=!!state.action;
@@ -20144,14 +20188,18 @@ function renderXpDetail(){
   const runSkill=state.action?state.action.skill:skill;
   const runXp=state.xp[runSkill];
   const runLvl=levelFromXp(runXp);
-  const runToNext=runLvl<MAX_LEVEL?XP_CUM[runLvl+1]-runXp:0;
+  const runAtMax=runLvl>=MAX_LEVEL;
+  // Past 99 the "to next level" target becomes the 200M chase, so the TTL line
+  // keeps counting something real instead of collapsing to "MAX LEVEL".
+  const runToNext=runAtMax?Math.max(0,XP_CAP-runXp):XP_CUM[runLvl+1]-runXp;
+  const runTarget=runAtMax?'200M':('lv '+(runLvl+1));
   const initXph=smoothXph(runSkill);
   const runPrefix=(runSkill!==skill?(SKILLS[runSkill].icon+' '):'');
-  const initTtl=initXph>0&&runLvl<MAX_LEVEL
-    ? runPrefix+'~'+fmtK(Math.round(initXph))+' xp/hr \u00b7 '+runToNext.toLocaleString()+' to lv '+(runLvl+1)+' \u00b7 ~'+fmtTime((runToNext/initXph)*3600000)
-    : runLvl<MAX_LEVEL
-    ? runPrefix+runToNext.toLocaleString()+' xp to lv '+(runLvl+1)
-    : runPrefix+SKILLS[runSkill].name+' MAX LEVEL';
+  const initTtl=initXph>0&&runToNext>0
+    ? runPrefix+'~'+fmtK(Math.round(initXph))+' xp/hr \u00b7 '+runToNext.toLocaleString()+' to '+runTarget+' \u00b7 ~'+fmtTime((runToNext/initXph)*3600000)
+    : runToNext>0
+    ? runPrefix+runToNext.toLocaleString()+' xp to '+runTarget
+    : runPrefix+SKILLS[runSkill].name+' · 200M XP';
 
   // Stat-row values — Now (live xph for SELECTED skill) / Bonus (speed%) / Tree (points spent / 98)
   const nowXphNum=Math.round(smoothXph(skill));
@@ -20169,7 +20217,8 @@ function renderXpDetail(){
       +'<div class="sk-banner-info">'
         +'<div class="sk-banner-head">'
           +'<span class="sk-banner-name">'+sk.name+'</span>'
-          +'<span class="sk-banner-lvl">Lv '+lvl+' / '+MAX_LEVEL+'</span>'
+          +'<span class="sk-banner-lvl"'+(atMax?' style="color:var(--trim)"':'')+'>'
+            +(atMax?'Lv 99 · MAX':'Lv '+lvl+' / '+MAX_LEVEL)+'</span>'
         +'</div>'
         +'<div class="sk-banner-bar">'
           +'<div class="sk-banner-fill" id="xdFill" style="width:'+pct+'%"></div>'
@@ -23554,9 +23603,13 @@ function animate(){
         var _viewSkill=selectedSkill;
         var _viewXp=state.xp[_viewSkill];
         var _viewLvl=levelFromXp(_viewXp);
-        if(_viewLvl<MAX_LEVEL){
-          var _lo=XP_CUM[_viewLvl], _hi=XP_CUM[_viewLvl+1];
-          var _pctXp=Math.round((_viewXp-_lo)/(_hi-_lo)*100);
+        // Past 99 the bar re-bases onto the 200M chase rather than freezing —
+        // same element IDs, same update path, just a different lo/hi.
+        {
+          var _vMax=_viewLvl>=MAX_LEVEL;
+          var _lo=_vMax?XP_CUM[MAX_LEVEL]:XP_CUM[_viewLvl];
+          var _hi=_vMax?XP_CAP:XP_CUM[_viewLvl+1];
+          var _pctXp=Math.max(0,Math.min(100,Math.round((_viewXp-_lo)/(_hi-_lo)*100)));
           var _xdXp=$('xdXp');
           if(_xdXp) _xdXp.textContent=_viewXp.toLocaleString();
           var _xdFill=$('xdFill');
@@ -23569,8 +23622,10 @@ function animate(){
         var _runSkill=state.action.skill;
         var _runXp=state.xp[_runSkill];
         var _runLvl=levelFromXp(_runXp);
-        var _runHi=_runLvl<MAX_LEVEL?XP_CUM[_runLvl+1]:_runXp;
-        var _runToNext=_runHi-_runXp;
+        var _runAtMax=_runLvl>=MAX_LEVEL;
+        var _runHi=_runAtMax?XP_CAP:XP_CUM[_runLvl+1];
+        var _runToNext=Math.max(0,_runHi-_runXp);
+        var _runTarget=_runAtMax?'200M':('lv '+(_runLvl+1));
 
         // TTL line: recompute every second (not every 4s) so speed potion changes are immediate
         if(!animate._ttlNext||now>animate._ttlNext){
@@ -23595,18 +23650,18 @@ function animate(){
             var _xph=_measuredXph>0?_measuredXph:_theoryXph;
             // Fall back to theory if measured hasn't warmed up
             if(_xph<=0) _xph=_theoryXph;
-            if(_xph>0&&_runLvl<MAX_LEVEL){
+            if(_xph>0&&_runToNext>0){
               var _ttlMs=(_runToNext/_xph)*3600000;
               var _ttlStr=_ttlMs<60000
                 ?(Math.ceil(_ttlMs/1000)+'s')
                 :fmtTime(_ttlMs);
               _xdTtl.textContent=_prefix+'~'+fmtK(Math.round(_xph))+' xp/hr · '
-                +_runToNext.toLocaleString()+' to lv '+(_runLvl+1)
+                +_runToNext.toLocaleString()+' to '+_runTarget
                 +' · ~'+_ttlStr;
-            } else if(_runLvl<MAX_LEVEL){
-              _xdTtl.textContent=_prefix+_runToNext.toLocaleString()+' xp to lv '+(_runLvl+1);
+            } else if(_runToNext>0){
+              _xdTtl.textContent=_prefix+_runToNext.toLocaleString()+' xp to '+_runTarget;
             } else {
-              _xdTtl.textContent=_prefix+SKILLS[_runSkill].name+' MAX LEVEL';
+              _xdTtl.textContent=_prefix+SKILLS[_runSkill].name+' · 200M XP';
             }
           }
         }
