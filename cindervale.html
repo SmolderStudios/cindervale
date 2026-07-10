@@ -2989,7 +2989,7 @@ select.dev-input{padding-right:26px}
       <button class="mm-btn" id="mmCredits">Credits</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.22</div>
+  <div class="mm-ver">v0.9.23</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -11853,8 +11853,8 @@ function offlineMods(){
 /* ════════ [JS-15] PERSISTENCE — localStorage save / load ════════════════════════ */
 /* =================================================================
    PERSISTENCE — localStorage only, keyed per browser device.
-   window.storage (Claude artifact API) is intentionally NOT used
-   for saves so that sharing the HTML file never shares save data.
+   No host-provided storage API is used for saves, so that sharing
+   the HTML file never shares save data.
    ================================================================= */
 function saveGame(){
   if(mmAtMenu || !mmSlot) return;
