@@ -1,6 +1,13 @@
-# Embervale Idle
+# Cindervale Idle
 
 A dark-fantasy idle/incremental RPG. Solo developer (Jordan). Distributed via Electron, Steam port planned, hosted live via GitHub Pages at `https://smolderstudios.github.io/embervale/embervale.html`.
+
+**Renamed from "Embervale Idle" in v0.9.12** — an unrelated idle RPG called Embervale already exists on Steam. The rename is **display-only**. These are identifiers, not branding, and renaming any of them orphans every player's save:
+- `SAVE_KEY = 'embervale_save_v2'` and `DEVICE_KEY = 'embervale_device_id'` (localStorage)
+- `UI_SCALE_KEY = 'embervale_ui_scale'`
+- `app.setName('embervale-idle')` in the wrapper — owns `%APPDATA%/embervale-idle`
+- the repo name / Pages URL — every installed wrapper polls it on launch
+- `appId` in the wrapper's `package.json` — changing it makes NSIS install a *second* app rather than upgrading in place
 
 ## Architecture
 
@@ -15,7 +22,7 @@ A dark-fantasy idle/incremental RPG. Solo developer (Jordan). Distributed via El
 - Edit `embervale.html` in this directory directly.
 - `version.json` mirrors the version string in the HTML banner — keep them in sync.
 - **Pre-release versioning (changed 2026-07):** work stays in **`0.9.x`** (beta). `1.0.0` is reserved for the full release — never ship `1.0.0` or higher until then. Increment the zero-padded patch every release: `0.9.01` → `0.9.02` → … The prior scheme was `1.0.x` (ended at `1.0.106`). The Electron wrapper updates on a plain string-inequality (`remoteVer !== localVer`), so the downgrade to `0.9.01` still triggers auto-update for existing installs.
-- Version lives in two spots inside the HTML: the UI `<div class="mm-ver">` banner and the JS-ICONS comment header. Update both.
+- Version lives in **one** spot inside the HTML: the UI `<div class="mm-ver">` banner. (The JS-ICONS header carries a `v1.0.28` stamp — that is a section-origin marker, not the live version, and has not tracked releases since.)
 
 ## Validation pipeline (MANDATORY before every commit)
 
@@ -41,7 +48,7 @@ Each skill has a **98-point passive tree** — hard invariant, verified on boot.
 
 ## Combat system
 
-9 zones: Rat Warrens → Demon Sanctum. Each zone has standard monsters + a boss. Rare monster spawns (0.4%–2.5% scaling by level) seed the Pets collection (9 zone-specific familiars). Monster Log sub-tab tracks kills/drops.
+12 zones: Rat Warrens → Demon Sanctum, plus Thornwood Thicket, Frostfang Tundra and Ashen Steppe. Each zone has standard monsters + a boss. Rare monster spawns (0.4%–2.5% scaling by level) seed the Pets collection (9 zone-specific familiars). Monster Log sub-tab tracks kills/drops.
 
 **Combat Mastery tree** (`cmast` prefix throughout — do NOT collide with skilling `state.mastery`): 37 nodes across melee/ranged/magic + hybrid bridge columns. Points from level-ups, milestones, first boss/zone clears. Surplus banks as Mastery Shards. **Node effects deferred** — allocations persist but don't yet modify combat formulas (next major TODO).
 
