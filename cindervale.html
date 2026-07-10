@@ -3137,7 +3137,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.34</div>
+  <div class="mm-ver">v0.9.35</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -3910,7 +3910,7 @@ const XP_CAP = 200000000;
 const IS_DEMO = !/electron/i.test(navigator.userAgent);
 const DEMO_LEVEL_CAP = 10;
 const DEMO_ZONES = ['rat_warrens','spider_hollow'];
-const SITE_URL = 'https://cindervaleidle.com';
+const SITE_URL = 'http://cindervaleidle.com';   // http (not https): works now + 301-upgrades to https once the Pages cert issues. Not protocol-relative — the demo runs on https, which would re-break it until the cert lands.
 const STEAM_URL = '';   // set to the Steam store page once it exists
 function demoXpCap(){ return XP_CUM[DEMO_LEVEL_CAP] || Infinity; }
 function demoZoneLocked(id){ return IS_DEMO && DEMO_ZONES.indexOf(id)<0; }
