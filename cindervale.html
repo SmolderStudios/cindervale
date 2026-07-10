@@ -3100,7 +3100,7 @@ select.dev-input{padding-right:26px}
       <button class="mm-btn" id="mmCredits">Credits</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.25</div>
+  <div class="mm-ver">v0.9.26</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -25194,6 +25194,24 @@ window.addEventListener('keydown', function(e){
   if(e.key !== 'F11') return;
   e.preventDefault();
   mmToggleFullscreen();
+});
+
+// Belt-and-suspenders so no dialog can ever trap you (0.9.26): Escape closes the
+// topmost open dialog, and clicking the dark backdrop (outside the card) closes it.
+// Scoped to the read-only dialogs — input flows (name/import/export) keep their
+// own explicit buttons. Pairs with the scroll fix: even if a card overflows the
+// window, you can always dismiss it.
+var MM_DISMISSABLE = ['gameMenuModal','mmSettingsModal','mmCreditsModal'];
+window.addEventListener('keydown', function(e){
+  if(e.key !== 'Escape') return;
+  for(var i=0;i<MM_DISMISSABLE.length;i++){
+    var el = $(MM_DISMISSABLE[i]);
+    if(el && !el.classList.contains('mm-hidden')){ el.classList.add('mm-hidden'); e.preventDefault(); return; }
+  }
+});
+MM_DISMISSABLE.forEach(function(id){
+  var el = $(id); if(!el) return;
+  el.addEventListener('click', function(e){ if(e.target === el) el.classList.add('mm-hidden'); });
 });
 
 $('mmCredits').addEventListener('click', function(){ $('mmCreditsModal').classList.remove('mm-hidden'); });
