@@ -50,6 +50,12 @@
   --bg:#181109;--panel:#251a10;--raised:#32241566;--raised-s:#322415;
   --trim:#c79b4e;--trim-d:#6e552c;--text:#ead9b5;--muted:#a08a64;
   --ember:#e0762f;--green:#7da33f;--red:#c4543a;--blue:#5a8fcb;--shadow:rgba(0,0,0,.45);
+  /* One shadow system (0.9.17). There were 21 distinct black drop shadows across
+     24 declarations — written one at a time, never compared. Three roles is all an
+     interface needs. Coloured inset glows are semantic and untouched. */
+  --sh-1:0 2px 6px rgba(0,0,0,.45);
+  --sh-2:0 6px 16px rgba(0,0,0,.55);
+  --sh-3:0 14px 36px rgba(0,0,0,.7);
 
   /* ── Custom cursors (0.9.16) ──────────────────────────────────────────
      Every `cursor:pointer` in the file was rewritten to var(--cur-pointer),
@@ -58,24 +64,44 @@
      no per-selector overrides, nothing to keep in sync. */
   --cur-default:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M3 2 L3 23 L8.6 17.8 L12.4 26.5 L16.6 24.6 L12.9 16.2 L20.5 15.6 Z' fill='%231a1108' stroke='%23c79b4e' stroke-width='1.6' stroke-linejoin='round'/%3E%3Cpath d='M5 5.5 L5 18.4 L8.9 14.8 Z' fill='%234a3820'/%3E%3C/svg%3E") 2 2, default;
   --cur-pointer:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Ccircle cx='4' cy='3' r='3.6' fill='%23e0762f' opacity='0.35'/%3E%3Cpath d='M3 2 L3 23 L8.6 17.8 L12.4 26.5 L16.6 24.6 L12.9 16.2 L20.5 15.6 Z' fill='%23f0c772' stroke='%232a1408' stroke-width='1.5' stroke-linejoin='round'/%3E%3Cpath d='M5 5.5 L5 18.4 L8.9 14.8 Z' fill='%23fff7e0'/%3E%3Ccircle cx='3.4' cy='2.6' r='1.5' fill='%23ffe9bf'/%3E%3C/svg%3E") 2 2, pointer;
+  /* Blocked / help / text were still falling through to the Windows cursors:
+     the grey stop disc over disabled buttons, the OS I-beam in every search
+     field. Same arrow silhouette, game palette, so they read as one family. */
+  --cur-na:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M3 2 L3 23 L8.6 17.8 L12.4 26.5 L16.6 24.6 L12.9 16.2 L20.5 15.6 Z' fill='%231a1108' stroke='%23c79b4e' stroke-width='1.6' stroke-linejoin='round'/%3E%3Cpath d='M5 5.5 L5 18.4 L8.9 14.8 Z' fill='%234a3820'/%3E%3Ccircle cx='22' cy='22' r='8.4' fill='%232a1008' stroke='%23c4543a' stroke-width='2.2'/%3E%3Cpath d='M16.6 16.6 L27.4 27.4' stroke='%23c4543a' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E") 2 2, not-allowed;
+  --cur-help:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M3 2 L3 23 L8.6 17.8 L12.4 26.5 L16.6 24.6 L12.9 16.2 L20.5 15.6 Z' fill='%231a1108' stroke='%23c79b4e' stroke-width='1.6' stroke-linejoin='round'/%3E%3Cpath d='M5 5.5 L5 18.4 L8.9 14.8 Z' fill='%234a3820'/%3E%3Ccircle cx='22' cy='22' r='8.4' fill='%231a1108' stroke='%23c79b4e' stroke-width='1.8'/%3E%3Cpath d='M19.4 19.2 Q19.4 16.4 22.2 16.4 Q25 16.4 25 18.8 Q25 20.6 22.6 21.4 L22.6 23' stroke='%23f0c772' stroke-width='1.9' fill='none' stroke-linecap='round'/%3E%3Ccircle cx='22.6' cy='26' r='1.3' fill='%23f0c772'/%3E%3C/svg%3E") 2 2, help;
+  --cur-text:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M16 5 L16 27' stroke='%230d0905' stroke-width='5' stroke-linecap='round'/%3E%3Cpath d='M11 5 L21 5 M11 27 L21 27' stroke='%230d0905' stroke-width='5' stroke-linecap='round'/%3E%3Cpath d='M16 6 L16 26' stroke='%23f0c772' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='M12 6 L20 6 M12 26 L20 26' stroke='%23f0c772' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E") 16 16, text;
 }
 
 /* Opting out restores the OS cursors everywhere at once. */
-html.no-custom-cursor{ --cur-default:default; --cur-pointer:pointer; }
+html.no-custom-cursor{
+  --cur-default:default; --cur-pointer:pointer;
+  --cur-na:not-allowed; --cur-help:help; --cur-text:text;
+}
 html{ cursor:var(--cur-default); }
 
 /* The I-beam over ordinary text is not a cursor bug — `cursor:auto` resolves
    to `text` because the text is selectable. Making the chrome unselectable is
    what removes it. Real text inputs opt back in, or you could not type. */
-body{ -webkit-user-select:none; user-select:none; }
+/* body user-select lives in the base body rule above. */
 input,textarea,[contenteditable="true"]{
-  -webkit-user-select:text; user-select:text; cursor:text;
+  -webkit-user-select:text; user-select:text; cursor:var(--cur-text);
 }
 input[type=range],input[type=checkbox],input[type=file],select{ cursor:var(--cur-pointer); }
 *{box-sizing:border-box;margin:0;padding:0}
 html{height:100%;zoom:1.1}
-body{height:100%;background:var(--bg);background-image:radial-gradient(ellipse at 50% -10%,#2c1d0e 0%,var(--bg) 60%);
-  color:var(--text);font-family:'Crimson Pro',Georgia,'Times New Roman',serif;font-size:17px;line-height:1.4;}
+body{height:100%;
+  background-color:var(--bg);
+  background-image:
+    radial-gradient(ellipse 78% 46% at 50% -6%, rgba(224,118,47,.075), transparent 60%),
+    radial-gradient(ellipse at 50% -10%, #2c1d0e 0%, var(--bg) 60%);
+  background-attachment:fixed;
+  background-repeat:no-repeat;
+  color:var(--text);font-family:'Crimson Pro',Georgia,'Times New Roman',serif;font-size:17px;line-height:1.4;
+  /* Idle games are mostly numbers changing. Proportional digits make a ticking
+     xp/hr counter jitter sideways; tabular ones change in place. */
+  font-variant-numeric:tabular-nums lining-nums;
+  font-feature-settings:'tnum' 1,'lnum' 1;
+  -webkit-user-select:none; user-select:none;}
 button{font-family:inherit;cursor:var(--cur-pointer)}
 button:focus-visible{outline:2px solid var(--ember);outline-offset:2px}
 
@@ -155,12 +181,12 @@ header h1 .flame{color:var(--ember)}
 .combat-panel{grid-column:1 / 3;}
 .combat-nav-btn.on{border-color:var(--red);color:#ffb4a0;background:#3a1714;}
 /* Combat is not yet released — the tab is locked and shows a "coming soon" hint. */
-.combat-nav-btn.locked{opacity:.45;cursor:not-allowed;position:relative;}
+.combat-nav-btn.locked{opacity:.45;cursor:var(--cur-na);position:relative;}
 .combat-nav-btn.locked:hover{background:inherit;border-color:var(--trim-d);}
 .combat-nav-btn.locked::after{content:attr(data-tip);position:absolute;left:50%;top:calc(100% + 8px);
   transform:translateX(-50%);white-space:nowrap;background:#1c130a;color:var(--trim);
   border:1px solid var(--trim-d);border-radius:5px;padding:3px 9px;font-size:14px;
-  letter-spacing:.04em;font-variant:small-caps;box-shadow:0 3px 8px var(--shadow);
+  letter-spacing:.04em;font-variant:small-caps;box-shadow:var(--sh-1);
   opacity:0;pointer-events:none;transition:opacity .12s;z-index:50;}
 .combat-nav-btn.locked:hover::after,.combat-nav-btn.locked.show-tip::after{opacity:1;}
 /* Combat tab in the left-panel tab strip (v1.0.65) — red accent when active,
@@ -243,7 +269,7 @@ header h1 .flame{color:var(--ember)}
 .cmb-btn.engage{border-color:var(--red);color:#ffb4a0;background:#3a1714}
 .cmb-btn.engage:hover{background:#4a1d18}
 .cmb-btn.flee:hover{border-color:var(--trim);color:var(--trim)}
-.cmb-btn:disabled{opacity:.45;cursor:not-allowed}
+.cmb-btn:disabled{opacity:.45;cursor:var(--cur-na)}
 .cmb-log{background:var(--raised);border:1px solid var(--trim-d);border-radius:5px;padding:7px 10px;
   height:130px;overflow-y:auto;font-size:12px;font-family:'Courier New',monospace;line-height:1.55;
   box-shadow:inset 0 1px 6px #00000044}
@@ -298,7 +324,7 @@ header h1 .flame{color:var(--ember)}
   color:var(--text);cursor:var(--cur-pointer);font-family:inherit;font-size:12px;
   transition:background 0.12s,border-color 0.12s}
 .cmb-pot-btn:hover:not(.disabled){background:#3a1714;border-color:#d8484e}
-.cmb-pot-btn.disabled,.cmb-pot-btn:disabled{opacity:.4;cursor:not-allowed}
+.cmb-pot-btn.disabled,.cmb-pot-btn:disabled{opacity:.4;cursor:var(--cur-na)}
 .cmb-pot-ic{font-size:20px;line-height:1;display:inline-flex;align-items:center;
   width:22px;height:22px;flex-shrink:0}
 .cmb-pot-meta{display:flex;flex-direction:column;line-height:1.1;align-items:flex-start}
@@ -353,7 +379,7 @@ header h1 .flame{color:var(--ember)}
 .cmb-derived-row{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}
 .cmb-derived-row .cd-stat{display:flex;flex-direction:column;align-items:center;gap:1px;
   background:var(--raised-s);border:1px solid var(--trim-d);border-radius:4px;
-  padding:5px 4px;text-align:center;cursor:help;transition:border-color .12s,background .12s}
+  padding:5px 4px;text-align:center;cursor:var(--cur-help);transition:border-color .12s,background .12s}
 .cmb-derived-row .cd-stat:hover{border-color:var(--trim);background:#231811}
 .cmb-derived-row .cd-stat>span{font-size:11px;color:var(--muted);font-variant:small-caps;
   letter-spacing:1.2px;font-weight:normal}
@@ -382,9 +408,9 @@ header h1 .flame{color:var(--ember)}
   border-radius:3px;padding:3px 8px;font-size:12px;letter-spacing:.4px;cursor:var(--cur-pointer)}
 .cmb-style:hover:not(:disabled){border-color:var(--trim);color:var(--trim)}
 .cmb-style.sel{border-color:var(--ember);color:#ffb4a0;background:#3a1714}
-.cmb-style:disabled{opacity:.5;cursor:not-allowed}
+.cmb-style:disabled{opacity:.5;cursor:var(--cur-na)}
 .cmb-style-row .cs-hint{flex:1;text-align:right;font-size:11px;font-style:italic}
-.cmb-mon.locked{cursor:not-allowed}
+.cmb-mon.locked{cursor:var(--cur-na)}
 .cmb-mon.locked > :not(.cmb-mon-tip){opacity:.35;filter:grayscale(0.8)}
 .cmb-mon.locked:hover{border-color:var(--trim-d)}
 /* Action / swing-timer bar — fills 0→100% between swings. Thin amber for player, red for foe. */
@@ -408,7 +434,7 @@ header h1 .flame{color:var(--ember)}
 .cmb-style-pick .cmb-style:hover:not(:disabled){border-color:var(--trim);background:#231811}
 .cmb-style-pick .cmb-style.sel{border-color:var(--ember);background:#3a1714;
   box-shadow:inset 0 0 6px #e0762f33}
-.cmb-style-pick .cmb-style:disabled{opacity:.5;cursor:not-allowed}
+.cmb-style-pick .cmb-style:disabled{opacity:.5;cursor:var(--cur-na)}
 /* ════ Arena layout rework (v1.0.25) ════════════════════════════════════════
    Fight block = engrid (fighters + basic stats) on the left, a static skill-
    levels card on the right (replaces the old Stats & Training dropdown). Below:
@@ -436,7 +462,7 @@ header h1 .flame{color:var(--ember)}
 .cmb-style-seg .cmb-style .style-ic svg{width:16px;height:16px}
 .cmb-style-seg .cmb-style:hover:not(:disabled){background:#231811;color:var(--trim)}
 .cmb-style-seg .cmb-style.sel{background:#3a1714;color:#ffd0a8;box-shadow:inset 0 0 8px #e0762f33}
-.cmb-style-seg .cmb-style:disabled{opacity:.5;cursor:not-allowed}
+.cmb-style-seg .cmb-style:disabled{opacity:.5;cursor:var(--cur-na)}
 .cmb-style-seg .cstyle-lock{font-size:11px;color:var(--muted);font-style:italic;flex:0 0 auto}
 .cmb-engage-wrap{flex:0 0 auto}
 .cmb-engage-btn{display:inline-flex;align-items:center;gap:8px;padding:11px 24px;font-size:15px;
@@ -445,7 +471,7 @@ header h1 .flame{color:var(--ember)}
 .cmb-engage-btn .ceb-ic{font-size:16px;line-height:1}
 .cmb-engage-btn b{font-weight:bold}
 .cmb-engage-btn.engage{border-color:#c4543a;color:#ffd2c2;
-  background:linear-gradient(180deg,#5e1e16,#3a1410);box-shadow:0 2px 9px #00000055}
+  background:linear-gradient(180deg,#5e1e16,#3a1410);box-shadow:var(--sh-1)}
 .cmb-engage-btn.engage:hover{background:linear-gradient(180deg,#74271c,#4a1813);border-color:#e0762f;
   color:#fff;transform:translateY(-1px)}
 .cmb-engage-btn.flee{border-color:#6e552c;color:#ecdcb6;background:linear-gradient(180deg,#2c1e11,#1d1409)}
@@ -470,7 +496,7 @@ header h1 .flame{color:var(--ember)}
 .cmb-foodmenu .fm-use{flex:none;background:#33240f;border:1px solid #c79b4e;color:#f0c772;
   border-radius:5px;padding:5px 13px;font-family:inherit;font-size:13px;cursor:var(--cur-pointer);transition:background .12s}
 .cmb-foodmenu .fm-use:hover:not(:disabled){background:#42300f}
-.cmb-foodmenu .fm-use:disabled{opacity:.45;cursor:not-allowed}
+.cmb-foodmenu .fm-use:disabled{opacity:.45;cursor:var(--cur-na)}
 .cmb-foodmenu .fm-toggle{display:flex;align-items:center;gap:5px;cursor:var(--cur-pointer);color:var(--trim);
   font-variant:small-caps;letter-spacing:.8px;font-size:12.5px}
 .cmb-foodmenu .fm-toggle input{cursor:var(--cur-pointer);accent-color:#e0762f}
@@ -485,7 +511,7 @@ header h1 .flame{color:var(--ember)}
 .cmb-foodmenu .fm-icon{position:relative;width:34px;height:34px;padding:0;flex:none;display:inline-flex;
   align-items:center;justify-content:center;background:#241410;border:1px solid var(--trim-d);border-radius:5px;cursor:var(--cur-pointer)}
 .cmb-foodmenu .fm-icon:hover:not(:disabled){border-color:#c89b4e;background:#33240f}
-.cmb-foodmenu .fm-icon:disabled{opacity:.42;cursor:not-allowed}
+.cmb-foodmenu .fm-icon:disabled{opacity:.42;cursor:var(--cur-na)}
 .cmb-foodmenu .fm-icon .fm-ic{font-size:18px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;line-height:1}
 .cmb-foodmenu .fm-icon .fm-ic svg{width:20px;height:20px}
 .cmb-foodmenu .fm-icon .ct{position:absolute;bottom:-4px;right:-4px;min-width:14px;height:14px;padding:0 2px;
@@ -509,9 +535,9 @@ header h1 .flame{color:var(--ember)}
 .cmb-base-stat{display:grid;grid-template-columns:auto 1fr auto;grid-template-rows:auto auto;
   grid-template-areas:"ic nm lvl" "bar bar bar";gap:1px 5px;align-items:center;
   background:var(--raised-s);border:1px solid var(--trim-d);border-radius:4px;
-  padding:4px 5px 5px;cursor:help;transition:border-color .12s,background .12s;position:relative}
+  padding:4px 5px 5px;cursor:var(--cur-help);transition:border-color .12s,background .12s;position:relative}
 .cmb-base-stat:hover:not(.locked){border-color:var(--trim);background:#231811}
-.cmb-base-stat.locked{opacity:.5;filter:grayscale(.4);cursor:help}
+.cmb-base-stat.locked{opacity:.5;filter:grayscale(.4);cursor:var(--cur-help)}
 .cmb-base-stat .cbs-ic{grid-area:ic;font-size:14px;line-height:1;display:inline-flex;align-items:center}
 .cmb-base-stat .cbs-nm{grid-area:nm;font-size:11px;color:var(--muted);font-variant:small-caps;
   letter-spacing:.6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -576,15 +602,15 @@ header h1 .flame{color:var(--ember)}
   text-align:left;
 }
 /* Stat rows hint they're hoverable */
-.cmb-stat[data-tip]{cursor:help}
-.cd-stat[data-tip]{cursor:help}
-.cmb-chip[data-tip]{cursor:help}
+.cmb-stat[data-tip]{cursor:var(--cur-help)}
+.cd-stat[data-tip]{cursor:var(--cur-help)}
+.cmb-chip[data-tip]{cursor:var(--cur-help)}
 .cd-stat[data-tip]:hover{background:rgba(199,155,78,.05);border-radius:3px}
 /* Hotbar slot tooltips — tighter min-width so the bubble sits under the slot
    rather than spanning a third of the panel for a 2-word label. */
 .cmb-slot[data-tip]:hover::after{min-width:0;max-width:220px;white-space:nowrap;font-size:13px;padding:5px 9px}
 /* Status chip tooltips — compact, sit right under the small chip (1.0.60) */
-.st-ic[data-tip]{cursor:help}
+.st-ic[data-tip]{cursor:var(--cur-help)}
 .fm-icon[data-tip]:hover::after{min-width:0;max-width:260px;white-space:pre;font-size:13px;padding:5px 9px}
 /* Buff/debuff chip tips open to the RIGHT of the chip so they never run off the
    left screen edge (the combat cards sit near the left margin). (1.0.65) */
@@ -626,10 +652,10 @@ header h1 .flame{color:var(--ember)}
    button) so the absolutely-positioned tooltip stays fully readable on hover.
    Opacity on a parent composites all descendants together — there's no way to
    "un-dim" a tooltip child once the parent has opacity:.45. */
-.cmb-zone-tile.locked{cursor:not-allowed}
+.cmb-zone-tile.locked{cursor:var(--cur-na)}
 .cmb-zone-tile.locked > :not(.cmb-zone-tip){opacity:.45;filter:grayscale(.7)}
 .cmb-zone-tile.locked:hover{border-color:var(--trim-d);background:var(--raised-s);transform:none;z-index:50}
-.cmb-zone-tile:disabled{cursor:not-allowed}
+.cmb-zone-tile:disabled{cursor:var(--cur-na)}
 
 /* Current-zone strip — name + blurb in a single accent-bordered row beneath the grid. */
 .cmb-zone-strip{margin-top:7px;padding:6px 9px 6px 12px;background:#160e07;border-radius:4px;
@@ -672,7 +698,7 @@ header h1 .flame{color:var(--ember)}
    is compact since the derived stats row moved to the side cards in 1.0.83, so
    no scrollbar is needed. The body floats over whatever's below it. */
 .cmb-stats-drawer[open] .cmb-stats-body{position:absolute;top:100%;left:0;right:0;
-  z-index:200;box-shadow:0 12px 28px rgba(0,0,0,.75)}
+  z-index:200;box-shadow:var(--sh-3)}
 
 /* Boss tile — gold trim, BOSS pill in the corner, slight pulse when unlocked */
 .cmb-mon.boss{border-color:#6e552c;background:linear-gradient(180deg,#2a1c0c,#1a1108)}
@@ -698,7 +724,7 @@ header h1 .flame{color:var(--ember)}
   border-radius:5px; padding:0;
   text-align:left;
   pointer-events:none; opacity:0; transition:opacity .12s;
-  z-index:500; box-shadow:0 6px 16px rgba(0,0,0,.9);
+  z-index:500; box-shadow:var(--sh-2);
   font-family:'Crimson Pro',serif;
 }
 .cmb-mon:hover .cmb-mon-tip{opacity:1}
@@ -770,7 +796,7 @@ header h1 .flame{color:var(--ember)}
   border-radius:5px; padding:0;
   text-align:left;
   pointer-events:none; opacity:0; transition:opacity .12s;
-  z-index:500; box-shadow:0 6px 16px rgba(0,0,0,.9);
+  z-index:500; box-shadow:var(--sh-2);
   font-family:'Crimson Pro',serif;
 }
 .cmb-zone-tile:hover .cmb-zone-tip{opacity:1}
@@ -814,7 +840,7 @@ header h1 .flame{color:var(--ember)}
   box-shadow:inset 0 0 6px #e0762f33,0 1px 0 var(--ember)}
 .cgs-tile.empty{opacity:0.55}
 .cgs-tile.empty:hover:not(:disabled){opacity:0.85}
-.cgs-tile:disabled{cursor:not-allowed;opacity:.45}
+.cgs-tile:disabled{cursor:var(--cur-na);opacity:.45}
 .cgs-lbl{font-size:11px;color:var(--muted);letter-spacing:1px;
   font-variant:small-caps;text-transform:uppercase;line-height:1}
 .cgs-tile.sel .cgs-lbl{color:#ffd99a}
@@ -940,7 +966,7 @@ header h1 .flame{color:var(--ember)}
 .cmb-status:empty{display:none}
 .cmb-status .st-ic{width:20px;height:20px;border:1px solid #555;border-radius:5px;
   background:radial-gradient(circle at 50% 35%,#1c1410,#0b0705);display:inline-flex;align-items:center;justify-content:center;
-  cursor:help;box-shadow:inset 0 0 5px rgba(0,0,0,.6),0 1px 2px rgba(0,0,0,.4);animation:st-ic-in .18s ease}
+  cursor:var(--cur-help);box-shadow:inset 0 0 5px rgba(0,0,0,.6),0 1px 2px rgba(0,0,0,.4);animation:st-ic-in .18s ease}
 .cmb-status .st-ic svg{width:15px;height:15px;display:block}
 .cmb-status .st-ic .st-ct{position:absolute;bottom:-5px;right:-5px;min-width:13px;height:13px;padding:0 2px;
   font-size:9px;line-height:12px;text-align:center;background:#120b06;border:1px solid currentColor;
@@ -968,7 +994,7 @@ header h1 .flame{color:var(--ember)}
 /* Stat row hover — shows breakdown info ("Attack lvl 25 + 8 from gear" etc.).
    Anchored to the row's right edge so the popover projects leftward into the
    panel rather than spilling past the right edge. */
-.cmb-srow[data-tip]{position:relative;cursor:help}
+.cmb-srow[data-tip]{position:relative;cursor:var(--cur-help)}
 .cmb-srow[data-tip]:hover::after{
   content:attr(data-tip);
   position:absolute;right:0;top:calc(100% + 4px);
@@ -977,7 +1003,7 @@ header h1 .flame{color:var(--ember)}
   border:1px solid var(--trim);border-radius:4px;
   padding:6px 10px;font-size:13px;color:var(--text);line-height:1.45;
   white-space:normal;pointer-events:none;z-index:500;
-  box-shadow:0 6px 14px rgba(0,0,0,.85);
+  box-shadow:var(--sh-2);
   font-family:'Crimson Pro',Georgia,serif;font-weight:400;text-align:left;
   letter-spacing:.02em}
 /* — Engage / Disengage button — 1.0.87: padding 12→9px, margin-top 9→6px to
@@ -993,7 +1019,7 @@ header h1 .flame{color:var(--ember)}
   box-shadow:0 0 8px rgba(224,118,47,.3)}
 .cmb-btn.flee{background:linear-gradient(180deg,#2a1008,#150404);border-color:#a04030;color:#f5b890}
 .cmb-btn.flee:hover{border-color:#c4543a;background:linear-gradient(180deg,#3a1408,#1a0604)}
-.cmb-btn:disabled{opacity:.45;cursor:not-allowed}
+.cmb-btn:disabled{opacity:.45;cursor:var(--cur-na)}
 /* — Unified hotbar — */
 .cmb-hotbar{display:flex;align-items:center;gap:8px;margin-top:8px;padding:2px 0;flex-wrap:wrap}
 .cmb-hbgrp{display:flex;align-items:center;gap:3px}
@@ -1006,7 +1032,7 @@ header h1 .flame{color:var(--ember)}
 .cmb-slot:hover:not(:disabled){border-color:#5a3818;background:#1d1208}
 .cmb-slot.sel{border-color:var(--ember);background:#231510;color:#fbd24e;
   box-shadow:inset 0 0 4px rgba(224,118,47,.2)}
-.cmb-slot:disabled{opacity:.45;cursor:not-allowed}
+.cmb-slot:disabled{opacity:.45;cursor:var(--cur-na)}
 .cmb-slot.cmb-style{width:34px;padding:0}
 .cmb-slot.cmb-style .style-ic{display:inline-flex;align-items:center;justify-content:center;
   width:18px;height:18px;font-size:18px;line-height:1}
@@ -1123,7 +1149,7 @@ header h1 .flame{color:var(--ember)}
    to all descendants and there's no way to "un-dim" a child after the fact).
    This lets locked zones still surface their full unlock requirements + name
    on hover even though the icon itself reads as muted. */
-.cmb-zicons .cmb-zone-tile.locked{cursor:not-allowed;opacity:1}
+.cmb-zicons .cmb-zone-tile.locked{cursor:var(--cur-na);opacity:1}
 .cmb-zicons .cmb-zone-tile.locked > .ztl-ic{opacity:.4;filter:grayscale(.7)}
 .cmb-zicons .cmb-zone-tile.locked:hover{background:#231811;border-color:var(--trim-d);z-index:600}
 .cmb-zicons .cmb-zone-tile .ztl-ic{font-size:20px;line-height:1;display:block;
@@ -1240,7 +1266,7 @@ header h1 .flame{color:var(--ember)}
 /* (1.0.88) `.dis` class instead of the native `disabled` attr — a disabled <button>
    swallows pointer events for its whole subtree, which blocked the material-chip
    tooltips. Class-based lets chips stay hoverable while the card still reads as locked. */
-.act.dis{opacity:.45;cursor:not-allowed}
+.act.dis{opacity:.45;cursor:var(--cur-na)}
 .act .act-stripe{position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--trim-d);
   border-radius:6px 0 0 6px;pointer-events:none}
 .act .act-icon{width:40px;height:40px;background:#1a0e08;border:1px solid var(--trim-d);
@@ -1258,7 +1284,7 @@ header h1 .flame{color:var(--ember)}
 .act .needs{display:flex;flex-wrap:wrap;gap:4px 5px;align-items:center;font-size:11.5px;
   font-family:'Courier New',monospace;margin-top:1px}
 .act .needs .mat{position:relative;display:inline-flex;align-items:center;gap:3px;color:var(--text);
-  background:#1a0e08;border:1px solid var(--trim-d);border-radius:3px;padding:1px 5px 1px 4px;line-height:1.5;cursor:help}
+  background:#1a0e08;border:1px solid var(--trim-d);border-radius:3px;padding:1px 5px 1px 4px;line-height:1.5;cursor:var(--cur-help)}
 .act .needs .mat svg{width:14px;height:14px;display:block;flex-shrink:0}
 .act .needs .mat b{font-weight:600}
 .act .needs .mat .sl{color:var(--muted)}
@@ -1295,7 +1321,7 @@ header h1 .flame{color:var(--ember)}
 .prog{height:8px;background:#0d0905;border-radius:4px;overflow:hidden;margin-top:2px}
 .prog i{display:block;height:100%;background:linear-gradient(90deg,var(--ember),#f0a050);width:0%;transition:none}
 .act .stopnote{font-size:12px;color:var(--ember)}
-.act.depleted{opacity:0.52;cursor:not-allowed;border-color:#5a2020}
+.act.depleted{opacity:0.52;cursor:var(--cur-na);border-color:#5a2020}
 .act.depleted .name{color:var(--muted)}
 .act-running-info{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-top:2px;gap:3px 8px}
 .runs-left{font-size:12px;color:var(--ember);font-family:'Courier New',monospace;white-space:normal}
@@ -1325,7 +1351,7 @@ header h1 .flame{color:var(--ember)}
   white-space:pre-wrap;
   pointer-events:none;
   z-index:500;
-  box-shadow:0 8px 24px rgba(0,0,0,.85);
+  box-shadow:var(--sh-3);
 }
 .node[data-tip]:hover::before{
   content:'';
@@ -1345,7 +1371,7 @@ header h1 .flame{color:var(--ember)}
 .node .nbuy{background:var(--raised-s);border:1px solid var(--trim-d);color:var(--trim);
   border-radius:4px;width:26px;height:26px;font-size:17px;line-height:1;flex-shrink:0;}
 .node .nbuy:hover:not(:disabled){border-color:var(--trim)}
-.node .nbuy:disabled{opacity:.35;cursor:not-allowed}
+.node .nbuy:disabled{opacity:.35;cursor:var(--cur-na)}
 .respec-btn{margin-top:8px;background:transparent;border:1px solid var(--trim-d);color:var(--muted);
   border-radius:4px;padding:6px 14px;font-size:14px;width:100%;}
 .respec-btn:hover{border-color:var(--red);color:var(--red)}
@@ -1370,7 +1396,7 @@ header h1 .flame{color:var(--ember)}
 .shop-item .si-buy{background:var(--raised-s);border:1px solid var(--trim-d);color:var(--trim);
   border-radius:4px;padding:5px 12px;font-size:14px;white-space:nowrap;}
 .shop-item .si-buy:hover:not(:disabled){border-color:var(--trim)}
-.shop-item .si-buy:disabled{opacity:.35;cursor:not-allowed}
+.shop-item .si-buy:disabled{opacity:.35;cursor:var(--cur-na)}
 .shop-item.owned{border-color:var(--green);opacity:.75}
 .shop-item.equipped-active{border-color:var(--ember);box-shadow:inset 0 0 6px #e0762f22}
 
@@ -1406,7 +1432,7 @@ header h1 .flame{color:var(--ember)}
 .shop-item-c .buy{background:var(--raised-s);border:1px solid var(--trim-d);color:var(--trim);
   border-radius:4px;padding:5px 10px;font-size:14px;white-space:nowrap;flex-shrink:0;font-family:inherit}
 .shop-item-c .buy:hover:not(:disabled){border-color:var(--ember);color:var(--ember)}
-.shop-item-c .buy:disabled{opacity:.35;cursor:not-allowed}
+.shop-item-c .buy:disabled{opacity:.35;cursor:var(--cur-na)}
 .shop-item-c .hint{font-size:12px;color:var(--muted);font-style:italic;flex-shrink:0;white-space:nowrap}
 @keyframes shop-cat-flash{
   0%  {background:#e0762f55;box-shadow:0 0 0 2px var(--ember)}
@@ -1516,7 +1542,7 @@ header h1 .flame{color:var(--ember)}
 /* dev tool panel — modernized: sectioned card w/ live item search */
 .dev-panel{position:fixed;bottom:60px;right:16px;width:300px;max-height:min(78vh,620px);
   display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--ember);
-  border-radius:10px;z-index:90;box-shadow:0 10px 34px #000c;overflow:hidden}
+  border-radius:10px;z-index:90;box-shadow:var(--sh-3);overflow:hidden}
 .dev-head{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;
   background:linear-gradient(180deg,#2a1608,#1a0e05);border-bottom:1px solid var(--trim-d);flex:none}
 .dev-title{color:var(--ember);font-size:13px;letter-spacing:2px;text-transform:uppercase;font-weight:700}
@@ -1553,7 +1579,7 @@ header h1 .flame{color:var(--ember)}
 .dev-res-empty{padding:10px;font-size:12px;color:var(--muted);font-style:italic;text-align:center}
 .dev-toggle{position:fixed;bottom:16px;right:16px;background:var(--panel);border:1px solid var(--ember);
   border-radius:20px;padding:5px 12px;font-size:14px;color:var(--ember);z-index:91;
-  box-shadow:0 4px 12px #000}
+  box-shadow:var(--sh-2)}
 .dev-toggle:hover{background:#e0762f22}
 .hidden{display:none}
 .inv-item .qty{margin-left:auto;font-family:'Courier New',monospace;font-size:13px;color:var(--trim);
@@ -1579,14 +1605,14 @@ header h1 .flame{color:var(--ember)}
   font-family:inherit;font-size:13px;cursor:var(--cur-pointer);transition:background .12s}
 .sat-expand:hover:not(.poor){background:#42300f}
 .sat-expand .se-ic{font-size:15px;line-height:1;font-weight:bold}
-.sat-expand.poor{opacity:.5;cursor:not-allowed;border-color:#6e552c;color:#a08a64}
+.sat-expand.poor{opacity:.5;cursor:var(--cur-na);border-color:#6e552c;color:#a08a64}
 .sat-cap-maxed{text-align:center;font-size:12px;color:#c79b4e;padding:3px}
 
 /* ════════ [CSS-12] TOASTS ═══════════════════════════════════════════════════════ */
 /* toast */
 #toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%) translateY(20px);
   background:#2b1d0f;border:1px solid var(--trim);border-radius:6px;padding:10px 18px;
-  box-shadow:0 6px 16px var(--shadow);opacity:0;transition:opacity .3s,transform .3s;
+  box-shadow:var(--sh-2);opacity:0;transition:opacity .3s,transform .3s;
   pointer-events:none;max-width:90vw;text-align:center;font-size:15px;z-index:50;}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
@@ -1600,7 +1626,7 @@ header h1 .flame{color:var(--ember)}
   align-items:center;justify-content:center;z-index:10050;padding:16px;}
 .modal-back.hidden{display:none}
 .modal{background:var(--panel);border:1px solid var(--trim);border-radius:8px;
-  padding:20px;max-width:480px;width:100%;box-shadow:0 10px 30px #000;}
+  padding:20px;max-width:480px;width:100%;box-shadow:var(--sh-3);}
 .modal h3{color:var(--trim);font-size:18px;margin-bottom:8px;font-variant:small-caps;letter-spacing:1px}
 .modal p{font-size:14px;color:var(--muted);margin-bottom:12px}
 .modal textarea{width:100%;height:96px;background:#0d0905;color:var(--text);
@@ -1649,7 +1675,7 @@ header h1 .flame{color:var(--ember)}
 .mm-btn{font-family:inherit;font-size:21px;font-variant:small-caps;letter-spacing:2px;
   color:#ead9b5;background:linear-gradient(#33240f,#241808);border:2px solid #6e552c;
   border-radius:8px;padding:13px 16px;cursor:var(--cur-pointer);transition:.12s;
-  box-shadow:0 3px 8px rgba(0,0,0,.4);}
+  box-shadow:var(--sh-1);}
 .mm-btn:hover{border-color:#c79b4e;color:#c79b4e;transform:translateY(-1px)}
 .mm-btn.mm-primary{border-color:#c79b4e;color:#f0c772;background:linear-gradient(#3d2a11,#2a1c0a)}
 #charSelect h2{color:#c79b4e;font-variant:small-caps;letter-spacing:2px;font-size:27px;
@@ -1722,6 +1748,19 @@ header h1 .flame{color:var(--ember)}
 .ach-when{font-family:'Courier New',monospace;font-size:10.5px;color:#6e552c;margin-top:3px}
 #emberMenu .mm-ver{position:absolute;bottom:14px;left:18px;color:#6e552c;
   font-family:'Courier New',monospace;font-size:13px;letter-spacing:1px}
+#gameMenuModal p{color:#a08a64;font-size:14px;margin:0 0 12px}
+.gm-rows{display:grid;gap:7px}
+.gm-row{display:flex;flex-direction:column;align-items:flex-start;gap:1px;width:100%;
+  background:linear-gradient(180deg,#20150c,#150e07);border:1px solid #4a3820;border-radius:5px;
+  padding:10px 13px;color:#ead9b5;font-family:inherit;font-size:16px;text-align:left;
+  cursor:var(--cur-pointer);transition:border-color .15s,color .15s,background .15s}
+.gm-row:hover{border-color:#c79b4e;color:#f0c772;background:#241708}
+.gm-row:focus-visible{outline:2px solid #f0c772;outline-offset:2px}
+.gm-row span{font-family:'Courier New',monospace;font-size:10.5px;letter-spacing:.6px;color:#7a6048}
+.gm-row:hover span{color:#a08a64}
+.gm-row.gm-danger{border-color:#5a2a20}
+.gm-row.gm-danger:hover{border-color:#c4543a;color:#e0836a;background:#2a1410}
+.set-row.gm-hide{display:none}
 /* Settings rows + credits list (0.9.12) */
 .set-row{display:flex;justify-content:space-between;align-items:center;gap:16px;
   padding:12px 0;border-bottom:1px solid #33261680}
@@ -1738,16 +1777,16 @@ header h1 .flame{color:var(--ember)}
   text-transform:uppercase;color:#7a6048;white-space:nowrap}
 .cr-list dd{margin:0;color:#ead9b5;font-size:15px}
 .cr-list dd span{display:block;font-family:'Courier New',monospace;font-size:11px;color:#7a6048;margin-top:1px}
-#mmNameModal,#mmImportModal,#mmExportModal,#mmSettingsModal,#mmCreditsModal{position:fixed;inset:0;z-index:10000;display:flex;align-items:center;
+#mmNameModal,#mmImportModal,#mmExportModal,#mmSettingsModal,#mmCreditsModal,#gameMenuModal{position:fixed;inset:0;z-index:10000;display:flex;align-items:center;
   justify-content:center;padding:18px;background:#000a;font-family:'Crimson Pro',serif}
-#mmNameModal.mm-hidden,#mmImportModal.mm-hidden,#mmExportModal.mm-hidden,#mmSettingsModal.mm-hidden,#mmCreditsModal.mm-hidden{display:none}
-#mmNameModal .mm-card,#mmImportModal .mm-card,#mmExportModal .mm-card,#mmSettingsModal .mm-card,#mmCreditsModal .mm-card{background:#251a10;border:1px solid #c79b4e;border-radius:8px;
-  padding:20px;max-width:360px;width:100%;box-shadow:0 10px 30px #000}
-#mmNameModal h3,#mmImportModal h3,#mmExportModal h3,#mmSettingsModal h3,#mmCreditsModal h3{color:#c79b4e;font-variant:small-caps;letter-spacing:1px;font-size:19px;margin:0 0 6px}
+#mmNameModal.mm-hidden,#mmImportModal.mm-hidden,#mmExportModal.mm-hidden,#mmSettingsModal.mm-hidden,#mmCreditsModal.mm-hidden,#gameMenuModal.mm-hidden{display:none}
+#mmNameModal .mm-card,#mmImportModal .mm-card,#mmExportModal .mm-card,#mmSettingsModal .mm-card,#mmCreditsModal .mm-card,#gameMenuModal .mm-card{background:#251a10;border:1px solid #c79b4e;border-radius:8px;
+  padding:20px;max-width:360px;width:100%;box-shadow:var(--sh-3)}
+#mmNameModal h3,#mmImportModal h3,#mmExportModal h3,#mmSettingsModal h3,#mmCreditsModal h3,#gameMenuModal h3{color:#c79b4e;font-variant:small-caps;letter-spacing:1px;font-size:19px;margin:0 0 6px}
 #mmNameModal p,#mmImportModal p,#mmExportModal p,#mmSettingsModal p,#mmCreditsModal p{color:#a08a64;font-size:14px;margin:0 0 12px}
 #mmNameModal input{width:100%;background:#0d0905;color:#ead9b5;border:1px solid #6e552c;
   border-radius:4px;padding:9px 11px;font-family:inherit;font-size:16px;margin-bottom:14px}
-#mmNameModal .mm-row,#mmImportModal .mm-row,#mmExportModal .mm-row,#mmSettingsModal .mm-row,#mmCreditsModal .mm-row{display:flex;gap:8px;justify-content:flex-end}
+#mmNameModal .mm-row,#mmImportModal .mm-row,#mmExportModal .mm-row,#mmSettingsModal .mm-row,#mmCreditsModal .mm-row,#gameMenuModal .mm-row{display:flex;gap:8px;justify-content:flex-end}
 .mm-mini{background:#322415;border:1px solid #6e552c;color:#ead9b5;border-radius:4px;
   padding:7px 15px;font-family:inherit;font-size:14px;cursor:var(--cur-pointer)}
 .mm-mini.mm-primary{border-color:#c79b4e;color:#f0c772}
@@ -1773,7 +1812,7 @@ header h1 .flame{color:var(--ember)}
 @media(max-width:760px){.mmd-types{grid-template-columns:1fr}.mmd-classes{grid-template-columns:repeat(2,1fr)}}
 .mmd-card{position:relative;cursor:var(--cur-pointer);text-align:center;background:linear-gradient(#26190d,#191006);
   border:2px solid #5a4326;border-radius:10px;padding:14px 12px;color:#ead9b5;transition:.14s;
-  box-shadow:0 3px 10px rgba(0,0,0,.45)}
+  box-shadow:var(--sh-1)}
 .mmd-card:hover{border-color:#c79b4e;transform:translateY(-2px)}
 .mmd-card.mmd-on{border-color:#f0c772;box-shadow:0 0 0 1px #f0c772,0 6px 18px rgba(0,0,0,.55);
   background:linear-gradient(#34230f,#241608)}
@@ -1795,7 +1834,7 @@ header h1 .flame{color:var(--ember)}
   background:linear-gradient(180deg,#20150c,#150e07);border:1px solid #4a3820;border-radius:6px;
   padding:16px 15px 15px;color:#ead9b5;font-family:inherit;cursor:var(--cur-pointer);overflow:hidden;
   transition:border-color .15s,transform .15s,box-shadow .15s,background .15s}
-.mmd-card:hover{border-color:#8a6a2e;transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,.5)}
+.mmd-card:hover{border-color:#8a6a2e;transform:translateY(-2px);box-shadow:var(--sh-2)}
 .mmd-card:focus-visible{outline:2px solid #f0c772;outline-offset:2px}
 .mmd-card.mmd-on{border-color:var(--accent,#c79b4e);background:#241708;
   box-shadow:0 8px 22px rgba(0,0,0,.55),inset 0 0 40px rgba(240,199,114,.07)}
@@ -1847,7 +1886,7 @@ header h1 .flame{color:var(--ember)}
 .mmd-sum-sep{color:#4a3820}
 .mmd-actions{display:flex;gap:12px;margin-top:14px;margin-bottom:8px}
 .mmd-actions .mm-btn{font-size:18px;padding:11px 22px}
-.mmd-actions .mm-btn:disabled{opacity:.4;cursor:not-allowed;transform:none;border-color:#5a4326;color:#8a7350}
+.mmd-actions .mm-btn:disabled{opacity:.4;cursor:var(--cur-na);transform:none;border-color:#5a4326;color:#8a7350}
 
 /* ════════ [CSS-15] GEAR PANEL ═══════════════════════════════════════════════════ */
 /* gear panel */
@@ -1872,7 +1911,7 @@ header h1 .flame{color:var(--ember)}
 .offline-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.78);z-index:200;
   overflow-y:auto;padding:20px;display:flex;align-items:flex-start;justify-content:center;}
 .offline-panel{background:var(--panel);border:1px solid var(--trim-d);border-radius:8px;
-  width:100%;max-width:640px;box-shadow:0 16px 48px #000;margin-top:16px;margin-bottom:32px;}
+  width:100%;max-width:640px;box-shadow:var(--sh-3);margin-top:16px;margin-bottom:32px;}
 .offline-panel-hdr{padding:14px 16px;border-bottom:1px solid var(--trim-d);
   display:flex;align-items:center;gap:12px;}
 .offline-section{padding:14px 16px;border-bottom:1px solid var(--trim-d)}
@@ -1964,7 +2003,7 @@ header h1 .flame{color:var(--ember)}
 .mlog-sechdr .mlh-chev{font-size:11px;color:var(--muted);transition:transform .2s}
 .mlog-sechdr.open .mlh-chev{transform:rotate(90deg)}
 .mlog-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(192px,1fr));gap:5px;padding:8px}
-.ma-tile{display:flex;align-items:center;gap:8px;background:var(--raised);border:1px solid var(--trim-d);border-radius:6px;padding:5px 8px;cursor:help}
+.ma-tile{display:flex;align-items:center;gap:8px;background:var(--raised);border:1px solid var(--trim-d);border-radius:6px;padding:5px 8px;cursor:var(--cur-help)}
 .ma-tile.mb-bronze{border-color:#cd7f3255}.ma-tile.mb-silver{border-color:#aab8c255}.ma-tile.mb-gold{border-color:#ffd70066}.ma-tile.mb-plat{border-color:#b0f6;box-shadow:inset 0 0 8px #b0f2}
 .ma-tile .ma-ic{font-size:18px;line-height:1;flex:0 0 20px;display:flex;align-items:center;justify-content:center}
 .ma-tile .ma-ic svg{width:18px;height:18px}
@@ -1999,14 +2038,14 @@ header h1 .flame{color:var(--ember)}
    1.0.92: rows near the bottom of the stats panel flip the tooltip ABOVE
    themselves so it doesn't extend past the panel's max-height and pop
    the scrollbar in (and shift layout) just from a hover. */
-.stat-row[data-tip]{position:relative;cursor:help}
+.stat-row[data-tip]{position:relative;cursor:var(--cur-help)}
 .stat-row[data-tip]:hover{background:#2a181066}
 .stat-row[data-tip]:hover::after{
   content:attr(data-tip);position:absolute;left:6px;right:6px;top:calc(100% + 2px);
   background:#1c130a;color:var(--text);border:1px solid var(--trim);border-radius:5px;
   padding:5px 9px;font-size:12px;line-height:1.45;letter-spacing:0;
   font-family:Georgia,serif;font-weight:normal;text-transform:none;
-  box-shadow:0 3px 10px var(--shadow);z-index:50;white-space:normal;pointer-events:none}
+  box-shadow:var(--sh-1);z-index:50;white-space:normal;pointer-events:none}
 /* Bottom-of-panel rows — tooltip flips upward instead of downward so the
    absolutely-positioned ::after doesn't extend past the scroll container's
    max-height and trigger an unwanted scrollbar mid-hover. */
@@ -2075,7 +2114,7 @@ header h1 .flame{color:var(--ember)}
   white-space:nowrap;
   pointer-events:none;
   z-index:300;
-  box-shadow:0 4px 14px rgba(0,0,0,.7);
+  box-shadow:var(--sh-2);
   letter-spacing:0.3px;
 }
 .inv-cat[data-tooltip]:hover::before{
@@ -2099,7 +2138,7 @@ header h1 .flame{color:var(--ember)}
 .use-btn{background:#3a1714;border:1px solid var(--ember);color:var(--ember);flex:none;
   border-radius:4px;font-size:13px;padding:2px 8px;margin-right:4px;cursor:var(--cur-pointer)}
 .use-btn:hover:not(:disabled){background:#e0762f22}
-.use-btn:disabled{opacity:.35;cursor:not-allowed}
+.use-btn:disabled{opacity:.35;cursor:var(--cur-na)}
 
 /* active effects banner */
 .effects-bar{background:#0d0905;border:1px solid var(--ember);border-radius:5px;
@@ -2177,13 +2216,13 @@ header h1 .flame{color:var(--ember)}
 .comp-card.comp-tile[data-tip]:hover::after{content:attr(data-tip);position:absolute;left:50%;bottom:calc(100% + 7px);
   transform:translateX(-50%);background:#1a1108;border:1px solid var(--trim);border-radius:6px;padding:6px 9px;
   width:158px;text-align:center;font-size:11px;line-height:1.45;color:var(--text);white-space:normal;
-  z-index:40;box-shadow:0 5px 14px rgba(0,0,0,.85);pointer-events:none}
+  z-index:40;box-shadow:var(--sh-2);pointer-events:none}
 /* Pagination row for compendium */
 .comp-pagi{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:10px}
 .comp-pagi button{background:var(--raised);border:1px solid var(--trim-d);color:var(--text);
   border-radius:4px;padding:4px 10px;font-size:13px;cursor:var(--cur-pointer);font-family:'Courier New',monospace}
 .comp-pagi button:hover:not(:disabled){border-color:var(--trim);color:var(--trim)}
-.comp-pagi button:disabled{opacity:0.4;cursor:not-allowed}
+.comp-pagi button:disabled{opacity:0.4;cursor:var(--cur-na)}
 .comp-pagi .pg-info{font-size:13px;color:var(--muted);font-family:'Courier New',monospace;min-width:60px;text-align:center}
 
 /* ════════ [CSS-23] FARMING HIGHLIGHTS ═══════════════════════════════════════════ */
@@ -2434,7 +2473,7 @@ header h1 .flame{color:var(--ember)}
   position:fixed;z-index:400;pointer-events:none;display:none;
   background:#1c110a;border:1px solid var(--trim);border-radius:6px;
   padding:9px 12px;font-size:13px;color:var(--text);line-height:1.65;
-  min-width:200px;max-width:270px;box-shadow:0 8px 24px rgba(0,0,0,.85);
+  min-width:200px;max-width:270px;box-shadow:var(--sh-3);
 }
 
 /* Inline SVG icons — registered in the ICONS map and rendered via iconHTML(id).
@@ -2487,7 +2526,7 @@ header h1 .flame{color:var(--ember)}
 .cmast-canvas svg{width:100%;height:auto;display:block}
 .cmast-canvas svg .node{cursor:var(--cur-pointer);transition:opacity 0.15s}
 .cmast-canvas svg .node:hover{opacity:0.85}
-.cmast-canvas svg .node.locked{cursor:not-allowed}
+.cmast-canvas svg .node.locked{cursor:var(--cur-na)}
 
 /* Hover tooltip — appears beside the cursor when hovering any tree node.
    Position:fixed + viewport coords so it follows the mouse regardless of
@@ -2502,7 +2541,7 @@ header h1 .flame{color:var(--ember)}
   max-width:260px;min-width:160px;
   z-index:9999;
   opacity:0;transition:opacity 0.1s;
-  box-shadow:0 4px 14px rgba(0,0,0,0.6);
+  box-shadow:var(--sh-2);
 }
 .cmast-tip.on{opacity:1}
 .cmast-tip .tt-name{color:var(--ember);font-weight:bold;font-size:13px;margin-bottom:3px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
@@ -2547,7 +2586,7 @@ header h1 .flame{color:var(--ember)}
 .cmast-d-btn:hover{background:#2a1a10}
 .cmast-d-btn.refund{color:var(--muted);border-color:var(--trim-d)}
 .cmast-d-btn.refund:hover{background:var(--raised-s);color:var(--text)}
-.cmast-d-btn.disabled,.cmast-d-btn:disabled{color:var(--muted);border-color:var(--trim-d);cursor:not-allowed;opacity:0.6}
+.cmast-d-btn.disabled,.cmast-d-btn:disabled{color:var(--muted);border-color:var(--trim-d);cursor:var(--cur-na);opacity:0.6}
 .cmast-d-btn.disabled:hover,.cmast-d-btn:disabled:hover{background:transparent}
 
 /* Legend */
@@ -2588,7 +2627,7 @@ header h1 .flame{color:var(--ember)}
 .cmb-fighter.foe.rare{border-color:#c79b4e;box-shadow:0 0 12px rgba(199,155,78,0.3),inset 0 0 12px rgba(199,155,78,0.08)}
 .cmb-fighter.foe.rare .face{filter:drop-shadow(0 0 6px rgba(251,210,78,0.35))}
 .cmb-fighter.foe.rare .who{color:#fbd24e;font-weight:600}
-.cmb-fighter .rareBadge{position:absolute;top:-8px;left:50%;transform:translateX(-50%);background:linear-gradient(180deg,#fbd24e,#c79b4e);color:#1a0e04;padding:2px 9px;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:1.5px;font-family:'Cinzel',serif;box-shadow:0 1px 4px rgba(0,0,0,0.5);z-index:2;white-space:nowrap}
+.cmb-fighter .rareBadge{position:absolute;top:-8px;left:50%;transform:translateX(-50%);background:linear-gradient(180deg,#fbd24e,#c79b4e);color:#1a0e04;padding:2px 9px;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:1.5px;font-family:'Cinzel',serif;box-shadow:var(--sh-1);z-index:2;white-space:nowrap}
 .cmb-fighter.foe{position:relative}
 
 /* Combat log lines for rare events */
@@ -2611,7 +2650,7 @@ header h1 .flame{color:var(--ember)}
 .mlog-zone-tab:hover:not(:disabled){border-color:var(--zone-accent);background:#231811}
 .mlog-zone-tab.on{background:#2a1c10;border-color:var(--zone-accent);color:#ffd99a;
   box-shadow:inset 0 -2px 0 var(--zone-accent)}
-.mlog-zone-tab.locked{opacity:.4;cursor:not-allowed;filter:grayscale(.7)}
+.mlog-zone-tab.locked{opacity:.4;cursor:var(--cur-na);filter:grayscale(.7)}
 .mlog-zone-tab .mlz-ic{font-size:14px;line-height:1}
 .mlog-zone-tab .mlz-nm{line-height:1}
 
@@ -2745,7 +2784,7 @@ header h1 .flame{color:var(--ember)}
   transition:left .28s cubic-bezier(.4,0,.2,1),top .28s cubic-bezier(.4,0,.2,1),width .28s cubic-bezier(.4,0,.2,1),height .28s cubic-bezier(.4,0,.2,1)}
 .tut-callout{position:absolute;width:300px;max-width:calc(100vw - 24px);z-index:4001;pointer-events:auto;
   background:linear-gradient(180deg,#241711,#140b08);border:1px solid var(--ember);border-radius:9px;
-  padding:14px 16px;box-shadow:0 12px 34px rgba(0,0,0,.75);transition:left .28s ease,top .28s ease}
+  padding:14px 16px;box-shadow:var(--sh-3);transition:left .28s ease,top .28s ease}
 .tut-callout h4{margin:0 0 6px;font-size:16px;color:var(--trim);font-family:'Crimson Pro',Georgia,serif;letter-spacing:.3px}
 .tut-callout p{margin:0 0 13px;font-size:13.5px;color:#d3c4a6;line-height:1.55}
 .tut-actions{display:flex;align-items:center;justify-content:space-between;gap:10px}
@@ -2852,7 +2891,7 @@ header h1 .flame{color:var(--ember)}
 .sl-tasks[open]>summary .sl-caret{transform:rotate(90deg)}
 .sl-tasks .sl-tk-body{position:absolute;top:calc(100% + 5px);right:0;z-index:60;width:max-content;min-width:320px;max-width:min(560px,86vw);
   max-height:300px;overflow-y:auto;background:linear-gradient(180deg,#1c1512,#110b07);border:1px solid var(--trim);border-radius:9px;
-  box-shadow:0 12px 30px rgba(0,0,0,.6);padding:9px 14px 11px}
+  box-shadow:var(--sh-3);padding:9px 14px 11px}
 .sl-tasks .sl-tk-m{margin:8px 0 0}
 .sl-tasks .sl-tk-m:first-child{margin-top:1px}
 .sl-tasks .sl-tk-hd{font-family:'Cinzel',serif;font-size:12.5px}
@@ -2893,7 +2932,7 @@ header h1 .flame{color:var(--ember)}
       <button class="mm-btn" id="mmCredits">Credits</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.16</div>
+  <div class="mm-ver">v0.9.17</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -2931,7 +2970,7 @@ header h1 .flame{color:var(--ember)}
       </div>
     </div>
 
-    <div class="set-row">
+    <div class="set-row" id="mmSetImportRow">
       <div class="set-lbl">Save data
         <small>Restore a .evsave backup into an empty slot</small>
       </div>
@@ -2942,6 +2981,26 @@ header h1 .flame{color:var(--ember)}
 
     <div class="mm-row" style="margin-top:16px">
       <button class="mm-mini mm-primary" id="mmSettingsClose">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== IN-GAME MENU =====
+     btnMenu used to fire a "return to title?" confirm directly, so Settings and
+     Credits were only reachable by leaving the game. Now it opens this. -->
+<div id="gameMenuModal" class="mm-hidden">
+  <div class="mm-card" style="max-width:380px">
+    <h3>Menu</h3>
+    <p>Your progress saves automatically.</p>
+    <div class="gm-rows">
+      <button class="gm-row" id="gmSettings">Settings<span>Scale, fullscreen, cursor</span></button>
+      <button class="gm-row" id="gmCredits">Credits<span>Who made this</span></button>
+      <button class="gm-row" id="gmTutorial">Replay the tutorial<span>Run the intro tour again</span></button>
+      <button class="gm-row" id="gmExport">Export save<span>Copy a backup code</span></button>
+      <button class="gm-row gm-danger" id="gmQuit">Return to title<span>Back to the main menu</span></button>
+    </div>
+    <div class="mm-row" style="margin-top:14px">
+      <button class="mm-mini mm-primary" id="gmClose">Close</button>
     </div>
   </div>
 </div>
@@ -16115,7 +16174,7 @@ function buildMonLogHTML(){
     const has = got>0;
     const qtyTag = Array.isArray(d.qty)?` <span class="mld-qty">×${d.qty[0]}–${d.qty[1]}</span>`:'';
     const disc = !!(state.discovered&&state.discovered[d.id]);
-    return `<div class="mlog-drop${has?' got':''}" data-mldrop="${d.id}" data-disc="${disc?1:0}" style="cursor:help">
+    return `<div class="mlog-drop${has?' got':''}" data-mldrop="${d.id}" data-disc="${disc?1:0}" style="cursor:var(--cur-help)">
       <span class="mld-ic">${iconHTML(d.id)}</span>
       <span class="mld-nm">${it?it.name:d.id}${qtyTag}</span>
       <span class="mld-rate">${_fmtMonChance(effDropChance(d.chance,true))}</span>
@@ -16239,7 +16298,7 @@ function buildRaidLogBody(raid){
     const lo=g.chance*minMult*dm, hi=g.chance*maxMult*dm;
     const disc=!!(state.discovered&&state.discovered[g.id]);
     const owned=disc||(state.items&&state.items[g.id]>0)||(typeof anyLoadoutHas==='function'&&anyLoadoutHas(g.id));
-    return `<div class="mlog-drop${owned?' got':''}" data-mldrop="${g.id}" data-disc="${disc?1:0}" style="cursor:help">
+    return `<div class="mlog-drop${owned?' got':''}" data-mldrop="${g.id}" data-disc="${disc?1:0}" style="cursor:var(--cur-help)">
       <span class="mld-ic">${iconHTML(g.id)}</span>
       <span class="mld-nm">${it?it.name:g.id}${g.id==='grave_cleaver'?' <span class="mld-qty">2H</span>':''}</span>
       <span class="mld-rate">${pctf(lo)}–${pctf(hi)}</span>
@@ -16253,7 +16312,7 @@ function buildRaidLogBody(raid){
     const disc=!!(state.discovered&&state.discovered[m.id]);
     const owned=disc||(state.items&&state.items[m.id]>0);
     const q=Array.isArray(m.qty)?`×${m.qty[0]}–${m.qty[1]}`:'';
-    return `<div class="mlog-drop${owned?' got':''}" data-mldrop="${m.id}" data-disc="${disc?1:0}" style="cursor:help">
+    return `<div class="mlog-drop${owned?' got':''}" data-mldrop="${m.id}" data-disc="${disc?1:0}" style="cursor:var(--cur-help)">
       <span class="mld-ic">${iconHTML(m.id)}</span>
       <span class="mld-nm">${it?it.name:m.id}${q?` <span class="mld-qty">${q}</span>`:''}</span>
       <span class="mld-rate">pool</span>
@@ -16706,7 +16765,7 @@ function renderInventory(){
     prevBtn.className='inv-sort';
     prevBtn.textContent='‹ Prev';
     prevBtn.disabled=invPage<=0;
-    prevBtn.style.cssText='font-size:13px;padding:4px 10px;'+(invPage<=0?'opacity:0.4;cursor:not-allowed':'');
+    prevBtn.style.cssText='font-size:13px;padding:4px 10px;'+(invPage<=0?'opacity:0.4;cursor:var(--cur-na)':'');
     prevBtn.addEventListener('click',()=>{ if(invPage>0){ invPage--; renderInventory(); } });
     pager.appendChild(prevBtn);
 
@@ -16719,7 +16778,7 @@ function renderInventory(){
     nextBtn.className='inv-sort';
     nextBtn.textContent='Next ›';
     nextBtn.disabled=invPage>=totalPages-1;
-    nextBtn.style.cssText='font-size:13px;padding:4px 10px;'+(invPage>=totalPages-1?'opacity:0.4;cursor:not-allowed':'');
+    nextBtn.style.cssText='font-size:13px;padding:4px 10px;'+(invPage>=totalPages-1?'opacity:0.4;cursor:var(--cur-na)':'');
     nextBtn.addEventListener('click',()=>{ if(invPage<totalPages-1){ invPage++; renderInventory(); } });
     pager.appendChild(nextBtn);
 
@@ -21050,7 +21109,7 @@ function renderEnchanting(){
     var it=ITEMS[mid]; if(!it) return;
     var qty=state.items[mid]||0;
     var chip=document.createElement('div');
-    chip.style.cssText='background:var(--raised-s);border:1px solid var(--trim-d);border-radius:5px;padding:3px 9px;font-size:13px;cursor:help;'+(qty>0?'color:var(--text)':'color:var(--muted);opacity:0.55');
+    chip.style.cssText='background:var(--raised-s);border:1px solid var(--trim-d);border-radius:5px;padding:3px 9px;font-size:13px;cursor:var(--cur-help);'+(qty>0?'color:var(--text)':'color:var(--muted);opacity:0.55');
     chip.innerHTML=iconHTML(mid)+' '+qty.toLocaleString();
     attachTooltip(chip, mid);  // rich item tooltip — name, desc (incl. source), sell value
     matRow.appendChild(chip);
@@ -21136,7 +21195,7 @@ function renderEnchantDetail(box, itemId){
   card.appendChild(header);
 
   // Cost line — each material is a hoverable chip: "Name — you have X, need Y —
-  // where to get it". Red where short, green where covered. cursor:help signals
+  // where to get it". Red where short, green where covered. cursor:var(--cur-help) signals
   // the tooltip so nobody is left guessing what the bare icons mean.
   var costRow=document.createElement('div');
   costRow.style.cssText='display:flex;align-items:center;gap:5px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--trim-d)';
@@ -21147,7 +21206,7 @@ function renderEnchantDetail(box, itemId){
     var mid=e2[0], need=e2[1], have=state.items[mid]||0, mIt=ITEMS[mid];
     var ok=have>=need;
     var chip=document.createElement('span');
-    chip.style.cssText='display:inline-flex;align-items:center;gap:3px;padding:1px 7px;border-radius:4px;cursor:help;'
+    chip.style.cssText='display:inline-flex;align-items:center;gap:3px;padding:1px 7px;border-radius:4px;cursor:var(--cur-help);'
       +'background:var(--raised-s);border:1px solid '+(ok?'#3a5018':'#5a2020')+';'
       +'color:'+(ok?'var(--green)':'var(--red)');
     // Name shown inline so the material is identifiable at a glance; the game's
@@ -24699,6 +24758,10 @@ function mmOpenSettings(){
   $('mmScale').value = String(pct);
   $('mmScaleVal').textContent = pct + '%';
   mmSyncCursorBtn();
+  // Importing loads into an *empty slot*, which is meaningless with a character
+  // already loaded. Hide the row rather than offer a control that misleads.
+  const impRow = $('mmSetImportRow');
+  if(impRow) impRow.classList.toggle('gm-hide', !!mmSlot && !mmAtMenu);
   $('mmSettingsModal').classList.remove('mm-hidden');
 }
 function mmToggleFullscreen(){
@@ -24734,9 +24797,22 @@ window.addEventListener('keydown', function(e){
 $('mmCredits').addEventListener('click', function(){ $('mmCreditsModal').classList.remove('mm-hidden'); });
 $('mmCreditsClose').addEventListener('click', function(){ $('mmCreditsModal').classList.add('mm-hidden'); });
 $('mmBackToMenu').addEventListener('click',mmShowMenu);
-$('btnMenu').addEventListener('click',async()=>{
+function gmClose(){ $('gameMenuModal').classList.add('mm-hidden'); }
+$('btnMenu').addEventListener('click',()=>$('gameMenuModal').classList.remove('mm-hidden'));
+$('gmClose').addEventListener('click',gmClose);
+$('gmSettings').addEventListener('click',()=>{ gmClose(); mmOpenSettings(); });
+$('gmCredits').addEventListener('click',()=>{ gmClose(); $('mmCreditsModal').classList.remove('mm-hidden'); });
+$('gmTutorial').addEventListener('click',()=>{ gmClose(); replayTutorial(); });
+$('gmExport').addEventListener('click',()=>{ gmClose(); showSaveModal('export'); });
+$('gmQuit').addEventListener('click',async()=>{
+  gmClose();
   const ok=await showConfirm('Return to Menu','Head back to the title screen?','Your progress is saved automatically.');
   if(ok) mmQuitToMenu();
+});
+// Escape closes the in-game menu, the way every other game does it.
+window.addEventListener('keydown',e=>{
+  if(e.key!=='Escape') return;
+  if(!$('gameMenuModal').classList.contains('mm-hidden')) gmClose();
 });
 $('mmNameOk').addEventListener('click',mmConfirmName);
 $('mmNameCancel').addEventListener('click',()=>{
