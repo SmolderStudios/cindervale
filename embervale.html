@@ -1630,25 +1630,50 @@ header h1 .flame{color:var(--ember)}
 #charSelect h2{color:#c79b4e;font-variant:small-caps;letter-spacing:2px;font-size:27px;
   text-shadow:0 2px 4px rgba(0,0,0,.45)}
 #charSelect .mm-sub{color:#a08a64;font-size:14px;margin-top:-18px;text-align:center}
-.mm-slots{display:flex;flex-direction:column;gap:13px;width:min(92vw,440px)}
-.mm-slot{display:flex;align-items:center;gap:13px;text-align:left;cursor:pointer;
-  background:linear-gradient(#2a1d10,#1f1409);border:2px solid #6e552c;border-radius:9px;
-  padding:14px 16px;color:#ead9b5;transition:.12s;box-shadow:0 3px 8px rgba(0,0,0,.4);}
-.mm-slot:hover{border-color:#c79b4e;transform:translateY(-1px)}
-.mm-slot.mm-empty{border-style:dashed;opacity:.85}
-.mm-slot.mm-empty:hover{opacity:1}
-.mm-slot .mm-ic{font-size:30px;width:44px;text-align:center;flex:none;
-  filter:drop-shadow(0 2px 3px rgba(0,0,0,.5))}
-.mm-slot .mm-info{flex:1;min-width:0}
-.mm-slot .mm-nm{font-size:19px;color:#c79b4e;font-variant:small-caps;letter-spacing:1px;
+/* ── Character select plates (0.9.13) ───────────────────────────────────────
+   Was three stacked bars showing name / total level / gold. Now three plates
+   carrying the numbers that actually distinguish one save from another, with the
+   crest as a watermark. The whole plate is the Play target; export and delete are
+   small and deliberate so neither is ever hit by accident. */
+.mm-slots{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;width:min(94vw,940px)}
+@media(max-width:820px){.mm-slots{grid-template-columns:1fr;width:min(94vw,440px)}}
+.mm-slot{position:relative;display:flex;flex-direction:column;text-align:left;cursor:pointer;
+  background:linear-gradient(180deg,#20150c,#150e07);border:1px solid #4a3820;border-radius:6px;
+  padding:16px 17px;color:#ead9b5;overflow:hidden;min-height:210px;
+  transition:border-color .15s,transform .15s,box-shadow .15s;}
+.mm-slot:hover{border-color:#c79b4e;transform:translateY(-2px);
+  box-shadow:0 8px 22px rgba(0,0,0,.55),inset 0 0 40px rgba(240,199,114,.05)}
+.mm-slot .mm-wmk{position:absolute;right:-14%;bottom:-16%;width:62%;opacity:.055;pointer-events:none}
+.mm-slot .mm-nm{font-size:20px;color:#ead9b5;font-variant:small-caps;letter-spacing:1px;line-height:1.1;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.mm-slot .mm-mt{font-size:14px;color:#a08a64;font-family:'Courier New',monospace;margin-top:2px}
-.mm-slot .mm-del{flex:none;background:transparent;border:1px solid #6e552c;
-  color:#a08a64;border-radius:5px;padding:6px 9px;cursor:pointer;font-size:15px}
-.mm-slot .mm-del:hover{border-color:#c4543a;color:#c4543a}
-.mm-slot .mm-exp{flex:none;background:transparent;border:1px solid #6e552c;
-  color:#a08a64;border-radius:5px;padding:6px 9px;cursor:pointer;font-size:15px;margin-right:6px}
+.mm-slot:hover .mm-nm{color:#f0c772}
+.mm-slot .mm-stats{margin-top:auto;padding-top:14px;display:grid;gap:5px}
+.mm-srow{display:flex;justify-content:space-between;align-items:baseline;gap:8px;
+  font-family:'Courier New',monospace;font-size:12px;letter-spacing:.4px;font-variant-numeric:tabular-nums}
+.mm-srow .k{color:#6e552c;text-transform:uppercase;letter-spacing:1.2px;font-size:10.5px}
+.mm-srow .v{color:#a08a64}
+.mm-srow .v.gold{color:#c79b4e}
+.mm-sfoot{margin-top:13px;padding-top:11px;border-top:1px solid #33261680;
+  display:flex;justify-content:space-between;align-items:center;gap:10px}
+.mm-play{font-family:'Courier New',monospace;font-size:11px;letter-spacing:1.6px;
+  text-transform:uppercase;color:#c79b4e}
+.mm-acts{display:flex;gap:7px}
+.mm-slot .mm-exp,.mm-slot .mm-del{flex:none;width:26px;height:26px;padding:0;display:grid;place-items:center;
+  background:transparent;border:1px solid #4a3820;border-radius:4px;color:#7a6048;cursor:pointer;
+  transition:border-color .12s,color .12s}
 .mm-slot .mm-exp:hover{border-color:#c79b4e;color:#f0c772}
+.mm-slot .mm-del:hover{border-color:#c4543a;color:#c4543a}
+.mm-slot .mm-exp svg,.mm-slot .mm-del svg{width:14px;height:14px}
+.mm-slot.mm-empty{border-style:dashed;border-color:#3a2c18;background:#120c07;
+  align-items:center;justify-content:center;text-align:center}
+.mm-slot.mm-empty:hover{border-style:solid;border-color:#c79b4e}
+.mm-slot.mm-empty .mm-plus{width:32px;height:32px;color:#5a4630;margin-bottom:12px}
+.mm-slot.mm-empty:hover .mm-plus{color:#c79b4e}
+.mm-slot.mm-empty .mm-etxt{font-size:15px;font-variant:small-caps;letter-spacing:1.2px;color:#6e552c}
+.mm-slot.mm-empty:hover .mm-etxt{color:#a08a64}
+/* Character-select footer is a row, not the menu's button column. */
+#charSelect .mm-btns{flex-direction:row;width:auto;gap:10px;justify-content:center;flex-wrap:wrap}
+#charSelect .mm-btns .mm-btn{font-size:16px;padding:10px 22px}
 #mmExportModal textarea{width:100%;height:96px;background:#0d0905;color:#ead9b5;
   border:1px solid #6e552c;border-radius:4px;padding:8px;font-family:'Courier New',monospace;
   font-size:12px;margin-bottom:10px;resize:vertical;word-break:break-all}
@@ -2785,7 +2810,7 @@ header h1 .flame{color:var(--ember)}
       <button class="mm-btn" id="mmCredits">Credits</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.12</div>
+  <div class="mm-ver">v0.9.13</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -2848,12 +2873,12 @@ header h1 .flame{color:var(--ember)}
 
 <!-- ===== CHARACTER SELECT (added) ===== -->
 <div id="charSelect" class="mm-hidden">
-  <h2>Select Your Character</h2>
+  <h2>Choose Your Character</h2>
   <p class="mm-sub">Each slot is a separate save.</p>
   <div class="mm-slots" id="mmSlots"></div>
   <div class="mm-btns" style="gap:10px">
-    <button class="mm-btn" id="mmImportBtn" style="font-size:17px">⤓ Import save code</button>
-    <button class="mm-btn" id="mmBackToMenu">← Back</button>
+    <button class="mm-btn" id="mmImportBtn" style="font-size:17px">Import Save</button>
+    <button class="mm-btn" id="mmBackToMenu">◂ Back</button>
   </div>
 </div>
 
@@ -24002,8 +24027,14 @@ function mmSummary(n){
     if(s._silverV3) silverCoins=s.coins||0;
     else if(s._silverV2) silverCoins=Math.round((s.coins||0)/10);
     else silverCoins=Math.round((s.coins||0)*SILVER_PER_GOLD);
+    // Combat level from the save's own combatXp — combatLevel() reads globals and
+    // there is no loaded character here, so recompute it from the parsed blob.
+    const cx=s.combatXp||{};
+    const cl=Math.max(1, Math.floor((levelFromXp(cx.attack||0)+levelFromXp(cx.strength||0)
+             +levelFromXp(cx.defence||0)+levelFromXp(cx.hitpoints||0))/4));
     return { name:(typeof s.charName==='string'&&s.charName.trim())?s.charName:'Adventurer',
-             totalLevel:tot, coins:silverCoins, lastSeen:s.lastSeen||0,
+             totalLevel:tot, combatLevel:cl, playtimeMs:s.playtimeMs||0,
+             coins:silverCoins, lastSeen:s.lastSeen||0,
              charType:(s.charType&&CHAR_TYPES[s.charType])?s.charType:null,
              charClass:(s.charClass&&CHAR_CLASSES[s.charClass])?s.charClass:null };
   }catch(e){ return null; }
@@ -24024,6 +24055,7 @@ function mmRenderSlots(){
     const s=mmSummary(n);
     const el=document.createElement('div');
     el.className='mm-slot'+(s?'':' mm-empty');
+    el.tabIndex=0;
     if(s){
       var badges='';
       if(s.charType||s.charClass){
@@ -24032,22 +24064,33 @@ function mmRenderSlots(){
           (s.charClass?'<span class="mm-badge mm-badge-cls">'+CHAR_CLASSES[s.charClass].name+'</span>':'')+
           '</div>';
       }
-      el.innerHTML='<div class="mm-ic">'+iconHTML('ui_shield')+'</div>'+
-        '<div class="mm-info"><div class="mm-nm">'+mmEsc(s.name)+'</div>'+
-        '<div class="mm-mt">Total Lv '+s.totalLevel+' · '+iconHTML('ui_coin')+' '+fmtCoins(s.coins,true)+
-        (s.lastSeen?' · '+mmFmtAgo(s.lastSeen):'')+'</div>'+badges+'</div>'+
-        '<button class="mm-exp" data-exp="'+n+'" title="Export / back up this save"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M8 11l4 4 4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg></button>'+
-        '<button class="mm-del" data-del="'+n+'" title="Delete"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12"/><path d="M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/></svg></button>';
-      el.addEventListener('click',e=>{
+      const row=(k,v,cls)=>'<div class="mm-srow"><span class="k">'+k+'</span><span class="v'+(cls?' '+cls:'')+'">'+v+'</span></div>';
+      el.innerHTML="<svg class=\"mm-wmk\" viewBox=\"0 0 64 64\" aria-hidden=\"true\"><path d=\"M7 47 L22 21 L32 36 L44 17 L57 47 Z\" fill=\"#c79b4e\"/><circle cx=\"32\" cy=\"42\" r=\"9\" fill=\"#e0762f\"/></svg>"+
+        '<div class="mm-nm">'+mmEsc(s.name)+'</div>'+badges+
+        '<div class="mm-stats">'+
+          row('Total','Lv '+s.totalLevel.toLocaleString(),'gold')+
+          row('Combat','Lv '+s.combatLevel)+
+          row('Gold', fmtCoins(s.coins,true))+
+          row('Played', s.playtimeMs>0?fmtPlaytime(s.playtimeMs):'—')+
+        '</div>'+
+        '<div class="mm-sfoot">'+
+          '<span class="mm-play">Play ▸</span>'+
+          '<span class="mm-acts">'+
+            '<button class="mm-exp" data-exp="'+n+'" title="Export / back up this save">'+"<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 3v12\"/><path d=\"M8 11l4 4 4-4\"/><path d=\"M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2\"/></svg>"+'</button>'+
+            '<button class="mm-del" data-del="'+n+'" title="Delete">'+"<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 7h16\"/><path d=\"M10 11v6\"/><path d=\"M14 11v6\"/><path d=\"M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12\"/><path d=\"M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3\"/></svg>"+'</button>'+
+          '</span>'+
+        '</div>';
+      const enter=e=>{
         if(e.target.closest('[data-del]')) return;
         if(e.target.closest('[data-exp]')){ mmOpenExport(n); return; }
         mmStart(n,false);
-      });
+      };
+      el.addEventListener('click',enter);
+      el.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); mmStart(n,false); } });
     }else{
-      el.innerHTML='<div class="mm-ic"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg></div>'+
-        '<div class="mm-info"><div class="mm-nm">Empty Slot '+n+'</div>'+
-        '<div class="mm-mt">Click to create a new character</div></div>';
+      el.innerHTML="<svg class=\"mm-plus\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\" aria-hidden=\"true\"><path d=\"M12 4v16\"/><path d=\"M4 12h16\"/></svg>"+'<div class="mm-etxt">Forge a new character</div>';
       el.addEventListener('click',()=>mmNewChar(n));
+      el.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); mmNewChar(n); } });
     }
     box.appendChild(el);
   }
