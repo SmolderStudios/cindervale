@@ -681,6 +681,14 @@ header h1 .flame{color:var(--ember)}
 }
 .cmb-mon:hover .cmb-mon-tip{opacity:1}
 .cmb-mon.boss .cmb-mon-tip{border-color:#c79b4e}
+/* Flipped above the tile by _clampTip when the default below-the-tile placement
+   would run off the bottom of the screen (the picker's last row). The selectors
+   are specific enough to beat `.cmb-zright .cmb-mon-tip`, which sets margin-top. */
+.cmb-mon .cmb-mon-tip.tip-up,
+.cmb-zright .cmb-mon .cmb-mon-tip.tip-up,
+.cmb-zone-tile .cmb-zone-tip.tip-up{
+  top:auto; bottom:100%; margin-top:0; margin-bottom:4px;
+}
 .mtip-head{display:flex;align-items:center;gap:8px;
   padding:5px 9px;border-bottom:1px solid #2a1f10;
   background:linear-gradient(180deg,#2a1c10,#1a1108)}
@@ -2727,7 +2735,7 @@ header h1 .flame{color:var(--ember)}
   <div class="mm-btns">
     <button class="mm-btn mm-primary" id="mmPlay">▶ Play</button>
   </div>
-  <div class="mm-ver">v0.9.09</div>
+  <div class="mm-ver">v0.9.10</div>
 </div>
 
 <!-- ===== CHARACTER SELECT (added) ===== -->
@@ -23141,8 +23149,10 @@ function renderCombat(){
   // this — auto-fit grids don't expose column position.
   function _clampTip(tile, tipSel){
     const tip = tile.querySelector(tipSel); if(!tip) return;
-    // Reset to centered default first so consecutive hovers don't accumulate offset.
+    // Reset to the centered, below-the-tile default first, so consecutive hovers
+    // never accumulate an offset or keep a stale flip.
     tip.style.transform = 'translateX(-50%)';
+    tip.classList.remove('tip-up');
     const rect = tip.getBoundingClientRect();
     const vw = window.innerWidth, margin = 6;
     let shift = 0;
@@ -23150,6 +23160,15 @@ function renderCombat(){
     else if(rect.right > vw - margin) shift = (vw - margin) - rect.right;
     if(shift !== 0){
       tip.style.transform = `translateX(calc(-50% + ${Math.round(shift)}px))`;
+    }
+    // These tips are CSS-positioned below their tile (top:100%). For the bottom
+    // row of the picker that runs straight off the screen, so flip above the tile
+    // instead — but only when there is actually room up there, otherwise a tall
+    // tip on a top-row tile would just clip off the other edge.
+    const r = tip.getBoundingClientRect();       // re-measure: the shift moved it
+    if(r.bottom > window.innerHeight - margin){
+      const t = tile.getBoundingClientRect();
+      if(t.top - r.height >= margin) tip.classList.add('tip-up');
     }
   }
   panel.querySelectorAll('.cmb-zone-tile').forEach(t=>{
