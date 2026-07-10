@@ -1840,11 +1840,10 @@ select.dev-input{padding-right:26px}
   border:1px solid #6e552c;border-radius:5px;padding:10px 11px;font-family:'Crimson Pro',serif;
   font-size:15px;line-height:1.4;margin-bottom:10px}
 .rep-ta:focus{outline:none;border-color:#c79b4e}
-.rep-ctx{background:#1a120b;border:1px solid #3a2c18;border-radius:6px;padding:9px 11px;
-  font-family:'Courier New',monospace;font-size:11px;color:#8a7a60;line-height:1.55;
-  white-space:pre-wrap;word-break:break-word;max-height:120px;overflow-y:auto;margin-bottom:12px}
-.rep-ctx b{color:#a89470;font-weight:normal}
-.rep-note{font-size:11.5px;color:#7a6048;margin:0 0 12px;line-height:1.4}
+.rep-attach{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.rep-fname{font-family:'Courier New',monospace;font-size:11.5px;color:#8a7a60;
+  word-break:break-all;flex:1;min-width:0}
+.rep-fname .rep-clear{color:var(--red);cursor:var(--cur-pointer);margin-left:6px;font-weight:bold}
 .rep-msg{font-size:13px;margin-top:10px;min-height:18px}
 .rep-msg.ok{color:var(--green)}
 .rep-msg.err{color:var(--red)}
@@ -3114,7 +3113,7 @@ select.dev-input{padding-right:26px}
       <button class="mm-btn" id="mmCredits">Credits</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.30</div>
+  <div class="mm-ver">v0.9.31</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -3224,8 +3223,11 @@ select.dev-input{padding-right:26px}
     <h3>Report a bug</h3>
     <p>Describe the bug, and what you clicked or did right before it. Sent straight to the dev's Discord.</p>
     <textarea class="rep-ta" id="mmReportText" maxlength="1400" placeholder="What went wrong? What were you doing — which buttons/actions led to it?"></textarea>
-    <div class="rep-note">Auto-attached so I can reproduce it:</div>
-    <div class="rep-ctx" id="mmReportCtx"></div>
+    <div class="rep-attach">
+      <input type="file" id="mmReportFile" accept="image/*" hidden>
+      <button class="mm-mini" id="mmReportAttach" type="button">Attach screenshot</button>
+      <span class="rep-fname" id="mmReportFileName"></span>
+    </div>
     <div class="mm-row" style="margin-top:4px">
       <button class="mm-mini" id="mmReportCancel">Cancel</button>
       <button class="mm-mini mm-primary" id="mmReportSend">Send report</button>
@@ -25248,9 +25250,28 @@ function mmBugContext(){
   const errs=_bugErrors.length?_bugErrors.map(e=>'• '+e.m).join('\n'):'(none)';
   return {ver,who,where,plat,errs};
 }
+let _bugFile=null;                       // optional screenshot the player attached
+const BUG_MAX_FILE=8*1024*1024;          // Discord's default 8 MB webhook limit
+function _bugExt(type){
+  return type==='image/jpeg'?'.jpg':type==='image/gif'?'.gif':type==='image/webp'?'.webp':'.png';
+}
+function mmClearReportFile(){
+  _bugFile=null;
+  $('mmReportFile').value='';
+  $('mmReportFileName').textContent='';
+}
+function mmPickReportFile(f){
+  const msg=$('mmReportMsg');
+  if(!f){ mmClearReportFile(); return; }
+  if(!/^image\//.test(f.type)){ msg.className='rep-msg err'; msg.textContent='That is not an image file.'; mmClearReportFile(); return; }
+  if(f.size>BUG_MAX_FILE){ msg.className='rep-msg err'; msg.textContent='Image is too big ('+(f.size/1048576).toFixed(1)+' MB). Max 8 MB.'; mmClearReportFile(); return; }
+  _bugFile=f; msg.textContent=''; msg.className='rep-msg';
+  const kb=f.size<1048576?Math.round(f.size/1024)+' KB':(f.size/1048576).toFixed(1)+' MB';
+  $('mmReportFileName').innerHTML=(f.name||'screenshot').slice(0,40)+' ('+kb+') <span class="rep-clear" id="mmReportClear">remove</span>';
+  const cl=$('mmReportClear'); if(cl) cl.addEventListener('click', mmClearReportFile);
+}
 function mmOpenReport(){
-  const c=mmBugContext();
-  $('mmReportCtx').textContent='Version:  '+c.ver+'\nCharacter: '+c.who+'\nLocation:  '+c.where+'\nPlatform:  '+c.plat+'\nRecent errors:\n'+c.errs;
+  mmClearReportFile();
   $('mmReportText').value='';
   const msg=$('mmReportMsg'); msg.textContent=''; msg.className='rep-msg';
   const btn=$('mmReportSend'); btn.disabled=false; btn.textContent='Send report';
@@ -25265,6 +25286,7 @@ async function mmSendReport(){
   const wait=BUG_COOLDOWN_MS-(Date.now()-_bugLastSent);
   if(wait>0){ msg.className='rep-msg err'; msg.textContent='Please wait '+Math.ceil(wait/1000)+'s before sending another.'; return; }
   btn.disabled=true; btn.textContent='Sending…'; msg.className='rep-msg'; msg.textContent='';
+  // context is gathered silently and sent to Discord — players never see it
   const c=mmBugContext();
   const payload={username:'Cindervale Bug Report',embeds:[{title:'Bug report',description:text.slice(0,1400),color:0xc05149,
     fields:[
@@ -25275,7 +25297,19 @@ async function mmSendReport(){
       {name:'Recent errors',value:('```'+c.errs+'```').slice(0,1024),inline:false}
     ]}]};
   try{
-    const res=await fetch(BUG_WEBHOOK,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    let res;
+    if(_bugFile){
+      // Attach as a plain file — Discord shows it below the embed. (Referencing
+      // it via attachment:// inside the embed silently drops the upload unless
+      // the modern attachments[] array is also declared, so keep it simple.)
+      const name='screenshot'+_bugExt(_bugFile.type);
+      const fd=new FormData();
+      fd.append('payload_json', JSON.stringify(payload));
+      fd.append('files[0]', _bugFile, name);
+      res=await fetch(BUG_WEBHOOK,{method:'POST',body:fd});   // browser sets multipart boundary
+    }else{
+      res=await fetch(BUG_WEBHOOK,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    }
     if(!(res.ok||res.status===204)) throw new Error('HTTP '+res.status);
     _bugLastSent=Date.now();
     msg.className='rep-msg ok'; msg.textContent='Thank you — report sent!';
@@ -25292,6 +25326,8 @@ $('gmReport').addEventListener('click', function(){ gmClose(); mmOpenReport(); }
 $('mmSetReport').addEventListener('click', function(){ $('mmSettingsModal').classList.add('mm-hidden'); mmOpenReport(); });
 $('mmReportCancel').addEventListener('click', function(){ $('mmReportModal').classList.add('mm-hidden'); });
 $('mmReportSend').addEventListener('click', mmSendReport);
+$('mmReportAttach').addEventListener('click', function(){ $('mmReportFile').click(); });
+$('mmReportFile').addEventListener('change', function(e){ mmPickReportFile(e.target.files&&e.target.files[0]); });
 $('mmScale').addEventListener('input', function(e){
   const pct = parseInt(e.target.value,10) || 100;
   $('mmScaleVal').textContent = pct + '%';
