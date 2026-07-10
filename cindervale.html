@@ -2938,6 +2938,112 @@ select.dev-input{padding-right:26px}
 .sl-btn.primary:hover:not(:disabled){filter:brightness(1.22)}
 .sl-btn:disabled{opacity:.45;cursor:default}
 .sl-btn.tiny{padding:1px 8px;font-size:11px;font-family:'Courier New',monospace}
+
+/* ════ Slayer panel — "Contract Ledger" layout (0.9.24) ════════════════════════
+   Two columns: bounty + masters on the left, a persistent Slayer ledger on the
+   right. Replaces ~90 lines of inline styles. Accent lives on .sly-wrap so the
+   slayer red never leaks into :root. */
+.sly-wrap{--sly:#c05149;--sly-lit:#e07a6e;--sly-win:#7da33f;display:flex;flex-direction:column;gap:11px;padding:1px 0}
+.sly-cols{display:flex;gap:12px;align-items:flex-start}
+.sly-main{flex:1;min-width:0}
+.sly-side{width:252px;flex:none;background:linear-gradient(180deg,#1c150f,#130d08);
+  border:1px solid var(--trim-d);border-radius:9px;padding:13px}
+
+/* hero bounty */
+.sly-hero{background:radial-gradient(ellipse at 11% 50%,#3a1a16 0%,transparent 62%),linear-gradient(180deg,#20130f,#140c08);
+  border:1px solid #6b3a33;border-left:4px solid var(--sly);border-radius:10px;padding:14px 16px;
+  display:flex;align-items:center;gap:15px}
+.sly-hero.done{border-color:#4a7a3a;border-left-color:var(--sly-win);
+  background:radial-gradient(ellipse at 11% 50%,#1e2e18 0%,transparent 62%),linear-gradient(180deg,#141c10,#0c1208)}
+.sly-hero.none{border:1px dashed #5a463a;background:linear-gradient(180deg,#1a1310,#120c08);
+  justify-content:center;text-align:center;padding:22px}
+.sly-mon{font-size:44px;line-height:1;flex:none;filter:drop-shadow(0 3px 8px #000)}
+.sly-mid{flex:1;min-width:0}
+.sly-eyebrow{font-family:'Courier New',monospace;font-size:10.5px;letter-spacing:2px;text-transform:uppercase;
+  color:var(--sly-lit);margin-bottom:4px}
+.sly-hero.done .sly-eyebrow{color:#9be89b}
+.sly-title{font-family:'Cinzel',serif;font-size:22px;color:#f4e6d4;line-height:1.15}
+.sly-meta{font-size:12.5px;color:var(--muted);margin-top:4px}
+.sly-barhd{display:flex;justify-content:space-between;align-items:baseline;margin:9px 0 3px;
+  font-family:'Courier New',monospace;font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:#8a7a68}
+.sly-barhd b{font-size:12px;color:#e7dcc4;letter-spacing:0;font-weight:normal}
+.sly-hero.done .sly-barhd b{color:#9be89b}
+.sly-bar{height:12px;background:#0d0905;border:1px solid #3a2a20;border-radius:6px;overflow:hidden}
+.sly-bar i{display:block;height:100%;background:linear-gradient(90deg,#8f3a33,var(--sly-lit));transition:width .25s}
+.sly-bar.done i{background:linear-gradient(90deg,#4a7a3a,#8fd06a)}
+
+/* action row */
+.sly-acts{display:flex;gap:7px;margin-top:9px}
+.sly-go{flex:1;font-family:'Cinzel',serif;font-size:13.5px;letter-spacing:.4px;padding:10px;border-radius:7px;
+  cursor:var(--cur-pointer);border:1px solid var(--sly);background:linear-gradient(180deg,#4a2420,#2a1210);color:#ffd8d2;
+  display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 3px 12px #00000066,inset 0 1px 0 #ffffff14;
+  transition:filter .12s}
+.sly-go:hover:not(:disabled){filter:brightness(1.2)}
+.sly-go.claim{border-color:#5f9448;background:linear-gradient(180deg,#2c4a22,#152a10);color:#d8f0c8}
+.sly-go:disabled{opacity:.45;cursor:default}
+
+/* section headers */
+.sly-sec{display:flex;align-items:center;gap:10px;margin:14px 0 8px}
+.sly-sec h3{font-family:'Courier New',monospace;font-size:11.5px;font-weight:normal;color:#8a7a68;
+  letter-spacing:2px;text-transform:uppercase}
+.sly-sec .sly-rule{flex:1;height:1px;background:linear-gradient(90deg,#4a3a28,transparent)}
+
+/* master rows */
+.sly-mrow{background:linear-gradient(180deg,#221a14,#150f0a);border:1px solid var(--trim-d);border-radius:9px;
+  padding:10px 12px;display:flex;align-items:center;gap:11px;margin-bottom:8px}
+.sly-mrow.locked{opacity:.48}
+.sly-mrow .sly-mi{font-size:23px;line-height:1;flex:none}
+.sly-mrow .sly-mn{font-family:'Cinzel',serif;font-size:14px;color:#e7dcc4}
+.sly-mrow .sly-mb{font-size:11px;color:#7d6f60;margin-top:2px}
+.sly-chips{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px}
+.sly-chip{font-family:'Courier New',monospace;font-size:10px;padding:2px 7px;border-radius:4px;
+  background:#2a1c14;border:1px solid #4a3628;color:#c0a888}
+.sly-chip.pts{color:#ffd24a;border-color:#6a5220}
+
+/* ledger sidebar */
+.sly-sd-top{text-align:center;padding-bottom:12px;border-bottom:1px solid #3a2c20}
+.sly-sd-ic{font-size:30px;line-height:1}
+.sly-sd-nm{font-family:'Cinzel',serif;font-size:18px;color:#f0d8d0;margin-top:5px}
+.sly-sd-lv{font-family:'Courier New',monospace;color:var(--sly);font-size:12.5px}
+.sly-sd-xp{font-family:'Courier New',monospace;font-size:10px;color:var(--muted);margin-top:5px}
+.sly-sd-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #3a2c20}
+.sly-sd-row span{font-size:12.5px;color:var(--muted)}
+.sly-sd-row b{font-family:'Cinzel',serif;font-size:18px;line-height:1;color:#f0d8d0;font-weight:normal}
+.sly-sd-row b.gold{color:#ffd24a}
+.sly-prow{display:flex;justify-content:space-between;align-items:center;gap:8px;background:#1a130e;
+  border:1px solid #3f3124;border-radius:7px;padding:7px 10px;margin-bottom:6px}
+.sly-prow .sly-pn{font-size:12px;color:#e7dcc4}
+.sly-pips{display:inline-flex;gap:3px;flex:none}
+.sly-pip{width:9px;height:9px;border-radius:2px;background:#2a1e1a}
+.sly-pip.on{background:var(--sly);box-shadow:0 0 5px #c0514966}
+.sly-blocked{font-size:10.5px;color:#7d6f60;line-height:1.4;margin-top:9px}
+.sly-sd-cta{width:100%;margin-top:9px;font-family:'Cinzel',serif;font-size:12px;padding:8px;border-radius:6px;
+  border:1px solid var(--trim);background:var(--raised-s);color:var(--trim);cursor:var(--cur-pointer);transition:filter .12s}
+.sly-sd-cta:hover{filter:brightness(1.25)}
+
+/* rewards shop */
+.sly-shop{background:linear-gradient(180deg,#1c150f,#140e09);border:1px solid var(--trim);border-radius:9px;padding:13px}
+.sly-seg{display:inline-flex;background:#120c08;border:1px solid #3a2c20;border-radius:7px;padding:3px;gap:3px}
+.sly-seg button{font-family:'Cinzel',serif;font-size:12px;padding:5px 14px;border-radius:5px;border:1px solid transparent;
+  background:transparent;color:var(--muted);cursor:var(--cur-pointer)}
+.sly-seg button:hover{color:var(--text)}
+.sly-seg button.on{background:linear-gradient(180deg,#3a1e1a,#241010);color:#f0d0c8;border-color:var(--sly)}
+.sly-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:11px}
+.sly-card{background:#1a130e;border:1px solid #3f3124;border-radius:8px;padding:11px;display:flex;flex-direction:column}
+.sly-card .sly-ch{display:flex;justify-content:space-between;align-items:center;gap:6px}
+.sly-card .sly-cn{font-family:'Cinzel',serif;font-size:13.5px;color:#e7dcc4}
+.sly-card .sly-cd{font-size:11px;color:var(--muted);line-height:1.4;margin:6px 0 9px;flex:1}
+.sly-card .sly-cb{width:100%;font-family:'Cinzel',serif;font-size:11.5px;padding:6px;border-radius:6px;
+  border:1px solid var(--trim-d);background:var(--raised-s);color:var(--muted);cursor:var(--cur-pointer)}
+.sly-card .sly-cb.buy{border-color:var(--sly);background:linear-gradient(180deg,#3a1e1a,#241010);color:#f0d0c8}
+.sly-card .sly-cb:hover:not(:disabled){filter:brightness(1.2)}
+.sly-card .sly-cb:disabled{opacity:.45;cursor:default}
+.sly-hint{font-size:10.5px;color:var(--muted);line-height:1.45;border-left:3px solid var(--sly);padding-left:9px}
+@media(max-width:1180px){
+  .sly-cols{flex-direction:column}
+  .sly-side{width:100%}
+  .sly-grid{grid-template-columns:repeat(2,1fr)}
+}
 /* Slayer "available tasks" dropdown (1.0.77) — pops out over the UI, no reflow (1.0.79) */
 .sl-tasks{position:relative;align-self:flex-start;background:linear-gradient(180deg,#1e1712,#140e0a);border:1px solid var(--trim-d);border-radius:7px}
 .sl-tasks[open]{border-color:var(--trim);background:linear-gradient(180deg,#241a15,#160f0a)}
@@ -2989,7 +3095,7 @@ select.dev-input{padding-right:26px}
       <button class="mm-btn" id="mmCredits">Credits</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.23</div>
+  <div class="mm-ver">v0.9.24</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -18719,9 +18825,9 @@ function handleRaidFail(){
    Tasks target the EXISTING monster roster (45 foes across 9 zones), so bounties
    rotate you around the world instead of grinding one spot. */
 const SLAYER_MASTERS=[
-  {key:'novice', name:'Novice Slayer Master', minLvl:1,  size:[15,28], pts:4,  band:[1,42],  blurb:'Rats, spiders, goblins, skeletons — starter bounties.'},
-  {key:'expert', name:'Expert Slayer Master', minLvl:35, size:[24,40], pts:9,  band:[18,75], blurb:'Wolves, ogres, undead. Bigger lists, better pay.'},
-  {key:'master', name:'Slayer General',       minLvl:75, size:[34,52], pts:17, band:[50,99], blurb:'Trolls, wyverns, demons — the deadliest bounties.'},
+  {key:'novice', name:'Novice Slayer Master', minLvl:1,  size:[15,28], pts:4,  band:[1,42],  ic:'ui_scroll', blurb:'Rats, spiders, goblins, skeletons — starter bounties.'},
+  {key:'expert', name:'Expert Slayer Master', minLvl:35, size:[24,40], pts:9,  band:[18,75], ic:'ui_swords', blurb:'Wolves, ogres, undead. Bigger lists, better pay.'},
+  {key:'master', name:'Slayer General',       minLvl:75, size:[34,52], pts:17, band:[50,99], ic:'ui_skull',  blurb:'Trolls, wyverns, demons — the deadliest bounties.'},
 ];
 const SLAYER_PERKS=[
   {id:'scholar',       name:'Bloodscholar', max:5, cost:[6,10,16,24,36], desc:'+8% Slayer XP per kill, per level.'},
@@ -18731,6 +18837,9 @@ const SLAYER_PERKS=[
   {id:'quartermaster', name:'Quartermaster',max:3, cost:[20,40,70],      desc:'+1 Slayer Point per completed bounty, per level.'},
 ];
 const SLAYER_SKIP_COST=5, SLAYER_BLOCK_COST=12;
+// Slayer panel UI-only state (0.9.24). Deliberately NOT in `state` — these are
+// view toggles, not progress, so they must never touch the save format.
+let slyShopOpen=false, slyShopTab='perks';
 function slayerMasterFor(key){ return SLAYER_MASTERS.find(m=>m.key===key)||SLAYER_MASTERS[0]; }
 function slayerLevel(){ return levelFromXp((state.slayer&&state.slayer.xp)||0); }
 function slayerPerkLevel(id){ return (state.slayer&&state.slayer.perks&&state.slayer.perks[id])||0; }
@@ -23082,92 +23191,143 @@ function buildCmastViewHTML(){
    card (progress + skip/block or claim), the three Slayer Masters, and the perk
    shop. Buttons carry data-sl-* attrs wired in renderCombat. */
 function buildSlayerHTML(){
-  const S=state.slayer||{}; const sl='#c05149';
+  // ── "Contract Ledger" layout (0.9.24). Two columns: the bounty you act on plus
+  // the master roster on the left, a persistent Slayer ledger on the right. The
+  // Rewards Shop collapses below both, and its old duplicate headings ("task
+  // actions" / "perks") are now one segmented toggle. All chrome is .sly-* CSS.
+  const S=state.slayer||{};
   const lvl=slayerLevel(), xp=S.xp||0, pts=S.points||0;
   const lo=XP_CUM[lvl]||0, hi=lvl<MAX_LEVEL?(XP_CUM[lvl+1]||lo):lo;
   const pct=lvl>=MAX_LEVEL?100:Math.floor(100*(xp-lo)/Math.max(1,(hi-lo)));
-  const header=`<div style="display:flex;align-items:center;gap:11px;background:linear-gradient(180deg,#241614,#160c0a);border:1px solid #5a2c28;border-left:3px solid ${sl};border-radius:8px;padding:8px 13px">
-    <span style="font-size:25px;line-height:1">🗡</span>
-    <div style="flex:1;min-width:0">
-      <div style="display:flex;align-items:baseline;gap:8px"><span style="font-family:'Cinzel',serif;font-size:17px;color:#f0d8d0">Slayer</span><span style="font-family:'Courier New',monospace;color:${sl};font-size:13px">Lv ${lvl}</span></div>
-      <div style="height:5px;background:#0d0905;border-radius:3px;margin-top:4px;overflow:hidden"><i style="display:block;height:100%;width:${pct}%;background:${sl}"></i></div>
-      <div style="font-size:10.5px;color:var(--muted);margin-top:3px;font-family:'Courier New',monospace">${xp.toLocaleString()} xp${lvl<MAX_LEVEL?` · ${(hi-xp).toLocaleString()} to Lv ${lvl+1}`:' · MAX'} · ${S.tasksDone||0} bounties</div>
-    </div>
-    <div style="text-align:right"><div style="font-family:'Cinzel',serif;font-size:21px;color:#ffd24a;line-height:1">${pts}</div><div style="font-size:9.5px;letter-spacing:1px;text-transform:uppercase;color:var(--muted)">points</div></div>
-  </div>`;
-  const t=S.task; let bounty;
+  const t=S.task, active=!!(t&&t.done<t.need), complete=!!(t&&t.done>=t.need);
+
+  // ── hero: the one thing you act on ───────────────────────────────────────────
+  let hero, acts='';
   if(t){
-    const mon=getMonster(t.monId), done=Math.min(t.done,t.need), p=Math.floor(100*done/t.need), complete=t.done>=t.need, master=slayerMasterFor(t.master);
-    bounty=`<div style="background:linear-gradient(180deg,#1a1310,#120c08);border:1px solid ${complete?'#4a7a3a':'#5a463a'};border-radius:9px;padding:10px 13px">
-      <div style="display:flex;justify-content:space-between;font-size:10.5px;letter-spacing:1.5px;text-transform:uppercase;color:${complete?'#9be89b':sl};margin-bottom:7px"><span>${complete?'✓ Bounty complete':'Current bounty'}</span><span style="color:var(--muted)">${master.name}</span></div>
-      <div style="display:flex;align-items:center;gap:11px">
-        <span style="font-size:26px;line-height:1">${iconHTML(mon.id)}</span>
-        <div style="flex:1;min-width:0"><div style="font-family:'Cinzel',serif;font-size:15.5px;color:#e7dcc4">Slay ${mon.name}</div>
-          <div style="height:7px;background:#0d0905;border-radius:4px;margin-top:5px;overflow:hidden"><i style="display:block;height:100%;width:${p}%;background:${complete?'#6ab04a':sl}"></i></div>
-          <div style="font-size:11.5px;color:var(--muted);margin-top:3px">${done} / ${t.need} slain · Lv ${mon.lvl} · ${getZone(mon.zone).name}</div></div>
-        <button class="sl-btn primary" style="align-self:center" data-sl-${complete?`newtask="${t.master}">🗡 Claim`:`goto="1">⚔ Go to task`}</button>
+    const mon=getMonster(t.monId), master=slayerMasterFor(t.master);
+    const done=Math.min(t.done,t.need), p=Math.floor(100*done/t.need), left=Math.max(0,t.need-t.done);
+    hero=`<div class="sly-hero${complete?' done':''}">
+      <span class="sly-mon">${iconHTML(mon.id)}</span>
+      <div class="sly-mid">
+        <div class="sly-eyebrow">${complete?'✓ Bounty complete':'Current bounty'} · ${master.name}</div>
+        <div class="sly-title">${complete?`${mon.name} — ${t.need} slain`:`Slay ${mon.name}`}</div>
+        <div class="sly-meta">${complete
+          ? `Reward: <b style="color:#ffd24a">+${master.pts} Slayer Points</b>`
+          : `Lv ${mon.lvl} · ${getZone(mon.zone).name} · ${left} kill${left===1?'':'s'} remaining`}</div>
+        <div class="sly-barhd"><span>${complete?'complete':'progress'}</span><b>${done} / ${t.need}</b></div>
+        <div class="sly-bar${complete?' done':''}"><i style="width:${p}%"></i></div>
       </div></div>`;
-  } else {
-    bounty=`<div style="background:linear-gradient(180deg,#1a1310,#120c08);border:1px dashed #5a463a;border-radius:9px;padding:11px;text-align:center;color:var(--muted);font-size:12.5px">No active bounty — take one from a Slayer Master below.</div>`;
-  }
-  const active=!!(t&&t.done<t.need);
-  const masters=SLAYER_MASTERS.map(m=>{
-    const locked=lvl<m.minLvl;
-    return `<div style="flex:1 1 172px;background:linear-gradient(180deg,#1e1712,#140e0a);border:1px solid ${locked?'#3a2e20':'#5a463a'};border-radius:8px;padding:8px 11px;${locked?'opacity:.55':''}">
-      <div style="font-family:'Cinzel',serif;font-size:13.5px;color:#e7dcc4">${m.name}</div>
-      <div style="font-size:10.5px;color:${sl};font-family:'Courier New',monospace;margin:1px 0 6px">Lv ${m.minLvl}+ · ${m.size[0]}–${m.size[1]} kills · +${m.pts} pts</div>
-      <button class="sl-btn ${locked||active?'':'primary'}" data-sl-newtask="${m.key}" ${locked||active?'disabled':''}>${locked?`🔒 Lv ${m.minLvl}`:(active?'bounty active':'Get bounty')}</button>
+    acts=`<div class="sly-acts">
+      ${complete
+        ? `<button class="sly-go claim" data-sl-newtask="${t.master}">${iconHTML('ui_coin')} Claim &amp; take next bounty</button>`
+        : `<button class="sly-go" data-sl-goto="1">${iconHTML('ui_swords')} Go to task</button>`}
+      <button class="sl-btn" data-sl-skip="1" ${active&&pts>=SLAYER_SKIP_COST?'':'disabled'}>Skip · ${SLAYER_SKIP_COST} pts</button>
+      <button class="sl-btn" data-sl-block="1" ${active&&pts>=SLAYER_BLOCK_COST?'':'disabled'}>Block · ${SLAYER_BLOCK_COST} pts</button>
     </div>`;
-  }).join('');
-  // ── Available-tasks dropdown (1.0.77) — collapsible list of what each master can
-  // actually assign at the player's current Combat level (via slayerEligible), so
-  // the roster is discoverable without cluttering the tab. ─────────────────────
+  } else {
+    hero=`<div class="sly-hero none"><div>
+      <div style="font-size:15px;color:var(--muted)">No active bounty</div>
+      <div style="font-size:12.5px;color:#7d6f60;margin-top:4px">Take one from a Slayer Master below.</div>
+    </div></div>`;
+  }
+
+  // ── available-tasks popout (unchanged behaviour, 1.0.77) ─────────────────────
   const taskListHTML=SLAYER_MASTERS.map(m=>{
     const unlocked=lvl>=m.minLvl;
     const pool=slayerEligible(m).slice().sort((a,b)=>a.lvl-b.lvl);
     const names=pool.map(mo=>`${mo.name} <span style="color:#6d6058">Lv${mo.lvl}</span>`).join(' · ');
-    return `<div class="sl-tk-m"><div class="sl-tk-hd" style="color:${unlocked?'#e7dcc4':'#7a6a60'}">${m.name} · ${m.size[0]}–${m.size[1]} kills${unlocked?'':` · 🔒 Lv ${m.minLvl}`}</div><div class="sl-tk-list">${unlocked?(names||'—'):'reach the required level to preview'}</div></div>`;
+    return `<div class="sl-tk-m"><div class="sl-tk-hd" style="color:${unlocked?'#e7dcc4':'#7a6a60'}">${m.name} · ${m.size[0]}–${m.size[1]} kills${unlocked?'':` · ${iconHTML('ui_lock')} Lv ${m.minLvl}`}</div><div class="sl-tk-list">${unlocked?(names||'—'):'reach the required level to preview'}</div></div>`;
   }).join('');
-  const tasksDropdown=`<details class="sl-tasks"><summary><span class="sl-caret">▶</span>Available tasks · your Combat Lv ${combatLevel()}</summary><div class="sl-tk-body">${taskListHTML}</div></details>`;
-  const perks=SLAYER_PERKS.map(p=>{
-    const plvl=slayerPerkLevel(p.id), maxed=plvl>=p.max, cost=maxed?0:p.cost[plvl], can=!maxed&&pts>=cost;
-    const pips=Array.from({length:p.max},(_,i)=>`<span style="width:9px;height:9px;border-radius:2px;background:${i<plvl?sl:'#2a1e1a'};display:inline-block"></span>`).join('');
-    return `<div style="flex:1 1 178px;background:linear-gradient(180deg,#1e1712,#140e0a);border:1px solid var(--trim-d);border-radius:8px;padding:9px 11px">
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:6px"><span style="font-family:'Cinzel',serif;font-size:13.5px;color:#e7dcc4">${p.name}</span><span style="display:inline-flex;gap:2px">${pips}</span></div>
-      <div style="font-size:11px;color:var(--muted);line-height:1.35;margin:3px 0 7px">${p.desc}</div>
-      <button class="sl-btn ${can?'primary':''}" data-sl-perk="${p.id}" ${maxed||!can?'disabled':''}>${maxed?'Maxed':`Buy · ${cost} pts`}</button>
+  const tasksDropdown=`<details class="sl-tasks"><summary><span class="sl-caret">▶</span>Available tasks · Combat Lv ${combatLevel()}</summary><div class="sl-tk-body">${taskListHTML}</div></details>`;
+
+  // ── master rows ──────────────────────────────────────────────────────────────
+  const masters=SLAYER_MASTERS.map(m=>{
+    const locked=lvl<m.minLvl;
+    const btn=locked
+      ? `<button class="sl-btn" disabled>${iconHTML('ui_lock')} Lv ${m.minLvl}</button>`
+      : `<button class="sl-btn ${active||complete?'':'primary'}" data-sl-newtask="${m.key}" ${active||complete?'disabled':''}>${active||complete?'Bounty active':'Get bounty'}</button>`;
+    return `<div class="sly-mrow${locked?' locked':''}">
+      <span class="sly-mi">${iconHTML(m.ic)}</span>
+      <div style="flex:1;min-width:0">
+        <div class="sly-mn">${m.name}</div>
+        <div class="sly-mb">${m.blurb}</div>
+        <div class="sly-chips"><span class="sly-chip">Lv ${m.minLvl}+</span><span class="sly-chip">${m.size[0]}–${m.size[1]} kills</span><span class="sly-chip pts">+${m.pts} pts</span></div>
+      </div>${btn}</div>`;
+  }).join('');
+
+  // ── ledger sidebar ───────────────────────────────────────────────────────────
+  const blockedIds=Object.keys(S.blocked||{}), nBlocked=blockedIds.length;
+  const pipRow=p=>{
+    const plvl=slayerPerkLevel(p.id);
+    const pips=Array.from({length:p.max},(_,i)=>`<i class="sly-pip${i<plvl?' on':''}"></i>`).join('');
+    return `<div class="sly-prow"><span class="sly-pn">${p.name}</span><span class="sly-pips">${pips}</span></div>`;
+  };
+  const side=`<aside class="sly-side">
+    <div class="sly-sd-top">
+      <div class="sly-sd-ic">${iconHTML('ui_swords')}</div>
+      <div class="sly-sd-nm">Slayer</div>
+      <div class="sly-sd-lv">Level ${lvl}</div>
+      <div class="sly-bar" style="height:8px;margin-top:9px"><i style="width:${pct}%"></i></div>
+      <div class="sly-sd-xp">${lvl<MAX_LEVEL?`${(hi-xp).toLocaleString()} xp to Lv ${lvl+1}`:'MAX LEVEL'}</div>
+    </div>
+    <div class="sly-sd-row"><span>Points</span><b class="gold">${pts}</b></div>
+    <div class="sly-sd-row"><span>Bounties done</span><b>${S.tasksDone||0}</b></div>
+    <div class="sly-sd-row"><span>Blocked</span><b>${nBlocked}</b></div>
+    <div class="sly-sec" style="margin:10px 0 8px"><h3>Perks</h3><span class="sly-rule"></span></div>
+    ${SLAYER_PERKS.map(pipRow).join('')}
+    ${nBlocked?`<div class="sly-blocked">Blocked: ${blockedIds.map(id=>{const m=getMonster(id);return m?m.name:id;}).join(', ')}</div>`:''}
+    <button class="sly-sd-cta" data-sl-shop="1">${slyShopOpen?'Close':'Open'} Rewards Shop · ${pts} pts</button>
+  </aside>`;
+
+  // ── rewards shop (collapsed by default; one section, two tabs) ───────────────
+  let shop='';
+  if(slyShopOpen){
+    let body;
+    if(slyShopTab==='perks'){
+      body=SLAYER_PERKS.map(p=>{
+        const plvl=slayerPerkLevel(p.id), maxed=plvl>=p.max, cost=maxed?0:p.cost[plvl], can=!maxed&&pts>=cost;
+        const pips=Array.from({length:p.max},(_,i)=>`<i class="sly-pip${i<plvl?' on':''}"></i>`).join('');
+        return `<div class="sly-card">
+          <div class="sly-ch"><span class="sly-cn">${p.name}</span><span class="sly-pips">${pips}</span></div>
+          <div class="sly-cd">${p.desc}</div>
+          <button class="sly-cb ${can?'buy':''}" data-sl-perk="${p.id}" ${maxed||!can?'disabled':''}>${maxed?'Maxed':(pts>=cost?`Buy · ${cost} pts`:`Need ${cost} pts`)}</button>
+        </div>`;
+      }).join('');
+    } else {
+      const canSkip=active&&pts>=SLAYER_SKIP_COST, canBlock=active&&pts>=SLAYER_BLOCK_COST;
+      const card=(title,desc,btn)=>`<div class="sly-card"><div class="sly-ch"><span class="sly-cn">${title}</span></div><div class="sly-cd">${desc}</div>${btn}</div>`;
+      body=[
+        card('Skip Bounty','Abandon the current bounty and reset your streak, then take a fresh one from any master.',
+          `<button class="sly-cb ${canSkip?'buy':''}" data-sl-skip="1" ${canSkip?'':'disabled'}>${active?`Skip · ${SLAYER_SKIP_COST} pts`:'No active bounty'}</button>`),
+        card('Block Monster',`Never assign ${active?getMonster(t.monId).name:'this monster'} again — removed from every future bounty pool.`,
+          `<button class="sly-cb ${canBlock?'buy':''}" data-sl-block="1" ${canBlock?'':'disabled'}>${active?`Block · ${SLAYER_BLOCK_COST} pts`:'No active bounty'}</button>`),
+        card('Unblock All',`Return ${nBlocked?`${nBlocked} blocked monster${nBlocked===1?'':'s'}`:'blocked monsters'} to the assignable pool. Free.`,
+          `<button class="sly-cb" data-sl-unblockall="1" ${nBlocked?'':'disabled'}>${nBlocked?`Clear ${nBlocked} block${nBlocked===1?'':'s'}`:'None blocked'}</button>`),
+      ].join('');
+    }
+    shop=`<div class="sly-shop">
+      <div class="sly-sec" style="margin:0 0 2px">
+        <h3>Rewards Shop</h3><span class="sly-rule"></span>
+        <div class="sly-seg">
+          <button class="${slyShopTab==='perks'?'on':''}" data-sl-shoptab="perks">Perks</button>
+          <button class="${slyShopTab==='actions'?'on':''}" data-sl-shoptab="actions">Task actions</button>
+        </div>
+      </div>
+      <div class="sly-grid">${body}</div>
     </div>`;
-  }).join('');
-  const blockedIds=Object.keys(S.blocked||{});
-  // ── Rewards Shop: task-management actions (skip / block / unblock). Skip & block
-  // act on the active bounty; unblock restores the blocked pool. Buttons stay
-  // visible but disable when they can't apply (no bounty / not enough pts / none
-  // blocked) so the shop always reads as a full menu. (1.0.76)
-  const canSkip=active&&pts>=SLAYER_SKIP_COST, canBlock=active&&pts>=SLAYER_BLOCK_COST;
-  const nBlocked=blockedIds.length;
-  const shopCard=(title,desc,btn)=>`<div style="flex:1 1 178px;background:linear-gradient(180deg,#1e1712,#140e0a);border:1px solid var(--trim-d);border-radius:8px;padding:9px 11px">
-    <div style="font-family:'Cinzel',serif;font-size:13.5px;color:#e7dcc4">${title}</div>
-    <div style="font-size:11px;color:var(--muted);line-height:1.35;margin:3px 0 7px">${desc}</div>${btn}</div>`;
-  const taskActions=[
-    shopCard('Skip Bounty','Abandon the current bounty and reset your streak, then take a fresh one from any master.',
-      `<button class="sl-btn ${canSkip?'primary':''}" data-sl-skip="1" ${canSkip?'':'disabled'}>${active?`Skip · ${SLAYER_SKIP_COST} pts`:'No active bounty'}</button>`),
-    shopCard('Block Monster',`Never assign ${active?getMonster(t.monId).name:'this monster'} again — removed from every future bounty pool.`,
-      `<button class="sl-btn ${canBlock?'primary':''}" data-sl-block="1" ${canBlock?'':'disabled'}>${active?`Block · ${SLAYER_BLOCK_COST} pts`:'No active bounty'}</button>`),
-    shopCard('Unblock All',`Return ${nBlocked?`${nBlocked} blocked monster${nBlocked===1?'':'s'}`:'blocked monsters'} to the assignable pool. Free.`,
-      `<button class="sl-btn" data-sl-unblockall="1" ${nBlocked?'':'disabled'}>${nBlocked?`Clear ${nBlocked} block${nBlocked===1?'':'s'}`:'None blocked'}</button>`),
-  ].join('');
-  const blockedRow=nBlocked?`<div style="font-size:11px;color:var(--muted)">Blocked from bounties: ${blockedIds.map(id=>{const m=getMonster(id);return m?m.name:id;}).join(', ')}</div>`:'';
-  const lbl='font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#6d6058';
-  return `<div style="display:flex;flex-direction:column;gap:7px;padding:1px 0">
-    ${header}${bounty}
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap"><div style="${lbl}">Slayer Masters</div>${tasksDropdown}</div>
-    <div style="display:flex;gap:7px;flex-wrap:wrap">${masters}</div>
-    <div style="${lbl};margin-top:1px">Rewards Shop · task actions</div>
-    <div style="display:flex;gap:7px;flex-wrap:wrap">${taskActions}</div>
-    <div style="${lbl};margin-top:1px">Rewards Shop · perks</div>
-    <div style="display:flex;gap:7px;flex-wrap:wrap">${perks}</div>
-    ${blockedRow?`<div style="margin-top:1px">${blockedRow}</div>`:''}
-    <div style="font-size:10.5px;color:var(--muted);line-height:1.4;border-left:3px solid ${sl};padding:1px 0 1px 9px;margin-top:1px">Take a bounty, kill that monster anywhere in the Arena for <b style="color:#e7dcc4">Slayer XP</b> + progress; finishing pays <b style="color:#ffd24a">Slayer Points</b>.</div>
+  }
+
+  return `<div class="sly-wrap">
+    <div class="sly-cols">
+      <div class="sly-main">
+        ${hero}${acts}
+        <div class="sly-sec"><h3>Slayer Masters</h3><span class="sly-rule"></span>${tasksDropdown}</div>
+        ${masters}
+      </div>
+      ${side}
+    </div>
+    ${shop}
+    <div class="sly-hint">Take a bounty, kill that monster anywhere in the Arena for <b style="color:#e7dcc4">Slayer XP</b> + progress; finishing pays <b style="color:#ffd24a">Slayer Points</b>.</div>
   </div>`;
 }
 function buildRaidsPanelHTML(){
@@ -23832,6 +23992,9 @@ function renderCombat(){
   panel.querySelectorAll('[data-sl-block]').forEach(b=>b.addEventListener('click',slayerBlockCurrent));
   panel.querySelectorAll('[data-sl-perk]').forEach(b=>{ if(b.disabled) return; b.addEventListener('click',()=>buySlayerPerk(b.getAttribute('data-sl-perk'))); });
   panel.querySelectorAll('[data-sl-unblockall]').forEach(b=>b.addEventListener('click',()=>{ state.slayer.blocked={}; saveGame(); renderCombat(); }));
+  // Rewards Shop chrome (0.9.24) — view-only toggles, so no save, just a re-render.
+  panel.querySelectorAll('[data-sl-shop]').forEach(b=>b.addEventListener('click',()=>{ slyShopOpen=!slyShopOpen; renderCombat(); }));
+  panel.querySelectorAll('[data-sl-shoptab]').forEach(b=>b.addEventListener('click',()=>{ slyShopTab=b.getAttribute('data-sl-shoptab'); renderCombat(); }));
 
   // ── Sub-tab wire-up (Arena / Mastery) (v1.0.69) ─────────────────────────────
   // Switching to Mastery during an active fight is allowed (you can read while
