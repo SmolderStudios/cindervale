@@ -1571,8 +1571,12 @@ header h1 .flame{color:var(--ember)}
 
 /* ════════ [CSS-13] MODALS ═══════════════════════════════════════════════════════ */
 /* modal */
+/* z-index must clear the menu overlays (#emberMenu/#charSelect 9999,
+   the mm-* modals 10000, #mmDestiny 10001). At the old value of 100 a confirm
+   dialog opened *behind* the character-select screen: it was there, it just
+   couldn't be seen or clicked, so "Delete character" silently did nothing. */
 .modal-back{position:fixed;inset:0;background:#000000aa;display:flex;
-  align-items:center;justify-content:center;z-index:100;padding:16px;}
+  align-items:center;justify-content:center;z-index:10050;padding:16px;}
 .modal-back.hidden{display:none}
 .modal{background:var(--panel);border:1px solid var(--trim);border-radius:8px;
   padding:20px;max-width:480px;width:100%;box-shadow:0 10px 30px #000;}
@@ -1762,7 +1766,65 @@ header h1 .flame{color:var(--ember)}
 .mmd-stats{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-top:9px}
 .mmd-pill{font-size:11.5px;letter-spacing:.4px;color:#d8c79a;background:#352510;border:1px solid #5a4326;
   border-radius:9px;padding:2px 9px;font-family:'Courier New',monospace}
-.mmd-actions{display:flex;gap:12px;margin-top:20px;margin-bottom:8px}
+/* ── Destiny cards, restyled 0.9.15 to match the Forge Gate menu ──────────
+   Cards are real <button>s now: focusable, aria-pressed, and keyboard-usable.
+   The old look was flat panels with a floating tick; selection now reads as a
+   lit plate with a gold rim and a corner check, matching the character plates. */
+.mmd-card{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;
+  background:linear-gradient(180deg,#20150c,#150e07);border:1px solid #4a3820;border-radius:6px;
+  padding:16px 15px 15px;color:#ead9b5;font-family:inherit;cursor:pointer;overflow:hidden;
+  transition:border-color .15s,transform .15s,box-shadow .15s,background .15s}
+.mmd-card:hover{border-color:#8a6a2e;transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,.5)}
+.mmd-card:focus-visible{outline:2px solid #f0c772;outline-offset:2px}
+.mmd-card.mmd-on{border-color:var(--accent,#c79b4e);background:#241708;
+  box-shadow:0 8px 22px rgba(0,0,0,.55),inset 0 0 40px rgba(240,199,114,.07)}
+.mmd-card.mmd-on::after{content:"";position:absolute;top:0;left:0;right:0;height:2px;
+  background:var(--accent,#c79b4e)}
+.mmd-card.mmd-on::before{content:"✓";position:absolute;top:7px;right:10px;color:var(--accent,#f0c772);
+  font-size:14px;font-weight:bold;line-height:1}
+
+/* Path card: sigil beside the name, trade-off chips below the blurb. */
+.mmd-type{align-items:stretch;text-align:left}
+.mmd-head{display:flex;align-items:center;gap:11px;margin-bottom:9px}
+.mmd-sigil{width:38px;height:38px;flex:none;filter:drop-shadow(0 2px 5px rgba(0,0,0,.6))}
+.mmd-headtxt{min-width:0}
+.mmd-type .mmd-tname{color:var(--accent,#f0c772);margin-bottom:2px}
+
+/* Class card: emblem on a sunken disc so the silhouette reads at a glance. */
+.mmd-emblem{width:66px;height:66px;border-radius:50%;display:grid;place-items:center;flex:none;
+  background:radial-gradient(circle at 42% 36%,#2c1e10,#120c06 72%);
+  border:1px solid #3a2c18;margin-bottom:10px;
+  box-shadow:inset 0 2px 10px rgba(0,0,0,.7)}
+.mmd-card.mmd-on .mmd-emblem{border-color:#8a6a2e}
+.mmd-model{width:44px;height:44px;display:block}
+
+.mmd-tname{font-variant:small-caps;letter-spacing:1.2px;font-size:20px;color:#f0c772;line-height:1.1}
+.mmd-tag{display:inline-block;font-family:'Courier New',monospace;font-size:9.5px;letter-spacing:1.4px;
+  text-transform:uppercase;color:#a08a64;border:1px solid #4a3820;border-radius:3px;padding:2px 7px;
+  background:transparent;margin-top:3px;align-self:flex-start}
+.mmd-class .mmd-tag{align-self:center}
+.mmd-card.mmd-on .mmd-tag{border-color:var(--accent,#8a6a2e);color:#ead9b5}
+.mmd-blurb{font-size:13px;line-height:1.4;color:#a08a64;margin-top:9px}
+.mmd-card.mmd-on .mmd-blurb{color:#b7a986}
+
+/* The XP/drop trade-off is the whole decision — give it tabular, signed chips. */
+.mmd-stats{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px}
+.mmd-pill{font-family:'Courier New',monospace;font-size:11px;letter-spacing:.6px;
+  font-variant-numeric:tabular-nums;border:1px solid #4a3820;border-radius:3px;
+  padding:3px 8px;color:#a08a64;background:#150e07}
+.mmd-pill.mmd-up{color:#7da33f;border-color:#3f5a24}
+.mmd-pill.mmd-down{color:#c4543a;border-color:#6a2e22}
+
+/* Tells the player what they picked, rather than silently enabling a button. */
+.mmd-summary{display:flex;align-items:baseline;justify-content:center;gap:9px;margin-top:20px;
+  min-height:22px;font-family:'Courier New',monospace;font-size:12px;letter-spacing:1.4px;
+  text-transform:uppercase;color:#6e552c}
+.mmd-summary.mmd-sum-ready{color:#a08a64}
+.mmd-sum-lbl{color:#6e552c}
+.mmd-sum-val{font-family:'Crimson Pro',Georgia,serif;font-size:19px;letter-spacing:1px;
+  text-transform:none;font-variant:small-caps;color:#ead9b5}
+.mmd-sum-sep{color:#4a3820}
+.mmd-actions{display:flex;gap:12px;margin-top:14px;margin-bottom:8px}
 .mmd-actions .mm-btn{font-size:18px;padding:11px 22px}
 .mmd-actions .mm-btn:disabled{opacity:.4;cursor:not-allowed;transform:none;border-color:#5a4326;color:#8a7350}
 
@@ -2810,7 +2872,7 @@ header h1 .flame{color:var(--ember)}
       <button class="mm-btn" id="mmCredits">Credits</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.14</div>
+  <div class="mm-ver">v0.9.15</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -2934,12 +2996,13 @@ header h1 .flame{color:var(--ember)}
   <div class="mmd-scroll">
     <h2>Forge Your Destiny</h2>
     <p class="mm-sub" id="mmdSubtitle">Choose a path and a calling for your new adventurer. This choice is permanent.</p>
-    <div class="mmd-sec-title">① Your Path <span>— risk &amp; reward</span></div>
+    <div class="mmd-sec-title">Your Path <span>— risk &amp; reward</span></div>
     <div class="mmd-types" id="mmdTypes"></div>
-    <div class="mmd-sec-title">② Your Calling <span>— a lifelong specialty</span></div>
+    <div class="mmd-sec-title">Your Calling <span>— a lifelong specialty</span></div>
     <div class="mmd-classes" id="mmdClasses"></div>
+    <div class="mmd-summary" id="mmdSummary">Choose a path to continue</div>
     <div class="mmd-actions">
-      <button class="mm-btn" id="mmdBack">← Back</button>
+      <button class="mm-btn" id="mmdBack">◂ Back</button>
       <button class="mm-btn mm-primary" id="mmdConfirm" disabled>Begin Your Journey</button>
     </div>
   </div>
@@ -12245,47 +12308,87 @@ const CHAR_TYPES={
     blurb:'Tear up the levels at 2× XP — but the world turns stingy: −40% drop chance across the board.' },
 };
 /* Character-model SVGs — stylised dark-fantasy full-body silhouettes (120×160). */
+/* Class emblems (0.9.15). The old art was a set of 120x160 full-body figures —
+   crude at any size and stylistically adrift from the rest of the game, which is
+   all 64x64 gradient-rich heraldry. These are emblems in that same language: one
+   object per calling, lit from the upper left, on the dark-fantasy palette.
+   The const name is unchanged so CHAR_CLASSES[..].model keeps resolving. */
 const CLASS_MODELS={
-  rogue:'<svg class="mmd-model" viewBox="0 0 120 160" xmlns="http://www.w3.org/2000/svg">'
-    +'<defs><linearGradient id="rgC" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#33493a"/><stop offset="1" stop-color="#111d16"/></linearGradient>'
-    +'<linearGradient id="rgS" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#eef3f5"/><stop offset="1" stop-color="#7e8d94"/></linearGradient></defs>'
-    +'<path d="M60 36 C40 40 34 70 36 120 L30 150 L50 146 L60 150 L70 146 L90 150 L84 120 C86 70 80 40 60 36 Z" fill="url(#rgC)" stroke="#0a120d" stroke-width="2"/>'
-    +'<path d="M60 13 C43 13 37 31 42 45 C50 38 70 38 78 45 C83 31 77 13 60 13 Z" fill="#26382c" stroke="#0a120d" stroke-width="2"/>'
-    +'<path d="M50 35 Q60 45 70 35 Q66 51 54 51 Q50 43 50 35Z" fill="#0a0f0c"/>'
-    +'<circle cx="55" cy="40" r="2" fill="#9be8a0"/><circle cx="65" cy="40" r="2" fill="#9be8a0"/>'
-    +'<path d="M40 92 L80 92 L78 100 L42 100 Z" fill="#5a4326" stroke="#0a120d" stroke-width="1.5"/>'
-    +'<g transform="rotate(18 30 112)"><rect x="26" y="94" width="6" height="32" rx="2" fill="url(#rgS)"/><rect x="23" y="123" width="12" height="5" rx="1" fill="#5a4326"/></g>'
-    +'<g transform="rotate(-18 90 112)"><rect x="88" y="94" width="6" height="32" rx="2" fill="url(#rgS)"/><rect x="85" y="123" width="12" height="5" rx="1" fill="#5a4326"/></g></svg>',
-  berserker:'<svg class="mmd-model" viewBox="0 0 120 160" xmlns="http://www.w3.org/2000/svg">'
-    +'<defs><linearGradient id="bzSk" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#caa07a"/><stop offset="1" stop-color="#88603f"/></linearGradient>'
-    +'<linearGradient id="bzAx" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#c2ccd0"/><stop offset="1" stop-color="#69757a"/></linearGradient></defs>'
-    +'<path d="M44 58 L18 98" stroke="url(#bzSk)" stroke-width="10" stroke-linecap="round"/>'
-    +'<g transform="rotate(13 30 96)"><rect x="27" y="34" width="6" height="108" rx="3" fill="#4a3320"/><path d="M33 40 Q62 32 58 66 Q33 72 27 60 Z" fill="url(#bzAx)" stroke="#2b3236" stroke-width="2"/></g>'
-    +'<path d="M60 40 C44 42 40 60 44 90 L40 122 L53 122 L56 96 L64 96 L67 122 L80 122 L76 90 C80 60 76 42 60 40Z" fill="url(#bzSk)" stroke="#3a2418" stroke-width="2"/>'
-    +'<path d="M60 58 L60 92 M52 70 H68 M52 81 H68" stroke="#6b4631" stroke-width="1.4" fill="none" opacity=".7"/>'
-    +'<circle cx="60" cy="27" r="13" fill="url(#bzSk)" stroke="#3a2418" stroke-width="2"/>'
-    +'<path d="M46 21 L41 10 L50 17 L48 6 L56 15 L60 4 L64 15 L72 6 L70 17 L79 10 L74 21 Z" fill="#7a1d16"/>'
-    +'<path d="M53 27 l6 2 M67 27 l-6 2" stroke="#3a1410" stroke-width="2" fill="none"/></svg>',
-  guardian:'<svg class="mmd-model" viewBox="0 0 120 160" xmlns="http://www.w3.org/2000/svg">'
-    +'<defs><linearGradient id="gdA" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#aebcc9"/><stop offset="1" stop-color="#5b6979"/></linearGradient>'
-    +'<linearGradient id="gdS" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#7fa8d4"/><stop offset="1" stop-color="#2c466a"/></linearGradient></defs>'
-    +'<path d="M60 40 C46 42 42 62 46 96 L42 132 L78 132 L74 96 C78 62 74 42 60 40Z" fill="url(#gdA)" stroke="#2a3540" stroke-width="2"/>'
-    +'<path d="M60 52 V128 M50 70 H70 M48 88 H72" stroke="#2a3540" stroke-width="1.2" opacity=".55" fill="none"/>'
-    +'<path d="M48 30 Q48 13 60 13 Q72 13 72 30 L72 41 Q60 47 48 41Z" fill="url(#gdA)" stroke="#2a3540" stroke-width="2"/>'
-    +'<rect x="58" y="19" width="4" height="22" fill="#2a3540"/>'
-    +'<path d="M74 64 L90 78" stroke="url(#gdA)" stroke-width="9" stroke-linecap="round"/>'
-    +'<path d="M83 54 L113 54 L111 92 Q109 113 98 122 Q87 113 85 92Z" fill="url(#gdS)" stroke="#1e3450" stroke-width="2"/>'
-    +'<path d="M98 58 V118 M86 86 H110" stroke="#d3e4f6" stroke-width="2" opacity=".7"/></svg>',
-  artisan:'<svg class="mmd-model" viewBox="0 0 120 160" xmlns="http://www.w3.org/2000/svg">'
-    +'<defs><linearGradient id="arR" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#7a5a2e"/><stop offset="1" stop-color="#41301a"/></linearGradient>'
-    +'<linearGradient id="arM" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#e6c878"/><stop offset="1" stop-color="#9b7a34"/></linearGradient></defs>'
-    +'<path d="M60 38 C44 42 40 64 42 96 L34 142 L86 142 L78 96 C80 64 76 42 60 38Z" fill="url(#arR)" stroke="#2a1c0e" stroke-width="2"/>'
-    +'<path d="M50 60 H70 L72 112 H48 Z" fill="#5a3d20" stroke="#2a1c0e" stroke-width="1.5"/>'
-    +'<path d="M44 64 L24 104" stroke="#caa07a" stroke-width="8" stroke-linecap="round"/>'
-    +'<g transform="rotate(20 21 110)"><rect x="18" y="98" width="6" height="34" rx="2" fill="#5a3d20"/><rect x="6" y="92" width="28" height="14" rx="3" fill="url(#arM)" stroke="#5a4410" stroke-width="1.5"/></g>'
-    +'<circle cx="60" cy="26" r="12" fill="#caa07a" stroke="#2a1c0e" stroke-width="2"/>'
-    +'<path d="M50 30 Q60 49 70 30 Q68 43 60 45 Q52 43 50 30Z" fill="#b9b3a6"/>'
-    +'<circle cx="96" cy="62" r="11" fill="none" stroke="url(#arM)" stroke-width="4"/><circle cx="96" cy="62" r="3" fill="url(#arM)"/></svg>',
+  rogue:'<svg class="mmd-model" viewBox="0 0 64 64" aria-hidden="true">'
+    +'<defs><linearGradient id="rg_bl" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e8eef2"/><stop offset="0.45" stop-color="#9fb0bd"/><stop offset="1" stop-color="#48565f"/></linearGradient>'
+    +'<linearGradient id="rg_hl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5a4630"/><stop offset="1" stop-color="#1e150c"/></linearGradient></defs>'
+    +'<path d="M18 50 Q30 44 44 30" stroke="#2a4038" stroke-width="7" opacity="0.35" fill="none" stroke-linecap="round"/>'
+    +'<path d="M46 8 L52 14 L26 42 L20 44 L22 38 Z" fill="url(#rg_bl)"/>'
+    +'<path d="M46 8 L52 14 L28 40 Z" fill="#fff" opacity="0.16"/>'
+    +'<path d="M20 44 L22 38 L26 42 Z" fill="#cfd8de"/>'
+    +'<path d="M17 45 L25 53" stroke="#c79b4e" stroke-width="3.4" stroke-linecap="round"/>'
+    +'<path d="M13 49 L21 57" stroke="url(#rg_hl)" stroke-width="6" stroke-linecap="round"/>'
+    +'<circle cx="12" cy="50" r="2.4" fill="#c79b4e"/>'
+    +'</svg>',
+  berserker:'<svg class="mmd-model" viewBox="0 0 64 64" aria-hidden="true">'
+    +'<defs><linearGradient id="bk_st" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d9e2e8"/><stop offset="0.5" stop-color="#8b9aa5"/><stop offset="1" stop-color="#3d484f"/></linearGradient>'
+    +'<linearGradient id="bk_hf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6a5236"/><stop offset="1" stop-color="#231810"/></linearGradient></defs>'
+    +'<rect x="30" y="6" width="4.5" height="52" rx="2" fill="url(#bk_hf)"/>'
+    +'<path d="M30 14 Q14 16 10 30 Q18 26 30 28 Z" fill="url(#bk_st)"/>'
+    +'<path d="M34.5 14 Q50.5 16 54.5 30 Q46.5 26 34.5 28 Z" fill="url(#bk_st)"/>'
+    +'<path d="M30 14 Q16 17 12 28 Q19 24 30 26 Z" fill="#fff" opacity="0.13"/>'
+    +'<rect x="27" y="12" width="10.5" height="4" rx="1.6" fill="#c79b4e"/>'
+    +'<rect x="28" y="52" width="8.5" height="4" rx="1.6" fill="#c79b4e"/>'
+    +'<circle cx="32.2" cy="34" r="2.6" fill="#e0762f"/>'
+    +'</svg>',
+  guardian:'<svg class="mmd-model" viewBox="0 0 64 64" aria-hidden="true">'
+    +'<defs><linearGradient id="gd_pl" x1="0" y1="0" x2="0.4" y2="1"><stop offset="0" stop-color="#6f7c85"/><stop offset="0.5" stop-color="#455057"/><stop offset="1" stop-color="#1c2226"/></linearGradient>'
+    +'<radialGradient id="gd_bs" cx="0.4" cy="0.35" r="0.7"><stop offset="0" stop-color="#f5d68a"/><stop offset="0.6" stop-color="#c79b4e"/><stop offset="1" stop-color="#6b4e1f"/></radialGradient></defs>'
+    +'<path d="M32 4 L54 12 L54 32 Q54 50 32 60 Q10 50 10 32 L10 12 Z" fill="url(#gd_pl)" stroke="#c79b4e" stroke-width="2"/>'
+    +'<path d="M32 4 L54 12 L54 32 Q54 44 32 56 Z" fill="#000" opacity="0.18"/>'
+    +'<path d="M32 9 L32 55" stroke="#c79b4e" stroke-width="1.2" opacity="0.5"/>'
+    +'<path d="M13 16 L51 16" stroke="#c79b4e" stroke-width="1.2" opacity="0.4"/>'
+    +'<circle cx="32" cy="28" r="7" fill="url(#gd_bs)"/>'
+    +'<circle cx="30" cy="26" r="2.4" fill="#ffe9bf" opacity="0.75"/>'
+    +'</svg>',
+  artisan:'<svg class="mmd-model" viewBox="0 0 64 64" aria-hidden="true">'
+    +'<defs><linearGradient id="ar_an" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5c666d"/><stop offset="0.55" stop-color="#333b41"/><stop offset="1" stop-color="#171c20"/></linearGradient>'
+    +'<linearGradient id="ar_hd" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c3ccd2"/><stop offset="1" stop-color="#4b565d"/></linearGradient>'
+    +'<radialGradient id="ar_gl" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#ffc36a"/><stop offset="1" stop-color="#e0762f" stop-opacity="0"/></radialGradient></defs>'
+    +'<ellipse cx="32" cy="30" rx="17" ry="6" fill="url(#ar_gl)" opacity="0.5"/>'
+    +'<path d="M12 34 L46 34 L52 40 L44 40 L44 44 L20 44 L20 40 L12 40 Z" fill="url(#ar_an)"/>'
+    +'<path d="M12 34 L46 34 L48 36 L14 36 Z" fill="#fff" opacity="0.10"/>'
+    +'<path d="M24 44 L40 44 L44 56 L20 56 Z" fill="url(#ar_an)"/>'
+    +'<path d="M18 56 L46 56" stroke="#c79b4e" stroke-width="2" stroke-linecap="round"/>'
+    +'<rect x="36" y="8" width="4" height="20" rx="1.6" transform="rotate(24 38 18)" fill="#6a5236"/>'
+    +'<rect x="28" y="6" width="16" height="8" rx="1.8" transform="rotate(24 36 10)" fill="url(#ar_hd)"/>'
+    +'<circle cx="24" cy="30" r="1.6" fill="#e0762f"/>'
+    +'<circle cx="41" cy="31" r="1.2" fill="#f5c451"/>'
+    +'</svg>',
+};
+
+/* Path sigils (0.9.15) — the three character types had no artwork at all, just a
+   coloured word. One mark each: even scales, a grinning skull, a bolt. */
+const TYPE_SIGILS={
+  normal:'<svg class="mmd-sigil" viewBox="0 0 48 48" aria-hidden="true">'
+    +'<path d="M24 6 L24 40" stroke="#c79b4e" stroke-width="2.4" stroke-linecap="round"/>'
+    +'<path d="M9 16 L39 16" stroke="#c79b4e" stroke-width="2.4" stroke-linecap="round"/>'
+    +'<path d="M9 16 L4 27 Q9 31 14 27 Z" fill="#c79b4e" opacity="0.85"/>'
+    +'<path d="M39 16 L34 27 Q39 31 44 27 Z" fill="#c79b4e" opacity="0.85"/>'
+    +'<rect x="17" y="39" width="14" height="3.4" rx="1.7" fill="#c79b4e"/>'
+    +'<circle cx="24" cy="11" r="2.6" fill="#f0c772"/>'
+    +'</svg>',
+  hardcore:'<svg class="mmd-sigil" viewBox="0 0 48 48" aria-hidden="true">'
+    +'<defs><linearGradient id="hc_sk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e6ddd0"/><stop offset="1" stop-color="#8a7f70"/></linearGradient></defs>'
+    +'<path d="M24 6 Q38 6 38 21 Q38 28 33 31 L33 37 Q33 40 30 40 L18 40 Q15 40 15 37 L15 31 Q10 28 10 21 Q10 6 24 6 Z" fill="url(#hc_sk)"/>'
+    +'<ellipse cx="18" cy="22" rx="4.2" ry="4.8" fill="#2a1408"/>'
+    +'<ellipse cx="30" cy="22" rx="4.2" ry="4.8" fill="#2a1408"/>'
+    +'<circle cx="18" cy="22" r="1.6" fill="#c4543a"/>'
+    +'<circle cx="30" cy="22" r="1.6" fill="#c4543a"/>'
+    +'<path d="M24 27 L21.5 32 L26.5 32 Z" fill="#2a1408"/>'
+    +'<path d="M19 36 L19 40 M24 36 L24 40 M29 36 L29 40" stroke="#2a1408" stroke-width="1.5"/>'
+    +'</svg>',
+  accelerated:'<svg class="mmd-sigil" viewBox="0 0 48 48" aria-hidden="true">'
+    +'<defs><linearGradient id="ac_bo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#bfe4ff"/><stop offset="0.5" stop-color="#4a90d9"/><stop offset="1" stop-color="#1f4d80"/></linearGradient></defs>'
+    +'<path d="M6 22 L18 22 M4 30 L14 30 M8 14 L16 14" stroke="#4a90d9" stroke-width="2" opacity="0.45" stroke-linecap="round"/>'
+    +'<path d="M28 4 L14 26 L23 26 L19 44 L36 20 L26 20 L31 4 Z" fill="url(#ac_bo)"/>'
+    +'<path d="M28 4 L16 24 L23 24 Z" fill="#fff" opacity="0.25"/>'
+    +'</svg>',
 };
 const CHAR_CLASSES={
   rogue:{ name:'Rogue', tag:'Light · Speed', model:CLASS_MODELS.rogue,
@@ -24145,31 +24248,60 @@ function mmOpenDestiny(mode, slot, name){
   $('mmDestiny').classList.remove('mm-hidden');
 }
 function mmRenderDestiny(){
+  /* Path cards: sigil + name on one row, the trade-off stated as two mono chips.
+     The signed XP/drop numbers ARE the decision, so they get their own row rather
+     than being buried at the end of the blurb. */
   const tb=$('mmdTypes'); tb.innerHTML='';
   ['normal','hardcore','accelerated'].forEach(key=>{
     const t=CHAR_TYPES[key];
-    const xpStr=t.xpMult===1?'XP ×1.0':((t.xpMult>=1?'+':'')+Math.round((t.xpMult-1)*100)+'% XP');
-    const drStr=t.dropMult===1?'Drops ×1.0':((t.dropMult>=1?'+':'')+Math.round((t.dropMult-1)*100)+'% Drops');
-    const el=document.createElement('div');
-    el.className='mmd-card'+(mmSelType===key?' mmd-on':'');
-    el.innerHTML='<div class="mmd-tname" style="color:'+t.col+'">'+t.name+'</div>'+
-      '<div class="mmd-tag" style="background:'+t.col+'">'+t.tag+'</div>'+
+    const sign=v=>(v>=1?'+':'')+Math.round((v-1)*100)+'%';
+    const xpStr=t.xpMult===1?'XP ±0':('XP '+sign(t.xpMult));
+    const drStr=t.dropMult===1?'Drops ±0':('Drops '+sign(t.dropMult));
+    const good=v=>v>1?' mmd-up':(v<1?' mmd-down':'');
+    const el=document.createElement('button');
+    el.type='button';
+    el.className='mmd-card mmd-type'+(mmSelType===key?' mmd-on':'');
+    el.setAttribute('aria-pressed', mmSelType===key?'true':'false');
+    el.style.setProperty('--accent', t.col);
+    el.innerHTML='<div class="mmd-head">'+(TYPE_SIGILS[key]||'')+
+        '<div class="mmd-headtxt"><div class="mmd-tname">'+t.name+'</div>'+
+        '<div class="mmd-tag">'+t.tag+'</div></div></div>'+
       '<div class="mmd-blurb">'+t.blurb+'</div>'+
-      '<div class="mmd-stats"><span class="mmd-pill">'+xpStr+'</span><span class="mmd-pill">'+drStr+'</span></div>';
+      '<div class="mmd-stats"><span class="mmd-pill'+good(t.xpMult)+'">'+xpStr+'</span>'+
+        '<span class="mmd-pill'+good(t.dropMult)+'">'+drStr+'</span></div>';
     el.addEventListener('click',()=>{ mmSelType=key; mmRenderDestiny(); });
     tb.appendChild(el);
   });
+
   const cb=$('mmdClasses'); cb.innerHTML='';
   ['rogue','berserker','guardian','artisan'].forEach(key=>{
     const c=CHAR_CLASSES[key];
-    const el=document.createElement('div');
-    el.className='mmd-card'+(mmSelClass===key?' mmd-on':'');
-    el.innerHTML=c.model+'<div class="mmd-tname">'+c.name+'</div>'+
+    const el=document.createElement('button');
+    el.type='button';
+    el.className='mmd-card mmd-class'+(mmSelClass===key?' mmd-on':'');
+    el.setAttribute('aria-pressed', mmSelClass===key?'true':'false');
+    el.innerHTML='<div class="mmd-emblem">'+c.model+'</div>'+
+      '<div class="mmd-tname">'+c.name+'</div>'+
       '<div class="mmd-tag">'+c.tag+'</div>'+
       '<div class="mmd-blurb">'+c.blurb+'</div>';
     el.addEventListener('click',()=>{ mmSelClass=key; mmRenderDestiny(); });
     cb.appendChild(el);
   });
+
+  // Say the choice back to the player instead of just un-greying a button.
+  const sum=$('mmdSummary');
+  if(sum){
+    if(mmSelType&&mmSelClass){
+      sum.innerHTML='<span class="mmd-sum-lbl">Your destiny</span>'+
+        '<span class="mmd-sum-val" style="color:'+CHAR_TYPES[mmSelType].col+'">'+CHAR_TYPES[mmSelType].name+'</span>'+
+        '<span class="mmd-sum-sep">·</span>'+
+        '<span class="mmd-sum-val">'+CHAR_CLASSES[mmSelClass].name+'</span>';
+      sum.classList.add('mmd-sum-ready');
+    }else{
+      sum.textContent = !mmSelType ? 'Choose a path to continue' : 'Now choose a calling';
+      sum.classList.remove('mmd-sum-ready');
+    }
+  }
   $('mmdConfirm').disabled = !(mmSelType&&mmSelClass);
 }
 function mmConfirmDestiny(){
@@ -24554,11 +24686,26 @@ $('btnMenu').addEventListener('click',async()=>{
   if(ok) mmQuitToMenu();
 });
 $('mmNameOk').addEventListener('click',mmConfirmName);
-$('mmNameCancel').addEventListener('click',()=>$('mmNameModal').classList.add('mm-hidden'));
+$('mmNameCancel').addEventListener('click',()=>{
+  $('mmNameModal').classList.add('mm-hidden');
+  mmEnsureMenuVisible();
+});
+/* Last line of defence: if no menu surface is showing and no character is loaded,
+   the player is staring at an empty game. Put them back on character select. */
+function mmEnsureMenuVisible(){
+  if(mmSlot) return;                       // a character is loaded; the game is real
+  const shown = id => !$(id).classList.contains('mm-hidden');
+  if(shown('emberMenu') || shown('charSelect') || shown('mmDestiny') || shown('mmNameModal')) return;
+  mmShowChars();
+}
 $('mmdConfirm').addEventListener('click',mmConfirmDestiny);
 $('mmdBack').addEventListener('click',()=>{
   $('mmDestiny').classList.add('mm-hidden');
-  if(mmDestinyMode==='new') mmNewChar(mmDestinySlot); // back to the name prompt
+  // mmOpenDestiny hid charSelect. Restore it *before* re-opening the name prompt,
+  // otherwise cancelling that prompt leaves every overlay hidden and drops the
+  // player onto a bare game layout with no character loaded.
+  if(mmDestinyMode==='new'){ mmShowChars(); mmNewChar(mmDestinySlot); }
+  else mmShowChars();
 });
 $('mmNameInput').addEventListener('keydown',e=>{ if(e.key==='Enter') mmConfirmName(); });
 $('mmImportBtn').addEventListener('click',()=>{ $('mmImportInput').value=''; $('mmImportMsg').textContent=''; $('mmImportModal').classList.remove('mm-hidden'); });
