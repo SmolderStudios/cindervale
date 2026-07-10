@@ -1602,18 +1602,24 @@ header h1 .flame{color:var(--ember)}
 .mm-slot .mm-del{flex:none;background:transparent;border:1px solid #6e552c;
   color:#a08a64;border-radius:5px;padding:6px 9px;cursor:pointer;font-size:15px}
 .mm-slot .mm-del:hover{border-color:#c4543a;color:#c4543a}
+.mm-slot .mm-exp{flex:none;background:transparent;border:1px solid #6e552c;
+  color:#a08a64;border-radius:5px;padding:6px 9px;cursor:pointer;font-size:15px;margin-right:6px}
+.mm-slot .mm-exp:hover{border-color:#c79b4e;color:#f0c772}
+#mmExportModal textarea{width:100%;height:96px;background:#0d0905;color:#ead9b5;
+  border:1px solid #6e552c;border-radius:4px;padding:8px;font-family:'Courier New',monospace;
+  font-size:12px;margin-bottom:10px;resize:vertical;word-break:break-all}
 #emberMenu .mm-ver{position:absolute;bottom:14px;right:18px;color:#a08a64;
   font-family:'Courier New',monospace;font-size:13px;letter-spacing:1px}
-#mmNameModal,#mmImportModal{position:fixed;inset:0;z-index:10000;display:flex;align-items:center;
+#mmNameModal,#mmImportModal,#mmExportModal{position:fixed;inset:0;z-index:10000;display:flex;align-items:center;
   justify-content:center;padding:18px;background:#000a;font-family:'Crimson Pro',serif}
-#mmNameModal.mm-hidden,#mmImportModal.mm-hidden{display:none}
-#mmNameModal .mm-card,#mmImportModal .mm-card{background:#251a10;border:1px solid #c79b4e;border-radius:8px;
+#mmNameModal.mm-hidden,#mmImportModal.mm-hidden,#mmExportModal.mm-hidden{display:none}
+#mmNameModal .mm-card,#mmImportModal .mm-card,#mmExportModal .mm-card{background:#251a10;border:1px solid #c79b4e;border-radius:8px;
   padding:20px;max-width:360px;width:100%;box-shadow:0 10px 30px #000}
-#mmNameModal h3,#mmImportModal h3{color:#c79b4e;font-variant:small-caps;letter-spacing:1px;font-size:19px;margin:0 0 6px}
-#mmNameModal p,#mmImportModal p{color:#a08a64;font-size:14px;margin:0 0 12px}
+#mmNameModal h3,#mmImportModal h3,#mmExportModal h3{color:#c79b4e;font-variant:small-caps;letter-spacing:1px;font-size:19px;margin:0 0 6px}
+#mmNameModal p,#mmImportModal p,#mmExportModal p{color:#a08a64;font-size:14px;margin:0 0 12px}
 #mmNameModal input{width:100%;background:#0d0905;color:#ead9b5;border:1px solid #6e552c;
   border-radius:4px;padding:9px 11px;font-family:inherit;font-size:16px;margin-bottom:14px}
-#mmNameModal .mm-row,#mmImportModal .mm-row{display:flex;gap:8px;justify-content:flex-end}
+#mmNameModal .mm-row,#mmImportModal .mm-row,#mmExportModal .mm-row{display:flex;gap:8px;justify-content:flex-end}
 .mm-mini{background:#322415;border:1px solid #6e552c;color:#ead9b5;border-radius:4px;
   padding:7px 15px;font-family:inherit;font-size:14px;cursor:pointer}
 .mm-mini.mm-primary{border-color:#c79b4e;color:#f0c772}
@@ -2676,7 +2682,7 @@ header h1 .flame{color:var(--ember)}
   <div class="mm-btns">
     <button class="mm-btn mm-primary" id="mmPlay">▶ Play</button>
   </div>
-  <div class="mm-ver">v0.9.01</div>
+  <div class="mm-ver">v0.9.02</div>
 </div>
 
 <!-- ===== CHARACTER SELECT (added) ===== -->
@@ -2707,14 +2713,32 @@ header h1 .flame{color:var(--ember)}
 <div id="mmImportModal" class="mm-hidden">
   <div class="mm-card" style="max-width:420px">
     <h3>Import Save Code</h3>
-    <p>Paste an exported save code. It will be loaded into the first empty character slot.</p>
+    <p>Paste an exported save code, or load a <code>.evsave</code> backup file. It will be loaded into the first empty character slot.</p>
     <textarea id="mmImportInput" style="width:100%;height:90px;background:#0d0905;color:#ead9b5;
       border:1px solid #6e552c;border-radius:4px;padding:8px;font-family:'Courier New',monospace;
       font-size:13px;margin-bottom:14px;resize:vertical"></textarea>
+    <input type="file" id="mmImportFile" accept=".evsave,.txt,.json,application/json" style="display:none">
     <div id="mmImportMsg" style="font-size:14px;color:#c4543a;margin:-6px 0 12px;min-height:16px"></div>
     <div class="mm-row">
+      <button class="mm-mini" id="mmImportFileBtn" style="margin-right:auto">Load file…</button>
       <button class="mm-mini" id="mmImportCancel">Cancel</button>
       <button class="mm-mini mm-primary" id="mmImportOk">Load</button>
+    </div>
+  </div>
+</div>
+
+<!-- Export counterpart to the import modal. Produces the exact base64 payload
+     mmDoImport() accepts, plus a .evsave file download for real backups. -->
+<div id="mmExportModal" class="mm-hidden">
+  <div class="mm-card" style="max-width:420px">
+    <h3>Export Save</h3>
+    <p id="mmExportSub">Copy this code, or download it as a backup file.</p>
+    <textarea id="mmExportOut" readonly onclick="this.select()"></textarea>
+    <div id="mmExportMsg" style="font-size:14px;color:#7da33f;margin:-4px 0 12px;min-height:16px"></div>
+    <div class="mm-row">
+      <button class="mm-mini" id="mmExportCopy" style="margin-right:auto">Copy code</button>
+      <button class="mm-mini" id="mmExportClose">Close</button>
+      <button class="mm-mini mm-primary" id="mmExportDl">Download backup</button>
     </div>
   </div>
 </div>
@@ -8360,8 +8384,8 @@ const TREES = {
     {id:'ag_speed', name:'Fleet Foot',     icon:AG_TREE_ICONS.ag_speed,max:15,req:0,  desc:r=>`Reduces task time by ${r*2}%`, next:r=>`+2% faster → ${r*2}%`},
     {id:'ag_coins', name:'Lap Reward',     icon:AG_TREE_ICONS.ag_coins,max:15,req:0,  desc:r=>`+${r*3}% coin reward per lap`,    next:r=>`+3% coins → ${r*3}%`},
     {id:'ag_xp',    name:'Endurance',      icon:AG_TREE_ICONS.ag_xp,max:10,req:0,  desc:r=>`+${r*3}% Agility XP`,             next:r=>`+3% XP → ${r*3}%`},
-    {id:'ag_drop',  name:'Lucky Stride',   icon:AG_TREE_ICONS.ag_drop,max:15,req:15, desc:r=>`${r*4}% bonus rare drop chance from all activities (coming soon)`, next:r=>`+4% drop rate → ${r*4}%`},
-    {id:'ag_shortcut',name:'Shortcutter',  icon:AG_TREE_ICONS.ag_shortcut,max:12,req:25, desc:r=>`${r*4}% chance to cut 10% off the current lap time (coming soon)`,next:r=>`+4% skip chance`},
+    {id:'ag_drop',  name:'Lucky Stride',   icon:AG_TREE_ICONS.ag_drop,max:15,req:15, desc:r=>`+${r*4}% rare drop chance from all skilling activities`, next:r=>`+4% drop rate → ${r*4}%`},
+    {id:'ag_shortcut',name:'Shortcutter',  icon:AG_TREE_ICONS.ag_shortcut,max:12,req:25, desc:r=>`${r*4}% chance to cut 10% off the current lap time`,next:r=>`+4% skip chance`},
     {id:'ag_master1',name:'Marathon',      icon:AG_TREE_ICONS.ag_master1,max:1, req:20, desc:r=>r?'Coin rewards +25%':'Lap coin rewards +25%',next:()=>'+25% all lap coin rewards'},
     {id:'ag_master2',name:'Windrunner',    icon:AG_TREE_ICONS.ag_master2,max:1, req:40, desc:r=>r?'Run 15% faster at all times (passive)':'Permanent +15% run speed on top of all bonuses',next:()=>'+15% run speed permanently'},
     {id:'ag_master3',name:'Iron Will',     icon:AG_TREE_ICONS.ag_master3,max:1, req:60, desc:r=>r?'Agility XP +25% permanently':'Permanent +25% Agility XP',next:()=>'+25% Agility XP permanently'},
@@ -8608,8 +8632,8 @@ const PASSIVE_TIPS={
   ag_speed:     'Reduces lap time. +2% per rank, up to +30%.',
   ag_coins:     'Increases coin reward for completing each lap.\nAt max (15): +45% coins per lap.',
   ag_xp:        'Multiplies all Agility XP. At max (10): +30%.',
-  ag_drop:      'Passive bonus to rare drop chances across all skills. (Implementation coming soon.)',
-  ag_shortcut:  'Chance to shave 10% off the current lap time mid-run. (Implementation coming soon.)',
+  ag_drop:      'Proportional bonus to rare drop chances across all skills.\nAt max (15): +60%. Combat drops are unaffected.',
+  ag_shortcut:  'Each lap has a chance to shave 10% off its time.\nAt max (12): 48% chance per lap, ~4.8% faster overall.',
   ag_master1:   'All lap coin rewards permanently increased by +25%.\nStacks with the Lap Reward node.',
   ag_master2:   'Permanent +15% run speed on top of all other speed bonuses.\\nStacks with Fleet Foot, Void Runner, and gear.',
   ag_master3:   'Permanent +25% Agility XP from all laps.\nReplaces the old level-unlock perk with immediate ongoing value.',
@@ -12028,14 +12052,25 @@ function charType(){ return (state&&CHAR_TYPES[state.charType])?state.charType:'
 function charTypeDef(){ return CHAR_TYPES[charType()]; }
 function charTypeXpMult(){ return charTypeDef().xpMult; }
 function charDropMult(){ return charTypeDef().dropMult; }
+/* Lucky Stride (agility ag_drop) — proportional bonus to every skilling rare roll,
+   +4%/rank, +60% at max. Proportional and cap-clamped like every other drop
+   multiplier, so it never turns an extreme rare into a common. Monster drops roll
+   through their own path (see the `d.chance*mul*cMul` table roll) and never see
+   this, which is why effDropChance() takes a `combat` opt-out below. */
+function luckyStrideMult(){
+  if(!state||!state.tree) return 1;
+  return 1 + treeRank('agility','ag_drop')*0.04;
+}
 /* Effective drop chance after the character-type drop dial. Boss trophies
    (≥99%) are exempt; everything else scales proportionally and clamps at
    RARE_DROP_CAP. The single source of truth shared by the roll logic AND every
-   rate display, so what the player sees always equals what actually rolls. */
-function effDropChance(c){
+   rate display, so what the player sees always equals what actually rolls.
+   Pass combat=true from monster-drop rate displays: those rolls are made
+   elsewhere and get no Lucky Stride, so showing it would overstate them. */
+function effDropChance(c,combat){
   if(!(c>0)) return c||0;
   if(c>=0.99) return c;
-  return Math.min(RARE_DROP_CAP, c*charDropMult());
+  return Math.min(RARE_DROP_CAP, c*charDropMult()*(combat?1:luckyStrideMult()));
 }
 function charClass(){ return (state&&CHAR_CLASSES[state.charClass])?state.charClass:null; }
 /* Weapon weight-class from dmgType: stab/ranged→light, crush→heavy, slash→standard.
@@ -13827,6 +13862,15 @@ function tick(){
     toast(skill==='cooking'?'Out of raw fish — stopped.':'Out of materials — stopped.');
   } else {
     state.actionStart+=cycles*ms;
+    // Shortcutter (ag_shortcut) — each completed lap has a 4%/rank chance to cut a
+    // corner, saving 10% of that lap's time. Credited back to actionStart rather
+    // than shrinking ms: the tick resolves whole batches of cycles against a single
+    // ms, so ms must stay constant across a batch or the elapsed math drifts.
+    if(skill==='agility'&&done>0){
+      const scP=Math.min(1, treeRank('agility','ag_shortcut')*0.04);
+      const hits=binom(done, scP);
+      if(hits>0) state.actionStart-=hits*ms*0.10;
+    }
   }
   saveGame();
   renderAll();
@@ -13861,7 +13905,10 @@ function grantOffline(){
     const act=getAct(skill,actId);
     if(act){
       const ms=actMs(act,skill);
-      const effectiveMs=ms/om.rate; // slower while offline
+      // Shortcutter can't roll per-lap across an offline block, so it lands as its
+      // expected value: chance × 10% off each lap. Same long-run rate as the live tick.
+      const scEV=skill==='agility'?(1-Math.min(1,treeRank('agility','ag_shortcut')*0.04)*0.10):1;
+      const effectiveMs=ms*scEV/om.rate; // slower while offline
       const cycles=Math.floor(away/effectiveMs);
       if(cycles>0){
         const before=levelFromXp(state.xp[skill]);
@@ -15669,7 +15716,7 @@ function buildMonLogHTML(){
     return `<div class="mlog-drop${has?' got':''}" data-mldrop="${d.id}" data-disc="${disc?1:0}" style="cursor:help">
       <span class="mld-ic">${iconHTML(d.id)}</span>
       <span class="mld-nm">${it?it.name:d.id}${qtyTag}</span>
-      <span class="mld-rate">${_fmtMonChance(effDropChance(d.chance))}</span>
+      <span class="mld-rate">${_fmtMonChance(effDropChance(d.chance,true))}</span>
       <span class="mld-cnt">${has?'×'+got.toLocaleString():'—'}</span>
       <span class="mld-mark">${has?'✓':'✗'}</span>
     </div>`;
@@ -23461,8 +23508,13 @@ function mmRenderSlots(){
         '<div class="mm-info"><div class="mm-nm">'+mmEsc(s.name)+'</div>'+
         '<div class="mm-mt">Total Lv '+s.totalLevel+' · '+iconHTML('ui_coin')+' '+fmtCoins(s.coins,true)+
         (s.lastSeen?' · '+mmFmtAgo(s.lastSeen):'')+'</div>'+badges+'</div>'+
+        '<button class="mm-exp" data-exp="'+n+'" title="Export / back up this save"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M8 11l4 4 4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg></button>'+
         '<button class="mm-del" data-del="'+n+'" title="Delete"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12"/><path d="M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/></svg></button>';
-      el.addEventListener('click',e=>{ if(e.target.closest('[data-del]')) return; mmStart(n,false); });
+      el.addEventListener('click',e=>{
+        if(e.target.closest('[data-del]')) return;
+        if(e.target.closest('[data-exp]')){ mmOpenExport(n); return; }
+        mmStart(n,false);
+      });
     }else{
       el.innerHTML='<div class="mm-ic"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg></div>'+
         '<div class="mm-info"><div class="mm-nm">Empty Slot '+n+'</div>'+
@@ -23703,6 +23755,62 @@ function mmDoImport(){
   $('mmImportModal').classList.add('mm-hidden');
   mmRenderSlots();
 }
+
+/* ── Save export ───────────────────────────────────────────────────────────
+   The import path has always accepted a base64 code (or raw JSON), but nothing
+   ever produced one. mmExportCode() emits exactly what mmDoImport() eats, so a
+   round-trip is lossless: the payload is the raw slot state, unwrapped, which
+   normalizeState() then migrates on load like any other save.
+   Also offered as a .evsave file — a real backup artifact, and the thing Steam
+   Cloud will sync once the wrapper mirrors it out of localStorage.           */
+let mmExportSlotN = 0;
+function mmExportCode(n){
+  const raw = localStorage.getItem(mmKey(n));
+  if(!raw) return '';
+  try{ return btoa(unescape(encodeURIComponent(raw))); }catch(e){ return ''; }
+}
+function mmOpenExport(n){
+  const code = mmExportCode(n);
+  if(!code) return;
+  mmExportSlotN = n;
+  let nm='character';
+  try{ nm = (JSON.parse(localStorage.getItem(mmKey(n))).name)||nm; }catch(e){}
+  $('mmExportSub').textContent = 'Backup for "'+nm+'" (slot '+n+'). Copy the code, or download it as a file.';
+  $('mmExportOut').value = code;
+  $('mmExportMsg').textContent = '';
+  $('mmExportModal').classList.remove('mm-hidden');
+}
+function mmExportDownload(){
+  const n = mmExportSlotN;
+  const code = mmExportCode(n);
+  if(!code) return;
+  let nm='character', tot=0;
+  try{ const s=mmSummary(n); if(s){ nm=(s.name||nm).replace(/[^a-z0-9_-]/gi,'_'); tot=s.totalLevel||0; } }catch(e){}
+  const d=new Date(), pad=v=>String(v).padStart(2,'0');
+  const stamp=d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate());
+  const fname='embervale-'+nm+'-lv'+tot+'-'+stamp+'.evsave';
+  try{
+    const url=URL.createObjectURL(new Blob([code],{type:'text/plain'}));
+    const a=document.createElement('a');
+    a.href=url; a.download=fname; document.body.appendChild(a); a.click();
+    document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+    $('mmExportMsg').style.color='#7da33f';
+    $('mmExportMsg').textContent='Saved '+fname;
+  }catch(e){
+    $('mmExportMsg').style.color='#c4543a';
+    $('mmExportMsg').textContent='Download failed — copy the code instead.';
+  }
+}
+function mmExportCopy(){
+  const ta=$('mmExportOut');
+  ta.select();
+  let ok=false;
+  try{ ok=document.execCommand('copy'); }catch(e){}
+  if(!ok && navigator.clipboard){ navigator.clipboard.writeText(ta.value).then(()=>{},()=>{}); ok=true; }
+  $('mmExportMsg').style.color = ok?'#7da33f':'#c4543a';
+  $('mmExportMsg').textContent = ok?'Code copied to clipboard.':'Copy failed — select the text manually.';
+}
 function mmStartEngine(){
   if(mmStarted) return;
   mmStarted=true;
@@ -23738,6 +23846,21 @@ $('mmNameInput').addEventListener('keydown',e=>{ if(e.key==='Enter') mmConfirmNa
 $('mmImportBtn').addEventListener('click',()=>{ $('mmImportInput').value=''; $('mmImportMsg').textContent=''; $('mmImportModal').classList.remove('mm-hidden'); });
 $('mmImportOk').addEventListener('click',mmDoImport);
 $('mmImportCancel').addEventListener('click',()=>$('mmImportModal').classList.add('mm-hidden'));
+/* File-backed import: read the .evsave into the textarea, then reuse mmDoImport
+   verbatim so file and pasted-code paths can never validate differently. */
+$('mmImportFileBtn').addEventListener('click',()=>$('mmImportFile').click());
+$('mmImportFile').addEventListener('change',e=>{
+  const f=e.target.files&&e.target.files[0];
+  if(!f) return;
+  const rd=new FileReader();
+  rd.onload=()=>{ $('mmImportInput').value=String(rd.result||'').trim(); mmDoImport(); };
+  rd.onerror=()=>{ $('mmImportMsg').textContent='Could not read that file.'; };
+  rd.readAsText(f);
+  e.target.value='';
+});
+$('mmExportCopy').addEventListener('click',mmExportCopy);
+$('mmExportDl').addEventListener('click',mmExportDownload);
+$('mmExportClose').addEventListener('click',()=>$('mmExportModal').classList.add('mm-hidden'));
 
 (function(){
   mmRecover();
