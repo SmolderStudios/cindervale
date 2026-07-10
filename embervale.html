@@ -1622,10 +1622,6 @@ header h1 .flame{color:var(--ember)}
 .ach-head-c{font-family:'Courier New',monospace;font-size:13px;color:#a08a64;margin:2px 0 7px}
 .ach-bar{height:8px;background:#150c05;border:1px solid #4a3820;border-radius:4px;overflow:hidden}
 .ach-bar-fill{height:100%;background:linear-gradient(90deg,#8a5a20,#f0c772);transition:width .35s ease}
-.ach-cat{display:flex;justify-content:space-between;align-items:baseline;margin:18px 0 8px;
-  font-variant:small-caps;letter-spacing:1.3px;font-size:16px;color:#c79b4e;
-  border-bottom:1px solid #3a2c18;padding-bottom:4px}
-.ach-cat-c{font-family:'Courier New',monospace;font-size:12px;color:#7a6048;letter-spacing:0}
 .ach-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
 .ach-card{display:flex;gap:11px;align-items:center;background:var(--raised,#1c1309);
   border:1px solid #3a2c18;border-radius:7px;padding:11px 12px;opacity:.62}
@@ -1782,16 +1778,16 @@ header h1 .flame{color:var(--ember)}
 .mlog-skbtn{display:flex;flex-direction:column;align-items:center;gap:2px;background:var(--raised);border:1px solid var(--trim-d);border-radius:7px;padding:8px 4px 6px;cursor:pointer;transition:border-color .12s,background .12s}
 .mlog-skbtn:hover{border-color:var(--trim);background:#231811}
 .mlog-skbtn.on{border-color:var(--ember);background:#2a1d10}
-/* Category sub-tabs — only rendered for skills with many activities (Crafting, Jeweler). */
-.mlog-catbar{display:flex;flex-wrap:wrap;gap:5px;margin:10px 0 8px}
-.mlog-catbtn{display:inline-flex;align-items:center;gap:6px;background:var(--raised);
+/* Category sub-tabs — shared by the Mastery Log (Crafting, Jeweler) and Achievements. */
+.mlog-catbar,.ach-catbar{display:flex;flex-wrap:wrap;gap:5px;margin:10px 0 8px}
+.mlog-catbtn,.ach-catbtn{display:inline-flex;align-items:center;gap:6px;background:var(--raised);
   border:1px solid var(--trim-d);border-radius:6px;padding:5px 10px;cursor:pointer;
   color:#a08a64;font-family:inherit;font-size:13px;font-variant:small-caps;letter-spacing:.6px;
   transition:border-color .12s,background .12s,color .12s}
-.mlog-catbtn:hover{border-color:var(--trim);color:#ead9b5}
-.mlog-catbtn.on{border-color:var(--ember);background:#2a1d10;color:#f0c772}
+.mlog-catbtn:hover,.ach-catbtn:hover{border-color:var(--trim);color:#ead9b5}
+.mlog-catbtn.on,.ach-catbtn.on{border-color:var(--ember);background:#2a1d10;color:#f0c772}
 .mcat-cnt{font-family:'Courier New',monospace;font-size:11px;color:#6e552c;letter-spacing:0}
-.mlog-catbtn.on .mcat-cnt{color:#a08a64}
+.mlog-catbtn.on .mcat-cnt,.ach-catbtn.on .mcat-cnt{color:#a08a64}
 .mlog-skbtn .msk-ic{font-size:22px;line-height:1;display:flex}
 .mlog-skbtn .msk-ic svg{width:22px;height:22px}
 .mlog-skbtn .msk-nm{font-size:11px;color:var(--trim);text-align:center;line-height:1.1}
@@ -2722,7 +2718,7 @@ header h1 .flame{color:var(--ember)}
   <div class="mm-btns">
     <button class="mm-btn mm-primary" id="mmPlay">▶ Play</button>
   </div>
-  <div class="mm-ver">v0.9.05</div>
+  <div class="mm-ver">v0.9.06</div>
 </div>
 
 <!-- ===== CHARACTER SELECT (added) ===== -->
@@ -20376,36 +20372,57 @@ function checkAchievements(){
   if(backfill) state.achBackfilled=1;
 }
 
+/* Selected achievement category (UI-only, not persisted). '__all' shows everything. */
+var _achCat=ACH_CATS[0][0];
+
 function renderAchievements(){
   const box=$('achView');
   if(!box) return;
   const total=ACHIEVEMENTS.length, got=achCount();
   const pct=total?Math.round(got/total*100):0;
+
+  if(_achCat!=='__all' && !ACH_CATS.some(c=>c[0]===_achCat)) _achCat=ACH_CATS[0][0];
+
+  /* All 33 cards stacked ran the panel to ~2100px — well past the viewport.
+     One category at a time keeps it to a screenful; the header bar still carries
+     the overall progress, so nothing is lost by not showing every card at once. */
   let html='<div class="ach-head">'
     +'<div class="ach-head-t">Achievements</div>'
     +'<div class="ach-head-c">'+got+' / '+total+' unlocked</div>'
     +'<div class="ach-bar"><div class="ach-bar-fill" style="width:'+pct+'%"></div></div>'
     +'</div>';
+
+  html+='<div class="ach-catbar">';
   for(const [key,label] of ACH_CATS){
     const list=ACHIEVEMENTS.filter(a=>a.cat===key);
     if(!list.length) continue;
     const done=list.filter(a=>achUnlocked(a.id)).length;
-    html+='<div class="ach-cat"><span>'+label+'</span><span class="ach-cat-c">'+done+'/'+list.length+'</span></div>';
-    html+='<div class="ach-grid">';
-    for(const a of list){
-      const has=achUnlocked(a.id);
-      const when=has?new Date(state.achievements[a.id]).toLocaleDateString():'';
-      html+='<div class="ach-card'+(has?' got':'')+'">'
-        +'<div class="ach-ic">'+iconHTML(has?a.icon:'ui_lock')+'</div>'
-        +'<div class="ach-body">'
-          +'<div class="ach-nm">'+a.name+'</div>'
-          +'<div class="ach-ds">'+a.desc+'</div>'
-          +(has?'<div class="ach-when">Unlocked '+when+'</div>':'')
-        +'</div></div>';
-    }
-    html+='</div>';
+    html+='<button class="ach-catbtn'+(_achCat===key?' on':'')+'" data-achcat="'+key+'">'
+      +label+'<span class="mcat-cnt">'+done+'/'+list.length+'</span></button>';
   }
+  html+='<button class="ach-catbtn'+(_achCat==='__all'?' on':'')+'" data-achcat="__all">'
+    +'All<span class="mcat-cnt">'+got+'/'+total+'</span></button>';
+  html+='</div>';
+
+  const shown=_achCat==='__all'?ACHIEVEMENTS:ACHIEVEMENTS.filter(a=>a.cat===_achCat);
+  html+='<div class="ach-grid">';
+  for(const a of shown){
+    const has=achUnlocked(a.id);
+    const when=has?new Date(state.achievements[a.id]).toLocaleDateString():'';
+    html+='<div class="ach-card'+(has?' got':'')+'">'
+      +'<div class="ach-ic">'+iconHTML(has?a.icon:'ui_lock')+'</div>'
+      +'<div class="ach-body">'
+        +'<div class="ach-nm">'+a.name+'</div>'
+        +'<div class="ach-ds">'+a.desc+'</div>'
+        +(has?'<div class="ach-when">Unlocked '+when+'</div>':'')
+      +'</div></div>';
+  }
+  html+='</div>';
   box.innerHTML=html;
+
+  box.querySelectorAll('[data-achcat]').forEach(b=>{
+    b.addEventListener('click',()=>{ _achCat=b.getAttribute('data-achcat'); renderAchievements(); });
+  });
 }
 
 /* ════ [JS-24d] offline overlay ══════════════════════════════════════════════════ */
