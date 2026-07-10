@@ -103,13 +103,16 @@ header h1 .flame{color:var(--ember)}
    the same fraction of the window. That is the readability lever — a tighter
    cap plus a matching design width means bigger text at the same edge coverage.
    Sized against the REAL Electron client area (~1904x1000 once the title bar and
-   borders eat into a 1920x1080 window), not a bare 1920x1080 viewport. At zoom
-   1.231 the document ran 1075px tall and overflowed that client area by 75px.
-   Raising this cap and UI_DESIGN_W together drops zoom to ~1.12 — the document
-   fits, text sits near its original size, and the layout still reaches the edges.
-   Keep the two constants in step when tuning. */
+   borders eat into a 1920x1080 window), not a bare 1920x1080 viewport.
+
+   The binding constraint is the combat panel: it is ~868 CSS px tall, so its
+   bottom clears the fold only at zoom <= ~1.067. (At the old static zoom:1.1 it
+   already overhung by ~31px — this predates the dynamic scaling.) Zoom is
+   window/UI_DESIGN_W, so raising this cap and UI_DESIGN_W together shrinks the UI
+   while the rendered layout stays the same fraction of the window: combat fits,
+   and the layout still reaches the edges. Keep the two constants in step. */
 .layout{display:grid;grid-template-columns:320px 1fr 300px;gap:14px;padding:14px;
-  max-width:1640px;margin:0 auto;
+  max-width:1740px;margin:0 auto;
   align-items:start;
   overflow:visible;
 }
@@ -2724,7 +2727,7 @@ header h1 .flame{color:var(--ember)}
   <div class="mm-btns">
     <button class="mm-btn mm-primary" id="mmPlay">▶ Play</button>
   </div>
-  <div class="mm-ver">v0.9.08</div>
+  <div class="mm-ver">v0.9.09</div>
 </div>
 
 <!-- ===== CHARACTER SELECT (added) ===== -->
@@ -6777,11 +6780,12 @@ function showGearTip(html,x,y){
   var tw=el.offsetWidth||240,th=el.offsetHeight||100;
   var cx=x/z,cy=y/z;
   // Always to the RIGHT of the cursor — clamp on-screen near the edge instead
-  // of flipping to the left, so tooltips never switch sides.
+  // of flipping to the left, so tooltips never switch sides. Vertically we do
+  // flip above the cursor rather than clamp, so a tall tip near the bottom of
+  // the screen never covers the item it describes. See _ttFlipY.
   var tx=cx+14,ty=cy-10;
   if(tx+tw>W-10) tx=Math.max(10, W-tw-10);
-  if(ty+th>H-10) ty=H-th-10;
-  if(ty<10) ty=10;
+  ty=_ttFlipY(ty, cy, th, H);
   el.style.left=tx+'px'; el.style.top=ty+'px';
 }
 function hideGearTip(){ var el=_gtEl(); if(el) el.style.display='none'; }
@@ -19469,9 +19473,21 @@ function positionTooltip(tt, x, y){
   // so hovers never jump sides depending on mouse position.
   let tx=cx+14, ty=cy-10;
   if(tx+tw>W-10) tx=Math.max(10, W-tw-10);
-  if(ty+th>H-10) ty=H-th-10;
-  if(ty<10) ty=10;
+  // Vertically we DO flip: a tall tooltip near the bottom would otherwise be
+  // clamped to the bottom edge and cover the very thing being hovered. Flip it
+  // above the cursor instead, and only fall back to clamping when it fits in
+  // neither direction (a tooltip taller than the viewport).
+  ty=_ttFlipY(ty, cy, th, H);
   tt.style.left=tx+'px'; tt.style.top=ty+'px';
+}
+
+/* Shared vertical placement: below-cursor by default, above-cursor when that
+   would run off the bottom, clamped as a last resort. Used by both tooltips. */
+function _ttFlipY(ty, cy, th, H){
+  if(ty+th<=H-10) return Math.max(10, ty);
+  const above=cy-th-14;              // flip: sit fully above the cursor
+  if(above>=10) return above;
+  return Math.max(10, H-th-10);      // taller than the viewport — clamp
 }
 
 function hideTooltip(){ const tt=ttEl(); if(tt) tt.style.display='none'; }
@@ -24015,8 +24031,8 @@ function _rootZoom(){ var z=parseFloat(getComputedStyle(document.documentElement
 
    _rootZoom() reads this back off the computed style, so every rect-based
    position (tooltips, tutorial spotlight, popovers) follows with no extra work. */
-const UI_DESIGN_W = 1700;   // .layout max-width (1640) + padding + scrollbar allowance
-const UI_ZOOM_MIN = 0.55;   // floor puts the minimum usable window near 930px
+const UI_DESIGN_W = 1800;   // .layout max-width (1740) + padding + scrollbar allowance
+const UI_ZOOM_MIN = 0.55;   // floor puts the minimum usable window near 990px
 const UI_ZOOM_MAX = 1.80;   // stop 4K monitors from ballooning the chrome
 let _zoomRaf = 0;
 function applyRootZoom(){
