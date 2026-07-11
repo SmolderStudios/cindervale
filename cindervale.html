@@ -3136,7 +3136,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.38</div>
+  <div class="mm-ver">v0.9.39</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -3856,12 +3856,14 @@ function _signupPing(name, type, cls, slot){
   let dev='?'; try{ dev=localStorage.getItem(DEVICE_KEY)||'?'; }catch(e){}
   const acct=_bumpCount('cindervale_acct_seq');                  // this device's Nth character
   const alt=acct>1;
+  const build=(typeof IS_DEMO!=='undefined'&&IS_DEMO)?'🖥️ Demo (browser)':'✅ Full game';
   const ver=(document.querySelector('.mm-ver')?document.querySelector('.mm-ver').textContent.trim():'?');
   const payload={username:'Cindervale Signups',embeds:[{
     title:'New character created'+(alt?'  •  #'+acct+' from this device':''),
     color:alt?0xe0762f:0x7da33f,
     fields:[
       {name:'Character',value:String(name||'?').slice(0,64),inline:true},
+      {name:'Build',value:build,inline:true},
       {name:'Account #',value:'#'+acct+(alt?' (alt — same device)':' (first here)'),inline:true},
       {name:'Device',value:String(dev).slice(0,40),inline:true},
       {name:'Path / Class',value:(String(type||'?')+' / '+String(cls||'?')).slice(0,64),inline:true},
