@@ -1796,15 +1796,15 @@ body:not(.is-demo) .demo-only{display:none !important}
 .mm-btn.mm-buy:hover{border-color:#fbd24e;color:#fbd24e}
 .gm-row.gm-buy{border-color:rgba(224,118,47,.5)}
 .gm-row.gm-buy,.gm-row.gm-buy span{color:#f0b070}
-#demoRibbon{position:fixed;top:10px;left:12px;z-index:9998;pointer-events:none;
-  font:700 11px/1 'Courier New',monospace;letter-spacing:.22em;color:#e0762f;
-  background:rgba(13,9,6,.72);border:1px solid rgba(224,118,47,.5);padding:5px 9px;border-radius:6px}
+.hdr-demo{align-self:center;margin-left:2px;padding:3px 9px;border-radius:999px;white-space:nowrap;
+  font-family:'Iowan Old Style',Palatino,Georgia,serif;text-transform:uppercase;letter-spacing:.18em;
+  font-size:10.5px;font-weight:700;color:#e0762f;border:1px solid rgba(224,118,47,.5);background:rgba(224,118,47,.08)}
 .cmb-zone-tile.demo-locked{opacity:.9;border-color:rgba(224,118,47,.45);cursor:var(--cur-pointer)}
 .cmb-zone-tile.demo-locked .ztl-lock{color:#e0762f}
 .cmb-zmode.demo-lk{opacity:.55}
 .cmb-zmode.demo-lk::after{content:'🔒';font-size:.82em;margin-left:5px;opacity:.85}
 .demo-buy-copy{color:#a08a64;font-size:14px;line-height:1.55;margin:0 0 6px}
-.demo-buy-btns{flex-direction:column;gap:10px;margin-top:14px}
+.demo-buy-btns{display:flex;flex-direction:column;gap:10px;margin-top:14px}
 .demo-buy-btns .mm-mini{width:100%}
 .mm-mini.mm-primary{border-color:#e0762f}
 #gameMenuModal p{color:#a08a64;font-size:14px;margin:0 0 12px}
@@ -1873,13 +1873,13 @@ body:not(.is-demo) .demo-only{display:none !important}
    instead of clipping the title and the Done button off-screen. align-items:center
    would pin an over-tall card centred, hiding its top with no way to scroll up —
    that stranded users on "a brown screen that just says On" (0.9.25). */
-#mmNameModal,#mmImportModal,#mmExportModal,#mmSettingsModal,#mmCreditsModal,#gameMenuModal,#mmReportModal{position:fixed;inset:0;z-index:10000;display:flex;align-items:normal;overflow-y:auto;
+#mmNameModal,#mmImportModal,#mmExportModal,#mmSettingsModal,#mmCreditsModal,#gameMenuModal,#mmReportModal,#demoBuyModal{position:fixed;inset:0;z-index:10000;display:flex;align-items:normal;overflow-y:auto;
   justify-content:center;padding:18px;background:#000a;font-family:'Crimson Pro',serif}
-#mmNameModal.mm-hidden,#mmImportModal.mm-hidden,#mmExportModal.mm-hidden,#mmSettingsModal.mm-hidden,#mmCreditsModal.mm-hidden,#gameMenuModal.mm-hidden,#mmReportModal.mm-hidden{display:none}
-#mmNameModal .mm-card,#mmImportModal .mm-card,#mmExportModal .mm-card,#mmSettingsModal .mm-card,#mmCreditsModal .mm-card,#gameMenuModal .mm-card,#mmReportModal .mm-card{background:#251a10;border:1px solid #c79b4e;border-radius:8px;
+#mmNameModal.mm-hidden,#mmImportModal.mm-hidden,#mmExportModal.mm-hidden,#mmSettingsModal.mm-hidden,#mmCreditsModal.mm-hidden,#gameMenuModal.mm-hidden,#mmReportModal.mm-hidden,#demoBuyModal.mm-hidden{display:none}
+#mmNameModal .mm-card,#mmImportModal .mm-card,#mmExportModal .mm-card,#mmSettingsModal .mm-card,#mmCreditsModal .mm-card,#gameMenuModal .mm-card,#mmReportModal .mm-card,#demoBuyModal .mm-card{background:#251a10;border:1px solid #c79b4e;border-radius:8px;
   padding:20px;max-width:360px;width:100%;margin:auto;box-shadow:var(--sh-3)}
-#mmNameModal h3,#mmImportModal h3,#mmExportModal h3,#mmSettingsModal h3,#mmCreditsModal h3,#gameMenuModal h3,#mmReportModal h3{color:#c79b4e;font-variant:small-caps;letter-spacing:1px;font-size:19px;margin:0 0 6px}
-#mmNameModal p,#mmImportModal p,#mmExportModal p,#mmSettingsModal p,#mmCreditsModal p,#mmReportModal p{color:#a08a64;font-size:14px;margin:0 0 12px}
+#mmNameModal h3,#mmImportModal h3,#mmExportModal h3,#mmSettingsModal h3,#mmCreditsModal h3,#gameMenuModal h3,#mmReportModal h3,#demoBuyModal h3{color:#c79b4e;font-variant:small-caps;letter-spacing:1px;font-size:19px;margin:0 0 6px}
+#mmNameModal p,#mmImportModal p,#mmExportModal p,#mmSettingsModal p,#mmCreditsModal p,#mmReportModal p,#demoBuyModal p{color:#a08a64;font-size:14px;margin:0 0 12px}
 #mmNameModal input{width:100%;background:#0d0905;color:#ead9b5;border:1px solid #6e552c;
   border-radius:4px;padding:9px 11px;font-family:inherit;font-size:16px;margin-bottom:14px}
 #mmNameModal .mm-row,#mmImportModal .mm-row,#mmExportModal .mm-row,#mmSettingsModal .mm-row,#mmCreditsModal .mm-row,#gameMenuModal .mm-row,#mmReportModal .mm-row{display:flex;gap:8px;justify-content:flex-end}
@@ -3114,7 +3114,6 @@ body:not(.is-demo) .demo-only{display:none !important}
    ════════════════════════════════════════════════════════════════════════════════ -->
 <!-- ══════ [HTML-01] MENU & CHARACTER-SELECT MODALS ══════ -->
 <!-- ===== MAIN MENU (added) ===== -->
-<div id="demoRibbon" class="demo-only" aria-hidden="true">DEMO</div>
 <div id="emberMenu">
   <canvas id="mmEmbers" aria-hidden="true"></canvas>
   <div class="mm-lock">
@@ -3137,7 +3136,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.35</div>
+  <div class="mm-ver">v0.9.36</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -3387,6 +3386,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <path d="M84,12 L60,44" stroke="#c79b4e" stroke-width="1.6" fill="none"/>
     </svg>
     <h1>Cinder<span class="flame">vale</span> Idle</h1>
+    <span class="hdr-demo demo-only">Demo</span>
   </div>
   <div class="hdr-nav">
     <button class="hdr-menu-btn" id="tabShop"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M3 7v1a3 3 0 0 0 6 0a3 3 0 0 0 6 0a3 3 0 0 0 6 0v-1l-2-4H5z"/><path d="M5 21v-10"/><path d="M19 21v-10"/><path d="M9 21v-4a2 2 0 0 1 4 0v4"/></svg>Shop</button>
