@@ -3136,7 +3136,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.39</div>
+  <div class="mm-ver">v0.9.40</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -3531,6 +3531,17 @@ body:not(.is-demo) .demo-only{display:none !important}
         <button class="dev-chip qty" data-qty="1000">1k</button>
       </div>
       <div class="dev-results" id="devItemResults"></div>
+    </div>
+
+    <div class="dev-sec">
+      <div class="dev-sec-lbl">Trailer</div>
+      <div class="dev-row">
+        <button class="dev-btn" id="devTrailerSetup" style="flex:1" title="Mid-game account: Lv 40-70 skills, a mix of gear, items & gold — ready to record">🎬 Trailer Setup</button>
+      </div>
+      <label class="dev-chips" id="devForceRareRow" style="cursor:pointer;user-select:none;align-items:center">
+        <input type="checkbox" id="devForceRare" style="margin-right:6px">
+        <span style="font-size:11.5px;color:#c8b890">Force rare spawns + guaranteed pet</span>
+      </label>
     </div>
 
   </div>
@@ -18600,7 +18611,8 @@ function rareSpawnChance(mon){
   // Character-type drop dial also nudges rare-monster spawn frequency.
   return (RARE_SPAWN_MIN + t*(RARE_SPAWN_MAX-RARE_SPAWN_MIN)) * charDropMult();
 }
-function rollRare(mon){ return Math.random()<rareSpawnChance(mon); }
+let _devForceRare=false; // dev/trailer: force every non-boss spawn rare (+ guaranteed pet drop)
+function rollRare(mon){ if(_devForceRare && mon && !mon.boss) return true; return Math.random()<rareSpawnChance(mon); }
 /* Returns a shallow-cloned monster object with rare scaling applied, or the
    original if isRare is false. Caller treats the result as `mon` for all combat
    math — no separate code paths. Preserves id/zone/lvl/swingMs so display and
@@ -22608,7 +22620,7 @@ function combatTick(){
         if(!combatMode && typeof toast==='function'){ toast(`✨ Defeated rare ${baseMon.name}!`); }
         // Pet drop — first-time only per pet. Skipped silently if already owned.
         const pet=getPetForZone(baseMon.zone);
-        if(pet && !hasPet(pet.id) && Math.random()<RARE_PET_CHANCE){
+        if(pet && !hasPet(pet.id) && (_devForceRare || Math.random()<RARE_PET_CHANCE)){
           if(!state.pets) state.pets={};
           state.pets[pet.id]={obtainedAt:Date.now(), zone:baseMon.zone, fromMonster:baseMon.id};
           cmbLog(`🎊 ${pet.name} appears beside you! New pet!`,'rare-pet');
@@ -24787,6 +24799,28 @@ $('tabSocket').addEventListener('click',()=>{ closeCombatPanel(); viewTab='socke
   searchEl.addEventListener('input',renderResults);
   searchEl.addEventListener('focus',renderResults);
   renderResults();
+
+  // ── Trailer preset (dev): mid-game account + rare/pet forcing for recording ──
+  const _tSkill={woodcutting:68,mining:63,fishing:52,foraging:44,smithing:59,cooking:55,alchemy:41,firemaking:66,agility:47,jeweler:49,farming:53,crafting:46};
+  const _tCombat={attack:63,strength:60,defence:58,hitpoints:64};
+  const _tGear={weapon:6,shield:5,chest:6,legs:5,helmet:4,gloves:5,boots:4};
+  function _tPickGear(slot,tier){ for(const id in ITEMS){ const it=ITEMS[id]; if(it.cgear&&it.cslot===slot&&it.ctier===tier) return id; } return null; }
+  const _tsBtn=$('devTrailerSetup');
+  if(_tsBtn) _tsBtn.addEventListener('click',()=>{
+    for(const k in SKILLS){ state.xp[k]=XP_CUM[_tSkill[k]||50]; }
+    if(!state.combatXp) state.combatXp={attack:0,strength:0,defence:0,hitpoints:0};
+    for(const k in COMBAT_STATS){ state.combatXp[k]=XP_CUM[_tCombat[k]||58]; }
+    if(typeof refreshCombatStats==='function') refreshCombatStats();
+    const _g=150000; state.coins+=_g*SILVER_PER_GOLD; if(typeof _coinsBaseline!=='undefined'&&_coinsBaseline!=null)_coinsBaseline+=_g*SILVER_PER_GOLD;
+    for(const slot in _tGear){ const id=_tPickGear(slot,_tGear[slot]); if(id){ state.items[id]=(state.items[id]||0)+1; if(typeof markDiscovered==='function')markDiscovered(id); try{ equipBodyItem(id, ITEMS[id].cslot, 'combat'); }catch(e){} } }
+    const mats=Object.keys(ITEMS).filter(id=>!ITEMS[id].cgear&&!ITEMS[id].tool).slice(0,26);
+    for(const id of mats){ state.items[id]=(state.items[id]||0)+(50+(id.length*17)%400); if(typeof markDiscovered==='function')markDiscovered(id); }
+    if(typeof refreshCombatStats==='function') refreshCombatStats();
+    renderAll(); saveGame();
+    if(typeof toast==='function') toast('🎬 Trailer account ready — mid-game levels, gear & items.');
+  });
+  const _frBox=$('devForceRare');
+  if(_frBox) _frBox.addEventListener('change',(e)=>{ _devForceRare=e.target.checked; if(typeof toast==='function') toast(_devForceRare?'⚡ Rare spawns forced + guaranteed pet':'Rare spawns back to normal'); });
 })();
 
 /* ===== MAIN MENU LOGIC (added) ===== */
