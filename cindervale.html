@@ -3136,7 +3136,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.43</div>
+  <div class="mm-ver">v0.9.44</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -4298,15 +4298,29 @@ const ITEMS={
   witchhazel_seed:{name:'Witchhazel Seed',icon:'🌱',sell:130},
   sunroot_seed:  {name:'Sunroot Seed',  icon:'🌱',sell:242},
   frostcrocus_seed:{name:'Frostcrocus Seed',icon:'🌱',sell:250},
-  moonflower_seed:{name:'Moonflower Seed',icon:'🌱',sell:605},
+  moonflower_seed:{name:'Nightbloom Seed',icon:'🌱',sell:605},
   nightshade_seed:{name:'Nightshade Seed',icon:'🌱',sell:440},
   ashbloom_seed:{name:'Ashbloom Seed',icon:'🌱',sell:770},
   voidbloom_seed:{name:'Voidbloom Seed',icon:'🌱',sell:1210},
   tearmoss_seed:{name:'Tearmoss Seed',icon:'🌱',sell:1100},
+  /* Every foraged herb is now farmable. Six had no seed at all, so the only way
+     to get them was to stand in a field picking them by hand — farming skipped
+     straight past the whole mid-tier of the foraging ladder. Sell prices sit
+     between the neighbouring seeds so the shop ordering stays monotonic. */
+  thornvine_seed:{name:'Thornvine Seed',icon:'🌱',sell:105},
+  dewleaf_seed:  {name:'Dewleaf Seed',  icon:'🌱',sell:210},
+  emberbloom_seed:{name:'Emberbloom Seed',icon:'🌱',sell:365},
+  starfern_seed: {name:'Starfern Seed', icon:'🌱',sell:950},
+  moonpetal_seed:{name:'Moonpetal Seed',icon:'🌱',sell:1450},
+  voidmoss_seed: {name:'Riftmoss Seed', icon:'🌱',sell:2200},
   wild_herb:     {name:'Wild Herb',     icon:'🌿',sell:176},
   garden_root:   {name:'Garden Root',   icon:'🥕',sell:440},
-  sunbloom:      {name:'Sunbloom',      icon:'🌻',sell:770},
-  moonflower:    {name:'Moonflower',    icon:'🌸',sell:1430},
+  /* Three cultivated herbs were named so close to their wild foraged counterparts
+     that players could not tell them apart in the satchel: Sunbloom/Sunroot,
+     Moonflower/Moonpetal, Voidbloom/Voidmoss. The DISPLAY names moved; the ids
+     did not, because ids are what every save, recipe and drop table keys on. */
+  sunbloom:      {name:'Dawnbloom',     icon:'🌻',sell:770},
+  moonflower:    {name:'Nightbloom',    icon:'🌸',sell:1430},
   voidbloom:     {name:'Voidbloom',     icon:'🌺',sell:2860},
   // Foraging
   wildberries:   {name:'Wildberries',      icon:'🫐',sell:22},
@@ -4322,7 +4336,7 @@ const ITEMS={
   starfern:      {name:'Starfern',         icon:'🌿',sell:638},
   tearmoss:      {name:'Tearmoss',         icon:'💧',sell:825},
   moonpetal:     {name:'Moonpetal',        icon:'🌸',sell:990},
-  voidmoss:      {name:'Voidmoss',         icon:'🍃',sell:1540},
+  voidmoss:      {name:'Riftmoss',         icon:'🍃',sell:1540},   // renamed off 'Voidmoss' — collided with the farmed Voidbloom
   // === SKILLING GEAR SETS — rare drops from each skill, unsellable ===
   // Woodcutting — Lumberjack's Set
   wc_hat:  {name:"Lumberjack's Hat",    icon:'🪵',sell:0,rare:true,skillGear:true,gearSkill:'woodcutting',gearSlot:'helmet',gearXp:0.03},
@@ -6832,6 +6846,15 @@ const ICONS = {
   voidbloom_seed:  _seedSVG({cloth:'#4a2858', shadow:'#180828', hl:'#7a4878', twine:'#2a1028', seed:'#a82878', seedEdge:'#3a0828', halo:'#8848c8'}),
   tearmoss_seed:   _seedSVG({cloth:'#5a7088', shadow:'#1a2230', hl:'#88a8c0', twine:'#2a3848', seed:'#88c8d8', seedEdge:'#3a6898', halo:'#5fb8e0'}),
   ancient_seed:    _seedSVG({cloth:'#5a4838', shadow:'#1a1208', hl:'#8a6848', twine:'#2a1810', seed:'#d49828', seedEdge:'#5a3010', halo:'#c79b4e'}),
+  /* Seeds for the six foraged herbs that had none. Each palette echoes its grown
+     herb — thorny green, dew blue-green, ember orange, starfern silver-green,
+     moonpetal pale violet, riftmoss abyssal teal — so the pouch reads at a glance. */
+  thornvine_seed:  _seedSVG({cloth:'#9aae7a', shadow:'#2a3a18', hl:'#c4d4a4', twine:'#4a5e28', seed:'#3a6820', seedEdge:'#142808'}),
+  dewleaf_seed:    _seedSVG({cloth:'#a8c4b8', shadow:'#28403a', hl:'#d4e8e0', twine:'#48685c', seed:'#3898a0', seedEdge:'#144448'}),
+  emberbloom_seed: _seedSVG({cloth:'#c89878', shadow:'#4a2818', hl:'#e8c0a0', twine:'#7a4828', seed:'#e0602a', seedEdge:'#5a1808', halo:'#e0884a'}),
+  starfern_seed:   _seedSVG({cloth:'#b0bca8', shadow:'#303828', hl:'#dce4d4', twine:'#5a6850', seed:'#9ac8a8', seedEdge:'#38684a', halo:'#c8e0d0'}),
+  moonpetal_seed:  _seedSVG({cloth:'#c8bcd4', shadow:'#3a3050', hl:'#e8e0f4', twine:'#6a5a80', seed:'#b898e0', seedEdge:'#4a2878', halo:'#c8b0f0'}),
+  voidmoss_seed:   _seedSVG({cloth:'#3a5a5a', shadow:'#0e2028', hl:'#68908c', twine:'#1e3838', seed:'#28c0a8', seedEdge:'#0a4a48', halo:'#38d8b8'}),
 
   /* ─── Farming produce (5) — each its own silhouette ─── */
   wild_herb: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="wherb_leaf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a8d860"/><stop offset="0.5" stop-color="#5a8028"/><stop offset="1" stop-color="#2a4015"/></linearGradient><linearGradient id="wh_leaf2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b8e878"/><stop offset="0.5" stop-color="#6a9030"/><stop offset="1" stop-color="#324818"/></linearGradient><linearGradient id="wh_twine" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d4b078"/><stop offset="1" stop-color="#6e4828"/></linearGradient></defs><ellipse cx="32" cy="56" rx="14" ry="2.4" fill="#000" opacity="0.35"/><path d="M22 50 Q24 38 20 14" stroke="#3a2810" stroke-width="1.4" fill="none" stroke-linecap="round"/><path d="M32 50 Q32 36 32 8" stroke="#3a2810" stroke-width="1.4" fill="none" stroke-linecap="round"/><path d="M42 50 Q40 38 44 14" stroke="#3a2810" stroke-width="1.4" fill="none" stroke-linecap="round"/><path d="M20 18 Q10 18 6 8 Q14 12 20 22 Z" fill="url(#wherb_leaf)"/><path d="M20 28 Q12 30 8 22 Q16 24 22 32 Z" fill="url(#wh_leaf2)"/><path d="M22 36 Q14 40 10 32 Q18 32 24 38 Z" fill="url(#wherb_leaf)"/><path d="M32 14 Q24 12 22 4 Q28 8 32 18 Z" fill="url(#wh_leaf2)"/><path d="M32 14 Q40 12 42 4 Q36 8 32 18 Z" fill="url(#wherb_leaf)"/><path d="M32 24 Q24 22 22 14 Q28 18 32 28 Z" fill="url(#wherb_leaf)"/><path d="M32 24 Q40 22 42 14 Q36 18 32 28 Z" fill="url(#wh_leaf2)"/><path d="M32 34 Q26 36 22 30 Q28 32 32 38 Z" fill="url(#wherb_leaf)" opacity="0.95"/><path d="M44 18 Q54 18 58 8 Q50 12 44 22 Z" fill="url(#wh_leaf2)"/><path d="M44 28 Q52 30 56 22 Q48 24 42 32 Z" fill="url(#wherb_leaf)"/><path d="M42 36 Q50 40 54 32 Q46 32 40 38 Z" fill="url(#wh_leaf2)"/><rect x="18" y="44" width="28" height="5" rx="1" fill="url(#wh_twine)"/><rect x="18" y="44" width="28" height="1.4" fill="#fff" opacity="0.35"/><path d="M18 49 L14 53 L17 52 L18 55 L20 51 Z" fill="url(#wh_twine)"/><path d="M46 49 L50 53 L47 52 L46 55 L44 51 Z" fill="url(#wh_twine)"/></svg>',
@@ -7574,18 +7597,20 @@ const DROPS={
   // Foraging — rare drops + seed drops (seeds obtainable while foraging)
   fo1:[{id:'wildberry_seed',chance:0.08}],
   fo9:[{id:'bloodcap_seed',chance:0.05},{id:'wildberry_seed',chance:0.05}],
-  fo2:[{id:'wildberry_seed',chance:0.06},{id:'herb_seed',chance:0.04}],
+  /* Each activity now drops the seed for the herb it gathers, so picking a plant
+     is how you learn to grow it. Six of these had no seed anywhere in the game. */
+  fo2:[{id:'thornvine_seed',chance:0.05},{id:'wildberry_seed',chance:0.04},{id:'herb_seed',chance:0.04}],
   fo10:[{id:'witchhazel_seed',chance:0.04},{id:'herb_seed',chance:0.03}],
-  fo3:[{id:'herb_seed',chance:0.05},{id:'sunroot_seed',chance:0.025}],
+  fo3:[{id:'dewleaf_seed',chance:0.04},{id:'herb_seed',chance:0.04},{id:'sunroot_seed',chance:0.025}],
   fo11:[{id:'frostcrocus_seed',chance:0.03},{id:'sunroot_seed',chance:0.02}],
-  fo4:[{id:'herb_seed',chance:0.04},{id:'sunroot_seed',chance:0.035}],
+  fo4:[{id:'emberbloom_seed',chance:0.035},{id:'herb_seed',chance:0.03},{id:'sunroot_seed',chance:0.03}],
   fo12:[{id:'nightshade_seed',chance:0.03},{id:'sunroot_seed',chance:0.02}],
   fo5:[{id:'sunroot_seed',chance:0.05},{id:'moonflower_seed',chance:0.02}],
   fo13:[{id:'ashbloom_seed',chance:0.025},{id:'moonflower_seed',chance:0.02}],
-  fo6:[{id:'golden_spore',chance:0.0042},{id:'mana_essence',chance:0.003},{id:'moonflower_seed',chance:0.03}],
+  fo6:[{id:'starfern_seed',chance:0.028},{id:'golden_spore',chance:0.0042},{id:'mana_essence',chance:0.003},{id:'moonflower_seed',chance:0.025}],
   fo14:[{id:'tearmoss_seed',chance:0.02},{id:'golden_spore',chance:0.005},{id:'moonflower_seed',chance:0.02}],
-  fo7:[{id:'golden_spore',chance:0.0058},{id:'mana_essence',chance:0.006},{id:'moonflower_seed',chance:0.04},{id:'voidbloom_seed',chance:0.01}],
-  fo8:[{id:'golden_spore',chance:0.0078},{id:'void_essence',chance:0.0026},{id:'mana_essence',chance:0.012},{id:'voidbloom_seed',chance:0.02},{id:'ancient_seed',chance:0.005}],
+  fo7:[{id:'moonpetal_seed',chance:0.022},{id:'golden_spore',chance:0.0058},{id:'mana_essence',chance:0.006},{id:'moonflower_seed',chance:0.03},{id:'voidbloom_seed',chance:0.01}],
+  fo8:[{id:'voidmoss_seed',chance:0.018},{id:'golden_spore',chance:0.0078},{id:'void_essence',chance:0.0026},{id:'mana_essence',chance:0.012},{id:'voidbloom_seed',chance:0.015},{id:'ancient_seed',chance:0.005}],
   // Agility rare drops — energy crystals and stamina shards
   ag1:[{id:'energy_crystal',chance:0.005}],
   ag2:[{id:'energy_crystal',chance:0.0065}],
@@ -9663,15 +9688,24 @@ const CROPS=[
   {id:'wildberry_seed',  lvl:1,  name:'Wildberry',    icon:'🫐', growMs:3*60000,  tendInterval:60000,  tendBoost:0.25, xp:200, out:{wildberries:3},  seedReturn:0.30},
   {id:'bloodcap_seed',   lvl:5,  name:'Bloodcap',     icon:'🍄', growMs:4*60000,  tendInterval:70000,  tendBoost:0.25, xp:250, out:{bloodcap:3},     seedReturn:0.28},
   {id:'herb_seed',       lvl:12, name:'Wild Herb',    icon:'🌿', growMs:5*60000,  tendInterval:90000,  tendBoost:0.25, xp:340, out:{wild_herb:2},    seedReturn:0.25},
+  {id:'thornvine_seed',  lvl:15, name:'Thornvine',    icon:'🌱', growMs:5*60000,  tendInterval:95000,  tendBoost:0.25, xp:380, out:{thornvine:2,wild_herb:1}, seedReturn:0.24},
   {id:'witchhazel_seed', lvl:18, name:'Witchhazel',   icon:'🌼', growMs:6*60000,  tendInterval:100000, tendBoost:0.25, xp:420, out:{witchhazel:2,wild_herb:1}, seedReturn:0.23},
-  {id:'sunroot_seed',    lvl:25, name:'Sunroot',      icon:'🥕', growMs:8*60000,  tendInterval:120000, tendBoost:0.25, xp:550, out:{garden_root:2,sunbloom:1}, seedReturn:0.20},
+  /* Was out:{garden_root:2,sunbloom:1} — a "Sunroot Seed" that could not grow
+     Sunroot, which is exactly the kind of thing that makes a crop list unreadable.
+     Garden Root stays on as the secondary so it keeps a producer. */
+  {id:'sunroot_seed',    lvl:25, name:'Sunroot',      icon:'🥕', growMs:8*60000,  tendInterval:120000, tendBoost:0.25, xp:550, out:{sunroot:2,garden_root:1}, seedReturn:0.20},
+  {id:'dewleaf_seed',    lvl:28, name:'Dewleaf',      icon:'🌿', growMs:9*60000,  tendInterval:128000, tendBoost:0.25, xp:620, out:{dewleaf:2,wild_herb:1}, seedReturn:0.20},
   {id:'frostcrocus_seed',lvl:32, name:'Frostcrocus',  icon:'❄️', growMs:10*60000, tendInterval:135000, tendBoost:0.25, xp:700, out:{frostcrocus:2,wild_herb:1}, seedReturn:0.19},
-  {id:'moonflower_seed', lvl:40, name:'Moonflower',   icon:'🌸', growMs:12*60000, tendInterval:150000, tendBoost:0.25, xp:900, out:{moonflower:1,wild_herb:2}, seedReturn:0.18},
+  {id:'emberbloom_seed', lvl:38, name:'Emberbloom',   icon:'🌺', growMs:11*60000, tendInterval:145000, tendBoost:0.25, xp:820, out:{emberbloom:2,wild_herb:1}, seedReturn:0.18},
+  {id:'moonflower_seed', lvl:40, name:'Nightbloom',   icon:'🌸', growMs:12*60000, tendInterval:150000, tendBoost:0.25, xp:900, out:{moonflower:1,wild_herb:2}, seedReturn:0.18},
   {id:'nightshade_seed', lvl:45, name:'Nightshade',   icon:'🌸', growMs:14*60000, tendInterval:170000, tendBoost:0.25, xp:1100,out:{nightshade:2,moonflower:1}, seedReturn:0.17},
   {id:'ashbloom_seed',   lvl:58, name:'Ashbloom',     icon:'🌻', growMs:17*60000, tendInterval:190000, tendBoost:0.25, xp:1500,out:{ashbloom:1,sunbloom:1},  seedReturn:0.16},
   {id:'voidbloom_seed',  lvl:60, name:'Voidbloom',    icon:'🌺', growMs:18*60000, tendInterval:200000, tendBoost:0.25, xp:1600,out:{voidbloom:1,moonflower:1}, seedReturn:0.15},
+  {id:'starfern_seed',   lvl:65, name:'Starfern',     icon:'🌿', growMs:20*60000, tendInterval:215000, tendBoost:0.26, xp:1800,out:{starfern:2,wild_herb:1}, seedReturn:0.14},
   {id:'tearmoss_seed',   lvl:70, name:'Tearmoss',     icon:'💧', growMs:24*60000, tendInterval:240000, tendBoost:0.28, xp:2100,out:{tearmoss:2},     seedReturn:0.13},
+  {id:'moonpetal_seed',  lvl:75, name:'Moonpetal',    icon:'🌸', growMs:27*60000, tendInterval:270000, tendBoost:0.28, xp:2450,out:{moonpetal:2,moonflower:1}, seedReturn:0.12},
   {id:'ancient_seed',    lvl:80, name:'Ancient Bloom',icon:'🌳', growMs:30*60000, tendInterval:300000, tendBoost:0.30, xp:2800,out:{voidbloom:2,ancient_seed:1}, rareDrops:[{id:'void_essence',chance:0.10}], seedReturn:0.10},
+  {id:'voidmoss_seed',   lvl:88, name:'Riftmoss',     icon:'🍃', growMs:34*60000, tendInterval:320000, tendBoost:0.30, xp:3400,out:{voidmoss:2,voidbloom:1}, rareDrops:[{id:'void_essence',chance:0.12}], seedReturn:0.10},
 ];
 
 function getCrop(seedId){ return CROPS.find(function(c){return c.id===seedId;})||null; }
