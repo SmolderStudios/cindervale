@@ -3136,7 +3136,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.40</div>
+  <div class="mm-ver">v0.9.41</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -3909,6 +3909,89 @@ function mmRecover(){
         if(old) localStorage.setItem(mmKey(n), old);
       }
     }
+  }catch(e){}
+}
+
+/* ════ [JS-STEAM] STEAM BRIDGE — Cloud save mirror + achievement backfill ═══════
+   Optional in every direction. The Steam wrapper's preload script injects
+   `window.cvSteam` (cloud) and `window.steamAchievement` (unlock seam, called
+   from unlockAch in [JS-ACH]). In the browser build both are undefined and every
+   function here is an inert no-op. Nothing in the game imports steamworks.js.
+
+   WHY A MIRROR. Steam Auto-Cloud cannot sync localStorage: Chromium keeps it in a
+   multi-file leveldb that is binary, opaque, and corrupts if Steam rewrites it
+   under a running client. So the wrapper mirrors each slot out to a plain JSON
+   file (userData/saves/slotN.json) and Auto-Cloud syncs only those.
+
+   The mirror is keyed by SLOT NUMBER, never by DEVICE_SAVE_KEY. That matters:
+   getDeviceId() mints a fresh random id per machine, so a save carried to a
+   second PC would otherwise land under a key nothing there reads. Slot-keyed,
+   it drops straight into whatever device-keyed slot this machine already uses.
+
+   Conflicts resolve on `lastSeen`, which saveGame() stamps on every write —
+   strictly-newer wins, so a tie keeps whatever is already on this machine. */
+function cvCloudOn(){ return typeof window!=='undefined' && !!window.cvSteam && typeof window.cvSteam.cloudWrite==='function'; }
+
+/* Fire-and-forget. `json` is already-serialized slot state, so this never
+   re-serializes and never throws into a caller mid-save. */
+function cvCloudPush(n, json){
+  if(!cvCloudOn() || !n) return;
+  try{ window.cvSteam.cloudWrite(n, json); }catch(e){}
+}
+function cvCloudDrop(n){
+  if(!cvCloudOn() || !n) return;
+  try{ window.cvSteam.cloudWrite(n, null); }catch(e){}
+}
+
+/* Boot reconcile. The wrapper reads the whole mirror during preload and hands it
+   over synchronously as `cvSteam.cloudSnapshot`, so this runs before the menu
+   renders without making boot async. */
+function cvCloudPull(){
+  if(!cvCloudOn()) return;
+  const snap = window.cvSteam.cloudSnapshot;
+  if(!snap || typeof snap!=='object') return;
+  for(let n=1;n<=MM_SLOTS;n++){
+    try{
+      const remoteRaw = snap[n] || snap[String(n)];
+      if(!remoteRaw) continue;
+      const remote = JSON.parse(remoteRaw);          // malformed mirror -> skip, keep local
+      if(!remote || typeof remote!=='object' || !remote.xp) continue;
+      // -1 for a missing local slot, so a fresh install adopts the cloud copy
+      // even when its lastSeen is 0.
+      let localSeen = -1;
+      const localRaw = localStorage.getItem(mmKey(n));
+      if(localRaw){ try{ localSeen = JSON.parse(localRaw).lastSeen||0; }catch(e){ localSeen = 0; } }
+      if((remote.lastSeen||0) > localSeen) localStorage.setItem(mmKey(n), remoteRaw);
+    }catch(e){}
+  }
+}
+
+/* First run under Steam: push slots the cloud has never seen, so an existing
+   local-only player seeds the cloud immediately instead of one character at a
+   time as each is played. Runs AFTER cvCloudPull, so anything just adopted is
+   already in the snapshot and is skipped. */
+function cvCloudSeed(){
+  if(!cvCloudOn()) return;
+  const snap = window.cvSteam.cloudSnapshot || {};
+  for(let n=1;n<=MM_SLOTS;n++){
+    try{
+      if(snap[n] || snap[String(n)]) continue;
+      const raw = localStorage.getItem(mmKey(n));
+      if(raw) cvCloudPush(n, raw);
+    }catch(e){}
+  }
+}
+
+/* Steam achievements are per-ACCOUNT; the game's are per-CHARACTER. Replaying a
+   character's unlocks on load makes the Steam set the union across all three
+   slots, which is what players expect. Re-activating an already-unlocked
+   achievement is a no-op on Steam's side, so this is safe every load — and it is
+   what backfills every achievement earned before the Steam build existed. */
+function cvSteamAchSync(){
+  if(typeof window==='undefined' || typeof window.steamAchievement!=='function') return;
+  try{
+    const a = state.achievements||{};
+    for(const id in a){ if(a[id] && ACH_BY_ID[id]) window.steamAchievement(id); }
   }catch(e){}
 }
 
@@ -12240,7 +12323,13 @@ function saveGame(){
       _coinsBaseline = state.coins||0;
     }
   }catch(e){}
-  try{ localStorage.setItem(mmKey(mmSlot), _serializeState()); }catch(e){ console.warn('Save failed:',e); }
+  // Serialize once, then write both copies. The cloud mirror is fire-and-forget:
+  // a Steam Cloud problem must never cost the player their local save.
+  try{
+    const json = _serializeState();
+    localStorage.setItem(mmKey(mmSlot), json);
+    cvCloudPush(mmSlot, json);
+  }catch(e){ console.warn('Save failed:',e); }
 }
 function loadGame(){
   if(!mmSlot) return;
@@ -24921,6 +25010,7 @@ function mmRenderSlots(){
       const ok=await showConfirm('Delete Character','Permanently delete "'+(s?s.name:'this character')+'"? This cannot be undone.','Cannot be undone.');
       if(!ok) return;
       try{ localStorage.removeItem(mmKey(n)); }catch(err){}
+      cvCloudDrop(n);   // else the next launch pulls the character back out of the cloud
       mmRenderSlots(); toast('Character deleted.');
     });
   });
@@ -25062,6 +25152,7 @@ function mmFinishStart(slot,isNew){
     }
     delete state._treeResetNotifs;
   }
+  cvSteamAchSync();   // backfill this character's unlocks onto the Steam account
   saveGame();
   mmStartEngine();
   // (1.0.89) One-time tour — gated on `isNew` so ONLY a freshly-created character sees
@@ -25297,7 +25388,11 @@ function mmDoImport(){
   if(!data||typeof data!=='object'||!data.xp){ msg.textContent='That doesn\'t look like a valid save code.'; return; }
   let n=mmFirstEmpty();
   if(!n){ msg.textContent='All 3 slots are full — delete one first.'; return; }
-  try{ localStorage.setItem(mmKey(n), JSON.stringify(data)); }catch(e){}
+  try{
+    const json = JSON.stringify(data);
+    localStorage.setItem(mmKey(n), json);
+    cvCloudPush(n, json);   // an imported character is never "played", so mirror it now
+  }catch(e){}
   $('mmImportModal').classList.add('mm-hidden');
   mmRenderSlots();
 }
@@ -25930,7 +26025,11 @@ $('mmExportDl').addEventListener('click',mmExportDownload);
 $('mmExportClose').addEventListener('click',()=>$('mmExportModal').classList.add('mm-hidden'));
 
 (function(){
+  // Order matters: adopt anything newer from Steam Cloud first, then let the
+  // legacy-key recovery fill slots still empty, then push local-only slots up.
+  cvCloudPull();
   mmRecover();
+  cvCloudSeed();
   mmShowMenu();
 })();
 </script>
