@@ -3136,7 +3136,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.42</div>
+  <div class="mm-ver">v0.9.43</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -3292,7 +3292,7 @@ body:not(.is-demo) .demo-only{display:none !important}
     <p class="demo-buy-copy">The demo runs to level 10 and the first two zones. The full game opens all 12 skills, 12 zones, raids, pets and the whole passive-tree endgame — one purchase, no microtransactions.</p>
     <div class="mm-row demo-buy-btns">
       <button class="mm-mini mm-primary" id="demoBuySite">Get the full game →</button>
-      <button class="mm-mini" id="demoBuySteam" disabled>Buy on Steam (coming soon)</button>
+      <button class="mm-mini" id="demoBuySteam">Buy on Steam</button>
       <button class="mm-mini" id="demoBuyClose">Keep playing the demo</button>
     </div>
   </div>
@@ -4082,7 +4082,9 @@ const IS_DEMO = !/electron/i.test(navigator.userAgent);
 const DEMO_LEVEL_CAP = 10;
 const DEMO_ZONES = ['rat_warrens','spider_hollow'];
 const SITE_URL = 'https://cindervaleidle.com';   // https valid via the Cloudflare proxy (v0.9.37); was briefly http while the cert provisioned.
-const STEAM_URL = '';   // set to the Steam store page once it exists
+/* Steam store page — filled in once app 4966660 went public. The demo's Steam
+   button was a disabled "coming soon" stub while this was empty. */
+const STEAM_URL = 'https://store.steampowered.com/app/4966660/';
 function demoXpCap(){ return XP_CUM[DEMO_LEVEL_CAP] || Infinity; }
 function demoZoneLocked(id){ return IS_DEMO && DEMO_ZONES.indexOf(id)<0; }
 let _demoCapShown=false;
@@ -4101,6 +4103,7 @@ function demoCapHit(kind){
     : 'You’ve reached the demo level cap (Lv '+DEMO_LEVEL_CAP+').');
 }
 function openFullGame(){ try{ window.open(SITE_URL,'_blank','noopener'); }catch(e){} }
+function openSteamPage(){ try{ window.open(STEAM_URL,'_blank','noopener'); }catch(e){} }
 
 /* Single funnel for every XP grant, so the cap can't be bypassed by one stray
    `state.xp[k] +=` site. Returns the amount actually granted (0 at the cap). */
@@ -4490,7 +4493,7 @@ const ITEMS={
   // ─── Themed combat-drop chestplates (1.0.96) — body slot, set-piece feel ──
   ratskin_tunic:     {name:'Ratskin Tunic',      icon:'🦺', sell:380,  cgear:true, ctier:2, cslot:'chest', desc:"Layered ratskin patches sewn over a leather core. Cheap, stinking, and surprisingly tough."},
   chitin_plate:      {name:'Chitin Plate',       icon:'🦺', sell:1100, cgear:true, ctier:3, cslot:'chest', desc:"Overlapping spider-plate scales stitched with silk. The chitin still has its faint violet sheen, and the joints are sharp enough to cut a careless grappler."},
-  warband_armor:     {name:'Warband Hide Armor', icon:'🦺', sell:2200, cgear:true, ctier:4, cslot:'chest', desc:"Goblin warrior plate — boiled hide reinforced with crude iron studs and bone charms. The tribal markings still glisten with old paint."},
+  warband_armor:     {name:'Warband Hide Armour', icon:'🦺', sell:2200, cgear:true, ctier:4, cslot:'chest', desc:"Goblin warrior plate — boiled hide reinforced with crude iron studs and bone charms. The tribal markings still glisten with old paint."},
   bone_plate_cuirass:{name:'Bone Plate Cuirass', icon:'🦺', sell:4400, cgear:true, ctier:5, cslot:'chest', desc:"A breastplate of riveted rib-plates and ancient bone, lashed to a mithril frame. Heavy as guilt; turns blades that would gut a knight."},
   pack_leader_vest:  {name:'Pack Leader Vest',   icon:'🦺', sell:8200, cgear:true, ctier:6, cslot:'chest', desc:"A scarred vest of pack-leader pelts bound with cobalt rivets. The howling horn at the throat makes a low, mournful sound when you breathe."},
   // ─── Socket Gems ─── (5 colors × 3 tiers — chipped / polished / flawless)
@@ -9724,7 +9727,10 @@ function patchReady(ps){
 function plantPatch(patchId, seedId, silent){
   if(!patchUnlocked(patchId)){if(!silent)toast('Patch not unlocked yet.');return false;}
   var ps=getPatchState(patchId);
-  if(ps&&!patchReady(ps)){if(!silent)toast('This patch is still growing. Harvest first or wait.');return false;}
+  // Fires when planting onto an occupied patch. The old copy said "Harvest first
+  // or wait", but this branch is specifically NOT-ready, so harvesting isn't an
+  // option — it told the player to do something the game would refuse.
+  if(ps&&!patchReady(ps)){if(!silent)toast('Something is already growing here — wait for it to finish.');return false;}
   var crop=getCrop(seedId);
   if(!crop){if(!silent)toast('Unknown seed.');return false;}
   if(farmingLvl()<crop.lvl){if(!silent)toast('Need Farming level '+crop.lvl+' to plant this.');return false;}
@@ -15628,8 +15634,8 @@ const CR_CAT_ICONS=(function(){
 })();
 const CR_CATS=[
   {key:'helm',   label:'Helms',   icon:CR_CAT_ICONS.helm,   desc:'Bar + log → helm. Worn in the helmet slot for Defence.'},
-  {key:'chest',  label:'Chests',  icon:CR_CAT_ICONS.chest,  desc:'3 bars + log → chest. The heaviest armor piece; biggest single Defence source.'},
-  {key:'legs',   label:'Legs',    icon:CR_CAT_ICONS.legs,   desc:'2 bars + log → leg armor.'},
+  {key:'chest',  label:'Chests',  icon:CR_CAT_ICONS.chest,  desc:'3 bars + log → chest. The heaviest armour piece; biggest single Defence source.'},
+  {key:'legs',   label:'Legs',    icon:CR_CAT_ICONS.legs,   desc:'2 bars + log → leg armour.'},
   {key:'gloves', label:'Gloves',  icon:CR_CAT_ICONS.gloves, desc:'Bar + log → gloves. Small Defence + a sliver of Attack.'},
   {key:'boots',  label:'Boots',   icon:CR_CAT_ICONS.boots,  desc:'Bar + log → boots.'},
   {key:'cape',   label:'Capes',   icon:CR_CAT_ICONS.cape,   desc:'Bar + 2 logs → cape. Back-slot piece — modest Defence with a touch of Attack from mid-tiers up.'},
@@ -16672,7 +16678,7 @@ function buildPetsViewHTML(){
   let html=`<div class="pets-head">
     <div class="pets-title">🐾 Pets</div>
     <div class="pets-sub">${ownedCount} / ${total} discovered</div>
-    <div class="pets-blurb">Companions earned from rare monsters. Each zone harbors one to discover.</div>
+    <div class="pets-blurb">Companions earned from rare monsters. Each zone harbours one to discover.</div>
   </div><div class="pets-grid">`;
   // Iterate in ZONES order so display matches the combat picker.
   for(const z of ZONES){
@@ -23490,7 +23496,7 @@ function _cmastDetailHTML(){
   }
   // Weapon-locked note
   const noteHTML=n.weaponLocked
-    ? `<div class="cmast-d-note">${n.weaponLocked.charAt(0).toUpperCase()+n.weaponLocked.slice(1)}s are not yet implemented. This node unlocks when the ${n.weaponLocked} weapon class is added.</div>`
+    ? `<div class="cmast-d-note">${n.weaponLocked.charAt(0).toUpperCase()+n.weaponLocked.slice(1)}s aren't in the game yet — this node unlocks when they arrive.</div>`
     : '';
   // Buttons — allocate disabled if can't allocate; refund disabled if rank===0
   const canAlloc=cmastCanAllocate(id);
@@ -23574,7 +23580,10 @@ function buildCmastViewHTML(){
         <div class="cmast-tree-h ranged">🛡 BULWARK</div>
         <div class="cmast-tree-h magic">⚑ WARFARE</div>
       </div>
-      <div class="cmast-soon-note">Three mastery disciplines. Always-on effects (damage, crit, max HP, damage reduction, lifesteal, XP &amp; gold) <b>and</b> conditional procs (Executioner, Giant Slayer, Berserker, Warlord, Savage Edge) now apply to combat. A few bespoke procs (bleed, Second Wind, Cleaving Edge, Last Stand) are still being wired. Ranged &amp; Magic trees arrive later; surplus points bank as Mastery Shards.</div>
+      <!-- Player-facing summary, not a changelog. The old copy listed every proc by
+           name and narrated which ones were still being wired; per-node detail already
+           lives in the node panel below, and locked nodes explain themselves. -->
+      <div class="cmast-soon-note">Spend points across three disciplines. Every rank you fill applies to combat right away — damage, crit, survivability, and your XP and gold gains. Points you can't spend yet bank as Mastery Shards.</div>
       <div class="cmast-detail">
         ${_cmastDetailHTML()}
       </div>
@@ -25784,6 +25793,7 @@ if(IS_DEMO) document.body.classList.add('is-demo');
   var b1=$('mmBuy'); if(b1) b1.addEventListener('click',function(){ showDemoBuy('This is the free demo of Cindervale Idle.'); });
   var b2=$('gmBuy'); if(b2) b2.addEventListener('click',function(){ if(typeof gmClose==='function') gmClose(); showDemoBuy('This is the free demo of Cindervale Idle.'); });
   var bs=$('demoBuySite'); if(bs) bs.addEventListener('click',openFullGame);
+  var bst=$('demoBuySteam'); if(bst) bst.addEventListener('click',openSteamPage);
   var bc=$('demoBuyClose'); if(bc) bc.addEventListener('click',function(){ $('demoBuyModal').classList.add('mm-hidden'); });
 })();
 
