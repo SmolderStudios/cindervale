@@ -1856,7 +1856,7 @@ body:not(.is-demo) .demo-only{display:none !important}
   color:#c79b4e;font-size:12.5px;letter-spacing:.4px}
 .cr-list .cr-ver{color:#6e552c}
 /* Bug report dialog (0.9.29) */
-#mmReportModal .mm-card{max-width:480px}
+#mmReportModal .mm-card,#mmIdeaModal .mm-card{max-width:480px}
 .rep-ta{width:100%;min-height:104px;resize:vertical;background:#0d0905;color:#ead9b5;
   border:1px solid #6e552c;border-radius:5px;padding:10px 11px;font-family:'Crimson Pro',serif;
   font-size:15px;line-height:1.4;margin-bottom:10px}
@@ -1873,16 +1873,16 @@ body:not(.is-demo) .demo-only{display:none !important}
    instead of clipping the title and the Done button off-screen. align-items:center
    would pin an over-tall card centred, hiding its top with no way to scroll up —
    that stranded users on "a brown screen that just says On" (0.9.25). */
-#mmNameModal,#mmImportModal,#mmExportModal,#mmSettingsModal,#mmCreditsModal,#gameMenuModal,#mmReportModal,#demoBuyModal{position:fixed;inset:0;z-index:10000;display:flex;align-items:normal;overflow-y:auto;
+#mmNameModal,#mmImportModal,#mmExportModal,#mmSettingsModal,#mmCreditsModal,#gameMenuModal,#mmReportModal,#mmIdeaModal,#demoBuyModal{position:fixed;inset:0;z-index:10000;display:flex;align-items:normal;overflow-y:auto;
   justify-content:center;padding:18px;background:#000a;font-family:'Crimson Pro',serif}
-#mmNameModal.mm-hidden,#mmImportModal.mm-hidden,#mmExportModal.mm-hidden,#mmSettingsModal.mm-hidden,#mmCreditsModal.mm-hidden,#gameMenuModal.mm-hidden,#mmReportModal.mm-hidden,#demoBuyModal.mm-hidden{display:none}
-#mmNameModal .mm-card,#mmImportModal .mm-card,#mmExportModal .mm-card,#mmSettingsModal .mm-card,#mmCreditsModal .mm-card,#gameMenuModal .mm-card,#mmReportModal .mm-card,#demoBuyModal .mm-card{background:#251a10;border:1px solid #c79b4e;border-radius:8px;
+#mmNameModal.mm-hidden,#mmImportModal.mm-hidden,#mmExportModal.mm-hidden,#mmSettingsModal.mm-hidden,#mmCreditsModal.mm-hidden,#gameMenuModal.mm-hidden,#mmReportModal.mm-hidden,#mmIdeaModal.mm-hidden,#demoBuyModal.mm-hidden{display:none}
+#mmNameModal .mm-card,#mmImportModal .mm-card,#mmExportModal .mm-card,#mmSettingsModal .mm-card,#mmCreditsModal .mm-card,#gameMenuModal .mm-card,#mmReportModal .mm-card,#mmIdeaModal .mm-card,#demoBuyModal .mm-card{background:#251a10;border:1px solid #c79b4e;border-radius:8px;
   padding:20px;max-width:360px;width:100%;margin:auto;box-shadow:var(--sh-3)}
-#mmNameModal h3,#mmImportModal h3,#mmExportModal h3,#mmSettingsModal h3,#mmCreditsModal h3,#gameMenuModal h3,#mmReportModal h3,#demoBuyModal h3{color:#c79b4e;font-variant:small-caps;letter-spacing:1px;font-size:19px;margin:0 0 6px}
-#mmNameModal p,#mmImportModal p,#mmExportModal p,#mmSettingsModal p,#mmCreditsModal p,#mmReportModal p,#demoBuyModal p{color:#a08a64;font-size:14px;margin:0 0 12px}
+#mmNameModal h3,#mmImportModal h3,#mmExportModal h3,#mmSettingsModal h3,#mmCreditsModal h3,#gameMenuModal h3,#mmReportModal h3,#mmIdeaModal h3,#demoBuyModal h3{color:#c79b4e;font-variant:small-caps;letter-spacing:1px;font-size:19px;margin:0 0 6px}
+#mmNameModal p,#mmImportModal p,#mmExportModal p,#mmSettingsModal p,#mmCreditsModal p,#mmReportModal p,#mmIdeaModal p,#demoBuyModal p{color:#a08a64;font-size:14px;margin:0 0 12px}
 #mmNameModal input{width:100%;background:#0d0905;color:#ead9b5;border:1px solid #6e552c;
   border-radius:4px;padding:9px 11px;font-family:inherit;font-size:16px;margin-bottom:14px}
-#mmNameModal .mm-row,#mmImportModal .mm-row,#mmExportModal .mm-row,#mmSettingsModal .mm-row,#mmCreditsModal .mm-row,#gameMenuModal .mm-row,#mmReportModal .mm-row{display:flex;gap:8px;justify-content:flex-end}
+#mmNameModal .mm-row,#mmImportModal .mm-row,#mmExportModal .mm-row,#mmSettingsModal .mm-row,#mmCreditsModal .mm-row,#gameMenuModal .mm-row,#mmReportModal .mm-row,#mmIdeaModal .mm-row{display:flex;gap:8px;justify-content:flex-end}
 .mm-mini{background:#322415;border:1px solid #6e552c;color:#ead9b5;border-radius:4px;
   padding:7px 15px;font-family:inherit;font-size:14px;cursor:var(--cur-pointer)}
 .mm-mini.mm-primary{border-color:#c79b4e;color:#f0c772}
@@ -3136,7 +3136,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.45</div>
+  <div class="mm-ver">v0.9.46</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -3213,6 +3213,15 @@ body:not(.is-demo) .demo-only{display:none !important}
       </div>
     </div>
 
+    <div class="set-row" id="mmIdeaRow" hidden>
+      <div class="set-lbl">Suggest an idea
+        <small>Send a suggestion straight to the dev's Discord</small>
+      </div>
+      <div class="set-ctl">
+        <button class="mm-mini" id="mmSetIdea">Suggest</button>
+      </div>
+    </div>
+
     <div class="mm-row" style="margin-top:16px">
       <button class="mm-mini mm-primary" id="mmSettingsClose">Done</button>
     </div>
@@ -3231,6 +3240,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="gm-row" id="gmCredits">Credits<span>Who made this</span></button>
       <button class="gm-row gm-buy demo-only" id="gmBuy">Get the full game<span>Unlock every zone, skill &amp; raid</span></button>
       <button class="gm-row" id="gmReport" hidden>Report a bug<span>Send a report to the dev</span></button>
+      <button class="gm-row" id="gmIdea" hidden>Suggest an idea<span>Tell the dev what you'd like to see</span></button>
       <button class="gm-row" id="gmTutorial">Replay the tutorial<span>Run the intro tour again</span></button>
       <button class="gm-row" id="gmExport">Export save<span>Copy a backup code</span></button>
       <button class="gm-row gm-danger" id="gmQuit">Return to title<span>Back to the main menu</span></button>
@@ -3257,6 +3267,20 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-mini mm-primary" id="mmReportSend">Send report</button>
     </div>
     <div class="rep-msg" id="mmReportMsg"></div>
+  </div>
+</div>
+
+<!-- ===== SUGGEST AN IDEA ===== -->
+<div id="mmIdeaModal" class="mm-hidden">
+  <div class="mm-card">
+    <h3>Suggest an idea</h3>
+    <p>New content, a skill tweak, a quality-of-life fix — anything you'd like to see. Sent straight to the dev's Discord.</p>
+    <textarea class="rep-ta" id="mmIdeaText" maxlength="1400" placeholder="What would you like added or changed? Why would it make the game better?"></textarea>
+    <div class="mm-row" style="margin-top:4px">
+      <button class="mm-mini" id="mmIdeaCancel">Cancel</button>
+      <button class="mm-mini mm-primary" id="mmIdeaSend">Send idea</button>
+    </div>
+    <div class="rep-msg" id="mmIdeaMsg"></div>
   </div>
 </div>
 
@@ -3782,7 +3806,14 @@ let mmStarted = false; // start gameplay loops only once
    players can only post, never read the channel. Leave BUG_WEBHOOK empty to
    hide the Report-a-bug buttons entirely. */
 const BUG_WEBHOOK = 'https://discord.com/api/webhooks/1525224836258070528/LQk3rRgxUPgOwG4n30z_NUSXXIaA7S6OpivvNdDey-mTyao5JxCRbIOHyjCGu48p9CI9';   // <-- public in the client; regenerate in Discord if spammed
+/* Ideas & suggestions — same one-way Discord webhook trick as bug reports.
+   Leave this empty and suggestions fall back to the bug channel, tagged and
+   coloured differently so they're still easy to tell apart. Paste a dedicated
+   webhook here to split them into their own channel. */
+const IDEA_WEBHOOK = '';
+function ideaHook(){ return IDEA_WEBHOOK || BUG_WEBHOOK; }
 const BUG_COOLDOWN_MS = 30000;
+let _ideaLastSent = 0;
 let _bugLastSent = 0;
 const _bugErrors = [];
 function _logBugError(msg){
@@ -10248,9 +10279,16 @@ function buildFarmerPanel(){
         :'<span style="color:var(--muted)">🔒 Farming Lv '+t.reqLvl+'</span>';
       (function(tt){ btn.addEventListener('click',function(){ hireFarmer(tt); }); })(t.tier);
     } else {
+      /* Farmers unlock in sequence, so a later tier can be locked for TWO different
+         reasons. This branch used to blame the level requirement either way, which
+         meant a Lv99 player with no farmer saw "Farming Lv 25" on the Journeyman —
+         a level they cleared 70 levels ago — and reasonably concluded hiring was
+         broken. Name the blocker that actually applies. */
       btn.disabled=true;
       btn.style.cssText+='background:var(--raised-s);border-color:var(--trim-d);color:var(--muted);opacity:0.5;cursor:default';
-      stateLine='<span>🔒 Farming Lv '+t.reqLvl+'</span>';
+      stateLine=lvl>=t.reqLvl
+        ?'<span>🔒 Hire the '+FARMER_TIERS[t.tier-2].name.split(' ')[0]+' first</span>'
+        :'<span>🔒 Farming Lv '+t.reqLvl+'</span>';
     }
     btn.innerHTML='<div style="display:flex;align-items:center;gap:6px"><span style="font-size:17px;line-height:1;display:inline-flex">'+iconHTML('farmer_t'+t.tier)+'</span>'
       +'<b style="font-size:12px;color:'+(isActive?'var(--green)':'var(--trim)')+'">'+t.name.split(' ')[0]+'</b>'
@@ -25824,6 +25862,59 @@ async function mmSendReport(){
     btn.disabled=false; btn.textContent='Try again';
   }
 }
+/* ── Ideas & suggestions ──────────────────────────────────────────────────────
+   Deliberately lighter than the bug reporter: no screenshot, and none of the
+   silent diagnostic context. A bug report needs to know what the game was doing;
+   a suggestion only needs the player's words and enough to reply to them.
+   Shares the 30s cooldown budget but tracks its own timer, so sending an idea
+   never locks someone out of reporting a bug they just hit.               */
+function mmOpenIdea(){
+  $('mmIdeaText').value='';
+  const msg=$('mmIdeaMsg'); msg.textContent=''; msg.className='rep-msg';
+  const btn=$('mmIdeaSend'); btn.disabled=false; btn.textContent='Send idea';
+  $('mmIdeaModal').classList.remove('mm-hidden');
+  setTimeout(function(){ try{$('mmIdeaText').focus();}catch(e){} },30);
+}
+async function mmSendIdea(){
+  const msg=$('mmIdeaMsg'), btn=$('mmIdeaSend');
+  const text=$('mmIdeaText').value.trim();
+  if(!ideaHook()){ msg.className='rep-msg err'; msg.textContent='Suggestions are not set up yet.'; return; }
+  if(text.length<4){ msg.className='rep-msg err'; msg.textContent='Please describe your idea first.'; return; }
+  const wait=BUG_COOLDOWN_MS-(Date.now()-_ideaLastSent);
+  if(wait>0){ msg.className='rep-msg err'; msg.textContent='Please wait '+Math.ceil(wait/1000)+'s before sending another.'; return; }
+  btn.disabled=true; btn.textContent='Sending…'; msg.className='rep-msg'; msg.textContent='';
+  let dev='?'; try{ dev=localStorage.getItem(DEVICE_KEY)||'?'; }catch(e){}
+  const who=(state&&state.charName)?String(state.charName):'(no character)';
+  const ver=(document.querySelector('.mm-ver')?document.querySelector('.mm-ver').textContent.trim():'?');
+  const payload={embeds:[{
+    title:'💡 Suggestion',
+    description:text.slice(0,3800),
+    color:0x4ea3c7,                      // blue — reads apart from the red bug embeds
+    timestamp:new Date().toISOString(),
+    fields:[
+      {name:'Character',value:who.slice(0,256),inline:true},
+      {name:'Version',value:String(ver).slice(0,32),inline:true},
+      {name:'Device',value:String(dev).slice(0,40),inline:true}
+    ]}]};
+  try{
+    const res=await fetch(ideaHook(),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    if(!(res.ok||res.status===204)) throw new Error('HTTP '+res.status);
+    _ideaLastSent=Date.now();
+    msg.className='rep-msg ok'; msg.textContent='Thank you — idea sent!';
+    btn.textContent='Sent';
+    setTimeout(function(){ $('mmIdeaModal').classList.add('mm-hidden'); },1400);
+  }catch(err){
+    msg.className='rep-msg err';
+    msg.textContent='Could not send ('+String(err.message||err).slice(0,50)+'). Please post in Discord instead.';
+    btn.disabled=false; btn.textContent='Try again';
+  }
+}
+if(ideaHook()){ ['gmIdea','mmIdeaRow'].forEach(function(id){ var el=$(id); if(el) el.hidden=false; }); }
+$('gmIdea').addEventListener('click', function(){ gmClose(); mmOpenIdea(); });
+$('mmSetIdea').addEventListener('click', function(){ $('mmSettingsModal').classList.add('mm-hidden'); mmOpenIdea(); });
+$('mmIdeaCancel').addEventListener('click', function(){ $('mmIdeaModal').classList.add('mm-hidden'); });
+$('mmIdeaSend').addEventListener('click', mmSendIdea);
+
 if(BUG_WEBHOOK){ ['gmReport','mmReportRow'].forEach(function(id){ var el=$(id); if(el) el.hidden=false; }); }
 $('gmReport').addEventListener('click', function(){ gmClose(); mmOpenReport(); });
 $('mmSetReport').addEventListener('click', function(){ $('mmSettingsModal').classList.add('mm-hidden'); mmOpenReport(); });
@@ -25868,7 +25959,7 @@ window.addEventListener('keydown', function(e){
 // Scoped to the read-only dialogs — input flows (name/import/export) keep their
 // own explicit buttons. Pairs with the scroll fix: even if a card overflows the
 // window, you can always dismiss it.
-var MM_DISMISSABLE = ['gameMenuModal','mmSettingsModal','mmCreditsModal','mmReportModal','demoBuyModal'];
+var MM_DISMISSABLE = ['gameMenuModal','mmSettingsModal','mmCreditsModal','mmReportModal','mmIdeaModal','demoBuyModal'];
 window.addEventListener('keydown', function(e){
   if(e.key !== 'Escape') return;
   for(var i=0;i<MM_DISMISSABLE.length;i++){
