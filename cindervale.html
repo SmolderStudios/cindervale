@@ -3136,7 +3136,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.46</div>
+  <div class="mm-ver">v0.9.47</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -6812,6 +6812,33 @@ const SK=(function(){
   return {woodcutting,mining,fishing,foraging,smithing,cooking,alchemy,firemaking,agility,jeweler,farming,crafting};
 })();
 
+/* Pet generator — one hunched-critter silhouette, palette-swapped per pet, in the
+   same spirit as _seedSVG and the tool generators. Fifteen bespoke creatures would
+   have been fifteen chances for the set to drift apart visually; this way a pet
+   always reads as a pet at 16px in the collection grid.
+   p: {body,belly,dark,eye,glow,ear} — `ear` picks the head shape so the twelve
+   skilling pets aren't all the same animal: 'point' (ears), 'frond' (leaves/fins),
+   'wing' (moth/wisp), 'horn' (stubby horns). */
+function _critterSVG(p){
+  const halo = p.glow ? `<ellipse cx="32" cy="34" rx="27" ry="26" fill="${p.glow}" opacity="0.20"/>` : '';
+  let head='';
+  if(p.ear==='frond')      head=`<path d="M22 20 Q18 8 26 12 Q28 16 27 21 Z" fill="${p.body}" stroke="${p.dark}" stroke-width="0.9"/><path d="M42 20 Q46 8 38 12 Q36 16 37 21 Z" fill="${p.body}" stroke="${p.dark}" stroke-width="0.9"/>`;
+  else if(p.ear==='wing')  head=`<path d="M18 24 Q6 14 12 28 Q16 32 21 30 Z" fill="${p.body}" stroke="${p.dark}" stroke-width="0.9" opacity="0.92"/><path d="M46 24 Q58 14 52 28 Q48 32 43 30 Z" fill="${p.body}" stroke="${p.dark}" stroke-width="0.9" opacity="0.92"/>`;
+  else if(p.ear==='horn')  head=`<path d="M23 18 L20 9 L27 15 Z" fill="${p.belly}" stroke="${p.dark}" stroke-width="0.9"/><path d="M41 18 L44 9 L37 15 Z" fill="${p.belly}" stroke="${p.dark}" stroke-width="0.9"/>`;
+  else                     head=`<path d="M22 19 L18 7 L30 15 Z" fill="${p.body}" stroke="${p.dark}" stroke-width="0.9"/><path d="M42 19 L46 7 L34 15 Z" fill="${p.body}" stroke="${p.dark}" stroke-width="0.9"/>`;
+  return `<svg class="ev-icon" viewBox="0 0 64 64">${halo}`
+    +`<ellipse cx="32" cy="57" rx="15" ry="2.6" fill="#000" opacity="0.42"/>`
+    +head
+    +`<path d="M46 46 Q56 44 54 52 Q50 56 46 52 Z" fill="${p.body}" stroke="${p.dark}" stroke-width="0.9"/>`
+    +`<ellipse cx="32" cy="38" rx="18" ry="17" fill="${p.body}" stroke="${p.dark}" stroke-width="1.1"/>`
+    +`<ellipse cx="32" cy="43" rx="11" ry="10" fill="${p.belly}" opacity="0.85"/>`
+    +`<ellipse cx="32" cy="26" rx="13" ry="11" fill="${p.body}" stroke="${p.dark}" stroke-width="1.1"/>`
+    +`<ellipse cx="26.5" cy="26" rx="3.1" ry="3.6" fill="${p.eye}"/><ellipse cx="37.5" cy="26" rx="3.1" ry="3.6" fill="${p.eye}"/>`
+    +`<ellipse cx="27.3" cy="24.8" rx="1.1" ry="1.3" fill="#fff" opacity="0.85"/><ellipse cx="38.3" cy="24.8" rx="1.1" ry="1.3" fill="#fff" opacity="0.85"/>`
+    +`<path d="M30 31 Q32 33 34 31" stroke="${p.dark}" stroke-width="1.1" fill="none" stroke-linecap="round"/>`
+    +`</svg>`;
+}
+
 const ICONS = {
   /* ─── Skill icons (13) ─── */
   woodcutting: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="wc_wood" x1="0" y1="0" x2="1" y2="0.6"><stop offset="0" stop-color="#8b5a30"/><stop offset="0.4" stop-color="#a86c3b"/><stop offset="0.8" stop-color="#7a4a25"/><stop offset="1" stop-color="#4a2e15"/></linearGradient><linearGradient id="wc_blade" x1="0.2" y1="0" x2="0.8" y2="1"><stop offset="0" stop-color="#f5f5fa"/><stop offset="0.3" stop-color="#c8c8d5"/><stop offset="0.7" stop-color="#6a6a7a"/><stop offset="1" stop-color="#2a2a36"/></linearGradient><linearGradient id="wc_brass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f5d278"/><stop offset="0.5" stop-color="#c79b4e"/><stop offset="1" stop-color="#6e552c"/></linearGradient></defs><g transform="rotate(-30 32 32)"><rect x="29" y="30" width="6" height="30" rx="2" fill="url(#wc_wood)"/><rect x="30.5" y="31" width="1.5" height="27" fill="#fff" opacity="0.2"/><rect x="29" y="50" width="6" height="3" fill="#2a1810"/><rect x="29" y="60" width="6" height="2" fill="#1a0e08"/></g><path d="M22 14 Q47 8 56 22 L52 30 Q48 27 38 27 L24 26 Q20 22 22 14 Z" fill="url(#wc_blade)"/><path d="M28 16 Q43 12 50 20" stroke="#fff" stroke-width="1.6" fill="none" opacity="0.55" stroke-linecap="round"/><path d="M50 22 L56 24 L55 27 L49 24 Z" fill="#fff" opacity="0.85"/><g transform="rotate(-30 32 32)"><ellipse cx="32" cy="32" rx="5" ry="3.5" fill="url(#wc_brass)"/><ellipse cx="32" cy="31" rx="4" ry="2" fill="#e0762f" opacity="0.5"/><circle cx="30" cy="32" r="0.7" fill="#3a2a17"/><circle cx="34" cy="32" r="0.7" fill="#3a2a17"/></g></svg>',
@@ -7563,6 +7590,27 @@ const ICONS = {
   pet_imp: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><radialGradient id="im_skin" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#e0762f"/><stop offset="0.6" stop-color="#a02818"/><stop offset="1" stop-color="#3a0808"/></radialGradient><radialGradient id="im_flame" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#fbd24e"/><stop offset="0.5" stop-color="#e0762f"/><stop offset="1" stop-color="#a02818" stop-opacity="0"/></radialGradient></defs><ellipse cx="32" cy="56" rx="14" ry="3" fill="#000" opacity="0.4"/><path d="M28 14 L22 4 L26 12 Z" fill="url(#im_skin)" stroke="#3a0808" stroke-width="0.6"/><path d="M36 14 L42 4 L38 12 Z" fill="url(#im_skin)" stroke="#3a0808" stroke-width="0.6"/><ellipse cx="32" cy="40" rx="16" ry="14" fill="url(#im_skin)" stroke="#3a0808" stroke-width="0.8"/><circle cx="32" cy="26" r="13" fill="url(#im_skin)" stroke="#3a0808" stroke-width="0.8"/><path d="M14 36 L4 30 L10 38 L4 42 L16 42 Z" fill="url(#im_skin)" stroke="#3a0808" stroke-width="0.6"/><path d="M50 36 L60 30 L54 38 L60 42 L48 42 Z" fill="url(#im_skin)" stroke="#3a0808" stroke-width="0.6"/><ellipse cx="26" cy="26" rx="2.8" ry="2.4" fill="#fbd24e"/><ellipse cx="38" cy="26" rx="2.8" ry="2.4" fill="#fbd24e"/><circle cx="26" cy="26" r="1.2" fill="#3a0808"/><circle cx="38" cy="26" r="1.2" fill="#3a0808"/><path d="M27 32 L29 30 L31 32 L33 30 L35 32 L37 30" stroke="#3a0808" stroke-width="1" fill="none"/><ellipse cx="32" cy="6" rx="6" ry="8" fill="url(#im_flame)" opacity="0.7"/><path d="M48 54 Q56 50 56 42" stroke="#a02818" stroke-width="2" fill="none" stroke-linecap="round"/></svg>',
   pet_smokey_bones: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="sb_fur" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6b6660"/><stop offset="0.55" stop-color="#3d3a36"/><stop offset="1" stop-color="#1c1a18"/></linearGradient><radialGradient id="sb_eye" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#ffe9bf"/><stop offset="0.5" stop-color="#f5c451"/><stop offset="1" stop-color="#e0762f"/></radialGradient><radialGradient id="sb_smoke" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#8a8078" stop-opacity="0.35"/><stop offset="1" stop-color="#8a8078" stop-opacity="0"/></radialGradient></defs><ellipse cx="32" cy="34" rx="26" ry="22" fill="url(#sb_smoke)"/><path d="M14 24 L18 8 L28 18 Z" fill="url(#sb_fur)"/><path d="M50 24 L46 8 L36 18 Z" fill="url(#sb_fur)"/><path d="M16.5 21 L18.6 12.5 L24 18 Z" fill="#5a3020" opacity="0.55"/><path d="M47.5 21 L45.4 12.5 L40 18 Z" fill="#5a3020" opacity="0.55"/><ellipse cx="32" cy="33" rx="20" ry="18" fill="url(#sb_fur)"/><ellipse cx="24" cy="30" rx="4.6" ry="5.4" fill="url(#sb_eye)"/><ellipse cx="40" cy="30" rx="4.6" ry="5.4" fill="url(#sb_eye)"/><ellipse cx="24" cy="30" rx="1.1" ry="4.4" fill="#1a1108"/><ellipse cx="40" cy="30" rx="1.1" ry="4.4" fill="#1a1108"/><path d="M32 38 L29.4 41.6 L34.6 41.6 Z" fill="#c4543a"/><path d="M32 42 L32 44.6 M32 44.6 Q28.6 46.6 26.6 43.6 M32 44.6 Q35.4 46.6 37.4 43.6" stroke="#1a1108" stroke-width="1.3" fill="none" stroke-linecap="round"/><path d="M6 34 L18 32 M6 40 L18 37 M58 34 L46 32 M58 40 L46 37" stroke="#b8b0a6" stroke-width="1" opacity="0.6" stroke-linecap="round"/><circle cx="20" cy="14" r="1.4" fill="#e0762f" opacity="0.7"/><circle cx="45" cy="12" r="1.1" fill="#e0762f" opacity="0.5"/></svg>',
   pet_unknown: '<svg class="ev-icon" viewBox="0 0 64 64"><circle cx="32" cy="32" r="28" fill="#1a1410" stroke="#3a2818" stroke-width="1.5"/><circle cx="32" cy="32" r="22" fill="#0f0a08"/><text x="32" y="44" text-anchor="middle" fill="#5a4838" font-size="32" font-family="serif" font-weight="700">?</text></svg>',
+
+  /* Hunt-zone familiars — palettes lifted from their own zones so they read as
+     belonging there: briar green, tundra ice-blue, steppe ash-orange. */
+  pet_briar_fawn:     _critterSVG({body:'#6f9a44', belly:'#c2d89a', dark:'#26380f', eye:'#f0e08a', glow:'#8ac25a', ear:'horn'}),
+  pet_frost_cub:      _critterSVG({body:'#a8c8e0', belly:'#e4f2fa', dark:'#2c4458', eye:'#5fd8f0', glow:'#a8dcf4', ear:'point'}),
+  pet_ash_jackal_pup: _critterSVG({body:'#a06848', belly:'#d8a878', dark:'#3a1e10', eye:'#ff8a30', glow:'#e0782a', ear:'point'}),
+
+  /* Skilling familiars (12) — one per skill, palette echoes the skill's own icon
+     so the collection grid is readable without labels. */
+  spet_woodcutting: _critterSVG({body:'#8a6038', belly:'#c8a070', dark:'#3a2410', eye:'#a8e070', glow:'#9ad05a', ear:'frond'}),
+  spet_mining:      _critterSVG({body:'#7a8090', belly:'#c0c8d4', dark:'#2a2e38', eye:'#78c8e8', glow:'#88a0c0', ear:'horn'}),
+  spet_fishing:     _critterSVG({body:'#3f8fb0', belly:'#a8dce8', dark:'#123a48', eye:'#d8f4ff', glow:'#5fb8e0', ear:'frond'}),
+  spet_foraging:    _critterSVG({body:'#5f8f34', belly:'#b8d888', dark:'#1e300c', eye:'#f0d060', glow:'#8ad04e', ear:'frond'}),
+  spet_smithing:    _critterSVG({body:'#8a5a30', belly:'#d09858', dark:'#2e1608', eye:'#ff9030', glow:'#e07423', ear:'horn'}),
+  spet_cooking:     _critterSVG({body:'#c07848', belly:'#f0c088', dark:'#3e2010', eye:'#ffd070', glow:'#e09a4a', ear:'point'}),
+  spet_alchemy:     _critterSVG({body:'#6a4a90', belly:'#b898d8', dark:'#241634', eye:'#88f0c0', glow:'#9868d0', ear:'frond'}),
+  spet_firemaking:  _critterSVG({body:'#8a4828', belly:'#e0a060', dark:'#2e1004', eye:'#ffc040', glow:'#ff8420', ear:'wing'}),
+  spet_agility:     _critterSVG({body:'#b8a878', belly:'#e8dcb8', dark:'#3a3018', eye:'#a0e8f0', glow:'#d8c890', ear:'point'}),
+  spet_jeweler:     _critterSVG({body:'#4a7a88', belly:'#a0d0d8', dark:'#16303a', eye:'#ff70c0', glow:'#50c0d0', ear:'horn'}),
+  spet_farming:     _critterSVG({body:'#6a5230', belly:'#b89868', dark:'#241a0c', eye:'#9ad060', glow:'#a08050', ear:'point'}),
+  spet_crafting:    _critterSVG({body:'#9a7860', belly:'#d8c0a8', dark:'#332218', eye:'#e8b060', glow:'#c0a080', ear:'wing'}),
   // ── [JS-ICONS-UI] chrome icons (1.0.96) — small inline SVGs replacing decorative
   // UI emoji (tabs, stat rows, currency, headers). Reused via iconHTML('ui_*'). ──
   ui_coin: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><radialGradient id="uic_g" cx="0.4" cy="0.34" r="0.72"><stop offset="0" stop-color="#ffe9a0"/><stop offset="0.5" stop-color="#e6b23e"/><stop offset="1" stop-color="#8a5e18"/></radialGradient></defs><ellipse cx="32" cy="55" rx="17" ry="2.8" fill="#000" opacity="0.32"/><circle cx="32" cy="32" r="22" fill="url(#uic_g)" stroke="#5a3c10" stroke-width="1.6"/><circle cx="32" cy="32" r="16" fill="none" stroke="#7a5418" stroke-width="1.1" opacity="0.7"/><path d="M32 21 L35 29.5 L44 29.5 L37 35 L39.5 44 L32 38.5 L24.5 44 L27 35 L20 29.5 L29 29.5 Z" fill="#fff6d0" opacity="0.85"/><ellipse cx="25" cy="24" rx="4" ry="2.2" fill="#fff" opacity="0.55" transform="rotate(-35 25 24)"/></svg>',
@@ -11997,6 +12045,13 @@ function normalizeState(){
   }
   // Pets (1.0.70) — ensure container exists and entries are well-formed.
   if(!state.pets||typeof state.pets!=='object'||Array.isArray(state.pets)) state.pets={};
+  // Skilling familiars live in their own bucket so they can't satisfy the
+  // zone-pet achievements. Same {obtainedAt} shape as state.pets.
+  if(!state.skillPets||typeof state.skillPets!=='object'||Array.isArray(state.skillPets)) state.skillPets={};
+  for(const spid in state.skillPets){
+    if(!state.skillPets[spid]||typeof state.skillPets[spid]!=='object') state.skillPets[spid]={obtainedAt:Date.now()};
+    if(typeof state.skillPets[spid].obtainedAt!=='number') state.skillPets[spid].obtainedAt=Date.now();
+  }
   for(const pid in state.pets){
     if(!state.pets[pid]||typeof state.pets[pid]!=='object') state.pets[pid]={obtainedAt:Date.now()};
     if(typeof state.pets[pid].obtainedAt!=='number') state.pets[pid].obtainedAt=Date.now();
@@ -14777,6 +14832,11 @@ function completeAction(act,skillKey,times){
     }
   }
 
+  // Skilling pet — one per skill, first time only. Rolled here so it rides the
+  // same per-action loop as rare drops (and so offline catch-up, which calls
+  // completeAction with times>1, gets its fair share of rolls).
+  rollSkillPet(skillKey, act, times);
+
   // XP — includes mastery bonus
   const before=levelFromXp(state.xp[skillKey]);
   const mastBonus=masteryXpBonus(act.id);
@@ -16832,6 +16892,32 @@ function buildPetsViewHTML(){
     </div>`;
   }
   html+='</div>';
+
+  /* Skilling familiars — their own section because they're earned a completely
+     different way (any action, vanishingly rare, scaled by the activity's level)
+     and because they live in state.skillPets rather than state.pets. */
+  const sOwned=state.skillPets||{};
+  let sHave=0; for(const k in SKILL_PETS) if(sOwned[SKILL_PETS[k].id]) sHave++;
+  const sTotal=Object.keys(SKILL_PETS).length;
+  html+=`<div class="pets-head" style="margin-top:14px">
+    <div class="pets-title">Skilling Familiars <span class="pets-count">${sHave}/${sTotal}</span></div>
+    <div class="pets-blurb">One per skill. Any action can turn one up &mdash; higher-level actions carry a better chance.</div>
+  </div><div class="pets-grid">`;
+  for(const sk in SKILL_PETS){
+    const pet=SKILL_PETS[sk];
+    const have=!!sOwned[pet.id];
+    const ic=have ? iconHTML(pet.id) : iconHTML('pet_unknown');
+    const at=have && sOwned[pet.id] ? sOwned[pet.id].obtainedAt : 0;
+    const ds=at ? new Date(at).toLocaleDateString() : '';
+    const skName=SKILLS[sk]?SKILLS[sk].name:sk;
+    html+=`<div class="pet-card ${have?'have':'miss'}" data-tip="${have?(pet.name+' &mdash; obtained '+ds):('Undiscovered &mdash; keep training '+skName+'; higher-level actions roll better odds')}">
+      <div class="pet-face">${ic}</div>
+      <div class="pet-name">${have?pet.name:'???'}</div>
+      <div class="pet-zone">${skName}</div>
+    </div>`;
+  }
+  html+='</div>';
+
   // Secret pets appear only once earned. A locked "???" card would advertise that
   // something exists, which is the one thing an easter egg must not do.
   if(hasSecretPet()){
@@ -18905,6 +18991,37 @@ function rareModify(mon, isRare){
    monster kill in that zone via a RARE_PET_CHANCE roll. Decorative for now;
    future updates will hook in active companion perks. The pet icon ids live
    in the ICONS registry (see [JS-ICONS-PETS]). */
+/* ── Skilling pets (12) ───────────────────────────────────────────────────────
+   One per skill, and unlike zone pets they can fall from ANY action in that
+   skill. The chance scales with the ACTIVITY's level requirement rather than
+   your own, so a Lv90 tree is worth chasing on a maxed account instead of
+   spam-clicking the Lv1 one — which is exactly what a flat rate would reward.
+
+   Deliberately kept in state.skillPets, NOT state.pets: the Beastfriend
+   achievement counts state.pets and would fire off nine skilling pets alone.
+   Merging the two collections is a pending job, along with the achievements
+   that go with it.                                                          */
+const SKILL_PET_BASE = 1/32000;   // per action at a Lv1 activity
+function skillPetChance(actLvl){
+  // Lv1 -> 1x, Lv50 -> ~2x, Lv90 -> ~2.8x. Gentle on purpose; these are meant
+  // to be the rarest thing in the game outside a boss pet.
+  return SKILL_PET_BASE * (1 + (Math.max(1, actLvl||1) - 1) / 50);
+}
+const SKILL_PETS={
+  woodcutting:{id:'spet_woodcutting', name:'Sapling Sprite'},
+  mining:     {id:'spet_mining',      name:'Geode Whelp'},
+  fishing:    {id:'spet_fishing',     name:'Tidepool Frond'},
+  foraging:   {id:'spet_foraging',    name:'Bramble Imp'},
+  smithing:   {id:'spet_smithing',    name:'Anvil Grub'},
+  cooking:    {id:'spet_cooking',     name:'Pot Pixie'},
+  alchemy:    {id:'spet_alchemy',     name:'Flask Newt'},
+  firemaking: {id:'spet_firemaking',  name:'Ashen Moth'},
+  agility:    {id:'spet_agility',     name:'Fleetfoot Hare'},
+  jeweler:    {id:'spet_jeweler',     name:'Facet Beetle'},
+  farming:    {id:'spet_farming',     name:'Furrow Mole'},
+  crafting:   {id:'spet_crafting',    name:'Thimble Wisp'},
+};
+
 const PETS={
   rat_warrens:     {id:'pet_plague_pup',       name:'Plague Pup',        zone:'rat_warrens'},
   spider_hollow:   {id:'pet_silk_hatchling',   name:'Silk Hatchling',    zone:'spider_hollow'},
@@ -18915,6 +19032,10 @@ const PETS={
   troll_caverns:   {id:'pet_troll_pebble',     name:'Troll Pebble',      zone:'troll_caverns'},
   wyvern_roost:    {id:'pet_wyvern_hatchling', name:'Wyvern Hatchling',  zone:'wyvern_roost'},
   demon_sanctum:   {id:'pet_imp',              name:'Imp',               zone:'demon_sanctum'},
+  // Hunt zones shipped without pets, so a quarter of the map had nothing to chase.
+  thornwood:       {id:'pet_briar_fawn',       name:'Briar Fawn',        zone:'thornwood'},
+  frostfang:       {id:'pet_frost_cub',        name:'Frost Cub',         zone:'frostfang'},
+  ashen_steppe:    {id:'pet_ash_jackal_pup',   name:'Ash Jackal Pup',    zone:'ashen_steppe'},
 };
 
 /* ── Secret pets (0.9.19) ──────────────────────────────────────────────────
@@ -18930,6 +19051,31 @@ const SECRET_PETS = {
   },
 };
 function hasSecretPet(){ return !!(state && state.pets && state.pets.pet_smokey_bones); }
+
+/* Skilling-pet roll. Kept out of state.pets on purpose — see the SKILL_PETS
+   comment. Returns true if one was just found, so callers could react; nothing
+   does yet beyond the toast and the collection re-render. */
+function rollSkillPet(skillKey, act, times){
+  try{
+    const def=SKILL_PETS[skillKey];
+    if(!def) return false;
+    if(!state.skillPets) state.skillPets={};
+    if(state.skillPets[def.id]) return false;          // first time only
+    const n=Math.max(1, times|0);
+    const p=skillPetChance(act&&act.lvl);
+    // binom() gives the same distribution as rolling each action separately,
+    // which matters for offline catch-up where times can be in the thousands.
+    if(binom(n,p)<=0) return false;
+    state.skillPets[def.id]={obtainedAt:Date.now()};
+    toast('🐾 A '+def.name+' has taken a shine to you!');
+    if(typeof logNotification==='function'){
+      logNotification('pet','🐾','Found a skilling familiar — '+def.name+' ('+(SKILLS[skillKey]?SKILLS[skillKey].name:skillKey)+').');
+    }
+    if(typeof viewTab!=='undefined' && viewTab==='pets' && typeof renderPets==='function') renderPets();
+    saveGame();
+    return true;
+  }catch(e){ return false; }
+}
 function getPetForZone(zoneId){ return PETS[zoneId]||null; }
 function hasPet(petId){ return !!(state && state.pets && state.pets[petId]); }
 
