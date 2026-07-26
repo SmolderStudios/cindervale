@@ -3136,7 +3136,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.47</div>
+  <div class="mm-ver">v0.9.48</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -7887,6 +7887,83 @@ function skillingGearTipHtml(itemId){
 /* Build a reusable stats block for combat gear (used in gear-tab + inventory tooltips).
    Returns '' for non-combat items. Color code matches the combat tab chips:
    red atk · ember str · blue def. Zero-value stats hidden for compactness. */
+/* ── Gear comparison (v0.9.48) ────────────────────────────────────────────────
+   Given a candidate item and whatever's equipped in the same slot, returns a
+   compact "+3 Atk  -1 Def" delta line so the player never has to hold two
+   tooltips in their head. Covers BOTH gear kinds off one normaliser:
+     - combat gear  → COMBAT_GEAR_STATS (flat atk/str/def + leather crit/dodge/aspd)
+     - skilling gear & jewelry → the SHOP/skillGear `bonus` object (percentages)
+   Returns '' when there's nothing equipped to compare against, or when the two
+   items are statistically identical. */
+function _gearStatVec(itemId){
+  // Flat combat stats. Leather secondaries (crit/dodge/aspd) live here too.
+  var out={};
+  var cs=COMBAT_GEAR_STATS[itemId];
+  if(cs){ for(var k in cs){ if(cs[k]) out[k]=cs[k]; } }
+  // Percentage bonuses from shop gear / jewelry.
+  var si=(typeof SHOP!=='undefined')?SHOP.find(function(i){return i.id===itemId;}):null;
+  if(si&&si.bonus){ for(var b in si.bonus){ if(si.bonus[b]) out['%'+b]=(out['%'+b]||0)+si.bonus[b]; } }
+  // Rare skilling-gear pieces (Lumberjack's Hat etc.) carry a flat gearXp fraction.
+  var it=ITEMS[itemId];
+  if(it&&it.skillGear&&it.gearXp) out['%skillXp']=(out['%skillXp']||0)+it.gearXp;
+  return out;
+}
+/* Clean names only — the value already gets a trailing % for percentage stats,
+   so a label like 'Crit%' would render "+5% Crit%". */
+var _GEAR_STAT_LABEL={atk:'Atk',str:'Str',def:'Def',crit:'Crit',dodge:'Dodge',aspd:'Atk Spd',
+  '%speed':'Speed','%xpBoost':'XP','%skillXp':'Skill XP','%gpBoost':'Gold','%doubleYield':'2× Yield',
+  '%preserve':'Preserve','%atkBoost':'Atk','%critChance':'Crit','%lifesteal':'Lifesteal',
+  '%hpBoost':'HP','%defBoost':'Def'};
+function _gearStatIsPct(key){ return key.charAt(0)==='%'||key==='crit'||key==='dodge'||key==='aspd'; }
+/* Resolve what's worn in a hovered item's slot and return the comparison line,
+   or '' if it isn't slotted gear or nothing is equipped to compare against.
+   Multi-slot items (rings fit two slots): compares against whichever of its
+   valid slots is filled, preferring an exact different item over an empty slot. */
+function hoverGearDelta(itemId){
+  var it=ITEMS[itemId];
+  var isCombat=!!(it&&it.cgear);
+  // Only gear has a slot to compare in. cgear covers combat; getItemSlots covers
+  // jewelry/capes/skilling gear/tools. Plain materials return [] and bail.
+  var slots=(typeof getItemSlots==='function')?getItemSlots(itemId):[];
+  if(isCombat && it.cslot && slots.indexOf(it.cslot)<0) slots=[it.cslot];
+  if(!slots.length) return '';
+  var loadout=isCombat?(state.combatEquipped||{}):(state.skillingEquipped||{});
+  // Pick the most informative slot: a filled slot holding a DIFFERENT item wins.
+  var equippedId='';
+  for(var i=0;i<slots.length;i++){ var e=loadout[slots[i]]; if(e && e!==itemId){ equippedId=e; break; } }
+  if(!equippedId){ // hovered item IS the equipped one, or slot empty → nothing to say
+    for(var j=0;j<slots.length;j++){ if(loadout[slots[j]]===itemId) return ''; }
+    return '';
+  }
+  return gearDeltaHTML(itemId, equippedId);
+}
+function gearDeltaHTML(candidateId, equippedId){
+  if(!equippedId || candidateId===equippedId) return '';
+  var A=_gearStatVec(candidateId), B=_gearStatVec(equippedId);
+  var keys={}; for(var k in A) keys[k]=1; for(var k2 in B) keys[k2]=1;
+  // Stable, readable order: flat combat stats first, then percentages.
+  var order=['atk','str','def','crit','dodge','aspd','%speed','%xpBoost','%skillXp','%gpBoost',
+    '%doubleYield','%preserve','%atkBoost','%critChance','%lifesteal','%hpBoost','%defBoost'];
+  var seen=Object.keys(keys).sort(function(a,b){
+    var ia=order.indexOf(a), ib=order.indexOf(b);
+    return (ia<0?99:ia)-(ib<0?99:ib);
+  });
+  var parts=[];
+  for(var i=0;i<seen.length;i++){
+    var key=seen[i];
+    var diff=(A[key]||0)-(B[key]||0);
+    if(Math.abs(diff)<1e-9) continue;
+    var pct=_gearStatIsPct(key);
+    var shown=pct?(Math.round(diff*1000)/10):diff;   // fractions → 1-dp %
+    var label=_GEAR_STAT_LABEL[key]||key.replace('%','');
+    var up=diff>0;
+    var sign=up?'+':'';
+    parts.push('<span style="color:'+(up?'#7fd07f':'#e07a6a')+'">'+sign+shown+(pct?'%':'')+' '+label+'</span>');
+  }
+  if(!parts.length) return '<div style="font-size:12px;color:var(--muted);margin-top:3px">Same stats as equipped</div>';
+  return '<div style="font-size:12px;margin-top:3px;line-height:1.5"><span style="color:var(--muted)">vs equipped: </span>'+parts.join('<span style="color:var(--trim-d)"> · </span>')+'</div>';
+}
+
 function combatGearStatBlock(itemId){
   var it=ITEMS[itemId];
   if(!it||!it.cgear) return '';
@@ -20289,10 +20366,14 @@ function openGearSlotModal(slotKey,def,currentId){
     var label='';
     if(isEquipped) label=' <span style="font-size:12px;color:var(--ember)">● Equipped</span>';
     else if(equippedElsewhere) label=' <span style="font-size:12px;color:var(--ember)">● In '+otherSlotLabel+'</span>';
+    // Stat delta vs the item currently equipped in this slot. Only for the
+    // alternatives — the equipped row has nothing to compare against itself.
+    var deltaHTML=(!isEquipped && typeof gearDeltaHTML==='function')?gearDeltaHTML(itemId,currentId):'';
     row.innerHTML='<span style="font-size:22px">'+iconHTML(itemId)+'</span>'
       +'<div style="flex:1"><div style="font-size:14px;color:'+(isEquipped?'var(--trim)':'var(--text)')+';margin-bottom:2px">'
       +d.name+label+'</div>'
-      +'<div style="font-size:13px;color:var(--muted)">'+(d.desc||'No bonus')+'</div></div>';
+      +'<div style="font-size:13px;color:var(--muted)">'+(d.desc||'No bonus')+'</div>'
+      +deltaHTML+'</div>';
 
     var btnWrap=document.createElement('div');
     btnWrap.style.cssText='display:flex;flex-direction:column;gap:4px;flex-shrink:0';
@@ -20678,6 +20759,12 @@ function showItemTooltip(itemId, x, y){
   if(it.cgear){
     html+=combatGearStatBlock(itemId);
   }
+  // Hover comparison — if this is gear and something ELSE is worn in its slot,
+  // show the stat delta so the player can judge an upgrade without opening the
+  // gear modal. Resolves the slot and its loadout the same way equipping does:
+  // combat gear from combatEquipped, everything else (jewelry, capes, skilling
+  // gear, tools) from skillingEquipped.
+  html+=hoverGearDelta(itemId);
   // Gem-tier jewelry — show gem badge + current enchant + bonus desc
   if(typeof JEWELRY_GEM_TIER!=='undefined' && JEWELRY_GEM_TIER[itemId]){
     html+=jewelryEnchantBlock(itemId);
