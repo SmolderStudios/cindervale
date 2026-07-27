@@ -3148,7 +3148,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.49</div>
+  <div class="mm-ver">v0.9.50</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -4343,6 +4343,24 @@ const ITEMS={
   dragon_pendant:  {name:'Dragon Pendant',      icon:'📿',sell:23100},
   bloodstone_pendant:{name:'Bloodstone Pendant',icon:'📿',sell:34100},
   void_jewel:      {name:'Void Pendant',        icon:'📿',sell:57200},
+  /* ── Trophy jewelry (v0.9.50) ──────────────────────────────────────────────
+     Crafted at the Jeweller from a boss's guaranteed trophy — one piece per boss,
+     scaling with the boss's level. Every trophy dropped @1 and was pure vendor
+     fodder; now each is the key to a unique piece with an INNATE bonus (no
+     enchant needed), read through jewelryInnateBonus(). Deliberately modest vs a
+     fully-enchanted gem set — a convenient boss-progress reward, not a
+     replacement for the enchant grind. Biased to rings (2 slots, less contested
+     than the neck, where the powerful pendant/amulet sets live). jbonus keys:
+     combat atkBoost/hpBoost/defBoost/critChance/lifesteal, skilling gpBoost/xpBoost. */
+  warren_signet:   {name:'Warren Signet',   icon:'💍',sell:2500,  trophyJewel:true, jslot:'ring',   jbonus:{gpBoost:0.05},                 desc:'Rat Queen trophy. +5% gold from everything you sell.'},
+  silkweave_band:  {name:'Silkweave Band',  icon:'💍',sell:5200,  trophyJewel:true, jslot:'ring',   jbonus:{critChance:0.02},              desc:'Silkweaver Queen trophy. +2% critical-hit chance.'},
+  warband_torc:    {name:'Warband Torc',    icon:'📿',sell:9000,  trophyJewel:true, jslot:'amulet', jbonus:{atkBoost:0.04},                desc:'Goblin Warchief trophy. +4% melee damage.'},
+  soulbound_amulet:{name:'Soulbound Amulet',icon:'📿',sell:16000, trophyJewel:true, jslot:'amulet', jbonus:{lifesteal:0.04},               desc:'Forged from a Lich trophy. Heal for 4% of the damage you deal.'},
+  alpha_fang_ring: {name:'Alpha Fang Ring', icon:'💍',sell:26000, trophyJewel:true, jslot:'ring',   jbonus:{critChance:0.03,atkBoost:0.02}, desc:'Ironfang trophy. +3% crit and +2% melee damage.'},
+  warlord_aegis:   {name:"Warlord's Aegis", icon:'📿',sell:40000, trophyJewel:true, jslot:'amulet', jbonus:{defBoost:0.08,hpBoost:0.05},    desc:'Ogre Warlord trophy. +8% Defence and +5% max HP.'},
+  mountain_locket: {name:'Mountain Locket',  icon:'📿',sell:60000, trophyJewel:true, jslot:'amulet', jbonus:{hpBoost:0.12},                  desc:'Troll King trophy. +12% max HP.'},
+  emberwyrm_eye:   {name:'Emberwyrm Eye',   icon:'💍',sell:88000, trophyJewel:true, jslot:'ring',   jbonus:{atkBoost:0.07,critChance:0.03}, desc:'Emberwyrm trophy. +7% melee damage and +3% crit.'},
+  sanctum_signet:  {name:'Sanctum Signet',  icon:'💍',sell:130000,trophyJewel:true, jslot:'ring',   jbonus:{atkBoost:0.06,lifesteal:0.04,critChance:0.03}, desc:'Demon Lord trophy. +6% damage, +4% lifesteal, +3% crit.'},
   gem_dust:        {name:'Gem Dust',            icon:'✨',sell:55, desc:'Glittering powder from cutting gems (Jeweler) or Gem Rocks (Mining Lv 40). Fuels socket drilling, gem crafting and high-tier enchants.'},
   // Farming outputs — seeds and produce
   wildberry_seed:{name:'Wildberry Seed',icon:'🌱',sell:33},
@@ -5498,6 +5516,20 @@ const SKILLS={
     {id:'jw_pen5',name:'Dragon pendant',   cat:'pendant',lvl:76,ms:20000,xp:1230,spdMult:0.770,minMs:3200, inp:{cut_dragon:1,runite_bar:1},     out:{dragon_pendant:1}},
     {id:'jw_pen8',name:'Bloodstone pendant',cat:'pendant',lvl:84,ms:23000,xp:1590,spdMult:0.790,minMs:3680, inp:{cut_bloodstone:1,starsteel_bar:1},out:{bloodstone_pendant:1}},
     {id:'jw_pen6',name:'Void pendant',     cat:'pendant',lvl:92,ms:26000,xp:1950,spdMult:0.790,minMs:4160, inp:{cut_void:1,starsteel_bar:1},    out:{void_jewel:1}},
+
+    /* Trophy jewelry (v0.9.50). Each consumes a boss's guaranteed trophy plus a
+       cut gem of matching era, so the recipe is gated by the boss, not just a
+       Jeweller level. Level reqs track roughly where each boss sits so a piece
+       becomes craftable about when you can farm its trophy. */
+    {id:'jw_tj_warren',  name:'Warren Signet',   cat:'trophy',lvl:15,ms:9000, xp:260, spdMult:0.62,minMs:1500,inp:{rat_queen_crown:1,cut_sapphire:1},     out:{warren_signet:1}},
+    {id:'jw_tj_silk',    name:'Silkweave Band',  cat:'trophy',lvl:22,ms:11000,xp:360, spdMult:0.66,minMs:1760,inp:{widow_crown:1,cut_emerald:1},         out:{silkweave_band:1}},
+    {id:'jw_tj_warband', name:'Warband Torc',    cat:'trophy',lvl:30,ms:13000,xp:500, spdMult:0.68,minMs:2080,inp:{warchief_crown:1,cut_emerald:1},      out:{warband_torc:1}},
+    {id:'jw_tj_lich',    name:'Soulbound Amulet',cat:'trophy',lvl:40,ms:15000,xp:720, spdMult:0.70,minMs:2400,inp:{lich_crown:1,cut_ruby:1},             out:{soulbound_amulet:1}},
+    {id:'jw_tj_alpha',   name:'Alpha Fang Ring', cat:'trophy',lvl:50,ms:17000,xp:980, spdMult:0.72,minMs:2720,inp:{ironfang_skull:1,cut_diamond:1},      out:{alpha_fang_ring:1}},
+    {id:'jw_tj_warlord', name:"Warlord's Aegis", cat:'trophy',lvl:62,ms:19000,xp:1280,spdMult:0.75,minMs:3040,inp:{warlord_skull:1,cut_amethyst:1},      out:{warlord_aegis:1}},
+    {id:'jw_tj_mountain',name:'Mountain Locket', cat:'trophy',lvl:72,ms:21000,xp:1620,spdMult:0.77,minMs:3360,inp:{troll_king_skull:1,cut_dragon:1},     out:{mountain_locket:1}},
+    {id:'jw_tj_ember',   name:'Emberwyrm Eye',   cat:'trophy',lvl:86,ms:24000,xp:2050,spdMult:0.79,minMs:3840,inp:{emberwyrm_skull:1,cut_bloodstone:1},  out:{emberwyrm_eye:1}},
+    {id:'jw_tj_sanctum', name:'Sanctum Signet',  cat:'trophy',lvl:95,ms:28000,xp:2600,spdMult:0.79,minMs:4480,inp:{demonlord_skull:1,cut_void:1},        out:{sanctum_signet:1}},
   ]},
   farming:{name:'Farming',icon:'🌾',acts:[]}, // Farming uses patch system — see renderFarming
 
@@ -7057,6 +7089,20 @@ const ICONS = {
   bloodstone_amulet: _amuletSVG(_jwPal(GP_BLOODSTONE,JB_OBSIDIAN)),
   void_amulet:       _amuletSVG(_jwPal(GP_VOID,JB_VOIDMETAL)),
 
+  /* Trophy jewelry (v0.9.50) — reuse the ring/amulet generators, gem palette
+     chosen to echo each boss (rats→sapphire, silkweaver→emerald, warband→ruby,
+     lich→amethyst glow, ironfang→diamond, warlord→bloodstone, troll→dragon,
+     emberwyrm→dragon fire, demon lord→void). Real SVG, not the placeholder emoji. */
+  warren_signet:   _ringSVG(_jwPal(GP_SAPPHIRE,JB_GOLD)),
+  silkweave_band:  _ringSVG(_jwPal(GP_EMERALD,JB_GOLD)),
+  warband_torc:    _amuletSVG(_jwPal(GP_RUBY,JB_GOLD)),
+  soulbound_amulet:_amuletSVG(_jwPal(GP_AMETHYST,JB_DARKGOLD)),
+  alpha_fang_ring: _ringSVG(_jwPal(GP_DIAMOND,JB_DARKGOLD)),
+  warlord_aegis:   _amuletSVG(_jwPal(GP_BLOODSTONE,JB_OBSIDIAN)),
+  mountain_locket: _amuletSVG(_jwPal(GP_DRAGON,JB_OBSIDIAN)),
+  emberwyrm_eye:   _ringSVG(_jwPal(GP_DRAGON,JB_OBSIDIAN)),
+  sanctum_signet:  _ringSVG(_jwPal(GP_VOID,JB_VOIDMETAL)),
+
   /* ─── Shop-only utility jewelry — unique themes (not in tier chain) ─── */
   ember_ring:  _ringSVG(_jwPal({light:'#ffb060',mid:'#e0762f',dark:'#5a1818',edge:'#1a0804',accent:'#fff8dc',glow:'#e0762f'},JB_GOLD)),
   moon_amulet: _amuletSVG(_jwPal({light:'#ffffff',mid:'#b8c8e0',dark:'#3a4868',edge:'#0e1828',accent:'#fff8f0',glow:'#a0b8d8'},{bandLight:'#e8eef6',band:'#9fa8b8',bandDark:'#3a4050'})),
@@ -7928,6 +7974,9 @@ function _gearStatVec(itemId){
   // Rare skilling-gear pieces (Lumberjack's Hat etc.) carry a flat gearXp fraction.
   var it=ITEMS[itemId];
   if(it&&it.skillGear&&it.gearXp) out['%skillXp']=(out['%skillXp']||0)+it.gearXp;
+  // Trophy jewelry carries an innate jbonus (combat + skilling percentage keys),
+  // so the v0.9.48 hover comparison covers it too.
+  if(it&&it.trophyJewel&&it.jbonus){ for(var jb in it.jbonus){ if(it.jbonus[jb]) out['%'+jb]=(out['%'+jb]||0)+it.jbonus[jb]; } }
   return out;
 }
 /* Clean names only — the value already gets a trailing % for percentage stats,
@@ -7949,14 +7998,19 @@ function hoverGearDelta(itemId){
   var slots=(typeof getItemSlots==='function')?getItemSlots(itemId):[];
   if(isCombat && it.cslot && slots.indexOf(it.cslot)<0) slots=[it.cslot];
   if(!slots.length) return '';
-  var loadout=isCombat?(state.combatEquipped||{}):(state.skillingEquipped||{});
-  // Pick the most informative slot: a filled slot holding a DIFFERENT item wins.
-  var equippedId='';
-  for(var i=0;i<slots.length;i++){ var e=loadout[slots[i]]; if(e && e!==itemId){ equippedId=e; break; } }
-  if(!equippedId){ // hovered item IS the equipped one, or slot empty → nothing to say
-    for(var j=0;j<slots.length;j++){ if(loadout[slots[j]]===itemId) return ''; }
-    return '';
+  // Combat gear only lives in the combat loadout. Jewelry, capes and skilling
+  // gear can sit in either, so check both and compare against whichever slot is
+  // filled — a trophy ring worn for combat still compares when hovered.
+  var loadouts=isCombat?[state.combatEquipped||{}]:[state.skillingEquipped||{}, state.combatEquipped||{}];
+  var equippedId='', selfWorn=false;
+  for(var L=0;L<loadouts.length && !equippedId;L++){
+    for(var i=0;i<slots.length;i++){
+      var e=loadouts[L][slots[i]];
+      if(e===itemId) selfWorn=true;
+      else if(e){ equippedId=e; break; }
+    }
   }
+  if(!equippedId) return '';           // slot empty everywhere, or only the item itself
   return gearDeltaHTML(itemId, equippedId);
 }
 function gearDeltaHTML(candidateId, equippedId){
@@ -8058,6 +8112,23 @@ function wfxTipHTML(itemId){
 /* Build a reusable enchant/gem block for gem-tier jewelry (ring/amulet/pendant/jewel).
    Shows the gem tier badge + slot, the current enchant + its bonus desc, and a
    muted hint if unenchanted. Returns '' for non-gem jewelry (ember_ring, etc). */
+/* Innate-bonus block for trophy jewelry — the always-on effect, formatted like
+   the enchant/set blocks so it reads as "this piece just does this". Labels and
+   colours mirror the combat stat vocabulary elsewhere. */
+function trophyJewelBlock(itemId){
+  var it=ITEMS[itemId]; if(!it||!it.jbonus) return '';
+  var L={atkBoost:['Melee damage','#d04848'],hpBoost:['Max HP','#7fd07f'],defBoost:['Defence','#5478c8'],
+    critChance:['Crit chance','#ffd24a'],lifesteal:['Lifesteal','#e07a6a'],gpBoost:['Gold from sales','#f0c060'],
+    xpBoost:['All skill XP','#7fd8c8']};
+  var parts=[];
+  for(var k in it.jbonus){
+    var meta=L[k]||[k,'#a08a64'];
+    parts.push('<span style="color:'+meta[1]+'">+'+Math.round(it.jbonus[k]*1000)/10+'% '+meta[0]+'</span>');
+  }
+  return '<div style="font-size:12.5px;line-height:1.5;margin-top:6px;padding-top:6px;border-top:1px solid #3a2a18">'
+    +'<span style="color:var(--ember);letter-spacing:.5px">'+iconHTML('ui_spark')+' Trophy — always active</span><br>'
+    +parts.join(' &nbsp; ')+'</div>';
+}
 function jewelryEnchantBlock(itemId){
   var it=ITEMS[itemId];
   if(!it) return '';
@@ -10975,6 +11046,10 @@ const ITEM_BODY_SLOTS={
   amethyst_amulet:['amulet'], bloodstone_amulet:['amulet'],
   // Shop jewelry
   ember_ring:['ring_l','ring_r'], moon_amulet:['amulet'],
+  // Trophy jewelry (v0.9.50) — rings fit either hand, the neck pieces the amulet slot.
+  warren_signet:['ring_l','ring_r'], silkweave_band:['ring_l','ring_r'], alpha_fang_ring:['ring_l','ring_r'],
+  emberwyrm_eye:['ring_l','ring_r'], sanctum_signet:['ring_l','ring_r'],
+  warband_torc:['amulet'], soulbound_amulet:['amulet'], warlord_aegis:['amulet'], mountain_locket:['amulet'],
   // Skillcapes — Lv 99 reward, cape slot only
   cape_woodcutting:['cape'], cape_mining:['cape'], cape_fishing:['cape'], cape_foraging:['cape'],
   cape_smithing:['cape'], cape_cooking:['cape'], cape_alchemy:['cape'], cape_firemaking:['cape'],
@@ -12770,6 +12845,21 @@ function jewelryBonus(type){
     const item=SHOP.find(i=>i.id===itemId);
     if(item&&item.skill===null&&item.bonus[type]) total+=item.bonus[type];
   }
+  // Trophy jewelry carries its bonus on the ITEM (jbonus), not in SHOP. Skilling
+  // keys (gpBoost/xpBoost) are read from the SKILLING loadout, same as gem jewelry.
+  total+=jewelryInnateBonus(state.equipped, type);
+  return total;
+}
+/* Sum a single innate jbonus key across a loadout. Shared by the skilling path
+   (jewelryBonus, above) and the combat path (folded into combatBonusesAll), so a
+   trophy piece contributes wherever its key is relevant and nowhere else. */
+function jewelryInnateBonus(loadout, key){
+  var total=0;
+  if(!loadout) return 0;
+  for(var slot in loadout){
+    var it=ITEMS[loadout[slot]];
+    if(it&&it.trophyJewel&&it.jbonus&&it.jbonus[key]) total+=it.jbonus[key];
+  }
   return total;
 }
 
@@ -13015,14 +13105,24 @@ function combatBonusesAll(){
   const st=combatSetBonus();
   const u=combatUniqueBonuses();
   const cm=cmastBonuses();
+  // Trophy jewelry innate combat keys — read from the COMBAT loadout only, so a
+  // ring worn for skilling gold doesn't also buff combat (and vice-versa).
+  const ce=(state&&state.combatEquipped)||{};
+  const tj={
+    atkBoost:  jewelryInnateBonus(ce,'atkBoost'),
+    hpBoost:   jewelryInnateBonus(ce,'hpBoost'),
+    defBoost:  jewelryInnateBonus(ce,'defBoost'),
+    critChance:jewelryInnateBonus(ce,'critChance'),
+    lifesteal: jewelryInnateBonus(ce,'lifesteal'),
+  };
   return {
-    atkBoost:  (e.atkBoost||0)  + (s.atkBoost||0) + (st.atkBoost||0) + (u.atkBoost||0) + cm.atkBoost,
-    hpBoost:   (e.hpBoost||0)   + (s.hpBoost||0)  + (st.hpBoost||0)  + (u.hpBoost||0)  + cm.hpBoost,
-    defBoost:  (e.defBoost||0)  + (s.defBoost||0) + (st.defBoost||0) + (u.defBoost||0) + cm.defBoost,
+    atkBoost:  (e.atkBoost||0)  + (s.atkBoost||0) + (st.atkBoost||0) + (u.atkBoost||0) + cm.atkBoost + tj.atkBoost,
+    hpBoost:   (e.hpBoost||0)   + (s.hpBoost||0)  + (st.hpBoost||0)  + (u.hpBoost||0)  + cm.hpBoost + tj.hpBoost,
+    defBoost:  (e.defBoost||0)  + (s.defBoost||0) + (st.defBoost||0) + (u.defBoost||0) + cm.defBoost + tj.defBoost,
     // Leather crit stacks on top of enchant/socket/set/unique crit — all flow through
     // the single crit roll in combatTick.
-    critChance:(e.critChance||0)+ (s.critChance||0) + a.crit + (st.critChance||0) + (u.critChance||0) + cm.critChance,
-    lifesteal: (e.lifesteal||0) + (s.lifesteal||0) + (st.lifesteal||0) + (u.lifesteal||0) + cm.lifesteal,
+    critChance:(e.critChance||0)+ (s.critChance||0) + a.crit + (st.critChance||0) + (u.critChance||0) + cm.critChance + tj.critChance,
+    lifesteal: (e.lifesteal||0) + (s.lifesteal||0) + (st.lifesteal||0) + (u.lifesteal||0) + cm.lifesteal + tj.lifesteal,
     dodge:     a.dodge,   // chance to fully avoid a foe's landed hit
     aspd:      a.aspd + cm.aspd,    // fractional swing-time reduction
   };
@@ -15821,6 +15921,7 @@ const JW_CATS=[
   {key:'ring',   label:'Rings',   icon:'💍', desc:'Cut gem + metal bar → ring. Fits either ring hand.'},
   {key:'amulet', label:'Amulets', icon:'📿', desc:'Cut gem + metal bar → amulet. Fits the neck slot.'},
   {key:'pendant',label:'Pendants',icon:'📿', desc:'Cut gem + metal bar → pendant. Fits either ring hand.'},
+  {key:'trophy', label:'Trophy',  icon:'💎', desc:'Boss trophy + cut gem → a unique piece with an always-on bonus. Each boss drops the trophy for its own piece.'},
 ];
 function renderJeweler(){
   const sk=SKILLS.jeweler;
@@ -20791,6 +20892,10 @@ function showItemTooltip(itemId, x, y){
   if(typeof JEWELRY_GEM_TIER!=='undefined' && JEWELRY_GEM_TIER[itemId]){
     html+=jewelryEnchantBlock(itemId);
   }
+  // Trophy jewelry — show its innate bonus as an always-on effect block.
+  if(it.trophyJewel && it.jbonus){
+    html+=trophyJewelBlock(itemId);
+  }
   // Socket gem — show tier + bonus description
   if(it.socketGem && typeof SOCKET_GEMS!=='undefined' && SOCKET_GEMS[itemId]){
     const gem=SOCKET_GEMS[itemId];
@@ -21401,7 +21506,7 @@ var _masterySel=null; // 1.0.19 — currently-selected skill in the Mastery Log 
 var _masteryCat={};
 const MASTERY_CAT_LABEL={helm:'Helms',chest:'Chests',legs:'Legs',gloves:'Gloves',boots:'Boots',
   weapon:'Weapons',shield:'Shields',cape:'Capes',tool:'Tools',tannery:'Tannery',
-  refine:'Refining',ring:'Rings',amulet:'Amulets',pendant:'Pendants'};
+  refine:'Refining',ring:'Rings',amulet:'Amulets',pendant:'Pendants',trophy:'Trophy Jewelry'};
 /* ════ [JS-24b] mastery view ═════════════════════════════════════════════════════ */
 function renderMastery(){
   const box=$('masteryView'); box.innerHTML='';
