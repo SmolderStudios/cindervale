@@ -3148,7 +3148,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.50</div>
+  <div class="mm-ver">v0.9.51</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -17514,10 +17514,15 @@ function renderInventory(){
   box.appendChild(sellRow);
 
   // Category filter tabs — icon only, styled hover tooltip shows full name
-  const cats=['all','logs','ores','fish','cooked','bars','forage','farm','jewelry','gems','fire','potions'];
+  const cats=['all','gear','logs','ores','fish','cooked','bars','forage','farm','jewelry','gems','fire','potions'];
   const _ciw=b=>`<svg class="ev-icon" viewBox="0 0 64 64" fill="currentColor">${b}</svg>`;
   const catLabels={
     all:'All',
+    gear:_ciw(
+      // Helm silhouette — reads as "equipment" next to the material icons.
+      `<path d="M14 34 Q14 12 32 12 Q50 12 50 34 L50 44 L44 44 L44 34 Q44 22 32 22 Q20 22 20 34 L20 44 L14 44 Z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>`
+      +`<path d="M20 44 L44 44 L44 52 Q44 56 40 56 L24 56 Q20 56 20 52 Z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>`
+      +`<line x1="32" y1="22" x2="32" y2="44" stroke="currentColor" stroke-width="2" opacity="0.55"/>`),
     logs:_ciw(
       `<ellipse cx="32" cy="20" rx="20" ry="8" fill="none" stroke="currentColor" stroke-width="3"/>`
       +`<ellipse cx="32" cy="20" rx="10" ry="3.5" fill="none" stroke="currentColor" stroke-width="2"/>`
@@ -17571,7 +17576,7 @@ function renderInventory(){
       +`<path d="M26 12 L26 22 L18 32 Q12 44 18 52 Q24 58 32 58 Q40 58 46 52 Q52 44 46 32 L38 22 L38 12 Z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>`
       +`<path d="M18 42 Q24 38 32 42 Q40 38 46 42 L46 52 Q40 58 32 58 Q24 58 18 52 Z" fill="currentColor" opacity="0.35"/>`),
   };
-  const catTitles={all:'All Items',logs:'Logs',ores:'Ores & Coal',fish:'Raw Fish',cooked:'Cooked Food',bars:'Smelted Bars',forage:'Foraged Plants',farm:'Farming Produce',jewelry:'Jewelry',gems:'Gems & Shards',fire:'Firemaking Outputs',potions:'Potions & Elixirs',skilling_gear:'Skilling Gear',crafted_gear:'Combat Gear'};
+  const catTitles={all:'All Items',gear:'Combat Gear',logs:'Logs',ores:'Ores & Coal',fish:'Raw Fish',cooked:'Cooked Food',bars:'Smelted Bars',forage:'Foraged Plants',farm:'Farming Produce',jewelry:'Jewelry',gems:'Gems & Shards',fire:'Firemaking Outputs',potions:'Potions & Elixirs',skilling_gear:'Skilling Gear',crafted_gear:'Combat Gear'};
   const catEl=document.createElement('div'); catEl.className='inv-cats';
   for(const cat of cats){
     const b=document.createElement('button');
@@ -17585,6 +17590,12 @@ function renderInventory(){
 
   // Filter + search — explicit category map; rare items go into their natural skill category
   function itemCat(id){
+    // Combat gear (armour / weapons / shields) — first, so a Gear tab collects
+    // everything equippable that used to scatter into 'misc'. Tools and skilling
+    // gear live in state.gear / state.skillingGear, not the satchel, so they
+    // never reach here. Trophy jewelry stays with the rings/amulets in 'jewelry'.
+    if(ITEMS[id]&&ITEMS[id].cgear) return 'gear';
+    if(ITEMS[id]&&ITEMS[id].trophyJewel) return 'jewelry';
     // Cooked fish carry potion.heal (1.0.21) but still belong in the Food tab,
     // so this prefix check must precede the generic potion bucket below.
     if(id.startsWith('cooked_')) return 'cooked';
