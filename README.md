@@ -8,7 +8,7 @@ A dark-fantasy idle/incremental RPG.
 
 ## Playing the game
 
-Cindervale Idle is distributed as a packaged Electron application. See [our discord](https://discord.gg/Z8kZjzgxWt) for download.
+Cindervale Idle is distributed as a packaged Electron application. See [our discord](https://discord.gg/Z8kZjzgxWt) for updates and news. Also check out [our website](https://cindervaleidle.com)
 
 ## The rename
 
