@@ -2283,11 +2283,16 @@ body:not(.is-demo) .demo-only{display:none !important}
 .comp-cat.on{background:var(--raised-s);border-color:var(--trim);color:var(--trim)}
 .comp-cat .cc-ico{display:inline-flex;vertical-align:-1px;font-size:calc(14px*var(--tscale))}
 .comp-cat .cc-ico .ev-icon{width:1em;height:1em}
-/* Currency coins run slightly larger than 1em. At body-text size a coin is ~13px
-   and there simply are not enough pixels for a rim and a face to both survive —
-   it collapses into a plain dot. The extra 25% is what lets the rim read as an
-   edge instead of an outline. Only fmtCoins' two inline coins carry this. */
-.coin-ic{width:1.25em;height:1.25em;vertical-align:-0.22em}
+/* Currency coins run larger than 1em. The header is 13px and the root zoom is
+   ~0.71 on a 1280px window, so a 1em coin lands at ~9 REAL pixels — small enough
+   that any icon collapses into a dark blob no matter how it's drawn.
+
+   MUST be `.ev-icon.coin-ic`, not `.coin-ic`. There is a SECOND `.ev-icon` rule
+   further down this stylesheet; at equal specificity the later rule wins, so a
+   bare `.coin-ic` here is silently overridden and the coins render at 1em. That
+   is exactly what happened through v0.9.56–0.9.59 and it made four different
+   icon designs all look like the same smudge. */
+.ev-icon.coin-ic{width:1.5em;height:1.5em;vertical-align:-0.32em}
 .comp-search{flex:1;min-width:0;background:var(--raised-s);color:var(--text);border:1px solid var(--trim-d);
   border-radius:6px;padding:6px 10px;font-size:calc(14px*var(--tscale));font-family:inherit}
 .comp-search::placeholder{color:var(--muted)}
@@ -3115,6 +3120,154 @@ body:not(.is-demo) .demo-only{display:none !important}
 .sl-tasks .sl-tk-hd{font-family:'Cinzel',serif;font-size:12.5px}
 .sl-tasks .sl-tk-list{font-size:11.5px;color:var(--muted);line-height:1.5;margin-top:1px}
 /* ════════ [CSS-32 END] RAIDS ══════════════════════════════════════════════════════ */
+
+/* ════════ [CSS-33] SAILING & TREASURE HUNTING (0.9.60) ═══════════════════════════
+   The sailing panel is its own visual world — an admiralty sea chart read by
+   lamplight. Ink-blue water and gold rhumb lines sit against the game's warm
+   browns deliberately: it is the one place the player leaves the land. Panel
+   chrome (trim, panel bg) still uses the shared tokens so it reads as Cindervale.
+   Mirrors .combat-panel's grid placement so the mode swap is a straight swap. */
+.sail-panel{grid-column:1 / 3;}
+.tab.tab-sail.on{border-color:#4d9bb0;color:#bfe4ef;background:#12303c;}
+.sl-wrap{display:flex;flex-direction:column;gap:10px}
+
+/* header strip */
+.sl-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  background:linear-gradient(180deg,#16222c,#0e1720);border:1px solid #2c4d5e;
+  border-radius:9px;padding:9px 13px}
+.sl-top .sl-ship{display:flex;align-items:center;gap:9px;min-width:0}
+.sl-top .sl-ship .ev-icon{width:26px;height:26px;flex:none}
+.sl-shipname{font-family:'Cinzel',serif;font-size:15px;color:#e8d7b0;line-height:1.2}
+.sl-shiptier{font-size:11px;color:#7fa8bc;font-family:monospace}
+.sl-lvl{display:flex;align-items:center;gap:8px;margin-left:auto;flex-wrap:wrap}
+.sl-lvlbox{text-align:right}
+.sl-lvlbox b{font-family:'Cinzel',serif;font-size:16px;color:var(--trim)}
+.sl-lvlbox i{display:block;font-style:normal;font-size:10.5px;color:var(--muted);font-family:monospace}
+.sl-xpbar{width:120px;height:7px;background:#08131a;border:1px solid #2c4d5e;border-radius:4px;overflow:hidden}
+.sl-xpbar i{display:block;height:100%;background:linear-gradient(90deg,#8a6a2e,#e0b64e)}
+.sl-stats{display:flex;gap:5px;flex-wrap:wrap}
+.sl-stat{font-family:monospace;font-size:10.5px;padding:3px 8px;border-radius:3px;
+  border:1px solid #2c4d5e;background:#0d1a24;color:#bfe4ef;white-space:nowrap}
+.sl-stat b{color:#e8d7b0}
+
+/* chart */
+.sl-chartbox{border:1px solid #2c4d5e;border-radius:9px;overflow:hidden;background:#0c1822;
+  box-shadow:0 6px 24px rgba(0,0,0,.5)}
+.sl-charthd{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;
+  padding:7px 12px;background:#0a141d;border-bottom:1px solid #2c4d5e}
+.sl-charthd .t{font-family:'Cinzel',serif;font-size:12.5px;color:var(--trim);letter-spacing:.05em}
+.sl-charthd .h{font-family:monospace;font-size:10.5px;color:#6d8c9c}
+.sl-chartscroll{overflow-x:auto}
+.sl-stage{position:relative;width:100%;min-width:700px;aspect-ratio:2.15/1}
+.sl-stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.sl-band{position:absolute;top:6px;transform:translateX(-50%);font-family:'Cinzel',serif;
+  font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#54798c;
+  pointer-events:none;white-space:nowrap}
+.sl-port{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;
+  align-items:center;gap:2px;pointer-events:none}
+.sl-port .ev-icon{width:22px;height:22px}
+.sl-port span{font-family:'Cinzel',serif;font-size:10px;letter-spacing:.11em;text-transform:uppercase;
+  color:var(--trim);text-shadow:0 1px 4px #030608}
+
+.sl-mk{position:absolute;transform:translate(-50%,-50%);background:none;border:none;padding:0;
+  cursor:var(--cur-pointer);display:flex;flex-direction:column;align-items:center;gap:2px;
+  font-family:'Cinzel',serif;color:#a9c4d0;transition:color .15s}
+.sl-mk:hover{color:#fbeed0;z-index:6}
+.sl-mk:focus-visible{outline:2px solid var(--trim);outline-offset:3px;border-radius:3px}
+.sl-mk .d{width:10px;height:10px;border-radius:50%;background:#2c4d5f;border:1.5px solid #6d9ab2;
+  transition:transform .15s,background .15s,box-shadow .15s}
+.sl-mk:hover .d{transform:scale(1.3);background:var(--trim)}
+.sl-mk.on{color:#fbeed0}
+.sl-mk.on .d{background:var(--trim);border-color:#f0dba8;transform:scale(1.4);
+  box-shadow:0 0 0 5px rgba(199,155,78,.16),0 0 12px rgba(199,155,78,.5)}
+.sl-mk.lock{opacity:.42}
+.sl-mk.lock .d{background:#20323c;border-color:#3d5866}
+.sl-mk .n{font-size:10.5px;white-space:nowrap;text-shadow:0 1px 4px #030608,0 0 9px #030608}
+.sl-mk.hid .d{background:#3a2140;border-color:#8c5fa8;border-style:dashed}
+.sl-mk.hid .n{color:#b98fd0;font-style:italic}
+.sl-mk.sailing-to .d{animation:sl-pulse 1.2s ease-in-out infinite}
+@keyframes sl-pulse{0%,100%{box-shadow:0 0 0 3px rgba(224,118,47,.18)}50%{box-shadow:0 0 0 8px rgba(224,118,47,.04)}}
+
+/* two-column body */
+.sl-body{display:grid;grid-template-columns:1.3fr 1fr;gap:10px}
+@media(max-width:1100px){.sl-body{grid-template-columns:1fr}}
+.sl-card{background:linear-gradient(180deg,#16222c,#0e1720);border:1px solid #2c4d5e;
+  border-radius:9px;padding:13px 15px}
+.sl-card h4{font-family:'Cinzel',serif;font-size:16px;color:#fbeed0;margin:0 0 2px}
+.sl-sub{font-family:monospace;font-size:10.5px;color:#6d8c9c;letter-spacing:.07em;margin-bottom:9px}
+.sl-flavor{font-size:12.5px;color:#a9c4d0;font-style:italic;line-height:1.5;
+  border-left:2px solid #2c4d5e;padding-left:11px;margin:0 0 12px}
+.sl-grid4{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:8px;margin-bottom:13px}
+.sl-kv{background:#0d1a24;border:1px solid #23404e;border-radius:5px;padding:7px 9px}
+.sl-kv .k{font-family:monospace;font-size:8.5px;letter-spacing:.14em;text-transform:uppercase;color:#6d8c9c}
+.sl-kv .v{font-family:'Cinzel',serif;font-size:16px;color:var(--trim);line-height:1.2}
+.sl-kv .v.sm{font-size:12.5px;color:#e8d7b0}
+
+/* outcome odds bar — replaces a danger number */
+.sl-oddlab{display:flex;justify-content:space-between;align-items:baseline;gap:8px;
+  font-family:monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;
+  color:#6d8c9c;margin-bottom:6px}
+.sl-odds{display:flex;height:23px;border-radius:5px;overflow:hidden;border:1px solid #23404e;background:#0d1a24}
+.sl-odds i{display:flex;align-items:center;justify-content:center;font-family:monospace;
+  font-size:10px;font-weight:700;color:#0b1206;min-width:0;overflow:hidden;transition:flex-grow .35s ease}
+.sl-o1{background:#dfb03c}.sl-o2{background:#7da33f}.sl-o3{background:#c9822e}
+.sl-o4{background:#a8412c;color:#f6e2dc}
+.sl-oddkey{display:flex;flex-wrap:wrap;gap:9px;margin-top:7px}
+.sl-oddkey span{font-family:monospace;font-size:9.5px;color:#6d8c9c;display:flex;align-items:center;gap:4px}
+.sl-oddkey em{width:8px;height:8px;border-radius:2px;display:block}
+
+.sl-chips{display:flex;flex-wrap:wrap;gap:5px}
+.sl-chip{display:inline-flex;align-items:center;gap:4px;font-family:monospace;font-size:10.5px;
+  padding:3px 8px;border-radius:3px;border:1px solid #2c4d5e;background:#0d1a24;color:#a9c4d0}
+.sl-chip .ev-icon{width:13px;height:13px}
+.sl-chip.gold{border-color:#5a4526;background:#1a1409;color:var(--trim)}
+.sl-chip.bad{border-color:#5c2c20;background:#22110d;color:#e0917c}
+.sl-chip.good{border-color:#40561f;background:#161f0c;color:#b4d472}
+.sl-chip.vio{border-color:#4a3058;background:#170f1e;color:#c19adb}
+
+/* buttons */
+.sl-btn{padding:9px 16px;border-radius:6px;cursor:var(--cur-pointer);font-family:'Cinzel',serif;
+  font-size:14px;border:1px solid #3d6274;background:#12242f;color:#dbe9ef;
+  transition:background .14s,border-color .14s,filter .14s}
+.sl-btn:hover:not(:disabled){background:#1a3543;border-color:#6d9ab2}
+.sl-btn:focus-visible{outline:2px solid var(--trim);outline-offset:2px}
+.sl-btn:disabled{opacity:.4;cursor:var(--cur-na)}
+.sl-btn.go{background:linear-gradient(180deg,#c96a24,#9c4d16);border-color:#7a4a1e;color:#fff2dd;
+  box-shadow:0 2px 0 #5e2c0c;width:100%}
+.sl-btn.go:hover:not(:disabled){filter:brightness(1.1);background:linear-gradient(180deg,#c96a24,#9c4d16)}
+.sl-btnrow{display:flex;gap:7px;flex-wrap:wrap}
+
+/* live expedition */
+.sl-clock{display:flex;align-items:baseline;gap:11px;flex-wrap:wrap;margin-bottom:8px}
+.sl-clock b{font-family:'Cinzel',serif;font-size:34px;color:#fbeed0;line-height:1;
+  font-variant-numeric:tabular-nums;letter-spacing:.01em}
+.sl-clock span{font-family:monospace;font-size:11px;color:#6d8c9c}
+.sl-pbar{height:8px;background:#08131a;border:1px solid #23404e;border-radius:5px;overflow:hidden;margin-bottom:9px}
+.sl-pbar i{display:block;height:100%;background:linear-gradient(90deg,#2f5f74,#6d9ab2);transition:width .5s linear}
+
+.sl-result{border-radius:7px;padding:12px 14px;border:1px solid;margin-bottom:10px}
+.sl-result h5{font-family:'Cinzel',serif;font-size:16px;margin:0 0 4px}
+.sl-result p{font-size:12.5px;margin:0;line-height:1.5;color:#c3d4dc}
+.sl-r1{background:#1d1707;border-color:#6a5420}.sl-r1 h5{color:#dfb03c}
+.sl-r2{background:#141d0c;border-color:#41591f}.sl-r2 h5{color:#7da33f}
+.sl-r3{background:#1f1509;border-color:#6a4520}.sl-r3 h5{color:#c9822e}
+.sl-r4{background:#1d0d09;border-color:#63281c}.sl-r4 h5{color:#c4543a}
+.sl-result .sl-chips{margin-top:9px}
+
+/* shipyard */
+.sl-yard{display:flex;flex-direction:column;gap:8px}
+.sl-hull{display:flex;align-items:center;gap:10px;background:#0d1a24;border:1px solid #23404e;
+  border-radius:6px;padding:9px 11px}
+.sl-hull.cur{border-color:var(--trim);background:#1a1409}
+.sl-hull.lock{opacity:.5}
+.sl-hull .ev-icon{width:26px;height:26px;flex:none}
+.sl-hull .i{flex:1;min-width:0}
+.sl-hull .i b{font-family:'Cinzel',serif;font-size:13px;color:#e8d7b0;display:block}
+.sl-hull .i span{font-family:monospace;font-size:10px;color:#6d8c9c}
+.sl-note{font-size:11.5px;color:var(--muted);line-height:1.5;margin:8px 0 0}
+.sl-preview{display:flex;align-items:center;gap:7px;font-family:monospace;font-size:10.5px;
+  color:#c9822e;background:#1f1509;border:1px dashed #6a4520;border-radius:5px;padding:6px 10px;margin-top:9px}
+/* ════════ [CSS-33 END] SAILING ═══════════════════════════════════════════════════ */
 </style>
 </head>
 <body>
@@ -3152,7 +3305,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.59</div>
+  <div class="mm-ver">v0.9.60</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -3468,6 +3621,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="tab on" id="tabSkills">Skills</button>
       <button class="tab" id="tabStatsLeft">Stats</button>
       <button class="tab tab-combat" id="tabCombat" title="Combat">⚔ Combat</button>
+      <button class="tab tab-sail" id="tabSail" title="Sailing &amp; Treasure Hunting">⚓ Sailing</button>
     </div>
     <div id="skillListWrap"><div id="skillList"></div></div>
     <div id="statsViewLeft" style="display:none;overflow-y:auto;max-height:calc(100vh - 120px)"></div>
@@ -3497,6 +3651,8 @@ body:not(.is-demo) .demo-only{display:none !important}
   </div>
 
   <div class="panel combat-panel" id="combatPanel" style="display:none"></div>
+
+  <div class="panel sail-panel" id="sailPanel" style="display:none"></div>
 
   <div class="panel" id="rightPanel">
     <div class="tabs rp-tab-strip" style="margin-bottom:8px;flex-wrap:wrap">
@@ -4723,6 +4879,14 @@ const ITEMS={
   voidweave:     {name:'Voidweave',       icon:'🧵',sell:3200, desc:'Cloth spun from unravelled rift-thread; it drinks the light that touches it. A T9 leathercrafting hide.'},
   riftshard:     {name:'Riftshard',       icon:'🔮',sell:6800, rare:true, desc:'A splinter of a sealed rift, still humming with the void it once opened. A rare T9 reagent.'},
   dawnshard:     {name:'Dawnshard',       icon:'✨',sell:12000, rare:true, desc:"A shard of the Dawnbroken God's cooling blood — warm to the touch and faintly singing. The signature relic of The Empyrean Throne; a future Dawnsteel reagent."},
+  /* ─── Sailing troves (0.9.60) — one per archipelago, pulled up on expeditions.
+     Rarity climbs with distance from Emberwatch. Passive effects land in a later
+     slice; for now they are collectable, sellable and Compendium-visible. ─── */
+  trove_shallows:{name:'Barnacled Coin-Purse', icon:'👛',sell:900,   rare:true, desc:"Someone's wages, lost in the shallows a long time ago and grown over twice since. Sells for a pittance. Counts toward the Trove all the same."},
+  trove_wracks:  {name:'The Ninth Bell',       icon:'🔔',sell:4800,  rare:true, desc:"Cut from the ninth ship to die on Widow's Wrack. It rings a half-beat before bad weather, which the crew find useful and deeply unpleasant."},
+  trove_mist:    {name:'Hollowtide Almanac',   icon:'📖',sell:16000, rare:true, desc:"Salt-swollen and still legible. It predicts the great ebb to the hour, in a hand nobody at the Admiralty recognises."},
+  trove_far:     {name:'Scale of the Old Thing',icon:'🐉',sell:52000, rare:true, desc:"Broader than a shield and lighter than paper. Nothing marks it — not fire, not starsteel, not the void. It was shed, not taken."},
+  trove_odd:     {name:'The Steady Lantern',   icon:'🏮',sell:120000,rare:true, desc:"Recovered from an island that is on no chart. It has never guttered. Crews who carry it report arriving where they meant to, which is not always welcome."},
 };
 
 /* ════════ COMBAT GEAR STATS ════════════════════════════════════════════════════
@@ -7708,8 +7872,12 @@ const ICONS = {
      the only thing that survives is the overall SHAPE and COLOUR, so these are a
      filled disc with a gentle gradient for roundness, a thin rim in the metal's
      own darker tone (never near-black), and one highlight. Nothing else fits. */
-  ui_coin_sm: '<svg class="ev-icon coin-ic" viewBox="0 0 64 64"><defs><radialGradient id="uicm_g" cx="0.36" cy="0.30" r="0.80"><stop offset="0" stop-color="#ffe89a"/><stop offset="0.55" stop-color="#eab63c"/><stop offset="1" stop-color="#c8912a"/></radialGradient></defs><circle cx="32" cy="32" r="28" fill="url(#uicm_g)" stroke="#a8741c" stroke-width="2"/><ellipse cx="23" cy="21" rx="8" ry="4.4" fill="#fff" opacity="0.45" transform="rotate(-35 23 21)"/></svg>',
-  ui_coin_silver: '<svg class="ev-icon coin-ic" viewBox="0 0 64 64"><defs><radialGradient id="uicms_g" cx="0.36" cy="0.30" r="0.80"><stop offset="0" stop-color="#eaf0f4"/><stop offset="0.55" stop-color="#b3bec7"/><stop offset="1" stop-color="#8b96a0"/></radialGradient></defs><circle cx="32" cy="32" r="28" fill="url(#uicms_g)" stroke="#6e7a84" stroke-width="2"/><ellipse cx="23" cy="21" rx="8" ry="4.4" fill="#fff" opacity="0.45" transform="rotate(-35 23 21)"/></svg>',
+  /* Flat solid discs. No gradient, no stroke, no highlight — every one of those
+     turns into a ring or a smudge at the ~14px these render at, which is what
+     four earlier attempts kept proving. Colour alone carries the meaning; the
+     g/s suffix beside it carries the rest. */
+  ui_coin_sm:     '<svg class="ev-icon coin-ic" viewBox="0 0 64 64"><circle cx="32" cy="32" r="28" fill="#e9b53d"/></svg>',
+  ui_coin_silver: '<svg class="ev-icon coin-ic" viewBox="0 0 64 64"><circle cx="32" cy="32" r="28" fill="#b0bac2"/></svg>',
   ui_swords: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="uisw_b" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f0f2f8"/><stop offset="0.5" stop-color="#9aa0ac"/><stop offset="1" stop-color="#4a4e58"/></linearGradient></defs><g stroke="#2a2c34" stroke-width="0.7"><path d="M11 9 L19 9 L45 43 L41 49 L35 47 Z" fill="url(#uisw_b)"/><path d="M53 9 L45 9 L19 43 L23 49 L29 47 Z" fill="url(#uisw_b)"/></g><path d="M39 45 L51 57 M25 45 L13 57" stroke="#6a4a20" stroke-width="4" stroke-linecap="round"/><path d="M43 41 L53 51 M21 41 L11 51" stroke="#c79b4e" stroke-width="3" stroke-linecap="round"/></svg>',
   ui_sword: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="uis_b" x1="0.2" y1="0" x2="0.8" y2="1"><stop offset="0" stop-color="#f0f2f8"/><stop offset="0.5" stop-color="#9aa0ac"/><stop offset="1" stop-color="#4a4e58"/></linearGradient></defs><path d="M30 6 L38 6 L36 40 L32 40 Z" fill="url(#uis_b)" stroke="#2a2c34" stroke-width="0.7"/><path d="M31 8 L34 8 L33 38 Z" fill="#fff" opacity="0.35"/><rect x="24" y="40" width="20" height="4" rx="1.5" fill="#c79b4e" stroke="#6e552c" stroke-width="0.6"/><rect x="31" y="44" width="6" height="12" rx="1.5" fill="#6a4a20"/><circle cx="34" cy="58" r="2.6" fill="#c79b4e" stroke="#6e552c" stroke-width="0.6"/></svg>',
   ui_shield: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="uish_g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7a90c0"/><stop offset="0.5" stop-color="#3f5488"/><stop offset="1" stop-color="#1a2848"/></linearGradient></defs><path d="M32 6 L54 14 Q54 40 32 58 Q10 40 10 14 Z" fill="url(#uish_g)" stroke="#0e1730" stroke-width="1.4"/><path d="M32 6 L54 14 Q54 40 32 58 Z" fill="#000" opacity="0.18"/><path d="M32 14 L44 18 Q44 36 32 48 Q20 36 20 18 Z" fill="none" stroke="#a8bce8" stroke-width="1.2" opacity="0.6"/><path d="M32 6 L32 58" stroke="#a8bce8" stroke-width="0.7" opacity="0.4"/></svg>',
@@ -7729,6 +7897,14 @@ const ICONS = {
   ui_lock: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="uilk_g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e6c25a"/><stop offset="1" stop-color="#8a6018"/></linearGradient></defs><path d="M20 30 L20 20 Q20 8 32 8 Q44 8 44 20 L44 30" fill="none" stroke="#b8b0a0" stroke-width="5"/><rect x="14" y="28" width="36" height="30" rx="4" fill="url(#uilk_g)" stroke="#4a3410" stroke-width="1.2"/><rect x="16" y="30" width="32" height="6" rx="3" fill="#fff" opacity="0.25"/><circle cx="32" cy="42" r="4.5" fill="#3a2810"/><rect x="30" y="44" width="4" height="9" rx="2" fill="#3a2810"/></svg>',
   ui_moon: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><radialGradient id="uimn_g" cx="0.4" cy="0.35" r="0.75"><stop offset="0" stop-color="#eef0ff"/><stop offset="0.6" stop-color="#b6c0e8"/><stop offset="1" stop-color="#6a76a8"/></radialGradient></defs><path d="M40 6 Q22 8 18 26 Q14 44 30 54 Q46 62 56 48 Q42 52 34 42 Q26 32 32 18 Q35 10 40 6 Z" fill="url(#uimn_g)" stroke="#3a4470" stroke-width="1"/><circle cx="30" cy="30" r="3" fill="#8a94c0" opacity="0.5"/><circle cx="38" cy="42" r="2" fill="#8a94c0" opacity="0.45"/><path d="M50 14 L51.5 18 L55.5 19.5 L51.5 21 L50 25 L48.5 21 L44.5 19.5 L48.5 18 Z" fill="#fff6d0" opacity="0.85"/></svg>',
   ui_save: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="uisv_g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5a86c0"/><stop offset="1" stop-color="#243c6a"/></linearGradient></defs><path d="M10 10 L46 10 L54 18 L54 54 L10 54 Z" fill="url(#uisv_g)" stroke="#16233f" stroke-width="1.4" stroke-linejoin="round"/><rect x="20" y="10" width="20" height="14" fill="#cdd8ee"/><rect x="32" y="12" width="5" height="10" fill="#3a5488"/><rect x="18" y="32" width="28" height="18" rx="1.5" fill="#dbe4f4"/><path d="M22 38 H42 M22 43 H42" stroke="#6a86b8" stroke-width="1.4" stroke-linecap="round"/></svg>',
+  /* ─── Sailing (0.9.60) — tab icon + one trove per archipelago ─── */
+  ui_anchor: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="uian_g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f0d894"/><stop offset="0.5" stop-color="#c79b4e"/><stop offset="1" stop-color="#6e552c"/></linearGradient></defs><circle cx="32" cy="12" r="5.5" fill="none" stroke="url(#uian_g)" stroke-width="3.4"/><path d="M32 18v34" stroke="url(#uian_g)" stroke-width="3.4" stroke-linecap="round"/><path d="M19 27h26" stroke="url(#uian_g)" stroke-width="3.4" stroke-linecap="round"/><path d="M14 39q0 14 18 14t18-14" fill="none" stroke="url(#uian_g)" stroke-width="3.4" stroke-linecap="round"/><path d="M14 39l-4.5 3.5L15 44Z" fill="#c79b4e"/><path d="M50 39l4.5 3.5L49 44Z" fill="#c79b4e"/></svg>',
+  sailing: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="sl_hull" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a86c3b"/><stop offset="0.5" stop-color="#6e4523"/><stop offset="1" stop-color="#2e1c0e"/></linearGradient><linearGradient id="sl_sail" x1="0.2" y1="0" x2="0.9" y2="1"><stop offset="0" stop-color="#fdf6e2"/><stop offset="0.45" stop-color="#e8d7b0"/><stop offset="1" stop-color="#a89574"/></linearGradient><linearGradient id="sl_sail2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e0cfa8"/><stop offset="1" stop-color="#8d7a58"/></linearGradient><linearGradient id="sl_sea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3f7f9c" stop-opacity="0.95"/><stop offset="1" stop-color="#0e2532" stop-opacity="0.95"/></linearGradient></defs><path d="M2 46 Q10 42 18 46 Q26 50 34 46 Q42 42 50 46 Q57 49 62 46 L62 62 L2 62 Z" fill="url(#sl_sea)"/><path d="M10 52 Q15 48 20 52 M40 53 Q45 49 50 53" stroke="#8fc4dc" stroke-width="1.1" fill="none" opacity="0.55"/><path d="M31 6 L31 44" stroke="#6e4523" stroke-width="2.6" stroke-linecap="round"/><path d="M34 10 Q50 26 50 40 L34 40 Z" fill="url(#sl_sail)"/><path d="M34 10 Q46 24 47 40" stroke="#b8a37a" stroke-width="0.7" fill="none" opacity="0.6"/><path d="M28 16 Q14 30 14 40 L28 40 Z" fill="url(#sl_sail2)"/><path d="M28 16 Q18 29 17 40" stroke="#6e5a3c" stroke-width="0.6" fill="none" opacity="0.5"/><path d="M8 40 L56 40 L49 51 L15 51 Z" fill="url(#sl_hull)"/><path d="M8 40 L56 40 L54.6 43 L9.4 43 Z" fill="#c79b4e"/><circle cx="22" cy="46" r="1.7" fill="#3a2412"/><circle cx="32" cy="46" r="1.7" fill="#3a2412"/><circle cx="42" cy="46" r="1.7" fill="#3a2412"/><path d="M31 6 L31 12" stroke="#c79b4e" stroke-width="2.6" stroke-linecap="round"/><circle cx="31" cy="5" r="2.2" fill="#e0762f"/></svg>',
+  trove_shallows: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="tv1_c" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9c8256"/><stop offset="0.5" stop-color="#6d5734"/><stop offset="1" stop-color="#3a2c17"/></linearGradient><radialGradient id="tv1_g" cx="0.5" cy="0.5" r="0.6"><stop offset="0" stop-color="#e0b64e" stop-opacity="0.55"/><stop offset="1" stop-color="#e0b64e" stop-opacity="0"/></radialGradient></defs><ellipse cx="32" cy="58" rx="16" ry="3" fill="#000" opacity="0.4"/><circle cx="32" cy="38" r="20" fill="url(#tv1_g)"/><path d="M16 32 Q16 26 22 22 L42 22 Q48 26 48 32 L50 46 Q46 56 32 56 Q18 56 14 46 Z" fill="url(#tv1_c)" stroke="#2a1f10" stroke-width="0.8"/><path d="M20 28 Q17 34 18 46 Q19 52 24 55 Q21 49 21 43 Q21 33 24 28 Z" fill="#b89a68" opacity="0.4"/><ellipse cx="32" cy="24" rx="13" ry="3.4" fill="#2a1f10"/><ellipse cx="32" cy="22.6" rx="12" ry="2.5" fill="#7d6540"/><path d="M20 24 Q20 17 26 15 L38 15 Q44 17 44 24" stroke="#5a4526" stroke-width="1.9" fill="none" stroke-linecap="round"/><circle cx="24" cy="40" r="3.4" fill="#8ca38a" opacity="0.85"/><circle cx="24" cy="40" r="1.7" fill="#c8d8c4" opacity="0.9"/><circle cx="41" cy="34" r="2.6" fill="#8ca38a" opacity="0.8"/><circle cx="41" cy="34" r="1.3" fill="#c8d8c4" opacity="0.85"/><circle cx="37" cy="47" r="2.2" fill="#8ca38a" opacity="0.75"/><ellipse cx="31" cy="43" rx="6" ry="5" fill="#c79b4e" opacity="0.5"/><circle cx="31" cy="43" r="3.4" fill="#e0b64e"/><circle cx="29.8" cy="41.6" r="1.2" fill="#fff" opacity="0.7"/></svg>',
+  trove_wracks: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="tv2_b" x1="0.1" y1="0" x2="0.9" y2="1"><stop offset="0" stop-color="#f0d894"/><stop offset="0.35" stop-color="#c79b4e"/><stop offset="0.75" stop-color="#7d5f2a"/><stop offset="1" stop-color="#3e2f14"/></linearGradient><radialGradient id="tv2_g" cx="0.5" cy="0.45" r="0.6"><stop offset="0" stop-color="#f0d894" stop-opacity="0.5"/><stop offset="1" stop-color="#f0d894" stop-opacity="0"/></radialGradient></defs><ellipse cx="32" cy="58" rx="17" ry="3" fill="#000" opacity="0.4"/><circle cx="32" cy="32" r="24" fill="url(#tv2_g)"/><path d="M32 8 Q30 8 30 11 L30 14 Q18 19 15 34 Q13 44 10 48 L54 48 Q51 44 49 34 Q46 19 34 14 L34 11 Q34 8 32 8 Z" fill="url(#tv2_b)" stroke="#3e2f14" stroke-width="0.8"/><path d="M21 24 Q17 33 16 45" stroke="#fbeaba" stroke-width="1.6" fill="none" opacity="0.55" stroke-linecap="round"/><path d="M10 48 L54 48 L54 52 L10 52 Z" fill="#8d6a2e" stroke="#3e2f14" stroke-width="0.7"/><path d="M10 48 L54 48 L54 49.6 L10 49.6 Z" fill="#f0d894" opacity="0.65"/><path d="M29 52 L35 52 L34 58 Q32 60 30 58 Z" fill="#6d5734"/><ellipse cx="32" cy="58" rx="3.4" ry="2.6" fill="#c79b4e"/><path d="M24 30 Q28 26 32 30" stroke="#3e2f14" stroke-width="0.7" fill="none" opacity="0.45"/><circle cx="40" cy="22" r="1.4" fill="#fff" opacity="0.55"/></svg>',
+  trove_mist: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="tv3_c" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4d7c92"/><stop offset="0.5" stop-color="#2c505f"/><stop offset="1" stop-color="#132a35"/></linearGradient><linearGradient id="tv3_p" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f2e6c6"/><stop offset="0.6" stop-color="#d5c39a"/><stop offset="1" stop-color="#a08d66"/></linearGradient><radialGradient id="tv3_g" cx="0.5" cy="0.4" r="0.6"><stop offset="0" stop-color="#8fd0e6" stop-opacity="0.42"/><stop offset="1" stop-color="#8fd0e6" stop-opacity="0"/></radialGradient></defs><ellipse cx="32" cy="57" rx="20" ry="3" fill="#000" opacity="0.4"/><circle cx="32" cy="32" r="24" fill="url(#tv3_g)"/><path d="M8 14 Q20 10 31 15 L31 52 Q20 47 8 51 Z" fill="url(#tv3_c)"/><path d="M56 14 Q44 10 33 15 L33 52 Q44 47 56 51 Z" fill="url(#tv3_c)"/><path d="M11 17 Q21 14 30 18 L30 49 Q21 45 11 48 Z" fill="url(#tv3_p)"/><path d="M53 17 Q43 14 34 18 L34 49 Q43 45 53 48 Z" fill="url(#tv3_p)"/><path d="M15 24 L26 22 M15 29 L26 27 M15 34 L24 32.5 M15 39 L26 37" stroke="#7d6a46" stroke-width="1.1" opacity="0.65" stroke-linecap="round"/><path d="M38 23 L49 25 M38 28 L49 30 M40 33 L49 35 M38 38 L49 40" stroke="#7d6a46" stroke-width="1.1" opacity="0.65" stroke-linecap="round"/><path d="M31 15 L31 52 L33 52 L33 15 Z" fill="#132a35"/><circle cx="41" cy="31" r="5" fill="none" stroke="#8fd0e6" stroke-width="1.2" opacity="0.75"/><path d="M41 26.5 L42.6 30.4 L41 34.6 L39.4 30.4 Z" fill="#8fd0e6" opacity="0.85"/><path d="M6 44 Q16 40 26 44" stroke="#bcd8e4" stroke-width="1.4" fill="none" opacity="0.3"/></svg>',
+  trove_far: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="tv4_s" x1="0.2" y1="0" x2="0.8" y2="1"><stop offset="0" stop-color="#8fe0d0"/><stop offset="0.3" stop-color="#3d9a92"/><stop offset="0.65" stop-color="#1f4f5c"/><stop offset="1" stop-color="#0c2029"/></linearGradient><radialGradient id="tv4_g" cx="0.45" cy="0.35" r="0.65"><stop offset="0" stop-color="#7fe8d4" stop-opacity="0.5"/><stop offset="1" stop-color="#7fe8d4" stop-opacity="0"/></radialGradient></defs><ellipse cx="32" cy="58" rx="15" ry="3" fill="#000" opacity="0.4"/><circle cx="32" cy="30" r="25" fill="url(#tv4_g)"/><path d="M32 4 Q52 14 52 34 Q52 52 32 60 Q12 52 12 34 Q12 14 32 4 Z" fill="url(#tv4_s)" stroke="#0c2029" stroke-width="0.9"/><path d="M32 4 Q44 12 46 30 Q47 46 32 58 Q36 44 36 30 Q36 15 32 4 Z" fill="#0c2029" opacity="0.3"/><path d="M22 16 Q17 26 17 36 Q17 46 24 54" stroke="#a8f0e0" stroke-width="1.6" fill="none" opacity="0.5" stroke-linecap="round"/><path d="M32 12 Q32 30 32 52" stroke="#0c2029" stroke-width="1" opacity="0.45"/><path d="M32 20 Q24 26 22 36 M32 20 Q40 26 42 36 M32 34 Q25 39 23 47 M32 34 Q39 39 41 47" stroke="#0c2029" stroke-width="0.8" fill="none" opacity="0.4"/><ellipse cx="26" cy="20" rx="5" ry="7" fill="#fff" opacity="0.22"/><circle cx="44" cy="20" r="1.5" fill="#c9fff2" opacity="0.7"/><circle cx="20" cy="42" r="1.1" fill="#c9fff2" opacity="0.55"/></svg>',
+  trove_odd: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="tv5_m" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c9a55e"/><stop offset="0.5" stop-color="#8a6a2e"/><stop offset="1" stop-color="#41300f"/></linearGradient><radialGradient id="tv5_f" cx="0.5" cy="0.6" r="0.55"><stop offset="0" stop-color="#fffdf0"/><stop offset="0.35" stop-color="#ffe08a"/><stop offset="0.75" stop-color="#e0762f"/><stop offset="1" stop-color="#8a3a10" stop-opacity="0.35"/></radialGradient><radialGradient id="tv5_h" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#ffd98a" stop-opacity="0.7"/><stop offset="1" stop-color="#ffd98a" stop-opacity="0"/></radialGradient></defs><circle cx="32" cy="34" r="27" fill="url(#tv5_h)"/><ellipse cx="32" cy="59" rx="12" ry="2.6" fill="#000" opacity="0.42"/><path d="M28 4 Q32 1 36 4" stroke="url(#tv5_m)" stroke-width="2.4" fill="none" stroke-linecap="round"/><path d="M32 4 L32 10" stroke="url(#tv5_m)" stroke-width="2.4" stroke-linecap="round"/><path d="M20 12 L44 12 L42 17 L22 17 Z" fill="url(#tv5_m)"/><path d="M22 17 L42 17 L45 46 L19 46 Z" fill="#2a2116" opacity="0.55"/><path d="M24 19 L40 19 L42.5 44 L21.5 44 Z" fill="url(#tv5_f)"/><path d="M32 24 Q27 31 27 37 Q27 42 32 42 Q37 42 37 37 Q37 31 32 24 Z" fill="#fffdf0" opacity="0.95"/><path d="M22 17 L21.5 44 M42 17 L42.5 44 M24 19 L40 19" stroke="url(#tv5_m)" stroke-width="2" fill="none"/><path d="M19 46 L45 46 L46 52 L18 52 Z" fill="url(#tv5_m)"/><path d="M19 46 L45 46 L45.2 47.6 L18.8 47.6 Z" fill="#f0d894" opacity="0.6"/><path d="M24 52 L40 52 L38 58 L26 58 Z" fill="#6d5734"/><circle cx="26" cy="14" r="1" fill="#fff" opacity="0.6"/></svg>',
 };
 
 /* Returns SVG markup for ids in the ICONS registry, falling back to
@@ -11863,6 +12039,29 @@ function normalizeState(){
   // uncapped build can never sit above the cap and render a >100% bar.
   for(const s in SKILLS) if(state.xp[s]>XP_CAP) state.xp[s]=XP_CAP;
   if(!state.items||typeof state.items!=='object'||Array.isArray(state.items)) state.items={};
+
+  /* ── Sailing (0.9.60). Every field defaulted here: a pre-0.9.60 save has none
+     of this and must load clean. `voy` holds an absolute endsAt (never a
+     remaining duration) so offline resolution is one subtraction on load. ── */
+  if(!state.sail||typeof state.sail!=='object'||Array.isArray(state.sail)) state.sail={};
+  if(typeof state.sail.xp!=='number'||!isFinite(state.sail.xp)) state.sail.xp=0;
+  if(state.sail.xp>XP_CAP) state.sail.xp=XP_CAP;
+  if(typeof state.sail.hull!=='number'||!(state.sail.hull>=0)) state.sail.hull=0;
+  if(typeof SAIL_HULLS!=='undefined') state.sail.hull=Math.min(SAIL_HULLS.length-1, Math.floor(state.sail.hull));
+  if(typeof state.sail.damaged!=='boolean') state.sail.damaged=false;
+  if(typeof state.sail.voyages!=='number') state.sail.voyages=0;
+  if(!state.sail.found||typeof state.sail.found!=='object') state.sail.found={};
+  if(state.sail.fast!==1) state.sail.fast=0;
+  // A malformed voyage (hand-edited save, interrupted write) is dropped rather
+  // than left to divide-by-zero the progress bar.
+  const _v=state.sail.voy;
+  if(_v && (typeof _v!=='object'||typeof _v.endsAt!=='number'||typeof _v.dur!=='number'||!(_v.dur>0)||typeof _v.i!=='number')) state.sail.voy=null;
+  if(state.sail.voy){
+    if(typeof state.sail.voy.roll!=='number')      state.sail.voy.roll=Math.random();
+    if(typeof state.sail.voy.troveRoll!=='number') state.sail.voy.troveRoll=Math.random();
+    if(typeof state.sail.voy.fogRoll!=='number')   state.sail.voy.fogRoll=Math.random();
+  }
+  if(state.sail.last!==null&&typeof state.sail.last!=='object') state.sail.last=null;
   if(typeof state.coins!=='number') state.coins=0;
   // Silver migration. Coins are stored in SILVER at 100s = 1g.
   //  - Pre-silver saves (no _silverV3 / no _silverV2): coins are GOLD -> ×100.
@@ -15284,6 +15483,14 @@ function tick(){
 
   // Drain cooking fire fuel in real time while lit
   applyContinuousBurn(now);
+
+  /* Sailing — a voyage resolves on its own absolute clock whether the panel is
+     open or not, so the ship comes home while you are skilling or fighting.
+     sailTickUI only rewrites the clock text, never the chart. */
+  if(typeof sailCheckArrival==='function' && state.sail && state.sail.voy){
+    if(sailCheckArrival()){ if(sailMode) renderSail(); renderRightPanel(); }
+    else if(sailMode) sailTickUI();
+  }
 
   // Double Action mining tick (fires in parallel with solo mining tick)
   if(state.mineDoubleAct&&state.action&&state.action.skill==='mining'){
@@ -22955,9 +23162,12 @@ function cmbLog(text,cls){
    panel is hidden, so the player knows combat is still resolving offscreen. */
 function updateModePanels(){
   const on=combatMode;
-  $('leftPanel').style.display   = on?'none':'';
-  $('centerPanel').style.display = on?'none':'';
+  const sl=(typeof sailMode!=='undefined')&&sailMode;
+  $('leftPanel').style.display   = (on||sl)?'none':'';
+  $('centerPanel').style.display = (on||sl)?'none':'';
   $('combatPanel').style.display = on?'':'none';
+  const slPanel=$('sailPanel'); if(slPanel) slPanel.style.display = sl?'':'none';
+  const slBtn=$('tabSail'); if(slBtn) slBtn.classList.toggle('on', sl);
   const cmbBtn=$('tabCombat');
   if(cmbBtn){
     cmbBtn.classList.toggle('on', on);
@@ -22967,7 +23177,7 @@ function updateModePanels(){
   }
   if(on){ ['tabShop','tabMastery','tabComp'].forEach(id=>{ const b=$(id); if(b) b.classList.remove('on'); }); }
 }
-function enterCombat(){ refreshCombatStats(); combatMode=true; updateModePanels(); renderCombat(); }
+function enterCombat(){ refreshCombatStats(); combatMode=true; if(typeof sailMode!=='undefined') sailMode=false; updateModePanels(); renderCombat(); }
 function closeCombatPanel(){
   // Hide combat panel and restore the skilling view — DO NOT touch fight state.
   // If a fight is in progress it keeps ticking; the Combat tab pulses to signal it.
@@ -25196,6 +25406,7 @@ function renderAll(){
   normalizeState();
   renderHeader(); renderSkillList(); renderCenter(); renderRightPanel();
   if(combatMode) renderCombat();
+  if(typeof sailMode!=='undefined' && sailMode) renderSail();
 }
 
 /* progress bar animation */
@@ -25394,6 +25605,527 @@ function logNotification(type, icon, text){
   if(typeof updateNotifBadge==='function') updateNotifBadge();
 }
 
+/* ════════ [JS-26] SAILING & TREASURE HUNTING (0.9.60 preview) ════════════════════
+   A dispatch loop, not a tick loop: you outfit a ship, send it to an island, and
+   it resolves on a real-world timer while skilling or combat carries on in the
+   foreground. Sailing never takes the action slot.
+
+   Deliberately NOT registered in SKILLS — that const drives the 12-skill
+   invariants (capes, pets, SKILL_ORDER, the 98-point tree audit). Sailing keeps
+   its own xp in state.sail.xp and reads level through the shared XP_CUM curve,
+   so nothing about the existing twelve has to move for this to exist.
+
+   Outcome grading replaces pass/fail on purpose. At 20 seconds a run, a wipe is
+   a shrug; at nine hours it is a rage-quit. Every voyage returns something —
+   Triumphant 140% / Successful 100% / Battered 65% / Wrecked 30%.
+
+   PREVIEW SCOPE: hull tiers only (no per-slot parts), 5 troves rather than 46,
+   no passive tree. state.sail.fast is a preview-only ×60 clock so the loop can
+   actually be play-tested; it ships visible and clearly labelled. */
+
+/* Hull tiers mirror Woodcutting's wc1..wc7 level gates exactly (1/10/25/45/65/78/90)
+   so the logs already being cut are the logs the next hull wants. */
+const SAIL_HULLS=[
+  {n:'Lashed Raft',          lv:1,  sound:40,  stores:25,  hold:120,  cost:{pine_log:60}},
+  {n:'Oak Sloop',            lv:10, sound:85,  stores:60,  hold:260,  cost:{oak_log:120,      bronze_bar:40}},
+  {n:'Ironbark Cutter',      lv:25, sound:140, stores:110, hold:450,  cost:{ironbark_log:180, iron_bar:60}},
+  {n:'Emberwood Brigantine', lv:45, sound:230, stores:165, hold:720,  cost:{ember_log:240,    steel_bar:90}},
+  {n:'Frostwood Galleon',    lv:65, sound:360, stores:220, hold:1100, cost:{frost_log:300,    mithril_bar:120}},
+  {n:'Shadowwood Corsair',   lv:78, sound:520, stores:290, hold:1600, cost:{shadow_log:380,   cobalt_bar:150}},
+  {n:'Ancient Leviathan',    lv:90, sound:760, stores:380, hold:2400, cost:{ancient_log:460,  starsteel_bar:180, voidheart:3}}
+];
+
+const SAIL_BANDS=[
+  {n:'The Shallows',    x:0.175, trove:'trove_shallows'},
+  {n:'The Wracks',      x:0.395, trove:'trove_wracks'},
+  {n:'The Mistlands',   x:0.625, trove:'trove_mist'},
+  {n:'The Far Reaches', x:0.855, trove:'trove_far'}
+];
+
+/* o = base outcome odds [triumphant, successful, battered, wrecked] before the
+   ship's Soundness shifts them. h = haul table (real ITEMS ids only, so grantItem
+   never silently drops a reward). find = 1-in-N chance of the band's trove. */
+const SAIL_ISLES=[
+  {n:'Shalefoot Shoals',  b:0,lv:1, x:.13, y:.34,m:20, st:20, w:'Glass Calm',        o:[8,88,4,0],   find:12, h:['pine_log','raw_minnow','copper_ore'],
+   f:'Tide-stripped flats an hour off the headland. Barely worth the trip, which is why they let beginners have it.'},
+  {n:'Gullstone Reef',    b:0,lv:8, x:.21, y:.19,m:35, st:35, w:'Chop',              o:[10,80,9,1],  find:15, h:['oak_log','raw_sardine','tin_ore'],
+   f:'Gannets by the thousand, and a reef that has opened more keels than it looks capable of.'},
+  {n:"Cutter's Rock",     b:0,lv:14,x:.115,y:.58,m:50, st:45, w:'Chop',              o:[11,77,11,1], find:18, h:['tin_ore','copper_ore','oak_log'],
+   f:'A single spire of black stone. Somebody keeps a lamp burning on it and nobody knows who.'},
+  {n:'Saltmarrow Cay',    b:0,lv:20,x:.235,y:.71,m:70, st:60, w:'Chop',              o:[12,74,13,1], find:20, h:['tanned_hide','silver_ore','raw_trout'],
+   f:'Brackish, low, and green to the waterline. The hemp grows here whether anyone plants it or not.'},
+  {n:'The Herring Banks', b:0,lv:25,x:.30, y:.44,m:90, st:75, w:'Chop',              o:[13,72,14,1], find:22, h:['raw_trout','raw_tuna','iron_ore'],
+   f:'Fish so thick the water goes solid silver. Every fleet on the coast works these banks and they still do not run out.'},
+  {n:'Kelp Warren',       b:0,lv:30,x:.155,y:.85,m:110,st:85, w:"Wrecker's Weather", o:[14,64,20,2], find:26, h:['pearl','ironbark_log','coal'],
+   f:'A forest, but underneath. Rudders foul, crews get nervous, and something down there is patient.'},
+
+  {n:"Widow's Wrack",     b:1,lv:34,x:.355,y:.235,m:135,st:100,w:"Wrecker's Weather",o:[15,60,23,2], find:28, h:['iron_ore','gold_ore','ironbark_log'],
+   f:'Nine ships on one reef across forty years. The Admiralty stopped counting after the ninth.'},
+  {n:'Brine Chapel',      b:1,lv:38,x:.45, y:.16, m:160,st:115,w:'Blackfog',         o:[16,58,24,2], find:30, h:['silver_ore','gem_dust','tanned_hide'],
+   f:'Someone built a chapel on a rock that floods twice a day. The candles are always lit and always dry.'},
+  {n:'Emberfall Atoll',   b:1,lv:42,x:.395,y:.42, m:180,st:130,w:'Chop',             o:[17,63,18,2], find:32, h:['ember_log','ember_dust','coal'],
+   f:'The ring of an old caldera, still warm. Emberwood grows here and nowhere else at sea.'},
+  {n:'The Bonewash',      b:1,lv:46,x:.475,y:.585,m:210,st:145,w:"Wrecker's Weather",o:[17,55,25,3], find:34, h:['beast_sinew','gold_ore','ember_log'],
+   f:'A white beach that is not sand. The tide brings more of it in every year from somewhere further out.'},
+  {n:'Tallow Key',        b:1,lv:50,x:.34, y:.73, m:240,st:160,w:'Blackfog',         o:[18,54,25,3], find:36, h:['gold_ore','mithril_ore','gem_dust'],
+   f:"A smuggler's key with six hidden inlets. The fog here is not entirely natural and the locals will not discuss it."},
+  {n:'Gravekeel Spit',    b:1,lv:54,x:.455,y:.865,m:270,st:175,w:'The Maw',          o:[19,48,28,5], find:40, h:['runite_ore','shade_ember','mithril_ore'],
+   f:'Every hull that ever sank between here and the Mistlands eventually washes up on this spit. So does whatever ate them.'},
+
+  {n:'Mistvault Isle',    b:2,lv:58,x:.585,y:.21, m:300,st:190,w:'Blackfog',         o:[19,52,25,4], find:42, h:['mithril_ore','gem_dust','frost_log'],
+   f:'It is on the chart. It is not always where the chart says. Three crews have sworn to this and one was sober.'},
+  {n:'The Drowned Spire', b:2,lv:62,x:.66, y:.37, m:345,st:205,w:'The Maw',          o:[20,46,28,6], find:45, h:['cobalt_ore','beast_sinew','raw_salmon'],
+   f:'A tower, upright, under sixty feet of water. Someone lit the top of it last winter.'},
+  {n:'Frostfang Skerry',  b:2,lv:66,x:.545,y:.51, m:390,st:220,w:"Wrecker's Weather",o:[20,49,27,4], find:48, h:['frost_log','cobalt_ore','frostcrocus'],
+   f:"The Tundra's teeth, seen from the water. Ice takes the rigging faster than a crew can chip it off."},
+  {n:'Hollowtide',        b:2,lv:70,x:.70, y:.63, m:435,st:235,w:'Blackfog',         o:[21,47,27,5], find:52, h:['shadow_log','runite_ore','pearl'],
+   f:'Twice a month the sea here goes out and does not come back for a day. What it uncovers is worth the wait.'},
+  {n:'The Weeping Stones',b:2,lv:74,x:.60, y:.78, m:480,st:250,w:"Wrecker's Weather",o:[21,46,28,5], find:56, h:['gem_dust','runite_ore','shadow_log'],
+   f:'Nine standing stones in a rough circle, all of them wet in dry weather. Nobody has explained this.'},
+  {n:"Corsair's Gibbet",  b:2,lv:78,x:.665,y:.895,m:525,st:265,w:'The Maw',          o:[22,42,29,7], find:60, h:['shade_ember','gold_ore','runite_ore'],
+   f:'Where the Admiralty hanged them, and where the survivors went afterward. Both groups are still here in their way.'},
+
+  {n:'Blackreef Hollow',  b:3,lv:82,x:.775,y:.225,m:570,st:280,w:'The Maw',          o:[22,41,29,8], find:64, h:['shadow_log','runite_ore','shade_ember'],
+   f:'Ashen Steppe water. The reef is not coral and it is not stone, and it has grown since it was charted.'},
+  {n:"Leviathan's Rest",  b:3,lv:86,x:.885,y:.375,m:630,st:300,w:'The Maw',          o:[23,38,29,10],find:70, h:['voidheart','starsteel_ore','beast_sinew'],
+   f:'A ribcage the size of a cathedral, half-buried. It is not the largest one down there — only the one close enough to reach.'},
+  {n:'The Salt Gate',     b:3,lv:88,x:.755,y:.475,m:660,st:310,w:'Blackfog',         o:[24,40,29,7], find:74, h:['starsteel_ore','gem_dust','ancient_log'],
+   f:'Two pillars of white stone standing in open ocean, four hundred miles from any land. They mark nothing. Crews sail between them anyway.'},
+  {n:'The Ashen Strand',  b:3,lv:90,x:.90, y:.565,m:690,st:320,w:"Wrecker's Weather",o:[23,42,28,7], find:78, h:['starsteel_ore','ember_dust','ancient_log'],
+   f:'Grey sand for eleven miles, and it is warm underfoot the whole way. Nothing grows. Everything washes up.'},
+  {n:'The Sunken Crown',  b:3,lv:93,x:.785,y:.675,m:750,st:340,w:'The Maw',          o:[24,36,29,11],find:84, h:['starsteel_ore','voidheart','runite_ore'],
+   f:'A city, or the top of one, breaking the surface at low water. Whatever it was crowned is still down there wearing it.'},
+  {n:'Voidmaw Trench',    b:3,lv:97,x:.885,y:.80, m:840,st:370,w:'The Maw',          o:[25,32,29,14],find:90, h:['voidheart','ancient_log','starsteel_ore'],
+   f:'You do not land here. You lower things into it and haul up whatever has attached itself on the way.'},
+
+  /* Unlogged — reachable only by a Blackfog misdelivery, then charted for good. */
+  {n:'The Lantern Isles', b:3,lv:80,x:.915,y:.13, m:540,st:290,w:'Blackfog',o:[30,45,20,5],find:8,hid:1,h:['starsteel_ore','pearl','gem_dust'],
+   f:'Not on any Admiralty chart. Crews who arrive here did not mean to. Every one of them describes the same lights.'},
+  {n:'Nowhere Cay',       b:2,lv:64,x:.515,y:.115,m:360,st:210,w:'Blackfog',o:[28,47,21,4],find:8,hid:1,h:['gem_dust','mithril_ore','pearl'],
+   f:'Reached only by being lost. The cartographers have a name for islands like this and it is not a polite one.'}
+];
+
+const SAIL_GRADES=[
+  {n:'Triumphant', c:'sl-r1', mult:1.40, p:'Clean water the whole crossing. The hold came back over-full, and the crew found something they were not looking for.'},
+  {n:'Successful', c:'sl-r2', mult:1.00, p:'An uneventful run, which at this distance counts as a good one.'},
+  {n:'Battered',   c:'sl-r3', mult:0.65, p:'She took a beating on the return leg. Two thirds of the haul made it home; the rest went over the side to keep her floating.'},
+  {n:'Wrecked',    c:'sl-r4', mult:0.30, p:'Barely made it back. Most of the haul is gone and the yard will have her for days — but the crew is alive and the log is intact.'}
+];
+
+let sailMode=false, sailSel=0, _sailRedrawT=null;
+
+function sailState(){ return state.sail; }
+function sailLvl(){ return levelFromXp((state.sail&&state.sail.xp)||0); }
+function sailHull(){ return SAIL_HULLS[Math.min(SAIL_HULLS.length-1, Math.max(0,(state.sail&&state.sail.hull)||0))]; }
+function sailIsle(i){ return SAIL_ISLES[Math.min(SAIL_ISLES.length-1, Math.max(0,i|0))]; }
+
+/* Preview-only clock scale. Ships visible and labelled so it never reads as a bug. */
+function sailSpeed(){ return (state.sail&&state.sail.fast)?60:1; }
+function sailDurMs(isle){ return Math.max(1000, Math.round(isle.m*60000/sailSpeed())); }
+
+/* An island is reachable only if BOTH the level and the ship's Stores clear it —
+   a capped sailor in a small hull still cannot make the far water. Unlogged
+   islands stay dark until a Blackfog misdelivery has put one on the chart. */
+function sailReach(i){
+  const isle=sailIsle(i), h=sailHull();
+  if(isle.hid && !(state.sail.found&&state.sail.found[i])) return 'hidden';
+  if(sailLvl()<isle.lv) return 'lvl';
+  if(h.stores<isle.st)  return 'stores';
+  return 'ok';
+}
+
+/* Soundness shifts probability mass between the good and bad halves of the bar.
+   A hull well over the island's expectation converts Wrecked into Triumphant and
+   Battered into Successful; an under-built one does the reverse. Always renormalised
+   to 100 so the rendered bar and the roll can never disagree. */
+function sailOdds(i){
+  const isle=sailIsle(i), h=sailHull();
+  const need=40+isle.lv*7.4;
+  const ratio=Math.max(0.35, Math.min(2.4, h.sound/need));
+  const shift=Math.max(-0.6, Math.min(0.75, (ratio-1)*0.55));
+  let o=isle.o.slice();
+  const mB=o[2]*shift, mW=o[3]*shift;
+  o[2]-=mB; o[1]+=mB; o[3]-=mW; o[0]+=mW;
+  o=o.map(v=>Math.max(0,v));
+  const t=o.reduce((a,b)=>a+b,0)||1;
+  return o.map(v=>v*100/t);
+}
+
+/* Roll is drawn at DEPARTURE and stored, so reloading cannot reroll a bad run. */
+function sailLaunch(i){
+  if(state.sail.voy) { toast('The ship is already at sea.'); return; }
+  const why=sailReach(i);
+  if(why!=='ok'){
+    toast(why==='lvl' ? 'Sailing level too low for that crossing.'
+        : why==='stores' ? 'Your ship cannot carry stores that far. Build a bigger hull.'
+        : 'That island is not on your chart.');
+    return;
+  }
+  if(state.sail.damaged){ toast('The ship is damaged. Repair her at the yard first.'); return; }
+  const isle=sailIsle(i), dur=sailDurMs(isle);
+  state.sail.voy={i:i, endsAt:Date.now()+dur, dur:dur, roll:Math.random(), troveRoll:Math.random(), fogRoll:Math.random()};
+  state.sail.last=null;
+  saveGame(); renderSail();
+  toast('Set sail for '+isle.n+'.');
+}
+
+/* Resolve a finished voyage. Safe to call from anywhere and at any cadence —
+   it no-ops unless a voyage exists and its absolute endsAt has passed, which is
+   what makes offline resolution a single subtraction rather than a catch-up loop. */
+function sailCheckArrival(){
+  const s=state.sail;
+  if(!s||!s.voy) return false;
+  if(Date.now() < s.voy.endsAt) return false;
+
+  const v=s.voy, isle=sailIsle(v.i), h=sailHull();
+
+  /* Blackfog can misdeliver you — the intended first route to the two unlogged
+     islands. Only fires when an unlogged island is still undiscovered. */
+  let landed=v.i, fogged=false;
+  if(isle.w==='Blackfog' && v.fogRoll<0.06){
+    const undisc=SAIL_ISLES.map((x,ix)=>x.hid&&!(s.found&&s.found[ix])?ix:-1).filter(ix=>ix>=0);
+    if(undisc.length){
+      landed=undisc[Math.floor(v.troveRoll*undisc.length)%undisc.length];
+      fogged=true;
+      if(!s.found) s.found={};
+      s.found[landed]=1;
+    }
+  }
+  const dest=sailIsle(landed);
+
+  // grade from the stored roll against the odds as they were for THIS ship
+  const odds=sailOdds(v.i);
+  let acc=0, g=3;
+  for(let k=0;k<4;k++){ acc+=odds[k]; if(v.roll*100<acc){ g=k; break; } }
+  const grade=SAIL_GRADES[g];
+
+  // haul scales with time at sea and level, capped by the hold
+  const lvl=sailLvl();
+  let units=Math.round(dest.m*0.9*(1+lvl*0.02)*grade.mult);
+  const capped=units>h.hold;
+  units=Math.min(units, h.hold);
+
+  const got={};
+  const per=Math.max(1, Math.floor(units/dest.h.length));
+  for(const id of dest.h){ const n=grantItem(id, per); if(n>0) got[id]=(got[id]||0)+n; }
+
+  // trove roll — the collection layer, and the reason to keep sailing
+  let trove=null;
+  const band=SAIL_BANDS[dest.b];
+  const troveId=dest.hid?'trove_odd':(band?band.trove:null);
+  if(troveId && g<=1 && v.troveRoll < (1/dest.find)*(g===0?2:1)){
+    if(grantItem(troveId,1)>0){ trove=troveId; markDiscovered(troveId);
+      logNotification('rare', iconHTML(troveId), 'Recovered '+ITEMS[troveId].name+' from '+dest.n+'!'); }
+  }
+
+  /* Sailing xp is its own pool — addSkillXp() writes state.xp[skill] and would
+     need Sailing registered in SKILLS, which is exactly what we are avoiding. */
+  const xp=Math.round(dest.m*(6+dest.lv*0.9)*grade.mult);
+  state.sail.xp=Math.min(XP_CAP,(state.sail.xp||0)+xp);
+
+  if(g>=2){ state.sail.damaged=(g===3); }
+  state.sail.voyages=(state.sail.voyages||0)+1;
+
+  state.sail.last={g:g, i:landed, from:v.i, fogged:fogged, got:got, trove:trove, xp:xp, capped:capped, units:units};
+  state.sail.voy=null;
+  saveGame();
+
+  logNotification('unlock', iconHTML('sailing'), grade.n+' return from '+dest.n+' · +'+xp+' Sailing XP');
+  if(!sailMode) toast('Your ship has returned from '+dest.n+' — '+grade.n+'.');
+  return true;
+}
+
+function sailRepair(){
+  const h=sailHull(), cost={};
+  for(const id in h.cost) cost[id]=Math.max(1,Math.ceil(h.cost[id]*0.25));
+  for(const id in cost){ if((state.items[id]||0)<cost[id]){ toast('Need '+cost[id]+'× '+(ITEMS[id]?ITEMS[id].name:id)+' to repair.'); return; } }
+  for(const id in cost) state.items[id]=(state.items[id]||0)-cost[id];
+  state.sail.damaged=false; saveGame(); renderSail(); toast('The yard has her seaworthy again.');
+}
+
+function sailBuild(t){
+  const h=SAIL_HULLS[t];
+  if(!h||t<=state.sail.hull) return;
+  if(sailLvl()<h.lv){ toast('Sailing '+h.lv+' needed to lay that keel.'); return; }
+  for(const id in h.cost){ if((state.items[id]||0)<h.cost[id]){ toast('Need '+h.cost[id]+'× '+(ITEMS[id]?ITEMS[id].name:id)+'.'); return; } }
+  for(const id in h.cost) state.items[id]=(state.items[id]||0)-h.cost[id];
+  state.sail.hull=t; state.sail.damaged=false;
+  saveGame(); renderSail(); toast(h.n+' launched at Emberwatch.');
+}
+
+/* ── chart canvas ────────────────────────────────────────────────────────────────
+   Drawn once per render (and on resize), never on rAF — an animation loop here
+   would fight the game's own frame loop for no visual gain. */
+function sailDrawChart(){
+  const cv=$('slCanvas'), stage=$('slStage');
+  if(!cv||!stage) return;
+  const ctx=cv.getContext&&cv.getContext('2d'); if(!ctx) return;
+  const w=stage.clientWidth, h=stage.clientHeight;
+  if(!w||!h) return;
+  const dpr=Math.min(window.devicePixelRatio||1,2);
+  cv.width=w*dpr; cv.height=h*dpr; ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,w,h);
+
+  const g=ctx.createLinearGradient(0,0,w,h);
+  g.addColorStop(0,'#0e1f2b'); g.addColorStop(.5,'#0b1822'); g.addColorStop(1,'#08131b');
+  ctx.fillStyle=g; ctx.fillRect(0,0,w,h);
+
+  const sg=ctx.createRadialGradient(0,h*.5,10,0,h*.5,w*.42);
+  sg.addColorStop(0,'rgba(30,72,94,.55)'); sg.addColorStop(1,'rgba(30,72,94,0)');
+  ctx.fillStyle=sg; ctx.fillRect(0,0,w,h);
+
+  ctx.strokeStyle='rgba(150,122,66,.16)'; ctx.lineWidth=1;
+  for(let i=1;i<16;i++){ ctx.beginPath(); ctx.moveTo(i*w/16,0); ctx.lineTo(i*w/16,h); ctx.stroke(); }
+  for(let i=1;i<8;i++){ ctx.beginPath(); ctx.moveTo(0,i*h/8); ctx.lineTo(w,i*h/8); ctx.stroke(); }
+
+  const nodes=[[w*.30,h*.50],[w*.68,h*.30],[w*.86,h*.72]];
+  ctx.lineWidth=.9;
+  nodes.forEach(n=>{
+    ctx.strokeStyle='rgba(168,136,74,.28)';
+    for(let a=0;a<16;a++){ const th=a*Math.PI/8, L=w*1.4;
+      ctx.beginPath(); ctx.moveTo(n[0],n[1]); ctx.lineTo(n[0]+Math.cos(th)*L,n[1]+Math.sin(th)*L); ctx.stroke(); }
+    ctx.strokeStyle='rgba(190,155,88,.42)';
+    ctx.beginPath(); ctx.arc(n[0],n[1],w*.055,0,Math.PI*2); ctx.stroke();
+    ctx.fillStyle='rgba(199,155,78,.5)'; ctx.beginPath(); ctx.arc(n[0],n[1],2.6,0,Math.PI*2); ctx.fill();
+  });
+
+  SAIL_ISLES.forEach((is,ix)=>{
+    if(is.hid && !(state.sail.found&&state.sail.found[ix])) return;
+    const cx=is.x*w, cy=is.y*h;
+    for(let r=1;r<=3;r++){
+      ctx.beginPath();
+      const rad=8+r*10;
+      for(let a=0;a<=Math.PI*2+.01;a+=Math.PI/14){
+        const wob=1+Math.sin(a*3+is.x*17+r)*0.13+Math.cos(a*5+is.y*11)*0.08;
+        const px=cx+Math.cos(a)*rad*wob, py=cy+Math.sin(a)*rad*wob*.72;
+        if(a===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+      }
+      ctx.closePath();
+      ctx.strokeStyle='rgba(122,170,196,'+(0.30-r*0.07)+')'; ctx.lineWidth=1; ctx.stroke();
+      if(r===1){ ctx.fillStyle='rgba(26,58,76,.6)'; ctx.fill(); }
+    }
+  });
+
+  ctx.fillStyle='rgba(122,170,196,.26)';
+  ctx.font="9px 'Cascadia Mono', Consolas, monospace";
+  for(let i=0;i<52;i++){
+    const sx=((i*97)%100)/100*w, sy=((i*61)%100)/100*h;
+    const near=SAIL_ISLES.some(is=>Math.abs(is.x*w-sx)<60&&Math.abs(is.y*h-sy)<46);
+    if(!near) ctx.fillText(String(7+(i*13)%90), sx, sy);
+  }
+
+  const vg=ctx.createRadialGradient(w/2,h/2,Math.min(w,h)*.42,w/2,h/2,Math.max(w,h)*.80);
+  vg.addColorStop(0,'rgba(0,0,0,0)'); vg.addColorStop(1,'rgba(0,0,0,.46)');
+  ctx.fillStyle=vg; ctx.fillRect(0,0,w,h);
+
+  const rx=w*.085, ry=h*.80, R=Math.min(w*.055,40);
+  ctx.save(); ctx.translate(rx,ry);
+  ctx.strokeStyle='rgba(206,166,92,.58)'; ctx.lineWidth=1.1;
+  ctx.beginPath(); ctx.arc(0,0,R,0,Math.PI*2); ctx.stroke();
+  ctx.strokeStyle='rgba(206,166,92,.36)';
+  ctx.beginPath(); ctx.arc(0,0,R*.72,0,Math.PI*2); ctx.stroke();
+  for(let a=0;a<8;a++){
+    const t=a*Math.PI/4-Math.PI/2, len=(a%2===0)?R:R*.55;
+    ctx.beginPath(); ctx.moveTo(0,0);
+    ctx.lineTo(Math.cos(t-0.13)*len*.4, Math.sin(t-0.13)*len*.4);
+    ctx.lineTo(Math.cos(t)*len, Math.sin(t)*len);
+    ctx.lineTo(Math.cos(t+0.13)*len*.4, Math.sin(t+0.13)*len*.4);
+    ctx.closePath();
+    ctx.fillStyle=(a%2===0)?'rgba(214,174,98,.76)':'rgba(214,174,98,.36)'; ctx.fill();
+  }
+  ctx.fillStyle='rgba(240,224,188,.9)';
+  ctx.font="italic 12px 'Palatino Linotype', Georgia, serif";
+  ctx.textAlign='center'; ctx.fillText('N',0,-R-7);
+  ctx.restore();
+}
+
+function sailFmtMins(m){
+  if(m<60) return m+'m';
+  const h=Math.floor(m/60), r=m%60;
+  return r? h+'h '+r+'m' : h+'h';
+}
+function sailFmtClock(ms){
+  if(ms<0) ms=0;
+  const s=Math.floor(ms/1000), hh=Math.floor(s/3600), mm=Math.floor(s%3600/60), ss=s%60;
+  const p=n=>(n<10?'0':'')+n;
+  return p(hh)+':'+p(mm)+':'+p(ss);
+}
+
+/* Lightweight per-tick updater — writes only the clock and the bar so the canvas
+   and the marker DOM survive. A full renderSail() every second would be wasteful
+   and would visibly reset the chart. */
+function sailTickUI(){
+  if(!sailMode) return;
+  const s=state.sail; if(!s||!s.voy) return;
+  const el=$('slClock'); if(!el) return;
+  const left=s.voy.endsAt-Date.now();
+  el.textContent=sailFmtClock(left);
+  const bar=$('slPBar');
+  if(bar) bar.style.width=Math.min(100,Math.max(0,(1-left/s.voy.dur)*100))+'%';
+}
+
+function enterSailing(){
+  sailMode=true; combatMode=false;
+  updateModePanels(); renderSail();
+}
+function closeSailPanel(){
+  if(!sailMode) return;
+  sailMode=false; updateModePanels();
+}
+
+function renderSail(){
+  const p=$('sailPanel'); if(!p) return;
+  const s=state.sail, h=sailHull(), lvl=sailLvl(), isle=sailIsle(sailSel);
+  const xpNow=s.xp||0, base=XP_CUM[lvl]||0, next=XP_CUM[Math.min(MAX_LEVEL,lvl+1)]||base+1;
+  const pct=lvl>=MAX_LEVEL?100:Math.max(0,Math.min(100,(xpNow-base)/Math.max(1,next-base)*100));
+
+  let html='<div class="sl-wrap">';
+
+  /* ── header ── */
+  html+='<div class="sl-top">'
+    +'<div class="sl-ship">'+iconHTML('sailing')
+    +'<div><div class="sl-shipname">'+h.n+(s.damaged?' <span style="color:var(--red);font-size:11px">· DAMAGED</span>':'')+'</div>'
+    +'<div class="sl-shiptier">Emberwatch Harbour · tier '+(s.hull+1)+' of 7</div></div></div>'
+    +'<div class="sl-stats">'
+    +'<span class="sl-stat">Sound <b>'+h.sound+'</b></span>'
+    +'<span class="sl-stat">Stores <b>'+h.stores+'</b></span>'
+    +'<span class="sl-stat">Hold <b>'+h.hold+'</b></span>'
+    +'<span class="sl-stat">Voyages <b>'+(s.voyages||0)+'</b></span></div>'
+    +'<div class="sl-lvl"><div class="sl-lvlbox"><b>Lv '+lvl+'</b><i>'+Math.floor(xpNow).toLocaleString()+' xp</i></div>'
+    +'<div class="sl-xpbar"><i style="width:'+pct+'%"></i></div>'
+    +'<button class="sl-btn" id="slLeave">Leave</button></div></div>';
+
+  /* ── chart ── */
+  const charted=SAIL_ISLES.filter((x,ix)=>!x.hid||(s.found&&s.found[ix])).length;
+  html+='<div class="sl-chartbox"><div class="sl-charthd">'
+    +'<span class="t">Emberwatch Admiralty Chart № 4</span>'
+    +'<span class="h">'+charted+' charted · '+(SAIL_ISLES.length-charted)+' unlogged</span></div>'
+    +'<div class="sl-chartscroll"><div class="sl-stage" id="slStage"><canvas id="slCanvas"></canvas>';
+
+  SAIL_BANDS.forEach(b=>{ html+='<div class="sl-band" style="left:'+(b.x*100)+'%">'+b.n+'</div>'; });
+  html+='<div class="sl-port" style="left:3.4%;top:50%">'+iconHTML('ui_anchor')+'<span>Emberwatch</span></div>';
+
+  SAIL_ISLES.forEach((is,ix)=>{
+    const why=sailReach(ix);
+    if(why==='hidden') return;
+    const cls='sl-mk'+(ix===sailSel?' on':'')+(why!=='ok'?' lock':'')+(is.hid?' hid':'')
+      +(s.voy&&s.voy.i===ix?' sailing-to':'');
+    html+='<button class="'+cls+'" data-slisle="'+ix+'" style="left:'+(is.x*100)+'%;top:'+(is.y*100)+'%" '
+      +'title="'+is.n+'"><span class="d"></span><span class="n">'+is.n+'</span></button>';
+  });
+  html+='</div></div></div>';
+
+  /* ── body: dossier | expedition + yard ── */
+  html+='<div class="sl-body">';
+
+  /* dossier */
+  const odds=sailOdds(sailSel), why=sailReach(sailSel);
+  const hazards={'Glass Calm':'Hazards — none of note','Chop':'Hazards — hull wear, spilled cargo',
+    "Wrecker's Weather":'Hazards — squalls, hull damage','Blackfog':'Hazards — misdelivery, lost time',
+    'The Maw':'Hazards — leviathan water'};
+  html+='<div class="sl-card"><h4>'+isle.n+'</h4>'
+    +'<div class="sl-sub">'+(isle.hid?'UNLOGGED':(SAIL_BANDS[isle.b].n.toUpperCase()))+' · SAILING '+isle.lv+'</div>'
+    +'<p class="sl-flavor">'+isle.f+'</p>'
+    +'<div class="sl-grid4">'
+    +'<div class="sl-kv"><div class="k">Time at sea</div><div class="v">'+sailFmtMins(isle.m)+'</div></div>'
+    +'<div class="sl-kv"><div class="k">Stores</div><div class="v'+(h.stores<isle.st?'':'')+'">'+isle.st+'</div></div>'
+    +'<div class="sl-kv"><div class="k">Waters</div><div class="v sm">'+isle.w+'</div></div>'
+    +'<div class="sl-kv"><div class="k">Trove find</div><div class="v">1 in '+isle.find+'</div></div></div>'
+    +'<div class="sl-oddlab"><span>Outcome odds</span><span>'+(hazards[isle.w]||'')+'</span></div>'
+    +'<div class="sl-odds">';
+  ['sl-o1','sl-o2','sl-o3','sl-o4'].forEach((c,k)=>{
+    html+='<i class="'+c+'" style="flex-grow:'+odds[k].toFixed(2)+'">'+(odds[k]>=7?Math.round(odds[k])+'%':'')+'</i>';
+  });
+  html+='</div><div class="sl-oddkey">'
+    +'<span><em style="background:#dfb03c"></em>Triumphant 140%</span>'
+    +'<span><em style="background:#7da33f"></em>Successful 100%</span>'
+    +'<span><em style="background:#c9822e"></em>Battered 65%</span>'
+    +'<span><em style="background:#a8412c"></em>Wrecked 30%</span></div>'
+    +'<div class="sl-oddlab" style="margin-top:13px"><span>Typical haul</span></div><div class="sl-chips">';
+  isle.h.forEach(id=>{ html+='<span class="sl-chip">'+iconHTML(id)+(ITEMS[id]?ITEMS[id].name:id)+'</span>'; });
+  html+='</div></div>';
+
+  /* expedition / yard column */
+  html+='<div style="display:flex;flex-direction:column;gap:10px">';
+
+  html+='<div class="sl-card">';
+  if(s.voy){
+    const v=s.voy, dest=sailIsle(v.i), left=v.endsAt-Date.now();
+    html+='<h4>At sea — '+dest.n+'</h4><div class="sl-sub">RETURNS WHEN THE CLOCK RUNS OUT</div>'
+      +'<div class="sl-clock"><b id="slClock">'+sailFmtClock(left)+'</b><span>remaining</span></div>'
+      +'<div class="sl-pbar"><i id="slPBar" style="width:'+Math.min(100,Math.max(0,(1-left/v.dur)*100))+'%"></i></div>'
+      +'<p class="sl-note">The voyage resolves on its own clock. Close the game if you like — she will be waiting.</p>'
+      +'<div class="sl-btnrow" style="margin-top:9px"><button class="sl-btn" id="slSkip">Return now (preview)</button></div>';
+  } else {
+    if(s.last){
+      const L=s.last, gr=SAIL_GRADES[L.g], di=sailIsle(L.i);
+      html+='<div class="sl-result '+gr.c+'"><h5>'+gr.n+' — '+di.n+'</h5><p>'
+        +(L.fogged?'<b>Blackfog took the ship off course.</b> She made landfall at '+di.n+', which is on no Admiralty chart. It is on yours now. ':'')
+        +gr.p+'</p><div class="sl-chips">';
+      for(const id in L.got) html+='<span class="sl-chip gold">'+iconHTML(id)+(ITEMS[id]?ITEMS[id].name:id)+' ×'+L.got[id]+'</span>';
+      html+='<span class="sl-chip good">+'+L.xp+' Sailing XP</span>';
+      if(L.trove) html+='<span class="sl-chip vio">'+iconHTML(L.trove)+ITEMS[L.trove].name+'</span>';
+      if(L.capped) html+='<span class="sl-chip bad">hold full — cargo left on the beach</span>';
+      if(L.g===3) html+='<span class="sl-chip bad">ship damaged</span>';
+      html+='</div></div>';
+    }
+    const cantWhy = s.damaged?'Repair her first'
+      : why==='lvl'?('Sailing '+isle.lv+' required')
+      : why==='stores'?('Needs '+isle.st+' Stores — you have '+h.stores)
+      : null;
+    html+='<h4>Launch an expedition</h4><div class="sl-sub">'+isle.n.toUpperCase()+' · '+sailFmtMins(isle.m)+'</div>'
+      +'<button class="sl-btn go" id="slGo"'+(cantWhy?' disabled':'')+'>'
+      +(cantWhy?cantWhy:'Set Sail — '+sailFmtMins(isle.m))+'</button>'
+      +'<label class="sl-preview"><input type="checkbox" id="slFast"'+(s.fast?' checked':'')+'> '
+      +'Preview: fast voyages (×60 clock)</label>';
+  }
+  html+='</div>';
+
+  /* shipyard */
+  html+='<div class="sl-card"><h4>Emberwatch Yard</h4>'
+    +'<div class="sl-sub">HULL TIERS · LOGS AND BARS YOU ALREADY CUT</div><div class="sl-yard">';
+  SAIL_HULLS.forEach((hh,t)=>{
+    const cur=t===s.hull, owned=t<=s.hull, canLvl=lvl>=hh.lv;
+    let costStr=Object.keys(hh.cost).map(id=>hh.cost[id]+'× '+(ITEMS[id]?ITEMS[id].name:id)).join(' · ');
+    const afford=Object.keys(hh.cost).every(id=>(state.items[id]||0)>=hh.cost[id]);
+    html+='<div class="sl-hull'+(cur?' cur':'')+(!canLvl&&!owned?' lock':'')+'">'+iconHTML('sailing')
+      +'<div class="i"><b>'+hh.n+'</b><span>Lv '+hh.lv+' · Sound '+hh.sound+' · Stores '+hh.stores+' · Hold '+hh.hold+'</span>'
+      +(owned?'':'<span style="display:block;color:'+(afford?'#7da33f':'#a08a64')+'">'+costStr+'</span>')+'</div>';
+    if(cur) html+='<span class="sl-chip gold">current</span>';
+    else if(owned) html+='<span class="sl-chip">built</span>';
+    else html+='<button class="sl-btn" data-slbuild="'+t+'"'+((canLvl&&afford)?'':' disabled')+'>Build</button>';
+    html+='</div>';
+  });
+  html+='</div>';
+  if(s.damaged) html+='<div class="sl-btnrow" style="margin-top:9px"><button class="sl-btn" id="slFix">Repair hull (25% of build cost)</button></div>';
+  html+='<p class="sl-note">Preview slice: hull tiers only. Per-slot parts (sails, rudder, cannons, hold, '
+    +'figurehead), the 46-piece Trove, treasure charts and the 98-point tree land in later slices.</p>'
+    +'</div></div></div></div>';
+
+  p.innerHTML=html;
+
+  /* listeners */
+  const leave=$('slLeave'); if(leave) leave.onclick=()=>{ closeSailPanel(); $('tabSkills').click(); };
+  const go=$('slGo');   if(go)   go.onclick=()=>sailLaunch(sailSel);
+  const skip=$('slSkip');if(skip) skip.onclick=()=>{ if(state.sail.voy){ state.sail.voy.endsAt=Date.now(); sailCheckArrival(); renderSail(); } };
+  const fix=$('slFix'); if(fix)  fix.onclick=sailRepair;
+  const fast=$('slFast');if(fast) fast.onchange=e=>{ state.sail.fast=e.target.checked?1:0; saveGame(); };
+  p.querySelectorAll('[data-slisle]').forEach(b=>{
+    b.onclick=()=>{ sailSel=+b.getAttribute('data-slisle'); renderSail(); };
+  });
+  p.querySelectorAll('[data-slbuild]').forEach(b=>{
+    b.onclick=()=>sailBuild(+b.getAttribute('data-slbuild'));
+  });
+
+  sailDrawChart();
+}
+
+/* Chart is canvas — it must be repainted when the panel is resized. */
+window.addEventListener('resize',()=>{
+  if(!sailMode) return;
+  clearTimeout(_sailRedrawT); _sailRedrawT=setTimeout(sailDrawChart,140);
+});
+
 /* ════════ [JS-25] BOOT ══════════════════════════════════════════════════════════ */
 /* =================================================================
    BOOT
@@ -25424,8 +26156,16 @@ $('tabCombat').addEventListener('click',()=>{
   $('tabSkills').classList.remove('on');
   $('tabStatsLeft').classList.remove('on');
 });
+/* Sailing opens its own full-width panel, same swap as Combat. Any voyage keeps
+   resolving on its clock whether the panel is open or not. */
+$('tabSail').addEventListener('click',()=>{
+  enterSailing();
+  $('tabSkills').classList.remove('on');
+  $('tabStatsLeft').classList.remove('on');
+  $('tabCombat').classList.remove('on');
+});
 $('tabSkills').addEventListener('click',()=>{
-  closeCombatPanel();
+  closeCombatPanel(); closeSailPanel();
   $('skillListWrap').style.display='';
   $('statsViewLeft').style.display='none';
   $('tabSkills').classList.add('on');
@@ -25434,7 +26174,7 @@ $('tabSkills').addEventListener('click',()=>{
   $('mainLayout').classList.remove('stats-expanded');
 });
 $('tabStatsLeft').addEventListener('click',()=>{
-  closeCombatPanel();
+  closeCombatPanel(); closeSailPanel();
   $('skillListWrap').style.display='none';
   $('statsViewLeft').style.display='';
   $('tabSkills').classList.remove('on');
