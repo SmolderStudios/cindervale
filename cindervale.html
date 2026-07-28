@@ -3147,7 +3147,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.56</div>
+  <div class="mm-ver">v0.9.57</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -3315,7 +3315,10 @@ body:not(.is-demo) .demo-only{display:none !important}
       <dt>Art</dt><dd>Smokeys Tavern</dd>
       <dt>Typeface</dt><dd>Crimson Pro (SIL Open Font License)</dd>
       <dt>Hearth Cat</dt><dd>Smokey Bones</dd>
-      <dt>Thanks</dt><dd>Everyone who played the beta and reported a bug</dd>
+      <!-- Playtester names ride the existing `.cr-list dd span` rule, which already
+           renders a small monospace sub-line — same treatment as the Discord and
+           support rows below, so this needed no new CSS. -->
+      <dt>Thanks</dt><dd>Everyone who played the beta and reported a bug<span>Bzshady &middot; Zackly &middot; Nelly &middot; illidan &middot; Milkie &middot; Security_AI</span></dd>
       <!-- Deliberately NOT an <a>: the Electron wrapper has no setWindowOpenHandler,
            so a click would navigate the game window to Discord with no way back.
            Selectable text lets the player copy it instead. -->
@@ -16621,27 +16624,41 @@ function renderPassives(){
     const rb=document.createElement('button');
     rb.className='respec-btn';
     rb.style.gridColumn='1/-1';
-    rb.textContent=`Refund skill points · Cost 🪙 ${cost.toLocaleString()}g`;
+    rb.textContent=cost>0?`Refund skill points · Cost 🪙 ${cost.toLocaleString()}g`
+                         :'Refund skill points · Free';
     rb.addEventListener('click',()=>doRespec(skill));
     box.appendChild(rb);
   }
 }
 
-function respecCost(skill){ return spentPoints(skill)*50; }
+/* Refunds are FREE while the skill is still under this level. Below 10 you are
+   working out what the tree even does, and 50g a point is real money at that
+   stage — taxing the experimenting was discouraging exactly the players who most
+   needed to try things. Flagged in playtesting. Above it, the old rate stands. */
+const RESPEC_FREE_BELOW=10;
+function respecCost(skill){
+  if(levelFromXp(state.xp[skill]||0)<RESPEC_FREE_BELOW) return 0;
+  return spentPoints(skill)*50;
+}
 
 async function doRespec(skill){
   const cost=respecCost(skill);
   const ok=await showConfirm(
     'Refund Skill Points',
     `Refund all ${spentPoints(skill)} points in ${SKILLS[skill].name}?`,
-    `Cost: ${fmtCoins(cost*SILVER_PER_GOLD)}`
+    cost>0?`Cost: ${fmtCoins(cost*SILVER_PER_GOLD)}`
+          :`Free below level ${RESPEC_FREE_BELOW}`
   );
   if(!ok) return;
-  if(state.coins<cost*SILVER_PER_GOLD){ toast('Not enough coins.'); return; }
-  state.coins-=cost*SILVER_PER_GOLD;
+  // Skip the wallet entirely when it's free, so a broke level-3 player isn't
+  // told "Not enough coins" for a refund that costs nothing.
+  if(cost>0){
+    if(state.coins<cost*SILVER_PER_GOLD){ toast('Not enough coins.'); return; }
+    state.coins-=cost*SILVER_PER_GOLD;
+  }
   state.tree[skill]={};
   renderAll(); saveGame();
-  toast('Tree reset. Points refunded.');
+  toast('Points refunded.');
 }
 
 function spendPoint(skill,nodeId){
