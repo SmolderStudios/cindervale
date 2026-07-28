@@ -3147,7 +3147,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.54</div>
+  <div class="mm-ver">v0.9.55</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -3441,7 +3441,8 @@ body:not(.is-demo) .demo-only{display:none !important}
     <button class="hdr-menu-btn" id="tabAch"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H5a2 2 0 0 0 0 4h2"/><path d="M17 6h2a2 2 0 0 1 0 4h-2"/></svg>Achievements</button>
   </div>
   <div class="stat-pill">
-    <span class="coins-wrap"><svg class="ev-icon" viewBox="0 0 64 64"><defs><radialGradient id="uic_hdr" cx="0.4" cy="0.34" r="0.72"><stop offset="0" stop-color="#ffe9a0"/><stop offset="0.5" stop-color="#e6b23e"/><stop offset="1" stop-color="#8a5e18"/></radialGradient></defs><ellipse cx="32" cy="55" rx="17" ry="2.8" fill="#000" opacity="0.32"/><circle cx="32" cy="32" r="22" fill="url(#uic_hdr)" stroke="#5a3c10" stroke-width="1.6"/><circle cx="32" cy="32" r="16" fill="none" stroke="#7a5418" stroke-width="1.1" opacity="0.7"/><path d="M32 21 L35 29.5 L44 29.5 L37 35 L39.5 44 L32 38.5 L24.5 44 L27 35 L20 29.5 L29 29.5 Z" fill="#fff6d0" opacity="0.85"/></svg> <b id="coins">0</b></span>
+    <span class="coins-wrap"><!-- Static header coin removed in v0.9.55: fmtCoins now emits its own gold
+         AND silver coin, so this rendered a second gold coin right beside it. --><b id="coins">0</b></span>
     <span>Total Lv <b id="totalLevel">6</b></span>
     <button class="hdr-btn" id="btnExport" title="Export save"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/><path d="M7 11l5 5l5-5"/><path d="M12 4v12"/></svg>Export</button>
     <button class="hdr-btn" id="btnImport" title="Import save"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/><path d="M7 9l5-5l5 5"/><path d="M12 4v12"/></svg>Import</button>
@@ -7682,11 +7683,21 @@ const ICONS = {
   // ── [JS-ICONS-UI] chrome icons (1.0.96) — small inline SVGs replacing decorative
   // UI emoji (tabs, stat rows, currency, headers). Reused via iconHTML('ui_*'). ──
   ui_coin: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><radialGradient id="uic_g" cx="0.4" cy="0.34" r="0.72"><stop offset="0" stop-color="#ffe9a0"/><stop offset="0.5" stop-color="#e6b23e"/><stop offset="1" stop-color="#8a5e18"/></radialGradient></defs><ellipse cx="32" cy="55" rx="17" ry="2.8" fill="#000" opacity="0.32"/><circle cx="32" cy="32" r="22" fill="url(#uic_g)" stroke="#5a3c10" stroke-width="1.6"/><circle cx="32" cy="32" r="16" fill="none" stroke="#7a5418" stroke-width="1.1" opacity="0.7"/><path d="M32 21 L35 29.5 L44 29.5 L37 35 L39.5 44 L32 38.5 L24.5 44 L27 35 L20 29.5 L29 29.5 Z" fill="#fff6d0" opacity="0.85"/><ellipse cx="25" cy="24" rx="4" ry="2.2" fill="#fff" opacity="0.55" transform="rotate(-35 25 24)"/></svg>',
-  /* Silver = the same coin silhouette as ui_coin, palette-swapped per the tiered-item
-     rule, and deliberately DARKER than you would expect silver to be. It replaced a
-     pale 9px .silver-pip circle that a playtester read as "a white dot", not a coin —
-     against this UI's cream text a light silver simply does not register as metal. */
-  ui_coin_silver: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><radialGradient id="uics_g" cx="0.4" cy="0.34" r="0.72"><stop offset="0" stop-color="#eef2f5"/><stop offset="0.5" stop-color="#98a3ac"/><stop offset="1" stop-color="#454e56"/></radialGradient></defs><ellipse cx="32" cy="55" rx="17" ry="2.8" fill="#000" opacity="0.32"/><circle cx="32" cy="32" r="22" fill="url(#uics_g)" stroke="#2e363c" stroke-width="1.6"/><circle cx="32" cy="32" r="16" fill="none" stroke="#59636b" stroke-width="1.1" opacity="0.7"/><path d="M32 21 L35 29.5 L44 29.5 L37 35 L39.5 44 L32 38.5 L24.5 44 L27 35 L20 29.5 L29 29.5 Z" fill="#f2f6f9" opacity="0.85"/><ellipse cx="25" cy="24" rx="4" ry="2.2" fill="#fff" opacity="0.55" transform="rotate(-35 25 24)"/></svg>',
+  /* ── INLINE currency coins, used ONLY by fmtCoins ────────────────────────────
+     These sit in running text at 13–15px, which is a different problem to ui_coin's
+     usual home on a button or a tile. ui_coin carries a near-white star across 55%
+     of its face; scaled to 13px that star is the only thing that survives and the
+     whole glyph reads as ✳, not a coin (playtest screenshot confirmed it).
+
+     So these are built for the small size instead: a bigger disc (r26 vs r22) to
+     fill the box, a heavy rim that stays visible at 13px, one highlight, and NO
+     star or inner ring — fine detail just turns to mush and steals the silhouette.
+     ui_coin itself is deliberately left alone so every existing large use looks
+     exactly as it did. */
+  ui_coin_sm: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><radialGradient id="uicm_g" cx="0.38" cy="0.32" r="0.75"><stop offset="0" stop-color="#ffeaa4"/><stop offset="0.55" stop-color="#e0a833"/><stop offset="1" stop-color="#8a5e18"/></radialGradient></defs><circle cx="32" cy="32" r="26" fill="url(#uicm_g)" stroke="#5a3c10" stroke-width="3"/><ellipse cx="24" cy="22" rx="7.5" ry="4.2" fill="#fff" opacity="0.42" transform="rotate(-35 24 22)"/></svg>',
+  /* Silver is deliberately DARK. A light silver next to cream body text reads as a
+     white dot rather than metal — which is exactly what the old .silver-pip did. */
+  ui_coin_silver: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><radialGradient id="uicms_g" cx="0.38" cy="0.32" r="0.75"><stop offset="0" stop-color="#dfe6ea"/><stop offset="0.55" stop-color="#8d99a3"/><stop offset="1" stop-color="#3d454c"/></radialGradient></defs><circle cx="32" cy="32" r="26" fill="url(#uicms_g)" stroke="#272e34" stroke-width="3"/><ellipse cx="24" cy="22" rx="7.5" ry="4.2" fill="#fff" opacity="0.42" transform="rotate(-35 24 22)"/></svg>',
   ui_swords: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="uisw_b" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f0f2f8"/><stop offset="0.5" stop-color="#9aa0ac"/><stop offset="1" stop-color="#4a4e58"/></linearGradient></defs><g stroke="#2a2c34" stroke-width="0.7"><path d="M11 9 L19 9 L45 43 L41 49 L35 47 Z" fill="url(#uisw_b)"/><path d="M53 9 L45 9 L19 43 L23 49 L29 47 Z" fill="url(#uisw_b)"/></g><path d="M39 45 L51 57 M25 45 L13 57" stroke="#6a4a20" stroke-width="4" stroke-linecap="round"/><path d="M43 41 L53 51 M21 41 L11 51" stroke="#c79b4e" stroke-width="3" stroke-linecap="round"/></svg>',
   ui_sword: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="uis_b" x1="0.2" y1="0" x2="0.8" y2="1"><stop offset="0" stop-color="#f0f2f8"/><stop offset="0.5" stop-color="#9aa0ac"/><stop offset="1" stop-color="#4a4e58"/></linearGradient></defs><path d="M30 6 L38 6 L36 40 L32 40 Z" fill="url(#uis_b)" stroke="#2a2c34" stroke-width="0.7"/><path d="M31 8 L34 8 L33 38 Z" fill="#fff" opacity="0.35"/><rect x="24" y="40" width="20" height="4" rx="1.5" fill="#c79b4e" stroke="#6e552c" stroke-width="0.6"/><rect x="31" y="44" width="6" height="12" rx="1.5" fill="#6a4a20"/><circle cx="34" cy="58" r="2.6" fill="#c79b4e" stroke="#6e552c" stroke-width="0.6"/></svg>',
   ui_shield: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="uish_g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7a90c0"/><stop offset="0.5" stop-color="#3f5488"/><stop offset="1" stop-color="#1a2848"/></linearGradient></defs><path d="M32 6 L54 14 Q54 40 32 58 Q10 40 10 14 Z" fill="url(#uish_g)" stroke="#0e1730" stroke-width="1.4"/><path d="M32 6 L54 14 Q54 40 32 58 Z" fill="#000" opacity="0.18"/><path d="M32 14 L44 18 Q44 36 32 48 Q20 36 20 18 Z" fill="none" stroke="#a8bce8" stroke-width="1.2" opacity="0.6"/><path d="M32 6 L32 58" stroke="#a8bce8" stroke-width="0.7" opacity="0.4"/></svg>',
@@ -12593,7 +12604,7 @@ function showGoldDrop(amount){
   // Merge with an existing recent gold row
   if(_goldDropState&&container.contains(_goldDropState.el)&&(now-_goldDropState.born)<_goldDropMergeMs){
     _goldDropState.qty+=amount;
-    _goldDropState.el.querySelector('.id-qty').innerHTML='+'+fmtCoins(_goldDropState.qty,true);
+    _goldDropState.el.querySelector('.id-qty').innerHTML='+'+fmtCoins(_goldDropState.qty,true,false);
     container.insertBefore(_goldDropState.el, container.firstChild);
     _goldDropState.el.classList.remove('id-flash'); void _goldDropState.el.offsetWidth; _goldDropState.el.classList.add('id-flash');
     return;
@@ -12602,7 +12613,7 @@ function showGoldDrop(amount){
   el.className='item-drop-row id-flash';
   el.innerHTML=`<span class="id-icon">${iconHTML('ui_coin')}</span>`
     +`<span class="id-name" style="color:var(--trim)">Coins</span>`
-    +`<span class="id-qty">+${fmtCoins(amount,true)}</span>`;
+    +`<span class="id-qty">+${fmtCoins(amount,true,false)}</span>`;
   container.insertBefore(el, container.firstChild);
   _goldDropState={el, qty:amount, born:now};
   // Trim old rows
@@ -13753,12 +13764,18 @@ const SILVER_PER_GOLD = 100;
    both that inconsistency and the fact that the pale pip didn't read as a coin at all.
 
    Callers must NOT prefix their own coin icon any more — this function owns both,
-   which is what keeps the placement from drifting apart again. */
-function fmtCoins(silver, html){
+   which is what keeps the placement from drifting apart again.
+
+   icons=false for contexts that ALREADY show a coin in their own layout (the drop
+   row has an icon column; the row is literally labelled "Coins"). Without it those
+   places render two coins in a row, which is exactly what shipped in v0.9.54. */
+function fmtCoins(silver, html, icons=true){
   silver = Math.max(0, Math.round(silver||0));
   const g = Math.floor(silver / SILVER_PER_GOLD), s = silver % SILVER_PER_GOLD;
-  const gs = (html ? iconHTML('ui_coin') : '🪙') + ' ' + g.toLocaleString() + 'g';
-  const ss = (html ? iconHTML('ui_coin_silver') : '⚪') + ' ' + s + 's';
+  const gi = !icons ? '' : (html ? iconHTML('ui_coin_sm')     : '🪙') + ' ';
+  const si = !icons ? '' : (html ? iconHTML('ui_coin_silver') : '⚪') + ' ';
+  const gs = gi + g.toLocaleString() + 'g';
+  const ss = si + s + 's';
   if(g===0) return ss;
   if(s===0) return gs;
   return gs + ' ' + ss;
