@@ -3152,7 +3152,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.58</div>
+  <div class="mm-ver">v0.9.59</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -7702,10 +7702,14 @@ const ICONS = {
      star or inner ring — fine detail just turns to mush and steals the silhouette.
      ui_coin itself is deliberately left alone so every existing large use looks
      exactly as it did. */
-  ui_coin_sm: '<svg class="ev-icon coin-ic" viewBox="0 0 64 64"><defs><radialGradient id="uicm_g" cx="0.38" cy="0.30" r="0.78"><stop offset="0" stop-color="#fff3c4"/><stop offset="0.5" stop-color="#e8b03a"/><stop offset="1" stop-color="#7a4f0e"/></radialGradient></defs><circle cx="32" cy="32" r="27" fill="url(#uicm_g)" stroke="#4a3009" stroke-width="6"/><circle cx="32" cy="32" r="17" fill="none" stroke="#8a5e18" stroke-width="4" opacity="0.75"/><ellipse cx="23" cy="21" rx="7" ry="3.8" fill="#fff" opacity="0.5" transform="rotate(-35 23 21)"/></svg>',
-  /* Silver is deliberately DARK. A light silver next to cream body text reads as a
-     white dot rather than metal — which is exactly what the old .silver-pip did. */
-  ui_coin_silver: '<svg class="ev-icon coin-ic" viewBox="0 0 64 64"><defs><radialGradient id="uicms_g" cx="0.38" cy="0.30" r="0.78"><stop offset="0" stop-color="#e9eff3"/><stop offset="0.5" stop-color="#8e9aa4"/><stop offset="1" stop-color="#333b42"/></radialGradient></defs><circle cx="32" cy="32" r="27" fill="url(#uicms_g)" stroke="#20262b" stroke-width="6"/><circle cx="32" cy="32" r="17" fill="none" stroke="#5c666e" stroke-width="4" opacity="0.75"/><ellipse cx="23" cy="21" rx="7" ry="3.8" fill="#fff" opacity="0.5" transform="rotate(-35 23 21)"/></svg>',
+  /* SOLID, on purpose. Three previous attempts failed at 13-15px for the same
+     underlying reason — detail. A star face turned the glyph into an asterisk; a
+     heavy dark rim plus an inner ring turned it into a black donut. At this size
+     the only thing that survives is the overall SHAPE and COLOUR, so these are a
+     filled disc with a gentle gradient for roundness, a thin rim in the metal's
+     own darker tone (never near-black), and one highlight. Nothing else fits. */
+  ui_coin_sm: '<svg class="ev-icon coin-ic" viewBox="0 0 64 64"><defs><radialGradient id="uicm_g" cx="0.36" cy="0.30" r="0.80"><stop offset="0" stop-color="#ffe89a"/><stop offset="0.55" stop-color="#eab63c"/><stop offset="1" stop-color="#c8912a"/></radialGradient></defs><circle cx="32" cy="32" r="28" fill="url(#uicm_g)" stroke="#a8741c" stroke-width="2"/><ellipse cx="23" cy="21" rx="8" ry="4.4" fill="#fff" opacity="0.45" transform="rotate(-35 23 21)"/></svg>',
+  ui_coin_silver: '<svg class="ev-icon coin-ic" viewBox="0 0 64 64"><defs><radialGradient id="uicms_g" cx="0.36" cy="0.30" r="0.80"><stop offset="0" stop-color="#eaf0f4"/><stop offset="0.55" stop-color="#b3bec7"/><stop offset="1" stop-color="#8b96a0"/></radialGradient></defs><circle cx="32" cy="32" r="28" fill="url(#uicms_g)" stroke="#6e7a84" stroke-width="2"/><ellipse cx="23" cy="21" rx="8" ry="4.4" fill="#fff" opacity="0.45" transform="rotate(-35 23 21)"/></svg>',
   ui_swords: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="uisw_b" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f0f2f8"/><stop offset="0.5" stop-color="#9aa0ac"/><stop offset="1" stop-color="#4a4e58"/></linearGradient></defs><g stroke="#2a2c34" stroke-width="0.7"><path d="M11 9 L19 9 L45 43 L41 49 L35 47 Z" fill="url(#uisw_b)"/><path d="M53 9 L45 9 L19 43 L23 49 L29 47 Z" fill="url(#uisw_b)"/></g><path d="M39 45 L51 57 M25 45 L13 57" stroke="#6a4a20" stroke-width="4" stroke-linecap="round"/><path d="M43 41 L53 51 M21 41 L11 51" stroke="#c79b4e" stroke-width="3" stroke-linecap="round"/></svg>',
   ui_sword: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="uis_b" x1="0.2" y1="0" x2="0.8" y2="1"><stop offset="0" stop-color="#f0f2f8"/><stop offset="0.5" stop-color="#9aa0ac"/><stop offset="1" stop-color="#4a4e58"/></linearGradient></defs><path d="M30 6 L38 6 L36 40 L32 40 Z" fill="url(#uis_b)" stroke="#2a2c34" stroke-width="0.7"/><path d="M31 8 L34 8 L33 38 Z" fill="#fff" opacity="0.35"/><rect x="24" y="40" width="20" height="4" rx="1.5" fill="#c79b4e" stroke="#6e552c" stroke-width="0.6"/><rect x="31" y="44" width="6" height="12" rx="1.5" fill="#6a4a20"/><circle cx="34" cy="58" r="2.6" fill="#c79b4e" stroke="#6e552c" stroke-width="0.6"/></svg>',
   ui_shield: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="uish_g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7a90c0"/><stop offset="0.5" stop-color="#3f5488"/><stop offset="1" stop-color="#1a2848"/></linearGradient></defs><path d="M32 6 L54 14 Q54 40 32 58 Q10 40 10 14 Z" fill="url(#uish_g)" stroke="#0e1730" stroke-width="1.4"/><path d="M32 6 L54 14 Q54 40 32 58 Z" fill="#000" opacity="0.18"/><path d="M32 14 L44 18 Q44 36 32 48 Q20 36 20 18 Z" fill="none" stroke="#a8bce8" stroke-width="1.2" opacity="0.6"/><path d="M32 6 L32 58" stroke="#a8bce8" stroke-width="0.7" opacity="0.4"/></svg>',
