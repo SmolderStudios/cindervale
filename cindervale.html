@@ -2271,10 +2271,9 @@ body:not(.is-demo) .demo-only{display:none !important}
 #itemTooltip .tt-chance{color:#e0762f;font-family:'Courier New',monospace;white-space:nowrap}
 #itemTooltip .tt-rare{color:#ffd700;font-size:calc(12px*var(--tscale));letter-spacing:1px}
 #itemTooltip .tt-sell{color:#7da33f;font-size:calc(13px*var(--tscale));margin-top:5px;padding-top:5px;border-top:1px solid #3a2a17}
-/* Silver-coin pip shown beside a silver (Xs) amount so it reads as silver, not gold. */
-.silver-pip{display:inline-block;width:9px;height:9px;margin-left:2px;border-radius:50%;
-  background:radial-gradient(circle at 35% 30%,#f4f1ea 0%,#cfd2d6 45%,#9aa0a6 100%);
-  border:1px solid #7c8186;box-shadow:inset 0 0 1px rgba(255,255,255,.6);vertical-align:baseline;position:relative;top:1px}
+/* .silver-pip removed — replaced by the ui_coin_silver SVG, which fmtCoins now places
+   BEFORE the amount like the gold coin. The pip was a pale circle sitting after the
+   digits; a playtester read it as a white dot rather than a coin. */
 
 /* ════════ [CSS-22] COMPENDIUM ═══════════════════════════════════════════════════ */
 /* compendium */
@@ -3148,7 +3147,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.53</div>
+  <div class="mm-ver">v0.9.54</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -7683,6 +7682,11 @@ const ICONS = {
   // ── [JS-ICONS-UI] chrome icons (1.0.96) — small inline SVGs replacing decorative
   // UI emoji (tabs, stat rows, currency, headers). Reused via iconHTML('ui_*'). ──
   ui_coin: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><radialGradient id="uic_g" cx="0.4" cy="0.34" r="0.72"><stop offset="0" stop-color="#ffe9a0"/><stop offset="0.5" stop-color="#e6b23e"/><stop offset="1" stop-color="#8a5e18"/></radialGradient></defs><ellipse cx="32" cy="55" rx="17" ry="2.8" fill="#000" opacity="0.32"/><circle cx="32" cy="32" r="22" fill="url(#uic_g)" stroke="#5a3c10" stroke-width="1.6"/><circle cx="32" cy="32" r="16" fill="none" stroke="#7a5418" stroke-width="1.1" opacity="0.7"/><path d="M32 21 L35 29.5 L44 29.5 L37 35 L39.5 44 L32 38.5 L24.5 44 L27 35 L20 29.5 L29 29.5 Z" fill="#fff6d0" opacity="0.85"/><ellipse cx="25" cy="24" rx="4" ry="2.2" fill="#fff" opacity="0.55" transform="rotate(-35 25 24)"/></svg>',
+  /* Silver = the same coin silhouette as ui_coin, palette-swapped per the tiered-item
+     rule, and deliberately DARKER than you would expect silver to be. It replaced a
+     pale 9px .silver-pip circle that a playtester read as "a white dot", not a coin —
+     against this UI's cream text a light silver simply does not register as metal. */
+  ui_coin_silver: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><radialGradient id="uics_g" cx="0.4" cy="0.34" r="0.72"><stop offset="0" stop-color="#eef2f5"/><stop offset="0.5" stop-color="#98a3ac"/><stop offset="1" stop-color="#454e56"/></radialGradient></defs><ellipse cx="32" cy="55" rx="17" ry="2.8" fill="#000" opacity="0.32"/><circle cx="32" cy="32" r="22" fill="url(#uics_g)" stroke="#2e363c" stroke-width="1.6"/><circle cx="32" cy="32" r="16" fill="none" stroke="#59636b" stroke-width="1.1" opacity="0.7"/><path d="M32 21 L35 29.5 L44 29.5 L37 35 L39.5 44 L32 38.5 L24.5 44 L27 35 L20 29.5 L29 29.5 Z" fill="#f2f6f9" opacity="0.85"/><ellipse cx="25" cy="24" rx="4" ry="2.2" fill="#fff" opacity="0.55" transform="rotate(-35 25 24)"/></svg>',
   ui_swords: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="uisw_b" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f0f2f8"/><stop offset="0.5" stop-color="#9aa0ac"/><stop offset="1" stop-color="#4a4e58"/></linearGradient></defs><g stroke="#2a2c34" stroke-width="0.7"><path d="M11 9 L19 9 L45 43 L41 49 L35 47 Z" fill="url(#uisw_b)"/><path d="M53 9 L45 9 L19 43 L23 49 L29 47 Z" fill="url(#uisw_b)"/></g><path d="M39 45 L51 57 M25 45 L13 57" stroke="#6a4a20" stroke-width="4" stroke-linecap="round"/><path d="M43 41 L53 51 M21 41 L11 51" stroke="#c79b4e" stroke-width="3" stroke-linecap="round"/></svg>',
   ui_sword: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="uis_b" x1="0.2" y1="0" x2="0.8" y2="1"><stop offset="0" stop-color="#f0f2f8"/><stop offset="0.5" stop-color="#9aa0ac"/><stop offset="1" stop-color="#4a4e58"/></linearGradient></defs><path d="M30 6 L38 6 L36 40 L32 40 Z" fill="url(#uis_b)" stroke="#2a2c34" stroke-width="0.7"/><path d="M31 8 L34 8 L33 38 Z" fill="#fff" opacity="0.35"/><rect x="24" y="40" width="20" height="4" rx="1.5" fill="#c79b4e" stroke="#6e552c" stroke-width="0.6"/><rect x="31" y="44" width="6" height="12" rx="1.5" fill="#6a4a20"/><circle cx="34" cy="58" r="2.6" fill="#c79b4e" stroke="#6e552c" stroke-width="0.6"/></svg>',
   ui_shield: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="uish_g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7a90c0"/><stop offset="0.5" stop-color="#3f5488"/><stop offset="1" stop-color="#1a2848"/></linearGradient></defs><path d="M32 6 L54 14 Q54 40 32 58 Q10 40 10 14 Z" fill="url(#uish_g)" stroke="#0e1730" stroke-width="1.4"/><path d="M32 6 L54 14 Q54 40 32 58 Z" fill="#000" opacity="0.18"/><path d="M32 14 L44 18 Q44 36 32 48 Q20 36 20 18 Z" fill="none" stroke="#a8bce8" stroke-width="1.2" opacity="0.6"/><path d="M32 6 L32 58" stroke="#a8bce8" stroke-width="0.7" opacity="0.4"/></svg>',
@@ -13738,19 +13742,26 @@ function lvlSpeedPct(skill){
    so low-tier laps keep meaningful sub-gold rewards after the economy nerf.
    100,000 gold = one skill cape ≈ the time anchor for the whole price scale. */
 const SILVER_PER_GOLD = 100;
-/* Format a silver amount as "Xg Ys" with a silver-coin icon beside the silver part.
-   html=true  -> uses a styled <span> pip (for innerHTML contexts).
-   html=false -> uses a plain glyph (for textContent / title / toast). */
-const SILVER_PIP_HTML='<span class="silver-pip" aria-hidden="true"></span>';
-const SILVER_PIP_TXT='⚪';
+/* Format a silver amount as "<coin> Xg <coin> Ys".
+   html=true  -> inline SVG coins (innerHTML contexts).
+   html=false -> emoji (textContent / title / toast, where SVG markup would render
+                 as literal angle brackets — see the icon rules in CLAUDE.md).
+
+   The icon ALWAYS leads its number, for BOTH currencies. It used to lead for gold
+   (callers prefixed iconHTML('ui_coin')) and trail for silver (a .silver-pip circle
+   after the digits), so a single line could read "🪙 5g 30s⚪". A playtester flagged
+   both that inconsistency and the fact that the pale pip didn't read as a coin at all.
+
+   Callers must NOT prefix their own coin icon any more — this function owns both,
+   which is what keeps the placement from drifting apart again. */
 function fmtCoins(silver, html){
   silver = Math.max(0, Math.round(silver||0));
   const g = Math.floor(silver / SILVER_PER_GOLD), s = silver % SILVER_PER_GOLD;
-  const pip = html ? SILVER_PIP_HTML : SILVER_PIP_TXT;
-  const silverStr = s + 's' + pip;
-  if(g===0) return silverStr;
-  if(s===0) return g.toLocaleString()+'g';
-  return g.toLocaleString()+'g '+silverStr;
+  const gs = (html ? iconHTML('ui_coin') : '🪙') + ' ' + g.toLocaleString() + 'g';
+  const ss = (html ? iconHTML('ui_coin_silver') : '⚪') + ' ' + s + 's';
+  if(g===0) return ss;
+  if(s===0) return gs;
+  return gs + ' ' + ss;
 }
 
 /* Compute the effective per-item sell price. ITEMS[].sell is stored in SILVER
@@ -15776,7 +15787,7 @@ function buildActBtn(act,reqLvl,lvl,m,bestXph,bestRph){
     const p=SK_PFX[selectedSkill];
     const coinMult=1+(treeRank(selectedSkill,p+'_coins')*0.03)+(treeRank(selectedSkill,p+'_master1')>0?0.25:0)+(treeRank(selectedSkill,p+'_master3')>0?0.25:0)+(treeRank(selectedSkill,'ag_gm_coins2')>0?0.75:0);
     const effCoins=Math.round(act.coins*coinMult);
-    coinDisplay=`${iconHTML('ui_coin')} ${fmtCoins(effCoins)} per lap`;
+    coinDisplay=`${fmtCoins(effCoins,true)} per lap`;
   }
   // (1.0.88) Drop the output name from meta for material skills — it's redundant with
   // the act name + output icon, and the tighter meta reads cleaner. Agility keeps coins.
@@ -16593,7 +16604,7 @@ function renderPassives(){
     const rb=document.createElement('button');
     rb.className='respec-btn';
     rb.style.gridColumn='1/-1';
-    rb.textContent=`Reset tree · costs 🪙${cost.toLocaleString()}`;
+    rb.textContent=`Refund skill points · Cost 🪙 ${cost.toLocaleString()}g`;
     rb.addEventListener('click',()=>doRespec(skill));
     box.appendChild(rb);
   }
@@ -16604,9 +16615,9 @@ function respecCost(skill){ return spentPoints(skill)*50; }
 async function doRespec(skill){
   const cost=respecCost(skill);
   const ok=await showConfirm(
-    'Reset Skill Tree',
+    'Refund Skill Points',
     `Refund all ${spentPoints(skill)} points in ${SKILLS[skill].name}?`,
-    `Cost: 🪙 ${fmtCoins(cost*SILVER_PER_GOLD)}`
+    `Cost: ${fmtCoins(cost*SILVER_PER_GOLD)}`
   );
   if(!ok) return;
   if(state.coins<cost*SILVER_PER_GOLD){ toast('Not enough coins.'); return; }
@@ -17491,7 +17502,7 @@ function renderInventory(){
   sellLabel.style.cssText='font-size:calc(13px*var(--tscale));color:var(--muted);white-space:nowrap';
   sellLabel.textContent='Sell:';
   sellRow.appendChild(sellLabel);
-  const sellModes=[['x','X qty'],['1','1'],['5','5'],['10','10'],['all','All']];
+  const sellModes=[['x','Custom'],['1','1'],['5','5'],['10','10'],['all','All']];
   for(const [mode,label] of sellModes){
     const val=mode==='x'?'x':mode==='all'?'all':parseInt(mode);
     const b=document.createElement('button');
@@ -20995,8 +21006,8 @@ function showItemTooltip(itemId, x, y){
   }
   if(it.sell>0){
     const effSell=effectiveItemSell(itemId);
-    if(effSell>it.sell) html+=`<div class="tt-sell">${iconHTML('ui_coin')} Sells for ${fmtCoins(effSell,true)} <span style="color:#6e552c">(base ${fmtCoins(it.sell,true)})</span></div>`;
-    else html+=`<div class="tt-sell">${iconHTML('ui_coin')} Sells for ${fmtCoins(it.sell,true)}</div>`;
+    if(effSell>it.sell) html+=`<div class="tt-sell">Sells for ${fmtCoins(effSell,true)} <span style="color:#6e552c">(base ${fmtCoins(it.sell,true)})</span></div>`;
+    else html+=`<div class="tt-sell">Sells for ${fmtCoins(it.sell,true)}</div>`;
   }
 
   tt.innerHTML=html;
@@ -22563,7 +22574,7 @@ function renderSockets(){
     matRow.style.cssText='display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px';
     var goldChip=document.createElement('div');
     goldChip.style.cssText='background:var(--raised-s);border:1px solid var(--trim-d);border-radius:5px;padding:4px 10px;font-size:calc(13px*var(--tscale));color:var(--text)';
-    goldChip.innerHTML=iconHTML('ui_coin')+' '+fmtCoins(state.coins||0);
+    goldChip.innerHTML=fmtCoins(state.coins||0,true);
     matRow.appendChild(goldChip);
     var dustQty=state.items['gem_dust']||0;
     var dustChip=document.createElement('div');
