@@ -3121,160 +3121,226 @@ body:not(.is-demo) .demo-only{display:none !important}
 .sl-tasks .sl-tk-list{font-size:11.5px;color:var(--muted);line-height:1.5;margin-top:1px}
 /* ════════ [CSS-32 END] RAIDS ══════════════════════════════════════════════════════ */
 
-/* ════════ [CSS-33] SAILING & TREASURE HUNTING (0.9.60) ═══════════════════════════
+/* ════════ [CSS-33] SAILING & TREASURE HUNTING (0.9.61) ═══════════════════════════
    The sailing panel is its own visual world — an admiralty sea chart read by
    lamplight. Ink-blue water and gold rhumb lines sit against the game's warm
    browns deliberately: it is the one place the player leaves the land. Panel
-   chrome (trim, panel bg) still uses the shared tokens so it reads as Cindervale.
-   Mirrors .combat-panel's grid placement so the mode swap is a straight swap. */
-.sail-panel{grid-column:1 / 3;}
+   chrome still uses the shared tokens so it reads as Cindervale.
+
+   Layout is a fixed two-column shell that fits one screen: a pan/zoom chart on
+   the left, a scrolling detail column on the right. The wrap's height is set in
+   JS (sailFit) rather than with vh — the root carries a CSS `zoom`, so vh would
+   resolve against the unscaled viewport and overflow the window. */
+.sail-panel{grid-column:1 / 3;overflow:hidden}
 .tab.tab-sail.on{border-color:#4d9bb0;color:#bfe4ef;background:#12303c;}
-.sl-wrap{display:flex;flex-direction:column;gap:10px}
-/* Preview banner. Amber rather than the panel's sea-blue so it reads as a notice
-   and not as chrome, but muted enough that it doesn't fight the chart for
-   attention every single time the panel opens. */
-.sl-preview{background:rgba(224,118,47,.10);border:1px solid rgba(224,118,47,.42);
-  border-radius:8px;padding:9px 13px;color:var(--muted);
-  font-size:calc(12.5px*var(--tscale));line-height:1.5}
-.sl-preview b{color:var(--ember);letter-spacing:.04em;text-transform:uppercase;
-  font-size:calc(11px*var(--tscale));margin-right:2px}
 
-/* header strip */
-.sl-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+.sl-wrap{display:flex;flex-direction:column;gap:8px;min-height:470px}
+.sl-main{display:grid;grid-template-columns:minmax(0,1fr) minmax(336px,30%);gap:8px;
+  flex:1;min-height:0}
+@media(max-width:1080px){
+  .sl-main{grid-template-columns:1fr;grid-template-rows:minmax(240px,42%) minmax(0,1fr)}
+}
+
+/* ── header strip ── */
+.sl-top{display:flex;align-items:center;gap:11px;flex-wrap:wrap;
   background:linear-gradient(180deg,#16222c,#0e1720);border:1px solid #2c4d5e;
-  border-radius:9px;padding:9px 13px}
+  border-radius:9px;padding:8px 12px;flex:none}
 .sl-top .sl-ship{display:flex;align-items:center;gap:9px;min-width:0}
-.sl-top .sl-ship .ev-icon{width:26px;height:26px;flex:none}
-.sl-shipname{font-family:'Cinzel',serif;font-size:15px;color:#e8d7b0;line-height:1.2}
-.sl-shiptier{font-size:11px;color:#7fa8bc;font-family:monospace}
-.sl-lvl{display:flex;align-items:center;gap:8px;margin-left:auto;flex-wrap:wrap}
-.sl-lvlbox{text-align:right}
-.sl-lvlbox b{font-family:'Cinzel',serif;font-size:16px;color:var(--trim)}
-.sl-lvlbox i{display:block;font-style:normal;font-size:10.5px;color:var(--muted);font-family:monospace}
-.sl-xpbar{width:120px;height:7px;background:#08131a;border:1px solid #2c4d5e;border-radius:4px;overflow:hidden}
+.sl-top .sl-ship .ev-icon{width:25px;height:25px;flex:none}
+.sl-shipname{font-family:'Cinzel',serif;font-size:14.5px;color:#e8d7b0;line-height:1.2}
+.sl-shiptier{font-size:10.5px;color:#7fa8bc;font-family:monospace}
+.sl-lvl{display:flex;align-items:center;gap:9px;margin-left:auto;flex-wrap:wrap}
+.sl-lvlbox{text-align:right;line-height:1.15}
+.sl-lvlbox b{font-family:'Cinzel',serif;font-size:15px;color:var(--trim)}
+.sl-lvlbox i{display:block;font-style:normal;font-size:10px;color:var(--muted);font-family:monospace}
+.sl-xpbar{width:104px;height:6px;background:#08131a;border:1px solid #2c4d5e;border-radius:4px;overflow:hidden}
 .sl-xpbar i{display:block;height:100%;background:linear-gradient(90deg,#8a6a2e,#e0b64e)}
-.sl-stats{display:flex;gap:5px;flex-wrap:wrap}
-.sl-stat{font-family:monospace;font-size:10.5px;padding:3px 8px;border-radius:3px;
-  border:1px solid #2c4d5e;background:#0d1a24;color:#bfe4ef;white-space:nowrap}
-.sl-stat b{color:#e8d7b0}
 
-/* chart */
+/* stat pills — icon + label + value, never bare text */
+.sl-stats{display:flex;gap:5px;flex-wrap:wrap}
+.sl-stat{display:inline-flex;align-items:center;gap:5px;font-family:monospace;font-size:10.5px;
+  padding:3px 9px;border-radius:20px;border:1px solid #2c4d5e;background:#0d1a24;
+  color:#8fb4c6;white-space:nowrap}
+.sl-stat .ev-icon{width:12px;height:12px;flex:none}
+.sl-stat b{color:#e8d7b0;font-size:11.5px}
+.sl-stat.warn{border-color:#6a4520;background:#1f1509;color:#d9a463}
+
+/* ── chart ── */
 .sl-chartbox{border:1px solid #2c4d5e;border-radius:9px;overflow:hidden;background:#0c1822;
-  box-shadow:0 6px 24px rgba(0,0,0,.5)}
-.sl-charthd{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;
-  padding:7px 12px;background:#0a141d;border-bottom:1px solid #2c4d5e}
-.sl-charthd .t{font-family:'Cinzel',serif;font-size:12.5px;color:var(--trim);letter-spacing:.05em}
-.sl-charthd .h{font-family:monospace;font-size:10.5px;color:#6d8c9c}
-.sl-chartscroll{overflow-x:auto}
-.sl-stage{position:relative;width:100%;min-width:700px;aspect-ratio:2.15/1}
-.sl-stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
-.sl-band{position:absolute;top:6px;transform:translateX(-50%);font-family:'Cinzel',serif;
-  font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#54798c;
-  pointer-events:none;white-space:nowrap}
+  box-shadow:0 6px 24px rgba(0,0,0,.5);display:flex;flex-direction:column;min-height:0}
+.sl-charthd{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;
+  padding:6px 10px;background:#0a141d;border-bottom:1px solid #2c4d5e;flex:none}
+.sl-charthd .t{font-family:'Cinzel',serif;font-size:12px;color:var(--trim);letter-spacing:.04em}
+.sl-zoomrow{display:flex;align-items:center;gap:4px}
+.sl-zb{width:24px;height:22px;display:flex;align-items:center;justify-content:center;
+  border:1px solid #2c4d5e;background:#12242f;color:#bfe4ef;border-radius:4px;
+  cursor:var(--cur-pointer);font-family:monospace;font-size:14px;line-height:1;padding:0}
+.sl-zb:hover{background:#1a3543;border-color:#6d9ab2}
+.sl-zb:focus-visible{outline:2px solid var(--trim);outline-offset:1px}
+.sl-zb.wide{width:auto;padding:0 8px;font-size:10px;letter-spacing:.05em}
+.sl-zlvl{font-family:monospace;font-size:10px;color:#6d8c9c;min-width:34px;text-align:center}
+
+.sl-stage{position:relative;flex:1;min-height:0;overflow:hidden;
+  cursor:grab;touch-action:none;user-select:none}
+.sl-stage.grabbing{cursor:grabbing}
+.sl-stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none}
+.sl-band{position:absolute;transform:translateX(-50%);font-family:'Cinzel',serif;
+  font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:#54798c;
+  pointer-events:none;white-space:nowrap;text-shadow:0 1px 4px #030608}
 .sl-port{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;
-  align-items:center;gap:2px;pointer-events:none}
-.sl-port .ev-icon{width:22px;height:22px}
-.sl-port span{font-family:'Cinzel',serif;font-size:10px;letter-spacing:.11em;text-transform:uppercase;
+  align-items:center;gap:1px;pointer-events:none}
+.sl-port .ev-icon{width:19px;height:19px}
+.sl-port span{font-family:'Cinzel',serif;font-size:9px;letter-spacing:.1em;text-transform:uppercase;
   color:var(--trim);text-shadow:0 1px 4px #030608}
 
 .sl-mk{position:absolute;transform:translate(-50%,-50%);background:none;border:none;padding:0;
   cursor:var(--cur-pointer);display:flex;flex-direction:column;align-items:center;gap:2px;
-  font-family:'Cinzel',serif;color:#a9c4d0;transition:color .15s}
-.sl-mk:hover{color:#fbeed0;z-index:6}
+  font-family:'Cinzel',serif;color:#a9c4d0;transition:color .14s}
+.sl-mk:hover{color:#fbeed0;z-index:7}
 .sl-mk:focus-visible{outline:2px solid var(--trim);outline-offset:3px;border-radius:3px}
-.sl-mk .d{width:10px;height:10px;border-radius:50%;background:#2c4d5f;border:1.5px solid #6d9ab2;
-  transition:transform .15s,background .15s,box-shadow .15s}
-.sl-mk:hover .d{transform:scale(1.3);background:var(--trim)}
-.sl-mk.on{color:#fbeed0}
+.sl-mk .d{width:9px;height:9px;border-radius:50%;background:#2c4d5f;border:1.5px solid #6d9ab2;
+  transition:transform .14s,background .14s,box-shadow .14s}
+.sl-mk:hover .d{transform:scale(1.35);background:var(--trim)}
+.sl-mk.on{color:#fbeed0;z-index:6}
 .sl-mk.on .d{background:var(--trim);border-color:#f0dba8;transform:scale(1.4);
-  box-shadow:0 0 0 5px rgba(199,155,78,.16),0 0 12px rgba(199,155,78,.5)}
-.sl-mk.lock{opacity:.42}
+  box-shadow:0 0 0 4px rgba(199,155,78,.18),0 0 12px rgba(199,155,78,.5)}
+.sl-mk.lock{opacity:.4}
 .sl-mk.lock .d{background:#20323c;border-color:#3d5866}
-.sl-mk .n{font-size:10.5px;white-space:nowrap;text-shadow:0 1px 4px #030608,0 0 9px #030608}
+.sl-mk .n{font-size:9.5px;white-space:nowrap;text-shadow:0 1px 4px #030608,0 0 9px #030608;
+  transition:opacity .15s}
 .sl-mk.hid .d{background:#3a2140;border-color:#8c5fa8;border-style:dashed}
 .sl-mk.hid .n{color:#b98fd0;font-style:italic}
-.sl-mk.sailing-to .d{animation:sl-pulse 1.2s ease-in-out infinite}
-@keyframes sl-pulse{0%,100%{box-shadow:0 0 0 3px rgba(224,118,47,.18)}50%{box-shadow:0 0 0 8px rgba(224,118,47,.04)}}
+.sl-mk.atsea .d{background:#e0762f;border-color:#ffc78a;animation:sl-pulse 1.5s ease-in-out infinite}
+@keyframes sl-pulse{0%,100%{box-shadow:0 0 0 3px rgba(224,118,47,.30)}50%{box-shadow:0 0 0 9px rgba(224,118,47,.02)}}
+/* Zoomed out the labels would collide, so only selected / at-sea / hovered keep text. */
+.sl-stage.far .sl-mk:not(.on):not(.atsea):not(:hover) .n{opacity:0}
+@media(prefers-reduced-motion:reduce){
+  .sl-mk.atsea .d{animation:none}
+  .sl-pbar i,.sl-odds i,.sl-mk .d{transition:none}
+}
 
-/* two-column body */
-.sl-body{display:grid;grid-template-columns:1.3fr 1fr;gap:10px}
-@media(max-width:1100px){.sl-body{grid-template-columns:1fr}}
+/* ── island hover card ── */
+.sl-tip{position:fixed;z-index:900;pointer-events:none;opacity:0;transition:opacity .12s;
+  width:226px;background:linear-gradient(180deg,#152532,#0b141c);border:1px solid #3d6274;
+  border-radius:8px;padding:10px 12px;box-shadow:0 8px 26px rgba(0,0,0,.66)}
+.sl-tip.show{opacity:1}
+.sl-tip h6{font-family:'Cinzel',serif;font-size:13.5px;color:#fbeed0;margin:0 0 6px;line-height:1.2}
+.sl-tip .row{display:flex;justify-content:space-between;gap:8px;font-family:monospace;
+  font-size:10.5px;color:#7fa4b4;margin-top:3px}
+.sl-tip .row b{color:#dbe9ef}
+.sl-tip .mini{display:flex;height:6px;border-radius:3px;overflow:hidden;margin-top:8px;background:#0a141d}
+.sl-tip .mini i{display:block}
+.sl-tip .why{font-size:10.5px;color:#d9a463;margin-top:7px;line-height:1.4}
+
+/* ── right column ── */
+.sl-side{display:flex;flex-direction:column;gap:8px;min-height:0}
+.sl-seg{display:flex;gap:4px;flex:none;background:#0a141d;border:1px solid #2c4d5e;
+  border-radius:8px;padding:4px}
+.sl-seg button{flex:1;padding:6px 8px;border-radius:5px;border:1px solid transparent;
+  background:transparent;color:#7fa4b4;font-family:'Cinzel',serif;font-size:12.5px;
+  cursor:var(--cur-pointer);transition:background .14s,color .14s}
+.sl-seg button:hover{color:#dbe9ef}
+.sl-seg button.on{background:#1a3543;border-color:#4d9bb0;color:#e8f2f6}
+.sl-seg button:focus-visible{outline:2px solid var(--trim);outline-offset:1px}
+.sl-sidebody{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:8px;
+  padding-right:2px;scrollbar-width:thin;scrollbar-color:#2c4d5e #0a141d}
+
 .sl-card{background:linear-gradient(180deg,#16222c,#0e1720);border:1px solid #2c4d5e;
-  border-radius:9px;padding:13px 15px}
-.sl-card h4{font-family:'Cinzel',serif;font-size:16px;color:#fbeed0;margin:0 0 2px}
-.sl-sub{font-family:monospace;font-size:10.5px;color:#6d8c9c;letter-spacing:.07em;margin-bottom:9px}
-.sl-flavor{font-size:12.5px;color:#a9c4d0;font-style:italic;line-height:1.5;
-  border-left:2px solid #2c4d5e;padding-left:11px;margin:0 0 12px}
-.sl-grid4{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:8px;margin-bottom:13px}
-.sl-kv{background:#0d1a24;border:1px solid #23404e;border-radius:5px;padding:7px 9px}
-.sl-kv .k{font-family:monospace;font-size:8.5px;letter-spacing:.14em;text-transform:uppercase;color:#6d8c9c}
-.sl-kv .v{font-family:'Cinzel',serif;font-size:16px;color:var(--trim);line-height:1.2}
-.sl-kv .v.sm{font-size:12.5px;color:#e8d7b0}
+  border-radius:9px;padding:12px 13px;flex:none}
+.sl-cardhd{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px}
+.sl-card h4{font-family:'Cinzel',serif;font-size:15.5px;color:#fbeed0;margin:0;line-height:1.2}
+.sl-metarow{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
 
-/* outcome odds bar — replaces a danger number */
-.sl-oddlab{display:flex;justify-content:space-between;align-items:baseline;gap:8px;
-  font-family:monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;
-  color:#6d8c9c;margin-bottom:6px}
-.sl-odds{display:flex;height:23px;border-radius:5px;overflow:hidden;border:1px solid #23404e;background:#0d1a24}
+/* small-caps section label with a trailing rule — replaces bare uppercase text */
+.sl-lab{display:flex;align-items:center;gap:8px;font-family:monospace;font-size:9px;
+  letter-spacing:.15em;text-transform:uppercase;color:#5f8496;margin:12px 0 7px}
+.sl-lab::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,#23404e,transparent)}
+
+.sl-flavor{font-size:12px;color:#9fbccb;font-style:italic;line-height:1.5;
+  border-left:2px solid #2c4d5e;padding-left:10px;margin:0}
+
+.sl-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(74px,1fr));gap:6px}
+.sl-tile{background:#0d1a24;border:1px solid #23404e;border-radius:6px;padding:7px 8px}
+.sl-tile .k{display:flex;align-items:center;gap:4px;font-family:monospace;font-size:8.5px;
+  letter-spacing:.1em;text-transform:uppercase;color:#5f8496;margin-bottom:3px}
+.sl-tile .v{font-family:'Cinzel',serif;font-size:15px;color:var(--trim);line-height:1.15}
+.sl-tile .v.sm{font-size:11.5px;color:#e8d7b0;line-height:1.3}
+.sl-tile .sub{font-family:monospace;font-size:9px;color:#5f8496;margin-top:2px;line-height:1.3}
+.sl-tile.bad{border-color:#63281c;background:#1d0d09}
+.sl-tile.bad .v{color:#e0917c}
+
+/* difficulty pill — a word for the risk, next to the bar that details it */
+.sl-pill{display:inline-flex;align-items:center;gap:5px;font-family:'Cinzel',serif;font-size:11px;
+  letter-spacing:.04em;padding:3px 10px;border-radius:20px;border:1px solid;white-space:nowrap}
+.sl-pill em{width:7px;height:7px;border-radius:50%;display:block;flex:none}
+.sl-p1{color:#a8cc72;border-color:#41591f;background:#141d0c}
+.sl-p2{color:#e0c060;border-color:#6a5420;background:#1d1707}
+.sl-p3{color:#e09a52;border-color:#6a4520;background:#1f1509}
+.sl-p4{color:#e2836c;border-color:#63281c;background:#1d0d09}
+
+.sl-odds{display:flex;height:22px;border-radius:6px;overflow:hidden;border:1px solid #23404e;background:#0d1a24}
 .sl-odds i{display:flex;align-items:center;justify-content:center;font-family:monospace;
-  font-size:10px;font-weight:700;color:#0b1206;min-width:0;overflow:hidden;transition:flex-grow .35s ease}
+  font-size:9.5px;font-weight:700;color:#0b1206;min-width:0;overflow:hidden;transition:flex-grow .35s ease}
 .sl-o1{background:#dfb03c}.sl-o2{background:#7da33f}.sl-o3{background:#c9822e}
 .sl-o4{background:#a8412c;color:#f6e2dc}
-.sl-oddkey{display:flex;flex-wrap:wrap;gap:9px;margin-top:7px}
-.sl-oddkey span{font-family:monospace;font-size:9.5px;color:#6d8c9c;display:flex;align-items:center;gap:4px}
-.sl-oddkey em{width:8px;height:8px;border-radius:2px;display:block}
+.sl-oddkey{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;margin-top:8px}
+.sl-oddkey span{font-family:monospace;font-size:9.5px;color:#6d8c9c;display:flex;align-items:center;gap:5px}
+.sl-oddkey em{width:8px;height:8px;border-radius:2px;display:block;flex:none}
 
 .sl-chips{display:flex;flex-wrap:wrap;gap:5px}
 .sl-chip{display:inline-flex;align-items:center;gap:4px;font-family:monospace;font-size:10.5px;
-  padding:3px 8px;border-radius:3px;border:1px solid #2c4d5e;background:#0d1a24;color:#a9c4d0}
+  padding:3px 8px;border-radius:5px;border:1px solid #2c4d5e;background:#0d1a24;color:#a9c4d0}
 .sl-chip .ev-icon{width:13px;height:13px}
 .sl-chip.gold{border-color:#5a4526;background:#1a1409;color:var(--trim)}
 .sl-chip.bad{border-color:#5c2c20;background:#22110d;color:#e0917c}
 .sl-chip.good{border-color:#40561f;background:#161f0c;color:#b4d472}
 .sl-chip.vio{border-color:#4a3058;background:#170f1e;color:#c19adb}
+.sl-chip.mut{border-color:#2c4d5e;background:#0a141d;color:#6d8c9c}
 
-/* buttons */
-.sl-btn{padding:9px 16px;border-radius:6px;cursor:var(--cur-pointer);font-family:'Cinzel',serif;
-  font-size:14px;border:1px solid #3d6274;background:#12242f;color:#dbe9ef;
+.sl-btn{padding:8px 14px;border-radius:6px;cursor:var(--cur-pointer);font-family:'Cinzel',serif;
+  font-size:13.5px;border:1px solid #3d6274;background:#12242f;color:#dbe9ef;
   transition:background .14s,border-color .14s,filter .14s}
 .sl-btn:hover:not(:disabled){background:#1a3543;border-color:#6d9ab2}
 .sl-btn:focus-visible{outline:2px solid var(--trim);outline-offset:2px}
-.sl-btn:disabled{opacity:.4;cursor:var(--cur-na)}
+.sl-btn:disabled{opacity:.42;cursor:var(--cur-na)}
+.sl-btn.sm{padding:5px 10px;font-size:12px}
 .sl-btn.go{background:linear-gradient(180deg,#c96a24,#9c4d16);border-color:#7a4a1e;color:#fff2dd;
-  box-shadow:0 2px 0 #5e2c0c;width:100%}
+  box-shadow:0 2px 0 #5e2c0c;width:100%;font-size:15px;padding:10px}
 .sl-btn.go:hover:not(:disabled){filter:brightness(1.1);background:linear-gradient(180deg,#c96a24,#9c4d16)}
-.sl-btnrow{display:flex;gap:7px;flex-wrap:wrap}
+.sl-btnrow{display:flex;gap:6px;flex-wrap:wrap}
 
-/* live expedition */
-.sl-clock{display:flex;align-items:baseline;gap:11px;flex-wrap:wrap;margin-bottom:8px}
-.sl-clock b{font-family:'Cinzel',serif;font-size:34px;color:#fbeed0;line-height:1;
-  font-variant-numeric:tabular-nums;letter-spacing:.01em}
-.sl-clock span{font-family:monospace;font-size:11px;color:#6d8c9c}
-.sl-pbar{height:8px;background:#08131a;border:1px solid #23404e;border-radius:5px;overflow:hidden;margin-bottom:9px}
+/* live voyage */
+.sl-clock{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;margin-bottom:7px}
+.sl-clock b{font-family:'Cinzel',serif;font-size:30px;color:#fbeed0;line-height:1;
+  font-variant-numeric:tabular-nums}
+.sl-clock span{font-family:monospace;font-size:10.5px;color:#6d8c9c}
+.sl-pbar{height:7px;background:#08131a;border:1px solid #23404e;border-radius:5px;overflow:hidden}
 .sl-pbar i{display:block;height:100%;background:linear-gradient(90deg,#2f5f74,#6d9ab2);transition:width .5s linear}
 
-.sl-result{border-radius:7px;padding:12px 14px;border:1px solid;margin-bottom:10px}
-.sl-result h5{font-family:'Cinzel',serif;font-size:16px;margin:0 0 4px}
-.sl-result p{font-size:12.5px;margin:0;line-height:1.5;color:#c3d4dc}
+.sl-result{border-radius:8px;padding:11px 13px;border:1px solid}
+.sl-result h5{font-family:'Cinzel',serif;font-size:15px;margin:0 0 3px}
+.sl-result p{font-size:12px;margin:0;line-height:1.45;color:#b8ccd6}
 .sl-r1{background:#1d1707;border-color:#6a5420}.sl-r1 h5{color:#dfb03c}
 .sl-r2{background:#141d0c;border-color:#41591f}.sl-r2 h5{color:#7da33f}
 .sl-r3{background:#1f1509;border-color:#6a4520}.sl-r3 h5{color:#c9822e}
 .sl-r4{background:#1d0d09;border-color:#63281c}.sl-r4 h5{color:#c4543a}
-.sl-result .sl-chips{margin-top:9px}
+.sl-result .sl-chips{margin-top:8px}
 
 /* shipyard */
-.sl-yard{display:flex;flex-direction:column;gap:8px}
-.sl-hull{display:flex;align-items:center;gap:10px;background:#0d1a24;border:1px solid #23404e;
-  border-radius:6px;padding:9px 11px}
+.sl-hull{display:flex;align-items:center;gap:9px;background:#0d1a24;border:1px solid #23404e;
+  border-radius:7px;padding:8px 10px;margin-bottom:6px}
+.sl-hull:last-child{margin-bottom:0}
 .sl-hull.cur{border-color:var(--trim);background:#1a1409}
 .sl-hull.lock{opacity:.5}
-.sl-hull .ev-icon{width:26px;height:26px;flex:none}
+.sl-hull .ev-icon{width:24px;height:24px;flex:none}
 .sl-hull .i{flex:1;min-width:0}
-.sl-hull .i b{font-family:'Cinzel',serif;font-size:13px;color:#e8d7b0;display:block}
-.sl-hull .i span{font-family:monospace;font-size:10px;color:#6d8c9c}
-.sl-note{font-size:11.5px;color:var(--muted);line-height:1.5;margin:8px 0 0}
-.sl-preview{display:flex;align-items:center;gap:7px;font-family:monospace;font-size:10.5px;
-  color:#c9822e;background:#1f1509;border:1px dashed #6a4520;border-radius:5px;padding:6px 10px;margin-top:9px}
+.sl-hull .i b{font-family:'Cinzel',serif;font-size:12.5px;color:#e8d7b0;display:block;line-height:1.25}
+.sl-hull .i .st{display:flex;gap:7px;flex-wrap:wrap;font-family:monospace;font-size:9.5px;color:#5f8496;margin-top:2px}
+.sl-hull .i .cst{display:block;font-family:monospace;font-size:9.5px;margin-top:3px;line-height:1.4}
+.sl-note{font-size:11px;color:var(--muted);line-height:1.5;margin:8px 0 0}
+.sl-preview{display:flex;align-items:center;gap:6px;font-family:monospace;font-size:10px;
+  color:#c9822e;background:#1f1509;border:1px dashed #6a4520;border-radius:6px;
+  padding:6px 9px;margin-top:8px;cursor:var(--cur-pointer)}
 /* ════════ [CSS-33 END] SAILING ═══════════════════════════════════════════════════ */
 </style>
 </head>
@@ -25861,76 +25927,164 @@ function sailBuild(t){
   saveGame(); renderSail(); toast(h.n+' launched at Emberwatch.');
 }
 
+/* ── chart view: pan + zoom ──────────────────────────────────────────────────────
+   Island positions are normalised 0..1. z=1 is exactly fit-to-stage, so there is
+   never empty water at the edges; panning only exists above z=1. Markers are HTML
+   (so their labels stay a constant size) and get positioned from the same
+   transform the canvas uses, in sailPlaceMarkers. */
+let sailView={z:1, ox:0, oy:0};
+let sailTab='voyage';
+const SAIL_ZMIN=1, SAIL_ZMAX=3.4, SAIL_LABEL_Z=1.5;
+
+/* The root carries a CSS `zoom`, so client coords and getBoundingClientRect are
+   in VISUAL px while clientWidth/offsetLeft are in CSS px. Everything below works
+   in CSS px and divides incoming pointer coords by this. */
+function sailRootZoom(){
+  const z=parseFloat(document.documentElement.style.zoom);
+  return (z&&isFinite(z)&&z>0)?z:1;
+}
+
+/* Size the panel to the window rather than with vh — under CSS zoom, vh resolves
+   against the unscaled viewport and would overflow or leave a gap. */
+function sailFit(){
+  const p=$('sailPanel'), wrap=$('slWrap');
+  if(!p||!wrap||p.style.display==='none') return;
+  const z=sailRootZoom();
+  const topVisual=p.getBoundingClientRect().top;
+  const availCss=(window.innerHeight-topVisual)/z - 16;
+  wrap.style.height=Math.max(470, Math.round(availCss))+'px';
+}
+
+function sailViewport(){
+  const st=$('slStage');
+  return st?{W:st.clientWidth||1, H:st.clientHeight||1}:{W:1,H:1};
+}
+function sailClamp(){
+  const {W,H}=sailViewport(), v=sailView;
+  const sw=W*v.z, sh=H*v.z;
+  v.ox = sw<=W ? (W-sw)/2 : Math.min(0, Math.max(W-sw, v.ox));
+  v.oy = sh<=H ? (H-sh)/2 : Math.min(0, Math.max(H-sh, v.oy));
+}
+/* Zoom about a point so the water under the cursor stays under the cursor. */
+function sailZoomAt(cx,cy,nz){
+  const {W,H}=sailViewport(), v=sailView;
+  nz=Math.max(SAIL_ZMIN, Math.min(SAIL_ZMAX, nz));
+  const wx=(cx-v.ox)/(W*v.z), wy=(cy-v.oy)/(H*v.z);
+  v.z=nz; v.ox=cx-wx*W*v.z; v.oy=cy-wy*H*v.z;
+  sailClamp(); sailPaintView();
+}
+function sailSetZoom(nz){
+  const {W,H}=sailViewport();
+  sailZoomAt(W/2, H/2, nz);
+}
+/* Recentre on an island — used when selecting one that is off-screen. */
+function sailCenterOn(i){
+  const isle=sailIsle(i), {W,H}=sailViewport(), v=sailView;
+  v.ox=W/2-isle.x*W*v.z; v.oy=H/2-isle.y*H*v.z;
+  sailClamp(); sailPaintView();
+}
+function sailPaintView(){
+  sailDrawChart(); sailPlaceMarkers();
+  const st=$('slStage'); if(st) st.classList.toggle('far', sailView.z<SAIL_LABEL_Z);
+  const lbl=$('slZlvl'); if(lbl) lbl.textContent=Math.round(sailView.z*100)+'%';
+}
+
+/* Place every marker, band label and the harbour from the current view. */
+function sailPlaceMarkers(){
+  const st=$('slStage'); if(!st) return;
+  const {W,H}=sailViewport(), v=sailView;
+  const sx=n=>n*W*v.z+v.ox, sy=n=>n*H*v.z+v.oy;
+  st.querySelectorAll('[data-slisle]').forEach(b=>{
+    const is=sailIsle(+b.getAttribute('data-slisle'));
+    b.style.left=sx(is.x)+'px'; b.style.top=sy(is.y)+'px';
+  });
+  st.querySelectorAll('[data-slband]').forEach(d=>{
+    d.style.left=sx(+d.getAttribute('data-slband'))+'px'; d.style.top='6px';
+  });
+  const port=st.querySelector('.sl-port');
+  if(port){ port.style.left=sx(0.034)+'px'; port.style.top=sy(0.5)+'px'; }
+}
+
 /* ── chart canvas ────────────────────────────────────────────────────────────────
-   Drawn once per render (and on resize), never on rAF — an animation loop here
-   would fight the game's own frame loop for no visual gain. */
+   Drawn on demand (render, pan, zoom, resize) and never on rAF — an animation
+   loop here would fight the game's own frame loop for no visual gain. The world
+   is drawn under the view transform; the compass rose is pinned in screen space
+   so it stays a fixed size and never drifts off the chart. */
 function sailDrawChart(){
   const cv=$('slCanvas'), stage=$('slStage');
   if(!cv||!stage) return;
   const ctx=cv.getContext&&cv.getContext('2d'); if(!ctx) return;
-  const w=stage.clientWidth, h=stage.clientHeight;
-  if(!w||!h) return;
+  const W=stage.clientWidth, H=stage.clientHeight;
+  if(!W||!H) return;
   const dpr=Math.min(window.devicePixelRatio||1,2);
-  cv.width=w*dpr; cv.height=h*dpr; ctx.setTransform(dpr,0,0,dpr,0,0);
-  ctx.clearRect(0,0,w,h);
+  cv.width=W*dpr; cv.height=H*dpr; ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,W,H);
 
-  const g=ctx.createLinearGradient(0,0,w,h);
+  const v=sailView, z=v.z;
+
+  // open water fills the whole viewport regardless of pan
+  const g=ctx.createLinearGradient(0,0,W,H);
   g.addColorStop(0,'#0e1f2b'); g.addColorStop(.5,'#0b1822'); g.addColorStop(1,'#08131b');
-  ctx.fillStyle=g; ctx.fillRect(0,0,w,h);
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
 
-  const sg=ctx.createRadialGradient(0,h*.5,10,0,h*.5,w*.42);
-  sg.addColorStop(0,'rgba(30,72,94,.55)'); sg.addColorStop(1,'rgba(30,72,94,0)');
-  ctx.fillStyle=sg; ctx.fillRect(0,0,w,h);
+  ctx.save();
+  ctx.translate(v.ox, v.oy); ctx.scale(z, z);
 
-  ctx.strokeStyle='rgba(150,122,66,.16)'; ctx.lineWidth=1;
-  for(let i=1;i<16;i++){ ctx.beginPath(); ctx.moveTo(i*w/16,0); ctx.lineTo(i*w/16,h); ctx.stroke(); }
-  for(let i=1;i<8;i++){ ctx.beginPath(); ctx.moveTo(0,i*h/8); ctx.lineTo(w,i*h/8); ctx.stroke(); }
+  // continental shelf glow off the harbour
+  const sg=ctx.createRadialGradient(0,H*.5,10,0,H*.5,W*.42);
+  sg.addColorStop(0,'rgba(30,72,94,.5)'); sg.addColorStop(1,'rgba(30,72,94,0)');
+  ctx.fillStyle=sg; ctx.fillRect(0,0,W,H);
 
-  const nodes=[[w*.30,h*.50],[w*.68,h*.30],[w*.86,h*.72]];
-  ctx.lineWidth=.9;
+  ctx.strokeStyle='rgba(150,122,66,.15)'; ctx.lineWidth=1/z;
+  for(let i=1;i<16;i++){ ctx.beginPath(); ctx.moveTo(i*W/16,0); ctx.lineTo(i*W/16,H); ctx.stroke(); }
+  for(let i=1;i<8;i++){ ctx.beginPath(); ctx.moveTo(0,i*H/8); ctx.lineTo(W,i*H/8); ctx.stroke(); }
+
+  const nodes=[[W*.30,H*.50],[W*.68,H*.30],[W*.86,H*.72]];
   nodes.forEach(n=>{
-    ctx.strokeStyle='rgba(168,136,74,.28)';
-    for(let a=0;a<16;a++){ const th=a*Math.PI/8, L=w*1.4;
+    ctx.strokeStyle='rgba(168,136,74,.26)'; ctx.lineWidth=0.9/z;
+    for(let a=0;a<16;a++){ const th=a*Math.PI/8, L=W*1.5;
       ctx.beginPath(); ctx.moveTo(n[0],n[1]); ctx.lineTo(n[0]+Math.cos(th)*L,n[1]+Math.sin(th)*L); ctx.stroke(); }
-    ctx.strokeStyle='rgba(190,155,88,.42)';
-    ctx.beginPath(); ctx.arc(n[0],n[1],w*.055,0,Math.PI*2); ctx.stroke();
-    ctx.fillStyle='rgba(199,155,78,.5)'; ctx.beginPath(); ctx.arc(n[0],n[1],2.6,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='rgba(190,155,88,.40)';
+    ctx.beginPath(); ctx.arc(n[0],n[1],W*.055,0,Math.PI*2); ctx.stroke();
+    ctx.fillStyle='rgba(199,155,78,.5)'; ctx.beginPath(); ctx.arc(n[0],n[1],2.6/z,0,Math.PI*2); ctx.fill();
   });
 
   SAIL_ISLES.forEach((is,ix)=>{
     if(is.hid && !(state.sail.found&&state.sail.found[ix])) return;
-    const cx=is.x*w, cy=is.y*h;
+    const cx=is.x*W, cy=is.y*H;
     for(let r=1;r<=3;r++){
       ctx.beginPath();
-      const rad=8+r*10;
+      const rad=(7+r*9)/z*Math.min(1.6,z);
       for(let a=0;a<=Math.PI*2+.01;a+=Math.PI/14){
         const wob=1+Math.sin(a*3+is.x*17+r)*0.13+Math.cos(a*5+is.y*11)*0.08;
         const px=cx+Math.cos(a)*rad*wob, py=cy+Math.sin(a)*rad*wob*.72;
         if(a===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
       }
       ctx.closePath();
-      ctx.strokeStyle='rgba(122,170,196,'+(0.30-r*0.07)+')'; ctx.lineWidth=1; ctx.stroke();
+      ctx.strokeStyle='rgba(122,170,196,'+(0.30-r*0.07)+')'; ctx.lineWidth=1/z; ctx.stroke();
       if(r===1){ ctx.fillStyle='rgba(26,58,76,.6)'; ctx.fill(); }
     }
   });
 
-  ctx.fillStyle='rgba(122,170,196,.26)';
-  ctx.font="9px 'Cascadia Mono', Consolas, monospace";
+  ctx.fillStyle='rgba(122,170,196,.24)';
+  ctx.font=(9/z)+"px 'Cascadia Mono', Consolas, monospace";
   for(let i=0;i<52;i++){
-    const sx=((i*97)%100)/100*w, sy=((i*61)%100)/100*h;
-    const near=SAIL_ISLES.some(is=>Math.abs(is.x*w-sx)<60&&Math.abs(is.y*h-sy)<46);
-    if(!near) ctx.fillText(String(7+(i*13)%90), sx, sy);
+    const px=((i*97)%100)/100*W, py=((i*61)%100)/100*H;
+    const near=SAIL_ISLES.some(is=>Math.abs(is.x*W-px)<58&&Math.abs(is.y*H-py)<44);
+    if(!near) ctx.fillText(String(7+(i*13)%90), px, py);
   }
+  ctx.restore();
 
-  const vg=ctx.createRadialGradient(w/2,h/2,Math.min(w,h)*.42,w/2,h/2,Math.max(w,h)*.80);
-  vg.addColorStop(0,'rgba(0,0,0,0)'); vg.addColorStop(1,'rgba(0,0,0,.46)');
-  ctx.fillStyle=vg; ctx.fillRect(0,0,w,h);
+  const vg=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.46,W/2,H/2,Math.max(W,H)*.82);
+  vg.addColorStop(0,'rgba(0,0,0,0)'); vg.addColorStop(1,'rgba(0,0,0,.42)');
+  ctx.fillStyle=vg; ctx.fillRect(0,0,W,H);
 
-  const rx=w*.085, ry=h*.80, R=Math.min(w*.055,40);
-  ctx.save(); ctx.translate(rx,ry);
-  ctx.strokeStyle='rgba(206,166,92,.58)'; ctx.lineWidth=1.1;
+  // compass rose — screen space, pinned bottom-left
+  const R=Math.max(20, Math.min(W*.058, 34));
+  ctx.save(); ctx.translate(R+12, H-R-12);
+  ctx.strokeStyle='rgba(206,166,92,.55)'; ctx.lineWidth=1.1;
   ctx.beginPath(); ctx.arc(0,0,R,0,Math.PI*2); ctx.stroke();
-  ctx.strokeStyle='rgba(206,166,92,.36)';
+  ctx.strokeStyle='rgba(206,166,92,.34)';
   ctx.beginPath(); ctx.arc(0,0,R*.72,0,Math.PI*2); ctx.stroke();
   for(let a=0;a<8;a++){
     const t=a*Math.PI/4-Math.PI/2, len=(a%2===0)?R:R*.55;
@@ -25939,14 +26093,18 @@ function sailDrawChart(){
     ctx.lineTo(Math.cos(t)*len, Math.sin(t)*len);
     ctx.lineTo(Math.cos(t+0.13)*len*.4, Math.sin(t+0.13)*len*.4);
     ctx.closePath();
-    ctx.fillStyle=(a%2===0)?'rgba(214,174,98,.76)':'rgba(214,174,98,.36)'; ctx.fill();
+    ctx.fillStyle=(a%2===0)?'rgba(214,174,98,.72)':'rgba(214,174,98,.34)'; ctx.fill();
   }
-  ctx.fillStyle='rgba(240,224,188,.9)';
-  ctx.font="italic 12px 'Palatino Linotype', Georgia, serif";
-  ctx.textAlign='center'; ctx.fillText('N',0,-R-7);
+  ctx.fillStyle='rgba(240,224,188,.88)';
+  ctx.font="italic 11px 'Palatino Linotype', Georgia, serif";
+  ctx.textAlign='center'; ctx.fillText('N',0,-R-5);
   ctx.restore();
 }
 
+/* ── wording helpers ────────────────────────────────────────────────────────────
+   Player-facing copy avoids the jargon the first pass shipped with: Soundness is
+   "Hull", Stores is "Range" (it is literally how far you can go), Hold is "Cargo",
+   and a 1-in-N trove chance is shown as a percentage. */
 function sailFmtMins(m){
   if(m<60) return m+'m';
   const h=Math.floor(m/60), r=m%60;
@@ -25958,10 +26116,64 @@ function sailFmtClock(ms){
   const p=n=>(n<10?'0':'')+n;
   return p(hh)+':'+p(mm)+':'+p(ss);
 }
+const SAIL_WATER_PLAIN={
+  'Glass Calm':'Nothing goes wrong out there.',
+  'Chop':'Light hull wear. The odd crate over the side.',
+  "Wrecker's Weather":'Squalls that chew hulls apart.',
+  'Blackfog':'You can arrive at the wrong island entirely.',
+  'The Maw':'Leviathan water. Rare, and it ends ships.'
+};
+/* One word for the risk, sitting next to the bar that spells it out. */
+function sailDifficulty(i){
+  const wrecked=sailOdds(i)[3];
+  if(wrecked<1.5) return {n:'Safe',      c:'sl-p1', col:'#a8cc72'};
+  if(wrecked<6)   return {n:'Risky',     c:'sl-p2', col:'#e0c060'};
+  if(wrecked<12)  return {n:'Dangerous', c:'sl-p3', col:'#e09a52'};
+  return               {n:'Deadly',    c:'sl-p4', col:'#e2836c'};
+}
+function sailPct(oneIn){ const p=100/oneIn; return (p>=10?Math.round(p):p.toFixed(1))+'%'; }
+function sailWhyText(i){
+  const isle=sailIsle(i), h=sailHull(), why=sailReach(i);
+  if(why==='lvl')    return 'Needs Sailing '+isle.lv+' — you are '+sailLvl()+'.';
+  if(why==='stores') return 'Needs Range '+isle.st+' — your ship has '+h.stores+'. Build a bigger hull.';
+  return '';
+}
 
-/* Lightweight per-tick updater — writes only the clock and the bar so the canvas
-   and the marker DOM survive. A full renderSail() every second would be wasteful
-   and would visibly reset the chart. */
+/* ── island hover card ── */
+function sailTipShow(i, ev){
+  let tip=$('slTip');
+  if(!tip){ tip=document.createElement('div'); tip.id='slTip'; tip.className='sl-tip'; document.body.appendChild(tip); }
+  const isle=sailIsle(i), o=sailOdds(i), d=sailDifficulty(i), why=sailWhyText(i);
+  let html='<h6>'+isle.n+'</h6>'
+    +'<div class="row"><span>'+(isle.hid?'Unlogged water':SAIL_BANDS[isle.b].n)+'</span><b>Sailing '+isle.lv+'</b></div>'
+    +'<div class="row"><span>Time at sea</span><b>'+sailFmtMins(isle.m)+'</b></div>'
+    +'<div class="row"><span>Range needed</span><b>'+isle.st+'</b></div>'
+    +'<div class="row"><span>Treasure</span><b>'+sailPct(isle.find)+'</b></div>'
+    +'<div class="row"><span>'+isle.w+'</span><b style="color:'+d.col+'">'+d.n+'</b></div>'
+    +'<div class="mini">'
+    +'<i style="background:#dfb03c;width:'+o[0].toFixed(1)+'%"></i>'
+    +'<i style="background:#7da33f;width:'+o[1].toFixed(1)+'%"></i>'
+    +'<i style="background:#c9822e;width:'+o[2].toFixed(1)+'%"></i>'
+    +'<i style="background:#a8412c;width:'+o[3].toFixed(1)+'%"></i></div>';
+  if(why) html+='<div class="why">'+why+'</div>';
+  tip.innerHTML=html;
+  tip.classList.add('show');
+  sailTipMove(ev);
+}
+function sailTipMove(ev){
+  const tip=$('slTip'); if(!tip||!ev) return;
+  const z=sailRootZoom();
+  const w=tip.offsetWidth||226, h=tip.offsetHeight||150;
+  const vw=window.innerWidth/z, vh=window.innerHeight/z;
+  let x=ev.clientX/z+16, y=ev.clientY/z+14;
+  if(x+w>vw-8) x=ev.clientX/z-w-16;
+  if(y+h>vh-8) y=Math.max(8, ev.clientY/z-h-14);
+  tip.style.left=Math.round(x)+'px'; tip.style.top=Math.round(y)+'px';
+}
+function sailTipHide(){ const t=$('slTip'); if(t) t.classList.remove('show'); }
+
+/* Lightweight per-tick updater — writes only the clock and bar so the canvas and
+   marker DOM survive. A full renderSail every second would visibly reset the map. */
 function sailTickUI(){
   if(!sailMode) return;
   const s=state.sail; if(!s||!s.voy) return;
@@ -25970,6 +26182,8 @@ function sailTickUI(){
   el.textContent=sailFmtClock(left);
   const bar=$('slPBar');
   if(bar) bar.style.width=Math.min(100,Math.max(0,(1-left/s.voy.dur)*100))+'%';
+  const eta=$('slEta');
+  if(eta) eta.textContent='back at '+new Date(s.voy.endsAt).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
 }
 
 function enterSailing(){
@@ -25978,7 +26192,7 @@ function enterSailing(){
 }
 function closeSailPanel(){
   if(!sailMode) return;
-  sailMode=false; updateModePanels();
+  sailMode=false; sailTipHide(); updateModePanels();
 }
 
 function renderSail(){
@@ -25987,161 +26201,247 @@ function renderSail(){
   const xpNow=s.xp||0, base=XP_CUM[lvl]||0, next=XP_CUM[Math.min(MAX_LEVEL,lvl+1)]||base+1;
   const pct=lvl>=MAX_LEVEL?100:Math.max(0,Math.min(100,(xpNow-base)/Math.max(1,next-base)*100));
 
-  let html='<div class="sl-wrap">';
-
-  /* ── preview notice ──
-     Sailing shipped as a look-at-it-first feature: the panel is real but the
-     rewards, troves and progression are not wired up yet. Saying so in the panel
-     costs nothing and stops it reading as a broken system — this is visible in
-     the public browser demo, where nobody has the context that it's early. */
-  html+='<div class="sl-preview">'
-    +'<b>Preview</b> — Sailing is early and still being built. Charts, troves and '
-    +'rewards are not finished, so expect gaps and changes. Progress here may be '
-    +'reset while it is being worked on.</div>';
+  let html='<div class="sl-wrap" id="slWrap">';
 
   /* ── header ── */
   html+='<div class="sl-top">'
     +'<div class="sl-ship">'+iconHTML('sailing')
-    +'<div><div class="sl-shipname">'+h.n+(s.damaged?' <span style="color:var(--red);font-size:11px">· DAMAGED</span>':'')+'</div>'
-    +'<div class="sl-shiptier">Emberwatch Harbour · tier '+(s.hull+1)+' of 7</div></div></div>'
+    +'<div><div class="sl-shipname">'+h.n+(s.damaged?' <span style="color:var(--red);font-size:11px">· needs repair</span>':'')+'</div>'
+    +'<div class="sl-shiptier">Emberwatch Harbour · ship '+(s.hull+1)+' of 7</div></div></div>'
     +'<div class="sl-stats">'
-    +'<span class="sl-stat">Sound <b>'+h.sound+'</b></span>'
-    +'<span class="sl-stat">Stores <b>'+h.stores+'</b></span>'
-    +'<span class="sl-stat">Hold <b>'+h.hold+'</b></span>'
-    +'<span class="sl-stat">Voyages <b>'+(s.voyages||0)+'</b></span></div>'
-    +'<div class="sl-lvl"><div class="sl-lvlbox"><b>Lv '+lvl+'</b><i>'+Math.floor(xpNow).toLocaleString()+' xp</i></div>'
+    +'<span class="sl-stat" data-tip="Hull — how well she shrugs off bad weather. Higher hull shifts the odds away from Battered and Wrecked.">'+iconHTML('ui_shield')+'Hull <b>'+h.sound+'</b></span>'
+    +'<span class="sl-stat" data-tip="Range — how far she can sail. Every island needs a minimum Range to reach at all.">'+iconHTML('ui_wind')+'Range <b>'+h.stores+'</b></span>'
+    +'<span class="sl-stat" data-tip="Cargo — the most she can carry home. Anything over this is left on the beach.">'+iconHTML('ui_coin')+'Cargo <b>'+h.hold+'</b></span>'
+    +'<span class="sl-stat" data-tip="Completed voyages.">'+iconHTML('ui_scroll')+'Trips <b>'+(s.voyages||0)+'</b></span>'
+    +'</div>'
+    +'<div class="sl-lvl"><div class="sl-lvlbox"><b>Sailing '+lvl+'</b><i>'+Math.floor(xpNow).toLocaleString()+' xp</i></div>'
     +'<div class="sl-xpbar"><i style="width:'+pct+'%"></i></div>'
-    +'<button class="sl-btn" id="slLeave">Leave</button></div></div>';
+    +'<button class="sl-btn sm" id="slLeave">Leave</button></div></div>';
+
+  html+='<div class="sl-main">';
 
   /* ── chart ── */
   const charted=SAIL_ISLES.filter((x,ix)=>!x.hid||(s.found&&s.found[ix])).length;
   html+='<div class="sl-chartbox"><div class="sl-charthd">'
-    +'<span class="t">Emberwatch Admiralty Chart № 4</span>'
-    +'<span class="h">'+charted+' charted · '+(SAIL_ISLES.length-charted)+' unlogged</span></div>'
-    +'<div class="sl-chartscroll"><div class="sl-stage" id="slStage"><canvas id="slCanvas"></canvas>';
+    +'<span class="t">Admiralty Chart № 4 · '+charted+' charted</span>'
+    +'<div class="sl-zoomrow">'
+    +'<button class="sl-zb" id="slZOut" title="Zoom out">&minus;</button>'
+    +'<span class="sl-zlvl" id="slZlvl">100%</span>'
+    +'<button class="sl-zb" id="slZIn" title="Zoom in">+</button>'
+    +'<button class="sl-zb wide" id="slZFit" title="Fit the whole chart">FIT</button>'
+    +'<button class="sl-zb wide" id="slZFind" title="Centre on the selected island">FIND</button>'
+    +'</div></div>'
+    +'<div class="sl-stage" id="slStage"><canvas id="slCanvas"></canvas>';
 
-  SAIL_BANDS.forEach(b=>{ html+='<div class="sl-band" style="left:'+(b.x*100)+'%">'+b.n+'</div>'; });
-  html+='<div class="sl-port" style="left:3.4%;top:50%">'+iconHTML('ui_anchor')+'<span>Emberwatch</span></div>';
+  SAIL_BANDS.forEach(b=>{ html+='<div class="sl-band" data-slband="'+b.x+'">'+b.n+'</div>'; });
+  html+='<div class="sl-port">'+iconHTML('ui_anchor')+'<span>Emberwatch</span></div>';
 
   SAIL_ISLES.forEach((is,ix)=>{
     const why=sailReach(ix);
     if(why==='hidden') return;
     const cls='sl-mk'+(ix===sailSel?' on':'')+(why!=='ok'?' lock':'')+(is.hid?' hid':'')
-      +(s.voy&&s.voy.i===ix?' sailing-to':'');
-    html+='<button class="'+cls+'" data-slisle="'+ix+'" style="left:'+(is.x*100)+'%;top:'+(is.y*100)+'%" '
-      +'title="'+is.n+'"><span class="d"></span><span class="n">'+is.n+'</span></button>';
+      +(s.voy&&s.voy.i===ix?' atsea':'');
+    html+='<button class="'+cls+'" data-slisle="'+ix+'"><span class="d"></span><span class="n">'+is.n+'</span></button>';
   });
-  html+='</div></div></div>';
-
-  /* ── body: dossier | expedition + yard ── */
-  html+='<div class="sl-body">';
-
-  /* dossier */
-  const odds=sailOdds(sailSel), why=sailReach(sailSel);
-  const hazards={'Glass Calm':'Hazards — none of note','Chop':'Hazards — hull wear, spilled cargo',
-    "Wrecker's Weather":'Hazards — squalls, hull damage','Blackfog':'Hazards — misdelivery, lost time',
-    'The Maw':'Hazards — leviathan water'};
-  html+='<div class="sl-card"><h4>'+isle.n+'</h4>'
-    +'<div class="sl-sub">'+(isle.hid?'UNLOGGED':(SAIL_BANDS[isle.b].n.toUpperCase()))+' · SAILING '+isle.lv+'</div>'
-    +'<p class="sl-flavor">'+isle.f+'</p>'
-    +'<div class="sl-grid4">'
-    +'<div class="sl-kv"><div class="k">Time at sea</div><div class="v">'+sailFmtMins(isle.m)+'</div></div>'
-    +'<div class="sl-kv"><div class="k">Stores</div><div class="v'+(h.stores<isle.st?'':'')+'">'+isle.st+'</div></div>'
-    +'<div class="sl-kv"><div class="k">Waters</div><div class="v sm">'+isle.w+'</div></div>'
-    +'<div class="sl-kv"><div class="k">Trove find</div><div class="v">1 in '+isle.find+'</div></div></div>'
-    +'<div class="sl-oddlab"><span>Outcome odds</span><span>'+(hazards[isle.w]||'')+'</span></div>'
-    +'<div class="sl-odds">';
-  ['sl-o1','sl-o2','sl-o3','sl-o4'].forEach((c,k)=>{
-    html+='<i class="'+c+'" style="flex-grow:'+odds[k].toFixed(2)+'">'+(odds[k]>=7?Math.round(odds[k])+'%':'')+'</i>';
-  });
-  html+='</div><div class="sl-oddkey">'
-    +'<span><em style="background:#dfb03c"></em>Triumphant 140%</span>'
-    +'<span><em style="background:#7da33f"></em>Successful 100%</span>'
-    +'<span><em style="background:#c9822e"></em>Battered 65%</span>'
-    +'<span><em style="background:#a8412c"></em>Wrecked 30%</span></div>'
-    +'<div class="sl-oddlab" style="margin-top:13px"><span>Typical haul</span></div><div class="sl-chips">';
-  isle.h.forEach(id=>{ html+='<span class="sl-chip">'+iconHTML(id)+(ITEMS[id]?ITEMS[id].name:id)+'</span>'; });
   html+='</div></div>';
 
-  /* expedition / yard column */
-  html+='<div style="display:flex;flex-direction:column;gap:10px">';
+  /* ── right column ── */
+  html+='<div class="sl-side">'
+    +'<div class="sl-seg">'
+    +'<button id="slTabVoy" class="'+(sailTab==='voyage'?'on':'')+'">Voyage</button>'
+    +'<button id="slTabYard" class="'+(sailTab==='yard'?'on':'')+'">Shipyard</button>'
+    +'</div><div class="sl-sidebody">';
 
-  html+='<div class="sl-card">';
-  if(s.voy){
-    const v=s.voy, dest=sailIsle(v.i), left=v.endsAt-Date.now();
-    html+='<h4>At sea — '+dest.n+'</h4><div class="sl-sub">RETURNS WHEN THE CLOCK RUNS OUT</div>'
-      +'<div class="sl-clock"><b id="slClock">'+sailFmtClock(left)+'</b><span>remaining</span></div>'
-      +'<div class="sl-pbar"><i id="slPBar" style="width:'+Math.min(100,Math.max(0,(1-left/v.dur)*100))+'%"></i></div>'
-      +'<p class="sl-note">The voyage resolves on its own clock. Close the game if you like — she will be waiting.</p>'
-      +'<div class="sl-btnrow" style="margin-top:9px"><button class="sl-btn" id="slSkip">Return now (preview)</button></div>';
-  } else {
-    if(s.last){
+  if(sailTab==='voyage'){
+    const odds=sailOdds(sailSel), why=sailReach(sailSel), diff=sailDifficulty(sailSel);
+    const reachOk=why==='ok';
+
+    /* live voyage first — it is the thing you came back to check */
+    if(s.voy){
+      const v=s.voy, dest=sailIsle(v.i), left=v.endsAt-Date.now();
+      html+='<div class="sl-card"><div class="sl-cardhd"><div>'
+        +'<h4>'+dest.n+'</h4><div class="sl-metarow"><span class="sl-chip good">at sea</span>'
+        +'<span class="sl-chip mut">'+sailFmtMins(dest.m)+' crossing</span></div></div></div>'
+        +'<div class="sl-lab">Time remaining</div>'
+        +'<div class="sl-clock"><b id="slClock">'+sailFmtClock(left)+'</b>'
+        +'<span id="slEta">back at '+new Date(v.endsAt).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})+'</span></div>'
+        +'<div class="sl-pbar"><i id="slPBar" style="width:'+Math.min(100,Math.max(0,(1-left/v.dur)*100))+'%"></i></div>'
+        +'<p class="sl-note">She sails on her own clock. Close the game if you like — the voyage still finishes.</p>'
+        +'<div class="sl-btnrow" style="margin-top:8px"><button class="sl-btn sm" id="slSkip">Bring her home now (preview)</button></div>'
+        +'</div>';
+    }
+
+    /* last result */
+    if(!s.voy && s.last){
       const L=s.last, gr=SAIL_GRADES[L.g], di=sailIsle(L.i);
       html+='<div class="sl-result '+gr.c+'"><h5>'+gr.n+' — '+di.n+'</h5><p>'
-        +(L.fogged?'<b>Blackfog took the ship off course.</b> She made landfall at '+di.n+', which is on no Admiralty chart. It is on yours now. ':'')
+        +(L.fogged?'<b>Blackfog took her off course.</b> She made landfall at '+di.n+', which is on no Admiralty chart. It is on yours now. ':'')
         +gr.p+'</p><div class="sl-chips">';
       for(const id in L.got) html+='<span class="sl-chip gold">'+iconHTML(id)+(ITEMS[id]?ITEMS[id].name:id)+' ×'+L.got[id]+'</span>';
-      html+='<span class="sl-chip good">+'+L.xp+' Sailing XP</span>';
+      html+='<span class="sl-chip good">+'+L.xp+' Sailing xp</span>';
       if(L.trove) html+='<span class="sl-chip vio">'+iconHTML(L.trove)+ITEMS[L.trove].name+'</span>';
-      if(L.capped) html+='<span class="sl-chip bad">hold full — cargo left on the beach</span>';
-      if(L.g===3) html+='<span class="sl-chip bad">ship damaged</span>';
+      if(L.capped) html+='<span class="sl-chip bad">cargo full — the rest was left behind</span>';
+      if(L.g===3) html+='<span class="sl-chip bad">ship needs repair</span>';
       html+='</div></div>';
     }
-    const cantWhy = s.damaged?'Repair her first'
-      : why==='lvl'?('Sailing '+isle.lv+' required')
-      : why==='stores'?('Needs '+isle.st+' Stores — you have '+h.stores)
-      : null;
-    html+='<h4>Launch an expedition</h4><div class="sl-sub">'+isle.n.toUpperCase()+' · '+sailFmtMins(isle.m)+'</div>'
-      +'<button class="sl-btn go" id="slGo"'+(cantWhy?' disabled':'')+'>'
-      +(cantWhy?cantWhy:'Set Sail — '+sailFmtMins(isle.m))+'</button>'
-      +'<label class="sl-preview"><input type="checkbox" id="slFast"'+(s.fast?' checked':'')+'> '
-      +'Preview: fast voyages (×60 clock)</label>';
-  }
-  html+='</div>';
 
-  /* shipyard */
-  html+='<div class="sl-card"><h4>Emberwatch Yard</h4>'
-    +'<div class="sl-sub">HULL TIERS · LOGS AND BARS YOU ALREADY CUT</div><div class="sl-yard">';
-  SAIL_HULLS.forEach((hh,t)=>{
-    const cur=t===s.hull, owned=t<=s.hull, canLvl=lvl>=hh.lv;
-    let costStr=Object.keys(hh.cost).map(id=>hh.cost[id]+'× '+(ITEMS[id]?ITEMS[id].name:id)).join(' · ');
-    const afford=Object.keys(hh.cost).every(id=>(state.items[id]||0)>=hh.cost[id]);
-    html+='<div class="sl-hull'+(cur?' cur':'')+(!canLvl&&!owned?' lock':'')+'">'+iconHTML('sailing')
-      +'<div class="i"><b>'+hh.n+'</b><span>Lv '+hh.lv+' · Sound '+hh.sound+' · Stores '+hh.stores+' · Hold '+hh.hold+'</span>'
-      +(owned?'':'<span style="display:block;color:'+(afford?'#7da33f':'#a08a64')+'">'+costStr+'</span>')+'</div>';
-    if(cur) html+='<span class="sl-chip gold">current</span>';
-    else if(owned) html+='<span class="sl-chip">built</span>';
-    else html+='<button class="sl-btn" data-slbuild="'+t+'"'+((canLvl&&afford)?'':' disabled')+'>Build</button>';
+    /* selected island */
+    html+='<div class="sl-card"><div class="sl-cardhd"><div>'
+      +'<h4>'+isle.n+'</h4>'
+      +'<div class="sl-metarow">'
+      +'<span class="sl-chip mut">'+(isle.hid?'Unlogged':SAIL_BANDS[isle.b].n)+'</span>'
+      +'<span class="sl-chip mut">Sailing '+isle.lv+'</span>'
+      +'<span class="sl-pill '+diff.c+'"><em style="background:'+diff.col+'"></em>'+diff.n+'</span>'
+      +'</div></div></div>'
+      +'<p class="sl-flavor">'+isle.f+'</p>'
+      +'<div class="sl-lab">The crossing</div><div class="sl-tiles">'
+      +'<div class="sl-tile"><div class="k">Time at sea</div><div class="v">'+sailFmtMins(isle.m)+'</div></div>'
+      +'<div class="sl-tile'+(h.stores<isle.st?' bad':'')+'"><div class="k">Range needed</div><div class="v">'+isle.st+'</div>'
+      +'<div class="sub">you have '+h.stores+'</div></div>'
+      +'<div class="sl-tile"><div class="k">Treasure</div><div class="v">'+sailPct(isle.find)+'</div>'
+      +'<div class="sub">per voyage</div></div>'
+      +'</div>'
+      +'<div class="sl-lab">Conditions</div>'
+      +'<div class="sl-tile"><div class="k">'+isle.w+'</div><div class="v sm">'+(SAIL_WATER_PLAIN[isle.w]||'')+'</div></div>'
+      +'<div class="sl-lab">How the voyage usually ends</div><div class="sl-odds">';
+    ['sl-o1','sl-o2','sl-o3','sl-o4'].forEach((c,k)=>{
+      html+='<i class="'+c+'" style="flex-grow:'+odds[k].toFixed(2)+'">'+(odds[k]>=8?Math.round(odds[k])+'%':'')+'</i>';
+    });
+    html+='</div><div class="sl-oddkey">'
+      +'<span><em style="background:#dfb03c"></em>Triumphant · +40% cargo</span>'
+      +'<span><em style="background:#7da33f"></em>Successful · full cargo</span>'
+      +'<span><em style="background:#c9822e"></em>Battered · keep 65%</span>'
+      +'<span><em style="background:#a8412c"></em>Wrecked · keep 30%</span></div>'
+      +'<div class="sl-lab">What she brings back</div><div class="sl-chips">';
+    isle.h.forEach(id=>{ html+='<span class="sl-chip">'+iconHTML(id)+(ITEMS[id]?ITEMS[id].name:id)+'</span>'; });
     html+='</div>';
-  });
-  html+='</div>';
-  if(s.damaged) html+='<div class="sl-btnrow" style="margin-top:9px"><button class="sl-btn" id="slFix">Repair hull (25% of build cost)</button></div>';
-  html+='<p class="sl-note">Preview slice: hull tiers only. Per-slot parts (sails, rudder, cannons, hold, '
-    +'figurehead), the 46-piece Trove, treasure charts and the 98-point tree land in later slices.</p>'
-    +'</div></div></div></div>';
 
+    if(!s.voy){
+      const blocked = s.damaged?'Repair her first'
+        : !reachOk?(why==='lvl'?('Needs Sailing '+isle.lv):('Needs Range '+isle.st))
+        : null;
+      html+='<div style="margin-top:11px"><button class="sl-btn go" id="slGo"'+(blocked?' disabled':'')+'>'
+        +(blocked?blocked:'Set sail · '+sailFmtMins(isle.m))+'</button>'
+        +(sailWhyText(sailSel)?'<p class="sl-note">'+sailWhyText(sailSel)+'</p>':'')
+        +'<label class="sl-preview"><input type="checkbox" id="slFast"'+(s.fast?' checked':'')+'> '
+        +'Preview mode — run voyages 60× faster</label></div>';
+    }
+    html+='</div>';
+
+  } else {
+    /* ── shipyard ── */
+    html+='<div class="sl-card"><div class="sl-cardhd"><div><h4>Emberwatch Shipyard</h4>'
+      +'<div class="sl-metarow"><span class="sl-chip mut">build a stronger ship</span></div></div></div>'
+      +'<p class="sl-note" style="margin:0 0 10px">A bigger hull takes more weather and sails further. '
+      +'Every ship is built from logs and bars you already gather — the level gates match Woodcutting exactly.</p>';
+    SAIL_HULLS.forEach((hh,t)=>{
+      const cur=t===s.hull, owned=t<=s.hull, canLvl=lvl>=hh.lv;
+      const afford=Object.keys(hh.cost).every(id=>(state.items[id]||0)>=hh.cost[id]);
+      html+='<div class="sl-hull'+(cur?' cur':'')+(!canLvl&&!owned?' lock':'')+'">'+iconHTML('sailing')
+        +'<div class="i"><b>'+hh.n+'</b>'
+        +'<div class="st"><span>Sailing '+hh.lv+'</span><span>Hull '+hh.sound+'</span>'
+        +'<span>Range '+hh.stores+'</span><span>Cargo '+hh.hold+'</span></div>';
+      if(!owned){
+        const parts=Object.keys(hh.cost).map(id=>{
+          const have=state.items[id]||0, need=hh.cost[id];
+          return '<span style="color:'+(have>=need?'#7da33f':'#a08a64')+'">'+need+'× '+(ITEMS[id]?ITEMS[id].name:id)+'</span>';
+        }).join(' · ');
+        html+='<span class="cst">'+parts+'</span>';
+      }
+      html+='</div>';
+      if(cur) html+='<span class="sl-chip gold">sailing this</span>';
+      else if(owned) html+='<span class="sl-chip mut">built</span>';
+      else html+='<button class="sl-btn sm" data-slbuild="'+t+'"'+((canLvl&&afford)?'':' disabled')+'>Build</button>';
+      html+='</div>';
+    });
+    if(s.damaged){
+      const rc=Object.keys(h.cost).map(id=>Math.max(1,Math.ceil(h.cost[id]*0.25))+'× '+(ITEMS[id]?ITEMS[id].name:id)).join(' · ');
+      html+='<div class="sl-lab">Repairs</div>'
+        +'<p class="sl-note" style="margin:0 0 8px">She cannot sail until the yard is done. Cost is a quarter of her build: '+rc+'</p>'
+        +'<div class="sl-btnrow"><button class="sl-btn" id="slFix">Repair the ship</button></div>';
+    }
+    html+='<p class="sl-note">Preview slice: hulls only. Sails, rudder, cannons, cargo hold and figurehead '
+      +'become separate slots later, along with the full 46-piece Trove, treasure charts and the passive tree.</p>'
+      +'</div>';
+  }
+
+  html+='</div></div></div></div>';
   p.innerHTML=html;
 
-  /* listeners */
-  const leave=$('slLeave'); if(leave) leave.onclick=()=>{ closeSailPanel(); $('tabSkills').click(); };
-  const go=$('slGo');   if(go)   go.onclick=()=>sailLaunch(sailSel);
-  const skip=$('slSkip');if(skip) skip.onclick=()=>{ if(state.sail.voy){ state.sail.voy.endsAt=Date.now(); sailCheckArrival(); renderSail(); } };
-  const fix=$('slFix'); if(fix)  fix.onclick=sailRepair;
-  const fast=$('slFast');if(fast) fast.onchange=e=>{ state.sail.fast=e.target.checked?1:0; saveGame(); };
-  p.querySelectorAll('[data-slisle]').forEach(b=>{
-    b.onclick=()=>{ sailSel=+b.getAttribute('data-slisle'); renderSail(); };
-  });
+  /* ── listeners ── */
+  const on=(id,ev,fn)=>{ const e=$(id); if(e) e.addEventListener(ev,fn); };
+  on('slLeave','click',()=>{ closeSailPanel(); $('tabSkills').click(); });
+  on('slGo','click',()=>sailLaunch(sailSel));
+  on('slSkip','click',()=>{ if(state.sail.voy){ state.sail.voy.endsAt=Date.now(); sailCheckArrival(); renderSail(); } });
+  on('slFix','click',sailRepair);
+  on('slFast','change',e=>{ state.sail.fast=e.target.checked?1:0; saveGame(); });
+  on('slTabVoy','click',()=>{ sailTab='voyage'; renderSail(); });
+  on('slTabYard','click',()=>{ sailTab='yard'; renderSail(); });
+  on('slZIn','click',()=>sailSetZoom(sailView.z*1.35));
+  on('slZOut','click',()=>sailSetZoom(sailView.z/1.35));
+  on('slZFit','click',()=>{ sailView.z=1; sailClamp(); sailPaintView(); });
+  on('slZFind','click',()=>{ if(sailView.z<1.8) sailView.z=1.8; sailCenterOn(sailSel); });
+
   p.querySelectorAll('[data-slbuild]').forEach(b=>{
-    b.onclick=()=>sailBuild(+b.getAttribute('data-slbuild'));
+    b.addEventListener('click',()=>sailBuild(+b.getAttribute('data-slbuild')));
   });
 
-  sailDrawChart();
+  /* marker click, hover card, and drag-suppression so panning never selects */
+  p.querySelectorAll('[data-slisle]').forEach(b=>{
+    const ix=+b.getAttribute('data-slisle');
+    b.addEventListener('click',()=>{ if(_slDragged) return; sailSel=ix; sailTipHide(); renderSail(); });
+    b.addEventListener('mouseenter',e=>sailTipShow(ix,e));
+    b.addEventListener('mousemove',sailTipMove);
+    b.addEventListener('mouseleave',sailTipHide);
+    b.addEventListener('focus',()=>{ const r=b.getBoundingClientRect(); sailTipShow(ix,{clientX:r.left+r.width/2,clientY:r.bottom}); });
+    b.addEventListener('blur',sailTipHide);
+  });
+
+  sailBindStage();
+  sailFit();
+  sailClamp();
+  sailPaintView();
 }
 
-/* Chart is canvas — it must be repainted when the panel is resized. */
+/* ── drag to pan / wheel to zoom ── */
+let _slDragged=false;
+function sailBindStage(){
+  const st=$('slStage'); if(!st) return;
+  let down=false, sx=0, sy=0, ox0=0, oy0=0;
+  const z=()=>sailRootZoom();
+
+  st.addEventListener('pointerdown',e=>{
+    if(e.target.closest('[data-slisle]')) { _slDragged=false; return; }
+    down=true; _slDragged=false;
+    sx=e.clientX; sy=e.clientY; ox0=sailView.ox; oy0=sailView.oy;
+    st.classList.add('grabbing');
+    st.setPointerCapture&&st.setPointerCapture(e.pointerId);
+  });
+  st.addEventListener('pointermove',e=>{
+    if(!down) return;
+    const dx=(e.clientX-sx)/z(), dy=(e.clientY-sy)/z();
+    if(Math.abs(dx)>4||Math.abs(dy)>4) _slDragged=true;
+    sailView.ox=ox0+dx; sailView.oy=oy0+dy;
+    sailClamp(); sailPaintView();
+  });
+  const end=()=>{ down=false; st.classList.remove('grabbing'); setTimeout(()=>{_slDragged=false;},0); };
+  st.addEventListener('pointerup',end);
+  st.addEventListener('pointercancel',end);
+  st.addEventListener('pointerleave',()=>{ if(down) end(); });
+
+  st.addEventListener('wheel',e=>{
+    e.preventDefault();
+    const r=st.getBoundingClientRect(), zz=z();
+    const cx=(e.clientX-r.left)/zz, cy=(e.clientY-r.top)/zz;
+    sailZoomAt(cx, cy, sailView.z*(e.deltaY<0?1.18:1/1.18));
+  }, {passive:false});
+}
+
+/* Chart is canvas and the shell is JS-sized, so both need a resize pass. */
 window.addEventListener('resize',()=>{
   if(!sailMode) return;
-  clearTimeout(_sailRedrawT); _sailRedrawT=setTimeout(sailDrawChart,140);
+  clearTimeout(_sailRedrawT);
+  _sailRedrawT=setTimeout(()=>{ sailFit(); sailClamp(); sailPaintView(); },140);
 });
 
 /* ════════ [JS-25] BOOT ══════════════════════════════════════════════════════════ */
