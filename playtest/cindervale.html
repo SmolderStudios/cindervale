@@ -587,12 +587,18 @@ header h1 .flame{color:var(--ember)}
 .cmb-chip[data-tip],
 .st-ic[data-tip],
 .fm-icon[data-tip],
+.sl-stat[data-tip],
+.sl-tile[data-tip],
+.sl-pill[data-tip],
 .cmb-slot[data-tip]{position:relative}
 .cmb-stat[data-tip]:hover::after,
 .cd-stat[data-tip]:hover::after,
 .cmb-chip[data-tip]:hover::after,
 .st-ic[data-tip]:hover::after,
 .fm-icon[data-tip]:hover::after,
+.sl-stat[data-tip]:hover::after,
+.sl-tile[data-tip]:hover::after,
+.sl-pill[data-tip]:hover::after,
 .cmb-slot[data-tip]:hover::after{
   content:attr(data-tip);
   position:absolute;
@@ -3121,160 +3127,248 @@ body:not(.is-demo) .demo-only{display:none !important}
 .sl-tasks .sl-tk-list{font-size:11.5px;color:var(--muted);line-height:1.5;margin-top:1px}
 /* ════════ [CSS-32 END] RAIDS ══════════════════════════════════════════════════════ */
 
-/* ════════ [CSS-33] SAILING & TREASURE HUNTING (0.9.60) ═══════════════════════════
+/* ════════ [CSS-33] SAILING & TREASURE HUNTING (0.9.61) ═══════════════════════════
    The sailing panel is its own visual world — an admiralty sea chart read by
    lamplight. Ink-blue water and gold rhumb lines sit against the game's warm
    browns deliberately: it is the one place the player leaves the land. Panel
-   chrome (trim, panel bg) still uses the shared tokens so it reads as Cindervale.
-   Mirrors .combat-panel's grid placement so the mode swap is a straight swap. */
-.sail-panel{grid-column:1 / 3;}
+   chrome still uses the shared tokens so it reads as Cindervale.
+
+   Layout is a fixed two-column shell that fits one screen: a pan/zoom chart on
+   the left, a scrolling detail column on the right. The wrap's height is set in
+   JS (sailFit) rather than with vh — the root carries a CSS `zoom`, so vh would
+   resolve against the unscaled viewport and overflow the window. */
+.sail-panel{grid-column:1 / 3;overflow:hidden}
 .tab.tab-sail.on{border-color:#4d9bb0;color:#bfe4ef;background:#12303c;}
-.sl-wrap{display:flex;flex-direction:column;gap:10px}
-/* Preview banner. Amber rather than the panel's sea-blue so it reads as a notice
-   and not as chrome, but muted enough that it doesn't fight the chart for
-   attention every single time the panel opens. */
-.sl-preview{background:rgba(224,118,47,.10);border:1px solid rgba(224,118,47,.42);
-  border-radius:8px;padding:9px 13px;color:var(--muted);
-  font-size:calc(12.5px*var(--tscale));line-height:1.5}
-.sl-preview b{color:var(--ember);letter-spacing:.04em;text-transform:uppercase;
-  font-size:calc(11px*var(--tscale));margin-right:2px}
 
-/* header strip */
-.sl-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+.sl-wrap{display:flex;flex-direction:column;gap:8px;min-height:470px}
+.sl-main{display:grid;grid-template-columns:minmax(0,1fr) minmax(336px,30%);gap:8px;
+  flex:1;min-height:0}
+@media(max-width:1080px){
+  .sl-main{grid-template-columns:1fr;grid-template-rows:minmax(240px,42%) minmax(0,1fr)}
+}
+
+/* ── header strip ── */
+.sl-top{display:flex;align-items:center;gap:11px;flex-wrap:wrap;
   background:linear-gradient(180deg,#16222c,#0e1720);border:1px solid #2c4d5e;
-  border-radius:9px;padding:9px 13px}
+  border-radius:9px;padding:8px 12px;flex:none}
 .sl-top .sl-ship{display:flex;align-items:center;gap:9px;min-width:0}
-.sl-top .sl-ship .ev-icon{width:26px;height:26px;flex:none}
-.sl-shipname{font-family:'Cinzel',serif;font-size:15px;color:#e8d7b0;line-height:1.2}
-.sl-shiptier{font-size:11px;color:#7fa8bc;font-family:monospace}
-.sl-lvl{display:flex;align-items:center;gap:8px;margin-left:auto;flex-wrap:wrap}
-.sl-lvlbox{text-align:right}
-.sl-lvlbox b{font-family:'Cinzel',serif;font-size:16px;color:var(--trim)}
-.sl-lvlbox i{display:block;font-style:normal;font-size:10.5px;color:var(--muted);font-family:monospace}
-.sl-xpbar{width:120px;height:7px;background:#08131a;border:1px solid #2c4d5e;border-radius:4px;overflow:hidden}
+.sl-top .sl-ship .ev-icon{width:25px;height:25px;flex:none}
+.sl-shipname{font-family:'Cinzel',serif;font-size:14.5px;color:#e8d7b0;line-height:1.2}
+.sl-shiptier{font-size:10.5px;color:#7fa8bc;font-family:monospace}
+.sl-lvl{display:flex;align-items:center;gap:9px;margin-left:auto;flex-wrap:wrap}
+.sl-lvlbox{text-align:right;line-height:1.15}
+.sl-lvlbox b{font-family:'Cinzel',serif;font-size:15px;color:var(--trim)}
+.sl-lvlbox i{display:block;font-style:normal;font-size:10px;color:var(--muted);font-family:monospace}
+.sl-xpbar{width:104px;height:6px;background:#08131a;border:1px solid #2c4d5e;border-radius:4px;overflow:hidden}
 .sl-xpbar i{display:block;height:100%;background:linear-gradient(90deg,#8a6a2e,#e0b64e)}
-.sl-stats{display:flex;gap:5px;flex-wrap:wrap}
-.sl-stat{font-family:monospace;font-size:10.5px;padding:3px 8px;border-radius:3px;
-  border:1px solid #2c4d5e;background:#0d1a24;color:#bfe4ef;white-space:nowrap}
-.sl-stat b{color:#e8d7b0}
 
-/* chart */
+/* stat pills — icon + label + value, never bare text */
+.sl-stats{display:flex;gap:5px;flex-wrap:wrap}
+.sl-stat{display:inline-flex;align-items:center;gap:5px;font-family:monospace;font-size:10.5px;
+  padding:3px 9px;border-radius:20px;border:1px solid #2c4d5e;background:#0d1a24;
+  color:#8fb4c6;white-space:nowrap}
+.sl-stat .ev-icon{width:12px;height:12px;flex:none}
+.sl-stat b{color:#e8d7b0;font-size:11.5px}
+.sl-stat.warn{border-color:#6a4520;background:#1f1509;color:#d9a463}
+
+/* ── chart ── */
 .sl-chartbox{border:1px solid #2c4d5e;border-radius:9px;overflow:hidden;background:#0c1822;
-  box-shadow:0 6px 24px rgba(0,0,0,.5)}
-.sl-charthd{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;
-  padding:7px 12px;background:#0a141d;border-bottom:1px solid #2c4d5e}
-.sl-charthd .t{font-family:'Cinzel',serif;font-size:12.5px;color:var(--trim);letter-spacing:.05em}
-.sl-charthd .h{font-family:monospace;font-size:10.5px;color:#6d8c9c}
-.sl-chartscroll{overflow-x:auto}
-.sl-stage{position:relative;width:100%;min-width:700px;aspect-ratio:2.15/1}
-.sl-stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
-.sl-band{position:absolute;top:6px;transform:translateX(-50%);font-family:'Cinzel',serif;
-  font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#54798c;
-  pointer-events:none;white-space:nowrap}
+  box-shadow:0 6px 24px rgba(0,0,0,.5);display:flex;flex-direction:column;min-height:0}
+.sl-charthd{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;
+  padding:6px 10px;background:#0a141d;border-bottom:1px solid #2c4d5e;flex:none}
+.sl-charthd .t{font-family:'Cinzel',serif;font-size:12px;color:var(--trim);letter-spacing:.04em}
+.sl-zoomrow{display:flex;align-items:center;gap:4px}
+.sl-zb{width:24px;height:22px;display:flex;align-items:center;justify-content:center;
+  border:1px solid #2c4d5e;background:#12242f;color:#bfe4ef;border-radius:4px;
+  cursor:var(--cur-pointer);font-family:monospace;font-size:14px;line-height:1;padding:0}
+.sl-zb:hover{background:#1a3543;border-color:#6d9ab2}
+.sl-zb:focus-visible{outline:2px solid var(--trim);outline-offset:1px}
+.sl-zb.wide{width:auto;padding:0 8px;font-size:10px;letter-spacing:.05em}
+.sl-zlvl{font-family:monospace;font-size:10px;color:#6d8c9c;min-width:34px;text-align:center}
+
+.sl-stage{position:relative;flex:1;min-height:0;overflow:hidden;
+  cursor:grab;touch-action:none;user-select:none}
+.sl-stage.grabbing{cursor:grabbing}
+.sl-stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none}
+.sl-band{position:absolute;transform:translateX(-50%);font-family:'Cinzel',serif;
+  font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:#54798c;
+  pointer-events:none;white-space:nowrap;text-shadow:0 1px 4px #030608}
 .sl-port{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;
-  align-items:center;gap:2px;pointer-events:none}
-.sl-port .ev-icon{width:22px;height:22px}
-.sl-port span{font-family:'Cinzel',serif;font-size:10px;letter-spacing:.11em;text-transform:uppercase;
+  align-items:center;gap:1px;pointer-events:none}
+.sl-port .ev-icon{width:19px;height:19px}
+.sl-port span{font-family:'Cinzel',serif;font-size:9px;letter-spacing:.1em;text-transform:uppercase;
   color:var(--trim);text-shadow:0 1px 4px #030608}
 
 .sl-mk{position:absolute;transform:translate(-50%,-50%);background:none;border:none;padding:0;
   cursor:var(--cur-pointer);display:flex;flex-direction:column;align-items:center;gap:2px;
-  font-family:'Cinzel',serif;color:#a9c4d0;transition:color .15s}
-.sl-mk:hover{color:#fbeed0;z-index:6}
+  font-family:'Cinzel',serif;color:#a9c4d0;transition:color .14s}
+.sl-mk:hover{color:#fbeed0;z-index:7}
 .sl-mk:focus-visible{outline:2px solid var(--trim);outline-offset:3px;border-radius:3px}
-.sl-mk .d{width:10px;height:10px;border-radius:50%;background:#2c4d5f;border:1.5px solid #6d9ab2;
-  transition:transform .15s,background .15s,box-shadow .15s}
-.sl-mk:hover .d{transform:scale(1.3);background:var(--trim)}
-.sl-mk.on{color:#fbeed0}
+.sl-mk .d{width:9px;height:9px;border-radius:50%;background:#2c4d5f;border:1.5px solid #6d9ab2;
+  transition:transform .14s,background .14s,box-shadow .14s}
+.sl-mk:hover .d{transform:scale(1.35);background:var(--trim)}
+.sl-mk.on{color:#fbeed0;z-index:6}
 .sl-mk.on .d{background:var(--trim);border-color:#f0dba8;transform:scale(1.4);
-  box-shadow:0 0 0 5px rgba(199,155,78,.16),0 0 12px rgba(199,155,78,.5)}
-.sl-mk.lock{opacity:.42}
+  box-shadow:0 0 0 4px rgba(199,155,78,.18),0 0 12px rgba(199,155,78,.5)}
+.sl-mk.lock{opacity:.4}
 .sl-mk.lock .d{background:#20323c;border-color:#3d5866}
-.sl-mk .n{font-size:10.5px;white-space:nowrap;text-shadow:0 1px 4px #030608,0 0 9px #030608}
+.sl-mk .n{font-size:9.5px;white-space:nowrap;text-shadow:0 1px 4px #030608,0 0 9px #030608;
+  transition:opacity .15s}
 .sl-mk.hid .d{background:#3a2140;border-color:#8c5fa8;border-style:dashed}
 .sl-mk.hid .n{color:#b98fd0;font-style:italic}
-.sl-mk.sailing-to .d{animation:sl-pulse 1.2s ease-in-out infinite}
-@keyframes sl-pulse{0%,100%{box-shadow:0 0 0 3px rgba(224,118,47,.18)}50%{box-shadow:0 0 0 8px rgba(224,118,47,.04)}}
+/* Chart-locked: the island is drawn but sealed until its treasure map turns up. */
+.sl-mk.needchart{opacity:.72}
+.sl-mk.needchart .d{background:#402c12;border-color:#c08a3a;border-style:dashed}
+.sl-mk.needchart .n{color:#d8ab5e}
+.sl-mk.needchart::after{content:"";position:absolute;top:-4px;left:calc(50% + 5px);width:6px;height:6px;
+  border-radius:1px;border:1.5px solid #c08a3a;border-bottom-width:3px}
+.sl-mk.atsea .d{background:#e0762f;border-color:#ffc78a;animation:sl-pulse 1.5s ease-in-out infinite}
+@keyframes sl-pulse{0%,100%{box-shadow:0 0 0 3px rgba(224,118,47,.30)}50%{box-shadow:0 0 0 9px rgba(224,118,47,.02)}}
+/* Zoomed out the labels would collide, so only selected / at-sea / hovered keep text. */
+.sl-stage.far .sl-mk:not(.on):not(.atsea):not(:hover) .n{opacity:0}
+@media(prefers-reduced-motion:reduce){
+  .sl-mk.atsea .d{animation:none}
+  .sl-pbar i,.sl-odds i,.sl-mk .d{transition:none}
+}
 
-/* two-column body */
-.sl-body{display:grid;grid-template-columns:1.3fr 1fr;gap:10px}
-@media(max-width:1100px){.sl-body{grid-template-columns:1fr}}
+/* data-tip popovers on the sailing pills/tiles. The shared rule (see the hover
+   tooltip block up in the combat CSS) anchors left, which would spill off the
+   right-hand column, so tiles and pills there anchor to their right edge. */
+.sl-stat[data-tip],.sl-tile[data-tip],.sl-pill[data-tip]{cursor:var(--cur-help)}
+.sl-stat[data-tip]:hover{border-color:var(--trim)}
+.sl-tile[data-tip]:hover::after,.sl-pill[data-tip]:hover::after{left:auto;right:0}
+
+/* ── island hover card ── */
+.sl-tip{position:fixed;z-index:900;pointer-events:none;opacity:0;transition:opacity .12s;
+  width:288px;background:linear-gradient(180deg,#172936,#0b141c);border:1px solid #4a7488;
+  border-radius:9px;padding:13px 15px;box-shadow:0 10px 30px rgba(0,0,0,.7)}
+.sl-tip.show{opacity:1}
+.sl-tip h6{font-family:'Cinzel',serif;font-size:17px;color:#fbeed0;margin:0 0 3px;line-height:1.2}
+.sl-tip .band{font-family:monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  color:#6d8c9c;margin-bottom:9px}
+.sl-tip .row{display:flex;justify-content:space-between;gap:10px;font-family:monospace;
+  font-size:13px;color:#8fb4c6;margin-top:5px;line-height:1.4}
+.sl-tip .row b{color:#eef6fa;font-size:13.5px}
+.sl-tip .mini{display:flex;height:9px;border-radius:5px;overflow:hidden;margin-top:11px;background:#0a141d;
+  border:1px solid #23404e}
+.sl-tip .mini i{display:block}
+.sl-tip .minikey{display:flex;justify-content:space-between;font-family:monospace;font-size:10.5px;
+  color:#5f8496;margin-top:4px}
+.sl-tip .why{font-size:12.5px;color:#e0a558;margin-top:10px;line-height:1.45;
+  border-top:1px solid #2c4d5e;padding-top:9px}
+.sl-tip .why b{color:#f0c884}
+.sl-tip .hint{font-size:12px;color:#a8cc72;margin-top:9px;line-height:1.45;
+  border-top:1px solid #2c4d5e;padding-top:9px}
+
+/* ── right column ── */
+.sl-side{display:flex;flex-direction:column;gap:8px;min-height:0}
+.sl-seg{display:flex;gap:4px;flex:none;background:#0a141d;border:1px solid #2c4d5e;
+  border-radius:8px;padding:4px}
+.sl-seg button{flex:1;padding:6px 8px;border-radius:5px;border:1px solid transparent;
+  background:transparent;color:#7fa4b4;font-family:'Cinzel',serif;font-size:12.5px;
+  cursor:var(--cur-pointer);transition:background .14s,color .14s}
+.sl-seg button:hover{color:#dbe9ef}
+.sl-seg button.on{background:#1a3543;border-color:#4d9bb0;color:#e8f2f6}
+.sl-seg button:focus-visible{outline:2px solid var(--trim);outline-offset:1px}
+.sl-sidebody{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:8px;
+  padding-right:2px;scrollbar-width:thin;scrollbar-color:#2c4d5e #0a141d}
+
 .sl-card{background:linear-gradient(180deg,#16222c,#0e1720);border:1px solid #2c4d5e;
-  border-radius:9px;padding:13px 15px}
-.sl-card h4{font-family:'Cinzel',serif;font-size:16px;color:#fbeed0;margin:0 0 2px}
-.sl-sub{font-family:monospace;font-size:10.5px;color:#6d8c9c;letter-spacing:.07em;margin-bottom:9px}
-.sl-flavor{font-size:12.5px;color:#a9c4d0;font-style:italic;line-height:1.5;
-  border-left:2px solid #2c4d5e;padding-left:11px;margin:0 0 12px}
-.sl-grid4{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:8px;margin-bottom:13px}
-.sl-kv{background:#0d1a24;border:1px solid #23404e;border-radius:5px;padding:7px 9px}
-.sl-kv .k{font-family:monospace;font-size:8.5px;letter-spacing:.14em;text-transform:uppercase;color:#6d8c9c}
-.sl-kv .v{font-family:'Cinzel',serif;font-size:16px;color:var(--trim);line-height:1.2}
-.sl-kv .v.sm{font-size:12.5px;color:#e8d7b0}
+  border-radius:9px;padding:12px 13px;flex:none}
+.sl-cardhd{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px}
+.sl-card h4{font-family:'Cinzel',serif;font-size:15.5px;color:#fbeed0;margin:0;line-height:1.2}
+.sl-metarow{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
 
-/* outcome odds bar — replaces a danger number */
-.sl-oddlab{display:flex;justify-content:space-between;align-items:baseline;gap:8px;
-  font-family:monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;
-  color:#6d8c9c;margin-bottom:6px}
-.sl-odds{display:flex;height:23px;border-radius:5px;overflow:hidden;border:1px solid #23404e;background:#0d1a24}
+/* small-caps section label with a trailing rule — replaces bare uppercase text */
+.sl-lab{display:flex;align-items:center;gap:8px;font-family:monospace;font-size:9px;
+  letter-spacing:.15em;text-transform:uppercase;color:#5f8496;margin:12px 0 7px}
+.sl-lab::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,#23404e,transparent)}
+
+.sl-flavor{font-size:12px;color:#9fbccb;font-style:italic;line-height:1.5;
+  border-left:2px solid #2c4d5e;padding-left:10px;margin:0}
+
+.sl-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(74px,1fr));gap:6px}
+.sl-tile{background:#0d1a24;border:1px solid #23404e;border-radius:6px;padding:7px 8px}
+.sl-tile .k{display:flex;align-items:center;gap:4px;font-family:monospace;font-size:8.5px;
+  letter-spacing:.1em;text-transform:uppercase;color:#5f8496;margin-bottom:3px}
+.sl-tile .v{font-family:'Cinzel',serif;font-size:15px;color:var(--trim);line-height:1.15}
+.sl-tile .v.sm{font-size:11.5px;color:#e8d7b0;line-height:1.3}
+.sl-tile .sub{font-family:monospace;font-size:9px;color:#5f8496;margin-top:2px;line-height:1.3}
+.sl-tile.bad{border-color:#63281c;background:#1d0d09}
+.sl-tile.bad .v{color:#e0917c}
+
+/* difficulty pill — a word for the risk, next to the bar that details it */
+.sl-pill{display:inline-flex;align-items:center;gap:5px;font-family:'Cinzel',serif;font-size:11px;
+  letter-spacing:.04em;padding:3px 10px;border-radius:20px;border:1px solid;white-space:nowrap}
+.sl-pill em{width:7px;height:7px;border-radius:50%;display:block;flex:none}
+.sl-p1{color:#a8cc72;border-color:#41591f;background:#141d0c}
+.sl-p2{color:#e0c060;border-color:#6a5420;background:#1d1707}
+.sl-p3{color:#e09a52;border-color:#6a4520;background:#1f1509}
+.sl-p4{color:#e2836c;border-color:#63281c;background:#1d0d09}
+
+.sl-odds{display:flex;height:22px;border-radius:6px;overflow:hidden;border:1px solid #23404e;background:#0d1a24}
 .sl-odds i{display:flex;align-items:center;justify-content:center;font-family:monospace;
-  font-size:10px;font-weight:700;color:#0b1206;min-width:0;overflow:hidden;transition:flex-grow .35s ease}
+  font-size:9.5px;font-weight:700;color:#0b1206;min-width:0;overflow:hidden;transition:flex-grow .35s ease}
 .sl-o1{background:#dfb03c}.sl-o2{background:#7da33f}.sl-o3{background:#c9822e}
 .sl-o4{background:#a8412c;color:#f6e2dc}
-.sl-oddkey{display:flex;flex-wrap:wrap;gap:9px;margin-top:7px}
-.sl-oddkey span{font-family:monospace;font-size:9.5px;color:#6d8c9c;display:flex;align-items:center;gap:4px}
-.sl-oddkey em{width:8px;height:8px;border-radius:2px;display:block}
+.sl-oddkey{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;margin-top:8px}
+.sl-oddkey span{font-family:monospace;font-size:9.5px;color:#6d8c9c;display:flex;align-items:center;gap:5px}
+.sl-oddkey em{width:8px;height:8px;border-radius:2px;display:block;flex:none}
 
 .sl-chips{display:flex;flex-wrap:wrap;gap:5px}
 .sl-chip{display:inline-flex;align-items:center;gap:4px;font-family:monospace;font-size:10.5px;
-  padding:3px 8px;border-radius:3px;border:1px solid #2c4d5e;background:#0d1a24;color:#a9c4d0}
+  padding:3px 8px;border-radius:5px;border:1px solid #2c4d5e;background:#0d1a24;color:#a9c4d0}
 .sl-chip .ev-icon{width:13px;height:13px}
 .sl-chip.gold{border-color:#5a4526;background:#1a1409;color:var(--trim)}
 .sl-chip.bad{border-color:#5c2c20;background:#22110d;color:#e0917c}
 .sl-chip.good{border-color:#40561f;background:#161f0c;color:#b4d472}
 .sl-chip.vio{border-color:#4a3058;background:#170f1e;color:#c19adb}
+.sl-chip.mut{border-color:#2c4d5e;background:#0a141d;color:#6d8c9c}
 
-/* buttons */
-.sl-btn{padding:9px 16px;border-radius:6px;cursor:var(--cur-pointer);font-family:'Cinzel',serif;
-  font-size:14px;border:1px solid #3d6274;background:#12242f;color:#dbe9ef;
+.sl-btn{padding:8px 14px;border-radius:6px;cursor:var(--cur-pointer);font-family:'Cinzel',serif;
+  font-size:13.5px;border:1px solid #3d6274;background:#12242f;color:#dbe9ef;
   transition:background .14s,border-color .14s,filter .14s}
 .sl-btn:hover:not(:disabled){background:#1a3543;border-color:#6d9ab2}
 .sl-btn:focus-visible{outline:2px solid var(--trim);outline-offset:2px}
-.sl-btn:disabled{opacity:.4;cursor:var(--cur-na)}
+.sl-btn:disabled{opacity:.42;cursor:var(--cur-na)}
+.sl-btn.sm{padding:5px 10px;font-size:12px}
 .sl-btn.go{background:linear-gradient(180deg,#c96a24,#9c4d16);border-color:#7a4a1e;color:#fff2dd;
-  box-shadow:0 2px 0 #5e2c0c;width:100%}
+  box-shadow:0 2px 0 #5e2c0c;width:100%;font-size:15px;padding:10px}
 .sl-btn.go:hover:not(:disabled){filter:brightness(1.1);background:linear-gradient(180deg,#c96a24,#9c4d16)}
-.sl-btnrow{display:flex;gap:7px;flex-wrap:wrap}
+.sl-btnrow{display:flex;gap:6px;flex-wrap:wrap}
 
-/* live expedition */
-.sl-clock{display:flex;align-items:baseline;gap:11px;flex-wrap:wrap;margin-bottom:8px}
-.sl-clock b{font-family:'Cinzel',serif;font-size:34px;color:#fbeed0;line-height:1;
-  font-variant-numeric:tabular-nums;letter-spacing:.01em}
-.sl-clock span{font-family:monospace;font-size:11px;color:#6d8c9c}
-.sl-pbar{height:8px;background:#08131a;border:1px solid #23404e;border-radius:5px;overflow:hidden;margin-bottom:9px}
+/* live voyage */
+.sl-clock{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;margin-bottom:7px}
+.sl-clock b{font-family:'Cinzel',serif;font-size:30px;color:#fbeed0;line-height:1;
+  font-variant-numeric:tabular-nums}
+.sl-clock span{font-family:monospace;font-size:10.5px;color:#6d8c9c}
+.sl-pbar{height:7px;background:#08131a;border:1px solid #23404e;border-radius:5px;overflow:hidden}
 .sl-pbar i{display:block;height:100%;background:linear-gradient(90deg,#2f5f74,#6d9ab2);transition:width .5s linear}
 
-.sl-result{border-radius:7px;padding:12px 14px;border:1px solid;margin-bottom:10px}
-.sl-result h5{font-family:'Cinzel',serif;font-size:16px;margin:0 0 4px}
-.sl-result p{font-size:12.5px;margin:0;line-height:1.5;color:#c3d4dc}
+.sl-result{border-radius:8px;padding:11px 13px;border:1px solid}
+.sl-result h5{font-family:'Cinzel',serif;font-size:15px;margin:0 0 3px}
+.sl-result p{font-size:12px;margin:0;line-height:1.45;color:#b8ccd6}
 .sl-r1{background:#1d1707;border-color:#6a5420}.sl-r1 h5{color:#dfb03c}
 .sl-r2{background:#141d0c;border-color:#41591f}.sl-r2 h5{color:#7da33f}
 .sl-r3{background:#1f1509;border-color:#6a4520}.sl-r3 h5{color:#c9822e}
 .sl-r4{background:#1d0d09;border-color:#63281c}.sl-r4 h5{color:#c4543a}
-.sl-result .sl-chips{margin-top:9px}
+.sl-result .sl-chips{margin-top:8px}
 
 /* shipyard */
-.sl-yard{display:flex;flex-direction:column;gap:8px}
-.sl-hull{display:flex;align-items:center;gap:10px;background:#0d1a24;border:1px solid #23404e;
-  border-radius:6px;padding:9px 11px}
+.sl-hull{display:flex;align-items:center;gap:9px;background:#0d1a24;border:1px solid #23404e;
+  border-radius:7px;padding:8px 10px;margin-bottom:6px}
+.sl-hull:last-child{margin-bottom:0}
 .sl-hull.cur{border-color:var(--trim);background:#1a1409}
 .sl-hull.lock{opacity:.5}
-.sl-hull .ev-icon{width:26px;height:26px;flex:none}
+.sl-hull .ev-icon{width:24px;height:24px;flex:none}
 .sl-hull .i{flex:1;min-width:0}
-.sl-hull .i b{font-family:'Cinzel',serif;font-size:13px;color:#e8d7b0;display:block}
-.sl-hull .i span{font-family:monospace;font-size:10px;color:#6d8c9c}
-.sl-note{font-size:11.5px;color:var(--muted);line-height:1.5;margin:8px 0 0}
-.sl-preview{display:flex;align-items:center;gap:7px;font-family:monospace;font-size:10.5px;
-  color:#c9822e;background:#1f1509;border:1px dashed #6a4520;border-radius:5px;padding:6px 10px;margin-top:9px}
+.sl-hull .i b{font-family:'Cinzel',serif;font-size:12.5px;color:#e8d7b0;display:block;line-height:1.25}
+.sl-hull .i .st{display:flex;gap:7px;flex-wrap:wrap;font-family:monospace;font-size:9.5px;color:#5f8496;margin-top:2px}
+.sl-hull .i .cst{display:block;font-family:monospace;font-size:9.5px;margin-top:3px;line-height:1.4}
+.sl-note{font-size:11px;color:var(--muted);line-height:1.5;margin:8px 0 0}
+.sl-preview{display:flex;align-items:center;gap:6px;font-family:monospace;font-size:10px;
+  color:#c9822e;background:#1f1509;border:1px dashed #6a4520;border-radius:6px;
+  padding:6px 9px;margin-top:8px;cursor:var(--cur-pointer)}
 /* ════════ [CSS-33 END] SAILING ═══════════════════════════════════════════════════ */
 </style>
 </head>
@@ -3313,7 +3407,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.61</div>
+  <div class="mm-ver">v0.9.66</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -4895,6 +4989,60 @@ const ITEMS={
   trove_mist:    {name:'Hollowtide Almanac',   icon:'📖',sell:16000, rare:true, desc:"Salt-swollen and still legible. It predicts the great ebb to the hour, in a hand nobody at the Admiralty recognises."},
   trove_far:     {name:'Scale of the Old Thing',icon:'🐉',sell:52000, rare:true, desc:"Broader than a shield and lighter than paper. Nothing marks it — not fire, not starsteel, not the void. It was shed, not taken."},
   trove_odd:     {name:'The Steady Lantern',   icon:'🏮',sell:120000,rare:true, desc:"Recovered from an island that is on no chart. It has never guttered. Crews who carry it report arriving where they meant to, which is not always welcome."},
+  /* ─── Treasure maps (0.9.62) — each one permanently charts a sealed island.
+     They drop rarely from one specific island, so the far water is opened by
+     sailing rather than by levelling. Finding one unlocks it on the spot; the
+     map itself stays in the satchel as a record. ─── */
+  chart_gravekeel:{name:"Wrecker's Chart",     icon:'🗺️',sell:6500,  rare:true, desc:"Scratched into a hatch cover by someone who did not survive the writing. It marks Gravekeel Spit, and the words around the edge are not directions."},
+  chart_gibbet:   {name:"Hangman's Chart",     icon:'🗺️',sell:22000, rare:true, desc:"Drawn on the back of a warrant, in the hand of the man it was issued for. Corsair's Gibbet is circled twice."},
+  chart_crown:    {name:"Drowned King's Chart",icon:'🗺️',sell:68000, rare:true, desc:"Vellum that has been underwater for centuries and has not softened. It shows a city, and the city has streets."},
+  chart_voidmaw:  {name:'Chart of the Long Descent',icon:'🗺️',sell:145000,rare:true, desc:"Not a map of a place — a map of a depth. The soundings run past the edge of the parchment and keep going in the margin."},
+  /* ─── Shipwright materials (0.9.64) — the sailing equivalent of beast_sinew /
+     shade_ember / voidheart, gating the top four hulls. Only obtainable at sea,
+     with the same deliberate cross-band scaling: a material is rare in the water
+     where it first appears and common further out, so the far islands cannot be
+     skipped by farming a safe one. ─── */
+  salt_iron:   {name:'Salt-Forged Iron', icon:'⚙️',sell:1400, rare:true, desc:"Ship-iron that has spent forty years in seawater and come out harder than it went in. No forge on land can reproduce it, and every shipwright in Emberwatch has tried."},
+  krakenbone:  {name:'Krakenbone',       icon:'🦴',sell:7200, rare:true, desc:"Light as ash, stiff as starsteel, and it does not rot. Hulls ribbed with it have come home from water that took everything else."},
+  tidewrought: {name:'Tidewrought Heart',icon:'💠',sell:38000,rare:true, desc:"A knot of stone and metal the deep water grew around something it swallowed. Warm on one side. The yard will not say which hull it goes into until it is bolted down."},
+  cannon_barrel:{name:'Salvaged Gun Barrel',icon:'🛢️',sell:2600,rare:true, desc:"Cut from a wreck on The Wracks. Still rifled, still true, and somebody else's initials are stamped into the breech. The yard files them off."},
+  /* Sailing pet + cape (0.9.65). Both are trophies rather than equipment for now —
+     see the note in the sailing module about why they stay out of SHOP/gear. */
+  spet_sailing: {name:'Storm Petrel',      icon:'🐦',sell:0, rare:true, nosell:true, desc:"Followed the ship home from water that had no business holding birds. It sleeps in the rigging and screams before weather. +5% treasure find."},
+  cape_sailing: {name:'Sailing Cape',      icon:'🧭',sell:0, rare:true, nosell:true, desc:"Given at Emberwatch to the handful who have sailed everything there is to sail. Salt-stiff, and the hem has been repaired more than once. +5% Sailing XP · +10% treasure find · +1 berth · −25% crew wages."},
+
+  /* ─── Sea materials (0.9.66) — 24 bespoke drops, six per archipelago, pulled up
+     on voyages and obtainable nowhere else. These replace the old three-per-island
+     fixed haul; every island now rolls a weighted table instead. Recipes arrive per
+     family in later slices — for now they carry gold value and Compendium entries. ─── */
+  // The Shallows
+  rock_salt:      {name:'Rock Salt',           icon:'🧂',sell:45,   sea:1, desc:"Scraped off flats the tide forgot. Cures fish so it keeps for months — the base of any ship's rations."},
+  driftwood:      {name:'Bleached Driftwood',  icon:'🪵',sell:38,   sea:1, desc:"Sun-white and bone dry after years in the water. Burns hotter and faster than anything felled on land."},
+  gull_egg:       {name:'Gull Egg',            icon:'🥚',sell:60,   sea:1, desc:"Speckled, and the gulls of Gullstone Reef are extremely clear about how they feel when you take one."},
+  barnacle_iron:  {name:'Barnacle Iron',       icon:'⚙️',sell:210,  sea:1, desc:"Ship-scrap crusted an inch thick in shell. Chip it clean and it still smelts."},
+  tide_glass:     {name:'Tide-Worn Glass',     icon:'🔷',sell:480,  sea:1, desc:"Somebody's bottle, forty years of surf ago. Frosted soft and edgeless. Cuts into cheap, pretty things."},
+  kelp_frond:     {name:'Kelp Frond',          icon:'🌿',sell:55,   sea:1, desc:"Cut from the Warren, where the forest is underneath you. Steeps into a serviceable low reagent."},
+  // The Wracks
+  wrack_timber:   {name:'Wrack Timber',        icon:'🪵',sell:620,  sea:1, desc:"Hull planking off a ship that died on the reef. Salt-hardened past anything a living tree gives you."},
+  tarred_rope:    {name:'Tarred Rope',         icon:'🪢',sell:540,  sea:1, desc:"Still supple, still black, still smells of the pitch pot. Rigging wants nothing else."},
+  salvaged_powder:{name:'Salvaged Powder',     icon:'🛢️',sell:1400, sea:1, desc:"Dry kegs out of a dead magazine. Whoever sealed them knew their trade and did not survive it."},
+  sailors_locket: {name:"Sailor's Locket",     icon:'📿',sell:2600, sea:1, desc:"Brass, tarnished, and there is a face inside it. The Emberwatch jewellers will rework it and not ask."},
+  ship_bell:      {name:"Cracked Ship's Bell", icon:'🔔',sell:6800, sea:1, rare:true, desc:"Split down one side, so it sounds wrong — but bell bronze is bell bronze, and no mine on the coast yields it."},
+  drowned_ledger: {name:'Drowned Ledger',      icon:'📕',sell:14000,sea:1, rare:true, desc:"A cargo manifest, legible and stamped. The Admiralty pays a bounty for these and does not explain why."},
+  // The Mistlands
+  mistglass:      {name:'Mistglass',           icon:'🔮',sell:2900, sea:1, desc:"It refracts wrong — the light comes out at an angle it did not go in at. Jewellers pay well and work fast."},
+  fogweed:        {name:'Fogweed',             icon:'☘️',sell:2400, sea:1, desc:"Grows where no light reaches, which should not be possible. Alchemists have stopped asking."},
+  spire_stone:    {name:'Spire Stone',         icon:'🧱',sell:5200, sea:1, desc:"Dressed masonry from a tower sixty feet under. Someone cut these blocks in air."},
+  siren_scale:    {name:'Siren Scale',         icon:'🐟',sell:8600, sea:1, desc:"Palm-sized, and warm. It sits between drake and wraith on any tanner's bench."},
+  drowned_coin:   {name:'Drowned Coin',        icon:'🪙',sell:26000,sea:1, rare:true, desc:"Struck by a mint that no longer exists, for a country that no longer exists. The metal alone is worth a house."},
+  tidebound_pearl:{name:'Tidebound Pearl',     icon:'⚪',sell:62000,sea:1, rare:true, desc:"Grown around something that was moving when the oyster closed. Feeds the finest rings in the world."},
+  // The Far Reaches
+  voidwood:       {name:'Voidwood',            icon:'🌲',sell:9500, sea:1, desc:"Timber from trees that grow below the waterline in the Trench. Darker than shadowwood and it does not float."},
+  deep_amber:     {name:'Deep Amber',          icon:'🟠',sell:8200, sea:1, desc:"Resin from something that was a forest before the water came. Burns for hours and smells of a summer nobody remembers."},
+  leviathan_scale:{name:'Leviathan Scale',     icon:'🐉',sell:24000,sea:1, desc:"Broad as a shield, light as paper. Shed, not taken — nothing alive is peeling these off."},
+  abyssal_pearl:  {name:'Abyssal Pearl',       icon:'⚫',sell:58000,sea:1, rare:true, desc:"Black, and it gives nothing back. Hold it to a lamp and the lamp seems dimmer."},
+  starfall_cinder:{name:'Starfall Cinder',     icon:'✨',sell:96000,sea:1, rare:true, desc:"Something came down out of the sky into deep water a very long time ago, and it is still warm."},
+  crown_fragment: {name:'Crown Fragment',      icon:'👑',sell:180000,sea:1,rare:true, desc:"One piece of a circlet that was worn by whatever the Sunken Crown was built for. There are others down there."},
 };
 
 /* ════════ COMBAT GEAR STATS ════════════════════════════════════════════════════
@@ -7074,6 +7222,34 @@ function _critterSVG(p){
     +`</svg>`;
 }
 
+/* ════ Sea-material icon generators (0.9.66) ══════════════════════════════════════
+   Five silhouettes cover fourteen of the twenty-four sea drops, palette-swapped per
+   archipelago — the same one-base-shape-per-family approach the log, seed, potion and
+   cape sets already use. `pre` must be unique per call: gradient ids share one
+   document namespace, so a duplicate prefix would make two items render identically. */
+
+/* Rounded gem / sea-glass / pearl. halo? adds a magical glow for the deep tiers. */
+function _seaGlassSVG(p){
+  const halo = p.halo ? `<circle cx="32" cy="34" r="26" fill="${p.halo}" opacity="0.3"/>` : '';
+  return `<svg class="ev-icon" viewBox="0 0 64 64">${halo}<defs><radialGradient id="${p.pre}_g" cx="0.36" cy="0.3" r="0.78"><stop offset="0" stop-color="${p.hi}"/><stop offset="0.38" stop-color="${p.mid}"/><stop offset="0.76" stop-color="${p.lo}"/><stop offset="1" stop-color="${p.deep}"/></radialGradient></defs><ellipse cx="32" cy="56" rx="15" ry="2.8" fill="#000" opacity="0.38"/><path d="M32 10q13 2 17 14t-5 24q-12 8-24 0T15 24 32 10z" fill="url(#${p.pre}_g)" stroke="${p.deep}" stroke-width="0.9"/><path d="M32 10q10 2 14 12l-9 4-7-6z" fill="${p.hi}" opacity="0.35"/><ellipse cx="25" cy="26" rx="5" ry="7" fill="#fff" opacity="0.34" transform="rotate(-22 25 26)"/><path d="M20 44q7 5 16 2" stroke="${p.hi}" stroke-width="1.4" fill="none" opacity="0.3" stroke-linecap="round"/><circle cx="41" cy="20" r="1.2" fill="#fff" opacity="0.6"/></svg>`;
+}
+/* Cut plank / driftwood billet with a visible end grain. */
+function _seaTimberSVG(p){
+  return `<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="${p.pre}_b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${p.bark[0]}"/><stop offset="0.32" stop-color="${p.bark[1]}"/><stop offset="0.72" stop-color="${p.bark[2]}"/><stop offset="1" stop-color="${p.bark[3]}"/></linearGradient><linearGradient id="${p.pre}_e" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${p.end[0]}"/><stop offset="0.5" stop-color="${p.end[1]}"/><stop offset="1" stop-color="${p.end[2]}"/></linearGradient></defs><ellipse cx="32" cy="52" rx="22" ry="2.6" fill="#000" opacity="0.34"/><path d="M9 24q-2 3-2 9t2 9l35 3q5 0 5-12t-5-12z" fill="url(#${p.pre}_b)"/><path d="M14 24v18M21 23.6v19M28 23.4v19.4M35 23.6v19M42 24v18" stroke="${p.rings}" stroke-width="0.6" opacity="0.38"/><path d="M11 24h33" stroke="#fff" stroke-width="1.1" opacity="0.24" fill="none"/><ellipse cx="47" cy="33" rx="8" ry="12" fill="url(#${p.pre}_e)"/><ellipse cx="47" cy="33" rx="6.6" ry="10" fill="none" stroke="${p.rings}" stroke-width="0.5" opacity="0.55"/><ellipse cx="47" cy="33" rx="4.4" ry="6.6" fill="none" stroke="${p.rings}" stroke-width="0.5" opacity="0.45"/><ellipse cx="47" cy="33" rx="2.2" ry="3.4" fill="none" stroke="${p.rings}" stroke-width="0.5" opacity="0.4"/><ellipse cx="47" cy="25" rx="5.6" ry="2.6" fill="#fff" opacity="0.2"/><path d="M18 30q4-2 7 1M30 37q4-2 7 1" stroke="${p.bark[3]}" stroke-width="0.7" fill="none" opacity="0.4"/></svg>`;
+}
+/* Irregular chunk — scrap metal, masonry, cinder. crust = encrustation specks. */
+function _seaScrapSVG(p){
+  return `<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="${p.pre}_m" x1="0.2" y1="0" x2="0.8" y2="1"><stop offset="0" stop-color="${p.hi}"/><stop offset="0.42" stop-color="${p.mid}"/><stop offset="1" stop-color="${p.lo}"/></linearGradient></defs><ellipse cx="32" cy="55" rx="19" ry="3" fill="#000" opacity="0.4"/><path d="M15 24l11-9 16 3 8 13-4 16-18 5-13-9z" fill="url(#${p.pre}_m)" stroke="${p.lo}" stroke-width="0.9"/><path d="M26 15l16 3-8 12z" fill="${p.hi}" opacity="0.42"/><path d="M15 24l11-9 8 15-19 6z" fill="#fff" opacity="0.14"/><path d="M34 30l16-9-4 16z" fill="${p.lo}" opacity="0.3"/><path d="M34 30l-19 6 13 9 18-5z" fill="${p.lo}" opacity="0.16"/><circle cx="22" cy="36" r="3.2" fill="${p.crust}" opacity="0.85"/><circle cx="22" cy="36" r="1.5" fill="${p.crust2}" opacity="0.9"/><circle cx="40" cy="41" r="2.4" fill="${p.crust}" opacity="0.75"/><circle cx="40" cy="41" r="1.1" fill="${p.crust2}" opacity="0.85"/><circle cx="44" cy="27" r="1.8" fill="${p.crust}" opacity="0.6"/><circle cx="29" cy="22" r="1.4" fill="${p.crust2}" opacity="0.5"/></svg>`;
+}
+/* Ribbon frond — kelp, fogweed. */
+function _seaLeafSVG(p){
+  return `<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="${p.pre}_l" x1="0.2" y1="0" x2="0.8" y2="1"><stop offset="0" stop-color="${p.top}"/><stop offset="0.5" stop-color="${p.mid}"/><stop offset="1" stop-color="${p.lo}"/></linearGradient></defs><ellipse cx="32" cy="58" rx="13" ry="2.4" fill="#000" opacity="0.32"/><path d="M31 58q-3-18 2-30t-1-20" stroke="${p.stem}" stroke-width="2.6" fill="none" stroke-linecap="round"/><path d="M32 12q10 3 12 12t-9 10q3-10-3-22z" fill="url(#${p.pre}_l)"/><path d="M31 20q-11 2-13 12t10 11q-4-11 3-23z" fill="url(#${p.pre}_l)" opacity="0.92"/><path d="M33 34q9 4 10 12t-8 8q2-9-2-20z" fill="url(#${p.pre}_l)" opacity="0.85"/><path d="M31 40q-8 3-9 10t7 8q-3-8 2-18z" fill="url(#${p.pre}_l)" opacity="0.78"/><path d="M35 17q6 4 7 10M28 25q-7 4-8 10M35 38q6 4 7 10" stroke="${p.lo}" stroke-width="0.7" fill="none" opacity="0.5"/><circle cx="40" cy="18" r="1.6" fill="${p.top}" opacity="0.7"/><circle cx="23" cy="30" r="1.3" fill="${p.top}" opacity="0.6"/></svg>`;
+}
+/* Overlapping scale plate. */
+function _seaScaleSVG(p){
+  return `<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="${p.pre}_s" x1="0.25" y1="0" x2="0.8" y2="1"><stop offset="0" stop-color="${p.hi}"/><stop offset="0.35" stop-color="${p.mid}"/><stop offset="0.8" stop-color="${p.lo}"/><stop offset="1" stop-color="${p.edge}"/></linearGradient><radialGradient id="${p.pre}_h" cx="0.5" cy="0.4" r="0.6"><stop offset="0" stop-color="${p.hi}" stop-opacity="0.3"/><stop offset="1" stop-color="${p.hi}" stop-opacity="0"/></radialGradient></defs><circle cx="32" cy="32" r="26" fill="url(#${p.pre}_h)"/><ellipse cx="32" cy="57" rx="14" ry="2.6" fill="#000" opacity="0.38"/><path d="M32 6q17 8 17 26T32 60Q15 50 15 32T32 6z" fill="url(#${p.pre}_s)" stroke="${p.edge}" stroke-width="0.9"/><path d="M32 6q12 8 14 26 1 16-14 28 4-14 4-28 0-14-4-26z" fill="${p.edge}" opacity="0.26"/><path d="M22 15q-5 10-5 18t5 17" stroke="${p.hi}" stroke-width="1.6" fill="none" opacity="0.45" stroke-linecap="round"/><path d="M32 14v38" stroke="${p.edge}" stroke-width="0.9" opacity="0.4"/><path d="M32 20q-7 5-9 13M32 20q7 5 9 13M32 34q-6 4-8 11M32 34q6 4 8 11" stroke="${p.edge}" stroke-width="0.7" fill="none" opacity="0.35"/><ellipse cx="26" cy="19" rx="4.4" ry="6" fill="#fff" opacity="0.2"/><circle cx="42" cy="22" r="1.2" fill="${p.hi}" opacity="0.6"/></svg>`;
+}
+
 const ICONS = {
   /* ─── Skill icons (13) ─── */
   woodcutting: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="wc_wood" x1="0" y1="0" x2="1" y2="0.6"><stop offset="0" stop-color="#8b5a30"/><stop offset="0.4" stop-color="#a86c3b"/><stop offset="0.8" stop-color="#7a4a25"/><stop offset="1" stop-color="#4a2e15"/></linearGradient><linearGradient id="wc_blade" x1="0.2" y1="0" x2="0.8" y2="1"><stop offset="0" stop-color="#f5f5fa"/><stop offset="0.3" stop-color="#c8c8d5"/><stop offset="0.7" stop-color="#6a6a7a"/><stop offset="1" stop-color="#2a2a36"/></linearGradient><linearGradient id="wc_brass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f5d278"/><stop offset="0.5" stop-color="#c79b4e"/><stop offset="1" stop-color="#6e552c"/></linearGradient></defs><g transform="rotate(-30 32 32)"><rect x="29" y="30" width="6" height="30" rx="2" fill="url(#wc_wood)"/><rect x="30.5" y="31" width="1.5" height="27" fill="#fff" opacity="0.2"/><rect x="29" y="50" width="6" height="3" fill="#2a1810"/><rect x="29" y="60" width="6" height="2" fill="#1a0e08"/></g><path d="M22 14 Q47 8 56 22 L52 30 Q48 27 38 27 L24 26 Q20 22 22 14 Z" fill="url(#wc_blade)"/><path d="M28 16 Q43 12 50 20" stroke="#fff" stroke-width="1.6" fill="none" opacity="0.55" stroke-linecap="round"/><path d="M50 22 L56 24 L55 27 L49 24 Z" fill="#fff" opacity="0.85"/><g transform="rotate(-30 32 32)"><ellipse cx="32" cy="32" rx="5" ry="3.5" fill="url(#wc_brass)"/><ellipse cx="32" cy="31" rx="4" ry="2" fill="#e0762f" opacity="0.5"/><circle cx="30" cy="32" r="0.7" fill="#3a2a17"/><circle cx="34" cy="32" r="0.7" fill="#3a2a17"/></g></svg>',
@@ -7912,6 +8088,48 @@ const ICONS = {
   trove_wracks: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="tv2_b" x1="0.1" y1="0" x2="0.9" y2="1"><stop offset="0" stop-color="#f0d894"/><stop offset="0.35" stop-color="#c79b4e"/><stop offset="0.75" stop-color="#7d5f2a"/><stop offset="1" stop-color="#3e2f14"/></linearGradient><radialGradient id="tv2_g" cx="0.5" cy="0.45" r="0.6"><stop offset="0" stop-color="#f0d894" stop-opacity="0.5"/><stop offset="1" stop-color="#f0d894" stop-opacity="0"/></radialGradient></defs><ellipse cx="32" cy="58" rx="17" ry="3" fill="#000" opacity="0.4"/><circle cx="32" cy="32" r="24" fill="url(#tv2_g)"/><path d="M32 8 Q30 8 30 11 L30 14 Q18 19 15 34 Q13 44 10 48 L54 48 Q51 44 49 34 Q46 19 34 14 L34 11 Q34 8 32 8 Z" fill="url(#tv2_b)" stroke="#3e2f14" stroke-width="0.8"/><path d="M21 24 Q17 33 16 45" stroke="#fbeaba" stroke-width="1.6" fill="none" opacity="0.55" stroke-linecap="round"/><path d="M10 48 L54 48 L54 52 L10 52 Z" fill="#8d6a2e" stroke="#3e2f14" stroke-width="0.7"/><path d="M10 48 L54 48 L54 49.6 L10 49.6 Z" fill="#f0d894" opacity="0.65"/><path d="M29 52 L35 52 L34 58 Q32 60 30 58 Z" fill="#6d5734"/><ellipse cx="32" cy="58" rx="3.4" ry="2.6" fill="#c79b4e"/><path d="M24 30 Q28 26 32 30" stroke="#3e2f14" stroke-width="0.7" fill="none" opacity="0.45"/><circle cx="40" cy="22" r="1.4" fill="#fff" opacity="0.55"/></svg>',
   trove_mist: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="tv3_c" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4d7c92"/><stop offset="0.5" stop-color="#2c505f"/><stop offset="1" stop-color="#132a35"/></linearGradient><linearGradient id="tv3_p" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f2e6c6"/><stop offset="0.6" stop-color="#d5c39a"/><stop offset="1" stop-color="#a08d66"/></linearGradient><radialGradient id="tv3_g" cx="0.5" cy="0.4" r="0.6"><stop offset="0" stop-color="#8fd0e6" stop-opacity="0.42"/><stop offset="1" stop-color="#8fd0e6" stop-opacity="0"/></radialGradient></defs><ellipse cx="32" cy="57" rx="20" ry="3" fill="#000" opacity="0.4"/><circle cx="32" cy="32" r="24" fill="url(#tv3_g)"/><path d="M8 14 Q20 10 31 15 L31 52 Q20 47 8 51 Z" fill="url(#tv3_c)"/><path d="M56 14 Q44 10 33 15 L33 52 Q44 47 56 51 Z" fill="url(#tv3_c)"/><path d="M11 17 Q21 14 30 18 L30 49 Q21 45 11 48 Z" fill="url(#tv3_p)"/><path d="M53 17 Q43 14 34 18 L34 49 Q43 45 53 48 Z" fill="url(#tv3_p)"/><path d="M15 24 L26 22 M15 29 L26 27 M15 34 L24 32.5 M15 39 L26 37" stroke="#7d6a46" stroke-width="1.1" opacity="0.65" stroke-linecap="round"/><path d="M38 23 L49 25 M38 28 L49 30 M40 33 L49 35 M38 38 L49 40" stroke="#7d6a46" stroke-width="1.1" opacity="0.65" stroke-linecap="round"/><path d="M31 15 L31 52 L33 52 L33 15 Z" fill="#132a35"/><circle cx="41" cy="31" r="5" fill="none" stroke="#8fd0e6" stroke-width="1.2" opacity="0.75"/><path d="M41 26.5 L42.6 30.4 L41 34.6 L39.4 30.4 Z" fill="#8fd0e6" opacity="0.85"/><path d="M6 44 Q16 40 26 44" stroke="#bcd8e4" stroke-width="1.4" fill="none" opacity="0.3"/></svg>',
   trove_far: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="tv4_s" x1="0.2" y1="0" x2="0.8" y2="1"><stop offset="0" stop-color="#8fe0d0"/><stop offset="0.3" stop-color="#3d9a92"/><stop offset="0.65" stop-color="#1f4f5c"/><stop offset="1" stop-color="#0c2029"/></linearGradient><radialGradient id="tv4_g" cx="0.45" cy="0.35" r="0.65"><stop offset="0" stop-color="#7fe8d4" stop-opacity="0.5"/><stop offset="1" stop-color="#7fe8d4" stop-opacity="0"/></radialGradient></defs><ellipse cx="32" cy="58" rx="15" ry="3" fill="#000" opacity="0.4"/><circle cx="32" cy="30" r="25" fill="url(#tv4_g)"/><path d="M32 4 Q52 14 52 34 Q52 52 32 60 Q12 52 12 34 Q12 14 32 4 Z" fill="url(#tv4_s)" stroke="#0c2029" stroke-width="0.9"/><path d="M32 4 Q44 12 46 30 Q47 46 32 58 Q36 44 36 30 Q36 15 32 4 Z" fill="#0c2029" opacity="0.3"/><path d="M22 16 Q17 26 17 36 Q17 46 24 54" stroke="#a8f0e0" stroke-width="1.6" fill="none" opacity="0.5" stroke-linecap="round"/><path d="M32 12 Q32 30 32 52" stroke="#0c2029" stroke-width="1" opacity="0.45"/><path d="M32 20 Q24 26 22 36 M32 20 Q40 26 42 36 M32 34 Q25 39 23 47 M32 34 Q39 39 41 47" stroke="#0c2029" stroke-width="0.8" fill="none" opacity="0.4"/><ellipse cx="26" cy="20" rx="5" ry="7" fill="#fff" opacity="0.22"/><circle cx="44" cy="20" r="1.5" fill="#c9fff2" opacity="0.7"/><circle cx="20" cy="42" r="1.1" fill="#c9fff2" opacity="0.55"/></svg>',
+  /* Sea materials (0.9.66) — see the five _sea*SVG generators defined above ICONS
+     for the palette-swapped families; bespoke one-offs are inline here. */
+  tide_glass:      _seaGlassSVG({pre:'tg', hi:'#dff2f8', mid:'#8fc4d8', lo:'#3d6a80', deep:'#16303d', halo:null}),
+  mistglass:       _seaGlassSVG({pre:'mg', hi:'#eae4f6', mid:'#a893c8', lo:'#5b4a7e', deep:'#241c38', halo:'#a888d8'}),
+  tidebound_pearl: _seaGlassSVG({pre:'tp', hi:'#fffdf6', mid:'#e2dcc6', lo:'#a89f84', deep:'#4e4838', halo:'#f0e8c8'}),
+  abyssal_pearl:   _seaGlassSVG({pre:'ap', hi:'#5c6a74', mid:'#2a343c', lo:'#131a20', deep:'#05080a', halo:'#3a5a70'}),
+  driftwood:       _seaTimberSVG({pre:'dw', bark:['#e6dcc8','#c9bda4','#9d9280','#655d4e'], end:['#f2ead8','#d4c9b0','#9d9280'], rings:'#8e8470'}),
+  wrack_timber:    _seaTimberSVG({pre:'wt', bark:['#8e7a5c','#6d5c42','#4e422e','#2c251a'], end:['#a8916c','#7d6b4e','#544733'], rings:'#3e3526'}),
+  voidwood:        _seaTimberSVG({pre:'vw', bark:['#5a4a68','#3d3049','#261d31','#120c1a'], end:['#6d5a80','#443659','#251c33'], rings:'#7a5f9a'}),
+  barnacle_iron:   _seaScrapSVG({pre:'bi', hi:'#b9c6cc', mid:'#6e828c', lo:'#2c3a42', crust:'#8ca38a', crust2:'#c8d8c4'}),
+  spire_stone:     _seaScrapSVG({pre:'ss', hi:'#cdd6dc', mid:'#8a97a0', lo:'#414c55', crust:'#6d8c9c', crust2:'#a9c4d0'}),
+  starfall_cinder: _seaScrapSVG({pre:'sc', hi:'#ffe9b0', mid:'#e0762f', lo:'#5a1e08', crust:'#ffb64a', crust2:'#fff6d8'}),
+  kelp_frond:      _seaLeafSVG({pre:'kf', top:'#7da33f', mid:'#3f6a2a', lo:'#1e3416', stem:'#5a7a2e'}),
+  fogweed:         _seaLeafSVG({pre:'fw', top:'#bcd8dc', mid:'#6d8c9c', lo:'#2c4453', stem:'#4e7182'}),
+  siren_scale:     _seaScaleSVG({pre:'sr', hi:'#c8f0e4', mid:'#4d9b96', lo:'#1c4a52', edge:'#0d2a30'}),
+  leviathan_scale: _seaScaleSVG({pre:'ls', hi:'#8fe0d0', mid:'#2b7f80', lo:'#0e2f38', edge:'#050f14'}),
+  rock_salt: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="rs_a" x1="0.2" y1="0" x2="0.8" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="0.45" stop-color="#e2ecf0"/><stop offset="1" stop-color="#9fb0b8"/></linearGradient></defs><ellipse cx="32" cy="56" rx="19" ry="3" fill="#000" opacity="0.34"/><path d="M18 26l8-10 12 2 8 12-6 12-16 2-8-10z" fill="url(#rs_a)" stroke="#7d8e96" stroke-width="0.8"/><path d="M26 16l4 12-12-2z" fill="#fff" opacity="0.75"/><path d="M38 18l8 12-16-2z" fill="#cfdce2" opacity="0.7"/><path d="M30 28l16 2-6 12-16 2z" fill="#b4c4cc" opacity="0.55"/><path d="M12 46l6-6 6 6-5 6z" fill="url(#rs_a)" stroke="#7d8e96" stroke-width="0.7"/><path d="M44 44l7-5 4 7-6 5z" fill="url(#rs_a)" stroke="#7d8e96" stroke-width="0.7"/><circle cx="24" cy="22" r="1.3" fill="#fff"/><circle cx="42" cy="36" r="1" fill="#fff" opacity="0.8"/></svg>',
+  gull_egg: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="ge_a" x1="0.3" y1="0" x2="0.8" y2="1"><stop offset="0" stop-color="#fdf6e4"/><stop offset="0.5" stop-color="#e4d6b4"/><stop offset="1" stop-color="#a89a78"/></linearGradient></defs><ellipse cx="32" cy="58" rx="14" ry="2.6" fill="#000" opacity="0.36"/><ellipse cx="32" cy="34" rx="16" ry="22" fill="url(#ge_a)" stroke="#8e8266" stroke-width="0.8"/><ellipse cx="26" cy="24" rx="5" ry="8" fill="#fff" opacity="0.5"/><ellipse cx="26" cy="40" rx="2.6" ry="2" fill="#7a6a4e" opacity="0.6"/><ellipse cx="38" cy="30" rx="2" ry="1.6" fill="#7a6a4e" opacity="0.55"/><ellipse cx="34" cy="46" rx="2.2" ry="1.7" fill="#7a6a4e" opacity="0.5"/><ellipse cx="40" cy="42" rx="1.5" ry="1.2" fill="#7a6a4e" opacity="0.45"/><ellipse cx="28" cy="52" rx="1.7" ry="1.3" fill="#7a6a4e" opacity="0.4"/><ellipse cx="22" cy="34" rx="1.4" ry="1.1" fill="#7a6a4e" opacity="0.4"/></svg>',
+  tarred_rope: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="tr_a" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6d5c42"/><stop offset="0.45" stop-color="#3e3426"/><stop offset="1" stop-color="#17120c"/></linearGradient></defs><ellipse cx="32" cy="56" rx="20" ry="3" fill="#000" opacity="0.4"/><ellipse cx="32" cy="40" rx="21" ry="10" fill="none" stroke="url(#tr_a)" stroke-width="7"/><ellipse cx="32" cy="32" rx="19" ry="9" fill="none" stroke="url(#tr_a)" stroke-width="7"/><ellipse cx="32" cy="24" rx="16" ry="8" fill="none" stroke="url(#tr_a)" stroke-width="7"/><path d="M13 40q6-4 12 0M27 41q6-4 12 0M14 32q6-4 12 0M28 33q6-4 12 0M17 24q6-4 12 0" stroke="#8a7558" stroke-width="1.2" fill="none" opacity="0.6"/><path d="M48 22q6 4 4 12" stroke="url(#tr_a)" stroke-width="6" fill="none" stroke-linecap="round"/><ellipse cx="24" cy="20" rx="6" ry="2.4" fill="#8a7558" opacity="0.3"/></svg>',
+  salvaged_powder: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="sp_a" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8e7654"/><stop offset="0.35" stop-color="#5f4e35"/><stop offset="0.75" stop-color="#3e3223"/><stop offset="1" stop-color="#231c12"/></linearGradient><linearGradient id="sp_b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a8b4bc"/><stop offset="1" stop-color="#4c5a64"/></linearGradient></defs><ellipse cx="32" cy="57" rx="17" ry="3" fill="#000" opacity="0.4"/><path d="M18 16q14-4 28 0v32q-14 4-28 0z" fill="url(#sp_a)" stroke="#1d170f" stroke-width="0.9"/><ellipse cx="32" cy="16" rx="14" ry="4.4" fill="#6d5c42" stroke="#1d170f" stroke-width="0.8"/><ellipse cx="32" cy="15.4" rx="12" ry="3.2" fill="#3a2f20"/><path d="M17 24h30M17 40h30" stroke="url(#sp_b)" stroke-width="3.4"/><path d="M17 24h30v1.2H17zM17 40h30v1.2H17z" fill="#cdd8de" opacity="0.5"/><path d="M25 18v28M32 17v30M39 18v28" stroke="#231c12" stroke-width="0.7" opacity="0.5"/><circle cx="44" cy="52" r="2.4" fill="#1a1a1a"/><circle cx="49" cy="54" r="1.7" fill="#1a1a1a"/><circle cx="40" cy="55" r="1.4" fill="#1a1a1a"/></svg>',
+  sailors_locket: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="sl_a" x1="0.2" y1="0" x2="0.8" y2="1"><stop offset="0" stop-color="#f0d894"/><stop offset="0.4" stop-color="#b48f42"/><stop offset="0.8" stop-color="#6b4f21"/><stop offset="1" stop-color="#33240d"/></linearGradient></defs><path d="M32 8a18 18 0 0 0-13 5" stroke="url(#sl_a)" stroke-width="2.4" fill="none" stroke-linecap="round"/><path d="M32 8a18 18 0 0 1 13 5" stroke="url(#sl_a)" stroke-width="2.4" fill="none" stroke-linecap="round"/><path d="M19 13 26 26M45 13 38 26" stroke="url(#sl_a)" stroke-width="2" stroke-linecap="round"/><ellipse cx="32" cy="40" rx="15" ry="17" fill="url(#sl_a)" stroke="#2c1f0a" stroke-width="0.9"/><ellipse cx="32" cy="40" rx="10.5" ry="12.5" fill="#2c2418"/><ellipse cx="32" cy="40" rx="10.5" ry="12.5" fill="none" stroke="#6b4f21" stroke-width="1"/><ellipse cx="32" cy="36" rx="4" ry="4.6" fill="#8a7a62"/><path d="M25 51q3-8 7-8t7 8z" fill="#8a7a62"/><ellipse cx="26" cy="31" rx="3.4" ry="5" fill="#fff" opacity="0.28"/><circle cx="32" cy="24" r="2.6" fill="url(#sl_a)"/></svg>',
+  ship_bell: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="sb_a" x1="0.1" y1="0" x2="0.9" y2="1"><stop offset="0" stop-color="#f0d894"/><stop offset="0.35" stop-color="#c79b4e"/><stop offset="0.75" stop-color="#7d5f2a"/><stop offset="1" stop-color="#3e2f14"/></linearGradient></defs><ellipse cx="32" cy="57" rx="16" ry="2.8" fill="#000" opacity="0.4"/><path d="M32 9q-2 0-2 3v2Q18 19 15 34q-2 10-5 14h44q-3-4-5-14Q46 19 34 14v-2q0-3-2-3z" fill="url(#sb_a)" stroke="#3e2f14" stroke-width="0.8"/><path d="M21 24q-4 9-5 21" stroke="#fbeaba" stroke-width="1.6" fill="none" opacity="0.5" stroke-linecap="round"/><path d="M40 20l3 28" stroke="#231a08" stroke-width="2.2" opacity="0.85"/><path d="M40 20l1.4 28" stroke="#0d0a04" stroke-width="0.9"/><path d="M10 48h44v4H10z" fill="#8d6a2e" stroke="#3e2f14" stroke-width="0.7"/><path d="M10 48h44v1.5H10z" fill="#f0d894" opacity="0.6"/><path d="M29 52h6l-1 6q-2 2-4 0z" fill="#6d5734"/><ellipse cx="32" cy="58" rx="3.2" ry="2.4" fill="#c79b4e"/></svg>',
+  drowned_ledger: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="dl_a" x1="0" y1="0" x2="0.4" y2="1"><stop offset="0" stop-color="#7d2a28"/><stop offset="0.5" stop-color="#54171a"/><stop offset="1" stop-color="#280a0c"/></linearGradient><linearGradient id="dl_b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f2e8cc"/><stop offset="0.6" stop-color="#d4c6a2"/><stop offset="1" stop-color="#9d9280"/></linearGradient></defs><ellipse cx="32" cy="57" rx="18" ry="2.8" fill="#000" opacity="0.4"/><path d="M12 10h34q4 0 4 4v40H16q-4 0-4-4z" fill="url(#dl_a)" stroke="#1c0708" stroke-width="0.9"/><path d="M17 13h30v38H17z" fill="#efe3c4"/><path d="M17 13h30v38H17z" fill="none" stroke="#a89a78" stroke-width="0.6"/><path d="M21 20h22M21 25h22M21 30h18M21 35h22M21 40h15M21 45h20" stroke="#8e7f5e" stroke-width="1.1" opacity="0.75" stroke-linecap="round"/><path d="M38 20v31" stroke="#8e7f5e" stroke-width="0.7" opacity="0.5"/><path d="M12 10h5v44h-5z" fill="#3e0f11" opacity="0.7"/><path d="M17 42q10 6 30 2v7H17z" fill="#8fa8b0" opacity="0.35"/><circle cx="44" cy="17" r="3" fill="#c79b4e" opacity="0.9"/></svg>',
+  drowned_coin: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><radialGradient id="dc_a" cx="0.36" cy="0.32" r="0.75"><stop offset="0" stop-color="#fff3c0"/><stop offset="0.35" stop-color="#e0b64e"/><stop offset="0.75" stop-color="#8a6a2e"/><stop offset="1" stop-color="#3e2c0e"/></radialGradient><radialGradient id="dc_g" cx="0.5" cy="0.5" r="0.55"><stop offset="0" stop-color="#ffe08a" stop-opacity="0.4"/><stop offset="1" stop-color="#ffe08a" stop-opacity="0"/></radialGradient></defs><circle cx="32" cy="32" r="27" fill="url(#dc_g)"/><ellipse cx="32" cy="56" rx="16" ry="2.8" fill="#000" opacity="0.4"/><circle cx="38" cy="36" r="16" fill="#6b4f21" opacity="0.55"/><circle cx="30" cy="30" r="19" fill="url(#dc_a)" stroke="#33240d" stroke-width="1"/><circle cx="30" cy="30" r="15" fill="none" stroke="#7d5f2a" stroke-width="1.1"/><path d="M30 19l3.4 8.2 8.6.7-6.6 5.6 2 8.5-7.4-4.6-7.4 4.6 2-8.5-6.6-5.6 8.6-.7z" fill="#fff3c0" opacity="0.85"/><path d="M17 22a19 19 0 0 1 9-7" stroke="#fff" stroke-width="1.8" fill="none" opacity="0.4" stroke-linecap="round"/><circle cx="46" cy="46" r="2" fill="#8ca38a" opacity="0.7"/></svg>',
+  deep_amber: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><radialGradient id="da_a" cx="0.38" cy="0.32" r="0.72"><stop offset="0" stop-color="#ffe6a8"/><stop offset="0.32" stop-color="#f0a23c"/><stop offset="0.7" stop-color="#a85a12"/><stop offset="1" stop-color="#4e2306"/></radialGradient><radialGradient id="da_g" cx="0.5" cy="0.5" r="0.55"><stop offset="0" stop-color="#ffb64a" stop-opacity="0.45"/><stop offset="1" stop-color="#ffb64a" stop-opacity="0"/></radialGradient></defs><circle cx="32" cy="34" r="27" fill="url(#da_g)"/><ellipse cx="32" cy="57" rx="15" ry="2.8" fill="#000" opacity="0.4"/><path d="M32 8l14 8 6 18-6 16-14 6-14-6-6-16 6-18z" fill="url(#da_a)" stroke="#3e1c05" stroke-width="0.9"/><path d="M32 8l14 8-9 7-7-5z" fill="#ffe6a8" opacity="0.4"/><path d="M18 16l-6 18 8-3 4-13z" fill="#fff" opacity="0.18"/><ellipse cx="28" cy="26" rx="4" ry="6" fill="#fff" opacity="0.3"/><path d="M34 30q-3 5-1 10 2 4 5 3" stroke="#5a2c08" stroke-width="1.3" fill="none" opacity="0.65"/><path d="M33 33l-3-2M35 38l3-1M34 43l-3 2" stroke="#5a2c08" stroke-width="0.9" opacity="0.55"/><circle cx="42" cy="22" r="1.2" fill="#fff8e0" opacity="0.75"/></svg>',
+  crown_fragment: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="cf_a" x1="0.1" y1="0" x2="0.9" y2="1"><stop offset="0" stop-color="#fff3c0"/><stop offset="0.3" stop-color="#e0b64e"/><stop offset="0.7" stop-color="#8a6a2e"/><stop offset="1" stop-color="#3e2c0e"/></linearGradient><radialGradient id="cf_g" cx="0.5" cy="0.45" r="0.6"><stop offset="0" stop-color="#ffe08a" stop-opacity="0.5"/><stop offset="1" stop-color="#ffe08a" stop-opacity="0"/></radialGradient></defs><circle cx="32" cy="30" r="28" fill="url(#cf_g)"/><ellipse cx="32" cy="57" rx="16" ry="2.8" fill="#000" opacity="0.42"/><path d="M14 46l-3-24 11 9 8-19 4 10-6 24z" fill="url(#cf_a)" stroke="#2c1f0a" stroke-width="0.9"/><path d="M11 22l11 9-2 4-8-7z" fill="#fff3c0" opacity="0.45"/><path d="M14 46l14 0-1 6-12 0z" fill="#8a6a2e" stroke="#2c1f0a" stroke-width="0.7"/><path d="M14 46h14v1.6H14z" fill="#fff3c0" opacity="0.55"/><circle cx="19" cy="32" r="3" fill="#7a1018" stroke="#2c1f0a" stroke-width="0.6"/><circle cx="18" cy="31" r="1" fill="#ff8898" opacity="0.7"/><circle cx="27" cy="26" r="2.4" fill="#1a4a7a" stroke="#2c1f0a" stroke-width="0.6"/><path d="M36 22l6-4 4 7-5 4z" fill="#5a4526" opacity="0.5"/><path d="M40 42l5 3-5 3z" fill="#8a6a2e" opacity="0.55"/><circle cx="49" cy="20" r="1.3" fill="#fff8e0" opacity="0.8"/><circle cx="46" cy="48" r="1" fill="#fff8e0" opacity="0.6"/></svg>',
+  /* Cannons, sails, crew, pet and cape (0.9.65). */
+  cannon_barrel: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="cb_m" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8e9aa2"/><stop offset="0.35" stop-color="#4c5a64"/><stop offset="1" stop-color="#181f25"/></linearGradient><linearGradient id="cb_r" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c9a55e"/><stop offset="1" stop-color="#6b4f21"/></linearGradient></defs><ellipse cx="32" cy="55" rx="22" ry="3" fill="#000" opacity="0.42"/><path d="M10 26h40q4 0 4 5v7q0 5-4 5H10z" fill="url(#cb_m)" stroke="#12181d" stroke-width="0.9"/><path d="M10 26h40q4 0 4 5v1H10z" fill="#a8b4bc" opacity="0.5"/><ellipse cx="54" cy="34.5" rx="3" ry="6" fill="#0d1216"/><ellipse cx="54" cy="34.5" rx="1.7" ry="4" fill="#000"/><rect x="12" y="23" width="5" height="21" rx="2" fill="url(#cb_r)"/><rect x="24" y="24" width="4" height="19" rx="1.6" fill="url(#cb_r)"/><rect x="40" y="25" width="3.4" height="17" rx="1.4" fill="url(#cb_r)"/><circle cx="8" cy="34.5" r="5" fill="#39434b" stroke="#12181d" stroke-width="0.9"/><circle cx="8" cy="34.5" r="2" fill="#1d2429"/><path d="M20 21h6l-1 3h-4z" fill="#5a6670"/><circle cx="34" cy="30" r="1.1" fill="#cdd8de" opacity="0.55"/></svg>',
+  sl_cannon: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="slc_m" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9aa6ae"/><stop offset="0.4" stop-color="#4c5a64"/><stop offset="1" stop-color="#161d22"/></linearGradient><linearGradient id="slc_w" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a8763a"/><stop offset="1" stop-color="#3e2712"/></linearGradient><radialGradient id="slc_f" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#fff6d8"/><stop offset="0.4" stop-color="#ffb64a"/><stop offset="1" stop-color="#e0762f" stop-opacity="0"/></radialGradient></defs><ellipse cx="32" cy="56" rx="21" ry="3" fill="#000" opacity="0.42"/><path d="M16 44l6-12h26l4 12z" fill="url(#slc_w)" stroke="#22160a" stroke-width="0.8"/><circle cx="21" cy="47" r="5.5" fill="#5a3f1e" stroke="#22160a" stroke-width="0.9"/><circle cx="21" cy="47" r="1.8" fill="#22160a"/><circle cx="45" cy="47" r="5.5" fill="#5a3f1e" stroke="#22160a" stroke-width="0.9"/><circle cx="45" cy="47" r="1.8" fill="#22160a"/><path d="M12 22h34q5 0 5 5v6q0 5-5 5H12z" fill="url(#slc_m)" stroke="#12181d" stroke-width="0.9" transform="rotate(-14 32 30)"/><path d="M12 22h34q5 0 5 5v1H12z" fill="#b4c0c8" opacity="0.45" transform="rotate(-14 32 30)"/><circle cx="10" cy="30" r="5.5" fill="#39434b" stroke="#12181d" stroke-width="0.9"/><circle cx="52" cy="18" r="7" fill="url(#slc_f)"/></svg>',
+  sl_sails: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="sls_a" x1="0.2" y1="0" x2="0.9" y2="1"><stop offset="0" stop-color="#fdf7e6"/><stop offset="0.45" stop-color="#e6d5ae"/><stop offset="1" stop-color="#a3906c"/></linearGradient><linearGradient id="sls_b" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e2d1a9"/><stop offset="1" stop-color="#8b7a58"/></linearGradient></defs><ellipse cx="32" cy="58" rx="17" ry="2.6" fill="#000" opacity="0.38"/><path d="M31 4v52" stroke="#6e4523" stroke-width="3" stroke-linecap="round"/><path d="M34 8q18 16 18 32H34z" fill="url(#sls_a)" stroke="#8b7a58" stroke-width="0.7"/><path d="M34 8q13 15 15 32M34 18q9 10 11 22M34 28q5 6 7 12" stroke="#b8a37a" stroke-width="0.7" fill="none" opacity="0.7"/><path d="M28 14Q13 27 13 40h15z" fill="url(#sls_b)" stroke="#6e5f42" stroke-width="0.7"/><path d="M28 14q-11 12-12 26M28 24q-6 7-8 16" stroke="#7d6c4c" stroke-width="0.7" fill="none" opacity="0.6"/><path d="M10 40h44" stroke="#6e4523" stroke-width="2.4" stroke-linecap="round"/><path d="M31 4l4 3-4 2z" fill="#c79b4e"/><path d="M6 20q5 3 10 0M48 12q5 3 10 0" stroke="#a9c4d0" stroke-width="1.5" fill="none" opacity="0.45" stroke-linecap="round"/></svg>',
+  sl_crew: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="slr_c" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7fa4b4"/><stop offset="1" stop-color="#2c4653"/></linearGradient><linearGradient id="slr_c2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c9a55e"/><stop offset="1" stop-color="#5c4319"/></linearGradient></defs><ellipse cx="32" cy="57" rx="20" ry="2.8" fill="#000" opacity="0.4"/><circle cx="20" cy="20" r="7" fill="#d8c49c"/><path d="M20 28q-9 0-11 9l-1 15h24l-1-15q-2-9-11-9z" fill="url(#slr_c)"/><circle cx="44" cy="22" r="6.4" fill="#c9b494"/><path d="M44 29q-8 0-10 8l-1 15h22l-1-15q-2-8-10-8z" fill="url(#slr_c2)"/><path d="M12 18q3-6 8-6t8 6q-4-2-8-2t-8 2z" fill="#3e2f18"/><path d="M37 19q3-5 7-5t7 5z" fill="#2c4653"/><circle cx="17.5" cy="20" r="1" fill="#2a2018"/><circle cx="22.5" cy="20" r="1" fill="#2a2018"/><circle cx="41.6" cy="22" r="0.9" fill="#2a2018"/><circle cx="46.4" cy="22" r="0.9" fill="#2a2018"/></svg>',
+  spet_sailing: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="spt_b" x1="0" y1="0" x2="0.4" y2="1"><stop offset="0" stop-color="#e9eff3"/><stop offset="0.45" stop-color="#8fa4b0"/><stop offset="1" stop-color="#3a4a55"/></linearGradient><radialGradient id="spt_g" cx="0.5" cy="0.5" r="0.6"><stop offset="0" stop-color="#a9d8ea" stop-opacity="0.35"/><stop offset="1" stop-color="#a9d8ea" stop-opacity="0"/></radialGradient></defs><circle cx="32" cy="30" r="26" fill="url(#spt_g)"/><path d="M6 50q10-4 20 0q10 4 20 0q6-2 12 0" stroke="#6d9ab2" stroke-width="1.8" fill="none" opacity="0.5" stroke-linecap="round"/><path d="M30 22q-12-8-22-2 8 2 12 8-10 0-14 6 10 0 16 4 4 2 8 2t8-4q6-6 14-8-8-4-16 0 4-8 0-12-4 2-6 6z" fill="url(#spt_b)" stroke="#2c3a44" stroke-width="0.7"/><ellipse cx="38" cy="26" rx="9" ry="7" fill="url(#spt_b)"/><circle cx="43" cy="24" r="4.6" fill="#f0f5f8"/><circle cx="44.4" cy="23.4" r="1.5" fill="#1c242a"/><circle cx="44.9" cy="22.9" r="0.5" fill="#fff"/><path d="M47.5 25.5l6 1.6-6 1.8z" fill="#e0a558"/><path d="M32 32q2 6 8 7" stroke="#2c3a44" stroke-width="0.8" fill="none" opacity="0.5"/><path d="M40 33l-1 6 3-1z" fill="#e0a558"/></svg>',
+  cape_sailing: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="slcp_c" x1="0.15" y1="0" x2="0.85" y2="1"><stop offset="0" stop-color="#4e8ba4"/><stop offset="0.4" stop-color="#26506a"/><stop offset="1" stop-color="#0d1e2c"/></linearGradient><linearGradient id="slcp_t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f0d894"/><stop offset="1" stop-color="#8a6a2e"/></linearGradient><radialGradient id="slcp_g" cx="0.5" cy="0.35" r="0.6"><stop offset="0" stop-color="#8fd0e6" stop-opacity="0.3"/><stop offset="1" stop-color="#8fd0e6" stop-opacity="0"/></radialGradient></defs><circle cx="32" cy="30" r="27" fill="url(#slcp_g)"/><path d="M22 12h20l10 12-4 34H18l-4-34z" fill="url(#slcp_c)" stroke="#0a1620" stroke-width="0.9"/><path d="M24 14l-3 44M32 13v45M40 14l3 44" stroke="#12324a" stroke-width="1" opacity="0.6"/><path d="M22 12h20l10 12H12z" fill="url(#slcp_t)" opacity="0.9"/><path d="M22 12h20l1.6 2H20.4z" fill="#fbeaba" opacity="0.7"/><circle cx="32" cy="36" r="9" fill="none" stroke="url(#slcp_t)" stroke-width="1.6"/><path d="M32 28.5l2.6 6.4L32 43l-2.6-8.1z" fill="url(#slcp_t)"/><path d="M23 36h4M37 36h4" stroke="url(#slcp_t)" stroke-width="1.3"/><circle cx="32" cy="36" r="1.4" fill="#fbeaba"/></svg>',
+  /* Shipwright materials — sea-only, gating the top four hulls. */
+  salt_iron: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="si_m" x1="0" y1="0" x2="0.3" y2="1"><stop offset="0" stop-color="#b9c6cc"/><stop offset="0.45" stop-color="#6e828c"/><stop offset="1" stop-color="#2c3a42"/></linearGradient><linearGradient id="si_t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#dde8ec"/><stop offset="1" stop-color="#8fa3ac"/></linearGradient></defs><ellipse cx="32" cy="55" rx="20" ry="3" fill="#000" opacity="0.4"/><path d="M14 30h36l6 12H8z" fill="url(#si_m)" stroke="#1e2a30" stroke-width="0.9"/><path d="M14 30h36l1.6 3.4H12.4z" fill="url(#si_t)"/><path d="M18 24h28l4 6H14z" fill="url(#si_m)" stroke="#1e2a30" stroke-width="0.8"/><path d="M18 24h28l1.2 2.4H16.8z" fill="url(#si_t)" opacity="0.9"/><path d="M20 36l3 3M28 35l2.6 3M38 36l3 3M46 35l2.4 3" stroke="#1e2a30" stroke-width="0.8" opacity="0.5"/><circle cx="17" cy="41" r="2.6" fill="#e6f0f2" opacity="0.85"/><circle cx="24" cy="44" r="1.7" fill="#e6f0f2" opacity="0.7"/><circle cx="45" cy="43" r="2.2" fill="#e6f0f2" opacity="0.8"/><circle cx="52" cy="40" r="1.5" fill="#e6f0f2" opacity="0.65"/><circle cx="36" cy="45" r="1.3" fill="#e6f0f2" opacity="0.6"/><circle cx="30" cy="28" r="1.6" fill="#dff0f4" opacity="0.75"/><circle cx="42" cy="27" r="1.1" fill="#dff0f4" opacity="0.6"/></svg>',
+  krakenbone: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="kb_b" x1="0.2" y1="0" x2="0.8" y2="1"><stop offset="0" stop-color="#f2ece0"/><stop offset="0.4" stop-color="#cfc6b2"/><stop offset="0.8" stop-color="#8e8574"/><stop offset="1" stop-color="#4e483d"/></linearGradient><radialGradient id="kb_g" cx="0.5" cy="0.5" r="0.6"><stop offset="0" stop-color="#8fd0c6" stop-opacity="0.3"/><stop offset="1" stop-color="#8fd0c6" stop-opacity="0"/></radialGradient></defs><circle cx="32" cy="32" r="25" fill="url(#kb_g)"/><ellipse cx="32" cy="57" rx="16" ry="2.6" fill="#000" opacity="0.38"/><path d="M20 8q-8 4-6 12t10 10q8 4 10 12t-6 14q10-2 14-10t-2-18q-6-8-12-10t-8-10z" fill="url(#kb_b)" stroke="#3e392f" stroke-width="0.8"/><path d="M22 12q-4 4-2 8t8 8" stroke="#fffbf2" stroke-width="1.4" fill="none" opacity="0.55" stroke-linecap="round"/><ellipse cx="18" cy="10" rx="6" ry="5" fill="url(#kb_b)" stroke="#3e392f" stroke-width="0.8"/><ellipse cx="16.5" cy="9" rx="2.4" ry="2" fill="#fffbf2" opacity="0.6"/><ellipse cx="34" cy="54" rx="7" ry="5.5" fill="url(#kb_b)" stroke="#3e392f" stroke-width="0.8"/><ellipse cx="32" cy="52.5" rx="2.6" ry="2" fill="#fffbf2" opacity="0.55"/><path d="M28 26q4 2 6 6" stroke="#6e675a" stroke-width="0.8" fill="none" opacity="0.6"/><circle cx="46" cy="22" r="1.2" fill="#a8e0d4" opacity="0.6"/></svg>',
+  tidewrought: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><radialGradient id="tw_c" cx="0.42" cy="0.38" r="0.68"><stop offset="0" stop-color="#eafffb"/><stop offset="0.28" stop-color="#7fe8d8"/><stop offset="0.62" stop-color="#2b8f96"/><stop offset="1" stop-color="#0d2a34"/></radialGradient><linearGradient id="tw_s" x1="0" y1="0" x2="0.4" y2="1"><stop offset="0" stop-color="#8c9aa0"/><stop offset="0.5" stop-color="#4a5a62"/><stop offset="1" stop-color="#1c262c"/></linearGradient><radialGradient id="tw_h" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#7fe8d8" stop-opacity="0.55"/><stop offset="1" stop-color="#7fe8d8" stop-opacity="0"/></radialGradient></defs><circle cx="32" cy="32" r="28" fill="url(#tw_h)"/><ellipse cx="32" cy="57" rx="15" ry="2.8" fill="#000" opacity="0.42"/><path d="M32 6l14 8 6 16-6 16-14 8-14-8-6-16 6-16z" fill="url(#tw_s)" stroke="#101a20" stroke-width="0.9"/><path d="M32 6l14 8-8 6-6-4z" fill="#a3b1b8" opacity="0.5"/><path d="M18 14l6 16-6 16-6-16z" fill="#101a20" opacity="0.35"/><circle cx="32" cy="32" r="13" fill="url(#tw_c)"/><circle cx="32" cy="32" r="13" fill="none" stroke="#0d2a34" stroke-width="1.1"/><path d="M32 22q-5 6-5 11 0 5 5 5t5-5q0-5-5-11z" fill="#eafffb" opacity="0.9"/><ellipse cx="28" cy="27" rx="3" ry="4" fill="#fff" opacity="0.42"/><circle cx="32" cy="32" r="17.5" fill="none" stroke="#7fe8d8" stroke-width="0.8" opacity="0.4"/><circle cx="20" cy="20" r="1.2" fill="#cffff5" opacity="0.7"/><circle cx="46" cy="42" r="1" fill="#cffff5" opacity="0.6"/><circle cx="44" cy="19" r="0.9" fill="#cffff5" opacity="0.5"/></svg>',
+  /* Treasure maps — one silhouette, palette climbing with the water it opens. */
+  chart_gravekeel: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="cg1_p" x1="0" y1="0" x2="0.3" y2="1"><stop offset="0" stop-color="#e8d4a4"/><stop offset="0.55" stop-color="#c3ac78"/><stop offset="1" stop-color="#8e7a4e"/></linearGradient></defs><ellipse cx="32" cy="57" rx="19" ry="2.6" fill="#000" opacity="0.36"/><path d="M8 12l16 4 16-4 16 4v40l-16-4-16 4-16-4z" fill="url(#cg1_p)" stroke="#6b5730" stroke-width="0.9"/><path d="M24 16v40M40 12v40" stroke="#6b5730" stroke-width="0.8" opacity="0.55"/><path d="M13 26q7-4 13 1t12-3" stroke="#7d6a46" stroke-width="1.1" fill="none" opacity="0.8"/><path d="M14 34q8-3 14 2t13-2" stroke="#7d6a46" stroke-width="1.1" fill="none" opacity="0.6"/><path d="M44 30l5-4 4 5-5 4z" fill="#8ca38a" opacity="0.7"/><path d="M26 40l6 6M32 40l-6 6" stroke="#a8412c" stroke-width="2.4" stroke-linecap="round"/><circle cx="47" cy="44" r="3.2" fill="none" stroke="#6b5730" stroke-width="1"/><path d="M47 41.2v6.4M43.8 44h6.4" stroke="#6b5730" stroke-width="0.8"/></svg>',
+  chart_gibbet: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="cg2_p" x1="0" y1="0" x2="0.3" y2="1"><stop offset="0" stop-color="#dcc79a"/><stop offset="0.55" stop-color="#ad9468"/><stop offset="1" stop-color="#6f5e3c"/></linearGradient></defs><ellipse cx="32" cy="57" rx="19" ry="2.6" fill="#000" opacity="0.4"/><path d="M8 12l16 4 16-4 16 4v40l-16-4-16 4-16-4z" fill="url(#cg2_p)" stroke="#4e3f22" stroke-width="0.9"/><path d="M24 16v40M40 12v40" stroke="#4e3f22" stroke-width="0.8" opacity="0.55"/><path d="M13 24q7-4 13 1t12-3" stroke="#5f5030" stroke-width="1.1" fill="none" opacity="0.8"/><path d="M14 33q8-3 14 2t13-2" stroke="#5f5030" stroke-width="1.1" fill="none" opacity="0.6"/><path d="M42 20v10h-8" stroke="#3a2e18" stroke-width="2" fill="none" stroke-linecap="round"/><circle cx="34" cy="34" r="3" fill="none" stroke="#3a2e18" stroke-width="1.4"/><path d="M22 42l6 6M28 42l-6 6" stroke="#a8412c" stroke-width="2.6" stroke-linecap="round"/><path d="M44 40l5 3-5 3z" fill="#c08a3a" opacity="0.85"/></svg>',
+  chart_crown: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="cg3_p" x1="0" y1="0" x2="0.3" y2="1"><stop offset="0" stop-color="#cfe0e8"/><stop offset="0.5" stop-color="#8fa8b8"/><stop offset="1" stop-color="#4e6879"/></linearGradient><radialGradient id="cg3_g" cx="0.5" cy="0.5" r="0.6"><stop offset="0" stop-color="#8fd0e6" stop-opacity="0.4"/><stop offset="1" stop-color="#8fd0e6" stop-opacity="0"/></radialGradient></defs><circle cx="32" cy="32" r="26" fill="url(#cg3_g)"/><ellipse cx="32" cy="57" rx="19" ry="2.6" fill="#000" opacity="0.4"/><path d="M8 12l16 4 16-4 16 4v40l-16-4-16 4-16-4z" fill="url(#cg3_p)" stroke="#2d4250" stroke-width="0.9"/><path d="M24 16v40M40 12v40" stroke="#2d4250" stroke-width="0.8" opacity="0.5"/><path d="M13 24q7-4 13 1t12-3" stroke="#3d566a" stroke-width="1.1" fill="none" opacity="0.75"/><path d="M13 42q8-3 14 2t13-2" stroke="#3d566a" stroke-width="1.1" fill="none" opacity="0.55"/><path d="M22 34l3-8 4 5 3-7 3 7 4-5 3 8z" fill="#dfb03c"/><path d="M22 34h20v3H22z" fill="#a67f22"/><path d="M26 44l5 5M31 44l-5 5" stroke="#a8412c" stroke-width="2.4" stroke-linecap="round"/></svg>',
+  chart_voidmaw: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="cg4_p" x1="0" y1="0" x2="0.3" y2="1"><stop offset="0" stop-color="#b9a4cc"/><stop offset="0.5" stop-color="#6d5586"/><stop offset="1" stop-color="#33224a"/></linearGradient><radialGradient id="cg4_g" cx="0.5" cy="0.62" r="0.55"><stop offset="0" stop-color="#0a0410"/><stop offset="0.6" stop-color="#3a1858" stop-opacity="0.7"/><stop offset="1" stop-color="#8848c8" stop-opacity="0"/></radialGradient></defs><circle cx="32" cy="36" r="26" fill="url(#cg4_g)"/><ellipse cx="32" cy="57" rx="19" ry="2.6" fill="#000" opacity="0.45"/><path d="M8 12l16 4 16-4 16 4v40l-16-4-16 4-16-4z" fill="url(#cg4_p)" stroke="#1e1030" stroke-width="0.9"/><path d="M24 16v40M40 12v40" stroke="#1e1030" stroke-width="0.8" opacity="0.5"/><path d="M13 22q7-4 13 1t12-3" stroke="#2a1840" stroke-width="1.1" fill="none" opacity="0.7"/><ellipse cx="32" cy="38" rx="11" ry="9" fill="#0a0410"/><ellipse cx="32" cy="36" rx="8" ry="6" fill="none" stroke="#a86fd8" stroke-width="1" opacity="0.6"/><ellipse cx="32" cy="34" rx="5" ry="3.6" fill="none" stroke="#a86fd8" stroke-width="0.9" opacity="0.45"/><ellipse cx="32" cy="32" rx="2.6" ry="1.8" fill="none" stroke="#c79fe0" stroke-width="0.8" opacity="0.35"/><circle cx="20" cy="26" r="1.1" fill="#c79fe0" opacity="0.7"/><circle cx="45" cy="46" r="0.9" fill="#c79fe0" opacity="0.6"/></svg>',
   trove_odd: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="tv5_m" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c9a55e"/><stop offset="0.5" stop-color="#8a6a2e"/><stop offset="1" stop-color="#41300f"/></linearGradient><radialGradient id="tv5_f" cx="0.5" cy="0.6" r="0.55"><stop offset="0" stop-color="#fffdf0"/><stop offset="0.35" stop-color="#ffe08a"/><stop offset="0.75" stop-color="#e0762f"/><stop offset="1" stop-color="#8a3a10" stop-opacity="0.35"/></radialGradient><radialGradient id="tv5_h" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#ffd98a" stop-opacity="0.7"/><stop offset="1" stop-color="#ffd98a" stop-opacity="0"/></radialGradient></defs><circle cx="32" cy="34" r="27" fill="url(#tv5_h)"/><ellipse cx="32" cy="59" rx="12" ry="2.6" fill="#000" opacity="0.42"/><path d="M28 4 Q32 1 36 4" stroke="url(#tv5_m)" stroke-width="2.4" fill="none" stroke-linecap="round"/><path d="M32 4 L32 10" stroke="url(#tv5_m)" stroke-width="2.4" stroke-linecap="round"/><path d="M20 12 L44 12 L42 17 L22 17 Z" fill="url(#tv5_m)"/><path d="M22 17 L42 17 L45 46 L19 46 Z" fill="#2a2116" opacity="0.55"/><path d="M24 19 L40 19 L42.5 44 L21.5 44 Z" fill="url(#tv5_f)"/><path d="M32 24 Q27 31 27 37 Q27 42 32 42 Q37 42 37 37 Q37 31 32 24 Z" fill="#fffdf0" opacity="0.95"/><path d="M22 17 L21.5 44 M42 17 L42.5 44 M24 19 L40 19" stroke="url(#tv5_m)" stroke-width="2" fill="none"/><path d="M19 46 L45 46 L46 52 L18 52 Z" fill="url(#tv5_m)"/><path d="M19 46 L45 46 L45.2 47.6 L18.8 47.6 Z" fill="#f0d894" opacity="0.6"/><path d="M24 52 L40 52 L38 58 L26 58 Z" fill="#6d5734"/><circle cx="26" cy="14" r="1" fill="#fff" opacity="0.6"/></svg>',
 };
 
@@ -12059,6 +12277,38 @@ function normalizeState(){
   if(typeof state.sail.damaged!=='boolean') state.sail.damaged=false;
   if(typeof state.sail.voyages!=='number') state.sail.voyages=0;
   if(!state.sail.found||typeof state.sail.found!=='object') state.sail.found={};
+  // Treasure maps already recovered. Keyed by chart item id; each one permanently
+  // charts its island, so this must never be lost or a player loses access.
+  if(!state.sail.charts||typeof state.sail.charts!=='object'||Array.isArray(state.sail.charts)) state.sail.charts={};
+  // Fitted parts + crew roster (0.9.65). Clamped to the real tables so a hand-edited
+  // or future-version save can never index off the end.
+  if(typeof state.sail.cannon!=='number'||!(state.sail.cannon>=0)) state.sail.cannon=0;
+  if(typeof state.sail.sails!=='number' ||!(state.sail.sails>=0))  state.sail.sails=0;
+  if(typeof SAIL_CANNONS!=='undefined') state.sail.cannon=Math.min(SAIL_CANNONS.length-1, Math.floor(state.sail.cannon));
+  if(typeof SAIL_SAILS!=='undefined')   state.sail.sails =Math.min(SAIL_SAILS.length-1,  Math.floor(state.sail.sails));
+  if(!state.sail.crew||typeof state.sail.crew!=='object'||Array.isArray(state.sail.crew)) state.sail.crew={};
+  for(const _cid in state.sail.crew){
+    const _n=Math.floor(state.sail.crew[_cid]);
+    // Drop unknown roles and non-positive counts rather than carrying dead keys.
+    if(typeof SAIL_CREW_BY_ID==='undefined'||!SAIL_CREW_BY_ID[_cid]||!(_n>0)) delete state.sail.crew[_cid];
+    else state.sail.crew[_cid]=_n;
+  }
+  /* A hull downgrade (or a save from before berths existed) can leave more crew
+     aboard than there are berths. Trim from the most expensive role first so the
+     player keeps the cheapest hands rather than losing the lot. */
+  if(typeof SAIL_HULLS!=='undefined'&&typeof SAIL_CREW_ROLES!=='undefined'){
+    const _berths=SAIL_HULLS[state.sail.hull].berths||0;
+    let _have=0; for(const k in state.sail.crew) _have+=state.sail.crew[k];
+    if(_have>_berths){
+      const _order=SAIL_CREW_ROLES.slice().sort((a,b)=>b.hire-a.hire);
+      for(const r of _order){
+        while(_have>_berths && state.sail.crew[r.id]>0){
+          state.sail.crew[r.id]--; _have--;
+          if(state.sail.crew[r.id]<=0) delete state.sail.crew[r.id];
+        }
+      }
+    }
+  }
   if(state.sail.fast!==1) state.sail.fast=0;
   // A malformed voyage (hand-edited save, interrupted write) is dropped rather
   // than left to divide-by-zero the progress bar.
@@ -12068,6 +12318,12 @@ function normalizeState(){
     if(typeof state.sail.voy.roll!=='number')      state.sail.voy.roll=Math.random();
     if(typeof state.sail.voy.troveRoll!=='number') state.sail.voy.troveRoll=Math.random();
     if(typeof state.sail.voy.fogRoll!=='number')   state.sail.voy.fogRoll=Math.random();
+    if(typeof state.sail.voy.chartRoll!=='number') state.sail.voy.chartRoll=Math.random();
+    if(!Array.isArray(state.sail.voy.matRolls)||state.sail.voy.matRolls.length<4)
+      state.sail.voy.matRolls=[Math.random(),Math.random(),Math.random(),Math.random()];
+    if(typeof state.sail.voy.petRoll!=='number') state.sail.voy.petRoll=Math.random();
+    if(!Array.isArray(state.sail.voy.haulRolls)||state.sail.voy.haulRolls.length<14)
+      state.sail.voy.haulRolls=Array.from({length:20},()=>Math.random());
   }
   if(state.sail.last!==null&&typeof state.sail.last!=='object') state.sail.last=null;
   if(typeof state.coins!=='number') state.coins=0;
@@ -17826,7 +18082,7 @@ function renderInventory(){
   box.appendChild(sellRow);
 
   // Category filter tabs — icon only, styled hover tooltip shows full name
-  const cats=['all','gear','logs','ores','fish','cooked','bars','forage','farm','jewelry','gems','fire','potions'];
+  const cats=['all','gear','logs','ores','fish','cooked','bars','forage','farm','jewelry','gems','fire','potions','sea'];
   const _ciw=b=>`<svg class="ev-icon" viewBox="0 0 64 64" fill="currentColor">${b}</svg>`;
   const catLabels={
     all:'All',
@@ -17887,8 +18143,14 @@ function renderInventory(){
       `<rect x="26" y="6" width="12" height="6" rx="1" fill="none" stroke="currentColor" stroke-width="2.4"/>`
       +`<path d="M26 12 L26 22 L18 32 Q12 44 18 52 Q24 58 32 58 Q40 58 46 52 Q52 44 46 32 L38 22 L38 12 Z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>`
       +`<path d="M18 42 Q24 38 32 42 Q40 38 46 42 L46 52 Q40 58 32 58 Q24 58 18 52 Z" fill="currentColor" opacity="0.35"/>`),
+    // Sea materials — a wave over an anchor stock, reads as "from the water".
+    sea:_ciw(
+      `<path d="M6 22 Q14 14 22 22 Q30 30 38 22 Q46 14 54 22 Q58 25 62 23" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/>`
+      +`<path d="M32 30 L32 56" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/>`
+      +`<path d="M22 38 L42 38" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/>`
+      +`<path d="M16 44 Q16 58 32 58 Q48 58 48 44" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/>`),
   };
-  const catTitles={all:'All Items',gear:'Combat Gear',logs:'Logs',ores:'Ores & Coal',fish:'Raw Fish',cooked:'Cooked Food',bars:'Smelted Bars',forage:'Foraged Plants',farm:'Farming Produce',jewelry:'Jewelry',gems:'Gems & Shards',fire:'Firemaking Outputs',potions:'Potions & Elixirs',skilling_gear:'Skilling Gear',crafted_gear:'Combat Gear'};
+  const catTitles={all:'All Items',gear:'Combat Gear',logs:'Logs',ores:'Ores & Coal',fish:'Raw Fish',cooked:'Cooked Food',bars:'Smelted Bars',forage:'Foraged Plants',farm:'Farming Produce',jewelry:'Jewelry',gems:'Gems & Shards',fire:'Firemaking Outputs',potions:'Potions & Elixirs',sea:'Sea Materials',skilling_gear:'Skilling Gear',crafted_gear:'Combat Gear'};
   const catEl=document.createElement('div'); catEl.className='inv-cats';
   for(const cat of cats){
     const b=document.createElement('button');
@@ -17908,6 +18170,10 @@ function renderInventory(){
     // never reach here. Trophy jewelry stays with the rings/amulets in 'jewelry'.
     if(ITEMS[id]&&ITEMS[id].cgear) return 'gear';
     if(ITEMS[id]&&ITEMS[id].trophyJewel) return 'jewelry';
+    /* Sea materials (0.9.66) get their own bucket, checked early — several of them
+       would otherwise be swallowed by the generic suffix rules below, and 24 new
+       ids landing in 'misc' makes the satchel unusable. */
+    if(ITEMS[id]&&ITEMS[id].sea) return 'sea';
     // Cooked fish carry potion.heal (1.0.21) but still belong in the Food tab,
     // so this prefix check must precede the generic potion bucket below.
     if(id.startsWith('cooked_')) return 'cooked';
@@ -17944,7 +18210,7 @@ function renderInventory(){
   });
 
   // Sort
-  const catOrder=['logs','ores','fish','cooked','bars','forage','farm','jewelry','gems','fire','potions','misc'];
+  const catOrder=['sea','logs','ores','fish','cooked','bars','forage','farm','jewelry','gems','fire','potions','misc'];
   filtered.sort(([a],[b])=>{
     if(invSort==='category'){
       const ca=catOrder.indexOf(itemCat(a)), cb=catOrder.indexOf(itemCat(b));
@@ -25634,14 +25900,89 @@ function logNotification(type, icon, text){
 /* Hull tiers mirror Woodcutting's wc1..wc7 level gates exactly (1/10/25/45/65/78/90)
    so the logs already being cut are the logs the next hull wants. */
 const SAIL_HULLS=[
-  {n:'Lashed Raft',          lv:1,  sound:40,  stores:25,  hold:120,  cost:{pine_log:60}},
-  {n:'Oak Sloop',            lv:10, sound:85,  stores:60,  hold:260,  cost:{oak_log:120,      bronze_bar:40}},
-  {n:'Ironbark Cutter',      lv:25, sound:140, stores:110, hold:450,  cost:{ironbark_log:180, iron_bar:60}},
-  {n:'Emberwood Brigantine', lv:45, sound:230, stores:165, hold:720,  cost:{ember_log:240,    steel_bar:90}},
-  {n:'Frostwood Galleon',    lv:65, sound:360, stores:220, hold:1100, cost:{frost_log:300,    mithril_bar:120}},
-  {n:'Shadowwood Corsair',   lv:78, sound:520, stores:290, hold:1600, cost:{shadow_log:380,   cobalt_bar:150}},
-  {n:'Ancient Leviathan',    lv:90, sound:760, stores:380, hold:2400, cost:{ancient_log:460,  starsteel_bar:180, voidheart:3}}
+  {n:'Lashed Raft',          lv:1,  sound:40,  stores:25,  hold:120,  berths:0,  cost:{pine_log:60}},
+  {n:'Oak Sloop',            lv:10, sound:85,  stores:60,  hold:260,  berths:1,  cost:{oak_log:120,      bronze_bar:40}},
+  {n:'Ironbark Cutter',      lv:25, sound:140, stores:110, hold:450,  berths:2,  cost:{ironbark_log:180, iron_bar:60}},
+  {n:'Emberwood Brigantine', lv:45, sound:230, stores:165, hold:720,  berths:4,  cost:{ember_log:240,    steel_bar:90,      salt_iron:6}},
+  /* Tier 5 is salt_iron only, deliberately. Krakenbone lives in band 2 (Mistlands),
+     and the tier-4 hull's Range 165 cannot reach the nearest band-2 island (Mistvault,
+     Range 190) — asking for krakenbone here would mean needing the Galleon to build
+     the Galleon. Krakenbone first appears as a cost on tier 6, which tier 5's Range
+     220 does reach. Verified as a no-dead-end chain in test. */
+  {n:'Frostwood Galleon',    lv:65, sound:360, stores:220, hold:1100, berths:6,  cost:{frost_log:300,    mithril_bar:120,   salt_iron:20}},
+  {n:'Shadowwood Corsair',   lv:78, sound:520, stores:290, hold:1600, berths:8,  cost:{shadow_log:380,   cobalt_bar:150,    krakenbone:10}},
+  {n:'Ancient Leviathan',    lv:90, sound:760, stores:380, hold:2400, berths:12, cost:{ancient_log:460,  starsteel_bar:180, krakenbone:16, tidewrought:5}}
 ];
+
+/* ── Cannons ───────────────────────────────────────────────────────────────────
+   Armaments answers The Maw and nothing else. A player who skips cannons still
+   sails 22 of 26 islands perfectly well and hits a wall at the four Maw islands,
+   which makes this a build decision rather than another number that only goes up.
+   Deliberately additive: no cannons leaves Maw odds exactly as they shipped in
+   0.9.64, so this is an upgrade path and never a retroactive tax on old saves. */
+const SAIL_CANNONS=[
+  {n:'No guns',              lv:0,  arms:0,   cost:null},
+  {n:'Bronze Swivel Guns',   lv:30, arms:34,  cost:{bronze_bar:60,     cannon_barrel:4}},
+  {n:'Iron Long Nines',      lv:50, arms:78,  cost:{iron_bar:90,       cannon_barrel:10, salt_iron:8}},
+  {n:'Cobalt Carronades',    lv:68, arms:145, cost:{cobalt_bar:120,    cannon_barrel:18, krakenbone:6}},
+  {n:'Starsteel Bombards',   lv:82, arms:240, cost:{starsteel_bar:150, cannon_barrel:28, krakenbone:12}},
+  {n:'The Leviathan Gun',    lv:95, arms:400, cost:{starsteel_bar:220, cannon_barrel:40, tidewrought:8}}
+];
+
+/* ── Sails ─────────────────────────────────────────────────────────────────────
+   Rigging cuts real voyage duration while XP still pays on the island's nominal
+   length, so better sails are a direct xp/hr multiplier. This is the fix for the
+   0.9.64 finding that voyage length had no effect on rate at all. */
+const SAIL_SAILS=[
+  {n:'Patched Canvas',       lv:0,  rig:0.00, cost:null},
+  {n:'Flaxen Sails',         lv:20, rig:0.08, cost:{tanned_hide:60, spider_silk:20}},
+  {n:'Doubled Canvas',       lv:40, rig:0.15, cost:{drake_hide:60,  spider_silk:50,  salt_iron:5}},
+  {n:'Stormsilk Rig',        lv:60, rig:0.22, cost:{emberweave:70,  drake_hide:90,   salt_iron:14}},
+  {n:'Krakenweave Rig',      lv:80, rig:0.29, cost:{wraithcloth:80, emberweave:120,  krakenbone:8}},
+  {n:'Leviathan Mainsail',   lv:92, rig:0.35, cost:{voidweave:90,   wraithcloth:140, tidewrought:6}}
+];
+
+/* ── Crew ──────────────────────────────────────────────────────────────────────
+   Hired with gold, paid a wage at each launch (mirrors the farmhand pattern, so
+   it is a real gold sink). Berths come from the hull, so a bigger boat carries
+   more hands — and the rougher islands demand a minimum crew before they will
+   let you attempt them at all. Roles stack. */
+const SAIL_CREW_ROLES=[
+  {id:'carpenter',n:'Carpenter',icon:'ui_shield',lv:20,hire:6000, wage:80, sound:28,
+   d:'Patches her mid-voyage. +28 Hull each.'},
+  {id:'cooper',   n:'Cooper',   icon:'ui_coin',  lv:25,hire:5000, wage:70, hold:70,
+   d:'Packs the hold tighter. +70 Cargo each.'},
+  {id:'gunner',   n:'Gunner',   icon:'ui_sword', lv:30,hire:4000, wage:60, arms:18,
+   d:'Works the guns. +18 Armaments each.'},
+  {id:'navigator',n:'Navigator',icon:'ui_wind',  lv:40,hire:9000, wage:110,rig:0.03,
+   d:'Reads the water. −3% voyage time each.'},
+  {id:'lookout',  n:'Lookout',  icon:'ui_spark', lv:50,hire:12000,wage:140,find:0.14,
+   d:'Spots what others miss. +14% treasure find each.'}
+];
+const SAIL_CREW_BY_ID={};
+SAIL_CREW_ROLES.forEach(r=>{ SAIL_CREW_BY_ID[r.id]=r; });
+
+/* Rougher water needs hands. Derived from the archipelago rather than stored on
+   all 26 islands, with The Maw asking for two more. */
+function sailCrewNeed(isle){
+  return [0,1,3,6][isle.b] + (isle.w==='The Maw'?2:0);
+}
+
+/* Shipwright materials only drop at sea. Rates scale with distance from
+   Emberwatch and take a bonus in The Maw — the same cross-tier shape the combat
+   DROPS table uses, so the deep water can never be skipped by farming a safe
+   island. Quantity is 1, or 2 on a Triumphant return. */
+function sailMatDrops(isle){
+  const maw = isle.w==='The Maw', out=[];
+  if(isle.b>=1) out.push({id:'salt_iron',   chance:0.35+(isle.b-1)*0.08+(maw?0.08:0)});
+  if(isle.b>=2) out.push({id:'krakenbone',  chance:0.22+(isle.b-2)*0.10+(maw?0.10:0)});
+  if(isle.b>=3) out.push({id:'tidewrought', chance:0.10+(maw?0.06:0)});
+  /* Gun barrels are cut out of other people's wrecks, so they come from The Wracks
+     first and stay available further out — the thing that beats The Maw is salvaged
+     from ships The Maw already took. */
+  if(isle.b>=1) out.push({id:'cannon_barrel', chance:0.28+(isle.b-1)*0.07+(maw?0.05:0)});
+  return out;
+}
 
 const SAIL_BANDS=[
   {n:'The Shallows',    x:0.175, trove:'trove_shallows'},
@@ -25650,68 +25991,151 @@ const SAIL_BANDS=[
   {n:'The Far Reaches', x:0.855, trove:'trove_far'}
 ];
 
-/* o = base outcome odds [triumphant, successful, battered, wrecked] before the
-   ship's Soundness shifts them. h = haul table (real ITEMS ids only, so grantItem
-   never silently drops a reward). find = 1-in-N chance of the band's trove. */
+/* Loot is two-tiered (0.9.66), replacing the old `h:[a,b,c]` where all three were
+   granted every single voyage — 26 destinations that only ever produced four hauls.
+
+   `d` is the BULK table: a weighted draw of `pk` entries without replacement, which
+   is what makes two trips to the same island differ. `r` are INDEPENDENT rolls at a
+   flat chance, because a without-replacement draw cannot express rarity — simulating
+   the first draft showed a 1-in-80 item surfacing in 49% of voyages once the pick
+   count approached the pool size. Rares therefore use the same shape troves,
+   treasure maps and shipwright materials already use.
+
+   `g` is gold per minute at sea, so every voyage pays something and crew wages have
+   a source. Each band keeps one or two land materials in the bulk pool so sailing is
+   still a way to top up ores and logs, just no longer the only thing it gives. */
 const SAIL_ISLES=[
-  {n:'Shalefoot Shoals',  b:0,lv:1, x:.13, y:.34,m:20, st:20, w:'Glass Calm',        o:[8,88,4,0],   find:12, h:['pine_log','raw_minnow','copper_ore'],
+  {n:'Shalefoot Shoals',  b:0,lv:1, x:.13, y:.34,m:20, st:20, w:'Glass Calm',        o:[8,88,4,0],   find:12, g:2.4, pk:[2,3],
+   d:[{i:'rock_salt',w:30,q:[10,26]},{i:'driftwood',w:26,q:[8,20]},{i:'raw_minnow',w:20,q:[6,16]},{i:'gull_egg',w:12,q:[3,8]},{i:'pine_log',w:12,q:[8,18]}],
+   r:[{i:'tide_glass',c:0.060,q:[1,3]}],
    f:'Tide-stripped flats an hour off the headland. Barely worth the trip, which is why they let beginners have it.'},
-  {n:'Gullstone Reef',    b:0,lv:8, x:.21, y:.19,m:35, st:35, w:'Chop',              o:[10,80,9,1],  find:15, h:['oak_log','raw_sardine','tin_ore'],
+  {n:'Gullstone Reef',    b:0,lv:8, x:.21, y:.19,m:35, st:35, w:'Chop',              o:[10,80,9,1],  find:15, g:2.9, pk:[2,3],
+   d:[{i:'gull_egg',w:30,q:[6,15]},{i:'rock_salt',w:24,q:[12,28]},{i:'raw_sardine',w:20,q:[8,20]},{i:'driftwood',w:14,q:[10,24]},{i:'oak_log',w:12,q:[10,22]}],
+   r:[{i:'tide_glass',c:0.055,q:[1,3]},{i:'barnacle_iron',c:0.090,q:[1,4]}],
    f:'Gannets by the thousand, and a reef that has opened more keels than it looks capable of.'},
-  {n:"Cutter's Rock",     b:0,lv:14,x:.115,y:.58,m:50, st:45, w:'Chop',              o:[11,77,11,1], find:18, h:['tin_ore','copper_ore','oak_log'],
+  {n:"Cutter's Rock",     b:0,lv:14,x:.115,y:.58,m:50, st:45, w:'Chop',              o:[11,77,11,1], find:18, g:3.4, pk:[2,3],
+   d:[{i:'barnacle_iron',w:28,q:[3,9]},{i:'driftwood',w:24,q:[12,28]},{i:'tin_ore',w:20,q:[10,24]},{i:'rock_salt',w:16,q:[10,24]},{i:'copper_ore',w:12,q:[10,22]}],
+   r:[{i:'tide_glass',c:0.070,q:[1,3]}],
    f:'A single spire of black stone. Somebody keeps a lamp burning on it and nobody knows who.'},
-  {n:'Saltmarrow Cay',    b:0,lv:20,x:.235,y:.71,m:70, st:60, w:'Chop',              o:[12,74,13,1], find:20, h:['tanned_hide','silver_ore','raw_trout'],
+  {n:'Saltmarrow Cay',    b:0,lv:20,x:.235,y:.71,m:70, st:60, w:'Chop',              o:[12,74,13,1], find:20, g:4.1, pk:[2,3],
+   d:[{i:'kelp_frond',w:28,q:[10,24]},{i:'rock_salt',w:24,q:[14,32]},{i:'tanned_hide',w:18,q:[4,11]},{i:'silver_ore',w:16,q:[8,18]},{i:'raw_trout',w:14,q:[7,17]}],
+   r:[{i:'tide_glass',c:0.075,q:[1,4]},{i:'barnacle_iron',c:0.100,q:[2,5]}],
    f:'Brackish, low, and green to the waterline. The hemp grows here whether anyone plants it or not.'},
-  {n:'The Herring Banks', b:0,lv:25,x:.30, y:.44,m:90, st:75, w:'Chop',              o:[13,72,14,1], find:22, h:['raw_trout','raw_tuna','iron_ore'],
+  {n:'The Herring Banks', b:0,lv:25,x:.30, y:.44,m:90, st:75, w:'Chop',              o:[13,72,14,1], find:22, g:4.6, pk:[2,4],
+   d:[{i:'raw_trout',w:28,q:[12,28]},{i:'raw_tuna',w:24,q:[9,22]},{i:'rock_salt',w:20,q:[16,36]},{i:'gull_egg',w:14,q:[5,13]},{i:'iron_ore',w:14,q:[10,24]}],
+   r:[{i:'tide_glass',c:0.070,q:[1,4]}],
    f:'Fish so thick the water goes solid silver. Every fleet on the coast works these banks and they still do not run out.'},
-  {n:'Kelp Warren',       b:0,lv:30,x:.155,y:.85,m:110,st:85, w:"Wrecker's Weather", o:[14,64,20,2], find:26, h:['pearl','ironbark_log','coal'],
+  {n:'Kelp Warren',       b:0,lv:30,x:.155,y:.85,m:110,st:85, w:"Wrecker's Weather", o:[14,64,20,2], find:26, g:5.2, pk:[2,4],
+   d:[{i:'kelp_frond',w:32,q:[16,38]},{i:'driftwood',w:22,q:[14,32]},{i:'coal',w:18,q:[10,24]},{i:'barnacle_iron',w:16,q:[3,9]},{i:'ironbark_log',w:12,q:[9,20]}],
+   r:[{i:'pearl',c:0.045,q:[1,2]},{i:'tide_glass',c:0.080,q:[2,5]}],
    f:'A forest, but underneath. Rudders foul, crews get nervous, and something down there is patient.'},
 
-  {n:"Widow's Wrack",     b:1,lv:34,x:.355,y:.235,m:135,st:100,w:"Wrecker's Weather",o:[15,60,23,2], find:28, h:['iron_ore','gold_ore','ironbark_log'],
+  {n:"Widow's Wrack",     b:1,lv:34,x:.355,y:.235,m:135,st:100,w:"Wrecker's Weather",o:[15,60,23,2], find:28, g:9.5, pk:[2,4],
+   d:[{i:'wrack_timber',w:28,q:[24,56]},{i:'tarred_rope',w:24,q:[18,42]},{i:'iron_ore',w:18,q:[20,46]},{i:'salvaged_powder',w:16,q:[4,11]},{i:'sailors_locket',w:14,q:[1,3]}],
+   r:[{i:'ship_bell',c:0.050,q:[1,2]},{i:'drowned_ledger',c:0.025,q:[1,1]}],
    f:'Nine ships on one reef across forty years. The Admiralty stopped counting after the ninth.'},
-  {n:'Brine Chapel',      b:1,lv:38,x:.45, y:.16, m:160,st:115,w:'Blackfog',         o:[16,58,24,2], find:30, h:['silver_ore','gem_dust','tanned_hide'],
+  {n:'Brine Chapel',      b:1,lv:38,x:.45, y:.16, m:160,st:115,w:'Blackfog',         o:[16,58,24,2], find:30, g:10.4,pk:[2,4],
+   d:[{i:'sailors_locket',w:26,q:[1,4]},{i:'wrack_timber',w:24,q:[22,50]},{i:'silver_ore',w:20,q:[16,38]},{i:'gem_dust',w:16,q:[6,15]},{i:'tarred_rope',w:14,q:[14,34]}],
+   r:[{i:'ship_bell',c:0.045,q:[1,2]},{i:'drowned_ledger',c:0.030,q:[1,1]}],
    f:'Someone built a chapel on a rock that floods twice a day. The candles are always lit and always dry.'},
-  {n:'Emberfall Atoll',   b:1,lv:42,x:.395,y:.42, m:180,st:130,w:'Chop',             o:[17,63,18,2], find:32, h:['ember_log','ember_dust','coal'],
+  {n:'Emberfall Atoll',   b:1,lv:42,x:.395,y:.42, m:180,st:130,w:'Chop',             o:[17,63,18,2], find:32, g:11.2,pk:[2,4],
+   d:[{i:'ember_log',w:28,q:[20,46]},{i:'ember_dust',w:24,q:[10,25]},{i:'wrack_timber',w:18,q:[20,46]},{i:'salvaged_powder',w:16,q:[5,13]},{i:'coal',w:14,q:[18,42]}],
+   r:[{i:'ship_bell',c:0.040,q:[1,2]}],
    f:'The ring of an old caldera, still warm. Emberwood grows here and nowhere else at sea.'},
-  {n:'The Bonewash',      b:1,lv:46,x:.475,y:.585,m:210,st:145,w:"Wrecker's Weather",o:[17,55,25,3], find:34, h:['beast_sinew','gold_ore','ember_log'],
+  {n:'The Bonewash',      b:1,lv:46,x:.475,y:.585,m:210,st:145,w:"Wrecker's Weather",o:[17,55,25,3], find:34, g:12.1,pk:[3,4],
+   d:[{i:'wrack_timber',w:26,q:[26,60]},{i:'tarred_rope',w:22,q:[20,46]},{i:'gold_ore',w:20,q:[14,34]},{i:'sailors_locket',w:16,q:[2,5]},{i:'ember_log',w:16,q:[18,42]}],
+   r:[{i:'beast_sinew',c:0.055,q:[1,1]},{i:'ship_bell',c:0.050,q:[1,2]},{i:'drowned_ledger',c:0.030,q:[1,1]}],
    f:'A white beach that is not sand. The tide brings more of it in every year from somewhere further out.'},
-  {n:'Tallow Key',        b:1,lv:50,x:.34, y:.73, m:240,st:160,w:'Blackfog',         o:[18,54,25,3], find:36, h:['gold_ore','mithril_ore','gem_dust'],
+  {n:'Tallow Key',        b:1,lv:50,x:.34, y:.73, m:240,st:160,w:'Blackfog',         o:[18,54,25,3], find:36, g:13.0,pk:[3,4],
+   d:[{i:'salvaged_powder',w:28,q:[7,17]},{i:'gold_ore',w:22,q:[16,38]},{i:'tarred_rope',w:18,q:[22,50]},{i:'mithril_ore',w:16,q:[12,28]},{i:'wrack_timber',w:16,q:[22,50]}],
+   r:[{i:'drowned_ledger',c:0.040,q:[1,2]},{i:'ship_bell',c:0.045,q:[1,2]}],
    f:"A smuggler's key with six hidden inlets. The fog here is not entirely natural and the locals will not discuss it."},
-  {n:'Gravekeel Spit',    b:1,lv:54,x:.455,y:.865,m:270,st:175,w:'The Maw',          o:[19,48,28,5], find:40, h:['runite_ore','shade_ember','mithril_ore'],
+  {n:'Gravekeel Spit',    b:1,lv:54,x:.455,y:.865,m:270,st:175,w:'The Maw',          o:[19,48,28,5], find:40, g:14.4,pk:[3,5],
+   d:[{i:'wrack_timber',w:26,q:[30,66]},{i:'runite_ore',w:22,q:[14,34]},{i:'salvaged_powder',w:18,q:[8,19]},{i:'mithril_ore',w:18,q:[16,38]},{i:'sailors_locket',w:16,q:[2,6]}],
+   r:[{i:'shade_ember',c:0.050,q:[1,1]},{i:'ship_bell',c:0.060,q:[1,3]},{i:'drowned_ledger',c:0.045,q:[1,2]}],
    f:'Every hull that ever sank between here and the Mistlands eventually washes up on this spit. So does whatever ate them.'},
 
-  {n:'Mistvault Isle',    b:2,lv:58,x:.585,y:.21, m:300,st:190,w:'Blackfog',         o:[19,52,25,4], find:42, h:['mithril_ore','gem_dust','frost_log'],
+  {n:'Mistvault Isle',    b:2,lv:58,x:.585,y:.21, m:300,st:190,w:'Blackfog',         o:[19,52,25,4], find:42, g:26,  pk:[3,4],
+   d:[{i:'mistglass',w:28,q:[36,80]},{i:'fogweed',w:24,q:[28,64]},{i:'mithril_ore',w:18,q:[24,54]},{i:'spire_stone',w:16,q:[12,30]},{i:'frost_log',w:14,q:[22,50]}],
+   r:[{i:'drowned_coin',c:0.055,q:[1,4]},{i:'tidebound_pearl',c:0.014,q:[1,2]}],
    f:'It is on the chart. It is not always where the chart says. Three crews have sworn to this and one was sober.'},
-  {n:'The Drowned Spire', b:2,lv:62,x:.66, y:.37, m:345,st:205,w:'The Maw',          o:[20,46,28,6], find:45, h:['cobalt_ore','beast_sinew','raw_salmon'],
+  {n:'The Drowned Spire', b:2,lv:62,x:.66, y:.37, m:345,st:205,w:'The Maw',          o:[20,46,28,6], find:45, g:28,  pk:[3,4],
+   d:[{i:'spire_stone',w:28,q:[18,42]},{i:'mistglass',w:24,q:[34,76]},{i:'cobalt_ore',w:18,q:[22,50]},{i:'siren_scale',w:16,q:[6,16]},{i:'raw_salmon',w:14,q:[14,34]}],
+   r:[{i:'beast_sinew',c:0.050,q:[1,1]},{i:'drowned_coin',c:0.060,q:[2,5]},{i:'tidebound_pearl',c:0.016,q:[1,2]}],
    f:'A tower, upright, under sixty feet of water. Someone lit the top of it last winter.'},
-  {n:'Frostfang Skerry',  b:2,lv:66,x:.545,y:.51, m:390,st:220,w:"Wrecker's Weather",o:[20,49,27,4], find:48, h:['frost_log','cobalt_ore','frostcrocus'],
+  {n:'Frostfang Skerry',  b:2,lv:66,x:.545,y:.51, m:390,st:220,w:"Wrecker's Weather",o:[20,49,27,4], find:48, g:30,  pk:[3,5],
+   d:[{i:'frost_log',w:26,q:[30,68]},{i:'mistglass',w:22,q:[32,72]},{i:'cobalt_ore',w:18,q:[24,54]},{i:'frostcrocus',w:18,q:[8,20]},{i:'fogweed',w:16,q:[24,56]}],
+   r:[{i:'drowned_coin',c:0.055,q:[1,4]},{i:'siren_scale',c:0.090,q:[2,6]}],
    f:"The Tundra's teeth, seen from the water. Ice takes the rigging faster than a crew can chip it off."},
-  {n:'Hollowtide',        b:2,lv:70,x:.70, y:.63, m:435,st:235,w:'Blackfog',         o:[21,47,27,5], find:52, h:['shadow_log','runite_ore','pearl'],
+  {n:'Hollowtide',        b:2,lv:70,x:.70, y:.63, m:435,st:235,w:'Blackfog',         o:[21,47,27,5], find:52, g:32,  pk:[3,5],
+   d:[{i:'mistglass',w:26,q:[40,88]},{i:'fogweed',w:22,q:[32,72]},{i:'shadow_log',w:18,q:[26,58]},{i:'spire_stone',w:18,q:[16,38]},{i:'siren_scale',w:16,q:[8,20]}],
+   r:[{i:'pearl',c:0.070,q:[1,3]},{i:'drowned_coin',c:0.065,q:[2,6]},{i:'tidebound_pearl',c:0.018,q:[1,2]}],
    f:'Twice a month the sea here goes out and does not come back for a day. What it uncovers is worth the wait.'},
-  {n:'The Weeping Stones',b:2,lv:74,x:.60, y:.78, m:480,st:250,w:"Wrecker's Weather",o:[21,46,28,5], find:56, h:['gem_dust','runite_ore','shadow_log'],
+  {n:'The Weeping Stones',b:2,lv:74,x:.60, y:.78, m:480,st:250,w:"Wrecker's Weather",o:[21,46,28,5], find:56, g:34,  pk:[3,5],
+   d:[{i:'spire_stone',w:28,q:[22,50]},{i:'gem_dust',w:22,q:[18,42]},{i:'runite_ore',w:18,q:[22,50]},{i:'mistglass',w:18,q:[34,76]},{i:'witchhazel',w:14,q:[8,20]}],
+   r:[{i:'drowned_coin',c:0.060,q:[2,6]},{i:'tidebound_pearl',c:0.017,q:[1,2]}],
    f:'Nine standing stones in a rough circle, all of them wet in dry weather. Nobody has explained this.'},
-  {n:"Corsair's Gibbet",  b:2,lv:78,x:.665,y:.895,m:525,st:265,w:'The Maw',          o:[22,42,29,7], find:60, h:['shade_ember','gold_ore','runite_ore'],
+  {n:"Corsair's Gibbet",  b:2,lv:78,x:.665,y:.895,m:525,st:265,w:'The Maw',          o:[22,42,29,7], find:60, g:37,  pk:[3,5],
+   d:[{i:'siren_scale',w:26,q:[10,26]},{i:'gold_ore',w:22,q:[26,58]},{i:'spire_stone',w:18,q:[20,46]},{i:'runite_ore',w:18,q:[24,54]},{i:'fogweed',w:16,q:[28,64]}],
+   r:[{i:'shade_ember',c:0.060,q:[1,1]},{i:'drowned_coin',c:0.070,q:[2,7]},{i:'tidebound_pearl',c:0.020,q:[1,2]}],
    f:'Where the Admiralty hanged them, and where the survivors went afterward. Both groups are still here in their way.'},
 
-  {n:'Blackreef Hollow',  b:3,lv:82,x:.775,y:.225,m:570,st:280,w:'The Maw',          o:[22,41,29,8], find:64, h:['shadow_log','runite_ore','shade_ember'],
+  {n:'Blackreef Hollow',  b:3,lv:82,x:.775,y:.225,m:570,st:280,w:'The Maw',          o:[22,41,29,8], find:64, g:56,  pk:[3,5],
+   d:[{i:'voidwood',w:26,q:[44,96]},{i:'deep_amber',w:22,q:[36,80]},{i:'shadow_log',w:18,q:[30,68]},{i:'runite_ore',w:18,q:[28,64]},{i:'leviathan_scale',w:16,q:[6,16]}],
+   r:[{i:'shade_ember',c:0.070,q:[1,1]},{i:'abyssal_pearl',c:0.070,q:[2,6]},{i:'starfall_cinder',c:0.022,q:[1,2]}],
    f:'Ashen Steppe water. The reef is not coral and it is not stone, and it has grown since it was charted.'},
-  {n:"Leviathan's Rest",  b:3,lv:86,x:.885,y:.375,m:630,st:300,w:'The Maw',          o:[23,38,29,10],find:70, h:['voidheart','starsteel_ore','beast_sinew'],
+  {n:"Leviathan's Rest",  b:3,lv:86,x:.885,y:.375,m:630,st:300,w:'The Maw',          o:[23,38,29,10],find:70, g:60,  pk:[3,5],
+   d:[{i:'leviathan_scale',w:30,q:[10,26]},{i:'voidwood',w:22,q:[40,88]},{i:'starsteel_ore',w:18,q:[26,58]},{i:'deep_amber',w:16,q:[32,72]},{i:'ancient_log',w:14,q:[24,54]}],
+   r:[{i:'voidheart',c:0.045,q:[1,1]},{i:'beast_sinew',c:0.060,q:[1,1]},{i:'abyssal_pearl',c:0.080,q:[3,8]},{i:'starfall_cinder',c:0.026,q:[1,2]}],
    f:'A ribcage the size of a cathedral, half-buried. It is not the largest one down there — only the one close enough to reach.'},
-  {n:'The Salt Gate',     b:3,lv:88,x:.755,y:.475,m:660,st:310,w:'Blackfog',         o:[24,40,29,7], find:74, h:['starsteel_ore','gem_dust','ancient_log'],
+  {n:'The Salt Gate',     b:3,lv:88,x:.755,y:.475,m:660,st:310,w:'Blackfog',         o:[24,40,29,7], find:74, g:62,  pk:[3,5],
+   d:[{i:'deep_amber',w:26,q:[40,88]},{i:'starsteel_ore',w:22,q:[28,64]},{i:'mistglass',w:18,q:[44,96]},{i:'voidwood',w:18,q:[38,84]},{i:'ancient_log',w:16,q:[26,58]}],
+   r:[{i:'abyssal_pearl',c:0.075,q:[3,8]},{i:'starfall_cinder',c:0.028,q:[1,2]},{i:'crown_fragment',c:0.010,q:[1,1]}],
    f:'Two pillars of white stone standing in open ocean, four hundred miles from any land. They mark nothing. Crews sail between them anyway.'},
-  {n:'The Ashen Strand',  b:3,lv:90,x:.90, y:.565,m:690,st:320,w:"Wrecker's Weather",o:[23,42,28,7], find:78, h:['starsteel_ore','ember_dust','ancient_log'],
+  {n:'The Ashen Strand',  b:3,lv:90,x:.90, y:.565,m:690,st:320,w:"Wrecker's Weather",o:[23,42,28,7], find:78, g:64,  pk:[3,5],
+   d:[{i:'deep_amber',w:28,q:[44,96]},{i:'starsteel_ore',w:22,q:[30,68]},{i:'ember_dust',w:18,q:[28,64]},{i:'voidwood',w:16,q:[38,84]},{i:'ancient_log',w:16,q:[28,64]}],
+   r:[{i:'abyssal_pearl',c:0.070,q:[3,8]},{i:'starfall_cinder',c:0.030,q:[1,2]}],
    f:'Grey sand for eleven miles, and it is warm underfoot the whole way. Nothing grows. Everything washes up.'},
-  {n:'The Sunken Crown',  b:3,lv:93,x:.785,y:.675,m:750,st:340,w:'The Maw',          o:[24,36,29,11],find:84, h:['starsteel_ore','voidheart','runite_ore'],
+  {n:'The Sunken Crown',  b:3,lv:93,x:.785,y:.675,m:750,st:340,w:'The Maw',          o:[24,36,29,11],find:84, g:68,  pk:[4,5],
+   d:[{i:'starsteel_ore',w:26,q:[32,72]},{i:'voidwood',w:22,q:[44,96]},{i:'leviathan_scale',w:18,q:[10,26]},{i:'deep_amber',w:18,q:[40,88]},{i:'spire_stone',w:16,q:[26,58]}],
+   r:[{i:'voidheart',c:0.050,q:[1,1]},{i:'abyssal_pearl',c:0.085,q:[4,9]},{i:'starfall_cinder',c:0.032,q:[1,3]},{i:'crown_fragment',c:0.016,q:[1,1]}],
    f:'A city, or the top of one, breaking the surface at low water. Whatever it was crowned is still down there wearing it.'},
-  {n:'Voidmaw Trench',    b:3,lv:97,x:.885,y:.80, m:840,st:370,w:'The Maw',          o:[25,32,29,14],find:90, h:['voidheart','ancient_log','starsteel_ore'],
+  {n:'Voidmaw Trench',    b:3,lv:97,x:.885,y:.80, m:840,st:370,w:'The Maw',          o:[25,32,29,14],find:90, g:74,  pk:[4,6],
+   d:[{i:'voidwood',w:26,q:[50,110]},{i:'deep_amber',w:20,q:[44,96]},{i:'starsteel_ore',w:18,q:[34,76]},{i:'leviathan_scale',w:16,q:[12,30]},{i:'ancient_log',w:12,q:[30,68]},{i:'spire_stone',w:8,q:[28,64]}],
+   r:[{i:'voidheart',c:0.055,q:[1,1]},{i:'abyssal_pearl',c:0.090,q:[4,10]},{i:'starfall_cinder',c:0.036,q:[1,3]},{i:'crown_fragment',c:0.020,q:[1,1]}],
    f:'You do not land here. You lower things into it and haul up whatever has attached itself on the way.'},
 
   /* Unlogged — reachable only by a Blackfog misdelivery, then charted for good. */
-  {n:'The Lantern Isles', b:3,lv:80,x:.915,y:.13, m:540,st:290,w:'Blackfog',o:[30,45,20,5],find:8,hid:1,h:['starsteel_ore','pearl','gem_dust'],
+  {n:'The Lantern Isles', b:3,lv:80,x:.915,y:.13, m:540,st:290,w:'Blackfog',o:[30,45,20,5],find:8,hid:1, g:70, pk:[3,5],
+   d:[{i:'starsteel_ore',w:26,q:[30,68]},{i:'deep_amber',w:22,q:[38,84]},{i:'mistglass',w:20,q:[42,92]},{i:'voidwood',w:18,q:[36,80]},{i:'gem_dust',w:14,q:[22,50]}],
+   r:[{i:'abyssal_pearl',c:0.120,q:[4,10]},{i:'tidebound_pearl',c:0.060,q:[1,3]},{i:'crown_fragment',c:0.030,q:[1,1]}],
    f:'Not on any Admiralty chart. Crews who arrive here did not mean to. Every one of them describes the same lights.'},
-  {n:'Nowhere Cay',       b:2,lv:64,x:.515,y:.115,m:360,st:210,w:'Blackfog',o:[28,47,21,4],find:8,hid:1,h:['gem_dust','mithril_ore','pearl'],
+  {n:'Nowhere Cay',       b:2,lv:64,x:.515,y:.115,m:360,st:210,w:'Blackfog',o:[28,47,21,4],find:8,hid:1, g:34, pk:[3,5],
+   d:[{i:'mistglass',w:26,q:[38,84]},{i:'fogweed',w:22,q:[32,72]},{i:'gem_dust',w:20,q:[20,46]},{i:'spire_stone',w:18,q:[18,42]},{i:'mithril_ore',w:14,q:[24,54]}],
+   r:[{i:'tidebound_pearl',c:0.055,q:[1,3]},{i:'drowned_coin',c:0.140,q:[2,7]}],
    f:'Reached only by being lost. The cartographers have a name for islands like this and it is not a polite one.'}
 ];
+
+/* Treasure maps (0.9.62). Four islands are sealed behind a map rather than a
+   level: each one drops from exactly one other island at a low rate, so opening
+   the far water is something you sail for, not something you grind XP for. The
+   source is always an island you can already reach at that point in the ladder.
+   `isle`/`from` are indices into SAIL_ISLES — kept in one table so the island
+   data and the drop source can never drift apart. */
+const SAIL_CHARTS={
+  chart_gravekeel:{isle:11, from:6,  chance:0.030},
+  chart_gibbet:   {isle:17, from:10, chance:0.025},
+  chart_crown:    {isle:22, from:13, chance:0.020},
+  chart_voidmaw:  {isle:23, from:19, chance:0.015}
+};
+/* Reverse lookups, built once so render paths never scan the table. */
+const SAIL_CHART_BY_ISLE={}, SAIL_CHART_BY_SRC={};
+for(const _cid in SAIL_CHARTS){
+  SAIL_CHART_BY_ISLE[SAIL_CHARTS[_cid].isle]=_cid;
+  SAIL_CHART_BY_SRC[SAIL_CHARTS[_cid].from]=_cid;
+}
+function sailHasChart(cid){ return !!(state.sail&&state.sail.charts&&state.sail.charts[cid]); }
+function sailChartFor(i){ return SAIL_CHART_BY_ISLE[i]||null; }
 
 const SAIL_GRADES=[
   {n:'Triumphant', c:'sl-r1', mult:1.40, p:'Clean water the whole crossing. The hold came back over-full, and the crew found something they were not looking for.'},
@@ -25725,11 +26149,51 @@ let sailMode=false, sailSel=0, _sailRedrawT=null;
 function sailState(){ return state.sail; }
 function sailLvl(){ return levelFromXp((state.sail&&state.sail.xp)||0); }
 function sailHull(){ return SAIL_HULLS[Math.min(SAIL_HULLS.length-1, Math.max(0,(state.sail&&state.sail.hull)||0))]; }
+function sailCannon(){ return SAIL_CANNONS[Math.min(SAIL_CANNONS.length-1, Math.max(0,(state.sail&&state.sail.cannon)||0))]; }
+function sailSails(){  return SAIL_SAILS[Math.min(SAIL_SAILS.length-1,  Math.max(0,(state.sail&&state.sail.sails)||0))]; }
+
+/* ── derived ship stats: hull tier + fitted parts + crew ───────────────────────
+   Every consumer goes through these rather than reading SAIL_HULLS directly, so
+   crew and parts feed the odds, duration, cargo and find-rate uniformly. */
+function sailCrew(){ return (state.sail&&state.sail.crew)||{}; }
+function sailCrewCount(){ const c=sailCrew(); let n=0; for(const k in c) n+=Math.max(0,c[k]|0); return n; }
+/* The Sailing Cape earns its keep beyond flat percentages: an extra berth and a
+   quarter off every wage bill, which is what makes a full crew affordable at 99. */
+function sailBerths(){
+  return (sailHull().berths||0) + (((state.items&&state.items.cape_sailing)>0)?1:0);
+}
+function _sailCrewSum(field){
+  const c=sailCrew(); let t=0;
+  for(const id in c){ const r=SAIL_CREW_BY_ID[id]; if(r&&r[field]) t+=r[field]*Math.max(0,c[id]|0); }
+  return t;
+}
+function sailSound(){ return sailHull().sound + _sailCrewSum('sound'); }
+function sailArms(){  return sailCannon().arms + _sailCrewSum('arms'); }
+function sailCargo(){ return sailHull().hold  + _sailCrewSum('hold'); }
+/* Rigging is capped well under 1 so duration can never collapse to nothing. */
+function sailRig(){ return Math.min(0.62, sailSails().rig + _sailCrewSum('rig')); }
+/* Treasure-find multiplier from crew, the pet and the cape. */
+function sailFindMult(){
+  let m=1+_sailCrewSum('find');
+  if((state.items&&state.items.spet_sailing)>0) m+=0.05;
+  if((state.items&&state.items.cape_sailing)>0) m+=0.10;
+  return m;
+}
+function sailWageTotal(){
+  const c=sailCrew(); let g=0;
+  for(const id in c){ const r=SAIL_CREW_BY_ID[id]; if(r) g+=r.wage*Math.max(0,c[id]|0); }
+  if((state.items&&state.items.cape_sailing)>0) g=Math.round(g*0.75);
+  return g;
+}
 function sailIsle(i){ return SAIL_ISLES[Math.min(SAIL_ISLES.length-1, Math.max(0,i|0))]; }
 
 /* Preview-only clock scale. Ships visible and labelled so it never reads as a bug. */
 function sailSpeed(){ return (state.sail&&state.sail.fast)?60:1; }
-function sailDurMs(isle){ return Math.max(1000, Math.round(isle.m*60000/sailSpeed())); }
+/* Rigging shortens the real crossing while XP still pays on the island's nominal
+   length — that is what makes sails an xp/hr upgrade rather than just convenience. */
+function sailDurMs(isle){
+  return Math.max(1000, Math.round(isle.m*60000*(1-sailRig())/sailSpeed()));
+}
 
 /* An island is reachable only if BOTH the level and the ship's Stores clear it —
    a capped sailor in a small hull still cannot make the far water. Unlogged
@@ -25737,8 +26201,11 @@ function sailDurMs(isle){ return Math.max(1000, Math.round(isle.m*60000/sailSpee
 function sailReach(i){
   const isle=sailIsle(i), h=sailHull();
   if(isle.hid && !(state.sail.found&&state.sail.found[i])) return 'hidden';
+  const cid=sailChartFor(i);
+  if(cid && !sailHasChart(cid)) return 'chart';
   if(sailLvl()<isle.lv) return 'lvl';
   if(h.stores<isle.st)  return 'stores';
+  if(sailCrewCount()<sailCrewNeed(isle)) return 'crew';
   return 'ok';
 }
 
@@ -25747,10 +26214,17 @@ function sailReach(i){
    Battered into Successful; an under-built one does the reverse. Always renormalised
    to 100 so the rendered bar and the roll can never disagree. */
 function sailOdds(i){
-  const isle=sailIsle(i), h=sailHull();
+  const isle=sailIsle(i);
   const need=40+isle.lv*7.4;
-  const ratio=Math.max(0.35, Math.min(2.4, h.sound/need));
-  const shift=Math.max(-0.6, Math.min(0.75, (ratio-1)*0.55));
+  const ratio=Math.max(0.35, Math.min(2.4, sailSound()/need));
+  let shift=Math.max(-0.6, Math.min(0.75, (ratio-1)*0.55));
+  /* Armaments only matter in The Maw. Purely additive — zero guns leaves those
+     islands exactly as difficult as they were before cannons existed, so this
+     rewards fitting guns instead of punishing saves that have not. */
+  if(isle.w==='The Maw'){
+    const aNeed=30+isle.lv*5.2;
+    shift += Math.min(0.45, (sailArms()/aNeed)*0.40);
+  }
   let o=isle.o.slice();
   const mB=o[2]*shift, mW=o[3]*shift;
   o[2]-=mB; o[1]+=mB; o[3]-=mW; o[0]+=mW;
@@ -25765,13 +26239,29 @@ function sailLaunch(i){
   const why=sailReach(i);
   if(why!=='ok'){
     toast(why==='lvl' ? 'Sailing level too low for that crossing.'
-        : why==='stores' ? 'Your ship cannot carry stores that far. Build a bigger hull.'
+        : why==='stores' ? 'Your ship cannot sail that far. Build a bigger hull.'
+        : why==='chart' ? ('Sealed — you need the '+ITEMS[sailChartFor(i)].name+' first.')
+        : why==='crew' ? ('That water needs '+sailCrewNeed(sailIsle(i))+' crew — you have '+sailCrewCount()+'.')
         : 'That island is not on your chart.');
     return;
   }
   if(state.sail.damaged){ toast('The ship is damaged. Repair her at the yard first.'); return; }
+  /* Crew are paid to provision at the dock, so wages are charged up front — no
+     way to end up in debt, and it is a straight gold sink. */
+  const wages=sailWageTotal();
+  if(wages>0){
+    const owed=wages*SILVER_PER_GOLD;
+    if((state.coins||0)<owed){ toast('Not enough gold for crew wages ('+wages.toLocaleString()+'g).'); return; }
+    state.coins-=owed;
+  }
   const isle=sailIsle(i), dur=sailDurMs(isle);
-  state.sail.voy={i:i, endsAt:Date.now()+dur, dur:dur, roll:Math.random(), troveRoll:Math.random(), fogRoll:Math.random()};
+  state.sail.voy={i:i, endsAt:Date.now()+dur, dur:dur, roll:Math.random(),
+                  troveRoll:Math.random(), fogRoll:Math.random(), chartRoll:Math.random(),
+                  matRolls:[Math.random(),Math.random(),Math.random(),Math.random()],
+                  petRoll:Math.random(),
+                  // 20 seeds is comfortably more than the deepest island consumes
+                  // (1 pick-count + 2 per bulk pick + 2 per rare roll).
+                  haulRolls:Array.from({length:20},()=>Math.random())};
   state.sail.last=null;
   saveGame(); renderSail();
   toast('Set sail for '+isle.n+'.');
@@ -25808,38 +26298,148 @@ function sailCheckArrival(){
   const grade=SAIL_GRADES[g];
 
   // haul scales with time at sea and level, capped by the hold
-  const lvl=sailLvl();
+  const lvl=sailLvl(), cargoCap=sailCargo();
   let units=Math.round(dest.m*0.9*(1+lvl*0.02)*grade.mult);
-  const capped=units>h.hold;
-  units=Math.min(units, h.hold);
+  units=Math.min(units, cargoCap);
 
+  /* Split the haul across the island's table — but rare materials are capped at a
+     couple per voyage rather than taking an even share. Several deep islands list
+     voidheart / shade_ember / beast_sinew, which gate T3-T5 skilling tools; an even
+     split there handed out ~750 of each in a single trip and would have wrecked
+     those gates. Bulk goes to the ordinary mats instead. */
+  /* ── the haul (0.9.66) ───────────────────────────────────────────────────────
+     Two tiers. BULK is a weighted draw without replacement from dest.d, so two
+     trips to the same island differ. RARES in dest.r roll independently at a flat
+     chance, because a without-replacement draw cannot express rarity — at pick
+     counts near the pool size it surfaces nearly everything regardless of weight.
+     Every roll comes from a seed stored at departure, so reloading cannot reroll.
+     Cargo capacity is spent as we go, and anything that will not fit is left. */
   const got={};
-  const per=Math.max(1, Math.floor(units/dest.h.length));
-  for(const id of dest.h){ const n=grantItem(id, per); if(n>0) got[id]=(got[id]||0)+n; }
+  const seeds=(v.haulRolls&&v.haulRolls.length>=14)?v.haulRolls:null;
+  let sIdx=0;
+  const nextSeed=()=>{ const r=seeds?seeds[sIdx%seeds.length]:Math.random(); sIdx++; return r; };
+
+  let room=units;
+  const take=(id,qty)=>{
+    if(qty<=0) return;
+    const isRare=ITEMS[id]&&ITEMS[id].rare;
+    // Rare gating mats stay hard-capped (the 0.9.64 fix) and never eat cargo room.
+    const amt=isRare?qty:Math.min(qty, room);
+    if(amt<=0) return;
+    const n=grantItem(id, amt);
+    if(n>0){ got[id]=(got[id]||0)+n; if(!isRare) room-=n; markDiscovered(id); }
+  };
+
+  const pool=(dest.d||[]).slice();
+  let picks=(dest.pk?_sailRi(nextSeed(),dest.pk[0],dest.pk[1]):2)+(g===0?1:0)-(g===2?1:0)-(g===3?2:0);
+  picks=Math.max(1, Math.min(pool.length, picks));
+  for(let k=0;k<picks && pool.length;k++){
+    let tot=0; for(const e of pool) tot+=e.w;
+    let r=nextSeed()*tot, run=0, idx=0;
+    for(let j=0;j<pool.length;j++){ run+=pool[j].w; if(r<run){ idx=j; break; } }
+    const e=pool.splice(idx,1)[0];
+    take(e.i, Math.max(1, Math.round(_sailRi(nextSeed(),e.q[0],e.q[1])*grade.mult)));
+  }
+  const capped=room<=0;
+  for(const e of (dest.r||[])){
+    if(nextSeed() < e.c*(g===0?2:1)){
+      const qty=(ITEMS[e.i]&&ITEMS[e.i].rare)?(g===0?2:1)
+               :Math.max(1, Math.round(_sailRi(nextSeed(),e.q[0],e.q[1])*grade.mult));
+      take(e.i, qty);
+    }
+  }
+
+  /* Gold, every voyage. Scaled by time at sea so long runs pay more in absolute
+     terms — and so crew wages, which are charged at the dock, have a source. */
+  const gold=Math.max(1, Math.round(dest.m*(dest.g||2)*grade.mult));
+  state.coins=(state.coins||0)+gold*SILVER_PER_GOLD;
 
   // trove roll — the collection layer, and the reason to keep sailing
   let trove=null;
   const band=SAIL_BANDS[dest.b];
   const troveId=dest.hid?'trove_odd':(band?band.trove:null);
-  if(troveId && g<=1 && v.troveRoll < (1/dest.find)*(g===0?2:1)){
+  if(troveId && g<=1 && v.troveRoll < (1/dest.find)*(g===0?2:1)*sailFindMult()){
     if(grantItem(troveId,1)>0){ trove=troveId; markDiscovered(troveId);
       logNotification('rare', iconHTML(troveId), 'Recovered '+ITEMS[troveId].name+' from '+dest.n+'!'); }
   }
 
   /* Sailing xp is its own pool — addSkillXp() writes state.xp[skill] and would
      need Sailing registered in SKILLS, which is exactly what we are avoiding. */
-  const xp=Math.round(dest.m*(6+dest.lv*0.9)*grade.mult);
+  /* Treasure map roll. Any grade can turn one up — a Wrecked crew still saw the
+     water — but it only fires on the one island that holds that map, and only
+     while it is still unfound. Uses its own stored roll so it cannot be rerolled
+     by reloading, same as the outcome. */
+  let chartFound=null;
+  const srcChart=SAIL_CHART_BY_SRC[landed];
+  if(srcChart && !sailHasChart(srcChart) && v.chartRoll < SAIL_CHARTS[srcChart].chance){
+    if(!state.sail.charts) state.sail.charts={};
+    state.sail.charts[srcChart]=1;
+    grantItem(srcChart,1); markDiscovered(srcChart);
+    chartFound=srcChart;
+  }
+
+  /* Shipwright materials. Rolled from stored seeds so they cannot be rerolled,
+     and folded into `got` so they show up in the return card with everything else. */
+  const mats={};
+  sailMatDrops(dest).forEach((md,mi)=>{
+    const r=(v.matRolls&&typeof v.matRolls[mi]==='number')?v.matRolls[mi]:Math.random();
+    if(r<md.chance){
+      const qty=(g===0?2:1);
+      const n=grantItem(md.id, qty);
+      if(n>0){ mats[md.id]=n; got[md.id]=(got[md.id]||0)+n; markDiscovered(md.id); }
+    }
+  });
+
+  /* XP curve v2 (0.9.64). The old linear level term topped out near 5.6k xp/hr —
+     roughly 40x behind every other skill, putting Lv99 past 3,400 hours of voyage
+     time. A power term makes each archipelago a real step up and lands 99 at
+     ~500 hours, which suits a skill you check twice a day rather than play. */
+  let xp=Math.round(dest.m*(8+Math.pow(dest.lv,1.65)*0.50)*grade.mult);
+  if((state.items&&state.items.cape_sailing)>0) xp=Math.round(xp*1.05);
   state.sail.xp=Math.min(XP_CAP,(state.sail.xp||0)+xp);
+
+  /* Storm Petrel — the sailing pet. Rarer than a trove and scales with how far out
+     you are, so it turns up over a long career rather than on a lucky first trip. */
+  let petFound=null;
+  if(!(state.items&&state.items.spet_sailing>0)){
+    const petChance=(1/900)*(1+dest.lv/28);
+    if(v.petRoll<petChance && grantItem('spet_sailing',1)>0){
+      petFound='spet_sailing'; markDiscovered('spet_sailing');
+    }
+  }
+  /* Sailing Cape — granted the moment Sailing 99 lands, not sold. */
+  let capeFound=null;
+  if(sailLvl()>=MAX_LEVEL && !(state.items&&state.items.cape_sailing>0)){
+    if(grantItem('cape_sailing',1)>0){ capeFound='cape_sailing'; markDiscovered('cape_sailing'); }
+  }
 
   if(g>=2){ state.sail.damaged=(g===3); }
   state.sail.voyages=(state.sail.voyages||0)+1;
 
-  state.sail.last={g:g, i:landed, from:v.i, fogged:fogged, got:got, trove:trove, xp:xp, capped:capped, units:units};
+  state.sail.last={g:g, i:landed, from:v.i, fogged:fogged, got:got, trove:trove, chart:chartFound,
+                   pet:petFound, cape:capeFound, xp:xp, gold:gold, capped:capped, units:units};
   state.sail.voy=null;
   saveGame();
 
   logNotification('unlock', iconHTML('sailing'), grade.n+' return from '+dest.n+' · +'+xp+' Sailing XP');
   if(!sailMode) toast('Your ship has returned from '+dest.n+' — '+grade.n+'.');
+
+  /* Logged last so it sits on top of the return line, and always toasted even
+     with the panel open — unsealing an island is the rarest thing that happens
+     out there and should never scroll past unnoticed. */
+  if(chartFound){
+    const opened=sailIsle(SAIL_CHARTS[chartFound].isle);
+    logNotification('rare', iconHTML(chartFound), 'Found '+ITEMS[chartFound].name+' — '+opened.n+' is now on your chart!');
+    toast('Treasure map recovered — '+opened.n+' is now open to you.');
+  }
+  if(petFound){
+    logNotification('rare', iconHTML('spet_sailing'), 'A Storm Petrel followed the ship home from '+dest.n+'!');
+    toast('A Storm Petrel has taken up in your rigging!');
+  }
+  if(capeFound){
+    logNotification('rare', iconHTML('cape_sailing'), 'Sailing 99 — Emberwatch has given you the Sailing Cape.');
+    toast('Sailing 99! Emberwatch presents the Sailing Cape.');
+  }
   return true;
 }
 
@@ -25849,6 +26449,49 @@ function sailRepair(){
   for(const id in cost){ if((state.items[id]||0)<cost[id]){ toast('Need '+cost[id]+'× '+(ITEMS[id]?ITEMS[id].name:id)+' to repair.'); return; } }
   for(const id in cost) state.items[id]=(state.items[id]||0)-cost[id];
   state.sail.damaged=false; saveGame(); renderSail(); toast('The yard has her seaworthy again.');
+}
+
+/* ── crew hiring ─────────────────────────────────────────────────────────────── */
+function sailHireCost(role){
+  // Escalates with total crew already aboard, so a full complement is a real
+  // investment rather than a flat purchase.
+  return Math.round(role.hire*(1+0.30*sailCrewCount()));
+}
+function sailHire(id){
+  const role=SAIL_CREW_BY_ID[id]; if(!role) return;
+  if(sailCrewCount()>=sailBerths()){
+    toast(sailBerths()===0 ? 'This ship has no berths. Build a bigger hull.'
+                           : 'All '+sailBerths()+' berths are full. Build a bigger hull.');
+    return;
+  }
+  if(sailLvl()<role.lv){ toast('Sailing '+role.lv+' needed to sign on a '+role.n+'.'); return; }
+  const cost=sailHireCost(role)*SILVER_PER_GOLD;
+  if((state.coins||0)<cost){ toast('Not enough gold — '+sailHireCost(role).toLocaleString()+'g to sign on a '+role.n+'.'); return; }
+  state.coins-=cost;
+  if(!state.sail.crew) state.sail.crew={};
+  state.sail.crew[id]=(state.sail.crew[id]|0)+1;
+  saveGame(); renderSail(); toast(role.n+' signed on.');
+}
+function sailDismiss(id){
+  const role=SAIL_CREW_BY_ID[id]; if(!role) return;
+  if(!state.sail.crew||!(state.sail.crew[id]>0)) return;
+  if(state.sail.voy){ toast('Not while she is at sea.'); return; }
+  state.sail.crew[id]--;
+  if(state.sail.crew[id]<=0) delete state.sail.crew[id];
+  saveGame(); renderSail(); toast(role.n+' paid off.');
+}
+
+/* ── fitting cannons and sails ───────────────────────────────────────────────── */
+function sailFitPart(kind,t){
+  const tbl = kind==='cannon'?SAIL_CANNONS:SAIL_SAILS;
+  const cur = kind==='cannon'?(state.sail.cannon|0):(state.sail.sails|0);
+  const e=tbl[t];
+  if(!e||!e.cost||t<=cur) return;
+  if(sailLvl()<e.lv){ toast('Sailing '+e.lv+' needed to fit the '+e.n+'.'); return; }
+  for(const id in e.cost){ if((state.items[id]||0)<e.cost[id]){ toast('Need '+e.cost[id]+'× '+(ITEMS[id]?ITEMS[id].name:id)+'.'); return; } }
+  for(const id in e.cost) state.items[id]=(state.items[id]||0)-e.cost[id];
+  if(kind==='cannon') state.sail.cannon=t; else state.sail.sails=t;
+  saveGame(); renderSail(); toast(e.n+' fitted.');
 }
 
 function sailBuild(t){
@@ -25861,76 +26504,164 @@ function sailBuild(t){
   saveGame(); renderSail(); toast(h.n+' launched at Emberwatch.');
 }
 
+/* ── chart view: pan + zoom ──────────────────────────────────────────────────────
+   Island positions are normalised 0..1. z=1 is exactly fit-to-stage, so there is
+   never empty water at the edges; panning only exists above z=1. Markers are HTML
+   (so their labels stay a constant size) and get positioned from the same
+   transform the canvas uses, in sailPlaceMarkers. */
+let sailView={z:1, ox:0, oy:0};
+let sailTab='voyage';
+const SAIL_ZMIN=1, SAIL_ZMAX=3.4, SAIL_LABEL_Z=1.5;
+
+/* The root carries a CSS `zoom`, so client coords and getBoundingClientRect are
+   in VISUAL px while clientWidth/offsetLeft are in CSS px. Everything below works
+   in CSS px and divides incoming pointer coords by this. */
+function sailRootZoom(){
+  const z=parseFloat(document.documentElement.style.zoom);
+  return (z&&isFinite(z)&&z>0)?z:1;
+}
+
+/* Size the panel to the window rather than with vh — under CSS zoom, vh resolves
+   against the unscaled viewport and would overflow or leave a gap. */
+function sailFit(){
+  const p=$('sailPanel'), wrap=$('slWrap');
+  if(!p||!wrap||p.style.display==='none') return;
+  const z=sailRootZoom();
+  const topVisual=p.getBoundingClientRect().top;
+  const availCss=(window.innerHeight-topVisual)/z - 16;
+  wrap.style.height=Math.max(470, Math.round(availCss))+'px';
+}
+
+function sailViewport(){
+  const st=$('slStage');
+  return st?{W:st.clientWidth||1, H:st.clientHeight||1}:{W:1,H:1};
+}
+function sailClamp(){
+  const {W,H}=sailViewport(), v=sailView;
+  const sw=W*v.z, sh=H*v.z;
+  v.ox = sw<=W ? (W-sw)/2 : Math.min(0, Math.max(W-sw, v.ox));
+  v.oy = sh<=H ? (H-sh)/2 : Math.min(0, Math.max(H-sh, v.oy));
+}
+/* Zoom about a point so the water under the cursor stays under the cursor. */
+function sailZoomAt(cx,cy,nz){
+  const {W,H}=sailViewport(), v=sailView;
+  nz=Math.max(SAIL_ZMIN, Math.min(SAIL_ZMAX, nz));
+  const wx=(cx-v.ox)/(W*v.z), wy=(cy-v.oy)/(H*v.z);
+  v.z=nz; v.ox=cx-wx*W*v.z; v.oy=cy-wy*H*v.z;
+  sailClamp(); sailPaintView();
+}
+function sailSetZoom(nz){
+  const {W,H}=sailViewport();
+  sailZoomAt(W/2, H/2, nz);
+}
+/* Recentre on an island — used when selecting one that is off-screen. */
+function sailCenterOn(i){
+  const isle=sailIsle(i), {W,H}=sailViewport(), v=sailView;
+  v.ox=W/2-isle.x*W*v.z; v.oy=H/2-isle.y*H*v.z;
+  sailClamp(); sailPaintView();
+}
+function sailPaintView(){
+  sailDrawChart(); sailPlaceMarkers();
+  const st=$('slStage'); if(st) st.classList.toggle('far', sailView.z<SAIL_LABEL_Z);
+  const lbl=$('slZlvl'); if(lbl) lbl.textContent=Math.round(sailView.z*100)+'%';
+}
+
+/* Place every marker, band label and the harbour from the current view. */
+function sailPlaceMarkers(){
+  const st=$('slStage'); if(!st) return;
+  const {W,H}=sailViewport(), v=sailView;
+  const sx=n=>n*W*v.z+v.ox, sy=n=>n*H*v.z+v.oy;
+  st.querySelectorAll('[data-slisle]').forEach(b=>{
+    const is=sailIsle(+b.getAttribute('data-slisle'));
+    b.style.left=sx(is.x)+'px'; b.style.top=sy(is.y)+'px';
+  });
+  st.querySelectorAll('[data-slband]').forEach(d=>{
+    d.style.left=sx(+d.getAttribute('data-slband'))+'px'; d.style.top='6px';
+  });
+  const port=st.querySelector('.sl-port');
+  if(port){ port.style.left=sx(0.034)+'px'; port.style.top=sy(0.5)+'px'; }
+}
+
 /* ── chart canvas ────────────────────────────────────────────────────────────────
-   Drawn once per render (and on resize), never on rAF — an animation loop here
-   would fight the game's own frame loop for no visual gain. */
+   Drawn on demand (render, pan, zoom, resize) and never on rAF — an animation
+   loop here would fight the game's own frame loop for no visual gain. The world
+   is drawn under the view transform; the compass rose is pinned in screen space
+   so it stays a fixed size and never drifts off the chart. */
 function sailDrawChart(){
   const cv=$('slCanvas'), stage=$('slStage');
   if(!cv||!stage) return;
   const ctx=cv.getContext&&cv.getContext('2d'); if(!ctx) return;
-  const w=stage.clientWidth, h=stage.clientHeight;
-  if(!w||!h) return;
+  const W=stage.clientWidth, H=stage.clientHeight;
+  if(!W||!H) return;
   const dpr=Math.min(window.devicePixelRatio||1,2);
-  cv.width=w*dpr; cv.height=h*dpr; ctx.setTransform(dpr,0,0,dpr,0,0);
-  ctx.clearRect(0,0,w,h);
+  cv.width=W*dpr; cv.height=H*dpr; ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,W,H);
 
-  const g=ctx.createLinearGradient(0,0,w,h);
+  const v=sailView, z=v.z;
+
+  // open water fills the whole viewport regardless of pan
+  const g=ctx.createLinearGradient(0,0,W,H);
   g.addColorStop(0,'#0e1f2b'); g.addColorStop(.5,'#0b1822'); g.addColorStop(1,'#08131b');
-  ctx.fillStyle=g; ctx.fillRect(0,0,w,h);
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
 
-  const sg=ctx.createRadialGradient(0,h*.5,10,0,h*.5,w*.42);
-  sg.addColorStop(0,'rgba(30,72,94,.55)'); sg.addColorStop(1,'rgba(30,72,94,0)');
-  ctx.fillStyle=sg; ctx.fillRect(0,0,w,h);
+  ctx.save();
+  ctx.translate(v.ox, v.oy); ctx.scale(z, z);
 
-  ctx.strokeStyle='rgba(150,122,66,.16)'; ctx.lineWidth=1;
-  for(let i=1;i<16;i++){ ctx.beginPath(); ctx.moveTo(i*w/16,0); ctx.lineTo(i*w/16,h); ctx.stroke(); }
-  for(let i=1;i<8;i++){ ctx.beginPath(); ctx.moveTo(0,i*h/8); ctx.lineTo(w,i*h/8); ctx.stroke(); }
+  // continental shelf glow off the harbour
+  const sg=ctx.createRadialGradient(0,H*.5,10,0,H*.5,W*.42);
+  sg.addColorStop(0,'rgba(30,72,94,.5)'); sg.addColorStop(1,'rgba(30,72,94,0)');
+  ctx.fillStyle=sg; ctx.fillRect(0,0,W,H);
 
-  const nodes=[[w*.30,h*.50],[w*.68,h*.30],[w*.86,h*.72]];
-  ctx.lineWidth=.9;
+  ctx.strokeStyle='rgba(150,122,66,.15)'; ctx.lineWidth=1/z;
+  for(let i=1;i<16;i++){ ctx.beginPath(); ctx.moveTo(i*W/16,0); ctx.lineTo(i*W/16,H); ctx.stroke(); }
+  for(let i=1;i<8;i++){ ctx.beginPath(); ctx.moveTo(0,i*H/8); ctx.lineTo(W,i*H/8); ctx.stroke(); }
+
+  const nodes=[[W*.30,H*.50],[W*.68,H*.30],[W*.86,H*.72]];
   nodes.forEach(n=>{
-    ctx.strokeStyle='rgba(168,136,74,.28)';
-    for(let a=0;a<16;a++){ const th=a*Math.PI/8, L=w*1.4;
+    ctx.strokeStyle='rgba(168,136,74,.26)'; ctx.lineWidth=0.9/z;
+    for(let a=0;a<16;a++){ const th=a*Math.PI/8, L=W*1.5;
       ctx.beginPath(); ctx.moveTo(n[0],n[1]); ctx.lineTo(n[0]+Math.cos(th)*L,n[1]+Math.sin(th)*L); ctx.stroke(); }
-    ctx.strokeStyle='rgba(190,155,88,.42)';
-    ctx.beginPath(); ctx.arc(n[0],n[1],w*.055,0,Math.PI*2); ctx.stroke();
-    ctx.fillStyle='rgba(199,155,78,.5)'; ctx.beginPath(); ctx.arc(n[0],n[1],2.6,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='rgba(190,155,88,.40)';
+    ctx.beginPath(); ctx.arc(n[0],n[1],W*.055,0,Math.PI*2); ctx.stroke();
+    ctx.fillStyle='rgba(199,155,78,.5)'; ctx.beginPath(); ctx.arc(n[0],n[1],2.6/z,0,Math.PI*2); ctx.fill();
   });
 
   SAIL_ISLES.forEach((is,ix)=>{
     if(is.hid && !(state.sail.found&&state.sail.found[ix])) return;
-    const cx=is.x*w, cy=is.y*h;
+    const cx=is.x*W, cy=is.y*H;
     for(let r=1;r<=3;r++){
       ctx.beginPath();
-      const rad=8+r*10;
+      const rad=(7+r*9)/z*Math.min(1.6,z);
       for(let a=0;a<=Math.PI*2+.01;a+=Math.PI/14){
         const wob=1+Math.sin(a*3+is.x*17+r)*0.13+Math.cos(a*5+is.y*11)*0.08;
         const px=cx+Math.cos(a)*rad*wob, py=cy+Math.sin(a)*rad*wob*.72;
         if(a===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
       }
       ctx.closePath();
-      ctx.strokeStyle='rgba(122,170,196,'+(0.30-r*0.07)+')'; ctx.lineWidth=1; ctx.stroke();
+      ctx.strokeStyle='rgba(122,170,196,'+(0.30-r*0.07)+')'; ctx.lineWidth=1/z; ctx.stroke();
       if(r===1){ ctx.fillStyle='rgba(26,58,76,.6)'; ctx.fill(); }
     }
   });
 
-  ctx.fillStyle='rgba(122,170,196,.26)';
-  ctx.font="9px 'Cascadia Mono', Consolas, monospace";
+  ctx.fillStyle='rgba(122,170,196,.24)';
+  ctx.font=(9/z)+"px 'Cascadia Mono', Consolas, monospace";
   for(let i=0;i<52;i++){
-    const sx=((i*97)%100)/100*w, sy=((i*61)%100)/100*h;
-    const near=SAIL_ISLES.some(is=>Math.abs(is.x*w-sx)<60&&Math.abs(is.y*h-sy)<46);
-    if(!near) ctx.fillText(String(7+(i*13)%90), sx, sy);
+    const px=((i*97)%100)/100*W, py=((i*61)%100)/100*H;
+    const near=SAIL_ISLES.some(is=>Math.abs(is.x*W-px)<58&&Math.abs(is.y*H-py)<44);
+    if(!near) ctx.fillText(String(7+(i*13)%90), px, py);
   }
+  ctx.restore();
 
-  const vg=ctx.createRadialGradient(w/2,h/2,Math.min(w,h)*.42,w/2,h/2,Math.max(w,h)*.80);
-  vg.addColorStop(0,'rgba(0,0,0,0)'); vg.addColorStop(1,'rgba(0,0,0,.46)');
-  ctx.fillStyle=vg; ctx.fillRect(0,0,w,h);
+  const vg=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.46,W/2,H/2,Math.max(W,H)*.82);
+  vg.addColorStop(0,'rgba(0,0,0,0)'); vg.addColorStop(1,'rgba(0,0,0,.42)');
+  ctx.fillStyle=vg; ctx.fillRect(0,0,W,H);
 
-  const rx=w*.085, ry=h*.80, R=Math.min(w*.055,40);
-  ctx.save(); ctx.translate(rx,ry);
-  ctx.strokeStyle='rgba(206,166,92,.58)'; ctx.lineWidth=1.1;
+  // compass rose — screen space, pinned bottom-left
+  const R=Math.max(20, Math.min(W*.058, 34));
+  ctx.save(); ctx.translate(R+12, H-R-12);
+  ctx.strokeStyle='rgba(206,166,92,.55)'; ctx.lineWidth=1.1;
   ctx.beginPath(); ctx.arc(0,0,R,0,Math.PI*2); ctx.stroke();
-  ctx.strokeStyle='rgba(206,166,92,.36)';
+  ctx.strokeStyle='rgba(206,166,92,.34)';
   ctx.beginPath(); ctx.arc(0,0,R*.72,0,Math.PI*2); ctx.stroke();
   for(let a=0;a<8;a++){
     const t=a*Math.PI/4-Math.PI/2, len=(a%2===0)?R:R*.55;
@@ -25939,13 +26670,21 @@ function sailDrawChart(){
     ctx.lineTo(Math.cos(t)*len, Math.sin(t)*len);
     ctx.lineTo(Math.cos(t+0.13)*len*.4, Math.sin(t+0.13)*len*.4);
     ctx.closePath();
-    ctx.fillStyle=(a%2===0)?'rgba(214,174,98,.76)':'rgba(214,174,98,.36)'; ctx.fill();
+    ctx.fillStyle=(a%2===0)?'rgba(214,174,98,.72)':'rgba(214,174,98,.34)'; ctx.fill();
   }
-  ctx.fillStyle='rgba(240,224,188,.9)';
-  ctx.font="italic 12px 'Palatino Linotype', Georgia, serif";
-  ctx.textAlign='center'; ctx.fillText('N',0,-R-7);
+  ctx.fillStyle='rgba(240,224,188,.88)';
+  ctx.font="italic 11px 'Palatino Linotype', Georgia, serif";
+  ctx.textAlign='center'; ctx.fillText('N',0,-R-5);
   ctx.restore();
 }
+
+/* ── wording helpers ────────────────────────────────────────────────────────────
+   Player-facing copy avoids the jargon the first pass shipped with: Soundness is
+   "Hull", Stores is "Range" (it is literally how far you can go), Hold is "Cargo",
+   and a 1-in-N trove chance is shown as a percentage. */
+/* Integer in [a,b] from a stored 0..1 seed — keeps the whole haul deterministic
+   so a reload cannot reroll loot. */
+function _sailRi(seed,a,b){ return a+Math.floor(Math.max(0,Math.min(0.999999,seed))*(b-a+1)); }
 
 function sailFmtMins(m){
   if(m<60) return m+'m';
@@ -25958,10 +26697,83 @@ function sailFmtClock(ms){
   const p=n=>(n<10?'0':'')+n;
   return p(hh)+':'+p(mm)+':'+p(ss);
 }
+const SAIL_WATER_PLAIN={
+  'Glass Calm':'Nothing goes wrong out there.',
+  'Chop':'Light hull wear. The odd crate over the side.',
+  "Wrecker's Weather":'Squalls that chew hulls apart.',
+  'Blackfog':'You can arrive at the wrong island entirely.',
+  'The Maw':'Leviathan water. Rare, and it ends ships.'
+};
+/* One word for the risk, sitting next to the bar that spells it out. */
+function sailDifficulty(i){
+  const wrecked=sailOdds(i)[3];
+  if(wrecked<1.5) return {n:'Safe',      c:'sl-p1', col:'#a8cc72'};
+  if(wrecked<6)   return {n:'Risky',     c:'sl-p2', col:'#e0c060'};
+  if(wrecked<12)  return {n:'Dangerous', c:'sl-p3', col:'#e09a52'};
+  return               {n:'Deadly',    c:'sl-p4', col:'#e2836c'};
+}
+function sailPct(oneIn){ const p=100/oneIn; return (p>=10?Math.round(p):p.toFixed(1))+'%'; }
+function sailWhyText(i){
+  const isle=sailIsle(i), h=sailHull(), why=sailReach(i);
+  if(why==='chart'){
+    const cid=sailChartFor(i), src=sailIsle(SAIL_CHARTS[cid].from);
+    return 'Needs <b>'+ITEMS[cid].name+'</b> — '+(SAIL_CHARTS[cid].chance*100).toFixed(1)+'% at '+src.n+'.';
+  }
+  if(why==='lvl')    return 'Needs Sailing '+isle.lv+'.';
+  if(why==='stores') return 'Needs Range '+isle.st+' — you have '+h.stores+'.';
+  if(why==='crew')   return 'Needs '+sailCrewNeed(isle)+' crew — you have '+sailCrewCount()+'.';
+  return '';
+}
+/* If this island holds a treasure map you have not found yet, say so — otherwise
+   there is no way for a player to know where to go looking. */
+function sailChartHint(i){
+  const cid=SAIL_CHART_BY_SRC[i];
+  if(!cid || sailHasChart(cid)) return '';
+  const opened=sailIsle(SAIL_CHARTS[cid].isle);
+  return '<b>'+ITEMS[cid].name+'</b> · '+(SAIL_CHARTS[cid].chance*100).toFixed(1)
+    +'% — opens <b>'+opened.n+'</b>.';
+}
 
-/* Lightweight per-tick updater — writes only the clock and the bar so the canvas
-   and the marker DOM survive. A full renderSail() every second would be wasteful
-   and would visibly reset the chart. */
+/* ── island hover card ── */
+function sailTipShow(i, ev){
+  let tip=$('slTip');
+  if(!tip){ tip=document.createElement('div'); tip.id='slTip'; tip.className='sl-tip'; document.body.appendChild(tip); }
+  const isle=sailIsle(i), o=sailOdds(i), d=sailDifficulty(i), why=sailWhyText(i);
+  const h=sailHull(), hint=sailChartHint(i);
+  let html='<h6>'+isle.n+'</h6>'
+    +'<div class="band">'+(isle.hid?'Unlogged water':SAIL_BANDS[isle.b].n)+' · Sailing '+isle.lv+'</div>'
+    +'<div class="row"><span>Time at sea</span><b>'+sailFmtMins(isle.m)+'</b></div>'
+    +'<div class="row"><span>Range needed</span><b'+(h.stores<isle.st?' style="color:#e0917c"':'')+'>'
+      +isle.st+' <span style="color:#5f8496">(you '+h.stores+')</span></b></div>'
+    +'<div class="row"><span>Treasure chance</span><b>'+sailPct(isle.find)+'</b></div>'
+    +'<div class="row"><span>'+isle.w+'</span><b style="color:'+d.col+'">'+d.n+'</b></div>'
+    +'<div class="mini">'
+    +'<i style="background:#dfb03c;width:'+o[0].toFixed(1)+'%"></i>'
+    +'<i style="background:#7da33f;width:'+o[1].toFixed(1)+'%"></i>'
+    +'<i style="background:#c9822e;width:'+o[2].toFixed(1)+'%"></i>'
+    +'<i style="background:#a8412c;width:'+o[3].toFixed(1)+'%"></i></div>'
+    +'<div class="minikey"><span>'+Math.round(o[0]+o[1])+'% goes well</span>'
+    +'<span>'+Math.round(o[3])+'% wrecked</span></div>';
+  if(why)  html+='<div class="why">'+why+'</div>';
+  if(hint) html+='<div class="hint">'+hint+'</div>';
+  tip.innerHTML=html;
+  tip.classList.add('show');
+  sailTipMove(ev);
+}
+function sailTipMove(ev){
+  const tip=$('slTip'); if(!tip||!ev) return;
+  const z=sailRootZoom();
+  const w=tip.offsetWidth||226, h=tip.offsetHeight||150;
+  const vw=window.innerWidth/z, vh=window.innerHeight/z;
+  let x=ev.clientX/z+16, y=ev.clientY/z+14;
+  if(x+w>vw-8) x=ev.clientX/z-w-16;
+  if(y+h>vh-8) y=Math.max(8, ev.clientY/z-h-14);
+  tip.style.left=Math.round(x)+'px'; tip.style.top=Math.round(y)+'px';
+}
+function sailTipHide(){ const t=$('slTip'); if(t) t.classList.remove('show'); }
+
+/* Lightweight per-tick updater — writes only the clock and bar so the canvas and
+   marker DOM survive. A full renderSail every second would visibly reset the map. */
 function sailTickUI(){
   if(!sailMode) return;
   const s=state.sail; if(!s||!s.voy) return;
@@ -25970,6 +26782,8 @@ function sailTickUI(){
   el.textContent=sailFmtClock(left);
   const bar=$('slPBar');
   if(bar) bar.style.width=Math.min(100,Math.max(0,(1-left/s.voy.dur)*100))+'%';
+  const eta=$('slEta');
+  if(eta) eta.textContent='back at '+new Date(s.voy.endsAt).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
 }
 
 function enterSailing(){
@@ -25978,7 +26792,7 @@ function enterSailing(){
 }
 function closeSailPanel(){
   if(!sailMode) return;
-  sailMode=false; updateModePanels();
+  sailMode=false; sailTipHide(); updateModePanels();
 }
 
 function renderSail(){
@@ -25987,161 +26801,387 @@ function renderSail(){
   const xpNow=s.xp||0, base=XP_CUM[lvl]||0, next=XP_CUM[Math.min(MAX_LEVEL,lvl+1)]||base+1;
   const pct=lvl>=MAX_LEVEL?100:Math.max(0,Math.min(100,(xpNow-base)/Math.max(1,next-base)*100));
 
-  let html='<div class="sl-wrap">';
-
-  /* ── preview notice ──
-     Sailing shipped as a look-at-it-first feature: the panel is real but the
-     rewards, troves and progression are not wired up yet. Saying so in the panel
-     costs nothing and stops it reading as a broken system — this is visible in
-     the public browser demo, where nobody has the context that it's early. */
-  html+='<div class="sl-preview">'
-    +'<b>Preview</b> — Sailing is early and still being built. Charts, troves and '
-    +'rewards are not finished, so expect gaps and changes. Progress here may be '
-    +'reset while it is being worked on.</div>';
+  let html='<div class="sl-wrap" id="slWrap">';
 
   /* ── header ── */
   html+='<div class="sl-top">'
     +'<div class="sl-ship">'+iconHTML('sailing')
-    +'<div><div class="sl-shipname">'+h.n+(s.damaged?' <span style="color:var(--red);font-size:11px">· DAMAGED</span>':'')+'</div>'
-    +'<div class="sl-shiptier">Emberwatch Harbour · tier '+(s.hull+1)+' of 7</div></div></div>'
+    +'<div><div class="sl-shipname">'+h.n+(s.damaged?' <span style="color:var(--red);font-size:11px">· needs repair</span>':'')+'</div>'
+    +'<div class="sl-shiptier">Emberwatch Harbour · ship '+(s.hull+1)+' of 7</div></div></div>'
     +'<div class="sl-stats">'
-    +'<span class="sl-stat">Sound <b>'+h.sound+'</b></span>'
-    +'<span class="sl-stat">Stores <b>'+h.stores+'</b></span>'
-    +'<span class="sl-stat">Hold <b>'+h.hold+'</b></span>'
-    +'<span class="sl-stat">Voyages <b>'+(s.voyages||0)+'</b></span></div>'
-    +'<div class="sl-lvl"><div class="sl-lvlbox"><b>Lv '+lvl+'</b><i>'+Math.floor(xpNow).toLocaleString()+' xp</i></div>'
+    +'<span class="sl-stat" data-tip="Resists storm damage.">'+iconHTML('ui_shield')+'Hull <b>'+sailSound()+'</b></span>'
+    +'<span class="sl-stat" data-tip="How far the ship can sail.">'+iconHTML('ui_wind')+'Range <b>'+h.stores+'</b></span>'
+    +'<span class="sl-stat" data-tip="Most cargo she can carry home.">'+iconHTML('ui_coin')+'Cargo <b>'+sailCargo()+'</b></span>'
+    +'<span class="sl-stat" data-tip="Gun power. Only matters in The Maw.">'+iconHTML('ui_sword')+'Guns <b>'+sailArms()+'</b></span>'
+    +(sailRig()>0?'<span class="sl-stat" data-tip="Cuts voyage time.">'+iconHTML('sl_sails')+'Rigging <b>'+Math.round(sailRig()*100)+'%</b></span>':'')
+    +'<span class="sl-stat'+(sailCrewCount()>=sailBerths()&&sailBerths()>0?'':'')+'" data-tip="Hands aboard, and berths available.">'+iconHTML('sl_crew')+'Crew <b>'+sailCrewCount()+'/'+sailBerths()+'</b></span>'
+    +'<span class="sl-stat" data-tip="Voyages completed.">'+iconHTML('ui_scroll')+'Trips <b>'+(s.voyages||0)+'</b></span>'
+    +'</div>'
+    +'<div class="sl-lvl"><div class="sl-lvlbox"><b>Sailing '+lvl+'</b><i>'+Math.floor(xpNow).toLocaleString()+' xp</i></div>'
     +'<div class="sl-xpbar"><i style="width:'+pct+'%"></i></div>'
-    +'<button class="sl-btn" id="slLeave">Leave</button></div></div>';
+    +'<button class="sl-btn sm" id="slLeave">Leave</button></div></div>';
+
+  html+='<div class="sl-main">';
 
   /* ── chart ── */
   const charted=SAIL_ISLES.filter((x,ix)=>!x.hid||(s.found&&s.found[ix])).length;
   html+='<div class="sl-chartbox"><div class="sl-charthd">'
-    +'<span class="t">Emberwatch Admiralty Chart № 4</span>'
-    +'<span class="h">'+charted+' charted · '+(SAIL_ISLES.length-charted)+' unlogged</span></div>'
-    +'<div class="sl-chartscroll"><div class="sl-stage" id="slStage"><canvas id="slCanvas"></canvas>';
+    +'<span class="t">Admiralty Chart № 4 · '+charted+' charted</span>'
+    +'<div class="sl-zoomrow">'
+    +'<button class="sl-zb" id="slZOut" title="Zoom out">&minus;</button>'
+    +'<span class="sl-zlvl" id="slZlvl">100%</span>'
+    +'<button class="sl-zb" id="slZIn" title="Zoom in">+</button>'
+    +'<button class="sl-zb wide" id="slZFind" title="Centre on the selected island">FIND</button>'
+    +'</div></div>'
+    +'<div class="sl-stage" id="slStage"><canvas id="slCanvas"></canvas>';
 
-  SAIL_BANDS.forEach(b=>{ html+='<div class="sl-band" style="left:'+(b.x*100)+'%">'+b.n+'</div>'; });
-  html+='<div class="sl-port" style="left:3.4%;top:50%">'+iconHTML('ui_anchor')+'<span>Emberwatch</span></div>';
+  SAIL_BANDS.forEach(b=>{ html+='<div class="sl-band" data-slband="'+b.x+'">'+b.n+'</div>'; });
+  html+='<div class="sl-port">'+iconHTML('ui_anchor')+'<span>Emberwatch</span></div>';
 
   SAIL_ISLES.forEach((is,ix)=>{
     const why=sailReach(ix);
     if(why==='hidden') return;
     const cls='sl-mk'+(ix===sailSel?' on':'')+(why!=='ok'?' lock':'')+(is.hid?' hid':'')
-      +(s.voy&&s.voy.i===ix?' sailing-to':'');
-    html+='<button class="'+cls+'" data-slisle="'+ix+'" style="left:'+(is.x*100)+'%;top:'+(is.y*100)+'%" '
-      +'title="'+is.n+'"><span class="d"></span><span class="n">'+is.n+'</span></button>';
+      +(why==='chart'?' needchart':'')+(s.voy&&s.voy.i===ix?' atsea':'');
+    html+='<button class="'+cls+'" data-slisle="'+ix+'"><span class="d"></span><span class="n">'+is.n+'</span></button>';
   });
-  html+='</div></div></div>';
-
-  /* ── body: dossier | expedition + yard ── */
-  html+='<div class="sl-body">';
-
-  /* dossier */
-  const odds=sailOdds(sailSel), why=sailReach(sailSel);
-  const hazards={'Glass Calm':'Hazards — none of note','Chop':'Hazards — hull wear, spilled cargo',
-    "Wrecker's Weather":'Hazards — squalls, hull damage','Blackfog':'Hazards — misdelivery, lost time',
-    'The Maw':'Hazards — leviathan water'};
-  html+='<div class="sl-card"><h4>'+isle.n+'</h4>'
-    +'<div class="sl-sub">'+(isle.hid?'UNLOGGED':(SAIL_BANDS[isle.b].n.toUpperCase()))+' · SAILING '+isle.lv+'</div>'
-    +'<p class="sl-flavor">'+isle.f+'</p>'
-    +'<div class="sl-grid4">'
-    +'<div class="sl-kv"><div class="k">Time at sea</div><div class="v">'+sailFmtMins(isle.m)+'</div></div>'
-    +'<div class="sl-kv"><div class="k">Stores</div><div class="v'+(h.stores<isle.st?'':'')+'">'+isle.st+'</div></div>'
-    +'<div class="sl-kv"><div class="k">Waters</div><div class="v sm">'+isle.w+'</div></div>'
-    +'<div class="sl-kv"><div class="k">Trove find</div><div class="v">1 in '+isle.find+'</div></div></div>'
-    +'<div class="sl-oddlab"><span>Outcome odds</span><span>'+(hazards[isle.w]||'')+'</span></div>'
-    +'<div class="sl-odds">';
-  ['sl-o1','sl-o2','sl-o3','sl-o4'].forEach((c,k)=>{
-    html+='<i class="'+c+'" style="flex-grow:'+odds[k].toFixed(2)+'">'+(odds[k]>=7?Math.round(odds[k])+'%':'')+'</i>';
-  });
-  html+='</div><div class="sl-oddkey">'
-    +'<span><em style="background:#dfb03c"></em>Triumphant 140%</span>'
-    +'<span><em style="background:#7da33f"></em>Successful 100%</span>'
-    +'<span><em style="background:#c9822e"></em>Battered 65%</span>'
-    +'<span><em style="background:#a8412c"></em>Wrecked 30%</span></div>'
-    +'<div class="sl-oddlab" style="margin-top:13px"><span>Typical haul</span></div><div class="sl-chips">';
-  isle.h.forEach(id=>{ html+='<span class="sl-chip">'+iconHTML(id)+(ITEMS[id]?ITEMS[id].name:id)+'</span>'; });
   html+='</div></div>';
 
-  /* expedition / yard column */
-  html+='<div style="display:flex;flex-direction:column;gap:10px">';
+  /* ── right column ── */
+  html+='<div class="sl-side">'
+    +'<div class="sl-seg">'
+    +'<button id="slTabVoy" class="'+(sailTab==='voyage'?'on':'')+'">Voyage</button>'
+    +'<button id="slTabYard" class="'+(sailTab==='yard'?'on':'')+'">Shipyard</button>'
+    +'<button id="slTabCrew" class="'+(sailTab==='crew'?'on':'')+'">Crew</button>'
+    +'</div><div class="sl-sidebody">';
 
-  html+='<div class="sl-card">';
-  if(s.voy){
-    const v=s.voy, dest=sailIsle(v.i), left=v.endsAt-Date.now();
-    html+='<h4>At sea — '+dest.n+'</h4><div class="sl-sub">RETURNS WHEN THE CLOCK RUNS OUT</div>'
-      +'<div class="sl-clock"><b id="slClock">'+sailFmtClock(left)+'</b><span>remaining</span></div>'
-      +'<div class="sl-pbar"><i id="slPBar" style="width:'+Math.min(100,Math.max(0,(1-left/v.dur)*100))+'%"></i></div>'
-      +'<p class="sl-note">The voyage resolves on its own clock. Close the game if you like — she will be waiting.</p>'
-      +'<div class="sl-btnrow" style="margin-top:9px"><button class="sl-btn" id="slSkip">Return now (preview)</button></div>';
-  } else {
-    if(s.last){
+  if(sailTab==='voyage'){
+    const odds=sailOdds(sailSel), why=sailReach(sailSel), diff=sailDifficulty(sailSel);
+    const reachOk=why==='ok';
+
+    /* live voyage first — it is the thing you came back to check */
+    if(s.voy){
+      const v=s.voy, dest=sailIsle(v.i), left=v.endsAt-Date.now();
+      html+='<div class="sl-card"><div class="sl-cardhd"><div>'
+        +'<h4>'+dest.n+'</h4><div class="sl-metarow"><span class="sl-chip good">at sea</span>'
+        +'<span class="sl-chip mut">'+sailFmtMins(dest.m)+' crossing</span></div></div></div>'
+        +'<div class="sl-lab">Time remaining</div>'
+        +'<div class="sl-clock"><b id="slClock">'+sailFmtClock(left)+'</b>'
+        +'<span id="slEta">back at '+new Date(v.endsAt).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})+'</span></div>'
+        +'<div class="sl-pbar"><i id="slPBar" style="width:'+Math.min(100,Math.max(0,(1-left/v.dur)*100))+'%"></i></div>'
+        +'<p class="sl-note">She sails on her own clock. Close the game if you like — the voyage still finishes.</p>'
+        +'<div class="sl-btnrow" style="margin-top:8px"><button class="sl-btn sm" id="slSkip">Bring her home now (preview)</button></div>'
+        +'</div>';
+    }
+
+    /* last result */
+    if(!s.voy && s.last){
       const L=s.last, gr=SAIL_GRADES[L.g], di=sailIsle(L.i);
       html+='<div class="sl-result '+gr.c+'"><h5>'+gr.n+' — '+di.n+'</h5><p>'
-        +(L.fogged?'<b>Blackfog took the ship off course.</b> She made landfall at '+di.n+', which is on no Admiralty chart. It is on yours now. ':'')
+        +(L.fogged?'<b>Blackfog took her off course.</b> She made landfall at '+di.n+', which is on no Admiralty chart. It is on yours now. ':'')
         +gr.p+'</p><div class="sl-chips">';
-      for(const id in L.got) html+='<span class="sl-chip gold">'+iconHTML(id)+(ITEMS[id]?ITEMS[id].name:id)+' ×'+L.got[id]+'</span>';
-      html+='<span class="sl-chip good">+'+L.xp+' Sailing XP</span>';
+      if(L.gold) html+='<span class="sl-chip gold">'+iconHTML('ui_coin')+'+'+L.gold.toLocaleString()+'g</span>';
+      for(const id in L.got){
+        const rare=ITEMS[id]&&ITEMS[id].rare;
+        html+='<span class="sl-chip'+(rare?' vio':'')+'">'+(rare?'✦ ':'')+iconHTML(id)
+          +(ITEMS[id]?ITEMS[id].name:id)+' ×'+L.got[id].toLocaleString()+'</span>';
+      }
+      html+='<span class="sl-chip good">+'+L.xp.toLocaleString()+' Sailing xp</span>';
       if(L.trove) html+='<span class="sl-chip vio">'+iconHTML(L.trove)+ITEMS[L.trove].name+'</span>';
-      if(L.capped) html+='<span class="sl-chip bad">hold full — cargo left on the beach</span>';
-      if(L.g===3) html+='<span class="sl-chip bad">ship damaged</span>';
+      if(L.chart) html+='<span class="sl-chip gold">'+iconHTML(L.chart)+ITEMS[L.chart].name+' — '
+        +sailIsle(SAIL_CHARTS[L.chart].isle).n+' unsealed!</span>';
+      if(L.pet)  html+='<span class="sl-chip vio">'+iconHTML('spet_sailing')+'A Storm Petrel followed her home!</span>';
+      if(L.cape) html+='<span class="sl-chip gold">'+iconHTML('cape_sailing')+'Sailing Cape awarded!</span>';
+      if(L.capped) html+='<span class="sl-chip bad">cargo full — the rest was left behind</span>';
+      if(L.g===3) html+='<span class="sl-chip bad">ship needs repair</span>';
       html+='</div></div>';
     }
-    const cantWhy = s.damaged?'Repair her first'
-      : why==='lvl'?('Sailing '+isle.lv+' required')
-      : why==='stores'?('Needs '+isle.st+' Stores — you have '+h.stores)
-      : null;
-    html+='<h4>Launch an expedition</h4><div class="sl-sub">'+isle.n.toUpperCase()+' · '+sailFmtMins(isle.m)+'</div>'
-      +'<button class="sl-btn go" id="slGo"'+(cantWhy?' disabled':'')+'>'
-      +(cantWhy?cantWhy:'Set Sail — '+sailFmtMins(isle.m))+'</button>'
-      +'<label class="sl-preview"><input type="checkbox" id="slFast"'+(s.fast?' checked':'')+'> '
-      +'Preview: fast voyages (×60 clock)</label>';
-  }
-  html+='</div>';
 
-  /* shipyard */
-  html+='<div class="sl-card"><h4>Emberwatch Yard</h4>'
-    +'<div class="sl-sub">HULL TIERS · LOGS AND BARS YOU ALREADY CUT</div><div class="sl-yard">';
-  SAIL_HULLS.forEach((hh,t)=>{
-    const cur=t===s.hull, owned=t<=s.hull, canLvl=lvl>=hh.lv;
-    let costStr=Object.keys(hh.cost).map(id=>hh.cost[id]+'× '+(ITEMS[id]?ITEMS[id].name:id)).join(' · ');
-    const afford=Object.keys(hh.cost).every(id=>(state.items[id]||0)>=hh.cost[id]);
-    html+='<div class="sl-hull'+(cur?' cur':'')+(!canLvl&&!owned?' lock':'')+'">'+iconHTML('sailing')
-      +'<div class="i"><b>'+hh.n+'</b><span>Lv '+hh.lv+' · Sound '+hh.sound+' · Stores '+hh.stores+' · Hold '+hh.hold+'</span>'
-      +(owned?'':'<span style="display:block;color:'+(afford?'#7da33f':'#a08a64')+'">'+costStr+'</span>')+'</div>';
-    if(cur) html+='<span class="sl-chip gold">current</span>';
-    else if(owned) html+='<span class="sl-chip">built</span>';
-    else html+='<button class="sl-btn" data-slbuild="'+t+'"'+((canLvl&&afford)?'':' disabled')+'>Build</button>';
+    /* selected island */
+    html+='<div class="sl-card"><div class="sl-cardhd"><div>'
+      +'<h4>'+isle.n+'</h4>'
+      +'<div class="sl-metarow">'
+      +'<span class="sl-chip mut">'+(isle.hid?'Unlogged':SAIL_BANDS[isle.b].n)+'</span>'
+      +'<span class="sl-chip mut">Sailing '+isle.lv+'</span>'
+      +'<span class="sl-pill '+diff.c+'" data-tip="'+Math.round(odds[3])+'% of voyages here end wrecked.">'
+      +'<em style="background:'+diff.col+'"></em>'+diff.n+'</span>'
+      +(why==='chart'?'<span class="sl-chip vio">'+iconHTML(sailChartFor(sailSel))+'sealed</span>':'')
+      +'</div></div></div>'
+      +'<p class="sl-flavor">'+isle.f+'</p>'
+      +(sailChartHint(sailSel)?'<div class="sl-lab">Treasure map here</div>'
+        +'<div class="sl-tile" style="border-color:#5a4526;background:#1a1409">'
+        +'<div class="v sm" style="color:#e8d7b0">'+sailChartHint(sailSel)+'</div></div>':'')
+      +'<div class="sl-lab">The crossing</div><div class="sl-tiles">'
+      +'<div class="sl-tile" data-tip="How long the voyage takes.">'
+      +'<div class="k">Time at sea</div><div class="v">'+sailFmtMins(isle.m)+'</div></div>'
+      +'<div class="sl-tile'+(h.stores<isle.st?' bad':'')+'" data-tip="Range needed to sail here.">'
+      +'<div class="k">Range needed</div><div class="v">'+isle.st+'</div>'
+      +'<div class="sub">you have '+h.stores+'</div></div>'
+      +'<div class="sl-tile" data-tip="Chance of a treasure per voyage.">'
+      +'<div class="k">Treasure</div><div class="v">'+sailPct(isle.find/Math.max(0.01,sailFindMult()))+'</div>'
+      +'<div class="sub">per voyage</div></div>'
+      +(sailCrewNeed(isle)>0?'<div class="sl-tile'+(sailCrewCount()<sailCrewNeed(isle)?' bad':'')
+        +'" data-tip="Hands needed to work her in this water."><div class="k">Crew needed</div>'
+        +'<div class="v">'+sailCrewNeed(isle)+'</div><div class="sub">you have '+sailCrewCount()+'</div></div>':'')
+      +'</div>'
+      +'<div class="sl-lab">Conditions</div>'
+      +'<div class="sl-tile"><div class="k">'+isle.w+'</div><div class="v sm">'+(SAIL_WATER_PLAIN[isle.w]||'')+'</div></div>'
+      +'<div class="sl-lab">How the voyage usually ends</div><div class="sl-odds">';
+    ['sl-o1','sl-o2','sl-o3','sl-o4'].forEach((c,k)=>{
+      html+='<i class="'+c+'" style="flex-grow:'+odds[k].toFixed(2)+'">'+(odds[k]>=8?Math.round(odds[k])+'%':'')+'</i>';
+    });
+    html+='</div><div class="sl-oddkey">'
+      +'<span><em style="background:#dfb03c"></em>Triumphant · +40% cargo</span>'
+      +'<span><em style="background:#7da33f"></em>Successful · full cargo</span>'
+      +'<span><em style="background:#c9822e"></em>Battered · keep 65%</span>'
+      +'<span><em style="background:#a8412c"></em>Wrecked · keep 30%</span></div>'
+      /* Possible loot, not a fixed list — bulk shows each entry's share of the draw,
+         rares show their flat per-voyage chance. */
+      +'<div class="sl-lab">Possible haul · '+(isle.pk?isle.pk[0]+'–'+isle.pk[1]:'2')+' of '
+      +(isle.d?isle.d.length:0)+' per voyage</div><div class="sl-chips">';
+    const _tw=(isle.d||[]).reduce((a,e)=>a+e.w,0)||1;
+    (isle.d||[]).forEach(e=>{
+      html+='<span class="sl-chip" data-tip="Share of each draw.">'+iconHTML(e.i)
+        +(ITEMS[e.i]?ITEMS[e.i].name:e.i)+' <b style="color:#6d8c9c">'+Math.round(e.w/_tw*100)+'%</b></span>';
+    });
     html+='</div>';
-  });
-  html+='</div>';
-  if(s.damaged) html+='<div class="sl-btnrow" style="margin-top:9px"><button class="sl-btn" id="slFix">Repair hull (25% of build cost)</button></div>';
-  html+='<p class="sl-note">Preview slice: hull tiers only. Per-slot parts (sails, rudder, cannons, hold, '
-    +'figurehead), the 46-piece Trove, treasure charts and the 98-point tree land in later slices.</p>'
-    +'</div></div></div></div>';
+    if(isle.r&&isle.r.length){
+      html+='<div class="sl-lab">Rare finds</div><div class="sl-chips">';
+      isle.r.forEach(e=>{
+        const pc=e.c*100;
+        html+='<span class="sl-chip gold" data-tip="Rolled on its own, every voyage.">'+iconHTML(e.i)
+          +(ITEMS[e.i]?ITEMS[e.i].name:e.i)+' <b>'+(pc<1?pc.toFixed(1):Math.round(pc))+'%</b></span>';
+      });
+      html+='</div>';
+    }
+    html+='<div class="sl-lab">Gold</div><div class="sl-chips">'
+      +'<span class="sl-chip gold" data-tip="Paid on every voyage, win or lose.">'+iconHTML('ui_coin')
+      +'~'+Math.round(isle.m*(isle.g||2)).toLocaleString()+'g</span></div>';
 
+    /* Shipwright materials, with the rate spelled out — these gate the top four
+       hulls and are sea-only, so a player has to be able to see where to farm. */
+    const mds=sailMatDrops(isle);
+    if(mds.length){
+      html+='<div class="sl-lab">Shipwright materials</div><div class="sl-chips">';
+      mds.forEach(md=>{
+        html+='<span class="sl-chip gold" data-tip="Used to build the top hulls.">'+iconHTML(md.id)
+          +ITEMS[md.id].name+' · '+Math.round(md.chance*100)+'%</span>';
+      });
+      html+='</div>';
+    }
+
+    if(!s.voy){
+      const wages=sailWageTotal();
+      const blocked = s.damaged?'Repair her first'
+        : !reachOk?(why==='chart'?'Sealed — find the map'
+                  : why==='lvl'?('Needs Sailing '+isle.lv)
+                  : why==='crew'?('Needs '+sailCrewNeed(isle)+' crew')
+                  : ('Needs Range '+isle.st))
+        : (wages>0&&(state.coins||0)<wages*SILVER_PER_GOLD)?('Need '+wages.toLocaleString()+'g for wages')
+        : null;
+      html+='<div style="margin-top:11px"><button class="sl-btn go" id="slGo"'+(blocked?' disabled':'')+'>'
+        +(blocked?blocked:'Set sail · '+sailFmtMins(Math.round(isle.m*(1-sailRig()))))+'</button>'
+        +(sailWhyText(sailSel)?'<p class="sl-note">'+sailWhyText(sailSel)+'</p>':'')
+        +(wages>0?'<p class="sl-note" style="margin-top:6px">Crew wages: <b style="color:var(--ember)">'
+          +wages.toLocaleString()+'g</b>, paid at the dock.'
+          +(sailRig()>0?' Rigging cuts the crossing from '+sailFmtMins(isle.m)+'.':'')+'</p>'
+         :(sailRig()>0?'<p class="sl-note" style="margin-top:6px">Rigging cuts the crossing from '+sailFmtMins(isle.m)+'.</p>':''))
+        +'<label class="sl-preview"><input type="checkbox" id="slFast"'+(s.fast?' checked':'')+'> '
+        +'Preview mode — run voyages 60× faster</label></div>';
+    }
+    html+='</div>';
+
+  } else if(sailTab==='yard'){
+    /* ── shipyard ── */
+    html+='<div class="sl-card"><div class="sl-cardhd"><div><h4>Emberwatch Shipyard</h4>'
+      +'<div class="sl-metarow"><span class="sl-chip mut">build a stronger ship</span></div></div></div>'
+      +'<p class="sl-note" style="margin:0 0 10px">A bigger hull takes more weather and sails further. '
+      +'Every ship is built from logs and bars you already gather — the level gates match Woodcutting exactly.</p>';
+    SAIL_HULLS.forEach((hh,t)=>{
+      const cur=t===s.hull, owned=t<=s.hull, canLvl=lvl>=hh.lv;
+      const afford=Object.keys(hh.cost).every(id=>(state.items[id]||0)>=hh.cost[id]);
+      html+='<div class="sl-hull'+(cur?' cur':'')+(!canLvl&&!owned?' lock':'')+'">'+iconHTML('sailing')
+        +'<div class="i"><b>'+hh.n+'</b>'
+        +'<div class="st"><span>Sailing '+hh.lv+'</span><span>Hull '+hh.sound+'</span>'
+        +'<span>Range '+hh.stores+'</span><span>Cargo '+hh.hold+'</span></div>';
+      if(!owned){
+        const parts=Object.keys(hh.cost).map(id=>{
+          const have=state.items[id]||0, need=hh.cost[id];
+          return '<span style="color:'+(have>=need?'#7da33f':'#a08a64')+'">'+need+'× '+(ITEMS[id]?ITEMS[id].name:id)+'</span>';
+        }).join(' · ');
+        html+='<span class="cst">'+parts+'</span>';
+      }
+      html+='</div>';
+      if(cur) html+='<span class="sl-chip gold">sailing this</span>';
+      else if(owned) html+='<span class="sl-chip mut">built</span>';
+      else html+='<button class="sl-btn sm" data-slbuild="'+t+'"'+((canLvl&&afford)?'':' disabled')+'>Build</button>';
+      html+='</div>';
+    });
+    if(s.damaged){
+      const rc=Object.keys(h.cost).map(id=>Math.max(1,Math.ceil(h.cost[id]*0.25))+'× '+(ITEMS[id]?ITEMS[id].name:id)).join(' · ');
+      html+='<div class="sl-lab">Repairs</div>'
+        +'<p class="sl-note" style="margin:0 0 8px">She cannot sail until the yard is done. Cost is a quarter of her build: '+rc+'</p>'
+        +'<div class="sl-btnrow"><button class="sl-btn" id="slFix">Repair the ship</button></div>';
+    }
+    html+='</div>';
+
+    /* Fitted parts — cannons and sails share one row renderer. */
+    const partRow=(kind,tbl,curIdx,label,sub)=>{
+      let out='<div class="sl-card"><div class="sl-cardhd"><div><h4>'+label+'</h4>'
+        +'<div class="sl-metarow"><span class="sl-chip mut">'+sub+'</span></div></div></div>';
+      tbl.forEach((e,t)=>{
+        if(!e.cost && t>0) return;
+        const cur=t===curIdx, owned=t<=curIdx, canLvl=lvl>=e.lv;
+        const afford=!e.cost||Object.keys(e.cost).every(id=>(state.items[id]||0)>=e.cost[id]);
+        out+='<div class="sl-hull'+(cur?' cur':'')+(!canLvl&&!owned?' lock':'')+'">'
+          +iconHTML(kind==='cannon'?'sl_cannon':'sl_sails')
+          +'<div class="i"><b>'+e.n+'</b><div class="st">'
+          +(e.lv?'<span>Sailing '+e.lv+'</span>':'<span>fitted as standard</span>')
+          +(kind==='cannon'?'<span>Guns '+e.arms+'</span>':'<span>−'+Math.round(e.rig*100)+'% voyage time</span>')
+          +'</div>';
+        if(!owned&&e.cost){
+          out+='<span class="cst">'+Object.keys(e.cost).map(id=>{
+            const have=state.items[id]||0;
+            return '<span style="color:'+(have>=e.cost[id]?'#7da33f':'#a08a64')+'">'+e.cost[id]+'× '+(ITEMS[id]?ITEMS[id].name:id)+'</span>';
+          }).join(' · ')+'</span>';
+        }
+        out+='</div>';
+        if(cur) out+='<span class="sl-chip gold">fitted</span>';
+        else if(owned) out+='<span class="sl-chip mut">—</span>';
+        else out+='<button class="sl-btn sm" data-slfit="'+kind+':'+t+'"'+((canLvl&&afford)?'':' disabled')+'>Fit</button>';
+        out+='</div>';
+      });
+      return out+'</div>';
+    };
+    html+=partRow('cannon',SAIL_CANNONS,s.cannon|0,'Cannons','guns only matter in the maw');
+    html+=partRow('sails', SAIL_SAILS, s.sails|0, 'Sails','rigging cuts voyage time');
+    html+='<div class="sl-card"><p class="sl-note" style="margin:0">Still to come: rudder, cargo hold and '
+      +'figurehead slots, the full 46-piece Trove, and the 98-point passive tree.</p></div>';
+
+  } else {
+    /* ── crew ── */
+    const berths=sailBerths(), have=sailCrewCount(), wages=sailWageTotal();
+    html+='<div class="sl-card"><div class="sl-cardhd"><div><h4>Ship\'s Company</h4>'
+      +'<div class="sl-metarow"><span class="sl-chip'+(have>=berths&&berths>0?' gold':' mut')+'">'
+      +have+' of '+berths+' berths</span>'
+      +(wages>0?'<span class="sl-chip bad">'+wages.toLocaleString()+'g per voyage</span>':'')
+      +'</div></div></div>';
+    if(berths===0){
+      html+='<p class="sl-note" style="margin:0">The '+h.n+' has no berths — you sail her alone. '
+        +'Build the Oak Sloop or better to take on hands.</p>';
+    } else {
+      html+='<p class="sl-note" style="margin:0 0 10px">Hands improve the ship and are paid a wage each '
+        +'time she leaves the dock. Rougher archipelagos will not let you sail without a minimum crew.</p>';
+    }
+    SAIL_CREW_ROLES.forEach(r=>{
+      const n=(s.crew&&s.crew[r.id])|0, canLvl=lvl>=r.lv, full=have>=berths;
+      const cost=sailHireCost(r), afford=(state.coins||0)>=cost*SILVER_PER_GOLD;
+      html+='<div class="sl-hull'+(n>0?' cur':'')+(!canLvl?' lock':'')+'">'+iconHTML(r.icon)
+        +'<div class="i"><b>'+r.n+(n>0?' ×'+n:'')+'</b><div class="st">'
+        +'<span>Sailing '+r.lv+'</span><span>'+r.wage+'g / voyage</span></div>'
+        +'<span class="cst" style="color:#7fa4b4">'+r.d+'</span></div>'
+        +'<div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">'
+        +'<button class="sl-btn sm" data-slhire="'+r.id+'"'+((canLvl&&!full&&afford&&berths>0)?'':' disabled')+'>'
+        +(canLvl?(full?'Full':cost.toLocaleString()+'g'):'Lv '+r.lv)+'</button>'
+        +(n>0?'<button class="sl-btn sm" data-sldismiss="'+r.id+'">Pay off</button>':'')
+        +'</div></div>';
+    });
+    html+='<div class="sl-lab">Crew needed by water</div><div class="sl-chips">';
+    SAIL_BANDS.forEach((b,bi)=>{
+      const base=[0,1,3,6][bi];
+      html+='<span class="sl-chip'+(have>=base?' good':' mut')+'">'+b.n+' · '+base+'</span>';
+    });
+    html+='<span class="sl-chip'+(have>=8?' good':' bad')+'">The Maw · +2</span></div>';
+    html+='</div>';
+  }
+
+  html+='</div></div></div></div>';
   p.innerHTML=html;
 
-  /* listeners */
-  const leave=$('slLeave'); if(leave) leave.onclick=()=>{ closeSailPanel(); $('tabSkills').click(); };
-  const go=$('slGo');   if(go)   go.onclick=()=>sailLaunch(sailSel);
-  const skip=$('slSkip');if(skip) skip.onclick=()=>{ if(state.sail.voy){ state.sail.voy.endsAt=Date.now(); sailCheckArrival(); renderSail(); } };
-  const fix=$('slFix'); if(fix)  fix.onclick=sailRepair;
-  const fast=$('slFast');if(fast) fast.onchange=e=>{ state.sail.fast=e.target.checked?1:0; saveGame(); };
-  p.querySelectorAll('[data-slisle]').forEach(b=>{
-    b.onclick=()=>{ sailSel=+b.getAttribute('data-slisle'); renderSail(); };
-  });
+  /* ── listeners ── */
+  const on=(id,ev,fn)=>{ const e=$(id); if(e) e.addEventListener(ev,fn); };
+  on('slLeave','click',()=>{ closeSailPanel(); $('tabSkills').click(); });
+  on('slGo','click',()=>sailLaunch(sailSel));
+  on('slSkip','click',()=>{ if(state.sail.voy){ state.sail.voy.endsAt=Date.now(); sailCheckArrival(); renderSail(); } });
+  on('slFix','click',sailRepair);
+  on('slFast','change',e=>{ state.sail.fast=e.target.checked?1:0; saveGame(); });
+  on('slTabVoy','click',()=>{ sailTab='voyage'; renderSail(); });
+  on('slTabYard','click',()=>{ sailTab='yard'; renderSail(); });
+  on('slTabCrew','click',()=>{ sailTab='crew'; renderSail(); });
+  on('slZIn','click',()=>sailSetZoom(sailView.z*1.35));
+  on('slZOut','click',()=>sailSetZoom(sailView.z/1.35));
+  on('slZFind','click',()=>{ if(sailView.z<1.8) sailView.z=1.8; sailCenterOn(sailSel); });
+
   p.querySelectorAll('[data-slbuild]').forEach(b=>{
-    b.onclick=()=>sailBuild(+b.getAttribute('data-slbuild'));
+    b.addEventListener('click',()=>sailBuild(+b.getAttribute('data-slbuild')));
+  });
+  p.querySelectorAll('[data-slfit]').forEach(b=>{
+    const [kind,t]=b.getAttribute('data-slfit').split(':');
+    b.addEventListener('click',()=>sailFitPart(kind, +t));
+  });
+  p.querySelectorAll('[data-slhire]').forEach(b=>{
+    b.addEventListener('click',()=>sailHire(b.getAttribute('data-slhire')));
+  });
+  p.querySelectorAll('[data-sldismiss]').forEach(b=>{
+    b.addEventListener('click',()=>sailDismiss(b.getAttribute('data-sldismiss')));
   });
 
-  sailDrawChart();
+  /* marker click, hover card, and drag-suppression so panning never selects */
+  p.querySelectorAll('[data-slisle]').forEach(b=>{
+    const ix=+b.getAttribute('data-slisle');
+    b.addEventListener('click',()=>{ if(_slDragged) return; sailSel=ix; sailTipHide(); renderSail(); });
+    b.addEventListener('mouseenter',e=>sailTipShow(ix,e));
+    b.addEventListener('mousemove',sailTipMove);
+    b.addEventListener('mouseleave',sailTipHide);
+    b.addEventListener('focus',()=>{ const r=b.getBoundingClientRect(); sailTipShow(ix,{clientX:r.left+r.width/2,clientY:r.bottom}); });
+    b.addEventListener('blur',sailTipHide);
+  });
+
+  sailBindStage();
+  sailFit();
+  sailClamp();
+  sailPaintView();
 }
 
-/* Chart is canvas — it must be repainted when the panel is resized. */
+/* ── drag to pan / wheel to zoom ── */
+let _slDragged=false;
+function sailBindStage(){
+  const st=$('slStage'); if(!st) return;
+  let down=false, sx=0, sy=0, ox0=0, oy0=0;
+  const z=()=>sailRootZoom();
+
+  st.addEventListener('pointerdown',e=>{
+    if(e.target.closest('[data-slisle]')) { _slDragged=false; return; }
+    down=true; _slDragged=false;
+    sx=e.clientX; sy=e.clientY; ox0=sailView.ox; oy0=sailView.oy;
+    st.classList.add('grabbing');
+    st.setPointerCapture&&st.setPointerCapture(e.pointerId);
+  });
+  st.addEventListener('pointermove',e=>{
+    if(!down) return;
+    const dx=(e.clientX-sx)/z(), dy=(e.clientY-sy)/z();
+    if(Math.abs(dx)>4||Math.abs(dy)>4) _slDragged=true;
+    sailView.ox=ox0+dx; sailView.oy=oy0+dy;
+    sailClamp(); sailPaintView();
+  });
+  const end=()=>{ down=false; st.classList.remove('grabbing'); setTimeout(()=>{_slDragged=false;},0); };
+  st.addEventListener('pointerup',end);
+  st.addEventListener('pointercancel',end);
+  st.addEventListener('pointerleave',()=>{ if(down) end(); });
+
+  st.addEventListener('wheel',e=>{
+    e.preventDefault();
+    const r=st.getBoundingClientRect(), zz=z();
+    const cx=(e.clientX-r.left)/zz, cy=(e.clientY-r.top)/zz;
+    sailZoomAt(cx, cy, sailView.z*(e.deltaY<0?1.18:1/1.18));
+  }, {passive:false});
+}
+
+/* Chart is canvas and the shell is JS-sized, so both need a resize pass. */
 window.addEventListener('resize',()=>{
   if(!sailMode) return;
-  clearTimeout(_sailRedrawT); _sailRedrawT=setTimeout(sailDrawChart,140);
+  clearTimeout(_sailRedrawT);
+  _sailRedrawT=setTimeout(()=>{ sailFit(); sailClamp(); sailPaintView(); },140);
 });
 
 /* ════════ [JS-25] BOOT ══════════════════════════════════════════════════════════ */
