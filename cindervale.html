@@ -3407,7 +3407,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.62</div>
+  <div class="mm-ver">v0.9.63</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -26229,11 +26229,10 @@ function sailWhyText(i){
   const isle=sailIsle(i), h=sailHull(), why=sailReach(i);
   if(why==='chart'){
     const cid=sailChartFor(i), src=sailIsle(SAIL_CHARTS[cid].from);
-    return 'Sealed. You need the <b>'+ITEMS[cid].name+'</b> — it turns up on voyages to <b>'
-      +src.n+'</b>, roughly '+(SAIL_CHARTS[cid].chance*100).toFixed(1)+'% of the time.';
+    return 'Needs <b>'+ITEMS[cid].name+'</b> — '+(SAIL_CHARTS[cid].chance*100).toFixed(1)+'% at '+src.n+'.';
   }
-  if(why==='lvl')    return 'Needs Sailing '+isle.lv+' — you are '+sailLvl()+'.';
-  if(why==='stores') return 'Needs Range '+isle.st+' — your ship has '+h.stores+'. Build a bigger hull.';
+  if(why==='lvl')    return 'Needs Sailing '+isle.lv+'.';
+  if(why==='stores') return 'Needs Range '+isle.st+' — you have '+h.stores+'.';
   return '';
 }
 /* If this island holds a treasure map you have not found yet, say so — otherwise
@@ -26242,8 +26241,8 @@ function sailChartHint(i){
   const cid=SAIL_CHART_BY_SRC[i];
   if(!cid || sailHasChart(cid)) return '';
   const opened=sailIsle(SAIL_CHARTS[cid].isle);
-  return 'A <b>'+ITEMS[cid].name+'</b> can be recovered here — about '
-    +(SAIL_CHARTS[cid].chance*100).toFixed(1)+'% per voyage. It opens <b>'+opened.n+'</b>.';
+  return '<b>'+ITEMS[cid].name+'</b> · '+(SAIL_CHARTS[cid].chance*100).toFixed(1)
+    +'% — opens <b>'+opened.n+'</b>.';
 }
 
 /* ── island hover card ── */
@@ -26321,10 +26320,10 @@ function renderSail(){
     +'<div><div class="sl-shipname">'+h.n+(s.damaged?' <span style="color:var(--red);font-size:11px">· needs repair</span>':'')+'</div>'
     +'<div class="sl-shiptier">Emberwatch Harbour · ship '+(s.hull+1)+' of 7</div></div></div>'
     +'<div class="sl-stats">'
-    +'<span class="sl-stat" data-tip="Hull — how well she shrugs off bad weather. Higher hull shifts the odds away from Battered and Wrecked.">'+iconHTML('ui_shield')+'Hull <b>'+h.sound+'</b></span>'
-    +'<span class="sl-stat" data-tip="Range — how far she can sail. Every island needs a minimum Range to reach at all.">'+iconHTML('ui_wind')+'Range <b>'+h.stores+'</b></span>'
-    +'<span class="sl-stat" data-tip="Cargo — the most she can carry home. Anything over this is left on the beach.">'+iconHTML('ui_coin')+'Cargo <b>'+h.hold+'</b></span>'
-    +'<span class="sl-stat" data-tip="Completed voyages.">'+iconHTML('ui_scroll')+'Trips <b>'+(s.voyages||0)+'</b></span>'
+    +'<span class="sl-stat" data-tip="Resists storm damage.">'+iconHTML('ui_shield')+'Hull <b>'+h.sound+'</b></span>'
+    +'<span class="sl-stat" data-tip="How far the ship can sail.">'+iconHTML('ui_wind')+'Range <b>'+h.stores+'</b></span>'
+    +'<span class="sl-stat" data-tip="Most cargo she can carry home.">'+iconHTML('ui_coin')+'Cargo <b>'+h.hold+'</b></span>'
+    +'<span class="sl-stat" data-tip="Voyages completed.">'+iconHTML('ui_scroll')+'Trips <b>'+(s.voyages||0)+'</b></span>'
     +'</div>'
     +'<div class="sl-lvl"><div class="sl-lvlbox"><b>Sailing '+lvl+'</b><i>'+Math.floor(xpNow).toLocaleString()+' xp</i></div>'
     +'<div class="sl-xpbar"><i style="width:'+pct+'%"></i></div>'
@@ -26405,8 +26404,7 @@ function renderSail(){
       +'<div class="sl-metarow">'
       +'<span class="sl-chip mut">'+(isle.hid?'Unlogged':SAIL_BANDS[isle.b].n)+'</span>'
       +'<span class="sl-chip mut">Sailing '+isle.lv+'</span>'
-      +'<span class="sl-pill '+diff.c+'" data-tip="How likely she is to come home wrecked. '+diff.n
-      +' — about '+Math.round(odds[3])+'% of voyages here end wrecked. A stronger hull improves this.">'
+      +'<span class="sl-pill '+diff.c+'" data-tip="'+Math.round(odds[3])+'% of voyages here end wrecked.">'
       +'<em style="background:'+diff.col+'"></em>'+diff.n+'</span>'
       +(why==='chart'?'<span class="sl-chip vio">'+iconHTML(sailChartFor(sailSel))+'sealed</span>':'')
       +'</div></div></div>'
@@ -26415,12 +26413,12 @@ function renderSail(){
         +'<div class="sl-tile" style="border-color:#5a4526;background:#1a1409">'
         +'<div class="v sm" style="color:#e8d7b0">'+sailChartHint(sailSel)+'</div></div>':'')
       +'<div class="sl-lab">The crossing</div><div class="sl-tiles">'
-      +'<div class="sl-tile" data-tip="How long she is away. The voyage runs on real time and finishes even if you close the game.">'
+      +'<div class="sl-tile" data-tip="How long the voyage takes.">'
       +'<div class="k">Time at sea</div><div class="v">'+sailFmtMins(isle.m)+'</div></div>'
-      +'<div class="sl-tile'+(h.stores<isle.st?' bad':'')+'" data-tip="Range is how far your ship can sail. This island needs '+isle.st+' and your '+h.n+' has '+h.stores+'. Build a bigger hull in the Shipyard to reach further.">'
+      +'<div class="sl-tile'+(h.stores<isle.st?' bad':'')+'" data-tip="Range needed to sail here.">'
       +'<div class="k">Range needed</div><div class="v">'+isle.st+'</div>'
       +'<div class="sub">you have '+h.stores+'</div></div>'
-      +'<div class="sl-tile" data-tip="Chance per voyage of bringing back a treasure from this archipelago. Triumphant returns double it.">'
+      +'<div class="sl-tile" data-tip="Chance of a treasure per voyage.">'
       +'<div class="k">Treasure</div><div class="v">'+sailPct(isle.find)+'</div>'
       +'<div class="sub">per voyage</div></div>'
       +'</div>'
