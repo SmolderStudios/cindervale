@@ -3414,7 +3414,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.67</div>
+  <div class="mm-ver">v0.9.68</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -4991,32 +4991,32 @@ const ITEMS={
   /* ─── Sailing troves (0.9.60) — one per archipelago, pulled up on expeditions.
      Rarity climbs with distance from Emberwatch. Passive effects land in a later
      slice; for now they are collectable, sellable and Compendium-visible. ─── */
-  trove_shallows:{name:'Barnacled Coin-Purse', icon:'👛',sell:900,   rare:true, desc:"Someone's wages, lost in the shallows a long time ago and grown over twice since. Sells for a pittance. Counts toward the Trove all the same."},
-  trove_wracks:  {name:'The Ninth Bell',       icon:'🔔',sell:4800,  rare:true, desc:"Cut from the ninth ship to die on Widow's Wrack. It rings a half-beat before bad weather, which the crew find useful and deeply unpleasant."},
-  trove_mist:    {name:'Hollowtide Almanac',   icon:'📖',sell:16000, rare:true, desc:"Salt-swollen and still legible. It predicts the great ebb to the hour, in a hand nobody at the Admiralty recognises."},
-  trove_far:     {name:'Scale of the Old Thing',icon:'🐉',sell:52000, rare:true, desc:"Broader than a shield and lighter than paper. Nothing marks it — not fire, not starsteel, not the void. It was shed, not taken."},
-  trove_odd:     {name:'The Steady Lantern',   icon:'🏮',sell:120000,rare:true, desc:"Recovered from an island that is on no chart. It has never guttered. Crews who carry it report arriving where they meant to, which is not always welcome."},
+  trove_shallows:{name:'Barnacled Coin-Purse', icon:'👛',sell:900, sea:1,   rare:true, desc:"Someone's wages, lost in the shallows a long time ago and grown over twice since. Sells for a pittance. Counts toward the Trove all the same."},
+  trove_wracks:  {sea:1, name:'The Ninth Bell',       icon:'🔔',sell:4800,  rare:true, desc:"Cut from the ninth ship to die on Widow's Wrack. It rings a half-beat before bad weather, which the crew find useful and deeply unpleasant."},
+  trove_mist:    {sea:1, name:'Hollowtide Almanac',   icon:'📖',sell:16000, rare:true, desc:"Salt-swollen and still legible. It predicts the great ebb to the hour, in a hand nobody at the Admiralty recognises."},
+  trove_far:     {sea:1, name:'Scale of the Old Thing',icon:'🐉',sell:52000, rare:true, desc:"Broader than a shield and lighter than paper. Nothing marks it — not fire, not starsteel, not the void. It was shed, not taken."},
+  trove_odd:     {sea:1, name:'The Steady Lantern',   icon:'🏮',sell:120000,rare:true, desc:"Recovered from an island that is on no chart. It has never guttered. Crews who carry it report arriving where they meant to, which is not always welcome."},
   /* ─── Treasure maps (0.9.62) — each one permanently charts a sealed island.
      They drop rarely from one specific island, so the far water is opened by
      sailing rather than by levelling. Finding one unlocks it on the spot; the
      map itself stays in the satchel as a record. ─── */
-  chart_gravekeel:{name:"Wrecker's Chart",     icon:'🗺️',sell:6500,  rare:true, desc:"Scratched into a hatch cover by someone who did not survive the writing. It marks Gravekeel Spit, and the words around the edge are not directions."},
-  chart_gibbet:   {name:"Hangman's Chart",     icon:'🗺️',sell:22000, rare:true, desc:"Drawn on the back of a warrant, in the hand of the man it was issued for. Corsair's Gibbet is circled twice."},
-  chart_crown:    {name:"Drowned King's Chart",icon:'🗺️',sell:68000, rare:true, desc:"Vellum that has been underwater for centuries and has not softened. It shows a city, and the city has streets."},
-  chart_voidmaw:  {name:'Chart of the Long Descent',icon:'🗺️',sell:145000,rare:true, desc:"Not a map of a place — a map of a depth. The soundings run past the edge of the parchment and keep going in the margin."},
+  chart_gravekeel:{name:"Wrecker's Chart",     icon:'🗺️',sell:6500, sea:1,  rare:true, desc:"Scratched into a hatch cover by someone who did not survive the writing. It marks Gravekeel Spit, and the words around the edge are not directions."},
+  chart_gibbet:   {sea:1, name:"Hangman's Chart",     icon:'🗺️',sell:22000, rare:true, desc:"Drawn on the back of a warrant, in the hand of the man it was issued for. Corsair's Gibbet is circled twice."},
+  chart_crown:    {sea:1, name:"Drowned King's Chart",icon:'🗺️',sell:68000, rare:true, desc:"Vellum that has been underwater for centuries and has not softened. It shows a city, and the city has streets."},
+  chart_voidmaw:  {sea:1, name:'Chart of the Long Descent',icon:'🗺️',sell:145000,rare:true, desc:"Not a map of a place — a map of a depth. The soundings run past the edge of the parchment and keep going in the margin."},
   /* ─── Shipwright materials (0.9.64) — the sailing equivalent of beast_sinew /
      shade_ember / voidheart, gating the top four hulls. Only obtainable at sea,
      with the same deliberate cross-band scaling: a material is rare in the water
      where it first appears and common further out, so the far islands cannot be
      skipped by farming a safe one. ─── */
-  salt_iron:   {name:'Salt-Forged Iron', icon:'⚙️',sell:1400, rare:true, desc:"Ship-iron that has spent forty years in seawater and come out harder than it went in. No forge on land can reproduce it, and every shipwright in Emberwatch has tried."},
-  krakenbone:  {name:'Krakenbone',       icon:'🦴',sell:7200, rare:true, desc:"Light as ash, stiff as starsteel, and it does not rot. Hulls ribbed with it have come home from water that took everything else."},
-  tidewrought: {name:'Tidewrought Heart',icon:'💠',sell:38000,rare:true, desc:"A knot of stone and metal the deep water grew around something it swallowed. Warm on one side. The yard will not say which hull it goes into until it is bolted down."},
-  cannon_barrel:{name:'Salvaged Gun Barrel',icon:'🛢️',sell:2600,rare:true, desc:"Cut from a wreck on The Wracks. Still rifled, still true, and somebody else's initials are stamped into the breech. The yard files them off."},
+  salt_iron:   {sea:1, name:'Salt-Forged Iron', icon:'⚙️',sell:1400, rare:true, desc:"Ship-iron that has spent forty years in seawater and come out harder than it went in. No forge on land can reproduce it, and every shipwright in Emberwatch has tried."},
+  krakenbone:  {sea:1, name:'Krakenbone',       icon:'🦴',sell:7200, rare:true, desc:"Light as ash, stiff as starsteel, and it does not rot. Hulls ribbed with it have come home from water that took everything else."},
+  tidewrought: {sea:1, name:'Tidewrought Heart',icon:'💠',sell:38000,rare:true, desc:"A knot of stone and metal the deep water grew around something it swallowed. Warm on one side. The yard will not say which hull it goes into until it is bolted down."},
+  cannon_barrel:{name:'Salvaged Gun Barrel',icon:'🛢️',sell:2600, sea:1,rare:true, desc:"Cut from a wreck on The Wracks. Still rifled, still true, and somebody else's initials are stamped into the breech. The yard files them off."},
   /* Sailing pet + cape (0.9.65). Both are trophies rather than equipment for now —
      see the note in the sailing module about why they stay out of SHOP/gear. */
-  spet_sailing: {name:'Storm Petrel',      icon:'🐦',sell:0, rare:true, nosell:true, desc:"Followed the ship home from water that had no business holding birds. It sleeps in the rigging and screams before weather. +5% treasure find."},
-  cape_sailing: {name:'Sailing Cape',      icon:'🧭',sell:0, rare:true, nosell:true, desc:"Given at Emberwatch to the handful who have sailed everything there is to sail. Salt-stiff, and the hem has been repaired more than once. +5% Sailing XP · +10% treasure find · +1 berth · −25% crew wages."},
+  spet_sailing: {sea:1, name:'Storm Petrel',      icon:'🐦',sell:0, rare:true, nosell:true, desc:"Followed the ship home from water that had no business holding birds. It sleeps in the rigging and screams before weather. +5% treasure find."},
+  cape_sailing: {sea:1, name:'Sailing Cape',      icon:'🧭',sell:0, rare:true, nosell:true, desc:"Given at Emberwatch to the handful who have sailed everything there is to sail. Salt-stiff, and the hem has been repaired more than once. +5% Sailing XP · +10% treasure find · +1 berth · −25% crew wages."},
 
   /* ─── Sea materials (0.9.66) — 24 bespoke drops, six per archipelago, pulled up
      on voyages and obtainable nowhere else. These replace the old three-per-island
@@ -21766,6 +21766,7 @@ const COMP_CATEGORIES=[
   {id:'gems',  label:'Gems',        ico:'sapphire'},
   {id:'fire',  label:'Fire',        ico:'firemaking'},
   {id:'potions',label:'Potions',    ico:'alchemy'},
+  {id:'sea',   label:'Sea',         ico:'rock_salt'},
   {id:'skilling_gear', label:'Skilling Gear', ico:'bronze_axe'},
   {id:'crafted_gear',  label:'Combat Gear',   ico:'bronze_sword'},
   {id:'rare',  label:'Rare',        ico:'gem_dust'},
@@ -21776,6 +21777,12 @@ function itemCompCat(id){
   const it=ITEMS[id];
   if(!it) return 'other';
   if(it.cgear) return 'crafted_gear';
+  /* Sea materials (0.9.68) need their own tab. Without it they fell through to
+     'other', which has no chip in COMP_CATEGORIES — so the 14 non-rare ones were
+     reachable only via All, and sorted to the very front of it because
+     COMP_CAT_ORDER.indexOf('other') is -1. Checked before the suffix rules so
+     nothing (voidwood, driftwood, wrack_timber) gets misfiled as a log. */
+  if(it.sea) return 'sea';
   if(it.skillGear) return 'skilling_gear';
   if(it.potion) return 'potions';
   if(id.endsWith('_log')||id==='ancient_log') return 'logs';
