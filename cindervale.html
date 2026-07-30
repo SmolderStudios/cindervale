@@ -3414,7 +3414,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.68</div>
+  <div class="mm-ver">v0.9.69</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -4489,6 +4489,14 @@ const ITEMS={
   cooked_swordfish: {name:'Cooked Swordfish', icon:'🍱',sell:880, potion:{heal:380}},
   cooked_shark:     {name:'Cooked Shark',     icon:'🍱',sell:1408,potion:{heal:520}},
   cooked_voideel:   {name:'Cooked Void Eel',  icon:'🍱',sell:2255,potion:{heal:700}},
+  /* Sea rations (0.9.69) — the first two sinks for Rock Salt and Gull Egg. Both
+     sit slightly ahead of the fresh fish at the same Cooking level, which is what
+     the salt buys you; both cost a sea material you can only get by sailing, so
+     they can never undercut the ordinary fish ladder as a bulk food source.
+     No `sea:1` on either — itemCat checks that flag ahead of the food buckets, so
+     flagging them would file cooked rations in the Sea tab away from the food. */
+  ships_biscuit:    {name:"Ship's Biscuit",   icon:'🍘',sell:210, potion:{heal:90},  desc:'Salt, egg and not much else, baked until it will outlast the ship. Chews like a roof tile and heals 90 HP.'},
+  salt_cod:         {name:'Salt Cod',         icon:'🐟',sell:640, potion:{heal:200}, desc:'Split, salted and dried on the rigging for a fortnight. Keeps for a year and puts 200 HP back in one sitting.'},
   // Smithing bars
   bronze_bar:    {name:'Bronze Bar',       icon:'🟫',sell:77},
   iron_bar:      {name:'Iron Bar',         icon:'⬜',sell:176},
@@ -5734,8 +5742,13 @@ const SKILLS={
     {id:'sm_scrap1',name:'Reclaim rusted blades', lvl:5, ms:5600, xp:62, spdMult:0.510, minMs:950, inp:{rusted_blade:2},  out:{iron_bar:1}},
     {id:'sm_scrap2',name:'Reclaim crude cleavers',lvl:15,ms:6400, xp:110,spdMult:0.545, minMs:1050,inp:{crude_cleaver:2}, out:{steel_bar:1}},
     {id:'sm2',name:'Smelt iron bar',      lvl:15,ms:6800, xp:83,  spdMult:0.594, minMs:1050, inp:{iron_ore:1},                  out:{iron_bar:1}},
+    /* Sea salvage (0.9.69), same shape as the goblin-scrap reclamation above: worse
+       gold than selling, but it turns a voyage into Smithing progress. A cracked bell
+       sells for 6,800g and yields 1,925g of bronze — you melt it for the xp. */
+    {id:'sm_barn',name:'Reclaim barnacle iron',lvl:22,ms:7200, xp:118, spdMult:0.610, minMs:1120, inp:{barnacle_iron:2},        out:{steel_bar:1}},
     {id:'sm3',name:'Smelt steel bar',     lvl:30,ms:8300, xp:133, spdMult:0.640, minMs:1230, inp:{iron_ore:1,coal:1},           out:{steel_bar:1}},
     {id:'sm4',name:'Smelt gold bar',      lvl:40,ms:9800, xp:204, spdMult:0.667, minMs:1380, inp:{gold_ore:1},                  out:{gold_bar:1}},
+    {id:'sm_bell',name:'Recast a cracked bell',lvl:45,ms:13000,xp:560, spdMult:0.680, minMs:1420, inp:{ship_bell:1},            out:{bronze_bar:25}},
     {id:'sm5',name:'Smelt silver bar',    lvl:48,ms:10800,xp:272, spdMult:0.693, minMs:1470, inp:{silver_ore:1},                out:{silver_bar:1}},
     {id:'sm6',name:'Smelt mithril bar',   lvl:58,ms:12800,xp:385, spdMult:0.735, minMs:1650, inp:{mithril_ore:1,coal:2},        out:{mithril_bar:1}},
     {id:'sm7',name:'Smelt cobalt bar',    lvl:68,ms:15000,xp:537, spdMult:0.765, minMs:1875, inp:{cobalt_ore:1,coal:3},         out:{cobalt_bar:1}},
@@ -5747,6 +5760,10 @@ const SKILLS={
     {id:'al1', name:'Brew Swiftness I',      lvl:1, ms:9800, xp:61,  spdMult:0.600,minMs:1706, inp:{wildberries:3},                        out:{swiftness_i:1}},
     {id:'al2', name:'Brew Bountiful I',      lvl:8, ms:10300,xp:75,  spdMult:0.620,minMs:1755, inp:{thornvine:3},                          out:{bountiful_i:1}},
     {id:'al3', name:'Brew Wisdom I',         lvl:10,ms:11000,xp:83,  spdMult:0.640,minMs:1804, inp:{dewleaf:3},                            out:{wisdom_i:1}},
+    /* Sea reagents (0.9.69). Kelp and Fogweed are alternate sources for brews that
+       already exist rather than new potions, so they need no new effect plumbing —
+       the same trick the monster-part brews below use. */
+    {id:'al_kelp',name:'Steep Kelp Tonic',    lvl:12,ms:11500,xp:88,  spdMult:0.640,minMs:1804, inp:{kelp_frond:3},                         out:{bountiful_i:1}},
     // Transmutation — the enchanting-reagent source (was "coming soon" since the enchant system shipped)
     {id:'al_ad',name:'Transmute Arcane Dust', lvl:15,ms:12000,xp:95,  spdMult:0.650,minMs:1950, inp:{gem_dust:1,wildberries:2,ash:2},       out:{arcane_dust:1}},
     /* The cultivated herbs had nowhere to go: Garden Root, Dawnbloom and
@@ -5756,6 +5773,7 @@ const SKILLS={
        so they need no new effect plumbing. */
     {id:'al_tm_bloom',name:'Transmute Bloom Essence', lvl:42,ms:15000,xp:340, spdMult:0.680,minMs:2400, inp:{sunbloom:2,garden_root:2},        out:{mana_essence:1}},
     {id:'al_tm_night',name:'Transmute Night Essence', lvl:58,ms:17500,xp:560, spdMult:0.715,minMs:2900, inp:{moonflower:2,arcane_dust:1},      out:{shadow_crystal:1}},
+    {id:'al_fog',     name:'Distill Fogweed Draught', lvl:60,ms:19000,xp:600, spdMult:0.740,minMs:3120, inp:{fogweed:3},                       out:{wisdom_iii:1}},
     {id:'al_tm_rift', name:'Transmute Rift Essence',  lvl:88,ms:22000,xp:1250,spdMult:0.780,minMs:3600, inp:{voidmoss:3,void_cinder:1},        out:{void_essence:1}},
     {id:'al7', name:'Brew Swiftness III',    lvl:38,ms:15900,xp:264, spdMult:0.700,minMs:2560, inp:{thornvine:3,dewleaf:3},                out:{swiftness_iii:1}},
     {id:'al8', name:'Brew Bountiful III',    lvl:45,ms:17200,xp:351, spdMult:0.720,minMs:2730, inp:{sunroot:2,dewleaf:2},                  out:{bountiful_iii:1}},
@@ -5799,11 +5817,17 @@ const SKILLS={
   firemaking:{name:'Firemaking',icon:'🔥',acts:[
     {id:'fm1',name:'Burn pine logs',     lvl:1, ms:3800, xp:43,  spdMult:0.500,minMs:645,  inp:{pine_log:1},      out:{ash:1}},
     {id:'fm2',name:'Burn oak logs',      lvl:10,ms:5300, xp:74,  spdMult:0.594,minMs:855,  inp:{oak_log:1},       out:{ash:1}},
+    /* Sea fuel (0.9.69). Driftwood is bone dry, so it burns a shade hotter than the
+       oak it sits next to; Deep Amber is resin and outclasses ancient logs outright.
+       Both are also loadable in the cooking fire — see LOG_BURN_SEC. Neither can be
+       farmed on land, which is what keeps them ahead of the ladder without breaking it. */
+    {id:'fm_drift',name:'Burn bleached driftwood',lvl:12,ms:4600,xp:88, spdMult:0.594,minMs:760, inp:{driftwood:1}, out:{ash:1,charcoal:1}},
     {id:'fm3',name:'Burn ironbark logs', lvl:25,ms:7200, xp:128, spdMult:0.640,minMs:1080, inp:{ironbark_log:1},  out:{ash:1,charcoal:1}},
     {id:'fm4',name:'Burn emberwood logs',lvl:40,ms:9300, xp:209, spdMult:0.667,minMs:1350, inp:{ember_log:1},     out:{ash:1,charcoal:1,ember_dust:1}},
     {id:'fm5',name:'Burn frostwood logs',lvl:55,ms:12000,xp:331, spdMult:0.693,minMs:1650, inp:{frost_log:1},     out:{ash:1,charcoal:2,ember_dust:1}},
     {id:'fm6',name:'Burn shadowwood logs',lvl:70,ms:15000,xp:520,spdMult:0.735,minMs:2025, inp:{shadow_log:1},    out:{ash:1,charcoal:2,ember_dust:2}},
     {id:'fm7',name:'Burn ancient logs',  lvl:85,ms:18800,xp:797, spdMult:0.765,minMs:2475, inp:{ancient_log:1},   out:{ash:1,charcoal:3,ember_dust:2,void_cinder:1}},
+    {id:'fm_amber',name:'Burn deep amber',lvl:88,ms:19800,xp:880,spdMult:0.790,minMs:2600, inp:{deep_amber:1},    out:{ash:1,charcoal:3,ember_dust:3,void_cinder:1}},
   ]},
   agility:{name:'Agility',icon:'🏃',acts:[
     {id:'ag1',name:'Riverside lap',      lvl:1, ms:7200, xp:68,  spdMult:0.500,minMs:1224, out:{},coins:33},
@@ -5818,9 +5842,15 @@ const SKILLS={
   jeweler:{name:'Jeweler',icon:'💎',acts:[
     // ── REFINE — turn raw gems into cut gems (gem-cutting also yields gem dust) ──
     {id:'jw_ref1',name:'Refine sapphire',  cat:'refine',lvl:1, ms:4500, xp:40,  spdMult:0.550,minMs:760,  inp:{sapphire:1},                  out:{cut_sapphire:1}},
+    /* Sea substrates (0.9.69). Neither adds a new gem — they feed the cut-gem tier
+       that the whole ring/amulet/pendant ladder already reads, which is what makes
+       them a real sink instead of another dead-end collectable. Both cost several
+       units per cut so the bulk quantities a voyage lands actually get eaten. */
+    {id:'jw_ref_tide',name:'Cut sea glass',cat:'refine',lvl:10,ms:5200, xp:58,  spdMult:0.580,minMs:880,  inp:{tide_glass:2},                out:{cut_sapphire:1,gem_dust:1}},
     {id:'jw_ref2',name:'Refine emerald',   cat:'refine',lvl:18,ms:6500, xp:92,  spdMult:0.620,minMs:1080, inp:{emerald:1},                   out:{cut_emerald:1,gem_dust:1}},
     {id:'jw_ref3',name:'Refine ruby',      cat:'refine',lvl:35,ms:9000, xp:195, spdMult:0.660,minMs:1450, inp:{ruby:1},                      out:{cut_ruby:1,gem_dust:2}},
     {id:'jw_ref4',name:'Refine diamond',   cat:'refine',lvl:52,ms:12000,xp:350, spdMult:0.700,minMs:1900, inp:{diamond:1},                   out:{cut_diamond:1,gem_dust:3}},
+    {id:'jw_ref_mist',name:'Fuse mistglass',cat:'refine',lvl:58,ms:13000,xp:430,spdMult:0.720,minMs:2080, inp:{mistglass:4,gem_dust:2},       out:{cut_amethyst:1}},
     {id:'jw_ref7',name:'Refine amethyst',  cat:'refine',lvl:60,ms:13500,xp:460, spdMult:0.725,minMs:2150, inp:{amethyst:1},                  out:{cut_amethyst:1,gem_dust:4}},
     {id:'jw_ref5',name:'Refine dragon gem',cat:'refine',lvl:68,ms:15000,xp:580, spdMult:0.750,minMs:2400, inp:{dragon_gem:1},                out:{cut_dragon:1,gem_dust:4}},
     {id:'jw_ref8',name:'Refine bloodstone',cat:'refine',lvl:76,ms:17000,xp:740, spdMult:0.770,minMs:2720, inp:{bloodstone:1},                out:{cut_bloodstone:1,gem_dust:5}},
@@ -5879,10 +5909,15 @@ const SKILLS={
     {id:'co_rs',name:'Grill Ratmeat Skewer',lvl:8, ms:4800, xp:55,  spdMult:0.530, minMs:800,  inp:{rat_tail:3,ratskin:1},       out:{ratmeat_skewer:1}},
     {id:'co_gj',name:'Cure Goblin Jerky',   lvl:14,ms:5400, xp:70,  spdMult:0.590, minMs:885,  inp:{tanned_hide:2,bone_charm:1}, out:{goblin_jerky:1}},
     {id:'co2',  name:'Cook sardine',        lvl:15,ms:5400, xp:62,  spdMult:0.594, minMs:885,  inp:{raw_sardine:1},              out:{cooked_sardine:1}},
+    /* Sea rations (0.9.69) — the Rock Salt and Gull Egg sinks. Both want a sea
+       material, so neither can be spammed from land: the biscuit is the cheap
+       bulk ration, the cod is a preserve that beats the fresh fish it is made of. */
+    {id:'co_sb',name:"Bake Ship's Biscuit", lvl:20,ms:6000, xp:80,  spdMult:0.620, minMs:975,  inp:{rock_salt:2,gull_egg:2},     out:{ships_biscuit:1}},
     {id:'co3',  name:'Cook trout',          lvl:25,ms:6900, xp:100, spdMult:0.640, minMs:1065, inp:{raw_trout:1},                out:{cooked_trout:1}},
     {id:'co_bs',name:'Simmer Bone Stew',    lvl:28,ms:6900, xp:100, spdMult:0.640, minMs:1065, inp:{ancient_bone:2,rib_plate:1}, out:{bone_stew:1}},
     {id:'co4',  name:'Cook tuna',           lvl:38,ms:8700, xp:155, spdMult:0.667, minMs:1275, inp:{raw_tuna:1},                 out:{cooked_tuna:1}},
     {id:'co_wj',name:'Smoke Wolf Jerky',    lvl:38,ms:8700, xp:155, spdMult:0.667, minMs:1275, inp:{wolf_pelt:2,frostfur:1},     out:{wolf_jerky:1}},
+    {id:'co_sc',name:'Salt-cure cod',       lvl:40,ms:9000, xp:170, spdMult:0.670, minMs:1300, inp:{rock_salt:3,raw_trout:2},    out:{salt_cod:1}},
     {id:'co_or',name:'Roast Ogre Haunch',   lvl:48,ms:10500,xp:227, spdMult:0.693, minMs:1470, inp:{ogre_hide:2,ogre_tusk:1},    out:{ogre_roast:1}},
     {id:'co5',  name:'Cook salmon',         lvl:50,ms:10500,xp:227, spdMult:0.693, minMs:1470, inp:{raw_salmon:1},               out:{cooked_salmon:1}},
     {id:'co_ts',name:'Stew Troll Meat',     lvl:60,ms:12800,xp:331, spdMult:0.735, minMs:1680, inp:{troll_hide:2,troll_blood:1}, out:{troll_stew:1}},
@@ -7860,6 +7895,9 @@ const ICONS = {
   marrow_broth: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="cmb1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c8a868"/><stop offset="1" stop-color="#7a5a2a"/></linearGradient><linearGradient id="cmb_b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b8b0a0"/><stop offset="1" stop-color="#5a544a"/></linearGradient></defs><ellipse cx="32" cy="56" rx="18" ry="2.6" fill="#000" opacity="0.35"/><path d="M14 34 Q14 50 32 50 Q50 50 50 34 Z" fill="url(#cmb_b)" stroke="#2a2620" stroke-width="1" stroke-linejoin="round"/><ellipse cx="32" cy="34" rx="18" ry="5" fill="url(#cmb1)" stroke="#3a2c14" stroke-width="0.8"/><ellipse cx="32" cy="33" rx="14" ry="3.4" fill="#d8b878" opacity="0.7"/><path d="M22 33 L30 35 L26 31 Z" fill="#e8e0c8" opacity="0.8"/><circle cx="38" cy="34" r="1.4" fill="#9a7a3a" opacity="0.6"/><path d="M24 20 Q22 24 24 28 M32 16 Q30 22 32 26 M40 20 Q38 24 40 28" stroke="#e8d8b0" stroke-width="1.2" fill="none" opacity="0.5" stroke-linecap="round"/></svg>',
   ratmeat_skewer: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><radialGradient id="crs1" cx="0.4" cy="0.4" r="0.7"><stop offset="0" stop-color="#a85838"/><stop offset="0.6" stop-color="#6a3018"/><stop offset="1" stop-color="#2a1008"/></radialGradient></defs><ellipse cx="32" cy="57" rx="14" ry="2.4" fill="#000" opacity="0.35"/><path d="M14 50 L52 14" stroke="#caa472" stroke-width="2.4" stroke-linecap="round"/><path d="M14 50 L52 14" stroke="#7a5a30" stroke-width="0.6" stroke-linecap="round"/><ellipse cx="26" cy="38" rx="8" ry="6.5" fill="url(#crs1)" stroke="#1a0a04" stroke-width="0.7" transform="rotate(-40 26 38)"/><ellipse cx="38" cy="26" rx="7.5" ry="6" fill="url(#crs1)" stroke="#1a0a04" stroke-width="0.7" transform="rotate(-40 38 26)"/><path d="M22 40 Q26 36 30 38 M34 28 Q38 24 42 26" stroke="#c87850" stroke-width="0.8" fill="none" opacity="0.6"/><circle cx="24" cy="40" r="1" fill="#3a1808"/><circle cx="40" cy="24" r="1" fill="#3a1808"/></svg>',
   goblin_jerky: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="cjk1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a4a28"/><stop offset="0.5" stop-color="#5a2c14"/><stop offset="1" stop-color="#2a1208"/></linearGradient></defs><ellipse cx="32" cy="57" rx="15" ry="2.4" fill="#000" opacity="0.35"/><path d="M18 10 Q24 28 20 50 Q24 54 28 50 Q24 30 28 12 Q23 8 18 10 Z" fill="url(#cjk1)" stroke="#1a0c04" stroke-width="0.8" stroke-linejoin="round"/><path d="M34 12 Q40 30 36 52 Q40 56 44 52 Q40 32 44 14 Q39 10 34 12 Z" fill="url(#cjk1)" stroke="#1a0c04" stroke-width="0.8" stroke-linejoin="round"/><path d="M22 18 L24 18 M21 30 L25 30 M22 42 L24 42 M38 20 L42 20 M37 32 L41 32 M38 44 L42 44" stroke="#c87850" stroke-width="0.7" opacity="0.5" stroke-linecap="round"/><path d="M20 12 Q23 14 26 12 M36 14 Q39 16 42 14" stroke="#a86038" stroke-width="0.6" fill="none" opacity="0.6"/></svg>',
+  /* ─── Sea rations (2, 0.9.69) — Rock Salt + Gull Egg sinks ─── */
+  ships_biscuit: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><radialGradient id="csb1" cx="0.36" cy="0.3" r="0.82"><stop offset="0" stop-color="#f4e4bc"/><stop offset="0.55" stop-color="#d8bc84"/><stop offset="1" stop-color="#8e7040"/></radialGradient></defs><ellipse cx="32" cy="55" rx="17" ry="2.8" fill="#000" opacity="0.35"/><rect x="11" y="13" width="42" height="38" rx="7" fill="url(#csb1)" stroke="#6a5028" stroke-width="1.1"/><rect x="15" y="17" width="34" height="30" rx="5" fill="none" stroke="#f2e6c4" stroke-width="0.7" opacity="0.45"/><circle cx="22" cy="24" r="2.1" fill="#7a5c2c" opacity="0.75"/><circle cx="32" cy="24" r="2.1" fill="#7a5c2c" opacity="0.75"/><circle cx="42" cy="24" r="2.1" fill="#7a5c2c" opacity="0.75"/><circle cx="22" cy="32" r="2.1" fill="#7a5c2c" opacity="0.75"/><circle cx="32" cy="32" r="2.1" fill="#7a5c2c" opacity="0.75"/><circle cx="42" cy="32" r="2.1" fill="#7a5c2c" opacity="0.75"/><circle cx="22" cy="40" r="2.1" fill="#7a5c2c" opacity="0.75"/><circle cx="32" cy="40" r="2.1" fill="#7a5c2c" opacity="0.75"/><circle cx="42" cy="40" r="2.1" fill="#7a5c2c" opacity="0.75"/><path d="M11 20 Q20 16 30 19" stroke="#fff6dc" stroke-width="1.2" fill="none" opacity="0.5" stroke-linecap="round"/><circle cx="17" cy="47" r="1.1" fill="#fff" opacity="0.85"/><circle cx="47" cy="19" r="1" fill="#fff" opacity="0.8"/><circle cx="49" cy="44" r="0.9" fill="#fff" opacity="0.7"/></svg>',
+  salt_cod: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="csc1" x1="0.1" y1="0" x2="0.8" y2="1"><stop offset="0" stop-color="#eef2f0"/><stop offset="0.5" stop-color="#c2ccc6"/><stop offset="1" stop-color="#78847e"/></linearGradient><linearGradient id="csc2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d8c8a0"/><stop offset="1" stop-color="#8a7448"/></linearGradient></defs><ellipse cx="32" cy="56" rx="19" ry="2.6" fill="#000" opacity="0.34"/><path d="M8 44 L56 44 L54 50 L10 50 Z" fill="url(#csc2)" stroke="#5a4a28" stroke-width="0.7"/><path d="M12 32 Q22 14 38 16 Q50 18 54 30 Q50 42 38 44 Q22 46 12 32 Z" fill="url(#csc1)" stroke="#5c6862" stroke-width="1"/><path d="M12 32 Q6 24 4 20 Q10 28 8 34 Q10 38 12 32 Z" fill="#9aa8a2" stroke="#5c6862" stroke-width="0.7"/><path d="M20 22 Q32 30 46 26" stroke="#8a968f" stroke-width="0.9" fill="none" opacity="0.75"/><path d="M18 30 Q32 36 48 33" stroke="#8a968f" stroke-width="0.8" fill="none" opacity="0.6"/><path d="M22 38 Q34 41 46 38" stroke="#8a968f" stroke-width="0.7" fill="none" opacity="0.5"/><ellipse cx="44" cy="24" rx="2.4" ry="2.2" fill="#e8eeeb" stroke="#4a5450" stroke-width="0.6"/><circle cx="44.4" cy="24" r="1" fill="#28302c"/><path d="M16 24 Q20 20 26 19" stroke="#fbfefc" stroke-width="1.1" fill="none" opacity="0.6" stroke-linecap="round"/><circle cx="26" cy="27" r="1.2" fill="#fff" opacity="0.9"/><circle cx="36" cy="34" r="1" fill="#fff" opacity="0.85"/><circle cx="30" cy="38" r="0.9" fill="#fff" opacity="0.75"/><circle cx="41" cy="31" r="0.8" fill="#fff" opacity="0.7"/><circle cx="20" cy="34" r="0.8" fill="#fff" opacity="0.65"/></svg>',
   silk_poultice: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="csp1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e8e4dc"/><stop offset="1" stop-color="#a8a298"/></linearGradient></defs><ellipse cx="32" cy="56" rx="15" ry="2.4" fill="#000" opacity="0.35"/><rect x="14" y="22" width="36" height="22" rx="5" fill="url(#csp1)" stroke="#6a655c" stroke-width="1"/><path d="M14 28 Q32 24 50 28 M14 38 Q32 34 50 38" stroke="#c4beb2" stroke-width="0.8" fill="none" opacity="0.7"/><path d="M22 22 L20 44 M32 22 L32 44 M42 22 L44 44" stroke="#b0aaa0" stroke-width="0.6" opacity="0.5"/><circle cx="32" cy="33" r="6" fill="#3a6a2a" opacity="0.85"/><circle cx="32" cy="33" r="6" fill="none" stroke="#244a18" stroke-width="0.6"/><path d="M29 33 Q32 29 35 33 Q32 37 29 33 Z" fill="#6aa83a"/><circle cx="32" cy="33" r="1.2" fill="#cce890"/></svg>',
 
   /* ─── Monster-drop heal foods, mid→endgame (6, 1.0.7) ─── */
@@ -8163,18 +8201,30 @@ const IS_GATHER={woodcutting:1,mining:1,fishing:1,foraging:1};
    The fire burns continuously while lit. Cooking requires the fire to be lit.
    "Storage style": loading logs adds to the stockpile but does NOT auto-light
    the fire — the player explicitly lights it when they want to start burning. */
+/* Two sea fuels joined the table in 0.9.69. Driftwood slots between pine and oak
+   and Deep Amber sits past ancient logs as the best fuel in the game — both come
+   only off a voyage, so neither shortcuts the Woodcutting ladder. */
 const LOG_BURN_SEC={
   pine_log:    7,
+  driftwood:   9,
   oak_log:     12,
   ironbark_log:22,
   ember_log:   38,
   frost_log:   60,
   shadow_log:  95,
   ancient_log: 150,
+  deep_amber:  210,
 };
-const LOG_TIER_ORDER=['pine_log','oak_log','ironbark_log','ember_log','frost_log','shadow_log','ancient_log'];
+/* Burn order, cheapest first — fireNextLog() consumes the earliest entry that is
+   loaded, so Deep Amber is deliberately last and gets held back. */
+const LOG_TIER_ORDER=['pine_log','driftwood','oak_log','ironbark_log','ember_log','frost_log','shadow_log','ancient_log','deep_amber'];
 // Firemaking XP per log when burned in the cooking fire — 15% of normal FM XP (reduced, no ash/charcoal drops)
-const LOG_FM_XP={pine_log:43,oak_log:74,ironbark_log:128,ember_log:209,frost_log:331,shadow_log:520,ancient_log:797};
+const LOG_FM_XP={pine_log:43,driftwood:88,oak_log:74,ironbark_log:128,ember_log:209,frost_log:331,shadow_log:520,ancient_log:797,deep_amber:880};
+/* Which Firemaking activity a fuel's mastery bonus reads from. Was derived as
+   'fm'+(LOG_TIER_ORDER.indexOf(id)+1), which broke the moment a fuel was inserted
+   mid-order — driftwood would have shifted every log above it onto the wrong act. */
+const LOG_FM_ACT={pine_log:'fm1',driftwood:'fm_drift',oak_log:'fm2',ironbark_log:'fm3',ember_log:'fm4',
+                  frost_log:'fm5',shadow_log:'fm6',ancient_log:'fm7',deep_amber:'fm_amber'};
 
 /* Rare drop tables — chances scale with tier so higher-level activities
    give MORE rare drops/hr than lower-level, rewarding progression.
@@ -15042,7 +15092,7 @@ function applyContinuousBurn(now){
         const fmFrac=treeRank('cooking','co_master_ember')>0?0.40:0.15;
         const fmXp=Math.max(1,Math.round(baseXp*fmFrac));
         const m=mods('firemaking');
-        const bonusXp=Math.round(fmXp*m.xpMult*(1+masteryXpBonus('fm'+(LOG_TIER_ORDER.indexOf(next)+1))));
+        const bonusXp=Math.round(fmXp*m.xpMult*(1+masteryXpBonus(LOG_FM_ACT[next]||'')));
         const fmBefore=levelFromXp(state.xp['firemaking']);
         state.xp['firemaking']=(state.xp['firemaking']||0)+bonusXp;
         recordXpGain('firemaking',bonusXp);
@@ -21482,6 +21532,20 @@ function buildUsageMap(){
       }
     }
   }
+  /* Shipwright costs (0.9.69). Hull, gun and rig costs are not activities, so
+     wrack timber, rope, masonry and hide would otherwise read as used by nothing
+     in the tooltip — while being the entire reason to keep them. */
+  const shipLabel={skKey:'sailing',skIcon:'⛵',skName:'Shipwright'};
+  for(const tbl of [typeof SAIL_HULLS  !=='undefined'?SAIL_HULLS  :[],
+                    typeof SAIL_CANNONS!=='undefined'?SAIL_CANNONS:[],
+                    typeof SAIL_SAILS  !=='undefined'?SAIL_SAILS  :[]]){
+    for(const e of tbl){
+      for(const id in (e.cost||{})){
+        if(!map[id]) map[id]=[];
+        if(!map[id].some(u=>u.skKey==='sailing')) map[id].push(shipLabel);
+      }
+    }
+  }
   return map;
 }
 let _usageMap=null;
@@ -25934,15 +25998,21 @@ const SAIL_HULLS=[
   {n:'Lashed Raft',          lv:1,  sound:40,  stores:25,  hold:120,  berths:0,  cost:{pine_log:60}},
   {n:'Oak Sloop',            lv:10, sound:85,  stores:60,  hold:260,  berths:1,  cost:{oak_log:120,      bronze_bar:40}},
   {n:'Ironbark Cutter',      lv:25, sound:140, stores:110, hold:450,  berths:2,  cost:{ironbark_log:180, iron_bar:60}},
-  {n:'Emberwood Brigantine', lv:45, sound:230, stores:165, hold:720,  berths:4,  cost:{ember_log:240,    steel_bar:90,      salt_iron:6}},
+  /* From tier 4 up, a hull is part salvage (0.9.69). The land counts came down
+     ~15% and the difference is made up in sea timber, rigging, masonry and hide —
+     so the boat that reaches the next archipelago is built out of the last one.
+     Every sea cost obeys the same rule as the shipwright mats: it must be
+     reachable by the PREVIOUS hull's Range, verified by _sailChainAudit(). */
+  {n:'Emberwood Brigantine', lv:45, sound:230, stores:165, hold:720,  berths:4,  cost:{ember_log:200,    steel_bar:80,      wrack_timber:40,  salt_iron:6}},
   /* Tier 5 is salt_iron only, deliberately. Krakenbone lives in band 2 (Mistlands),
      and the tier-4 hull's Range 165 cannot reach the nearest band-2 island (Mistvault,
      Range 190) — asking for krakenbone here would mean needing the Galleon to build
      the Galleon. Krakenbone first appears as a cost on tier 6, which tier 5's Range
-     220 does reach. Verified as a no-dead-end chain in test. */
-  {n:'Frostwood Galleon',    lv:65, sound:360, stores:220, hold:1100, berths:6,  cost:{frost_log:300,    mithril_bar:120,   salt_iron:20}},
-  {n:'Shadowwood Corsair',   lv:78, sound:520, stores:290, hold:1600, berths:8,  cost:{shadow_log:380,   cobalt_bar:150,    krakenbone:10}},
-  {n:'Ancient Leviathan',    lv:90, sound:760, stores:380, hold:2400, berths:12, cost:{ancient_log:460,  starsteel_bar:180, krakenbone:16, tidewrought:5}}
+     220 does reach. Verified as a no-dead-end chain in test. Same reason spire_stone
+     (band 2) waits for tier 6 and voidwood (band 3) for tier 7. */
+  {n:'Frostwood Galleon',    lv:65, sound:360, stores:220, hold:1100, berths:6,  cost:{frost_log:260,    mithril_bar:100,   wrack_timber:80,  tarred_rope:60,      salt_iron:20}},
+  {n:'Shadowwood Corsair',   lv:78, sound:520, stores:290, hold:1600, berths:8,  cost:{shadow_log:320,   cobalt_bar:130,    spire_stone:60,   tarred_rope:100,     krakenbone:10}},
+  {n:'Ancient Leviathan',    lv:90, sound:760, stores:380, hold:2400, berths:12, cost:{ancient_log:380,  starsteel_bar:160, voidwood:140,     leviathan_scale:24,  krakenbone:16, tidewrought:5}}
 ];
 
 /* ── Cannons ───────────────────────────────────────────────────────────────────
@@ -25953,11 +26023,18 @@ const SAIL_HULLS=[
    0.9.64, so this is an upgrade path and never a retroactive tax on old saves. */
 const SAIL_CANNONS=[
   {n:'No guns',              lv:0,  arms:0,   cost:null},
-  {n:'Bronze Swivel Guns',   lv:30, arms:34,  cost:{bronze_bar:60,     cannon_barrel:4}},
-  {n:'Iron Long Nines',      lv:50, arms:78,  cost:{iron_bar:90,       cannon_barrel:10, salt_iron:8}},
-  {n:'Cobalt Carronades',    lv:68, arms:145, cost:{cobalt_bar:120,    cannon_barrel:18, krakenbone:6}},
-  {n:'Starsteel Bombards',   lv:82, arms:240, cost:{starsteel_bar:150, cannon_barrel:28, krakenbone:12}},
-  {n:'The Leviathan Gun',    lv:95, arms:400, cost:{starsteel_bar:220, cannon_barrel:40, tidewrought:8}}
+  /* A gun is built with its magazine (0.9.69) — Salvaged Powder is packed at the
+     yard rather than metered per voyage. Metering it would mean a Maw run can fail
+     to launch because the hold is dry, which is exactly the kind of check an idle
+     game should not make you do. The Swivel Guns stay powder-free — powder and
+     barrels both come from The Wracks, and the nearest of those is Widow's Wrack
+     at Sailing 34, which is also why the Swivel Guns moved from 30 to 34: the audit
+     caught them advertising an unlock four levels before their barrels exist. */
+  {n:'Bronze Swivel Guns',   lv:34, arms:34,  cost:{bronze_bar:60,     cannon_barrel:4}},
+  {n:'Iron Long Nines',      lv:50, arms:78,  cost:{iron_bar:90,       cannon_barrel:10, salvaged_powder:25,  salt_iron:8}},
+  {n:'Cobalt Carronades',    lv:68, arms:145, cost:{cobalt_bar:120,    cannon_barrel:18, salvaged_powder:50,  krakenbone:6}},
+  {n:'Starsteel Bombards',   lv:82, arms:240, cost:{starsteel_bar:150, cannon_barrel:28, salvaged_powder:85,  krakenbone:12}},
+  {n:'The Leviathan Gun',    lv:95, arms:400, cost:{starsteel_bar:220, cannon_barrel:40, salvaged_powder:130, tidewrought:8}}
 ];
 
 /* ── Sails ─────────────────────────────────────────────────────────────────────
@@ -25966,11 +26043,15 @@ const SAIL_CANNONS=[
    0.9.64 finding that voyage length had no effect on rate at all. */
 const SAIL_SAILS=[
   {n:'Patched Canvas',       lv:0,  rig:0.00, cost:null},
+  /* Tarred Rope is the rigging (0.9.69) and appears from tier 3 up — Flaxen Sails
+     unlock at Sailing 20 and no island drops rope before 34. Siren Scale skins the
+     Krakenweave and Leviathan Scale the Mainsail, both a full archipelago inside
+     the level that fits them. */
   {n:'Flaxen Sails',         lv:20, rig:0.08, cost:{tanned_hide:60, spider_silk:20}},
-  {n:'Doubled Canvas',       lv:40, rig:0.15, cost:{drake_hide:60,  spider_silk:50,  salt_iron:5}},
-  {n:'Stormsilk Rig',        lv:60, rig:0.22, cost:{emberweave:70,  drake_hide:90,   salt_iron:14}},
-  {n:'Krakenweave Rig',      lv:80, rig:0.29, cost:{wraithcloth:80, emberweave:120,  krakenbone:8}},
-  {n:'Leviathan Mainsail',   lv:92, rig:0.35, cost:{voidweave:90,   wraithcloth:140, tidewrought:6}}
+  {n:'Doubled Canvas',       lv:40, rig:0.15, cost:{drake_hide:60,  spider_silk:50,  tarred_rope:40,  salt_iron:5}},
+  {n:'Stormsilk Rig',        lv:60, rig:0.22, cost:{emberweave:70,  drake_hide:90,   tarred_rope:70,  salt_iron:14}},
+  {n:'Krakenweave Rig',      lv:80, rig:0.29, cost:{wraithcloth:80, emberweave:120,  tarred_rope:110, siren_scale:30,     krakenbone:8}},
+  {n:'Leviathan Mainsail',   lv:92, rig:0.35, cost:{voidweave:90,   wraithcloth:140, tarred_rope:150, leviathan_scale:30, tidewrought:6}}
 ];
 
 /* ── Crew ──────────────────────────────────────────────────────────────────────
@@ -26169,6 +26250,40 @@ for(const _cid in SAIL_CHARTS){
 }
 function sailHasChart(cid){ return !!(state.sail&&state.sail.charts&&state.sail.charts[cid]); }
 function sailChartFor(i){ return SAIL_CHART_BY_ISLE[i]||null; }
+
+/* ── shipwright dead-end audit ─────────────────────────────────────────────────
+   Sea materials went into hull, cannon and sail costs in 0.9.69, which introduces
+   a failure mode land materials never had: a tier can ask for something only the
+   NEXT tier can go and fetch. This walks every cost and, for each sea material,
+   demands at least one charted island that (a) drops it, (b) sits at or under the
+   level that unlocks the tier, and (c) is inside the Range the player already has
+   at that point — the previous hull for a hull, the best hull their level allows
+   for a sail or a gun. Chart-sealed and unlogged islands do not count as sources,
+   since neither is guaranteed to be open. Returns [] when the ladder is sound;
+   run it in the smoke test after touching any cost. */
+function _sailChainAudit(){
+  const problems=[];
+  /* Only sea-EXCLUSIVE materials can dead-end. Island bulk tables also carry logs
+     and ores on purpose, and those are gatherable ashore, so keying off the island
+     tables alone would flag every hull for wanting its own logs. */
+  const isSea=id=>!!(ITEMS[id]&&ITEMS[id].sea);
+  const sources=id=>SAIL_ISLES.filter((is,ix)=>!is.hid && !SAIL_CHART_BY_ISLE[ix] && (
+       (is.d||[]).some(e=>e.i===id) || (is.r||[]).some(e=>e.i===id)
+    || sailMatDrops(is).some(m=>m.id===id)));
+  /* Best Range a player can have at a given Sailing level. */
+  const rangeAt=lvl=>SAIL_HULLS.reduce((r,h)=>h.lv<=lvl?Math.max(r,h.stores):r, SAIL_HULLS[0].stores);
+  const check=(label,cost,lvl,range)=>{
+    for(const id in (cost||{})){
+      if(!isSea(id)) continue;                      // gathered ashore — not our problem
+      if(!sources(id).some(is=>is.lv<=lvl && is.st<=range))
+        problems.push(label+' wants '+id+', but no charted island that drops it is both Lv≤'+lvl+' and within Range '+range+'.');
+    }
+  };
+  SAIL_HULLS.forEach((h,t)=>{ if(t>0) check('Hull "'+h.n+'"', h.cost, h.lv, SAIL_HULLS[t-1].stores); });
+  SAIL_CANNONS.forEach(e=>{ if(e.cost) check('Guns "'+e.n+'"', e.cost, e.lv, rangeAt(e.lv)); });
+  SAIL_SAILS.forEach(e=>{   if(e.cost) check('Rig "'+e.n+'"',  e.cost, e.lv, rangeAt(e.lv)); });
+  return problems;
+}
 
 const SAIL_GRADES=[
   {n:'Triumphant', c:'sl-r1', mult:1.40, p:'Clean water the whole crossing. The hold came back over-full, and the crew found something they were not looking for.'},
@@ -27077,7 +27192,8 @@ function renderSail(){
     html+='<div class="sl-card"><div class="sl-cardhd"><div><h4>Emberwatch Shipyard</h4>'
       +'<div class="sl-metarow"><span class="sl-chip mut">build a stronger ship</span></div></div></div>'
       +'<p class="sl-note" style="margin:0 0 10px">A bigger hull takes more weather and sails further. '
-      +'Every ship is built from logs and bars you already gather — the level gates match Woodcutting exactly.</p>';
+      +'The first three are logs and bars off the land — the level gates match Woodcutting exactly. '
+      +'From the Brigantine up she is part salvage: timber, rope, masonry and hide you can only bring back from a voyage.</p>';
     SAIL_HULLS.forEach((hh,t)=>{
       const cur=t===s.hull, owned=t<=s.hull, canLvl=lvl>=hh.lv;
       const afford=Object.keys(hh.cost).every(id=>(state.items[id]||0)>=hh.cost[id]);
