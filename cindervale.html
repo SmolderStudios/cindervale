@@ -587,12 +587,18 @@ header h1 .flame{color:var(--ember)}
 .cmb-chip[data-tip],
 .st-ic[data-tip],
 .fm-icon[data-tip],
+.sl-stat[data-tip],
+.sl-tile[data-tip],
+.sl-pill[data-tip],
 .cmb-slot[data-tip]{position:relative}
 .cmb-stat[data-tip]:hover::after,
 .cd-stat[data-tip]:hover::after,
 .cmb-chip[data-tip]:hover::after,
 .st-ic[data-tip]:hover::after,
 .fm-icon[data-tip]:hover::after,
+.sl-stat[data-tip]:hover::after,
+.sl-tile[data-tip]:hover::after,
+.sl-pill[data-tip]:hover::after,
 .cmb-slot[data-tip]:hover::after{
   content:attr(data-tip);
   position:absolute;
@@ -3210,6 +3216,12 @@ body:not(.is-demo) .demo-only{display:none !important}
   transition:opacity .15s}
 .sl-mk.hid .d{background:#3a2140;border-color:#8c5fa8;border-style:dashed}
 .sl-mk.hid .n{color:#b98fd0;font-style:italic}
+/* Chart-locked: the island is drawn but sealed until its treasure map turns up. */
+.sl-mk.needchart{opacity:.72}
+.sl-mk.needchart .d{background:#402c12;border-color:#c08a3a;border-style:dashed}
+.sl-mk.needchart .n{color:#d8ab5e}
+.sl-mk.needchart::after{content:"";position:absolute;top:-4px;left:calc(50% + 5px);width:6px;height:6px;
+  border-radius:1px;border:1.5px solid #c08a3a;border-bottom-width:3px}
 .sl-mk.atsea .d{background:#e0762f;border-color:#ffc78a;animation:sl-pulse 1.5s ease-in-out infinite}
 @keyframes sl-pulse{0%,100%{box-shadow:0 0 0 3px rgba(224,118,47,.30)}50%{box-shadow:0 0 0 9px rgba(224,118,47,.02)}}
 /* Zoomed out the labels would collide, so only selected / at-sea / hovered keep text. */
@@ -3219,18 +3231,34 @@ body:not(.is-demo) .demo-only{display:none !important}
   .sl-pbar i,.sl-odds i,.sl-mk .d{transition:none}
 }
 
+/* data-tip popovers on the sailing pills/tiles. The shared rule (see the hover
+   tooltip block up in the combat CSS) anchors left, which would spill off the
+   right-hand column, so tiles and pills there anchor to their right edge. */
+.sl-stat[data-tip],.sl-tile[data-tip],.sl-pill[data-tip]{cursor:var(--cur-help)}
+.sl-stat[data-tip]:hover{border-color:var(--trim)}
+.sl-tile[data-tip]:hover::after,.sl-pill[data-tip]:hover::after{left:auto;right:0}
+
 /* ── island hover card ── */
 .sl-tip{position:fixed;z-index:900;pointer-events:none;opacity:0;transition:opacity .12s;
-  width:226px;background:linear-gradient(180deg,#152532,#0b141c);border:1px solid #3d6274;
-  border-radius:8px;padding:10px 12px;box-shadow:0 8px 26px rgba(0,0,0,.66)}
+  width:288px;background:linear-gradient(180deg,#172936,#0b141c);border:1px solid #4a7488;
+  border-radius:9px;padding:13px 15px;box-shadow:0 10px 30px rgba(0,0,0,.7)}
 .sl-tip.show{opacity:1}
-.sl-tip h6{font-family:'Cinzel',serif;font-size:13.5px;color:#fbeed0;margin:0 0 6px;line-height:1.2}
-.sl-tip .row{display:flex;justify-content:space-between;gap:8px;font-family:monospace;
-  font-size:10.5px;color:#7fa4b4;margin-top:3px}
-.sl-tip .row b{color:#dbe9ef}
-.sl-tip .mini{display:flex;height:6px;border-radius:3px;overflow:hidden;margin-top:8px;background:#0a141d}
+.sl-tip h6{font-family:'Cinzel',serif;font-size:17px;color:#fbeed0;margin:0 0 3px;line-height:1.2}
+.sl-tip .band{font-family:monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  color:#6d8c9c;margin-bottom:9px}
+.sl-tip .row{display:flex;justify-content:space-between;gap:10px;font-family:monospace;
+  font-size:13px;color:#8fb4c6;margin-top:5px;line-height:1.4}
+.sl-tip .row b{color:#eef6fa;font-size:13.5px}
+.sl-tip .mini{display:flex;height:9px;border-radius:5px;overflow:hidden;margin-top:11px;background:#0a141d;
+  border:1px solid #23404e}
 .sl-tip .mini i{display:block}
-.sl-tip .why{font-size:10.5px;color:#d9a463;margin-top:7px;line-height:1.4}
+.sl-tip .minikey{display:flex;justify-content:space-between;font-family:monospace;font-size:10.5px;
+  color:#5f8496;margin-top:4px}
+.sl-tip .why{font-size:12.5px;color:#e0a558;margin-top:10px;line-height:1.45;
+  border-top:1px solid #2c4d5e;padding-top:9px}
+.sl-tip .why b{color:#f0c884}
+.sl-tip .hint{font-size:12px;color:#a8cc72;margin-top:9px;line-height:1.45;
+  border-top:1px solid #2c4d5e;padding-top:9px}
 
 /* ── right column ── */
 .sl-side{display:flex;flex-direction:column;gap:8px;min-height:0}
@@ -3379,7 +3407,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.61</div>
+  <div class="mm-ver">v0.9.62</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -4961,6 +4989,14 @@ const ITEMS={
   trove_mist:    {name:'Hollowtide Almanac',   icon:'📖',sell:16000, rare:true, desc:"Salt-swollen and still legible. It predicts the great ebb to the hour, in a hand nobody at the Admiralty recognises."},
   trove_far:     {name:'Scale of the Old Thing',icon:'🐉',sell:52000, rare:true, desc:"Broader than a shield and lighter than paper. Nothing marks it — not fire, not starsteel, not the void. It was shed, not taken."},
   trove_odd:     {name:'The Steady Lantern',   icon:'🏮',sell:120000,rare:true, desc:"Recovered from an island that is on no chart. It has never guttered. Crews who carry it report arriving where they meant to, which is not always welcome."},
+  /* ─── Treasure maps (0.9.62) — each one permanently charts a sealed island.
+     They drop rarely from one specific island, so the far water is opened by
+     sailing rather than by levelling. Finding one unlocks it on the spot; the
+     map itself stays in the satchel as a record. ─── */
+  chart_gravekeel:{name:"Wrecker's Chart",     icon:'🗺️',sell:6500,  rare:true, desc:"Scratched into a hatch cover by someone who did not survive the writing. It marks Gravekeel Spit, and the words around the edge are not directions."},
+  chart_gibbet:   {name:"Hangman's Chart",     icon:'🗺️',sell:22000, rare:true, desc:"Drawn on the back of a warrant, in the hand of the man it was issued for. Corsair's Gibbet is circled twice."},
+  chart_crown:    {name:"Drowned King's Chart",icon:'🗺️',sell:68000, rare:true, desc:"Vellum that has been underwater for centuries and has not softened. It shows a city, and the city has streets."},
+  chart_voidmaw:  {name:'Chart of the Long Descent',icon:'🗺️',sell:145000,rare:true, desc:"Not a map of a place — a map of a depth. The soundings run past the edge of the parchment and keep going in the margin."},
 };
 
 /* ════════ COMBAT GEAR STATS ════════════════════════════════════════════════════
@@ -7978,6 +8014,11 @@ const ICONS = {
   trove_wracks: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="tv2_b" x1="0.1" y1="0" x2="0.9" y2="1"><stop offset="0" stop-color="#f0d894"/><stop offset="0.35" stop-color="#c79b4e"/><stop offset="0.75" stop-color="#7d5f2a"/><stop offset="1" stop-color="#3e2f14"/></linearGradient><radialGradient id="tv2_g" cx="0.5" cy="0.45" r="0.6"><stop offset="0" stop-color="#f0d894" stop-opacity="0.5"/><stop offset="1" stop-color="#f0d894" stop-opacity="0"/></radialGradient></defs><ellipse cx="32" cy="58" rx="17" ry="3" fill="#000" opacity="0.4"/><circle cx="32" cy="32" r="24" fill="url(#tv2_g)"/><path d="M32 8 Q30 8 30 11 L30 14 Q18 19 15 34 Q13 44 10 48 L54 48 Q51 44 49 34 Q46 19 34 14 L34 11 Q34 8 32 8 Z" fill="url(#tv2_b)" stroke="#3e2f14" stroke-width="0.8"/><path d="M21 24 Q17 33 16 45" stroke="#fbeaba" stroke-width="1.6" fill="none" opacity="0.55" stroke-linecap="round"/><path d="M10 48 L54 48 L54 52 L10 52 Z" fill="#8d6a2e" stroke="#3e2f14" stroke-width="0.7"/><path d="M10 48 L54 48 L54 49.6 L10 49.6 Z" fill="#f0d894" opacity="0.65"/><path d="M29 52 L35 52 L34 58 Q32 60 30 58 Z" fill="#6d5734"/><ellipse cx="32" cy="58" rx="3.4" ry="2.6" fill="#c79b4e"/><path d="M24 30 Q28 26 32 30" stroke="#3e2f14" stroke-width="0.7" fill="none" opacity="0.45"/><circle cx="40" cy="22" r="1.4" fill="#fff" opacity="0.55"/></svg>',
   trove_mist: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="tv3_c" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4d7c92"/><stop offset="0.5" stop-color="#2c505f"/><stop offset="1" stop-color="#132a35"/></linearGradient><linearGradient id="tv3_p" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f2e6c6"/><stop offset="0.6" stop-color="#d5c39a"/><stop offset="1" stop-color="#a08d66"/></linearGradient><radialGradient id="tv3_g" cx="0.5" cy="0.4" r="0.6"><stop offset="0" stop-color="#8fd0e6" stop-opacity="0.42"/><stop offset="1" stop-color="#8fd0e6" stop-opacity="0"/></radialGradient></defs><ellipse cx="32" cy="57" rx="20" ry="3" fill="#000" opacity="0.4"/><circle cx="32" cy="32" r="24" fill="url(#tv3_g)"/><path d="M8 14 Q20 10 31 15 L31 52 Q20 47 8 51 Z" fill="url(#tv3_c)"/><path d="M56 14 Q44 10 33 15 L33 52 Q44 47 56 51 Z" fill="url(#tv3_c)"/><path d="M11 17 Q21 14 30 18 L30 49 Q21 45 11 48 Z" fill="url(#tv3_p)"/><path d="M53 17 Q43 14 34 18 L34 49 Q43 45 53 48 Z" fill="url(#tv3_p)"/><path d="M15 24 L26 22 M15 29 L26 27 M15 34 L24 32.5 M15 39 L26 37" stroke="#7d6a46" stroke-width="1.1" opacity="0.65" stroke-linecap="round"/><path d="M38 23 L49 25 M38 28 L49 30 M40 33 L49 35 M38 38 L49 40" stroke="#7d6a46" stroke-width="1.1" opacity="0.65" stroke-linecap="round"/><path d="M31 15 L31 52 L33 52 L33 15 Z" fill="#132a35"/><circle cx="41" cy="31" r="5" fill="none" stroke="#8fd0e6" stroke-width="1.2" opacity="0.75"/><path d="M41 26.5 L42.6 30.4 L41 34.6 L39.4 30.4 Z" fill="#8fd0e6" opacity="0.85"/><path d="M6 44 Q16 40 26 44" stroke="#bcd8e4" stroke-width="1.4" fill="none" opacity="0.3"/></svg>',
   trove_far: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="tv4_s" x1="0.2" y1="0" x2="0.8" y2="1"><stop offset="0" stop-color="#8fe0d0"/><stop offset="0.3" stop-color="#3d9a92"/><stop offset="0.65" stop-color="#1f4f5c"/><stop offset="1" stop-color="#0c2029"/></linearGradient><radialGradient id="tv4_g" cx="0.45" cy="0.35" r="0.65"><stop offset="0" stop-color="#7fe8d4" stop-opacity="0.5"/><stop offset="1" stop-color="#7fe8d4" stop-opacity="0"/></radialGradient></defs><ellipse cx="32" cy="58" rx="15" ry="3" fill="#000" opacity="0.4"/><circle cx="32" cy="30" r="25" fill="url(#tv4_g)"/><path d="M32 4 Q52 14 52 34 Q52 52 32 60 Q12 52 12 34 Q12 14 32 4 Z" fill="url(#tv4_s)" stroke="#0c2029" stroke-width="0.9"/><path d="M32 4 Q44 12 46 30 Q47 46 32 58 Q36 44 36 30 Q36 15 32 4 Z" fill="#0c2029" opacity="0.3"/><path d="M22 16 Q17 26 17 36 Q17 46 24 54" stroke="#a8f0e0" stroke-width="1.6" fill="none" opacity="0.5" stroke-linecap="round"/><path d="M32 12 Q32 30 32 52" stroke="#0c2029" stroke-width="1" opacity="0.45"/><path d="M32 20 Q24 26 22 36 M32 20 Q40 26 42 36 M32 34 Q25 39 23 47 M32 34 Q39 39 41 47" stroke="#0c2029" stroke-width="0.8" fill="none" opacity="0.4"/><ellipse cx="26" cy="20" rx="5" ry="7" fill="#fff" opacity="0.22"/><circle cx="44" cy="20" r="1.5" fill="#c9fff2" opacity="0.7"/><circle cx="20" cy="42" r="1.1" fill="#c9fff2" opacity="0.55"/></svg>',
+  /* Treasure maps — one silhouette, palette climbing with the water it opens. */
+  chart_gravekeel: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="cg1_p" x1="0" y1="0" x2="0.3" y2="1"><stop offset="0" stop-color="#e8d4a4"/><stop offset="0.55" stop-color="#c3ac78"/><stop offset="1" stop-color="#8e7a4e"/></linearGradient></defs><ellipse cx="32" cy="57" rx="19" ry="2.6" fill="#000" opacity="0.36"/><path d="M8 12l16 4 16-4 16 4v40l-16-4-16 4-16-4z" fill="url(#cg1_p)" stroke="#6b5730" stroke-width="0.9"/><path d="M24 16v40M40 12v40" stroke="#6b5730" stroke-width="0.8" opacity="0.55"/><path d="M13 26q7-4 13 1t12-3" stroke="#7d6a46" stroke-width="1.1" fill="none" opacity="0.8"/><path d="M14 34q8-3 14 2t13-2" stroke="#7d6a46" stroke-width="1.1" fill="none" opacity="0.6"/><path d="M44 30l5-4 4 5-5 4z" fill="#8ca38a" opacity="0.7"/><path d="M26 40l6 6M32 40l-6 6" stroke="#a8412c" stroke-width="2.4" stroke-linecap="round"/><circle cx="47" cy="44" r="3.2" fill="none" stroke="#6b5730" stroke-width="1"/><path d="M47 41.2v6.4M43.8 44h6.4" stroke="#6b5730" stroke-width="0.8"/></svg>',
+  chart_gibbet: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="cg2_p" x1="0" y1="0" x2="0.3" y2="1"><stop offset="0" stop-color="#dcc79a"/><stop offset="0.55" stop-color="#ad9468"/><stop offset="1" stop-color="#6f5e3c"/></linearGradient></defs><ellipse cx="32" cy="57" rx="19" ry="2.6" fill="#000" opacity="0.4"/><path d="M8 12l16 4 16-4 16 4v40l-16-4-16 4-16-4z" fill="url(#cg2_p)" stroke="#4e3f22" stroke-width="0.9"/><path d="M24 16v40M40 12v40" stroke="#4e3f22" stroke-width="0.8" opacity="0.55"/><path d="M13 24q7-4 13 1t12-3" stroke="#5f5030" stroke-width="1.1" fill="none" opacity="0.8"/><path d="M14 33q8-3 14 2t13-2" stroke="#5f5030" stroke-width="1.1" fill="none" opacity="0.6"/><path d="M42 20v10h-8" stroke="#3a2e18" stroke-width="2" fill="none" stroke-linecap="round"/><circle cx="34" cy="34" r="3" fill="none" stroke="#3a2e18" stroke-width="1.4"/><path d="M22 42l6 6M28 42l-6 6" stroke="#a8412c" stroke-width="2.6" stroke-linecap="round"/><path d="M44 40l5 3-5 3z" fill="#c08a3a" opacity="0.85"/></svg>',
+  chart_crown: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="cg3_p" x1="0" y1="0" x2="0.3" y2="1"><stop offset="0" stop-color="#cfe0e8"/><stop offset="0.5" stop-color="#8fa8b8"/><stop offset="1" stop-color="#4e6879"/></linearGradient><radialGradient id="cg3_g" cx="0.5" cy="0.5" r="0.6"><stop offset="0" stop-color="#8fd0e6" stop-opacity="0.4"/><stop offset="1" stop-color="#8fd0e6" stop-opacity="0"/></radialGradient></defs><circle cx="32" cy="32" r="26" fill="url(#cg3_g)"/><ellipse cx="32" cy="57" rx="19" ry="2.6" fill="#000" opacity="0.4"/><path d="M8 12l16 4 16-4 16 4v40l-16-4-16 4-16-4z" fill="url(#cg3_p)" stroke="#2d4250" stroke-width="0.9"/><path d="M24 16v40M40 12v40" stroke="#2d4250" stroke-width="0.8" opacity="0.5"/><path d="M13 24q7-4 13 1t12-3" stroke="#3d566a" stroke-width="1.1" fill="none" opacity="0.75"/><path d="M13 42q8-3 14 2t13-2" stroke="#3d566a" stroke-width="1.1" fill="none" opacity="0.55"/><path d="M22 34l3-8 4 5 3-7 3 7 4-5 3 8z" fill="#dfb03c"/><path d="M22 34h20v3H22z" fill="#a67f22"/><path d="M26 44l5 5M31 44l-5 5" stroke="#a8412c" stroke-width="2.4" stroke-linecap="round"/></svg>',
+  chart_voidmaw: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="cg4_p" x1="0" y1="0" x2="0.3" y2="1"><stop offset="0" stop-color="#b9a4cc"/><stop offset="0.5" stop-color="#6d5586"/><stop offset="1" stop-color="#33224a"/></linearGradient><radialGradient id="cg4_g" cx="0.5" cy="0.62" r="0.55"><stop offset="0" stop-color="#0a0410"/><stop offset="0.6" stop-color="#3a1858" stop-opacity="0.7"/><stop offset="1" stop-color="#8848c8" stop-opacity="0"/></radialGradient></defs><circle cx="32" cy="36" r="26" fill="url(#cg4_g)"/><ellipse cx="32" cy="57" rx="19" ry="2.6" fill="#000" opacity="0.45"/><path d="M8 12l16 4 16-4 16 4v40l-16-4-16 4-16-4z" fill="url(#cg4_p)" stroke="#1e1030" stroke-width="0.9"/><path d="M24 16v40M40 12v40" stroke="#1e1030" stroke-width="0.8" opacity="0.5"/><path d="M13 22q7-4 13 1t12-3" stroke="#2a1840" stroke-width="1.1" fill="none" opacity="0.7"/><ellipse cx="32" cy="38" rx="11" ry="9" fill="#0a0410"/><ellipse cx="32" cy="36" rx="8" ry="6" fill="none" stroke="#a86fd8" stroke-width="1" opacity="0.6"/><ellipse cx="32" cy="34" rx="5" ry="3.6" fill="none" stroke="#a86fd8" stroke-width="0.9" opacity="0.45"/><ellipse cx="32" cy="32" rx="2.6" ry="1.8" fill="none" stroke="#c79fe0" stroke-width="0.8" opacity="0.35"/><circle cx="20" cy="26" r="1.1" fill="#c79fe0" opacity="0.7"/><circle cx="45" cy="46" r="0.9" fill="#c79fe0" opacity="0.6"/></svg>',
   trove_odd: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="tv5_m" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c9a55e"/><stop offset="0.5" stop-color="#8a6a2e"/><stop offset="1" stop-color="#41300f"/></linearGradient><radialGradient id="tv5_f" cx="0.5" cy="0.6" r="0.55"><stop offset="0" stop-color="#fffdf0"/><stop offset="0.35" stop-color="#ffe08a"/><stop offset="0.75" stop-color="#e0762f"/><stop offset="1" stop-color="#8a3a10" stop-opacity="0.35"/></radialGradient><radialGradient id="tv5_h" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#ffd98a" stop-opacity="0.7"/><stop offset="1" stop-color="#ffd98a" stop-opacity="0"/></radialGradient></defs><circle cx="32" cy="34" r="27" fill="url(#tv5_h)"/><ellipse cx="32" cy="59" rx="12" ry="2.6" fill="#000" opacity="0.42"/><path d="M28 4 Q32 1 36 4" stroke="url(#tv5_m)" stroke-width="2.4" fill="none" stroke-linecap="round"/><path d="M32 4 L32 10" stroke="url(#tv5_m)" stroke-width="2.4" stroke-linecap="round"/><path d="M20 12 L44 12 L42 17 L22 17 Z" fill="url(#tv5_m)"/><path d="M22 17 L42 17 L45 46 L19 46 Z" fill="#2a2116" opacity="0.55"/><path d="M24 19 L40 19 L42.5 44 L21.5 44 Z" fill="url(#tv5_f)"/><path d="M32 24 Q27 31 27 37 Q27 42 32 42 Q37 42 37 37 Q37 31 32 24 Z" fill="#fffdf0" opacity="0.95"/><path d="M22 17 L21.5 44 M42 17 L42.5 44 M24 19 L40 19" stroke="url(#tv5_m)" stroke-width="2" fill="none"/><path d="M19 46 L45 46 L46 52 L18 52 Z" fill="url(#tv5_m)"/><path d="M19 46 L45 46 L45.2 47.6 L18.8 47.6 Z" fill="#f0d894" opacity="0.6"/><path d="M24 52 L40 52 L38 58 L26 58 Z" fill="#6d5734"/><circle cx="26" cy="14" r="1" fill="#fff" opacity="0.6"/></svg>',
 };
 
@@ -12125,6 +12166,9 @@ function normalizeState(){
   if(typeof state.sail.damaged!=='boolean') state.sail.damaged=false;
   if(typeof state.sail.voyages!=='number') state.sail.voyages=0;
   if(!state.sail.found||typeof state.sail.found!=='object') state.sail.found={};
+  // Treasure maps already recovered. Keyed by chart item id; each one permanently
+  // charts its island, so this must never be lost or a player loses access.
+  if(!state.sail.charts||typeof state.sail.charts!=='object'||Array.isArray(state.sail.charts)) state.sail.charts={};
   if(state.sail.fast!==1) state.sail.fast=0;
   // A malformed voyage (hand-edited save, interrupted write) is dropped rather
   // than left to divide-by-zero the progress bar.
@@ -12134,6 +12178,7 @@ function normalizeState(){
     if(typeof state.sail.voy.roll!=='number')      state.sail.voy.roll=Math.random();
     if(typeof state.sail.voy.troveRoll!=='number') state.sail.voy.troveRoll=Math.random();
     if(typeof state.sail.voy.fogRoll!=='number')   state.sail.voy.fogRoll=Math.random();
+    if(typeof state.sail.voy.chartRoll!=='number') state.sail.voy.chartRoll=Math.random();
   }
   if(state.sail.last!==null&&typeof state.sail.last!=='object') state.sail.last=null;
   if(typeof state.coins!=='number') state.coins=0;
@@ -25779,6 +25824,27 @@ const SAIL_ISLES=[
    f:'Reached only by being lost. The cartographers have a name for islands like this and it is not a polite one.'}
 ];
 
+/* Treasure maps (0.9.62). Four islands are sealed behind a map rather than a
+   level: each one drops from exactly one other island at a low rate, so opening
+   the far water is something you sail for, not something you grind XP for. The
+   source is always an island you can already reach at that point in the ladder.
+   `isle`/`from` are indices into SAIL_ISLES — kept in one table so the island
+   data and the drop source can never drift apart. */
+const SAIL_CHARTS={
+  chart_gravekeel:{isle:11, from:6,  chance:0.030},
+  chart_gibbet:   {isle:17, from:10, chance:0.025},
+  chart_crown:    {isle:22, from:13, chance:0.020},
+  chart_voidmaw:  {isle:23, from:19, chance:0.015}
+};
+/* Reverse lookups, built once so render paths never scan the table. */
+const SAIL_CHART_BY_ISLE={}, SAIL_CHART_BY_SRC={};
+for(const _cid in SAIL_CHARTS){
+  SAIL_CHART_BY_ISLE[SAIL_CHARTS[_cid].isle]=_cid;
+  SAIL_CHART_BY_SRC[SAIL_CHARTS[_cid].from]=_cid;
+}
+function sailHasChart(cid){ return !!(state.sail&&state.sail.charts&&state.sail.charts[cid]); }
+function sailChartFor(i){ return SAIL_CHART_BY_ISLE[i]||null; }
+
 const SAIL_GRADES=[
   {n:'Triumphant', c:'sl-r1', mult:1.40, p:'Clean water the whole crossing. The hold came back over-full, and the crew found something they were not looking for.'},
   {n:'Successful', c:'sl-r2', mult:1.00, p:'An uneventful run, which at this distance counts as a good one.'},
@@ -25803,6 +25869,8 @@ function sailDurMs(isle){ return Math.max(1000, Math.round(isle.m*60000/sailSpee
 function sailReach(i){
   const isle=sailIsle(i), h=sailHull();
   if(isle.hid && !(state.sail.found&&state.sail.found[i])) return 'hidden';
+  const cid=sailChartFor(i);
+  if(cid && !sailHasChart(cid)) return 'chart';
   if(sailLvl()<isle.lv) return 'lvl';
   if(h.stores<isle.st)  return 'stores';
   return 'ok';
@@ -25831,13 +25899,15 @@ function sailLaunch(i){
   const why=sailReach(i);
   if(why!=='ok'){
     toast(why==='lvl' ? 'Sailing level too low for that crossing.'
-        : why==='stores' ? 'Your ship cannot carry stores that far. Build a bigger hull.'
+        : why==='stores' ? 'Your ship cannot sail that far. Build a bigger hull.'
+        : why==='chart' ? ('Sealed — you need the '+ITEMS[sailChartFor(i)].name+' first.')
         : 'That island is not on your chart.');
     return;
   }
   if(state.sail.damaged){ toast('The ship is damaged. Repair her at the yard first.'); return; }
   const isle=sailIsle(i), dur=sailDurMs(isle);
-  state.sail.voy={i:i, endsAt:Date.now()+dur, dur:dur, roll:Math.random(), troveRoll:Math.random(), fogRoll:Math.random()};
+  state.sail.voy={i:i, endsAt:Date.now()+dur, dur:dur, roll:Math.random(),
+                  troveRoll:Math.random(), fogRoll:Math.random(), chartRoll:Math.random()};
   state.sail.last=null;
   saveGame(); renderSail();
   toast('Set sail for '+isle.n+'.');
@@ -25894,18 +25964,41 @@ function sailCheckArrival(){
 
   /* Sailing xp is its own pool — addSkillXp() writes state.xp[skill] and would
      need Sailing registered in SKILLS, which is exactly what we are avoiding. */
+  /* Treasure map roll. Any grade can turn one up — a Wrecked crew still saw the
+     water — but it only fires on the one island that holds that map, and only
+     while it is still unfound. Uses its own stored roll so it cannot be rerolled
+     by reloading, same as the outcome. */
+  let chartFound=null;
+  const srcChart=SAIL_CHART_BY_SRC[landed];
+  if(srcChart && !sailHasChart(srcChart) && v.chartRoll < SAIL_CHARTS[srcChart].chance){
+    if(!state.sail.charts) state.sail.charts={};
+    state.sail.charts[srcChart]=1;
+    grantItem(srcChart,1); markDiscovered(srcChart);
+    chartFound=srcChart;
+  }
+
   const xp=Math.round(dest.m*(6+dest.lv*0.9)*grade.mult);
   state.sail.xp=Math.min(XP_CAP,(state.sail.xp||0)+xp);
 
   if(g>=2){ state.sail.damaged=(g===3); }
   state.sail.voyages=(state.sail.voyages||0)+1;
 
-  state.sail.last={g:g, i:landed, from:v.i, fogged:fogged, got:got, trove:trove, xp:xp, capped:capped, units:units};
+  state.sail.last={g:g, i:landed, from:v.i, fogged:fogged, got:got, trove:trove, chart:chartFound,
+                   xp:xp, capped:capped, units:units};
   state.sail.voy=null;
   saveGame();
 
   logNotification('unlock', iconHTML('sailing'), grade.n+' return from '+dest.n+' · +'+xp+' Sailing XP');
   if(!sailMode) toast('Your ship has returned from '+dest.n+' — '+grade.n+'.');
+
+  /* Logged last so it sits on top of the return line, and always toasted even
+     with the panel open — unsealing an island is the rarest thing that happens
+     out there and should never scroll past unnoticed. */
+  if(chartFound){
+    const opened=sailIsle(SAIL_CHARTS[chartFound].isle);
+    logNotification('rare', iconHTML(chartFound), 'Found '+ITEMS[chartFound].name+' — '+opened.n+' is now on your chart!');
+    toast('Treasure map recovered — '+opened.n+' is now open to you.');
+  }
   return true;
 }
 
@@ -26134,9 +26227,23 @@ function sailDifficulty(i){
 function sailPct(oneIn){ const p=100/oneIn; return (p>=10?Math.round(p):p.toFixed(1))+'%'; }
 function sailWhyText(i){
   const isle=sailIsle(i), h=sailHull(), why=sailReach(i);
+  if(why==='chart'){
+    const cid=sailChartFor(i), src=sailIsle(SAIL_CHARTS[cid].from);
+    return 'Sealed. You need the <b>'+ITEMS[cid].name+'</b> — it turns up on voyages to <b>'
+      +src.n+'</b>, roughly '+(SAIL_CHARTS[cid].chance*100).toFixed(1)+'% of the time.';
+  }
   if(why==='lvl')    return 'Needs Sailing '+isle.lv+' — you are '+sailLvl()+'.';
   if(why==='stores') return 'Needs Range '+isle.st+' — your ship has '+h.stores+'. Build a bigger hull.';
   return '';
+}
+/* If this island holds a treasure map you have not found yet, say so — otherwise
+   there is no way for a player to know where to go looking. */
+function sailChartHint(i){
+  const cid=SAIL_CHART_BY_SRC[i];
+  if(!cid || sailHasChart(cid)) return '';
+  const opened=sailIsle(SAIL_CHARTS[cid].isle);
+  return 'A <b>'+ITEMS[cid].name+'</b> can be recovered here — about '
+    +(SAIL_CHARTS[cid].chance*100).toFixed(1)+'% per voyage. It opens <b>'+opened.n+'</b>.';
 }
 
 /* ── island hover card ── */
@@ -26144,18 +26251,23 @@ function sailTipShow(i, ev){
   let tip=$('slTip');
   if(!tip){ tip=document.createElement('div'); tip.id='slTip'; tip.className='sl-tip'; document.body.appendChild(tip); }
   const isle=sailIsle(i), o=sailOdds(i), d=sailDifficulty(i), why=sailWhyText(i);
+  const h=sailHull(), hint=sailChartHint(i);
   let html='<h6>'+isle.n+'</h6>'
-    +'<div class="row"><span>'+(isle.hid?'Unlogged water':SAIL_BANDS[isle.b].n)+'</span><b>Sailing '+isle.lv+'</b></div>'
+    +'<div class="band">'+(isle.hid?'Unlogged water':SAIL_BANDS[isle.b].n)+' · Sailing '+isle.lv+'</div>'
     +'<div class="row"><span>Time at sea</span><b>'+sailFmtMins(isle.m)+'</b></div>'
-    +'<div class="row"><span>Range needed</span><b>'+isle.st+'</b></div>'
-    +'<div class="row"><span>Treasure</span><b>'+sailPct(isle.find)+'</b></div>'
+    +'<div class="row"><span>Range needed</span><b'+(h.stores<isle.st?' style="color:#e0917c"':'')+'>'
+      +isle.st+' <span style="color:#5f8496">(you '+h.stores+')</span></b></div>'
+    +'<div class="row"><span>Treasure chance</span><b>'+sailPct(isle.find)+'</b></div>'
     +'<div class="row"><span>'+isle.w+'</span><b style="color:'+d.col+'">'+d.n+'</b></div>'
     +'<div class="mini">'
     +'<i style="background:#dfb03c;width:'+o[0].toFixed(1)+'%"></i>'
     +'<i style="background:#7da33f;width:'+o[1].toFixed(1)+'%"></i>'
     +'<i style="background:#c9822e;width:'+o[2].toFixed(1)+'%"></i>'
-    +'<i style="background:#a8412c;width:'+o[3].toFixed(1)+'%"></i></div>';
-  if(why) html+='<div class="why">'+why+'</div>';
+    +'<i style="background:#a8412c;width:'+o[3].toFixed(1)+'%"></i></div>'
+    +'<div class="minikey"><span>'+Math.round(o[0]+o[1])+'% goes well</span>'
+    +'<span>'+Math.round(o[3])+'% wrecked</span></div>';
+  if(why)  html+='<div class="why">'+why+'</div>';
+  if(hint) html+='<div class="hint">'+hint+'</div>';
   tip.innerHTML=html;
   tip.classList.add('show');
   sailTipMove(ev);
@@ -26240,7 +26352,7 @@ function renderSail(){
     const why=sailReach(ix);
     if(why==='hidden') return;
     const cls='sl-mk'+(ix===sailSel?' on':'')+(why!=='ok'?' lock':'')+(is.hid?' hid':'')
-      +(s.voy&&s.voy.i===ix?' atsea':'');
+      +(why==='chart'?' needchart':'')+(s.voy&&s.voy.i===ix?' atsea':'');
     html+='<button class="'+cls+'" data-slisle="'+ix+'"><span class="d"></span><span class="n">'+is.n+'</span></button>';
   });
   html+='</div></div>';
@@ -26280,6 +26392,8 @@ function renderSail(){
       for(const id in L.got) html+='<span class="sl-chip gold">'+iconHTML(id)+(ITEMS[id]?ITEMS[id].name:id)+' ×'+L.got[id]+'</span>';
       html+='<span class="sl-chip good">+'+L.xp+' Sailing xp</span>';
       if(L.trove) html+='<span class="sl-chip vio">'+iconHTML(L.trove)+ITEMS[L.trove].name+'</span>';
+      if(L.chart) html+='<span class="sl-chip gold">'+iconHTML(L.chart)+ITEMS[L.chart].name+' — '
+        +sailIsle(SAIL_CHARTS[L.chart].isle).n+' unsealed!</span>';
       if(L.capped) html+='<span class="sl-chip bad">cargo full — the rest was left behind</span>';
       if(L.g===3) html+='<span class="sl-chip bad">ship needs repair</span>';
       html+='</div></div>';
@@ -26291,14 +26405,23 @@ function renderSail(){
       +'<div class="sl-metarow">'
       +'<span class="sl-chip mut">'+(isle.hid?'Unlogged':SAIL_BANDS[isle.b].n)+'</span>'
       +'<span class="sl-chip mut">Sailing '+isle.lv+'</span>'
-      +'<span class="sl-pill '+diff.c+'"><em style="background:'+diff.col+'"></em>'+diff.n+'</span>'
+      +'<span class="sl-pill '+diff.c+'" data-tip="How likely she is to come home wrecked. '+diff.n
+      +' — about '+Math.round(odds[3])+'% of voyages here end wrecked. A stronger hull improves this.">'
+      +'<em style="background:'+diff.col+'"></em>'+diff.n+'</span>'
+      +(why==='chart'?'<span class="sl-chip vio">'+iconHTML(sailChartFor(sailSel))+'sealed</span>':'')
       +'</div></div></div>'
       +'<p class="sl-flavor">'+isle.f+'</p>'
+      +(sailChartHint(sailSel)?'<div class="sl-lab">Treasure map here</div>'
+        +'<div class="sl-tile" style="border-color:#5a4526;background:#1a1409">'
+        +'<div class="v sm" style="color:#e8d7b0">'+sailChartHint(sailSel)+'</div></div>':'')
       +'<div class="sl-lab">The crossing</div><div class="sl-tiles">'
-      +'<div class="sl-tile"><div class="k">Time at sea</div><div class="v">'+sailFmtMins(isle.m)+'</div></div>'
-      +'<div class="sl-tile'+(h.stores<isle.st?' bad':'')+'"><div class="k">Range needed</div><div class="v">'+isle.st+'</div>'
+      +'<div class="sl-tile" data-tip="How long she is away. The voyage runs on real time and finishes even if you close the game.">'
+      +'<div class="k">Time at sea</div><div class="v">'+sailFmtMins(isle.m)+'</div></div>'
+      +'<div class="sl-tile'+(h.stores<isle.st?' bad':'')+'" data-tip="Range is how far your ship can sail. This island needs '+isle.st+' and your '+h.n+' has '+h.stores+'. Build a bigger hull in the Shipyard to reach further.">'
+      +'<div class="k">Range needed</div><div class="v">'+isle.st+'</div>'
       +'<div class="sub">you have '+h.stores+'</div></div>'
-      +'<div class="sl-tile"><div class="k">Treasure</div><div class="v">'+sailPct(isle.find)+'</div>'
+      +'<div class="sl-tile" data-tip="Chance per voyage of bringing back a treasure from this archipelago. Triumphant returns double it.">'
+      +'<div class="k">Treasure</div><div class="v">'+sailPct(isle.find)+'</div>'
       +'<div class="sub">per voyage</div></div>'
       +'</div>'
       +'<div class="sl-lab">Conditions</div>'
@@ -26318,7 +26441,9 @@ function renderSail(){
 
     if(!s.voy){
       const blocked = s.damaged?'Repair her first'
-        : !reachOk?(why==='lvl'?('Needs Sailing '+isle.lv):('Needs Range '+isle.st))
+        : !reachOk?(why==='chart'?'Sealed — find the map'
+                  : why==='lvl'?('Needs Sailing '+isle.lv)
+                  : ('Needs Range '+isle.st))
         : null;
       html+='<div style="margin-top:11px"><button class="sl-btn go" id="slGo"'+(blocked?' disabled':'')+'>'
         +(blocked?blocked:'Set sail · '+sailFmtMins(isle.m))+'</button>'
