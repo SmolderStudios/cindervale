@@ -3204,14 +3204,21 @@ body:not(.is-demo) .demo-only{display:none !important}
   font-family:'Cinzel',serif;color:#a9c4d0;transition:color .14s}
 .sl-mk:hover{color:#fbeed0;z-index:7}
 .sl-mk:focus-visible{outline:2px solid var(--trim);outline-offset:3px;border-radius:3px}
-.sl-mk .d{width:9px;height:9px;border-radius:50%;background:#2c4d5f;border:1.5px solid #6d9ab2;
+/* --mkc is set inline per island from its archipelago colour. Using a custom
+   property rather than an inline background means the selected/hover states can
+   still restyle the dot — an inline background would beat every stylesheet rule. */
+.sl-mk{--mkc:#6d9ab2}
+.sl-mk .d{width:9px;height:9px;border-radius:50%;background:var(--mkc);
+  border:1.5px solid var(--mkc);
   transition:transform .14s,background .14s,box-shadow .14s}
-.sl-mk:hover .d{transform:scale(1.35);background:var(--trim)}
+/* Hollow = charted but never landed on, so the map doubles as a progress sheet. */
+.sl-mk.unseen .d{background:transparent}
+.sl-mk:hover .d{transform:scale(1.35)}
 .sl-mk.on{color:#fbeed0;z-index:6}
-.sl-mk.on .d{background:var(--trim);border-color:#f0dba8;transform:scale(1.4);
-  box-shadow:0 0 0 4px rgba(199,155,78,.18),0 0 12px rgba(199,155,78,.5)}
-.sl-mk.lock{opacity:.4}
-.sl-mk.lock .d{background:#20323c;border-color:#3d5866}
+.sl-mk.on .d{transform:scale(1.45);
+  box-shadow:0 0 0 4px rgba(255,255,255,.14),0 0 0 5px var(--mkc),0 0 13px var(--mkc)}
+.sl-mk.lock{opacity:.42}
+.sl-mk.lock .d{filter:grayscale(.65) brightness(.8)}
 .sl-mk .n{font-size:9.5px;white-space:nowrap;text-shadow:0 1px 4px #030608,0 0 9px #030608;
   transition:opacity .15s}
 .sl-mk.hid .d{background:#3a2140;border-color:#8c5fa8;border-style:dashed}
@@ -3407,7 +3414,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.66</div>
+  <div class="mm-ver">v0.9.67</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -12280,6 +12287,23 @@ function normalizeState(){
   // Treasure maps already recovered. Keyed by chart item id; each one permanently
   // charts its island, so this must never be lost or a player loses access.
   if(!state.sail.charts||typeof state.sail.charts!=='object'||Array.isArray(state.sail.charts)) state.sail.charts={};
+  /* Islands actually landed on (0.9.67) — drives filled vs hollow chart markers.
+     Existing captains have no record, and showing a veteran an all-hollow map would
+     be wrong, so backfill once from everywhere they can currently reach: level,
+     Range and any chart they hold. Approximate but far closer than empty. */
+  if(!state.sail.seen||typeof state.sail.seen!=='object'||Array.isArray(state.sail.seen)) state.sail.seen={};
+  if(!state.sail.seenBackfill && typeof SAIL_ISLES!=='undefined'){
+    if((state.sail.voyages||0)>0){
+      const _lv=levelFromXp(state.sail.xp||0), _h=SAIL_HULLS[state.sail.hull];
+      SAIL_ISLES.forEach((isle,ix)=>{
+        if(isle.hid) return;
+        const _cid=SAIL_CHART_BY_ISLE[ix];
+        if(_cid && !(state.sail.charts&&state.sail.charts[_cid])) return;
+        if(_lv>=isle.lv && _h.stores>=isle.st) state.sail.seen[ix]=1;
+      });
+    }
+    state.sail.seenBackfill=1;
+  }
   // Fitted parts + crew roster (0.9.65). Clamped to the real tables so a hand-edited
   // or future-version save can never index off the end.
   if(typeof state.sail.cannon!=='number'||!(state.sail.cannon>=0)) state.sail.cannon=0;
@@ -25984,11 +26008,13 @@ function sailMatDrops(isle){
   return out;
 }
 
+/* `col` (0.9.67) tints the chart marker for every island in the band, so distance
+   reads at a glance instead of the band labels carrying it alone. */
 const SAIL_BANDS=[
-  {n:'The Shallows',    x:0.175, trove:'trove_shallows'},
-  {n:'The Wracks',      x:0.395, trove:'trove_wracks'},
-  {n:'The Mistlands',   x:0.625, trove:'trove_mist'},
-  {n:'The Far Reaches', x:0.855, trove:'trove_far'}
+  {n:'The Shallows',    x:0.175, trove:'trove_shallows', col:'#7fc9a8'},
+  {n:'The Wracks',      x:0.395, trove:'trove_wracks',   col:'#e0c060'},
+  {n:'The Mistlands',   x:0.625, trove:'trove_mist',     col:'#8fa8e0'},
+  {n:'The Far Reaches', x:0.855, trove:'trove_far',      col:'#c98fd0'}
 ];
 
 /* Loot is two-tiered (0.9.66), replacing the old `h:[a,b,c]` where all three were
@@ -26415,6 +26441,8 @@ function sailCheckArrival(){
 
   if(g>=2){ state.sail.damaged=(g===3); }
   state.sail.voyages=(state.sail.voyages||0)+1;
+  if(!state.sail.seen) state.sail.seen={};
+  state.sail.seen[landed]=1;   // fills the chart marker in — landed, not merely charted
 
   state.sail.last={g:g, i:landed, from:v.i, fogged:fogged, got:got, trove:trove, chart:chartFound,
                    pet:petFound, cape:capeFound, xp:xp, gold:gold, capped:capped, units:units};
@@ -26511,6 +26539,7 @@ function sailBuild(t){
    transform the canvas uses, in sailPlaceMarkers. */
 let sailView={z:1, ox:0, oy:0};
 let sailTab='voyage';
+let _slShipT=0;
 const SAIL_ZMIN=1, SAIL_ZMAX=3.4, SAIL_LABEL_Z=1.5;
 
 /* The root carries a CSS `zoom`, so client coords and getBoundingClientRect are
@@ -26607,10 +26636,16 @@ function sailDrawChart(){
   ctx.save();
   ctx.translate(v.ox, v.oy); ctx.scale(z, z);
 
-  // continental shelf glow off the harbour
-  const sg=ctx.createRadialGradient(0,H*.5,10,0,H*.5,W*.42);
-  sg.addColorStop(0,'rgba(30,72,94,.5)'); sg.addColorStop(1,'rgba(30,72,94,0)');
-  ctx.fillStyle=sg; ctx.fillRect(0,0,W,H);
+  /* Bathymetry (0.9.67) — four filled bands, pale on the shelf by the harbour and
+     darkening outward, replacing the 78 hand-wobbled contour rings that used to ring
+     every island. "Further is deeper is harder" becomes something you feel, and it is
+     four gradients per repaint instead of 78 paths, which matters while panning. */
+  [[0.00,0.30,'rgba(46,104,132,0.40)'],[0.28,0.55,'rgba(34,80,104,0.34)'],
+   [0.52,0.78,'rgba(24,58,78,0.30)'],[0.74,1.06,'rgba(14,36,52,0.32)']].forEach(s=>{
+    const gr=ctx.createLinearGradient(s[0]*W,0,s[1]*W,0);
+    gr.addColorStop(0,s[2]); gr.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=gr; ctx.fillRect(s[0]*W,0,(s[1]-s[0])*W,H);
+  });
 
   ctx.strokeStyle='rgba(150,122,66,.15)'; ctx.lineWidth=1/z;
   for(let i=1;i<16;i++){ ctx.beginPath(); ctx.moveTo(i*W/16,0); ctx.lineTo(i*W/16,H); ctx.stroke(); }
@@ -26626,21 +26661,16 @@ function sailDrawChart(){
     ctx.fillStyle='rgba(199,155,78,.5)'; ctx.beginPath(); ctx.arc(n[0],n[1],2.6/z,0,Math.PI*2); ctx.fill();
   });
 
+  // One soft shoal halo per island, tinted to its archipelago.
   SAIL_ISLES.forEach((is,ix)=>{
     if(is.hid && !(state.sail.found&&state.sail.found[ix])) return;
-    const cx=is.x*W, cy=is.y*H;
-    for(let r=1;r<=3;r++){
-      ctx.beginPath();
-      const rad=(7+r*9)/z*Math.min(1.6,z);
-      for(let a=0;a<=Math.PI*2+.01;a+=Math.PI/14){
-        const wob=1+Math.sin(a*3+is.x*17+r)*0.13+Math.cos(a*5+is.y*11)*0.08;
-        const px=cx+Math.cos(a)*rad*wob, py=cy+Math.sin(a)*rad*wob*.72;
-        if(a===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
-      }
-      ctx.closePath();
-      ctx.strokeStyle='rgba(122,170,196,'+(0.30-r*0.07)+')'; ctx.lineWidth=1/z; ctx.stroke();
-      if(r===1){ ctx.fillStyle='rgba(26,58,76,.6)'; ctx.fill(); }
-    }
+    const cx=is.x*W, cy=is.y*H, rr=22/z*Math.min(1.5,z);
+    const hg=ctx.createRadialGradient(cx,cy,1,cx,cy,rr);
+    hg.addColorStop(0,'rgba(150,200,220,0.28)'); hg.addColorStop(1,'rgba(150,200,220,0)');
+    ctx.fillStyle=hg;
+    ctx.beginPath(); ctx.ellipse(cx,cy,rr,rr*0.74,0,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='rgba(140,190,214,0.24)'; ctx.lineWidth=1/z;
+    ctx.beginPath(); ctx.ellipse(cx,cy,rr*0.55,rr*0.42,0,0,Math.PI*2); ctx.stroke();
   });
 
   ctx.fillStyle='rgba(122,170,196,.24)';
@@ -26649,6 +26679,38 @@ function sailDrawChart(){
     const px=((i*97)%100)/100*W, py=((i*61)%100)/100*H;
     const near=SAIL_ISLES.some(is=>Math.abs(is.x*W-px)<58&&Math.abs(is.y*H-py)<44);
     if(!near) ctx.fillText(String(7+(i*13)%90), px, py);
+  }
+
+  /* The voyage, on the chart (0.9.67). Previously a voyage in flight existed only as
+     a pulsing marker and a clock in the side panel — the chart, which IS the voyage,
+     showed nothing. Dashed route out of Emberwatch, a wake as far as she has got, and
+     the hull drawn at her real progress and rotated along the bearing. Recomputed on
+     each repaint, so it advances whenever the panel re-renders; no rAF loop. */
+  const _v=state.sail.voy;
+  if(_v){
+    const d=sailIsle(_v.i);
+    const x0=0.034*W, y0=0.5*H, x1=d.x*W, y1=d.y*H;
+    const prog=Math.max(0, Math.min(1, 1-((_v.endsAt-Date.now())/Math.max(1,_v.dur))));
+    ctx.save();
+    ctx.setLineDash([7/z,6/z]); ctx.lineWidth=1.7/z;
+    ctx.strokeStyle='rgba(224,118,47,0.50)';
+    ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(x1,y1); ctx.stroke();
+    ctx.restore();
+    const mx=x0+(x1-x0)*prog, my=y0+(y1-y0)*prog;
+    const wg=ctx.createLinearGradient(x0,y0,mx,my);
+    wg.addColorStop(0,'rgba(224,118,47,0)'); wg.addColorStop(1,'rgba(255,190,130,0.42)');
+    ctx.strokeStyle=wg; ctx.lineWidth=3.4/z;
+    ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(mx,my); ctx.stroke();
+    const ang=Math.atan2(y1-y0,x1-x0), sc=9/z*Math.min(1.4,z);
+    ctx.save(); ctx.translate(mx,my); ctx.rotate(ang);
+    ctx.beginPath();
+    ctx.moveTo(sc*1.5,0); ctx.lineTo(-sc*0.8,sc*0.72); ctx.lineTo(-sc*0.35,0); ctx.lineTo(-sc*0.8,-sc*0.72);
+    ctx.closePath();
+    ctx.fillStyle='#ffd9a8'; ctx.fill();
+    ctx.strokeStyle='rgba(90,44,12,0.9)'; ctx.lineWidth=0.9/z; ctx.stroke();
+    ctx.restore();
+    ctx.beginPath(); ctx.arc(mx,my,sc*2.1,0,Math.PI*2);
+    ctx.strokeStyle='rgba(255,190,130,0.28)'; ctx.lineWidth=1.1/z; ctx.stroke();
   }
   ctx.restore();
 
@@ -26784,6 +26846,11 @@ function sailTickUI(){
   if(bar) bar.style.width=Math.min(100,Math.max(0,(1-left/s.voy.dur)*100))+'%';
   const eta=$('slEta');
   if(eta) eta.textContent='back at '+new Date(s.voy.endsAt).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+  /* Nudge the chart every ~2s so the ship visibly creeps along her route. Cheap now
+     that bathymetry is four gradients rather than 78 contour paths, and far lighter
+     than a full renderSail — which would rebuild the marker DOM every tick. */
+  _slShipT=(_slShipT||0)+1;
+  if(_slShipT%8===0) sailDrawChart();
 }
 
 function enterSailing(){
@@ -26835,15 +26902,22 @@ function renderSail(){
     +'</div></div>'
     +'<div class="sl-stage" id="slStage"><canvas id="slCanvas"></canvas>';
 
-  SAIL_BANDS.forEach(b=>{ html+='<div class="sl-band" data-slband="'+b.x+'">'+b.n+'</div>'; });
+  /* Band labels wear their own colour, which makes the marker legend implicit —
+     no extra chrome needed to explain what the dot colours mean. */
+  SAIL_BANDS.forEach(b=>{
+    html+='<div class="sl-band" data-slband="'+b.x+'" style="color:'+b.col+';opacity:.82">'+b.n+'</div>';
+  });
   html+='<div class="sl-port">'+iconHTML('ui_anchor')+'<span>Emberwatch</span></div>';
 
   SAIL_ISLES.forEach((is,ix)=>{
     const why=sailReach(ix);
     if(why==='hidden') return;
+    const seen=!!(s.seen&&s.seen[ix]);
     const cls='sl-mk'+(ix===sailSel?' on':'')+(why!=='ok'?' lock':'')+(is.hid?' hid':'')
-      +(why==='chart'?' needchart':'')+(s.voy&&s.voy.i===ix?' atsea':'');
-    html+='<button class="'+cls+'" data-slisle="'+ix+'"><span class="d"></span><span class="n">'+is.n+'</span></button>';
+      +(why==='chart'?' needchart':'')+(s.voy&&s.voy.i===ix?' atsea':'')+(seen?'':' unseen');
+    const col=is.hid?'#b98fd0':(SAIL_BANDS[is.b]?SAIL_BANDS[is.b].col:'#6d9ab2');
+    html+='<button class="'+cls+'" data-slisle="'+ix+'" style="--mkc:'+col+'">'
+      +'<span class="d"></span><span class="n">'+is.n+'</span></button>';
   });
   html+='</div></div>';
 
