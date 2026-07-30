@@ -3407,7 +3407,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.63</div>
+  <div class="mm-ver">v0.9.64</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -4997,6 +4997,14 @@ const ITEMS={
   chart_gibbet:   {name:"Hangman's Chart",     icon:'🗺️',sell:22000, rare:true, desc:"Drawn on the back of a warrant, in the hand of the man it was issued for. Corsair's Gibbet is circled twice."},
   chart_crown:    {name:"Drowned King's Chart",icon:'🗺️',sell:68000, rare:true, desc:"Vellum that has been underwater for centuries and has not softened. It shows a city, and the city has streets."},
   chart_voidmaw:  {name:'Chart of the Long Descent',icon:'🗺️',sell:145000,rare:true, desc:"Not a map of a place — a map of a depth. The soundings run past the edge of the parchment and keep going in the margin."},
+  /* ─── Shipwright materials (0.9.64) — the sailing equivalent of beast_sinew /
+     shade_ember / voidheart, gating the top four hulls. Only obtainable at sea,
+     with the same deliberate cross-band scaling: a material is rare in the water
+     where it first appears and common further out, so the far islands cannot be
+     skipped by farming a safe one. ─── */
+  salt_iron:   {name:'Salt-Forged Iron', icon:'⚙️',sell:1400, rare:true, desc:"Ship-iron that has spent forty years in seawater and come out harder than it went in. No forge on land can reproduce it, and every shipwright in Emberwatch has tried."},
+  krakenbone:  {name:'Krakenbone',       icon:'🦴',sell:7200, rare:true, desc:"Light as ash, stiff as starsteel, and it does not rot. Hulls ribbed with it have come home from water that took everything else."},
+  tidewrought: {name:'Tidewrought Heart',icon:'💠',sell:38000,rare:true, desc:"A knot of stone and metal the deep water grew around something it swallowed. Warm on one side. The yard will not say which hull it goes into until it is bolted down."},
 };
 
 /* ════════ COMBAT GEAR STATS ════════════════════════════════════════════════════
@@ -8014,6 +8022,10 @@ const ICONS = {
   trove_wracks: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="tv2_b" x1="0.1" y1="0" x2="0.9" y2="1"><stop offset="0" stop-color="#f0d894"/><stop offset="0.35" stop-color="#c79b4e"/><stop offset="0.75" stop-color="#7d5f2a"/><stop offset="1" stop-color="#3e2f14"/></linearGradient><radialGradient id="tv2_g" cx="0.5" cy="0.45" r="0.6"><stop offset="0" stop-color="#f0d894" stop-opacity="0.5"/><stop offset="1" stop-color="#f0d894" stop-opacity="0"/></radialGradient></defs><ellipse cx="32" cy="58" rx="17" ry="3" fill="#000" opacity="0.4"/><circle cx="32" cy="32" r="24" fill="url(#tv2_g)"/><path d="M32 8 Q30 8 30 11 L30 14 Q18 19 15 34 Q13 44 10 48 L54 48 Q51 44 49 34 Q46 19 34 14 L34 11 Q34 8 32 8 Z" fill="url(#tv2_b)" stroke="#3e2f14" stroke-width="0.8"/><path d="M21 24 Q17 33 16 45" stroke="#fbeaba" stroke-width="1.6" fill="none" opacity="0.55" stroke-linecap="round"/><path d="M10 48 L54 48 L54 52 L10 52 Z" fill="#8d6a2e" stroke="#3e2f14" stroke-width="0.7"/><path d="M10 48 L54 48 L54 49.6 L10 49.6 Z" fill="#f0d894" opacity="0.65"/><path d="M29 52 L35 52 L34 58 Q32 60 30 58 Z" fill="#6d5734"/><ellipse cx="32" cy="58" rx="3.4" ry="2.6" fill="#c79b4e"/><path d="M24 30 Q28 26 32 30" stroke="#3e2f14" stroke-width="0.7" fill="none" opacity="0.45"/><circle cx="40" cy="22" r="1.4" fill="#fff" opacity="0.55"/></svg>',
   trove_mist: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="tv3_c" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4d7c92"/><stop offset="0.5" stop-color="#2c505f"/><stop offset="1" stop-color="#132a35"/></linearGradient><linearGradient id="tv3_p" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f2e6c6"/><stop offset="0.6" stop-color="#d5c39a"/><stop offset="1" stop-color="#a08d66"/></linearGradient><radialGradient id="tv3_g" cx="0.5" cy="0.4" r="0.6"><stop offset="0" stop-color="#8fd0e6" stop-opacity="0.42"/><stop offset="1" stop-color="#8fd0e6" stop-opacity="0"/></radialGradient></defs><ellipse cx="32" cy="57" rx="20" ry="3" fill="#000" opacity="0.4"/><circle cx="32" cy="32" r="24" fill="url(#tv3_g)"/><path d="M8 14 Q20 10 31 15 L31 52 Q20 47 8 51 Z" fill="url(#tv3_c)"/><path d="M56 14 Q44 10 33 15 L33 52 Q44 47 56 51 Z" fill="url(#tv3_c)"/><path d="M11 17 Q21 14 30 18 L30 49 Q21 45 11 48 Z" fill="url(#tv3_p)"/><path d="M53 17 Q43 14 34 18 L34 49 Q43 45 53 48 Z" fill="url(#tv3_p)"/><path d="M15 24 L26 22 M15 29 L26 27 M15 34 L24 32.5 M15 39 L26 37" stroke="#7d6a46" stroke-width="1.1" opacity="0.65" stroke-linecap="round"/><path d="M38 23 L49 25 M38 28 L49 30 M40 33 L49 35 M38 38 L49 40" stroke="#7d6a46" stroke-width="1.1" opacity="0.65" stroke-linecap="round"/><path d="M31 15 L31 52 L33 52 L33 15 Z" fill="#132a35"/><circle cx="41" cy="31" r="5" fill="none" stroke="#8fd0e6" stroke-width="1.2" opacity="0.75"/><path d="M41 26.5 L42.6 30.4 L41 34.6 L39.4 30.4 Z" fill="#8fd0e6" opacity="0.85"/><path d="M6 44 Q16 40 26 44" stroke="#bcd8e4" stroke-width="1.4" fill="none" opacity="0.3"/></svg>',
   trove_far: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="tv4_s" x1="0.2" y1="0" x2="0.8" y2="1"><stop offset="0" stop-color="#8fe0d0"/><stop offset="0.3" stop-color="#3d9a92"/><stop offset="0.65" stop-color="#1f4f5c"/><stop offset="1" stop-color="#0c2029"/></linearGradient><radialGradient id="tv4_g" cx="0.45" cy="0.35" r="0.65"><stop offset="0" stop-color="#7fe8d4" stop-opacity="0.5"/><stop offset="1" stop-color="#7fe8d4" stop-opacity="0"/></radialGradient></defs><ellipse cx="32" cy="58" rx="15" ry="3" fill="#000" opacity="0.4"/><circle cx="32" cy="30" r="25" fill="url(#tv4_g)"/><path d="M32 4 Q52 14 52 34 Q52 52 32 60 Q12 52 12 34 Q12 14 32 4 Z" fill="url(#tv4_s)" stroke="#0c2029" stroke-width="0.9"/><path d="M32 4 Q44 12 46 30 Q47 46 32 58 Q36 44 36 30 Q36 15 32 4 Z" fill="#0c2029" opacity="0.3"/><path d="M22 16 Q17 26 17 36 Q17 46 24 54" stroke="#a8f0e0" stroke-width="1.6" fill="none" opacity="0.5" stroke-linecap="round"/><path d="M32 12 Q32 30 32 52" stroke="#0c2029" stroke-width="1" opacity="0.45"/><path d="M32 20 Q24 26 22 36 M32 20 Q40 26 42 36 M32 34 Q25 39 23 47 M32 34 Q39 39 41 47" stroke="#0c2029" stroke-width="0.8" fill="none" opacity="0.4"/><ellipse cx="26" cy="20" rx="5" ry="7" fill="#fff" opacity="0.22"/><circle cx="44" cy="20" r="1.5" fill="#c9fff2" opacity="0.7"/><circle cx="20" cy="42" r="1.1" fill="#c9fff2" opacity="0.55"/></svg>',
+  /* Shipwright materials — sea-only, gating the top four hulls. */
+  salt_iron: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="si_m" x1="0" y1="0" x2="0.3" y2="1"><stop offset="0" stop-color="#b9c6cc"/><stop offset="0.45" stop-color="#6e828c"/><stop offset="1" stop-color="#2c3a42"/></linearGradient><linearGradient id="si_t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#dde8ec"/><stop offset="1" stop-color="#8fa3ac"/></linearGradient></defs><ellipse cx="32" cy="55" rx="20" ry="3" fill="#000" opacity="0.4"/><path d="M14 30h36l6 12H8z" fill="url(#si_m)" stroke="#1e2a30" stroke-width="0.9"/><path d="M14 30h36l1.6 3.4H12.4z" fill="url(#si_t)"/><path d="M18 24h28l4 6H14z" fill="url(#si_m)" stroke="#1e2a30" stroke-width="0.8"/><path d="M18 24h28l1.2 2.4H16.8z" fill="url(#si_t)" opacity="0.9"/><path d="M20 36l3 3M28 35l2.6 3M38 36l3 3M46 35l2.4 3" stroke="#1e2a30" stroke-width="0.8" opacity="0.5"/><circle cx="17" cy="41" r="2.6" fill="#e6f0f2" opacity="0.85"/><circle cx="24" cy="44" r="1.7" fill="#e6f0f2" opacity="0.7"/><circle cx="45" cy="43" r="2.2" fill="#e6f0f2" opacity="0.8"/><circle cx="52" cy="40" r="1.5" fill="#e6f0f2" opacity="0.65"/><circle cx="36" cy="45" r="1.3" fill="#e6f0f2" opacity="0.6"/><circle cx="30" cy="28" r="1.6" fill="#dff0f4" opacity="0.75"/><circle cx="42" cy="27" r="1.1" fill="#dff0f4" opacity="0.6"/></svg>',
+  krakenbone: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="kb_b" x1="0.2" y1="0" x2="0.8" y2="1"><stop offset="0" stop-color="#f2ece0"/><stop offset="0.4" stop-color="#cfc6b2"/><stop offset="0.8" stop-color="#8e8574"/><stop offset="1" stop-color="#4e483d"/></linearGradient><radialGradient id="kb_g" cx="0.5" cy="0.5" r="0.6"><stop offset="0" stop-color="#8fd0c6" stop-opacity="0.3"/><stop offset="1" stop-color="#8fd0c6" stop-opacity="0"/></radialGradient></defs><circle cx="32" cy="32" r="25" fill="url(#kb_g)"/><ellipse cx="32" cy="57" rx="16" ry="2.6" fill="#000" opacity="0.38"/><path d="M20 8q-8 4-6 12t10 10q8 4 10 12t-6 14q10-2 14-10t-2-18q-6-8-12-10t-8-10z" fill="url(#kb_b)" stroke="#3e392f" stroke-width="0.8"/><path d="M22 12q-4 4-2 8t8 8" stroke="#fffbf2" stroke-width="1.4" fill="none" opacity="0.55" stroke-linecap="round"/><ellipse cx="18" cy="10" rx="6" ry="5" fill="url(#kb_b)" stroke="#3e392f" stroke-width="0.8"/><ellipse cx="16.5" cy="9" rx="2.4" ry="2" fill="#fffbf2" opacity="0.6"/><ellipse cx="34" cy="54" rx="7" ry="5.5" fill="url(#kb_b)" stroke="#3e392f" stroke-width="0.8"/><ellipse cx="32" cy="52.5" rx="2.6" ry="2" fill="#fffbf2" opacity="0.55"/><path d="M28 26q4 2 6 6" stroke="#6e675a" stroke-width="0.8" fill="none" opacity="0.6"/><circle cx="46" cy="22" r="1.2" fill="#a8e0d4" opacity="0.6"/></svg>',
+  tidewrought: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><radialGradient id="tw_c" cx="0.42" cy="0.38" r="0.68"><stop offset="0" stop-color="#eafffb"/><stop offset="0.28" stop-color="#7fe8d8"/><stop offset="0.62" stop-color="#2b8f96"/><stop offset="1" stop-color="#0d2a34"/></radialGradient><linearGradient id="tw_s" x1="0" y1="0" x2="0.4" y2="1"><stop offset="0" stop-color="#8c9aa0"/><stop offset="0.5" stop-color="#4a5a62"/><stop offset="1" stop-color="#1c262c"/></linearGradient><radialGradient id="tw_h" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#7fe8d8" stop-opacity="0.55"/><stop offset="1" stop-color="#7fe8d8" stop-opacity="0"/></radialGradient></defs><circle cx="32" cy="32" r="28" fill="url(#tw_h)"/><ellipse cx="32" cy="57" rx="15" ry="2.8" fill="#000" opacity="0.42"/><path d="M32 6l14 8 6 16-6 16-14 8-14-8-6-16 6-16z" fill="url(#tw_s)" stroke="#101a20" stroke-width="0.9"/><path d="M32 6l14 8-8 6-6-4z" fill="#a3b1b8" opacity="0.5"/><path d="M18 14l6 16-6 16-6-16z" fill="#101a20" opacity="0.35"/><circle cx="32" cy="32" r="13" fill="url(#tw_c)"/><circle cx="32" cy="32" r="13" fill="none" stroke="#0d2a34" stroke-width="1.1"/><path d="M32 22q-5 6-5 11 0 5 5 5t5-5q0-5-5-11z" fill="#eafffb" opacity="0.9"/><ellipse cx="28" cy="27" rx="3" ry="4" fill="#fff" opacity="0.42"/><circle cx="32" cy="32" r="17.5" fill="none" stroke="#7fe8d8" stroke-width="0.8" opacity="0.4"/><circle cx="20" cy="20" r="1.2" fill="#cffff5" opacity="0.7"/><circle cx="46" cy="42" r="1" fill="#cffff5" opacity="0.6"/><circle cx="44" cy="19" r="0.9" fill="#cffff5" opacity="0.5"/></svg>',
   /* Treasure maps — one silhouette, palette climbing with the water it opens. */
   chart_gravekeel: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="cg1_p" x1="0" y1="0" x2="0.3" y2="1"><stop offset="0" stop-color="#e8d4a4"/><stop offset="0.55" stop-color="#c3ac78"/><stop offset="1" stop-color="#8e7a4e"/></linearGradient></defs><ellipse cx="32" cy="57" rx="19" ry="2.6" fill="#000" opacity="0.36"/><path d="M8 12l16 4 16-4 16 4v40l-16-4-16 4-16-4z" fill="url(#cg1_p)" stroke="#6b5730" stroke-width="0.9"/><path d="M24 16v40M40 12v40" stroke="#6b5730" stroke-width="0.8" opacity="0.55"/><path d="M13 26q7-4 13 1t12-3" stroke="#7d6a46" stroke-width="1.1" fill="none" opacity="0.8"/><path d="M14 34q8-3 14 2t13-2" stroke="#7d6a46" stroke-width="1.1" fill="none" opacity="0.6"/><path d="M44 30l5-4 4 5-5 4z" fill="#8ca38a" opacity="0.7"/><path d="M26 40l6 6M32 40l-6 6" stroke="#a8412c" stroke-width="2.4" stroke-linecap="round"/><circle cx="47" cy="44" r="3.2" fill="none" stroke="#6b5730" stroke-width="1"/><path d="M47 41.2v6.4M43.8 44h6.4" stroke="#6b5730" stroke-width="0.8"/></svg>',
   chart_gibbet: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="cg2_p" x1="0" y1="0" x2="0.3" y2="1"><stop offset="0" stop-color="#dcc79a"/><stop offset="0.55" stop-color="#ad9468"/><stop offset="1" stop-color="#6f5e3c"/></linearGradient></defs><ellipse cx="32" cy="57" rx="19" ry="2.6" fill="#000" opacity="0.4"/><path d="M8 12l16 4 16-4 16 4v40l-16-4-16 4-16-4z" fill="url(#cg2_p)" stroke="#4e3f22" stroke-width="0.9"/><path d="M24 16v40M40 12v40" stroke="#4e3f22" stroke-width="0.8" opacity="0.55"/><path d="M13 24q7-4 13 1t12-3" stroke="#5f5030" stroke-width="1.1" fill="none" opacity="0.8"/><path d="M14 33q8-3 14 2t13-2" stroke="#5f5030" stroke-width="1.1" fill="none" opacity="0.6"/><path d="M42 20v10h-8" stroke="#3a2e18" stroke-width="2" fill="none" stroke-linecap="round"/><circle cx="34" cy="34" r="3" fill="none" stroke="#3a2e18" stroke-width="1.4"/><path d="M22 42l6 6M28 42l-6 6" stroke="#a8412c" stroke-width="2.6" stroke-linecap="round"/><path d="M44 40l5 3-5 3z" fill="#c08a3a" opacity="0.85"/></svg>',
@@ -12179,6 +12191,8 @@ function normalizeState(){
     if(typeof state.sail.voy.troveRoll!=='number') state.sail.voy.troveRoll=Math.random();
     if(typeof state.sail.voy.fogRoll!=='number')   state.sail.voy.fogRoll=Math.random();
     if(typeof state.sail.voy.chartRoll!=='number') state.sail.voy.chartRoll=Math.random();
+    if(!Array.isArray(state.sail.voy.matRolls)||state.sail.voy.matRolls.length<3)
+      state.sail.voy.matRolls=[Math.random(),Math.random(),Math.random()];
   }
   if(state.sail.last!==null&&typeof state.sail.last!=='object') state.sail.last=null;
   if(typeof state.coins!=='number') state.coins=0;
@@ -25748,11 +25762,28 @@ const SAIL_HULLS=[
   {n:'Lashed Raft',          lv:1,  sound:40,  stores:25,  hold:120,  cost:{pine_log:60}},
   {n:'Oak Sloop',            lv:10, sound:85,  stores:60,  hold:260,  cost:{oak_log:120,      bronze_bar:40}},
   {n:'Ironbark Cutter',      lv:25, sound:140, stores:110, hold:450,  cost:{ironbark_log:180, iron_bar:60}},
-  {n:'Emberwood Brigantine', lv:45, sound:230, stores:165, hold:720,  cost:{ember_log:240,    steel_bar:90}},
-  {n:'Frostwood Galleon',    lv:65, sound:360, stores:220, hold:1100, cost:{frost_log:300,    mithril_bar:120}},
-  {n:'Shadowwood Corsair',   lv:78, sound:520, stores:290, hold:1600, cost:{shadow_log:380,   cobalt_bar:150}},
-  {n:'Ancient Leviathan',    lv:90, sound:760, stores:380, hold:2400, cost:{ancient_log:460,  starsteel_bar:180, voidheart:3}}
+  {n:'Emberwood Brigantine', lv:45, sound:230, stores:165, hold:720,  cost:{ember_log:240,    steel_bar:90,      salt_iron:6}},
+  /* Tier 5 is salt_iron only, deliberately. Krakenbone lives in band 2 (Mistlands),
+     and the tier-4 hull's Range 165 cannot reach the nearest band-2 island (Mistvault,
+     Range 190) — asking for krakenbone here would mean needing the Galleon to build
+     the Galleon. Krakenbone first appears as a cost on tier 6, which tier 5's Range
+     220 does reach. Verified as a no-dead-end chain in test. */
+  {n:'Frostwood Galleon',    lv:65, sound:360, stores:220, hold:1100, cost:{frost_log:300,    mithril_bar:120,   salt_iron:20}},
+  {n:'Shadowwood Corsair',   lv:78, sound:520, stores:290, hold:1600, cost:{shadow_log:380,   cobalt_bar:150,    krakenbone:10}},
+  {n:'Ancient Leviathan',    lv:90, sound:760, stores:380, hold:2400, cost:{ancient_log:460,  starsteel_bar:180, krakenbone:16, tidewrought:5}}
 ];
+
+/* Shipwright materials only drop at sea. Rates scale with distance from
+   Emberwatch and take a bonus in The Maw — the same cross-tier shape the combat
+   DROPS table uses, so the deep water can never be skipped by farming a safe
+   island. Quantity is 1, or 2 on a Triumphant return. */
+function sailMatDrops(isle){
+  const maw = isle.w==='The Maw', out=[];
+  if(isle.b>=1) out.push({id:'salt_iron',   chance:0.35+(isle.b-1)*0.08+(maw?0.08:0)});
+  if(isle.b>=2) out.push({id:'krakenbone',  chance:0.22+(isle.b-2)*0.10+(maw?0.10:0)});
+  if(isle.b>=3) out.push({id:'tidewrought', chance:0.10+(maw?0.06:0)});
+  return out;
+}
 
 const SAIL_BANDS=[
   {n:'The Shallows',    x:0.175, trove:'trove_shallows'},
@@ -25907,7 +25938,8 @@ function sailLaunch(i){
   if(state.sail.damaged){ toast('The ship is damaged. Repair her at the yard first.'); return; }
   const isle=sailIsle(i), dur=sailDurMs(isle);
   state.sail.voy={i:i, endsAt:Date.now()+dur, dur:dur, roll:Math.random(),
-                  troveRoll:Math.random(), fogRoll:Math.random(), chartRoll:Math.random()};
+                  troveRoll:Math.random(), fogRoll:Math.random(), chartRoll:Math.random(),
+                  matRolls:[Math.random(),Math.random(),Math.random()]};
   state.sail.last=null;
   saveGame(); renderSail();
   toast('Set sail for '+isle.n+'.');
@@ -25949,9 +25981,20 @@ function sailCheckArrival(){
   const capped=units>h.hold;
   units=Math.min(units, h.hold);
 
+  /* Split the haul across the island's table — but rare materials are capped at a
+     couple per voyage rather than taking an even share. Several deep islands list
+     voidheart / shade_ember / beast_sinew, which gate T3-T5 skilling tools; an even
+     split there handed out ~750 of each in a single trip and would have wrecked
+     those gates. Bulk goes to the ordinary mats instead. */
   const got={};
-  const per=Math.max(1, Math.floor(units/dest.h.length));
-  for(const id of dest.h){ const n=grantItem(id, per); if(n>0) got[id]=(got[id]||0)+n; }
+  const rares=dest.h.filter(id=>ITEMS[id]&&ITEMS[id].rare);
+  const bulk =dest.h.filter(id=>!(ITEMS[id]&&ITEMS[id].rare));
+  for(const id of rares){
+    const n=grantItem(id, (g===0?2:1));
+    if(n>0) got[id]=(got[id]||0)+n;
+  }
+  const per=Math.max(1, Math.floor(units/Math.max(1,bulk.length)));
+  for(const id of bulk){ const n=grantItem(id, per); if(n>0) got[id]=(got[id]||0)+n; }
 
   // trove roll — the collection layer, and the reason to keep sailing
   let trove=null;
@@ -25977,7 +26020,23 @@ function sailCheckArrival(){
     chartFound=srcChart;
   }
 
-  const xp=Math.round(dest.m*(6+dest.lv*0.9)*grade.mult);
+  /* Shipwright materials. Rolled from stored seeds so they cannot be rerolled,
+     and folded into `got` so they show up in the return card with everything else. */
+  const mats={};
+  sailMatDrops(dest).forEach((md,mi)=>{
+    const r=(v.matRolls&&typeof v.matRolls[mi]==='number')?v.matRolls[mi]:Math.random();
+    if(r<md.chance){
+      const qty=(g===0?2:1);
+      const n=grantItem(md.id, qty);
+      if(n>0){ mats[md.id]=n; got[md.id]=(got[md.id]||0)+n; markDiscovered(md.id); }
+    }
+  });
+
+  /* XP curve v2 (0.9.64). The old linear level term topped out near 5.6k xp/hr —
+     roughly 40x behind every other skill, putting Lv99 past 3,400 hours of voyage
+     time. A power term makes each archipelago a real step up and lands 99 at
+     ~500 hours, which suits a skill you check twice a day rather than play. */
+  const xp=Math.round(dest.m*(8+Math.pow(dest.lv,1.65)*0.50)*grade.mult);
   state.sail.xp=Math.min(XP_CAP,(state.sail.xp||0)+xp);
 
   if(g>=2){ state.sail.damaged=(g===3); }
@@ -26436,6 +26495,18 @@ function renderSail(){
       +'<div class="sl-lab">What she brings back</div><div class="sl-chips">';
     isle.h.forEach(id=>{ html+='<span class="sl-chip">'+iconHTML(id)+(ITEMS[id]?ITEMS[id].name:id)+'</span>'; });
     html+='</div>';
+
+    /* Shipwright materials, with the rate spelled out — these gate the top four
+       hulls and are sea-only, so a player has to be able to see where to farm. */
+    const mds=sailMatDrops(isle);
+    if(mds.length){
+      html+='<div class="sl-lab">Shipwright materials</div><div class="sl-chips">';
+      mds.forEach(md=>{
+        html+='<span class="sl-chip gold" data-tip="Used to build the top hulls.">'+iconHTML(md.id)
+          +ITEMS[md.id].name+' · '+Math.round(md.chance*100)+'%</span>';
+      });
+      html+='</div>';
+    }
 
     if(!s.voy){
       const blocked = s.damaged?'Repair her first'
