@@ -3414,7 +3414,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.69</div>
+  <div class="mm-ver">v0.9.70</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -4507,6 +4507,11 @@ const ITEMS={
   cobalt_bar:    {name:'Cobalt Bar',       icon:'🟦',sell:1430},
   runite_bar:    {name:'Runite Bar',       icon:'🔴',sell:2035},
   starsteel_bar: {name:'Starsteel Bar',    icon:'✨',sell:3025},
+  /* Post-starsteel (0.9.70). Smelted from a Starfall Cinder, which sells for 96,000g
+     on its own — so this bar, like the recast bell, is a deliberate gold sacrifice for
+     a material that cannot be bought. Its sell price stays on the bar ladder rather
+     than tracking the cinder, otherwise every other bar looks like a rounding error. */
+  starfall_bar:  {name:'Starfall Bar',     icon:'✨',sell:4840, desc:'Cinder and starsteel taken to a heat no forge on land will hold. It never quite cools.'},
   // Potions (consumable) — values tuned down so buffs are meaningful but not dominant
   swiftness_i:   {name:'Swiftness Potion I',   icon:'⚗️',sell:330,  potion:{speed:0.05,dur:120}},
   swiftness_iii: {name:'Swiftness Potion III', icon:'⚗️',sell:3190, potion:{speed:0.16,dur:300}},
@@ -4643,6 +4648,25 @@ const ITEMS={
   mountain_locket: {name:'Mountain Locket',  icon:'📿',sell:60000, trophyJewel:true, jslot:'amulet', jbonus:{hpBoost:0.12},                  desc:'Troll King trophy. +12% max HP.'},
   emberwyrm_eye:   {name:'Emberwyrm Eye',   icon:'💍',sell:88000, trophyJewel:true, jslot:'ring',   jbonus:{atkBoost:0.07,critChance:0.03}, desc:'Emberwyrm trophy. +7% melee damage and +3% crit.'},
   sanctum_signet:  {name:'Sanctum Signet',  icon:'💍',sell:130000,trophyJewel:true, jslot:'ring',   jbonus:{atkBoost:0.06,lifesteal:0.04,critChance:0.03}, desc:'Demon Lord trophy. +6% damage, +4% lifesteal, +3% crit.'},
+  /* ── Sea jewellery (0.9.70) ────────────────────────────────────────────────
+     The last five sea materials that had no recipe, plus the plain Pearl, which
+     has been a fishing rare with no use since fishing shipped. These reuse the
+     trophyJewel plumbing exactly — an innate jbonus, no enchant needed — because
+     the source is the same shape as a boss trophy: a rare you can only get one
+     way, in a quantity you cannot rush. The Drowned King's Jewel wants five Crown
+     Fragments at 1-2% off three of the deepest islands, so it is deliberately the
+     longest grind in the game and priced against Sanctum Signet accordingly.
+
+     They carry `sea:1` AND `trophyJewel`, and the two categorisers disagree on
+     purpose: itemCat checks trophyJewel first, so the satchel files them with your
+     other jewellery where you would go looking for them, while itemCompCat checks
+     sea first, so the Compendium's Sea tab shows the whole sailing collection —
+     materials and the things made from them — in one place. */
+  pearl_band:      {name:'Pearl Band',      icon:'💍',sell:4400,  trophyJewel:true, jslot:'ring',   jbonus:{hpBoost:0.04},                    sea:1, desc:'Three river pearls on a silver band. Fisherfolk work. +4% max HP.'},
+  drowned_locket:  {name:'Drowned Locket',  icon:'📿',sell:22000, trophyJewel:true, jslot:'amulet', jbonus:{gpBoost:0.09},                    sea:1, desc:"Reworked from lockets off the wrecks. The Emberwatch jewellers do not ask whose faces these were. +9% gold from sales."},
+  tidebound_ring:  {name:'Tidebound Ring',  icon:'💍',sell:68000, trophyJewel:true, jslot:'ring',   jbonus:{critChance:0.03,hpBoost:0.05},    sea:1, desc:'The pearl still moves if you hold it long enough. +3% crit and +5% max HP.'},
+  abyssal_pendant: {name:'Abyssal Pendant', icon:'📿',sell:96000, trophyJewel:true, jslot:'amulet', jbonus:{lifesteal:0.05,atkBoost:0.04},    sea:1, desc:'Black pearl in starfall metal. It takes something back from whatever you hit. +5% lifesteal, +4% melee damage.'},
+  drowned_jewel:   {name:"Drowned King's Jewel", icon:'👑',sell:210000, trophyJewel:true, jslot:'amulet', jbonus:{atkBoost:0.07,defBoost:0.07,hpBoost:0.07}, sea:1, desc:'Five fragments of one circlet, reassembled around a stone nobody has named. +7% damage, Defence and max HP.'},
   gem_dust:        {name:'Gem Dust',            icon:'✨',sell:55, desc:'Glittering powder from cutting gems (Jeweler) or Gem Rocks (Mining Lv 40). Fuels socket drilling, gem crafting and high-tier enchants.'},
   // Farming outputs — seeds and produce
   wildberry_seed:{name:'Wildberry Seed',icon:'🌱',sell:33},
@@ -5754,6 +5778,9 @@ const SKILLS={
     {id:'sm7',name:'Smelt cobalt bar',    lvl:68,ms:15000,xp:537, spdMult:0.765, minMs:1875, inp:{cobalt_ore:1,coal:3},         out:{cobalt_bar:1}},
     {id:'sm8',name:'Smelt runite bar',    lvl:80,ms:18000,xp:741, spdMult:0.790, minMs:2175, inp:{runite_ore:1,coal:4},         out:{runite_bar:1}},
     {id:'sm9',name:'Smelt starsteel bar', lvl:90,ms:21800,xp:1028,spdMult:0.790, minMs:2550, inp:{starsteel_ore:1,coal:5},      out:{starsteel_bar:1}},
+    /* The one rung past starsteel (0.9.70). Gated by a Starfall Cinder rather than a
+       level, so it opens by sailing the Far Reaches, not by grinding Smithing. */
+    {id:'sm10',name:'Smelt starfall bar', lvl:95,ms:25000,xp:1420,spdMult:0.790, minMs:2900, inp:{starfall_cinder:1,starsteel_ore:4,coal:8}, out:{starfall_bar:1}},
   ]},
   alchemy:{name:'Alchemy',icon:'⚗️',acts:[
     // ─── Skilling tier (speed / xp / gp / yield buffs) ─────────────────────
@@ -5896,6 +5923,16 @@ const SKILLS={
     {id:'jw_tj_mountain',name:'Mountain Locket', cat:'trophy',lvl:72,ms:21000,xp:1620,spdMult:0.77,minMs:3360,inp:{troll_king_skull:1,cut_dragon:1},     out:{mountain_locket:1}},
     {id:'jw_tj_ember',   name:'Emberwyrm Eye',   cat:'trophy',lvl:86,ms:24000,xp:2050,spdMult:0.79,minMs:3840,inp:{emberwyrm_skull:1,cut_bloodstone:1},  out:{emberwyrm_eye:1}},
     {id:'jw_tj_sanctum', name:'Sanctum Signet',  cat:'trophy',lvl:95,ms:28000,xp:2600,spdMult:0.79,minMs:4480,inp:{demonlord_skull:1,cut_void:1},        out:{sanctum_signet:1}},
+
+    /* Sea jewellery (0.9.70) — the last five sea materials, plus the plain Pearl.
+       Same shape as the trophy line above: a rare you can only get one way, turned
+       into a piece with an innate bonus. Levels track roughly where each material's
+       archipelago opens, so a piece becomes craftable about when you can farm it. */
+    {id:'jw_sea_pearl', name:'Pearl Band',      cat:'sea',lvl:30,ms:12000,xp:420, spdMult:0.66,minMs:1900,inp:{pearl:3,silver_bar:2},                        out:{pearl_band:1}},
+    {id:'jw_sea_locket',name:'Drowned Locket',  cat:'sea',lvl:46,ms:16000,xp:820, spdMult:0.70,minMs:2560,inp:{sailors_locket:3,cut_ruby:1,gold_bar:2},      out:{drowned_locket:1}},
+    {id:'jw_sea_tide',  name:'Tidebound Ring',  cat:'sea',lvl:70,ms:20000,xp:1340,spdMult:0.76,minMs:3200,inp:{tidebound_pearl:1,cut_diamond:1,mithril_bar:2},out:{tidebound_ring:1}},
+    {id:'jw_sea_abyss', name:'Abyssal Pendant', cat:'sea',lvl:86,ms:24000,xp:2050,spdMult:0.79,minMs:3840,inp:{abyssal_pearl:2,cut_void:1,starfall_bar:1},    out:{abyssal_pendant:1}},
+    {id:'jw_sea_crown', name:"Drowned King's Jewel",cat:'sea',lvl:96,ms:30000,xp:2900,spdMult:0.79,minMs:4800,inp:{crown_fragment:5,starfall_bar:3,cut_void:2}, out:{drowned_jewel:1}},
   ]},
   farming:{name:'Farming',icon:'🌾',acts:[]}, // Farming uses patch system — see renderFarming
 
@@ -6319,6 +6356,20 @@ const GP_DRAGON    ={light:'#f8b048',mid:'#c05818',dark:'#4a1808',edge:'#1a0804'
 const GP_BLOODSTONE={light:'#c84038',mid:'#7a1020',dark:'#2a0408',edge:'#100204',accent:'#e87060',glow:'#a02828'};
 const GP_VOID      ={light:'#a878f0',mid:'#5028a8',dark:'#180828',edge:'#040208',accent:'#d8b0ff',glow:'#7838c8',sparkles:true};
 const GP_VOIDSHARD ={light:'#9868d8',mid:'#4818a0',dark:'#120428',edge:'#040108',accent:'#c898f0',glow:'#6028a8'};
+/* Sea jewellery stones (0.9.70). Nacre reads as a soft near-white so the plain
+   Pearl Band stays humble; Tidebound takes a cold green shimmer; Abyssal is the
+   only near-black stone in the set and gets no glow on purpose — the item text
+   says it gives nothing back. The Drowned King's stone is the one gold-white. */
+const GP_NACRE     ={light:'#ffffff',mid:'#dfe4ee',dark:'#8e97ab',edge:'#3a4152',accent:'#ffffff'};
+const GP_TIDEBOUND ={light:'#c8f4ec',mid:'#4aa8a0',dark:'#123a3c',edge:'#04161a',accent:'#e8fffa',glow:'#5ec0b4'};
+const GP_ABYSSAL   ={light:'#5a5a6e',mid:'#22222e',dark:'#0a0a10',edge:'#000000',accent:'#8a8aa0'};
+const GP_BRASSGLASS={light:'#f0d8a0',mid:'#b08840',dark:'#4a3410',edge:'#180e04',accent:'#fff0c8'};
+const GP_DROWNCROWN={light:'#fff4c8',mid:'#e0b040',dark:'#5a3c08',edge:'#1a1002',accent:'#ffffff',glow:'#f0c860',sparkles:true};
+/* Band metals for the same set — sea silver for the low pieces, tarnished brass for
+   the locket, and starfall metal for the two endgame ones. */
+const JB_SEASILVER={bandLight:'#f0f6fa',band:'#a8b8c4',bandDark:'#4a5864'};
+const JB_SEABRASS ={bandLight:'#e0c078',band:'#94702c',bandDark:'#3a2a0c'};
+const JB_STARFALL ={bandLight:'#e8ecff',band:'#8a92c0',bandDark:'#2a3050'};
 
 /* Jewelry band metals — gold for low tiers, darker exotic metals for high tiers. */
 const JB_GOLD     ={bandLight:'#fbe278',band:'#c79b4e',bandDark:'#6e4818'};
@@ -7339,6 +7390,7 @@ const ICONS = {
   cobalt_bar:    _barSVG({top:'#3070d8', front:'#1a3088', edge:'#080820', stamp:'#000010', hl:'#80b0ff', glow:'#3060c8'}),
   runite_bar:    _barSVG({top:'#208870', front:'#105040', edge:'#04140c', stamp:'#000a04', hl:'#60d0a8', glow:'#208870'}),
   starsteel_bar: _barSVG({top:'#d0d8ec', front:'#6a72a0', edge:'#0e1018', stamp:'#080a14', hl:'#ffffff', glow:'#a0a8d0', sparkles:true}),
+  starfall_bar:  _barSVG({top:'#fff0c8', front:'#c08a3c', edge:'#2a1604', stamp:'#160c02', hl:'#ffffff', glow:'#f0b850', sparkles:true}),
 
   /* ─── Fishing items: raw fish (8) — species-distinct silhouettes ─── */
   raw_minnow:    _minnowSVG({back:'#8a8e92', belly:'#d8dce0', fin:'#5a5e62', accent:'#3a3e42', edge:'#1a1e22'}, false),
@@ -7501,6 +7553,13 @@ const ICONS = {
   mountain_locket: _amuletSVG(_jwPal(GP_DRAGON,JB_OBSIDIAN)),
   emberwyrm_eye:   _ringSVG(_jwPal(GP_DRAGON,JB_OBSIDIAN)),
   sanctum_signet:  _ringSVG(_jwPal(GP_VOID,JB_VOIDMETAL)),
+
+  /* ─── Sea jewellery (0.9.70) — palette swaps on the same two silhouettes ─── */
+  pearl_band:      _ringSVG(_jwPal(GP_NACRE,JB_SEASILVER)),
+  drowned_locket:  _amuletSVG(_jwPal(GP_BRASSGLASS,JB_SEABRASS)),
+  tidebound_ring:  _ringSVG(_jwPal(GP_TIDEBOUND,JB_SEASILVER)),
+  abyssal_pendant: _amuletSVG(_jwPal(GP_ABYSSAL,JB_STARFALL)),
+  drowned_jewel:   _amuletSVG(_jwPal(GP_DROWNCROWN,JB_STARFALL)),
 
   /* ─── Shop-only utility jewelry — unique themes (not in tier chain) ─── */
   ember_ring:  _ringSVG(_jwPal({light:'#ffb060',mid:'#e0762f',dark:'#5a1818',edge:'#1a0804',accent:'#fff8dc',glow:'#e0762f'},JB_GOLD)),
@@ -11537,6 +11596,9 @@ const ITEM_BODY_SLOTS={
   warren_signet:['ring_l','ring_r'], silkweave_band:['ring_l','ring_r'], alpha_fang_ring:['ring_l','ring_r'],
   emberwyrm_eye:['ring_l','ring_r'], sanctum_signet:['ring_l','ring_r'],
   warband_torc:['amulet'], soulbound_amulet:['amulet'], warlord_aegis:['amulet'], mountain_locket:['amulet'],
+  // Sea jewellery (0.9.70) — same split: rings either hand, the rest the neck.
+  pearl_band:['ring_l','ring_r'], tidebound_ring:['ring_l','ring_r'],
+  drowned_locket:['amulet'], abyssal_pendant:['amulet'], drowned_jewel:['amulet'],
   // Skillcapes — Lv 99 reward, cape slot only
   cape_woodcutting:['cape'], cape_mining:['cape'], cape_fishing:['cape'], cape_foraging:['cape'],
   cape_smithing:['cape'], cape_cooking:['cape'], cape_alchemy:['cape'], cape_firemaking:['cape'],
@@ -16516,6 +16578,9 @@ const JW_CATS=[
   {key:'amulet', label:'Amulets', icon:'📿', desc:'Cut gem + metal bar → amulet. Fits the neck slot.'},
   {key:'pendant',label:'Pendants',icon:'📿', desc:'Cut gem + metal bar → pendant. Fits either ring hand.'},
   {key:'trophy', label:'Trophy',  icon:'💎', desc:'Boss trophy + cut gem → a unique piece with an always-on bonus. Each boss drops the trophy for its own piece.'},
+  /* Emoji here matches the five tabs above rather than the ui_* SVG set — a lone
+     SVG in an all-emoji tab bar reads as a mistake. Convert the row together or not at all. */
+  {key:'sea',    label:'Sea',     icon:'⚓', desc:'Sea material + cut gem → a unique piece with an always-on bonus. Every stone here comes back from a voyage and nowhere else.'},
 ];
 function renderJeweler(){
   const sk=SKILLS.jeweler;
