@@ -593,6 +593,7 @@ header h1 .flame{color:var(--ember)}
 .sl-stat[data-tip],
 .sl-tile[data-tip],
 .sl-pill[data-tip],
+.sl-chip[data-tip],
 .cmb-slot[data-tip]{position:relative}
 .cmb-stat[data-tip]:hover::after,
 .cd-stat[data-tip]:hover::after,
@@ -602,6 +603,7 @@ header h1 .flame{color:var(--ember)}
 .sl-stat[data-tip]:hover::after,
 .sl-tile[data-tip]:hover::after,
 .sl-pill[data-tip]:hover::after,
+.sl-chip[data-tip]:hover::after,
 .cmb-slot[data-tip]:hover::after{
   content:attr(data-tip);
   position:absolute;
@@ -3191,12 +3193,18 @@ body:not(.is-demo) .demo-only{display:none !important}
    Layout is a fixed two-column shell that fits one screen: a pan/zoom chart on
    the left, a scrolling detail column on the right. The wrap's height is set in
    JS (sailFit) rather than with vh — the root carries a CSS `zoom`, so vh would
-   resolve against the unscaled viewport and overflow the window. */
+   resolve against the unscaled viewport and overflow the window.
+
+   Type (0.9.78): every font-size here is `calc(Npx*var(--tscale))`. The panel
+   shipped with hard px, so the Settings text-size slider did nothing inside
+   Sailing — the one panel dense enough to actually need it. The base numbers
+   also came up ~15-30% (the smallest labels most), because this panel reads
+   like a document and was set two steps below the rest of the game. */
 .sail-panel{grid-column:1 / 3;overflow:hidden}
 .tab.tab-sail.on{border-color:#4d9bb0;color:#bfe4ef;background:#12303c;}
 
 .sl-wrap{display:flex;flex-direction:column;gap:8px;min-height:470px}
-.sl-main{display:grid;grid-template-columns:minmax(0,1fr) minmax(336px,30%);gap:8px;
+.sl-main{display:grid;grid-template-columns:minmax(0,1fr) minmax(372px,30%);gap:8px;
   flex:1;min-height:0}
 @media(max-width:1080px){
   .sl-main{grid-template-columns:1fr;grid-template-rows:minmax(240px,42%) minmax(0,1fr)}
@@ -3208,22 +3216,22 @@ body:not(.is-demo) .demo-only{display:none !important}
   border-radius:9px;padding:8px 12px;flex:none}
 .sl-top .sl-ship{display:flex;align-items:center;gap:9px;min-width:0}
 .sl-top .sl-ship .ev-icon{width:25px;height:25px;flex:none}
-.sl-shipname{font-family:'Cinzel',serif;font-size:14.5px;color:#e8d7b0;line-height:1.2}
-.sl-shiptier{font-size:10.5px;color:#7fa8bc;font-family:monospace}
+.sl-shipname{font-family:'Cinzel',serif;font-size:calc(15.7px*var(--tscale));color:#e8d7b0;line-height:1.2}
+.sl-shiptier{font-size:calc(12.8px*var(--tscale));color:#7fa8bc;font-family:monospace}
 .sl-lvl{display:flex;align-items:center;gap:9px;margin-left:auto;flex-wrap:wrap}
 .sl-lvlbox{text-align:right;line-height:1.15}
-.sl-lvlbox b{font-family:'Cinzel',serif;font-size:15px;color:var(--trim)}
-.sl-lvlbox i{display:block;font-style:normal;font-size:10px;color:var(--muted);font-family:monospace}
+.sl-lvlbox b{font-family:'Cinzel',serif;font-size:calc(16.2px*var(--tscale));color:var(--trim)}
+.sl-lvlbox i{display:block;font-style:normal;font-size:calc(12.2px*var(--tscale));color:var(--muted);font-family:monospace}
 .sl-xpbar{width:104px;height:6px;background:#08131a;border:1px solid #2c4d5e;border-radius:4px;overflow:hidden}
 .sl-xpbar i{display:block;height:100%;background:linear-gradient(90deg,#8a6a2e,#e0b64e)}
 
 /* stat pills — icon + label + value, never bare text */
 .sl-stats{display:flex;gap:5px;flex-wrap:wrap}
-.sl-stat{display:inline-flex;align-items:center;gap:5px;font-family:monospace;font-size:10.5px;
+.sl-stat{display:inline-flex;align-items:center;gap:5px;font-family:monospace;font-size:calc(12.8px*var(--tscale));
   padding:3px 9px;border-radius:20px;border:1px solid #2c4d5e;background:#0d1a24;
   color:#8fb4c6;white-space:nowrap}
 .sl-stat .ev-icon{width:12px;height:12px;flex:none}
-.sl-stat b{color:#e8d7b0;font-size:11.5px}
+.sl-stat b{color:#e8d7b0;font-size:calc(13.2px*var(--tscale))}
 .sl-stat.warn{border-color:#6a4520;background:#1f1509;color:#d9a463}
 
 /* ── chart ── */
@@ -3231,27 +3239,27 @@ body:not(.is-demo) .demo-only{display:none !important}
   box-shadow:0 6px 24px rgba(0,0,0,.5);display:flex;flex-direction:column;min-height:0}
 .sl-charthd{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;
   padding:6px 10px;background:#0a141d;border-bottom:1px solid #2c4d5e;flex:none}
-.sl-charthd .t{font-family:'Cinzel',serif;font-size:12px;color:var(--trim);letter-spacing:.04em}
+.sl-charthd .t{font-family:'Cinzel',serif;font-size:calc(13.8px*var(--tscale));color:var(--trim);letter-spacing:.04em}
 .sl-zoomrow{display:flex;align-items:center;gap:4px}
 .sl-zb{width:24px;height:22px;display:flex;align-items:center;justify-content:center;
   border:1px solid #2c4d5e;background:#12242f;color:#bfe4ef;border-radius:4px;
-  cursor:var(--cur-pointer);font-family:monospace;font-size:14px;line-height:1;padding:0}
+  cursor:var(--cur-pointer);font-family:monospace;font-size:calc(16.1px*var(--tscale));line-height:1;padding:0}
 .sl-zb:hover{background:#1a3543;border-color:#6d9ab2}
 .sl-zb:focus-visible{outline:2px solid var(--trim);outline-offset:1px}
-.sl-zb.wide{width:auto;padding:0 8px;font-size:10px;letter-spacing:.05em}
-.sl-zlvl{font-family:monospace;font-size:10px;color:#6d8c9c;min-width:34px;text-align:center}
+.sl-zb.wide{width:auto;padding:0 8px;font-size:calc(12.2px*var(--tscale));letter-spacing:.05em}
+.sl-zlvl{font-family:monospace;font-size:calc(12.2px*var(--tscale));color:#6d8c9c;min-width:44px;text-align:center}
 
 .sl-stage{position:relative;flex:1;min-height:0;overflow:hidden;
   cursor:grab;touch-action:none;user-select:none}
 .sl-stage.grabbing{cursor:grabbing}
 .sl-stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none}
 .sl-band{position:absolute;transform:translateX(-50%);font-family:'Cinzel',serif;
-  font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:#54798c;
+  font-size:calc(11.6px*var(--tscale));letter-spacing:.18em;text-transform:uppercase;color:#54798c;
   pointer-events:none;white-space:nowrap;text-shadow:0 1px 4px #030608}
 .sl-port{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;
   align-items:center;gap:1px;pointer-events:none}
 .sl-port .ev-icon{width:19px;height:19px}
-.sl-port span{font-family:'Cinzel',serif;font-size:9px;letter-spacing:.1em;text-transform:uppercase;
+.sl-port span{font-family:'Cinzel',serif;font-size:calc(11.7px*var(--tscale));letter-spacing:.1em;text-transform:uppercase;
   color:var(--trim);text-shadow:0 1px 4px #030608}
 
 .sl-mk{position:absolute;transform:translate(-50%,-50%);background:none;border:none;padding:0;
@@ -3268,14 +3276,21 @@ body:not(.is-demo) .demo-only{display:none !important}
   transition:transform .14s,background .14s,box-shadow .14s}
 /* Hollow = charted but never landed on, so the map doubles as a progress sheet. */
 .sl-mk.unseen .d{background:transparent}
-.sl-mk:hover .d{transform:scale(1.35)}
+.sl-mk:hover .d{transform:scale(1.3)}
 .sl-mk.on{color:#fbeed0;z-index:6}
-.sl-mk.on .d{transform:scale(1.45);
-  box-shadow:0 0 0 4px rgba(255,255,255,.14),0 0 0 5px var(--mkc),0 0 13px var(--mkc)}
+/* Selection is a RING, not a bloom (0.9.78). The old state stacked a 5px solid
+   halo on a 13px blur over an already-scaled dot, which on the chart read as a
+   coloured disc roughly four times the island — it covered the island it was
+   meant to point at. A hairline gap and a 2px ring say "this one" without
+   putting anything on top of the water. */
+.sl-mk.on .d{transform:scale(1.25);
+  box-shadow:0 0 0 2px #0a141d,0 0 0 3.5px var(--mkc)}
 .sl-mk.lock{opacity:.42}
 .sl-mk.lock .d{filter:grayscale(.65) brightness(.8)}
-.sl-mk .n{font-size:9.5px;white-space:nowrap;text-shadow:0 1px 4px #030608,0 0 9px #030608;
+.sl-mk .n{font-size:calc(11.6px*var(--tscale));white-space:nowrap;text-shadow:0 1px 4px #030608,0 0 9px #030608;
   transition:opacity .15s}
+/* The selected island keeps its name plated so it reads over the shoal wash. */
+.sl-mk.on .n{background:rgba(8,17,24,.72);border-radius:3px;padding:0 4px}
 .sl-mk.hid .d{background:#3a2140;border-color:#8c5fa8;border-style:dashed}
 .sl-mk.hid .n{color:#b98fd0;font-style:italic}
 /* Chart-locked: the island is drawn but sealed until its treasure map turns up. */
@@ -3296,30 +3311,34 @@ body:not(.is-demo) .demo-only{display:none !important}
 /* data-tip popovers on the sailing pills/tiles. The shared rule (see the hover
    tooltip block up in the combat CSS) anchors left, which would spill off the
    right-hand column, so tiles and pills there anchor to their right edge. */
-.sl-stat[data-tip],.sl-tile[data-tip],.sl-pill[data-tip]{cursor:var(--cur-help)}
+.sl-stat[data-tip],.sl-tile[data-tip],.sl-pill[data-tip],.sl-chip[data-tip]{cursor:var(--cur-help)}
 .sl-stat[data-tip]:hover{border-color:var(--trim)}
-.sl-tile[data-tip]:hover::after,.sl-pill[data-tip]:hover::after{left:auto;right:0}
+.sl-tile[data-tip]:hover::after,.sl-pill[data-tip]:hover::after,
+.sl-chip[data-tip]:hover::after{left:auto;right:0}
+/* Haul chips wrap several to a row, so a hovered one has to lift above its
+   neighbours or the row below draws over the bubble. */
+.sl-chip[data-tip]:hover{border-color:var(--trim);z-index:60}
 
 /* ── island hover card ── */
 .sl-tip{position:fixed;z-index:900;pointer-events:none;opacity:0;transition:opacity .12s;
-  width:288px;background:linear-gradient(180deg,#172936,#0b141c);border:1px solid #4a7488;
+  width:326px;background:linear-gradient(180deg,#172936,#0b141c);border:1px solid #4a7488;
   border-radius:9px;padding:13px 15px;box-shadow:0 10px 30px rgba(0,0,0,.7)}
 .sl-tip.show{opacity:1}
-.sl-tip h6{font-family:'Cinzel',serif;font-size:17px;color:#fbeed0;margin:0 0 3px;line-height:1.2}
-.sl-tip .band{font-family:monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+.sl-tip h6{font-family:'Cinzel',serif;font-size:calc(18.4px*var(--tscale));color:#fbeed0;margin:0 0 3px;line-height:1.2}
+.sl-tip .band{font-family:monospace;font-size:calc(13.4px*var(--tscale));letter-spacing:.1em;text-transform:uppercase;
   color:#6d8c9c;margin-bottom:9px}
 .sl-tip .row{display:flex;justify-content:space-between;gap:10px;font-family:monospace;
-  font-size:13px;color:#8fb4c6;margin-top:5px;line-height:1.4}
-.sl-tip .row b{color:#eef6fa;font-size:13.5px}
+  font-size:calc(15px*var(--tscale));color:#8fb4c6;margin-top:5px;line-height:1.4}
+.sl-tip .row b{color:#eef6fa;font-size:calc(15.5px*var(--tscale))}
 .sl-tip .mini{display:flex;height:9px;border-radius:5px;overflow:hidden;margin-top:11px;background:#0a141d;
   border:1px solid #23404e}
 .sl-tip .mini i{display:block}
-.sl-tip .minikey{display:flex;justify-content:space-between;font-family:monospace;font-size:10.5px;
+.sl-tip .minikey{display:flex;justify-content:space-between;font-family:monospace;font-size:calc(12.8px*var(--tscale));
   color:#5f8496;margin-top:4px}
-.sl-tip .why{font-size:12.5px;color:#e0a558;margin-top:10px;line-height:1.45;
+.sl-tip .why{font-size:calc(14.4px*var(--tscale));color:#e0a558;margin-top:10px;line-height:1.45;
   border-top:1px solid #2c4d5e;padding-top:9px}
 .sl-tip .why b{color:#f0c884}
-.sl-tip .hint{font-size:12px;color:#a8cc72;margin-top:9px;line-height:1.45;
+.sl-tip .hint{font-size:calc(13.8px*var(--tscale));color:#a8cc72;margin-top:9px;line-height:1.45;
   border-top:1px solid #2c4d5e;padding-top:9px}
 
 /* ── right column ── */
@@ -3327,7 +3346,7 @@ body:not(.is-demo) .demo-only{display:none !important}
 .sl-seg{display:flex;gap:4px;flex:none;background:#0a141d;border:1px solid #2c4d5e;
   border-radius:8px;padding:4px}
 .sl-seg button{flex:1;padding:6px 8px;border-radius:5px;border:1px solid transparent;
-  background:transparent;color:#7fa4b4;font-family:'Cinzel',serif;font-size:12.5px;
+  background:transparent;color:#7fa4b4;font-family:'Cinzel',serif;font-size:calc(14.4px*var(--tscale));
   cursor:var(--cur-pointer);transition:background .14s,color .14s}
 .sl-seg button:hover{color:#dbe9ef}
 .sl-seg button.on{background:#1a3543;border-color:#4d9bb0;color:#e8f2f6}
@@ -3338,29 +3357,29 @@ body:not(.is-demo) .demo-only{display:none !important}
 .sl-card{background:linear-gradient(180deg,#16222c,#0e1720);border:1px solid #2c4d5e;
   border-radius:9px;padding:12px 13px;flex:none}
 .sl-cardhd{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px}
-.sl-card h4{font-family:'Cinzel',serif;font-size:15.5px;color:#fbeed0;margin:0;line-height:1.2}
+.sl-card h4{font-family:'Cinzel',serif;font-size:calc(16.7px*var(--tscale));color:#fbeed0;margin:0;line-height:1.2}
 .sl-metarow{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
 
 /* small-caps section label with a trailing rule — replaces bare uppercase text */
-.sl-lab{display:flex;align-items:center;gap:8px;font-family:monospace;font-size:9px;
+.sl-lab{display:flex;align-items:center;gap:8px;font-family:monospace;font-size:calc(11.7px*var(--tscale));
   letter-spacing:.15em;text-transform:uppercase;color:#5f8496;margin:12px 0 7px}
 .sl-lab::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,#23404e,transparent)}
 
-.sl-flavor{font-size:12px;color:#9fbccb;font-style:italic;line-height:1.5;
+.sl-flavor{font-size:calc(13.8px*var(--tscale));color:#9fbccb;font-style:italic;line-height:1.5;
   border-left:2px solid #2c4d5e;padding-left:10px;margin:0}
 
-.sl-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(74px,1fr));gap:6px}
+.sl-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(92px,1fr));gap:6px}
 .sl-tile{background:#0d1a24;border:1px solid #23404e;border-radius:6px;padding:7px 8px}
-.sl-tile .k{display:flex;align-items:center;gap:4px;font-family:monospace;font-size:8.5px;
+.sl-tile .k{display:flex;align-items:center;gap:4px;font-family:monospace;font-size:calc(11.1px*var(--tscale));
   letter-spacing:.1em;text-transform:uppercase;color:#5f8496;margin-bottom:3px}
-.sl-tile .v{font-family:'Cinzel',serif;font-size:15px;color:var(--trim);line-height:1.15}
-.sl-tile .v.sm{font-size:11.5px;color:#e8d7b0;line-height:1.3}
-.sl-tile .sub{font-family:monospace;font-size:9px;color:#5f8496;margin-top:2px;line-height:1.3}
+.sl-tile .v{font-family:'Cinzel',serif;font-size:calc(16.2px*var(--tscale));color:var(--trim);line-height:1.15}
+.sl-tile .v.sm{font-size:calc(13.2px*var(--tscale));color:#e8d7b0;line-height:1.3}
+.sl-tile .sub{font-family:monospace;font-size:calc(11.7px*var(--tscale));color:#5f8496;margin-top:2px;line-height:1.3}
 .sl-tile.bad{border-color:#63281c;background:#1d0d09}
 .sl-tile.bad .v{color:#e0917c}
 
 /* difficulty pill — a word for the risk, next to the bar that details it */
-.sl-pill{display:inline-flex;align-items:center;gap:5px;font-family:'Cinzel',serif;font-size:11px;
+.sl-pill{display:inline-flex;align-items:center;gap:5px;font-family:'Cinzel',serif;font-size:calc(13.4px*var(--tscale));
   letter-spacing:.04em;padding:3px 10px;border-radius:20px;border:1px solid;white-space:nowrap}
 .sl-pill em{width:7px;height:7px;border-radius:50%;display:block;flex:none}
 .sl-p1{color:#a8cc72;border-color:#41591f;background:#141d0c}
@@ -3370,15 +3389,15 @@ body:not(.is-demo) .demo-only{display:none !important}
 
 .sl-odds{display:flex;height:22px;border-radius:6px;overflow:hidden;border:1px solid #23404e;background:#0d1a24}
 .sl-odds i{display:flex;align-items:center;justify-content:center;font-family:monospace;
-  font-size:9.5px;font-weight:700;color:#0b1206;min-width:0;overflow:hidden;transition:flex-grow .35s ease}
+  font-size:calc(11.6px*var(--tscale));font-weight:700;color:#0b1206;min-width:0;overflow:hidden;transition:flex-grow .35s ease}
 .sl-o1{background:#dfb03c}.sl-o2{background:#7da33f}.sl-o3{background:#c9822e}
 .sl-o4{background:#a8412c;color:#f6e2dc}
 .sl-oddkey{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;margin-top:8px}
-.sl-oddkey span{font-family:monospace;font-size:9.5px;color:#6d8c9c;display:flex;align-items:center;gap:5px}
+.sl-oddkey span{font-family:monospace;font-size:calc(11.6px*var(--tscale));color:#6d8c9c;display:flex;align-items:center;gap:5px}
 .sl-oddkey em{width:8px;height:8px;border-radius:2px;display:block;flex:none}
 
 .sl-chips{display:flex;flex-wrap:wrap;gap:5px}
-.sl-chip{display:inline-flex;align-items:center;gap:4px;font-family:monospace;font-size:10.5px;
+.sl-chip{display:inline-flex;align-items:center;gap:4px;font-family:monospace;font-size:calc(12.8px*var(--tscale));
   padding:3px 8px;border-radius:5px;border:1px solid #2c4d5e;background:#0d1a24;color:#a9c4d0}
 .sl-chip .ev-icon{width:13px;height:13px}
 .sl-chip.gold{border-color:#5a4526;background:#1a1409;color:var(--trim)}
@@ -3388,28 +3407,28 @@ body:not(.is-demo) .demo-only{display:none !important}
 .sl-chip.mut{border-color:#2c4d5e;background:#0a141d;color:#6d8c9c}
 
 .sl-btn{padding:8px 14px;border-radius:6px;cursor:var(--cur-pointer);font-family:'Cinzel',serif;
-  font-size:13.5px;border:1px solid #3d6274;background:#12242f;color:#dbe9ef;
+  font-size:calc(15.5px*var(--tscale));border:1px solid #3d6274;background:#12242f;color:#dbe9ef;
   transition:background .14s,border-color .14s,filter .14s}
 .sl-btn:hover:not(:disabled){background:#1a3543;border-color:#6d9ab2}
 .sl-btn:focus-visible{outline:2px solid var(--trim);outline-offset:2px}
 .sl-btn:disabled{opacity:.42;cursor:var(--cur-na)}
-.sl-btn.sm{padding:5px 10px;font-size:12px}
+.sl-btn.sm{padding:5px 10px;font-size:calc(13.8px*var(--tscale))}
 .sl-btn.go{background:linear-gradient(180deg,#c96a24,#9c4d16);border-color:#7a4a1e;color:#fff2dd;
-  box-shadow:0 2px 0 #5e2c0c;width:100%;font-size:15px;padding:10px}
+  box-shadow:0 2px 0 #5e2c0c;width:100%;font-size:calc(16.2px*var(--tscale));padding:10px}
 .sl-btn.go:hover:not(:disabled){filter:brightness(1.1);background:linear-gradient(180deg,#c96a24,#9c4d16)}
 .sl-btnrow{display:flex;gap:6px;flex-wrap:wrap}
 
 /* live voyage */
 .sl-clock{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;margin-bottom:7px}
-.sl-clock b{font-family:'Cinzel',serif;font-size:30px;color:#fbeed0;line-height:1;
+.sl-clock b{font-family:'Cinzel',serif;font-size:calc(30px*var(--tscale));color:#fbeed0;line-height:1;
   font-variant-numeric:tabular-nums}
-.sl-clock span{font-family:monospace;font-size:10.5px;color:#6d8c9c}
+.sl-clock span{font-family:monospace;font-size:calc(12.8px*var(--tscale));color:#6d8c9c}
 .sl-pbar{height:7px;background:#08131a;border:1px solid #23404e;border-radius:5px;overflow:hidden}
 .sl-pbar i{display:block;height:100%;background:linear-gradient(90deg,#2f5f74,#6d9ab2);transition:width .5s linear}
 
 .sl-result{border-radius:8px;padding:11px 13px;border:1px solid}
-.sl-result h5{font-family:'Cinzel',serif;font-size:15px;margin:0 0 3px}
-.sl-result p{font-size:12px;margin:0;line-height:1.45;color:#b8ccd6}
+.sl-result h5{font-family:'Cinzel',serif;font-size:calc(16.2px*var(--tscale));margin:0 0 3px}
+.sl-result p{font-size:calc(13.8px*var(--tscale));margin:0;line-height:1.45;color:#b8ccd6}
 .sl-r1{background:#1d1707;border-color:#6a5420}.sl-r1 h5{color:#dfb03c}
 .sl-r2{background:#141d0c;border-color:#41591f}.sl-r2 h5{color:#7da33f}
 .sl-r3{background:#1f1509;border-color:#6a4520}.sl-r3 h5{color:#c9822e}
@@ -3418,12 +3437,13 @@ body:not(.is-demo) .demo-only{display:none !important}
 /* Ship's log (0.9.73). Sits inside the result card under the chips, dimmer than
    the grade blurb above it so the outcome still reads first. */
 .sl-log{margin-top:10px;padding-top:9px;border-top:1px solid rgba(255,255,255,.10)}
-.sl-log>b{display:block;font-family:'Cinzel',serif;font-size:11.5px;letter-spacing:1.2px;
+.sl-log>b{display:block;font-family:'Cinzel',serif;font-size:calc(13.2px*var(--tscale));letter-spacing:1.2px;
   text-transform:uppercase;color:#8fa8b4;margin-bottom:6px}
-.sl-log p{font-size:11.5px;line-height:1.5;margin:0 0 4px;color:#93a8b2}
+/* One or two lines now (0.9.78) — see sailBuildLog. The old log ran to six
+   entries with a timestamp gutter, half of which restated the grade blurb
+   directly above it, so the card ended in a wall of prose nobody read. */
+.sl-log p{font-size:calc(13.2px*var(--tscale));line-height:1.5;margin:0 0 5px;color:#93a8b2;font-style:italic}
 .sl-log p:last-child{margin-bottom:0}
-.sl-log i{display:inline-block;min-width:64px;font-style:normal;font-family:monospace;
-  font-size:10px;color:#6d8490;letter-spacing:.5px}
 
 /* shipyard */
 .sl-hull{display:flex;align-items:center;gap:9px;background:#0d1a24;border:1px solid #23404e;
@@ -3433,11 +3453,11 @@ body:not(.is-demo) .demo-only{display:none !important}
 .sl-hull.lock{opacity:.5}
 .sl-hull .ev-icon{width:24px;height:24px;flex:none}
 .sl-hull .i{flex:1;min-width:0}
-.sl-hull .i b{font-family:'Cinzel',serif;font-size:12.5px;color:#e8d7b0;display:block;line-height:1.25}
-.sl-hull .i .st{display:flex;gap:7px;flex-wrap:wrap;font-family:monospace;font-size:9.5px;color:#5f8496;margin-top:2px}
-.sl-hull .i .cst{display:block;font-family:monospace;font-size:9.5px;margin-top:3px;line-height:1.4}
-.sl-note{font-size:11px;color:var(--muted);line-height:1.5;margin:8px 0 0}
-.sl-preview{display:flex;align-items:center;gap:6px;font-family:monospace;font-size:10px;
+.sl-hull .i b{font-family:'Cinzel',serif;font-size:calc(14.4px*var(--tscale));color:#e8d7b0;display:block;line-height:1.25}
+.sl-hull .i .st{display:flex;gap:7px;flex-wrap:wrap;font-family:monospace;font-size:calc(11.6px*var(--tscale));color:#5f8496;margin-top:2px}
+.sl-hull .i .cst{display:block;font-family:monospace;font-size:calc(11.6px*var(--tscale));margin-top:3px;line-height:1.4}
+.sl-note{font-size:calc(13.4px*var(--tscale));color:var(--muted);line-height:1.5;margin:8px 0 0}
+.sl-preview{display:flex;align-items:center;gap:6px;font-family:monospace;font-size:calc(12.2px*var(--tscale));
   color:#c9822e;background:#1f1509;border:1px dashed #6a4520;border-radius:6px;
   padding:6px 9px;margin-top:8px;cursor:var(--cur-pointer)}
 /* ════════ [CSS-33 END] SAILING ═══════════════════════════════════════════════════ */
@@ -3478,7 +3498,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.77</div>
+  <div class="mm-ver">v0.9.78</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -26692,69 +26712,45 @@ function sailChartFor(i){ return SAIL_CHART_BY_ISLE[i]||null; }
    Lines are picked by condition, not at random from one pool — a Wrecker's Weather
    entry can only appear on a Wrecker's Weather crossing, a rudder line only when a
    rudder is fitted. That is the difference between a log and a fortune cookie. */
+/* One short line per weather type — this is the whole log now, so it has to earn
+   its place in a sentence. */
 const SAIL_LOG_WEATHER={
   'Glass Calm':[
-    'Not a breath all morning. The hands took turns at the sweeps and complained about it.',
-    'Water like a slab of glass. You could see the bottom at nine fathoms and wished you could not.'],
+    'Not a breath all morning. The hands took turns at the sweeps.',
+    'Water like a slab of glass, and the bottom visible at nine fathoms.'],
   'Chop':[
     'Short steep sea on the beam. Nothing dangerous, everything wet.',
-    'She butted into it all day and the cook gave up on anything that needed a pot.'],
+    'She butted into it all day and the cook gave up on the pot.'],
   "Wrecker's Weather":[
     'The wind backed round without warning and stayed there. Reefed down by noon.',
-    'Grey water coming green over the bow. This is the weather the coast is named for.'],
+    'Grey water coming green over the bow — the weather this coast is named for.'],
   'Blackfog':[
-    'Fog came down thick enough to lose the masthead. Rang the bell every two minutes and heard nothing back.',
-    'No sun, no stars, no horizon for a day and a half. Navigated on faith and the lead line.'],
+    'Fog thick enough to lose the masthead. Rang the bell and heard nothing back.',
+    'No sun, no stars, no horizon. Navigated on faith and the lead line.'],
   'The Maw':[
     'Something followed the ship for six hours and did not surface.',
-    'The sea here does not run in one direction. It goes down more than it goes across.']
+    'The sea here goes down more than it goes across.']
 };
-const SAIL_LOG_GRADE=[
-  ['Made the anchorage on a rising tide with the hold overfull and the crew singing.',
-   'Everything that could have gone right did. Nobody trusts a run like this and everybody enjoyed it.'],
-  ['Uneventful crossing both ways. The hold is full and the ship is sound.',
-   'Made the passage on schedule. No damage worth logging.'],
-  ['Took the worst of it broadside. Sprung planking above the waterline and a day of pumping.',
-   'She came home leaking and short a spar. The hold took water and some of it was cargo.'],
-  ['Struck in the dark and came off the reef with the pumps losing. Cut cargo loose to float her.',
-   'Lost the crossing outright. What came home came home because the crew would not let go of it.']
-];
 function _sailLogPick(arr, r){ return arr[Math.floor(r*arr.length)%arr.length]; }
 /* Builds the log for a resolved voyage. `seeds` are the stored departure rolls. */
+/* Trimmed hard in 0.9.78. The first pass wrote five or six stamped entries per
+   voyage and most of them told you nothing you could act on: a departure line
+   that is identical every trip, a line praising whichever part happened to be
+   fitted, a crew line, and a closing line that restated the grade blurb printed
+   directly above it — plus a "Day 2 / 4h" gutter that was a guess in the first
+   place. What is left is the one thing the card does not already say: what the
+   water was like, and (when it happens) that the fog put you somewhere else.
+   Everything mechanical — haul, gold, xp, damage, refusals — is in the chips.
+
+   Entries are plain strings now. The old {d,t} objects still render, since a
+   `last` written before this update survives in the save. */
 function sailBuildLog(dest, grade, g, seeds, ctx){
   const r=(i)=>seeds&&seeds.length?seeds[i%seeds.length]:Math.random();
-  /* Stamps are position-based, not clock-based. A 20-minute hop to Shalefoot and a
-     14-hour haul to Voidmaw both get five entries, so a fixed "Day 2" is nonsense on
-     one and a fixed "Hour 2" on the other — the middle entries carry the elapsed
-     time for the run they actually belong to, and the ends say what they are. */
-  const hours=dest.m/60;
   const out=[];
-  const at=(frac)=>{
-    const h=hours*frac;
-    if(hours>=24) return 'Day '+Math.max(1, Math.round(h/24));
-    if(h<1)       return Math.max(5, Math.round(h*60))+'m';
-    return Math.round(h)+'h';
-  };
-  const day=(n)=>n<=1?'Departed':(n>=4?'Returned':at(n/5));
-  out.push({d:day(1), t:'Cast off from Emberwatch for '+dest.n+'. '+
-    (dest.w==='Glass Calm'?'Barely a ripple in the harbour.':'The glass was falling before we cleared the mole.')});
   const wx=SAIL_LOG_WEATHER[dest.w];
-  if(wx) out.push({d:day(2), t:_sailLogPick(wx, r(0))});
-  /* Parts and crew only speak when they exist. A rudder line on a plain tiller
-     would be the exact fortune-cookie problem this is meant to avoid. */
-  if(ctx.steer>0 && g>=2)
-    out.push({d:day(2), t:'The '+ctx.rudder+' held her head up through the worst of it. Without it she would have gone over.'});
-  else if(ctx.rig>0 && g<=1)
-    out.push({d:day(2), t:'Carried full canvas the whole reach. The '+ctx.sails+' pulled a day off the passage.'});
-  if(ctx.crewRole)
-    out.push({d:day(3), t:ctx.crewLine});
+  if(wx) out.push(_sailLogPick(wx, r(0)));
   if(ctx.fogged)
-    out.push({d:day(3), t:'The fog took us. When it lifted the coast was wrong and no chart aboard admitted the place existed.'});
-  if(ctx.troveName)
-    out.push({d:day(3), t:'Brought up '+ctx.troveName+' in the shallows off the landing. It is in the hold and it is not for sale.'});
-  if(ctx.chartName)
-    out.push({d:day(3), t:'Found a chart among the wreckage, dry and legible. It shows water we have never had a name for.'});
-  out.push({d:day(4), t:_sailLogPick(SAIL_LOG_GRADE[g], r(1))});
+    out.push('The fog took us, and when it lifted the coast was wrong — no chart aboard admitted the place existed.');
   return out;
 }
 
@@ -27143,27 +27139,9 @@ function sailCheckArrival(){
   if(!state.sail.seen) state.sail.seen={};
   state.sail.seen[landed]=1;   // fills the chart marker in — landed, not merely charted
 
-  /* Ship's log (0.9.73). Built from the departure seeds and the facts of THIS run —
-     which parts were fitted, who was aboard, what turned up — so the lines explain
-     the grade rather than decorating it. */
-  const _logCrew=Object.keys(sailCrew()).filter(id=>sailCrew()[id]>0);
-  const _crewPick=_logCrew.length
-    ? _logCrew[Math.floor(((v.logRolls&&v.logRolls[2])||0)*_logCrew.length)%_logCrew.length] : null;
-  const _CREW_LINE={
-    carpenter:'The carpenter was below with a maul and a bucket of oakum for most of a watch, and said nothing about it after.',
-    cooper:   'The cooper restowed the whole hold on his own initiative and got another twenty barrels in.',
-    gunner:   'The gunner ran the guns out twice for practice and once because he meant it.',
-    navigator:'The navigator put us on the landing within a mile without ever seeming to look up.',
-    lookout:  'The lookout saw the shoal water before the leadsman felt it, which is the entire job.'
-  };
-  const _log=sailBuildLog(dest, grade, g, v.logRolls, {
-    steer:sailSteer(), rudder:sailRudder().n,
-    rig:sailRig(),     sails:sailSails().n,
-    crewRole:_crewPick, crewLine:_crewPick?_CREW_LINE[_crewPick]:'',
-    fogged:fogged,
-    troveName:trove?ITEMS[trove].name:null,
-    chartName:chartFound?ITEMS[chartFound].name:null
-  });
+  /* Ship's log (0.9.73, cut back in 0.9.78). One or two lines of what the water
+     was actually like — everything mechanical is already in the chips above it. */
+  const _log=sailBuildLog(dest, grade, g, v.logRolls, {fogged:fogged});
 
   state.sail.last={g:g, i:landed, from:v.i, fogged:fogged, got:got, trove:trove, chart:chartFound,
                    pet:petFound, cape:capeFound, xp:xp, gold:gold, capped:capped, units:units,
@@ -27267,14 +27245,25 @@ function sailBuild(t){
 }
 
 /* ── chart view: pan + zoom ──────────────────────────────────────────────────────
-   Island positions are normalised 0..1. z=1 is exactly fit-to-stage, so there is
-   never empty water at the edges; panning only exists above z=1. Markers are HTML
-   (so their labels stay a constant size) and get positioned from the same
-   transform the canvas uses, in sailPlaceMarkers. */
+   Island positions are normalised 0..1 and multiply into a FIXED world size in
+   CSS px (0.9.78). They used to multiply into the stage's own width and height,
+   which meant the chart was not a chart: every window resize restretched it, the
+   distance between two islands changed with the browser, and a tall thin window
+   squashed the whole archipelago into a band. The sheet is now a constant
+   1400×900 that the viewport shows more or less of — resizing pans and reveals,
+   it never rescales. Zoom is the only thing that changes the scale, and 100%
+   means one world pixel to one CSS pixel.
+
+   Markers are HTML (so their labels stay a constant size regardless of zoom) and
+   get positioned from the same transform the canvas uses, in sailPlaceMarkers. */
+const SAIL_WORLD_W=1400, SAIL_WORLD_H=900;
 let sailView={z:1, ox:0, oy:0};
 let sailTab='voyage';
-let _slShipT=0;
-const SAIL_ZMIN=1, SAIL_ZMAX=3.4, SAIL_LABEL_Z=1.5;
+let _slShipT=0, _slViewInit=false, _slRenderedTab='voyage';
+/* ZMIN has to go below 1 now that the world no longer shrinks to fit — a small
+   window needs to be able to zoom out far enough to see the whole sheet.
+   LABEL_Z is in world scale: below ~95% the names collide, above it they read. */
+const SAIL_ZMIN=0.28, SAIL_ZMAX=3.0, SAIL_LABEL_Z=0.95;
 
 /* The root carries a CSS `zoom`, so client coords and getBoundingClientRect are
    in VISUAL px while clientWidth/offsetLeft are in CSS px. Everything below works
@@ -27301,26 +27290,36 @@ function sailViewport(){
 }
 function sailClamp(){
   const {W,H}=sailViewport(), v=sailView;
-  const sw=W*v.z, sh=H*v.z;
+  const sw=SAIL_WORLD_W*v.z, sh=SAIL_WORLD_H*v.z;
   v.ox = sw<=W ? (W-sw)/2 : Math.min(0, Math.max(W-sw, v.ox));
   v.oy = sh<=H ? (H-sh)/2 : Math.min(0, Math.max(H-sh, v.oy));
 }
 /* Zoom about a point so the water under the cursor stays under the cursor. */
 function sailZoomAt(cx,cy,nz){
-  const {W,H}=sailViewport(), v=sailView;
+  const v=sailView;
   nz=Math.max(SAIL_ZMIN, Math.min(SAIL_ZMAX, nz));
-  const wx=(cx-v.ox)/(W*v.z), wy=(cy-v.oy)/(H*v.z);
-  v.z=nz; v.ox=cx-wx*W*v.z; v.oy=cy-wy*H*v.z;
+  const wx=(cx-v.ox)/(SAIL_WORLD_W*v.z), wy=(cy-v.oy)/(SAIL_WORLD_H*v.z);
+  v.z=nz; v.ox=cx-wx*SAIL_WORLD_W*v.z; v.oy=cy-wy*SAIL_WORLD_H*v.z;
   sailClamp(); sailPaintView();
 }
 function sailSetZoom(nz){
   const {W,H}=sailViewport();
   sailZoomAt(W/2, H/2, nz);
 }
+/* Zoom-to-fit, used on the first open of the panel and by the FIT button. Never
+   called from the resize handler — the whole point of a fixed world is that
+   dragging the window edge does not re-scale the chart under you. */
+function sailFitView(){
+  const {W,H}=sailViewport(), v=sailView;
+  if(W<2||H<2) return;
+  v.z=Math.max(SAIL_ZMIN, Math.min(SAIL_ZMAX, Math.min(W/SAIL_WORLD_W, H/SAIL_WORLD_H)));
+  v.ox=(W-SAIL_WORLD_W*v.z)/2; v.oy=(H-SAIL_WORLD_H*v.z)/2;
+  sailClamp();
+}
 /* Recentre on an island — used when selecting one that is off-screen. */
 function sailCenterOn(i){
   const isle=sailIsle(i), {W,H}=sailViewport(), v=sailView;
-  v.ox=W/2-isle.x*W*v.z; v.oy=H/2-isle.y*H*v.z;
+  v.ox=W/2-isle.x*SAIL_WORLD_W*v.z; v.oy=H/2-isle.y*SAIL_WORLD_H*v.z;
   sailClamp(); sailPaintView();
 }
 function sailPaintView(){
@@ -27332,8 +27331,8 @@ function sailPaintView(){
 /* Place every marker, band label and the harbour from the current view. */
 function sailPlaceMarkers(){
   const st=$('slStage'); if(!st) return;
-  const {W,H}=sailViewport(), v=sailView;
-  const sx=n=>n*W*v.z+v.ox, sy=n=>n*H*v.z+v.oy;
+  const v=sailView;
+  const sx=n=>n*SAIL_WORLD_W*v.z+v.ox, sy=n=>n*SAIL_WORLD_H*v.z+v.oy;
   st.querySelectorAll('[data-slisle]').forEach(b=>{
     const is=sailIsle(+b.getAttribute('data-slisle'));
     b.style.left=sx(is.x)+'px'; b.style.top=sy(is.y)+'px';
@@ -27370,48 +27369,60 @@ function sailDrawChart(){
   ctx.save();
   ctx.translate(v.ox, v.oy); ctx.scale(z, z);
 
+  /* World-space drawing from here down. WW/WH are the fixed sheet; vx0..vy1 is the
+     slice of it the viewport can currently see, which the grid and the depth bands
+     are stretched to cover so the chart never ends in a hard edge when the window
+     is a different shape from the sheet. */
+  const WW=SAIL_WORLD_W, WH=SAIL_WORLD_H;
+  const vx0=(0-v.ox)/z, vx1=(W-v.ox)/z, vy0=(0-v.oy)/z, vy1=(H-v.oy)/z;
+
   /* Bathymetry (0.9.67) — four filled bands, pale on the shelf by the harbour and
      darkening outward, replacing the 78 hand-wobbled contour rings that used to ring
      every island. "Further is deeper is harder" becomes something you feel, and it is
      four gradients per repaint instead of 78 paths, which matters while panning. */
   [[0.00,0.30,'rgba(46,104,132,0.40)'],[0.28,0.55,'rgba(34,80,104,0.34)'],
    [0.52,0.78,'rgba(24,58,78,0.30)'],[0.74,1.06,'rgba(14,36,52,0.32)']].forEach(s=>{
-    const gr=ctx.createLinearGradient(s[0]*W,0,s[1]*W,0);
+    const gr=ctx.createLinearGradient(s[0]*WW,0,s[1]*WW,0);
     gr.addColorStop(0,s[2]); gr.addColorStop(1,'rgba(0,0,0,0)');
-    ctx.fillStyle=gr; ctx.fillRect(s[0]*W,0,(s[1]-s[0])*W,H);
+    ctx.fillStyle=gr; ctx.fillRect(s[0]*WW,vy0,(s[1]-s[0])*WW,vy1-vy0);
   });
 
+  /* Grid at the sheet's own spacing, tiled across whatever is on screen. */
   ctx.strokeStyle='rgba(150,122,66,.15)'; ctx.lineWidth=1/z;
-  for(let i=1;i<16;i++){ ctx.beginPath(); ctx.moveTo(i*W/16,0); ctx.lineTo(i*W/16,H); ctx.stroke(); }
-  for(let i=1;i<8;i++){ ctx.beginPath(); ctx.moveTo(0,i*H/8); ctx.lineTo(W,i*H/8); ctx.stroke(); }
+  const gx=WW/16, gy=WH/8;
+  for(let x=Math.floor(vx0/gx)*gx; x<=vx1; x+=gx){ ctx.beginPath(); ctx.moveTo(x,vy0); ctx.lineTo(x,vy1); ctx.stroke(); }
+  for(let y=Math.floor(vy0/gy)*gy; y<=vy1; y+=gy){ ctx.beginPath(); ctx.moveTo(vx0,y); ctx.lineTo(vx1,y); ctx.stroke(); }
 
-  const nodes=[[W*.30,H*.50],[W*.68,H*.30],[W*.86,H*.72]];
+  const nodes=[[WW*.30,WH*.50],[WW*.68,WH*.30],[WW*.86,WH*.72]];
   nodes.forEach(n=>{
     ctx.strokeStyle='rgba(168,136,74,.26)'; ctx.lineWidth=0.9/z;
-    for(let a=0;a<16;a++){ const th=a*Math.PI/8, L=W*1.5;
+    for(let a=0;a<16;a++){ const th=a*Math.PI/8, L=WW*1.5;
       ctx.beginPath(); ctx.moveTo(n[0],n[1]); ctx.lineTo(n[0]+Math.cos(th)*L,n[1]+Math.sin(th)*L); ctx.stroke(); }
     ctx.strokeStyle='rgba(190,155,88,.40)';
-    ctx.beginPath(); ctx.arc(n[0],n[1],W*.055,0,Math.PI*2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(n[0],n[1],WW*.055,0,Math.PI*2); ctx.stroke();
     ctx.fillStyle='rgba(199,155,78,.5)'; ctx.beginPath(); ctx.arc(n[0],n[1],2.6/z,0,Math.PI*2); ctx.fill();
   });
 
-  // One soft shoal halo per island, tinted to its archipelago.
+  /* One soft shoal wash per island, tinted to its archipelago. Held at a constant
+     ~13px on screen (0.9.78): it used to grow with the world and, together with the
+     old selection bloom, put a coloured disc four times the marker's size over the
+     island — you could not see what you had clicked. */
   SAIL_ISLES.forEach((is,ix)=>{
     if(is.hid && !(state.sail.found&&state.sail.found[ix])) return;
-    const cx=is.x*W, cy=is.y*H, rr=22/z*Math.min(1.5,z);
+    const cx=is.x*WW, cy=is.y*WH, rr=13/z;
     const hg=ctx.createRadialGradient(cx,cy,1,cx,cy,rr);
-    hg.addColorStop(0,'rgba(150,200,220,0.28)'); hg.addColorStop(1,'rgba(150,200,220,0)');
+    hg.addColorStop(0,'rgba(150,200,220,0.20)'); hg.addColorStop(1,'rgba(150,200,220,0)');
     ctx.fillStyle=hg;
     ctx.beginPath(); ctx.ellipse(cx,cy,rr,rr*0.74,0,0,Math.PI*2); ctx.fill();
-    ctx.strokeStyle='rgba(140,190,214,0.24)'; ctx.lineWidth=1/z;
-    ctx.beginPath(); ctx.ellipse(cx,cy,rr*0.55,rr*0.42,0,0,Math.PI*2); ctx.stroke();
+    ctx.strokeStyle='rgba(140,190,214,0.18)'; ctx.lineWidth=1/z;
+    ctx.beginPath(); ctx.ellipse(cx,cy,rr*0.6,rr*0.46,0,0,Math.PI*2); ctx.stroke();
   });
 
   ctx.fillStyle='rgba(122,170,196,.24)';
   ctx.font=(9/z)+"px 'Cascadia Mono', Consolas, monospace";
   for(let i=0;i<52;i++){
-    const px=((i*97)%100)/100*W, py=((i*61)%100)/100*H;
-    const near=SAIL_ISLES.some(is=>Math.abs(is.x*W-px)<58&&Math.abs(is.y*H-py)<44);
+    const px=((i*97)%100)/100*WW, py=((i*61)%100)/100*WH;
+    const near=SAIL_ISLES.some(is=>Math.abs(is.x*WW-px)<74&&Math.abs(is.y*WH-py)<50);
     if(!near) ctx.fillText(String(7+(i*13)%90), px, py);
   }
 
@@ -27423,7 +27434,7 @@ function sailDrawChart(){
   const _v=state.sail.voy;
   if(_v){
     const d=sailIsle(_v.i);
-    const x0=0.034*W, y0=0.5*H, x1=d.x*W, y1=d.y*H;
+    const x0=0.034*WW, y0=0.5*WH, x1=d.x*WW, y1=d.y*WH;
     const prog=Math.max(0, Math.min(1, 1-((_v.endsAt-Date.now())/Math.max(1,_v.dur))));
     ctx.save();
     ctx.setLineDash([7/z,6/z]); ctx.lineWidth=1.7/z;
@@ -27509,6 +27520,27 @@ function sailDifficulty(i){
   return               {n:'Deadly',    c:'sl-p4', col:'#e2836c'};
 }
 function sailPct(oneIn){ const p=100/oneIn; return (p>=10?Math.round(p):p.toFixed(1))+'%'; }
+
+/* ── chip tooltips (0.9.78) ─────────────────────────────────────────────────────
+   A returning voyage lists its haul as a row of chips, and until now the only way
+   to find out what "Barnacle Iron ×14" actually was involved leaving the panel and
+   hunting the satchel. These build a `data-tip` attribute, which the shared hover
+   rule renders through CSS attr() — so PLAIN TEXT ONLY here, no SVG and no markup,
+   and every quote has to be escaped or it closes the attribute. */
+function _slTip(text){
+  return ' data-tip="'+String(text==null?'':text).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;')+'"';
+}
+/* Item chip: the item's own description, plus what it sells for, plus any extra
+   line the caller wants on the end (why it was refused, what a map opened). */
+function _slItemTip(id, extra){
+  const it=ITEMS[id];
+  if(!it) return extra?_slTip(extra):'';
+  const bits=[it.name];
+  if(it.desc) bits.push(it.desc);
+  if(it.sell>0 && !it.nosell) bits.push('Sells for '+it.sell.toLocaleString()+'g each.');
+  if(extra) bits.push(extra);
+  return _slTip(bits.join('\n\n'));
+}
 function sailWhyText(i){
   const isle=sailIsle(i), h=sailHull(), why=sailReach(i);
   if(why==='chart'){
@@ -27589,6 +27621,7 @@ function sailTickUI(){
 
 function enterSailing(){
   sailMode=true; combatMode=false;
+  _slViewInit=false;              // fit the chart to whatever the window is now
   updateModePanels(); renderSail();
 }
 function closeSailPanel(){
@@ -27607,13 +27640,18 @@ function renderSail(){
   /* ── header ── */
   html+='<div class="sl-top">'
     +'<div class="sl-ship">'+iconHTML('sailing')
-    +'<div><div class="sl-shipname">'+h.n+(s.damaged?' <span style="color:var(--red);font-size:11px">· needs repair</span>':'')+'</div>'
+    +'<div><div class="sl-shipname">'+h.n+(s.damaged?' <span style="color:var(--red);font-size:calc(13.4px*var(--tscale))">· needs repair</span>':'')+'</div>'
     +'<div class="sl-shiptier">Emberwatch Harbour · ship '+(s.hull+1)+' of 7</div></div></div>'
     +'<div class="sl-stats">'
-    +'<span class="sl-stat" data-tip="Resists storm damage.">'+iconHTML('ui_shield')+'Hull <b>'+sailSound()+'</b></span>'
-    +'<span class="sl-stat" data-tip="How far the ship can sail.">'+iconHTML('ui_wind')+'Range <b>'+h.stores+'</b></span>'
-    +'<span class="sl-stat" data-tip="Most cargo she can carry home.">'+iconHTML('ui_coin')+'Cargo <b>'+sailCargo()+'</b></span>'
-    +'<span class="sl-stat" data-tip="Gun power. Only matters in The Maw.">'+iconHTML('ui_sword')+'Guns <b>'+sailArms()+'</b></span>'
+    +'<span class="sl-stat"'+_slTip('How well she takes weather. Each island expects a Hull of about 40 + 7.4 × its Sailing level; '
+      +'beat that and the odds bar shifts out of Wrecked and Battered into Successful and Triumphant, fall short and it shifts the other way. '
+      +'Hull is the single biggest thing you control.')+'>'+iconHTML('ui_shield')+'Hull <b>'+sailSound()+'</b></span>'
+    +'<span class="sl-stat"'+_slTip('How far the ship can sail. An island with a higher Range than this cannot be attempted at all.')
+      +'>'+iconHTML('ui_wind')+'Range <b>'+h.stores+'</b></span>'
+    +'<span class="sl-stat"'+_slTip('Most bulk cargo she can carry home in one voyage. Anything past this is left behind. Rare finds and salvage do not use cargo room.')
+      +'>'+iconHTML('ui_coin')+'Cargo <b>'+sailCargo()+'</b></span>'
+    +'<span class="sl-stat"'+_slTip('Gun power. Only counts in The Maw, where it shifts the odds bar the same way Hull does. Everywhere else it does nothing.')
+      +'>'+iconHTML('ui_sword')+'Guns <b>'+sailArms()+'</b></span>'
     +(sailRig()>0?'<span class="sl-stat" data-tip="Cuts voyage time.">'+iconHTML('sl_sails')+'Rigging <b>'+Math.round(sailRig()*100)+'%</b></span>':'')
     /* Steering and the wage cut only appear once fitted, same as Rigging — an
        always-visible 0% reads as a broken stat rather than an empty slot. */
@@ -27636,9 +27674,14 @@ function renderSail(){
     +'<button class="sl-zb" id="slZOut" title="Zoom out">&minus;</button>'
     +'<span class="sl-zlvl" id="slZlvl">100%</span>'
     +'<button class="sl-zb" id="slZIn" title="Zoom in">+</button>'
+    +'<button class="sl-zb wide" id="slZFit" title="Fit the whole chart on screen">FIT</button>'
     +'<button class="sl-zb wide" id="slZFind" title="Centre on the selected island">FIND</button>'
     +'</div></div>'
-    +'<div class="sl-stage" id="slStage"><canvas id="slCanvas"></canvas>';
+    /* `far` is decided HERE rather than by sailPaintView after the innerHTML swap.
+       Applying it a frame later meant every marker label was painted visible and
+       then transitioned to opacity 0 — so clicking any island made all 26 names
+       flash across the chart. */
+    +'<div class="sl-stage'+(sailView.z<SAIL_LABEL_Z?' far':'')+'" id="slStage"><canvas id="slCanvas"></canvas>';
 
   /* Band labels wear their own colour, which makes the marker legend implicit —
      no extra chrome needed to explain what the dot colours mean. */
@@ -27693,33 +27736,41 @@ function renderSail(){
       html+='<div class="sl-result '+gr.c+'"><h5>'+gr.n+' — '+di.n+'</h5><p>'
         +(L.fogged?'<b>Blackfog took her off course.</b> She made landfall at '+di.n+', which is on no Admiralty chart. It is on yours now. ':'')
         +gr.p+'</p><div class="sl-chips">';
-      if(L.gold) html+='<span class="sl-chip gold">'+iconHTML('ui_coin')+'+'+L.gold.toLocaleString()+'g</span>';
+      if(L.gold) html+='<span class="sl-chip gold"'+_slTip('Gold, paid at the dock. Every voyage pays some; the grade scales it.')
+        +'>'+iconHTML('ui_coin')+'+'+L.gold.toLocaleString()+'g</span>';
       for(const id in L.got){
         const rare=ITEMS[id]&&ITEMS[id].rare;
-        html+='<span class="sl-chip'+(rare?' vio':'')+'">'+(rare?'✦ ':'')+iconHTML(id)
+        html+='<span class="sl-chip'+(rare?' vio':'')+'"'+_slItemTip(id)+'>'+(rare?'✦ ':'')+iconHTML(id)
           +(ITEMS[id]?ITEMS[id].name:id)+' ×'+L.got[id].toLocaleString()+'</span>';
       }
-      html+='<span class="sl-chip good">+'+L.xp.toLocaleString()+' Sailing xp</span>';
-      if(L.trove) html+='<span class="sl-chip vio">'+iconHTML(L.trove)+ITEMS[L.trove].name+'</span>';
-      if(L.chart) html+='<span class="sl-chip gold">'+iconHTML(L.chart)+ITEMS[L.chart].name+' — '
+      html+='<span class="sl-chip good"'+_slTip('Sailing experience. Scales with time at sea, the island’s level and the grade.')
+        +'>+'+L.xp.toLocaleString()+' Sailing xp</span>';
+      if(L.trove) html+='<span class="sl-chip vio"'+_slItemTip(L.trove,'Trove keepsake — see the Trove tab. Permanent, and it stacks up to five.')
+        +'>'+iconHTML(L.trove)+ITEMS[L.trove].name+'</span>';
+      if(L.chart) html+='<span class="sl-chip gold"'+_slItemTip(L.chart,'Treasure map — '+sailIsle(SAIL_CHARTS[L.chart].isle).n+' is now open to you.')
+        +'>'+iconHTML(L.chart)+ITEMS[L.chart].name+' — '
         +sailIsle(SAIL_CHARTS[L.chart].isle).n+' unsealed!</span>';
-      if(L.pet)  html+='<span class="sl-chip vio">'+iconHTML('spet_sailing')+'A Storm Petrel followed her home!</span>';
-      if(L.cape) html+='<span class="sl-chip gold">'+iconHTML('cape_sailing')+'Sailing Cape awarded!</span>';
-      if(L.capped) html+='<span class="sl-chip bad">cargo full — the rest was left behind</span>';
+      if(L.pet)  html+='<span class="sl-chip vio"'+_slItemTip('spet_sailing')+'>'+iconHTML('spet_sailing')+'A Storm Petrel followed her home!</span>';
+      if(L.cape) html+='<span class="sl-chip gold"'+_slItemTip('cape_sailing')+'>'+iconHTML('cape_sailing')+'Sailing Cape awarded!</span>';
+      if(L.capped) html+='<span class="sl-chip bad"'+_slTip('The hold filled before the haul was done. Fit a bigger Cargo hold, a bigger hull, or take a Cooper.')
+        +'>cargo full — the rest was left behind</span>';
       /* Satchel refusals (0.9.75) are named, not summarised — if a voyage turned away
          Salt-Forged Iron you need to know WHICH material to make room for. */
       if(L.refused){
         for(const id in L.refused)
-          html+='<span class="sl-chip bad">'+iconHTML(id)+'no room for '+(ITEMS[id]?ITEMS[id].name:id)
+          html+='<span class="sl-chip bad"'+_slItemTip(id,'Your satchel had no free slot for this, so it was left on the dock. Clear a slot and sail again.')
+            +'>'+iconHTML(id)+'no room for '+(ITEMS[id]?ITEMS[id].name:id)
                +' ×'+L.refused[id].toLocaleString()+' — satchel full</span>';
       }
-      if(L.g===3) html+='<span class="sl-chip bad">ship needs repair</span>';
+      if(L.g===3) html+='<span class="sl-chip bad"'+_slTip('A Wrecked return always damages the ship. She cannot sail until the Shipyard repairs her.')
+        +'>ship needs repair</span>';
       html+='</div>';
-      /* Ship's log (0.9.73). Guarded on L.log so a `last` written by an older
-         version still renders its card instead of throwing. */
+      /* Ship's log (0.9.73, trimmed 0.9.78). Guarded on L.log so a `last` written by
+         an older version still renders — those entries are {d,t} objects, this one
+         writes plain strings, and both are handled here. */
       if(L.log&&L.log.length){
-        html+='<div class="sl-log"><b>Ship\'s log</b>';
-        L.log.forEach(e=>{ html+='<p><i>'+e.d+'</i>'+e.t+'</p>'; });
+        html+='<div class="sl-log">';
+        L.log.forEach(e=>{ html+='<p>'+(typeof e==='string'?e:(e&&e.t)||'')+'</p>'; });
         html+='</div>';
       }
       html+='</div>';
@@ -27762,14 +27813,15 @@ function renderSail(){
       +'<span><em style="background:#dfb03c"></em>Triumphant · +40% cargo</span>'
       +'<span><em style="background:#7da33f"></em>Successful · full cargo</span>'
       +'<span><em style="background:#c9822e"></em>Battered · keep 65%</span>'
-      +'<span><em style="background:#a8412c"></em>Wrecked · keep 30%</span></div>'
+      +'<span><em style="background:#a8412c"></em>Wrecked · keep 30%, ship damaged</span></div>'
       /* Possible loot, not a fixed list — bulk shows each entry's share of the draw,
          rares show their flat per-voyage chance. */
       +'<div class="sl-lab">Possible haul · '+(isle.pk?isle.pk[0]+'–'+isle.pk[1]:'2')+' of '
       +(isle.d?isle.d.length:0)+' per voyage</div><div class="sl-chips">';
     const _tw=(isle.d||[]).reduce((a,e)=>a+e.w,0)||1;
     (isle.d||[]).forEach(e=>{
-      html+='<span class="sl-chip" data-tip="Share of each draw.">'+iconHTML(e.i)
+      html+='<span class="sl-chip"'+_slItemTip(e.i, Math.round(e.w/_tw*100)+'% share of each draw · '+e.q[0]+'–'+e.q[1]+' per pick.')
+        +'>'+iconHTML(e.i)
         +(ITEMS[e.i]?ITEMS[e.i].name:e.i)+' <b style="color:#6d8c9c">'+Math.round(e.w/_tw*100)+'%</b></span>';
     });
     html+='</div>';
@@ -27777,7 +27829,8 @@ function renderSail(){
       html+='<div class="sl-lab">Rare finds</div><div class="sl-chips">';
       isle.r.forEach(e=>{
         const pc=e.c*100;
-        html+='<span class="sl-chip gold" data-tip="Rolled on its own, every voyage.">'+iconHTML(e.i)
+        html+='<span class="sl-chip gold"'+_slItemTip(e.i, 'Rolled on its own every voyage, at '+(pc<1?pc.toFixed(1):Math.round(pc))+'%. Does not use up a bulk pick.')
+          +'>'+iconHTML(e.i)
           +(ITEMS[e.i]?ITEMS[e.i].name:e.i)+' <b>'+(pc<1?pc.toFixed(1):Math.round(pc))+'%</b></span>';
       });
       html+='</div>';
@@ -27792,7 +27845,8 @@ function renderSail(){
     if(mds.length){
       html+='<div class="sl-lab">Shipwright materials</div><div class="sl-chips">';
       mds.forEach(md=>{
-        html+='<span class="sl-chip gold" data-tip="Used to build the top hulls.">'+iconHTML(md.id)
+        html+='<span class="sl-chip gold"'+_slItemTip(md.id, Math.round(md.chance*100)+'% per voyage here. Salvage — it can only be brought back by sailing, and the top hulls, guns and sails are built from it.')
+          +'>'+iconHTML(md.id)
           +ITEMS[md.id].name+' · '+Math.round(md.chance*100)+'%</span>';
       });
       html+='</div>';
@@ -27900,8 +27954,15 @@ function renderSail(){
     html+=partRow('rudder',SAIL_RUDDERS,     s.rudder|0);
     html+=partRow('hold',  SAIL_HOLDS,       s.hold|0);
     html+=partRow('fig',   SAIL_FIGUREHEADS, s.fig|0);
-    html+='<div class="sl-card"><p class="sl-note" style="margin:0">Still to come: a log of what actually '
-      +'happened on the crossing.</p></div>';
+    /* Damage is the one rule players ask about, and until now it was never
+       written down anywhere — you inferred it from a red chip on a return card. */
+    html+='<div class="sl-card"><div class="sl-cardhd"><div><h4>How damage works</h4></div></div>'
+      +'<p class="sl-note" style="margin:0 0 8px">Only a <b>Wrecked</b> return damages the ship — a Battered one costs you cargo but nothing else. '
+      +'There is no damage meter and no gradual wear: she is either seaworthy or she is not.</p>'
+      +'<p class="sl-note" style="margin:0 0 8px">A damaged ship cannot leave the dock. Repairing costs a quarter of her build in '
+      +'<b>ordinary stores only</b> — logs and bars off the land, never salvage, so a wreck with an empty hold can always get moving again.</p>'
+      +'<p class="sl-note" style="margin:0">To wreck less: raise <b>Hull</b> (a bigger ship, or a Carpenter aboard), or fit a better '
+      +'<b>Rudder</b> — a rudder cannot make a voyage go well, it only turns some of the Wrecked share into Battered.</p></div>';
 
   } else if(sailTab==='crew'){
     /* ── crew ── */
@@ -27940,39 +28001,63 @@ function renderSail(){
     html+='</div>';
 
   } else if(sailTab==='hold'){
-    /* ── the Trove (0.9.71) ──
-       Five collectables that now carry passives. Rows show held / cap and the
-       effect at the CURRENT count, not the cap, so the next copy reads as an
-       upgrade rather than a target you have already met. */
+    /* ── the Trove (0.9.71, rewritten for clarity 0.9.78) ──
+       The mechanics never changed; the words did. The old copy said "counted",
+       showed an unlabelled per-copy figure in the right-hand chip, and described
+       where a keepsake comes from as "The Shallows" — which is a stretch of the
+       chart, not an island, so it read as a place you were supposed to find. Each
+       row now spells out three separate numbers in three separate places: how many
+       you hold, what they are giving you right now, and what one more would add. */
     const setOn=sailTroveSet();
+    const kept=SAIL_TROVES.filter(t=>sailTroveCount(t.id)>0).length;
     html+='<div class="sl-card"><div class="sl-cardhd"><div><h4>The Trove</h4>'
-      +'<div class="sl-metarow"><span class="sl-chip mut">'+SAIL_TROVES.filter(t=>sailTroveCount(t.id)>0).length
-      +' of '+SAIL_TROVES.length+' recovered</span></div></div></div>'
-      +'<p class="sl-note" style="margin:0 0 10px">One trove is drawn on any voyage that comes home Successful or better, '
-      +'at odds set by the island. Copies stack to five. Every one of these is permanent and cannot be bought.</p>';
+      +'<div class="sl-metarow"><span class="sl-chip mut">'+kept+' of '+SAIL_TROVES.length+' kinds found</span>'
+      +'<span class="sl-chip '+(setOn?'gold':'mut')+'">'+(setOn?'full set — +'+Math.round(SAIL_TROVE_SET_XP*100)+'% Sailing xp':'full set not yet held')+'</span>'
+      +'</div></div></div>'
+      +'<p class="sl-note" style="margin:0 0 10px">Five keepsakes — one kind for each stretch of the chart. '
+      +'Any voyage that returns <b>Successful</b> or <b>Triumphant</b> gets one roll for the keepsake belonging to the water it sailed to; '
+      +'the island\'s <b>Treasure</b> chance is the odds, and a Triumphant return doubles it.</p>'
+      +'<p class="sl-note" style="margin:0 0 10px">They are not equipment and there is nothing to activate. '
+      +'Holding one applies its bonus permanently, and each further copy applies it again — up to five copies, after which extras do nothing. '
+      +'They cannot be bought, sold, or used up.</p>';
     SAIL_TROVES.forEach(tv=>{
       const n=sailTroveCount(tv.id), raw=(state.items&&state.items[tv.id])|0;
       const it=ITEMS[tv.id], has=n>0, maxed=n>=tv.cap;
+      /* No right-hand control on these rows — there is nothing to press, and the
+         column is narrow enough that a chip there squeezed the name onto two
+         lines. Everything goes in the one text block, in reading order: how many,
+         what they give now, what one more would give. */
       html+='<div class="sl-hull'+(has?' cur':' lock')+'">'+iconHTML(tv.id)
-        +'<div class="i"><b>'+(has?it.name:'???')+(raw>1?' ×'+raw:'')+'</b>'
-        +'<div class="st"><span>'+n+' / '+tv.cap+' counted</span>'
-        +'<span>'+(has?tv.fmt(tv.per*n):'not yet recovered')+'</span></div>'
+        +'<div class="i"><b>'+(has?it.name:'??? — not found yet')+'</b>'
+        +'<div class="st"><span>you hold '+n+' of '+tv.cap+'</span>'
+        +'<span style="color:'+(has?'#b4d472':'#5f8496')+'">'
+          +(has?'now giving '+tv.fmt(tv.per*n):'giving nothing yet')+'</span>'
+        +'<span>'+(maxed?'full — this is the most it can give':(has?'one more: '+tv.fmt(tv.per*(n+1)):'the first: '+tv.fmt(tv.per)))+'</span>'
+        +(raw>tv.cap?'<span style="color:#a08a64">'+(raw-tv.cap)+' spare, doing nothing</span>':'')
+        +'</div>'
         +'<span class="cst" style="color:#7fa4b4">'
-        +(has?it.desc:'Drawn on a voyage to '+tv.from+'.')
-        +'</span></div>'
-        +'<span class="sl-chip '+(maxed?'gold':has?'good':'mut')+'">'+(maxed?'full':has?tv.fmt(tv.per):'—')+'</span>'
-        +'</div>';
+        +(has?it.desc:'Rolls on voyages to any island in '+tv.from+'.')
+        +'</span></div></div>';
     });
-    html+='<div class="sl-lab">Complete set</div>'
-      +'<p class="sl-note" style="margin:0 0 8px">One of each — including the Steady Lantern, which only comes off an island '
-      +'you have to get lost to find: <b>+'+Math.round(SAIL_TROVE_SET_XP*100)+'% Sailing XP</b>.</p>'
-      +'<div class="sl-chips"><span class="sl-chip '+(setOn?'gold':'mut')+'">'
-      +(setOn?'set complete — bonus active':'incomplete')+'</span></div>';
+    html+='<div class="sl-lab">Holding one of every kind</div>'
+      +'<p class="sl-note" style="margin:0">Hold at least one of all five at once — including the Steady Lantern, which only rolls on the '
+      +'island you have to get lost in Blackfog to find — and every voyage pays <b>+'+Math.round(SAIL_TROVE_SET_XP*100)+'% Sailing xp</b> on top of everything above. '
+      +(setOn?'<b style="color:#b4d472">Active.</b>':'You are missing '+(SAIL_TROVES.length-kept)+'.')+'</p>';
     html+='</div>';
   }
 
   html+='</div></div></div></div>';
+
+  /* Selecting an island rebuilds the whole panel, which threw the right-hand
+     column back to the top every click — the haul tables and the Set sail button
+     sit well below the fold, so browsing the chart meant re-scrolling each time.
+     Keep the offset across a re-render of the SAME tab; switching tabs still
+     starts at the top, which is what you want there. */
+  const _sbOld=p.querySelector('.sl-sidebody');
+  const _keepScroll=(_sbOld && _slRenderedTab===sailTab) ? _sbOld.scrollTop : 0;
+
   p.innerHTML=html;
+  _slRenderedTab=sailTab;
 
   /* ── listeners ── */
   const on=(id,ev,fn)=>{ const e=$(id); if(e) e.addEventListener(ev,fn); };
@@ -27987,7 +28072,8 @@ function renderSail(){
   on('slTabHold','click',()=>{ sailTab='hold'; renderSail(); });
   on('slZIn','click',()=>sailSetZoom(sailView.z*1.35));
   on('slZOut','click',()=>sailSetZoom(sailView.z/1.35));
-  on('slZFind','click',()=>{ if(sailView.z<1.8) sailView.z=1.8; sailCenterOn(sailSel); });
+  on('slZFit','click',()=>{ sailFitView(); sailPaintView(); });
+  on('slZFind','click',()=>{ if(sailView.z<1.25) sailView.z=1.25; sailCenterOn(sailSel); });
 
   p.querySelectorAll('[data-slbuild]').forEach(b=>{
     b.addEventListener('click',()=>sailBuild(+b.getAttribute('data-slbuild')));
@@ -28016,8 +28102,19 @@ function renderSail(){
 
   sailBindStage();
   sailFit();
+  /* Fit once per visit to the panel, never on a re-render or a resize — see the
+     note on SAIL_WORLD_W. */
+  if(!_slViewInit){ _slViewInit=true; sailFitView(); }
   sailClamp();
   sailPaintView();
+
+  /* Restore the side column LAST. sailFit() above is what gives .sl-wrap its
+     height, and until that runs the fresh column has no overflow to scroll —
+     assigning scrollTop before it silently clamps to 0. */
+  if(_keepScroll){
+    const _sbNew=p.querySelector('.sl-sidebody');
+    if(_sbNew) _sbNew.scrollTop=_keepScroll;
+  }
 }
 
 /* ── drag to pan / wheel to zoom ── */
