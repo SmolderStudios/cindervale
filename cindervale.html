@@ -3360,6 +3360,15 @@ body:not(.is-demo) .demo-only{display:none !important}
 .sl-r3{background:#1f1509;border-color:#6a4520}.sl-r3 h5{color:#c9822e}
 .sl-r4{background:#1d0d09;border-color:#63281c}.sl-r4 h5{color:#c4543a}
 .sl-result .sl-chips{margin-top:8px}
+/* Ship's log (0.9.73). Sits inside the result card under the chips, dimmer than
+   the grade blurb above it so the outcome still reads first. */
+.sl-log{margin-top:10px;padding-top:9px;border-top:1px solid rgba(255,255,255,.10)}
+.sl-log>b{display:block;font-family:'Cinzel',serif;font-size:11.5px;letter-spacing:1.2px;
+  text-transform:uppercase;color:#8fa8b4;margin-bottom:6px}
+.sl-log p{font-size:11.5px;line-height:1.5;margin:0 0 4px;color:#93a8b2}
+.sl-log p:last-child{margin-bottom:0}
+.sl-log i{display:inline-block;min-width:64px;font-style:normal;font-family:monospace;
+  font-size:10px;color:#6d8490;letter-spacing:.5px}
 
 /* shipyard */
 .sl-hull{display:flex;align-items:center;gap:9px;background:#0d1a24;border:1px solid #23404e;
@@ -3414,7 +3423,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.72</div>
+  <div class="mm-ver">v0.9.73</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -26408,6 +26417,85 @@ for(const _cid in SAIL_CHARTS){
 function sailHasChart(cid){ return !!(state.sail&&state.sail.charts&&state.sail.charts[cid]); }
 function sailChartFor(i){ return SAIL_CHART_BY_ISLE[i]||null; }
 
+/* ── the ship's log (0.9.73) ───────────────────────────────────────────────────
+   A voyage used to resolve to a grade and a pile of loot with no account of what
+   happened in between — nine hours of nothing, then a number. This writes four to
+   six dated lines that explain the grade using the run's actual facts: the water
+   she crossed, the parts fitted, the hands aboard, and what the outcome cost.
+
+   Every line is drawn from seeds stored at DEPARTURE, so the log is fixed the
+   moment you cast off. Reloading cannot reroll it, and a voyage resolved offline
+   produces exactly the log it would have produced in the foreground.
+
+   Lines are picked by condition, not at random from one pool — a Wrecker's Weather
+   entry can only appear on a Wrecker's Weather crossing, a rudder line only when a
+   rudder is fitted. That is the difference between a log and a fortune cookie. */
+const SAIL_LOG_WEATHER={
+  'Glass Calm':[
+    'Not a breath all morning. The hands took turns at the sweeps and complained about it.',
+    'Water like a slab of glass. You could see the bottom at nine fathoms and wished you could not.'],
+  'Chop':[
+    'Short steep sea on the beam. Nothing dangerous, everything wet.',
+    'She butted into it all day and the cook gave up on anything that needed a pot.'],
+  "Wrecker's Weather":[
+    'The wind backed round without warning and stayed there. Reefed down by noon.',
+    'Grey water coming green over the bow. This is the weather the coast is named for.'],
+  'Blackfog':[
+    'Fog came down thick enough to lose the masthead. Rang the bell every two minutes and heard nothing back.',
+    'No sun, no stars, no horizon for a day and a half. Navigated on faith and the lead line.'],
+  'The Maw':[
+    'Something followed the ship for six hours and did not surface.',
+    'The sea here does not run in one direction. It goes down more than it goes across.']
+};
+const SAIL_LOG_GRADE=[
+  ['Made the anchorage on a rising tide with the hold overfull and the crew singing.',
+   'Everything that could have gone right did. Nobody trusts a run like this and everybody enjoyed it.'],
+  ['Uneventful crossing both ways. The hold is full and the ship is sound.',
+   'Made the passage on schedule. No damage worth logging.'],
+  ['Took the worst of it broadside. Sprung planking above the waterline and a day of pumping.',
+   'She came home leaking and short a spar. The hold took water and some of it was cargo.'],
+  ['Struck in the dark and came off the reef with the pumps losing. Cut cargo loose to float her.',
+   'Lost the crossing outright. What came home came home because the crew would not let go of it.']
+];
+function _sailLogPick(arr, r){ return arr[Math.floor(r*arr.length)%arr.length]; }
+/* Builds the log for a resolved voyage. `seeds` are the stored departure rolls. */
+function sailBuildLog(dest, grade, g, seeds, ctx){
+  const r=(i)=>seeds&&seeds.length?seeds[i%seeds.length]:Math.random();
+  /* Stamps are position-based, not clock-based. A 20-minute hop to Shalefoot and a
+     14-hour haul to Voidmaw both get five entries, so a fixed "Day 2" is nonsense on
+     one and a fixed "Hour 2" on the other — the middle entries carry the elapsed
+     time for the run they actually belong to, and the ends say what they are. */
+  const hours=dest.m/60;
+  const out=[];
+  const at=(frac)=>{
+    const h=hours*frac;
+    if(hours>=24) return 'Day '+Math.max(1, Math.round(h/24));
+    if(h<1)       return Math.max(5, Math.round(h*60))+'m';
+    return Math.round(h)+'h';
+  };
+  const day=(n)=>n<=1?'Departed':(n>=4?'Returned':at(n/5));
+  out.push({d:day(1), t:'Cast off from Emberwatch for '+dest.n+'. '+
+    (dest.w==='Glass Calm'?'Barely a ripple in the harbour.':'The glass was falling before we cleared the mole.')});
+  const wx=SAIL_LOG_WEATHER[dest.w];
+  if(wx) out.push({d:day(2), t:_sailLogPick(wx, r(0))});
+  /* Parts and crew only speak when they exist. A rudder line on a plain tiller
+     would be the exact fortune-cookie problem this is meant to avoid. */
+  if(ctx.steer>0 && g>=2)
+    out.push({d:day(2), t:'The '+ctx.rudder+' held her head up through the worst of it. Without it she would have gone over.'});
+  else if(ctx.rig>0 && g<=1)
+    out.push({d:day(2), t:'Carried full canvas the whole reach. The '+ctx.sails+' pulled a day off the passage.'});
+  if(ctx.crewRole)
+    out.push({d:day(3), t:ctx.crewLine});
+  if(ctx.fogged)
+    out.push({d:day(3), t:'The fog took us. When it lifted the coast was wrong and no chart aboard admitted the place existed.'});
+  if(ctx.troveName)
+    out.push({d:day(3), t:'Brought up '+ctx.troveName+' in the shallows off the landing. It is in the hold and it is not for sale.'});
+  if(ctx.chartName)
+    out.push({d:day(3), t:'Found a chart among the wreckage, dry and legible. It shows water we have never had a name for.'});
+  out.push({d:day(4), t:_sailLogPick(SAIL_LOG_GRADE[g], r(1))});
+  return out;
+}
+
 /* ── shipwright dead-end audit ─────────────────────────────────────────────────
    Sea materials went into hull, cannon and sail costs in 0.9.69, which introduces
    a failure mode land materials never had: a tier can ask for something only the
@@ -26594,6 +26682,9 @@ function sailLaunch(i){
                   troveRoll:Math.random(), fogRoll:Math.random(), chartRoll:Math.random(),
                   matRolls:[Math.random(),Math.random(),Math.random(),Math.random()],
                   petRoll:Math.random(),
+                  /* Log seeds, drawn at departure like everything else, so the
+                     ship's log a voyage produces is fixed the moment she leaves. */
+                  logRolls:[Math.random(),Math.random(),Math.random(),Math.random()],
                   // 20 seeds is comfortably more than the deepest island consumes
                   // (1 pick-count + 2 per bulk pick + 2 per rare roll).
                   haulRolls:Array.from({length:20},()=>Math.random())};
@@ -26754,8 +26845,31 @@ function sailCheckArrival(){
   if(!state.sail.seen) state.sail.seen={};
   state.sail.seen[landed]=1;   // fills the chart marker in — landed, not merely charted
 
+  /* Ship's log (0.9.73). Built from the departure seeds and the facts of THIS run —
+     which parts were fitted, who was aboard, what turned up — so the lines explain
+     the grade rather than decorating it. */
+  const _logCrew=Object.keys(sailCrew()).filter(id=>sailCrew()[id]>0);
+  const _crewPick=_logCrew.length
+    ? _logCrew[Math.floor(((v.logRolls&&v.logRolls[2])||0)*_logCrew.length)%_logCrew.length] : null;
+  const _CREW_LINE={
+    carpenter:'The carpenter was below with a maul and a bucket of oakum for most of a watch, and said nothing about it after.',
+    cooper:   'The cooper restowed the whole hold on his own initiative and got another twenty barrels in.',
+    gunner:   'The gunner ran the guns out twice for practice and once because he meant it.',
+    navigator:'The navigator put us on the landing within a mile without ever seeming to look up.',
+    lookout:  'The lookout saw the shoal water before the leadsman felt it, which is the entire job.'
+  };
+  const _log=sailBuildLog(dest, grade, g, v.logRolls, {
+    steer:sailSteer(), rudder:sailRudder().n,
+    rig:sailRig(),     sails:sailSails().n,
+    crewRole:_crewPick, crewLine:_crewPick?_CREW_LINE[_crewPick]:'',
+    fogged:fogged,
+    troveName:trove?ITEMS[trove].name:null,
+    chartName:chartFound?ITEMS[chartFound].name:null
+  });
+
   state.sail.last={g:g, i:landed, from:v.i, fogged:fogged, got:got, trove:trove, chart:chartFound,
-                   pet:petFound, cape:capeFound, xp:xp, gold:gold, capped:capped, units:units};
+                   pet:petFound, cape:capeFound, xp:xp, gold:gold, capped:capped, units:units,
+                   log:_log};
   state.sail.voy=null;
   saveGame();
 
@@ -27285,7 +27399,15 @@ function renderSail(){
       if(L.cape) html+='<span class="sl-chip gold">'+iconHTML('cape_sailing')+'Sailing Cape awarded!</span>';
       if(L.capped) html+='<span class="sl-chip bad">cargo full — the rest was left behind</span>';
       if(L.g===3) html+='<span class="sl-chip bad">ship needs repair</span>';
-      html+='</div></div>';
+      html+='</div>';
+      /* Ship's log (0.9.73). Guarded on L.log so a `last` written by an older
+         version still renders its card instead of throwing. */
+      if(L.log&&L.log.length){
+        html+='<div class="sl-log"><b>Ship\'s log</b>';
+        L.log.forEach(e=>{ html+='<p><i>'+e.d+'</i>'+e.t+'</p>'; });
+        html+='</div>';
+      }
+      html+='</div>';
     }
 
     /* selected island */
