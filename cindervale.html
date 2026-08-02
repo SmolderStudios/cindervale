@@ -3423,7 +3423,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.73</div>
+  <div class="mm-ver">v0.9.74</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -12403,7 +12403,11 @@ function normalizeState(){
      of this and must load clean. `voy` holds an absolute endsAt (never a
      remaining duration) so offline resolution is one subtraction on load. ── */
   if(!state.sail||typeof state.sail!=='object'||Array.isArray(state.sail)) state.sail={};
+  /* Clamped at BOTH ends. The isFinite check catches NaN and Infinity but a plain
+     negative is finite, so a hand-edited save carrying xp:-5 used to survive intact
+     and then read as level 1 with a negative progress bar. */
   if(typeof state.sail.xp!=='number'||!isFinite(state.sail.xp)) state.sail.xp=0;
+  if(state.sail.xp<0) state.sail.xp=0;
   if(state.sail.xp>XP_CAP) state.sail.xp=XP_CAP;
   if(typeof state.sail.hull!=='number'||!(state.sail.hull>=0)) state.sail.hull=0;
   if(typeof SAIL_HULLS!=='undefined') state.sail.hull=Math.min(SAIL_HULLS.length-1, Math.floor(state.sail.hull));
