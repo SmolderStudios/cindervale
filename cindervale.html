@@ -3423,7 +3423,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.74</div>
+  <div class="mm-ver">v0.9.75</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -12945,9 +12945,17 @@ let viewTab='acts';
 /* Satchel expansion (1.0.29) — formula-based so the cap can grow deep into the
    late game. 15 base + up to 30 expansions × 5 = 165 max. Cost climbs ~1.5× per
    expansion (150g → ~19M g), rounded to 2 significant figures for clean prices. */
-const SATCHEL_BASE=15;
-const SATCHEL_SLOT_STEP=5;
-const SATCHEL_MAX_EXPANSIONS=30;       // 15 + 30×5 = 165 slots
+/* Resized in 0.9.75. Base 15 was set before Sailing existed and long before it
+   added 28 new material ids; an audit career filled the satchel and then had every
+   NEW item id silently refused for the rest of the run, never once receiving
+   Salt-Forged Iron. 28 base is enough that nobody trips it by accident while
+   levelling two or three skills, and the step went 5 → 8 so an early expansion is
+   worth the 150g. The cost curve is deliberately untouched — 30 expansions at
+   150g × 1.5^n is a ~57M gold sink and one of the few big ones in the game; this
+   only changes what each purchase buys, not what it costs. Ceiling 165 → 268. */
+const SATCHEL_BASE=28;
+const SATCHEL_SLOT_STEP=8;
+const SATCHEL_MAX_EXPANSIONS=30;       // 28 + 30×8 = 268 slots
 function satchelTierCost(n){           // n = 0-indexed expansion number → gold cost
   const raw=150*Math.pow(1.5,n);
   const mag=Math.pow(10,Math.max(1,Math.floor(Math.log10(raw))-1));
@@ -18408,7 +18416,7 @@ function renderInventory(){
     upBtn.className='sat-expand';
     const canAfford=state.coins>=nextCost*SILVER_PER_GOLD;
     if(!canAfford) upBtn.classList.add('poor');
-    upBtn.innerHTML=`<span class="se-ic">＋</span>Expand +5 slots · ${iconHTML('ui_coin')} ${nextCost.toLocaleString()}g`;
+    upBtn.innerHTML=`<span class="se-ic">＋</span>Expand +${SATCHEL_SLOT_STEP} slots · ${iconHTML('ui_coin')} ${nextCost.toLocaleString()}g`;
     upBtn.disabled=!canAfford;
     upBtn.addEventListener('click',()=>{
       const cost=satchelTierCost(state.satchelUpgrades||0);
@@ -26218,15 +26226,25 @@ function sailCrewNeed(isle){
    Emberwatch and take a bonus in The Maw — the same cross-tier shape the combat
    DROPS table uses, so the deep water can never be skipped by farming a safe
    island. Quantity is 1, or 2 on a Triumphant return. */
+/* Quantity by archipelago (0.9.75). These used to drop exactly 1, or 2 on a
+   Triumphant, at every depth — while the bulk table beside them scaled quantity
+   with the island. That asymmetry was the whole endgame bottleneck: a full ship
+   ladder wanted 30 Tidewrought Hearts at 0.20 a voyage (~1,440 hours) against 190
+   Wrack Timber at 35 a voyage (~12 hours), for materials gating the same tiers.
+   Deeper water now yields a bigger haul of salvage too, same as it does of
+   everything else, which brings the worst material to roughly 350h — in line with
+   the 500-680h it takes to reach Sailing 99. */
+const SAIL_MAT_QTY=[[1,1],[1,2],[2,4],[3,6]];   // indexed by isle.b
 function sailMatDrops(isle){
   const maw = isle.w==='The Maw', out=[];
-  if(isle.b>=1) out.push({id:'salt_iron',   chance:0.35+(isle.b-1)*0.08+(maw?0.08:0)});
-  if(isle.b>=2) out.push({id:'krakenbone',  chance:0.22+(isle.b-2)*0.10+(maw?0.10:0)});
-  if(isle.b>=3) out.push({id:'tidewrought', chance:0.10+(maw?0.06:0)});
+  const q = SAIL_MAT_QTY[Math.max(0,Math.min(SAIL_MAT_QTY.length-1, isle.b|0))];
+  if(isle.b>=1) out.push({id:'salt_iron',   chance:0.35+(isle.b-1)*0.08+(maw?0.08:0), q:q});
+  if(isle.b>=2) out.push({id:'krakenbone',  chance:0.22+(isle.b-2)*0.10+(maw?0.10:0), q:q});
+  if(isle.b>=3) out.push({id:'tidewrought', chance:0.10+(maw?0.06:0),                 q:q});
   /* Gun barrels are cut out of other people's wrecks, so they come from The Wracks
      first and stay available further out — the thing that beats The Maw is salvaged
      from ships The Maw already took. */
-  if(isle.b>=1) out.push({id:'cannon_barrel', chance:0.28+(isle.b-1)*0.07+(maw?0.05:0)});
+  if(isle.b>=1) out.push({id:'cannon_barrel', chance:0.28+(isle.b-1)*0.07+(maw?0.05:0), q:q});
   return out;
 }
 
@@ -26685,6 +26703,7 @@ function sailLaunch(i){
   state.sail.voy={i:i, endsAt:Date.now()+dur, dur:dur, roll:Math.random(),
                   troveRoll:Math.random(), fogRoll:Math.random(), chartRoll:Math.random(),
                   matRolls:[Math.random(),Math.random(),Math.random(),Math.random()],
+                  matQtyRolls:[Math.random(),Math.random(),Math.random(),Math.random()],
                   petRoll:Math.random(),
                   /* Log seeds, drawn at departure like everything else, so the
                      ship's log a voyage produces is fixed the moment she leaves. */
@@ -26745,6 +26764,13 @@ function sailCheckArrival(){
      Every roll comes from a seed stored at departure, so reloading cannot reroll.
      Cargo capacity is spent as we go, and anything that will not fit is left. */
   const got={};
+  /* Anything the satchel turned away (0.9.75). grantItem returns 0 for an item id
+     you have never held once the satchel is at capacity, so a voyage could land a
+     brand-new material and simply not give it to you — with a toast that offline
+     resolution never shows and nothing on the return card. Now it is recorded and
+     reported, because losing shipwright materials silently is the worst version of
+     this bug: a full satchel could stall the entire ship ladder invisibly. */
+  const refused={};
   const seeds=(v.haulRolls&&v.haulRolls.length>=14)?v.haulRolls:null;
   let sIdx=0;
   const nextSeed=()=>{ const r=seeds?seeds[sIdx%seeds.length]:Math.random(); sIdx++; return r; };
@@ -26758,6 +26784,7 @@ function sailCheckArrival(){
     if(amt<=0) return;
     const n=grantItem(id, amt);
     if(n>0){ got[id]=(got[id]||0)+n; if(!isRare) room-=n; markDiscovered(id); }
+    else refused[id]=(refused[id]||0)+amt;
   };
 
   const pool=(dest.d||[]).slice();
@@ -26814,9 +26841,15 @@ function sailCheckArrival(){
   sailMatDrops(dest).forEach((md,mi)=>{
     const r=(v.matRolls&&typeof v.matRolls[mi]==='number')?v.matRolls[mi]:Math.random();
     if(r<md.chance){
-      const qty=(g===0?2:1);
+      /* Quantity comes from the island's band (0.9.75), doubled on a Triumphant as
+         before. A voyage already at sea when this shipped has no matQtyRolls, so it
+         falls back to the low end of the range rather than rerolling. */
+      const qr=(v.matQtyRolls&&typeof v.matQtyRolls[mi]==='number')?v.matQtyRolls[mi]:0;
+      const band=md.q||[1,1];
+      const qty=Math.max(1, _sailRi(qr, band[0], band[1])*(g===0?2:1));
       const n=grantItem(md.id, qty);
       if(n>0){ mats[md.id]=n; got[md.id]=(got[md.id]||0)+n; markDiscovered(md.id); }
+      else refused[md.id]=(refused[md.id]||0)+qty;
     }
   });
 
@@ -26827,7 +26860,28 @@ function sailCheckArrival(){
   let xp=Math.round(dest.m*(8+Math.pow(dest.lv,1.65)*0.50)*grade.mult);
   if((state.items&&state.items.cape_sailing)>0) xp=Math.round(xp*1.05);
   if(sailTroveSet()) xp=Math.round(xp*(1+SAIL_TROVE_SET_XP));   // one of each in the hold
-  state.sail.xp=Math.min(XP_CAP,(state.sail.xp||0)+xp);
+  /* Demo cap (0.9.75). Sailing keeps its own xp pool and so never passed through
+     addSkillXp(), which is where the cap lives — the free browser build was handing
+     out the entire skill: all 26 islands, the shipwright ladder and every endgame
+     material, while Woodcutting stopped at 10. Capping the xp is all that is needed,
+     because every island is level-gated: a demo captain gets Shalefoot Shoals and
+     Gullstone Reef, which mirrors the two demo combat zones.
+
+     Mirrors addSkillXp exactly, including the part that matters most: a captain
+     ALREADY past the cap is left alone rather than demoted. Export/Import moves
+     saves between the full game and the browser build, so clamping downward here
+     would slash a real player's Sailing to Lv 10 on their next voyage. */
+  const _demo = (typeof IS_DEMO!=='undefined' && IS_DEMO);
+  const _sailCap = _demo ? Math.min(XP_CAP, demoXpCap()) : XP_CAP;
+  const _sailBefore = state.sail.xp||0;
+  if(_sailBefore >= _sailCap){
+    xp=0;                                             // at or past the cap — nothing granted, nothing taken
+    if(_demo) demoCapHit('level');
+  } else {
+    state.sail.xp=Math.min(_sailCap, _sailBefore+xp);
+    xp=state.sail.xp-_sailBefore;                     // report what was actually granted
+    if(_demo && state.sail.xp>=_sailCap) demoCapHit('level');
+  }
 
   /* Storm Petrel — the sailing pet. Rarer than a trove and scales with how far out
      you are, so it turns up over a long career rather than on a lucky first trip. */
@@ -26873,7 +26927,7 @@ function sailCheckArrival(){
 
   state.sail.last={g:g, i:landed, from:v.i, fogged:fogged, got:got, trove:trove, chart:chartFound,
                    pet:petFound, cape:capeFound, xp:xp, gold:gold, capped:capped, units:units,
-                   log:_log};
+                   refused:(Object.keys(refused).length?refused:null), log:_log};
   state.sail.voy=null;
   saveGame();
 
@@ -26899,9 +26953,19 @@ function sailCheckArrival(){
   return true;
 }
 
+/* The repair bill is deliberately LAND MATERIALS ONLY (0.9.75, fixing a softlock).
+   A damaged ship cannot launch, and sea materials can only be obtained by
+   launching — so charging salt_iron or krakenbone for a patch job meant that
+   wrecking with an empty hold left you permanently unable to sail, with no way
+   back. An audit career hit exactly that at Sailing 51 and could not continue.
+   Thematically it also reads better: the Emberwatch yard has timber and iron in
+   the sheds; what it does not have is other people's salvage. */
 function sailRepair(){
   const h=sailHull(), cost={};
-  for(const id in h.cost) cost[id]=Math.max(1,Math.ceil(h.cost[id]*0.25));
+  for(const id in h.cost){
+    if(ITEMS[id]&&ITEMS[id].sea) continue;
+    cost[id]=Math.max(1,Math.ceil(h.cost[id]*0.25));
+  }
   for(const id in cost){ if((state.items[id]||0)<cost[id]){ toast('Need '+cost[id]+'× '+(ITEMS[id]?ITEMS[id].name:id)+' to repair.'); return; } }
   for(const id in cost) state.items[id]=(state.items[id]||0)-cost[id];
   state.sail.damaged=false; saveGame(); renderSail(); toast('The yard has her seaworthy again.');
@@ -27402,6 +27466,13 @@ function renderSail(){
       if(L.pet)  html+='<span class="sl-chip vio">'+iconHTML('spet_sailing')+'A Storm Petrel followed her home!</span>';
       if(L.cape) html+='<span class="sl-chip gold">'+iconHTML('cape_sailing')+'Sailing Cape awarded!</span>';
       if(L.capped) html+='<span class="sl-chip bad">cargo full — the rest was left behind</span>';
+      /* Satchel refusals (0.9.75) are named, not summarised — if a voyage turned away
+         Salt-Forged Iron you need to know WHICH material to make room for. */
+      if(L.refused){
+        for(const id in L.refused)
+          html+='<span class="sl-chip bad">'+iconHTML(id)+'no room for '+(ITEMS[id]?ITEMS[id].name:id)
+               +' ×'+L.refused[id].toLocaleString()+' — satchel full</span>';
+      }
       if(L.g===3) html+='<span class="sl-chip bad">ship needs repair</span>';
       html+='</div>';
       /* Ship's log (0.9.73). Guarded on L.log so a `last` written by an older
@@ -27536,9 +27607,11 @@ function renderSail(){
       html+='</div>';
     });
     if(s.damaged){
-      const rc=Object.keys(h.cost).map(id=>Math.max(1,Math.ceil(h.cost[id]*0.25))+'× '+(ITEMS[id]?ITEMS[id].name:id)).join(' · ');
+      // Mirrors sailRepair: land materials only, so the bill shown is the bill charged.
+      const rc=Object.keys(h.cost).filter(id=>!(ITEMS[id]&&ITEMS[id].sea))
+        .map(id=>Math.max(1,Math.ceil(h.cost[id]*0.25))+'× '+(ITEMS[id]?ITEMS[id].name:id)).join(' · ');
       html+='<div class="sl-lab">Repairs</div>'
-        +'<p class="sl-note" style="margin:0 0 8px">She cannot sail until the yard is done. Cost is a quarter of her build: '+rc+'</p>'
+        +'<p class="sl-note" style="margin:0 0 8px">She cannot sail until the yard is done. Cost is a quarter of her build in ordinary stores — no salvage, since you cannot sail to fetch any: '+rc+'</p>'
         +'<div class="sl-btnrow"><button class="sl-btn" id="slFix">Repair the ship</button></div>';
     }
     html+='</div>';
