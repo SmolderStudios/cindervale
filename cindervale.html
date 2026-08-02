@@ -3423,7 +3423,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.75</div>
+  <div class="mm-ver">v0.9.76</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -5941,7 +5941,7 @@ const SKILLS={
     {id:'jw_sea_locket',name:'Drowned Locket',  cat:'sea',lvl:46,ms:16000,xp:820, spdMult:0.70,minMs:2560,inp:{sailors_locket:3,cut_ruby:1,gold_bar:2},      out:{drowned_locket:1}},
     {id:'jw_sea_tide',  name:'Tidebound Ring',  cat:'sea',lvl:70,ms:20000,xp:1340,spdMult:0.76,minMs:3200,inp:{tidebound_pearl:1,cut_diamond:1,mithril_bar:2},out:{tidebound_ring:1}},
     {id:'jw_sea_abyss', name:'Abyssal Pendant', cat:'sea',lvl:86,ms:24000,xp:2050,spdMult:0.79,minMs:3840,inp:{abyssal_pearl:2,cut_void:1,starfall_bar:1},    out:{abyssal_pendant:1}},
-    {id:'jw_sea_crown', name:"Drowned King's Jewel",cat:'sea',lvl:96,ms:30000,xp:2900,spdMult:0.79,minMs:4800,inp:{crown_fragment:5,starfall_bar:3,cut_void:2}, out:{drowned_jewel:1}},
+    {id:'jw_sea_crown', name:"Drowned King's Jewel",cat:'sea',lvl:96,ms:30000,xp:2900,spdMult:0.79,minMs:4800,inp:{crown_fragment:3,starfall_bar:2,cut_void:2}, out:{drowned_jewel:1}},
   ]},
   farming:{name:'Farming',icon:'🌾',acts:[]}, // Farming uses patch system — see renderFarming
 
@@ -26234,7 +26234,18 @@ function sailCrewNeed(isle){
    Deeper water now yields a bigger haul of salvage too, same as it does of
    everything else, which brings the worst material to roughly 350h — in line with
    the 500-680h it takes to reach Sailing 99. */
-const SAIL_MAT_QTY=[[1,1],[1,2],[2,4],[3,6]];   // indexed by isle.b
+/* ── Pace (0.9.76) ────────────────────────────────────────────────────────────
+   Jordan's call after the v0.9.74 survey: sailing should be a long skill, not a
+   several-hundred-hour one. Every rate moved together so the shape is unchanged
+   and only the scale shifts — xp, salvage and rare finds all came down by roughly
+   the same factor, which keeps the archipelagos in the same relative order.
+
+   SAIL_XP_BASE lifts the floor so the first twenty levels are not left behind by a
+   change that mostly multiplies the power term; SAIL_XP_COEF does the heavy work
+   from the Wracks outward. Measured with the career simulation, not estimated. */
+const SAIL_XP_BASE=20;      // was an inline 8
+const SAIL_XP_COEF=2.05;    // was an inline 0.50
+const SAIL_MAT_QTY=[[1,2],[3,6],[6,12],[9,18]];  // indexed by isle.b
 function sailMatDrops(isle){
   const maw = isle.w==='The Maw', out=[];
   const q = SAIL_MAT_QTY[Math.max(0,Math.min(SAIL_MAT_QTY.length-1, isle.b|0))];
@@ -26307,114 +26318,114 @@ function sailTroveSet(){ return SAIL_TROVES.every(tv=>sailTroveCount(tv.id)>0); 
    a source. Each band keeps one or two land materials in the bulk pool so sailing is
    still a way to top up ores and logs, just no longer the only thing it gives. */
 const SAIL_ISLES=[
-  {n:'Shalefoot Shoals',  b:0,lv:1, x:.13, y:.34,m:20, st:20, w:'Glass Calm',        o:[8,88,4,0],   find:12, g:2.4, pk:[2,3],
+  {n:'Shalefoot Shoals',  b:0,lv:1, x:.13, y:.34,m:20, st:20, w:'Glass Calm',        o:[8,88,4,0],   find:4, g:2.4, pk:[2,3],
    d:[{i:'rock_salt',w:30,q:[10,26]},{i:'driftwood',w:26,q:[8,20]},{i:'raw_minnow',w:20,q:[6,16]},{i:'gull_egg',w:12,q:[3,8]},{i:'pine_log',w:12,q:[8,18]}],
-   r:[{i:'tide_glass',c:0.060,q:[1,3]}],
+   r:[{i:'tide_glass',c:0.18,q:[1,3]}],
    f:'Tide-stripped flats an hour off the headland. Barely worth the trip, which is why they let beginners have it.'},
-  {n:'Gullstone Reef',    b:0,lv:8, x:.21, y:.19,m:35, st:35, w:'Chop',              o:[10,80,9,1],  find:15, g:2.9, pk:[2,3],
+  {n:'Gullstone Reef',    b:0,lv:8, x:.21, y:.19,m:35, st:35, w:'Chop',              o:[10,80,9,1],  find:5, g:2.9, pk:[2,3],
    d:[{i:'gull_egg',w:30,q:[6,15]},{i:'rock_salt',w:24,q:[12,28]},{i:'raw_sardine',w:20,q:[8,20]},{i:'driftwood',w:14,q:[10,24]},{i:'oak_log',w:12,q:[10,22]}],
-   r:[{i:'tide_glass',c:0.055,q:[1,3]},{i:'barnacle_iron',c:0.090,q:[1,4]}],
+   r:[{i:'tide_glass',c:0.165,q:[1,3]},{i:'barnacle_iron',c:0.27,q:[1,4]}],
    f:'Gannets by the thousand, and a reef that has opened more keels than it looks capable of.'},
-  {n:"Cutter's Rock",     b:0,lv:14,x:.115,y:.58,m:50, st:45, w:'Chop',              o:[11,77,11,1], find:18, g:3.4, pk:[2,3],
+  {n:"Cutter's Rock",     b:0,lv:14,x:.115,y:.58,m:50, st:45, w:'Chop',              o:[11,77,11,1], find:6, g:3.4, pk:[2,3],
    d:[{i:'barnacle_iron',w:28,q:[3,9]},{i:'driftwood',w:24,q:[12,28]},{i:'tin_ore',w:20,q:[10,24]},{i:'rock_salt',w:16,q:[10,24]},{i:'copper_ore',w:12,q:[10,22]}],
-   r:[{i:'tide_glass',c:0.070,q:[1,3]}],
+   r:[{i:'tide_glass',c:0.21,q:[1,3]}],
    f:'A single spire of black stone. Somebody keeps a lamp burning on it and nobody knows who.'},
-  {n:'Saltmarrow Cay',    b:0,lv:20,x:.235,y:.71,m:70, st:60, w:'Chop',              o:[12,74,13,1], find:20, g:4.1, pk:[2,3],
+  {n:'Saltmarrow Cay',    b:0,lv:20,x:.235,y:.71,m:70, st:60, w:'Chop',              o:[12,74,13,1], find:7, g:4.1, pk:[2,3],
    d:[{i:'kelp_frond',w:28,q:[10,24]},{i:'rock_salt',w:24,q:[14,32]},{i:'tanned_hide',w:18,q:[4,11]},{i:'silver_ore',w:16,q:[8,18]},{i:'raw_trout',w:14,q:[7,17]}],
-   r:[{i:'tide_glass',c:0.075,q:[1,4]},{i:'barnacle_iron',c:0.100,q:[2,5]}],
+   r:[{i:'tide_glass',c:0.225,q:[1,4]},{i:'barnacle_iron',c:0.3,q:[2,5]}],
    f:'Brackish, low, and green to the waterline. The hemp grows here whether anyone plants it or not.'},
-  {n:'The Herring Banks', b:0,lv:25,x:.30, y:.44,m:90, st:75, w:'Chop',              o:[13,72,14,1], find:22, g:4.6, pk:[2,4],
+  {n:'The Herring Banks', b:0,lv:25,x:.30, y:.44,m:90, st:75, w:'Chop',              o:[13,72,14,1], find:7, g:4.6, pk:[2,4],
    d:[{i:'raw_trout',w:28,q:[12,28]},{i:'raw_tuna',w:24,q:[9,22]},{i:'rock_salt',w:20,q:[16,36]},{i:'gull_egg',w:14,q:[5,13]},{i:'iron_ore',w:14,q:[10,24]}],
-   r:[{i:'tide_glass',c:0.070,q:[1,4]}],
+   r:[{i:'tide_glass',c:0.21,q:[1,4]}],
    f:'Fish so thick the water goes solid silver. Every fleet on the coast works these banks and they still do not run out.'},
-  {n:'Kelp Warren',       b:0,lv:30,x:.155,y:.85,m:110,st:85, w:"Wrecker's Weather", o:[14,64,20,2], find:26, g:5.2, pk:[2,4],
+  {n:'Kelp Warren',       b:0,lv:30,x:.155,y:.85,m:110,st:85, w:"Wrecker's Weather", o:[14,64,20,2], find:9, g:5.2, pk:[2,4],
    d:[{i:'kelp_frond',w:32,q:[16,38]},{i:'driftwood',w:22,q:[14,32]},{i:'coal',w:18,q:[10,24]},{i:'barnacle_iron',w:16,q:[3,9]},{i:'ironbark_log',w:12,q:[9,20]}],
-   r:[{i:'pearl',c:0.045,q:[1,2]},{i:'tide_glass',c:0.080,q:[2,5]}],
+   r:[{i:'pearl',c:0.135,q:[1,2]},{i:'tide_glass',c:0.24,q:[2,5]}],
    f:'A forest, but underneath. Rudders foul, crews get nervous, and something down there is patient.'},
 
-  {n:"Widow's Wrack",     b:1,lv:34,x:.355,y:.235,m:135,st:100,w:"Wrecker's Weather",o:[15,60,23,2], find:28, g:9.5, pk:[2,4],
+  {n:"Widow's Wrack",     b:1,lv:34,x:.355,y:.235,m:135,st:100,w:"Wrecker's Weather",o:[15,60,23,2], find:9, g:9.5, pk:[2,4],
    d:[{i:'wrack_timber',w:28,q:[24,56]},{i:'tarred_rope',w:24,q:[18,42]},{i:'iron_ore',w:18,q:[20,46]},{i:'salvaged_powder',w:16,q:[4,11]},{i:'sailors_locket',w:14,q:[1,3]}],
-   r:[{i:'ship_bell',c:0.050,q:[1,2]},{i:'drowned_ledger',c:0.025,q:[1,1]}],
+   r:[{i:'ship_bell',c:0.15,q:[1,2]},{i:'drowned_ledger',c:0.075,q:[1,1]}],
    f:'Nine ships on one reef across forty years. The Admiralty stopped counting after the ninth.'},
-  {n:'Brine Chapel',      b:1,lv:38,x:.45, y:.16, m:160,st:115,w:'Blackfog',         o:[16,58,24,2], find:30, g:10.4,pk:[2,4],
+  {n:'Brine Chapel',      b:1,lv:38,x:.45, y:.16, m:160,st:115,w:'Blackfog',         o:[16,58,24,2], find:10, g:10.4,pk:[2,4],
    d:[{i:'sailors_locket',w:26,q:[1,4]},{i:'wrack_timber',w:24,q:[22,50]},{i:'silver_ore',w:20,q:[16,38]},{i:'gem_dust',w:16,q:[6,15]},{i:'tarred_rope',w:14,q:[14,34]}],
-   r:[{i:'ship_bell',c:0.045,q:[1,2]},{i:'drowned_ledger',c:0.030,q:[1,1]}],
+   r:[{i:'ship_bell',c:0.135,q:[1,2]},{i:'drowned_ledger',c:0.09,q:[1,1]}],
    f:'Someone built a chapel on a rock that floods twice a day. The candles are always lit and always dry.'},
-  {n:'Emberfall Atoll',   b:1,lv:42,x:.395,y:.42, m:180,st:130,w:'Chop',             o:[17,63,18,2], find:32, g:11.2,pk:[2,4],
+  {n:'Emberfall Atoll',   b:1,lv:42,x:.395,y:.42, m:180,st:130,w:'Chop',             o:[17,63,18,2], find:11, g:11.2,pk:[2,4],
    d:[{i:'ember_log',w:28,q:[20,46]},{i:'ember_dust',w:24,q:[10,25]},{i:'wrack_timber',w:18,q:[20,46]},{i:'salvaged_powder',w:16,q:[5,13]},{i:'coal',w:14,q:[18,42]}],
-   r:[{i:'ship_bell',c:0.040,q:[1,2]}],
+   r:[{i:'ship_bell',c:0.12,q:[1,2]}],
    f:'The ring of an old caldera, still warm. Emberwood grows here and nowhere else at sea.'},
-  {n:'The Bonewash',      b:1,lv:46,x:.475,y:.585,m:210,st:145,w:"Wrecker's Weather",o:[17,55,25,3], find:34, g:12.1,pk:[3,4],
+  {n:'The Bonewash',      b:1,lv:46,x:.475,y:.585,m:210,st:145,w:"Wrecker's Weather",o:[17,55,25,3], find:11, g:12.1,pk:[3,4],
    d:[{i:'wrack_timber',w:26,q:[26,60]},{i:'tarred_rope',w:22,q:[20,46]},{i:'gold_ore',w:20,q:[14,34]},{i:'sailors_locket',w:16,q:[2,5]},{i:'ember_log',w:16,q:[18,42]}],
-   r:[{i:'beast_sinew',c:0.055,q:[1,1]},{i:'ship_bell',c:0.050,q:[1,2]},{i:'drowned_ledger',c:0.030,q:[1,1]}],
+   r:[{i:'beast_sinew',c:0.165,q:[1,1]},{i:'ship_bell',c:0.15,q:[1,2]},{i:'drowned_ledger',c:0.09,q:[1,1]}],
    f:'A white beach that is not sand. The tide brings more of it in every year from somewhere further out.'},
-  {n:'Tallow Key',        b:1,lv:50,x:.34, y:.73, m:240,st:160,w:'Blackfog',         o:[18,54,25,3], find:36, g:13.0,pk:[3,4],
+  {n:'Tallow Key',        b:1,lv:50,x:.34, y:.73, m:240,st:160,w:'Blackfog',         o:[18,54,25,3], find:12, g:13.0,pk:[3,4],
    d:[{i:'salvaged_powder',w:28,q:[7,17]},{i:'gold_ore',w:22,q:[16,38]},{i:'tarred_rope',w:18,q:[22,50]},{i:'mithril_ore',w:16,q:[12,28]},{i:'wrack_timber',w:16,q:[22,50]}],
-   r:[{i:'drowned_ledger',c:0.040,q:[1,2]},{i:'ship_bell',c:0.045,q:[1,2]}],
+   r:[{i:'drowned_ledger',c:0.12,q:[1,2]},{i:'ship_bell',c:0.135,q:[1,2]}],
    f:"A smuggler's key with six hidden inlets. The fog here is not entirely natural and the locals will not discuss it."},
-  {n:'Gravekeel Spit',    b:1,lv:54,x:.455,y:.865,m:270,st:175,w:'The Maw',          o:[19,48,28,5], find:40, g:14.4,pk:[3,5],
+  {n:'Gravekeel Spit',    b:1,lv:54,x:.455,y:.865,m:270,st:175,w:'The Maw',          o:[19,48,28,5], find:13, g:14.4,pk:[3,5],
    d:[{i:'wrack_timber',w:26,q:[30,66]},{i:'runite_ore',w:22,q:[14,34]},{i:'salvaged_powder',w:18,q:[8,19]},{i:'mithril_ore',w:18,q:[16,38]},{i:'sailors_locket',w:16,q:[2,6]}],
-   r:[{i:'shade_ember',c:0.050,q:[1,1]},{i:'ship_bell',c:0.060,q:[1,3]},{i:'drowned_ledger',c:0.045,q:[1,2]}],
+   r:[{i:'shade_ember',c:0.15,q:[1,1]},{i:'ship_bell',c:0.18,q:[1,3]},{i:'drowned_ledger',c:0.135,q:[1,2]}],
    f:'Every hull that ever sank between here and the Mistlands eventually washes up on this spit. So does whatever ate them.'},
 
-  {n:'Mistvault Isle',    b:2,lv:58,x:.585,y:.21, m:300,st:190,w:'Blackfog',         o:[19,52,25,4], find:42, g:26,  pk:[3,4],
+  {n:'Mistvault Isle',    b:2,lv:58,x:.585,y:.21, m:300,st:190,w:'Blackfog',         o:[19,52,25,4], find:14, g:26,  pk:[3,4],
    d:[{i:'mistglass',w:28,q:[36,80]},{i:'fogweed',w:24,q:[28,64]},{i:'mithril_ore',w:18,q:[24,54]},{i:'spire_stone',w:16,q:[12,30]},{i:'frost_log',w:14,q:[22,50]}],
-   r:[{i:'drowned_coin',c:0.055,q:[1,4]},{i:'tidebound_pearl',c:0.014,q:[1,2]}],
+   r:[{i:'drowned_coin',c:0.165,q:[1,4]},{i:'tidebound_pearl',c:0.042,q:[1,2]}],
    f:'It is on the chart. It is not always where the chart says. Three crews have sworn to this and one was sober.'},
-  {n:'The Drowned Spire', b:2,lv:62,x:.66, y:.37, m:345,st:205,w:'The Maw',          o:[20,46,28,6], find:45, g:28,  pk:[3,4],
+  {n:'The Drowned Spire', b:2,lv:62,x:.66, y:.37, m:345,st:205,w:'The Maw',          o:[20,46,28,6], find:15, g:28,  pk:[3,4],
    d:[{i:'spire_stone',w:28,q:[18,42]},{i:'mistglass',w:24,q:[34,76]},{i:'cobalt_ore',w:18,q:[22,50]},{i:'siren_scale',w:16,q:[6,16]},{i:'raw_salmon',w:14,q:[14,34]}],
-   r:[{i:'beast_sinew',c:0.050,q:[1,1]},{i:'drowned_coin',c:0.060,q:[2,5]},{i:'tidebound_pearl',c:0.016,q:[1,2]}],
+   r:[{i:'beast_sinew',c:0.15,q:[1,1]},{i:'drowned_coin',c:0.18,q:[2,5]},{i:'tidebound_pearl',c:0.048,q:[1,2]}],
    f:'A tower, upright, under sixty feet of water. Someone lit the top of it last winter.'},
-  {n:'Frostfang Skerry',  b:2,lv:66,x:.545,y:.51, m:390,st:220,w:"Wrecker's Weather",o:[20,49,27,4], find:48, g:30,  pk:[3,5],
+  {n:'Frostfang Skerry',  b:2,lv:66,x:.545,y:.51, m:390,st:220,w:"Wrecker's Weather",o:[20,49,27,4], find:16, g:30,  pk:[3,5],
    d:[{i:'frost_log',w:26,q:[30,68]},{i:'mistglass',w:22,q:[32,72]},{i:'cobalt_ore',w:18,q:[24,54]},{i:'frostcrocus',w:18,q:[8,20]},{i:'fogweed',w:16,q:[24,56]}],
-   r:[{i:'drowned_coin',c:0.055,q:[1,4]},{i:'siren_scale',c:0.090,q:[2,6]}],
+   r:[{i:'drowned_coin',c:0.165,q:[1,4]},{i:'siren_scale',c:0.27,q:[2,6]}],
    f:"The Tundra's teeth, seen from the water. Ice takes the rigging faster than a crew can chip it off."},
-  {n:'Hollowtide',        b:2,lv:70,x:.70, y:.63, m:435,st:235,w:'Blackfog',         o:[21,47,27,5], find:52, g:32,  pk:[3,5],
+  {n:'Hollowtide',        b:2,lv:70,x:.70, y:.63, m:435,st:235,w:'Blackfog',         o:[21,47,27,5], find:17, g:32,  pk:[3,5],
    d:[{i:'mistglass',w:26,q:[40,88]},{i:'fogweed',w:22,q:[32,72]},{i:'shadow_log',w:18,q:[26,58]},{i:'spire_stone',w:18,q:[16,38]},{i:'siren_scale',w:16,q:[8,20]}],
-   r:[{i:'pearl',c:0.070,q:[1,3]},{i:'drowned_coin',c:0.065,q:[2,6]},{i:'tidebound_pearl',c:0.018,q:[1,2]}],
+   r:[{i:'pearl',c:0.21,q:[1,3]},{i:'drowned_coin',c:0.195,q:[2,6]},{i:'tidebound_pearl',c:0.054,q:[1,2]}],
    f:'Twice a month the sea here goes out and does not come back for a day. What it uncovers is worth the wait.'},
-  {n:'The Weeping Stones',b:2,lv:74,x:.60, y:.78, m:480,st:250,w:"Wrecker's Weather",o:[21,46,28,5], find:56, g:34,  pk:[3,5],
+  {n:'The Weeping Stones',b:2,lv:74,x:.60, y:.78, m:480,st:250,w:"Wrecker's Weather",o:[21,46,28,5], find:19, g:34,  pk:[3,5],
    d:[{i:'spire_stone',w:28,q:[22,50]},{i:'gem_dust',w:22,q:[18,42]},{i:'runite_ore',w:18,q:[22,50]},{i:'mistglass',w:18,q:[34,76]},{i:'witchhazel',w:14,q:[8,20]}],
-   r:[{i:'drowned_coin',c:0.060,q:[2,6]},{i:'tidebound_pearl',c:0.017,q:[1,2]}],
+   r:[{i:'drowned_coin',c:0.18,q:[2,6]},{i:'tidebound_pearl',c:0.051,q:[1,2]}],
    f:'Nine standing stones in a rough circle, all of them wet in dry weather. Nobody has explained this.'},
-  {n:"Corsair's Gibbet",  b:2,lv:78,x:.665,y:.895,m:525,st:265,w:'The Maw',          o:[22,42,29,7], find:60, g:37,  pk:[3,5],
+  {n:"Corsair's Gibbet",  b:2,lv:78,x:.665,y:.895,m:525,st:265,w:'The Maw',          o:[22,42,29,7], find:20, g:37,  pk:[3,5],
    d:[{i:'siren_scale',w:26,q:[10,26]},{i:'gold_ore',w:22,q:[26,58]},{i:'spire_stone',w:18,q:[20,46]},{i:'runite_ore',w:18,q:[24,54]},{i:'fogweed',w:16,q:[28,64]}],
-   r:[{i:'shade_ember',c:0.060,q:[1,1]},{i:'drowned_coin',c:0.070,q:[2,7]},{i:'tidebound_pearl',c:0.020,q:[1,2]}],
+   r:[{i:'shade_ember',c:0.18,q:[1,1]},{i:'drowned_coin',c:0.21,q:[2,7]},{i:'tidebound_pearl',c:0.06,q:[1,2]}],
    f:'Where the Admiralty hanged them, and where the survivors went afterward. Both groups are still here in their way.'},
 
-  {n:'Blackreef Hollow',  b:3,lv:82,x:.775,y:.225,m:570,st:280,w:'The Maw',          o:[22,41,29,8], find:64, g:56,  pk:[3,5],
+  {n:'Blackreef Hollow',  b:3,lv:82,x:.775,y:.225,m:570,st:280,w:'The Maw',          o:[22,41,29,8], find:21, g:56,  pk:[3,5],
    d:[{i:'voidwood',w:26,q:[44,96]},{i:'deep_amber',w:22,q:[36,80]},{i:'shadow_log',w:18,q:[30,68]},{i:'runite_ore',w:18,q:[28,64]},{i:'leviathan_scale',w:16,q:[6,16]}],
-   r:[{i:'shade_ember',c:0.070,q:[1,1]},{i:'abyssal_pearl',c:0.070,q:[2,6]},{i:'starfall_cinder',c:0.022,q:[1,2]}],
+   r:[{i:'shade_ember',c:0.21,q:[1,1]},{i:'abyssal_pearl',c:0.21,q:[2,6]},{i:'starfall_cinder',c:0.132,q:[1,2]}],
    f:'Ashen Steppe water. The reef is not coral and it is not stone, and it has grown since it was charted.'},
-  {n:"Leviathan's Rest",  b:3,lv:86,x:.885,y:.375,m:630,st:300,w:'The Maw',          o:[23,38,29,10],find:70, g:60,  pk:[3,5],
+  {n:"Leviathan's Rest",  b:3,lv:86,x:.885,y:.375,m:630,st:300,w:'The Maw',          o:[23,38,29,10],find:23, g:60,  pk:[3,5],
    d:[{i:'leviathan_scale',w:30,q:[10,26]},{i:'voidwood',w:22,q:[40,88]},{i:'starsteel_ore',w:18,q:[26,58]},{i:'deep_amber',w:16,q:[32,72]},{i:'ancient_log',w:14,q:[24,54]}],
-   r:[{i:'voidheart',c:0.045,q:[1,1]},{i:'beast_sinew',c:0.060,q:[1,1]},{i:'abyssal_pearl',c:0.080,q:[3,8]},{i:'starfall_cinder',c:0.026,q:[1,2]}],
+   r:[{i:'voidheart',c:0.135,q:[1,1]},{i:'beast_sinew',c:0.18,q:[1,1]},{i:'abyssal_pearl',c:0.24,q:[3,8]},{i:'starfall_cinder',c:0.156,q:[1,2]}],
    f:'A ribcage the size of a cathedral, half-buried. It is not the largest one down there — only the one close enough to reach.'},
-  {n:'The Salt Gate',     b:3,lv:88,x:.755,y:.475,m:660,st:310,w:'Blackfog',         o:[24,40,29,7], find:74, g:62,  pk:[3,5],
+  {n:'The Salt Gate',     b:3,lv:88,x:.755,y:.475,m:660,st:310,w:'Blackfog',         o:[24,40,29,7], find:25, g:62,  pk:[3,5],
    d:[{i:'deep_amber',w:26,q:[40,88]},{i:'starsteel_ore',w:22,q:[28,64]},{i:'mistglass',w:18,q:[44,96]},{i:'voidwood',w:18,q:[38,84]},{i:'ancient_log',w:16,q:[26,58]}],
-   r:[{i:'abyssal_pearl',c:0.075,q:[3,8]},{i:'starfall_cinder',c:0.028,q:[1,2]},{i:'crown_fragment',c:0.010,q:[1,1]}],
+   r:[{i:'abyssal_pearl',c:0.225,q:[3,8]},{i:'starfall_cinder',c:0.168,q:[1,2]},{i:'crown_fragment',c:0.06,q:[1,1]}],
    f:'Two pillars of white stone standing in open ocean, four hundred miles from any land. They mark nothing. Crews sail between them anyway.'},
-  {n:'The Ashen Strand',  b:3,lv:90,x:.90, y:.565,m:690,st:320,w:"Wrecker's Weather",o:[23,42,28,7], find:78, g:64,  pk:[3,5],
+  {n:'The Ashen Strand',  b:3,lv:90,x:.90, y:.565,m:690,st:320,w:"Wrecker's Weather",o:[23,42,28,7], find:26, g:64,  pk:[3,5],
    d:[{i:'deep_amber',w:28,q:[44,96]},{i:'starsteel_ore',w:22,q:[30,68]},{i:'ember_dust',w:18,q:[28,64]},{i:'voidwood',w:16,q:[38,84]},{i:'ancient_log',w:16,q:[28,64]}],
-   r:[{i:'abyssal_pearl',c:0.070,q:[3,8]},{i:'starfall_cinder',c:0.030,q:[1,2]}],
+   r:[{i:'abyssal_pearl',c:0.21,q:[3,8]},{i:'starfall_cinder',c:0.18,q:[1,2]}],
    f:'Grey sand for eleven miles, and it is warm underfoot the whole way. Nothing grows. Everything washes up.'},
-  {n:'The Sunken Crown',  b:3,lv:93,x:.785,y:.675,m:750,st:340,w:'The Maw',          o:[24,36,29,11],find:84, g:68,  pk:[4,5],
+  {n:'The Sunken Crown',  b:3,lv:93,x:.785,y:.675,m:750,st:340,w:'The Maw',          o:[24,36,29,11],find:28, g:68,  pk:[4,5],
    d:[{i:'starsteel_ore',w:26,q:[32,72]},{i:'voidwood',w:22,q:[44,96]},{i:'leviathan_scale',w:18,q:[10,26]},{i:'deep_amber',w:18,q:[40,88]},{i:'spire_stone',w:16,q:[26,58]}],
-   r:[{i:'voidheart',c:0.050,q:[1,1]},{i:'abyssal_pearl',c:0.085,q:[4,9]},{i:'starfall_cinder',c:0.032,q:[1,3]},{i:'crown_fragment',c:0.016,q:[1,1]}],
+   r:[{i:'voidheart',c:0.15,q:[1,1]},{i:'abyssal_pearl',c:0.255,q:[4,9]},{i:'starfall_cinder',c:0.192,q:[1,2]},{i:'crown_fragment',c:0.096,q:[1,1]}],
    f:'A city, or the top of one, breaking the surface at low water. Whatever it was crowned is still down there wearing it.'},
-  {n:'Voidmaw Trench',    b:3,lv:97,x:.885,y:.80, m:840,st:370,w:'The Maw',          o:[25,32,29,14],find:90, g:74,  pk:[4,6],
+  {n:'Voidmaw Trench',    b:3,lv:97,x:.885,y:.80, m:840,st:370,w:'The Maw',          o:[25,32,29,14],find:30, g:74,  pk:[4,6],
    d:[{i:'voidwood',w:26,q:[50,110]},{i:'deep_amber',w:20,q:[44,96]},{i:'starsteel_ore',w:18,q:[34,76]},{i:'leviathan_scale',w:16,q:[12,30]},{i:'ancient_log',w:12,q:[30,68]},{i:'spire_stone',w:8,q:[28,64]}],
-   r:[{i:'voidheart',c:0.055,q:[1,1]},{i:'abyssal_pearl',c:0.090,q:[4,10]},{i:'starfall_cinder',c:0.036,q:[1,3]},{i:'crown_fragment',c:0.020,q:[1,1]}],
+   r:[{i:'voidheart',c:0.165,q:[1,1]},{i:'abyssal_pearl',c:0.27,q:[4,10]},{i:'starfall_cinder',c:0.216,q:[1,2]},{i:'crown_fragment',c:0.12,q:[1,1]}],
    f:'You do not land here. You lower things into it and haul up whatever has attached itself on the way.'},
 
   /* Unlogged — reachable only by a Blackfog misdelivery, then charted for good. */
-  {n:'The Lantern Isles', b:3,lv:80,x:.915,y:.13, m:540,st:290,w:'Blackfog',o:[30,45,20,5],find:8,hid:1, g:70, pk:[3,5],
+  {n:'The Lantern Isles', b:3,lv:80,x:.915,y:.13, m:540,st:290,w:'Blackfog',o:[30,45,20,5],find:4,hid:1, g:70, pk:[3,5],
    d:[{i:'starsteel_ore',w:26,q:[30,68]},{i:'deep_amber',w:22,q:[38,84]},{i:'mistglass',w:20,q:[42,92]},{i:'voidwood',w:18,q:[36,80]},{i:'gem_dust',w:14,q:[22,50]}],
-   r:[{i:'abyssal_pearl',c:0.120,q:[4,10]},{i:'tidebound_pearl',c:0.060,q:[1,3]},{i:'crown_fragment',c:0.030,q:[1,1]}],
+   r:[{i:'abyssal_pearl',c:0.3,q:[4,10]},{i:'tidebound_pearl',c:0.18,q:[1,3]},{i:'crown_fragment',c:0.18,q:[1,1]}],
    f:'Not on any Admiralty chart. Crews who arrive here did not mean to. Every one of them describes the same lights.'},
-  {n:'Nowhere Cay',       b:2,lv:64,x:.515,y:.115,m:360,st:210,w:'Blackfog',o:[28,47,21,4],find:8,hid:1, g:34, pk:[3,5],
+  {n:'Nowhere Cay',       b:2,lv:64,x:.515,y:.115,m:360,st:210,w:'Blackfog',o:[28,47,21,4],find:4,hid:1, g:34, pk:[3,5],
    d:[{i:'mistglass',w:26,q:[38,84]},{i:'fogweed',w:22,q:[32,72]},{i:'gem_dust',w:20,q:[20,46]},{i:'spire_stone',w:18,q:[18,42]},{i:'mithril_ore',w:14,q:[24,54]}],
-   r:[{i:'tidebound_pearl',c:0.055,q:[1,3]},{i:'drowned_coin',c:0.140,q:[2,7]}],
+   r:[{i:'tidebound_pearl',c:0.165,q:[1,3]},{i:'drowned_coin',c:0.3,q:[2,7]}],
    f:'Reached only by being lost. The cartographers have a name for islands like this and it is not a polite one.'}
 ];
 
@@ -26425,10 +26436,10 @@ const SAIL_ISLES=[
    `isle`/`from` are indices into SAIL_ISLES — kept in one table so the island
    data and the drop source can never drift apart. */
 const SAIL_CHARTS={
-  chart_gravekeel:{isle:11, from:6,  chance:0.030},
-  chart_gibbet:   {isle:17, from:10, chance:0.025},
-  chart_crown:    {isle:22, from:13, chance:0.020},
-  chart_voidmaw:  {isle:23, from:19, chance:0.015}
+  chart_gravekeel:{isle:11, from:6,  chance:0.09},
+  chart_gibbet:   {isle:17, from:10, chance:0.075},
+  chart_crown:    {isle:22, from:13, chance:0.06},
+  chart_voidmaw:  {isle:23, from:19, chance:0.045}
 };
 /* Reverse lookups, built once so render paths never scan the table. */
 const SAIL_CHART_BY_ISLE={}, SAIL_CHART_BY_SRC={};
@@ -26857,7 +26868,7 @@ function sailCheckArrival(){
      roughly 40x behind every other skill, putting Lv99 past 3,400 hours of voyage
      time. A power term makes each archipelago a real step up and lands 99 at
      ~500 hours, which suits a skill you check twice a day rather than play. */
-  let xp=Math.round(dest.m*(8+Math.pow(dest.lv,1.65)*0.50)*grade.mult);
+  let xp=Math.round(dest.m*(SAIL_XP_BASE+Math.pow(dest.lv,1.65)*SAIL_XP_COEF)*grade.mult);
   if((state.items&&state.items.cape_sailing)>0) xp=Math.round(xp*1.05);
   if(sailTroveSet()) xp=Math.round(xp*(1+SAIL_TROVE_SET_XP));   // one of each in the hold
   /* Demo cap (0.9.75). Sailing keeps its own xp pool and so never passed through
