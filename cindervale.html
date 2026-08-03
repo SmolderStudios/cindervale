@@ -3542,7 +3542,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.87</div>
+  <div class="mm-ver">v0.9.88</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -5044,26 +5044,26 @@ const ITEMS={
   // Each weapon sits between two standard tiers, granted ~10-20% stat advantage
   // over the lower tier as a reward for grinding the source zone. Tagged with
   // dmgType so the damage-type matchup system works; subcat handled in recipe.
-  plague_fang_dagger:{name:'Plague Fang Dagger', icon:'🗡️', sell:280,  cgear:true, ctier:2, cslot:'weapon', dmgType:'stab',  wfx:{poison:{mult:0.10}}, desc:'A rat fang the length of a finger, lashed to a rough iron tang. The wounds it leaves sour and weep — every cut carries the warren\'s rot.'},
-  chitin_maul:       {name:'Chitin Maul',        icon:'🔨', sell:720,  cgear:true, ctier:3, cslot:'weapon', dmgType:'crush', desc:'A weighted ball of jagged spider plates bound in spinneret silk. Sounds like crunching shell when it lands.'},
-  warcleaver:        {name:'Warcleaver',         icon:'⚔️', sell:1400, cgear:true, ctier:4, cslot:'weapon', dmgType:'slash', desc:'A crude goblin cleaver, reforged proper around a steel core and wrapped in tanned hide. Still smells faintly of the cave.'},
+  plague_fang_dagger:{name:'Plague Fang Dagger', icon:'🗡️', sell:280,  cgear:true, ctier:1, cslot:'weapon', dmgType:'stab',  wfx:{poison:{mult:0.10}}, desc:'A rat fang the length of a finger, lashed to a rough iron tang. The wounds it leaves sour and weep — every cut carries the warren\'s rot.'},
+  chitin_maul:       {name:'Chitin Maul',        icon:'🔨', sell:720,  cgear:true, ctier:2, cslot:'weapon', dmgType:'crush', desc:'A weighted ball of jagged spider plates bound in spinneret silk. Sounds like crunching shell when it lands.'},
+  warcleaver:        {name:'Warcleaver',         icon:'⚔️', sell:1400, cgear:true, ctier:3, cslot:'weapon', dmgType:'slash', desc:'A crude goblin cleaver, reforged proper around a steel core and wrapped in tanned hide. Still smells faintly of the cave.'},
   bone_reaper:       {name:'Bone Reaper',        icon:'⚔️', sell:2800, cgear:true, ctier:4, cslot:'weapon', dmgType:'slash', desc:'A curved blade carved from a single rib plate, edged with ground bone-shard and steel. Hums when undead are near.'},
-  soulbinder_hammer: {name:'Soulbinder Hammer',  icon:'🔨', sell:3200, cgear:true, ctier:5, cslot:'weapon', dmgType:'crush', desc:'A bone-headed maul with a soul shard fused into its crown. The shard pulses with the heartbeats of the things it has felled.'},
+  soulbinder_hammer: {name:'Soulbinder Hammer',  icon:'🔨', sell:3200, cgear:true, ctier:4, cslot:'weapon', dmgType:'crush', desc:'A bone-headed maul with a soul shard fused into its crown. The shard pulses with the heartbeats of the things it has felled.'},
   ironfang_claws:    {name:'Ironfang Claws',     icon:'🗡️', sell:4800, cgear:true, ctier:5, cslot:'weapon', dmgType:'stab',  desc:'Twin alpha claws strapped over a leather gauntlet. The wolf-bones bound along the wrist still rattle when you swing.'},
   // ─── Themed combat-drop capes (1.0.96) — back-slot, monster-themed ─────
   // Each cape uses unused drops from its source zone. Stat budget sits between
   // base tier capes; flavor adds a sliver of atk or str on top of pure def.
-  ratskin_cape:      {name:'Ratskin Cape',       icon:'🧣', sell:220,  cgear:true, ctier:2, cslot:'cape', desc:"A patchwork cape stitched from cured rat-hide and gnawed bone-buttons. Smells of the warrens; nothing in the warrens will smell you coming."},
-  silkwoven_cape:    {name:'Silkwoven Cape',     icon:'🧣', sell:680,  cgear:true, ctier:3, cslot:'cape', desc:"Woven from spider silk and dipped in diluted venom. The fabric moves like it's still alive."},
-  warband_cape:      {name:'Warband Cape',       icon:'🧣', sell:1400, cgear:true, ctier:4, cslot:'cape', desc:"A goblin chieftain's mantle — tanned hide draped over the shoulders, hung with feathers and tribal fetishes that rattle when you walk."},
-  wraithweave_cape:  {name:'Wraithweave Cape',   icon:'🧣', sell:2900, cgear:true, ctier:5, cslot:'cape', desc:"Cloth pulled from a captured wraith and pinned with cursed dust. It billows in still air and chills the spine of anyone behind you."},
-  pack_alpha_cape:   {name:'Pack Alpha Cape',    icon:'🧣', sell:5400, cgear:true, ctier:6, cslot:'cape', desc:"A heavy mantle of dire-wolf pelt lined with frostfur. Worn by those who lead the pack — or by those bold enough to claim the right."},
+  ratskin_cape:      {name:'Ratskin Cape',       icon:'🧣', sell:220,  cgear:true, ctier:1, cslot:'cape', desc:"A patchwork cape stitched from cured rat-hide and gnawed bone-buttons. Smells of the warrens; nothing in the warrens will smell you coming."},
+  silkwoven_cape:    {name:'Silkwoven Cape',     icon:'🧣', sell:680,  cgear:true, ctier:2, cslot:'cape', desc:"Woven from spider silk and dipped in diluted venom. The fabric moves like it's still alive."},
+  warband_cape:      {name:'Warband Cape',       icon:'🧣', sell:1400, cgear:true, ctier:3, cslot:'cape', desc:"A goblin chieftain's mantle — tanned hide draped over the shoulders, hung with feathers and tribal fetishes that rattle when you walk."},
+  wraithweave_cape:  {name:'Wraithweave Cape',   icon:'🧣', sell:2900, cgear:true, ctier:4, cslot:'cape', desc:"Cloth pulled from a captured wraith and pinned with cursed dust. It billows in still air and chills the spine of anyone behind you."},
+  pack_alpha_cape:   {name:'Pack Alpha Cape',    icon:'🧣', sell:5400, cgear:true, ctier:5, cslot:'cape', desc:"A heavy mantle of dire-wolf pelt lined with frostfur. Worn by those who lead the pack — or by those bold enough to claim the right."},
   // ─── Themed combat-drop chestplates (1.0.96) — body slot, set-piece feel ──
-  ratskin_tunic:     {name:'Ratskin Tunic',      icon:'🦺', sell:380,  cgear:true, ctier:2, cslot:'chest', desc:"Layered ratskin patches sewn over a leather core. Cheap, stinking, and surprisingly tough."},
-  chitin_plate:      {name:'Chitin Plate',       icon:'🦺', sell:1100, cgear:true, ctier:3, cslot:'chest', desc:"Overlapping spider-plate scales stitched with silk. The chitin still has its faint violet sheen, and the joints are sharp enough to cut a careless grappler."},
-  warband_armor:     {name:'Warband Hide Armour', icon:'🦺', sell:2200, cgear:true, ctier:4, cslot:'chest', desc:"Goblin warrior plate — boiled hide reinforced with crude iron studs and bone charms. The tribal markings still glisten with old paint."},
-  bone_plate_cuirass:{name:'Bone Plate Cuirass', icon:'🦺', sell:4400, cgear:true, ctier:5, cslot:'chest', desc:"A breastplate of riveted rib-plates and ancient bone, lashed to a mithril frame. Heavy as guilt; turns blades that would gut a knight."},
-  pack_leader_vest:  {name:'Pack Leader Vest',   icon:'🦺', sell:8200, cgear:true, ctier:6, cslot:'chest', desc:"A scarred vest of pack-leader pelts bound with cobalt rivets. The howling horn at the throat makes a low, mournful sound when you breathe."},
+  ratskin_tunic:     {name:'Ratskin Tunic',      icon:'🦺', sell:380,  cgear:true, ctier:1, cslot:'chest', desc:"Layered ratskin patches sewn over a leather core. Cheap, stinking, and surprisingly tough."},
+  chitin_plate:      {name:'Chitin Plate',       icon:'🦺', sell:1100, cgear:true, ctier:2, cslot:'chest', desc:"Overlapping spider-plate scales stitched with silk. The chitin still has its faint violet sheen, and the joints are sharp enough to cut a careless grappler."},
+  warband_armor:     {name:'Warband Hide Armour', icon:'🦺', sell:2200, cgear:true, ctier:3, cslot:'chest', desc:"Goblin warrior plate — boiled hide reinforced with crude iron studs and bone charms. The tribal markings still glisten with old paint."},
+  bone_plate_cuirass:{name:'Bone Plate Cuirass', icon:'🦺', sell:4400, cgear:true, ctier:4, cslot:'chest', desc:"A breastplate of riveted rib-plates and ancient bone, lashed to a mithril frame. Heavy as guilt; turns blades that would gut a knight."},
+  pack_leader_vest:  {name:'Pack Leader Vest',   icon:'🦺', sell:8200, cgear:true, ctier:5, cslot:'chest', desc:"A scarred vest of pack-leader pelts bound with cobalt rivets. The howling horn at the throat makes a low, mournful sound when you breathe."},
   // ─── Socket Gems ─── (5 colors × 3 tiers — chipped / polished / flawless)
   // Mapping: sanguine=combat ATK, verdant=combat HP, azure=combat DEF,
   //          topaz=SKILLING gpBoost, onyx=SKILLING speed/xpBoost.
@@ -14524,8 +14524,8 @@ function mods(skill){
      multiplicatively. This slows gain at high investment (e.g. tree + potion + jewelry
      used to multiply together; now they simply sum).
      Exception: explicit ×2 unlock nodes stay multiplicative — they're earned milestones. */
-  const xpTree   = (skill==='woodcutting'?r(p+'_xp')*0.05:skill==='alchemy'?r(p+'_xp')*0.02:skill==='cooking'?r(p+'_xp')*0.007:skill==='firemaking'?r(p+'_xp')*0.015:r(p+'_xp')*0.03)  // wc:5%, alchemy:2%, cooking:0.7%, firemaking:1.5%, others:3%
-                 + (skill!=='mining'&&skill!=='woodcutting'?r(p+'_gm_xp')*(skill==='cooking'?0.008:skill==='firemaking'?0.02:0.03):0)
+  const xpTree   = (skill==='woodcutting'?r(p+'_xp')*0.05:skill==='alchemy'?r(p+'_xp')*0.02:skill==='cooking'?r(p+'_xp')*0.015:skill==='firemaking'?r(p+'_xp')*0.015:r(p+'_xp')*0.03)  // wc:5%, alchemy:2%, cooking:1.5%, firemaking:1.5%, others:3%
+                 + (skill!=='mining'&&skill!=='woodcutting'?r(p+'_gm_xp')*(skill==='cooking'?0.02:skill==='firemaking'?0.02:0.03):0)
                  + (skill==='woodcutting'?r('wc_gm_xp')*0.03:0);
   const xpAdditive = xpTree
                    + activeEffectBonus('xp')        // potion
@@ -14545,13 +14545,13 @@ function mods(skill){
              : skill==='woodcutting'?(r('wc_gm_2x_xp')>0?1.5:1)
              : skill==='fishing'    ?(r('fi_gm_2x_xp')>0?1.5:1)
              : skill==='foraging'   ?(r('fo_master3')>0?1.5:1)
-             : skill==='cooking'    ?(r('co_gm_2x_xp')>0?1.25:1)
+             : skill==='cooking'    ?(r('co_gm_2x_xp')>0?1.5:1)
              : skill==='firemaking' ?(r('fm_master3')>0?1.5:1)
              : (r(p+'_master3')>0?2:1);
 
   return {
-    speed:   r(p+'_speed')*(skill==='cooking'?0.006:skill==='firemaking'?0.009:SPD_RANK)
-           + r(p+'_gm_speed')*(skill==='cooking'?0.007:skill==='firemaking'?0.012:SPD_GM)
+    speed:   r(p+'_speed')*(skill==='cooking'?0.009:skill==='firemaking'?0.009:SPD_RANK)
+           + r(p+'_gm_speed')*(skill==='cooking'?0.012:skill==='firemaking'?0.012:SPD_GM)
            /* Forge Sense is a MINING node that buffs SMITHING (its name, desc and
               tip all say so). It used to be added to the mining speed term, where
               `r` is bound to the mining tree — so it silently sped up Mining and
@@ -20297,7 +20297,10 @@ Object.assign(ICONS,{
     [7, 84, 17, 8, 0.030,0.030,0.035,  9000],
     [8, 90, 20, 9, 0.035,0.035,0.040, 16000],
     [9, 93, 24,10, 0.040,0.040,0.045, 30000],
-    [10,96, 20, 8, 0.040,0.040,0.050, 60000],  // low def by design — rogue offhand, not a tank piece
+    // T10 must still beat T9 on raw stats — it used to REGRESS (def 20 < 24,
+    // atk 8 < 10), so the capstone buckler was a downgrade from the one below it.
+    // "Low def by design" is about bucklers vs shields, not about this rung.
+    [10,96, 27,11, 0.045,0.045,0.050, 60000],
   ];
   /* Buckler XP/time is interpolated off the mainline shield ladder at the
      buckler's own level, then discounted 12% for the log the recipe doesn't ask
@@ -20640,7 +20643,11 @@ const DAWN_MAT_POOL=[
 const RAIDS=[
   {
     id:'sunken_barrow', name:'The Sunken Barrow', icon:'sunken_barrow',
-    accent:'#4a9a8a', unlockLvl:60,
+    // Unlock matches the loot: all nine gearDrops are ctier 7, which
+    // COMBAT_GEAR_REQ gates at Defence/Attack 70. At the old unlockLvl of 60 the
+    // entire reward table sat unequippable in the satchel for ten combat levels.
+    // Every other raid already lines up (Emberforge 80/80, Abyssal 90/90).
+    accent:'#4a9a8a', unlockLvl:70,
     blurb:"A warrior-king's tomb, drowned when the old dam broke. His honour guard never stopped their vigil — and they do not open the door for the living.",
     // Sequence — 4 revenants + 1 mini-boss + 1 final boss. HP totals ~9.4k with no
     // heal between stages; a geared Lv70 raider clears in ~3.5–5 min.
