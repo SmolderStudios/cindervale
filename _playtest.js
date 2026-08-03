@@ -68,6 +68,33 @@ if (live.ver !== live.html) {
   process.exit(1);
 }
 
+/* The demo is the public storefront for a paid game, and a gate that lives in one
+ * code path is a gate that can silently go missing. v0.9.61 shipped to /demo/
+ * without the sailing XP cap (added at 0.9.75), so the free build handed out all
+ * 26 islands and the whole shipwright ladder while Woodcutting stopped at 10 —
+ * and nothing caught it for fourteen versions. Assert every known gate token is
+ * present in the build being published before it is written.
+ */
+const DEMO_GATE_TOKENS = [
+  ['_sailCap',          'sailing XP cap'],
+  ['demoXpCap',         'skill XP cap'],
+  ['DEMO_LEVEL_CAP',    'level cap constant'],
+  ['DEMO_ZONES',        'zone allowlist'],
+  ['demoCapHit',        'buy prompt'],
+  ['_devSellTaps>=5&&!IS_DEMO', 'dev-panel gesture gate'],
+];
+if (channel === 'demo') {
+  const src = fs.readFileSync(path.join(root, 'cindervale.html'), 'utf8');
+  const missing = DEMO_GATE_TOKENS.filter(([t]) => !src.includes(t));
+  if (missing.length) {
+    console.error('Refusing to publish the demo: these gates are missing from the build —');
+    for (const [t, why] of missing) console.error(`  ${t}  (${why})`);
+    console.error('The demo is public. Fix the gates, then re-run.');
+    process.exit(1);
+  }
+  console.log(`demo gate check: all ${DEMO_GATE_TOKENS.length} tokens present.`);
+}
+
 const before = read(channel).ver;
 fs.mkdirSync(dir, { recursive: true });
 // version.json LAST: until it changes the wrapper ignores the new HTML, so this
