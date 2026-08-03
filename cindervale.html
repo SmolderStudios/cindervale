@@ -3528,7 +3528,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.81</div>
+  <div class="mm-ver">v0.9.82</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -10862,6 +10862,11 @@ function harvestPatch(patchId, silent){
   if(state.patchNotified) delete state.patchNotified[patchId];
   // Skilling gear drop on harvest (treat each harvest as equivalent to a mid-level act)
   rollSkillingGear('farming', crop.lvl||1, 1);
+  // ...and the skilling pet, for the same reason. rollSkillPet is otherwise only
+  // called from completeAction, and SKILLS.farming.acts is empty (farming runs on
+  // the patch system), so without this the Furrow Mole could never drop and the
+  // Skilling Familiars counter was hard-capped at 11/12.
+  rollSkillPet('farming', {lvl:crop.lvl||1}, 1);
   if(!silent){
     renderFarming(); saveGame();
     toast(crop.icon+' Harvested '+crop.name+'!'+(bumper?' 🌻 Bumper Crop — doubled!':''));
@@ -15233,7 +15238,30 @@ function recordMastery(actId, times){
    CORE LOOP
    ================================================================= */
 /* ════ [JS-21a] afford / getAct helpers ══════════════════════════════════════════ */
-function getAct(skillKey,actId){ return SKILLS[skillKey].acts.find(a=>a.id===actId); }
+function getAct(skillKey,actId){ const sk=SKILLS[skillKey]; return sk?sk.acts.find(a=>a.id===actId):undefined; }
+
+/* Crafted skilling tools are a one-time unlock that lives in state.gear, NOT in
+   state.items. The T6 Everflame recipes consume the previous-tier tool as an
+   input, so any material lookup that only reads state.items reports 0 and the
+   whole tier becomes uncraftable while the player is holding the input. Every
+   have-count for a recipe input goes through here. */
+function matHave(id){
+  const n=state.items[id]||0;
+  if(n>0) return n;
+  const it=ITEMS[id];
+  return (it&&it.tool&&Array.isArray(state.gear)&&state.gear.indexOf(id)>=0)?1:0;
+}
+/* Spend a tool input out of state.gear, clearing it off both loadouts so no
+   equip slot is left pointing at an item the player no longer owns. */
+function consumeToolFromGear(id){
+  if(!Array.isArray(state.gear)) return false;
+  const gi=state.gear.indexOf(id); if(gi<0) return false;
+  state.gear.splice(gi,1);
+  for(const s in state.skillingEquipped) if(state.skillingEquipped[s]===id) delete state.skillingEquipped[s];
+  for(const s in state.combatEquipped)   if(state.combatEquipped[s]===id)   delete state.combatEquipped[s];
+  if(!ownsItemAnywhere(id)) reclaimSocketsFor(id);
+  return true;
+}
 function canAfford(act,times,m){
   if(!act.inp) return times;
   let max=Infinity;
@@ -15241,7 +15269,7 @@ function canAfford(act,times,m){
     let cost=q; if(id==='coal') cost=Math.max(0,q-(m.coalSave||0));
     if(id==='coal'&&m.sm_noCoal) cost=0;   // Living Forge (Lv99): recipes need no Coal
     if(cost<=0) continue;
-    max=Math.min(max,Math.floor((state.items[id]||0)/cost));
+    max=Math.min(max,Math.floor(matHave(id)/cost));
   }
   return Math.min(max,times);
 }
@@ -15595,6 +15623,26 @@ function completeAction(act,skillKey,times){
     return 0;
   }
 
+  // Satchel full — stop the action when the output needs a new slot but inventory
+  // is at cap. This MUST run before act.inp is deducted and it must cover every
+  // skill, not just gatherers: grantItem returns 0 for a new item type at cap, so
+  // a processing action that got past here would spend its inputs, receive
+  // nothing, and keep running — quietly grinding a whole ore/log/herb stack into
+  // thin air. Tool outputs are exempt: they unlock into state.gear, not a slot.
+  if(act.out){
+    const _cap=satchelCap(), _used=satchelUsed();
+    if(_used>=_cap){
+      // Only block if at least one output item doesn't already have a stack (would need a new slot)
+      const needsNewSlot=Object.keys(act.out).some(id=>(state.items[id]||0)===0&&!(ITEMS[id]&&ITEMS[id].tool));
+      if(needsNewSlot){
+        state.action=null;
+        toast('🎒 Satchel full — action stopped. Sell or store items to make room.');
+        logNotification('inv','🎒','Satchel full — action paused. Free up a slot to continue.');
+        return 0;
+      }
+    }
+  }
+
   if(act.inp){
     times=canAfford(act,times,m);
     if(times<=0) return 0;
@@ -15605,23 +15653,12 @@ function completeAction(act,skillKey,times){
     for(const [id,q] of Object.entries(act.inp)){
       let cost=q; if(id==='coal') cost=Math.max(0,q-m.coalSave);
       if(id==='coal'&&m.sm_noCoal) cost=0;   // Living Forge (Lv99): recipes need no Coal
+      if(cost>0&&paid>0&&!(state.items[id]>0)&&ITEMS[id]&&ITEMS[id].tool){
+        consumeToolFromGear(id);   // T6 Everflame: the previous-tier tool is the input
+        continue;
+      }
       state.items[id]=(state.items[id]||0)-cost*paid;
       if(state.items[id]<0) state.items[id]=0;
-    }
-  }
-
-  // Satchel full — stop gathering actions when output needs a new slot but inventory is at cap
-  if(IS_G && act.out){
-    const _cap=satchelCap(), _used=satchelUsed();
-    if(_used>=_cap){
-      // Only block if at least one output item doesn't already have a stack (would need a new slot)
-      const needsNewSlot=Object.keys(act.out).some(id=>(state.items[id]||0)===0);
-      if(needsNewSlot){
-        state.action=null;
-        toast('🎒 Satchel full — action stopped. Sell or store items to make room.');
-        logNotification('inv','🎒','Satchel full — action paused. Free up a slot to continue gathering.');
-        return 0;
-      }
     }
   }
 
@@ -16513,7 +16550,7 @@ function needsHtml(act,m){
   const chips=Object.entries(act.inp).map(([id,q])=>{
     let need=q; if(id==='coal') need=Math.max(0,q-m.coalSave);
     if(need<=0) return '';
-    const have=state.items[id]||0;
+    const have=matHave(id);   // tool inputs (T6 Everflame) are held in state.gear, not state.items
     const it=ITEMS[id];
     const nm=it?it.name:id;
     return `<span class="mat${have>=need?'':' miss'}" data-tip="${nm} — have ${have}, need ${need} per craft">`
@@ -18456,6 +18493,12 @@ function equipItem(id){
 function sellShopItem(id){
   const item=SHOP.find(i=>i.id===id);
   if(!item||!state.gear.includes(id)) return;
+  // Skilling tools moved out of the shop and into Crafting in 1.0.47, but their
+  // SHOP entries kept a `cost` nobody pays any more. Refunding half of it turned
+  // "craft a tool, sell it" into an unbounded gold printer (a Lv12 crafter
+  // out-earned a maxed Lv99 skiller by two orders of magnitude). Tools are
+  // one-time unlocks now, so there is no sale to make.
+  if(item.tool||(ITEMS[id]&&ITEMS[id].tool)){ toast('Tools are permanent unlocks — they cannot be sold.'); return; }
   // Check BOTH loadouts — an item equipped in combat OR skilling blocks the sale
   const all=Object.assign({},state.skillingEquipped,state.combatEquipped);
   for(const oSlot in state.skillingEquipped){
@@ -20092,13 +20135,36 @@ Object.assign(ICONS,{
     [9, 93, 24,10, 0.040,0.040,0.045, 30000],
     [10,96, 20, 8, 0.040,0.040,0.050, 60000],  // low def by design — rogue offhand, not a tank piece
   ];
+  /* Buckler XP/time is interpolated off the mainline shield ladder at the
+     buckler's own level, then discounted 12% for the log the recipe doesn't ask
+     for. The flat `400+ct*380` curve this replaced paid the Lv5 buckler 780 xp
+     for 2 bronze bars — 4.6x what cr_t1_shld pays for the same bars plus a log —
+     which made "spam the cheapest buckler" the only correct way to train
+     Crafting from Lv5 all the way to Lv69 and left ~200 authored recipes as dead
+     content for anyone optimising. */
+  const SHLD=[[9,4500,170,0.510,540],[23,7000,305,0.595,980],[38,9500,545,0.640,1330],
+              [58,12500,950,0.700,1750],[73,15500,1635,0.745,2170],[88,18500,2585,0.775,2590],
+              [98,21500,3335,0.790,3010]];
+  function shldAt(lvl){
+    if(lvl<=SHLD[0][0]) return SHLD[0];
+    const last=SHLD[SHLD.length-1];
+    if(lvl>=last[0]) return last;
+    for(let i=1;i<SHLD.length;i++){
+      if(lvl<=SHLD[i][0]){
+        const a=SHLD[i-1], b=SHLD[i], t=(lvl-a[0])/(b[0]-a[0]);
+        return [lvl, a[1]+(b[1]-a[1])*t, a[2]+(b[2]-a[2])*t, a[3]+(b[3]-a[3])*t, a[4]+(b[4]-a[4])*t];
+      }
+    }
+    return last;
+  }
   ROW.forEach(function(r){
     const ct=r[0], id=NAME[ct].toLowerCase()+'_buckler', nm=NAME[ct]+' Buckler';
     ITEMS[id]={name:nm, icon:'🛡️', sell:r[7], cgear:true, ctier:ct, cslot:'shield', light:true, offhand:true,
       desc:'A light round off-hand for dagger fighters. <b>No block</b>, but +crit, +dodge and +attack speed — and it never slows a light weapon. Where a shield would only weigh a rogue down.'};
     COMBAT_GEAR_STATS[id]={atk:r[3], str:0, def:r[2], crit:r[4], dodge:r[5], aspd:r[6]};
     ICONS[id]=_bucklerSVG(PAL[ct]);
-    const rec={id:'cr_buckler_'+ct, name:nm, cat:'shield', lvl:r[1], ms:Math.round(4200+ct*1600), xp:Math.round(400+ct*380), spdMult:0.62, minMs:Math.round(1100+ct*260), inp:{}, out:{}};
+    const s=shldAt(r[1]);
+    const rec={id:'cr_buckler_'+ct, name:nm, cat:'shield', lvl:r[1], ms:Math.round(s[1]), xp:Math.round(s[2]*0.88), spdMult:+s[3].toFixed(3), minMs:Math.round(s[4]), inp:{}, out:{}};
     rec.inp[BAR[ct]]=2; if(ct===10) rec.inp.dawnshard=1; rec.out[id]=1;
     if(typeof SKILLS!=='undefined'&&SKILLS.crafting&&SKILLS.crafting.acts) SKILLS.crafting.acts.push(rec);
   });
