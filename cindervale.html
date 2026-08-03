@@ -2699,6 +2699,7 @@ body:not(.is-demo) .demo-only{display:none !important}
 .cmast-d-tag.weapon{color:#8a7a5a;border-color:#5a4a38}
 .cmast-d-tag.cap{color:#ffd700;border-color:#ffd70044}
 .cmast-d-tag.unique{color:#aad97a;border-color:#aad97a44}
+.cmast-d-tag.soon{color:#c48a4a;border-color:#c48a4a55}
 .cmast-d-meta{font-size:calc(12px*var(--tscale));color:var(--muted);margin-left:auto;letter-spacing:0.5px;font-family:'Courier New',monospace}
 .cmast-d-desc{font-size:calc(14px*var(--tscale));color:var(--text);line-height:1.6;margin-bottom:10px}
 .cmast-d-desc .hi{color:var(--ember);font-weight:bold}
@@ -3528,7 +3529,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.84</div>
+  <div class="mm-ver">v0.9.85</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -4753,7 +4754,10 @@ const ITEMS={
   ash:           {name:'Ash',            icon:'⬜',sell:11},
   charcoal:      {name:'Charcoal',       icon:'🖤',sell:88},
   ember_dust:    {name:'Ember Dust',     icon:'🟠',sell:264},
-  void_cinder:   {name:'Void Cinder',   icon:'🔮',sell:990},
+  // void_cinder is defined with the Demon Sanctum drops further down (sell 2400,
+  // with a description). This block used to declare it a second time at sell 990;
+  // as the earlier of two duplicate object keys it was silently discarded, so the
+  // dead line is removed rather than left to look authoritative.
   // Agility outputs (coins reward + rare drops handled in drops table)
   energy_crystal:{name:'Energy Crystal',icon:'💎',sell:660, rare:true},
   stamina_shard: {name:'Stamina Shard', icon:'🔷',sell:1210,rare:true},
@@ -12811,6 +12815,25 @@ function normalizeState(){
     }
   }
   if(!state.newlyDiscovered||typeof state.newlyDiscovered!=='object'||Array.isArray(state.newlyDiscovered)) state.newlyDiscovered={};
+  /* Boss-trophy latch (see rollDrops). Seeded once from any `once` drop the
+     player currently holds, wears or has already discovered, so existing saves
+     do not get a second free roll on a trophy they have already earned. */
+  // Backfill for saves made before buyShop marked purchases discovered.
+  if(Array.isArray(state.gear)&&state.discovered)
+    for(const gid of state.gear) if(ITEMS[gid]) state.discovered[gid]=1;
+  if(!state.trophies||typeof state.trophies!=='object'||Array.isArray(state.trophies)){
+    state.trophies={};
+    try{
+      const held=id=>(state.items&&state.items[id]>0)
+        ||(Array.isArray(state.gear)&&state.gear.indexOf(id)>=0)
+        ||(state.discovered&&state.discovered[id])
+        ||Object.values(state.combatEquipped||{}).indexOf(id)>=0
+        ||Object.values(state.skillingEquipped||{}).indexOf(id)>=0;
+      for(const mid in MONSTER_DROPS)
+        for(const d of MONSTER_DROPS[mid])
+          if(d.once && held(d.id)) state.trophies[d.id]=1;
+    }catch(e){}
+  }
   if(state.action!==null&&typeof state.action!=='object') state.action=null;
   /* …and it has to point at an activity that still exists. tick() dereferences
      `getAct(skill,actId).ms` every 250ms with no guard, so a save holding a
@@ -13902,10 +13925,13 @@ function combatUniqueBonuses(){
    so it flows through the normal combat math. `effect:{}` scalars scale by rank; a few
    flat unique/capstone effects are added by id. Returns extra channels beyond the gear
    set (maxHpFlat, dmgReduce, combatXpMult, gpMult) consumed at their own call sites.
-   DEFERRED (bespoke per-tick procs, not yet wired): Bleeder, Rending Blows crit-dmg,
-   Savage Edge, Executioner, Cleaving Edge, Dagger Finesse, Ember Wrath, Second Wind,
-   Berserker, Stonewall, Retribution, Last Stand, Undying, Trophy/Head Hunter, Scavenger,
-   Warmonger, Plunder, Giant Slayer, rareDrop/doubleDrop loot, Warlord, Champion. */
+   STILL DEFERRED — the authoritative list is CMAST_UNWIRED (beside CMAST_CAP), which
+   the tree UI reads to badge these nodes NOT YET ACTIVE. 16 of 37 nodes / 28 of 98
+   points: Bleeder, Rending Blows, Cleaving Edge, Dagger Finesse, Ember Wrath,
+   Second Wind, Retribution, Last Stand, Undying, Keen Senses, Trophy Hunter,
+   Scavenger, Warmonger, Plunder, Headhunter, Champion.
+   This comment previously also listed Savage Edge, Executioner, Berserker, Stonewall
+   and Warlord, which were wired in 1.0.104 — keep it in step with CMAST_UNWIRED. */
 function cmastBonuses(){
   const b={atkBoost:0,hpBoost:0,defBoost:0,critChance:0,lifesteal:0,aspd:0,
            maxHpFlat:0,dmgReduce:0,combatXpMult:0,gpMult:0};
@@ -14445,7 +14471,14 @@ function classYieldBonus(){ return charClass()==='artisan' ? 0.05 : 0; }
 
 function mods(skill){
   const p=SK_PFX[skill];
+  /* Level-99 capstones are gated on OWNING the matching skillcape, but only at
+     spend time — mods() read the rank alone and sellShopItem neither refunds the
+     point nor clears it. Buy cape 100,000g → allocate → unequip → sell +50,000g
+     kept the capstone for a net 50,000g, halving the game's biggest gold sink
+     across all 12 skills. `rc` re-checks ownership on every read. */
+  const _hasCape=hasSkillCape(skill);
   const r=id=>treeRank(skill,id);
+  const rc=id=>(_hasCape?treeRank(skill,id):0);
   const IS_G=IS_GATHER[skill];
   /* Jewelry enchantment bonuses (global ladder + skill-unique for THIS skill + active sets) */
   const eb=enchantBonuses(skill);
@@ -14542,9 +14575,9 @@ function mods(skill){
     coalSave: skill==='smithing'&&r('sm_master1')>0?1:0,
     wc_kin:    skill==='woodcutting'?r('wc_kin'):0,
     wc_hwd:    skill==='woodcutting'&&r('wc_master_hwd')>0,
-    wc_double_act: skill==='woodcutting'&&r('wc_gm_double')>0,
+    wc_double_act: skill==='woodcutting'&&rc('wc_gm_double')>0,
     fi_school: skill==='fishing'&&r('fi_master_school')>0,
-    fi_double_act: skill==='fishing'&&r('fi_gm_double_act')>0,
+    fi_double_act: skill==='fishing'&&rc('fi_gm_double_act')>0,
     fo_berries:skill==='foraging'&&r('fo_master1')>0,
     fi_cook:   skill==='fishing'?r('fi_cook')*0.04:0,
     fi_sell:   skill==='fishing'?r('fi_sell')*0.05:0,
@@ -14552,21 +14585,21 @@ function mods(skill){
     mi_hard:   skill==='mining'&&r('mi_master1')>0,
     mi_magma:  skill==='mining'?r('mi_gm_coal')*0.08:0,
     mi_vbreak: skill==='mining'&&r('mi_master_vein')>0,
-    mi_double: skill==='mining'&&r('mi_gm_double')>0,
+    mi_double: skill==='mining'&&rc('mi_gm_double')>0,
     wc_bark:   skill==='woodcutting'?(r('wc_bark')*0.008 + r('wc_gm_bark')*0.008):0,
     freeBrew:  skill==='alchemy'&&r('al_master_free')>0?0.20:0,
     al_twin:   skill==='alchemy'&&r('al_gm_twin')>0,
     // ── Level-99 skill-cape capstones ──
-    fo_primal:  skill==='foraging'&&r('fo_gm_cape')>0,   // Primal Bloom: 20% chance for +3 cache
-    sm_noCoal:  skill==='smithing'&&r('sm_gm_cape')>0,   // Living Forge: recipes use no Coal
-    al_triple:  skill==='alchemy'&&r('al_gm_cape')>0,    // Grand Elixir: ×3 potion output
-    fm_rebirth: skill==='firemaking'&&r('fm_gm_cape')>0, // Phoenix Rebirth: every 10th log reborn
-    ag_bonusLap:skill==='agility'&&r('ag_gm_cape')>0,    // Runner's High: 20% chance free lap
-    jw_flawless:skill==='jeweler'&&r('jw_gm_cape')>0,    // Flawless Cut: 15% chance +2 jewelry
-    fa_bumper:  skill==='farming'&&r('fa_gm_cape')>0,    // Bountiful Soil: 50% chance double harvest
+    fo_primal:  skill==='foraging'&&rc('fo_gm_cape')>0,   // Primal Bloom: 20% chance for +3 cache
+    sm_noCoal:  skill==='smithing'&&rc('sm_gm_cape')>0,   // Living Forge: recipes use no Coal
+    al_triple:  skill==='alchemy'&&rc('al_gm_cape')>0,    // Grand Elixir: ×3 potion output
+    fm_rebirth: skill==='firemaking'&&rc('fm_gm_cape')>0, // Phoenix Rebirth: every 10th log reborn
+    ag_bonusLap:skill==='agility'&&rc('ag_gm_cape')>0,    // Runner's High: 20% chance free lap
+    jw_flawless:skill==='jeweler'&&rc('jw_gm_cape')>0,    // Flawless Cut: 15% chance +2 jewelry
+    fa_bumper:  skill==='farming'&&rc('fa_gm_cape')>0,    // Bountiful Soil: 50% chance double harvest
     cr_dupe:    skill==='crafting'&&r('cr_master1')>0,   // Heirloom Forge: 5% chance free duplicate piece
     cr_potency: skill==='crafting'&&r('cr_master2')>0,   // Mastersmith: +10% combat stats on freshly crafted pieces
-    cr_flawless:skill==='crafting'&&r('cr_gm_cape')>0,   // Flawless Forge: 15% chance +2 bonus pieces
+    cr_flawless:skill==='crafting'&&rc('cr_gm_cape')>0,   // Flawless Forge: 15% chance +2 bonus pieces
   };
 }
 function actMs(act,skill){
@@ -15335,7 +15368,7 @@ function canAfford(act,times,m){
    Clamped so the fire always makes some progress. */
 function fuelBurnMult(){
   // Eternal Flame (Lv99 cape capstone): the fire never consumes fuel.
-  if(treeRank('cooking','co_gm_cape')>0) return 0;
+  if(treeRank('cooking','co_gm_cape')>0 && hasSkillCape('cooking')) return 0;
   const slow=(treeRank('cooking','co_fuel')||0)*0.008
             +(treeRank('cooking','co_master_hearth')>0?0.10:0);
   return Math.max(0.30, 1-slow);
@@ -16840,8 +16873,9 @@ let _jwTab='refine';
 const JW_CATS=[
   {key:'refine', label:'Refine', icon:'💠', desc:'Cut raw gems into refined gems. Refined gems are required to craft any jewelry — and cutting also yields Gem Dust.'},
   {key:'ring',   label:'Rings',   icon:'💍', desc:'Cut gem + metal bar → ring. Fits either ring hand.'},
+  // NOTE: pendants moved from the hand slots to the NECK in 1.0.91 — see ITEM_BODY_SLOTS.
   {key:'amulet', label:'Amulets', icon:'📿', desc:'Cut gem + metal bar → amulet. Fits the neck slot.'},
-  {key:'pendant',label:'Pendants',icon:'📿', desc:'Cut gem + metal bar → pendant. Fits either ring hand.'},
+  {key:'pendant',label:'Pendants',icon:'📿', desc:'Cut gem + metal bar → pendant. Fits the neck slot (shares it with amulets).'},
   {key:'trophy', label:'Trophy',  icon:'💎', desc:'Boss trophy + cut gem → a unique piece with an always-on bonus. Each boss drops the trophy for its own piece.'},
   /* Emoji here matches the five tabs above rather than the ui_* SVG set — a lone
      SVG in an all-emoji tab bar reads as a mistake. Convert the row together or not at all. */
@@ -18528,6 +18562,11 @@ function buyShop(id){
   if(state.gear.includes(id)){ toast('You already own this.'); return; }
   state.coins-=item.cost*SILVER_PER_GOLD;
   state.gear.push(id);
+  // Buying was the one acquisition path that never marked the item discovered,
+  // and grantItem's tool branch short-circuits on "already in state.gear" — so
+  // crafting it later could not fix it either. 66 shop/craft tools sat as
+  // permanent '???' tiles with no way to close the Collection Log.
+  markDiscovered(id);
   // Auto-equip if slot is empty OR the new item is a higher tier than what's equipped
   const curEquipped=state.equipped[item.slot];
   const curTier=curEquipped?(SHOP.find(i=>i.id===curEquipped)||{}).tier||0:0;
@@ -19355,6 +19394,16 @@ const CMAST_ICON_SVG={
    only (30). When the Ranged/Magic trees return this grows automatically, and
    shard banking (grantCmastPoints) re-derives against the larger cap. */
 const CMAST_CAP=CMAST_NODES.reduce((s,n)=>s+n.max,0);
+/* Nodes whose `effect` keys are not read by cmastBonuses() or the combat tick.
+   Their ranks persist and the UI badges them NOT YET ACTIVE, so a player can see
+   what they are buying. Delete an id from here the moment its effect is wired —
+   the badge is the only thing keeping the tooltips honest. */
+const CMAST_UNWIRED={
+  m_t3_l:1, m_t3_r:1, m_t5_m:1, m_t5_r:1, m_cap:1,          // melee: Bleeder, Rending Blows, Cleaving Edge, Dagger Finesse, Ember Wrath
+  r_t3_l:1, r_t5_l:1, r_t5_m:1, r_cap:1,                     // survival: Second Wind, Retribution, Last Stand, Undying
+  g_t2_r:1, g_t3_l:1, g_t3_r:1, g_t4_l:1, g_t4_r:1, g_t5_l:1,// warfare: Keen Senses, Trophy Hunter, Scavenger, Warmonger, Plunder, Headhunter
+  rm_t4:1,                                                    // bridge: Champion (its mirror mr_t4 Warlord IS wired)
+};
 
 /* ── Mastery state helpers ─────────────────────────────────────────────────────── */
 
@@ -20305,7 +20354,11 @@ function rollDrops(monId, isRare){
   // trophies (≥99%) are exempt so a build choice never locks anyone out of a key.
   const cMul = charDropMult();
   for(const d of tbl){
-    if(d.once && (state.items&&state.items[d.id])>0) continue;
+    /* `once` means first kill only, so it has to latch — gating on a live satchel
+       count meant selling the trophy re-armed the 100% roll and turned every boss
+       into a repeatable payday (4.67x gold per Rat Queen kill). Boss KEYS already
+       latch this way, with a comment saying exactly why; trophies never got it. */
+    if(d.once && state.trophies && state.trophies[d.id]) continue;
     // "Always" drops (≥99%, mostly boss trophies) stay at their base chance —
     // multiplying them would just hit the cap noisily. Below that, scale + clamp.
     const c = d.chance>=0.99 ? d.chance : Math.min(RARE_DROP_CAP, d.chance*mul*cMul);
@@ -20314,6 +20367,7 @@ function rollDrops(monId, isRare){
       if(Array.isArray(d.qty)){
         const [lo,hi]=d.qty; qty=lo+Math.floor(Math.random()*(hi-lo+1));
       } else if(typeof d.qty==='number'){ qty=d.qty; }
+      if(d.once){ if(!state.trophies) state.trophies={}; state.trophies[d.id]=1; }
       out.push({id:d.id,qty});
     }
   }
@@ -20731,12 +20785,20 @@ function grantRaidRewards(raid, timeMs){
     agg[pick.id]=(agg[pick.id]||0)+q;
   }
   if(!state.discovered) state.discovered={};
-  for(const id in agg){ grantItem(id, agg[id]); state.discovered[id]=1; res.mats.push({id, qty:agg[id]}); }
+  /* Honour grantItem's return value. It gives 0 for a new item type once the
+     satchel is at cap, so ignoring it printed the reward in the log, toasted it
+     and flipped the Monster Log row green for an item the player never received
+     — including the ~1-in-150 marquee relics. The leather boss drop already does
+     it this way; these two loops did not. */
+  for(const id in agg){
+    const n=grantItem(id, agg[id]);
+    if(n>0){ state.discovered[id]=1; res.mats.push({id, qty:n}); }
+  }
   // Gear — each piece: base chance × rating mult, clamped. Character drop dial
   // nudges it too so hardcore/accelerated feel consistent with the rest of loot.
   for(const g of raid.gearDrops){
     const c=Math.min(0.6, g.chance * rt.mult * charDropMult());
-    if(Math.random()<c){ grantItem(g.id,1); state.discovered[g.id]=1; res.gear.push(g.id); }
+    if(Math.random()<c && grantItem(g.id,1)>0){ state.discovered[g.id]=1; res.gear.push(g.id); }
   }
   // Clears + best rating/time.
   if(!state.raidClears) state.raidClears={};
@@ -22485,11 +22547,14 @@ function itemCompCat(id){
      nothing (voidwood, driftwood, wrack_timber) gets misfiled as a log. */
   if(it.sea) return 'sea';
   if(it.skillGear) return 'skilling_gear';
+  /* Cooked food is checked BEFORE the generic potion bucket. Every cooked fish
+     carries potion:{heal:N}, so with `it.potion` first all 8 of them filed as
+     potions and the Cooked tab was permanently empty. */
+  if(id.startsWith('cooked_')) return 'cooked';
   if(it.potion) return 'potions';
   if(id.endsWith('_log')||id==='ancient_log') return 'logs';
   if(id.endsWith('_ore')||id==='coal') return 'ores';
   if(id.startsWith('raw_')) return 'fish';
-  if(id.startsWith('cooked_')) return 'cooked';
   if(id.endsWith('_bar')) return 'bars';
   if(['sapphire','emerald','ruby','diamond','amethyst','dragon_gem','bloodstone','void_crystal','void_shard','gem_dust','pearl','abyssal_scale','arcane_dust','mana_essence','rune_fragment','cut_sapphire','cut_emerald','cut_ruby','cut_diamond','cut_amethyst','cut_dragon','cut_bloodstone','cut_void'].includes(id)) return 'gems';
   if(id.endsWith('_ring')||id.endsWith('_amulet')||id.endsWith('_pendant')||id.endsWith('_jewel')) return 'jewelry';
@@ -25305,6 +25370,10 @@ function _cmastDetailHTML(){
   if(n.powerful) tags.push(`<span class="cmast-d-tag unique">POWERFUL</span>`);
   if(n.unique&&!n.powerful&&!n.capstone) tags.push(`<span class="cmast-d-tag unique">UNIQUE</span>`);
   if(n.weaponLocked) tags.push(`<span class="cmast-d-tag weapon">WEAPON</span>`);
+  // 16 of the 37 nodes (28 of 98 points, including two of three capstones) are
+  // authored but not yet read by any combat formula. Say so on the node instead
+  // of letting a concrete tooltip number read as a silent stat bug.
+  if(CMAST_UNWIRED[n.id]) tags.push(`<span class="cmast-d-tag soon">NOT YET ACTIVE</span>`);
   // Rank pips
   const pips=Array.from({length:max},(_,i)=>`<span class="cmast-pip${i<rank?' on':''}"></span>`).join('');
   // Prereqs display
@@ -25411,7 +25480,7 @@ function buildCmastViewHTML(){
       <!-- Player-facing summary, not a changelog. The old copy listed every proc by
            name and narrated which ones were still being wired; per-node detail already
            lives in the node panel below, and locked nodes explain themselves. -->
-      <div class="cmast-soon-note">Spend points across three disciplines. Every rank you fill applies to combat right away — damage, crit, survivability, and your XP and gold gains. Points you can't spend yet bank as Mastery Shards.</div>
+      <div class="cmast-soon-note">Spend points across three disciplines — damage, crit, survivability, and your XP and gold gains. Nodes marked <span class="cmast-d-tag soon">NOT YET ACTIVE</span> are built but not wired into the combat formulas yet; their ranks are saved and will start applying in a later update. Points you can't spend yet bank as Mastery Shards.</div>
       <div class="cmast-detail">
         ${_cmastDetailHTML()}
       </div>
