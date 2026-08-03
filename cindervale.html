@@ -1667,7 +1667,11 @@ select.dev-input{padding-right:26px}
 #toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%) translateY(20px);
   background:#2b1d0f;border:1px solid var(--trim);border-radius:6px;padding:10px 18px;
   box-shadow:var(--sh-2);opacity:0;transition:opacity .3s,transform .3s;
-  pointer-events:none;max-width:90vw;text-align:center;font-size:15px;z-index:50;}
+  /* Above every modal overlay (.modal-back 10050, mm-* 10000). Toasts are how
+     save/import/sell feedback is delivered, and at z-index 50 every one fired
+     from inside a dialog was painted behind it. pointer-events:none already
+     means it can never block the dialog underneath. */
+  pointer-events:none;max-width:90vw;text-align:center;font-size:15px;z-index:10600;}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
 /* ════════ [CSS-13] MODALS ═══════════════════════════════════════════════════════ */
@@ -1676,11 +1680,18 @@ select.dev-input{padding-right:26px}
    the mm-* modals 10000, #mmDestiny 10001). At the old value of 100 a confirm
    dialog opened *behind* the character-select screen: it was there, it just
    couldn't be seen or clicked, so "Delete character" silently did nothing. */
+/* align-items:normal + overflow-y:auto + card margin:auto (NOT align-items:center)
+   for the same reason the mm-* modals were fixed in 0.9.25: an over-tall card
+   pinned centred hides its own title and its Close button with no way to scroll
+   to either. The gear-slot and preset pickers build one row per owned item and
+   are uncapped, so ~12 owned weapons was already enough to strand the player. */
 .modal-back{position:fixed;inset:0;background:#000000aa;display:flex;
-  align-items:center;justify-content:center;z-index:10050;padding:16px;}
+  align-items:normal;justify-content:center;overflow-y:auto;z-index:10050;padding:16px;}
 .modal-back.hidden{display:none}
 .modal{background:var(--panel);border:1px solid var(--trim);border-radius:8px;
-  padding:20px;max-width:480px;width:100%;box-shadow:var(--sh-3);}
+  padding:20px;max-width:480px;width:100%;margin:auto;box-shadow:var(--sh-3);}
+/* Belt-and-braces for the dynamic bodies, so the card itself stays a sane size. */
+#gearSlotBody,#presetSlotBody,#gearDetailBody,#fuelLogList{max-height:60vh;overflow-y:auto}
 .modal h3{color:var(--trim);font-size:18px;margin-bottom:8px;font-variant:small-caps;letter-spacing:1px}
 .modal p{font-size:calc(14px*var(--tscale));color:var(--muted);margin-bottom:12px}
 .modal textarea{width:100%;height:96px;background:#0d0905;color:var(--text);
@@ -2042,7 +2053,7 @@ body:not(.is-demo) .demo-only{display:none !important}
 .skill-row.offline-skill .xp-bar i{background:var(--blue)}
 /* compact tabs that always stay on one row */
 .rp-tab-strip{flex-wrap:nowrap!important}
-.rp-tab-strip /* Text size (v0.9.49): navigation tabs are fixed-width chrome, not reading copy.
+/* Text size (v0.9.49): navigation tabs are fixed-width chrome, not reading copy.
    The band-scaling caught their 13px labels, which pushed the 4-tab right strip
    past its panel at max scale. Resetting --tscale here (the calc reads it, so a
    local value cascades) keeps tab labels put while body text still scales. */
@@ -3002,14 +3013,16 @@ body:not(.is-demo) .demo-only{display:none !important}
 .mlog-tierrow{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
 .mlog-tierchip{display:inline-flex;flex-direction:column;align-items:center;gap:1px;min-width:52px;padding:5px 8px;background:var(--raised-s);border:1px solid var(--tc,#888);border-radius:6px;font-family:'Cinzel',serif;font-size:16px;font-weight:700;color:var(--tc,#ccc);cursor:default;line-height:1}
 .mlog-tierchip i{font-style:normal;font-family:'Courier New',monospace;font-size:9.5px;color:var(--muted);letter-spacing:0}
-/* Slayer tab buttons (1.0.73) */
-.sl-btn{background:var(--raised-s);border:1px solid var(--trim-d);color:var(--muted);border-radius:6px;
+/* Slayer tab buttons (1.0.73) — .slay-btn, NOT .sl-btn: the Sailing panel
+   defines its own .sl-btn further down (CSS-33) and, being later, was winning
+   for both panels and rendering Slayer buttons in sailing sea-blue. */
+.slay-btn{background:var(--raised-s);border:1px solid var(--trim-d);color:var(--muted);border-radius:6px;
   padding:6px 13px;font-family:'Cinzel',serif;font-size:calc(13px*var(--tscale));letter-spacing:.4px;cursor:var(--cur-pointer);transition:filter .12s,background .12s}
-.sl-btn:hover:not(:disabled){background:#2a1a12;color:var(--text);border-color:var(--trim)}
-.sl-btn.primary{background:linear-gradient(180deg,#3a1e1a,#241010);border-color:#c05149;color:#f0d0c8}
-.sl-btn.primary:hover:not(:disabled){filter:brightness(1.22)}
-.sl-btn:disabled{opacity:.45;cursor:default}
-.sl-btn.tiny{padding:1px 8px;font-size:11px;font-family:'Courier New',monospace}
+.slay-btn:hover:not(:disabled){background:#2a1a12;color:var(--text);border-color:var(--trim)}
+.slay-btn.primary{background:linear-gradient(180deg,#3a1e1a,#241010);border-color:#c05149;color:#f0d0c8}
+.slay-btn.primary:hover:not(:disabled){filter:brightness(1.22)}
+.slay-btn:disabled{opacity:.45;cursor:default}
+.slay-btn.tiny{padding:1px 8px;font-size:11px;font-family:'Courier New',monospace}
 
 /* ════ Slayer panel — "Contract Ledger" layout (0.9.24) ════════════════════════
    Two columns: bounty + masters on the left, a persistent Slayer ledger on the
@@ -3529,7 +3542,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.85</div>
+  <div class="mm-ver">v0.9.86</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -25536,8 +25549,8 @@ function buildSlayerHTML(){
       ${complete
         ? `<button class="sly-go claim" data-sl-newtask="${t.master}">${iconHTML('ui_coin')} Claim &amp; take next bounty</button>`
         : `<button class="sly-go" data-sl-goto="1">${iconHTML('ui_swords')} Go to task</button>`}
-      <button class="sl-btn" data-sl-skip="1" ${active&&pts>=SLAYER_SKIP_COST?'':'disabled'}>Skip · ${SLAYER_SKIP_COST} pts</button>
-      <button class="sl-btn" data-sl-block="1" ${active&&pts>=SLAYER_BLOCK_COST?'':'disabled'}>Block · ${SLAYER_BLOCK_COST} pts</button>
+      <button class="slay-btn" data-sl-skip="1" ${active&&pts>=SLAYER_SKIP_COST?'':'disabled'}>Skip · ${SLAYER_SKIP_COST} pts</button>
+      <button class="slay-btn" data-sl-block="1" ${active&&pts>=SLAYER_BLOCK_COST?'':'disabled'}>Block · ${SLAYER_BLOCK_COST} pts</button>
     </div>`;
   } else {
     hero=`<div class="sly-hero none"><div>
@@ -25559,8 +25572,8 @@ function buildSlayerHTML(){
   const masters=SLAYER_MASTERS.map(m=>{
     const locked=lvl<m.minLvl;
     const btn=locked
-      ? `<button class="sl-btn" disabled>${iconHTML('ui_lock')} Lv ${m.minLvl}</button>`
-      : `<button class="sl-btn ${active||complete?'':'primary'}" data-sl-newtask="${m.key}" ${active||complete?'disabled':''}>${active||complete?'Bounty active':'Get bounty'}</button>`;
+      ? `<button class="slay-btn" disabled>${iconHTML('ui_lock')} Lv ${m.minLvl}</button>`
+      : `<button class="slay-btn ${active||complete?'':'primary'}" data-sl-newtask="${m.key}" ${active||complete?'disabled':''}>${active||complete?'Bounty active':'Get bounty'}</button>`;
     return `<div class="sly-mrow${locked?' locked':''}">
       <span class="sly-mi">${iconHTML(m.ic)}</span>
       <div style="flex:1;min-width:0">
@@ -26401,6 +26414,7 @@ function renderCombat(){
         if(n.powerful) tags.push('<span class="tt-tag uniq">POWERFUL</span>');
         if(n.unique&&!n.powerful&&!n.capstone) tags.push('<span class="tt-tag uniq">UNIQUE</span>');
         if(n.weaponLocked) tags.push('<span class="tt-tag weapon">WEAPON</span>');
+        if(CMAST_UNWIRED[n.id]) tags.push('<span class="tt-tag soon">NOT YET ACTIVE</span>');
         // Prereq summary — only if there are any
         let preq='';
         if(n.prereq&&n.prereq.length){
@@ -26421,19 +26435,28 @@ function renderCombat(){
           <div class="tt-rank">Rank ${rank} / ${n.max}</div>
           ${preq}
         `;
-        // Position BEFORE making visible so the tip never flashes at (0,0).
-        cmastTip.style.left=(e.clientX+14)+'px';
-        cmastTip.style.top=(e.clientY+14)+'px';
+        /* .cmast-tip is position:fixed INSIDE the zoomed root, so the px written
+           here are re-scaled by applyRootZoom while e.clientX/Y are visual-viewport
+           px. Every other fixed tooltip (positionTooltip, showGearTip) divides by
+           the root zoom; this one did not, so at a 1280px window (z=0.711) the tip
+           landed ~290px left and ~170px above the node it belonged to.
+           Position BEFORE making visible so the tip never flashes at (0,0). */
+        const z0=_rootZoom();
+        cmastTip.style.left=(e.clientX/z0+14)+'px';
+        cmastTip.style.top=(e.clientY/z0+14)+'px';
         cmastTip.classList.add('on');
       });
       g.addEventListener('mousemove',(e)=>{
         // Always to the RIGHT of the cursor — clamp on-screen near the edge
-        // rather than flipping left, so the tip never switches sides.
-        const vw=window.innerWidth, vh=window.innerHeight;
+        // rather than flipping left, so the tip never switches sides. All of this
+        // is in CSS px, so the viewport has to be unscaled to match.
+        const z=_rootZoom();
+        const vw=window.innerWidth/z, vh=window.innerHeight/z;
         const tw=cmastTip.offsetWidth||220, th=cmastTip.offsetHeight||120;
-        let lx=e.clientX+14, ly=e.clientY+14;
+        const cx=e.clientX/z, cy=e.clientY/z;
+        let lx=cx+14, ly=cy+14;
         if(lx+tw>vw-8) lx=Math.max(8, vw-tw-8);
-        if(ly+th>vh-8) ly=e.clientY-th-14;
+        if(ly+th>vh-8) ly=cy-th-14;
         if(lx<8) lx=8;
         if(ly<8) ly=8;
         cmastTip.style.left=lx+'px';
