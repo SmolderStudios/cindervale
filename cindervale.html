@@ -3528,7 +3528,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.82</div>
+  <div class="mm-ver">v0.9.83</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -10058,8 +10058,8 @@ const TREES = {
     N('wc_xp','Forest Lore',WC_TREE_ICONS.wc_xp,6,0,
       r=>`+${r*5}% Woodcutting XP`,   r=>`+5% XP → ${r*5}%`),
     N('wc_bark','Keen Edge',WC_TREE_ICONS.wc_bark,8,15,
-      r=>`${(r*1.5).toFixed(1)}% chance for a bonus log per chop`,
-      r=>`+1.5% bonus log chance → ${(r*1.5).toFixed(1)}%`),
+      r=>`${(r*0.8).toFixed(1)}% chance for a bonus log per chop`,
+      r=>`+0.8% bonus log chance → ${(r*0.8).toFixed(1)}%`),
     N('wc_kin','Lumberjack Kin',WC_TREE_ICONS.wc_kin,6,25,
       r=>`${r*5}% chance per chop to find a forage item (rare plants more rare)`,
       r=>`+5% forage chance → ${r*5}%`),
@@ -10076,7 +10076,7 @@ const TREES = {
     N('wc_gm_speed','Master Lumberjack',WC_TREE_ICONS.wc_gm_speed,10,75,
       r=>`Reduces task time by ${(r*1.2).toFixed(1)}% (grandmaster)`, r=>`+1.2% faster → ${(r*1.2).toFixed(1)}%`),
     N('wc_gm_bark','Splinter Edge',WC_TREE_ICONS.wc_gm_bark,12,75,
-      r=>`+${(r*1.5).toFixed(1)}% bonus log chance per chop (grandmaster)`, r=>`+1.5% bonus log chance → ${(r*1.5).toFixed(1)}%`),
+      r=>`+${(r*0.8).toFixed(1)}% bonus log chance per chop (grandmaster)`, r=>`+0.8% bonus log chance → ${(r*0.8).toFixed(1)}%`),
     N('wc_gm_sell','Timber Baron',WC_TREE_ICONS.wc_gm_sell,10,80,
       r=>`Log sell value +${r*7}%`, r=>`+7% sell → ${r*7}%`),
     N('wc_gm_xp','Canopy Scholar',WC_TREE_ICONS.wc_gm_xp,10,80,
@@ -10093,15 +10093,15 @@ const TREES = {
     N('mi_speed','Reinforced Pick',MI_TREE_ICONS.mi_speed,15,0,
       r=>`Reduces task time by ${r*1}%`, r=>`+1% faster → ${r*1}%`),
     N('mi_vein','Rich Vein',MI_TREE_ICONS.mi_vein,15,0,
-      r=>`${r*2}% chance for a bonus ore`, r=>`+2% bonus ore → ${r*2}%`),
+      r=>`${r}% chance for a bonus ore`, r=>`+1% bonus ore → ${r}%`),
     N('mi_xp','Geologist',MI_TREE_ICONS.mi_xp,10,0,
       r=>`+${r*3}% Mining XP`,         r=>`+3% XP → ${r*3}%`),
     N('mi_coal','Coal Seeker',MI_TREE_ICONS.mi_coal,10,15,
       r=>`Each ore mined has ${r*4}% chance to also yield Coal`,
       r=>`+4% coal chance → ${r*4}%`),
     N('mi_smelt','Forge Sense',MI_TREE_ICONS.mi_smelt,10,25,
-      r=>`Smithing speed increased ${r*2}% (cross-skill)`,
-      r=>`+2% smithing speed → ${r*2}%`),
+      r=>`Smithing speed increased ${(r*1.3).toFixed(1)}% (cross-skill)`,
+      r=>`+1.3% smithing speed → ${(r*1.3).toFixed(1)}%`),
     N('mi_master_vein','Veinbreaker',MI_TREE_ICONS.mi_master_vein,1,30,
       r=>r?'Every 10th strike guaranteed to yield +2 bonus ore (tracked per session)':'Every 10th swing: +2 bonus ore',
       ()=>'Every 10th strike: +2 bonus ore'),
@@ -10117,7 +10117,7 @@ const TREES = {
     N('mi_gm_fortune','Ore Fortune',MI_TREE_ICONS.mi_gm_fortune,9,75,
       r=>`Ore sell value +${r*7}%`, r=>`+7% sell → ${r*7}%`),
     N('mi_gm_vein','Deep Veins',MI_TREE_ICONS.mi_gm_vein,8,80,
-      r=>`+${r*3}% bonus ore chance (grandmaster)`, r=>`+3% bonus ore → ${r*3}%`),
+      r=>`+${r*2}% bonus ore chance (grandmaster)`, r=>`+2% bonus ore → ${r*2}%`),
     N('mi_gm_coal','Magma Core',MI_TREE_ICONS.mi_gm_coal,6,80,
       r=>`Coal Seeker also has a ${r*8}% chance to yield 2 Coal instead of 1`,
       r=>`+8% double-coal chance → ${r*8}%`),
@@ -10155,7 +10155,7 @@ const TREES = {
     N('fi_gm_speed','Master Angler','🎣',10,75,
       r=>`Reduces task time by ${(r*1.2).toFixed(1)}% (grandmaster)`, r=>`+1.2% faster → ${(r*1.2).toFixed(1)}%`),
     N('fi_gm_double','Deep Current','🐋',10,75,
-      r=>`+${(r*2.5).toFixed(1)}% bonus fish chance per cast (grandmaster)`, r=>`+2.5% bonus fish chance → ${(r*2.5).toFixed(1)}%`),
+      r=>`+${r*2}% bonus fish chance per cast (grandmaster)`, r=>`+2% bonus fish chance → ${r*2}%`),
     N('fi_gm_sell','Premium Catch','💰',10,80,
       r=>`Fish sell value +${r*7}%`, r=>`+7% sell → ${r*7}%`),
     N('fi_gm_xp','Tide Lore','📜',8,80,
@@ -10203,7 +10203,7 @@ const TREES = {
 
   smithing:[
     N('sm_speed','Rapid Hammer','🔨',15,0,
-      r=>`Reduces task time by ${r*2}%`, r=>`+2% faster → ${r*2}%`),
+      r=>`Reduces task time by ${(r*1.3).toFixed(1)}%`, r=>`+1.3% faster → ${(r*1.3).toFixed(1)}%`),
     N('sm_thrift','Efficient Smelting','♻️',20,0,
       r=>`${r*2}% chance to not consume materials`, r=>`+2% preserve → ${r*2}%`),
     N('sm_xp','Metallurgist','📖',10,0,
@@ -10224,9 +10224,9 @@ const TREES = {
       r=>r?'Starsteel bars require no Coal':'Starsteel bars need no Coal',
       ()=>'Starsteel: 0 Coal required'),
     N('sm_gm_speed','Grand Smith','🔨',9,75,
-      r=>`Reduces task time by ${r*3}% (grandmaster)`, r=>`+3% faster → ${r*3}%`),
+      r=>`Reduces task time by ${(r*1.8).toFixed(1)}% (grandmaster)`, r=>`+1.8% faster → ${(r*1.8).toFixed(1)}%`),
     N('sm_gm_xp','Forge Mastery','📜',8,80,
-      r=>`+${r*4}% Smithing XP (grandmaster)`,  r=>`+4% XP → ${r*4}%`),
+      r=>`+${r*3}% Smithing XP (grandmaster)`,  r=>`+3% XP → ${r*3}%`),
     N('sm_gm_sell','Black Market Smith','💰',8,85,
       r=>`Bar sell value +${r*6}%`,             r=>`+6% sell → ${r*6}%`),
     N('sm_gm_cape','Living Forge','🔥',1,99,
@@ -10346,7 +10346,7 @@ const TREES = {
       next:()=>'Every 10th log reborn (refund + bonus XP) · requires the Firemaking Cape'},
   ],
   agility:[
-    {id:'ag_speed', name:'Fleet Foot',     icon:AG_TREE_ICONS.ag_speed,max:15,req:0,  desc:r=>`Reduces task time by ${r*2}%`, next:r=>`+2% faster → ${r*2}%`},
+    {id:'ag_speed', name:'Fleet Foot',     icon:AG_TREE_ICONS.ag_speed,max:15,req:0,  desc:r=>`Reduces task time by ${(r*1.3).toFixed(1)}%`, next:r=>`+1.3% faster → ${(r*1.3).toFixed(1)}%`},
     {id:'ag_coins', name:'Lap Reward',     icon:AG_TREE_ICONS.ag_coins,max:15,req:0,  desc:r=>`+${r*3}% coin reward per lap`,    next:r=>`+3% coins → ${r*3}%`},
     {id:'ag_xp',    name:'Endurance',      icon:AG_TREE_ICONS.ag_xp,max:10,req:0,  desc:r=>`+${r*3}% Agility XP`,             next:r=>`+3% XP → ${r*3}%`},
     {id:'ag_drop',  name:'Lucky Stride',   icon:AG_TREE_ICONS.ag_drop,max:15,req:15, desc:r=>`+${r*4}% rare drop chance from all skilling activities`, next:r=>`+4% drop rate → ${r*4}%`},
@@ -10354,8 +10354,8 @@ const TREES = {
     {id:'ag_master1',name:'Marathon',      icon:AG_TREE_ICONS.ag_master1,max:1, req:20, desc:r=>r?'Coin rewards +25%':'Lap coin rewards +25%',next:()=>'+25% all lap coin rewards'},
     {id:'ag_master2',name:'Windrunner',    icon:AG_TREE_ICONS.ag_master2,max:1, req:40, desc:r=>r?'Run 15% faster at all times (passive)':'Permanent +15% run speed on top of all bonuses',next:()=>'+15% run speed permanently'},
     {id:'ag_master3',name:'Iron Will',     icon:AG_TREE_ICONS.ag_master3,max:1, req:60, desc:r=>r?'Agility XP +25% permanently':'Permanent +25% Agility XP',next:()=>'+25% Agility XP permanently'},
-    {id:'ag_gm_speed',name:'Void Runner',  icon:AG_TREE_ICONS.ag_gm_speed,max:9,req:75, desc:r=>`Reduces task time by ${r*3}% (grandmaster)`, next:r=>`+3% faster → ${r*3}%`},
-    {id:'ag_gm_xp',   name:'Elite Athlete',icon:AG_TREE_ICONS.ag_gm_xp,max:8, req:80, desc:r=>`+${r*4}% Agility XP (grandmaster)`,   next:r=>`+4% XP → ${r*4}%`},
+    {id:'ag_gm_speed',name:'Void Runner',  icon:AG_TREE_ICONS.ag_gm_speed,max:9,req:75, desc:r=>`Reduces task time by ${(r*1.8).toFixed(1)}% (grandmaster)`, next:r=>`+1.8% faster → ${(r*1.8).toFixed(1)}%`},
+    {id:'ag_gm_xp',   name:'Elite Athlete',icon:AG_TREE_ICONS.ag_gm_xp,max:8, req:80, desc:r=>`+${r*3}% Agility XP (grandmaster)`,   next:r=>`+3% XP → ${r*3}%`},
     {id:'ag_gm_coins',name:'Prize Runner', icon:AG_TREE_ICONS.ag_gm_coins,max:8, req:85, desc:r=>`Lap coin rewards +${r*6}%`,           next:r=>`+6% coins → ${r*6}%`},
     {id:'ag_gm_2x_xp',name:'Marathon Legend',icon:AG_TREE_ICONS.ag_gm_2x_xp,max:1,req:90,desc:r=>r?'2× Agility XP from all laps (grandmaster pinnacle)':'Double Agility XP permanently',next:()=>'2× Agility XP permanently'},
     {id:'ag_gm_coins2',name:'Gold Sprinter',icon:AG_TREE_ICONS.ag_gm_coins2,max:1,req:90,desc:r=>r?'Coin rewards from all laps +75%':'Permanent +75% lap coin rewards',next:()=>'+75% coin rewards from all laps'},
@@ -10364,7 +10364,7 @@ const TREES = {
       next:()=>'20% chance for a free bonus lap · requires the Agility Cape'},
   ],
   jeweler:[
-    {id:'jw_speed', name:'Steady Hand',    icon:'💎',max:15,req:0,  desc:r=>`Reduces task time by ${r*2}%`, next:r=>`+2% faster → ${r*2}%`},
+    {id:'jw_speed', name:'Steady Hand',    icon:'💎',max:15,req:0,  desc:r=>`Reduces task time by ${(r*1.3).toFixed(1)}%`, next:r=>`+1.3% faster → ${(r*1.3).toFixed(1)}%`},
     {id:'jw_thrift',name:'Gem Saver',      icon:'♻️',max:15,req:0,  desc:r=>`${r*2}% chance not to consume gem`,next:r=>`+2% preserve → ${r*2}%`},
     {id:'jw_xp',    name:'Lapidary Lore',  icon:'📖',max:10,req:0,  desc:r=>`+${r*3}% Jeweler XP`,             next:r=>`+3% XP → ${r*3}%`},
     {id:'jw_dust',  name:'Dust Collector', icon:'✨',max:15,req:15, desc:r=>`${r*5}% chance extra gem dust`,    next:r=>`+5% dust → ${r*5}%`},
@@ -10372,15 +10372,15 @@ const TREES = {
     {id:'jw_master1',name:'Heirloom',      icon:'👑',max:1, req:20, desc:r=>r?'Chance to produce both ring AND amulet from one cut':'Both ring and amulet per cut (5% chance)',next:()=>'5% chance: produce ring AND amulet'},
     {id:'jw_master2',name:'Gem Mastery',   icon:'💎',max:1, req:40, desc:r=>r?'Each cut produces 2 jewelry items':'Double jewelry output',next:()=>'2× jewelry output'},
     {id:'jw_master3',name:'Gem Hoarder',  icon:'💜',max:1, req:60, desc:r=>r?'All gem dust outputs doubled — every cut produces 2× gem dust':'2× gem dust from all jewelry cuts',next:()=>'Double gem dust from every jewelry cut'},
-    {id:'jw_gm_speed',name:'Grand Lapidary',icon:'💎',max:9,req:75,desc:r=>`Reduces task time by ${r*3}% (grandmaster)`, next:r=>`+3% faster → ${r*3}%`},
-    {id:'jw_gm_xp',   name:'Gem Scholar',  icon:'📜',max:10, req:80, desc:r=>`+${r*4}% Jeweler XP (grandmaster)`,  next:r=>`+4% XP → ${r*4}%`},
+    {id:'jw_gm_speed',name:'Grand Lapidary',icon:'💎',max:9,req:75,desc:r=>`Reduces task time by ${(r*1.8).toFixed(1)}% (grandmaster)`, next:r=>`+1.8% faster → ${(r*1.8).toFixed(1)}%`},
+    {id:'jw_gm_xp',   name:'Gem Scholar',  icon:'📜',max:10, req:80, desc:r=>`+${r*3}% Jeweler XP (grandmaster)`,  next:r=>`+3% XP → ${r*3}%`},
     {id:'jw_gm_sell', name:'Void Merchant',icon:'💰',max:10,req:85, desc:r=>`Jewelry sell value +${r*6}%`,        next:r=>`+6% sell → ${r*6}%`},
     {id:'jw_gm_cape', name:'Flawless Cut', icon:'💠',max:1,req:99,reqPts:97,reqCape:true,
       desc:r=>r?'15% chance per cut for a flawless result: +2 bonus jewelry pieces':'15% chance per cut: +2 bonus jewelry',
       next:()=>'15% chance for +2 bonus jewelry · requires the Jeweler Cape'},
   ],
   farming:[
-    {id:'fa_speed', name:'Green Thumb',      icon:FA_TREE_ICONS.fa_speed,max:15,req:0,  desc:r=>`Reduces tend cooldown by ${r*2}%`,      next:r=>`+2% faster → ${r*2}%`},
+    {id:'fa_speed', name:'Green Thumb',      icon:FA_TREE_ICONS.fa_speed,max:15,req:0,  desc:r=>`Reduces tend cooldown by ${(r*1.3).toFixed(1)}%`,      next:r=>`+1.3% faster → ${(r*1.3).toFixed(1)}%`},
     {id:'fa_yield', name:'Bountiful Crop',   icon:FA_TREE_ICONS.fa_yield,max:15,req:0,  desc:r=>`${r*4}% chance for a bonus harvest roll`, next:r=>`+4% bonus → ${r*4}%`},
     {id:'fa_xp',    name:'Herbalist',         icon:FA_TREE_ICONS.fa_xp,max:10,req:0,  desc:r=>`+${r*3}% Farming XP`,                    next:r=>`+3% XP → ${r*3}%`},
     {id:'fa_seed',  name:'Seed Saver',        icon:FA_TREE_ICONS.fa_seed,max:15,req:15, desc:r=>`${r*5}% chance to recover seed on harvest`,next:r=>`+5% seed return → ${r*5}%`},
@@ -10388,8 +10388,8 @@ const TREES = {
     {id:'fa_master1',name:'Plentiful Harvest',icon:FA_TREE_ICONS.fa_master1,max:1, req:20, desc:r=>r?'Every harvest yields +1 of each crop type (guaranteed)':'Guaranteed +1 crop per type on every harvest',next:()=>'+1 guaranteed crop per type on harvest'},
     {id:'fa_master2',name:'Abundance',        icon:FA_TREE_ICONS.fa_master2,max:1, req:40, desc:r=>r?'2× crop yield from all patches':'Double all farm outputs',next:()=>'2× all farm outputs'},
     {id:'fa_master3',name:'Eternal Garden',   icon:FA_TREE_ICONS.fa_master3,max:1, req:60, desc:r=>r?'Seeds always returned after harvest — farm one seed indefinitely. Also unlocks Ancient Bloom at Lv 70.':'Seeds always returned on harvest; Ancient Bloom unlocks 10 levels early',next:()=>'100% seed return — never permanently lose a planted seed'},
-    {id:'fa_gm_speed',name:'Verdant Keeper',  icon:FA_TREE_ICONS.fa_gm_speed,max:9,req:75, desc:r=>`Reduces tend cooldown by ${r*3}% (grandmaster)`,   next:r=>`+3% faster → ${r*3}%`},
-    {id:'fa_gm_xp',   name:'Elder Farmer',    icon:FA_TREE_ICONS.fa_gm_xp,max:10, req:80, desc:r=>`+${r*4}% Farming XP (grandmaster)`,                 next:r=>`+4% XP → ${r*4}%`},
+    {id:'fa_gm_speed',name:'Verdant Keeper',  icon:FA_TREE_ICONS.fa_gm_speed,max:9,req:75, desc:r=>`Reduces tend cooldown by ${(r*1.8).toFixed(1)}% (grandmaster)`,   next:r=>`+1.8% faster → ${(r*1.8).toFixed(1)}%`},
+    {id:'fa_gm_xp',   name:'Elder Farmer',    icon:FA_TREE_ICONS.fa_gm_xp,max:10, req:80, desc:r=>`+${r*3}% Farming XP (grandmaster)`,                 next:r=>`+3% XP → ${r*3}%`},
     {id:'fa_gm_sell', name:'Void Harvest',    icon:FA_TREE_ICONS.fa_gm_sell,max:8, req:85, desc:r=>`Farm produce sell value +${r*6}%`,                  next:r=>`+6% sell → ${r*6}%`},
     {id:'fa_gm_2x_xp',name:'Master Cultivator',icon:FA_TREE_ICONS.fa_gm_2x_xp,max:1,req:90, desc:r=>r?'2× Farming XP from all harvests (pinnacle)':'Double all Farming XP permanently',next:()=>'2× Farming XP permanently'},
     {id:'fa_gm_tend', name:'Perfect Tender',  icon:FA_TREE_ICONS.fa_gm_tend,max:1, req:90, desc:r=>r?'Each tend removes 2× the normal growth time (pinnacle)':'Tend actions are twice as effective — 50% boost instead of 25%',next:()=>'Tending is 2× as effective'},
@@ -10478,32 +10478,32 @@ const TREES = {
    ================================================================= */
 const PASSIVE_TIPS={
   // Woodcutting
-  wc_speed:     'Reduces the time each chop takes.\nEach rank gives +2% speed, up to +30% at max.\nStacks with level bonuses and gear.',
+  wc_speed:     'Reduces the time each chop takes.\nEach rank gives +1% speed, up to +15% at max 15 ranks.\nStacks with level bonuses and gear.',
   wc_double:    'Each chop has a chance to produce a bonus log on top of the normal drop.\nAt max rank (12): 24% bonus log chance per chop.',
   wc_xp:        'Multiplies all Woodcutting XP gains.\nAt max rank (6): +30% XP from every chop. (+5% per rank)\n2× XP unlock moved to Arborist in the Grandmaster tier.',
-  wc_bark:      'Each chop has a chance to produce a bonus log on top of the normal drop.\nAt max (8 ranks): ~6.4% bonus log chance per chop.\nStacks additively with Timber! and Splinter Edge (grandmaster).\nRequires 15 points spent first.',
+  wc_bark:      'Each chop has a chance to produce a bonus log on top of the normal drop.\nEach rank: +0.8%, up to 6.4% at max 8 ranks.\nStacks additively with Timber! and Splinter Edge (grandmaster).\nRequires 15 points spent first.',
   wc_kin:       'Each chop has a chance to also find a random forage item.\nWeighted pool: Wildberries most common, Voidmoss very rare.\nAt max (6 ranks): 30% forage chance.',
   wc_master1:   'Each chop has an X% chance to ignite the log on impact.\nThe log is consumed (not added to satchel) but grants +50% of the normal WC XP as a bonus.\n+2% chance per rank, capped at 10% at max rank (5 ranks).\nBonus XP passes through your full XP multiplier.',
   wc_master_hwd:'Every 10th chop yields +1 bonus log (tracked per session).\nGives a rhythmic burst every 10 actions — pairs well with high-tier logs.\nCounter resets when you stop chopping or switch activities.',
   wc_master2:   '15% chance for +1 log per chop.\nStacks with Keen Edge and other bonus rolls.\nRequires 50 points spent.',
-  wc_gm_speed:  'Grandmaster bonus (Lv 75 + all base nodes maxed).\n+3% chop speed per rank, up to +30% extra at max.',
-  wc_gm_bark:   'Grandmaster bonus (Lv 75). Adds bonus log chance per chop on top of Timber! and Keen Edge.\n+3% per rank, up to +36% at max 12 ranks. Same roll pool as Keen Edge.',
+  wc_gm_speed:  'Grandmaster bonus (Lv 75 + all base nodes maxed).\n+1.2% chop speed per rank, up to +14.4% extra at max 12 ranks.',
+  wc_gm_bark:   'Grandmaster bonus (Lv 75). Adds bonus log chance per chop on top of Timber! and Keen Edge.\n+0.8% per rank, up to +9.6% at max 12 ranks. Same roll pool as Keen Edge.',
   wc_gm_sell:   'Grandmaster bonus (Lv 80). Raises sell value of all logs.\n+7% per rank, up to +70% at max 10 ranks.',
   wc_gm_xp:     'Grandmaster bonus (Lv 80). Boosts all Woodcutting XP gains.\n+3% per rank, up to +30% at max 10 ranks. Adds into the additive XP bonus below the 1.5× Arborist multiplier.',
   wc_gm_2x_xp:  'Grandmaster pinnacle (Lv 85). Permanently multiplies all Woodcutting XP by 1.5×.\nApplied on top of the summed additive XP bonuses (tree + potion + gear).',
   wc_gm_double: 'Level 99 pinnacle. Unlocks a second woodcutting bar running at 50% speed.\nChoose a different tree type to chop in parallel — both bars run simultaneously.\nAll passives (Timber!, Keen Edge, Ancient Grove, Heartwood) apply to both bars.\nRequires 97 points spent AND the Woodcutting Cape (buy from the Shop at Lv 99).',
   // Mining
   mi_speed:     'Reduces time per mining action.\nEach rank: +1% faster, up to +15% at max 15 ranks.',
-  mi_vein:      'Each mine swing has a chance to produce a second ore automatically.\nAt max (15 ranks): 30% chance for a bonus ore every action.\nAlso boosted by Deep Veins (grandmaster).',
+  mi_vein:      'Each mine swing has a chance to produce a second ore automatically.\nEach rank: +1%, up to 15% at max 15 ranks.\nAlso boosted by Deep Veins (grandmaster).',
   mi_xp:        'Multiplies all Mining XP earned.\nAt max (10 ranks): +30% XP from every ore mined.\n2× XP unlock moved to Titan\'s Insight in the Grandmaster tier.',
   mi_coal:      'When mining any ore, there\'s a chance to also produce Coal.\nAt max (10 ranks): 40% coal chance.\nSynergises with Magma Core (grandmaster) for double-coal procs.',
-  mi_smelt:     'Passively boosts Smithing speed based on your Mining investment.\nEach rank: +2% Smithing speed. Cross-skill bonus.',
+  mi_smelt:     'Passively boosts Smithing speed based on your Mining investment.\nEach rank: +1.3% Smithing speed, up to +13% at max 10 ranks. Cross-skill bonus.',
   mi_master_vein:'Every 10th mining strike yields +2 bonus ore (tracked per session).\nCombines with Rich Vein and Motherlode for bursts of extra ore.\nCounter resets when you stop mining or switch activities.',
   mi_master1:   'Whenever you mine any ore (not just Coal), you automatically receive +1 Coal.\nHelps keep Smithing supplied when chain-mining higher ores.\nNote: reduced from +2 to keep Coal Seeker + Hardened Grip balanced.',
   mi_master2:   '30% chance for +1 ore per mine.\nCombines with Rich Vein — the doubled base can also proc the bonus roll.\nRequires 55 points spent — unlock after Hardened Grip.',
-  mi_gm_speed:  'Grandmaster bonus (Lv 75 + all base nodes maxed).\n+3% mining speed per rank, up to +30% extra.',
+  mi_gm_speed:  'Grandmaster bonus (Lv 75 + all base nodes maxed).\n+1.2% mining speed per rank, up to +12% extra at max 10 ranks.',
   mi_gm_fortune:'Grandmaster bonus (Lv 75). Raises the sell value of all ore.\n+7% per rank, up to +63% at max 9 ranks.',
-  mi_gm_vein:   'Grandmaster bonus (Lv 80). Adds to bonus ore chance on top of Rich Vein.\n+3% per rank, up to +24% extra at max 8 ranks.',
+  mi_gm_vein:   'Grandmaster bonus (Lv 80). Adds to bonus ore chance on top of Rich Vein.\n+2% per rank, up to +16% extra at max 8 ranks.',
   mi_gm_coal:   'Grandmaster bonus (Lv 80). When Coal Seeker procs, this gives a chance for it to yield 2 Coal instead of 1.\n+8% double-coal chance per rank, up to 48% at max 6 ranks.',
   mi_gm_2x_xp:  'Grandmaster pinnacle (Lv 85). Permanently multiplies all Mining XP by 1.5×.\nApplied on top of the summed additive XP bonuses.',
   mi_gm_double: 'Level 99 pinnacle. Unlocks a second mining action bar running at 50% speed.\nChoose a different ore to mine in parallel — both bars run simultaneously.\nCombines with all passives. A single mining session produces two ore streams.\nRequires 97 points spent AND the Mining Cape (buy from the Shop at Lv 99).',
@@ -10516,36 +10516,36 @@ const PASSIVE_TIPS={
   fi_master1:   'Every 10th cast yields +1 bonus fish (tracked per session).\nResets when you stop fishing or change activity.\nStacks with Schooling on the same proc.',
   fi_master_school:'Every 10th cast yields +1 bonus fish (tracked per session).\nShares the cast counter with Lucky Lure — both fire on the same 10th cast.\nCounter resets when you stop fishing or switch activities.',
   fi_master2:   '30% chance for +1 fish per cast.\nStacks with Haul Net bonus rolls.\nRequires 50 points spent — a deeper investment than Lucky Lure.',
-  fi_gm_speed:  'Grandmaster bonus (Lv 75 + all base nodes maxed).\n+3% cast speed per rank, up to +30% extra at max.',
-  fi_gm_double: 'Grandmaster bonus (Lv 75). Adds bonus fish chance on top of Haul Net.\n+3% per rank, up to +30% at max 10 ranks. Same roll pool as Haul Net.',
+  fi_gm_speed:  'Grandmaster bonus (Lv 75 + all base nodes maxed).\n+1.2% cast speed per rank, up to +12% extra at max 10 ranks.',
+  fi_gm_double: 'Grandmaster bonus (Lv 75). Adds bonus fish chance on top of Haul Net.\n+2% per rank, up to +20% at max 10 ranks. Same roll pool as Haul Net.',
   fi_gm_sell:   'Grandmaster bonus (Lv 80). Raises sell value of all fish.\n+7% per rank, up to +70% at max 10 ranks.',
   fi_gm_xp:     'Grandmaster bonus (Lv 80). Boosts all Fishing XP.\n+3% per rank, up to +24% at max 8 ranks. Adds into the additive XP bonus below the 1.5× Master of Tides multiplier.',
   fi_gm_2x_xp:  'Grandmaster pinnacle (Lv 85). Permanently multiplies all Fishing XP by 1.5×.\nApplied on top of the summed additive XP bonuses.',
   fi_gm_double_act:'Level 99 pinnacle. Unlocks a second fishing bar running at 50% speed.\nChoose a different spot to fish in parallel — both bars run simultaneously.\nAll passives (Haul Net, Steady Hands, Schooling, Lucky Lure) apply to both bars.\nRequires 97 points spent AND the Fishing Cape (buy from the Shop at Lv 99).',
   // Foraging
-  fo_speed:     'Reduces time per forage action. +2% per rank, up to +30%.',
+  fo_speed:     'Reduces time per forage action. +1% per rank, up to +15% at max 15 ranks.',
   fo_double:    'Each forage action has a chance to find a bonus resource.\nAt max (20): 40% chance for a second item every action.',
   fo_xp:        'Multiplies all Foraging XP. At max (10): +30% XP.',
   fo_cook:      'Each forage action has a chance to also find 1 Wild Herb.\nWild Herb is used in Cooking and Alchemy recipes.\nAt max (15 ranks): 60% bonus herb chance.',
   fo_sell:      'Raises sell value of all foraged plants. At max (9): +45%.',
   fo_master1:   'Every forage action always yields 1 bonus Wildberry on top of the normal drop.\nGuaranteed, not a chance. Wildberries are used in Alchemy.',
   fo_master2:   'Doubles sell value on all foraged items AND adds +25% Foraging XP.\nReplaces the old unlock mechanic — useful at any level.',
-  fo_master3:   '50% chance for +1 resource per forage.\nCombines with Keen Eye double rolls.',
-  fo_gm_speed:  'Grandmaster bonus (Lv 75). +3% forage speed per rank.',
+  fo_master3:   '50% chance for +1 resource per forage.\nAlso multiplies ALL Foraging XP by 1.5x.\nCombines with Keen Eye double rolls.',
+  fo_gm_speed:  'Grandmaster bonus (Lv 75). +1.2% forage speed per rank, up to +10.8% at max 9 ranks.',
   fo_gm_xp:     'Grandmaster bonus (Lv 80). +3% Foraging XP per rank.',
   fo_gm_sell:   'Grandmaster bonus (Lv 85). +6% foraged goods sell value per rank.',
   fo_gm_cape:   'Level 99 pinnacle — Primal Bloom. 20% chance on each forage to unearth a Bountiful Cache: +3 of that resource at once.\nRequires 97 points spent AND the Foraging Cape (buy from the Shop at Lv 99).',
   // Smithing
-  sm_speed:     'Reduces time per smelt. +2% per rank, up to +30%.',
+  sm_speed:     'Reduces time per smelt. +1.3% per rank, up to +19.5% at max 15 ranks.',
   sm_thrift:    'Each smelt has a chance for ingredients NOT to be consumed.\nFree bar — no ore cost, still produces the bar.',
   sm_xp:        'Multiplies all Smithing XP. At max (10): +30% XP.',
   sm_double:    'Each smelt has a chance to produce an extra bar for free.\nAt max (15): 60% chance for a bonus bar.',
   sm_sell:      'Raises sell value of all smelted bars. At max (9): +45%.',
   sm_master1:   'All smelting recipes that require Coal need 1 fewer Coal (minimum 0).\nSaves Coal across all bar types — significant long-term saving.',
   sm_master2:   'Every smelt produces 2 bars as the base output instead of 1.\nCombines with Twin Pour double rolls.',
-  sm_master3:   'Starsteel bars no longer require Coal to smelt.\nSaves 3 Coal per starsteel bar at max Smithing.',
-  sm_gm_speed:  'Grandmaster bonus (Lv 75). +3% smelt speed per rank.',
-  sm_gm_xp:     'Grandmaster bonus (Lv 80). +4% Smithing XP per rank.',
+  sm_master3:   'Permanently doubles all Smithing XP.\nAlso removes the Coal cost from starsteel bars — 3 Coal saved per bar.',
+  sm_gm_speed:  'Grandmaster bonus (Lv 75). +1.8% smelt speed per rank, up to +16.2% at max 9 ranks.',
+  sm_gm_xp:     'Grandmaster bonus (Lv 80). +3% Smithing XP per rank, up to +24% at max 8 ranks.',
   sm_gm_sell:   'Grandmaster bonus (Lv 85). +6% bar sell value per rank.',
   sm_gm_cape:   'Level 99 pinnacle — Living Forge. Smithing recipes consume no Coal at all (overrides Endurance and Starsteel Mastery).\nRequires 97 points spent AND the Smithing Cape (buy from the Shop at Lv 99).',
   // Cooking
@@ -10557,7 +10557,7 @@ const PASSIVE_TIPS={
   co_sell:      'Raises sell value of all cooked food. +1.5% per rank, up to +15% at max 10.',
   co_master_ember:'Logs you burn as cooking fuel normally grant only 15% of their Firemaking XP.\nEmber Cook raises that to 40%, giving the cook/fuel loop a modest Firemaking trickle.',
   co_master_hearth:'Milestone: the fire burns an additional 10% slower, on top of Slow Embers.\nWith both maxed the fire burns 18% slower — fewer logs needed per cooking session.',
-  co_gm_speed:  'Grandmaster bonus (Lv 75). +0.7% cook speed per rank, up to +7% at max 10.',
+  co_gm_speed:  'Grandmaster bonus (Lv 75). +0.7% cook speed per rank, up to +6.3% at max 9 ranks.',
   co_gm_xp:     'Grandmaster bonus (Lv 80). +0.8% Cooking XP per rank, up to +6.4% at max 8.',
   co_gm_sell:   'Grandmaster bonus (Lv 80). +1.5% cooked food sell value per rank, up to +6% at max 4.',
   co_gm_feast:  'Grandmaster pinnacle. Each cook has a 25% chance to produce a second meal (no longer a guaranteed double).\nRequires Lv 90 and 90 points spent in this tree. Stacks with Batch Cook.',
@@ -10572,7 +10572,7 @@ const PASSIVE_TIPS={
   al_concentrate:'Strengthens the actual effect of every potion (speed/XP/gold/yield).\n+2% to the potion\'s own bonus per rank, up to +16% at max 8.\nExample: a +10% speed potion becomes +11.6%.',
   al_master_swift:'Speed (Swiftness) potions also grant a +3% XP bonus while active.\nThe incidental XP never conflicts with a dedicated XP potion.',
   al_master_free:'20% chance each brew costs no ingredients at all — completely free.\nStacks with Reagent Saver for very cheap brewing at high investment.',
-  al_gm_speed:  'Grandmaster bonus (Lv 75). +1.8% brew speed per rank, up to +18% faster at max 10.',
+  al_gm_speed:  'Grandmaster bonus (Lv 75). +1.8% brew speed per rank, up to +16.2% faster at max 9 ranks.',
   al_gm_xp:     'Grandmaster bonus (Lv 80). +3% Alchemy XP per rank, up to +24% at max 8.',
   al_gm_potency:'Grandmaster bonus (Lv 80). Potions last +3% longer per rank, up to +12% at max 4.\nStacks with the Lingering Brew base node.',
   al_gm_2x_xp:  'Grandmaster pinnacle. Multiplies ALL Alchemy XP by 1.5× permanently.\nRequires 90 points spent in this tree. Applies on top of every additive XP bonus.',
@@ -10587,14 +10587,14 @@ const PASSIVE_TIPS={
   fm_sell:      'Raises sell value of all firemaking outputs (Ash, Charcoal, Ember Dust). +4% per rank, up to +40% at max 10.',
   fm_master1:   'Pine and Oak logs now have a 25% chance to also produce Charcoal in addition to Ash (Ash is still guaranteed).\nNormally only Ironbark+ produces Charcoal.',
   fm_master_bellows:'Milestone: a permanent +6% burn speed on top of Quick Kindle and all other speed bonuses.\nRequires 45 points spent.',
-  fm_gm_speed:  'Grandmaster bonus (Lv 75). +1.2% burn speed per rank, up to +12% at max 10.',
+  fm_gm_speed:  'Grandmaster bonus (Lv 75). +1.2% burn speed per rank, up to +10.8% at max 9 ranks.',
   fm_gm_xp:     'Grandmaster bonus (Lv 80). +2% Firemaking XP per rank, up to +16% at max 8.',
   fm_gm_sell:   'Grandmaster bonus (Lv 80). +4% firemaking output sell value per rank, up to +16% at max 4.',
   fm_master3:   'Grandmaster pinnacle. Multiplies ALL Firemaking XP by 1.5× permanently.\nRequires Lv 90 and 90 points spent in this tree. Applies on top of every additive XP bonus.',
   fm_master2:   'Grandmaster pinnacle. Every burn produces double its base outputs — 2× Ash, 2× Charcoal, 2× Ember Dust, etc.\nRequires Lv 90 and 97 points spent (take Void Furnace first).',
   fm_gm_cape:   'Level 99 pinnacle — Phoenix Rebirth. Every 10th log burned is reborn from the ashes: refunded to your satchel and grants its Firemaking XP a second time.\nRequires 97 points spent AND the Firemaking Cape (buy from the Shop at Lv 99).',
   // Agility
-  ag_speed:     'Reduces lap time. +2% per rank, up to +30%.',
+  ag_speed:     'Reduces lap time. +1.3% per rank, up to +19.5% at max 15 ranks.',
   ag_coins:     'Increases coin reward for completing each lap.\nAt max (15): +45% coins per lap.',
   ag_xp:        'Multiplies all Agility XP. At max (10): +30%.',
   ag_drop:      'Proportional bonus to rare drop chances across all skills.\nAt max (15): +60%. Combat drops are unaffected.',
@@ -10602,25 +10602,25 @@ const PASSIVE_TIPS={
   ag_master1:   'All lap coin rewards permanently increased by +25%.\nStacks with the Lap Reward node.',
   ag_master2:   'Permanent +15% run speed on top of all other speed bonuses.\\nStacks with Fleet Foot, Void Runner, and gear.',
   ag_master3:   'Permanent +25% Agility XP from all laps.\nReplaces the old level-unlock perk with immediate ongoing value.',
-  ag_gm_speed:  'Grandmaster bonus (Lv 75). +3% lap speed per rank.',
-  ag_gm_xp:     'Grandmaster bonus (Lv 80). +4% Agility XP per rank.',
-  ag_gm_coins:  'Grandmaster bonus (Lv 85). +6% lap coin rewards per rank.',
+  ag_gm_speed:  'Grandmaster bonus (Lv 75). +1.8% lap speed per rank, up to +16.2% at max 9 ranks.',
+  ag_gm_xp:     'Grandmaster bonus (Lv 80). +3% Agility XP per rank, up to +24% at max 8 ranks.',
+  ag_gm_coins:  'Grandmaster bonus (Lv 85). +6% lap coin rewards per rank, up to +48% at max 8 ranks.',
   // Jeweler
-  jw_speed:     'Reduces time per jewelry cut. +2% per rank, up to +30%.',
+  jw_speed:     'Reduces time per jewelry cut. +1.3% per rank, up to +19.5% at max 15 ranks.',
   jw_thrift:    'Each cut has a chance to not consume the gem.\nGem stays in satchel — free jewelry.',
   jw_xp:        'Multiplies all Jeweler XP. At max (10): +30%.',
-  jw_dust:      'Each cut has a chance to produce extra Gem Dust.\nGem Dust is used in Enchanting.\nAt max (15 ranks): 75% bonus dust chance.',
+  jw_dust:      'Each gem refine has a chance to produce extra Gem Dust.\nGem Dust fuels socket drilling, the Gem Exchange and high-tier enchants.\nEach rank: +5%, up to 75% bonus dust chance at max 15 ranks.',
   jw_sell:      'Raises sell value of all jewelry. At max (10): +50%.',
   jw_master1:   '5% chance each cut produces both a ring AND an amulet of that gem type.',
   jw_master2:   'Every cut produces 2 jewelry items instead of 1 as the base.',
-  jw_master3:   'Doubles all Gem Dust output from every cut.\nEnchanting requires large amounts of Gem Dust — this is significant.',
-  jw_gm_speed:  'Grandmaster bonus (Lv 75). +3% cut speed per rank.',
-  jw_gm_xp:     'Grandmaster bonus (Lv 80). +4% Jeweler XP per rank.',
+  jw_master3:   'Permanently doubles all Jeweler XP.\nAlso doubles the output of every non-refine cut.',
+  jw_gm_speed:  'Grandmaster bonus (Lv 75). +1.8% cut speed per rank, up to +16.2% at max 9 ranks.',
+  jw_gm_xp:     'Grandmaster bonus (Lv 80). +3% Jeweler XP per rank, up to +30% at max 10 ranks.',
   jw_gm_sell:   'Grandmaster bonus (Lv 85). +6% jewelry sell value per rank.',
   jw_gm_cape:   'Level 99 pinnacle — Flawless Cut. 15% chance on each jewelry cut for a flawless result that yields +2 bonus pieces (jewelry crafts only, not gem refining).\nRequires 97 points spent AND the Jeweler Cape (buy from the Shop at Lv 99).',
   ag_gm_cape:   'Level 99 pinnacle — Runner\'s High. 20% chance per lap to instantly bank a second lap\'s full coins and XP.\nRequires 97 points spent AND the Agility Cape (buy from the Shop at Lv 99).',
   // Farming
-  fa_speed:     'Reduces tending time per patch. +2% per rank, up to +30%.',
+  fa_speed:     'Reduces tending time per patch. +1.3% per rank, up to +19.5% at max 15 ranks.',
   fa_yield:     'Each harvest has a 4% per rank chance for a bonus harvest roll.\nAt max (15): 60% bonus yield chance.',
   fa_xp:        'Multiplies all Farming XP. At max (10): +30%.',
   fa_seed:      'Each harvest has a chance to return the planted seed.\nAt max (15): 75% seed-return chance. Stacks with Eternal Garden (100%).',
@@ -10628,8 +10628,8 @@ const PASSIVE_TIPS={
   fa_master1:   'Every harvest guarantees +1 of each crop type on top of all other bonuses.\nFor multi-output crops (e.g. Moonflower) you get +1 of every output.\nStacks with Abundance (2×) and Bountiful Crop bonus rolls.',
   fa_master2:   'Doubles the base yield of every patch — all crop quantities × 2.\nCombines with Bountiful Crop bonus rolls and Plentiful Harvest +1.',
   fa_master3:   'Seeds are always returned after every harvest.\nThe seed IS consumed when you plant, but you always get it back.\nAlso unlocks Ancient Bloom 10 levels early (Lv 70 instead of 80).',
-  fa_gm_speed:  'Grandmaster bonus (Lv 75). +3% tend-cooldown reduction per rank.',
-  fa_gm_xp:     'Grandmaster bonus (Lv 80). +4% Farming XP per rank.',
+  fa_gm_speed:  'Grandmaster bonus (Lv 75). +1.8% tend-cooldown reduction per rank, up to +16.2% at max 9 ranks.',
+  fa_gm_xp:     'Grandmaster bonus (Lv 80). +3% Farming XP per rank, up to +30% at max 10 ranks.',
   fa_gm_sell:   'Grandmaster bonus (Lv 85). +6% farm produce sell value per rank.',
   fa_gm_2x_xp:  'Pinnacle (Lv 90). Permanently doubles all Farming XP.\nStacks multiplicatively with Herbalist, Elder Farmer, and potions.',
   fa_gm_tend:   'Pinnacle (Lv 90). Each tend action removes 2× the normal growth time.\n25% → 50% boost per tend, letting you harvest crops much faster.',
@@ -14455,13 +14455,22 @@ function mods(skill){
   return {
     speed:   r(p+'_speed')*(skill==='cooking'?0.006:skill==='firemaking'?0.009:SPD_RANK)
            + r(p+'_gm_speed')*(skill==='cooking'?0.007:skill==='firemaking'?0.012:SPD_GM)
-           + (skill==='mining'?r('mi_smelt')*0.013:0)  // was 0.015
+           /* Forge Sense is a MINING node that buffs SMITHING (its name, desc and
+              tip all say so). It used to be added to the mining speed term, where
+              `r` is bound to the mining tree — so it silently sped up Mining and
+              gave Smithing nothing. Read it cross-tree from the smithing branch. */
+           + (skill==='smithing'?treeRank('mining','mi_smelt')*0.013:0)
            + (skill==='agility'&&r(p+'_master2')>0?0.15:0)
            + (skill==='firemaking'&&r('fm_master_bellows')>0?0.06:0)
            + gearBonus(skill,'speed')
            + eb.speed                                   // enchantments (Swift / unique / sets)
            + sb.speed,                                  // socket gems (onyx)
     double:  IS_G?(r(p+'_double')*0.01
+                  /* Mining's base yield node is `mi_vein`, not `mi_double` — the
+                     generic `p+'_double'` lookup above resolves to an id that has
+                     never existed, so the tree's single biggest node (15 pts, a
+                     0-req opener) did nothing at all. */
+                  + (skill==='mining'?r('mi_vein')*0.01:0)
                   + (skill==='mining'?r('mi_gm_vein')*0.02:0)
                   + (skill==='fishing'?r('fi_gm_double')*0.02:0)
                   + eb.doubleYield                       // enchantments (Gatherer / Hoarder / sets)
@@ -14492,6 +14501,7 @@ function mods(skill){
     master1: r(p+'_master1')>0,
     master2: r(p+'_master2')>0,
     master3: r(p+'_master3')>0,
+    jw_dust: skill==='jeweler'?r('jw_dust')*0.05:0,   // Dust Collector — bonus gem dust per cut
     wc_burnChance: skill==='woodcutting'?Math.min(0.10,r('wc_master1')*0.02):0,
     coalSave: skill==='smithing'&&r('sm_master1')>0?1:0,
     wc_kin:    skill==='woodcutting'?r('wc_kin'):0,
@@ -14605,7 +14615,7 @@ function gpPerAction(act,skill){
   // Agility coin reward — already receives a coinMult at runtime; replicate it here for display
   if(IS_AGILITY_SKILL[skill]&&act.coins){
     const p=SK_PFX[skill];
-    const coinMult=1+(treeRank(skill,p+'_coins')*0.03)+(treeRank(skill,p+'_master1')>0?0.25:0)+(treeRank(skill,p+'_master3')>0?0.25:0)+(treeRank(skill,'ag_gm_coins2')>0?0.75:0);
+    const coinMult=1+(treeRank(skill,p+'_coins')*0.03)+(treeRank(skill,p+'_master1')>0?0.25:0)+(treeRank(skill,p+'_master3')>0?0.25:0)+(treeRank(skill,'ag_gm_coins')*0.06)+(treeRank(skill,'ag_gm_coins2')>0?0.75:0);
     gp+=act.coins*coinMult; // act.coins is already SILVER (matches item-sell silver)
   }
   for(const [id,q] of Object.entries(act.out)){
@@ -15810,6 +15820,10 @@ function completeAction(act,skillKey,times){
       if(m.master2 && act.cat!=='refine' && skillKey!=='crafting') qty=q*2*times;
       // Flawless Cut (Lv99): 15% chance per jewelry cut for +2 bonus pieces (jewelry crafts only)
       if(m.jw_flawless && act.cat!=='refine'){ const fc=binom(times,0.15); if(fc>0) qty+=fc*2; }
+      // Dust Collector (jw_dust): chance for bonus gem dust on a refine. 15 points
+      // of the Jeweler tree bought nothing at all before this — gem_dust gates
+      // socket drilling and the Gem Exchange, so the node matters.
+      if(m.jw_dust>0 && id==='gem_dust'){ const dd=binom(times,m.jw_dust); if(dd>0) qty+=dd; }
       // Grand Elixir (Lv99): every brew yields ×3 potions (deterministic; supersedes Double/Twin)
       if(m.al_triple) qty=q*times*3;
       // Heirloom Forge (cr_master1): 5% chance per craft for a free duplicate piece
@@ -15873,7 +15887,7 @@ function completeAction(act,skillKey,times){
   let agBonusLaps=0;
   if(IS_AGILITY_SKILL[skillKey]&&act.coins){
     const p=SK_PFX[skillKey];
-    const coinMult=1+(treeRank(skillKey,p+'_coins')*0.03)+(treeRank(skillKey,p+'_master1')>0?0.25:0)+(treeRank(skillKey,p+'_master3')>0?0.25:0)+(treeRank(skillKey,'ag_gm_coins2')>0?0.75:0);
+    const coinMult=1+(treeRank(skillKey,p+'_coins')*0.03)+(treeRank(skillKey,p+'_master1')>0?0.25:0)+(treeRank(skillKey,p+'_master3')>0?0.25:0)+(treeRank(skillKey,'ag_gm_coins')*0.06)+(treeRank(skillKey,'ag_gm_coins2')>0?0.75:0);
     // Runner's High (Lv99): 20% chance per lap to instantly bank a second lap's rewards.
     if(m.ag_bonusLap) agBonusLaps=binom(times,0.20);
     const coinsGained=Math.round((act.coins||0)*(times+agBonusLaps)*coinMult); // already SILVER
@@ -16640,7 +16654,7 @@ function buildActBtn(act,reqLvl,lvl,m,bestXph,bestRph){
   let coinDisplay='';
   if(IS_AGILITY_SKILL[selectedSkill]&&act.coins){
     const p=SK_PFX[selectedSkill];
-    const coinMult=1+(treeRank(selectedSkill,p+'_coins')*0.03)+(treeRank(selectedSkill,p+'_master1')>0?0.25:0)+(treeRank(selectedSkill,p+'_master3')>0?0.25:0)+(treeRank(selectedSkill,'ag_gm_coins2')>0?0.75:0);
+    const coinMult=1+(treeRank(selectedSkill,p+'_coins')*0.03)+(treeRank(selectedSkill,p+'_master1')>0?0.25:0)+(treeRank(selectedSkill,p+'_master3')>0?0.25:0)+(treeRank(selectedSkill,'ag_gm_coins')*0.06)+(treeRank(selectedSkill,'ag_gm_coins2')>0?0.75:0);
     const effCoins=Math.round(act.coins*coinMult);
     coinDisplay=`${fmtCoins(effCoins,true)} per lap`;
   }
@@ -17971,7 +17985,9 @@ function renderStats(){
   const lvlSpd=+(0.0015*(lvl-1)*100).toFixed(1);   // matches actMs lvlBonus
   const treeSpd=+((r(p+'_speed')*_spdRank)+(r(p+'_gm_speed')*_spdGm)).toFixed(1);
   const gearSpd=+(gearBonus(skill,'speed')*100).toFixed(1);
-  const crossSpd=skill==='smithing'?+(r('mi_smelt')*1.3).toFixed(1):0;
+  // Forge Sense lives in the MINING tree, so it has to be read cross-tree —
+  // treeRank(skill,…) with skill==='smithing' is structurally always 0.
+  const crossSpd=skill==='smithing'?+(treeRank('mining','mi_smelt')*1.3).toFixed(1):0;
   const potionSpd=+(activeEffectBonus('speed')*100).toFixed(1);
   const totalSpd=+(lvlSpd+treeSpd+gearSpd+crossSpd+potionSpd).toFixed(1);
 
