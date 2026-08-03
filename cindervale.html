@@ -3542,7 +3542,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.91</div>
+  <div class="mm-ver">v0.9.92</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -5564,14 +5564,29 @@ const PENDANT_SETS={
 };
 /* Is a set active in `loadout`? For the neck (amulet) slot, the equipped item's TYPE must
    match `neckType` — so amulet sets need an amulet on the neck, pendant sets need a pendant. */
+/* Every set declares slots:['ring_l','amulet'], but rings fit EITHER hand — the
+   gear doll presents Ring (L) and Ring (R) as symmetric and the shop's ember_ring
+   even defaults to the right. A bare loadout['ring_l'] meant a right-hand ring
+   silently killed the set: measured on the Void pair, ring_l gave speed 0.88 /
+   xp 0.65 / gp 0.35 / double 0.20 with the set live, ring_r gave 0.60 / 0.30 / 0 / 0
+   with no set at all — 244,000g of materials and a Jeweler-84/88 chain lost on a
+   coin-flip slot choice, with nothing in any tooltip to hint at it. The ring leg
+   now resolves across both hands, counting each hand at most once so a matched
+   pair cannot satisfy two legs of the same set. */
 function _enchantSetActive(setDef, loadout, neckType){
+  var used={};
   return setDef.slots.every(function(slot){
-    var eq=loadout[slot];
-    if(!eq) return false;
-    if(JEWELRY_GEM_TIER[eq]!==setDef.gemMatch) return false;
-    if(!state.enchantments[eq]) return false;
-    if(slot==='amulet' && neckType && _jwType(eq)!==neckType) return false;
-    return true;
+    var candidates = (slot==='ring_l'||slot==='ring_r') ? ['ring_l','ring_r'] : [slot];
+    return candidates.some(function(sl){
+      if(used[sl]) return false;
+      var eq=loadout[sl];
+      if(!eq) return false;
+      if(JEWELRY_GEM_TIER[eq]!==setDef.gemMatch) return false;
+      if(!state.enchantments[eq]) return false;
+      if(sl==='amulet' && neckType && _jwType(eq)!==neckType) return false;
+      used[sl]=1;
+      return true;
+    });
   });
 }
 
@@ -5817,6 +5832,23 @@ function ownsItemAnywhere(id){
 /* An item left the player's possession (sold / fully consumed): pop every gem
    still socketed in it back to the satchel, then drop the socket record so the
    item stops lingering in the Socket panel. */
+/* Strip an item off every loadout. Selling the last copy of a WORN item left both
+   loadouts pointing at it, and ownsItemAnywhere counts loadout membership as
+   ownership — so the socket sweep skipped the record forever and the item's stats
+   and socket bonuses kept applying to a piece the player owned 0 of, across a full
+   save round-trip. One free permanent item per equip slot. */
+function unequipEverywhere(id){
+  const maps=[state.equipped,state.combatEquipped,state.skillingEquipped];
+  for(const mp of maps){ if(!mp) continue; for(const s in mp){ if(mp[s]===id) delete mp[s]; } }
+}
+/* Call after any satchel decrement: if that was the last one, take it off the
+   paper doll first, THEN reclaim its gems. Order matters — reclaimSocketsFor is
+   gated on ownsItemAnywhere, which stays true while a loadout still names it. */
+function releaseIfGone(id){
+  if((state.items&&state.items[id]||0)>0) return;
+  unequipEverywhere(id);
+  if(!ownsItemAnywhere(id)) reclaimSocketsFor(id);
+}
 function reclaimSocketsFor(itemId){
   var sd=state.sockets&&state.sockets[itemId];
   if(!sd) return;
@@ -12780,6 +12812,13 @@ function normalizeState(){
   for(var _gpKey2 in state.gearPresets) _migPendantToNeck(state.gearPresets[_gpKey2]);
   if(!state.mastery||typeof state.mastery!=='object'||Array.isArray(state.mastery)) state.mastery={};
   if(!Array.isArray(state.effects)) state.effects=[];
+  /* Container-only guards were the pattern here: Array.isArray at the top, then
+     every element dereferenced unguarded below. A single null entry — which is
+     JSON-expressible, and mmDoImport writes imported payloads without normalising
+     — threw out of normalizeState. applySave swallows that, but mmStart calls it
+     again uncaught, so mmFinishStart never ran: every menu screen hidden, Play
+     button dead, character permanently unopenable. Drop malformed entries. */
+  state.effects=state.effects.filter(e=>e&&typeof e==='object'&&typeof e.expires==='number');
   // Migrate old multi-object stacks: merge same-variant effects into one object with _stacks
   (()=>{
     const BK=['speed','xp','gp','doubleChance','atk','str','def'];
@@ -12991,6 +13030,10 @@ function normalizeState(){
   if(!state.potionCooldowns||typeof state.potionCooldowns!=='object'||Array.isArray(state.potionCooldowns)) state.potionCooldowns={};
   if(typeof state.satchelUpgrades!=='number'||state.satchelUpgrades<0) state.satchelUpgrades=0;
   if(!Array.isArray(state.notifications)) state.notifications=[];
+  // Same class of bug as state.effects above: a null row here bricked the character.
+  // A non-numeric time renders as "undefinedNaNd ago", so coerce it too.
+  state.notifications=state.notifications.filter(n=>n&&typeof n==='object');
+  for(const n of state.notifications) if(typeof n.time!=='number'||!isFinite(n.time)) n.time=Date.now();
   if(typeof state.notifsSeen!=='number') state.notifsSeen=state.notifications.length;
   // Migrate to per-notification seen flag. Any existing notif without `seen`
   // gets seen=true so we don't suddenly flash old history as unread.
@@ -13640,8 +13683,18 @@ function loadGame(){
   const raw = lsGet(mmKey(mmSlot));
   if(raw){ try{ applySave(JSON.parse(raw)); }catch(e){ console.warn('Load failed:',e); } }
 }
+/* Returns true if the payload is plausibly one of our saves. `typeof {} === 'object'`
+   and so does an array, so the old shape-only check let `btoa('{}')` through: the
+   in-game Import replaced a live character with a level-1 default, toasted "Save
+   loaded!", and the 5-second autosave committed it over the real slot within five
+   seconds. Total unrecoverable loss from one mis-paste. mmDoImport has always
+   checked `data.xp`; the in-game path did not. */
+function isPlausibleSave(s){
+  return !!s && typeof s === 'object' && !Array.isArray(s)
+      && !!s.xp && typeof s.xp === 'object' && !Array.isArray(s.xp);
+}
 function applySave(s){
-  if(!s||typeof s!=='object') return;
+  if(!isPlausibleSave(s)) return false;
   // Tamper check before we touch anything. Only flags saves that HAVE a seal and
   // fail it — older/unsealed saves are ignored, so nobody is falsely flagged.
   try{ if(s._seal!==undefined && s._seal!==_cheatSeal(s)) _auditPing('Save tamper seal failed (edited outside the game)', [{name:'Name',value:String(s.charName||'?').slice(0,64),inline:true}], 'seal'); }catch(e){}
@@ -13656,6 +13709,7 @@ function applySave(s){
   state=defaultState();
   Object.assign(state,s);
   normalizeState();
+  return true;
 }
 
 /* ════════ [JS-16] MODAL SYSTEM — custom confirm / prompt ════════════════════════ */
@@ -13716,7 +13770,10 @@ $('smAction').addEventListener('click',()=>{
     const code=$('smArea').value.trim();
     if(!code) return;
     try{
-      applySave(JSON.parse(decodeURIComponent(escape(atob(code)))));
+      if(!applySave(JSON.parse(decodeURIComponent(escape(atob(code)))))){
+        toast("That doesn't look like a valid save code — nothing was changed.");
+        return;
+      }
       grantOffline(); renderAll();
       $('saveModal').classList.add('hidden');
       toast('Save loaded!');
@@ -13802,10 +13859,21 @@ function globalSellBonus(){
    and the producing skill's sell perk. Used by the satchel, tooltips, and compendium so the
    shown price always reflects current gear and perks. */
 function producingSkillOf(id){
-  return Object.keys(SKILLS).find(sk=>
+  const direct=Object.keys(SKILLS).find(sk=>
     SKILLS[sk].acts.some(a=>a.out&&a.out[id])||
     (sk==='fishing'&&id.startsWith('raw'))||(sk==='cooking'&&id.startsWith('cooked'))
-  )||null;
+  );
+  if(direct) return direct;
+  /* Farming has no acts — it runs on the patch system — so the acts[].out scan
+     above can never return it. That left fa_sell and fa_gm_sell, 18 of the farming
+     tree's 98 points, computing a +98% sell bonus that nothing read, while the
+     panel cheerfully rendered "Sell value bonus +98%". Swept all 18 crop outputs
+     and all 18 seeds before the fix: delta exactly 0 on all 37.
+     Deliberately a FALLBACK, not another branch of the find: a dozen crops are also
+     foraging outputs, and those must keep resolving to foraging as they always have
+     rather than silently switching which tree pays their sell bonus. */
+  if(typeof CROPS!=='undefined' && CROPS.some(c=>c.id===id||(c.out&&c.out[id]))) return 'farming';
+  return null;
 }
 function effectiveItemSell(id){
   const it=ITEMS[id]; if(!it||!it.sell) return 0;
@@ -14185,6 +14253,7 @@ const COMBAT_P={ HIT_LVL:1.6, HIT_GEAR:5.0, ACC_LVL:1.5, ACC_GEAR:3.5,
 // foe's defence. Each stack refreshes the whole effect to 10s, so a dry streak
 // (25%/hit) lets it fall off. Tick damage scales with the player's max hit.
 // Burn: a hotter pure-DoT (no defence shred), preferred for raw damage.
+const MAX_STACKS=3;            // buff-potion AND buff-food stack ceiling (was local to usePotion)
 const POISON_MAX_STACKS=10;   // hard cap on stacks
 const POISON_CHANCE=0.25;     // per landed hit
 const POISON_DUR_MS=10000;    // refreshed on each application; 10s ceiling
@@ -15012,7 +15081,19 @@ function useHealPotion(itemId){
   if(hasBuff){
     if(!Array.isArray(state.effects)) state.effects=[];
     const dur=(buff.dur||30)*1000;
-    state.effects.push({atk:buff.atk||0,str:buff.str||0,def:buff.def||0,expires:Date.now()+dur,name:it.name,food:true});
+    /* Carry _itemId and obey MAX_STACKS, exactly as usePotion does. Without them
+       every bite pushed a fresh unbounded effect: six Infernal Roasts gave +18 Str
+       / +18 Def (six times the game's Lv90 capstone brew) and sixty gave +180/+180.
+       Auto-eat is ON by default, so a long boss fight accumulated this on its own —
+       a measured 120s fight took max hit 158 -> 278 with no player input. */
+    const now=Date.now();
+    const ex=state.effects.find(e=>e.expires>now&&e._itemId===itemId);
+    if(ex){
+      ex.expires=Math.min(now+dur*MAX_STACKS, Math.max(ex.expires,now)+dur);
+      ex._stacks=Math.min(MAX_STACKS, Math.max(1, Math.round((ex.expires-now)/dur)));
+    } else {
+      state.effects.push({atk:buff.atk||0,str:buff.str||0,def:buff.def||0,expires:now+dur,name:it.name,food:true,_itemId:itemId,_stacks:1});
+    }
     if(typeof refreshCombatStats==='function') refreshCombatStats();
     if(typeof cmbLog==='function'){
       const tag=[buff.atk?`+${buff.atk} Atk`:'',buff.str?`+${buff.str} Str`:'',buff.def?`+${buff.def} Def`:''].filter(Boolean).join(', ');
@@ -15199,7 +15280,6 @@ function usePotion(itemId,silent){
   const hasMaster1Xp=it.potion.speed&&!it.potion.xp&&treeRank('alchemy','al_master_swift')>0;
   if(hasMaster1Xp) effect.xp=0.03; // incidental Alchemist's Insight XP — flat, not concentrated
 
-  const MAX_STACKS=3;
   const cap=addedDur*MAX_STACKS; // hard ceiling on total remaining duration
 
   // ── Case 1: same potion already active → top up duration toward the cap ──
@@ -15244,16 +15324,19 @@ function usePotion(itemId,silent){
     }
   }
 
-  // Remove any active effect weaker than the new potion on a shared stat
+  /* Supersede only the stats the new potion actually beats. This used to drop the
+     whole rival object: a Warrior's Triple Brew (3/3/3) plus Honed Edge II (atk 4)
+     ended as {4,0,0} with BOTH consumed — 9 stat points down to 4 — and a +4 Str
+     brew on top of six Infernal Roasts destroyed +18 Str and +18 Def outright.
+     Zero the beaten stats instead, and only drop the effect once nothing is left. */
+  const ALL_BONUS_KEYS=['speed','xp','gp','doubleChance','atk','str','def'];
   state.effects=state.effects.filter(e=>{
     if(e.expires<=now) return false;
     if(e._itemId===itemId) return true;
-    // Keep effects with no shared stats (they coexist freely)
-    const hasSharedStat=intendedTypes.some(k=>(e[k]||0)>0);
-    if(!hasSharedStat) return true;
-    // Remove if new potion is stronger on any shared stat
-    const newPotionIsStronger=intendedTypes.some(k=>(e[k]||0)>0&&(effect[k]||0)>=(e[k]||0));
-    return !newPotionIsStronger;
+    const beaten=intendedTypes.filter(k=>(e[k]||0)>0&&(effect[k]||0)>=(e[k]||0));
+    if(!beaten.length) return true;          // no shared stat, or the rival still wins
+    for(const k of beaten) e[k]=0;
+    return ALL_BONUS_KEYS.some(k=>(e[k]||0)>0);
   });
 
   effect._stacks=1;
@@ -19088,6 +19171,7 @@ function renderInventory(){
           const qty=Math.min(want,q);
           if(!(qty>0)) return;
           state.items[id]=Math.max(0,(state.items[id]||0)-qty);
+          releaseIfGone(id);   // sold the last one: unequip, then reclaim its gems
           state.coins+=sv*qty;
           showCoinPop(sv*qty);
           renderRightPanel(); renderHeader();
@@ -21305,9 +21389,9 @@ function openSellModal(id, sv, maxQty){
     const qty=readQty();
     if(qty<=0){ $('sellModal').classList.add('hidden'); return; }
     state.items[id]=Math.max(0,(state.items[id]||0)-qty);
-    // Sold the last one — pop any socketed gems back to the satchel so they
-    // aren't lost and the item stops showing in the Socket panel.
-    if((state.items[id]||0)===0) reclaimSocketsFor(id);
+    // Sold the last one — take it off the paper doll, then pop any socketed gems
+    // back to the satchel so they aren't lost and it leaves the Socket panel.
+    releaseIfGone(id);
     state.coins+=sv*qty;
     showCoinPop(sv*qty);
     $('sellModal').classList.add('hidden');
