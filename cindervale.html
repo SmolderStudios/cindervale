@@ -3542,7 +3542,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.88</div>
+  <div class="mm-ver">v0.9.89</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -10268,11 +10268,11 @@ const TREES = {
     // BASE TIER — totals 74 ranks, maxing exactly at Lv 75 (mirrors the alchemy rework).
     // Per-rank values nerfed hard across the board — see cooking branches in mods().
     {id:'co_speed', name:'Quick Fire',    icon:CO_TREE_ICONS.co_speed,max:18,req:0,
-      desc:r=>`Cook ${(r*0.6).toFixed(1)}% faster`, next:r=>`+0.6% cook speed → ${(r*0.6).toFixed(1)}% faster`},
+      desc:r=>`Cook ${(r*0.9).toFixed(1)}% faster`, next:r=>`+0.9% cook speed → ${(r*0.9).toFixed(1)}% faster`},
     {id:'co_thrift',name:'Careful Prep',  icon:CO_TREE_ICONS.co_thrift,max:12,req:0,
       desc:r=>`${(r*0.5).toFixed(1)}% chance the raw fish isn't consumed`, next:r=>`+0.5% preserve → ${(r*0.5).toFixed(1)}%`},
     {id:'co_xp',    name:'Master Chef',   icon:CO_TREE_ICONS.co_xp,max:10,req:0,
-      desc:r=>`+${(r*0.7).toFixed(1)}% Cooking XP`, next:r=>`+0.7% XP → ${(r*0.7).toFixed(1)}%`},
+      desc:r=>`+${(r*1.5).toFixed(1)}% Cooking XP`, next:r=>`+1.5% XP → ${(r*1.5).toFixed(1)}%`},
     {id:'co_fuel',  name:'Slow Embers',   icon:CO_TREE_ICONS.co_fuel,max:10,req:15,
       desc:r=>`Cooking fire burns ${(r*0.8).toFixed(1)}% slower — fuel lasts longer`, next:r=>`+0.8% slower burn → ${(r*0.8).toFixed(1)}%`},
     {id:'co_double',name:'Batch Cook',    icon:CO_TREE_ICONS.co_double,max:12,req:20,
@@ -10287,17 +10287,17 @@ const TREES = {
       next:()=>'Fire burns 10% slower (stacks with Slow Embers)'},
     // GRANDMASTER TIER — Lv 75+ with all base nodes maxed. Base(74)+GM(24)=98 = points earned at Lv 99.
     {id:'co_gm_speed',name:'Iron Chef',   icon:CO_TREE_ICONS.co_gm_speed,max:9,req:75,
-      desc:r=>`Reduces cook time by ${(r*0.7).toFixed(1)}% (grandmaster)`, next:r=>`+0.7% faster → ${(r*0.7).toFixed(1)}%`},
+      desc:r=>`Reduces cook time by ${(r*1.2).toFixed(1)}% (grandmaster)`, next:r=>`+1.2% faster → ${(r*1.2).toFixed(1)}%`},
     {id:'co_gm_xp',  name:'Culinary Arts',icon:CO_TREE_ICONS.co_gm_xp,max:8,req:80,
-      desc:r=>`+${(r*0.8).toFixed(1)}% Cooking XP (grandmaster)`, next:r=>`+0.8% XP → ${(r*0.8).toFixed(1)}%`},
+      desc:r=>`+${(r*2).toFixed(1)}% Cooking XP (grandmaster)`, next:r=>`+2% XP → ${(r*2).toFixed(1)}%`},
     {id:'co_gm_sell',name:'Fine Dining',  icon:CO_TREE_ICONS.co_gm_sell,max:4,req:80,
       desc:r=>`Cooked food sell value +${(r*1.5).toFixed(1)}% (grandmaster)`, next:r=>`+1.5% sell → ${(r*1.5).toFixed(1)}%`},
     {id:'co_gm_feast',name:'Feasting Table',icon:CO_TREE_ICONS.co_gm_feast,max:1,req:90,reqPts:90,
       desc:r=>r?'25% chance to cook a second meal (grandmaster pinnacle, stacks with Batch Cook)':'+25% second-meal chance',
       next:()=>'25% chance for a second meal (stacks with Batch Cook)'},
     {id:'co_gm_2x_xp',name:'Grand Chef',  icon:CO_TREE_ICONS.co_gm_2x_xp,max:1,req:90,reqPts:95,
-      desc:r=>r?'1.25× Cooking XP permanently from every cook (grandmaster pinnacle)':'1.25× Cooking XP permanently',
-      next:()=>'1.25× Cooking XP permanently'},
+      desc:r=>r?'1.5× Cooking XP permanently from every cook (grandmaster pinnacle)':'1.5× Cooking XP permanently',
+      next:()=>'1.5× Cooking XP permanently'},
     {id:'co_gm_cape',name:'Eternal Flame', icon:CO_TREE_ICONS.co_gm_cape,max:1,req:99,reqPts:97,reqCape:true,
       desc:r=>r?'Your cooking fire never consumes fuel — light it once and cook forever':'Cooking fire never consumes fuel',
       next:()=>'Cooking fire never burns fuel · requires the Cooking Cape'},
@@ -10579,19 +10579,19 @@ const PASSIVE_TIPS={
   sm_gm_sell:   'Grandmaster bonus (Lv 85). +6% bar sell value per rank.',
   sm_gm_cape:   'Level 99 pinnacle — Living Forge. Smithing recipes consume no Coal at all (overrides Endurance and Starsteel Mastery).\nRequires 97 points spent AND the Smithing Cape (buy from the Shop at Lv 99).',
   // Cooking
-  co_speed:     'Reduces time per cook. +0.6% per rank, up to +10.8% faster at max 18 ranks.\nThis is craft speed only — it does not affect the fire/fuel system.',
+  co_speed:     'Reduces time per cook. +0.9% per rank, up to +16.2% faster at max 18 ranks.\nThis is craft speed only — it does not affect the fire/fuel system.',
   co_thrift:    'Each cook has a chance for the raw fish NOT to be consumed.\nFree cooked food — the raw fish stays in your satchel. +0.5% per rank, up to 6% at max.',
-  co_xp:        'Multiplies all Cooking XP. +0.7% per rank, up to +7% at max 10.',
+  co_xp:        'Multiplies all Cooking XP. +1.5% per rank, up to +15% at max 10 ranks.',
   co_fuel:      'Cooking is the only skill with a fuel system — the fire burns logs in real time.\nSlow Embers makes the fire burn slower so each log lasts longer. +0.8% slower per rank, up to 8% at max 10.\nStacks with Open Hearth.',
   co_double:    'Each cook has a chance to produce a second cooked meal from one raw fish.\n+0.6% per rank, up to 7.2% second-meal chance at max 12.',
   co_sell:      'Raises sell value of all cooked food. +1.5% per rank, up to +15% at max 10.',
   co_master_ember:'Logs you burn as cooking fuel normally grant only 15% of their Firemaking XP.\nEmber Cook raises that to 40%, giving the cook/fuel loop a modest Firemaking trickle.',
   co_master_hearth:'Milestone: the fire burns an additional 10% slower, on top of Slow Embers.\nWith both maxed the fire burns 18% slower — fewer logs needed per cooking session.',
-  co_gm_speed:  'Grandmaster bonus (Lv 75). +0.7% cook speed per rank, up to +6.3% at max 9 ranks.',
-  co_gm_xp:     'Grandmaster bonus (Lv 80). +0.8% Cooking XP per rank, up to +6.4% at max 8.',
+  co_gm_speed:  'Grandmaster bonus (Lv 75). +1.2% cook speed per rank, up to +10.8% at max 9 ranks.',
+  co_gm_xp:     'Grandmaster bonus (Lv 80). +2% Cooking XP per rank, up to +16% at max 8 ranks.',
   co_gm_sell:   'Grandmaster bonus (Lv 80). +1.5% cooked food sell value per rank, up to +6% at max 4.',
   co_gm_feast:  'Grandmaster pinnacle. Each cook has a 25% chance to produce a second meal (no longer a guaranteed double).\nRequires Lv 90 and 90 points spent in this tree. Stacks with Batch Cook.',
-  co_gm_2x_xp:  'Grandmaster pinnacle. Multiplies ALL Cooking XP by 1.25× permanently.\nRequires Lv 90 and 97 points spent (take Feasting Table first). Applies on top of every additive XP bonus.',
+  co_gm_2x_xp:  'Grandmaster pinnacle. Multiplies ALL Cooking XP by 1.5× permanently.\nRequires Lv 90 and 97 points spent (take Feasting Table first). Applies on top of every additive XP bonus.',
   co_gm_cape:   'Level 99 pinnacle — Eternal Flame. Your cooking fire never consumes fuel; light it once with any log and cook indefinitely.\nRequires 97 points spent AND the Cooking Cape (buy from the Shop at Lv 99).',
   // Alchemy
   al_speed:     'Speeds up brewing — each potion takes less time to make.\nThis affects crafting time only, NOT how long a potion lasts once drunk.\n+1.3% per rank, up to +23.4% faster at max 18 ranks.',
