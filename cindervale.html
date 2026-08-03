@@ -3542,7 +3542,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.86</div>
+  <div class="mm-ver">v0.9.87</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -12638,7 +12638,10 @@ function normalizeState(){
      aboard than there are berths. Trim from the most expensive role first so the
      player keeps the cheapest hands rather than losing the lot. */
   if(typeof SAIL_HULLS!=='undefined'&&typeof SAIL_CREW_ROLES!=='undefined'){
-    const _berths=SAIL_HULLS[state.sail.hull].berths||0;
+    // +1 for the Sailing Cape, exactly as sailBerths() counts it — reading the
+    // raw hull number fired a capped captain's 13th hand on every single load.
+    const _berths=(SAIL_HULLS[state.sail.hull].berths||0)
+                 +(((state.items&&state.items.cape_sailing)>0)?1:0);
     let _have=0; for(const k in state.sail.crew) _have+=state.sail.crew[k];
     if(_have>_berths){
       const _order=SAIL_CREW_ROLES.slice().sort((a,b)=>b.hire-a.hire);
@@ -12831,6 +12834,12 @@ function normalizeState(){
   /* Boss-trophy latch (see rollDrops). Seeded once from any `once` drop the
      player currently holds, wears or has already discovered, so existing saves
      do not get a second free roll on a trophy they have already earned. */
+  /* Existing saves carry rendered <svg> in their notification log (~4 KB each,
+     50-entry ring). Strip it: it is dead weight in localStorage and must never
+     be re-injected as HTML. The row keeps its text and just loses its glyph. */
+  if(Array.isArray(state.notifications))
+    for(const n of state.notifications)
+      if(n && typeof n.icon==='string' && n.icon.indexOf('<')>=0) n.icon='✦';
   // Backfill for saves made before buyShop marked purchases discovered.
   if(Array.isArray(state.gear)&&state.discovered)
     for(const gid of state.gear) if(ITEMS[gid]) state.discovered[gid]=1;
@@ -13280,6 +13289,12 @@ function skillHasNewDiscovery(skillKey){
    from 70k→80k takes ~2 minutes to fully reflect the new rate.
    During the first WARMUP_MS the theoretical rate is shown as a seed
    so the number is never blank or spikey on a fresh start.            */
+/* Ceiling on how much wall-clock one tick may pay out at the full online rate.
+   Generous next to any real throttle (a backgrounded tab still fires roughly
+   every second, and even a stalled main thread recovers well inside this), but
+   it stops a suspended machine from cashing hours of online-rate progress that
+   should have gone through the capped offline path. */
+const TICK_CATCHUP_MAX_MS = 120000;   // 2 minutes
 const XPH_WINDOW = 120000; // 2 minute rolling window — smooth cross-activity average
 const XPH_WARMUP =  10000; // show theoretical for first 10s until real data builds up
 const xphBuf={};
@@ -16041,7 +16056,10 @@ function completeWcDoubleAction(act,cycles){
   for(const [id,q] of Object.entries(act.out)){
     let qty=q*cycles;
     qty+=binom(cycles,m.double)*q;         // Timber! double chance
-    if(m.master2) qty+=1*cycles;           // Ancient Grove +1
+    if(m.master2) qty+=binom(cycles,0.15)*q;   // Ancient Grove — 15% chance of +1
+    // (chance-based, matching the primary bar — the secondary copies were
+    // missed when master2 went from '+1 always' to a roll, leaving this bar
+    // out-yielding its own intended output by 54-74%.)
     qty+=binom(cycles,m.wc_bark)*q;        // Keen Edge + Splinter Edge
     // Verdant Pyre (wc_master1): chance to burn log — subtract burned logs (no XP, this bar doesn't grant XP)
     if(m.wc_burnChance>0) qty=Math.max(0,qty-binom(cycles,m.wc_burnChance));
@@ -16049,7 +16067,7 @@ function completeWcDoubleAction(act,cycles){
     if(m.wc_hwd){
       state.wcStrikes=(state.wcStrikes||0)+cycles;
       const hwdHits=Math.floor(state.wcStrikes/10);
-      if(hwdHits>0){ state.wcStrikes=state.wcStrikes%10; qty+=hwdHits*2; }
+      if(hwdHits>0){ state.wcStrikes=state.wcStrikes%10; qty+=hwdHits*1; }   // primary bar pays *1; tip says '+1 bonus log'
     }
     if(qty>0) grantItem(id,qty);
     // Lumberjack Kin forage drops
@@ -16102,7 +16120,10 @@ function completeFishDoubleAction(act,cycles){
   for(const [id,q] of Object.entries(act.out)){
     let qty=q*cycles;
     qty+=binom(cycles,m.double)*q;         // Haul Net + Deep Current GM
-    if(m.master2) qty+=1*cycles;           // Steady Hands +1 always
+    if(m.master2) qty+=binom(cycles,0.30)*q;   // Steady Hands — 30% chance of +1
+    // (chance-based, matching the primary bar — the secondary copies were
+    // missed when master2 went from '+1 always' to a roll, leaving this bar
+    // out-yielding its own intended output by 54-74%.)
     // Lucky Lure + Schooling share state.fishCasts with primary bar
     if(m.master1||m.fi_school){
       state.fishCasts=(state.fishCasts||0)+cycles;
@@ -16160,8 +16181,11 @@ function completeDoubleAction(act,cycles){
     let qty=q*cycles;
     // Rich Vein + Deep Veins bonus ore
     qty+=binom(cycles,m.double)*q;
-    // Motherlode: +1 ore base
-    if(m.master2) qty+=q*cycles;
+    // Motherlode: 30% chance of +1 ore
+    if(m.master2) qty+=binom(cycles,0.30)*q;
+    // (chance-based, matching the primary bar — the secondary copies were
+    // missed when master2 went from '+1 always' to a roll, leaving this bar
+    // out-yielding its own intended output by 54-74%.)
     if(qty>0){ grantItem(id,qty); }
     // Coal Seeker
     if(id!=='coal'&&m.mi_coal>0){
@@ -16281,7 +16305,18 @@ function tick(){
   // throw out of the 250ms heartbeat, which would freeze the game silently.
   if(!act){ state.action=null; return; }
   const ms=actMs(act,skill);
-  const elapsed=now-state.actionStart;
+  let elapsed=now-state.actionStart;
+  /* Catch-up clamp. cycles derives from wall-clock elapsed with no ceiling, so
+     suspending the machine with the game OPEN never triggered a reload — no
+     grantOffline, therefore no OFFLINE_RATE (0.30) and no 24h cap — and the next
+     tick paid 100% of the online rate for the entire gap. Eight hours asleep paid
+     3.3x the offline award; 100 hours paid 13.9x, because offline is capped and
+     sleep was not. A throttled background tab still fires every few seconds, so
+     anything past this threshold is a suspend, not a slow frame. */
+  if(elapsed>TICK_CATCHUP_MAX_MS){
+    state.actionStart=now-TICK_CATCHUP_MAX_MS;
+    elapsed=TICK_CATCHUP_MAX_MS;
+  }
   if(elapsed<ms) return;
   const cycles=Math.floor(elapsed/ms);
   const done=completeAction(act,skill,cycles);
@@ -16407,6 +16442,13 @@ function grantOffline(){
   }
 
   state.actionStart=Date.now();
+
+  /* The whole offline award was pushed into the XP/hr ring buffer as ONE entry
+     stamped "now", so liveXph divided hours of XP by a few seconds of span —
+     a 24h catch-up read 61,081,456 xp/hr against a real 37,175, and the smoother
+     snapped straight to it. Clear the tracker instead; it refills from live play
+     within the warm-up window. */
+  for(const sk in SKILLS) if(typeof resetXphTracker==='function') resetXphTracker(sk);
 
   // Totals + meta for the reworked welcome-back summary (1.0.11)
   const meta={
@@ -21327,8 +21369,10 @@ function renderNotifications(){
   for(const n of filtered){
     const row=document.createElement('div');
     row.className='notif-row '+(n.type||'')+(n.seen?'':' unread');
-    row.innerHTML=`<span class="nr-icon">${n.icon||'•'}</span>`
-      +`<div class="nr-body"><div class="nr-text">${n.text}</div><div class="nr-time">${ago(n.time)}</div></div>`;
+    // Both fields come out of localStorage / the Steam cloud mirror, so neither
+    // is trusted: the icon is resolved from an id and the text is escaped.
+    row.innerHTML=`<span class="nr-icon">${notifIconHTML(n.icon)}</span>`
+      +`<div class="nr-body"><div class="nr-text">${escapeHTML(n.text)}</div><div class="nr-time">${ago(n.time)}</div></div>`;
     if(!n.seen){
       // Hovering an unread alert acks just that one — the rest stay highlighted
       // until each is individually hovered.
@@ -22434,7 +22478,7 @@ function grantItem(id, qty){
     if(!state.skillingGear) state.skillingGear={};
     state.skillingGear[id]=true;
     markDiscovered(id);
-    logNotification('rare', iconHTML(id), `Found ${it.name}! (${it.gearSlot} · ${SKILLING_SETS[it.gearSkill]?SKILLING_SETS[it.gearSkill].name:'Skilling Set'})`);
+    logNotification('rare', id, `Found ${it.name}! (${it.gearSlot} · ${SKILLING_SETS[it.gearSkill]?SKILLING_SETS[it.gearSkill].name:'Skilling Set'})`);
     showItemPop(id, 1);
     return 1;
   }
@@ -22448,13 +22492,13 @@ function grantItem(id, qty){
     if(state.gear.indexOf(id)>=0) return 0;
     state.gear.push(id);
     markDiscovered(id);
-    logNotification('rare', iconHTML(id), 'Crafted '+it.name);
+    logNotification('rare', id, 'Crafted '+it.name);
     showItemPop(id, 1);
     return 1;
   }
   // Log rare drops to the notification log
   if(it.rare){
-    logNotification('rare', iconHTML(id), `Found ${qty>1?qty+'× ':''}${it.name}`);
+    logNotification('rare', id, `Found ${qty>1?qty+'× ':''}${it.name}`);
   }
   // If the item already has a slot, always add qty
   if((state.items[id]||0)>0){
@@ -22546,6 +22590,11 @@ const COMP_CATEGORIES=[
   {id:'skilling_gear', label:'Skilling Gear', ico:'bronze_axe'},
   {id:'crafted_gear',  label:'Combat Gear',   ico:'bronze_sword'},
   {id:'rare',  label:'Rare',        ico:'gem_dust'},
+  /* itemCompCat()'s fallback bucket. Without a chip its 169 items — the whole
+     monster-drop set, every raid material, the boss trophies — were reachable
+     only through All, where they sorted to the very front because
+     COMP_CAT_ORDER.indexOf('other') was -1. */
+  {id:'other', label:'Spoils',      ico:'rat_tail'},
 ];
 
 /* ════ [JS-24a] compendium view ══════════════════════════════════════════════════ */
@@ -23278,8 +23327,8 @@ const ACHIEVEMENTS=[
 
   // ── Collection ──
   {id:'first_pet',    cat:'collection', icon:'ui_paw',  name:'Companion',    desc:'Find your first familiar.',                    check:()=>_achPets()>=1},
-  {id:'beastfriend',  cat:'collection', icon:'ui_paw',  name:'Beastfriend',  desc:'Find all nine familiars.',                     check:()=>_achPets()>=9},
-  {id:'first_socket', cat:'collection', icon:'ui_gem',  name:'Jeweller',     desc:'Socket a gem into a piece of gear.',            check:()=>Object.keys(state.sockets||{}).length>=1},
+  {id:'beastfriend',  cat:'collection', icon:'ui_paw',  name:'Beastfriend',  desc:'Find a familiar in every zone.',               check:()=>_achPets()>=Object.keys(PETS).length},
+  {id:'first_socket', cat:'collection', icon:'ui_gem',  name:'Jeweller',     desc:'Socket a gem into a piece of gear.',            check:()=>Object.values(state.sockets||{}).some(s=>s&&Array.isArray(s.gems)&&s.gems.some(g=>!!g))},
   {id:'enchanter',    cat:'collection', icon:'ui_moon', name:'Enchanter',    desc:'Enchant a piece of gear.',                      check:()=>Object.keys(state.enchantments||{}).length>=1},
   {id:'archivist',    cat:'collection', icon:'ui_book', name:'Archivist',    desc:'Discover 100 different items.',                 check:()=>_achDiscovered()>=100},
   {id:'voidtouched',  cat:'collection', icon:'ui_gem',  name:'Voidtouched',  desc:'Obtain a Voidheart.',                          check:()=>((state.items||{}).voidheart||0)>=1||!!(state.discovered||{}).voidheart},
@@ -26689,8 +26738,25 @@ function toast(msg){
 
 /* Record a notable event to the persistent notification log (rare drops,
    masteries, unlocks, farming). Keeps the most recent 100 entries. */
+/* The `icon` argument is an ITEM/ICONS **id** or a short emoji marker — never
+   rendered markup. Storing markup wrote a full ~4 KB <svg> into localStorage for
+   every entry (the ring holds 50), and made a saved string an HTML-injection
+   surface on render. notifIconHTML resolves ids at paint time instead. */
+function notifIconHTML(icon){
+  if(typeof icon!=='string'||!icon) return '&bull;';
+  if(icon.indexOf('<')>=0) return '&#10022;';   // legacy save holding markup — never re-inject it
+  if(typeof ICONS!=='undefined'&&ICONS[icon]) return iconHTML(icon);
+  if(typeof ITEMS!=='undefined'&&ITEMS[icon])  return iconHTML(icon);
+  return escapeHTML(icon);                       // emoji / text marker
+}
+function escapeHTML(s){
+  return String(s).replace(/[&<>"']/g,function(c){
+    return c==='&'?'&amp;':c==='<'?'&lt;':c==='>'?'&gt;':c==='"'?'&quot;':'&#39;';
+  });
+}
 function logNotification(type, icon, text){
   if(!state.notifications) state.notifications=[];
+  if(typeof icon==='string'&&icon.indexOf('<')>=0) icon='✦';  // defensive: never persist markup
   state.notifications.unshift({type:type, icon:icon, text:text, time:Date.now(), seen:false});
   if(state.notifications.length>50) state.notifications.length=50;
   // If the notifications tab is currently open, re-render so the new row appears.
@@ -27429,7 +27495,7 @@ function sailCheckArrival(){
   const troveId=dest.hid?'trove_odd':(band?band.trove:null);
   if(troveId && g<=1 && v.troveRoll < (1/dest.find)*(g===0?2:1)*sailFindMult()){
     if(grantItem(troveId,1)>0){ trove=troveId; markDiscovered(troveId);
-      logNotification('rare', iconHTML(troveId), 'Recovered '+ITEMS[troveId].name+' from '+dest.n+'!'); }
+      logNotification('rare', troveId, 'Recovered '+ITEMS[troveId].name+' from '+dest.n+'!'); }
   }
 
   /* Sailing xp is its own pool — addSkillXp() writes state.xp[skill] and would
@@ -27525,7 +27591,7 @@ function sailCheckArrival(){
   state.sail.voy=null;
   saveGame();
 
-  logNotification('unlock', iconHTML('sailing'), grade.n+' return from '+dest.n+' · +'+xp+' Sailing XP');
+  logNotification('unlock', 'sailing', grade.n+' return from '+dest.n+' · +'+xp+' Sailing XP');
   if(!sailMode) toast('Your ship has returned from '+dest.n+' — '+grade.n+'.');
 
   /* Logged last so it sits on top of the return line, and always toasted even
@@ -27533,15 +27599,15 @@ function sailCheckArrival(){
      out there and should never scroll past unnoticed. */
   if(chartFound){
     const opened=sailIsle(SAIL_CHARTS[chartFound].isle);
-    logNotification('rare', iconHTML(chartFound), 'Found '+ITEMS[chartFound].name+' — '+opened.n+' is now on your chart!');
+    logNotification('rare', chartFound, 'Found '+ITEMS[chartFound].name+' — '+opened.n+' is now on your chart!');
     toast('Treasure map recovered — '+opened.n+' is now open to you.');
   }
   if(petFound){
-    logNotification('rare', iconHTML('spet_sailing'), 'A Storm Petrel followed the ship home from '+dest.n+'!');
+    logNotification('rare', 'spet_sailing', 'A Storm Petrel followed the ship home from '+dest.n+'!');
     toast('A Storm Petrel has taken up in your rigging!');
   }
   if(capeFound){
-    logNotification('rare', iconHTML('cape_sailing'), 'Sailing 99 — Emberwatch has given you the Sailing Cape.');
+    logNotification('rare', 'cape_sailing', 'Sailing 99 — Emberwatch has given you the Sailing Cape.');
     toast('Sailing 99! Emberwatch presents the Sailing Cape.');
   }
   return true;
@@ -27963,7 +28029,10 @@ function _slItemTip(id, extra){
   if(!it) return extra?_slTip(extra):'';
   const bits=[it.name];
   if(it.desc) bits.push(it.desc);
-  if(it.sell>0 && !it.nosell) bits.push('Sells for '+it.sell.toLocaleString()+'g each.');
+  // ITEMS[].sell is stored in SILVER (100 silver = 1 gold) since the economy
+  // rebalance. Printing it raw with a 'g' suffix overstated every sailing item's
+  // value by 100x. fmtCoins owns the split; icons off, this is plain-text tip copy.
+  if(it.sell>0 && !it.nosell) bits.push('Sells for '+fmtCoins(it.sell,false,false)+' each.');
   if(extra) bits.push(extra);
   return _slTip(bits.join('\n\n'));
 }
