@@ -3528,7 +3528,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.80</div>
+  <div class="mm-ver">v0.9.81</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -3844,7 +3844,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="tab on" id="tabSkills">Skills</button>
       <button class="tab" id="tabStatsLeft">Stats</button>
       <button class="tab tab-combat" id="tabCombat" title="Combat">⚔ Combat</button>
-      <button class="tab tab-sail" id="tabSail" title="Sailing &amp; Treasure Hunting">⚓ Sailing</button>
+      <button class="tab tab-sail" id="tabSail" title="Sailing &amp; Treasure Hunting">Sailing</button>
     </div>
     <div id="skillListWrap"><div id="skillList"></div></div>
     <div id="statsViewLeft" style="display:none;overflow-y:auto;max-height:calc(100vh - 120px)"></div>
@@ -21889,6 +21889,100 @@ function buildSourceMap(){
       }
     }
   }
+  /* ── Sailing sources (0.9.81) ──────────────────────────────────────────────
+     buildSourceMap only ever walked SKILLS / CROPS / MONSTER_DROPS / RAIDS, so
+     every sea-exclusive item fell through to "Source unknown" — measured at 39
+     items, which is the entire sailing economy: all four treasure maps, all five
+     troves, the salvage that gates the top hulls, the pet and the cape. An item
+     you can only get by sailing was the one kind of item that refused to say so.
+
+     Chances are shown RAW (rare:false), unlike monster drops: a voyage rolls its
+     own seeds and never passes through charDropMult or Lucky Stride, so running
+     them through effDropChance would print a rate the sea does not honour. */
+  if(typeof SAIL_ISLES!=='undefined'){
+    let sic=''; try{ sic=iconHTML('sailing'); }catch(e){}
+    /* The two unlogged islands are a discovery — naming them in a tooltip would
+       hand over the surprise, so they report as the thing rather than the place. */
+    const isleName=is=>is.hid?'An island on no chart':is.n;
+    const add=(id,name,chance,lvl)=>addSource(id,{actName:name, skIcon:sic, skName:'Sailing',
+                                                  skKey:'sailing', chance:chance, reqLvl:lvl, rare:false});
+
+    /* Bulk is a weighted draw WITHOUT replacement, so an entry's share of the pool
+       is not its per-voyage odds — and `1-(1-w/W)^k` is the WITH-replacement
+       answer, which understates it by 8-16 points (verified against a 30k-trial
+       simulation of the real draw loop). Every item removed from the pool raises
+       what is left, so the true number is always higher.
+
+       Computed exactly instead: enumerate the ways the item can be MISSED. Pools
+       are at most six entries and at most four picks, so this is a few hundred
+       paths per entry and it runs once, lazily, on the first tooltip. */
+    const missProb=(pool, want, k)=>{
+      if(k<=0) return 1;
+      let tot=0; for(const e of pool) tot+=e.w;
+      if(tot<=0) return 1;
+      let p=0;
+      for(let j=0;j<pool.length;j++){
+        if(pool[j].i===want) continue;
+        p += (pool[j].w/tot) * missProb(pool.slice(0,j).concat(pool.slice(j+1)), want, k-1);
+      }
+      return p;
+    };
+    SAIL_ISLES.forEach(is=>{
+      const pool=is.d||[];
+      /* The island card advertises the base pick range, so quote against the same
+         thing — the grade modifier (+1 Triumphant, -2 Wrecked) is not knowable in
+         advance and would make the figure unquotable. */
+      const lo=is.pk?is.pk[0]:2, hi=is.pk?is.pk[1]:2;
+      pool.forEach(e=>{
+        let acc=0, n=0;
+        for(let k=lo;k<=hi;k++){ acc += 1-missProb(pool, e.i, Math.max(1,Math.min(pool.length,k))); n++; }
+        add(e.i, isleName(is), Math.min(1, n?acc/n:0), is.lv);
+      });
+      // Rares roll independently at a flat chance, and do not consume a pick.
+      (is.r||[]).forEach(e=>add(e.i, isleName(is), e.c, is.lv));
+      // Shipwright salvage is derived rather than tabled — ask the same helper the panel does.
+      try{ (sailMatDrops(is)||[]).forEach(m=>add(m.id, isleName(is), m.chance, is.lv)); }catch(e){}
+    });
+
+    // Treasure maps: one island each, one time.
+    if(typeof SAIL_CHARTS!=='undefined'){
+      for(const cid in SAIL_CHARTS){
+        const c=SAIL_CHARTS[cid], from=SAIL_ISLES[c.from];
+        if(from) add(cid, isleName(from), c.chance, from.lv);
+      }
+    }
+
+    /* Troves are per-archipelago, not per-island, and only roll on a voyage that
+       came home Successful or better. Quote the best island in the band, since
+       that is the one you would actually farm. */
+    if(typeof SAIL_TROVES!=='undefined' && typeof SAIL_BANDS!=='undefined'){
+      SAIL_TROVES.forEach(tv=>{
+        const bi=SAIL_BANDS.findIndex(b=>b.trove===tv.id);
+        /* `!is.hid` matters: the two unlogged islands carry a band number AND the
+           best find rate in it, so without this the reduce below always picked
+           one of them — but sailCheckArrival hands out trove_odd for a hidden
+           island and never the band trove, so the quoted rate came from a place
+           that structurally cannot drop it. Overstated the Mistlands trove 3.5x
+           and the Far Reaches trove 5.3x. */
+        const pool=SAIL_ISLES.filter(is=>tv.id==='trove_odd' ? is.hid : (is.b===bi && !is.hid));
+        if(!pool.length) return;
+        const best=pool.reduce((a,b)=>(1/b.find)>(1/a.find)?b:a);
+        add(tv.id, (tv.id==='trove_odd'?'An island on no chart':tv.from)+' — Successful or better',
+            1/best.find, best.lv);
+      });
+    }
+
+    /* The two one-time grants, which live in sailCheckArrival rather than a table.
+       The petrel is `(1/900)*(1+dest.lv/28)` — it gets COMMONER the deeper you go,
+       1-in-869 at Shalefoot against 1-in-202 at Voidmaw. Quote the best island,
+       matching how every other source here sorts best-first; a flat 1/900 was
+       below the true rate at literally every island. */
+    const petBest=SAIL_ISLES.reduce((a,b)=>b.lv>a.lv?b:a);
+    add('spet_sailing', 'Any voyage — likelier the further out you sail',
+        (1/900)*(1+petBest.lv/28), 1);
+    add('cape_sailing', 'Awarded at Sailing 99', 1, 99);
+  }
+
   // Socket gems roll procedurally off any kill (rollSocketGemDrop), so they have
   // no single act or monster to point at — say so rather than showing nothing.
   if(typeof SOCKET_GEMS!=='undefined'){
@@ -21946,7 +22040,9 @@ function buildUsageMap(){
   /* Shipwright costs (0.9.69). Hull, gun and rig costs are not activities, so
      wrack timber, rope, masonry and hide would otherwise read as used by nothing
      in the tooltip — while being the entire reason to keep them. */
-  const shipLabel={skKey:'sailing',skIcon:'⛵',skName:'Shipwright'};
+  // SVG, not the ⛵ emoji it shipped with — this renders through innerHTML.
+  let _shipIc=''; try{ _shipIc=iconHTML('sailing'); }catch(e){}
+  const shipLabel={skKey:'sailing',skIcon:_shipIc,skName:'Shipwright'};
   const shipTables=[typeof SAIL_HULLS!=='undefined'?SAIL_HULLS:[]];
   /* Every fitted slot, read off the same registry the yard and the audit use, so a
      sixth slot needs no edit here. */
