@@ -3203,7 +3203,10 @@ body:not(.is-demo) .demo-only{display:none !important}
 .sail-panel{grid-column:1 / 3;overflow:hidden}
 .tab.tab-sail.on{border-color:#4d9bb0;color:#bfe4ef;background:#12303c;}
 
-.sl-wrap{display:flex;flex-direction:column;gap:8px;min-height:470px}
+/* Floor lowered 470 → 340 in 0.9.80. At 470 a short window could not fit the
+   panel at all, so the page grew a scrollbar no amount of resizing removed. The
+   side column scrolls internally, so a shorter shell costs nothing. */
+.sl-wrap{display:flex;flex-direction:column;gap:8px;min-height:340px}
 .sl-main{display:grid;grid-template-columns:minmax(0,1fr) minmax(372px,30%);gap:8px;
   flex:1;min-height:0}
 @media(max-width:1080px){
@@ -3329,11 +3332,22 @@ body:not(.is-demo) .demo-only{display:none !important}
    right-hand column, so tiles and pills there anchor to their right edge. */
 .sl-stat[data-tip],.sl-tile[data-tip],.sl-pill[data-tip],.sl-chip[data-tip]{cursor:var(--cur-help)}
 .sl-stat[data-tip]:hover{border-color:var(--trim)}
-.sl-tile[data-tip]:hover::after,.sl-pill[data-tip]:hover::after,
-.sl-chip[data-tip]:hover::after{left:auto;right:0}
-/* Haul chips wrap several to a row, so a hovered one has to lift above its
-   neighbours or the row below draws over the bubble. */
-.sl-chip[data-tip]:hover{border-color:var(--trim);z-index:60}
+.sl-chip[data-tip]:hover{border-color:var(--trim)}
+/* The shared ::after bubble is CLIPPED in here (0.9.80) — .sl-sidebody scrolls,
+   .sail-panel is overflow:hidden, and a chip near the bottom of the column got a
+   tooltip sliced in half and drawn behind the chart. An ::after can never escape
+   a scrolling ancestor, so Sailing opts out of the shared rule entirely and uses
+   a position:fixed element parked on <body> instead — see slDataTipShow. */
+.sail-panel [data-tip]:hover::after{content:none;display:none}
+
+.sl-dtip{position:fixed;z-index:940;pointer-events:none;opacity:0;transition:opacity .1s;
+  max-width:320px;background:linear-gradient(180deg,#231711,#13090a);
+  border:1px solid var(--trim);border-radius:5px;padding:8px 11px;
+  font-family:'Crimson Pro',Georgia,'Times New Roman',serif;
+  font-size:calc(14px*var(--tscale));color:var(--text);line-height:1.5;
+  white-space:pre-wrap;letter-spacing:.02em;
+  box-shadow:0 6px 18px rgba(0,0,0,.9), inset 0 1px 0 rgba(199,155,78,.2)}
+.sl-dtip.show{opacity:1}
 
 /* ── island hover card ── */
 .sl-tip{position:fixed;z-index:900;pointer-events:none;opacity:0;transition:opacity .12s;
@@ -3514,7 +3528,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.79</div>
+  <div class="mm-ver">v0.9.80</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -27335,14 +27349,39 @@ function sailRootZoom(){
 }
 
 /* Size the panel to the window rather than with vh — under CSS zoom, vh resolves
-   against the unscaled viewport and would overflow or leave a gap. */
+   against the unscaled viewport and would overflow or leave a gap.
+
+   Fixed in 0.9.80: the panel's own padding and border (.panel is 12px each side
+   plus a 1px border, so 26px vertically) sit OUTSIDE the wrap, and sizing the
+   wrap to the whole remaining viewport never accounted for them. The panel came
+   out 26px taller than the space it had, every time — so the page always carried
+   a scrollbar, and making the window bigger just produced a bigger panel and the
+   same overflow. Measured rather than hardcoded, so it survives a padding change.
+   Also uses documentElement.clientHeight, which excludes a scrollbar that
+   window.innerHeight counts — using innerHeight makes the overflow self-sustaining
+   once a scrollbar exists. */
+const SAIL_EDGE_GAP=6;    // breathing room under the panel, CSS px
+const SAIL_MIN_H=340;     // floor; below this the chart stops being usable
 function sailFit(){
   const p=$('sailPanel'), wrap=$('slWrap');
   if(!p||!wrap||p.style.display==='none') return;
-  const z=sailRootZoom();
-  const topVisual=p.getBoundingClientRect().top;
-  const availCss=(window.innerHeight-topVisual)/z - 16;
-  wrap.style.height=Math.max(470, Math.round(availCss))+'px';
+  const z=sailRootZoom(), de=document.documentElement;
+  const chrome=Math.max(0, p.offsetHeight - wrap.offsetHeight);
+  const topCss=p.getBoundingClientRect().top/z;
+  const availCss=(de.clientHeight/z) - topCss - chrome - SAIL_EDGE_GAP;
+  const want=Math.max(SAIL_MIN_H, Math.round(availCss));
+  /* Idempotent: refits are triggered from three places now (window resize, visual
+     viewport, the interface-scale slider) and a no-op call must not write, or the
+     write itself becomes something else's resize to react to. */
+  if(Math.abs((parseFloat(wrap.style.height)||0)-want)>1) wrap.style.height=want+'px';
+  /* Belt and braces: if anything below the panel still pushes the document past
+     the viewport — a layout margin, a footer added later — take the difference
+     straight off rather than trusting the arithmetic above. */
+  const over=de.scrollHeight-de.clientHeight;
+  if(over>0){
+    const h=parseFloat(wrap.style.height)||SAIL_MIN_H;
+    wrap.style.height=Math.max(SAIL_MIN_H, Math.round(h-over/z-1))+'px';
+  }
 }
 
 function sailViewport(){
@@ -27673,6 +27712,54 @@ function sailTipMove(ev){
 }
 function sailTipHide(){ const t=$('slTip'); if(t) t.classList.remove('show'); }
 
+/* ── data-tip tooltips, positioned in JS (0.9.80) ───────────────────────────────
+   Everything in the sailing panel that carries data-tip — stat pills, crossing
+   tiles, the difficulty pill, every haul chip — routes through here instead of the
+   shared CSS ::after. A pseudo-element cannot leave its scrolling ancestor, and the
+   right-hand column scrolls, so tooltips on anything below the fold were clipped
+   at the column edge and the rest drawn under the chart.
+
+   One element, parked on <body>, bound once by delegation so re-rendering the
+   panel never has to rebind. Same coordinate handling as the island card: the root
+   carries a CSS zoom, so pointer coords are visual px and everything here works in
+   CSS px. */
+let _slDTipBound=false;
+function slDataTipEl(){
+  let t=$('slDataTip');
+  if(!t){ t=document.createElement('div'); t.id='slDataTip'; t.className='sl-dtip'; document.body.appendChild(t); }
+  return t;
+}
+function slDataTipShow(text, ev){
+  const t=slDataTipEl();
+  t.textContent=text;             // textContent, not innerHTML — these strings are plain text
+  t.classList.add('show');
+  slDataTipMove(ev);
+}
+function slDataTipMove(ev){
+  const t=$('slDataTip'); if(!t||!ev) return;
+  const z=sailRootZoom();
+  const w=t.offsetWidth||220, h=t.offsetHeight||60;
+  const vw=window.innerWidth/z, vh=window.innerHeight/z;
+  let x=ev.clientX/z+15, y=ev.clientY/z+16;
+  if(x+w>vw-8) x=Math.max(8, ev.clientX/z-w-15);
+  if(y+h>vh-8) y=Math.max(8, ev.clientY/z-h-14);
+  t.style.left=Math.round(x)+'px'; t.style.top=Math.round(y)+'px';
+}
+function slDataTipHide(){ const t=$('slDataTip'); if(t) t.classList.remove('show'); }
+function slBindDataTips(){
+  if(_slDTipBound) return;
+  const p=$('sailPanel'); if(!p) return;
+  _slDTipBound=true;
+  const tipOf=e=>{ const el=e.target&&e.target.closest?e.target.closest('[data-tip]'):null;
+                   return (el && p.contains(el)) ? el : null; };
+  p.addEventListener('mouseover', e=>{ const el=tipOf(e); if(el) slDataTipShow(el.getAttribute('data-tip'), e); });
+  p.addEventListener('mousemove', e=>{ if(tipOf(e)) slDataTipMove(e); else slDataTipHide(); });
+  p.addEventListener('mouseout',  e=>{ if(!tipOf(e)) slDataTipHide(); });
+  p.addEventListener('mouseleave', slDataTipHide);
+  /* Scrolling the column moves the anchor out from under the cursor. */
+  p.addEventListener('scroll', slDataTipHide, true);
+}
+
 /* Lightweight per-tick updater — writes only the clock and bar so the canvas and
    marker DOM survive. A full renderSail every second would visibly reset the map. */
 function sailTickUI(){
@@ -27699,7 +27786,7 @@ function enterSailing(){
 }
 function closeSailPanel(){
   if(!sailMode) return;
-  sailMode=false; sailTipHide(); updateModePanels();
+  sailMode=false; sailTipHide(); slDataTipHide(); updateModePanels();
   /* Opening Sailing strips `on` off every left-panel tab, so hand the highlight
      back on the way out or the strip returns with nothing selected. Which one
      gets it is read off what the left panel is actually showing, not remembered
@@ -28198,6 +28285,8 @@ function renderSail(){
   });
 
   sailBindStage();
+  slBindDataTips();
+  slDataTipHide();          // the element the cursor was over no longer exists
   sailFit();
   /* Fit once per visit to the panel, never on a re-render or a resize — see the
      note on SAIL_WORLD_W. */
@@ -28248,12 +28337,20 @@ function sailBindStage(){
   }, {passive:false});
 }
 
-/* Chart is canvas and the shell is JS-sized, so both need a resize pass. */
-window.addEventListener('resize',()=>{
+/* Chart is canvas and the shell is JS-sized, so both need a resize pass. Debounced
+   through one entry point (0.9.80) so the window, the visual viewport and the
+   interface-scale slider all land in the same place. */
+function sailScheduleRefit(){
   if(!sailMode) return;
   clearTimeout(_sailRedrawT);
-  _sailRedrawT=setTimeout(()=>{ sailFit(); sailClamp(); sailPaintView(); },140);
-});
+  _sailRedrawT=setTimeout(()=>{ if(!sailMode) return; sailFit(); sailClamp(); sailPaintView(); },140);
+}
+window.addEventListener('resize', sailScheduleRefit);
+/* visualViewport also fires for browser zoom and for on-screen keyboards, neither
+   of which raises a window resize on every platform. */
+if(window.visualViewport && window.visualViewport.addEventListener){
+  try{ window.visualViewport.addEventListener('resize', sailScheduleRefit); }catch(e){}
+}
 
 /* ════════ [JS-25] BOOT ══════════════════════════════════════════════════════════ */
 /* =================================================================
@@ -28869,7 +28966,12 @@ function applyRootZoom(){
 }
 function _onZoomResize(){
   if(_zoomRaf) return;
-  _zoomRaf = requestAnimationFrame(()=>{ _zoomRaf=0; applyRootZoom(); _tutReposition&&_tutReposition(); });
+  _zoomRaf = requestAnimationFrame(()=>{ _zoomRaf=0; applyRootZoom(); _tutReposition&&_tutReposition();
+    /* Root zoom changes how many CSS px the window is worth, so the sailing shell
+       has to be re-measured — the interface-scale slider moves it with no window
+       resize at all (0.9.80). */
+    if(typeof sailMode!=='undefined' && sailMode && typeof sailScheduleRefit==='function') sailScheduleRefit();
+  });
 }
 window.addEventListener('resize', _onZoomResize);
 applyRootZoom();
