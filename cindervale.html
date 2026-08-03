@@ -3528,7 +3528,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.83</div>
+  <div class="mm-ver">v0.9.84</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -4193,13 +4193,26 @@ const SAVE_KEY = 'cindervale_save_v1';
    different people opening the same HTML file never share save data.
    Export/Import lets players move saves intentionally.              */
 const DEVICE_KEY = 'cindervale_device_id';
+/* Merely TOUCHING window.localStorage throws SecurityError when the browser is
+   set to block all site data (Chrome/Edge "Block all cookies", Firefox Block All,
+   any storage-partitioned iframe). This runs at top level, so an unguarded throw
+   killed the rest of the single <script> — ITEMS, SKILLS and every other const
+   below it never got defined and the free browser demo was a silent blank page.
+   Every other localStorage touch in the file is already wrapped; this was the
+   one outlier. */
+let _noStorage=false, _noStorageWarned=false;
 function getDeviceId(){
-  let id = localStorage.getItem(DEVICE_KEY);
-  if(!id){
-    id = 'dev_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
-    localStorage.setItem(DEVICE_KEY, id);
+  try{
+    let id = localStorage.getItem(DEVICE_KEY);
+    if(!id){
+      id = 'dev_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+      localStorage.setItem(DEVICE_KEY, id);
+    }
+    return id;
+  }catch(e){
+    _noStorage=true;
+    return 'dev_nostore';
   }
-  return id;
 }
 const DEVICE_SAVE_KEY = SAVE_KEY + '_' + getDeviceId();
 
@@ -10793,8 +10806,10 @@ function tendPatch(patchId, silent){
   ps.tendedMs=(ps.tendedMs||0)+boost;
   ps.lastTended=now;
   // XP for tending — uses full xpMult from tree and potions
-  var xpGain=Math.round(crop.xp*0.15*m.xpMult);
-  state.xp['farming']=(state.xp['farming']||0)+xpGain;
+  var xpGain=addSkillXp('farming', Math.round(crop.xp*0.15*m.xpMult));
+  // Routed through addSkillXp: it is the single funnel that enforces XP_CAP
+  // and the free-demo level ceiling. Writing state.xp directly here let demo
+  // players train past the Lv10 wall with no buy prompt.
   recordXpGain('farming',xpGain);
   if(!silent){
     showXpPop('farming',xpGain);
@@ -10852,8 +10867,10 @@ function harvestPatch(patchId, silent){
   }
 
   // XP
-  var xpGain=Math.round(crop.xp*m.xpMult);
-  state.xp['farming']=(state.xp['farming']||0)+xpGain;
+  var xpGain=addSkillXp('farming', Math.round(crop.xp*m.xpMult));
+  // Routed through addSkillXp: it is the single funnel that enforces XP_CAP
+  // and the free-demo level ceiling. Writing state.xp directly here let demo
+  // players train past the Lv10 wall with no buy prompt.
   recordXpGain('farming',xpGain);
   if(!silent) showXpPop('farming',xpGain);
 
@@ -12795,6 +12812,14 @@ function normalizeState(){
   }
   if(!state.newlyDiscovered||typeof state.newlyDiscovered!=='object'||Array.isArray(state.newlyDiscovered)) state.newlyDiscovered={};
   if(state.action!==null&&typeof state.action!=='object') state.action=null;
+  /* …and it has to point at an activity that still exists. tick() dereferences
+     `getAct(skill,actId).ms` every 250ms with no guard, so a save holding a
+     retired skill key or act id throws forever: the engine never starts, nothing
+     autosaves, and the character is unopenable with no error text. Reachable
+     today via a pasted import code, and guaranteed the first time a release
+     retires an activity. The file already validates state.zone, state.slayer.task
+     and the monster-log selection this way — state.action was the omission. */
+  if(state.action && (!SKILLS[state.action.skill] || !getAct(state.action.skill,state.action.actId))) state.action=null;
   // Dual skilling removed (v1.0.35) — strip any stale pairing/buffer from old saves.
   if('dualAction' in state) delete state.dualAction;
   if('herbBuffer' in state) delete state.herbBuffer;
@@ -12802,6 +12827,8 @@ function normalizeState(){
   if(typeof state.offlineXp!=='number') state.offlineXp=0;
   if(state.offlineConfig!==null&&state.offlineConfig!==undefined&&typeof state.offlineConfig!=='object') state.offlineConfig=null;
   if(!state.hasOwnProperty('offlineConfig')) state.offlineConfig=null;
+  // Same validation as state.action — grantOffline() dereferences it identically.
+  if(state.offlineConfig && (!SKILLS[state.offlineConfig.skill] || !getAct(state.offlineConfig.skill,state.offlineConfig.actId))) state.offlineConfig=null;
   if(!state.enchantments||typeof state.enchantments!=='object'||Array.isArray(state.enchantments)) state.enchantments={};
   // Migrate old slot-keyed enchantments {ring_l|ring_r|amulet: enchId} → item-id keyed.
   // Non-destructive: maps each enchanted slot to its equipped item id; preserves any
@@ -13560,6 +13587,15 @@ function applySave(s){
   // Tamper check before we touch anything. Only flags saves that HAVE a seal and
   // fail it — older/unsealed saves are ignored, so nobody is falsely flagged.
   try{ if(s._seal!==undefined && s._seal!==_cheatSeal(s)) _auditPing('Save tamper seal failed (edited outside the game)', [{name:'Name',value:String(s.charName||'?').slice(0,64),inline:true}], 'seal'); }catch(e){}
+  /* Reset first. loadGame() gets away without this because mmStart() does
+     `state=defaultState()` immediately before it, but the in-game Import Save
+     path calls applySave against the character currently being played — so a
+     bare Object.assign merged the imported save ON TOP of it. Every field the
+     import lacked (sail, pets, slayer, monKills, achievements, satchelUpgrades,
+     cmast points…) kept the live character's value. That produced a hybrid
+     character out of a restore the modal promises will "overwrite your current
+     progress", and doubled as a free cheat. */
+  state=defaultState();
   Object.assign(state,s);
   normalizeState();
 }
@@ -15368,9 +15404,10 @@ function applyContinuousBurn(now){
         const m=mods('firemaking');
         const bonusXp=Math.round(fmXp*m.xpMult*(1+masteryXpBonus(LOG_FM_ACT[next]||'')));
         const fmBefore=levelFromXp(state.xp['firemaking']);
-        state.xp['firemaking']=(state.xp['firemaking']||0)+bonusXp;
-        recordXpGain('firemaking',bonusXp);
-        showXpPop('firemaking',bonusXp);
+        // addSkillXp, not a raw += — see the funnel note at its definition.
+        const fmBanked=addSkillXp('firemaking', bonusXp);
+        recordXpGain('firemaking',fmBanked);
+        showXpPop('firemaking',fmBanked);
         const fmAfter=levelFromXp(state.xp['firemaking']);
         if(fmAfter>fmBefore) toast('🔥 Firemaking level '+fmAfter+'!');
       }
@@ -15996,9 +16033,9 @@ function completeWcDoubleAction(act,cycles){
   }
   // XP — secondary bar gives full XP at 50% speed (2× ms compensates)
   const xpGained=Math.round(act.xp*cycles*m.xpMult);
-  state.xp['woodcutting']=(state.xp['woodcutting']||0)+xpGained;
-  recordXpGain('woodcutting',xpGained);
-  showXpPop('woodcutting',xpGained);
+  const xpBanked=addSkillXp('woodcutting', xpGained);
+  recordXpGain('woodcutting',xpBanked);
+  showXpPop('woodcutting',xpBanked);
   // Rare drops
   const dropTable=DROPS[act.id]||[];
   for(const drop of dropTable){ const hits=binom(cycles,effDropChance(drop.chance)); if(hits>0) grantItem(drop.id,hits); }
@@ -16050,9 +16087,9 @@ function completeFishDoubleAction(act,cycles){
   }
   // XP
   const xpGained=Math.round(act.xp*cycles*m.xpMult);
-  state.xp['fishing']=(state.xp['fishing']||0)+xpGained;
-  recordXpGain('fishing',xpGained);
-  showXpPop('fishing',xpGained);
+  const xpBanked=addSkillXp('fishing', xpGained);
+  recordXpGain('fishing',xpBanked);
+  showXpPop('fishing',xpBanked);
   // Rare drops
   const dropTable=DROPS[act.id]||[];
   for(const drop of dropTable){ const hits=binom(cycles,effDropChance(drop.chance)); if(hits>0) grantItem(drop.id,hits); }
@@ -16091,9 +16128,9 @@ function completeDoubleAction(act,cycles){
   }
   // XP at 50% — already folded in via the 2x ms, so just give normal xp
   const xpGained=Math.round(act.xp*cycles*m.xpMult);
-  state.xp['mining']=(state.xp['mining']||0)+xpGained;
-  recordXpGain('mining',xpGained);
-  showXpPop('mining',xpGained);
+  const xpBanked=addSkillXp('mining', xpGained);
+  recordXpGain('mining',xpBanked);
+  showXpPop('mining',xpBanked);
   // Rare drops
   const dropTable=DROPS[act.id]||[];
   for(const drop of dropTable){ const hits=binom(cycles,effDropChance(drop.chance)); if(hits>0) grantItem(drop.id,hits); }
@@ -16194,6 +16231,9 @@ function tick(){
   if(!state.action) return;
   const {skill,actId}=state.action;
   const act=getAct(skill,actId);
+  // Belt-and-braces behind normalizeState's validation: never let a missing act
+  // throw out of the 250ms heartbeat, which would freeze the game silently.
+  if(!act){ state.action=null; return; }
   const ms=actMs(act,skill);
   const elapsed=now-state.actionStart;
   if(elapsed<ms) return;
@@ -18589,7 +18629,11 @@ function renderInventory(){
         const _now=Date.now();
         if(_now-_devSellLast>3000) _devSellTaps=0;
         _devSellLast=_now; _devSellTaps++;
-        if(_devSellTaps>=5){ _devSellTaps=0; $('devPanel').classList.toggle('hidden'); if(!$('devPanel').classList.contains('hidden')){ renderDevSteam(); _auditPing('Dev/cheat panel opened', null, 'devopen'); } }
+        // Never in the free browser demo: the panel grants Lv99 in every skill,
+        // unlimited gold and every item, none of it through addSkillXp — five
+        // clicks on a button the player already uses would hand over the whole
+        // paid game and make the Lv10 cap and zone lock decorative.
+        if(_devSellTaps>=5&&!IS_DEMO){ _devSellTaps=0; $('devPanel').classList.toggle('hidden'); if(!$('devPanel').classList.contains('hidden')){ renderDevSteam(); _auditPing('Dev/cheat panel opened', null, 'devopen'); } }
       }
       renderInventory();
     });
@@ -28617,7 +28661,7 @@ $('tabSocket').addEventListener('click',()=>{ leaveFullPanels(); viewTab='socket
   sel.appendChild(cg);
 
   const searchEl=$('devItemSearch'), resultsEl=$('devItemResults');
-  $('devToggle').addEventListener('click',()=>{ $('devPanel').classList.toggle('hidden'); if(!$('devPanel').classList.contains('hidden')){ renderResults(); renderDevSteam(); _auditPing('Dev/cheat panel opened', null, 'devopen'); } });
+  $('devToggle').addEventListener('click',()=>{ if(IS_DEMO) return; $('devPanel').classList.toggle('hidden'); if(!$('devPanel').classList.contains('hidden')){ renderResults(); renderDevSteam(); _auditPing('Dev/cheat panel opened', null, 'devopen'); } });
   /* Bypasses unlockAch entirely and hits the Steam seam directly, so a pop here
      means Steamworks is fine and the problem is elsewhere; silence means the seam
      is dead. first_swing is safe to re-send — Steam ignores a repeat unlock. */
@@ -28770,6 +28814,12 @@ function mmSummary(n){
 }
 function mmShowMenu(){
   mmAtMenu=true; mmSlot=0;
+  // Storage blocked (see getDeviceId): the game runs but nothing can ever be
+  // saved. Say so once, rather than letting the player lose a session to it.
+  if(_noStorage&&!_noStorageWarned){
+    _noStorageWarned=true;
+    setTimeout(function(){ toast('⚠️ This browser is blocking site data — progress cannot be saved. Allow cookies for this site, or play the desktop build.'); },600);
+  }
   $('charSelect').classList.add('mm-hidden');
   $('emberMenu').classList.remove('mm-hidden');
 }
@@ -28984,6 +29034,15 @@ function mmFinishStart(slot,isNew){
 }
 function mmQuitToMenu(){
   if(mmSlot && !mmAtMenu){ state.lastSeen=Date.now(); saveGame(); }
+  /* Tear the fight down before leaving. `combat` is a module-level singleton and
+     mmStart() does not reset it, while combatTick is the one interval with no
+     mmAtMenu guard — so an in-flight swing kept resolving against whatever
+     `state` pointed at next. Quitting mid-kill credited that kill's XP, gold,
+     monster-log entry and Combat Mastery points to the NEXT character loaded. */
+  stopCombatTimer();
+  combat.active=false; combat.rare=false; combat.raid=null; combat.raidDebuff=null;
+  combat.regens=[]; combat.foeStatus={};
+  combatMode=false;
   mmShowMenu();
 }
 
