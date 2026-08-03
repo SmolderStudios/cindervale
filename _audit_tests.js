@@ -250,7 +250,82 @@ setTimeout(() => {
     ok('dev panel stays shut in the demo build',
        devGate && devGate.isDemo===true && devGate.openedByGesture===false && devGate.openedByToggle===false,
        JSON.stringify(devGate));
-    ok('getDeviceId is wrapped in try/catch', /function getDeviceId\(\)\{\s*try\{/.test(html.replace(/\r/g,'')));
+    /* Storage access. Wrapping the two functions that had bitten us was not enough —
+       it shipped twice (getDeviceId in v0.9.84, then cursorEnabled, which took the
+       whole menu block down with it). The invariant is that the raw API appears in
+       exactly three places: the bodies of lsGet/lsSet/lsDel. _validate.js proves the
+       behaviour by booting with localStorage throwing; this stops the next raw call
+       from being written at all. */
+    const rawLs=(html.match(/localStorage\.(getItem|setItem|removeItem)\(/g)||[]).length;
+    ok('localStorage is touched only inside lsGet/lsSet/lsDel', rawLs===3, rawLs+' raw call sites (expected 3)');
+    ok('the wrappers exist and swallow', /function lsGet\(k\)\{ try\{/.test(html)&&/function lsSet\(k,v\)\{ try\{/.test(html)&&/function lsDel\(k\)\{ try\{/.test(html));
+
+    /* Performance is a correctness property in an idle game: the skill list renders
+       on a 1s interval forever, and its cost used to grow with mastery — 757ms per
+       render at full Platinum, on TWO intervals, so >100% of a second of blocking JS.
+       Assert it stays flat as mastery climbs rather than pinning an absolute ms
+       number, which would be machine-dependent and flaky. */
+    const perf=ev(`(function(){
+        function fill(lvl){
+          state=defaultState(); normalizeState();
+          for(var k in SKILLS) state.xp[k]=XP_CUM[99];
+          state.mastery={};
+          if(lvl>0){ var need=masteryXpNeeded(lvl); for(var s in SKILLS) SKILLS[s].acts.forEach(function(a){ state.mastery[a.id]=need; }); }
+          invalidateMasteryCache();
+        }
+        function ms(lvl){ fill(lvl); renderSkillList(); var t=Date.now(); for(var i=0;i<3;i++) renderSkillList(); return (Date.now()-t)/3; }
+        var lo=ms(0), hi=ms(100);
+        return {lo:+lo.toFixed(1), hi:+hi.toFixed(1), ratio:+(hi/Math.max(lo,0.5)).toFixed(2)};
+      })()`);
+    ok('renderSkillList cost does not scale with mastery', perf.ratio<3, JSON.stringify(perf));
+
+    const offPerf=ev(`(function(){
+        state=defaultState(); normalizeState();
+        for(var k in SKILLS) state.xp[k]=XP_CUM[99];
+        var need=masteryXpNeeded(100);
+        state.mastery={}; for(var s in SKILLS) SKILLS[s].acts.forEach(function(a){ state.mastery[a.id]=need; });
+        invalidateMasteryCache();
+        state.action={skill:'woodcutting',actId:'wc1'};
+        state.lastSeen=Date.now()-8*3600000;
+        var t=Date.now(); grantOffline(); return Date.now()-t;
+      })()`);
+    // Was 9,203ms at full Platinum — a nine-second frozen window on every launch.
+    ok('grantOffline does not freeze launch', offPerf<1500, offPerf+' ms');
+
+    // Count the repaints directly. The wall-clock check above passes even with the
+    // redundant renders restored (they are only ~12ms each now), so it does not on
+    // its own stop the 12x rebuild from creeping back in.
+    const offRenders=ev(`(function(){
+        state=defaultState(); normalizeState();
+        for(var k in SKILLS) state.xp[k]=XP_CUM[99];
+        state.action={skill:'woodcutting',actId:'wc1'};
+        state.lastSeen=Date.now()-8*3600000;
+        var real=renderSkillList, n=0;
+        renderSkillList=function(){ n++; return real.apply(this,arguments); };
+        try{ grantOffline(); } finally { renderSkillList=real; }
+        return n;
+      })()`);
+    ok('grantOffline repaints the skill list at most once', offRenders<=1, offRenders+' repaints');
+
+    // The memo's real risk is a stale value, not speed: mastery must be re-counted
+    // after recordMastery moves an activity into Platinum.
+    const cacheInval=ev(`(function(){
+        state=defaultState(); normalizeState();
+        for(var k in SKILLS) state.xp[k]=XP_CUM[99];
+        state.mastery={}; invalidateMasteryCache();
+        var before=platinumMasteryCount();
+        var act=SKILLS.woodcutting.acts[0];
+        state.mastery[act.id]=0;
+        recordMastery(act.id, 100000000);          // straight to Platinum
+        return {before:before, after:platinumMasteryCount(), lvl:masteryLevel(act.id)};
+      })()`);
+    ok('the platinum-count memo invalidates when mastery changes',
+       cacheInval.after===cacheInval.before+1, JSON.stringify(cacheInval));
+
+    // Only ONE 1s interval may rebuild the skill list.
+    const skillIntervals=html.split(/\r?\n/)
+      .filter(l=>/setInterval\(/.test(l)&&/renderSkillList\(\)/.test(l)&&!/^\s*\/\//.test(l)).length;
+    ok('only one interval repaints the skill list', skillIntervals===1, skillIntervals+' found');
   }
 
   section('Trophy/cape exploits & completion blockers (v0.9.85)');

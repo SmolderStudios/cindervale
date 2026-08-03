@@ -3542,7 +3542,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.90</div>
+  <div class="mm-ver">v0.9.91</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -4207,26 +4207,30 @@ const SAVE_KEY = 'cindervale_save_v1';
    different people opening the same HTML file never share save data.
    Export/Import lets players move saves intentionally.              */
 const DEVICE_KEY = 'cindervale_device_id';
-/* Merely TOUCHING window.localStorage throws SecurityError when the browser is
-   set to block all site data (Chrome/Edge "Block all cookies", Firefox Block All,
-   any storage-partitioned iframe). This runs at top level, so an unguarded throw
-   killed the rest of the single <script> — ITEMS, SKILLS and every other const
-   below it never got defined and the free browser demo was a silent blank page.
-   Every other localStorage touch in the file is already wrapped; this was the
-   one outlier. */
+// Declared before the wrappers below — they assign to it, and a `let` in its
+// temporal dead zone would throw from the very code meant to swallow throws.
 let _noStorage=false, _noStorageWarned=false;
+/* EVERY localStorage access in this file goes through these three. Merely touching
+   window.localStorage throws SecurityError when the browser blocks site data, and a
+   single unguarded read at top level kills the rest of the inline <script> — every
+   const and listener below it never comes into being, so the menu paints and nothing
+   works, with no error the player or the developer ever sees.
+   That happened twice: getDeviceId (fixed in v0.9.84) and then cursorEnabled, which
+   sat ~840 lines above the mmPlay listener and took the whole settings/menu block
+   down with it. Wrapping the two known offenders was not enough — the failure mode
+   is "someone adds a raw localStorage call one day", so the raw API is now used in
+   exactly one place. _noStorage drives the one-time warning in mmShowMenu. */
+function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ _noStorage=true; return null; } }
+function lsSet(k,v){ try{ localStorage.setItem(k,v); return true; }catch(e){ _noStorage=true; return false; } }
+function lsDel(k){ try{ localStorage.removeItem(k); return true; }catch(e){ _noStorage=true; return false; } }
+
 function getDeviceId(){
-  try{
-    let id = localStorage.getItem(DEVICE_KEY);
-    if(!id){
-      id = 'dev_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
-      localStorage.setItem(DEVICE_KEY, id);
-    }
-    return id;
-  }catch(e){
-    _noStorage=true;
-    return 'dev_nostore';
+  let id = lsGet(DEVICE_KEY);
+  if(!id){
+    id = 'dev_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+    if(!lsSet(DEVICE_KEY, id)) return 'dev_nostore';   // storage blocked — stable per session
   }
+  return id;
 }
 const DEVICE_SAVE_KEY = SAVE_KEY + '_' + getDeviceId();
 
@@ -4300,9 +4304,9 @@ try{
      query string on a file:// URL, and the hash always survives. */
   const _u = (location.search||'') + '&' + String(location.hash||'').replace(/^#/,'');
   const _q = new URLSearchParams(_u.replace(/^&/,''));
-  if(_q.get('cvdev')==='1')      localStorage.setItem(DEV_MUTE_KEY,'1');
-  else if(_q.get('cvdev')==='0') localStorage.removeItem(DEV_MUTE_KEY);
-  _devMute = localStorage.getItem(DEV_MUTE_KEY)==='1';
+  if(_q.get('cvdev')==='1')      lsSet(DEV_MUTE_KEY,'1');
+  else if(_q.get('cvdev')==='0') lsDel(DEV_MUTE_KEY);
+  _devMute = lsGet(DEV_MUTE_KEY)==='1';
 }catch(e){ _devMute=false; }
 if(_devMute && typeof console!=='undefined' && console.info)
   console.info('[cindervale] DEV MUTE ON — audit and signup webhooks suppressed for this browser. Load with ?cvdev=0 to clear.');
@@ -4345,7 +4349,7 @@ function _auditPing(reason, extraFields, dedupeKey){
   if(_auditCount>=25) return; _auditCount++;               // session backstop
   const hook = AUDIT_WEBHOOK || (typeof BUG_WEBHOOK!=='undefined' ? BUG_WEBHOOK : '');
   if(!hook) return;
-  let dev='?'; try{ dev=localStorage.getItem(DEVICE_KEY)||'?'; }catch(e){}
+  let dev='?'; try{ dev=lsGet(DEVICE_KEY)||'?'; }catch(e){}
   const flagN=(typeof _bumpCount==='function')?_bumpCount('cindervale_flag_seq'):0;
   const gold = Math.floor((((typeof state!=='undefined'&&state.coins)||0))/(typeof SILVER_PER_GOLD!=='undefined'?SILVER_PER_GOLD:100));
   const fields=[
@@ -4371,14 +4375,14 @@ function _auditPing(reason, extraFields, dedupeKey){
    blocks or alters gameplay. */
 const SIGNUP_WEBHOOK = 'https://discord.com/api/webhooks/1525421043458637875/EpMJrV60uW1VlQxO8iJhEWP3R1SVpefTUXr1wxacPuliuDyTBeqDyUqwsHem_UhAgEyF';   // <-- public in the client; regenerate in Discord if spammed
 function _bumpCount(key){
-  let n=1; try{ n=(parseInt(localStorage.getItem(key),10)||0)+1; localStorage.setItem(key,String(n)); }catch(e){ n=1; }
+  let n=1; try{ n=(parseInt(lsGet(key),10)||0)+1; lsSet(key,String(n)); }catch(e){ n=1; }
   return n;
 }
 let _signupSent=0;
 function _signupPing(name, type, cls, slot){
   if(_devMute) return;                                           // see DEV_MUTE_KEY above
   if(!SIGNUP_WEBHOOK || _signupSent>=5) return; _signupSent++;   // session backstop
-  let dev='?'; try{ dev=localStorage.getItem(DEVICE_KEY)||'?'; }catch(e){}
+  let dev='?'; try{ dev=lsGet(DEVICE_KEY)||'?'; }catch(e){}
   const acct=_bumpCount('cindervale_acct_seq');                  // this device's Nth character
   const alt=acct>1;
   const build=(typeof IS_DEMO!=='undefined'&&IS_DEMO)?'🖥️ Demo (browser)':'✅ Full game';
@@ -4411,16 +4415,16 @@ function mmKey(n){ return DEVICE_SAVE_KEY + '_c' + n; }
 function mmRecover(){
   try{
     // Slot 1: prefer existing _c1, else recover from older locations.
-    if(!localStorage.getItem(mmKey(1))){
-      const legacy = localStorage.getItem(DEVICE_SAVE_KEY)
-                  || localStorage.getItem(DEVICE_SAVE_KEY + '_slot1');
-      if(legacy) localStorage.setItem(mmKey(1), legacy); // copy only — keep the original as backup
+    if(!lsGet(mmKey(1))){
+      const legacy = lsGet(DEVICE_SAVE_KEY)
+                  || lsGet(DEVICE_SAVE_KEY + '_slot1');
+      if(legacy) lsSet(mmKey(1), legacy); // copy only — keep the original as backup
     }
     // Slots 2-3: recover from the v1.1.0 '_slotN' scheme if present.
     for(let n=2;n<=MM_SLOTS;n++){
-      if(!localStorage.getItem(mmKey(n))){
-        const old = localStorage.getItem(DEVICE_SAVE_KEY + '_slot' + n);
-        if(old) localStorage.setItem(mmKey(n), old);
+      if(!lsGet(mmKey(n))){
+        const old = lsGet(DEVICE_SAVE_KEY + '_slot' + n);
+        if(old) lsSet(mmKey(n), old);
       }
     }
   }catch(e){}
@@ -4473,9 +4477,9 @@ function cvCloudPull(){
       // -1 for a missing local slot, so a fresh install adopts the cloud copy
       // even when its lastSeen is 0.
       let localSeen = -1;
-      const localRaw = localStorage.getItem(mmKey(n));
+      const localRaw = lsGet(mmKey(n));
       if(localRaw){ try{ localSeen = JSON.parse(localRaw).lastSeen||0; }catch(e){ localSeen = 0; } }
-      if((remote.lastSeen||0) > localSeen) localStorage.setItem(mmKey(n), remoteRaw);
+      if((remote.lastSeen||0) > localSeen) lsSet(mmKey(n), remoteRaw);
     }catch(e){}
   }
 }
@@ -4490,7 +4494,7 @@ function cvCloudSeed(){
   for(let n=1;n<=MM_SLOTS;n++){
     try{
       if(snap[n] || snap[String(n)]) continue;
-      const raw = localStorage.getItem(mmKey(n));
+      const raw = lsGet(mmKey(n));
       if(raw) cvCloudPush(n, raw);
     }catch(e){}
   }
@@ -12831,6 +12835,9 @@ function normalizeState(){
     }
   }
   if(!state.newlyDiscovered||typeof state.newlyDiscovered!=='object'||Array.isArray(state.newlyDiscovered)) state.newlyDiscovered={};
+  // The whole state object is swapped on load/import/character-switch, so the
+  // memoised platinum count from the previous character must not carry over.
+  if(typeof invalidateMasteryCache==='function') invalidateMasteryCache();
   /* Boss-trophy latch (see rollDrops). Seeded once from any `once` drop the
      player currently holds, wears or has already discovered, so existing saves
      do not get a second free roll on a trophy they have already earned. */
@@ -13624,13 +13631,13 @@ function saveGame(){
   // a Steam Cloud problem must never cost the player their local save.
   try{
     const json = _serializeState();
-    localStorage.setItem(mmKey(mmSlot), json);
+    lsSet(mmKey(mmSlot), json);
     cvCloudPush(mmSlot, json);
   }catch(e){ console.warn('Save failed:',e); }
 }
 function loadGame(){
   if(!mmSlot) return;
-  const raw = localStorage.getItem(mmKey(mmSlot));
+  const raw = lsGet(mmKey(mmSlot));
   if(raw){ try{ applySave(JSON.parse(raw)); }catch(e){ console.warn('Load failed:',e); } }
 }
 function applySave(s){
@@ -14847,14 +14854,25 @@ function binom(n,p){
    Curve: floor(level^2.55) cumulative actions to reach level.
    Tiers: Bronze lv10 (+1% xp), Silver lv25 (+2.5%), Gold lv50 (+5%), Platinum lv100 (+10%)
    ================================================================= */
-function masteryXpNeeded(lvl){ return Math.floor(Math.pow(lvl,2.55)); }
 const MAX_MASTERY=100;
+/* The mastery ladder is a fixed curve, so compute it once. It used to be a live
+   Math.pow per call, and the call chain multiplies hard: masteryLevel() scanned
+   from 0 (up to 100 pow), platinumMasteryCount() calls masteryLevel() for all 411
+   activities, and mods() calls platinumMasteryCount() for its global XP term — so
+   one skill-list render was ~67M pow. Measured at full Platinum: renderSkillList
+   757ms, running on a 1s interval, and grantOffline 9.2s of frozen launch. */
+const MASTERY_XP_TABLE=(function(){ const t=[0]; for(let l=1;l<=MAX_MASTERY;l++) t[l]=Math.floor(Math.pow(l,2.55)); return t; })();
+function masteryXpNeeded(lvl){
+  return (lvl>=0&&lvl<=MAX_MASTERY)?MASTERY_XP_TABLE[lvl]:Math.floor(Math.pow(lvl,2.55));
+}
 
 function masteryLevel(actId){
   const xp=state.mastery[actId]||0;
-  let l=0;
-  while(l<MAX_MASTERY && xp>=masteryXpNeeded(l+1)) l++;
-  return l;
+  if(xp<=0) return 0;
+  // Binary search the table instead of walking it from 0.
+  let lo=0, hi=MAX_MASTERY;
+  while(lo<hi){ const mid=(lo+hi+1)>>1; if(xp>=MASTERY_XP_TABLE[mid]) lo=mid; else hi=mid-1; }
+  return lo;
 }
 
 function masteryTier(lvl){
@@ -14874,12 +14892,18 @@ const MASTERY_BAR_COLOR={none:'#3a2a17',bronze:'#cd7f32',silver:'#aab8c2',gold:'
 function masteryXpBonus(actId){ return (masteryLevel(actId)*0.001); }
 
 // Count total Platinum masteries across all activities (for global XP bonus)
+/* Memoised: this walks all 411 activities and mods() calls it on every rate
+   computation, so an uncached call was the single hottest thing in the game.
+   Mastery only moves in recordMastery and on a state swap, so those invalidate. */
+let _platCache=null;
+function invalidateMasteryCache(){ _platCache=null; }
 function platinumMasteryCount(){
+  if(_platCache!==null) return _platCache;
   let n=0;
   for(const sk of Object.values(SKILLS))
     for(const act of sk.acts)
       if(masteryTier(masteryLevel(act.id))==='plat') n++;
-  return n;
+  return (_platCache=n);
 }
 
 function masteryBadgeHtml(actId){
@@ -15323,6 +15347,7 @@ function recordMastery(actId, times){
   const prevXp=state.mastery[actId]||0;
   const prevLvl=masteryLevel(actId); // level BEFORE adding
   state.mastery[actId]=prevXp+times*masteryXpRate(actId);
+  invalidateMasteryCache();          // platinumMasteryCount is memoised
   const newLvl=masteryLevel(actId); // level AFTER adding
   if(newLvl>prevLvl){
     // Only notify at tier-threshold crossings, not every level
@@ -16448,7 +16473,8 @@ function grantOffline(){
      a 24h catch-up read 61,081,456 xp/hr against a real 37,175, and the smoother
      snapped straight to it. Clear the tracker instead; it refills from live play
      within the warm-up window. */
-  for(const sk in SKILLS) if(typeof resetXphTracker==='function') resetXphTracker(sk);
+  for(const sk in SKILLS) resetXphTracker(sk);
+  renderSkillList();   // one repaint, not one per skill
 
   // Totals + meta for the reworked welcome-back summary (1.0.11)
   const meta={
@@ -16565,10 +16591,13 @@ function renderHeader(){
   $('totalLevel').textContent=tot;
 }
 
+/* Data-only. It used to end in an unconditional renderSkillList(), which made the
+   per-skill reset loop in grantOffline rebuild the whole list 12 times — measured
+   9.2s of frozen launch at full Platinum, before any panel appeared. Callers that
+   need a repaint ask for one. */
 function resetXphTracker(skill){
   xphBuf[skill]=[];
   xphStartTime[skill]=0;
-  renderSkillList();
 }
 
 function renderSkillList(){
@@ -16668,7 +16697,7 @@ function renderSkillList(){
 
   // Attach reset handlers after DOM insertion (can't use onclick in innerHTML safely with CSP)
   box.querySelectorAll('.xph-reset').forEach(rb=>{
-    rb.addEventListener('click',e=>{ e.stopPropagation(); resetXphTracker(rb.dataset.sk); });
+    rb.addEventListener('click',e=>{ e.stopPropagation(); resetXphTracker(rb.dataset.sk); renderSkillList(); });
   });
 }
 
@@ -28752,7 +28781,7 @@ $('btnReset').addEventListener('click',async()=>{
   const ok=await showConfirm('Reset Save','This will permanently wipe this character\'s progress.','Cannot be undone.');
   if(!ok) return;
   const keepName=state.charName||'Adventurer';
-  if(mmSlot) localStorage.removeItem(mmKey(mmSlot));
+  if(mmSlot) lsDel(mmKey(mmSlot));
   state=defaultState();
   state.charName=keepName;
   normalizeState();
@@ -28957,7 +28986,7 @@ function mmFmtAgo(ts){
 function mmEsc(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function mmSummary(n){
   try{
-    const raw=localStorage.getItem(mmKey(n));
+    const raw=lsGet(mmKey(n));
     if(!raw) return null;
     const s=JSON.parse(raw);
     let tot=0; for(const k in SKILLS) tot+=levelFromXp((s.xp&&s.xp[k])||0);
@@ -29048,7 +29077,7 @@ function mmRenderSlots(){
       const s=mmSummary(n);
       const ok=await showConfirm('Delete Character','Permanently delete "'+(s?s.name:'this character')+'"? This cannot be undone.','Cannot be undone.');
       if(!ok) return;
-      try{ localStorage.removeItem(mmKey(n)); }catch(err){}
+      try{ lsDel(mmKey(n)); }catch(err){}
       cvCloudDrop(n);   // else the next launch pulls the character back out of the cloud
       mmRenderSlots(); toast('Character deleted.');
     });
@@ -29155,7 +29184,7 @@ function mmConfirmDestiny(){
     state.charType=mmSelType; state.charClass=mmSelClass;
     state.lastSeen=Date.now();
     normalizeState();
-    try{ localStorage.setItem(mmKey(n), _serializeState()); }catch(e){}
+    try{ lsSet(mmKey(n), _serializeState()); }catch(e){}
     try{ _signupPing(state.charName, state.charType, state.charClass, n); }catch(e){}
     mmStart(n,true);   // reloads the freshly-saved char and enters the world
   }else{
@@ -29298,9 +29327,9 @@ const _CUR_ART = {
     '<path d="M12 6 L20 6 M12 26 L20 26" stroke="#f0c772" stroke-width="2" stroke-linecap="round"/>', 16, 16, 'text'],
 };
 
-function cursorEnabled(){ return localStorage.getItem(CURSOR_KEY) !== '0'; }
+function cursorEnabled(){ return lsGet(CURSOR_KEY) !== '0'; }
 function cursorSize(){
-  const v = parseInt(localStorage.getItem(CURSOR_SIZE_KEY), 10);
+  const v = parseInt(lsGet(CURSOR_SIZE_KEY), 10);
   return CURSOR_SIZES.indexOf(v) >= 0 ? v : 32;
 }
 function _curValue(inner, hx, hy, keyword, size){
@@ -29322,17 +29351,17 @@ function applyCursorPref(){
   }
 }
 function setCursorEnabled(on){
-  try{ localStorage.setItem(CURSOR_KEY, on ? '1' : '0'); }catch(e){}
+  try{ lsSet(CURSOR_KEY, on ? '1' : '0'); }catch(e){}
   applyCursorPref();
 }
 function setCursorSize(px){
   if(CURSOR_SIZES.indexOf(px) < 0) return;
-  try{ localStorage.setItem(CURSOR_SIZE_KEY, String(px)); }catch(e){}
+  try{ lsSet(CURSOR_SIZE_KEY, String(px)); }catch(e){}
   applyCursorPref();
 }
 applyCursorPref();
 function uiScale(){
-  const v = parseFloat(localStorage.getItem(UI_SCALE_KEY));
+  const v = parseFloat(lsGet(UI_SCALE_KEY));
   return (v >= 0.7 && v <= 1.3) ? v : 1;
 }
 /* ── Text size (v0.9.49) ──────────────────────────────────────────────────────
@@ -29343,12 +29372,12 @@ function uiScale(){
    overflow. Stored under its own key so it survives independently of the zoom. */
 const TEXT_SCALE_KEY = 'cindervale_text_scale';
 function textScale(){
-  const v = parseFloat(localStorage.getItem(TEXT_SCALE_KEY));
+  const v = parseFloat(lsGet(TEXT_SCALE_KEY));
   return (v >= 0.9 && v <= 1.3) ? v : 1;
 }
 function setTextScale(v){
   const c = Math.max(0.9, Math.min(1.3, v));
-  try{ localStorage.setItem(TEXT_SCALE_KEY, String(c)); }catch(e){}
+  try{ lsSet(TEXT_SCALE_KEY, String(c)); }catch(e){}
   applyTextScale();
   return c;
 }
@@ -29358,7 +29387,7 @@ function applyTextScale(){
 applyTextScale();
 function setUiScale(v){
   const c = Math.max(0.7, Math.min(1.3, v));
-  try{ localStorage.setItem(UI_SCALE_KEY, String(c)); }catch(e){}
+  try{ lsSet(UI_SCALE_KEY, String(c)); }catch(e){}
   applyRootZoom();
   return c;
 }
@@ -29449,7 +29478,7 @@ function endTutorial(){
 /* Replay from the menu — resets the flag so the tour runs again. */
 function replayTutorial(){ if(state) state.tutorialSeen=false; startTutorial(); }
 function mmFirstEmpty(){
-  for(let n=1;n<=MM_SLOTS;n++){ if(!localStorage.getItem(mmKey(n))) return n; }
+  for(let n=1;n<=MM_SLOTS;n++){ if(!lsGet(mmKey(n))) return n; }
   return 0;
 }
 function mmDoImport(){
@@ -29464,7 +29493,7 @@ function mmDoImport(){
   if(!n){ msg.textContent='All 3 slots are full — delete one first.'; return; }
   try{
     const json = JSON.stringify(data);
-    localStorage.setItem(mmKey(n), json);
+    lsSet(mmKey(n), json);
     cvCloudPush(n, json);   // an imported character is never "played", so mirror it now
   }catch(e){}
   $('mmImportModal').classList.add('mm-hidden');
@@ -29480,7 +29509,7 @@ function mmDoImport(){
    Cloud will sync once the wrapper mirrors it out of localStorage.           */
 let mmExportSlotN = 0;
 function mmExportCode(n){
-  const raw = localStorage.getItem(mmKey(n));
+  const raw = lsGet(mmKey(n));
   if(!raw) return '';
   try{ return btoa(unescape(encodeURIComponent(raw))); }catch(e){ return ''; }
 }
@@ -29489,7 +29518,7 @@ function mmOpenExport(n){
   if(!code) return;
   mmExportSlotN = n;
   let nm='character';
-  try{ nm = (JSON.parse(localStorage.getItem(mmKey(n))).name)||nm; }catch(e){}
+  try{ nm = (JSON.parse(lsGet(mmKey(n))).name)||nm; }catch(e){}
   $('mmExportSub').textContent = 'Backup for "'+nm+'" (slot '+n+'). Copy the code, or download it as a file.';
   $('mmExportOut').value = code;
   $('mmExportMsg').textContent = '';
@@ -29538,7 +29567,8 @@ function mmStartEngine(){
     if(viewTab==='acts'&&selectedSkill==='farming') renderFarming();
   },2000);
   setInterval(saveGame,5000);
-  setInterval(()=>{ if(!mmAtMenu) renderSkillList(); },1000);
+  // (removed) a second 1s renderSkillList interval — the one above already does it,
+  // so the most expensive render in the game was running twice a second.
   window.addEventListener('beforeunload',()=>{ if(mmSlot&&!mmAtMenu){ state.lastSeen=Date.now(); saveGame(); } });
   requestAnimationFrame(animate);
 }
@@ -29708,7 +29738,7 @@ async function mmSendReport(){
   // context is gathered silently and sent to Discord — players never see it
   const c=mmBugContext();
   const _flagged = (function(){ try{ return _hasSlur(text); }catch(e){ return false; } })();
-  let _dev='?'; try{ _dev=localStorage.getItem(DEVICE_KEY)||'?'; }catch(e){}
+  let _dev='?'; try{ _dev=lsGet(DEVICE_KEY)||'?'; }catch(e){}
   const _bugN=(typeof _bumpCount==='function')?_bumpCount('cindervale_bug_seq'):0;
   const payload={username:'Cindervale Bug Report',embeds:[{title:_flagged?'Bug report — flagged language':'Bug report',description:text.slice(0,1400),color:_flagged?0x8a2f2f:0xc05149,
     fields:[
@@ -29766,7 +29796,7 @@ async function mmSendIdea(){
   const wait=BUG_COOLDOWN_MS-(Date.now()-_ideaLastSent);
   if(wait>0){ msg.className='rep-msg err'; msg.textContent='Please wait '+Math.ceil(wait/1000)+'s before sending another.'; return; }
   btn.disabled=true; btn.textContent='Sending…'; msg.className='rep-msg'; msg.textContent='';
-  let dev='?'; try{ dev=localStorage.getItem(DEVICE_KEY)||'?'; }catch(e){}
+  let dev='?'; try{ dev=lsGet(DEVICE_KEY)||'?'; }catch(e){}
   const who=(state&&state.charName)?String(state.charName):'(no character)';
   const ver=(document.querySelector('.mm-ver')?document.querySelector('.mm-ver').textContent.trim():'?');
   const payload={embeds:[{
@@ -29887,9 +29917,9 @@ if(IS_DEMO) document.body.classList.add('is-demo');
    Hit-testing runs off a single window listener that only fires when the click
    landed on the background — never on a card, a button, or a tooltip.               */
 const EMBERS_KEY = 'cindervale_embers';
-function embersEnabled(){ return localStorage.getItem(EMBERS_KEY) !== '0'; }
+function embersEnabled(){ return lsGet(EMBERS_KEY) !== '0'; }
 function setEmbersEnabled(on){
-  try{ localStorage.setItem(EMBERS_KEY, on ? '1' : '0'); }catch(e){}
+  try{ lsSet(EMBERS_KEY, on ? '1' : '0'); }catch(e){}
   const cv = $('bgEmbers');
   if(cv) cv.style.display = on ? '' : 'none';
 }
