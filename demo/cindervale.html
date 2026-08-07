@@ -1314,6 +1314,10 @@ header h1 .flame{color:var(--ember)}
 .act .needs .mat{position:relative;display:inline-flex;align-items:center;gap:3px;color:var(--text);
   background:#1a0e08;border:1px solid var(--trim-d);border-radius:3px;padding:1px 5px 1px 4px;line-height:1.5;cursor:var(--cur-help)}
 .act .needs .mat svg{width:14px;height:14px;display:block;flex-shrink:0}
+/* Materials shown on a still-locked recipe: readable enough to plan a stockpile
+   against, dim enough that the card still reads as locked. */
+.needs-locked{opacity:.55}
+.needs-locked .mat{filter:saturate(.7)}
 .act .needs .mat b{font-weight:600}
 .act .needs .mat .sl{color:var(--muted)}
 .act .needs .mat.miss{color:#ff9a78;border-color:#7a2f1e;background:#2a0f08}
@@ -3574,7 +3578,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.95</div>
+  <div class="mm-ver">v0.9.96</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -15896,6 +15900,24 @@ function completeAction(act,skillKey,times){
     return 0;
   }
 
+  /* Already-owned tool — stop before spending anything. Skilling tools are
+     one-time unlocks: grantItem returns 0 once the id is in state.gear, and
+     completeAction ignored that return, so a repeating tool craft consumed its
+     inputs every cycle and granted nothing. Measured: four repeats after the
+     first craft destroyed 4 bronze bars and 4 pine logs. The activity card
+     already hides a re-craft, but an action ALREADY running just kept going —
+     so idling after a tool craft quietly ate the whole bar and log stack. */
+  if(act.out){
+    const _outIds=Object.keys(act.out);
+    const _ownedTool=_outIds.length>0 && _outIds.every(id=>
+      ITEMS[id]&&ITEMS[id].tool&&Array.isArray(state.gear)&&state.gear.indexOf(id)>=0);
+    if(_ownedTool){
+      state.action=null;
+      toast('You already own that tool — crafting stopped.');
+      return 0;
+    }
+  }
+
   // Satchel full — stop the action when the output needs a new slot but inventory
   // is at cap. This MUST run before act.inp is deducted and it must cover every
   // skill, not just gatherers: grantItem returns 0 for a new item type at cap, so
@@ -16098,6 +16120,14 @@ function completeAction(act,skillKey,times){
 
     // apply sell bonus to value in sell functions not here (qty is physical)
     if(qty>0) grantItem(id, qty);
+    /* Tool crafted — stop here rather than letting the loop re-arm. The guard at
+       the top of completeAction would catch the next cycle anyway, but it would
+       toast "you already own that tool" one tick after you deliberately made it,
+       which reads like an error. Ending it quietly is the honest outcome: there
+       is nothing left to craft. */
+    if(ITEMS[id]&&ITEMS[id].tool&&Array.isArray(state.gear)&&state.gear.indexOf(id)>=0){
+      state.action=null;
+    }
   }
 
   // ---- Firemaking-specific bonuses ----
@@ -17007,7 +17037,12 @@ function buildActBtn(act,reqLvl,lvl,m,bestXph,bestRph){
       </div>
       <span class="meta">${metaText}</span>
       ${locked||depleted||toolOwned?'':statsHtml}
-      ${locked?'':needsHtml(act,m)}
+      ${/* Locked recipes used to hide their materials entirely, so you could not
+            see what an upcoming craft needed until you already had the level —
+            no way to stockpile ahead of it. Show the chips either way; the
+            .needs-locked wrapper dims them so a locked card still reads as
+            locked, and the have/need counts stay live and accurate. */''}
+      ${toolOwned?'':(locked?`<div class="needs-locked">${needsHtml(act,m)}</div>`:needsHtml(act,m))}
       ${masteryHtml}
       ${runningHtml}
     </div>`;
