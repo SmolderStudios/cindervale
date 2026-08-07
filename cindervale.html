@@ -1902,16 +1902,31 @@ body:not(.is-demo) .demo-only{display:none !important}
    instead of clipping the title and the Done button off-screen. align-items:center
    would pin an over-tall card centred, hiding its top with no way to scroll up —
    that stranded users on "a brown screen that just says On" (0.9.25). */
-#mmNameModal,#mmImportModal,#mmExportModal,#mmSettingsModal,#mmCreditsModal,#gameMenuModal,#mmReportModal,#mmIdeaModal,#demoBuyModal{position:fixed;inset:0;z-index:10000;display:flex;align-items:normal;overflow-y:auto;
+#mmNameModal,#mmImportModal,#mmExportModal,#mmSettingsModal,#mmCreditsModal,#gameMenuModal,#mmReportModal,#mmIdeaModal,#demoBuyModal,#mmEaModal{position:fixed;inset:0;z-index:10000;display:flex;align-items:normal;overflow-y:auto;
   justify-content:center;padding:18px;background:#000a;font-family:'Crimson Pro',serif}
-#mmNameModal.mm-hidden,#mmImportModal.mm-hidden,#mmExportModal.mm-hidden,#mmSettingsModal.mm-hidden,#mmCreditsModal.mm-hidden,#gameMenuModal.mm-hidden,#mmReportModal.mm-hidden,#mmIdeaModal.mm-hidden,#demoBuyModal.mm-hidden{display:none}
-#mmNameModal .mm-card,#mmImportModal .mm-card,#mmExportModal .mm-card,#mmSettingsModal .mm-card,#mmCreditsModal .mm-card,#gameMenuModal .mm-card,#mmReportModal .mm-card,#mmIdeaModal .mm-card,#demoBuyModal .mm-card{background:#251a10;border:1px solid #c79b4e;border-radius:8px;
+#mmNameModal.mm-hidden,#mmImportModal.mm-hidden,#mmExportModal.mm-hidden,#mmSettingsModal.mm-hidden,#mmCreditsModal.mm-hidden,#gameMenuModal.mm-hidden,#mmReportModal.mm-hidden,#mmIdeaModal.mm-hidden,#demoBuyModal.mm-hidden,#mmEaModal.mm-hidden{display:none}
+#mmNameModal .mm-card,#mmImportModal .mm-card,#mmExportModal .mm-card,#mmSettingsModal .mm-card,#mmCreditsModal .mm-card,#gameMenuModal .mm-card,#mmReportModal .mm-card,#mmIdeaModal .mm-card,#demoBuyModal .mm-card,#mmEaModal .mm-card{background:#251a10;border:1px solid #c79b4e;border-radius:8px;
   padding:20px;max-width:360px;width:100%;margin:auto;box-shadow:var(--sh-3)}
-#mmNameModal h3,#mmImportModal h3,#mmExportModal h3,#mmSettingsModal h3,#mmCreditsModal h3,#gameMenuModal h3,#mmReportModal h3,#mmIdeaModal h3,#demoBuyModal h3{color:#c79b4e;font-variant:small-caps;letter-spacing:1px;font-size:19px;margin:0 0 6px}
-#mmNameModal p,#mmImportModal p,#mmExportModal p,#mmSettingsModal p,#mmCreditsModal p,#mmReportModal p,#mmIdeaModal p,#demoBuyModal p{color:#a08a64;font-size:calc(14px*var(--tscale));margin:0 0 12px}
+#mmNameModal h3,#mmImportModal h3,#mmExportModal h3,#mmSettingsModal h3,#mmCreditsModal h3,#gameMenuModal h3,#mmReportModal h3,#mmIdeaModal h3,#demoBuyModal h3,#mmEaModal h3{color:#c79b4e;font-variant:small-caps;letter-spacing:1px;font-size:19px;margin:0 0 6px}
+#mmNameModal p,#mmImportModal p,#mmExportModal p,#mmSettingsModal p,#mmCreditsModal p,#mmReportModal p,#mmIdeaModal p,#demoBuyModal p,#mmEaModal p{color:#a08a64;font-size:calc(14px*var(--tscale));margin:0 0 12px}
 #mmNameModal input{width:100%;background:#0d0905;color:#ead9b5;border:1px solid #6e552c;
   border-radius:4px;padding:9px 11px;font-family:inherit;font-size:16px;margin-bottom:14px}
-#mmNameModal .mm-row,#mmImportModal .mm-row,#mmExportModal .mm-row,#mmSettingsModal .mm-row,#mmCreditsModal .mm-row,#gameMenuModal .mm-row,#mmReportModal .mm-row,#mmIdeaModal .mm-row{display:flex;gap:8px;justify-content:flex-end}
+#mmNameModal .mm-row,#mmImportModal .mm-row,#mmExportModal .mm-row,#mmSettingsModal .mm-row,#mmCreditsModal .mm-row,#gameMenuModal .mm-row,#mmReportModal .mm-row,#mmIdeaModal .mm-row,#mmEaModal .mm-row{display:flex;gap:8px;justify-content:flex-end}
+/* Early Access welcome. Wider than the rest of the mm-* family because it is the
+   one modal that is read rather than acted on. */
+#mmEaModal .mm-card{max-width:520px}
+#mmEaModal .ea-mark{display:block;width:46px;height:46px;margin:0 auto 10px}
+#mmEaModal h3{text-align:center;font-size:23px;margin-bottom:2px}
+#mmEaModal .ea-sub{text-align:center;color:#7a6647;font-size:calc(12.5px*var(--tscale));
+  letter-spacing:2.4px;text-transform:uppercase;margin:0 0 16px}
+#mmEaModal .ea-rule{height:1px;margin:0 0 15px;
+  background:linear-gradient(90deg,rgba(199,155,78,0),#c79b4e,rgba(199,155,78,0))}
+#mmEaModal p{color:#c4b593;font-size:calc(15px*var(--tscale));line-height:1.62;margin:0 0 12px}
+#mmEaModal p b{color:#f0c772;font-weight:600}
+#mmEaModal .ea-note{color:#a08a64;font-size:calc(13.5px*var(--tscale));font-style:italic;
+  border-left:2px solid #6e552c;padding-left:11px;margin:0 0 16px}
+#mmEaModal .ea-sign{text-align:right;color:#8a7a5a;font-size:calc(13.5px*var(--tscale));
+  font-style:italic;margin:0 0 16px}
 .mm-mini{background:#322415;border:1px solid #6e552c;color:#ead9b5;border-radius:4px;
   padding:7px 15px;font-family:inherit;font-size:calc(14px*var(--tscale));cursor:var(--cur-pointer)}
 .mm-mini.mm-primary{border-color:#c79b4e;color:#f0c772}
@@ -3395,6 +3410,26 @@ body:not(.is-demo) .demo-only{display:none !important}
 .sl-seg button:hover{color:#dbe9ef}
 .sl-seg button.on{background:#1a3543;border-color:#4d9bb0;color:#e8f2f6}
 .sl-seg button:focus-visible{outline:2px solid var(--trim);outline-offset:1px}
+/* Shipyard sub-tabs. The yard used to render all six sections stacked — hull plus
+   five part slots, every tier of each — which was a very long scroll to find the
+   one row you wanted. Now one section at a time, with the fitted tier named on the
+   tab so the whole ship is still readable at a glance without opening anything.
+   Wraps rather than squeezing: six labels do not fit one row at small widths. */
+.sl-yardseg{display:flex;flex-wrap:wrap;gap:4px;background:#0a141d;border:1px solid #2c4d5e;
+  border-radius:8px;padding:4px;margin-bottom:8px}
+.sl-yardseg button{flex:1 1 30%;min-width:88px;padding:5px 7px;border-radius:5px;
+  border:1px solid transparent;background:transparent;color:#7fa4b4;font-family:'Cinzel',serif;
+  font-size:calc(13px*var(--tscale));line-height:1.25;cursor:var(--cur-pointer);
+  transition:background .14s,color .14s;text-align:center}
+.sl-yardseg button:hover{color:#dbe9ef}
+.sl-yardseg button.on{background:#1a3543;border-color:#4d9bb0;color:#e8f2f6}
+.sl-yardseg button:focus-visible{outline:2px solid var(--trim);outline-offset:1px}
+/* The fitted tier, under the slot name — dimmed so the label still reads first. */
+.sl-yardseg button i{display:block;font-style:normal;font-family:'Courier New',monospace;
+  font-size:calc(10.5px*var(--tscale));color:#5f8496;letter-spacing:0;margin-top:1px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sl-yardseg button.on i{color:#9fc4d4}
+.sl-yardseg button.up i{color:#c9822e}      /* an upgrade is affordable right now */
 .sl-sidebody{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:8px;
   padding-right:2px;scrollbar-width:thin;scrollbar-color:#2c4d5e #0a141d}
 
@@ -3501,9 +3536,6 @@ body:not(.is-demo) .demo-only{display:none !important}
 .sl-hull .i .st{display:flex;gap:7px;flex-wrap:wrap;font-family:monospace;font-size:calc(11.6px*var(--tscale));color:#5f8496;margin-top:2px}
 .sl-hull .i .cst{display:block;font-family:monospace;font-size:calc(11.6px*var(--tscale));margin-top:3px;line-height:1.4}
 .sl-note{font-size:calc(13.4px*var(--tscale));color:var(--muted);line-height:1.5;margin:8px 0 0}
-.sl-preview{display:flex;align-items:center;gap:6px;font-family:monospace;font-size:calc(12.2px*var(--tscale));
-  color:#c9822e;background:#1f1509;border:1px dashed #6a4520;border-radius:6px;
-  padding:6px 9px;margin-top:8px;cursor:var(--cur-pointer)}
 /* ════════ [CSS-33 END] SAILING ═══════════════════════════════════════════════════ */
 </style>
 </head>
@@ -3542,7 +3574,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.92</div>
+  <div class="mm-ver">v0.9.93</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -3767,6 +3799,32 @@ body:not(.is-demo) .demo-only{display:none !important}
 </div>
 
 <!-- ===== IMPORT SAVE (added) ===== -->
+<!-- Early Access welcome. Shown once per install on the paid build only — a demo
+     player has not purchased anything, so the thank-you would read as a lie. -->
+<div id="mmEaModal" class="mm-hidden">
+  <div class="mm-card">
+    <svg class="ea-mark" viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="eaFlame" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#7a1820"/><stop offset=".4" stop-color="#e0762f"/>
+      <stop offset=".8" stop-color="#fbd24e"/><stop offset="1" stop-color="#fff8dc"/></linearGradient></defs>
+      <path d="M32 6 Q22 18 19 30 Q15 42 20 52 Q25 58 32 58 Q39 58 44 52 Q49 42 45 30 Q42 18 32 6 Z" fill="url(#eaFlame)"/></svg>
+    <h3>Thank you</h3>
+    <p class="ea-sub">Early Access</p>
+    <div class="ea-rule"></div>
+    <p>Cindervale is made by <b>one person</b>, and you buying it is what makes the next
+       part of it possible. Genuinely — thank you.</p>
+    <p>This is an <b>Early Access</b> build. Everything here is real and playable, and your
+       save carries forward — but you will find rough edges, numbers that still want
+       balancing, and the occasional bug. Magic and Ranged are still to come, along with
+       more zones, gear and skilling past the current endgame.</p>
+    <p class="ea-note">If something breaks or feels wrong, use <b>Report a bug</b> in the menu.
+       It comes straight to me, and it is the single biggest reason the game gets better.</p>
+    <p class="ea-sign">— Jordan, Smolder Studios</p>
+    <div class="mm-row">
+      <button class="mm-mini mm-primary" id="mmEaOk">Set sail</button>
+    </div>
+  </div>
+</div>
+
 <div id="mmImportModal" class="mm-hidden">
   <div class="mm-card" style="max-width:420px">
     <h3>Import Save Code</h3>
@@ -12689,7 +12747,7 @@ function normalizeState(){
       }
     }
   }
-  if(state.sail.fast!==1) state.sail.fast=0;
+  delete state.sail.fast;   // preview-only 60x clock, removed at 0.9.93
   // A malformed voyage (hand-edited save, interrupted write) is dropped rather
   // than left to divide-by-zero the progress bar.
   const _v=state.sail.voy;
@@ -26903,9 +26961,9 @@ function logNotification(type, icon, text){
    a shrug; at nine hours it is a rage-quit. Every voyage returns something —
    Triumphant 140% / Successful 100% / Battered 65% / Wrecked 30%.
 
-   PREVIEW SCOPE: hull tiers only (no per-slot parts), 5 troves rather than 46,
-   no passive tree. state.sail.fast is a preview-only ×60 clock so the loop can
-   actually be play-tested; it ships visible and clearly labelled. */
+   The 0.9.60 preview shipped hull tiers only, 5 troves and a x60 clock toggle.
+   Per-slot parts and the full trove table landed since; the speed toggle was
+   removed at the Steam Early Access launch (0.9.93). */
 
 /* Hull tiers mirror Woodcutting's wc1..wc7 level gates exactly (1/10/25/45/65/78/90)
    so the logs already being cut are the logs the next hull wants. */
@@ -27424,8 +27482,12 @@ function sailWageTotal(){
 }
 function sailIsle(i){ return SAIL_ISLES[Math.min(SAIL_ISLES.length-1, Math.max(0,i|0))]; }
 
-/* Preview-only clock scale. Ships visible and labelled so it never reads as a bug. */
-function sailSpeed(){ return (state.sail&&state.sail.fast)?60:1; }
+/* Voyages run on the real clock. The 60x 'Preview mode' toggle and the
+   'Bring her home now' skip button were scaffolding for the 0.9.60 preview and
+   were removed at the Steam Early Access launch — a shipped game should not carry
+   a speed cheat in its own UI. sailSpeed() is kept as the single seam so a future
+   event or passive could scale voyage time without touching every call site. */
+function sailSpeed(){ return 1; }
 /* Rigging shortens the real crossing while XP still pays on the island's nominal
    length — that is what makes sails an xp/hr upgrade rather than just convenience. */
 function sailDurMs(isle){
@@ -27834,6 +27896,9 @@ const SAIL_SHELVES=[
 ];
 let sailView={z:1, ox:0, oy:0};
 let sailTab='voyage';
+/* Which Shipyard slot is open. The yard rendered hull + five part slots stacked,
+   every tier of each, which was a very long scroll to reach one row. */
+let sailYardTab='hull';
 let _slShipT=0, _slViewInit=false, _slRenderedTab='voyage';
 /* ZMIN has to go below 1 now that the world no longer shrinks to fit — a small
    window needs to be able to zoom out far enough to see the whole sheet.
@@ -28407,7 +28472,6 @@ function renderSail(){
         +'<span id="slEta">back at '+new Date(v.endsAt).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})+'</span></div>'
         +'<div class="sl-pbar"><i id="slPBar" style="width:'+Math.min(100,Math.max(0,(1-left/v.dur)*100))+'%"></i></div>'
         +'<p class="sl-note">She sails on her own clock. Close the game if you like — the voyage still finishes.</p>'
-        +'<div class="sl-btnrow" style="margin-top:8px"><button class="sl-btn sm" id="slSkip">Bring her home now (preview)</button></div>'
         +'</div>';
     }
 
@@ -28549,48 +28613,12 @@ function renderSail(){
           +wages.toLocaleString()+'g</b>, paid at the dock.'
           +(sailRig()>0?' Rigging cuts the crossing from '+sailFmtMins(isle.m)+'.':'')+'</p>'
          :(sailRig()>0?'<p class="sl-note" style="margin-top:6px">Rigging cuts the crossing from '+sailFmtMins(isle.m)+'.</p>':''))
-        +'<label class="sl-preview"><input type="checkbox" id="slFast"'+(s.fast?' checked':'')+'> '
-        +'Preview mode — run voyages 60× faster</label></div>';
+        +'</div>';
     }
     html+='</div>';
 
   } else if(sailTab==='yard'){
     /* ── shipyard ── */
-    html+='<div class="sl-card"><div class="sl-cardhd"><div><h4>Emberwatch Shipyard</h4>'
-      +'<div class="sl-metarow"><span class="sl-chip mut">build a stronger ship</span></div></div></div>'
-      +'<p class="sl-note" style="margin:0 0 10px">A bigger hull takes more weather and sails further. '
-      +'The first three are logs and bars off the land — the level gates match Woodcutting exactly. '
-      +'From the Brigantine up she is part salvage: timber, rope, masonry and hide you can only bring back from a voyage.</p>';
-    SAIL_HULLS.forEach((hh,t)=>{
-      const cur=t===s.hull, owned=t<=s.hull, canLvl=lvl>=hh.lv;
-      const afford=Object.keys(hh.cost).every(id=>(state.items[id]||0)>=hh.cost[id]);
-      html+='<div class="sl-hull'+(cur?' cur':'')+(!canLvl&&!owned?' lock':'')+'">'+iconHTML('sailing')
-        +'<div class="i"><b>'+hh.n+'</b>'
-        +'<div class="st"><span>Sailing '+hh.lv+'</span><span>Hull '+hh.sound+'</span>'
-        +'<span>Range '+hh.stores+'</span><span>Cargo '+hh.hold+'</span></div>';
-      if(!owned){
-        const parts=Object.keys(hh.cost).map(id=>{
-          const have=state.items[id]||0, need=hh.cost[id];
-          return '<span style="color:'+(have>=need?'#7da33f':'#a08a64')+'">'+need+'× '+(ITEMS[id]?ITEMS[id].name:id)+'</span>';
-        }).join(' · ');
-        html+='<span class="cst">'+parts+'</span>';
-      }
-      html+='</div>';
-      if(cur) html+='<span class="sl-chip gold">sailing this</span>';
-      else if(owned) html+='<span class="sl-chip mut">built</span>';
-      else html+='<button class="sl-btn sm" data-slbuild="'+t+'"'+((canLvl&&afford)?'':' disabled')+'>Build</button>';
-      html+='</div>';
-    });
-    if(s.damaged){
-      // Mirrors sailRepair: land materials only, so the bill shown is the bill charged.
-      const rc=Object.keys(h.cost).filter(id=>!(ITEMS[id]&&ITEMS[id].sea))
-        .map(id=>Math.max(1,Math.ceil(h.cost[id]*0.25))+'× '+(ITEMS[id]?ITEMS[id].name:id)).join(' · ');
-      html+='<div class="sl-lab">Repairs</div>'
-        +'<p class="sl-note" style="margin:0 0 8px">She cannot sail until the yard is done. Cost is a quarter of her build in ordinary stores — no salvage, since you cannot sail to fetch any: '+rc+'</p>'
-        +'<div class="sl-btnrow"><button class="sl-btn" id="slFix">Repair the ship</button></div>';
-    }
-    html+='</div>';
-
     /* Fitted parts — cannons and sails share one row renderer. */
     /* Five slots share this renderer (0.9.72). `stat` is the one line that differs
        per slot, passed in rather than branched on inside — the previous ternary was
@@ -28630,13 +28658,76 @@ function renderSail(){
       });
       return out+'</div>';
     };
-    html+=partRow('cannon',SAIL_CANNONS,     s.cannon|0);
-    html+=partRow('sails', SAIL_SAILS,       s.sails|0);
-    html+=partRow('rudder',SAIL_RUDDERS,     s.rudder|0);
-    html+=partRow('hold',  SAIL_HOLDS,       s.hold|0);
-    html+=partRow('fig',   SAIL_FIGUREHEADS, s.fig|0);
+
+    /* One row per slot: which table it reads, what is fitted, and whether an
+       upgrade is affordable right now (that last one drives the amber tab hint,
+       so an available upgrade is visible without opening every section). */
+    const YARD_SLOTS=[
+      {key:'hull',   label:'Hull',       tbl:SAIL_HULLS,       idx:s.hull|0},
+      {key:'cannon', label:'Cannons',    tbl:SAIL_CANNONS,     idx:s.cannon|0},
+      {key:'sails',  label:'Sails',      tbl:SAIL_SAILS,       idx:s.sails|0},
+      {key:'rudder', label:'Rudder',     tbl:SAIL_RUDDERS,     idx:s.rudder|0},
+      {key:'hold',   label:'Cargo hold', tbl:SAIL_HOLDS,       idx:s.hold|0},
+      {key:'fig',    label:'Figurehead', tbl:SAIL_FIGUREHEADS, idx:s.fig|0}
+    ];
+    const canBuy=(sl)=>sl.tbl.some((e,t)=>{
+      if(t<=sl.idx || !e.cost) return false;
+      if(lvl<(e.lv||0)) return false;
+      return Object.keys(e.cost).every(id=>(state.items[id]||0)>=e.cost[id]);
+    });
+    if(!YARD_SLOTS.some(sl=>sl.key===sailYardTab)) sailYardTab='hull';
+    html+='<div class="sl-yardseg">'+YARD_SLOTS.map(sl=>{
+      const fitted=(sl.tbl[sl.idx]||{}).n||'—';
+      const up=canBuy(sl);
+      return '<button data-slyard="'+sl.key+'" class="'+(sailYardTab===sl.key?'on':'')+(up?' up':'')+'"'
+        +_slTip(sl.label+' — fitted: '+fitted+(up?'\n\nAn upgrade is affordable now.':''))+'>'
+        +sl.label+'<i>'+(up?'\u25b2 ':'')+fitted+'</i></button>';
+    }).join('')+'</div>';
+
+    if(sailYardTab==='hull'){
+    html+='<div class="sl-card"><div class="sl-cardhd"><div><h4>Emberwatch Shipyard</h4>'
+      +'<div class="sl-metarow"><span class="sl-chip mut">build a stronger ship</span></div></div></div>'
+      +'<p class="sl-note" style="margin:0 0 10px">A bigger hull takes more weather and sails further. '
+      +'The first three are logs and bars off the land — the level gates match Woodcutting exactly. '
+      +'From the Brigantine up she is part salvage: timber, rope, masonry and hide you can only bring back from a voyage.</p>';
+    SAIL_HULLS.forEach((hh,t)=>{
+      const cur=t===s.hull, owned=t<=s.hull, canLvl=lvl>=hh.lv;
+      const afford=Object.keys(hh.cost).every(id=>(state.items[id]||0)>=hh.cost[id]);
+      html+='<div class="sl-hull'+(cur?' cur':'')+(!canLvl&&!owned?' lock':'')+'">'+iconHTML('sailing')
+        +'<div class="i"><b>'+hh.n+'</b>'
+        +'<div class="st"><span>Sailing '+hh.lv+'</span><span>Hull '+hh.sound+'</span>'
+        +'<span>Range '+hh.stores+'</span><span>Cargo '+hh.hold+'</span></div>';
+      if(!owned){
+        const parts=Object.keys(hh.cost).map(id=>{
+          const have=state.items[id]||0, need=hh.cost[id];
+          return '<span style="color:'+(have>=need?'#7da33f':'#a08a64')+'">'+need+'× '+(ITEMS[id]?ITEMS[id].name:id)+'</span>';
+        }).join(' · ');
+        html+='<span class="cst">'+parts+'</span>';
+      }
+      html+='</div>';
+      if(cur) html+='<span class="sl-chip gold">sailing this</span>';
+      else if(owned) html+='<span class="sl-chip mut">built</span>';
+      else html+='<button class="sl-btn sm" data-slbuild="'+t+'"'+((canLvl&&afford)?'':' disabled')+'>Build</button>';
+      html+='</div>';
+    });
+    if(s.damaged){
+      // Mirrors sailRepair: land materials only, so the bill shown is the bill charged.
+      const rc=Object.keys(h.cost).filter(id=>!(ITEMS[id]&&ITEMS[id].sea))
+        .map(id=>Math.max(1,Math.ceil(h.cost[id]*0.25))+'× '+(ITEMS[id]?ITEMS[id].name:id)).join(' · ');
+      html+='<div class="sl-lab">Repairs</div>'
+        +'<p class="sl-note" style="margin:0 0 8px">She cannot sail until the yard is done. Cost is a quarter of her build in ordinary stores — no salvage, since you cannot sail to fetch any: '+rc+'</p>'
+        +'<div class="sl-btnrow"><button class="sl-btn" id="slFix">Repair the ship</button></div>';
+    }
+    html+='</div>';
+    } else {
+      const sl=YARD_SLOTS.find(x=>x.key===sailYardTab);
+      html+=partRow(sl.key, sl.tbl, sl.idx);
+    }
+
     /* Damage is the one rule players ask about, and until now it was never
-       written down anywhere — you inferred it from a red chip on a return card. */
+       written down anywhere — you inferred it from a red chip on a return card.
+       Lives under Hull and Rudder, the two slots that actually change wreck odds. */
+    if(sailYardTab==='hull'||sailYardTab==='rudder')
     html+='<div class="sl-card"><div class="sl-cardhd"><div><h4>How damage works</h4></div></div>'
       +'<p class="sl-note" style="margin:0 0 8px">Only a <b>Wrecked</b> return damages the ship — a Battered one costs you cargo but nothing else. '
       +'There is no damage meter and no gradual wear: she is either seaworthy or she is not.</p>'
@@ -28750,9 +28841,11 @@ function renderSail(){
   on('slGoShop','click',  ()=>{ closeSailPanel(); $('tabShop').click(); });
   on('slGoLog','click',   ()=>{ closeSailPanel(); $('tabComp').click(); });
   on('slGo','click',()=>sailLaunch(sailSel));
-  on('slSkip','click',()=>{ if(state.sail.voy){ state.sail.voy.endsAt=Date.now(); sailCheckArrival(); renderSail(); } });
+  // Shipyard slot tabs — delegated, since the strip is re-rendered every paint.
+  document.querySelectorAll('[data-slyard]').forEach(b=>{
+    b.addEventListener('click',()=>{ sailYardTab=b.getAttribute('data-slyard'); renderSail(); });
+  });
   on('slFix','click',sailRepair);
-  on('slFast','change',e=>{ state.sail.fast=e.target.checked?1:0; saveGame(); });
   on('slTabVoy','click',()=>{ sailTab='voyage'; renderSail(); });
   on('slTabYard','click',()=>{ sailTab='yard'; renderSail(); });
   on('slTabCrew','click',()=>{ sailTab='crew'; renderSail(); });
@@ -29103,6 +29196,27 @@ function mmShowMenu(){
   }
   $('charSelect').classList.add('mm-hidden');
   $('emberMenu').classList.remove('mm-hidden');
+  maybeShowEaNotice();
+}
+
+/* Early Access welcome — once per install, paid build only.
+   Not shown in the browser demo: it thanks the player for buying, and a demo
+   player has not. Keyed in localStorage rather than the save so it is per-install
+   and does not reappear for every character; bump the key to re-show it after a
+   milestone update. Fires from mmShowMenu so it lands on the menu rather than
+   over a half-drawn game panel, and only when actually at the menu. */
+const EA_NOTICE_KEY='cindervale_ea_notice_v1';
+let _eaNoticeShown=false;
+function maybeShowEaNotice(){
+  if(_eaNoticeShown||IS_DEMO) return;
+  if(lsGet(EA_NOTICE_KEY)==='1') return;
+  _eaNoticeShown=true;
+  const el=$('mmEaModal'); if(!el) return;
+  setTimeout(function(){ el.classList.remove('mm-hidden'); }, 380);
+}
+function dismissEaNotice(){
+  const el=$('mmEaModal'); if(el) el.classList.add('mm-hidden');
+  lsSet(EA_NOTICE_KEY,'1');
 }
 function mmShowChars(){
   $('emberMenu').classList.add('mm-hidden');
@@ -30257,6 +30371,7 @@ $('mmdBack').addEventListener('click',()=>{
 $('mmNameInput').addEventListener('keydown',e=>{ if(e.key==='Enter') mmConfirmName(); });
 $('mmImportBtn').addEventListener('click',()=>{ $('mmImportInput').value=''; $('mmImportMsg').textContent=''; $('mmImportModal').classList.remove('mm-hidden'); });
 $('mmImportOk').addEventListener('click',mmDoImport);
+$('mmEaOk').addEventListener('click',dismissEaNotice);
 $('mmImportCancel').addEventListener('click',()=>$('mmImportModal').classList.add('mm-hidden'));
 /* File-backed import: read the .evsave into the textarea, then reuse mmDoImport
    verbatim so file and pasted-code paths can never validate differently. */
