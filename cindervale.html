@@ -3578,7 +3578,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.97</div>
+  <div class="mm-ver">v0.9.98</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -6345,22 +6345,22 @@ const SKILLS={
     /* T1 tools — Lv 1 · bronze_bar + pine_log */
     {id:'cr_tl_bronze_axe',     name:'Bronze Axe',           cat:'tool', lvl:1, ms:4500, xp:80,  spdMult:0.510, minMs:540,  inp:{bronze_bar:1,pine_log:1},      out:{bronze_axe:1}},
     {id:'cr_tl_bronze_pick',    name:'Bronze Pick',          cat:'tool', lvl:1, ms:4500, xp:80,  spdMult:0.510, minMs:540,  inp:{bronze_bar:1,pine_log:1},      out:{bronze_pick:1}},
-    {id:'cr_tl_cane_rod',       name:'Bamboo Rod',           cat:'tool', lvl:1, ms:4500, xp:80,  spdMult:0.510, minMs:540,  inp:{bronze_bar:1,pine_log:1},      out:{cane_rod:1}},
-    {id:'cr_tl_foraging_pouch', name:"Forager's Pouch",      cat:'tool', lvl:1, ms:4500, xp:80,  spdMult:0.510, minMs:540,  inp:{bronze_bar:1,pine_log:1},      out:{foraging_pouch:1}},
-    {id:'cr_tl_iron_tongs',     name:'Iron Tongs',           cat:'tool', lvl:1, ms:4500, xp:80,  spdMult:0.510, minMs:540,  inp:{bronze_bar:1,pine_log:1},      out:{iron_tongs:1}},
-    {id:'cr_tl_copper_pan',     name:'Copper Pan',           cat:'tool', lvl:1, ms:4500, xp:80,  spdMult:0.510, minMs:540,  inp:{bronze_bar:1,pine_log:1},      out:{copper_pan:1}},
-    {id:'cr_tl_stone_mortar',   name:'Stone Mortar',         cat:'tool', lvl:1, ms:4500, xp:80,  spdMult:0.510, minMs:540,  inp:{bronze_bar:1,pine_log:1},      out:{stone_mortar:1}},
-    {id:'cr_tl_flint',          name:'Flint & Steel',        cat:'tool', lvl:1, ms:4500, xp:80,  spdMult:0.510, minMs:540,  inp:{bronze_bar:1,pine_log:1},      out:{flint:1}},
-    {id:'cr_tl_leather_boots',  name:'Leather Boots',        cat:'tool', lvl:1, ms:4500, xp:80,  spdMult:0.510, minMs:540,  inp:{bronze_bar:1,pine_log:1},      out:{leather_boots:1}},
-    {id:'cr_tl_copper_lens',    name:'Copper Lens',          cat:'tool', lvl:1, ms:4500, xp:80,  spdMult:0.510, minMs:540,  inp:{bronze_bar:1,pine_log:1},      out:{copper_lens:1}},
-    {id:'cr_tl_wooden_trowel',  name:'Wooden Trowel',        cat:'tool', lvl:1, ms:4500, xp:80,  spdMult:0.510, minMs:540,  inp:{bronze_bar:1,pine_log:1},      out:{wooden_trowel:1}},
+    {id:'cr_tl_cane_rod',       name:'Bamboo Rod',           cat:'tool', lvl:1, ms:4500, xp:80,  spdMult:0.510, minMs:540,  inp:{pine_log:2},      out:{cane_rod:1}},
+    {id:'cr_tl_foraging_pouch', name:"Forager's Pouch",      cat:'tool', lvl:1, ms:4500, xp:80,  spdMult:0.510, minMs:540,  inp:{rough_leather:1,pine_log:1},      out:{foraging_pouch:1}},
+    {id:'cr_tl_iron_tongs',     name:'Iron Tongs',           cat:'tool', lvl:1, ms:4500, xp:80,  spdMult:0.510, minMs:540,  inp:{bronze_bar:2},      out:{iron_tongs:1}},
+    {id:'cr_tl_copper_pan',     name:'Copper Pan',           cat:'tool', lvl:1, ms:4500, xp:80,  spdMult:0.510, minMs:540,  inp:{bronze_bar:2},      out:{copper_pan:1}},
+    {id:'cr_tl_stone_mortar',   name:'Stone Mortar',         cat:'tool', lvl:1, ms:4500, xp:80,  spdMult:0.510, minMs:540,  inp:{copper_ore:2,pine_log:1},      out:{stone_mortar:1}},
+    {id:'cr_tl_flint',          name:'Flint & Steel',        cat:'tool', lvl:1, ms:4500, xp:80,  spdMult:0.510, minMs:540,  inp:{bronze_bar:1,tin_ore:2},      out:{flint:1}},
+    {id:'cr_tl_leather_boots',  name:'Leather Boots',        cat:'tool', lvl:1, ms:4500, xp:80,  spdMult:0.510, minMs:540,  inp:{rough_leather:2},      out:{leather_boots:1}},
+    {id:'cr_tl_copper_lens',    name:'Copper Lens',          cat:'tool', lvl:1, ms:4500, xp:80,  spdMult:0.510, minMs:540,  inp:{bronze_bar:1,copper_ore:2},      out:{copper_lens:1}},
+    {id:'cr_tl_wooden_trowel',  name:'Wooden Trowel',        cat:'tool', lvl:1, ms:4500, xp:80,  spdMult:0.510, minMs:540,  inp:{pine_log:2},      out:{wooden_trowel:1}},
     /* T2 tools — Lv 12 · iron_bar + oak_log */
     {id:'cr_tl_iron_axe',       name:'Iron Axe',             cat:'tool', lvl:12,ms:7000, xp:220, spdMult:0.595, minMs:980,  inp:{iron_bar:1,oak_log:1},         out:{iron_axe:1}},
     {id:'cr_tl_iron_pick',      name:'Iron Pick',            cat:'tool', lvl:12,ms:7000, xp:220, spdMult:0.595, minMs:980,  inp:{iron_bar:1,oak_log:1},         out:{iron_pick:1}},
-    {id:'cr_tl_iron_rod',       name:'Iron Rod',             cat:'tool', lvl:12,ms:7000, xp:220, spdMult:0.595, minMs:980,  inp:{iron_bar:1,oak_log:1},         out:{iron_rod:1}},
-    {id:'cr_tl_herbalist_kit',  name:'Herbalist Kit',        cat:'tool', lvl:12,ms:7000, xp:220, spdMult:0.595, minMs:980,  inp:{iron_bar:1,oak_log:1},         out:{herbalist_kit:1}},
-    {id:'cr_tl_steel_anvil',    name:'Steel Anvil',          cat:'tool', lvl:12,ms:7000, xp:220, spdMult:0.595, minMs:980,  inp:{iron_bar:1,oak_log:1},         out:{steel_anvil:1}},
-    {id:'cr_tl_iron_pan',       name:'Iron Pan',             cat:'tool', lvl:12,ms:7000, xp:220, spdMult:0.595, minMs:980,  inp:{iron_bar:1,oak_log:1},         out:{iron_pan:1}},
+    {id:'cr_tl_iron_rod',       name:'Iron Rod',             cat:'tool', lvl:12,ms:7000, xp:220, spdMult:0.595, minMs:980,  inp:{iron_bar:2},         out:{iron_rod:1}},
+    {id:'cr_tl_herbalist_kit',  name:'Herbalist Kit',        cat:'tool', lvl:12,ms:7000, xp:220, spdMult:0.595, minMs:980,  inp:{chitin_leather:1,oak_log:1},         out:{herbalist_kit:1}},
+    {id:'cr_tl_steel_anvil',    name:'Steel Anvil',          cat:'tool', lvl:12,ms:7000, xp:220, spdMult:0.595, minMs:980,  inp:{iron_bar:2},         out:{steel_anvil:1}},
+    {id:'cr_tl_iron_pan',       name:'Iron Pan',             cat:'tool', lvl:12,ms:7000, xp:220, spdMult:0.595, minMs:980,  inp:{iron_bar:2},         out:{iron_pan:1}},
     {id:'cr_tl_iron_mortar',    name:'Iron Mortar',          cat:'tool', lvl:12,ms:7000, xp:220, spdMult:0.595, minMs:980,  inp:{iron_bar:1,oak_log:1},         out:{iron_mortar:1}},
     {id:'cr_tl_iron_tinder',    name:'Iron Tinderbox',       cat:'tool', lvl:12,ms:7000, xp:220, spdMult:0.595, minMs:980,  inp:{iron_bar:1,oak_log:1},         out:{iron_tinder:1}},
     {id:'cr_tl_iron_runners',   name:'Iron Runners',         cat:'tool', lvl:12,ms:7000, xp:220, spdMult:0.595, minMs:980,  inp:{iron_bar:1,oak_log:1},         out:{iron_runners:1}},
