@@ -3574,7 +3574,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.94</div>
+  <div class="mm-ver">v0.9.95</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -3810,12 +3810,10 @@ body:not(.is-demo) .demo-only{display:none !important}
     <h3>Thanks for buying</h3>
     <p class="ea-sub">Early Access</p>
     <div class="ea-rule"></div>
-    <p>It's just me making Cindervale, so you picking it up means a lot.</p>
     <p>This is an <b>Early Access</b> build. It's playable start to finish, but it isn't
        done — expect some rough balance, the odd bug, and bits that change between
        updates. Your save carries through all of it.</p>
-    <p>Still to come: <b>Magic and Ranged</b> combat, more zones, more gear, and more to
-       do past the current endgame.</p>
+    <p>There's <b>a lot more to come</b>, and your feedback shapes what gets built next.</p>
     <p class="ea-note">Hit <b>Menu</b> in the top right, then <b>Report a bug</b> or
        <b>Suggest an idea</b>. Both come straight to me and I read all of them — it's the
        quickest way to get something fixed.</p>
@@ -16376,6 +16374,8 @@ function completeDoubleAction(act,cycles){
 /* ════ [JS-21e] main tick ════════════════════════════════════════════════════════ */
 function tick(){
   if(mmAtMenu) return;
+  // Land any repaint that was held back while a tooltip was open (see renderTick).
+  flushOwedRepaint();
   const now=Date.now();
   // Accumulate playtime — tick fires every 250ms while the tab is open
   state.playtimeMs=(state.playtimeMs||0)+250;
@@ -16405,7 +16405,7 @@ function tick(){
           const _dCyc=Math.floor(_dElapsed/_dMs);
           completeDoubleAction(_dAct,_dCyc);
           state.mineDoubleAct.start=(state.mineDoubleAct.start||now)+_dCyc*_dMs;
-          saveGame(); renderAll();
+          saveGame(); renderTick();
         }
       } else if(_dAct&&state.mineDoubleAct.actId===state.action.actId){
         state.mineDoubleAct=null;
@@ -16429,7 +16429,7 @@ function tick(){
           const _wcCyc=Math.floor(_wcElapsed/_wcMs);
           completeWcDoubleAction(_wcAct,_wcCyc);
           state.wcDoubleAct.start=(state.wcDoubleAct.start||now)+_wcCyc*_wcMs;
-          saveGame(); renderAll();
+          saveGame(); renderTick();
         }
       } else if(_wcAct&&state.wcDoubleAct.actId===state.action.actId){
         state.wcDoubleAct=null;
@@ -16453,7 +16453,7 @@ function tick(){
           const _fiCyc=Math.floor(_fiElapsed/_fiMs);
           completeFishDoubleAction(_fiAct,_fiCyc);
           state.fishDoubleAct.start=(state.fishDoubleAct.start||now)+_fiCyc*_fiMs;
-          saveGame(); renderAll();
+          saveGame(); renderTick();
         }
       } else if(_fiAct&&state.fishDoubleAct.actId===state.action.actId){
         state.fishDoubleAct=null;
@@ -16507,7 +16507,7 @@ function tick(){
     }
   }
   saveGame();
-  renderAll();
+  renderTick();
 }
 
 /* ════ [JS-21f] offline grant & summary ══════════════════════════════════════════ */
@@ -26735,6 +26735,40 @@ function renderAll(){
   if(typeof sailMode!=='undefined' && sailMode) renderSail();
 }
 
+/* ── Deferred repaint while a tooltip is open ─────────────────────────────────
+   Panels are rebuilt wholesale through innerHTML, so an element replaced under
+   the cursor takes its tooltip with it. Hover a ship part or an item, have a
+   woodcutting action finish somewhere else, and the tooltip you were reading
+   vanishes mid-sentence — nothing you did closed it.
+
+   Automatic repaints (an action completing, the 1s refresh) now wait until the
+   tooltip is gone. Repaints from an explicit click still go straight through
+   renderAll(): a click has to show its own result immediately, even if the
+   pointer happens to be resting on the thing it just changed.
+
+   The wait is self-clearing — tick() runs every 250ms and calls
+   flushOwedRepaint() first, so the held repaint lands as soon as the cursor
+   moves off rather than whenever the next action happens to finish. */
+let _repaintOwed=false;
+function _tooltipOpen(){
+  try{
+    // CSS ::after tooltips (sailing rows, stat chips, material chips…)
+    if(document.querySelector('[data-tip]:hover')) return true;
+    const t=$('itemTooltip');  if(t && t.style.display==='block') return true;  // satchel / drop rows
+    const g=$('gearHoverTip'); if(g && g.style.display==='block') return true;  // gear compare card
+    const c=$('cmastTip');     if(c && c.classList.contains('on'))  return true; // mastery nodes
+  }catch(e){}
+  return false;
+}
+function renderTick(){
+  if(_tooltipOpen()){ _repaintOwed=true; return; }
+  _repaintOwed=false;
+  renderAll();
+}
+function flushOwedRepaint(){
+  if(_repaintOwed && !_tooltipOpen()){ _repaintOwed=false; renderAll(); }
+}
+
 /* progress bar animation */
 function animate(){
   if(mmAtMenu){ requestAnimationFrame(animate); return; }
@@ -29758,7 +29792,9 @@ function mmStartEngine(){
   if(mmStarted) return;
   mmStarted=true;
   setInterval(tick,250);
-  setInterval(()=>{ if(mmAtMenu) return; updateSmoothedXph(); tickEffects(); renderEffectsBar(); renderSkillList(); checkAchievements(); },1000);
+  setInterval(()=>{ if(mmAtMenu) return; updateSmoothedXph(); tickEffects(); renderEffectsBar();
+    if(!_tooltipOpen()) renderSkillList();   // don't yank a tooltip out from under the cursor
+    checkAchievements(); },1000);
   setInterval(()=>{
     if(mmAtMenu) return;
     tickFarmingNotifications();

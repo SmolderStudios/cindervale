@@ -323,9 +323,51 @@ setTimeout(() => {
        cacheInval.after===cacheInval.before+1, JSON.stringify(cacheInval));
 
     // Only ONE 1s interval may rebuild the skill list.
-    const skillIntervals=html.split(/\r?\n/)
-      .filter(l=>/setInterval\(/.test(l)&&/renderSkillList\(\)/.test(l)&&!/^\s*\/\//.test(l)).length;
+    // Structural, not line-based: the callback may span several lines, and the
+    // guard added in 0.9.95 moved renderSkillList onto its own line — which broke
+    // the old same-line regex on correct code.
+    const skillIntervals=(function(){
+      let n=0, i=0;
+      while((i=html.indexOf('setInterval(', i))>=0){
+        const body=html.slice(i, i+500);
+        if(/renderSkillList\(\)/.test(body.split(/,\s*\d+\s*\);/)[0]||'')) n++;
+        i+=12;
+      }
+      return n;
+    })();
     ok('only one interval repaints the skill list', skillIntervals===1, skillIntervals+' found');
+
+    /* Tooltips used to be yanked out from under the cursor: panels are rebuilt via
+       innerHTML, so an element replaced while hovered takes its tooltip with it —
+       hover a ship part, have a woodcutting action finish, tooltip gone. Automatic
+       repaints now wait for the tooltip to close.
+       Driven through the JS tooltip because headless Chrome cannot produce a real
+       CSS :hover; the [data-tip]:hover arm of _tooltipOpen() is the same condition
+       the browser uses to render that tooltip, so it holds by construction. */
+    const tipGuard=ev(`(function(){
+        state=defaultState(); normalizeState();
+        for(var k in SKILLS) state.xp[k]=XP_CUM[99];
+        state.action={skill:'woodcutting',actId:'wc1'};
+        mmAtMenu=false; mmSlot=1;
+        var host=document.getElementById('skillList');
+        if(!host) return {err:'no skillList'};
+        renderAll();
+        host.setAttribute('data-tipmark','1');
+        var tt=document.getElementById('itemTooltip');
+        tt.style.display='block';                       // player is reading a tooltip
+        var seen=_tooltipOpen();
+        state.actionStart=Date.now()-999999; tick();     // an action completes
+        var heldMark=!!document.querySelector('[data-tipmark]');
+        var owed=_repaintOwed;
+        tt.style.display='none';                        // cursor moves off
+        tick();                                          // next heartbeat flushes
+        return {seen:seen, heldRepaint:heldMark, owed:owed, flushed:_repaintOwed===false};
+      })()`);
+    ok('an open tooltip is detected', tipGuard.seen===true, JSON.stringify(tipGuard));
+    ok('a completing action does not repaint over an open tooltip', tipGuard.heldRepaint===true, JSON.stringify(tipGuard));
+    ok('the held repaint is owed and then flushed', tipGuard.owed===true&&tipGuard.flushed===true, JSON.stringify(tipGuard));
+    // A click must still paint immediately even with the pointer parked on its target.
+    ok('renderAll stays unguarded for user actions', /function renderAll\(\)\{\s*normalizeState\(\);/.test(html.replace(/\r/g,'')));
   }
 
   section('Trophy/cape exploits & completion blockers (v0.9.85)');
