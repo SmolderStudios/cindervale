@@ -697,6 +697,113 @@ setTimeout(() => {
        (pace.cooking/median*100).toFixed(0)+'% of median');
   }
 
+  section('Equipped gear is not for sale (v0.9.99)');
+  {
+    // Reported by a playtester: crafted a full set, wore one of each, sold "the
+    // rest" — and sold the worn pieces too. Equipping never decremented
+    // state.items (the paper doll just points at the satchel stack), so Sell All
+    // took the whole stack and releaseIfGone quietly unequipped afterwards.
+    // Nothing threw; the armour just came off. Guard every sell path.
+    const SET=`state=defaultState(); normalizeState();
+      state.xp.attack=XP_CUM[50]; state.xp.defence=XP_CUM[50];
+      state.items={bronze_chest:3}; state.coins=0;
+      equipBodyItem('bronze_chest','chest','combat');
+      rightTab='satchel'; invCat='all'; invSearch=''; invPage=0;`;
+    const findRow=`(function(){
+      return [...document.querySelectorAll('#inventory .inv-item')].find(function(r){
+        var n=r.querySelector('.inv-name'); return n&&/Bronze Chest/i.test(n.textContent); });
+    })()`;
+
+    ev(SET);
+    ok('worn copy is reserved', ev('reservedForEquip("bronze_chest")')===1);
+    ok('sellableQty holds one back', ev('sellableQty("bronze_chest")')===2);
+
+    // The row button, not just the helper — the bug lived in the click handler.
+    ev(`invSellMode='all'; invSellCustom=0; renderInventory();`);
+    const clicked=ev(`(function(){ var r=${findRow}; if(!r) return 'no row';
+      var b=r.querySelector('.sell'); if(!b) return 'no button'; b.click(); return 'ok'; })()`);
+    const sold=ev('[state.items.bronze_chest||0, state.combatEquipped.chest||null, state.coins]');
+    ok('Sell All leaves the worn copy on your back',
+       clicked==='ok'&&sold[0]===1&&sold[1]==='bronze_chest', clicked+' '+JSON.stringify(sold));
+    ok('Sell All pays for 2, not 3', sold[2]===2*ev('effectiveItemSell("bronze_chest")'), JSON.stringify(sold));
+
+    // Down to just the worn one: the button must refuse and say why.
+    ev('renderInventory();');
+    const lone=ev(`(function(){ var r=${findRow}; if(!r) return {err:'row gone'};
+      var b=r.querySelector('.sell'); if(b) b.click();
+      return {dis:!!(b&&b.disabled), badge:!!r.querySelector('.inv-eq'),
+              qty:state.items.bronze_chest||0, eq:state.combatEquipped.chest||null}; })()`);
+    ok('last worn copy: sell disabled + Equipped badge',
+       lone.dis===true&&lone.badge===true, JSON.stringify(lone));
+    ok('last worn copy: clicking sells nothing',
+       lone.qty===1&&lone.eq==='bronze_chest', JSON.stringify(lone));
+
+    // Fixed-quantity modes clamp too, not just All.
+    ev(`state.items.bronze_chest=4; invSellMode=5; invSellCustom=0; renderInventory();`);
+    ev(`(function(){ var r=${findRow}; if(r) r.querySelector('.sell').click(); })()`);
+    ok('Sell 5 of 4 (1 worn) sells 3', ev('state.items.bronze_chest')===1,
+       'left='+ev('state.items.bronze_chest'));
+
+    // Skilling loadout counts as worn as well — it shares the satchel stack.
+    ev(`state=defaultState(); normalizeState();
+        state.items={bronze_chest:2}; equipBodyItem('bronze_chest','chest','skilling');`);
+    ok('skilling loadout reserves a copy too', ev('sellableQty("bronze_chest")')===1);
+
+    // The Sell X dialog must not offer the worn copy either, and must re-clamp on
+    // confirm (it can sit open while the player equips from the gear panel).
+    ev(`state=defaultState(); normalizeState(); state.xp.defence=XP_CUM[50];
+        state.items={bronze_chest:3}; equipBodyItem('bronze_chest','chest','combat');
+        openSellModal('bronze_chest', effectiveItemSell('bronze_chest'), 3);`);
+    ok('sell dialog max excludes the worn copy',
+       Number(ev('document.getElementById("sellQtyInput").max'))===2,
+       'max='+ev('document.getElementById("sellQtyInput").max'));
+    ev(`document.getElementById('sellQtyInput').value=99; document.getElementById('sellConfirmBtn').click();`);
+    ok('sell dialog confirm clamps to sellable',
+       ev('state.items.bronze_chest')===1&&ev('state.combatEquipped.chest')==='bronze_chest',
+       JSON.stringify(ev('[state.items.bronze_chest,state.combatEquipped.chest]')));
+
+    ev(`unequipBodyItem('chest','combat');`);
+    ok('unequipping frees it for sale', ev('sellableQty("bronze_chest")')===1);
+
+    // And none of this may touch ordinary material stacks.
+    ev(`state=defaultState(); normalizeState(); state.items={oak_log:50};`);
+    ok('plain materials stay fully sellable', ev('sellableQty("oak_log")')===50);
+  }
+
+  section('Left rail category filter (v0.9.99)');
+  {
+    ok('filter strip has all four tabs',
+       ev('document.querySelectorAll("#railGroups .rg").length')===4);
+    const unbucketed=ev('Object.keys(SKILLS).filter(function(k){return !RAIL_GROUP[k];})');
+    ok('every skill is bucketed', unbucketed.length===0, JSON.stringify(unbucketed));
+
+    ev(`state=defaultState(); normalizeState(); selectedSkill='woodcutting';
+        state.action=null; setRailGroup('all');`);
+    const nAll=ev('document.querySelectorAll("#skillList .skill-row").length');
+    ok('All shows every skill plus the offline row',
+       nAll===ev('Object.keys(SKILLS).length')+1, 'rows='+nAll);
+
+    ev(`setRailGroup('produce');`);
+    const prod=ev(`[...document.querySelectorAll('#skillList .skill-row[data-skill]')].map(function(r){return r.dataset.skill;})`);
+    ok('Craft shows production skills only',
+       prod.indexOf('smithing')>=0&&prod.indexOf('mining')<0, JSON.stringify(prod));
+    // A tab must never hide the skill you are looking at or the one that is running.
+    ok('selected skill is never filtered out', prod.indexOf('woodcutting')>=0, JSON.stringify(prod));
+    ok('offline row survives every filter',
+       ev('!!document.querySelector("#skillList .offline-skill")')===true);
+
+    ev(`selectedSkill='mining'; state.action={skill:'cooking',actId:'ck1'}; setRailGroup('gather');`);
+    const gath=ev(`[...document.querySelectorAll('#skillList .skill-row[data-skill]')].map(function(r){return r.dataset.skill;})`);
+    ok('Gather bucket is right',
+       gath.indexOf('farming')>=0&&gath.indexOf('smithing')<0, JSON.stringify(gath));
+    ok('running skill is never filtered out', gath.indexOf('cooking')>=0, JSON.stringify(gath));
+
+    ev(`setRailGroup('support');`);
+    ok('active tab carries the .on class',
+       ev(`document.querySelector('#railGroups .rg.on').dataset.rg`)==='support');
+    ev(`state=defaultState(); normalizeState(); setRailGroup('all'); selectedSkill='woodcutting';`);
+  }
+
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));
   process.exit(fail ? 1 : 0);
 }, 2500);

@@ -1262,6 +1262,15 @@ header h1 .flame{color:var(--ember)}
   border-radius:4px;padding:5px 12px;font-size:calc(14px*var(--tscale));letter-spacing:1px;text-transform:uppercase;}
 .tab.on{color:var(--trim);border-color:var(--trim)}
 .tab.has-new:not(.on){animation:new-pulse 1.6s ease-in-out infinite;color:var(--ember)}
+/* Left rail category filter — Gathering / Production / Support. Sits above the
+   skill list, one row of four, styled off .inv-cat so it reads as a filter strip
+   rather than a second row of panel tabs. */
+.rail-groups{display:flex;gap:4px;margin-bottom:7px}
+.rail-groups .rg{flex:1;background:#0d0905;border:1px solid var(--trim-d);color:var(--muted);
+  border-radius:10px;padding:3px 4px;font-size:calc(12px*var(--tscale));letter-spacing:.5px;
+  cursor:var(--cur-pointer);white-space:nowrap;text-align:center}
+.rail-groups .rg:hover{color:var(--text)}
+.rail-groups .rg.on{background:var(--raised-s);border-color:var(--trim);color:var(--trim)}
 .activity-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:7px}
 /* Cooking fire panel (1.0.60) — warm themed card with a live fuel gauge */
 .cook-fire{grid-column:1/-1;margin-bottom:10px;display:flex;align-items:center;gap:12px;
@@ -1645,7 +1654,13 @@ select.dev-input{padding-right:26px}
 .inv-item .inv-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text)}
 .inv-item .sell{background:var(--raised-s);border:1px solid var(--trim-d);color:var(--text);
   border-radius:4px;font-size:calc(13px*var(--tscale));padding:2px 7px;flex:none}
-.inv-item .sell:hover{border-color:var(--trim)}
+.inv-item .sell:hover:not(:disabled){border-color:var(--trim)}
+/* "Worn" tag on a satchel row — that copy is held back from every sell path.
+   Kept short on purpose: the row already carries a name, a qty pill and a sell
+   button, and a longer word pushed "Bronze Chest" into an ellipsis. */
+.inv-item .inv-eq{flex:none;font-size:calc(10px*var(--tscale));letter-spacing:.3px;
+  text-transform:uppercase;color:#9ad1a0;background:#16240f;border:1px solid #35502c;
+  border-radius:9px;padding:1px 5px;margin-left:3px;line-height:1.5}
 .inv-empty{color:var(--muted);font-size:calc(14px*var(--tscale));font-style:italic}
 .sell-all{width:100%;margin-top:10px;background:var(--raised-s);border:1px solid var(--trim-d);
   color:var(--text);border-radius:4px;padding:6px;font-size:calc(14px*var(--tscale));}
@@ -3578,7 +3593,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.98</div>
+  <div class="mm-ver">v0.9.99</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -3921,7 +3936,15 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="tab tab-combat" id="tabCombat" title="Combat">⚔ Combat</button>
       <button class="tab tab-sail" id="tabSail" title="Sailing &amp; Treasure Hunting">Sailing</button>
     </div>
-    <div id="skillListWrap"><div id="skillList"></div></div>
+    <div id="skillListWrap">
+      <div class="rail-groups" id="railGroups">
+        <button class="rg on" data-rg="all">All</button>
+        <button class="rg" data-rg="gather">Gather</button>
+        <button class="rg" data-rg="produce">Craft</button>
+        <button class="rg" data-rg="support">Support</button>
+      </div>
+      <div id="skillList"></div>
+    </div>
     <div id="statsViewLeft" style="display:none;overflow-y:auto;max-height:calc(100vh - 120px)"></div>
   </div>
 
@@ -5888,6 +5911,24 @@ function ownsItemAnywhere(id){
   var maps=[state.equipped,state.combatEquipped,state.skillingEquipped];
   for(var mi=0;mi<maps.length;mi++){ var mp=maps[mi]; if(mp){ for(var s in mp){ if(mp[s]===id) return true; } } }
   return false;
+}
+
+/* How many copies of an item the loadouts are holding onto. Equipping does NOT
+   decrement state.items — the paper doll just points at the satchel stack — so a
+   bulk "Sell All" happily sold the piece off the player's back and only then
+   unequipped it (releaseIfGone). One copy is reserved: combat and skilling can
+   both name the same id, but that is one physical item worn in two loadouts, and
+   equipBodyItem already dedups within a loadout. */
+function reservedForEquip(id){
+  if(!id) return 0;
+  const maps=[state.equipped,state.combatEquipped,state.skillingEquipped];
+  for(const mp of maps){ if(!mp) continue; for(const s in mp){ if(mp[s]===id) return 1; } }
+  return 0;
+}
+/* Satchel quantity the player is actually allowed to sell — the worn copy is
+   held back. Every sell path must clamp to this, not to the raw stack. */
+function sellableQty(id){
+  return Math.max(0,(state.items&&state.items[id]||0)-reservedForEquip(id));
 }
 
 /* An item left the player's possession (sold / fully consumed): pop every gem
@@ -16772,6 +16813,26 @@ function resetXphTracker(skill){
   xphStartTime[skill]=0;
 }
 
+/* Which bucket each skill sits in for the rail filter. Gathering pulls raw
+   material out of the world; production turns it into something; support is
+   everything else. Offline is pinned to the bottom regardless and is never
+   filtered out. Unmapped skills fall through to 'support' so a new skill shows
+   up somewhere instead of vanishing. */
+const RAIL_GROUP={
+  woodcutting:'gather', mining:'gather', fishing:'gather', foraging:'gather', farming:'gather',
+  smithing:'produce', cooking:'produce', alchemy:'produce', crafting:'produce',
+  jeweler:'produce', firemaking:'produce',
+  agility:'support',
+};
+/* Session-local, not saved — it's a view filter, not character data. */
+let _railGroup='all';
+function setRailGroup(g){
+  _railGroup=g;
+  const strip=$('railGroups');
+  if(strip) strip.querySelectorAll('.rg').forEach(b=>b.classList.toggle('on',b.dataset.rg===g));
+  renderSkillList();
+}
+
 function renderSkillList(){
   const box=$('skillList'); box.innerHTML='';
   // Active (currently-running) skill pinned to the top; everyone else stays in a
@@ -16784,6 +16845,11 @@ function renderSkillList(){
     return SKILLS[a].name.localeCompare(SKILLS[b].name);
   });
   for(const key of sortedKeys){
+    /* Filter, but never hide the skill you are looking at or actually running —
+       having the selected row vanish because of a tab is worse than a longer list. */
+    if(_railGroup!=='all'
+       && (RAIL_GROUP[key]||'support')!==_railGroup
+       && key!==selectedSkill && key!==activeKey) continue;
     const sk=SKILLS[key];
     const xp=state.xp[key];
     const lvl=levelFromXp(xp);
@@ -19246,23 +19312,50 @@ function renderInventory(){
       }
       row.appendChild(useBtn);
     }
+    // The copy on the paper doll is not for sale. Badge the row so the held-back
+    // quantity is visible rather than mysterious.
+    const worn=reservedForEquip(id);
+    const sellMax=Math.max(0,q-worn);
+    if(worn){
+      const eqBadge=document.createElement('span');
+      eqBadge.className='inv-eq';
+      eqBadge.textContent='Worn';
+      eqBadge.title='Worn on a loadout — unequip it before selling this one.';
+      row.insertBefore(eqBadge,row.querySelector('.qty'));
+    }
     if(sv>0){
       const sellBtn=document.createElement('button'); sellBtn.className='sell';
-      sellBtn.title=`${fmtCoins(sv)} each · click to change amount`;
+      if(sellMax<=0){
+        // Only the worn copy left — refuse rather than silently selling it.
+        sellBtn.textContent='Sell';
+        sellBtn.disabled=true;
+        sellBtn.title='Equipped — unequip it first to sell.';
+        sellBtn.style.opacity='0.4';
+        sellBtn.style.cursor='not-allowed';
+        row.appendChild(sellBtn);
+        itemsWrap.appendChild(row);
+        continue; // row is complete; skip the normal sell wiring below
+      }
+      sellBtn.title=`${fmtCoins(sv)} each · click to change amount`
+                   +(worn?` · 1 held back (equipped)`:'');
       // Show current sell mode quantity label
       const sellQty=invSellMode==='all'?'All'
                    :invSellMode==='x'?(invSellCustom>0?String(invSellCustom):'X')
                    :String(invSellMode);
       sellBtn.textContent=`Sell ${sellQty}`;
       sellBtn.addEventListener('click',()=>{
+        // Re-read: the row was rendered before this click, and equipping in the
+        // gear panel between the two would leave a stale cap.
+        const have=state.items[id]||0, cap=sellableQty(id);
+        if(cap<=0){ toast('Unequip it first — that is the one you are wearing.'); renderRightPanel(); return; }
         // Custom with an amount typed in sells straight away; blank still asks.
         if(invSellMode==='x'&&invSellCustom<=0){
-          openSellModal(id, sv, q);
+          openSellModal(id, sv, cap);
         } else {
           // invSellMode is 'x' here only when a custom amount is set, so read the
           // amount from invSellCustom — Math.min('x', q) would be NaN.
-          const want=invSellMode==='all'?q:(invSellMode==='x'?invSellCustom:invSellMode);
-          const qty=Math.min(want,q);
+          const want=invSellMode==='all'?have:(invSellMode==='x'?invSellCustom:invSellMode);
+          const qty=Math.min(want,cap);
           if(!(qty>0)) return;
           state.items[id]=Math.max(0,(state.items[id]||0)-qty);
           releaseIfGone(id);   // sold the last one: unequip, then reclaim its gems
@@ -21457,6 +21550,9 @@ function _wireGearSelInteraction(sel){
 /* Sell X modal helpers */
 function openSellModal(id, sv, maxQty){
   const it=ITEMS[id];
+  // Never offer the worn copy, whatever the caller passed in.
+  maxQty=Math.min(maxQty==null?sellableQty(id):maxQty, sellableQty(id));
+  if(maxQty<=0){ toast('Unequip it first — that is the one you are wearing.'); return; }
   $('sellItemName').innerHTML=`${iconHTML(id)} ${it.name}`;
   $('sellItemPrice').innerHTML=`${fmtCoins(sv,true)} each`;
   $('sellQtyInput').min=0; // allow 0 — sell of 0 is a no-op cancel
@@ -21480,7 +21576,9 @@ function openSellModal(id, sv, maxQty){
   updateBtn();
   $('sellModal').classList.remove('hidden');
   $('sellConfirmBtn').onclick=()=>{
-    const qty=readQty();
+    // Re-clamp on confirm: the dialog can sit open while the player equips this
+    // very item from the gear panel.
+    const qty=Math.min(readQty(),sellableQty(id));
     if(qty<=0){ $('sellModal').classList.add('hidden'); return; }
     state.items[id]=Math.max(0,(state.items[id]||0)-qty);
     // Sold the last one — take it off the paper doll, then pop any socketed gems
@@ -29034,6 +29132,10 @@ $('btnReset').addEventListener('click',async()=>{
   selectedSkill='woodcutting'; viewTab='acts'; rightTab='satchel';
   renderAll(); saveGame();
   toast('Save reset. Starting fresh!');
+});
+/* Left-rail category filter (All / Gather / Craft / Support) */
+document.querySelectorAll('#railGroups .rg').forEach(b=>{
+  b.addEventListener('click',()=>setRailGroup(b.dataset.rg));
 });
 $('tabSatchel').addEventListener('click',()=>{ rightTab='satchel'; _gearToolsOpen=false; _gearSetsOpen=false; renderRightPanel(); });
 $('tabGear').addEventListener('click',()=>{ rightTab='gear'; renderRightPanel(); });
