@@ -234,7 +234,6 @@ header h1 .flame{color:var(--ember)}
 .cmb-back:hover{border-color:var(--trim);color:var(--trim)}
 .cmb-skilling-note{font-size:calc(12px*var(--tscale));color:var(--muted);background:var(--raised);
   border:1px solid var(--trim-d);border-radius:4px;padding:4px 8px;margin-bottom:6px;line-height:1.4}
-.cmb-skilling-note.paused{color:#ffb4a0;border-color:#5a2020;background:#2a1410}
 .cmb-arena{display:grid;grid-template-columns:1fr auto 1fr;gap:9px;align-items:stretch;
   background:var(--raised);border:1px solid var(--trim-d);border-radius:7px;padding:10px 12px;margin-bottom:7px;position:relative}
 .cmb-fighter{display:flex;flex-direction:column;align-items:center;gap:4px;
@@ -1282,6 +1281,13 @@ header h1 .flame{color:var(--ember)}
   cursor:var(--cur-pointer);white-space:nowrap;text-align:center}
 .rail-groups .rg:hover{color:var(--text)}
 .rail-groups .rg.on{background:var(--raised-s);border-color:var(--trim);color:var(--trim)}
+/* Ember dot on the tab that holds the running skill, so filtering strictly never
+   hides the fact that something is training. Only shown on tabs you are NOT on. */
+.rail-groups .rg{position:relative}
+.rail-groups .rg.running::after{content:'';position:absolute;top:3px;right:4px;
+  width:5px;height:5px;border-radius:50%;background:var(--ember);
+  box-shadow:0 0 4px var(--ember);animation:rg-run-dot 1.6s ease-in-out infinite}
+@keyframes rg-run-dot{0%,100%{opacity:.45}50%{opacity:1}}
 .activity-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:7px}
 /* Cooking fire panel (1.0.60) — warm themed card with a live fuel gauge */
 .cook-fire{grid-column:1/-1;margin-bottom:10px;display:flex;align-items:center;gap:12px;
@@ -4427,7 +4433,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.101-ui</div>
+  <div class="mm-ver">v0.9.102-ui</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -17723,6 +17729,17 @@ function setRailGroup(g){
   if(strip) strip.querySelectorAll('.rg').forEach(b=>b.classList.toggle('on',b.dataset.rg===g));
   renderSkillList();
 }
+/* Marks the tab whose bucket owns the currently-running skill. This is what pays for
+   filtering strictly: the running row can leave the list without the run becoming
+   invisible. Cheap enough to call on every rail render. */
+function railRunDot(){
+  const strip=$('railGroups'); if(!strip) return;
+  const running=(state.action&&state.action.skill)||null;
+  const grp=running?(RAIL_GROUP[running]||'support'):null;
+  strip.querySelectorAll('.rg').forEach(b=>{
+    b.classList.toggle('running', !!grp && b.dataset.rg===grp && b.dataset.rg!==_railGroup);
+  });
+}
 
 function renderSkillList(){
   const box=$('skillList'); box.innerHTML='';
@@ -17736,11 +17753,12 @@ function renderSkillList(){
     return SKILLS[a].name.localeCompare(SKILLS[b].name);
   });
   for(const key of sortedKeys){
-    /* Filter, but never hide the skill you are looking at or actually running —
-       having the selected row vanish because of a tab is worse than a longer list. */
-    if(_railGroup!=='all'
-       && (RAIL_GROUP[key]||'support')!==_railGroup
-       && key!==selectedSkill && key!==activeKey) continue;
+    /* A tab is a filter, not a suggestion. The selected and running skills used to be
+       exempt from it, so clicking Crafting and then Gather left Crafting sitting in the
+       middle of the gather list — that reads as a row that failed to clear, not as a
+       deliberate pin. Filter strictly; the tab holding the running skill gets a dot
+       instead (railRunDot), which is how you find it without polluting every list. */
+    if(_railGroup!=='all' && (RAIL_GROUP[key]||'support')!==_railGroup) continue;
     const sk=SKILLS[key];
     const xp=state.xp[key];
     const lvl=levelFromXp(xp);
@@ -17835,6 +17853,7 @@ function renderSkillList(){
   box.querySelectorAll('.xph-reset').forEach(rb=>{
     rb.addEventListener('click',e=>{ e.stopPropagation(); resetXphTracker(rb.dataset.sk); renderSkillList(); });
   });
+  railRunDot();
 }
 
 function fmtK(n){
@@ -20387,7 +20406,7 @@ let rightTab='satchel';
 
 /* ════════ COMBAT (leveled scaffold) ═════════════════════════════════════════
    combatMode  — the Combat tab is open (left+center panels swapped for the arena)
-   combat.active — a fight is currently running (skilling is paused while true)
+   combat.active — a fight is currently running (skilling runs alongside it, unaffected)
    Combat now uses leveled stats (attack/strength/defence/hitpoints) plus gear
    bonuses for accuracy/max hit/defence/HP. Monsters scale across levels 1-90.
 
@@ -22152,7 +22171,8 @@ function startRaid(id){
   if(combat.active) return;
   const raid=getRaid(id); if(!raid) return;
   if(combatLevel()<raid.unlockLvl){ toast(`🔒 Requires Combat Lv ${raid.unlockLvl} to enter ${raid.name}.`); return; }
-  if(state.action){ state.action=null; }
+  // Skilling keeps running through a raid, same as a normal fight. The no-retreat
+  // rule is about the raid, not about the rest of the character.
   if(typeof _combatGearSlot!=='undefined') _combatGearSlot=null;
   state.cmbSubTab='arena';
   state.zoneMode='raids';
@@ -25618,8 +25638,8 @@ function cmbLog(text,cls){
   if(combat.log.length>60) combat.log.shift();
 }
 
-/* Enter / leave the combat tab. Skilling keeps running in the background while the
-   tab is open — it only stops the moment a fight is actually engaged.
+/* Enter / leave the combat tab. Skilling keeps running throughout — opening the tab,
+   engaging, and the whole fight. Nothing here stops it.
 
    Panel visibility (`combatMode`) and fight state (`combat.active`) are independent:
      · enterCombat       — show panel, no fight side-effects
@@ -25705,7 +25725,10 @@ function engageCombat(){
     state.hintsOn=_on;
     return;
   }
-  // Starting a fight stops the active skilling action — this is the hand-off point.
+  // Engaging no longer stops the active skilling action. The two loops are independent
+  // — the 250ms `tick` drives skilling and never consults `combat.active`, and the
+  // 100ms combat timer never touches `state.action` — so the only thing that ever
+  // enforced "one at a time" was the hand-off line that used to sit here.
   const mon=getMonster(combat.monId);
   if(demoZoneLocked(state.zone)){ demoCapHit('zone'); return; }
   // Guard rails: don't let an out-of-zone selection or a locked boss tile sneak through.
@@ -25718,7 +25741,6 @@ function engageCombat(){
     toast(`⚔ ${mon.name} is too dangerous — Combat Lv ${mon.lvl-5} required.`);
     return;
   }
-  if(state.action){ state.action=null; }
   _combatGearSlot=null;          // close gear drawer — no mid-fight swapping
   state.cmbSubTab='arena';       // force Arena view so the player sees the fight
   refreshCombatStats();          // pull current atk/maxHp/swingMs from worn gear + levels
@@ -27155,15 +27177,14 @@ function renderCombat(){
   const cs=combatStats();
   const style=(state.combatStyle==='strength'||state.combatStyle==='defence')?state.combatStyle:'attack';
 
-  // Background skilling status line
+  // Background skilling status line. Skilling and combat run side by side now, so this
+  // reports what is training rather than warning that engaging will stop it.
   let noteHtml;
-  if(active){
-    noteHtml=`<div class="cmb-skilling-note paused">⚔ In combat — skilling is paused until you disengage.</div>`;
-  }else if(state.action){
+  if(state.action){
     const sk=SKILLS[state.action.skill]; const act=getAct(state.action.skill,state.action.actId);
-    noteHtml=`<div class="cmb-skilling-note">🌿 Skilling continues in the background: ${sk?sk.icon:''} ${sk?sk.name:''}${act?` — ${act.name}`:''}. It stops the moment you engage.</div>`;
+    noteHtml=`<div class="cmb-skilling-note">🌿 Training in the background: ${sk?sk.icon:''} ${sk?sk.name:''}${act?` — ${act.name}`:''}. It keeps running while you fight.</div>`;
   }else{
-    noteHtml=`<div class="cmb-skilling-note">🌿 No skill is currently active. Engaging starts a fight here.</div>`;
+    noteHtml=`<div class="cmb-skilling-note">🌿 No skill is training. You can start one from the Skills tab and it will keep going through the fight.</div>`;
   }
 
   const foePct=active?Math.max(0,100*combat.foeHp/mon.hp):100;

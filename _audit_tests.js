@@ -787,8 +787,9 @@ setTimeout(() => {
     const prod=ev(`[...document.querySelectorAll('#skillList .skill-row[data-skill]')].map(function(r){return r.dataset.skill;})`);
     ok('Craft shows production skills only',
        prod.indexOf('smithing')>=0&&prod.indexOf('mining')<0, JSON.stringify(prod));
-    // A tab must never hide the skill you are looking at or the one that is running.
-    ok('selected skill is never filtered out', prod.indexOf('woodcutting')>=0, JSON.stringify(prod));
+    // A tab is a strict filter. Exempting the selected skill left it stranded in a
+    // list it does not belong to, which read as a row that failed to clear.
+    ok('selected skill IS filtered out', prod.indexOf('woodcutting')<0, JSON.stringify(prod));
     ok('offline row survives every filter',
        ev('!!document.querySelector("#skillList .offline-skill")')===true);
 
@@ -796,12 +797,68 @@ setTimeout(() => {
     const gath=ev(`[...document.querySelectorAll('#skillList .skill-row[data-skill]')].map(function(r){return r.dataset.skill;})`);
     ok('Gather bucket is right',
        gath.indexOf('farming')>=0&&gath.indexOf('smithing')<0, JSON.stringify(gath));
-    ok('running skill is never filtered out', gath.indexOf('cooking')>=0, JSON.stringify(gath));
+    ok('running skill IS filtered out', gath.indexOf('cooking')<0, JSON.stringify(gath));
+    // ...and the tab that owns it carries the dot, which is what makes strict
+    // filtering safe — the run never becomes invisible, it just moves to the tab.
+    ok('run dot marks the tab holding the running skill',
+       ev(`document.querySelector('#railGroups .rg[data-rg="produce"]').classList.contains('running')`)===true);
+    ok('run dot is not drawn on the tab you are already on',
+       ev(`state.action={skill:'mining',actId:'mi1'}; renderSkillList();
+           document.querySelector('#railGroups .rg[data-rg="gather"]').classList.contains('running')`)===false);
+    ok('run dot clears when nothing is training',
+       ev(`state.action=null; renderSkillList();
+           document.querySelectorAll('#railGroups .rg.running').length`)===0);
 
     ev(`setRailGroup('support');`);
     ok('active tab carries the .on class',
        ev(`document.querySelector('#railGroups .rg.on').dataset.rg`)==='support');
     ev(`state=defaultState(); normalizeState(); setRailGroup('all'); selectedSkill='woodcutting';`);
+  }
+
+  section('Combat and skilling run together');
+  {
+    /* The two loops were always independent — the 250ms tick never consults
+       combat.active and the 100ms combat timer never touches state.action. The only
+       thing enforcing "one at a time" was a state.action=null in the engage path.
+       Nothing throws if that line comes back, so it needs an assertion. */
+    // Armed on purpose: the UI-rework build refuses the first bare-handed engage,
+    // so a weaponless character would make "the fight started" fail for a reason
+    // that has nothing to do with skilling.
+    ev(`state=defaultState(); normalizeState();
+        state.xp.attack=XP_CUM[40]; state.xp.strength=XP_CUM[40];
+        state.xp.defence=XP_CUM[40]; state.xp.hitpoints=XP_CUM[40];
+        state.combatEquipped=state.combatEquipped||{};
+        state.combatEquipped.weapon='bronze_sword';
+        state.zone='rat_warrens'; combat.monId='rat'; combat.active=false;
+        state.action={skill:'woodcutting',actId:'wc1'}; state.actionStart=Date.now();
+        engageCombat();`);
+    // eqCombatWeapon() only checks truthiness, so a typo'd id would still "arm" the
+    // character and quietly turn the setup above into a no-op.
+    ok('the test weapon is a real weapon item',
+       ev(`!!(ITEMS.bronze_sword&&ITEMS.bronze_sword.cslot==='weapon')`)===true);
+    ok('engaging leaves the skilling action running',
+       ev('state.action&&state.action.skill')==='woodcutting');
+    ok('the fight actually started', ev('combat.active')===true);
+
+    // ...and the reverse: picking up a skill mid-fight must not end the fight.
+    ev(`setAction('mining','mi1');`);
+    ok('starting a skill mid-fight keeps the fight alive', ev('combat.active')===true);
+    ok('the skill switch took', ev('state.action&&state.action.skill')==='mining');
+
+    // The skilling tick has to actually PAY while a fight is running, not just
+    // survive. Backdate actionStart past one cycle and check the XP lands.
+    const wcBefore=ev('state.xp.mining');
+    ev(`state.actionStart=Date.now()-(actMs(getAct('mining','mi1'),'mining')+50); tick();`);
+    ok('skilling XP still accrues during a fight',
+       ev('state.xp.mining')>wcBefore, 'before='+wcBefore+' after='+ev('state.xp.mining'));
+
+    // exitCombat is the explicit "stop everything here" — it kills the fight, but it
+    // is a combat control and has no business clearing what you are training.
+    ev(`exitCombat();`);
+    ok('leaving combat stops the fight', ev('combat.active')===false);
+    ok('leaving combat leaves the skill training',
+       ev('state.action&&state.action.skill')==='mining');
+    ev(`state=defaultState(); normalizeState(); combat.active=false; combatMode=false;`);
   }
 
   section('SVG icon id collisions (v0.9.100 / v0.9.101)');
