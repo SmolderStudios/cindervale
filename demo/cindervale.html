@@ -3593,7 +3593,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.99</div>
+  <div class="mm-ver">v0.9.100</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -8561,15 +8561,33 @@ const ICONS = {
    the legacy emoji string from ITEMS/SKILLS. Use this everywhere a span
    wants to display an icon: `<span class="icon">${iconHTML(id)}</span>`.
    The emoji fallback means migration is incremental and safe. */
+/* Icon markup carries fixed gradient ids (mi_head, mi_wood, …). Rendering the
+   same icon in two places puts DUPLICATE ids in the document, and every
+   url(#id) reference then resolves to whichever copy is first in tree order —
+   per getElementById semantics, not the nearest one. When that winner sits in a
+   display:none panel its gradients never paint, so the *visible* icon loses
+   every gradient-filled shape and reads as a black silhouette.
+   That is what made the skill-panel icon go black on the Stats tab: the hidden
+   #skillList copy won, and an xp popup (earlier still in the DOM, and visible)
+   briefly took over each time the skill ticked — the "fixes itself for half a
+   second" in the report. Stamping every rendered instance with its own suffix
+   removes the collision outright. ~1.5us per icon, ~80 icons per full render. */
+let _icoUid=0;
+function _icoUniq(svg){
+  if(typeof svg!=='string' || svg.indexOf('id="')<0) return svg;
+  const u='_u'+(++_icoUid);
+  return svg.replace(/id="([^"]+)"/g, (m,d)=>'id="'+d+u+'"')
+            .replace(/url\(#([^)]+)\)/g, (m,d)=>'url(#'+d+u+')');
+}
 function iconHTML(id){
-  if(ICONS[id]) return ICONS[id];
-  if(ITEMS[id])  return ITEMS[id].icon;
-  if(SKILLS[id]) return SKILLS[id].icon;
+  if(ICONS[id]) return _icoUniq(ICONS[id]);
+  if(ITEMS[id])  return _icoUniq(ITEMS[id].icon);
+  if(SKILLS[id]) return _icoUniq(SKILLS[id].icon);
   // SHOP fallback — covers tool/jewelry/cape ids that haven't been migrated
   // into ICONS yet (e.g. bronze_axe, ember_ring). Without this, the shop and
   // gear panel render the raw id string where the icon should be.
   if(typeof SHOP!=='undefined'){
-    for(let i=0;i<SHOP.length;i++){ if(SHOP[i].id===id) return SHOP[i].icon; }
+    for(let i=0;i<SHOP.length;i++){ if(SHOP[i].id===id) return _icoUniq(SHOP[i].icon); }
   }
   return id;
 }
