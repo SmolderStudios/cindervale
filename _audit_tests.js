@@ -804,6 +804,84 @@ setTimeout(() => {
     ev(`state=defaultState(); normalizeState(); setRailGroup('all'); selectedSkill='woodcutting';`);
   }
 
+  section('SVG icon id collisions (v0.9.100 / v0.9.101)');
+  {
+    // Icon markup carries hard-coded gradient ids. Two live copies of the same id
+    // means url(#id) resolves by DOCUMENT ORDER, so if the winner sits in a hidden
+    // panel the VISIBLE icon paints with no gradients and reads as a black
+    // silhouette. v0.9.100 fixed the raw-emission shape; v0.9.101 fixed the
+    // memoised shape (one iconHTML() result baked into a data structure and then
+    // emitted N times — the id IS suffixed, just duplicated N ways).
+    //
+    // Both assertions are needed. #1 alone misses a raw path until someone renders
+    // it twice; #2 alone misses the memoised shape entirely, because a baked
+    // `sl_hull_u152` passes a "is it suffixed?" check while being 30-way duplicated.
+    // That exact blind spot is why this defect survived v0.9.100.
+    const scan = () => ev(`(function(){
+      var m={};
+      [].forEach.call(document.querySelectorAll('[id]'),function(el){
+        if(!el.closest('svg')) return;              // panel ids are a different class
+        (m[el.id]=m[el.id]||[]).push(el);
+      });
+      var dup=[],raw=[];
+      for(var k in m){
+        if(m[k].length>1){
+          var hosts={};
+          m[k].forEach(function(e){
+            var a=e,h='(detached)';
+            while(a){ if(a.id&&!a.closest('svg')){h=a.id;break;} a=a.parentElement; }
+            hosts[h]=(hosts[h]||0)+1;
+          });
+          dup.push(k+' x'+m[k].length+' '+JSON.stringify(hosts));
+        }
+        if(!/_u\\d+$/.test(k) && k!=='eaFlame') raw.push(k);
+      }
+      return {dup:dup, raw:raw};
+    })()`);
+
+    // Drive the surfaces IN ONE SESSION without resetting between steps — the
+    // collision only exists ACROSS panels (populated-but-hidden compendium vs a
+    // visible tooltip), so a per-panel snapshot passes on broken code.
+    ev(`state=defaultState(); normalizeState();
+        Object.keys(SKILLS).forEach(function(k){ state.xp[k]=XP_CUM[99]; });
+        Object.keys(ITEMS).forEach(function(id){ state.discovered[id]=1; state.items[id]=5; });
+        renderAll();`);
+    const threw=[];
+    const drive = (label, code) => { try { ev(code); } catch(e) { threw.push(label+': '+e.message); } };
+
+    for (const sk of ev('Object.keys(SKILLS)')) {
+      drive('acts:'+sk, `selectedSkill=${JSON.stringify(sk)}; viewTab='acts'; renderCenter();`);
+      drive('tree:'+sk, `selectedSkill=${JSON.stringify(sk)}; viewTab='tree'; renderCenter();`);
+    }
+    for (const tab of ['shop','mastery','ach','enchant','socket','comp'])
+      drive('tab:'+tab, `viewTab=${JSON.stringify(tab)}; renderCenter();`);
+    // Every compendium category — the step that actually arms the bug.
+    drive('comp:cats', `viewTab='comp';
+      ['all','logs','ores','fish','cooked','bars','gems','sea','jewelry','crafted_gear','other']
+        .forEach(function(c){ try{ compCat=c; compPage=0; renderCompendium(); }catch(e){} });`);
+    drive('combat', `enterCombat(); renderCombat();`);
+    drive('destiny', `mmOpenDestiny('new',1,'T'); mmSelType='hardcore'; mmSelClass='guardian'; mmRenderDestiny();`);
+    // Leave the compendium hidden-but-populated, then hover — the real repro.
+    drive('leave-comp', `viewTab='acts'; renderCenter();`);
+    const cardsLeft = ev(`document.querySelectorAll('#compView [class*="ctile"]').length`);
+    for (const it of ['pearl','oak_log','copper_ore','sapphire','bronze_bar'])
+      drive('tip:'+it, `try{ showItemTooltip(${JSON.stringify(it)},0,0); }catch(e){}`);
+
+    const r = scan();
+    ok('no duplicate SVG ids across the whole session', r.dup.length===0,
+       r.dup.length ? r.dup.slice(0,6).join(' | ') : 'compendium still holding '+cardsLeft+' cards');
+    ok('every rendered SVG id carries a _uN suffix', r.raw.length===0,
+       r.raw.length ? r.raw.slice(0,10).join(',') : 'allowlist: eaFlame');
+    ok('render sweep reached every surface without throwing', threw.length===0, threw.slice(0,4).join(' | '));
+
+    // Static: constructs _icoUniq cannot rewrite would silently break a working
+    // reference, since it only rewrites id="..." and url(#...) inside one string.
+    const src = fs.readFileSync(path.join(ROOT,'cindervale.html'),'utf8');
+    const body = src.slice(src.indexOf('const ICONS'));
+    const unrewritable = ['<use ','xlink:href','href="#'].filter(p=>body.includes(p));
+    ok('no SVG constructs _icoUniq cannot rewrite', unrewritable.length===0, unrewritable.join(','));
+  }
+
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));
   process.exit(fail ? 1 : 0);
 }, 2500);

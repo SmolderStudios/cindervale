@@ -3593,7 +3593,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.100</div>
+  <div class="mm-ver">v0.9.101</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -8571,7 +8571,18 @@ const ICONS = {
    #skillList copy won, and an xp popup (earlier still in the DOM, and visible)
    briefly took over each time the skill ticked — the "fixes itself for half a
    second" in the report. Stamping every rendered instance with its own suffix
-   removes the collision outright. ~1.5us per icon, ~80 icons per full render. */
+   removes the collision outright. ~1.5us per icon, ~80 icons per full render.
+
+   v0.9.101 — there is a SECOND shape, and routing through iconHTML does not stop
+   it. If a caller BAKES the result of one iconHTML() call into a data structure
+   and then emits it many times, all those copies share one suffix. buildSourceMap
+   did exactly that: one iconHTML('sailing') shared by 39 sailing source records,
+   one iconHTML('ui_gem') by 15 gems, one monster portrait by up to 11 drops. A
+   detector that scans for "ids missing a _uN suffix" cannot see this — the id IS
+   suffixed, just duplicated. The rule is therefore: uniquify at the EMISSION
+   site, not where the string is stored. Re-applying _icoUniq to an already
+   suffixed string is safe: it appends a second suffix to id= and url(#…) together,
+   so the reference still resolves. */
 let _icoUid=0;
 function _icoUniq(svg){
   if(typeof svg!=='string' || svg.indexOf('id="')<0) return svg;
@@ -18049,7 +18060,7 @@ function renderPassives(){
     const tipText=PASSIVE_TIPS[node.id]||'';
     if(tipText) row.setAttribute('data-tip', tipText);
     row.innerHTML=`<div class="info">
-      <div class="nname">${node.icon} ${node.name}</div>
+      <div class="nname">${_icoUniq(node.icon)} ${node.name}</div>
       ${reqLocked?`<div class="nreq">${lockReason}</div>`:''}
       <div class="ndesc">${maxed?node.desc(rank)+' ✓':rank>0?node.desc(rank)+' · next: '+node.next(rank+1):'Next: '+node.next(rank+1)}</div>
     </div>
@@ -22734,7 +22745,7 @@ function showItemTooltip(itemId, x, y){
       const ch=s.rare?effDropChance(s.chance,s.combat):s.chance;
       const pctStr=ch>=1?'100%':_fmtMonChance(ch);
       const color=ch>=1?'#7da33f':ch>=0.01?'#c79b4e':'#e0762f';
-      html+=`<div class="tt-source">${s.skIcon} ${s.actName}<span class="tt-chance" style="color:${color}">${pctStr}</span></div>`;
+      html+=`<div class="tt-source">${_icoUniq(s.skIcon)} ${s.actName}<span class="tt-chance" style="color:${color}">${pctStr}</span></div>`;
     }
     if(sources.length>5) html+=`<div style="font-size:calc(12px*var(--tscale));color:#6e552c">+${sources.length-5} more sources</div>`;
   } else {
@@ -22745,7 +22756,7 @@ function showItemTooltip(itemId, x, y){
     html+=`<div style="margin-top:5px;padding-top:5px;border-top:1px solid #3a2a17;font-size:calc(12px*var(--tscale));color:#a08a64;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">Used in</div>`;
     html+=`<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:2px">`;
     for(const u of usages){
-      html+=`<span style="background:var(--raised-s);border:1px solid #5a8fcb55;border-radius:6px;padding:2px 6px;font-size:calc(14px*var(--tscale))" title="${u.skName}">${u.skIcon} ${u.skName}</span>`;
+      html+=`<span style="background:var(--raised-s);border:1px solid #5a8fcb55;border-radius:6px;padding:2px 6px;font-size:calc(14px*var(--tscale))" title="${u.skName}">${_icoUniq(u.skIcon)} ${u.skName}</span>`;
     }
     html+=`</div>`;
     html+=`<div style="font-size:calc(12px*var(--tscale));color:#6e552c;margin-top:2px">Click item to highlight skills</div>`;
@@ -23058,7 +23069,7 @@ function renderCompendium(){
     // that drops it. Skill icons are emoji; monster source uses its SVG portrait.
     const skSrc=sources.length?sources[0]:null;
     const cbSrc=(!skSrc&&dropSrc[id])?dropSrc[id]:null;
-    const srcBadge=skSrc?`<span class="ctile-src">${skSrc.skIcon}</span>`
+    const srcBadge=skSrc?`<span class="ctile-src">${_icoUniq(skSrc.skIcon)}</span>`
                   :cbSrc?`<span class="ctile-src svg" title="Drops from the ${cbSrc.monName}">${iconHTML(cbSrc.monId)}</span>`:'';
     const where=skSrc?`Found while ${skSrc.skName.toLowerCase()}`
                :cbSrc?`Drops from the ${cbSrc.monName}`:'Source unknown';
@@ -25206,7 +25217,12 @@ const STATUS_ICONS={
     +'<path d="M32 56 C 8 40 8 15 24 15 C 30 15 32 22 32 24 C 32 22 34 15 40 15 C 56 15 56 40 32 56 Z" fill="url(#rgn_g)" stroke="#12300a" stroke-width="2.4"/>'
     +'<path d="M32 27 L32 45 M23 36 L41 36" stroke="#eaffd8" stroke-width="4.2" stroke-linecap="round"/></svg>'
 };
-function _fxIcon(name){ return STATUS_ICONS[name] || iconHTML(name); }
+/* STATUS_ICONS is read raw here, so it has to be uniquified explicitly — iconHTML
+   is only reached by the fallback branch. Not a live collision today (poison/burn/
+   stun render on the foe row only, regen on the you row only, so no id appears
+   twice), but it goes live the day a player-side DoT or a second status surface
+   lands. Cheaper to hold the invariant than to rediscover it. */
+function _fxIcon(name){ return STATUS_ICONS[name] ? _icoUniq(STATUS_ICONS[name]) : iconHTML(name); }
 
 /* Buff/debuff chip DATA for a fighter (1.0.60/1.0.62). Returns an array of
    {key,glyph,color,tip,stacks?}. `key` identifies the effect state (type +
@@ -29520,7 +29536,7 @@ function mmRenderDestiny(){
     el.className='mmd-card mmd-type'+(mmSelType===key?' mmd-on':'');
     el.setAttribute('aria-pressed', mmSelType===key?'true':'false');
     el.style.setProperty('--accent', t.col);
-    el.innerHTML='<div class="mmd-head">'+(TYPE_SIGILS[key]||'')+
+    el.innerHTML='<div class="mmd-head">'+_icoUniq(TYPE_SIGILS[key]||'')+
         '<div class="mmd-headtxt"><div class="mmd-tname">'+t.name+'</div>'+
         '<div class="mmd-tag">'+t.tag+'</div></div></div>'+
       '<div class="mmd-blurb">'+t.blurb+'</div>'+
@@ -29537,7 +29553,7 @@ function mmRenderDestiny(){
     el.type='button';
     el.className='mmd-card mmd-class'+(mmSelClass===key?' mmd-on':'');
     el.setAttribute('aria-pressed', mmSelClass===key?'true':'false');
-    el.innerHTML='<div class="mmd-emblem">'+c.model+'</div>'+
+    el.innerHTML='<div class="mmd-emblem">'+_icoUniq(c.model)+'</div>'+
       '<div class="mmd-tname">'+c.name+'</div>'+
       '<div class="mmd-tag">'+c.tag+'</div>'+
       '<div class="mmd-blurb">'+c.blurb+'</div>';
