@@ -51,13 +51,7 @@ if (process.argv.includes('--status')) {
   console.log();
   for (const c of CHANNELS) {
     const s = read(c);
-    /* A `-ui` channel is NOT behind — it is carrying the UI rework, which this
-       script cannot produce. Telling someone to run `_playtest.js playtest` here
-       would quietly replace the rework with the stock UI. */
-    if (s.ver && /-ui$/.test(s.ver))
-      console.log(`  ${c}: carrying the UI rework at ${s.ver} — move it with \`node _playtest-ui.js\`,`
-                + `\n            NOT \`node _playtest.js ${c}\` (that would publish the stock UI over it)`);
-    else console.log(s.ver === live.ver
+    console.log(s.ver === live.ver
       ? `  ${c}: in sync with live`
       : `  ${c}: HELD at ${s.ver} — run \`node _playtest.js ${c}\` to move it`);
   }
