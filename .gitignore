@@ -7,3 +7,6 @@ dist/
 .DS_Store
 Thumbs.db
 *.bak
+
+# staging dir for _validate-playtest.js
+.validate-playtest/
