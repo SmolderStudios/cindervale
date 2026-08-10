@@ -939,6 +939,54 @@ setTimeout(() => {
     ok('no SVG constructs _icoUniq cannot rewrite', unrewritable.length===0, unrewritable.join(','));
   }
 
+  section('Stylesheet integrity (v0.9.104)');
+  {
+    /* v0.9.103 shipped an orphaned comment TERMINATOR in [CSS-10c]: an edit added
+       a second comment tail after the block's real one, so the prose between them
+       sat OUTSIDE any comment. A browser recovers by treating that prose as the
+       start of a selector and consuming up to the next {...} — which swallowed
+       `.sk-banner.has-art{position:relative;overflow:hidden;isolation:isolate}`
+       whole and discarded it. `.sk-scene` then had no positioned ancestor, so
+       its `inset:0` resolved against the VIEWPORT and the skill painting filled
+       the entire window behind the UI at z-index -4.
+
+       Nothing caught it. node --check only parses the script, and jsdom does no
+       layout and does not report discarded rules — the boot was clean, all 104
+       regressions passed, and the screenshots were of the UI-rework build, whose
+       patch-ui9 sets position/isolation on .sk-banner itself and masked it. */
+    const styles = [...html.matchAll(/<style\b[^>]*>([\s\S]*?)<\/style>/gi)].map(m => m[1]);
+    ok('inline stylesheet found', styles.length > 0, styles.length + ' <style> block(s)');
+    const css = styles.join('\n');
+    const lineOf = i => css.slice(0, i).split('\n').length;
+
+    const stripped = css.replace(/\/\*[\s\S]*?\*\//g, m => ' '.repeat(m.length));
+    const stray = stripped.indexOf('*/');
+    ok('no stray comment terminator in the CSS', stray === -1,
+       stray === -1 ? 'comments balanced' : 'orphan */ near line ' + lineOf(stray));
+
+    const open = stripped.indexOf('/*');
+    ok('no unterminated comment in the CSS', open === -1,
+       open === -1 ? '' : 'unclosed /* near line ' + lineOf(open));
+
+    /* Positive check: the rules the painted backdrop depends on must each START
+       a rule, not be glued onto the tail of something the parser is discarding. */
+    const CRITICAL = ['.sk-banner.has-art{', '.sk-scene{', '.sk-banner.has-art::after{'];
+    for (const sel of CRITICAL) {
+      const at = stripped.indexOf(sel);
+      const before = at < 0 ? '' : stripped.slice(0, at).replace(/\s+$/, '').slice(-1);
+      ok('rule starts cleanly: ' + sel, at >= 0 && (before === '}' || before === ''),
+         at < 0 ? 'SELECTOR MISSING' : 'preceded by ' + JSON.stringify(before) + ' @ line ' + lineOf(at));
+    }
+
+    /* The backdrop must be able to escape nothing: a positioned, isolated banner
+       is the only thing keeping a z-index:-4 absolute child inside the card. */
+    const hasArt = /\.sk-banner\.has-art\{[^}]*\}/.exec(stripped);
+    const decl = hasArt ? hasArt[0] : '';
+    ok('painted banner establishes a containing block', /position:\s*relative/.test(decl), decl.slice(0, 70));
+    ok('painted banner establishes a stacking context', /isolation:\s*isolate/.test(decl), decl.slice(0, 70));
+    ok('painted banner clips its backdrop', /overflow:\s*hidden/.test(decl), decl.slice(0, 70));
+  }
+
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));
   process.exit(fail ? 1 : 0);
 }, 2500);
