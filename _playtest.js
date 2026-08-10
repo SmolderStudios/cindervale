@@ -28,7 +28,11 @@ const root = __dirname;
 const CHANNELS = ['playtest', 'demo'];
 
 const verOf = (p) => { try { return JSON.parse(fs.readFileSync(p, 'utf8')).version; } catch (e) { return null; } };
-const stampOf = (p) => { try { return (fs.readFileSync(p, 'utf8').match(/mm-ver">v([0-9.]+)/) || [])[1] || null; } catch (e) { return null; } };
+/* The suffix is part of the match on purpose. A playtest build published by
+   _playtest-ui.js is stamped like `0.9.104-ui`; reading only [0-9.] truncated it
+   to `0.9.104`, so the status table showed the channel carrying the same banner
+   as live and gave no hint the rework was there at all. */
+const stampOf = (p) => { try { return (fs.readFileSync(p, 'utf8').match(/mm-ver">v([0-9][0-9.a-z-]*)/) || [])[1] || null; } catch (e) { return null; } };
 const read = (dir) => ({
   ver: verOf(path.join(root, dir, 'version.json')),
   html: stampOf(path.join(root, dir, 'cindervale.html'))
@@ -47,7 +51,13 @@ if (process.argv.includes('--status')) {
   console.log();
   for (const c of CHANNELS) {
     const s = read(c);
-    console.log(s.ver === live.ver
+    /* A `-ui` channel is NOT behind — it is carrying the UI rework, which this
+       script cannot produce. Telling someone to run `_playtest.js playtest` here
+       would quietly replace the rework with the stock UI. */
+    if (s.ver && /-ui$/.test(s.ver))
+      console.log(`  ${c}: carrying the UI rework at ${s.ver} — move it with \`node _playtest-ui.js\`,`
+                + `\n            NOT \`node _playtest.js ${c}\` (that would publish the stock UI over it)`);
+    else console.log(s.ver === live.ver
       ? `  ${c}: in sync with live`
       : `  ${c}: HELD at ${s.ver} — run \`node _playtest.js ${c}\` to move it`);
   }
