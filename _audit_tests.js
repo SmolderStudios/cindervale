@@ -987,6 +987,199 @@ setTimeout(() => {
     ok('painted banner clips its backdrop', /overflow:\s*hidden/.test(decl), decl.slice(0, 70));
   }
 
+  section('Player-reported bug batch (v0.9.106)');
+  {
+    /* Four reports off the Discord bug channel. Every one of them was silent —
+       nothing threw, all 113 prior regressions passed, and the boot test was
+       clean — which is exactly why they reached players. */
+    ev(`mmAtMenu=false; state=defaultState(); normalizeState(); renderAll();`);
+
+    // --- 1. Search boxes must survive their own re-render ---
+    /* The satchel and compendium panels are rebuilt wholesale (box.innerHTML='')
+       and the search input's own handler calls back into that render to
+       re-filter, so the field being typed into was destroyed on every keystroke
+       and focus fell to <body>. The player had to re-click between letters. */
+    const srch = ev(`(()=>{
+      rightTab='satchel'; renderRightPanel();
+      const s=document.querySelector('.inv-search'); if(!s) return {err:'no search box'};
+      s.focus(); s.value='pin'; s.setSelectionRange(3,3);
+      s.dispatchEvent(new Event('input',{bubbles:true}));
+      const a=document.querySelector('.inv-search');
+      return {rebuilt:a!==s, focused:document.activeElement===a, caret:a?a.selectionStart:-1};
+    })()`);
+    ok('satchel search survives a keystroke', srch.focused === true, JSON.stringify(srch));
+    ok('satchel search keeps its caret', srch.caret === 3, 'caret=' + srch.caret);
+    ok('the panel really is still rebuilt', srch.rebuilt === true);   // guards a lazy "just skip the render" fix
+
+    const csr = ev(`(()=>{
+      viewTab='comp'; renderCenter();
+      const s=document.querySelector('.comp-search'); if(!s) return {err:'no comp search'};
+      s.focus(); s.value='ra'; s.setSelectionRange(2,2);
+      s.dispatchEvent(new Event('input',{bubbles:true}));
+      const a=document.querySelector('.comp-search');
+      return {focused:document.activeElement===a, caret:a?a.selectionStart:-1};
+    })()`);
+    ok('compendium search survives a keystroke', csr.focused === true, JSON.stringify(csr));
+
+    // --- 2. Auto-eat must fire on heal-over-time food ---
+    /* Marrow Broth and the stews carry potion.regen and NO potion.heal, so
+       combatHealItems() never listed them and autoUseHealPotion() returned false
+       every swing for anyone whose only food was a broth. Reported as "auto-eat
+       doesn't work when there's a heal over time effect" — the HoT was a red
+       herring, nothing ever read combat.regens. */
+    const hot = ev(`(()=>{
+      state.items={marrow_broth:5};
+      state.autoHeal={enabled:true,thresholdPct:50,itemId:''};
+      combat.active=true; combat.youMaxHp=200; combat.youHp=50; combat.regens=[];
+      const inst=combatHealItems().length;
+      const fired=autoUseHealPotion();
+      return {inst, fired, left:state.items.marrow_broth, regens:combat.regens.length};
+    })()`);
+    ok('broth is invisible to the instant-heal list', hot.inst === 0, 'combatHealItems=' + hot.inst);
+    ok('auto-eat still fires on a broth-only satchel', hot.fired === true, JSON.stringify(hot));
+    ok('the broth was actually consumed', hot.left === 4, 'left=' + hot.left);
+    ok('the regen buff was applied', hot.regens === 1);
+
+    const inst = ev(`(()=>{
+      state.items={marrow_broth:5,cooked_minnow:5};
+      state.autoHeal={enabled:true,thresholdPct:50,itemId:''};
+      combat.active=true; combat.youMaxHp=200; combat.youHp=50; combat.regens=[];
+      autoUseHealPotion();
+      return {broth:state.items.marrow_broth, minnow:state.items.cooked_minnow};
+    })()`);
+    ok('instant heals still win outright', inst.broth === 5 && inst.minnow === 4, JSON.stringify(inst));
+
+    const picked = ev(`(()=>{
+      state.items={marrow_broth:5,bone_stew:5};
+      state.autoHeal={enabled:true,thresholdPct:50,itemId:'marrow_broth'};
+      combat.active=true; combat.youMaxHp=400; combat.youHp=100; combat.regens=[];
+      autoUseHealPotion();
+      return {broth:state.items.marrow_broth, stew:state.items.bone_stew};
+    })()`);
+    ok('a player-picked regen food is honoured', picked.broth === 4 && picked.stew === 5, JSON.stringify(picked));
+
+    const chain = ev(`(()=>{
+      state.items={marrow_broth:9};
+      state.autoHeal={enabled:true,thresholdPct:50,itemId:''};
+      combat.active=true; combat.youMaxHp=200; combat.youHp=170; combat.regens=[];
+      for(let i=0;i<8;i++) autoUseHealPotion();
+      return 9-state.items.marrow_broth;
+    })()`);
+    ok('regens already ticking stop it chain-eating', chain <= 2, 'ate ' + chain + ' of 8 swings');
+
+    // --- 3. Every gold spend must repaint the header ---
+    /* renderHeader() is the ONLY painter of #coins. The socket drill, sailHire()
+       and voyage crew wages all deducted gold without it, so the header sat on a
+       stale total while the panel's own gold chip updated — reported as "gold
+       doesn't update when being spent on sockets". */
+    const drill = ev(`(()=>{
+      state.coins=9000000; state.items={gem_dust:5000,bronze_helm:1}; state.sockets={};
+      renderHeader();
+      const before=document.getElementById('coins').textContent;
+      const drilled=drillSocket('bronze_helm');
+      const stale=document.getElementById('coins').textContent;
+      if(drilled){ renderHeader(); renderRightPanel(); }
+      return {drilled, before, stale, after:document.getElementById('coins').textContent};
+    })()`);
+    ok('the drill ran (test setup is valid)', drill.drilled === true, JSON.stringify(drill));
+    ok('drillSocket alone leaves the header stale', drill.before === drill.stale);
+    ok('the patched call path repaints it', drill.before !== drill.after,
+       JSON.stringify(drill.before) + ' -> ' + JSON.stringify(drill.after));
+    ok('the real call site is wired with renderHeader',
+       /if\(drillSocket\(itemId\)\)\{ renderHeader\(\);/.test(html));
+
+    /* Static sweep: no gold deduction anywhere may sit without a repaint in its
+       enclosing function. 6867 is inside drillSocket() itself, whose sole caller
+       repaints — asserted directly above. */
+    const src = html.split('\n');
+    const spends = [];
+    src.forEach((l, i) => { if (/state\.coins-=/.test(l)) spends.push(i + 1); });
+    const orphan = spends
+      .filter(ln => !/renderHeader\(\)|renderAll\(\)/.test(src.slice(ln - 1, ln + 60).join('\n')))
+      .filter(ln => !/^\s*state\.coins-=cost\.coins\*SILVER_PER_GOLD;\s*$/.test(src[ln - 1]));
+    ok('every gold-spend site repaints the header', orphan.length === 0,
+       orphan.length ? 'unrepainted at line(s) ' + orphan.join(', ') : spends.length + ' sites checked');
+
+    // --- 4. The onboarding dock must track progress live ---
+    /* renderQuestDock() only ran when a step ADVANCED — questCheck() returns at
+       `if(!done)` before reaching it — so the bar and "0 / 8 pine logs" froze at
+       whatever they read when the step opened. */
+    const dock = ev(`(()=>{
+      mmAtMenu=false;
+      state.onboard={step:0,done:false,hidden:false};
+      state.items={pine_log:2}; renderQuestDock();
+      const a=document.querySelector('#questDock .qd-readout').textContent;
+      const aw=document.querySelector('#questDock .qd-track i').style.width;
+      state.items.pine_log=5; tick();          // step 0 needs 8 — must NOT advance
+      const b=document.querySelector('#questDock .qd-readout').textContent;
+      const bw=document.querySelector('#questDock .qd-track i').style.width;
+      return {a,aw,b,bw,step:state.onboard.step};
+    })()`);
+    ok('the dock readout tracks gathering live', dock.a !== dock.b,
+       JSON.stringify(dock.a) + ' -> ' + JSON.stringify(dock.b));
+    ok('the progress bar tracks gathering live', dock.aw !== dock.bw, dock.aw + ' -> ' + dock.bw);
+    ok('a mid-step tick does not advance the step', dock.step === 0);
+
+    /* A save reloaded mid-onboarding used to show no dock at all: the only other
+       render is gated on `isNew` in mmFinishStart. */
+    const reload = ev(`(()=>{
+      const d=document.getElementById('questDock'); if(d) d.remove();
+      state.onboard={step:1,done:false,hidden:false};
+      tick();
+      const el=document.getElementById('questDock');
+      return {present:!!el, blank:el?el.innerHTML.trim().length===0:true};
+    })()`);
+    ok('a reloaded mid-onboarding save gets its dock back', reload.present === true);
+    ok('the rebuilt dock is not blank', reload.blank === false);   // guards the _dockCache staleness
+
+    /* position:fixed on document.body at z-index 3900 — nothing in mmShowMenu()
+       removed it, so it floated over the character select. */
+    const menu = ev(`(()=>{
+      mmAtMenu=true; renderQuestDock();
+      const gone=!document.getElementById('questDock');
+      mmAtMenu=false; tick();
+      return {gone, back:!!document.getElementById('questDock')};
+    })()`);
+    ok('the dock is torn down at the main menu', menu.gone === true);
+    ok('the dock returns on re-entering the game', menu.back === true);
+
+    // --- 5. Satchel sort: right-click steps backward (player suggestion) ---
+    const sort = ev(`(()=>{
+      mmAtMenu=false; rightTab='satchel'; invSort='category'; renderInventory();
+      const btn=()=>[...document.querySelectorAll('button.inv-sort')].find(x=>x.textContent.indexOf('↕')===0);
+      const seq=[];
+      btn().click(); seq.push(invSort);
+      const e1=new window.MouseEvent('contextmenu',{bubbles:true,cancelable:true});
+      btn().dispatchEvent(e1); seq.push(invSort);
+      const e2=new window.MouseEvent('contextmenu',{bubbles:true,cancelable:true});
+      btn().dispatchEvent(e2); seq.push(invSort);
+      return {seq, prevented:e1.defaultPrevented, title:btn().title};
+    })()`);
+    ok('left-click still advances the sort', sort.seq[0] === 'name', JSON.stringify(sort.seq));
+    ok('right-click steps the sort backward', sort.seq[1] === 'category');
+    ok('right-click wraps past the head', sort.seq[2] === 'value');
+    ok('the browser context menu is suppressed', sort.prevented === true);
+    ok('the tooltip documents right-click', /right-click/i.test(sort.title || ''), sort.title);
+
+    /* itemCat() returns 'gear' for crafted combat gear, but catOrder omitted it —
+       indexOf gave -1, which sorted gear to the front by accident. Right answer,
+       wrong mechanism, and one reorder away from breaking silently. */
+    /* Static, because itemCat() is nested inside renderInventory() and is not
+       reachable from eval. Pull every bucket it can return straight out of its
+       body and assert catOrder ranks all of them. */
+    {
+      const fn = /function itemCat\(id\)\{([\s\S]*?)\n  \}/.exec(html);
+      const buckets = fn ? [...new Set([...fn[1].matchAll(/return '([a-z]+)'/g)].map(m => m[1]))] : [];
+      const co = /const catOrder=\[([^\]]+)\]/.exec(html);
+      const order = co ? co[1].split(',').map(s => s.trim().replace(/^'|'$/g, '')) : [];
+      const missing = buckets.filter(b => order.indexOf(b) < 0);
+      ok('itemCat() body was found', buckets.length > 5, buckets.length + ' buckets');
+      ok('every itemCat() bucket has a catOrder rank', missing.length === 0,
+         missing.length ? 'unranked: ' + missing.join(', ') + ' (indexOf -1 sorts them to the front by accident)'
+                        : buckets.length + ' buckets all ranked');
+    }
+  }
+
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));
   process.exit(fail ? 1 : 0);
 }, 2500);
