@@ -4625,7 +4625,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.111</div>
+  <div class="mm-ver">v0.9.112</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -24138,27 +24138,24 @@ function positionTooltip(tt, x, y){
   // Always sit to the RIGHT of the cursor. Near the right edge we clamp the
   // tooltip onto the screen rather than flipping it to the left of the cursor,
   // so hovers never jump sides depending on mouse position.
-  let tx=cx+14, ty=cy-10;
+  let tx=cx+14;
   if(tx+tw>W-10) tx=Math.max(10, W-tw-10);
-  /* Never cover the cursor (0.9.111). The satchel is the right-hand column, so a
-     tooltip opened there is always the clamped case above — and clamping slides it
-     back LEFT across the cursor, parking it on top of the row you are pointing at
-     and its Sell / Equip buttons. The tooltip is pointer-events:none so the click
-     still lands, but you cannot see what you are clicking, which is worse.
+  /* ALWAYS below the cursor (0.9.112). This was `cy-10` — the box top sat just
+     above the pointer, so the card always covered the row being hovered and its
+     Sell / Equip buttons. It is pointer-events:none so the click still landed, you
+     just could not see the target.
 
-     So after clamping, if the box still spans the cursor's column, move it clear
-     vertically: below the cursor by preference, above it if there is no room
-     below. Off-screen clamping is unchanged — this only ever shifts the box along
-     y, and _ttFlipY still has the final say on staying in the viewport. */
-  const spansCursor = cx > tx-6 && cx < tx+tw+6;
-  if(spansCursor){
-    const below=cy+24;
-    ty = (below+th <= H-10) ? below : Math.max(10, cy-th-18);
-  }
-  // Vertically we DO flip: a tall tooltip near the bottom would otherwise be
-  // clamped to the bottom edge and cover the very thing being hovered. Flip it
-  // above the cursor instead, and only fall back to clamping when it fits in
-  // neither direction (a tooltip taller than the viewport).
+     0.9.111 moved it clear only when the horizontal clamp had slid the box back
+     across the cursor, which is the right-hand edge of the satchel — so the drop
+     appeared on the Equip/Sell end of a row and nowhere else, and the tooltip
+     seemed to move around at random. Unconditional is the fix: same offset
+     everywhere in the satchel, and everywhere else item tooltips are used.
+
+     _ttFlipY still owns staying in the viewport — it flips the card above the
+     cursor near the bottom edge, and clamps only when it fits in neither
+     direction. So the guarantee is "below unless that would go off-screen",
+     which is predictable in a way "below only sometimes" was not. */
+  let ty=cy+24;
   ty=_ttFlipY(ty, cy, th, H);
   tt.style.left=tx+'px'; tt.style.top=ty+'px';
 }
