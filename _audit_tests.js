@@ -729,9 +729,16 @@ setTimeout(() => {
 
     // Down to just the worn one: the button must refuse and say why.
     ev('renderInventory();');
+    /* `explained` was originally just the .inv-eq "Worn" badge. Since v0.9.108 a
+       satchel row for equipped combat gear carries a green Remove button instead
+       — the two together ellipsised "Bronze Helm" into "Bronze ...", so they are
+       mutually exclusive. Either one satisfies this assertion's actual intent:
+       the held-back copy must be explained rather than mysterious. */
     const lone=ev(`(function(){ var r=${findRow}; if(!r) return {err:'row gone'};
       var b=r.querySelector('.sell'); if(b) b.click();
-      return {dis:!!(b&&b.disabled), badge:!!r.querySelector('.inv-eq'),
+      var eqb=r.querySelector('.inv-equip');
+      return {dis:!!(b&&b.disabled),
+              badge:!!r.querySelector('.inv-eq')||!!(eqb&&eqb.textContent==='Remove'),
               qty:state.items.bronze_chest||0, eq:state.combatEquipped.chest||null}; })()`);
     ok('last worn copy: sell disabled + Equipped badge',
        lone.dis===true&&lone.badge===true, JSON.stringify(lone));
@@ -1253,6 +1260,72 @@ setTimeout(() => {
       return setSocketGem(id,0,'onyx_flaw');})()`);
     ok('a skilling gem in combat armour still warns', sg === true && shown() === 'That gem cannot pay out from combat gear', String(shown()));
     reset();
+  }
+
+  section('Equip from the satchel (v0.9.108)');
+  {
+    /* A second entry point into equipBodyItem. The risk is that it becomes a
+       BYPASS of the rules the gear panel enforces — the level gate and the
+       two-handed/shield conflict — none of which throw when skipped. */
+    ev(`mmAtMenu=false; state=defaultState(); normalizeState(); rightTab='satchel'; invCat='all'; invSearch='';`);
+    const eqBtn = nm => `(function(){ for(var r of document.querySelectorAll('.inv-item')){
+      var n=r.querySelector('.inv-name'), b=r.querySelector('.inv-equip');
+      if(n&&b&&n.textContent.indexOf(${JSON.stringify(nm)})===0) return b; } return null; })()`;
+
+    ev(`state.items={bronze_helm:1}; state.combatEquipped={}; state.skillingEquipped={}; state.combatXp.defence=0; renderInventory();`);
+    ev(eqBtn('Bronze Helm') + '.click()');
+    ok('satchel Equip fills the combat slot', ev('state.combatEquipped.helmet') === 'bronze_helm',
+       JSON.stringify(ev('state.combatEquipped')));
+    ok('it does NOT touch the skilling loadout', JSON.stringify(ev('state.skillingEquipped')) === '{}');
+
+    ev('renderInventory();');
+    ok('an equipped row offers Remove', ev(eqBtn('Bronze Helm') + '.textContent') === 'Remove');
+    ev(eqBtn('Bronze Helm') + '.click()');
+    ok('Remove unequips', ev('state.combatEquipped.helmet===undefined') === true);
+
+    /* The level gate is the one that matters — equipBodyItem toasts and returns,
+       so a bypass here would be silent. */
+    ev(`state.items={steel_helm:1}; state.combatEquipped={}; state.combatXp.defence=0; renderInventory();`);
+    const gate = ev(`(function(){ var b=${eqBtn('Steel Helm')};
+      return b?{dis:b.disabled, txt:b.textContent}:null; })()`);
+    ok('under-level gear is disabled, not clickable', gate && gate.dis === true, JSON.stringify(gate));
+    ok('the button shows the wield level', gate && /^Lv \d+$/.test(gate.txt), gate && gate.txt);
+    ev(eqBtn('Steel Helm') + '.click()');
+    ok('clicking it equips nothing', ev('state.combatEquipped.helmet===undefined') === true);
+
+    ev(`state.combatXp.defence=XP_CUM[40]; renderInventory();`);
+    ev(eqBtn('Steel Helm') + '.click()');
+    ok('it equips once the level is met', ev('state.combatEquipped.helmet') === 'steel_helm');
+
+    /* Two-handed weapons must still evict the shield through this path. */
+    const twoH = ev(`Object.keys(ITEMS).find(k=>ITEMS[k].twoHanded&&ITEMS[k].cgear)`);
+    if (twoH) {
+      ev(`state.items={bronze_shield:1}; state.items['${twoH}']=1;
+          state.combatEquipped={shield:'bronze_shield'};
+          state.combatXp.attack=XP_CUM[99]; state.combatXp.defence=XP_CUM[99]; renderInventory();`);
+      // Matched by name here rather than via eqBtn(), since the id is dynamic.
+      ev(`(function(){ for(var r of document.querySelectorAll('.inv-item')){
+        var n=r.querySelector('.inv-name'), b=r.querySelector('.inv-equip');
+        if(n&&b&&n.textContent.indexOf(ITEMS['${twoH}'].name)===0){ b.click(); return; } } })()`);
+      ok('a 2H equipped from the satchel still drops the shield',
+         ev('state.combatEquipped.shield===undefined') === true && ev('state.combatEquipped.weapon') === twoH,
+         JSON.stringify(ev('state.combatEquipped')));
+    }
+
+    /* Jewelry is deliberately excluded — ring_l/ring_r/amulet exist in BOTH
+       loadouts, so a one-click button would have to guess which one. */
+    ev(`state.items={sapphire_ring:1,pine_log:5}; state.combatEquipped={}; renderInventory();`);
+    ok('jewelry gets no satchel Equip button', ev(eqBtn('Sapphire Ring')) === null);
+    ok('raw materials get no satchel Equip button', ev(eqBtn('Pine Log')) === null);
+
+    /* Width regression: the WORN badge and the Remove button together ellipsised
+       "Bronze Helm" to "Bronze ...". They must stay mutually exclusive. */
+    ev(`state.items={bronze_helm:1,bronze_chest:1,iron_helm:1,bronze_sword:1,bronze_shield:1};
+        state.combatEquipped={helmet:'bronze_helm'}; state.combatXp.defence=XP_CUM[12]; renderInventory();`);
+    const both = ev(`(function(){ for(var r of document.querySelectorAll('.inv-item')){
+      var b=r.querySelector('.inv-equip');
+      if(b&&b.textContent==='Remove'&&r.querySelector('.inv-eq')) return true; } return false; })()`);
+    ok('WORN badge and Remove never share a row', both === false);
   }
 
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));

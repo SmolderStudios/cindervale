@@ -1726,6 +1726,15 @@ select.dev-input{padding-right:26px}
 .inv-item .inv-eq{flex:none;font-size:calc(10px*var(--tscale));letter-spacing:.3px;
   text-transform:uppercase;color:#9ad1a0;background:#16240f;border:1px solid #35502c;
   border-radius:9px;padding:1px 5px;margin-left:3px;line-height:1.5}
+/* Equip straight off the satchel row. Sits left of Sell and is deliberately the
+   narrower of the two — "Equip"/"Remove" rather than a slot name — because the
+   row already carries an icon, a name, a qty pill and the sell button. */
+.inv-item .inv-equip{background:linear-gradient(180deg,#3d2a12,#28190a);border:1px solid var(--trim-d);
+  color:var(--trim);border-radius:4px;font-size:calc(12px*var(--tscale));padding:2px 7px;flex:none;
+  font-family:inherit;cursor:var(--cur-pointer)}
+.inv-item .inv-equip:hover:not(:disabled){border-color:var(--trim);filter:brightness(1.15)}
+.inv-item .inv-equip.on{background:linear-gradient(180deg,#1c2c16,#132009);border-color:#35502c;color:#9ad1a0}
+.inv-item .inv-equip:disabled{opacity:.4;cursor:not-allowed}
 .inv-empty{color:var(--muted);font-size:calc(14px*var(--tscale));font-style:italic}
 .sell-all{width:100%;margin-top:10px;background:var(--raised-s);border:1px solid var(--trim-d);
   color:var(--text);border-radius:4px;padding:6px;font-size:calc(14px*var(--tscale));}
@@ -4593,7 +4602,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.107</div>
+  <div class="mm-ver">v0.9.108</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -20563,12 +20572,56 @@ function renderInventory(){
     // quantity is visible rather than mysterious.
     const worn=reservedForEquip(id);
     const sellMax=Math.max(0,q-worn);
-    if(worn){
+    /* The Remove button below already says "this is on your body", in green, and
+       it only exists for combat gear. Showing the WORN badge as well cost enough
+       width to ellipsis "Bronze Helm" down to "Bronze ..." — so the two never
+       appear together. Anything the button does NOT cover (jewelry, a cgear piece
+       somehow reserved from another slot) still gets the badge. */
+    const _hasRemoveBtn=!!(it.cgear&&it.cslot&&(state.combatEquipped||{})[it.cslot]===id);
+    if(worn&&!_hasRemoveBtn){
       const eqBadge=document.createElement('span');
       eqBadge.className='inv-eq';
       eqBadge.textContent='Worn';
       eqBadge.title='Worn on a loadout — unequip it before selling this one.';
       row.insertBefore(eqBadge,row.querySelector('.qty'));
+    }
+    /* Equip / Remove straight from the satchel (0.9.108). Equipping used to mean
+       Gear tab → find the slot → open its picker → find the item, which is four
+       steps to put on a helmet you are already looking at. equipBodyItem already
+       owns the level gate, the multi-slot dedupe and the 2H/shield conflict, so
+       this is purely a second entry point to it — no rules live here.
+
+       Deliberately combat-gear only. Rings and amulets share slot names across
+       BOTH loadouts, so a one-click button would have to guess which one you
+       meant and would be wrong about half the time; those keep the gear panel,
+       where the loadout you are editing is explicit. */
+    if(it.cgear && it.cslot){
+      const eqBtn=document.createElement('button'); eqBtn.className='inv-equip';
+      const ce=state.combatEquipped||{};
+      const wornHere=ce[it.cslot]===id;
+      const req=combatGearReq(id);
+      if(wornHere){
+        eqBtn.classList.add('on');
+        eqBtn.textContent='Remove';
+        eqBtn.title='Take this off — frees the '+it.cslot+' slot';
+        eqBtn.addEventListener('click',()=>unequipBodyItem(it.cslot,'combat'));
+      }else if(req && cmbLvl(req.stat)<req.level){
+        /* Show the wield requirement on the face of the button rather than
+           letting the click fail into a toast — the crafting card never showed
+           it either, so this is often the first place the player learns it. */
+        eqBtn.textContent='Lv '+req.level;
+        eqBtn.disabled=true;
+        eqBtn.title='Requires '+req.level+' '+(req.stat==='attack'?'Attack':'Defence')
+                   +' to wield (you have '+cmbLvl(req.stat)+')';
+      }else{
+        eqBtn.textContent='Equip';
+        const occupant=ce[it.cslot];
+        eqBtn.title=occupant&&ITEMS[occupant]
+          ? 'Equip to '+it.cslot+' — replaces '+ITEMS[occupant].name
+          : 'Equip to your '+it.cslot+' slot';
+        eqBtn.addEventListener('click',()=>equipBodyItem(id,it.cslot,'combat'));
+      }
+      row.appendChild(eqBtn);
     }
     if(sv>0){
       const sellBtn=document.createElement('button'); sellBtn.className='sell';
