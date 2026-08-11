@@ -4344,10 +4344,28 @@ body:not(.is-demo) .demo-only{display:none !important}
 @keyframes sk-breathe{ 0%,100%{opacity:1} 50%{opacity:.58} }
 
 /* Sheen: one narrow highlight crossing the card. Long gap between passes — a
-   fast repeating sweep reads as a loading bar, not as "this is alive". */
-.sk-live::after{
-  content:''; position:absolute; top:0; bottom:0; width:38%; z-index:-1;
-  pointer-events:none; left:-45%;
+   fast repeating sweep reads as a loading bar, not as "this is alive".
+
+   ON ITS OWN ELEMENT, NOT ::after (0.9.113). This used to be `.sk-live::after`,
+   and on a painted banner that is the SAME pseudo-element as
+   `.sk-banner.has-art::after` — the vertical gradient that keeps the xp numbers
+   readable over the painting. They collided, and the result was worse than
+   either intent:
+
+     * `.sk-banner.has-art::after` is two classes to `.sk-live::after`'s one, so
+       it won `background` — the pseudo painted the BLACK darkening gradient.
+     * only this rule set `width`, so that black gradient was 38% wide.
+     * `left` was animated, and an animation beats any normal declaration
+       whatever its specificity, so the black slab slid across the card.
+
+   Net effect while training a skill with art: a black shadow bar sweeping over
+   the painting every 5.6s, and no legibility band at all underneath the numbers
+   it exists to protect. A real element cannot collide with a pseudo, so both
+   effects now get to do their job. */
+.sk-banner-sheen{ display:none; }
+.sk-live .sk-banner-sheen{
+  display:block; position:absolute; top:0; bottom:0; width:38%; z-index:-1;
+  pointer-events:none; left:-45%; border-radius:inherit;
   background:linear-gradient(100deg, transparent,
     color-mix(in srgb, var(--sk-accent,#c79b4e) 17%, transparent) 45%, transparent);
   animation:sk-sheen 5.6s ease-in-out infinite;
@@ -4409,7 +4427,7 @@ body:not(.is-demo) .demo-only{display:none !important}
 /* An idle banner must be completely still, and so must the whole thing for
    anyone who has asked the OS for less motion. */
 @media (prefers-reduced-motion: reduce){
-  .sk-live::after,.sk-live .sk-banner-glow,.sk-live .sk-banner-art,
+  .sk-live .sk-banner-sheen,.sk-live .sk-banner-glow,.sk-live .sk-banner-art,
   .sk-live .sk-banner-icon,.sk-live .sk-banner-fill::after,.sk-embers i{
     animation:none !important;
   }
@@ -4625,7 +4643,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.112</div>
+  <div class="mm-ver">v0.9.113</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -24927,6 +24945,10 @@ function renderXpDetail(){
       +(_skLive?' sk-live':'')+'" style="--sk-accent:'+_accent+'">'
     +(bannerArt?'<img class="sk-scene" src="'+bannerArt+'" alt="">':'')
     +'<div class="sk-banner-glow" aria-hidden="true"></div>'
+    /* The sheen needs a real element of its own: as a pseudo it shared ::after
+       with the painted banner's legibility gradient and turned it into a black
+       slab sliding over the art. Emitted always, shown only by .sk-live. */
+    +'<div class="sk-banner-sheen" aria-hidden="true"></div>'
     /* The huge faint skill icon was this pass's answer to a blank card. A skill
        that has a painting does not need it, and the two stacked read as clutter
        — the watermark sits exactly where the art is densest, on the right. */
