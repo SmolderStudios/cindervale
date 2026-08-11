@@ -4075,6 +4075,29 @@ body:not(.is-demo) .demo-only{display:none !important}
   line-height:1.6; white-space:pre-wrap; text-align:left; pointer-events:none; z-index:500;
   box-shadow:0 8px 22px rgba(0,0,0,.9);
 }
+/* ── Tree tooltip legibility (0.9.111) ──────────────────────────────────────────
+   `.tnode.locked{opacity:.62}` dimmed the node to read as locked, and cost the
+   tooltip twice over:
+
+     1. opacity applies to the whole subtree INCLUDING ::after, so the tooltip
+        itself rendered at 62% — washed out and hard to read, which is worst on
+        exactly the nodes whose tooltip you most need (a locked pinnacle is the
+        one node whose text explains why it is locked).
+     2. any opacity below 1 creates a stacking context, which traps the tooltip's
+        z-index:500 inside the node. Sibling nodes later in the DOM then paint on
+        top of it, so the bottom of the tooltip disappeared behind the next row.
+
+   Dim the node's element children instead. A pseudo-element is not matched by
+   `> *`, so the tooltip is left at full strength and is free to escape. Every
+   child of .tnode is an element (.tp / .tn-name / .tn-eff / .tn-buy), so this
+   dims exactly what the old rule dimmed. The connector stub is a pseudo-element
+   and needs dimming by hand. */
+.tnode.locked{ opacity:1; }
+.tnode.locked > *{ opacity:.62; }
+.tree-tier.branched .tnode.locked::before{ opacity:.62; }
+/* Lift the hovered node above its siblings so nothing can underlap its tooltip,
+   whatever stacking contexts the rest of the row happens to create. */
+.tnode:hover{ z-index:600; }
 
 .tree-gm-hd{
   display:flex; align-items:baseline; gap:9px; margin:22px 0 14px; padding-top:12px;
@@ -4602,7 +4625,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.110</div>
+  <div class="mm-ver">v0.9.111</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -24117,6 +24140,21 @@ function positionTooltip(tt, x, y){
   // so hovers never jump sides depending on mouse position.
   let tx=cx+14, ty=cy-10;
   if(tx+tw>W-10) tx=Math.max(10, W-tw-10);
+  /* Never cover the cursor (0.9.111). The satchel is the right-hand column, so a
+     tooltip opened there is always the clamped case above — and clamping slides it
+     back LEFT across the cursor, parking it on top of the row you are pointing at
+     and its Sell / Equip buttons. The tooltip is pointer-events:none so the click
+     still lands, but you cannot see what you are clicking, which is worse.
+
+     So after clamping, if the box still spans the cursor's column, move it clear
+     vertically: below the cursor by preference, above it if there is no room
+     below. Off-screen clamping is unchanged — this only ever shifts the box along
+     y, and _ttFlipY still has the final say on staying in the viewport. */
+  const spansCursor = cx > tx-6 && cx < tx+tw+6;
+  if(spansCursor){
+    const below=cy+24;
+    ty = (below+th <= H-10) ? below : Math.max(10, cy-th-18);
+  }
   // Vertically we DO flip: a tall tooltip near the bottom would otherwise be
   // clamped to the bottom edge and cover the very thing being hovered. Flip it
   // above the cursor instead, and only fall back to clamping when it fits in
