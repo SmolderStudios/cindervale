@@ -4593,7 +4593,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.106</div>
+  <div class="mm-ver">v0.9.107</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -6888,6 +6888,14 @@ function setSocketGem(itemId, slotIdx, gemId){
   state.items[gemId]=(state.items[gemId]||0)-1;
   sd.gems[slotIdx]=gemId;
   saveGame();
+  /* Topaz and Onyx are read by socketBonuses(), which walks state.equipped —
+     the SKILLING loadout. Combat gear can never sit there, so a skilling gem in
+     armour pays out exactly zero forever, with no error and no greyed-out slot.
+     A Flawless Onyx is ~4 hours of gem-rock mining, so this is worth saying. */
+  try{
+    var _g=SOCKET_GEMS[gemId], _it=ITEMS[itemId];
+    if(_g&&_it&&_it.cgear&&(_g.color==='topaz'||_g.color==='onyx')) showHint('socket_skilling_gem');
+  }catch(e){}
   return true;
 }
 
@@ -17871,6 +17879,13 @@ function setAction(skillKey,actId){
           .map(([id])=>(ITEMS[id]&&ITEMS[id].name)||id)
           .join(', ');
         toast(`⚠ Not enough materials — need ${missing}.`);
+        /* The leather lines are the one case where the missing material is made
+           on a DIFFERENT tab. Every other recipe's inputs are gathered, so the
+           toast alone is enough; here it names a cured leather the player has
+           never seen and cannot find. */
+        try{
+          if(Object.keys(act.inp).some(mid=>/_leather$/.test(mid)&&(state.items[mid]||0)<act.inp[mid])) showHint('craft_leather');
+        }catch(e){}
         return;
       }
     }
@@ -18515,6 +18530,18 @@ function renderCrafting(){
   // ── Selected panel ──
   const cat=CR_CATS.find(c=>c.key===_crTab);
   let acts=sk.acts.filter(a=>a.cat===cat.key);
+
+  /* T3+ tool recipes are gated on rare COMBAT drops with no skilling source, so
+     the whole row renders depleted and — because buildActBtn only attaches a
+     click listener to a live card — clicking one does nothing at all. No toast
+     can fire from an inert card, so the explanation has to come from the render.
+     Fires only once the player is high enough to see the dead row. */
+  if(cat.key==='tool'){
+    try{
+      if(levelFromXp(state.xp.crafting)>=28 && !(state.items&&state.items.beast_sinew>0)
+         && acts.some(a=>a.inp&&a.inp.beast_sinew)) showHint('craft_tool_drops');
+    }catch(e){}
+  }
 
   // Tools tab gets a second-tier sub-tab row, one per skill that owns tools.
   // Filters `acts` down to only the tools belonging to the selected skill.
@@ -22771,6 +22798,14 @@ function _wireGearSelInteraction(sel){
 /* Sell X modal helpers */
 function openSellModal(id, sv, maxQty){
   const it=ITEMS[id];
+  /* Selling the last copy runs releaseIfGone → reclaimSocketsFor, which hands the
+     gems back but deletes the sockets outright — thousands of gold in drilling,
+     silently. Enchants survive a sale, so the two systems disagree and the wrong
+     guess is the intuitive one. Warn before the confirm button, not after. */
+  try{
+    var _sd=state.sockets&&state.sockets[id];
+    if(_sd&&_sd.slots>0&&maxQty>=(state.items[id]||0)) showHint('socket_sell_loss');
+  }catch(e){}
   // Never offer the worn copy, whatever the caller passed in.
   maxQty=Math.min(maxQty==null?sellableQty(id):maxQty, sellableQty(id));
   if(maxQty<=0){ toast('Unequip it first — that is the one you are wearing.'); return; }
@@ -24032,12 +24067,28 @@ function grantItem(id, qty){
     markDiscovered(id);
     logNotification('rare', id, 'Crafted '+it.name);
     showItemPop(id, 1);
+    /* Crafting a tool does NOT equip it — buyShop used to, so the game's own
+       precedent trains the wrong expectation and the speed bonus sits inert.
+       The Skill Tools block in the gear panel also defaults collapsed. */
+    try{
+      var _eq=state.equipped||{};
+      var _has=false; for(var _s in _eq){ if(_eq[_s]===id){ _has=true; break; } }
+      if(!_has) showHint('craft_tool_equip');
+    }catch(e){}
     return 1;
   }
   // Log rare drops to the notification log
   if(it.rare){
     logNotification('rare', id, `Found ${qty>1?qty+'× ':''}${it.name}`);
   }
+  /* Two things the Crafting panel cannot tell you, caught at the moment the item
+     lands: combat gear carries a WIELD level (Attack for weapons, Defence for the
+     rest) that is separate from the crafting level on the card, and gem jewelry
+     points at Enchant/Socket tabs that only exist under the Jeweler skill. */
+  try{
+    if(it.cgear && typeof combatGearReq==='function' && !meetsCombatReq(id)) showHint('craft_gear_req');
+    if(typeof JEWELRY_GEM_TIER!=='undefined' && JEWELRY_GEM_TIER[id] && selectedSkill!=='jeweler') showHint('jeweler_tabs');
+  }catch(e){}
   // If the item already has a slot, always add qty
   if((state.items[id]||0)>0){
     state.items[id]=(state.items[id]||0)+qty;
@@ -25414,6 +25465,11 @@ function renderEnchantDetail(box, itemId){
   var tier=availEnchants.length?ENCHANTS[availEnchants[0]].tier:1;
   var cost=ENCHANT_COST_BY_TIER[tier]||ENCHANT_COST_BY_TIER[1];
   var canAfford=Object.keys(cost).every(function(mid){return (state.items[mid]||0)>=cost[mid];});
+
+  /* Every non-active row still reads "Apply", and clicking one charges the FULL
+     tier cost again and discards the enchant it replaces — no confirm, no refund.
+     Warn while they are looking at the menu, not after they have paid. */
+  if(currentEnch){ try{ showHint('enchant_replace'); }catch(e){} }
 
   var card=document.createElement('div');
   card.style.cssText='border:1px solid '+(currentEnch?'var(--ember)':'var(--trim-d)')+';border-radius:6px;padding:8px 10px;background:var(--raised)';
@@ -31141,12 +31197,68 @@ const HINTS={
     title:'Your satchel is nearly full',
     body:"A slot is one item type, not one item — nine hundred logs cost the same as one log.\n\nWhen it fills, whatever you are running stops. Sell what you are not using, or buy more slots from the bar at the top of the satchel.",
   },
+
+  /* ── Crafting (0.9.107) ───────────────────────────────────────────────────
+     Four things the Crafting panel does not say and cannot be deduced from it. */
+  craft_tool_equip:{
+    guard:true,
+    title:'Your new tool is not in use yet',
+    body:"Crafting a tool puts it in your gear, not in your hands. Until you equip it the speed bonus does nothing.\n\nOpen Gear on the right, switch the filter to Skilling, and expand Skill Tools — that section starts collapsed, which is why it is easy to miss.",
+    cta:{label:'Open my gear', run:()=>{ try{ rightTab='gear'; _gearFilter='skilling'; _gearToolsOpen=true; renderRightPanel(); }catch(e){} }},
+  },
+  craft_gear_req:{
+    guard:true,
+    title:'You cannot wear that yet',
+    body:"Combat gear has a second requirement the crafting card never shows: a wield level. Weapons need Attack, everything else needs Defence, and it climbs with the tier — Iron wants 10, Steel 20, Mithril 30.\n\nThat is a combat level, not a crafting level. Making the piece and being allowed to wear it are two different milestones.\n\nIt keeps. Craft ahead if you want, just do not expect to equip it today.",
+  },
+  craft_leather:{
+    guard:true,
+    title:'Leather armour needs cured leather',
+    body:"Hides do not go into armour directly. They are tanned first: the Tannery tab in Crafting turns raw hides into leather, and the leather is what the armour recipes take.\n\nSo it is two steps — tan, then craft. Check the Tannery tab for the tier you are missing.",
+    cta:{label:'Show me the Tannery', run:()=>{ try{ selectedSkill='crafting'; viewTab='acts'; _crTab='tannery'; renderAll(); }catch(e){} }},
+  },
+  craft_tool_drops:{
+    guard:true,
+    title:'The tool ladder needs combat drops from here',
+    body:"Tier 3 tools and above are not pure skilling recipes any more. Each one also wants a rare monster drop — Beast Sinew first, then Shade Ember, then Voidheart at the top.\n\nThere is no skilling, shop or farming source for any of them. Beast Sinew comes off low-level monsters and their bosses; the Rat Queen is the usual first one.\n\nThe cards stay dark until you have the drop, which is why clicking them does nothing.",
+  },
+
+  /* ── Jeweler: enchanting, sockets, gems (0.9.107) ─────────────────────────
+     The two systems the game points at most often and locates least well. */
+  jeweler_tabs:{
+    guard:true,
+    title:'Enchanting and Sockets live under Jeweler',
+    body:"Tooltips will tell you to \"visit the Enchanting tab\" without saying where it is. Both it and the Socket tab only appear while Jeweler is your selected skill — from anywhere else in the game they are not on screen at all.\n\nSelect Jeweler on the left and the two extra tabs appear above the activity cards.",
+    cta:{label:'Open Jeweler', run:()=>{ try{ selectedSkill='jeweler'; viewTab='acts'; renderAll(); }catch(e){} }},
+  },
+  enchant_replace:{
+    guard:true,
+    title:'Changing an enchant costs full price',
+    body:"A piece holds one enchant. Applying a different one does not swap it — it charges the whole material cost again and the old enchant is simply gone.\n\nRemove refunds nothing either. At the high tiers a single change of mind is tens of hours of gathering, so pick deliberately rather than trying one to see.",
+  },
+  socket_skilling_gem:{
+    guard:true,
+    title:'That gem cannot pay out from combat gear',
+    body:"Topaz and Onyx are skilling gems — sell value, speed and XP. Those bonuses are only read from your skilling loadout, and combat armour can never sit in it.\n\nSocketed into a helmet or chestplate they contribute exactly zero, forever. Put them in jewelry instead. Combat armour wants Sanguine, Verdant or Azure.",
+  },
+  socket_sell_loss:{
+    guard:true,
+    title:'Selling this destroys its sockets',
+    body:"The gems come back to your satchel, but the sockets themselves do not. Drilling is paid in gold and gem dust and none of it is refunded — sell the last copy and that investment is gone.\n\nEnchants behave the opposite way and survive a sale, which makes this easy to guess wrong.\n\nIf you are replacing this with a better tier, pop the gems and keep one copy rather than clearing the stack.",
+  },
 };
 function showHint(id, extra){
-  if(!state||!state.hintsOn) return;
+  if(!state) return;
+  const h=HINTS[id]; if(!h) return;
+  /* `guard:true` fires regardless of the hints setting, the same reasoning that
+     made combat_unarmed force it at its call site: these are not tips, they are
+     the last thing standing between the player and an irreversible loss or a
+     hard block. It matters because hintsOn is armed for NEW characters only —
+     every save made before 0.9.99 has it false forever, so a plain tip can
+     never reach the people already playing. */
+  if(!h.guard && !state.hintsOn) return;
   if(!state.hints||state.hints[id]) return;
   if(typeof mmAtMenu!=='undefined'&&mmAtMenu) return;
-  const h=HINTS[id]; if(!h) return;
   state.hints[id]=1;                      // set at paint time, before anything can fail
   let el=document.getElementById('hintCard');
   if(!el){ el=document.createElement('div'); el.id='hintCard'; el.className='hint-card'; document.body.appendChild(el); }

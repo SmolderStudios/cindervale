@@ -1180,6 +1180,81 @@ setTimeout(() => {
     }
   }
 
+  section('Contextual hint cards (v0.9.107)');
+  {
+    /* Every failure mode here is silent. A renamed hint id leaves a showHint()
+       call that does nothing; a renamed global inside a cta.run() throws into a
+       swallowed catch; and a hint that is not guard:true can never reach an
+       existing save, because hintsOn is armed for NEW characters only. */
+    ev(`mmAtMenu=false; state=defaultState(); normalizeState(); state.hintsOn=false; state.hints={}; renderAll();`);
+
+    const refs = [...new Set([...html.matchAll(/showHint\('([a-z_]+)'/g)].map(m => m[1]))];
+    const keys = ev('Object.keys(HINTS)');
+    const dangling = refs.filter(r => keys.indexOf(r) < 0);
+    ok('no showHint() call references a missing hint', dangling.length === 0,
+       dangling.length ? 'dangling: ' + dangling.join(', ') : refs.length + ' ids wired');
+    const orphan = keys.filter(k => refs.indexOf(k) < 0);
+    ok('no HINTS entry is unreachable', orphan.length === 0,
+       orphan.length ? 'never shown: ' + orphan.join(', ') : keys.length + ' all reachable');
+
+    /* cta.run bodies poke globals directly (selectedSkill, viewTab, _crTab,
+       _gearFilter, ...) and the call site wraps them in try{}catch{}, so a
+       renamed global turns the button into a no-op with nothing logged. */
+    const ctas = ev(`(()=>{const out=[];
+      for(const k of Object.keys(HINTS)){ const h=HINTS[k]; if(!h.cta) continue;
+        let err=null; try{ h.cta.run(); }catch(e){ err=String(e); }
+        out.push({k,err}); }
+      return out;})()`);
+    const broken = ctas.filter(c => c.err);
+    ok('every hint CTA runs without throwing', broken.length === 0,
+       broken.length ? broken.map(b => b.k + ': ' + b.err).join(' | ') : ctas.length + ' CTAs exercised');
+
+    const shown = () => ev(`(()=>{const e=document.getElementById('hintCard');
+      return (e&&e.style.display!=='none')?e.querySelector('.hc-title').textContent:null;})()`);
+    const reset = () => ev(`(()=>{const e=document.getElementById('hintCard'); if(e) e.style.display='none';})()`);
+
+    /* The whole point of guard:true — these reach players whose save predates
+       the hints system. Verified against hintsOn:false, which is what every
+       pre-0.9.99 save carries. */
+    ev(`state.hints={}; state.gear=[]; state.equipped={}; state.items={};`);
+    ev(`grantItem('bronze_axe',1)`);
+    ok('a guard hint reaches a save with hintsOn:false', shown() !== null, String(shown()));
+    reset();
+
+    // NOTE: state.hints is deliberately NOT cleared here — the one-shot flag set
+    // by the call above is the thing under test.
+    ev(`state.gear=[]; grantItem('bronze_pick',1)`);
+    ok('a guard hint still fires only once', shown() === null, String(shown()));
+    reset();
+
+    /* A non-guard hint must STAY gated, or turning hints off in settings stops
+       meaning anything. */
+    const gated = ev(`(()=>{ state.hints={}; state.hintsOn=false;
+      showHint('need_fire');
+      const e=document.getElementById('hintCard');
+      return (e&&e.style.display!=='none')?e.querySelector('.hc-title').textContent:null; })()`);
+    ok('a non-guard hint stays suppressed when hints are off', gated === null, String(gated));
+    reset();
+
+    ok('the guard set is exactly the 8 loss-preventing hints',
+       ev('Object.keys(HINTS).filter(k=>HINTS[k].guard).length') === 8,
+       ev('Object.keys(HINTS).filter(k=>HINTS[k].guard).join(", ")'));
+
+    /* Spot-check the two triggers most likely to silently rot: both depend on
+       item-data shape (cgear/ctier, JEWELRY_GEM_TIER) rather than on a flag. */
+    ev(`state.hints={}; state.items={}; state.xp.defence=0; state.hintsOn=false;`);
+    ev(`(()=>{const id=Object.keys(ITEMS).find(k=>ITEMS[k].cgear&&ITEMS[k].ctier>=3&&ITEMS[k].cslot!=='weapon'); grantItem(id,1);})()`);
+    ok('unwearable crafted gear still warns', shown() === 'You cannot wear that yet', String(shown()));
+    reset();
+
+    ev(`state.hints={}; state.items={}; state.sockets={};`);
+    const sg = ev(`(()=>{const id=Object.keys(ITEMS).find(k=>ITEMS[k].cgear&&maxSocketsFor(k)>0);
+      state.items[id]=1; state.sockets[id]={slots:1,gems:[null]}; state.items.onyx_flaw=1;
+      return setSocketGem(id,0,'onyx_flaw');})()`);
+    ok('a skilling gem in combat armour still warns', sg === true && shown() === 'That gem cannot pay out from combat gear', String(shown()));
+    reset();
+  }
+
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));
   process.exit(fail ? 1 : 0);
 }, 2500);
