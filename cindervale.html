@@ -4593,7 +4593,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.105</div>
+  <div class="mm-ver">v0.9.106</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -16268,15 +16268,37 @@ function autoUseHealPotion(){
   const missing=(combat.youMaxHp||0)-(combat.youHp||0);
   if(missing<=0) return false;
   const avail=combatHealItems();   // draughts + cooked food + poultices (1.0.8)
-  if(!avail.length) return false;
   // Player-picked auto-eat item wins if they still own it.
   const sel=state.autoHeal&&state.autoHeal.itemId;
   if(sel){ const s=avail.find(a=>a.id===sel); if(s) return useHealPotion(s.id); }
-  // Otherwise: largest heal that fits the missing-HP gap (no waste); else smallest.
-  let pick=null;
-  for(const p of avail){ if(p.heal<=missing) pick=p; }
-  if(!pick) pick=avail[0];
-  return useHealPotion(pick.id);
+  if(avail.length){
+    // Largest heal that fits the missing-HP gap (no waste); else smallest.
+    let pick=null;
+    for(const p of avail){ if(p.heal<=missing) pick=p; }
+    if(!pick) pick=avail[0];
+    return useHealPotion(pick.id);
+  }
+  /* Heal-over-time fallback (auto-eat fix). Marrow Broth and the stews carry
+     potion.regen and NO potion.heal, so combatHealItems() — instant heals only —
+     never listed them and auto-eat sat completely inert for anyone whose only
+     food was a broth: no toast, no log line, it just returned false every swing.
+     Instant heals still win outright above; this runs only when there are none.
+     `pending` is the HP still owed by regens already ticking, so bowls stack only
+     until the missing gap is covered rather than one per swing indefinitely. */
+  const regens=combatRegenFoods();
+  if(!regens.length) return false;
+  const nowR=Date.now();
+  let pending=0;
+  if(Array.isArray(combat.regens)){
+    for(const rg of combat.regens){ if(rg.until>nowR) pending+=(rg.acc||0)+rg.rate*(rg.until-nowR)/1000; }
+  }
+  if(pending>=missing) return false;          // enough already inbound — don't waste food
+  // Reachable only here: a regen food chosen in the auto-eat picker is invisible to
+  // combatHealItems(), so `sel` fell through the instant-heal branch untouched.
+  const selR=sel?regens.find(r=>r.id===sel):null;
+  let pickR=null;
+  for(const r of regens){ if(r.total<=(missing-pending)) pickR=r; }
+  return useRegenFood((selR||pickR||regens[0]).id);
 }
 
 /* All owned heal-over-time regen foods (1.0.21) — items with potion.regen.
@@ -17501,6 +17523,15 @@ function completeDoubleAction(act,cycles){
 function tick(){
   if(typeof questCheck==='function') questCheck();
   if(mmAtMenu) return;
+  /* The dock's progress track, readout and sub-rows are generated from live state,
+     so it has to repaint every tick. questCheck() only rendered when a step ADVANCED
+     (it returns at `if(!done)`), which froze the bar at whatever it read the moment
+     the step opened — and a save reloaded mid-onboarding showed no dock at all,
+     since mmFinishStart's only render is gated on `isNew`. Cheap: renderQuestDock's
+     _dockCache html-compare short-circuits before any DOM write unless a displayed
+     number actually changed. Must stay at the top of tick(): the solo-skill section
+     below returns early on `!state.action`, which is exactly onboarding steps 4 and 5. */
+  if(typeof renderQuestDock==='function') renderQuestDock();
   // Land any repaint that was held back while a tooltip was open (see renderTick).
   flushOwedRepaint();
   const now=Date.now();
@@ -20101,7 +20132,23 @@ let invPage=0;
 const INV_PAGE_SIZE=10; // items per page in the satchel
 
 function renderInventory(){
-  const box=$('inventory'); box.innerHTML='';
+  const box=$('inventory');
+  /* Keep the two text fields in this panel alive across the rebuild. The panel is
+     thrown away wholesale, so the field being typed into is destroyed on every
+     keystroke (the search's own input handler calls back in here to re-filter) and
+     again on every automatic repaint via renderTick(). Focus fell back to <body>
+     and the player had to re-click between letters. Same class of fix as the SELECT
+     guards in renderGear/renderCenter, except a search box must still re-filter
+     while focused, so the caret is restored after the rebuild instead of the
+     rebuild being skipped. Captured here because innerHTML='' below moves
+     activeElement off the input. */
+  const _oldSrch=box.querySelector('.inv-search');
+  const _srchFocus=!!_oldSrch&&document.activeElement===_oldSrch;
+  const _srchS=_srchFocus?_oldSrch.selectionStart:0, _srchE=_srchFocus?_oldSrch.selectionEnd:0;
+  const _oldQty=box.querySelector('.inv-qtybox');
+  const _qtyFocus=!!_oldQty&&document.activeElement===_oldQty;
+  const _qtyS=_qtyFocus?_oldQty.selectionStart:0, _qtyE=_qtyFocus?_oldQty.selectionEnd:0;
+  box.innerHTML='';
 
   const owned=Object.entries(state.items).filter(([id,q])=>q>0&&ITEMS[id]);
 
@@ -20116,13 +20163,27 @@ function renderInventory(){
   const sortLabels={category:'Cat',name:'A–Z',qty:'Qty',value:'Val'};
   const sortBtn=document.createElement('button'); sortBtn.className='inv-sort on';
   sortBtn.textContent='↕ '+sortLabels[invSort];
-  sortBtn.title='Sort order';
-  sortBtn.addEventListener('click',()=>{
-    invSort=sortCycle[(sortCycle.indexOf(invSort)+1)%sortCycle.length]; invPage=0;
+  sortBtn.title='Sort order — left-click: next, right-click: previous';
+  /* Step the sort mode by +/-1 with wraparound. Right-click walks backward so
+     overshooting the mode you wanted costs one click instead of three. Adding
+     sortCycle.length before the modulo keeps the backward step non-negative, and
+     Math.max(0,...) pins a stray invSort back onto the head of the cycle instead
+     of letting indexOf's -1 pick an arbitrary entry. */
+  const stepSort=dir=>{
+    const i=Math.max(0,sortCycle.indexOf(invSort));
+    invSort=sortCycle[(i+dir+sortCycle.length)%sortCycle.length]; invPage=0;
     renderInventory();
-  });
+  };
+  sortBtn.addEventListener('click',()=>stepSort(1));
+  /* Chromium raises a contextmenu event on right-click in both the browser build
+     and the Electron wrapper; preventDefault stops the page menu (Electron shows
+     no default menu, so there this is only the sort step). Touch devices have no
+     right-click — the forward click above stays the complete path for them. */
+  sortBtn.addEventListener('contextmenu',e=>{ e.preventDefault(); stepSort(-1); });
   ctrl.appendChild(sortBtn);
   box.appendChild(ctrl);
+  // Caret restore — only once searchEl is actually in the document (see top of fn).
+  if(_srchFocus){ try{ searchEl.focus(); searchEl.setSelectionRange(_srchS,_srchE); }catch(e){} }
 
   // Controls row 2: sell mode toggle
   const sellRow=document.createElement('div');
@@ -20170,7 +20231,7 @@ function renderInventory(){
      for half-typed values. */
   if(invSellMode==='x'){
     const qtyBox=document.createElement('input');
-    qtyBox.type='text'; qtyBox.inputMode='numeric'; qtyBox.placeholder='amt';
+    qtyBox.type='text'; qtyBox.inputMode='numeric'; qtyBox.placeholder='amt'; qtyBox.className='inv-qtybox';
     qtyBox.value=invSellCustom>0?String(invSellCustom):'';
     qtyBox.title='How many to sell per click. Blank = ask each time.';
     qtyBox.style.cssText='width:56px;font-size:calc(13px*var(--tscale));padding:2px 6px;'
@@ -20187,6 +20248,9 @@ function renderInventory(){
   }
 
   box.appendChild(sellRow);
+  // Caret restore for the custom-sell box (see top of fn). Its own handler never
+  // re-renders, but renderTick() does, so it needs the same protection.
+  if(_qtyFocus){ const _qb=box.querySelector('.inv-qtybox'); if(_qb){ try{ _qb.focus(); _qb.setSelectionRange(_qtyS,_qtyE); }catch(e){} } }
 
   // Category filter tabs — icon only, styled hover tooltip shows full name
   const cats=['all','gear','logs','ores','fish','cooked','bars','forage','farm','jewelry','gems','fire','potions','sea'];
@@ -20317,7 +20381,10 @@ function renderInventory(){
   });
 
   // Sort
-  const catOrder=['sea','logs','ores','fish','cooked','bars','forage','farm','jewelry','gems','fire','potions','misc'];
+  /* 'gear' leads deliberately, matching the category chip order below. It used to be
+     absent, so itemCat()==='gear' scored indexOf === -1 and landed at the front by
+     accident — right answer, wrong mechanism, and one reorder away from breaking. */
+  const catOrder=['gear','sea','logs','ores','fish','cooked','bars','forage','farm','jewelry','gems','fire','potions','misc'];
   filtered.sort(([a],[b])=>{
     if(invSort==='category'){
       const ca=catOrder.indexOf(itemCat(a)), cb=catOrder.indexOf(itemCat(b));
@@ -24125,7 +24192,15 @@ function compTierRank(id){
 }
 
 function renderCompendium(){
-  const box=$('compView'); box.innerHTML='';
+  const box=$('compView');
+  /* Same focus-loss fix as renderInventory: this panel is rebuilt wholesale, so
+     the search field is destroyed on every keystroke and on every automatic
+     repaint (renderCenter runs off renderTick). Capture the caret before
+     innerHTML='' detaches the input; it is put back after the row is re-appended. */
+  const _oldCS=box.querySelector('.comp-search');
+  const _csFocus=!!_oldCS&&document.activeElement===_oldCS;
+  const _csS=_csFocus?_oldCS.selectionStart:0, _csE=_csFocus?_oldCS.selectionEnd:0;
+  box.innerHTML='';
   if(!state.discovered) state.discovered={};
   if(!state.newlyDiscovered) state.newlyDiscovered={};
   const sm=sourceMap();
@@ -24162,6 +24237,8 @@ function renderCompendium(){
   });
   srchRow.appendChild(clearBtn);
   box.appendChild(srchRow);
+  // Caret restore — only once srch is actually in the document (see top of fn).
+  if(_csFocus){ try{ srch.focus(); srch.setSelectionRange(_csS,_csE); }catch(e){} }
 
   // Category tabs (with new-count badge on Rare tab when there are newly-discovered rares)
   const cats=document.createElement('div'); cats.className='comp-cats';
@@ -25656,7 +25733,7 @@ function renderSocketDetail(box, itemId){
             removeSocketGem(itemId, slotIdx);
             _socketSlotPicker=null;
             toast('Gem returned to satchel.');
-            renderSockets(); renderGear();
+            renderSockets(); renderGear(); renderRightPanel();
           });
           slotCard.appendChild(remBtn);
         } else {
@@ -25672,7 +25749,7 @@ function renderSocketDetail(box, itemId){
             ownedGems.forEach(function(g){ var o=document.createElement('option'); o.value=g.id; o.textContent=g.name+' ×'+g.qty+' · '+g.desc; gsel.appendChild(o); });
             (function(sIdx){ gsel.addEventListener('change',function(){
               var gid=this.value; if(!gid) return;
-              if(setSocketGem(itemId,sIdx,gid)){ toast('✦ Slotted '+(SOCKET_GEMS[gid]?SOCKET_GEMS[gid].name:'gem')+'!'); hideTooltip(); renderSockets(); renderGear(); }
+              if(setSocketGem(itemId,sIdx,gid)){ toast('✦ Slotted '+(SOCKET_GEMS[gid]?SOCKET_GEMS[gid].name:'gem')+'!'); hideTooltip(); renderSockets(); renderGear(); renderRightPanel(); }
             }); })(slotIdx);
             slotCard.appendChild(gsel);
           }
@@ -25703,7 +25780,9 @@ function renderSocketDetail(box, itemId){
       +(canAfford?'':'opacity:0.6');
     drillBtn.textContent='Drill Socket';
     drillBtn.addEventListener('click',function(){
-      if(drillSocket(itemId)){ renderSockets(); renderGear(); }
+      // renderHeader is what paints #coins — the drill deducts gold and gem dust, so
+      // without these two the header gold and the satchel both sat on stale numbers.
+      if(drillSocket(itemId)){ renderHeader(); renderSockets(); renderGear(); renderRightPanel(); }
     });
     drillRow.appendChild(drillBtn);
     card.appendChild(drillRow);
@@ -25793,7 +25872,7 @@ function renderGemExchange(box){
             saveGame();
             toast('Crafted 1× '+gemName+'!');
             hideTooltip();
-            renderSockets();
+            renderSockets(); renderRightPanel();
           });
         }
         grid.appendChild(tile);
@@ -28985,6 +29064,7 @@ function sailLaunch(i){
     const owed=wages*SILVER_PER_GOLD;
     if((state.coins||0)<owed){ toast('Not enough gold for crew wages ('+wages.toLocaleString()+'g).'); return; }
     state.coins-=owed;
+    renderHeader();   // #coins has exactly one painter; without this the header keeps the pre-wage total
   }
   const isle=sailIsle(i), dur=sailDurMs(isle);
   state.sail.voy={i:i, endsAt:Date.now()+dur, dur:dur, roll:Math.random(),
@@ -29259,7 +29339,7 @@ function sailHire(id){
   state.coins-=cost;
   if(!state.sail.crew) state.sail.crew={};
   state.sail.crew[id]=(state.sail.crew[id]|0)+1;
-  saveGame(); renderSail(); toast(role.n+' signed on.');
+  saveGame(); renderHeader(); renderSail(); toast(role.n+' signed on.');
 }
 function sailDismiss(id){
   const role=SAIL_CREW_BY_ID[id]; if(!role) return;
@@ -30996,10 +31076,14 @@ function questCheck(){
 let _dockCache='';
 function renderQuestDock(){
   let el=document.getElementById('questDock');
-  if(!onboardActive()){ if(el) el.remove(); _dockCache=''; return; }
+  /* The mmAtMenu clause tears the dock down on quit-to-menu. It is position:fixed on
+     document.body at z-index 3900, so nothing in mmShowMenu() removes it and a player
+     who quit mid-onboarding kept the objective card floating over the main menu. */
+  if(!onboardActive()||(typeof mmAtMenu!=='undefined'&&mmAtMenu)){ if(el) el.remove(); _dockCache=''; return; }
   if(!el){
     el=document.createElement('div'); el.id='questDock'; el.className='quest-dock';
     document.body.appendChild(el);
+    _dockCache='';   // fresh empty node — a stale cache would match and leave it blank
   }
   const i=state.onboard.step, step=ONBOARD_STEPS[i], n=ONBOARD_STEPS.length;
   const hidden=!!state.onboard.hidden;

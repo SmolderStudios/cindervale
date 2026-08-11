@@ -10,3 +10,9 @@ Thumbs.db
 
 # staging dir for _validate-playtest.js
 .validate-playtest/
+
+# UI theme preview scratch (build artifacts, not shipped)
+_uipreview/
+
+# icon lab scratch (build artifacts, not shipped)
+_iconlab/
