@@ -822,49 +822,89 @@ setTimeout(() => {
     ev(`state=defaultState(); normalizeState(); setRailGroup('all'); selectedSkill='woodcutting';`);
   }
 
-  section('Combat and skilling run together');
+  section('Combat and skilling are one or the other (v0.9.109)');
   {
-    /* The two loops were always independent — the 250ms tick never consults
-       combat.active and the 100ms combat timer never touches state.action. The only
-       thing enforcing "one at a time" was a state.action=null in the engage path.
-       Nothing throws if that line comes back, so it needs an assertion. */
-    // Armed on purpose: the UI-rework build refuses the first bare-handed engage,
-    // so a weaponless character would make "the fight started" fail for a reason
-    // that has nothing to do with skilling.
+    /* This INVERTS the v0.9.99 guarantee. The two loops are still independent in
+       code — the 250ms tick never consults combat.active and the 100ms combat
+       timer never touches state.action — so the ONLY things enforcing one-at-a-time
+       are the hand-off in engageCombat and the retreat in setAction. Neither throws
+       if removed, which is exactly why they are asserted here.
+
+       Both hand-offs sit BELOW every early return in their function, so a refused
+       engage or a refused activity must not stop what is already running. Those
+       negative cases are the second half of this block and matter more than the
+       positive ones: silently cancelling a player's training on a click that did
+       nothing is worse than the concurrency it replaced. */
     ev(`state=defaultState(); normalizeState();
-        state.xp.attack=XP_CUM[40]; state.xp.strength=XP_CUM[40];
-        state.xp.defence=XP_CUM[40]; state.xp.hitpoints=XP_CUM[40];
+        state.combatXp.attack=XP_CUM[40]; state.combatXp.strength=XP_CUM[40];
+        state.combatXp.defence=XP_CUM[40]; state.combatXp.hitpoints=XP_CUM[40];
         state.combatEquipped=state.combatEquipped||{};
         state.combatEquipped.weapon='bronze_sword';
+        state.hints=state.hints||{}; state.hints.combat_unarmed=1;
         state.zone='rat_warrens'; combat.monId='rat'; combat.active=false;
         state.action={skill:'woodcutting',actId:'wc1'}; state.actionStart=Date.now();
         engageCombat();`);
     // eqCombatWeapon() only checks truthiness, so a typo'd id would still "arm" the
     // character and quietly turn the setup above into a no-op.
     ok('the test weapon is a real weapon item',
-       ev(`!!(ITEMS.bronze_sword&&ITEMS.bronze_sword.cslot==='weapon')`)===true);
-    ok('engaging leaves the skilling action running',
-       ev('state.action&&state.action.skill')==='woodcutting');
-    ok('the fight actually started', ev('combat.active')===true);
+       ev(`!!(ITEMS.bronze_sword&&ITEMS.bronze_sword.cslot==='weapon')`) === true);
+    ok('the fight actually started', ev('combat.active') === true);
+    ok('engaging STOPS the skilling action', ev('state.action') === null,
+       JSON.stringify(ev('state.action')));
 
-    // ...and the reverse: picking up a skill mid-fight must not end the fight.
+    // ...and the reverse: starting a skill mid-fight must end the fight.
     ev(`setAction('mining','mi1');`);
-    ok('starting a skill mid-fight keeps the fight alive', ev('combat.active')===true);
-    ok('the skill switch took', ev('state.action&&state.action.skill')==='mining');
+    ok('starting a skill ends the fight', ev('combat.active') === false);
+    ok('the skill actually started', ev('state.action&&state.action.skill') === 'mining');
 
-    // The skilling tick has to actually PAY while a fight is running, not just
-    // survive. Backdate actionStart past one cycle and check the XP lands.
-    const wcBefore=ev('state.xp.mining');
-    ev(`state.actionStart=Date.now()-(actMs(getAct('mining','mi1'),'mining')+50); tick();`);
-    ok('skilling XP still accrues during a fight',
-       ev('state.xp.mining')>wcBefore, 'before='+wcBefore+' after='+ev('state.xp.mining'));
+    /* No skilling XP may accrue while a fight runs. Proven in two halves, because
+       "XP did not move" is vacuously true if the tick was never going to pay
+       anything: first show the SAME setup does pay with no fight, then show it
+       does not once a fight starts. */
+    ev(`combat.active=false; state.action={skill:'mining',actId:'mi1'};
+        state.actionStart=Date.now()-99999; state.xp.mining=0; tick();`);
+    const paidIdle = ev('state.xp.mining');
+    ok('control: the tick DOES pay mining XP with no fight running', paidIdle > 0, 'xp=' + paidIdle);
 
-    // exitCombat is the explicit "stop everything here" — it kills the fight, but it
-    // is a combat control and has no business clearing what you are training.
+    ev(`state.action={skill:'mining',actId:'mi1'}; state.actionStart=Date.now();
+        combat.monId='rat'; engageCombat();`);
+    ok('engaging cleared the action', ev('state.action') === null);
+    const xpBefore = ev('state.xp.mining');
+    ev(`state.actionStart=Date.now()-99999; tick(); tick();`);
+    ok('no skilling XP accrues during a fight', ev('state.xp.mining') === xpBefore,
+       'before=' + xpBefore + ' after=' + ev('state.xp.mining'));
+
+    /* NEGATIVE CASES — a click that gets refused must leave you alone. */
+    ev(`state=defaultState(); normalizeState();
+        state.hints=state.hints||{}; state.hints.combat_unarmed=1;
+        state.combatEquipped={weapon:'bronze_sword'};
+        state.zone='rat_warrens'; combat.active=false;
+        state.action={skill:'woodcutting',actId:'wc1'}; state.actionStart=Date.now();
+        combat.monId=(MONSTERS.find(m=>m.lvl>combatLevel()+5)||{id:'rat'}).id;
+        engageCombat();`);
+    ok('an over-level engage does NOT stop your training',
+       ev('state.action&&state.action.skill') === 'woodcutting', JSON.stringify(ev('state.action')));
+    ok('and no fight started', ev('combat.active') === false);
+
+    // A cooking start refused for an unlit fire must not retreat an active fight.
+    ev(`state=defaultState(); normalizeState();
+        state.hints=state.hints||{}; state.hints.combat_unarmed=1; state.hintsOn=false;
+        state.combatEquipped={weapon:'bronze_sword'};
+        state.combatXp.attack=XP_CUM[40]; state.combatXp.hitpoints=XP_CUM[40];
+        state.zone='rat_warrens'; combat.monId='rat'; combat.active=false;
+        state.action=null; engageCombat();`);
+    const wasFighting = ev('combat.active');
+    ev(`state.xp.cooking=XP_CUM[20]; state.fire=null;
+        var _ck=SKILLS.cooking.acts[0]; setAction('cooking',_ck.id);`);
+    ok('the fight was running before the refused start', wasFighting === true);
+    ok('a refused activity does NOT retreat the fight', ev('combat.active') === true);
+    ok('and no action was set', ev('state.action') === null, JSON.stringify(ev('state.action')));
+
+    // exitCombat stays a pure combat control — it must not start anything.
     ev(`exitCombat();`);
-    ok('leaving combat stops the fight', ev('combat.active')===false);
-    ok('leaving combat leaves the skill training',
-       ev('state.action&&state.action.skill')==='mining');
+    ok('leaving combat stops the fight', ev('combat.active') === false);
+    ok('leaving combat does not auto-resume a skill', ev('state.action') === null);
+
     ev(`state=defaultState(); normalizeState(); combat.active=false; combatMode=false;`);
   }
 
@@ -1258,7 +1298,7 @@ setTimeout(() => {
     const sg = ev(`(()=>{const id=Object.keys(ITEMS).find(k=>ITEMS[k].cgear&&maxSocketsFor(k)>0);
       state.items[id]=1; state.sockets[id]={slots:1,gems:[null]}; state.items.onyx_flaw=1;
       return setSocketGem(id,0,'onyx_flaw');})()`);
-    ok('a skilling gem in combat armour still warns', sg === true && shown() === 'That gem cannot pay out from combat gear', String(shown()));
+    ok('a skilling gem in combat armour still warns', sg === true && shown() === 'That gem does nothing in armour', String(shown()));
     reset();
   }
 

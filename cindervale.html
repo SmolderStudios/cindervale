@@ -4602,7 +4602,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.108</div>
+  <div class="mm-ver">v0.9.109</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -17898,6 +17898,17 @@ function setAction(skillKey,actId){
         return;
       }
     }
+    /* (0.9.109) The other half of one-or-the-other. Sits below every early return
+       above, so a refused start (no fire, missing materials, demo cap) never ends
+       a fight the player is winning. Retreating costs nothing, but it does forfeit
+       the current foe's progress, so say it rather than doing it silently. */
+    if(combat.active){
+      stopCombatTimer();
+      combat.active=false; combat.rare=false;
+      combat.regens=[]; combat.foeStatus={};
+      refreshCombatTabIndicator();
+      toast('🏃 Retreated — you cannot fight while training.');
+    }
     // Switching activity — don't wipe buffer, let the window absorb the new rate naturally
     state.action={skill:skillKey,actId};
     state.actionStart=Date.now();
@@ -20616,9 +20627,30 @@ function renderInventory(){
       }else{
         eqBtn.textContent='Equip';
         const occupant=ce[it.cslot];
-        eqBtn.title=occupant&&ITEMS[occupant]
-          ? 'Equip to '+it.cslot+' — replaces '+ITEMS[occupant].name
-          : 'Equip to your '+it.cslot+' slot';
+        /* Stat comparison against whatever is in the slot now. Without it the
+           player has to remember the old piece's numbers, and the crafting card
+           never showed them either. Deltas only — an unchanged stat is noise. */
+        const _S=(typeof COMBAT_GEAR_STATS!=='undefined')?COMBAT_GEAR_STATS:{};
+        const _new=_S[id]||{}, _old=occupant?(_S[occupant]||{}):{};
+        const KEYS=[['atk','Atk'],['str','Str'],['def','Def'],
+                    ['crit','Crit'],['dodge','Dodge'],['aspd','Atk Spd']];
+        const deltas=[];
+        for(const [k,label] of KEYS){
+          const a=_old[k]||0, b=_new[k]||0;
+          if(a===b) continue;
+          // crit/dodge/aspd are stored as fractions; the others are flat points.
+          const pct=(k==='crit'||k==='dodge'||k==='aspd');
+          const fmt=v=>pct?(Math.round(v*1000)/10)+'%':String(v);
+          const d=b-a, sign=d>0?'+':'−';
+          deltas.push(label+' '+fmt(a)+' → '+fmt(b)+'  ('+sign+fmt(Math.abs(d))+')');
+        }
+        if(occupant&&ITEMS[occupant]){
+          eqBtn.title='Equip to '+it.cslot+' — replaces '+ITEMS[occupant].name
+            +(deltas.length?'\n'+deltas.join('\n'):'\nNo stat change');
+        }else{
+          eqBtn.title='Equip to your empty '+it.cslot+' slot'
+            +(deltas.length?'\n'+deltas.join('\n'):'');
+        }
         eqBtn.addEventListener('click',()=>equipBodyItem(id,it.cslot,'combat'));
       }
       row.appendChild(eqBtn);
@@ -26101,10 +26133,6 @@ function engageCombat(){
     state.hintsOn=_on;
     return;
   }
-  // Engaging no longer stops the active skilling action. The two loops are independent
-  // — the 250ms `tick` drives skilling and never consults `combat.active`, and the
-  // 100ms combat timer never touches `state.action` — so the only thing that ever
-  // enforced "one at a time" was the hand-off line that used to sit here.
   const mon=getMonster(combat.monId);
   if(demoZoneLocked(state.zone)){ demoCapHit('zone'); return; }
   // Guard rails: don't let an out-of-zone selection or a locked boss tile sneak through.
@@ -26116,6 +26144,20 @@ function engageCombat(){
   if(mon.lvl>combatLevel()+5){
     toast(`⚔ ${mon.name} is too dangerous — Combat Lv ${mon.lvl-5} required.`);
     return;
+  }
+  /* (0.9.109) Combat and skilling are one-or-the-other again. Placed here rather
+     than at the top of the function on purpose: every guard above this line
+     RETURNS (demo lock, sealed boss, over-level monster, the unarmed hint), and
+     stopping the player's training on an engage that never happened would be a
+     silent theft of progress. Past this point the fight is definitely starting.
+
+     The two loops are still independent in code — the 250ms tick drives skilling
+     and never consults combat.active — so this hand-off and the one in setAction
+     are the ONLY things enforcing it. Neither throws if removed. */
+  if(state.action){
+    const _s=SKILLS[state.action.skill];
+    state.action=null;
+    if(_s) toast('⚔ '+_s.name+' stopped — you cannot train while fighting.');
   }
   _combatGearSlot=null;          // close gear drawer — no mid-fight swapping
   state.cmbSubTab='arena';       // force Arena view so the player sees the fight
@@ -31088,7 +31130,7 @@ const ONBOARD_STEPS=[
   {
     id:'logs',
     title:'Chop 8 pine logs',
-    body:"Open Woodcutting on the left and click Chop pine saplings. It repeats on its own — you never click per swing.",
+    body:"Open Woodcutting in the skills menu on the left, then click Chop pine saplings. It will keep chopping on its own once you select the activity.",
     why:"Logs feed almost everything you build.",
     prog:()=>({have:(state.items&&state.items.pine_log)||0, need:8, label:'pine logs'}),
     check:()=>(((state.items&&state.items.pine_log)||0)>=8),
@@ -31096,8 +31138,8 @@ const ONBOARD_STEPS=[
   {
     id:'bars',
     title:'Smelt 6 bronze bars',
-    body:"Mine copper, then mine tin, then open Smithing and smelt them together.",
-    why:"Most skills here are fed by another skill. That pattern holds for the whole game.",
+    body:"Mine 6 copper and 6 tin, then open the Smithing skill and smelt 6 bronze bars.",
+    why:"Most skills are fed by another skill. That holds for the whole game.",
     prog:()=>({have:(state.items&&state.items.bronze_bar)||0, need:6, label:'bronze bars'}),
     sub:()=>[
       {label:'copper ore', have:(state.items&&state.items.copper_ore)||0},
@@ -31117,8 +31159,8 @@ const ONBOARD_STEPS=[
   {
     id:'craft7',
     title:'Reach Crafting 7',
-    body:"Weapon recipes need Crafting 7 and there is no shortcut. Bronze Helms are the fastest way there — one bar, one log each.",
-    why:"You can only run one activity at a time, so alternate: mine, chop, smelt, craft. Leave it running and come back.",
+    body:"Open the Crafting menu and craft bronze armour until you hit Crafting 7. Bronze Helms are the fastest — one bar and one log each.",
+    why:"It takes about 29 helms, so you will need to go back for more ore and logs. You can only run one activity at a time.",
     /* Progress is XP toward Lv7, not a helm counter — any crafting XP counts, and a
        long step with a frozen bar reads as a broken quest. */
     prog:()=>{
@@ -31131,8 +31173,8 @@ const ONBOARD_STEPS=[
   {
     id:'weapon',
     title:'Craft a weapon and equip it',
-    body:"In Crafting, open the Weapons tab and make a Bronze Hammer. Then open Combat, click the weapon slot, and put it in.",
-    why:"Skilling gear and combat gear are separate loadouts — a weapon sitting in your satchel does nothing. Hammers crush, and everything in the first two zones takes extra damage from crushing.",
+    body:"Craft a bronze weapon in the Crafting tab, then equip it from your satchel or the Gear menu.",
+    why:"A weapon sitting in your satchel does nothing. Hammers crush, and the first two zones take extra damage from crushing.",
     prog:()=>({have:eqCombatWeapon()?1:0, need:1, label:'weapon equipped'}),
     /* Deliberately ANY weapon. All three tier-1 weapons unlock together at Crafting 7
        and the dagger is the intuitive pick by name; gating on the hammer specifically
@@ -31142,8 +31184,8 @@ const ONBOARD_STEPS=[
   {
     id:'rat',
     title:'Kill a Cave Rat',
-    body:"Open Combat, choose Rat Warrens, and attack a Cave Rat.",
-    why:"The fight runs on its own and your skilling keeps running at the same time. You are not choosing between them.",
+    body:"Open Combat, choose Rat Warrens, and engage a Cave Rat.",
+    why:"The fight runs on its own. Engaging stops whatever you were training — you do one or the other, not both.",
     prog:()=>({have:(state.monKills&&state.monKills.rat)||0, need:1, label:'cave rats'}),
     /* The monster id is 'rat', not 'cave_rat' — the obvious guess returns false
        forever and hangs the chain with nothing thrown. */
@@ -31234,7 +31276,7 @@ function renderQuestDock(){
 const HINTS={
   combat_unarmed:{
     title:'You have no weapon',
-    body:"Almost all of your accuracy and damage comes from your weapon. Bare-handed your maximum hit is 2, against a Cave Rat with 50 health — it kills you roughly six times faster than you kill it.\n\nGet Crafting to 7 and make a Bronze Hammer first.\n\nLosing costs you nothing — no items, no XP, you just retreat. Press Engage again if you want to see it.",
+    body:"Your weapon is where nearly all of your damage comes from. Bare-handed you will lose this fight.\n\nGet Crafting to 7 and make a bronze weapon first.\n\nLosing costs you nothing — no items, no XP. Press Engage again if you want to try anyway.",
     cta:{label:'Show me the recipe', run:()=>{ try{ selectedSkill='crafting'; viewTab='acts'; renderAll(); }catch(e){} }},
   },
   need_fire:{
@@ -31243,37 +31285,37 @@ const HINTS={
   },
   first_point:{
     title:'You have points to spend',
-    body:"Every skill level gives that skill one passive point, and it only works in that skill's own tree.\n\nOpen the Skill Tree tab above the activity cards. The early nodes are speed and yield, so they pay back fast — and respec is free below level 10, so nothing here is a trap.",
+    body:"Every level in a skill gives that skill one point. Points only work in their own skill's tree.\n\nOpen the Skill Tree tab above the activity cards. Early nodes give speed and yield, and respec is free below level 10.",
     cta:{label:'Open Skill Tree', run:()=>{ try{ viewTab='tree'; renderAll(); }catch(e){} }},
   },
   satchel_pressure:{
     title:'Your satchel is nearly full',
-    body:"A slot is one item type, not one item — nine hundred logs cost the same as one log.\n\nWhen it fills, whatever you are running stops. Sell what you are not using, or buy more slots from the bar at the top of the satchel.",
+    body:"A slot holds one item type, not one item. 900 logs take up the same single slot as 1 log.\n\nWhen every slot is full, whatever you are running stops. Sell what you do not need, or buy more slots from the bar at the top of the satchel.",
   },
 
   /* ── Crafting (0.9.107) ───────────────────────────────────────────────────
      Four things the Crafting panel does not say and cannot be deduced from it. */
   craft_tool_equip:{
     guard:true,
-    title:'Your new tool is not in use yet',
-    body:"Crafting a tool puts it in your gear, not in your hands. Until you equip it the speed bonus does nothing.\n\nOpen Gear on the right, switch the filter to Skilling, and expand Skill Tools — that section starts collapsed, which is why it is easy to miss.",
+    title:'Equip your new tool',
+    body:"Crafting a tool does not equip it. The speed bonus does nothing until you put it on.\n\nOpen Gear on the right, set the filter to Skilling, and expand Skill Tools. That section starts collapsed.",
     cta:{label:'Open my gear', run:()=>{ try{ rightTab='gear'; _gearFilter='skilling'; _gearToolsOpen=true; renderRightPanel(); }catch(e){} }},
   },
   craft_gear_req:{
     guard:true,
     title:'You cannot wear that yet',
-    body:"Combat gear has a second requirement the crafting card never shows: a wield level. Weapons need Attack, everything else needs Defence, and it climbs with the tier — Iron wants 10, Steel 20, Mithril 30.\n\nThat is a combat level, not a crafting level. Making the piece and being allowed to wear it are two different milestones.\n\nIt keeps. Craft ahead if you want, just do not expect to equip it today.",
+    body:"Combat gear needs a level to wear it, and the crafting card does not show it. Weapons need Attack, everything else needs Defence. Iron needs 10, Steel 20, Mithril 30.\n\nThat is a combat level, not a crafting level.\n\nThe piece keeps. Craft ahead if you want, you just cannot wear it yet.",
   },
   craft_leather:{
     guard:true,
     title:'Leather armour needs cured leather',
-    body:"Hides do not go into armour directly. They are tanned first: the Tannery tab in Crafting turns raw hides into leather, and the leather is what the armour recipes take.\n\nSo it is two steps — tan, then craft. Check the Tannery tab for the tier you are missing.",
+    body:"Hides do not go straight into armour. Tan them first — the Tannery tab in Crafting turns raw hides into leather, and the recipes take the leather.\n\nTwo steps: tan, then craft.",
     cta:{label:'Show me the Tannery', run:()=>{ try{ selectedSkill='crafting'; viewTab='acts'; _crTab='tannery'; renderAll(); }catch(e){} }},
   },
   craft_tool_drops:{
     guard:true,
-    title:'The tool ladder needs combat drops from here',
-    body:"Tier 3 tools and above are not pure skilling recipes any more. Each one also wants a rare monster drop — Beast Sinew first, then Shade Ember, then Voidheart at the top.\n\nThere is no skilling, shop or farming source for any of them. Beast Sinew comes off low-level monsters and their bosses; the Rat Queen is the usual first one.\n\nThe cards stay dark until you have the drop, which is why clicking them does nothing.",
+    title:'Tier 3 tools need monster drops',
+    body:"Tier 3 tools and up also need a rare monster drop — Beast Sinew, then Shade Ember, then Voidheart.\n\nYou cannot get them from skilling, the shop or farming. Beast Sinew drops from low-level monsters and their bosses. The Rat Queen is the usual first one.\n\nThe cards stay dark until you have the drop, so clicking them does nothing.",
   },
 
   /* ── Jeweler: enchanting, sockets, gems (0.9.107) ─────────────────────────
@@ -31281,23 +31323,23 @@ const HINTS={
   jeweler_tabs:{
     guard:true,
     title:'Enchanting and Sockets live under Jeweler',
-    body:"Tooltips will tell you to \"visit the Enchanting tab\" without saying where it is. Both it and the Socket tab only appear while Jeweler is your selected skill — from anywhere else in the game they are not on screen at all.\n\nSelect Jeweler on the left and the two extra tabs appear above the activity cards.",
+    body:"The Enchant and Socket tabs only show up while Jeweler is your selected skill. From anywhere else they are not on screen at all, which is why tooltips point at a tab you cannot find.\n\nSelect Jeweler on the left and both tabs appear above the activity cards.",
     cta:{label:'Open Jeweler', run:()=>{ try{ selectedSkill='jeweler'; viewTab='acts'; renderAll(); }catch(e){} }},
   },
   enchant_replace:{
     guard:true,
     title:'Changing an enchant costs full price',
-    body:"A piece holds one enchant. Applying a different one does not swap it — it charges the whole material cost again and the old enchant is simply gone.\n\nRemove refunds nothing either. At the high tiers a single change of mind is tens of hours of gathering, so pick deliberately rather than trying one to see.",
+    body:"A piece holds one enchant. Applying a different one charges the full material cost again and the old enchant is gone.\n\nRemove refunds nothing either. High-tier reagents take a long time to gather, so pick carefully the first time.",
   },
   socket_skilling_gem:{
     guard:true,
-    title:'That gem cannot pay out from combat gear',
-    body:"Topaz and Onyx are skilling gems — sell value, speed and XP. Those bonuses are only read from your skilling loadout, and combat armour can never sit in it.\n\nSocketed into a helmet or chestplate they contribute exactly zero, forever. Put them in jewelry instead. Combat armour wants Sanguine, Verdant or Azure.",
+    title:'That gem does nothing in armour',
+    body:"Topaz and Onyx are skilling gems — sell value, speed and XP. Those bonuses only count from your skilling loadout, and combat armour cannot go in it.\n\nIn a helmet or chestplate they do nothing at all. Put them in jewelry. Combat armour wants Sanguine, Verdant or Azure.",
   },
   socket_sell_loss:{
     guard:true,
     title:'Selling this destroys its sockets',
-    body:"The gems come back to your satchel, but the sockets themselves do not. Drilling is paid in gold and gem dust and none of it is refunded — sell the last copy and that investment is gone.\n\nEnchants behave the opposite way and survive a sale, which makes this easy to guess wrong.\n\nIf you are replacing this with a better tier, pop the gems and keep one copy rather than clearing the stack.",
+    body:"The gems come back to your satchel. The sockets do not. The gold and gem dust you spent drilling them is gone for good.\n\nEnchants survive a sale, so this one is easy to get wrong.\n\nUpgrading to a better tier? Pop the gems out and keep one copy instead of selling the whole stack.",
   },
 };
 function showHint(id, extra){
