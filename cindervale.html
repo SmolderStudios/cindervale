@@ -3324,6 +3324,10 @@ body:not(.is-demo) .demo-only{display:none !important}
 .sf-row .st{font-family:var(--num);font-size:11px;color:#8a7550;flex:none}
 .sf-mini{height:3px;width:58px;flex:none;background:#241a0e;border-radius:2px;overflow:hidden}
 .sf-mini i{display:block;height:100%}
+/* Explanatory line inside a footer card (0.9.120) — used where the card would
+   otherwise be either absent or a single unexplained chip. */
+.sf-note{margin-top:7px;font-size:11.5px;line-height:1.5;color:var(--muted)}
+.sf-note b{color:var(--trim);font-weight:normal}
 .sf-chips{display:flex;flex-wrap:wrap;gap:6px 14px}
 .sf-chip{font-family:var(--num);font-size:11px;color:var(--muted);
   display:flex;align-items:center;gap:5px;white-space:nowrap}
@@ -3770,6 +3774,18 @@ body:not(.is-demo) .demo-only{display:none !important}
 .sl-manbtn:hover{border-color:#6d9ab2;background:#12242f;color:#cfe6f0}
 .sl-manbtn.on{border-color:#2c4d5e;color:#cfe6f0}
 .sl-man{margin-top:8px;padding-top:2px;border-top:1px solid #1b3140}
+
+/* Laid up (0.9.120). Reads as a stop sign, not a card — a damaged hull is the one
+   state in Sailing that blocks everything, and it used to be communicated only by
+   a greyed-out button with three words on it. */
+.sl-laidup{border:1px solid #6a3a2a;border-left:3px solid var(--red);border-radius:8px;
+  background:linear-gradient(180deg,#1e1210,#150d0b);padding:10px 12px;margin-bottom:10px}
+.sl-laidup h5{margin:0 0 5px;font-family:'Cinzel',serif;font-size:calc(14.6px*var(--tscale));
+  color:#e2836c;display:flex;align-items:center;gap:6px}
+.sl-laidup h5 .ev-icon{width:16px;height:16px;flex:none}
+.sl-laidup p{margin:0;font-size:calc(12.8px*var(--tscale));line-height:1.5;color:#c8b2a4}
+.sl-laidup p b{color:#e8d7b0}
+.sl-laidup .sl-lab{margin-top:9px}
 /* ════════ [CSS-33 END] SAILING ═══════════════════════════════════════════════════ */
 
 /* ════════ [CSS-99] UI PREVIEW PASS ══════════════════════════════════════════════
@@ -4781,7 +4797,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.119</div>
+  <div class="mm-ver">v0.9.120</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -10265,8 +10281,23 @@ function combatGearStatBlock(itemId){
       +'<span style="color:'+(complete?'#7fd8c8':'#9c8c72')+';letter-spacing:.5px">'+iconHTML('ui_spark')+' '+st.name+' set · '+worn+'/'+st.pieces.length+(complete?' — ACTIVE':'')+'</span>'
       +'<div style="color:'+(complete?'#bfe6db':'var(--muted)')+';font-size:11.5px;line-height:1.45;margin-top:2px">'+st.desc+'</div></div>';
   }
+  /* Damage type (0.9.120). Weapons only, and only when the item declares one —
+     it is the answer to "does this cleaver slash or crush", which was previously
+     unanswerable in-game despite being worth ±15% against half the bestiary. The
+     wording deliberately mirrors the Monster Log's Weak to / Resists tags. */
+  var dmgLine='';
+  if(it.cslot==='weapon' && it.dmgType && DMG_TYPES[it.dmgType]){
+    var dt=DMG_TYPES[it.dmgType];
+    dmgLine='<div style="margin-top:6px;font-size:calc(12.5px*var(--tscale));color:'+dt.col+'">'
+      +'<span style="display:inline-block;font-size:calc(14px*var(--tscale));line-height:1;vertical-align:-2px;margin-right:3px">'+iconHTML(dt.ico)+'</span>'
+      +'Deals <b>'+dt.n.toLowerCase()+'</b> damage'
+      +'<div style="color:var(--muted);font-size:calc(11.5px*var(--tscale));line-height:1.45;margin-top:1px">'
+      +'+15% against foes weak to '+it.dmgType+', −15% against those that resist it. '
+      +'The Monster Log lists both for every foe.</div></div>';
+  }
+
   return '<div style="color:var(--ember);font-size:calc(12px*var(--tscale));letter-spacing:.5px;margin-bottom:6px">'+iconHTML('ui_swords')+' '+tierName+' · Tier '+it.ctier+' · '+slotLabel+'</div>'
-    +'<div style="font-size:calc(14px*var(--tscale));line-height:1.7">'+statLine+'</div>'+fxLine+setLine+reqLine;
+    +'<div style="font-size:calc(14px*var(--tscale));line-height:1.7">'+statLine+'</div>'+dmgLine+fxLine+setLine+reqLine;
 }
 
 /* Human-readable on-hit effect block for an item's `wfx` (poison / burn / stun
@@ -16006,6 +16037,23 @@ function weaponClass(itemId){
   if(t==='slash') return 'standard';
   return null;
 }
+/* ── damage types, said out loud (0.9.120) ─────────────────────────────────────
+   Every weapon has carried a `dmgType` since 1.0.93 and it swings a real ±15% in
+   combat, and the Monster Log has always shown what a foe is weak to — but the
+   weapon itself never said which type it dealt anywhere in the game. A player
+   reported not being able to tell whether the Warcleaver slashed or crushed, and
+   they were right: it was unknowable short of reading the source.
+
+   One vocabulary in one place, and the icons match the ones the Monster Log
+   already uses for Weak to / Resists, so the two read as the same system. */
+const DMG_TYPES={
+  slash:{n:'Slashing', ico:'bronze_sword',  col:'#d0a848'},
+  stab: {n:'Stabbing', ico:'bronze_dagger', col:'#9bd8c8'},
+  crush:{n:'Crushing', ico:'bronze_hammer', col:'#e0975a'},
+  ranged:{n:'Ranged',  ico:'bronze_dagger', col:'#a8c86a'}
+};
+function dmgTypeIcon(t){ const d=DMG_TYPES[t]; return d?iconHTML(d.ico):''; }
+function dmgTypeName(t){ const d=DMG_TYPES[t]; return d?d.n:''; }
 function eqCombatWeapon(){ return (state&&state.combatEquipped&&state.combatEquipped.weapon)||''; }
 function eqCombatShield(){ return (state&&state.combatEquipped&&state.combatEquipped.shield)||''; }
 /* Shield flat damage reduction (1.0.87) — a raised shield soaks a % of every LANDED
@@ -19070,13 +19118,20 @@ function _sfActive(){
     else if(growing) rows.push({c:'var(--blue)', n:'Farming', sub:growing+' growing', st:'', pct:null});
   }catch(e){}
   try{
-    if(state.sail&&state.sail.voy){
-      const left=Math.max(0,state.sail.voy.endsAt-Date.now());
-      const pct=100*(1-left/(state.sail.voy.dur||1));
+    /* Both hulls since 0.9.118 — this read state.sail.voy directly and so went
+       blind to the consort, which is exactly the ship most likely to be out while
+       you are stood in a skill panel. */
+    let anyOut=false;
+    (typeof sailVoyages==='function'?sailVoyages():[{slot:0,v:(state.sail||{}).voy}]).forEach(sv=>{
+      if(!sv.v) return;
+      anyOut=true;
+      const left=Math.max(0,sv.v.endsAt-Date.now());
+      const pct=100*(1-left/(sv.v.dur||1));
       const mins=Math.round(left/60000);
-      rows.push({c:'var(--blue)', n:'Sailing', sub:sailIsle(state.sail.voy.i).n,
+      rows.push({c:'var(--blue)', n:'Sailing', sub:sailIsle(sv.v.i).n+(sv.slot===1?' · consort':''),
                  st:(mins>60?(Math.floor(mins/60)+'h '+(mins%60)+'m'):(mins+'m')), pct:Math.max(0,Math.min(100,pct))});
-    } else if(state.sail&&state.sail.last){
+    });
+    if(!anyOut && state.sail && state.sail.last){
       rows.push({c:'var(--ember)', n:'Sailing', sub:'ship home — haul waiting', st:'collect', pct:100});
     }
   }catch(e){}
@@ -19129,7 +19184,18 @@ function renderSkillFooter(host, skill){
   wrap.className='sf-wrap';
 
   const cardNext=()=>{
-    if(!next) return null;
+    /* No next unlock means everything is open — say so rather than dropping the
+       card, which left a hole in the footer at the exact moment the player had
+       most earned the opposite. */
+    if(!next){
+      const lvl=levelFromXp(state.xp[skill]||0);
+      if(lvl<MAX_LEVEL) return null;   // mid-game with nothing pending: genuinely nothing to say
+      const d=document.createElement('div'); d.className='sf-card';
+      d.innerHTML='<h5>Next in '+SKILLS[skill].name+'</h5>'
+        +'<div class="sf-note">Every activity in this skill is unlocked. '
+        +'Mastery keeps going.</div>';
+      return d;
+    }
     const d=document.createElement('div'); d.className='sf-card';
     const pct=next.gain>0?('<em>+'+Math.round(next.gain*100)+'% xp/hr</em>'):'';
     d.innerHTML='<h5>Next in '+SKILLS[skill].name+'</h5>'+
@@ -19146,11 +19212,26 @@ function renderSkillFooter(host, skill){
       (r.pct!=null?'<span class="sf-mini"><i style="width:'+r.pct+'%;background:'+r.c+'"></i></span>':'')+
       '<span class="st">'+(r.st||'')+'</span></div>').join('');
     if(!rows) rows='<div class="sf-row"><span class="nm">Nothing running. Pick an activity above.</span></div>';
-    d.innerHTML='<h5>Right now</h5>'+rows;
+    /* The rule itself, written down (0.9.120). This card has always LISTED the
+       things running in parallel, but never said which skills can do that — a
+       player asked outright which ones level passively alongside an activity.
+       Exactly two do, and everything else shares one slot. */
+    d.innerHTML='<h5>Right now</h5>'+rows
+      +'<div class="sf-note"><b>Farming</b> and <b>Sailing</b> run on their own clocks — '
+      +'they keep going alongside whatever activity you pick, and while you are away. '
+      +'Every other skill shares the single activity slot, so starting one stops the last.</div>';
     return d;
   };
+  /* Always rendered since 0.9.120. It used to bail whenever the skill had no
+     entries in DROPS, which silently hid it on SEVEN of the twelve — smithing,
+     cooking, alchemy, firemaking, jeweler, farming and crafting — so the footer
+     had a different number of cards depending on which skill you opened, and a
+     player reported exactly that inconsistency.
+
+     "Nothing" was also untrue: every one of the twelve drops its own 4-piece
+     skilling set while you train it. That was already being rendered here, but
+     only ever as a tail chip on skills that happened to have a DROPS table too. */
   const cardDrops=()=>{
-    if(!drops.length) return null;
     const d=document.createElement('div'); d.className='sf-card';
     const set=SKILLING_SETS[skill];
     const fmt=(typeof _fmtMonChance==='function')?_fmtMonChance:(c=>'1/'+Math.max(2,Math.round(1/c)));
@@ -19163,9 +19244,14 @@ function renderSkillFooter(host, skill){
       const owned=set.pieces.filter(p=>(state.skillingGear&&state.skillingGear[p])||
         Object.values(state.equipped||{}).indexOf(p)>=0 ||
         Object.values(state.skillingEquipped||{}).indexOf(p)>=0).length;
-      chips+='<span class="sf-chip">'+set.name+' <b>'+owned+' / '+set.pieces.length+'</b></span>';
+      chips+='<span class="sf-chip">'+(set.icon||'')+' '+set.name+' <b>'+owned+' / '+set.pieces.length+'</b></span>';
     }
-    d.innerHTML='<h5>What this skill drops</h5><div class="sf-chips">'+chips+'</div>';
+    d.innerHTML='<h5>What this skill drops</h5><div class="sf-chips">'+chips+'</div>'
+      /* Say it in words on the processing skills, where the set is the ONLY thing
+         that drops — otherwise a lone set chip reads like the card failed to load. */
+      +(drops.length?''
+        :'<div class="sf-note">No extra materials — the '+(set?set.name:'skilling set')
+         +' is what this skill drops. Rarer from higher-level activities.</div>');
     return d;
   };
   const cardMastery=()=>{
@@ -31666,6 +31752,38 @@ function renderSail(){
       html+='</div>';
     }
 
+    /* ── laid up ──
+       A damaged ship stops everything, and until 0.9.120 the only thing saying so
+       on this tab was the word "Repair her first" greying out Set sail — the bill
+       and the button both lived two clicks away in the Shipyard, and a player
+       reported having no idea what repair meant or wanted. It is the first thing
+       on the tab now, itemised, with the button in reach. */
+    if(slotDmg){
+      const bill=sailRepairBill(sailSlot);
+      const ids=Object.keys(bill);
+      const canFix=ids.every(id=>(state.items[id]||0)>=bill[id]);
+      html+='<div class="sl-laidup"><h5>'+iconHTML('ui_shield')+' '
+        +(sailSlot===1?'The consort is':'Your ship is')+' laid up</h5>'
+        +'<p>She came home <b>Wrecked</b>, which is the only outcome that damages a hull. '
+        +'She cannot leave the dock until the yard has her back together — no voyage, from this ship, at all.</p>'
+        +'<div class="sl-lab">What the yard wants</div><div class="sl-chips">'
+        +ids.map(id=>{
+            const have=state.items[id]||0, need=bill[id], ok=have>=need;
+            return '<span class="sl-chip'+(ok?' good':' bad')+'"'+_slItemTip(id,
+              ok?('You have '+have.toLocaleString()+'.')
+                :('You have '+have.toLocaleString()+' — '+(need-have).toLocaleString()+' short.'))
+              +'>'+iconHTML(id)+need.toLocaleString()+'× '+(ITEMS[id]?ITEMS[id].name:id)+'</span>';
+          }).join('')
+        +'</div>'
+        +'<p class="sl-note" style="margin-top:8px">A quarter of her build cost, in <b>land materials only</b> — '
+        +'logs and bars, never salvage. That rule exists so an empty hold can never strand you: '
+        +'salvage only comes back from voyages, and a laid-up ship cannot make one.</p>'
+        +'<div class="sl-btnrow" style="margin-top:9px">'
+        +'<button class="sl-btn" data-slfixslot="'+sailSlot+'"'+(canFix?'':' disabled')+'>'
+        +(canFix?'Repair her — '+ids.length+' material'+(ids.length===1?'':'s'):'Not enough materials')+'</button></div>'
+        +'</div>';
+    }
+
     /* live voyage first — it is the thing you came back to check */
     if(myVoy){
       const v=myVoy, dest=sailIsle(v.i), left=v.endsAt-Date.now();
@@ -32231,6 +32349,9 @@ function renderSail(){
   on('slConsort','click',sailBuildConsort);
   on('slMan','click',()=>{ sailManifest=!sailManifest; renderSail(); });
   on('slFix2','click',()=>sailRepair(1));
+  p.querySelectorAll('[data-slfixslot]').forEach(b=>{
+    b.addEventListener('click',()=>sailRepair(+b.getAttribute('data-slfixslot')||0));
+  });
   /* Fleet switcher and the orders picker. Both only redraw the panel — neither
      writes save state, so browsing them commits to nothing. */
   p.querySelectorAll('[data-slslot]').forEach(b=>{
