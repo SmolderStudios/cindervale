@@ -1410,6 +1410,158 @@ setTimeout(() => {
     ok('WORN badge and Remove never share a row', both === false);
   }
 
+  section('Slayer panel rework (v0.9.122)');
+  {
+    /* The rework's premise is that the panel had been printing numbers that were
+       not true and hiding the ones that were. None of that throws, so it is
+       asserted here rather than left to a screenshot.
+
+       The load-bearing fact: onSlayerKill computes the payout from
+       state.slayer.streak and increments the streak on the NEXT line. So the
+       forecast for the bounty you are on and the figure a finished bounty
+       actually paid are different numbers, and a panel that uses one value for
+       both overstates the completed card by up to a point. */
+    const setup = (over) => ev(`mmAtMenu=false; state=defaultState(); normalizeState();
+      state.combatXp.attack=XP_CUM[99]; state.combatXp.strength=XP_CUM[99];
+      state.combatXp.defence=XP_CUM[99]; state.combatXp.hitpoints=XP_CUM[99];
+      refreshCombatStats(); combatMode=true; state.cmbSubTab='slayer';
+      state.slayer=Object.assign({xp:XP_CUM[62],points:90,tasksDone:10,streak:7,
+        masterSel:'expert',perks:{},blocked:{},task:null}, ${JSON.stringify(over || {})});
+      renderCombat();`);
+    const payTile = `(function(){var e=document.querySelector('.sly-tile.pay .sly-tv');
+      return e?parseInt(e.textContent.replace(/[^0-9]/g,''),10):null})()`;
+    const payLabel = `(function(){var e=document.querySelector('.sly-tile.pay .sly-tk');
+      return e?e.textContent.trim():''})()`;
+
+    setup();
+    ok('the Slayer panel renders', ev(`!!document.querySelector('.sly-wrap')`) === true);
+
+    // Forecast vs reality, proven by running the real handler.
+    const real = ev(`(function(){
+      var mon=MONSTERS.find(function(m){return !m.boss&&m.lvl>=40})||MONSTERS[0];
+      state.slayer.perks={quartermaster:2};
+      state.slayer.task={monId:mon.id,need:3,done:2,master:'expert'};
+      renderCombat();
+      var advertised=${payTile};
+      var before=state.slayer.points;
+      onSlayerKill(mon);
+      var paid=state.slayer.points-before;
+      renderCombat();
+      return {advertised:advertised, paid:paid, shown:${payTile}, label:${payLabel},
+              streak:state.slayer.streak};
+    })()`);
+    ok('the payout the panel forecasts is the payout onSlayerKill pays',
+       real.advertised === real.paid, 'advertised=' + real.advertised + ' paid=' + real.paid);
+    ok('a completed bounty states what it ACTUALLY paid, not the next forecast',
+       real.shown === real.paid,
+       'shown=' + real.shown + ' paid=' + real.paid + ' streak now=' + real.streak);
+    ok('and it is labelled in the past tense', real.label === 'Paid', real.label);
+
+    /* onSlayerKill banks the points on the final kill, so the old completed card
+       ("Reward: +N Slayer Points" over a "Claim & take next bounty" button) was
+       promising money the player already had. */
+    const claimTxt = ev(`(function(){var b=document.querySelector('.sly-go.claim');
+      return b?b.textContent.replace(/\\s+/g,' ').trim():''})()`);
+    ok('the completed CTA does not present banked points as a pending reward',
+       !/claim/i.test(claimTxt) && /banked|already/i.test(claimTxt), claimTxt);
+
+    /* Streak was worth up to +6 points a bounty and appeared nowhere at all. */
+    setup({ streak: 5, task: null });
+    ok('the streak is on screen', ev(`!!document.querySelector('.sly-smeter')`) === true);
+    ok('the streak meter draws one segment per bounty',
+       ev(`document.querySelectorAll('.sly-sseg').length`) === 12);
+    ok('and lights the streak actually held',
+       ev(`document.querySelectorAll('.sly-sseg.on').length`) === 5);
+
+    /* Every perk's effect used to live behind a closed shop, with a name-only pip
+       list duplicating it in the rail. */
+    ok('every perk is visible without opening anything',
+       ev(`document.querySelectorAll('.sly-pcard').length`) === ev(`SLAYER_PERKS.length`));
+    ok('a perk states what it is doing for you right now',
+       ev(`(function(){state.slayer.perks={scholar:3};renderCombat();
+         var e=document.querySelector('.sly-pcard .sly-pnow');
+         return e?e.textContent.trim():''})()`) === '+24% Slayer XP right now');
+
+    /* No dead controls: with a bounty running, all three master buttons used to
+       read "Bounty active" and sit disabled. */
+    const deadIn = (over) => { setup(over); return ev(`(function(){
+      return Array.prototype.slice.call(document.querySelectorAll('.sly-wrap button'))
+        .filter(function(b){return b.disabled})
+        .map(function(b){return b.textContent.trim().slice(0,30)}) })()`); };
+    ok('no dead control with no bounty', deadIn({ task: null }).length === 0,
+       JSON.stringify(deadIn({ task: null })));
+    const activeDead = ev(`(function(){
+      var mon=MONSTERS.find(function(m){return !m.boss&&m.lvl>=40})||MONSTERS[0];
+      state.slayer.task={monId:mon.id,need:30,done:12,master:'expert'};
+      state.slayer.points=90; renderCombat();
+      return Array.prototype.slice.call(document.querySelectorAll('.sly-wrap button'))
+        .filter(function(b){return b.disabled}).length })()`);
+    ok('no dead control mid-bounty either', activeDead === 0, 'disabled=' + activeDead);
+    ok('a locked master states the distance instead of showing a lock button',
+       ev(`(function(){state.slayer.xp=0;state.slayer.task=null;renderCombat();
+         var n=document.querySelector('.sly-mcard.locked .sly-mnote');
+         return n?/to go/.test(n.textContent):false})()`) === true);
+
+    /* #combatPanel::after washes the top 210px — i.e. the contract card — with
+       --zone-accent, which is picked on the Arena tab. The Slayer hero was being
+       lit lime/lilac/sky by a selection invisible from this tab. */
+    const wash = ev(`(function(){
+      state.zone='spider_hollow'; state.cmbSubTab='arena'; renderCombat();
+      var a=document.getElementById('combatPanel').style.getPropertyValue('--zone-accent').trim();
+      state.cmbSubTab='slayer'; renderCombat();
+      var s=document.getElementById('combatPanel').style.getPropertyValue('--zone-accent').trim();
+      return {arena:a, slayer:s} })()`);
+    ok('the Arena still spends the zone accent', wash.arena !== '#c05149' && !!wash.arena, wash.arena);
+    ok('the Slayer tab lights itself instead of borrowing the zone', wash.slayer === '#c05149', wash.slayer);
+
+    /* The sub-tab badge is the only ambient Slayer signal outside the panel, and
+       it used to fall back to the level the moment a bounty finished — going
+       quiet at exactly the moment there was something to act on. */
+    const badge = ev(`(function(){
+      function read(){var b=document.querySelector('.cmb-subtab[data-sub="slayer"] .badge');
+        return b?b.textContent.trim():''}
+      var mon=MONSTERS.find(function(m){return !m.boss&&m.lvl>=40})||MONSTERS[0];
+      state.slayer.xp=XP_CUM[62];
+      state.slayer.task={monId:mon.id,need:30,done:12,master:'expert'}; renderCombat();
+      var mid=read();
+      state.slayer.task.done=30; renderCombat(); var done=read();
+      state.slayer.task=null; renderCombat(); var none=read();
+      return {mid:mid, done:done, none:none} })()`);
+    ok('the sub-tab badge counts mid-bounty', /^\d+\/\d+$/.test(badge.mid), badge.mid);
+    ok('the sub-tab badge stays loud when the bounty is finished', badge.done === 'DONE', badge.done);
+    ok('and falls back to the level only when there is no bounty',
+       /^Lv\d+$/.test(badge.none), badge.none);
+
+    /* A CSS transition cannot fire on this panel — renderCombat replaces
+       #combatPanel.innerHTML wholesale, so the node is new and already at its
+       final value. That is why the old bar never animated. Keyframe cues are
+       gated on the number having moved; the gate is what stops the panel
+       strobing on every idle re-render during a fight. */
+    const gate = ev(`(function(){
+      var mon=MONSTERS.find(function(m){return !m.boss&&m.lvl>=40})||MONSTERS[0];
+      state.slayer.task={monId:mon.id,need:20,done:5,master:'expert'};
+      renderCombat(); var first=!!document.querySelector('.sly-track.tick');
+      renderCombat(); var idle=!!document.querySelector('.sly-track.tick');
+      state.slayer.task.done=6; renderCombat();
+      var kill=!!document.querySelector('.sly-track.tick');
+      renderCombat(); var repeat=!!document.querySelector('.sly-track.tick');
+      state.slayer.task={monId:mon.id,need:44,done:0,master:'novice'}; renderCombat();
+      var fresh=!!document.querySelector('.sly-track.tick');
+      return {first:first, idle:idle, kill:kill, repeat:repeat, fresh:fresh} })()`);
+    ok('the progress cue does not fire on a first render', gate.first === false);
+    ok('nor on an idle re-render', gate.idle === false);
+    ok('it fires when a kill actually lands', gate.kill === true);
+    ok('it does not repeat on the next render', gate.repeat === false);
+    ok('and a brand-new bounty does not sweep an empty bar', gate.fresh === false);
+    ok('no transition was reintroduced on the progress fill',
+       ev(`(function(){var e=document.querySelector('.sly-fill');
+         if(!e) return 'missing';
+         var t=getComputedStyle(e).transitionProperty;
+         return (t==='none'||t==='all'||!t)?'clean':t })()`) !== 'missing');
+
+    ev(`state=defaultState(); normalizeState(); combat.active=false; combatMode=false;`);
+  }
+
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));
   process.exit(fail ? 1 : 0);
 }, 2500);
