@@ -4797,7 +4797,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.120</div>
+  <div class="mm-ver">v0.9.121</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -28037,14 +28037,24 @@ function renderCombat(){
   const cs=combatStats();
   const style=(state.combatStyle==='strength'||state.combatStyle==='defence')?state.combatStyle:'attack';
 
-  // Background skilling status line. Skilling and combat run side by side now, so this
-  // reports what is training rather than warning that engaging will stop it.
+  /* Skilling status line. (0.9.109) made the two one-or-the-other again — engageCombat
+     clears state.action and setAction retreats from a live fight — so this warns about
+     the trade instead of reporting a background that no longer exists. This copy said
+     "keeps running while you fight" until 0.9.121, three versions after the behaviour
+     flipped under it. Word it against what the two hand-offs actually do.
+
+     They CLEAR the action, they do not park it: nothing re-arms state.action when the
+     fight ends. Never write "pauses" or "resumes" here unless that changes.
+     Both branches are reachable with a fight running; state.action and combat.active
+     are never both truthy, which is why the first branch never says "while fighting". */
   let noteHtml;
   if(state.action){
     const sk=SKILLS[state.action.skill]; const act=getAct(state.action.skill,state.action.actId);
-    noteHtml=`<div class="cmb-skilling-note">🌿 Training in the background: ${sk?sk.icon:''} ${sk?sk.name:''}${act?` — ${act.name}`:''}. It keeps running while you fight.</div>`;
+    noteHtml=`<div class="cmb-skilling-note">🌿 Training now: ${iconHTML(state.action.skill)} ${sk?sk.name:''}${act?` — ${act.name}`:''}. Engaging a foe stops it — you will have to start it again after the fight.</div>`;
+  }else if(active){
+    noteHtml=`<div class="cmb-skilling-note">⚔ Fighting — no skill trains while you are in combat. Starting one from the Skills tab retreats you from this fight.</div>`;
   }else{
-    noteHtml=`<div class="cmb-skilling-note">🌿 No skill is training. You can start one from the Skills tab and it will keep going through the fight.</div>`;
+    noteHtml=`<div class="cmb-skilling-note">🌿 No skill is training. Combat and skilling are one or the other — engaging stops your training, and starting a skill ends the fight.</div>`;
   }
 
   const foePct=active?Math.max(0,100*combat.foeHp/mon.hp):100;

@@ -905,6 +905,48 @@ setTimeout(() => {
     ok('leaving combat stops the fight', ev('combat.active') === false);
     ok('leaving combat does not auto-resume a skill', ev('state.action') === null);
 
+    /* The combat panel's `.cmb-skilling-note` describes this rule to the player, and
+       from 0.9.102 to 0.9.120 it described the OPPOSITE one: 0.9.102 ran the two at
+       once, 0.9.109 made them exclusive again, and the copy was never turned back.
+       Engaging then showed "it will keep going through the fight" on the very panel
+       that had just toasted "you cannot train while fighting". Nothing throws when
+       prose and behaviour disagree, so assert the prose here.
+
+       Phrase-matched rather than compared to a fixed string — the wording is free to
+       change, the promise is not. If the two ever DO run together again, delete this
+       block in the same commit that removes the hand-offs asserted above. */
+    const noteText = () => { ev('renderCombat()'); return ev(
+      `(function(){var e=document.querySelector('.cmb-skilling-note');return e?e.textContent:''})()`); };
+    const CONCURRENT = /keeps? (?:running|going)|in the background|through the fight|while you fight|side by side/i;
+
+    ev(`state=defaultState(); normalizeState();
+        state.hints=state.hints||{}; state.hints.combat_unarmed=1; state.hintsOn=false;
+        state.combatEquipped={weapon:'bronze_sword'};
+        state.combatXp.attack=XP_CUM[40]; state.combatXp.hitpoints=XP_CUM[40];
+        state.zone='rat_warrens'; combat.monId='rat'; combat.active=false;
+        state.xp.mining=XP_CUM[60]; state.action=null;`);
+    const noteIdle = noteText();
+    ok('the idle note never promises background training', !CONCURRENT.test(noteIdle), noteIdle);
+
+    ev(`setAction('mining','mi1');`);
+    const noteTraining = noteText();
+    ok('the training note names the skill', /Mining/.test(noteTraining), noteTraining);
+    ok('the training note never promises it survives a fight',
+       !CONCURRENT.test(noteTraining), noteTraining);
+    // It is cleared, not parked, so it must not be sold as a pause either.
+    ok('the training note does not claim it resumes after the fight',
+       !/paus|resum/i.test(noteTraining), noteTraining);
+
+    // The reported repro: train, engage, read the panel you were just dropped into.
+    ev(`combat.monId='rat'; engageCombat();`);
+    const noteFighting = noteText();
+    ok('the repro engage really did stop the skill',
+       ev('combat.active') === true && ev('state.action') === null);
+    ok('the in-fight note never promises background training',
+       !CONCURRENT.test(noteFighting), noteFighting);
+    ok('the in-fight note does not claim a skill is training',
+       !/Training now/i.test(noteFighting), noteFighting);
+
     ev(`state=defaultState(); normalizeState(); combat.active=false; combatMode=false;`);
   }
 
