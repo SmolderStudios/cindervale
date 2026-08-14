@@ -17,7 +17,7 @@
 const fs = require('fs');
 const path = require('path');
 const ROOT = __dirname;
-const html = fs.readFileSync(path.join(ROOT, 'cindervale.html'), 'utf8');
+const html = fs.readFileSync(path.join(ROOT, process.env.CV_FILE||'cindervale.html'), 'utf8');
 const { JSDOM } = require('jsdom');
 const dom = new JSDOM(html, { url: 'http://localhost/', runScripts: 'dangerously', pretendToBeVisual: true });
 
@@ -980,7 +980,7 @@ setTimeout(() => {
 
     // Static: constructs _icoUniq cannot rewrite would silently break a working
     // reference, since it only rewrites id="..." and url(#...) inside one string.
-    const src = fs.readFileSync(path.join(ROOT,'cindervale.html'),'utf8');
+    const src = fs.readFileSync(path.join(ROOT, process.env.CV_FILE||'cindervale.html'),'utf8');
     const body = src.slice(src.indexOf('const ICONS'));
     const unrewritable = ['<use ','xlink:href','href="#'].filter(p=>body.includes(p));
     ok('no SVG constructs _icoUniq cannot rewrite', unrewritable.length===0, unrewritable.join(','));
