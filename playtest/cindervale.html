@@ -5011,6 +5011,7 @@ body:not(.is-demo) .demo-only{display:none !important}
 </style>
 
 
+
 /* ==FULLSTAGE-CSS-START== */
 <style>
 /* ════════ FULL STAGE COMBAT ARENA ══════════════════════════════════════════
@@ -5197,6 +5198,42 @@ body:not(.is-demo) .demo-only{display:none !important}
 /* ── hit splats: a contained column over the foe, not the whole stage ───── */
 .cvsplats{left:50%;right:auto;transform:translateX(-50%);width:calc(300px*var(--tscale));inset-inline:auto}
 
+
+/* ── TOOLTIPS FOR THE STAGE PANELS ───────────────────────────────────────────
+   The game's data-tip tooltip is an explicit ALLOWLIST of classes
+   (.cmb-stat, .cd-stat, .cmb-chip, .st-ic, .fm-icon, .sl-*, .cmb-slot) — it is
+   not a generic [data-tip] rule. The stage's own classes were never added, so
+   every drop row and stat tile carried a data-tip that could never render.
+   Same treatment, extended to them. */
+.cvdrop[data-tip],.cvst2[data-tip],.cvarena-foe[data-tip]{position:relative;cursor:var(--cur-help)}
+.cvdrop[data-tip]:hover::after,.cvst2[data-tip]:hover::after,.cvarena-foe[data-tip]:hover::after{
+  content:attr(data-tip);position:absolute;left:0;top:calc(100% + 6px);
+  min-width:190px;max-width:290px;
+  background:linear-gradient(180deg,#231711,#13090a);border:1px solid var(--trim,#c79b4e);
+  border-radius:5px;padding:8px 11px;font-size:calc(13px*var(--tscale));
+  color:var(--text,#e8d8b0);line-height:1.5;white-space:pre-wrap;pointer-events:none;z-index:500;
+  box-shadow:0 6px 18px rgba(0,0,0,.9),inset 0 1px 0 rgba(199,155,78,.2);
+  letter-spacing:.02em;text-transform:none;font-variant:normal;
+  font-family:'Crimson Pro',Georgia,serif;font-weight:400;text-align:left}
+/* The right rail is near the viewport edge, so its bubbles open leftward. */
+.cvrail.r .cvst2[data-tip]:hover::after{left:auto;right:0}
+.cvdrop[data-tip]:hover{background:rgba(199,155,78,.06);border-radius:3px}
+
+/* ── drops: smaller ─────────────────────────────────────────────────────── */
+.cvglass .cvdrop{font-size:calc(10.5px*var(--tscale));padding:1px 0}
+.cvglass .cvdrop .dc{font-size:calc(9.5px*var(--tscale))}
+
+/* ── Engage moves into the right rail, above Training ───────────────────── */
+.cvrail.r .cmb-engage-btn{width:100%;margin:0;padding:calc(11px*var(--tscale)) calc(10px*var(--tscale));
+  font-size:calc(13px*var(--tscale));display:flex;align-items:center;justify-content:center;gap:6px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cvrail.r .cmb-engage-btn b{font-weight:600}
+/* With the button gone from the bottom band, the bars are the only child left —
+   so the band shrinks to them and centres properly instead of sitting off to
+   the left of stage centre with a hole where the button used to be. */
+.cvstage-bottom{width:min(calc(620px*var(--tscale)),52%);justify-content:center}
+.cvstage-bottom > .cvglass{flex:1 1 100%}
+
 @media (max-width:1100px){
   .cvrail{position:static;width:auto;margin:8px 0 0}
   .cvstage{height:auto;padding-bottom:10px}
@@ -5237,7 +5274,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.124</div>
+  <div class="mm-ver">v0.9.125</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -10462,6 +10499,7 @@ function iconHTML(id){
   for(var k in ART_MON){ if(typeof ICONS!=='undefined') ICONS[k]=ART_MON[k]; }
 })();
 /* ==ART-PACK-END== */
+
 
 
 /* ==ZONE-BG-START== */
@@ -27337,6 +27375,8 @@ function stopCombatTimer(){
 
 
 
+
+
 /* ==SPLAT-FN-START== */
 /* Floating damage numbers over the creature. Colour encodes the SOURCE, which
    is the whole point — a poison tick and a crit are both "damage" in the log
@@ -29116,6 +29156,7 @@ ${combat.raid?buildRaidProgressHTML():''}
       </div>
 
       <div class="cvrail r">
+        ${active?`<button class="cmb-engage-btn flee" id="cmbFlee"><span class="ceb-ic">\u2715</span>Disengage</button>`:`<button class="cmb-engage-btn engage" id="cmbEngage"><span class="ceb-ic">${iconHTML('ui_swords')}</span>Engage <b>${mon.name}</b></button>`}
         <div class="cvglass">
           <h4>Training</h4>
           <div class="cstyle-btns">
@@ -29153,7 +29194,6 @@ ${combat.raid?buildRaidProgressHTML():''}
             </div>
           </div>
         </div>
-        ${active?`<button class="cmb-engage-btn flee" id="cmbFlee"><span class="ceb-ic">\u2715</span>Disengage</button>`:`<button class="cmb-engage-btn engage" id="cmbEngage"><span class="ceb-ic">${iconHTML('ui_swords')}</span>Engage <b>${mon.name}</b></button>`}
       </div>
     </div>
     <div class="cmb-zones-block">
