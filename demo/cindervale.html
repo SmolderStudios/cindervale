@@ -4843,21 +4843,28 @@ body:not(.is-demo) .demo-only{display:none !important}
 .ew-lab.dim::after{background:linear-gradient(90deg,rgba(214,170,96,.14),transparent)}
 .ew-lab .ct{font-family:var(--num);letter-spacing:1px;color:#7a6a4a;text-transform:none}
 
-/* ── worn-slot cards: the three things actually paying you ── */
+/* ── worn-slot cards: the three things actually paying you ──
+   Laid out on their side (0.9.126). Stacked — label over a 60px well over two lines
+   of text — each card ran ~145px and the three of them ate the top of the panel
+   before you reached anything you could act on. Same information, half the height. */
 .ew-slots{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--ew-gap)}
-.ew-slot{padding:12px;border-radius:9px;background:var(--ew-card);box-shadow:var(--ew-sh);
-  text-align:center;position:relative;cursor:var(--cur-pointer);transition:box-shadow .12s}
+.ew-slot{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;
+  background:var(--ew-card);box-shadow:var(--ew-sh);text-align:left;
+  position:relative;cursor:var(--cur-pointer);transition:box-shadow .12s}
 .ew-slot:hover{box-shadow:var(--ew-sh-hi)}
 .ew-slot.sel{box-shadow:var(--ew-sh-hi), 0 0 0 1px var(--ember)}
-.ew-slot .sl{font-family:var(--num);font-size:9.5px;letter-spacing:2px;text-transform:uppercase;
-  color:#8a7657;margin-bottom:8px}
-.ew-slot .well{width:60px;height:60px;margin:0 auto 8px;border-radius:50%;background:#100b06;
+.ew-slot .si{flex:1;min-width:0}
+.ew-slot .sl{font-family:var(--num);font-size:9px;letter-spacing:1.6px;text-transform:uppercase;
+  color:#8a7657;line-height:1}
+.ew-slot .well{width:42px;height:42px;flex:none;border-radius:50%;background:#100b06;
   box-shadow:var(--ew-well);display:flex;align-items:center;justify-content:center}
 /* black-only glow eats a dark icon's own edges — pair it with the gem's colour */
-.ew-slot .well .ev-icon{width:34px;height:34px;
-  filter:drop-shadow(0 2px 5px rgba(0,0,0,.9)) drop-shadow(0 0 7px var(--gc,rgba(214,138,52,.5)))}
-.ew-slot .nm{font-family:'Cinzel',serif;font-size:calc(13px*var(--tscale));color:#e8d7b0;line-height:1.2}
-.ew-slot .ec{font-family:var(--num);font-size:calc(11.5px*var(--tscale));margin-top:4px;line-height:1.3}
+.ew-slot .well .ev-icon{width:26px;height:26px;
+  filter:drop-shadow(0 2px 4px rgba(0,0,0,.9)) drop-shadow(0 0 6px var(--gc,rgba(214,138,52,.5)))}
+.ew-slot .nm{font-family:'Cinzel',serif;font-size:calc(12.5px*var(--tscale));color:#e8d7b0;
+  line-height:1.2;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ew-slot .ec{font-family:var(--num);font-size:calc(10.5px*var(--tscale));margin-top:2px;
+  line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ew-slot .ec.on{color:var(--ember)}
 .ew-slot .ec.off{color:#6e6046;font-style:italic}
 .ew-slot.empty .well{opacity:.4}
@@ -5009,6 +5016,12 @@ body:not(.is-demo) .demo-only{display:none !important}
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ew-empty{font-size:calc(13.5px*var(--tscale));color:var(--muted);font-style:italic;padding:12px 0}
 </style>
+
+
+
+
+
+
 
 
 
@@ -5234,6 +5247,45 @@ body:not(.is-demo) .demo-only{display:none !important}
 .cvstage-bottom{width:min(calc(620px*var(--tscale)),52%);justify-content:center}
 .cvstage-bottom > .cvglass{flex:1 1 100%}
 
+
+/* ── FOE BOX: the creature was rendering at the LEFT edge ────────────────────
+   .cvarena-foe is absolutely positioned with left:50% + translateX(-50%), which
+   normally shrink-to-fits — but it measured 1329px wide, the full stage. The art
+   is an inline-block inside it, so it sat at the left of that box and only the
+   BOX was centred. Pin an explicit width and centre the contents.
+   Also: .ev-icon forces width:1em AND height:1em, so a wide creature was being
+   letterboxed inside a square by object-fit. Width auto keeps its real aspect. */
+.cvstage .cvarena-foe{width:fit-content;line-height:1}
+.cvstage .cvarena-art{display:block;line-height:1}
+.cvstage .cvarena-art .ev-icon.art-mon{width:1em;height:1em;object-fit:contain}
+.cvstage .cvarena-art svg{width:1em;height:1em}
+
+/* Hovered glass panel paints above its siblings. backdrop-filter creates a
+   stacking context, so a tooltip inside one panel was trapped under the next
+   panel down the rail. */
+.cvrail .cvglass{position:relative;z-index:1}
+.cvrail .cvglass:hover{z-index:30}
+
+/* ── real item tooltip for drops ─────────────────────────────────────────────
+   A CSS attr() tooltip can only ever be plain text, so it could never show the
+   item itself. This one is a real element on <body> — which also escapes every
+   stacking context on the way out. */
+.cv-itemtip{position:fixed;z-index:9999;pointer-events:none;opacity:0;
+  min-width:calc(168px*var(--tscale));max-width:calc(272px*var(--tscale));
+  background:linear-gradient(180deg,#231711,#13090a);border:1px solid var(--trim,#c79b4e);
+  border-radius:6px;padding:calc(9px*var(--tscale)) calc(11px*var(--tscale));
+  box-shadow:0 8px 22px rgba(0,0,0,.92),inset 0 1px 0 rgba(199,155,78,.2);
+  transition:opacity .09s ease}
+.cv-itemtip.on{opacity:1}
+.cv-itemtip .cvit-h{display:flex;align-items:center;gap:calc(8px*var(--tscale));
+  font-family:'Crimson Pro',Georgia,serif;font-size:calc(15px*var(--tscale));font-weight:600;
+  color:var(--parch,#e8d8b0)}
+.cv-itemtip .cvit-h .ev-icon{width:calc(30px*var(--tscale));height:calc(30px*var(--tscale));flex:0 0 auto}
+.cv-itemtip .cvit-r{margin-top:calc(6px*var(--tscale));padding-top:calc(6px*var(--tscale));
+  border-top:1px solid rgba(199,155,78,.18);
+  font-size:calc(11.5px*var(--tscale));color:var(--muted,#8a7550);line-height:1.5}
+.cv-itemtip .cvit-r b{color:var(--trim,#c79b4e);font-weight:600}
+
 @media (max-width:1100px){
   .cvrail{position:static;width:auto;margin:8px 0 0}
   .cvstage{height:auto;padding-bottom:10px}
@@ -5274,7 +5326,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.125</div>
+  <div class="mm-ver">v0.9.126</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -10499,6 +10551,12 @@ function iconHTML(id){
   for(var k in ART_MON){ if(typeof ICONS!=='undefined') ICONS[k]=ART_MON[k]; }
 })();
 /* ==ART-PACK-END== */
+
+
+
+
+
+
 
 
 
@@ -26623,6 +26681,71 @@ function _ewFocusCard(eid,itemId,cost,canAfford,redraw){
   return b;
 }
 
+/* Which piece is satisfying (or could satisfy) one leg of a set, and what is still
+   wrong with it. A leg needs an item of the right gem AND the right type, WORN, and
+   carrying ANY enchant — three separate ways to fall short, and the card's ✓/✗ chip
+   cannot say which. This drives the hover. */
+function _ewLegState(gem,want){
+  var worn=null, ownedUnworn=null;
+  for(var s in state.equipped){
+    var eq=state.equipped[s];
+    if(eq&&JEWELRY_GEM_TIER[eq]===gem&&_jwType(eq)===want){ worn=eq; break; }
+  }
+  if(!worn){
+    for(var id in JEWELRY_GEM_TIER){
+      if(JEWELRY_GEM_TIER[id]!==gem||_jwType(id)!==want) continue;
+      if((state.items[id]||0)>0||anyLoadoutHas(id)){ ownedUnworn=id; break; }
+    }
+  }
+  var piece=worn||ownedUnworn;
+  var ench=piece?state.enchantments[piece]:null;
+  return {
+    piece:piece, worn:!!worn, ench:ench,
+    ok:!!(worn&&ench),
+    // the single next thing to do about this leg
+    need: !piece ? 'craft' : (!worn ? 'wear' : (!ench ? 'enchant' : null))
+  };
+}
+/* Hover body for a set card — spells out the requirement per leg instead of leaving
+   "Ring / Amulet" chips to be decoded. */
+function _ewSetTipHtml(def,gem,kind,live){
+  var gemName=gem.charAt(0).toUpperCase()+gem.slice(1);
+  var rows=def.slots.map(function(sl){
+    var want=(sl==='ring_l'||sl==='ring_r')?'ring':kind;
+    var st=_ewLegState(gem,want);
+    var typeName=want==='ring'?'Ring':want==='pendant'?'Pendant':'Amulet';
+    var label=st.piece?(ITEMS[st.piece]?ITEMS[st.piece].name:st.piece):(gemName+' '+typeName);
+    var detail, colour;
+    if(st.ok){
+      detail='worn · ✦ '+(ENCHANTS[st.ench]?ENCHANTS[st.ench].name:'enchanted');
+      colour='#a8cf60';
+    } else if(st.need==='craft'){
+      detail='you do not own one — craft it in the Jeweler';
+      colour='#c8564a';
+    } else if(st.need==='wear'){
+      detail=(st.ench?'enchanted, but ':'')+'not worn — equip it'
+        +(want==='ring'?' in either ring slot':' in the neck slot');
+      colour='#d8a24a';
+    } else {
+      detail='worn, but not enchanted — bind any enchant to it';
+      colour='#d8a24a';
+    }
+    return '<div style="margin-top:5px;line-height:1.35">'
+      +'<span style="color:'+colour+'">'+(st.ok?'✓':'✗')+'</span> '
+      +'<b style="color:#e8d7b0">'+label+'</b>'
+      +'<div style="color:#9a8663;font-size:.92em;padding-left:13px">'+detail+'</div></div>';
+  }).join('');
+  return '<div style="font-family:\'Cinzel\',serif;font-size:1.06em;color:'
+      +(live?'#a8cf60':'var(--gold-hi)')+'">'+(live?'✦ ':'')+def.name+'</div>'
+    +'<div style="color:#9a8663;margin-top:2px">'+def.desc.replace(/^[^:]*: */,'')+'</div>'
+    +'<div style="margin-top:7px;padding-top:6px;border-top:1px solid rgba(214,170,96,.16);'
+      +'font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:var(--ember)">'
+      +(live?'Active — both worn and enchanted':'Needs all of')+'</div>'
+    +rows
+    +(live?'':'<div style="margin-top:7px;color:#7a6a4a;font-size:.9em;font-style:italic">'
+      +'Any enchant counts — the set only checks that the piece carries one.</div>');
+}
+
 /* ── set-bonus card: names the legs you have, not just on/off ────────────────── */
 function _ewSetCard(def,gem,kind){
   var live=false;
@@ -26642,6 +26765,14 @@ function _ewSetCard(def,gem,kind){
   c.innerHTML='<div class="sn">'+(live?'✦ ':'')+def.name+'</div>'
     +'<div class="sd">'+def.desc.replace(/^[^:]*: */,'')+'</div>'
     +'<div class="legs">'+legs+'</div>';
+  /* The ✓/✗ chips say a leg is unmet but not why — missing piece, unworn, or worn but
+     unenchanted all look identical. showGearTip takes HTML (the CSS attr() tooltips
+     cannot), so the full requirement goes here. */
+  var tip=_ewSetTipHtml(def,gem,kind,live);
+  c.addEventListener('mouseenter',function(e){ showGearTip(tip,e.clientX,e.clientY); });
+  c.addEventListener('mousemove',function(e){ showGearTip(tip,e.clientX,e.clientY); });
+  c.addEventListener('mouseleave',hideGearTip);
+  c.style.cursor='var(--cur-help)';
   return c;
 }
 /* Eight gems x two set kinds is sixteen cards nobody reads. Rank by what the player
@@ -26784,10 +26915,10 @@ function renderEnchanting(){
     const c=_ewEl('ew-slot'+(id?'':' empty')+(id&&id===_enchantSel?' sel':''));
     c.style.setProperty('--gc', id?(EW_GEMC[JEWELRY_GEM_TIER[id]]||'rgba(214,138,52,.5)')
                                  :'rgba(214,138,52,.3)');
-    c.innerHTML='<div class="sl">'+EW_SLOT_LABEL[sl]+'</div>'
-      +'<div class="well">'+(id?iconHTML(id):iconHTML('ui_gem'))+'</div>'
+    c.innerHTML='<div class="well">'+(id?iconHTML(id):iconHTML('ui_gem'))+'</div>'
+      +'<div class="si"><div class="sl">'+EW_SLOT_LABEL[sl]+'</div>'
       +'<div class="nm">'+(id?(ITEMS[id]?ITEMS[id].name:id):'empty')+'</div>'
-      +'<div class="ec '+(ed?'on':'off')+'">'+(ed?'✦ '+ed.name:(id?'unenchanted':'—'))+'</div>';
+      +'<div class="ec '+(ed?'on':'off')+'">'+(ed?'✦ '+ed.name:(id?'unenchanted':'—'))+'</div></div>';
     if(id) c.addEventListener('click',function(){ _enchantSel=id; hideTooltip(); redraw(); });
     slots.appendChild(c);
   });
@@ -27377,6 +27508,23 @@ function stopCombatTimer(){
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* ==SPLAT-FN-START== */
 /* Floating damage numbers over the creature. Colour encodes the SOURCE, which
    is the whole point — a poison tick and a crit are both "damage" in the log
@@ -27402,6 +27550,44 @@ function cmbSplat(text,cls){
   }catch(e){}
 }
 /* ==SPLAT-FN-END== */
+/* ==ITEMTIP-START== */
+/* Real item tooltip for the stage drop rows. Delegated on document because
+   #combatPanel replaces its innerHTML on every kill, so any listener bound to
+   a row would be dropped on the floor within seconds of a fight starting. */
+function cvItemTipInit(){
+  if(document.getElementById("cvItemTip")) return;
+  var t=document.createElement("div");
+  t.id="cvItemTip"; t.className="cv-itemtip";
+  document.body.appendChild(t);
+  document.addEventListener("mouseover",function(e){
+    var row=(e.target&&e.target.closest)?e.target.closest(".cvdrop[data-item]"):null;
+    if(!row){ t.classList.remove("on"); return; }
+    var id=row.getAttribute("data-item");
+    var it=(typeof ITEMS!=="undefined"&&ITEMS[id])||null;
+    if(!it){ t.classList.remove("on"); return; }
+    var ic=""; try{ ic=(typeof iconHTML==="function")?iconHTML(id):""; }catch(x){}
+    var meta="Drops <b>"+row.getAttribute("data-rate")+"</b> of the time";
+    if(it.sell) meta+="<br>Sells for <b>"+it.sell+"g</b>";
+    if(it.slot) meta+="<br>Equipment — <b>"+it.slot+"</b>";
+    if(it.heal) meta+="<br>Heals <b>"+it.heal+"</b> hp";
+    t.innerHTML='<div class="cvit-h">'+ic+"<span>"+it.name+"</span></div>"+
+                '<div class="cvit-r">'+meta+"</div>";
+    t.classList.add("on");
+    var r=row.getBoundingClientRect(), tw=t.offsetWidth||190, th=t.offsetHeight||90;
+    var x=r.left, y=r.bottom+7;
+    if(x+tw>innerWidth-8) x=innerWidth-tw-8;
+    if(y+th>innerHeight-8) y=r.top-th-7;
+    t.style.left=Math.max(8,Math.round(x))+"px";
+    t.style.top=Math.max(8,Math.round(y))+"px";
+  },true);
+  document.addEventListener("mouseout",function(e){
+    var row=(e.target&&e.target.closest)?e.target.closest(".cvdrop[data-item]"):null;
+    if(row) t.classList.remove("on");
+  },true);
+}
+try{ if(document.readyState!=="loading") cvItemTipInit();
+     else document.addEventListener("DOMContentLoaded",cvItemTipInit); }catch(e){}
+/* ==ITEMTIP-END== */
 /* ==DROPROWS-START== */
 /* Compact drop rows for the stage rail. chance in MONSTER_DROPS is FRACTIONAL
    (0.27 = 27%), not a percent — reading it as a percent would quietly show
@@ -27423,12 +27609,10 @@ function cvDropRowsHTML(m){
       var nm=it?it.name:d.id;
       var pc=d.chance*100;
       var pct=pc>=10?pc.toFixed(0):pc>=1?pc.toFixed(1):pc>=0.1?pc.toFixed(2):pc.toFixed(3);
-      var tip=nm+'&#10;'+pct+'% per kill';
-      if(it&&it.sell) tip+='&#10;Sells for '+it.sell+'g';
-      if(it&&it.slot) tip+='&#10;Equipment — '+it.slot;
-      if(it&&it.heal) tip+='&#10;Heals '+it.heal+' hp';
-      if(d.chance<0.01) tip+='&#10;&#10;Very rare.';
-      return '<div class="cvdrop'+(d.chance<0.03?' rare':'')+'" data-tip="'+String(tip).replace(/"/g,'&quot;')+'">'
+      /* data-item/data-rate drive the real hover card (cvItemTipInit), which
+         can show the item ICON — a CSS attr() tooltip is plain text only and
+         could never do that. No data-tip here, or both would fire at once. */
+      return '<div class="cvdrop'+(d.chance<0.03?' rare':'')+'" data-item="'+d.id+'" data-rate="'+pct+'%">'
         +'<span class="dn">'+nm+'</span><span class="dc">'+pct+'%</span></div>';
     }).join('');
   }catch(e){ return ''; }
@@ -27485,6 +27669,7 @@ function combatTick(){
         cmbLog(`☠ Poison saps the ${mon.name} for ${pd}.`,'');
         cmbSplat(pd,'poison');
         cmbSplat(pd,'poison');
+        cmbSplat(pd,'poison');
       }
     }
   }
@@ -27497,6 +27682,7 @@ function combatTick(){
         const bd=Math.min(_brn.tickDmg, combat.foeHp-REFLECT_CLAMP_MIN);
         combat.foeHp-=bd;
         cmbLog(`🔥 Flames scorch the ${mon.name} for ${bd}.`,'');
+        cmbSplat(bd,'burn');
         cmbSplat(bd,'burn');
         cmbSplat(bd,'burn');
       }
@@ -27521,6 +27707,7 @@ function combatTick(){
     let youDmg = (Math.random()<hitChance)
       ? Math.max(1, Math.round(combat.youMaxHit*(COMBAT_P.HIT_MIN+(1-COMBAT_P.HIT_MIN)*Math.random())))
       : 0;
+    if(youDmg===0) cmbSplat('miss','miss');
     if(youDmg===0) cmbSplat('miss','miss');
     if(youDmg===0) cmbSplat('miss','miss');
     let didCrit=false;
@@ -27565,6 +27752,7 @@ function combatTick(){
     if(combat.bossfx&&combat.bossfx.kind==='voidbomb') combat.bossfx.acc=(combat.bossfx.acc||0)+youDmg+_cleaveDmg;
     if(youDmg>0){
       cmbLog(`You ${didCrit?'<span style="color:#ffd700">crit</span> ':''}hit the ${mon.name} for ${youDmg}.`,'hit');
+      cmbSplat(youDmg,didCrit?'crit':'hit');
       cmbSplat(youDmg,didCrit?'crit':'hit');
       cmbSplat(youDmg,didCrit?'crit':'hit');
       if(_cleaveDmg>0){ cmbLog(`🪓 Reaping Arc cleaves again for ${_cleaveDmg}!`,'hit'); setTimeout(function(){cmbSplat(_cleaveDmg,'cleave');},150); }
@@ -27788,6 +27976,7 @@ function combatTick(){
     // Berserker downside (1.0.104) — +5% damage taken while below 30% HP (the trade for its +15% dealt).
     if(foeDmg>0 && state.cmast && state.cmast['r_t3_r']>0 && combat.youMaxHp>0 && (combat.youHp/combat.youMaxHp)<0.30){ foeDmg=Math.round(foeDmg*1.05); }
     combat.youHp=Math.max(0,combat.youHp-foeDmg);
+    if(foeDmg>0) cmbSplat(foeDmg,'take');
     if(foeDmg>0) cmbSplat(foeDmg,'take');
     if(foeDmg>0) cmbSplat(foeDmg,'take');
     cmbLog(_dodged?`💨 You dodge the ${mon.name}!`:(foeDmg>0?`${mon.name} hits you for ${foeDmg}.`:`${mon.name} misses.`), foeDmg>0?'hit':(_dodged?'':''));
