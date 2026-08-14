@@ -46,7 +46,6 @@
    [CSS-32]   RAIDS
    [CSS-33]   SAILING & TREASURE HUNTING
    [CSS-34]   SKILL PANEL FOOTER
-   [CSS-35]   ENCHANTING PANEL
    ════════════════════════════════════════════════════════════════════════════════ */
 /* ════════ [CSS-01] ROOT · RESET · TYPOGRAPHY ════════════════════════════════════ */
 /* Crimson Pro, inlined 0.9.21. This used to be an @import from Google Fonts.
@@ -4812,202 +4811,6 @@ body:not(.is-demo) .demo-only{display:none !important}
 
 
 .ev-icon.art-mon{object-fit:contain;image-rendering:auto;vertical-align:middle}
-
-/* ════════ [CSS-35] ENCHANTING PANEL (0.9.123) ═══════════════════════════════════
-   The panel used to be a <select> plus a column of thin flex strips, so your
-   collection was invisible (one dropdown entry at a time), the set bonuses only
-   appeared once they were already live, and nothing anywhere told you what your
-   enchants actually totalled. This is the loadout-first rebuild: what you are
-   wearing, what it adds up to, how close the sets are, then the bench.
-
-   Everything here follows the house lit-surface recipe — cards sit ABOVE the
-   panel ground on --lit-top/--rim/--under with light instead of outlines, wells
-   are recessed with an inset shadow. Do not swap these for 1px borders; that is
-   the inversion that makes a panel read as one flat brown wash. */
-#enchantView{ --ew-card:linear-gradient(178deg,var(--lit-top),var(--lit-bot) 78%);
-  --ew-sh:inset 0 1px 0 var(--rim), inset 0 -1px 0 var(--under), 0 3px 8px rgba(0,0,0,.45);
-  --ew-sh-hi:inset 0 1px 0 rgba(240,199,114,.32), inset 0 -1px 0 var(--under), 0 5px 14px rgba(0,0,0,.55);
-  --ew-well:inset 0 2px 4px rgba(0,0,0,.9), inset 0 -1px 0 rgba(214,170,96,.08);
-  --ew-gap:10px; }
-
-.ew-stack{display:flex;flex-direction:column;gap:13px}
-.ew-col{display:flex;flex-direction:column;gap:13px;min-width:0}
-.ew-two{display:grid;grid-template-columns:minmax(215px,.8fr) minmax(300px,1.7fr);gap:14px;align-items:start}
-@media (max-width:860px){ .ew-two{grid-template-columns:1fr} }
-
-/* ── section headers ── */
-.ew-lab{font-size:10.5px;color:var(--ember);text-transform:uppercase;letter-spacing:2.2px;
-  margin:0 0 7px;display:flex;align-items:center;gap:8px}
-.ew-lab::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(214,170,96,.28),transparent)}
-.ew-lab.dim{color:#8a7657}
-.ew-lab.dim::after{background:linear-gradient(90deg,rgba(214,170,96,.14),transparent)}
-.ew-lab .ct{font-family:var(--num);letter-spacing:1px;color:#7a6a4a;text-transform:none}
-
-/* ── worn-slot cards: the three things actually paying you ── */
-.ew-slots{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--ew-gap)}
-.ew-slot{padding:12px;border-radius:9px;background:var(--ew-card);box-shadow:var(--ew-sh);
-  text-align:center;position:relative;cursor:var(--cur-pointer);transition:box-shadow .12s}
-.ew-slot:hover{box-shadow:var(--ew-sh-hi)}
-.ew-slot.sel{box-shadow:var(--ew-sh-hi), 0 0 0 1px var(--ember)}
-.ew-slot .sl{font-family:var(--num);font-size:9.5px;letter-spacing:2px;text-transform:uppercase;
-  color:#8a7657;margin-bottom:8px}
-.ew-slot .well{width:60px;height:60px;margin:0 auto 8px;border-radius:50%;background:#100b06;
-  box-shadow:var(--ew-well);display:flex;align-items:center;justify-content:center}
-/* black-only glow eats a dark icon's own edges — pair it with the gem's colour */
-.ew-slot .well .ev-icon{width:34px;height:34px;
-  filter:drop-shadow(0 2px 5px rgba(0,0,0,.9)) drop-shadow(0 0 7px var(--gc,rgba(214,138,52,.5)))}
-.ew-slot .nm{font-family:'Cinzel',serif;font-size:calc(13px*var(--tscale));color:#e8d7b0;line-height:1.2}
-.ew-slot .ec{font-family:var(--num);font-size:calc(11.5px*var(--tscale));margin-top:4px;line-height:1.3}
-.ew-slot .ec.on{color:var(--ember)}
-.ew-slot .ec.off{color:#6e6046;font-style:italic}
-.ew-slot.empty .well{opacity:.4}
-.ew-slot.empty .nm{color:#6e6046;font-style:italic}
-
-/* ── the totals strip — the number the panel never showed before ── */
-.ew-tot{display:grid;grid-template-columns:repeat(auto-fit,minmax(84px,1fr));gap:7px}
-.ew-tot .t{padding:8px 6px;border-radius:7px;background:#100b06;box-shadow:var(--ew-well);text-align:center}
-.ew-tot .t b{display:block;font-family:var(--num);font-size:calc(16px*var(--tscale));
-  color:var(--green);line-height:1}
-.ew-tot .t.zero b{color:#4e4636}
-.ew-tot .t span{display:block;font-size:9.5px;letter-spacing:1.2px;text-transform:uppercase;
-  color:#7a6a4a;margin-top:4px}
-
-/* ── set-bonus cards, run across (stacked they outrun the column beside them) ── */
-.ew-sets{display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(228px,1fr))}
-.ew-set{padding:9px 11px;border-radius:8px;background:var(--ew-card);box-shadow:var(--ew-sh);
-  position:relative;overflow:hidden}
-.ew-set.live{box-shadow:var(--ew-sh-hi), 0 0 0 1px #4a6a20}
-.ew-set.live::after{content:'';position:absolute;inset:0;pointer-events:none;
-  background:radial-gradient(110% 80% at 0% 50%, rgba(125,163,63,.13), transparent 62%)}
-.ew-set .sn{font-family:'Cinzel',serif;font-size:calc(13px*var(--tscale));color:#e8d7b0;
-  display:flex;align-items:center;gap:7px;position:relative;z-index:1}
-.ew-set.live .sn{color:#a8cf60}
-.ew-set .sd{font-size:calc(11.5px*var(--tscale));color:#8a7657;line-height:1.4;margin-top:3px;
-  position:relative;z-index:1}
-.ew-set .legs{display:flex;gap:5px;margin-top:6px;position:relative;z-index:1;flex-wrap:wrap}
-.ew-set .leg{font-family:var(--num);font-size:10px;letter-spacing:.8px;padding:2px 7px;border-radius:3px;
-  background:#100b06;box-shadow:var(--ew-well);color:#6e6046}
-.ew-set .leg.ok{color:#a8cf60;box-shadow:var(--ew-well),0 0 0 1px #3a5018}
-
-/* ── the collection rail ──
-   A complete jewelry collection is 24 pieces. Unbounded, this column is taller than
-   the panel and pushes the bench off the bottom of the screen, so it is capped and
-   scrolls on its own. The cap is viewport-relative so it still fits on short windows. */
-.ew-rail{display:grid;gap:var(--ew-gap);max-height:clamp(240px,52vh,560px);overflow-y:auto;
-  padding-right:5px;scrollbar-width:thin;scrollbar-color:#4a3a20 transparent;
-  overscroll-behavior:contain}
-.ew-rail::-webkit-scrollbar{width:8px}
-.ew-rail::-webkit-scrollbar-thumb{background:#4a3a20;border-radius:4px;
-  border:2px solid transparent;background-clip:padding-box}
-.ew-rail::-webkit-scrollbar-thumb:hover{background:#6a5533;background-clip:padding-box}
-.ew-rail::-webkit-scrollbar-track{background:#140d07;border-radius:4px}
-/* a fade at the bottom edge so a capped rail reads as "more below", not "the end" */
-.ew-railwrap{position:relative}
-.ew-railwrap::after{content:'';position:absolute;left:0;right:5px;bottom:0;height:26px;
-  pointer-events:none;border-radius:0 0 8px 8px;
-  background:linear-gradient(180deg,transparent,rgba(20,13,7,.92))}
-.ew-railwrap.nofade::after{display:none}
-
-.ew-piece{display:flex;align-items:center;gap:9px;padding:9px 10px;border:0;border-radius:8px;
-  background:var(--ew-card);box-shadow:var(--ew-sh);cursor:var(--cur-pointer);
-  text-align:left;width:100%;font-family:inherit;position:relative;overflow:hidden;
-  transition:transform .12s ease, box-shadow .12s ease}
-.ew-piece:hover{transform:translateY(-1px);box-shadow:var(--ew-sh-hi)}
-.ew-piece .ev-icon{width:30px;height:30px;flex:none}
-.ew-piece .pi{flex:1;min-width:0;display:block}
-.ew-piece .pn{display:block;font-family:'Cinzel',serif;font-size:calc(13.5px*var(--tscale));
-  color:#e8d7b0;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ew-piece .pn small{color:#7a6a4a;font-size:.8em}
-.ew-piece .ps{display:block;font-family:var(--num);font-size:calc(11px*var(--tscale));
-  color:#8a7657;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ew-piece .ps.on{color:var(--ember)}
-/* the gem's own colour as a left edge — the collection reads as a ladder at a glance */
-.ew-piece::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--gc,#6a5533)}
-.ew-piece.sel{box-shadow:var(--ew-sh-hi), 0 0 0 1px var(--ember)}
-.ew-piece.sel .pn{color:var(--gold-hi)}
-.ew-dot{width:7px;height:7px;border-radius:50%;flex:none;background:#3a2c18;
-  box-shadow:inset 0 1px 2px rgba(0,0,0,.8)}
-.ew-dot.on{background:var(--ember);box-shadow:0 0 6px rgba(214,138,52,.7)}
-.ew-worn{font-family:var(--num);font-size:9.5px;letter-spacing:1px;text-transform:uppercase;
-  color:var(--green);border:1px solid #3a5018;border-radius:3px;padding:1px 5px;flex:none}
-
-/* ── the piece being worked on ── */
-.ew-hero{padding:14px;border-radius:10px;background:var(--ew-card);box-shadow:var(--ew-sh);
-  position:relative;overflow:hidden}
-.ew-hero::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--gc,#6a5533)}
-.ew-hero .hr{display:flex;align-items:center;gap:13px}
-.ew-hero .well{width:76px;height:76px;flex:none;border-radius:50%;background:#100b06;
-  box-shadow:var(--ew-well);display:flex;align-items:center;justify-content:center}
-.ew-hero .well .ev-icon{width:44px;height:44px;
-  filter:drop-shadow(0 2px 6px rgba(0,0,0,.9)) drop-shadow(0 0 9px var(--gc,rgba(214,138,52,.55)))}
-.ew-hero h4{font-family:'Cinzel',serif;font-size:calc(19px*var(--tscale));color:var(--gold-hi);
-  margin:0;line-height:1.15;letter-spacing:.3px}
-.ew-hero .sub{font-family:var(--num);font-size:calc(12px*var(--tscale));color:#8a7657;margin-top:4px}
-.ew-hero .cur{font-family:var(--num);font-size:calc(12.5px*var(--tscale));color:var(--ember);margin-top:5px}
-.ew-hero .cur .no{color:#6e6046}
-/* the v0.9.122 spare-copy note, carried over — enchants bind per item id */
-.ew-dupe{font-size:calc(11.5px*var(--tscale));color:#8a7657;line-height:1.5;margin-top:10px;
-  padding:6px 9px;border-left:2px solid var(--ember);background:#100b06;border-radius:0 5px 5px 0}
-.ew-dupe b{color:#e8d7b0}
-.ew-dupe .k{color:var(--ember)}
-
-.ew-cost{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-top:10px;padding-top:10px;
-  border-top:1px solid rgba(214,170,96,.12)}
-.ew-cost .cl{font-size:10px;letter-spacing:1.6px;text-transform:uppercase;color:#7a6a4a}
-.ew-mat{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:6px;
-  background:#100b06;box-shadow:var(--ew-well);font-family:var(--num);
-  font-size:calc(11.5px*var(--tscale));color:#8a7657;cursor:var(--cur-help)}
-.ew-mat .ev-icon{width:16px;height:16px}
-.ew-mat b{color:#a8cf60;font-weight:normal}
-.ew-mat.short b{color:#c8564a}
-
-/* ── the enchant option cards ── */
-.ew-opts{display:grid;gap:var(--ew-gap)}
-.ew-opts.two{grid-template-columns:repeat(auto-fit,minmax(250px,1fr))}
-.ew-ench{display:flex;align-items:center;gap:10px;padding:10px 11px;border:0;border-radius:8px;
-  background:var(--ew-card);box-shadow:var(--ew-sh);position:relative;overflow:hidden}
-.ew-ench.on{box-shadow:var(--ew-sh-hi), 0 0 0 1px var(--ember)}
-.ew-ench.on::after{content:'';position:absolute;inset:0;pointer-events:none;
-  background:radial-gradient(120% 80% at 0% 50%, rgba(214,138,52,.14), transparent 60%)}
-.ew-ench .eh{flex:1;min-width:0;position:relative;z-index:1;display:block}
-.ew-ench .en{display:block;font-family:'Cinzel',serif;font-size:calc(14px*var(--tscale));
-  color:#e8d7b0;line-height:1.2}
-.ew-ench.on .en{color:var(--gold-hi)}
-.ew-ench .ed{display:block;font-size:calc(12px*var(--tscale));color:#94805f;line-height:1.4;margin-top:4px}
-.ew-ench .ev-icon{width:24px;height:24px;flex:none;opacity:.92}
-/* the effect as one number the eye can find without reading the sentence */
-.ew-num{font-family:var(--num);font-size:calc(17px*var(--tscale));color:var(--green);
-  line-height:1;letter-spacing:.5px;white-space:nowrap;min-width:52px;flex:none;
-  position:relative;z-index:1}
-.ew-num small{font-size:9.5px;color:#7a6a4a;letter-spacing:1.2px;text-transform:uppercase;
-  display:block;margin-top:3px}
-.ew-apply{flex:none;position:relative;z-index:1;font-family:inherit;
-  font-size:calc(12.5px*var(--tscale));padding:6px 14px;border-radius:5px;cursor:var(--cur-pointer);
-  background:linear-gradient(180deg,#3a2a12,#241905);border:1px solid var(--ember);color:var(--gold-hi);
-  box-shadow:0 2px 5px rgba(0,0,0,.5);white-space:nowrap;transition:filter .12s}
-.ew-apply:hover{filter:brightness(1.25)}
-.ew-apply.off{background:var(--panel);border-color:var(--trim-d);color:#6e6046;
-  cursor:default;box-shadow:none}
-.ew-apply.rm{border-color:#7a3028;color:#e08a7a;background:linear-gradient(180deg,#3a1a14,#240d08)}
-/* Amethyst alone carries twelve skill-focus enchants, all with the SAME numbers — so
-   the shared bonus is stated once on the section header and each card is just its
-   skill. Four across keeps the group from burying the globals above it. */
-.ew-focus{display:grid;grid-template-columns:repeat(auto-fit,minmax(158px,1fr));gap:8px}
-.ew-fc{display:flex;align-items:center;gap:8px;padding:8px 9px;border:0;border-radius:7px;
-  background:var(--ew-card);box-shadow:var(--ew-sh);cursor:var(--cur-pointer);width:100%;
-  text-align:left;font-family:inherit;transition:transform .12s,box-shadow .12s}
-.ew-fc:hover{transform:translateY(-1px);box-shadow:var(--ew-sh-hi)}
-.ew-fc.on{box-shadow:var(--ew-sh-hi), 0 0 0 1px var(--ember)}
-.ew-fc.off{opacity:.5;cursor:default}
-.ew-fc.off:hover{transform:none;box-shadow:var(--ew-sh)}
-.ew-fc .ev-icon{width:22px;height:22px;flex:none}
-.ew-fc .fi{flex:1;min-width:0;display:block}
-.ew-fc .fn{display:block;font-family:'Cinzel',serif;font-size:calc(12.5px*var(--tscale));
-  color:#e8d7b0;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ew-fc.on .fn{color:var(--gold-hi)}
-.ew-fc .fs{display:block;font-family:var(--num);font-size:10px;color:#7a6a4a;margin-top:2px;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ew-empty{font-size:calc(13.5px*var(--tscale));color:var(--muted);font-style:italic;padding:12px 0}
 </style>
 /* ==FULLSTAGE-CSS-START== */
 <style>
@@ -26402,352 +26205,287 @@ function openOfflineOverlay(){
   if(closeBtn) closeBtn.addEventListener('click',()=>overlay.remove());
 }
 
-/* ════ [JS-24f] enchanting view (rebuilt 0.9.123) ════════════════════════════════
-   Loadout-first. The old panel led with a <select> — your collection was invisible
-   one entry at a time, set bonuses only appeared once they were already live, and
-   the panel never told you what any of it totalled. Order here is: what you are
-   wearing → what it adds up to → how close the sets are → the bench.
-
-   Enchants bind per ITEM ID (see enchantBonuses), which is why a spare copy cannot
-   carry a second enchant; the hero card says so rather than leaving it to be
-   discovered. Styling lives in [CSS-35]. */
-
-/* Gem accent, used for the card's left edge and the portrait glow. A black-only
-   glow on a dark icon over a dark well eats the icon's own edges. */
-const EW_GEMC={sapphire:'#4a86c8',emerald:'#3fa860',ruby:'#c8434a',diamond:'#8fd4e0',
-  amethyst:'#b886e6',dragon:'#e08a34',bloodstone:'#d0334a',void:'#9a5ad0'};
-const EW_GEM_ORDER=['sapphire','emerald','ruby','diamond','amethyst','dragon','bloodstone','void'];
-const EW_SLOT_LABEL={ring_l:'Ring · Left',ring_r:'Ring · Right',amulet:'Neck'};
-const EW_BONUS_LABEL={speed:'Speed',xpBoost:'XP',gpBoost:'Sell',doubleYield:'Double',
-  atkBoost:'Attack',defBoost:'Defence',hpBoost:'Max HP',critChance:'Crit',lifesteal:'Lifesteal'};
-
-function _ewEl(cls,html){ var d=document.createElement('div'); if(cls)d.className=cls;
-  if(html!=null)d.innerHTML=html; return d; }
-function _ewLab(txt,dim,count){
-  return _ewEl('ew-lab'+(dim?' dim':''), txt+(count!=null?' <span class="ct">'+count+'</span>':''));
-}
-/* Every jewelry piece owned anywhere — satchel quantity OR sitting in a loadout. */
-function _ewOwned(){
-  var out=[];
-  for(var id in JEWELRY_GEM_TIER){
-    if((state.items[id]||0)>0 || anyLoadoutHas(id)) out.push(id);
-  }
-  var TY={ring:0,amulet:1,pendant:2,other:3};
-  out.sort(function(a,b){
-    var d=TY[_jwType(a)]-TY[_jwType(b)];
-    if(d) return d;
-    return EW_GEM_ORDER.indexOf(JEWELRY_GEM_TIER[a])-EW_GEM_ORDER.indexOf(JEWELRY_GEM_TIER[b]);
-  });
-  return out;
-}
-function _ewWornSlot(id){
-  for(var s in state.equipped) if(state.equipped[s]===id) return s;
-  return null;
-}
-/* Reagent cost for a piece — driven by its gem's tier, same table the old panel used. */
-function _ewCostFor(itemId){
-  var gem=JEWELRY_GEM_TIER[itemId];
-  var list=ENCHANTS_BY_GEM[gem]||[];
-  var tier=list.length?ENCHANTS[list[0]].tier:1;
-  return {cost:ENCHANT_COST_BY_TIER[tier]||ENCHANT_COST_BY_TIER[1], list:list, gem:gem};
-}
-/* The single biggest number in a bonus object — what the player is shopping for. */
-function _ewHeadline(bonus){
-  var best=null;
-  for(var k in bonus){ if(best===null||bonus[k]>bonus[best]) best=k; }
-  if(best===null) return {v:'',l:''};
-  return {v:'+'+Math.round(bonus[best]*100)+'%', l:EW_BONUS_LABEL[best]||best};
-}
-function _ewMatChip(mid,need){
-  var have=state.items[mid]||0;
-  var s=document.createElement('span');
-  s.className='ew-mat'+(need==null||have>=need?'':' short');
-  s.innerHTML=iconHTML(mid)+' <b>'+have.toLocaleString()+'</b>'+(need!=null?'/'+need.toLocaleString():'');
-  try{ attachTooltip(s,mid); }catch(e){}
-  return s;
-}
-
-/* ── collection card ─────────────────────────────────────────────────────────── */
-function _ewPieceCard(id,redraw){
-  var gem=JEWELRY_GEM_TIER[id], ench=state.enchantments[id], ed=ench?ENCHANTS[ench]:null;
-  var worn=_ewWornSlot(id), copies=Math.max(state.items[id]||0, worn?1:0);
-  var b=document.createElement('button');
-  b.className='ew-piece'+(_enchantSel===id?' sel':'');
-  b.style.setProperty('--gc',EW_GEMC[gem]||'#6a5533');
-  b.innerHTML=iconHTML(id)
-    +'<span class="pi"><span class="pn">'+(ITEMS[id]?ITEMS[id].name:id)
-    +(copies>1?' <small>x'+copies+'</small>':'')+'</span>'
-    +'<span class="ps'+(ed?' on':'')+'">'+(ed?'✦ '+ed.name:'unenchanted')+'</span></span>'
-    +(worn?'<span class="ew-worn">'+(EW_SLOT_LABEL[worn]||'worn').replace('Ring · ','')+'</span>':'')
-    +'<span class="ew-dot'+(ed?' on':'')+'"></span>';
-  b.addEventListener('click',function(){ _enchantSel=id; hideTooltip(); redraw(); });
-  return b;
-}
-
-/* ── one enchant option ──────────────────────────────────────────────────────── */
-function _ewApply(itemId,eid,cost,redraw){
-  for(var m in cost){
-    if((state.items[m]||0)<cost[m]){ toast('Not enough '+((ITEMS[m]&&ITEMS[m].name)||m)+'.'); return; }
-  }
-  for(var m2 in cost) state.items[m2]=(state.items[m2]||0)-cost[m2];
-  state.enchantments[itemId]=eid;
-  saveGame(); redraw(); renderGear();
-  toast('✦ Enchanted with '+ENCHANTS[eid].name+'!');
-}
-function _ewRemove(itemId,redraw){
-  delete state.enchantments[itemId];
-  saveGame(); redraw(); renderGear();
-  toast('Enchantment removed.');
-}
-function _ewEnchCard(eid,itemId,cost,canAfford,redraw){
-  var en=ENCHANTS[eid], active=state.enchantments[itemId]===eid;
-  var h=_ewHeadline(en.bonus||{});
-  var row=_ewEl('ew-ench'+(active?' on':''));
-  row.innerHTML='<span class="ew-num">'+h.v+'<small>'+h.l+'</small></span>'
-    +'<span class="eh"><span class="en">'+(active?'✦ ':'')+en.name+'</span>'
-    +'<span class="ed">'+en.desc+'</span></span>';
-  var btn=document.createElement('button');
-  btn.className='ew-apply'+(active?' rm':(canAfford?'':' off'));
-  btn.textContent=active?'Remove':(canAfford?'Apply':'Short');
-  if(active||canAfford){
-    btn.addEventListener('click',function(){
-      if(active) _ewRemove(itemId,redraw); else _ewApply(itemId,eid,cost,redraw);
-    });
-  }
-  row.appendChild(btn);
-  return row;
-}
-/* Skill-focus cards. Every one of these carries identical numbers, so the shared
-   bonus is stated once on the header and the card is just the skill it locks to. */
-function _ewFocusCard(eid,itemId,cost,canAfford,redraw){
-  var en=ENCHANTS[eid], active=state.enchantments[itemId]===eid;
-  var sk=SKILLS[en.skill];
-  var b=document.createElement('button');
-  b.className='ew-fc'+(active?' on':(canAfford?'':' off'));
-  b.innerHTML=iconHTML(en.skill)
-    +'<span class="fi"><span class="fn">'+en.name+'</span>'
-    +'<span class="fs">'+(sk?sk.name:en.skill)+(active?' · bound':'')+'</span></span>';
-  if(active||canAfford){
-    b.addEventListener('click',function(){
-      if(active) _ewRemove(itemId,redraw); else _ewApply(itemId,eid,cost,redraw);
-    });
-  }
-  return b;
-}
-
-/* ── set-bonus card: names the legs you have, not just on/off ────────────────── */
-function _ewSetCard(def,gem,kind){
-  var live=false;
-  try{ live=_enchantSetActive(def,state.equipped,kind); }catch(e){}
-  var c=_ewEl('ew-set'+(live?' live':''));
-  var legs=def.slots.map(function(sl){
-    var want=(sl==='ring_l'||sl==='ring_r')?'ring':kind;
-    var got=false;
-    for(var s in state.equipped){
-      var eq=state.equipped[s];
-      if(!eq||JEWELRY_GEM_TIER[eq]!==gem||!state.enchantments[eq]) continue;
-      if(_jwType(eq)===want){ got=true; break; }
-    }
-    var nm=want==='ring'?'Ring':want==='pendant'?'Pendant':'Amulet';
-    return '<span class="leg'+(got?' ok':'')+'">'+(got?'✓ ':'')+nm+'</span>';
-  }).join('');
-  c.innerHTML='<div class="sn">'+(live?'✦ ':'')+def.name+'</div>'
-    +'<div class="sd">'+def.desc.replace(/^[^:]*: */,'')+'</div>'
-    +'<div class="legs">'+legs+'</div>';
-  return c;
-}
-/* Eight gems x two set kinds is sixteen cards nobody reads. Rank by what the player
-   is actually near — live first, then the gem of the open piece, then richest gem
-   owned — and show three. */
-function _ewSetsRow(){
-  var wrap=_ewEl('ew-sets');
-  var owned=_ewOwned();
-  var selGem=_enchantSel?JEWELRY_GEM_TIER[_enchantSel]:null;
-  var cands=[];
-  EW_GEM_ORDER.forEach(function(g){
-    if(!owned.some(function(id){return JEWELRY_GEM_TIER[id]===g;})) return;
-    [[ENCHANT_SETS[g],'amulet'],[PENDANT_SETS[g],'pendant']].forEach(function(p){
-      if(!p[0]) return;
-      var live=false; try{ live=_enchantSetActive(p[0],state.equipped,p[1]); }catch(e){}
-      cands.push({def:p[0],gem:g,kind:p[1],live:live,sel:g===selGem});
-    });
-  });
-  cands.sort(function(a,b){
-    if(a.live!==b.live) return a.live?-1:1;
-    if(a.sel!==b.sel) return a.sel?-1:1;
-    return EW_GEM_ORDER.indexOf(b.gem)-EW_GEM_ORDER.indexOf(a.gem);
-  });
-  cands.slice(0,3).forEach(function(c){ wrap.appendChild(_ewSetCard(c.def,c.gem,c.kind)); });
-  if(!cands.length) wrap.appendChild(_ewEl('ew-set',
-    '<div class="sd">Enchant a matching ring + amulet of the same gem for a skilling set, '
-    +'or a ring + pendant for a combat one.</div>'));
-  return wrap;
-}
-
-/* ── the totals strip ────────────────────────────────────────────────────────── */
-function _ewTotals(){
-  var sk={}, cb={};
-  try{ sk=enchantBonuses(); }catch(e){ sk={}; }
-  try{ cb=combatEnchantBonuses(); }catch(e){ cb={}; }
-  var cells=[['Speed',sk.speed],['XP',sk.xpBoost],['Sell',sk.gpBoost],['Double',sk.doubleYield],
-             ['Attack',cb.atkBoost],['Defence',cb.defBoost],['Max HP',cb.hpBoost]];
-  var w=_ewEl('ew-tot');
-  cells.forEach(function(c){
-    var v=c[1]||0;
-    w.appendChild(_ewEl('t'+(v?'':' zero'),'<b>+'+Math.round(v*100)+'%</b><span>'+c[0]+'</span>'));
-  });
-  return w;
-}
-
-/* ── the piece on the bench ──────────────────────────────────────────────────── */
-function _ewHero(itemId){
-  var gem=JEWELRY_GEM_TIER[itemId], ench=state.enchantments[itemId], ed=ench?ENCHANTS[ench]:null;
-  var worn=_ewWornSlot(itemId), copies=Math.max(state.items[itemId]||0, worn?1:0);
-  var h=_ewEl('ew-hero'); h.style.setProperty('--gc',EW_GEMC[gem]||'#6a5533');
-  h.innerHTML='<div class="hr"><div class="well">'+iconHTML(itemId)+'</div>'
-    +'<div style="flex:1;min-width:0"><h4>'+(ITEMS[itemId]?ITEMS[itemId].name:itemId)+'</h4>'
-    +'<div class="sub">'+(worn?'worn — '+(EW_SLOT_LABEL[worn]||worn):'in the satchel, not worn')
-    +(copies>1?' · '+copies+' owned':'')+'</div>'
-    +'<div class="cur">'+(ed?'✦ '+ed.name+' — '+ed.desc
-        :'<span class="no">no enchant bound</span>')+'</div>'
-    +'</div></div>';
-  /* Spare copies (0.9.122). Enchants bind to the ITEM ID and equipBodyItem strips an id
-     from any other slot in the same loadout, so a second copy cannot be worn beside the
-     first or hold its own enchant. Say it on the piece rather than letting players
-     stockpile duplicates for a second enchant slot that does not exist. */
-  if(copies>1){
-    h.appendChild(_ewEl('ew-dupe','You own <b>'+copies+'</b> of these. Only one can be worn at a time, '
-      +'and the enchant binds to the piece itself — a spare cannot carry a second, different '
-      +'enchant. To run two enchants at once, wear a <b class="k">different gem</b> in your other '
-      +'ring slot. Spares are safe to sell; the enchant stays on the one you keep.'));
-  }
-  var f=_ewCostFor(itemId);
-  var cost=_ewEl('ew-cost','<span class="cl">Cost per enchant</span>');
-  Object.keys(f.cost).forEach(function(m){ cost.appendChild(_ewMatChip(m,f.cost[m])); });
-  h.appendChild(cost);
-  return h;
-}
-
-/* ── the enchant list for the open piece ─────────────────────────────────────── */
-function _ewOptions(itemId,redraw){
-  var f=_ewCostFor(itemId);
-  var canAfford=Object.keys(f.cost).every(function(m){return (state.items[m]||0)>=f.cost[m];});
-  var frag=document.createDocumentFragment();
-  var globals=f.list.filter(function(e){return (ENCHANTS[e].cat||'global')==='global';});
-  var combats=f.list.filter(function(e){return ENCHANTS[e].cat==='combat';});
-  var focus  =f.list.filter(function(e){return ENCHANTS[e].cat==='skill';});
-  if(globals.length){
-    frag.appendChild(_ewLab('Global — every skill'));
-    var g=_ewEl('ew-opts two');
-    globals.forEach(function(e){ g.appendChild(_ewEnchCard(e,itemId,f.cost,canAfford,redraw)); });
-    frag.appendChild(g);
-  }
-  if(combats.length){
-    frag.appendChild(_ewLab('Combat',1));
-    var c=_ewEl('ew-opts two');
-    combats.forEach(function(e){ c.appendChild(_ewEnchCard(e,itemId,f.cost,canAfford,redraw)); });
-    frag.appendChild(c);
-  }
-  if(focus.length){
-    var b=ENCHANTS[focus[0]].bonus||{};
-    frag.appendChild(_ewLab('Skill Focus — one skill only',1,
-      '+'+Math.round((b.speed||0)*100)+'% speed · +'+Math.round((b.xpBoost||0)*100)+'% XP'));
-    var fx=_ewEl('ew-focus');
-    focus.forEach(function(e){ fx.appendChild(_ewFocusCard(e,itemId,f.cost,canAfford,redraw)); });
-    frag.appendChild(fx);
-  }
-  return frag;
-}
-
+/* ════ [JS-24f] enchanting view ══════════════════════════════════════════════════ */
 function renderEnchanting(){
-  const box=$('enchantView'); if(!box) return;
-  box.innerHTML='';
+  const box=$('enchantView'); box.innerHTML='';
 
+  // ── One-line intro ──
   const intro=document.createElement('div');
   intro.className='skill-intro';
-  intro.innerHTML='<b>Enchanting</b> — bind one enchant per jewelry piece; the bonus works while '
-    +'it\'s equipped. Pendants &amp; amulets share the neck slot: a ring + <span class="k">amulet</span> '
-    +'unlocks a skilling <span class="k">Set Bonus</span>, a ring + <span class="k">pendant</span> '
-    +'unlocks a combat one (atk / lifesteal / crit).';
+  intro.innerHTML='<b>Enchanting</b> — bind one enchant per jewelry piece; the bonus works while it\'s equipped. Pendants &amp; amulets share the neck slot: a ring + <span class="k">amulet</span> unlocks a skilling <span class="k">Set Bonus</span>, a ring + <span class="k">pendant</span> unlocks a combat one (atk / lifesteal / crit).';
   box.appendChild(intro);
 
-  const pieces=_ewOwned();
-  if(!pieces.length){
-    box.appendChild(_ewEl('ew-empty','No jewelry yet. Craft rings, amulets or pendants in the '
-      +'Jeweler — you can enchant them straight from your satchel.'));
+  // ── Build list of owned jewelry (in satchel and/or equipped) ──
+  var GEM_ORDER=['sapphire','emerald','ruby','diamond','amethyst','dragon','bloodstone','void'];
+  function jewelryType(id){
+    if(id.indexOf('_ring')>=0) return 'ring';
+    if(id.indexOf('_amulet')>=0) return 'amulet';
+    if(id.indexOf('_pendant')>=0||id==='void_jewel') return 'pendant';
+    return 'other';
+  }
+  function ownedCount(id){
+    var c=state.items[id]||0;
+    if(Object.values(state.equipped).indexOf(id)>=0) c=Math.max(c,1);
+    return c;
+  }
+  var owned=[];
+  for(var jid in JEWELRY_GEM_TIER){ if(ownedCount(jid)>0) owned.push(jid); }
+  var TYPE_ORDER={ring:0,amulet:1,pendant:2,other:3};
+  owned.sort(function(a,b){
+    var ta=TYPE_ORDER[jewelryType(a)], tb=TYPE_ORDER[jewelryType(b)];
+    if(ta!==tb) return ta-tb;
+    var ga=GEM_ORDER.indexOf(JEWELRY_GEM_TIER[a]), gb=GEM_ORDER.indexOf(JEWELRY_GEM_TIER[b]);
+    if(ga!==gb) return ga-gb;
+    return (ITEMS[a]?ITEMS[a].name:a).localeCompare(ITEMS[b]?ITEMS[b].name:b);
+  });
+
+  if(!owned.length){
+    const emp=document.createElement('div');
+    emp.style.cssText='font-size:calc(14px*var(--tscale));color:var(--muted);font-style:italic;padding:10px 0';
+    emp.textContent='No jewelry yet. Craft rings, amulets or pendants in the Jeweler — you can enchant them straight from your satchel.';
+    box.appendChild(emp);
     return;
   }
-  if(!_enchantSel || pieces.indexOf(_enchantSel)<0) _enchantSel=pieces[0];
-  const redraw=function(){ renderEnchanting(); };
+  if(!_enchantSel || owned.indexOf(_enchantSel)<0) _enchantSel=owned[0];
 
-  /* Every non-active row still reads "Apply", and clicking one charges the FULL tier
-     cost again and discards the enchant it replaces — no confirm, no refund. Warn
-     while they are looking at the menu, not after they have paid. */
-  if(state.enchantments[_enchantSel]){ try{ showHint('enchant_replace'); }catch(e){} }
+  // Two-column layout: LEFT = materials + jewelry picker + set bonuses,
+  // RIGHT = the selected piece's enchant list. Mirrors the Socket panel.
+  var cols=document.createElement('div');
+  cols.style.cssText='display:flex;gap:12px;flex-wrap:wrap;align-items:flex-start';
+  var left=document.createElement('div');
+  left.style.cssText='flex:1 1 230px;min-width:210px';
+  var right=document.createElement('div');
+  right.style.cssText='flex:1.5 1 300px;min-width:270px';
 
-  const stack=_ewEl('ew-stack');
-
-  // ── what you are wearing ──
-  stack.appendChild(_ewLab('What You Are Wearing'));
-  const slots=_ewEl('ew-slots');
-  ['ring_l','ring_r','amulet'].forEach(function(sl){
-    const id=state.equipped[sl];
-    const ench=id?state.enchantments[id]:null, ed=ench?ENCHANTS[ench]:null;
-    const c=_ewEl('ew-slot'+(id?'':' empty')+(id&&id===_enchantSel?' sel':''));
-    c.style.setProperty('--gc', id?(EW_GEMC[JEWELRY_GEM_TIER[id]]||'rgba(214,138,52,.5)')
-                                 :'rgba(214,138,52,.3)');
-    c.innerHTML='<div class="sl">'+EW_SLOT_LABEL[sl]+'</div>'
-      +'<div class="well">'+(id?iconHTML(id):iconHTML('ui_gem'))+'</div>'
-      +'<div class="nm">'+(id?(ITEMS[id]?ITEMS[id].name:id):'empty')+'</div>'
-      +'<div class="ec '+(ed?'on':'off')+'">'+(ed?'✦ '+ed.name:(id?'unenchanted':'—'))+'</div>';
-    if(id) c.addEventListener('click',function(){ _enchantSel=id; hideTooltip(); redraw(); });
-    slots.appendChild(c);
+  // LEFT — materials chips (source info lives in the tooltip, not a footer wall)
+  var matRow=document.createElement('div');
+  matRow.style.cssText='display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px';
+  ['arcane_dust','rune_fragment','mana_essence','gem_dust','void_cinder'].forEach(function(mid){
+    var it=ITEMS[mid]; if(!it) return;
+    var qty=state.items[mid]||0;
+    var chip=document.createElement('div');
+    chip.style.cssText='background:var(--raised-s);border:1px solid var(--trim-d);border-radius:5px;padding:3px 9px;font-size:calc(13px*var(--tscale));cursor:var(--cur-help);'+(qty>0?'color:var(--text)':'color:var(--muted);opacity:0.55');
+    chip.innerHTML=iconHTML(mid)+' '+qty.toLocaleString();
+    attachTooltip(chip, mid);  // rich item tooltip — name, desc (incl. source), sell value
+    matRow.appendChild(chip);
   });
-  stack.appendChild(slots);
+  left.appendChild(matRow);
 
-  // ── what it totals ── (nothing in the game showed this before)
-  stack.appendChild(_ewLab('What It All Adds Up To',1));
-  stack.appendChild(_ewTotals());
+  // LEFT — jewelry picker dropdown (themed, grouped by type)
+  var lbl=document.createElement('div');
+  lbl.style.cssText='font-size:11px;color:var(--ember);text-transform:uppercase;letter-spacing:2px;margin-bottom:5px';
+  lbl.textContent='Select Jewelry';
+  left.appendChild(lbl);
+  var jSel=document.createElement('select');
+  jSel.style.cssText='width:100%;background:var(--raised-s);color:var(--text);border:1px solid var(--trim-d);border-radius:6px;padding:7px 9px;font-size:calc(14px*var(--tscale));cursor:var(--cur-pointer);margin-bottom:10px';
+  [['ring','Rings'],['amulet','Amulets'],['pendant','Pendants'],['other','Other']].forEach(function(g){
+    var inGroup=owned.filter(function(id){return jewelryType(id)===g[0];});
+    if(!inGroup.length) return;
+    var og=document.createElement('optgroup'); og.label=g[1];
+    inGroup.forEach(function(id){
+      var ench=state.enchantments[id]?ENCHANTS[state.enchantments[id]]:null;
+      var isEq=Object.values(state.equipped).indexOf(id)>=0;
+      var o=document.createElement('option'); o.value=id;
+      o.textContent=(isEq?'✓ ':'')+(ITEMS[id]?ITEMS[id].name:id)+(ench?' · ✦ '+ench.name:' · unenchanted');
+      if(id===_enchantSel) o.selected=true;
+      og.appendChild(o);
+    });
+    jSel.appendChild(og);
+  });
+  jSel.addEventListener('change',function(){ _enchantSel=this.value; hideTooltip(); renderEnchanting(); });
+  left.appendChild(jSel);
 
-  // ── set bonuses ──
-  stack.appendChild(_ewLab('Set Bonuses',1));
-  stack.appendChild(_ewSetsRow());
-
-  // ── the bench: collection rail | the piece + its enchants ──
-  const two=_ewEl('ew-two');
-  const c1=_ewEl('ew-col'), c2=_ewEl('ew-col');
-  c1.appendChild(_ewLab('Your Jewelry',0,pieces.length));
-  const railWrap=_ewEl('ew-railwrap');
-  const rail=_ewEl('ew-rail');
-  pieces.forEach(function(id){ rail.appendChild(_ewPieceCard(id,redraw)); });
-  railWrap.appendChild(rail);
-  c1.appendChild(railWrap);
-  c2.appendChild(_ewHero(_enchantSel));
-  c2.appendChild(_ewOptions(_enchantSel,redraw));
-  two.appendChild(c1); two.appendChild(c2);
-  stack.appendChild(two);
-  box.appendChild(stack);
-
-  /* The bottom fade says "more below". It has to go once the rail is scrolled to the
-     end, or a fully-scrolled list looks like it is still hiding something — and it
-     must not show at all when nothing is clipped. Measured after layout. */
-  const syncFade=function(){
-    const clipped=rail.scrollHeight>rail.clientHeight+2;
-    const atEnd=rail.scrollTop+rail.clientHeight>=rail.scrollHeight-2;
-    railWrap.classList.toggle('nofade', !clipped||atEnd);
-  };
-  rail.addEventListener('scroll',syncFade);
-  syncFade();
-  /* clientHeight is 0 until the panel is actually laid out (the view is display:none
-     on first paint), so re-check on the next frame. */
-  requestAnimationFrame(syncFade);
-  /* Keep the open piece in view when the panel redraws after an Apply. */
-  const selCard=rail.querySelector('.ew-piece.sel');
-  if(selCard&&rail.scrollHeight>rail.clientHeight+2){
-    const top=selCard.offsetTop-rail.clientHeight/2+selCard.offsetHeight/2;
-    rail.scrollTop=Math.max(0,top);
-    syncFade();
+  // LEFT — active set bonuses (compact)
+  var activeSets=activeSetBonuses();
+  if(activeSets.length){
+    var setBox=document.createElement('div');
+    setBox.style.cssText='padding:7px 9px;background:#16220a66;border:1px solid #3a5018;border-radius:6px;margin-bottom:8px';
+    setBox.innerHTML='<div style="font-size:10px;color:var(--green);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:4px">✦ Active Set Bonus</div>'
+      +activeSets.map(function(s){return '<div style="font-size:calc(12px*var(--tscale));color:var(--text);line-height:1.4"><b style="color:var(--ember)">'+s.name+'</b><br><span style="color:var(--muted)">'+s.desc.replace(/^[^:]*: */,'')+'</span></div>';}).join('');
+    left.appendChild(setBox);
+  } else {
+    var setHint=document.createElement('div');
+    setHint.style.cssText='font-size:11px;color:var(--muted);font-style:italic;line-height:1.5';
+    setHint.textContent='No set bonus active — enchant a matching ring + amulet (skilling) or ring + pendant (combat) of the same gem.';
+    left.appendChild(setHint);
   }
+
+  // RIGHT — enchant list for the selected piece
+  renderEnchantDetail(right, _enchantSel);
+
+  cols.appendChild(left); cols.appendChild(right);
+  box.appendChild(cols);
+}
+
+/* Detail panel: enchant options for one selected jewelry item id. Enchants are
+   written per item id; the bonus applies only while the piece is equipped.
+   Layout: header (piece + current enchant) → cost line → rows grouped
+   GLOBAL / COMBAT / SKILL FOCUS with inline descriptions (no hover needed). */
+function renderEnchantDetail(box, itemId){
+  if(!itemId) return;
+  var it=ITEMS[itemId];
+  var gemTier=JEWELRY_GEM_TIER[itemId];
+  var equipped=Object.values(state.equipped).indexOf(itemId)>=0;
+  var currentEnch=state.enchantments[itemId];
+  var currentEnchDef=currentEnch?ENCHANTS[currentEnch]:null;
+  var availEnchants=ENCHANTS_BY_GEM[gemTier]||[];
+  var tier=availEnchants.length?ENCHANTS[availEnchants[0]].tier:1;
+  var cost=ENCHANT_COST_BY_TIER[tier]||ENCHANT_COST_BY_TIER[1];
+  var canAfford=Object.keys(cost).every(function(mid){return (state.items[mid]||0)>=cost[mid];});
+
+  /* Every non-active row still reads "Apply", and clicking one charges the FULL
+     tier cost again and discards the enchant it replaces — no confirm, no refund.
+     Warn while they are looking at the menu, not after they have paid. */
+  if(currentEnch){ try{ showHint('enchant_replace'); }catch(e){} }
+
+  var card=document.createElement('div');
+  card.style.cssText='border:1px solid '+(currentEnch?'var(--ember)':'var(--trim-d)')+';border-radius:6px;padding:8px 10px;background:var(--raised)';
+
+  var eqNote=equipped
+    ?'<span style="font-size:11px;color:var(--green)">● equipped</span>'
+    :'<span style="font-size:11px;color:var(--muted)">not equipped</span>';
+  var header=document.createElement('div');
+  header.style.cssText='display:flex;align-items:center;gap:7px;margin-bottom:6px';
+  header.innerHTML='<span style="font-size:21px">'+(it?iconHTML(itemId):'?')+'</span>'
+    +'<div style="flex:1;min-width:0"><div style="font-size:calc(13px*var(--tscale));color:var(--trim)">'+(it?it.name:'Unknown')+'  '+eqNote+'</div>'
+    +(currentEnchDef
+      ?'<div style="font-size:calc(12px*var(--tscale));color:var(--ember)">✦ '+currentEnchDef.name+' <span style="color:var(--muted)">— '+currentEnchDef.desc+'</span></div>'
+      :'<div style="font-size:calc(12px*var(--tscale));color:var(--muted)">Not enchanted</div>')
+    +'</div>';
+  card.appendChild(header);
+
+  /* Spare copies (0.9.122). Enchants bind to the ITEM ID, and equipBodyItem removes an
+     id from any other slot in the same loadout — so a second Sapphire Ring cannot be
+     worn beside the first, cannot hold its own enchant, and never shows up in the picker
+     as a separate entry (the list is built from distinct item ids). That is the intended
+     shape — set bonuses pair a ring with an amulet of the SAME gem, so the other ring
+     slot is meant for a DIFFERENT gem — but nothing said so, and players were stockpiling
+     duplicates waiting for a second enchant slot that does not exist. Say it on the piece. */
+  var copies=Math.max(state.items[itemId]||0, equipped?1:0);
+  if(copies>1){
+    var dupe=document.createElement('div');
+    dupe.style.cssText='font-size:calc(11.5px*var(--tscale));color:var(--muted);line-height:1.5;'
+      +'margin-bottom:8px;padding:5px 8px;border-left:2px solid var(--ember);background:var(--raised-s)';
+    dupe.innerHTML='You own <b style="color:var(--text)">'+copies+'</b> of these. Only one can be worn at a time, '
+      +'and the enchant binds to the piece itself — a spare cannot carry a second, different enchant. '
+      +'To run two enchants at once, wear a <b style="color:var(--ember)">different gem</b> in your other ring slot. '
+      +'Spares are safe to sell; the enchant stays on the one you keep.';
+    card.appendChild(dupe);
+  }
+
+  // Cost line — each material is a hoverable chip: "Name — you have X, need Y —
+  // where to get it". Red where short, green where covered. cursor:var(--cur-help) signals
+  // the tooltip so nobody is left guessing what the bare icons mean.
+  var costRow=document.createElement('div');
+  costRow.style.cssText='display:flex;align-items:center;gap:5px;flex-wrap:wrap;font-size:calc(12px*var(--tscale));color:var(--muted);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--trim-d)';
+  var costLbl=document.createElement('span');
+  costLbl.textContent='Cost per enchant:';
+  costRow.appendChild(costLbl);
+  Object.entries(cost).forEach(function(e2){
+    var mid=e2[0], need=e2[1], have=state.items[mid]||0, mIt=ITEMS[mid];
+    var ok=have>=need;
+    var chip=document.createElement('span');
+    chip.style.cssText='display:inline-flex;align-items:center;gap:3px;padding:1px 7px;border-radius:4px;cursor:var(--cur-help);'
+      +'background:var(--raised-s);border:1px solid '+(ok?'#3a5018':'#5a2020')+';'
+      +'color:'+(ok?'var(--green)':'var(--red)');
+    // Name shown inline so the material is identifiable at a glance; the game's
+    // rich tooltip (attachTooltip) carries the desc + source on hover.
+    chip.innerHTML=(mIt?iconHTML(mid):'?')+' '+(mIt?mIt.name:mid)+' '+have.toLocaleString()+'/'+need.toLocaleString();
+    attachTooltip(chip, mid);
+    costRow.appendChild(chip);
+  });
+  card.appendChild(costRow);
+
+  // ── Shared helpers ──
+  function payAndApply(eid){
+    for(var mid in cost){
+      if((state.items[mid]||0)<cost[mid]){ toast('Not enough '+((ITEMS[mid]&&ITEMS[mid].name)||mid)+'.'); return; }
+    }
+    for(var mid2 in cost) state.items[mid2]=(state.items[mid2]||0)-cost[mid2];
+    state.enchantments[itemId]=eid;
+    saveGame(); renderEnchanting(); renderGear();
+    toast('✦ Enchanted with '+ENCHANTS[eid].name+'!');
+  }
+  function removeEnch(){
+    delete state.enchantments[itemId];
+    saveGame(); renderEnchanting(); renderGear();
+    toast('Enchantment removed.');
+  }
+  function mkBtn(active){
+    var b=document.createElement('button');
+    b.style.cssText='flex:none;font-size:11px;padding:3px 9px;border-radius:4px;cursor:var(--cur-pointer);'
+      +(active
+        ?'background:var(--panel);border:1px solid var(--trim-d);color:var(--muted)'
+        :'background:var(--raised-s);border:1px solid '+(canAfford?'var(--ember)':'var(--trim-d)')+';color:'+(canAfford?'var(--ember)':'var(--muted)')+';'+(canAfford?'':'opacity:0.55'));
+    b.textContent=active?'✕ Remove':'Apply';
+    return b;
+  }
+  function mkRow(eid,accent){
+    var en=ENCHANTS[eid];
+    var active=currentEnch===eid;
+    var row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;gap:8px;padding:4px 7px;border-radius:5px;margin-bottom:3px;'
+      +'background:'+(active?'#2a1a0866':'var(--raised-s)')+';'
+      +'border:1px solid '+(active?'var(--ember)':'var(--trim-d)');
+    row.innerHTML='<span style="flex:none;min-width:86px;font-size:calc(12px*var(--tscale));color:'+(active?'var(--ember)':accent)+'">'+(active?'✦ ':'')+en.name+'</span>'
+      +'<span style="flex:1;min-width:0;font-size:calc(12px*var(--tscale));color:var(--muted);line-height:1.3">'+en.desc+'</span>';
+    var b=mkBtn(active);
+    b.addEventListener('click', active?removeEnch:function(){ payAndApply(eid); });
+    row.appendChild(b);
+    return row;
+  }
+  function secLabel(txt,color){
+    var l=document.createElement('div');
+    l.style.cssText='font-size:10px;color:'+color+';text-transform:uppercase;letter-spacing:1.5px;margin:7px 0 4px';
+    l.textContent=txt;
+    return l;
+  }
+
+  // ── Grouped rows: GLOBAL / COMBAT / SKILL FOCUS ──
+  var globals=availEnchants.filter(function(eid){return ENCHANTS[eid].cat==='global';});
+  var combats=availEnchants.filter(function(eid){return ENCHANTS[eid].cat==='combat';});
+  var skills =availEnchants.filter(function(eid){return ENCHANTS[eid].cat==='skill';});
+
+  if(globals.length){
+    card.appendChild(secLabel('Global — all skills','var(--trim)'));
+    globals.forEach(function(eid){ card.appendChild(mkRow(eid,'var(--text)')); });
+  }
+  if(combats.length){
+    card.appendChild(secLabel('Combat','#ff8f7a'));
+    combats.forEach(function(eid){ card.appendChild(mkRow(eid,'#ffb4a0')); });
+  }
+  if(skills.length){
+    // One compact row: pick a skill from the dropdown, Apply binds that skill's focus enchant.
+    card.appendChild(secLabel('Skill Focus — one skill, stronger','#b886e6'));
+    var curIsSkill=currentEnchDef&&currentEnchDef.cat==='skill';
+    var row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;gap:8px;padding:4px 7px;border-radius:5px;margin-bottom:3px;'
+      +'background:'+(curIsSkill?'#2a1a0866':'var(--raised-s)')+';'
+      +'border:1px solid '+(curIsSkill?'var(--ember)':'var(--trim-d)');
+    var info=document.createElement('span');
+    info.style.cssText='flex:none;font-size:calc(12px*var(--tscale));color:'+(curIsSkill?'var(--ember)':'#b886e6');
+    info.textContent=curIsSkill?('✦ '+currentEnchDef.name):'+25% speed · +20% XP';
+    row.appendChild(info);
+    var sSel=document.createElement('select');
+    sSel.style.cssText='flex:1;min-width:0;background:var(--panel);color:var(--text);border:1px solid var(--trim-d);border-radius:4px;padding:3px 5px;font-size:calc(12px*var(--tscale));cursor:var(--cur-pointer)';
+    skills.forEach(function(eid){
+      var en=ENCHANTS[eid];
+      var o=document.createElement('option'); o.value=eid;
+      o.textContent=(SKILLS[en.skill]?SKILLS[en.skill].name:en.skill)+' — '+en.name;
+      if(currentEnch===eid) o.selected=true;
+      sSel.appendChild(o);
+    });
+    row.appendChild(sSel);
+    var b2=mkBtn(curIsSkill);
+    b2.addEventListener('click',function(){
+      if(curIsSkill){ removeEnch(); return; }
+      payAndApply(sSel.value);
+    });
+    row.appendChild(b2);
+    card.appendChild(row);
+  }
+
+  box.appendChild(card);
 }
 
 /* ════ [JS-25] SOCKETING UI ══════════════════════════════════════════════════════
@@ -35141,5 +34879,496 @@ $('mmExportClose').addEventListener('click',()=>$('mmExportModal').classList.add
   mmShowMenu();
 })();
 </script>
+<style>
+/* ═══ ENCHANTING REVAMP — PREVIEW OVERLAY ════════════════════════════════════════
+   Three directions share one component set; only the LAYOUT differs per variant.
+   Everything uses the house lit-surface recipe (--lit-top/--rim/--under) so cards
+   sit ABOVE the panel ground instead of below it. */
+#enchantView{ --ew-card:linear-gradient(178deg,var(--lit-top),var(--lit-bot) 78%);
+  --ew-sh:inset 0 1px 0 var(--rim), inset 0 -1px 0 var(--under), 0 3px 8px rgba(0,0,0,.45);
+  --ew-sh-hi:inset 0 1px 0 rgba(240,199,114,.32), inset 0 -1px 0 var(--under), 0 5px 14px rgba(0,0,0,.55);
+  --ew-well:inset 0 2px 4px rgba(0,0,0,.9), inset 0 -1px 0 rgba(214,170,96,.08);
+  --ew-gap:10px; }
+
+/* ── section headers ── */
+.ew-lab{font-size:10.5px;color:var(--ember);text-transform:uppercase;letter-spacing:2.2px;
+  margin:0 0 7px;display:flex;align-items:center;gap:8px}
+.ew-lab::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(214,170,96,.28),transparent)}
+.ew-lab.dim{color:#8a7657}
+.ew-lab.dim::after{background:linear-gradient(90deg,rgba(214,170,96,.14),transparent)}
+
+/* ── the collection rail: one chunky card per owned piece ── */
+.ew-grid{display:grid;gap:var(--ew-gap)}
+/* A full jewelry set is 24 pieces; unbounded that column is taller than the panel and
+   drags every neighbour's whitespace with it. Cap it and let the rail scroll. */
+.ew-grid.rail{max-height:min(58vh,470px);overflow-y:auto;padding-right:4px;
+  scrollbar-width:thin;scrollbar-color:#4a3a20 transparent}
+.ew-grid.rail::-webkit-scrollbar{width:7px}
+.ew-grid.rail::-webkit-scrollbar-thumb{background:#4a3a20;border-radius:4px}
+.ew-grid.rail::-webkit-scrollbar-track{background:transparent}
+.ew-num{min-width:52px}
+.ew-piece{display:flex;align-items:center;gap:9px;padding:9px 10px;border:0;border-radius:8px;
+  background:var(--ew-card);box-shadow:var(--ew-sh);cursor:var(--cur-pointer);
+  text-align:left;width:100%;font-family:inherit;position:relative;overflow:hidden;
+  transition:transform .12s ease, box-shadow .12s ease}
+.ew-piece:hover{transform:translateY(-1px);box-shadow:var(--ew-sh-hi)}
+.ew-piece .ev-icon{width:30px;height:30px;flex:none}
+.ew-piece .pi{flex:1;min-width:0;display:block}
+.ew-piece .pn{display:block;font-family:'Cinzel',serif;font-size:calc(13.5px*var(--tscale));color:#e8d7b0;
+  line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ew-piece .ps{display:block;font-family:var(--num);font-size:calc(11px*var(--tscale));color:#8a7657;margin-top:3px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ew-piece .ps.on{color:var(--ember)}
+/* the gem's own colour as a left edge — the collection reads as a ladder at a glance */
+.ew-piece::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--gc,#6a5533)}
+.ew-piece.sel{box-shadow:var(--ew-sh-hi), 0 0 0 1px var(--ember)}
+.ew-piece.sel .pn{color:var(--gold-hi)}
+.ew-dot{width:7px;height:7px;border-radius:50%;flex:none;background:#3a2c18;
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.8)}
+.ew-dot.on{background:var(--ember);box-shadow:0 0 6px rgba(214,138,52,.7)}
+.ew-worn{font-family:var(--num);font-size:9.5px;letter-spacing:1px;text-transform:uppercase;
+  color:var(--green);border:1px solid #3a5018;border-radius:3px;padding:1px 5px;flex:none}
+
+/* ── the enchant option card ── */
+.ew-opts{display:grid;gap:var(--ew-gap)}
+.ew-ench{display:flex;align-items:center;gap:10px;padding:10px 11px;border:0;border-radius:8px;
+  background:var(--ew-card);box-shadow:var(--ew-sh);position:relative;overflow:hidden}
+.ew-ench.on{box-shadow:var(--ew-sh-hi), 0 0 0 1px var(--ember)}
+.ew-ench.on::after{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(120% 80% at 0% 50%, rgba(214,138,52,.14), transparent 60%)}
+.ew-ench .eh{flex:1;min-width:0;position:relative;z-index:1;display:block}
+.ew-ench .en{display:block;font-family:'Cinzel',serif;font-size:calc(14px*var(--tscale));color:#e8d7b0;line-height:1.2}
+.ew-ench.on .en{color:var(--gold-hi)}
+.ew-ench .ed{display:block;font-size:calc(12px*var(--tscale));color:#94805f;line-height:1.4;margin-top:4px}
+.ew-ench .ev-icon{width:26px;height:26px;flex:none;opacity:.9}
+/* the effect, as a number the eye can find */
+.ew-num{font-family:var(--num);font-size:calc(17px*var(--tscale));color:var(--green);
+  line-height:1;letter-spacing:.5px;white-space:nowrap}
+.ew-num small{font-size:9.5px;color:#7a6a4a;letter-spacing:1.2px;text-transform:uppercase;
+  display:block;margin-top:3px}
+.ew-apply{flex:none;position:relative;z-index:1;font-family:inherit;
+  font-size:calc(12.5px*var(--tscale));padding:6px 14px;border-radius:5px;cursor:var(--cur-pointer);
+  background:linear-gradient(180deg,#3a2a12,#241905);border:1px solid var(--ember);color:var(--gold-hi);
+  box-shadow:0 2px 5px rgba(0,0,0,.5);white-space:nowrap;transition:filter .12s}
+.ew-apply:hover{filter:brightness(1.25)}
+.ew-apply.off{background:var(--panel);border-color:var(--trim-d);color:#6e6046;
+  cursor:default;box-shadow:none}
+.ew-apply.rm{border-color:#7a3028;color:#e08a7a;background:linear-gradient(180deg,#3a1a14,#240d08)}
+
+/* ── worn-slot cards (variant B hero row) ── */
+.ew-slots{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--ew-gap)}
+.ew-slot{padding:12px;border-radius:9px;background:var(--ew-card);box-shadow:var(--ew-sh);
+  text-align:center;position:relative;cursor:var(--cur-pointer);transition:box-shadow .12s}
+.ew-slot:hover{box-shadow:var(--ew-sh-hi)}
+.ew-slot.sel{box-shadow:var(--ew-sh-hi), 0 0 0 1px var(--ember)}
+.ew-slot .sl{font-family:var(--num);font-size:9.5px;letter-spacing:2px;text-transform:uppercase;
+  color:#8a7657;margin-bottom:8px}
+.ew-slot .well{width:60px;height:60px;margin:0 auto 8px;border-radius:50%;background:#100b06;
+  box-shadow:var(--ew-well);display:flex;align-items:center;justify-content:center}
+.ew-slot .well .ev-icon{width:34px;height:34px;
+  filter:drop-shadow(0 2px 5px rgba(0,0,0,.9)) drop-shadow(0 0 7px var(--gc,rgba(214,138,52,.5)))}
+.ew-slot .nm{font-family:'Cinzel',serif;font-size:calc(13px*var(--tscale));color:#e8d7b0;line-height:1.2}
+.ew-slot .ec{font-family:var(--num);font-size:calc(11.5px*var(--tscale));margin-top:4px;line-height:1.3}
+.ew-slot .ec.on{color:var(--ember)}
+.ew-slot .ec.off{color:#6e6046;font-style:italic}
+.ew-slot.empty .well{opacity:.4}
+.ew-slot.empty .nm{color:#6e6046;font-style:italic}
+
+/* ── totals readout: what all this actually adds up to ── */
+.ew-tot{display:grid;grid-template-columns:repeat(auto-fit,minmax(88px,1fr));gap:7px}
+.ew-tot .t{padding:8px 6px;border-radius:7px;background:#100b06;box-shadow:var(--ew-well);text-align:center}
+.ew-tot .t b{display:block;font-family:var(--num);font-size:calc(16px*var(--tscale));
+  color:var(--green);line-height:1}
+.ew-tot .t.zero b{color:#4e4636}
+.ew-tot .t span{display:block;font-size:9.5px;letter-spacing:1.2px;text-transform:uppercase;
+  color:#7a6a4a;margin-top:4px}
+
+/* ── set-bonus cards ── */
+.ew-sets{display:grid;gap:8px}
+/* Stacked in a side column the three set cards outrun whatever sits beside them and
+   leave a dead half-panel. Run them across instead — they are a status readout, not
+   a list you scroll. */
+.ew-sets.row{grid-template-columns:repeat(auto-fit,minmax(228px,1fr))}
+.ew-set{padding:9px 11px;border-radius:8px;background:var(--ew-card);box-shadow:var(--ew-sh);
+  position:relative;overflow:hidden}
+.ew-set.live{box-shadow:var(--ew-sh-hi), 0 0 0 1px #4a6a20}
+.ew-set.live::after{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(110% 80% at 0% 50%, rgba(125,163,63,.13), transparent 62%)}
+.ew-set .sn{font-family:'Cinzel',serif;font-size:calc(13px*var(--tscale));color:#e8d7b0;
+  display:flex;align-items:center;gap:7px;position:relative;z-index:1}
+.ew-set.live .sn{color:#a8cf60}
+.ew-set .sd{font-size:calc(11.5px*var(--tscale));color:#8a7657;line-height:1.4;margin-top:3px;
+  position:relative;z-index:1}
+.ew-set .legs{display:flex;gap:5px;margin-top:6px;position:relative;z-index:1}
+.ew-set .leg{font-family:var(--num);font-size:10px;letter-spacing:.8px;padding:2px 7px;border-radius:3px;
+  background:#100b06;box-shadow:var(--ew-well);color:#6e6046}
+.ew-set .leg.ok{color:#a8cf60;box-shadow:var(--ew-well),0 0 0 1px #3a5018}
+
+/* ── material rail ── */
+.ew-mats{display:flex;flex-wrap:wrap;gap:6px}
+.ew-mat{display:inline-flex;align-items:center;gap:5px;padding:5px 9px;border-radius:6px;
+  background:var(--ew-card);box-shadow:var(--ew-sh);font-family:var(--num);
+  font-size:calc(11.5px*var(--tscale));color:#94805f;cursor:var(--cur-help)}
+.ew-mat .ev-icon{width:16px;height:16px}
+.ew-mat b{color:#e8d7b0;font-weight:normal}
+.ew-mat.short b{color:#c8564a}
+
+/* ── the cost strip on the selected piece ── */
+.ew-cost{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-top:9px;padding-top:9px;
+  border-top:1px solid rgba(214,170,96,.12)}
+.ew-cost .cl{font-size:10px;letter-spacing:1.6px;text-transform:uppercase;color:#7a6a4a}
+
+/* ── hero card for the piece being worked on ── */
+.ew-hero{padding:14px;border-radius:10px;background:var(--ew-card);box-shadow:var(--ew-sh);
+  position:relative;overflow:hidden}
+.ew-hero::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--gc,#6a5533)}
+.ew-hero .hr{display:flex;align-items:center;gap:13px}
+.ew-hero .well{width:76px;height:76px;flex:none;border-radius:50%;background:#100b06;
+  box-shadow:var(--ew-well);display:flex;align-items:center;justify-content:center}
+.ew-hero .well .ev-icon{width:44px;height:44px;
+  filter:drop-shadow(0 2px 6px rgba(0,0,0,.9)) drop-shadow(0 0 9px var(--gc,rgba(214,138,52,.55)))}
+.ew-hero h4{font-family:'Cinzel',serif;font-size:calc(19px*var(--tscale));color:var(--gold-hi);
+  margin:0;line-height:1.15;letter-spacing:.3px}
+.ew-hero .sub{font-family:var(--num);font-size:calc(12px*var(--tscale));color:#8a7657;margin-top:4px}
+.ew-hero .cur{font-family:var(--num);font-size:calc(12.5px*var(--tscale));color:var(--ember);margin-top:5px}
+
+/* ── layout scaffolds ── */
+.ew-two{display:grid;grid-template-columns:minmax(210px,.85fr) minmax(300px,1.6fr);gap:14px;align-items:start}
+.ew-three{display:grid;grid-template-columns:minmax(190px,.7fr) minmax(240px,1fr) minmax(250px,1.15fr);
+  gap:13px;align-items:start}
+.ew-col{display:flex;flex-direction:column;gap:13px;min-width:0}
+.ew-stack{display:flex;flex-direction:column;gap:13px}
+@media (max-width:1180px){ .ew-three{grid-template-columns:1fr 1fr} }
+@media (max-width:820px){ .ew-three,.ew-two{grid-template-columns:1fr} }
+
+/* variant badge — preview only, never ships */
+.ew-badge{position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:99999;
+  font-family:var(--num);font-size:12px;letter-spacing:2px;text-transform:uppercase;
+  padding:5px 16px;border-radius:20px;background:#1a1208;border:1px solid var(--ember);
+  color:var(--gold-hi);box-shadow:0 4px 14px rgba(0,0,0,.7)}
+</style>
+<script>
+/* ═══ ENCHANTING REVAMP — three layout directions over one component set ═══════ */
+(function(){
+  var GEMC={sapphire:'#4a86c8',emerald:'#3fa860',ruby:'#c8434a',diamond:'#8fd4e0',
+            amethyst:'#b886e6',dragon:'#e08a34',bloodstone:'#d0334a',void:'#9a5ad0'};
+  var GEM_ORDER=['sapphire','emerald','ruby','diamond','amethyst','dragon','bloodstone','void'];
+  var SLOT_LABEL={ring_l:'Ring · Left',ring_r:'Ring · Right',amulet:'Neck'};
+  /* ?ev=1|2|3 picks the direction so all three are reachable without the console;
+     a floating badge names the one you are looking at. Preview scaffolding only. */
+  var _q=(location.search.match(/[?&]ev=(\d)/)||[])[1];
+  window._EV=window._EV||(_q?+_q:1);
+  var NAMES={1:'Direction 1 — The Bench',2:'Direction 2 — The Loadout',3:'Direction 3 — The Atelier'};
+  setTimeout(function(){
+    var b=document.createElement('div'); b.className='ew-badge';
+    b.textContent=NAMES[window._EV]+'   ·   ?ev=1 / 2 / 3';
+    document.body.appendChild(b);
+  },3000);
+  window._EWsel=null;            // selected piece id
+  window._EWslot='ring_l';       // selected slot (variant B)
+
+  function jwType(id){
+    if(id.indexOf('_ring')>=0) return 'ring';
+    if(id.indexOf('_amulet')>=0) return 'amulet';
+    if(id.indexOf('_pendant')>=0||id==='void_jewel') return 'pendant';
+    return 'other';
+  }
+  function ownedPieces(){
+    var out=[];
+    for(var id in JEWELRY_GEM_TIER){
+      var c=state.items[id]||0;
+      if(c<=0 && !anyLoadoutHas(id)) continue;
+      out.push(id);
+    }
+    out.sort(function(a,b){
+      var ta={ring:0,amulet:1,pendant:2,other:3}, d=ta[jwType(a)]-ta[jwType(b)];
+      if(d) return d;
+      return GEM_ORDER.indexOf(JEWELRY_GEM_TIER[a])-GEM_ORDER.indexOf(JEWELRY_GEM_TIER[b]);
+    });
+    return out;
+  }
+  function wornSlot(id){
+    for(var s in state.equipped) if(state.equipped[s]===id) return s;
+    return null;
+  }
+  /* One enchant's headline number — the thing the player is actually shopping for. */
+  var BK={speed:'Speed',xpBoost:'XP',gpBoost:'Sell',doubleYield:'Double',
+          atkBoost:'Attack',defBoost:'Defence',hpBoost:'Max HP',
+          critChance:'Crit',lifesteal:'Lifesteal'};
+  function headline(bonus){
+    var best=null;
+    for(var k in bonus){ if(best===null||bonus[k]>bonus[best]) best=k; }
+    if(best===null) return {v:'',l:''};
+    return {v:'+'+Math.round(bonus[best]*100)+'%', l:BK[best]||best};
+  }
+  function matChip(mid,need){
+    var have=state.items[mid]||0, it=ITEMS[mid];
+    var s=document.createElement('span');
+    s.className='ew-mat'+(have>=need?'':' short');
+    s.innerHTML=iconHTML(mid)+' <b>'+have.toLocaleString()+'</b>'+(need!=null?'/'+need.toLocaleString():'');
+    try{ attachTooltip(s,mid); }catch(e){}
+    return s;
+  }
+  function el(cls,html){ var d=document.createElement('div'); if(cls)d.className=cls; if(html!=null)d.innerHTML=html; return d; }
+  function lab(txt,dim){ return el('ew-lab'+(dim?' dim':''), txt); }
+
+  /* ── the collection card ───────────────────────────────────────────────────── */
+  function pieceCard(id,onPick){
+    var gem=JEWELRY_GEM_TIER[id], ench=state.enchantments[id], ed=ench?ENCHANTS[ench]:null;
+    var worn=wornSlot(id), copies=Math.max(state.items[id]||0, worn?1:0);
+    var b=document.createElement('button');
+    b.className='ew-piece'+(window._EWsel===id?' sel':'');
+    b.style.setProperty('--gc',GEMC[gem]||'#6a5533');
+    b.innerHTML=iconHTML(id)
+      +'<span class="pi"><span class="pn">'+(ITEMS[id]?ITEMS[id].name:id)+(copies>1?' <small style="color:#7a6a4a">x'+copies+'</small>':'')+'</span>'
+      +'<span class="ps'+(ed?' on':'')+'">'+(ed?'✦ '+ed.name:'unenchanted')+'</span></span>'
+      +(worn?'<span class="ew-worn">'+(SLOT_LABEL[worn]||'worn').replace('Ring · ','')+'</span>':'')
+      +'<span class="ew-dot'+(ed?' on':'')+'"></span>';
+    b.addEventListener('click',function(){ window._EWsel=id; onPick&&onPick(); });
+    return b;
+  }
+
+  /* ── the enchant option card ──────────────────────────────────────────────── */
+  function enchCard(eid,itemId,cost,canAfford,redraw){
+    var en=ENCHANTS[eid], active=state.enchantments[itemId]===eid;
+    var h=headline(en.bonus||{});
+    var row=el('ew-ench'+(active?' on':''));
+    row.innerHTML='<span class="ew-num">'+h.v+'<small>'+h.l+'</small></span>'
+      +'<span class="eh"><span class="en">'+(active?'✦ ':'')+en.name+'</span>'
+      +'<span class="ed">'+en.desc+'</span></span>';
+    var btn=document.createElement('button');
+    btn.className='ew-apply'+(active?' rm':(canAfford?'':' off'));
+    btn.textContent=active?'Remove':(canAfford?'Apply':'Short');
+    btn.addEventListener('click',function(){
+      if(active){ delete state.enchantments[itemId]; saveGame(); redraw(); renderGear(); toast('Enchantment removed.'); return; }
+      for(var m in cost) if((state.items[m]||0)<cost[m]){ toast('Not enough '+((ITEMS[m]&&ITEMS[m].name)||m)+'.'); return; }
+      for(var m2 in cost) state.items[m2]=(state.items[m2]||0)-cost[m2];
+      state.enchantments[itemId]=eid; saveGame(); redraw(); renderGear();
+      toast('✦ Enchanted with '+en.name+'!');
+    });
+    row.appendChild(btn);
+    return row;
+  }
+
+  /* ── set-bonus card: says which legs you have, not just whether it's live ──── */
+  function setCard(def,gem,kind){
+    var live=false;
+    try{ live=_enchantSetActive(def,state.equipped,kind); }catch(e){}
+    var c=el('ew-set'+(live?' live':''));
+    var legs=def.slots.map(function(sl){
+      var want=(sl==='ring_l'||sl==='ring_r')?'ring':kind;
+      var got=false;
+      for(var s in state.equipped){
+        var eq=state.equipped[s];
+        if(!eq||JEWELRY_GEM_TIER[eq]!==gem||!state.enchantments[eq]) continue;
+        if(want==='ring'&&jwType(eq)==='ring'){got=true;break;}
+        if(want!=='ring'&&jwType(eq)===want){got=true;break;}
+      }
+      return '<span class="leg'+(got?' ok':'')+'">'+(got?'✓ ':'')+(want==='ring'?'Ring':want==='pendant'?'Pendant':'Amulet')+'</span>';
+    }).join('');
+    c.innerHTML='<div class="sn">'+(live?'✦ ':'')+def.name+'</div>'
+      +'<div class="sd">'+def.desc.replace(/^[^:]*: */,'')+'</div>'
+      +'<div class="legs">'+legs+'</div>';
+    return c;
+  }
+
+  /* Eight gems x two set kinds is sixteen cards nobody reads. Rank by what the player
+     is actually near: live sets first, then the gem of the piece they have open, then
+     gems they own anything of. Three cards, always the three that mean something. */
+  function setsColumn(asRow){
+    var wrap=el('ew-sets'+(asRow?' row':''));
+    var owned=ownedPieces();
+    var selGem=window._EWsel?JEWELRY_GEM_TIER[window._EWsel]:null;
+    var cands=[];
+    GEM_ORDER.forEach(function(g){
+      if(!owned.some(function(id){return JEWELRY_GEM_TIER[id]===g;})) return;
+      [[ENCHANT_SETS[g],'amulet'],[PENDANT_SETS[g],'pendant']].forEach(function(p){
+        if(!p[0]) return;
+        var live=false; try{ live=_enchantSetActive(p[0],state.equipped,p[1]); }catch(e){}
+        cands.push({def:p[0],gem:g,kind:p[1],live:live,sel:g===selGem});
+      });
+    });
+    cands.sort(function(a,b){
+      if(a.live!==b.live) return a.live?-1:1;
+      if(a.sel!==b.sel) return a.sel?-1:1;
+      return GEM_ORDER.indexOf(b.gem)-GEM_ORDER.indexOf(a.gem);   // richest gem first
+    });
+    cands.slice(0,3).forEach(function(c){ wrap.appendChild(setCard(c.def,c.gem,c.kind)); });
+    if(!cands.length) wrap.appendChild(el('ew-set','<div class="sd">Enchant a matching ring + amulet of the same gem for a skilling set, or ring + pendant for a combat one.</div>'));
+    return wrap;
+  }
+
+  /* ── totals: the number nobody could see before ────────────────────────────── */
+  function totalsRow(){
+    var sk={}, cb={};
+    try{ sk=enchantBonuses(); }catch(e){ sk={}; }
+    try{ cb=combatEnchantBonuses(); }catch(e){ cb={}; }
+    var cells=[['Speed',sk.speed],['XP',sk.xpBoost],['Sell',sk.gpBoost],['Double',sk.doubleYield],
+               ['Attack',cb.atkBoost],['Defence',cb.defBoost],['Max HP',cb.hpBoost]];
+    var w=el('ew-tot');
+    cells.forEach(function(c){
+      var v=c[1]||0;
+      w.appendChild(el('t'+(v?'':' zero'),'<b>+'+Math.round(v*100)+'%</b><span>'+c[0]+'</span>'));
+    });
+    return w;
+  }
+
+  function costFor(itemId){
+    var gem=JEWELRY_GEM_TIER[itemId];
+    var list=ENCHANTS_BY_GEM[gem]||[];
+    var tier=list.length?ENCHANTS[list[0]].tier:1;
+    return {cost:ENCHANT_COST_BY_TIER[tier]||ENCHANT_COST_BY_TIER[1], list:list, gem:gem};
+  }
+
+  /* ── the enchant list for one piece, grouped ──────────────────────────────── */
+  function optionsFor(itemId,redraw,skillLimit){
+    var f=costFor(itemId);
+    var canAfford=Object.keys(f.cost).every(function(m){return (state.items[m]||0)>=f.cost[m];});
+    var frag=document.createDocumentFragment();
+    var groups=[['global','Global — every skill'],['combat','Combat'],['skill','Skill Focus — one skill, stronger']];
+    groups.forEach(function(g){
+      var ids=f.list.filter(function(e){return (ENCHANTS[e].cat||'global')===g[0];});
+      if(!ids.length) return;
+      if(g[0]==='skill'&&skillLimit) ids=ids.slice(0,skillLimit);
+      frag.appendChild(lab(g[1],g[0]!=='global'));
+      var box=el('ew-opts');
+      ids.forEach(function(eid){ box.appendChild(enchCard(eid,itemId,f.cost,canAfford,redraw)); });
+      frag.appendChild(box);
+      if(g[0]==='skill'&&skillLimit&&f.list.filter(function(e){return ENCHANTS[e].cat==='skill';}).length>skillLimit){
+        frag.appendChild(el('','<div style="font-size:11.5px;color:#7a6a4a;font-style:italic;padding:2px 2px 0">'
+          +'+ '+(f.list.filter(function(e){return ENCHANTS[e].cat==='skill';}).length-skillLimit)+' more skill-focus enchants</div>'));
+      }
+    });
+    return frag;
+  }
+
+  function heroCard(itemId){
+    var gem=JEWELRY_GEM_TIER[itemId], ench=state.enchantments[itemId], ed=ench?ENCHANTS[ench]:null;
+    var worn=wornSlot(itemId), copies=Math.max(state.items[itemId]||0, worn?1:0);
+    var h=el('ew-hero'); h.style.setProperty('--gc',GEMC[gem]||'#6a5533');
+    h.innerHTML='<div class="hr"><div class="well">'+iconHTML(itemId)+'</div>'
+      +'<div style="flex:1;min-width:0"><h4>'+(ITEMS[itemId]?ITEMS[itemId].name:itemId)+'</h4>'
+      +'<div class="sub">'+(worn?'worn — '+(SLOT_LABEL[worn]||worn):'in the satchel, not worn')
+      +(copies>1?' · '+copies+' owned':'')+'</div>'
+      +'<div class="cur">'+(ed?'✦ '+ed.name+' — '+ed.desc:'<span style="color:#6e6046">no enchant bound</span>')+'</div>'
+      +'</div></div>';
+    var f=costFor(itemId);
+    var cost=el('ew-cost','<span class="cl">Cost per enchant</span>');
+    Object.keys(f.cost).forEach(function(m){ cost.appendChild(matChip(m,f.cost[m])); });
+    h.appendChild(cost);
+    return h;
+  }
+
+  /* ══════════════════════════════════════════════════════════════════════════
+     DIRECTION 1 — "THE BENCH": collection rail | the piece | its enchants
+     ══════════════════════════════════════════════════════════════════════════ */
+  function drawBench(box,pieces,redraw){
+    var g=el('ew-three');
+    var c1=el('ew-col'), c2=el('ew-col'), c3=el('ew-col');
+    c1.appendChild(lab('Your Jewelry'));
+    var grid=el('ew-grid rail');
+    pieces.forEach(function(id){ grid.appendChild(pieceCard(id,redraw)); });
+    c1.appendChild(grid);
+    c2.appendChild(lab('The Piece'));
+    c2.appendChild(heroCard(window._EWsel));
+    c2.appendChild(lab('Set Bonuses',1));
+    c2.appendChild(setsColumn());
+    c3.appendChild(lab('Bind an Enchant'));
+    c3.appendChild(optionsFor(window._EWsel,redraw,3));
+    g.appendChild(c1); g.appendChild(c2); g.appendChild(c3);
+    box.appendChild(g);
+  }
+
+  /* ══════════════════════════════════════════════════════════════════════════
+     DIRECTION 2 — "THE LOADOUT": what you are wearing, what it totals, then edit
+     ══════════════════════════════════════════════════════════════════════════ */
+  function drawLoadout(box,pieces,redraw){
+    var stack=el('ew-stack');
+    stack.appendChild(lab('What You Are Wearing'));
+    var slots=el('ew-slots');
+    ['ring_l','ring_r','amulet'].forEach(function(sl){
+      var id=state.equipped[sl];
+      var ench=id?state.enchantments[id]:null, ed=ench?ENCHANTS[ench]:null;
+      var c=el('ew-slot'+(id?'':' empty')+(window._EWslot===sl?' sel':''));
+      c.style.setProperty('--gc',id?(GEMC[JEWELRY_GEM_TIER[id]]||'rgba(214,138,52,.5)'):'rgba(214,138,52,.3)');
+      c.innerHTML='<div class="sl">'+SLOT_LABEL[sl]+'</div>'
+        +'<div class="well">'+(id?iconHTML(id):iconHTML('ui_gem'))+'</div>'
+        +'<div class="nm">'+(id?(ITEMS[id]?ITEMS[id].name:id):'empty')+'</div>'
+        +'<div class="ec '+(ed?'on':'off')+'">'+(ed?'✦ '+ed.name:(id?'unenchanted':'—'))+'</div>';
+      if(id) c.addEventListener('click',function(){ window._EWslot=sl; window._EWsel=id; redraw(); });
+      slots.appendChild(c);
+    });
+    stack.appendChild(slots);
+    stack.appendChild(lab('What It All Adds Up To',1));
+    stack.appendChild(totalsRow());
+    stack.appendChild(lab('Set Bonuses',1));
+    stack.appendChild(setsColumn(true));
+    var g=el('ew-two');
+    var c1=el('ew-col'), c2=el('ew-col');
+    c1.appendChild(lab('Every Piece You Own'));
+    var grid=el('ew-grid rail');
+    pieces.forEach(function(id){ grid.appendChild(pieceCard(id,redraw)); });
+    c1.appendChild(grid);
+    c2.appendChild(heroCard(window._EWsel));
+    c2.appendChild(optionsFor(window._EWsel,redraw,2));
+    g.appendChild(c1); g.appendChild(c2);
+    stack.appendChild(g);
+    box.appendChild(stack);
+  }
+
+  /* ══════════════════════════════════════════════════════════════════════════
+     DIRECTION 3 — "THE ATELIER": one big piece, enchants as a 2-up card grid
+     ══════════════════════════════════════════════════════════════════════════ */
+  function drawAtelier(box,pieces,redraw){
+    var stack=el('ew-stack');
+    // collection as a horizontal shelf — the piece you are working on sits below it
+    stack.appendChild(lab('Your Jewelry'));
+    var shelf=el('ew-grid');
+    shelf.style.gridTemplateColumns='repeat(auto-fill,minmax(215px,1fr))';
+    pieces.forEach(function(id){ shelf.appendChild(pieceCard(id,redraw)); });
+    stack.appendChild(shelf);
+    var g=el('ew-two');
+    g.style.gridTemplateColumns='minmax(260px,1fr) minmax(340px,1.5fr)';
+    var c1=el('ew-col'), c2=el('ew-col');
+    c1.appendChild(heroCard(window._EWsel));
+    c1.appendChild(lab('Reagents',1));
+    var mats=el('ew-mats');
+    ['arcane_dust','rune_fragment','mana_essence','gem_dust','void_cinder'].forEach(function(m){
+      mats.appendChild(matChip(m,null));
+    });
+    c1.appendChild(mats);
+    c2.appendChild(lab('Bind an Enchant'));
+    var opts=optionsFor(window._EWsel,redraw,4);
+    c2.appendChild(opts);
+    g.appendChild(c1); g.appendChild(c2);
+    stack.appendChild(g);
+    stack.appendChild(lab('Set Bonuses',1));
+    stack.appendChild(setsColumn(true));
+    // enchant cards go 2-up in this direction
+    box.appendChild(stack);
+    box.querySelectorAll('.ew-opts').forEach(function(o){
+      o.style.gridTemplateColumns='repeat(auto-fit,minmax(255px,1fr))';
+    });
+  }
+
+  /* ── entry point ──────────────────────────────────────────────────────────── */
+  window.renderEnchanting=function(){
+    var box=document.getElementById('enchantView'); if(!box) return;
+    box.innerHTML='';
+    var pieces=ownedPieces();
+    if(!pieces.length){
+      box.appendChild(el('','<div style="font-size:14px;color:var(--muted);font-style:italic;padding:12px 0">'
+        +'No jewelry yet. Craft rings, amulets or pendants in the Jeweler — you can enchant them straight from your satchel.</div>'));
+      return;
+    }
+    if(!window._EWsel||pieces.indexOf(window._EWsel)<0) window._EWsel=pieces[0];
+    var redraw=function(){ window.renderEnchanting(); };
+    if(window._EV===2) drawLoadout(box,pieces,redraw);
+    else if(window._EV===3) drawAtelier(box,pieces,redraw);
+    else drawBench(box,pieces,redraw);
+  };
+})();
+</script>
+
 </body>
 </html>
