@@ -2017,21 +2017,48 @@ body:not(.is-demo) .demo-only{display:none !important}
 .rep-msg{font-size:calc(13px*var(--tscale));margin-top:10px;min-height:18px}
 .rep-msg.ok{color:var(--green)}
 .rep-msg.err{color:var(--red)}
+/* Mail — the dev's reply to a report you sent (0.9.121) */
+#mmMailModal .mm-card{max-width:540px}
+.mail-list{display:grid;gap:9px;max-height:44vh;overflow-y:auto;margin-bottom:12px;padding-right:2px}
+.mail-empty{font-size:calc(13.5px*var(--tscale));color:#8a7a60;font-style:italic;padding:6px 2px}
+.mail-msg{background:#160f07;border:1px solid #4a3a1e;border-left:3px solid #6e552c;border-radius:5px;padding:9px 11px}
+.mail-msg.new{border-left-color:#e0762f;background:#1c1208}
+.mail-hd{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:5px}
+.mail-who{color:#f0c772;font-size:calc(14px*var(--tscale));font-weight:600}
+.mail-meta{font-family:var(--num);font-size:10.5px;letter-spacing:.5px;color:#7a6048}
+.mail-tag{font-family:var(--num);font-size:9.5px;letter-spacing:.8px;color:#150d05;
+  background:#e0762f;border-radius:3px;padding:1px 5px}
+.mail-body{font-size:calc(14.5px*var(--tscale));line-height:1.45;color:#ead9b5;
+  white-space:pre-wrap;word-break:break-word}
+.mail-about{margin-top:6px;padding-top:5px;border-top:1px solid #2e2412;
+  font-size:calc(12px*var(--tscale));color:#7a6048;font-style:italic}
+.mail-reply-btn{margin-top:7px;font-family:var(--num);font-size:10.5px;letter-spacing:.6px;
+  background:none;border:1px solid #4a3a1e;color:#a08a64;border-radius:3px;
+  padding:3px 8px;cursor:var(--cur-pointer)}
+.mail-reply-btn:hover{border-color:#c79b4e;color:#f0c772}
+.mail-to{font-family:var(--num);font-size:11px;letter-spacing:.5px;color:#a08a64;margin-bottom:6px}
+.gm-row.gm-mail{border-color:rgba(224,118,47,.5)}
+.gm-row.gm-mail span{color:#e0972f}
+/* Scoped to the button rather than added to .hdr-btn: that class is shared by
+   every header control and none of them expect a positioning context. */
+#btnMenu{position:relative}
+.hdr-dot{position:absolute;top:3px;right:3px;width:8px;height:8px;border-radius:50%;
+  background:#e0762f;box-shadow:0 0 6px #e0762f;pointer-events:none}
 /* align-items:normal + overflow-y:auto + card margin:auto (not align-items:center)
    so that when root zoom makes a card taller than the window, the modal SCROLLS
    instead of clipping the title and the Done button off-screen. align-items:center
    would pin an over-tall card centred, hiding its top with no way to scroll up —
    that stranded users on "a brown screen that just says On" (0.9.25). */
-#mmNameModal,#mmImportModal,#mmExportModal,#mmSettingsModal,#mmCreditsModal,#gameMenuModal,#mmReportModal,#mmIdeaModal,#demoBuyModal,#mmEaModal{position:fixed;inset:0;z-index:10000;display:flex;align-items:normal;overflow-y:auto;
+#mmNameModal,#mmImportModal,#mmExportModal,#mmSettingsModal,#mmCreditsModal,#gameMenuModal,#mmReportModal,#mmIdeaModal,#mmMailModal,#demoBuyModal,#mmEaModal{position:fixed;inset:0;z-index:10000;display:flex;align-items:normal;overflow-y:auto;
   justify-content:center;padding:18px;background:#000a;font-family:'Crimson Pro',serif}
-#mmNameModal.mm-hidden,#mmImportModal.mm-hidden,#mmExportModal.mm-hidden,#mmSettingsModal.mm-hidden,#mmCreditsModal.mm-hidden,#gameMenuModal.mm-hidden,#mmReportModal.mm-hidden,#mmIdeaModal.mm-hidden,#demoBuyModal.mm-hidden,#mmEaModal.mm-hidden{display:none}
-#mmNameModal .mm-card,#mmImportModal .mm-card,#mmExportModal .mm-card,#mmSettingsModal .mm-card,#mmCreditsModal .mm-card,#gameMenuModal .mm-card,#mmReportModal .mm-card,#mmIdeaModal .mm-card,#demoBuyModal .mm-card,#mmEaModal .mm-card{background:#251a10;border:1px solid #c79b4e;border-radius:8px;
+#mmNameModal.mm-hidden,#mmImportModal.mm-hidden,#mmExportModal.mm-hidden,#mmSettingsModal.mm-hidden,#mmCreditsModal.mm-hidden,#gameMenuModal.mm-hidden,#mmReportModal.mm-hidden,#mmIdeaModal.mm-hidden,#mmMailModal.mm-hidden,#demoBuyModal.mm-hidden,#mmEaModal.mm-hidden{display:none}
+#mmNameModal .mm-card,#mmImportModal .mm-card,#mmExportModal .mm-card,#mmSettingsModal .mm-card,#mmCreditsModal .mm-card,#gameMenuModal .mm-card,#mmReportModal .mm-card,#mmIdeaModal .mm-card,#mmMailModal .mm-card,#demoBuyModal .mm-card,#mmEaModal .mm-card{background:#251a10;border:1px solid #c79b4e;border-radius:8px;
   padding:20px;max-width:360px;width:100%;margin:auto;box-shadow:var(--sh-3)}
-#mmNameModal h3,#mmImportModal h3,#mmExportModal h3,#mmSettingsModal h3,#mmCreditsModal h3,#gameMenuModal h3,#mmReportModal h3,#mmIdeaModal h3,#demoBuyModal h3,#mmEaModal h3{color:#c79b4e;font-variant:small-caps;letter-spacing:1px;font-size:19px;margin:0 0 6px}
-#mmNameModal p,#mmImportModal p,#mmExportModal p,#mmSettingsModal p,#mmCreditsModal p,#mmReportModal p,#mmIdeaModal p,#demoBuyModal p,#mmEaModal p{color:#a08a64;font-size:calc(14px*var(--tscale));margin:0 0 12px}
+#mmNameModal h3,#mmImportModal h3,#mmExportModal h3,#mmSettingsModal h3,#mmCreditsModal h3,#gameMenuModal h3,#mmReportModal h3,#mmIdeaModal h3,#mmMailModal h3,#demoBuyModal h3,#mmEaModal h3{color:#c79b4e;font-variant:small-caps;letter-spacing:1px;font-size:19px;margin:0 0 6px}
+#mmNameModal p,#mmImportModal p,#mmExportModal p,#mmSettingsModal p,#mmCreditsModal p,#mmReportModal p,#mmIdeaModal p,#mmMailModal p,#demoBuyModal p,#mmEaModal p{color:#a08a64;font-size:calc(14px*var(--tscale));margin:0 0 12px}
 #mmNameModal input{width:100%;background:#0d0905;color:#ead9b5;border:1px solid #6e552c;
   border-radius:4px;padding:9px 11px;font-family:inherit;font-size:16px;margin-bottom:14px}
-#mmNameModal .mm-row,#mmImportModal .mm-row,#mmExportModal .mm-row,#mmSettingsModal .mm-row,#mmCreditsModal .mm-row,#gameMenuModal .mm-row,#mmReportModal .mm-row,#mmIdeaModal .mm-row,#mmEaModal .mm-row{display:flex;gap:8px;justify-content:flex-end}
+#mmNameModal .mm-row,#mmImportModal .mm-row,#mmExportModal .mm-row,#mmSettingsModal .mm-row,#mmCreditsModal .mm-row,#gameMenuModal .mm-row,#mmReportModal .mm-row,#mmIdeaModal .mm-row,#mmMailModal .mm-row,#mmEaModal .mm-row{display:flex;gap:8px;justify-content:flex-end}
 /* Early Access welcome. Wider than the rest of the mm-* family because it is the
    one modal that is read rather than acted on. */
 #mmEaModal .mm-card{max-width:520px}
@@ -4797,7 +4824,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.120</div>
+  <div class="mm-ver">v0.9.121</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -4893,6 +4920,15 @@ body:not(.is-demo) .demo-only{display:none !important}
       </div>
     </div>
 
+    <div class="set-row" id="mmMailRow" hidden>
+      <div class="set-lbl">Mail
+        <small id="mmMailSub">Replies from the dev on what you've sent</small>
+      </div>
+      <div class="set-ctl">
+        <button class="mm-mini" id="mmSetMail">Open</button>
+      </div>
+    </div>
+
     <div class="mm-row" style="margin-top:16px">
       <button class="mm-mini mm-primary" id="mmSettingsClose">Done</button>
     </div>
@@ -4912,6 +4948,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="gm-row gm-buy demo-only" id="gmBuy">Get the full game<span>Unlock every zone, skill &amp; raid</span></button>
       <button class="gm-row" id="gmReport" hidden>Report a bug<span>Send a report to the dev</span></button>
       <button class="gm-row" id="gmIdea" hidden>Suggest an idea<span>Tell the dev what you'd like to see</span></button>
+      <button class="gm-row" id="gmMail" hidden>Mail<span id="gmMailSub">Replies from the dev</span></button>
       <button class="gm-row" id="gmTutorial">Replay the tutorial<span>Run the intro tour again</span></button>
       <button class="gm-row" id="gmExport">Export save<span>Copy a backup code</span></button>
       <button class="gm-row gm-danger" id="gmQuit">Return to title<span>Back to the main menu</span></button>
@@ -4952,6 +4989,29 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-mini mm-primary" id="mmIdeaSend">Send idea</button>
     </div>
     <div class="rep-msg" id="mmIdeaMsg"></div>
+  </div>
+</div>
+
+<!-- ===== MAIL =====
+     The other half of the bug reporter. Replies typed in Discord land here, and
+     only in the mailbox that raised the ticket. -->
+<div id="mmMailModal" class="mm-hidden">
+  <div class="mm-card">
+    <h3>Mail</h3>
+    <p>Replies from the developer about the bugs and ideas you've sent in.</p>
+    <div class="mail-list" id="mmMailList"></div>
+    <div id="mmMailCompose" hidden>
+      <div class="mail-to" id="mmMailTo"></div>
+      <textarea class="rep-ta" id="mmMailText" maxlength="1400" placeholder="Write back…"></textarea>
+      <div class="mm-row" style="margin-top:4px">
+        <button class="mm-mini" id="mmMailReplyCancel">Cancel</button>
+        <button class="mm-mini mm-primary" id="mmMailReplySend">Send reply</button>
+      </div>
+    </div>
+    <div class="rep-msg" id="mmMailMsg"></div>
+    <div class="mm-row" style="margin-top:4px">
+      <button class="mm-mini mm-primary" id="mmMailClose">Close</button>
+    </div>
   </div>
 </div>
 
@@ -5117,7 +5177,7 @@ body:not(.is-demo) .demo-only{display:none !important}
     <button class="hdr-btn" id="btnExport" title="Export save"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/><path d="M7 11l5 5l5-5"/><path d="M12 4v12"/></svg>Export</button>
     <button class="hdr-btn" id="btnImport" title="Import save"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/><path d="M7 9l5-5l5 5"/><path d="M12 4v12"/></svg>Import</button>
     <button class="hdr-btn" id="btnReset" title="Reset save" style="border-color:var(--red);color:var(--red)"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12"/><path d="M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/></svg>Reset</button>
-    <button class="hdr-btn" id="btnMenu"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h16"/></svg>Menu</button>
+    <button class="hdr-btn" id="btnMenu"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h16"/></svg>Menu<span class="hdr-dot" id="mailDot" hidden></span></button>
   </div>
 </header>
 <canvas id="bgEmbers" aria-hidden="true"></canvas>
@@ -5534,6 +5594,23 @@ const BUG_WEBHOOK = 'https://discord.com/api/webhooks/1525224836258070528/LQk3rR
    webhook here to split them into their own channel. */
 const IDEA_WEBHOOK = '';
 function ideaHook(){ return IDEA_WEBHOOK || BUG_WEBHOOK; }
+/* ── Mail (0.9.121) ──────────────────────────────────────────────────────────
+   The webhooks above are a shout into a channel; nothing can ever come back
+   from them. Reports routed through this worker instead carry a ticket bound to
+   a MAILBOX ID, and replying to that ticket in Discord delivers into this game
+   and no other.
+
+   MAIL_KEY is that mailbox: a secret this machine mints on its first report and
+   shows nobody. Deliberately NOT the device id — that one is printed in every
+   embed in the channel, so anyone reading it could poll someone else's mail.
+
+   Point MAIL_API at nothing to switch the whole feature off; reports then post
+   straight to the webhook exactly as they did before it existed. An unreachable
+   worker does the same thing on its own, so shipping this ahead of the deploy
+   is safe. See C:\code\cindervale-mail. */
+const MAIL_API     = 'https://cindervaleidle.com/mail';
+const MAIL_KEY     = 'cindervale_mail_id';    // secret delivery address
+const MAIL_BOX_KEY = 'cindervale_mail_box';   // cached replies, so the inbox reads offline
 const BUG_COOLDOWN_MS = 30000;
 let _ideaLastSent = 0;
 let _bugLastSent = 0;
@@ -33747,6 +33824,23 @@ async function mmSendReport(){
   const _flagged = (function(){ try{ return _hasSlur(text); }catch(e){ return false; } })();
   let _dev='?'; try{ _dev=lsGet(DEVICE_KEY)||'?'; }catch(e){}
   const _bugN=(typeof _bumpCount==='function')?_bumpCount('cindervale_bug_seq'):0;
+  // Worker first. It posts the same embed AND files a ticket against this
+  // machine's mailbox, which is the only reason a reply can ever come back. If
+  // it is unreachable we fall through to the direct webhook below — a report
+  // that lands unrepliable still beats a report that is lost.
+  const _mbox=mailboxId();
+  if(MAIL_API && _mbox){
+    const t=await _mailSend('bug',_mbox,text,c,_dev,_bugN,_flagged,_bugFile);
+    if(t){
+      _bugLastSent=Date.now();
+      msg.className='rep-msg ok';
+      msg.textContent='Thank you — report #'+t+' sent. Any reply shows up in Menu → Mail.';
+      btn.textContent='Sent';
+      mailStart();
+      setTimeout(function(){ $('mmReportModal').classList.add('mm-hidden'); },2200);
+      return;
+    }
+  }
   const payload={username:'Cindervale Bug Report',embeds:[{title:_flagged?'Bug report — flagged language':'Bug report',description:text.slice(0,1400),color:_flagged?0x8a2f2f:0xc05149,
     fields:[
       {name:'Version',value:c.ver,inline:true},
@@ -33806,6 +33900,20 @@ async function mmSendIdea(){
   let dev='?'; try{ dev=lsGet(DEVICE_KEY)||'?'; }catch(e){}
   const who=(state&&state.charName)?String(state.charName):'(no character)';
   const ver=(document.querySelector('.mm-ver')?document.querySelector('.mm-ver').textContent.trim():'?');
+  // Same worker-first, webhook-fallback path as the bug reporter above.
+  const _mbox=mailboxId();
+  if(MAIL_API && _mbox){
+    const t=await _mailSend('idea',_mbox,text,{who:who,ver:ver},dev,0,false,null);
+    if(t){
+      _ideaLastSent=Date.now();
+      msg.className='rep-msg ok';
+      msg.textContent='Thank you — idea #'+t+' sent. Any reply shows up in Menu → Mail.';
+      btn.textContent='Sent';
+      mailStart();
+      setTimeout(function(){ $('mmIdeaModal').classList.add('mm-hidden'); },2200);
+      return;
+    }
+  }
   const payload={embeds:[{
     title:'💡 Suggestion',
     description:text.slice(0,3800),
@@ -33834,6 +33942,200 @@ $('gmIdea').addEventListener('click', function(){ gmClose(); mmOpenIdea(); });
 $('mmSetIdea').addEventListener('click', function(){ $('mmSettingsModal').classList.add('mm-hidden'); mmOpenIdea(); });
 $('mmIdeaCancel').addEventListener('click', function(){ $('mmIdeaModal').classList.add('mm-hidden'); });
 $('mmIdeaSend').addEventListener('click', mmSendIdea);
+
+/* ── Mail — the reply half of the bug reporter (0.9.121) ─────────────────────
+   Every path in here is best-effort and silent when it fails. The worker may
+   not be deployed (then /mail is just a 404 page from Pages), the player may be
+   offline, storage may be blocked — in every one of those cases the game has to
+   behave exactly as it did before mail existed.
+
+   Polling only ever starts for someone who has actually sent something: no
+   mailbox, no requests. Most players never make a single call.                */
+function _mailRand(){
+  let s='';
+  try{
+    const a=new Uint8Array(12); crypto.getRandomValues(a);
+    for(let i=0;i<a.length;i++) s+=('0'+a[i].toString(16)).slice(-2);
+    return s;
+  }catch(e){}
+  while(s.length<24) s+=Math.random().toString(36).slice(2);
+  return s.slice(0,24).replace(/[^a-z0-9]/g,'0');
+}
+function mailboxPeek(){ return lsGet(MAIL_KEY)||''; }
+/* Minted on the first report, never before. Storage blocked returns '' and mail
+   stays off for good — an address that does not survive a reload can't receive. */
+function mailboxId(){
+  let id = mailboxPeek();
+  if(!id){ id=_mailRand(); if(!lsSet(MAIL_KEY,id)) return ''; }
+  return id;
+}
+/* `ok` means a ticket was really filed — the worker answered with a number.
+   Minting a mailbox is not evidence of that: mailboxId() persists one even when
+   the send falls through to the plain webhook, and without this flag such a
+   player would get a Mail row, and a poll timer, for a mailbox no ticket points
+   at. No ticket, no row, no traffic. */
+function _mailLoad(){
+  try{
+    const o=JSON.parse(lsGet(MAIL_BOX_KEY)||'{}');
+    return {since:+o.since||0, read:+o.read||0, ok:!!o.ok, msgs:Array.isArray(o.msgs)?o.msgs:[]};
+  }catch(e){ return {since:0,read:0,ok:false,msgs:[]}; }
+}
+function _mailMarkFiled(){ const b=_mailLoad(); if(!b.ok){ b.ok=true; _mailSave(b); } }
+function _mailSave(b){ try{ lsSet(MAIL_BOX_KEY, JSON.stringify(b)); }catch(e){} }
+function mailUnread(){ const b=_mailLoad(); return b.msgs.filter(function(m){ return (+m.id)>b.read; }).length; }
+
+/* Mail lives outside the save on purpose: it belongs to the install, not to a
+   character, so it must not vanish when you switch slots — and it needs no
+   normalizeState guard to stay safe on old saves. */
+function mailSync(){
+  const b=_mailLoad(), n=mailUnread(), have=!!(MAIL_API && mailboxPeek() && (b.ok||b.msgs.length));
+  const dot=$('mailDot'); if(dot) dot.hidden = !(n>0);
+  const row=$('gmMail');
+  if(row){ row.hidden = !have; row.classList.toggle('gm-mail', n>0); }
+  const srow=$('mmMailRow'); if(srow) srow.hidden = !have;
+  const sub = n>0 ? (n+' new '+(n===1?'reply':'replies'))
+                  : (b.msgs.length ? 'Replies from the dev' : 'Nothing back yet');
+  ['gmMailSub','mmMailSub'].forEach(function(id){ const el=$(id); if(el) el.textContent=sub; });
+}
+
+let _mailFails=0, _mailTimer=0, _mailBusy=false, _mailLastSent=0, _mailReplyTicket=0;
+async function mailPoll(){
+  const box=mailboxPeek();
+  if(!MAIL_API || !box || _mailBusy || _mailFails>=3) return;
+  _mailBusy=true;
+  try{
+    const b=_mailLoad();
+    const res=await fetch(MAIL_API+'/api/inbox?m='+encodeURIComponent(box)+'&since='+b.since,{cache:'no-store'});
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const data=await res.json();
+    if(!data || !Array.isArray(data.msgs)) throw new Error('bad body');
+    _mailFails=0;                                   // three strikes and this browser stops asking
+    if(data.msgs.length){
+      data.msgs.forEach(function(m){ if(m && (+m.id)>b.since) b.since=+m.id; });
+      b.msgs=b.msgs.concat(data.msgs).slice(-30);
+      _mailSave(b); mailSync();
+      toast('📬 The dev replied to your report');   // toast is textContent — emoji, never SVG
+    }
+  }catch(e){ _mailFails++; }
+  finally{ _mailBusy=false; }
+}
+function mailStart(){
+  const b=_mailLoad();
+  if(_mailTimer || !MAIL_API || !mailboxPeek() || !(b.ok||b.msgs.length)) return;
+  setTimeout(mailPoll, 8000);
+  _mailTimer=setInterval(mailPoll, 180000);
+  mailSync();
+}
+
+/* Posts a report or idea through the worker, which relays it to Discord AND
+   records the ticket. Returns the ticket number, or 0 for "use the old direct
+   webhook instead". Never throws — the caller's fallback depends on that. */
+async function _mailSend(kind, box, text, c, dev, n, flagged, file){
+  try{
+    const fd=new FormData();
+    fd.append('m',box); fd.append('kind',kind); fd.append('text',text);
+    fd.append('dev',dev||'');            fd.append('who',(c&&c.who)||'');
+    fd.append('ver',(c&&c.ver)||'');     fd.append('where',(c&&c.where)||'');
+    fd.append('plat',(c&&c.plat)||'');   fd.append('errs',(c&&c.errs)||'');
+    fd.append('n',String(n||0));         fd.append('flag',flagged?'1':'0');
+    if(file) fd.append('shot', file, 'screenshot'+_bugExt(file.type));
+    // FormData, not JSON: multipart is CORS-safelisted so there is no preflight,
+    // and the screenshot rides in the same request.
+    const res=await fetch(MAIL_API+'/api/send',{method:'POST',body:fd});
+    if(!res.ok) return 0;
+    const j=await res.json();
+    if(!(j && j.ok && j.ticket)) return 0;
+    _mailMarkFiled();
+    return j.ticket;
+  }catch(e){ return 0; }
+}
+
+function _mailWhen(ts){
+  const d=Date.now()-(+ts||0);
+  if(d<60000)    return 'just now';
+  if(d<3600000)  return Math.floor(d/60000)+'m ago';
+  if(d<86400000) return Math.floor(d/3600000)+'h ago';
+  return Math.floor(d/86400000)+'d ago';
+}
+function mailRender(){
+  const list=$('mmMailList'); if(!list) return;
+  const b=_mailLoad();
+  if(!b.msgs.length){
+    list.innerHTML='<div class="mail-empty">Nothing yet. Send a bug report or an idea and any reply lands here.</div>';
+    return;
+  }
+  list.innerHTML=b.msgs.slice().reverse().map(function(m){
+    const isNew=(+m.id)>b.read;
+    return '<div class="mail-msg'+(isNew?' new':'')+'">'
+      +'<div class="mail-hd"><span class="mail-who">'+escapeHTML(m.author||'Smolder Studios')+'</span>'
+      +'<span class="mail-meta">Ticket #'+(+m.ticket||0)+' &middot; '+_mailWhen(m.ts)+'</span>'
+      +(isNew?'<span class="mail-tag">NEW</span>':'')+'</div>'
+      +'<div class="mail-body">'+escapeHTML(m.body||'')+'</div>'
+      +(m.about?'<div class="mail-about">on your '+(m.kind==='idea'?'idea':'report')+': &ldquo;'+escapeHTML(m.about)+'&rdquo;</div>':'')
+      +'<button class="mail-reply-btn" data-ticket="'+(+m.ticket||0)+'">Reply</button>'
+      +'</div>';
+  }).join('');
+  list.querySelectorAll('.mail-reply-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){ mailReplyTo(+btn.dataset.ticket); });
+  });
+}
+function mmOpenMail(){
+  const b=_mailLoad();
+  mailRender();
+  $('mmMailCompose').hidden=true;
+  const msg=$('mmMailMsg'); msg.textContent=''; msg.className='rep-msg';
+  $('mmMailModal').classList.remove('mm-hidden');
+  // Opening it is what clears the badge, and what puts 👀 on the message in
+  // Discord — so the channel shows the answer was read, not merely sent.
+  if(b.since>b.read){
+    b.read=b.since; _mailSave(b);
+    const box=mailboxPeek();
+    if(MAIL_API && box){
+      try{
+        fetch(MAIL_API+'/api/seen',{method:'POST',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({m:box,upto:b.since})}).catch(function(){});
+      }catch(e){}
+    }
+  }
+  mailSync();
+}
+function mailReplyTo(ticket){
+  _mailReplyTicket=ticket||0;
+  const c=$('mmMailCompose'); if(!c || !_mailReplyTicket) return;
+  c.hidden=false;
+  $('mmMailTo').textContent='Replying on ticket #'+_mailReplyTicket;
+  $('mmMailText').value='';
+  const btn=$('mmMailReplySend'); btn.disabled=false; btn.textContent='Send reply';
+  const msg=$('mmMailMsg'); msg.textContent=''; msg.className='rep-msg';
+  setTimeout(function(){ try{$('mmMailText').focus();}catch(e){} },30);
+}
+async function mailSendReply(){
+  const msg=$('mmMailMsg'), btn=$('mmMailReplySend');
+  const text=$('mmMailText').value.trim(), box=mailboxPeek();
+  if(!box || !_mailReplyTicket) return;
+  if(text.length<2){ msg.className='rep-msg err'; msg.textContent='Write something first.'; return; }
+  const wait=BUG_COOLDOWN_MS-(Date.now()-_mailLastSent);
+  if(wait>0){ msg.className='rep-msg err'; msg.textContent='Please wait '+Math.ceil(wait/1000)+'s before sending another.'; return; }
+  btn.disabled=true; btn.textContent='Sending…'; msg.className='rep-msg'; msg.textContent='';
+  try{
+    const res=await fetch(MAIL_API+'/api/reply',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({m:box,ticket:_mailReplyTicket,text:text.slice(0,1400)})});
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    _mailLastSent=Date.now();
+    msg.className='rep-msg ok'; msg.textContent='Sent — thank you!';
+    $('mmMailCompose').hidden=true;
+  }catch(err){
+    msg.className='rep-msg err'; msg.textContent='Could not send. Please try again later.';
+    btn.disabled=false; btn.textContent='Send reply';
+  }
+}
+$('gmMail').addEventListener('click', function(){ gmClose(); mmOpenMail(); });
+$('mmSetMail').addEventListener('click', function(){ $('mmSettingsModal').classList.add('mm-hidden'); mmOpenMail(); });
+$('mmMailClose').addEventListener('click', function(){ $('mmMailModal').classList.add('mm-hidden'); });
+$('mmMailReplyCancel').addEventListener('click', function(){ $('mmMailCompose').hidden=true; });
+$('mmMailReplySend').addEventListener('click', mailSendReply);
+mailSync();
+mailStart();
 
 if(BUG_WEBHOOK){ ['gmReport','mmReportRow'].forEach(function(id){ var el=$(id); if(el) el.hidden=false; }); }
 $('gmReport').addEventListener('click', function(){ gmClose(); mmOpenReport(); });
@@ -33884,7 +34186,7 @@ window.addEventListener('keydown', function(e){
 // Scoped to the read-only dialogs — input flows (name/import/export) keep their
 // own explicit buttons. Pairs with the scroll fix: even if a card overflows the
 // window, you can always dismiss it.
-var MM_DISMISSABLE = ['gameMenuModal','mmSettingsModal','mmCreditsModal','mmReportModal','mmIdeaModal','demoBuyModal'];
+var MM_DISMISSABLE = ['gameMenuModal','mmSettingsModal','mmCreditsModal','mmReportModal','mmIdeaModal','mmMailModal','demoBuyModal'];
 window.addEventListener('keydown', function(e){
   if(e.key !== 'Escape') return;
   for(var i=0;i<MM_DISMISSABLE.length;i++){

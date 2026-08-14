@@ -1368,6 +1368,47 @@ setTimeout(() => {
     ok('WORN badge and Remove never share a row', both === false);
   }
 
+  section('Modal CSS registration (v0.9.121)');
+  {
+    /* Every mm-style modal is styled by FOUR id-scoped selector lists, not by a
+       class. Add a modal and forget one and nothing throws — it just renders
+       wrong, and the .mm-hidden miss is the bad one: with no display:none rule
+       the modal paints over the running game from boot. That is exactly what
+       happened to #mmMailModal, and only a screenshot caught it.
+
+       Driven off MM_DISMISSABLE so a future modal is covered the day it is
+       added, without anyone remembering this file exists.
+
+       Asserted on COMPUTED style, not on selector text. Grepping the source for
+       "#id .mm-card" reads green off any rule at all — the modal's own
+       max-width line satisfies it — so it would have missed the very bug it was
+       written for. */
+    const ids = ev('MM_DISMISSABLE.slice()');
+    ok('MM_DISMISSABLE is populated', Array.isArray(ids) && ids.length >= 6, String(ids));
+
+    const CARD_BG = 'rgb(37, 26, 16)';    // #251a10, the frame list at [CSS] mm-card
+    const H3_FG   = 'rgb(199, 155, 78)';  // #c79b4e
+    ids.forEach(id => {
+      const s = ev(`(function(){
+        var e=document.getElementById('${id}'); if(!e) return null;
+        var was=e.classList.contains('mm-hidden');
+        e.classList.add('mm-hidden');
+        var hidden=getComputedStyle(e).display;
+        e.classList.remove('mm-hidden');
+        var shown=getComputedStyle(e);
+        var c=e.querySelector('.mm-card'), h=e.querySelector('h3');
+        var out={hidden:hidden, pos:shown.position, z:shown.zIndex,
+                 card:c?getComputedStyle(c).backgroundColor:'no card',
+                 h3:h?getComputedStyle(h).color:'no h3'};
+        if(was) e.classList.add('mm-hidden');
+        return out; })()`);
+      ok(id + ' hides completely when .mm-hidden is set', s && s.hidden === 'none', s && s.hidden);
+      ok(id + ' lays out as a fixed overlay', s && s.pos === 'fixed', s && s.pos + ' z' + (s && s.z));
+      ok(id + ' card gets the frame background', s && s.card === CARD_BG, s && s.card);
+      ok(id + ' heading gets the gold treatment', s && s.h3 === H3_FG, s && s.h3);
+    });
+  }
+
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));
   process.exit(fail ? 1 : 0);
 }, 2500);
