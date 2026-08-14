@@ -2747,6 +2747,11 @@ body:not(.is-demo) .demo-only{display:none !important}
   border:1px solid var(--green);color:var(--green);background:var(--raised-s);
   cursor:var(--cur-pointer);font-family:inherit;white-space:nowrap;flex-shrink:0;margin-left:auto}
 .preset-quick-btn:hover{background:#0e2010}
+.preset-quick-btn .ev-icon{width:1.1em;height:1.1em;vertical-align:-0.15em}
+/* No preset saved yet — the button offers to make one, so it reads as an invitation
+   in the trim colour rather than a live green "this will change your gear" action. */
+.preset-quick-btn.new{border-color:var(--trim-d);color:var(--muted)}
+.preset-quick-btn.new:hover{border-color:var(--trim);color:var(--trim);background:var(--raised)}
 .sg-slot{position:relative;background:var(--raised);border:1px solid var(--trim-d);border-radius:5px;
   padding:5px 3px;text-align:center;cursor:var(--cur-pointer);transition:border-color .15s;height:74px;overflow:hidden;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px}
@@ -3702,7 +3707,15 @@ body:not(.is-demo) .demo-only{display:none !important}
 .sl-hull .i{flex:1;min-width:0}
 .sl-hull .i b{font-family:'Cinzel',serif;font-size:calc(14.4px*var(--tscale));color:#e8d7b0;display:block;line-height:1.25}
 .sl-hull .i .st{display:flex;gap:7px;flex-wrap:wrap;font-family:var(--num);font-size:calc(11.6px*var(--tscale));color:#5f8496;margin-top:2px}
-.sl-hull .i .cst{display:block;font-family:var(--num);font-size:calc(11.6px*var(--tscale));margin-top:3px;line-height:1.4}
+.sl-hull .i .cst{display:flex;flex-wrap:wrap;gap:4px;font-family:var(--num);font-size:calc(11.6px*var(--tscale));margin-top:4px;line-height:1.4}
+/* One chip per material (0.9.122) — icon, name, have/need. Green when covered,
+   amber when short, matching the needs-chips on every crafting card. The icon is
+   pinned back to 1em here because .sl-hull .ev-icon sizes the 46px slot art. */
+.sl-hull .i .cst .m{display:inline-flex;align-items:center;gap:4px;padding:1px 7px;border-radius:4px;
+  background:var(--raised-s);border:1px solid #3a5018;color:#7da33f;cursor:var(--cur-help)}
+.sl-hull .i .cst .m.miss{border-color:#54401c;color:#a08a64}
+.sl-hull .i .cst .m b{display:inline;font-family:var(--num);font-size:inherit;color:inherit;line-height:inherit}
+.sl-hull .i .cst .m .ev-icon{width:1.25em;height:1.25em}
 .sl-note{font-size:calc(13.4px*var(--tscale));color:var(--muted);line-height:1.5;margin:8px 0 0}
 
 /* ── the fleet strip (0.9.118) ──
@@ -4437,6 +4450,12 @@ body:not(.is-demo) .demo-only{display:none !important}
 .act .meta{
   white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; max-width:100%;
 }
+/* …with one exception (0.9.122). A warning that gets ellipsed loses the half that
+   matters — "Owned — a 2nd can…" tells the player nothing. This variant is only set
+   on the duplicate-jewelry line, which appears on a handful of jeweler cards you have
+   already crafted, so the height cost the nowrap rule exists to prevent (19 cooking
+   cards x 5 rows) cannot happen here. Full sentence still lives in the card's title. */
+.act .meta.warn{ white-space:normal; text-overflow:clip; line-height:1.3; }
 .act .act-hero .t{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
 
@@ -4824,7 +4843,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.121</div>
+  <div class="mm-ver">v0.9.122</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -18688,9 +18707,21 @@ function buildActBtn(act,reqLvl,lvl,m,bestXph,bestRph){
   // kept here because it's a cooking blocker the needs row doesn't cover.
   /* [UI-PREVIEW] The plain rate case now lives in the hero line, so rendering it
      here too cost every card a whole extra row. Keep meta only for real states. */
+  /* Jewelry you already own (0.9.122). Enchants and sockets are keyed by ITEM ID and
+     equipBodyItem strips an id from any other slot in the same loadout, so a second
+     Sapphire Ring cannot be worn beside the first and cannot carry its own enchant.
+     Players were crafting spares expecting a second enchant slot. WARN, never block
+     like toolOwned does — jewelry sells well and the jeweler XP loop is built on
+     crafting pieces you have no intention of wearing. */
+  const dupeJewel = !isActive && !locked && typeof JEWELRY_GEM_TIER!=='undefined'
+    && Object.keys(act.out||{}).some(function(id){
+        return JEWELRY_GEM_TIER[id] && ((state.items[id]||0)>0 || anyLoadoutHas(id));
+      });
+
   const metaState = locked?`Unlocks at Lv ${reqLvl}`
                  : toolOwned?`✓ Already owned`
                  : (fireOut&&!isActive)?`⚠ Fire is out`
+                 : dupeJewel?`⚠ Owned — a 2nd can't be worn`
                  : metaExtra||'';
   const metaText = metaState;
 
@@ -18737,7 +18768,7 @@ function buildActBtn(act,reqLvl,lvl,m,bestXph,bestRph){
         <span class="act-tier">${isAlchSingleton?tierBadge:('Lv '+reqLvl)}</span>
       </div>
       ${heroHtml}
-      ${metaText?`<span class="meta">${metaText}</span>`:''}
+      ${metaText?`<span class="meta${dupeJewel?' warn':''}">${metaText}</span>`:''}
       ${locked||depleted||toolOwned?'':statsHtml}
       ${/* Locked recipes used to hide their materials entirely, so you could not
             see what an upcoming craft needed until you already had the level —
@@ -18751,7 +18782,10 @@ function buildActBtn(act,reqLvl,lvl,m,bestXph,bestRph){
   /* [UI-PREVIEW] Per-action XP and the exact rate left the card face when the hero
      line was capped to one row — keep them a hover away rather than losing them. */
   btn.title=act.name+' · '+act.xp+' XP per action · '+(ms/1000).toFixed(1)+'s'
-    +(locked?' · unlocks at Lv '+reqLvl:' · '+fmtK(xph)+' xp/hr');
+    +(locked?' · unlocks at Lv '+reqLvl:' · '+fmtK(xph)+' xp/hr')
+    +(dupeJewel?'\n\nYou already own one. Only one of a given piece can be worn at a time, and the'
+       +' enchant binds to the piece — a spare cannot carry a second, different enchant.'
+       +' Craft it for the XP or the sale, not for a second enchant slot.':'');
   if(!locked&&!depleted&&!toolOwned) btn.addEventListener('click',()=>setAction(selectedSkill,act.id));
   return btn;
 }
@@ -25452,18 +25486,26 @@ function renderCenter(){
   const sk=SKILLS[selectedSkill];
   $('panelTitle').textContent=`${sk.icon} ${sk.name}`;
 
-  // Preset quick-button — only shown when a preset is saved for this skill
+  /* Preset quick-button. It used to render ONLY when a preset already existed for
+     this skill, which meant a player who had never opened the Presets tab never saw
+     it — and so never learned that one-click skilling loadouts exist at all (players
+     kept asking for the feature it was hiding). It is always here now: with a preset
+     saved it equips it, without one it opens the editor seeded from what you have on,
+     so the button teaches the feature instead of waiting for you to find it. */
   var existingPqb=$('presetQuickBtn');
   if(existingPqb) existingPqb.remove();
-  if(hasGearPreset(selectedSkill)){
-    var pqb=document.createElement('button');
-    pqb.id='presetQuickBtn';
-    pqb.className='preset-quick-btn';
-    pqb.textContent='📋 Equip Preset';
-    pqb.title='Equip saved '+sk.name+' preset';
-    (function(key){ pqb.addEventListener('click',function(){ equipGearPreset(key); }); })(selectedSkill);
-    $('panelTitleRow').appendChild(pqb);
-  }
+  var _hasPreset=hasGearPreset(selectedSkill);
+  var pqb=document.createElement('button');
+  pqb.id='presetQuickBtn';
+  pqb.className='preset-quick-btn'+(_hasPreset?'':' new');
+  pqb.innerHTML=iconHTML(_hasPreset?'ui_scroll':'ui_save')+' '+(_hasPreset?'Equip Preset':'Save Gear Set');
+  pqb.title=_hasPreset
+    ? 'Equip your saved '+sk.name+' loadout in one click'
+    : 'Save your current gear as a one-click '+sk.name+' loadout';
+  (function(key,has){ pqb.addEventListener('click',function(){
+    if(has) equipGearPreset(key); else openPresetEditor(key);
+  }); })(selectedSkill,_hasPreset);
+  $('panelTitleRow').appendChild(pqb);
   const pts=availPoints(selectedSkill);
   $('tabPts').textContent=pts>0?`(${pts})`:'';
   // Enchant & Socket are the Jeweler's gem workbench (v1.0.42) — only surface them
@@ -26088,6 +26130,25 @@ function renderEnchantDetail(box, itemId){
       :'<div style="font-size:calc(12px*var(--tscale));color:var(--muted)">Not enchanted</div>')
     +'</div>';
   card.appendChild(header);
+
+  /* Spare copies (0.9.122). Enchants bind to the ITEM ID, and equipBodyItem removes an
+     id from any other slot in the same loadout — so a second Sapphire Ring cannot be
+     worn beside the first, cannot hold its own enchant, and never shows up in the picker
+     as a separate entry (the list is built from distinct item ids). That is the intended
+     shape — set bonuses pair a ring with an amulet of the SAME gem, so the other ring
+     slot is meant for a DIFFERENT gem — but nothing said so, and players were stockpiling
+     duplicates waiting for a second enchant slot that does not exist. Say it on the piece. */
+  var copies=Math.max(state.items[itemId]||0, equipped?1:0);
+  if(copies>1){
+    var dupe=document.createElement('div');
+    dupe.style.cssText='font-size:calc(11.5px*var(--tscale));color:var(--muted);line-height:1.5;'
+      +'margin-bottom:8px;padding:5px 8px;border-left:2px solid var(--ember);background:var(--raised-s)';
+    dupe.innerHTML='You own <b style="color:var(--text)">'+copies+'</b> of these. Only one can be worn at a time, '
+      +'and the enchant binds to the piece itself — a spare cannot carry a second, different enchant. '
+      +'To run two enchants at once, wear a <b style="color:var(--ember)">different gem</b> in your other ring slot. '
+      +'Spares are safe to sell; the enchant stays on the one you keep.';
+    card.appendChild(dupe);
+  }
 
   // Cost line — each material is a hoverable chip: "Name — you have X, need Y —
   // where to get it". Red where short, green where covered. cursor:var(--cur-help) signals
@@ -32074,6 +32135,20 @@ function renderSail(){
     /* Five slots share this renderer (0.9.72). `stat` is the one line that differs
        per slot, passed in rather than branched on inside — the previous ternary was
        already at its limit with two slots. */
+    /* Cost lines (0.9.122). The yard was the last place in the game that printed a
+       build cost as bare text — "60× Tanned Hide" with no icon, no running count and
+       no tooltip — while every other cost surface (needsHtml, the enchant chips) shows
+       icon + have/need + source. A player looking at an amber name they had never
+       seen could not tell whether they had 0 or 59 of it, or whether the item existed
+       at all. Same chip shape here: icon, name, have/need, item tip on hover. */
+    const slCostHTML=(cost)=>Object.keys(cost).map(id=>{
+      const have=state.items[id]||0, need=cost[id];
+      const it=ITEMS[id];
+      return '<span class="m'+(have>=need?'':' miss')+'"'
+        +_slItemTip(id,'You have '+have.toLocaleString()+' of the '+need.toLocaleString()+' needed.')+'>'
+        +iconHTML(id)+(it?it.name:id)+' <b>'+have.toLocaleString()+'</b>/'+need.toLocaleString()+'</span>';
+    }).join('');
+
     const PART_META={
       cannon:{icon:'sl_cannon', label:'Cannons',    sub:'guns only matter in the maw',      stat:e=>'Guns '+e.arms},
       sails: {icon:'sl_sails',  label:'Sails',      sub:'rigging cuts voyage time',         stat:e=>'−'+Math.round(e.rig*100)+'% voyage time'},
@@ -32096,10 +32171,7 @@ function renderSail(){
           +'<span>'+meta.stat(e)+'</span>'
           +'</div>';
         if(!owned&&e.cost){
-          out+='<span class="cst">'+Object.keys(e.cost).map(id=>{
-            const have=state.items[id]||0;
-            return '<span style="color:'+(have>=e.cost[id]?'#7da33f':'#a08a64')+'">'+e.cost[id]+'× '+(ITEMS[id]?ITEMS[id].name:id)+'</span>';
-          }).join(' · ')+'</span>';
+          out+='<span class="cst">'+slCostHTML(e.cost)+'</span>';
         }
         out+='</div>';
         if(cur) out+='<span class="sl-chip gold">fitted</span>';
@@ -32163,11 +32235,7 @@ function renderSail(){
         +'<div class="st"><span>Sailing '+hh.lv+'</span><span>Hull '+hh.sound+'</span>'
         +'<span>Range '+hh.stores+'</span><span>Cargo '+hh.hold+'</span></div>';
       if(!owned){
-        const parts=Object.keys(hh.cost).map(id=>{
-          const have=state.items[id]||0, need=hh.cost[id];
-          return '<span style="color:'+(have>=need?'#7da33f':'#a08a64')+'">'+need+'× '+(ITEMS[id]?ITEMS[id].name:id)+'</span>';
-        }).join(' · ');
-        html+='<span class="cst">'+parts+'</span>';
+        html+='<span class="cst">'+slCostHTML(hh.cost)+'</span>';
       }
       html+='</div>';
       if(cur) html+='<span class="sl-chip gold">sailing this</span>';
@@ -32177,10 +32245,12 @@ function renderSail(){
     });
     if(s.damaged){
       // Mirrors sailRepair: land materials only, so the bill shown is the bill charged.
-      const rc=Object.keys(h.cost).filter(id=>!(ITEMS[id]&&ITEMS[id].sea))
-        .map(id=>Math.max(1,Math.ceil(h.cost[id]*0.25))+'× '+(ITEMS[id]?ITEMS[id].name:id)).join(' · ');
+      const rcCost={};
+      Object.keys(h.cost).filter(id=>!(ITEMS[id]&&ITEMS[id].sea))
+        .forEach(id=>{ rcCost[id]=Math.max(1,Math.ceil(h.cost[id]*0.25)); });
       html+='<div class="sl-lab">Repairs</div>'
-        +'<p class="sl-note" style="margin:0 0 8px">You cannot sail until this is paid. It costs a quarter of the hull\'s build cost, in land materials only — never salvage, since you would have to sail to get more: '+rc+'</p>'
+        +'<p class="sl-note" style="margin:0 0 6px">You cannot sail until this is paid. It costs a quarter of the hull\'s build cost, in land materials only — never salvage, since you would have to sail to get more.</p>'
+        +'<div class="sl-hull"><div class="i"><span class="cst">'+slCostHTML(rcCost)+'</span></div></div>'
         +'<div class="sl-btnrow"><button class="sl-btn" id="slFix">Repair the ship</button></div>';
     }
     html+='</div>';
