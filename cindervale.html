@@ -5010,6 +5010,7 @@ body:not(.is-demo) .demo-only{display:none !important}
 .ew-empty{font-size:calc(13.5px*var(--tscale));color:var(--muted);font-style:italic;padding:12px 0}
 </style>
 
+
 /* ==FULLSTAGE-CSS-START== */
 <style>
 /* ════════ FULL STAGE COMBAT ARENA ══════════════════════════════════════════
@@ -5164,7 +5165,7 @@ body:not(.is-demo) .demo-only{display:none !important}
 /* MODE-SWITCH JUMP: Dungeons / Hunt / Raids render blocks of different heights,
    so the whole panel shifted under the cursor when you switched. A min-height
    holds the floor steady; the tallest of the three sets it. */
-.cmb-zones-block{min-height:calc(292px*var(--tscale))}
+.cmb-zones-block{min-height:calc(432px*var(--tscale))}
 
 /* ── health bars: smaller, and pushed left so Engage sits further right ──── */
 .cvstage-bottom{width:min(calc(890px*var(--tscale)),74%);bottom:calc(12px*var(--tscale));
@@ -10461,6 +10462,7 @@ function iconHTML(id){
   for(var k in ART_MON){ if(typeof ICONS!=='undefined') ICONS[k]=ART_MON[k]; }
 })();
 /* ==ART-PACK-END== */
+
 
 /* ==ZONE-BG-START== */
 /* Painted zone backdrops for the combat stage. Keyed by zone id; a zone with
@@ -27330,6 +27332,8 @@ function startCombatTimer(){
 function stopCombatTimer(){
   if(_combatTimer){ clearInterval(_combatTimer); _combatTimer=null; }
 }
+
+
 
 
 
