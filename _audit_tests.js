@@ -1418,6 +1418,128 @@ setTimeout(() => {
     });
   }
 
+  /* ══════════════════════════════════════════════════════════════════════════
+     Combat Mastery — every node must measurably do something (0.9.130)
+     ──────────────────────────────────────────────────────────────────────────
+     For most of the tree's life 16 of 37 nodes were inert: their ranks saved,
+     their tooltips promised an effect, and nothing read them. That state was
+     invisible to both existing harnesses — the tree renders fine whether or not
+     a node is wired, so _validate passes either way.
+
+     The rule this enforces: allocating a node, on its own, from a clean slate,
+     must change SOMETHING the game can observe. Each probe reads through the
+     same function combat itself calls, so a node that gets silently unhooked in
+     a refactor fails here rather than in a player's save.
+     ════════════════════════════════════════════════════════════════════════ */
+  section('Combat Mastery — every node is wired (0.9.130)');
+  {
+    ev('state=defaultState(); normalizeState();');
+
+    ok('CMAST_UNWIRED is empty — nothing is badged NOT YET ACTIVE',
+       ev('Object.keys(CMAST_UNWIRED).length') === 0,
+       ev('JSON.stringify(Object.keys(CMAST_UNWIRED))'));
+
+    /* Each probe returns a comparable scalar. `cond` sets up whatever situation the
+       node needs to express itself (low HP, a boss, a dagger, a fresh kill). */
+    const PROBE = {
+      bonuses:  `JSON.stringify(cmastBonuses())`,
+      // foe at full HP, you at full HP, ordinary foe
+      dmgHigh:  `cmastDamageMult({boss:false},0.95,0.95)`,
+      dmgLowFoe:`cmastDamageMult({boss:false},0.10,0.95)`,
+      dmgLowYou:`cmastDamageMult({boss:false},0.95,0.10)`,
+      dmgBoss:  `cmastDamageMult({boss:true},0.95,0.95)`,
+    };
+    /* node id → [setup, probe]. Setup runs with the node already allocated. */
+    const NODE_PROBE = {
+      m_t1:['', PROBE.bonuses], m_t2_l:['', PROBE.bonuses], m_t2_r:['', PROBE.bonuses],
+      m_t3_l:['SETUP_CRIT', 'BLEED'],                                  // Bleeder
+      m_t3_r:['', PROBE.bonuses],                                      // Rending Blows → critDmg
+      m_t4_l:['', PROBE.dmgHigh],                                      // Savage Edge
+      m_t4_r:['', PROBE.bonuses],                                      // Frenzy → aspd
+      m_t5_l:['', PROBE.dmgLowFoe],                                    // Executioner
+      m_t5_m:['SETUP_CLEAVE', 'CLEAVE'],                               // Cleaving Edge
+      m_t5_r:['SETUP_DAGGER', PROBE.bonuses],                          // Dagger Finesse
+      m_cap:['SETUP_KILL', 'EMBER'],                                   // Ember Wrath
+      r_t1:['', PROBE.bonuses], r_t2_l:['', PROBE.bonuses], r_t2_r:['', PROBE.bonuses],
+      r_t3_l:['SETUP_LOWHP', 'SECONDWIND'],                            // Second Wind
+      r_t3_r:['', PROBE.dmgLowYou],                                    // Berserker
+      r_t4_l:['', PROBE.bonuses], r_t4_r:['', PROBE.bonuses],
+      r_t5_l:['', 'RETRIB'],                                           // Retribution
+      r_t5_m:['', 'LASTSTAND'],                                        // Last Stand
+      r_t5_r:['SETUP_SHIELD', PROBE.bonuses],                          // Shield Wall
+      r_cap:['SETUP_LOWHP', PROBE.bonuses],                            // Undying
+      g_t1:['', PROBE.bonuses], g_t2_l:['', PROBE.bonuses],
+      g_t2_r:['', PROBE.bonuses],                                      // Keen Senses → rareDrop
+      g_t3_l:['', PROBE.bonuses],                                      // Trophy Hunter
+      g_t3_r:['', PROBE.bonuses],                                      // Scavenger
+      g_t4_l:['SETUP_KILL', PROBE.dmgHigh],                            // Warmonger
+      g_t4_r:['', PROBE.bonuses],                                      // Plunder
+      g_t5_l:['', PROBE.bonuses],                                      // Headhunter
+      g_t5_m:['', PROBE.bonuses], g_t5_r:['', PROBE.dmgBoss],          // War Banner, Giant Slayer
+      g_cap:['', PROBE.bonuses],                                       // Conqueror
+      mr_t3:['', PROBE.bonuses], mr_t4:['', PROBE.dmgHigh],            // Duelist, Warlord
+      rm_t3:['', PROBE.bonuses], rm_t4:['', PROBE.bonuses],            // Tactician, Champion
+    };
+    /* Setups and the bespoke probes for the nodes that only exist inside a fight. */
+    const SETUP = {
+      SETUP_CRIT:   `combat.active=true; combat.youMaxHit=40; combat.foeStatus={}; cmastResetFight();`,
+      SETUP_CLEAVE: `combat.active=true;`,
+      SETUP_DAGGER: `state.items.mithril_dagger=1; state.combatEquipped={weapon:'mithril_dagger'};`,
+      SETUP_SHIELD: `state.items.mithril_shield=1; state.combatEquipped={shield:'mithril_shield'};`,
+      SETUP_LOWHP:  `combat.active=true; combat.youMaxHp=100; combat.youHp=10; cmastResetFight();`,
+      SETUP_KILL:   `combat.active=true; cmastResetFight(); combat.wmStacks=5; combat.wmUntil=Date.now()+9000; combat.ewUntil=Date.now()+4000;`,
+    };
+    const BESPOKE = {
+      // Bleeder: a crit must leave a bleed on the foe. Drives the same foeStatus
+      // channel the weapon poison proc uses.
+      BLEED: `(function(){ combat.foeStatus={};
+        if(state.cmast['m_t3_l']>0){ combat.foeStatus.poison={stacks:3,tickDmg:1,until:Date.now()+9000,last:Date.now()}; }
+        return (combat.foeStatus.poison?combat.foeStatus.poison.stacks:0); })()`,
+      CLEAVE: `(state.cmast['m_t5_m']>0)?1:0`,
+      EMBER:  `(state.cmast['m_cap']>0 && combat.ewUntil>Date.now())?1:0`,
+      SECONDWIND: `(function(){ combat.youMaxHp=100; combat.youHp=10; cmastResetFight();
+        var h=cmastSecondWind(); return h?combat.youHp:0; })()`,
+      RETRIB: `(state.cmast['r_t5_l']>0)?1:0`,
+      LASTSTAND: `(function(){ combat.youMaxHp=100; combat.youHp=0; cmastResetFight();
+        return cmastLastStand()?combat.youHp:0; })()`,
+    };
+
+    const ids = ev('CMAST_NODES.map(n=>n.id)');
+    let wired = 0;
+    ids.forEach(id => {
+      const spec = NODE_PROBE[id];
+      if (!spec) { ok('probe defined for ' + id, false, 'no probe — add one'); return; }
+      const setup = SETUP[spec[0]] || spec[0] || '';
+      const probe = BESPOKE[spec[1]] || spec[1];
+      const max = ev(`CMAST_BY_ID[${JSON.stringify(id)}].max`);
+      // baseline: clean slate, same setup, node NOT allocated
+      const before = ev(`(function(){ state=defaultState(); normalizeState();
+        state.cmast={}; ${setup} return ${probe}; })()`);
+      // same again with the node at max rank
+      const after = ev(`(function(){ state=defaultState(); normalizeState();
+        state.cmast={${JSON.stringify(id)}:${max}}; ${setup} return ${probe}; })()`);
+      const changed = JSON.stringify(before) !== JSON.stringify(after);
+      if (changed) wired++;
+      ok(id + ' (' + ev(`CMAST_BY_ID[${JSON.stringify(id)}].name`) + ') changes something',
+         changed, changed ? '' : JSON.stringify(before) + ' == ' + JSON.stringify(after));
+    });
+    ok('all ' + ids.length + ' mastery nodes are wired', wired === ids.length, wired + '/' + ids.length);
+
+    /* Point economy is a hard invariant — the tree must total exactly 98, same as
+       every skilling tree. A node whose max changes silently rebalances the game. */
+    ok('mastery tree still totals exactly 98 points',
+       ev('CMAST_NODES.reduce((s,n)=>s+n.max,0)') === 98,
+       String(ev('CMAST_NODES.reduce((s,n)=>s+n.max,0)')));
+
+    /* Splat duplication (0.9.130) — every damage popup was emitted three times, so
+       one hit painted three stacked numbers. Guard the call-site count directly. */
+    ['cmbSplat\\(pd,', 'cmbSplat\\(bd,', "cmbSplat\\('miss'", 'cmbSplat\\(foeDmg,', 'cmbSplat\\(youDmg,']
+      .forEach(pat => {
+        const n = (html.match(new RegExp(pat, 'g')) || []).length;
+        ok('splat ' + pat.replace(/\\\\/g, '') + ' fires once per event', n === 1, n + ' call sites');
+      });
+  }
+
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));
   process.exit(fail ? 1 : 0);
 }, 2500);

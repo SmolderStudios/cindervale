@@ -2860,12 +2860,148 @@ body:not(.is-demo) .demo-only{display:none !important}
 .cmast-tree-h.ranged{color:#7e94a8}
 .cmast-tree-h.magic{color:#d4a04a}
 
-/* SVG canvas */
-.cmast-canvas{background:#0e0a08;border:1px solid var(--trim-d);border-radius:6px;padding:6px 4px 4px;margin:0 auto 12px;max-width:760px}
-.cmast-canvas svg{width:100%;height:auto;display:block}
-.cmast-canvas svg .node{cursor:var(--cur-pointer);transition:opacity 0.15s}
-.cmast-canvas svg .node:hover{opacity:0.85}
-.cmast-canvas svg .node.locked{cursor:var(--cur-na)}
+/* ════════ CONSTELLATION BOARD (0.9.130) ══════════════════════════════════════
+   Nodes are HTML pucks over an SVG rail layer, NOT filled SVG circles. That is
+   the whole point of the rebuild: this game's node material is a recessed dark
+   well — a radial gradient under an inset shadow — with the discipline colour
+   carried in the RING and the GLOW and never in the fill. A flat coloured disc
+   reads as cheap vector art beside everything else here. The skilling tree's
+   .tnode puck is the reference; these two are now visibly the same object.
+   HTML is what makes that possible — layered box-shadows, gradients, hover and
+   the pulse animation are all things a plain SVG fill cannot do. */
+.cmast-canvas{overflow-x:auto;overflow-y:hidden;margin:0 auto 12px;border-radius:11px;
+  scrollbar-width:thin;scrollbar-color:#4a3a20 transparent}
+.cmast-canvas::-webkit-scrollbar{height:8px}
+.cmast-canvas::-webkit-scrollbar-thumb{background:#4a3a20;border-radius:4px}
+.cmast-stage{position:relative;width:980px;height:722px;border-radius:11px;margin:0 auto;
+  background:
+    radial-gradient(58% 40% at 50% -4%, rgba(224,118,47,.06), transparent 70%),
+    radial-gradient(120% 90% at 50% 106%, #1a1209, #0f0a05 74%);
+  box-shadow:inset 0 2px 8px rgba(0,0,0,.75), inset 0 0 0 1px rgba(214,170,96,.07)}
+/* a faint vertical wash per discipline, so the three read as territories */
+.cmast-terr{position:absolute;top:0;bottom:0;pointer-events:none;
+  background:linear-gradient(180deg, var(--tw) 0%, transparent 76%);
+  -webkit-mask:linear-gradient(90deg,transparent,#000 18%,#000 82%,transparent);
+  mask:linear-gradient(90deg,transparent,#000 18%,#000 82%,transparent)}
+.cmast-rails{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.cmast-tname{position:absolute;left:14px;font-family:var(--num);font-size:calc(9.5px*var(--tscale));
+  letter-spacing:2.2px;text-transform:uppercase;color:#5e5136;transform:translateY(-50%);pointer-events:none}
+.cmast-rule{position:absolute;left:0;right:0;height:1px;background:rgba(214,170,96,.045);pointer-events:none}
+/* light travelling down a rail you have paid for */
+.cmast-flow{stroke-dasharray:5 26;animation:cmast-flow 1.9s linear infinite}
+@keyframes cmast-flow{ from{stroke-dashoffset:31} to{stroke-dashoffset:0} }
+@media(prefers-reduced-motion:reduce){ .cmast-flow{animation:none;opacity:0} }
+
+.cmast-stage .node{position:absolute;transform:translate(-50%,-50%);display:flex;
+  flex-direction:column;align-items:center;border:0;background:none;padding:0;
+  font-family:inherit;cursor:var(--cur-pointer);width:120px}
+.cmast-stage .node .rim{display:flex;align-items:center;justify-content:center;flex:none;position:relative}
+.cmast-stage .node .puck{width:var(--d);height:var(--d);border-radius:50%;position:relative;flex:none;
+  display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(120% 120% at 50% 14%, #2b1d0c, #0d0704 76%);
+  box-shadow:inset 0 2px 5px rgba(0,0,0,.85), 0 0 0 2px #3a2c18, 0 3px 7px rgba(0,0,0,.6);
+  transition:box-shadow .16s, transform .12s}
+.cmast-stage .node .puck svg{width:calc(var(--d) * .46);height:calc(var(--d) * .46);
+  opacity:.34;filter:grayscale(.8);transition:opacity .16s, filter .16s}
+.cmast-stage .node:hover .puck{transform:translateY(-2px)}
+
+.cmast-stage .node.ready .puck{box-shadow:inset 0 2px 5px rgba(0,0,0,.8), 0 0 0 2px var(--trim),
+  0 0 12px rgba(199,155,78,.45), 0 3px 7px rgba(0,0,0,.6);animation:cmast-avail 2.2s ease-in-out infinite}
+.cmast-stage .node.ready .puck svg{opacity:.92;filter:none}
+@keyframes cmast-avail{
+  0%,100%{box-shadow:inset 0 2px 5px rgba(0,0,0,.8),0 0 0 2px var(--trim),0 0 8px rgba(199,155,78,.3),0 3px 7px rgba(0,0,0,.6)}
+  50%{box-shadow:inset 0 2px 5px rgba(0,0,0,.8),0 0 0 2px var(--gold-hi),0 0 20px rgba(240,199,114,.6),0 3px 7px rgba(0,0,0,.6)}
+}
+@media(prefers-reduced-motion:reduce){ .cmast-stage .node.ready .puck{animation:none} }
+.cmast-stage .node.on .puck{background:radial-gradient(120% 120% at 50% 16%, var(--pcwarm), #0d0704 78%);
+  box-shadow:inset 0 2px 5px rgba(0,0,0,.8), 0 0 0 2px var(--pc),
+  0 0 22px var(--pcglow), 0 0 44px var(--pcfar), 0 3px 7px rgba(0,0,0,.6)}
+.cmast-stage .node.on .puck svg{opacity:1;filter:drop-shadow(0 0 6px var(--pcglow))}
+/* maxed lights a hot core, so a finished node reads without counting pips */
+.cmast-stage .node.max .puck{background:radial-gradient(120% 120% at 50% 16%, var(--pchot), #120b05 74%);
+  box-shadow:inset 0 2px 6px rgba(0,0,0,.6), 0 0 0 2.5px var(--pc),
+  0 0 30px var(--pcglow), 0 0 60px var(--pcfar), 0 3px 8px rgba(0,0,0,.65)}
+.cmast-stage .node.max .puck svg{filter:drop-shadow(0 0 9px var(--pcglow))}
+.cmast-stage .node.max .rim::before{content:'';position:absolute;inset:-9px;border-radius:50%;
+  border:1px solid var(--pcdim);pointer-events:none}
+.cmast-stage .node.locked{cursor:var(--cur-na)}
+.cmast-stage .node.locked .puck{opacity:.55}
+.cmast-stage .node.locked .nm{color:#584c34}
+.cmast-stage .node.wlock .puck{opacity:.4}
+
+/* Uniques get a forged bezel, keystones a heavier one — a conic gradient so the
+   light rakes across real metal, not a flat outline. */
+.cmast-stage .node.uniq .rim::after,.cmast-stage .node.key .rim::after{content:'';position:absolute;
+  inset:calc(var(--d) / -2 * 0.13);border-radius:50%;pointer-events:none;padding:1.5px;
+  background:conic-gradient(from 210deg, #6b5430, #cdaa6a 22%, #4a3a20 48%, #a98a52 74%, #6b5430);
+  -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude;opacity:.5}
+.cmast-stage .node.key .rim::after{inset:calc(var(--d) / -2 * 0.2);padding:2.5px;opacity:.62}
+.cmast-stage .node.on.uniq .rim::after,.cmast-stage .node.on.key .rim::after{opacity:.92;
+  background:conic-gradient(from 210deg, var(--pcdim), var(--pc) 22%, #3a2c18 48%, var(--pc) 74%, var(--pcdim))}
+/* Capstone = two nested hexes, coloured rim outside and the well inside. The
+   obvious build — one hex puck with an absolutely-positioned frame behind it —
+   renders as a SOLID colour block, because clip-path creates a stacking context
+   and the frame can never get behind its own parent's background. */
+.cmast-hex{clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%)}
+.cmast-stage .node.cap .rim{width:calc(var(--d) + 9px);height:calc(var(--d) + 9px);background:#3a2c18}
+.cmast-stage .node.cap.on .rim{background:var(--pc);filter:drop-shadow(0 0 13px var(--pcglow))}
+.cmast-stage .node.cap .puck{border-radius:0;box-shadow:none;
+  background:radial-gradient(120% 120% at 50% 16%, #33210f, #0b0603 78%)}
+.cmast-stage .node.cap.on .puck{background:radial-gradient(120% 120% at 50% 16%, var(--pchot), #100a04 76%)}
+.cmast-stage .node.cap .puck svg{width:calc(var(--d) * .40);height:calc(var(--d) * .40)}
+
+/* The rank pill hangs off the puck's bottom edge, so it CANNOT live inside a puck
+   that is clipped to a hex — the clip eats it. Sibling positioned against the node
+   instead, so one rule serves round and hex nodes alike. */
+.cmast-stage .node .pill{position:absolute;top:calc(var(--d) - 11px);left:50%;transform:translateX(-50%);
+  z-index:3;font-family:var(--num);font-size:calc(10px*var(--tscale));font-weight:700;line-height:1.6;
+  color:#8a7657;background:linear-gradient(180deg,#2f2110,#160d05);padding:0 7px;border-radius:9px;
+  box-shadow:0 0 0 1.5px #3a2c18, 0 2px 4px rgba(0,0,0,.7);white-space:nowrap}
+.cmast-stage .node.on .pill{color:var(--gold-hi);box-shadow:0 0 0 1.5px var(--pc), 0 2px 4px rgba(0,0,0,.7)}
+.cmast-stage .node.max .pill{color:#c8e878;box-shadow:0 0 0 1.5px var(--green), 0 2px 4px rgba(0,0,0,.7)}
+.cmast-stage .node .pill s{text-decoration:none;color:#6e6046;font-weight:400;font-size:.86em}
+.cmast-stage .node .nm{font-family:'Cinzel',serif;font-size:calc(11.5px*var(--tscale));color:#9a8663;
+  line-height:1.18;margin-top:15px;text-align:center;max-width:108px;overflow-wrap:break-word}
+.cmast-stage .node.t5 .nm{max-width:74px;font-size:calc(10.5px*var(--tscale))}
+.cmast-stage .node.on .nm,.cmast-stage .node.ready .nm{color:#e8d9b8}
+.cmast-stage .node.sel .nm{color:var(--gold-hi)}
+.cmast-stage .node.sel .puck{box-shadow:inset 0 2px 5px rgba(0,0,0,.8), 0 0 0 2px var(--gold-hi),
+  0 0 18px rgba(240,199,114,.55), 0 3px 7px rgba(0,0,0,.6)}
+
+/* crests — what each discipline is FOR, and how deep you are into it */
+.cmast-crests{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;margin-bottom:12px}
+@media (max-width:760px){ .cmast-crests{grid-template-columns:1fr} }
+.cmast-crest{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:9px;
+  background:linear-gradient(178deg,var(--lit-top),var(--lit-bot) 78%);
+  box-shadow:inset 0 1px 0 var(--rim), inset 0 -1px 0 var(--under), 0 3px 8px rgba(0,0,0,.45);
+  position:relative;overflow:hidden}
+.cmast-crest::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--pc)}
+.cmast-crest::after{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(80% 130% at 0% 0%, var(--pcglow), transparent 62%)}
+.cmast-crest .sig{width:38px;height:38px;flex:none;border-radius:50%;position:relative;z-index:1;
+  display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(120% 120% at 50% 14%, #2b1d0c, #0d0704 76%);
+  box-shadow:inset 0 2px 5px rgba(0,0,0,.85), 0 0 0 2px var(--pc), 0 0 12px var(--pcglow)}
+.cmast-crest .sig svg{width:20px;height:20px;color:var(--pc)}
+.cmast-crest .tx{flex:1;min-width:0;position:relative;z-index:1}
+.cmast-crest h4{font-family:'Cinzel',serif;font-size:calc(15px*var(--tscale));color:var(--pc);margin:0;line-height:1.1}
+.cmast-crest .role{font-size:calc(11px*var(--tscale));color:#8a7657;margin-top:3px;line-height:1.35}
+.cmast-crest .n{font-family:var(--num);font-size:calc(14px*var(--tscale));color:var(--pc);flex:none;position:relative;z-index:1}
+.cmast-crest .n small{color:#6e6046;font-size:calc(10px*var(--tscale))}
+
+/* running totals — the number the tree never showed */
+.cmast-lab{font-size:calc(10.5px*var(--tscale));color:#8a7657;text-transform:uppercase;
+  letter-spacing:2.2px;margin:0 0 8px;display:flex;align-items:center;gap:8px}
+.cmast-lab::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(214,170,96,.14),transparent)}
+.cmast-tot{display:grid;grid-template-columns:repeat(auto-fit,minmax(86px,1fr));gap:7px;margin-bottom:12px}
+.cmast-tot .tt{padding:8px 6px;border-radius:7px;background:#100b06;text-align:center;
+  box-shadow:inset 0 2px 4px rgba(0,0,0,.9), inset 0 -1px 0 rgba(214,170,96,.08)}
+.cmast-tot .tt b{display:block;font-family:var(--num);font-size:calc(15px*var(--tscale));color:var(--green);line-height:1}
+.cmast-tot .tt.nil b{color:#4e4636}
+.cmast-tot .tt span{display:block;font-size:calc(9px*var(--tscale));letter-spacing:1.1px;
+  text-transform:uppercase;color:#7a6a4a;margin-top:4px}
+.cmast-tot .tt i{display:block;width:15px;height:2px;border-radius:1px;margin:6px auto 0;background:var(--pc,#4e4636)}
 
 /* Hover tooltip — appears beside the cursor when hovering any tree node.
    Position:fixed + viewport coords so it follows the mouse regardless of
@@ -2932,15 +3068,15 @@ body:not(.is-demo) .demo-only{display:none !important}
 /* Legend */
 .cmast-legend{display:flex;flex-wrap:wrap;gap:10px;padding:8px 4px 0;font-size:calc(11px*var(--tscale));color:var(--muted)}
 .cmast-legend .li{display:inline-flex;align-items:center;gap:5px}
-.cmast-legend .sw{display:inline-block;width:10px;height:10px;border-radius:50%}
-.cmast-legend .sw.alloc{background:#c44a25}
-.cmast-legend .sw.avail{background:transparent;border:1px solid #c44a25}
-.cmast-legend .sw.locked{background:#0e0a08;border:1px solid #c44a25;position:relative}
-.cmast-legend .sw.locked::after{content:'🔒';position:absolute;top:-2px;right:-3px;font-size:calc(10px*var(--tscale));color:#c44a25}
-.cmast-legend .sw.wlock{background:#0e0a08;border:1px solid #c89c3e;position:relative}
-.cmast-legend .sw.wlock::after{content:'🔒';position:absolute;top:-2px;right:-3px;font-size:calc(10px*var(--tscale));color:#c89c3e}
-.cmast-legend .sw.hyb{transform:rotate(45deg);border:1px solid #a87a3a;border-radius:1px}
-.cmast-legend .sw.cap{border:1px solid #c89c3e;border-radius:1px}
+/* The legend swatches are the real puck material at 11px, not abstract squares —
+   whatever a state looks like on the board is exactly what it looks like here. */
+.cmast-legend .sw{display:inline-block;width:11px;height:11px;border-radius:50%;
+  background:radial-gradient(120% 120% at 50% 14%,#2b1d0c,#0d0704 76%)}
+.cmast-legend .sw.ready{box-shadow:inset 0 1px 3px rgba(0,0,0,.9),0 0 0 1.5px var(--trim),0 0 7px rgba(199,155,78,.5)}
+.cmast-legend .sw.alloc{box-shadow:inset 0 1px 3px rgba(0,0,0,.9),0 0 0 1.5px #e0762f,0 0 7px rgba(224,118,47,.5)}
+.cmast-legend .sw.maxed{background:radial-gradient(120% 120% at 50% 16%,#7a3a10,#120b05 74%);
+  box-shadow:0 0 0 1.5px #e0762f,0 0 8px rgba(224,118,47,.55)}
+.cmast-legend .sw.locked{box-shadow:inset 0 1px 3px rgba(0,0,0,.9),0 0 0 1.5px #3a2c18;opacity:.55}
 
 /* ════════ [CSS-29 END] COMBAT MASTERY ═══════════════════════════════════════════ */
 
@@ -5594,7 +5730,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.129</div>
+  <div class="mm-ver">v0.9.130</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -16484,7 +16620,9 @@ function combatUniqueBonuses(){
    and Warlord, which were wired in 1.0.104 — keep it in step with CMAST_UNWIRED. */
 function cmastBonuses(){
   const b={atkBoost:0,hpBoost:0,defBoost:0,critChance:0,lifesteal:0,aspd:0,
-           maxHpFlat:0,dmgReduce:0,combatXpMult:0,gpMult:0};
+           maxHpFlat:0,dmgReduce:0,combatXpMult:0,gpMult:0,
+           /* (0.9.130) channels added when the last unwired nodes landed */
+           rareDrop:0,doubleDrop:0,critDmg:0,consolation:0,trophyGuarantee:0};
   if(!state||!state.cmast) return b;
   // effect-key → channel (only always-on scalars; conditional/proc keys ignored here)
   for(const id in state.cmast){
@@ -16500,19 +16638,37 @@ function cmastBonuses(){
       if(ef.atkSpeed)   b.aspd          += ef.atkSpeed*rank;
       if(ef.combatXp)   b.combatXpMult  += ef.combatXp*rank;
       if(ef.gp)         b.gpMult        += ef.gp*rank;
+      if(ef.rareDrop)   b.rareDrop      += ef.rareDrop*rank;    // Keen Senses
+      if(ef.doubleDrop) b.doubleDrop    += ef.doubleDrop*rank;  // Plunder
     }
     // Flat always-on unique/capstone effects (by id)
     if(id==='g_cap'){ b.atkBoost+=0.05; b.defBoost+=0.05; b.hpBoost+=0.05; }        // Conqueror
     if(id==='g_t5_m'){ b.combatXpMult+=0.10; b.gpMult+=0.10; }                       // War Banner
     if(id==='r_t5_r' && typeof eqCombatShield==='function' && eqCombatShield()){ b.dmgReduce+=0.10; } // Shield Wall
+    if(id==='m_t3_r'){ b.critDmg+=0.20; }                                            // Rending Blows
+    /* Dagger Finesse — conditional on the wielded weapon, exactly like Shield Wall
+       above. It started life inline in the combat tick, which meant nothing outside
+       a swing could see it: not the tree's totals strip, not a tooltip, not the
+       coverage test. Conditional-but-always-on effects belong here. */
+    if(id==='m_t5_r'){
+      const _dg=(typeof eqCombatWeapon==='function')?eqCombatWeapon():((state.combatEquipped&&state.combatEquipped.weapon)||'');
+      if(_dg&&/dagger/.test(_dg)) b.critDmg+=0.15;
+    }
+    if(id==='g_t5_l'){ b.rareDrop+=0.03; }                                           // Headhunter
+    if(id==='g_t3_r'){ b.consolation+=0.25; }                                        // Scavenger
+    if(id==='g_t3_l'){ b.trophyGuarantee=1; }                                        // Trophy Hunter
+    if(id==='rm_t4'){ b.atkBoost+=0.05; b.dmgReduce+=0.05; }                          // Champion
+    /* Undying — a conditional that belongs in the always-on DR channel because that
+       is the only place the combat tick reads damage reduction from. `combat` is a
+       module-level object that exists outside a fight too, hence the guard. */
+    if(id==='r_cap' && typeof combat!=='undefined' && combat && combat.active &&
+       combat.youMaxHp>0 && (combat.youHp/combat.youMaxHp)<0.20){ b.dmgReduce+=0.30; }
   }
   return b;
 }
-/* (1.0.104) Conditional damage procs from the Combat Mastery tree — evaluated per hit with
-   the current foe HP-fraction, player HP-fraction and boss flag. Returns a damage multiplier
-   applied to the player's landed blow. Covers Executioner, Giant Slayer, Berserker, Warlord,
-   Savage Edge. (Warmonger's kill-timed stacks + the bespoke bleed/second-wind procs remain
-   deferred.) */
+/* (1.0.104, completed 0.9.130) Conditional damage procs from the Combat Mastery tree —
+   evaluated per hit with the current foe HP-fraction, player HP-fraction and boss flag.
+   Returns a damage multiplier applied to the player's landed blow. */
 function cmastDamageMult(mon, foeFrac, youFrac){
   if(!state||!state.cmast) return 1;
   const R=id=>state.cmast[id]||0;
@@ -16522,7 +16678,56 @@ function cmastDamageMult(mon, foeFrac, youFrac){
   if(R('r_t3_r')>0 && youFrac<0.30)           m+=0.15;              // Berserker — you under 30% HP
   if(R('mr_t4')>0 && youFrac>0.80)            m+=0.08;              // Warlord — you above 80% HP
   if(R('m_t4_l')>0 && foeFrac>0.80)           m+=0.02*R('m_t4_l');  // Savage Edge — foe above 80% HP (opener)
+  /* Warmonger — kill-timed stacks. combat.wmStacks/wmUntil are set in the kill block
+     and live on the runtime object, so they reset with the fight and never touch the
+     save. Stacks cap at the node's rank so five ranks is +10%, not unbounded. */
+  if(R('g_t4_l')>0 && typeof combat!=='undefined' && combat && combat.wmUntil>Date.now()){
+    m+=0.02*Math.min(combat.wmStacks||0, R('g_t4_l'));
+  }
   return m;
+}
+/* ── Combat Mastery per-fight procs (0.9.130) ─────────────────────────────────────
+   Everything here reads and writes the runtime `combat` object, never `state`, so a
+   fight's proc state cannot leak into a save and needs no normalizeState guard. The
+   once-per-fight flags live in combat.cmOnce, which cmastResetFight() clears at every
+   point the engine already resets combat.foeStatus. */
+/* `full` distinguishes the two kinds of boundary, and the distinction is the whole
+   design of these nodes:
+     · a RESPAWN inside a farming loop is a new foe, so the once-per-fight saves
+       (Second Wind, Last Stand) must re-arm — otherwise idling gives you one of
+       each, ever — but Warmonger's stacks have to survive it, because "stacks as
+       you chain kills" is exactly a thing that spans respawns.
+     · engaging, disengaging, retreating or dying ends the whole engagement, so
+       everything resets. */
+function cmastResetFight(full){
+  if(typeof combat==='undefined'||!combat) return;
+  combat.cmOnce={};
+  if(full!==false){ combat.wmStacks=0; combat.wmUntil=0; combat.ewUntil=0; }
+}
+/* Second Wind — once per fight, dropping below 25% HP heals 15% of max HP. Called
+   from the damage-taken path AFTER hp is applied and BEFORE the death check, so a
+   blow that would drop you low heals you rather than being wasted post-mortem. */
+function cmastSecondWind(){
+  if(!state||!state.cmast||!(state.cmast['r_t3_l']>0)) return false;
+  if(typeof combat==='undefined'||!combat||!combat.cmOnce) return false;
+  if(combat.cmOnce.secondWind) return false;
+  if(combat.youHp<=0 || combat.youMaxHp<=0) return false;
+  if(combat.youHp/combat.youMaxHp >= 0.25) return false;
+  combat.cmOnce.secondWind=1;
+  const heal=Math.max(1, Math.round(combat.youMaxHp*0.15));
+  combat.youHp=Math.min(combat.youMaxHp, combat.youHp+heal);
+  return heal;
+}
+/* Last Stand — once per fight, a blow that would kill you leaves you at 1 HP.
+   Deliberately mirrors _tryCheatDeath's contract and is checked after it, so a
+   player carrying both gets two saves rather than one silently eating the other. */
+function cmastLastStand(){
+  if(!state||!state.cmast||!(state.cmast['r_t5_m']>0)) return false;
+  if(typeof combat==='undefined'||!combat||!combat.cmOnce) return false;
+  if(combat.cmOnce.lastStand) return false;
+  combat.cmOnce.lastStand=1;
+  combat.youHp=1;
+  return true;
 }
 function combatBonusesAll(){
   const e=(typeof combatEnchantBonuses==='function')?combatEnchantBonuses():{atkBoost:0,hpBoost:0,defBoost:0,critChance:0,lifesteal:0};
@@ -19222,7 +19427,7 @@ function setAction(skillKey,actId){
     if(combat.active){
       stopCombatTimer();
       combat.active=false; combat.rare=false;
-      combat.regens=[]; combat.foeStatus={};
+      combat.regens=[]; combat.foeStatus={}; cmastResetFight();
       refreshCombatTabIndicator();
       toast('🏃 Retreated — you cannot fight while training.');
     }
@@ -22453,14 +22658,29 @@ const CMAST_ICON_SVG={
 const CMAST_CAP=CMAST_NODES.reduce((s,n)=>s+n.max,0);
 /* Nodes whose `effect` keys are not read by cmastBonuses() or the combat tick.
    Their ranks persist and the UI badges them NOT YET ACTIVE, so a player can see
-   what they are buying. Delete an id from here the moment its effect is wired —
-   the badge is the only thing keeping the tooltips honest. */
-const CMAST_UNWIRED={
-  m_t3_l:1, m_t3_r:1, m_t5_m:1, m_t5_r:1, m_cap:1,          // melee: Bleeder, Rending Blows, Cleaving Edge, Dagger Finesse, Ember Wrath
-  r_t3_l:1, r_t5_l:1, r_t5_m:1, r_cap:1,                     // survival: Second Wind, Retribution, Last Stand, Undying
-  g_t2_r:1, g_t3_l:1, g_t3_r:1, g_t4_l:1, g_t4_r:1, g_t5_l:1,// warfare: Keen Senses, Trophy Hunter, Scavenger, Warmonger, Plunder, Headhunter
-  rm_t4:1,                                                    // bridge: Champion (its mirror mr_t4 Warlord IS wired)
-};
+   what they are buying.
+
+   EMPTY as of 0.9.130 — all 37 nodes are wired. It stays as a live mechanism, not
+   a historical note: add an id back the moment a new node ships ahead of its
+   effect, and the tree badges it automatically. _audit_tests asserts both that this
+   map is empty AND that every node measurably changes something, so a node that
+   quietly stops working fails the build rather than the player.
+
+   For reference, the 16 that landed here and where each one now lives:
+     Bleeder / Dagger Finesse   → combat.foeStatus.poison, applied on crit
+     Rending Blows              → cmastBonuses().critDmg, multiplies the crit
+     Cleaving Edge              → the _cleaveDmg double-hit path
+     Ember Wrath                → combat.ewUntil, consumed by the next crit roll
+     Second Wind / Last Stand   → combat.cmOnce, in the damage-taken path
+     Retribution                → the reflect block, stacking with a thorns shield
+     Undying                    → conditional dmgReduce inside cmastBonuses()
+     Champion                   → flat atkBoost + dmgReduce
+     Warmonger                  → combat.wmStacks, read by cmastDamageMult
+     Keen Senses / Headhunter   → rollDrops rare multiplier (proportional, capped)
+     Plunder                    → rollDrops stack doubling
+     Trophy Hunter              → rollDrops `once` guarantee
+     Scavenger                  → the consolation-gold branch of the kill block */
+const CMAST_UNWIRED={};
 
 /* ── Mastery state helpers ─────────────────────────────────────────────────────── */
 
@@ -23413,6 +23633,16 @@ function rollDrops(monId, isRare){
   // Character-type global drop dial (hardcore 1.5× / accelerated 0.6×). Boss
   // trophies (≥99%) are exempt so a build choice never locks anyone out of a key.
   const cMul = charDropMult();
+  /* ── Combat Mastery drop nodes (0.9.130) ──────────────────────────────────────
+     Keen Senses / Headhunter raise the rare-drop chance; Plunder rolls to double a
+     landed drop; Trophy Hunter guarantees a boss's `once` trophy on the first kill.
+     Applied as a PROPORTIONAL multiplier and clamped to RARE_DROP_CAP, matching the
+     rare-monster rule — an additive bonus here would turn a 0.1% voidheart into a
+     near-certainty and wreck the whole tier-gating scheme. */
+  const _cm=(typeof cmastBonuses==='function')?cmastBonuses():null;
+  const _rare = _cm?(_cm.rareDrop||0):0;
+  const _dbl  = _cm?(_cm.doubleDrop||0):0;
+  const _troph= _cm?(_cm.trophyGuarantee||0):0;
   for(const d of tbl){
     /* `once` means first kill only, so it has to latch — gating on a live satchel
        count meant selling the trophy re-armed the 100% roll and turned every boss
@@ -23421,12 +23651,17 @@ function rollDrops(monId, isRare){
     if(d.once && state.trophies && state.trophies[d.id]) continue;
     // "Always" drops (≥99%, mostly boss trophies) stay at their base chance —
     // multiplying them would just hit the cap noisily. Below that, scale + clamp.
-    const c = d.chance>=0.99 ? d.chance : Math.min(RARE_DROP_CAP, d.chance*mul*cMul);
+    let c = d.chance>=0.99 ? d.chance : Math.min(RARE_DROP_CAP, d.chance*mul*cMul*(1+_rare));
+    // Trophy Hunter — a boss's one-time trophy is guaranteed on the first kill.
+    if(_troph && d.once) c=1;
     if(Math.random()<c){
       let qty=1;
       if(Array.isArray(d.qty)){
         const [lo,hi]=d.qty; qty=lo+Math.floor(Math.random()*(hi-lo+1));
       } else if(typeof d.qty==='number'){ qty=d.qty; }
+      /* Plunder doubles the stack, not the roll — a second roll would let it
+         re-trigger `once` trophies and hand out two of a unique. */
+      if(_dbl>0 && !d.once && Math.random()<_dbl) qty*=2;
       if(d.once){ if(!state.trophies) state.trophies={}; state.trophies[d.id]=1; }
       out.push({id:d.id,qty});
     }
@@ -23906,7 +24141,7 @@ function _beginRaidStage(raid, stage, fullHeal){
   combat.active=true;
   combat.foeHp=mon.hp;
   combat.foeMaxHp=mon.hp;   // (1.0.104) cmast HP-conditional procs
-  combat.foeStatus={};
+  combat.foeStatus={}; cmastResetFight();
   combat.foeSwingMs=mon.swingMs||COMBAT_BASE_SWING_MS;
   combat.raidDebuff=mon.raidfx||null;
   if(fullHeal){ combat.youHp=combat.youMaxHp; combat.regens=[]; }
@@ -23948,7 +24183,7 @@ function _tryCheatDeath(){
 function _resolvePlayerDeath(){
   if(combat.raid){ handleRaidFail(); }
   else cmbLog('💀 You were defeated and retreat to safety.','lose');
-  combat.active=false; combat.rare=false; combat.regens=[]; combat.foeStatus={};
+  combat.active=false; combat.rare=false; combat.regens=[]; combat.foeStatus={}; cmastResetFight();
   combat.bossfx=null; combat.cheatDeathReady=false;
   combat.youHp=combat.youMaxHp;
   stopCombatTimer(); renderCombat(); refreshCombatTabIndicator();
@@ -24001,7 +24236,7 @@ function handleRaidKill(baseMon){
     const res=grantRaidRewards(raid, timeMs);
     _raidResult=res;
     combat.active=false; combat.raid=null; combat.raidDebuff=null; combat.bossfx=null;
-    combat.foeStatus={}; combat.regens=[];
+    combat.foeStatus={}; cmastResetFight(); combat.regens=[];
     combat.youHp=combat.youMaxHp;
     _resetCombatTargetAfterRaid();
     stopCombatTimer();
@@ -27897,7 +28132,7 @@ function engageCombat(){
   combat.bossfx=null;             // (1.0.85) normal fights carry no active boss mechanic
   combat.cheatDeathReady=true;    // (1.0.85) one cheat-death per fight (if gear worn)
   combat.regens=[];   // (1.0.21) fresh fight — no carried-over food regen
-  combat.foeStatus={}; // (1.0.60) clean foe — no carried-over poison/stun
+  combat.foeStatus={}; cmastResetFight(); // (1.0.60) clean foe — no carried-over poison/stun
   combat.foeSwingMs=mon.swingMs||COMBAT_BASE_SWING_MS;
   // Both sides start their first swing cycle now — no opener advantage.
   combat.youSwingStart=Date.now();
@@ -27926,7 +28161,7 @@ function fleeCombat(){
   combat.active=false;
   combat.rare=false;  // disengage clears rare — re-engaging rerolls (1.0.70)
   combat.regens=[];   // (1.0.21) drop any active food regen on disengage
-  combat.foeStatus={}; // (1.0.60) clear poison/stun on disengage
+  combat.foeStatus={}; cmastResetFight(); // (1.0.60) clear poison/stun on disengage
   combat.youSwingStart=0;
   combat.foeSwingStart=0;
   cmbLog('🏃 You disengage.','sys');
@@ -28112,8 +28347,6 @@ function combatTick(){
         combat.foeHp-=pd;
         cmbLog(`☠ Poison saps the ${mon.name} for ${pd}.`,'');
         cmbSplat(pd,'poison');
-        cmbSplat(pd,'poison');
-        cmbSplat(pd,'poison');
       }
     }
   }
@@ -28126,8 +28359,6 @@ function combatTick(){
         const bd=Math.min(_brn.tickDmg, combat.foeHp-REFLECT_CLAMP_MIN);
         combat.foeHp-=bd;
         cmbLog(`🔥 Flames scorch the ${mon.name} for ${bd}.`,'');
-        cmbSplat(bd,'burn');
-        cmbSplat(bd,'burn');
         cmbSplat(bd,'burn');
       }
     }
@@ -28152,8 +28383,6 @@ function combatTick(){
       ? Math.max(1, Math.round(combat.youMaxHit*(COMBAT_P.HIT_MIN+(1-COMBAT_P.HIT_MIN)*Math.random())))
       : 0;
     if(youDmg===0) cmbSplat('miss','miss');
-    if(youDmg===0) cmbSplat('miss','miss');
-    if(youDmg===0) cmbSplat('miss','miss');
     let didCrit=false;
     {
       // ── Damage-type matchup (1.0.93) — equipped weapon's dmgType vs foe's
@@ -28169,9 +28398,17 @@ function combatTick(){
       // Crit chance — jewelry (Executioner enchant) + sockets. On crit, double
       // the damage. Falls back to zero if the bonus aggregator isn't present.
       const cb=(typeof combatBonusesAll==='function')?combatBonusesAll():null;
-      if(cb&&cb.critChance>0&&Math.random()<cb.critChance){
-        youDmg*=2;
-        didCrit=true;
+      /* Ember Wrath (0.9.130) — the killing-blow capstone guarantees the NEXT attack
+         inside 5s. Checked before the roll so it can't be double-counted by it. */
+      const _ewOn=(state.cmast&&state.cmast['m_cap']>0&&combat.ewUntil>now);
+      if(_ewOn){ combat.ewUntil=0; didCrit=true; }
+      else if(cb&&cb.critChance>0&&Math.random()<cb.critChance){ didCrit=true; }
+      if(didCrit){
+        /* Base crit is ×2. Rending Blows (+20%) and Dagger Finesse (+15% with a
+           dagger) both arrive through cmastBonuses().critDmg and multiply the crit
+           rather than the raw hit — which is what "+% critical damage" has to mean. */
+        const _cm=(typeof cmastBonuses==='function')?cmastBonuses():null;
+        youDmg=Math.max(1,Math.round(youDmg*(2+(_cm?(_cm.critDmg||0):0))));
       }
       // ── Combat Mastery conditional damage procs (1.0.104) — Executioner/Giant Slayer/
       // Berserker/Warlord/Savage Edge. Applied after crit so multipliers compound.
@@ -28190,14 +28427,16 @@ function combatTick(){
       const _clId=(typeof eqCombatWeapon==='function')?eqCombatWeapon():((state.combatEquipped&&state.combatEquipped.weapon)||'');
       const _clfx=_clId&&ITEMS[_clId]&&ITEMS[_clId].wfx;
       if(_clfx&&_clfx.cleave&&Math.random()<_clfx.cleave.chance){ _cleaveDmg=youDmg; }
+      /* Cleaving Edge (0.9.130) — the Onslaught keystone rolls the SAME double-hit the
+         Grave Cleaver's Reaping Arc uses, from a different source. Rolled only if the
+         weapon proc did not already fire, so carrying both is one extra hit, not two. */
+      if(!_cleaveDmg && state.cmast && state.cmast['m_t5_m']>0 && Math.random()<0.08){ _cleaveDmg=youDmg; }
     }
     combat.foeHp=Math.max(0,combat.foeHp-youDmg-_cleaveDmg);
     // Void-bomb DPS check (1.0.85) — accumulate damage dealt to the boss this window.
     if(combat.bossfx&&combat.bossfx.kind==='voidbomb') combat.bossfx.acc=(combat.bossfx.acc||0)+youDmg+_cleaveDmg;
     if(youDmg>0){
       cmbLog(`You ${didCrit?'<span style="color:#ffd700">crit</span> ':''}hit the ${mon.name} for ${youDmg}.`,'hit');
-      cmbSplat(youDmg,didCrit?'crit':'hit');
-      cmbSplat(youDmg,didCrit?'crit':'hit');
       cmbSplat(youDmg,didCrit?'crit':'hit');
       if(_cleaveDmg>0){ cmbLog(`🪓 Reaping Arc cleaves again for ${_cleaveDmg}!`,'hit'); setTimeout(function(){cmbSplat(_cleaveDmg,'cleave');},150); }
       // Per-damage XP factor ÷10 vs old scale — damage numbers are ~10× bigger now.
@@ -28209,6 +28448,32 @@ function combatTick(){
       if(cb2&&cb2.lifesteal>0&&combat.youHp<combat.youMaxHp){
         const heal=Math.max(1,Math.floor(youDmg*cb2.lifesteal));
         combat.youHp=Math.min(combat.youMaxHp, combat.youHp+heal);
+      }
+      /* ── Combat Mastery bleeds (0.9.130) ────────────────────────────────
+         Bleeder and Dagger Finesse both describe a bleed on crit, so they run
+         through the SAME foeStatus.poison channel the weapon procs use rather
+         than inventing a second damage-over-time system with its own timer and
+         its own tick loop. Bleeder is a flat 3-stack application; Dagger Finesse
+         adds one stack per crit up to 3 while a dagger is wielded. */
+      if(didCrit && state.cmast){
+        let _bleedStacks=0;
+        if(state.cmast['m_t3_l']>0) _bleedStacks=3;                       // Bleeder
+        if(state.cmast['m_t5_r']>0){
+          const _dgId=(typeof eqCombatWeapon==='function')?eqCombatWeapon():((state.combatEquipped&&state.combatEquipped.weapon)||'');
+          if(_dgId&&/dagger/.test(_dgId)) _bleedStacks=Math.max(_bleedStacks,1);
+        }
+        if(_bleedStacks>0){
+          if(!combat.foeStatus) combat.foeStatus={};
+          const _bp=combat.foeStatus.poison;
+          const _bs=Math.min(POISON_MAX_STACKS,(_bp?_bp.stacks:0)+_bleedStacks);
+          combat.foeStatus.poison={
+            stacks:_bs,
+            tickDmg:Math.max(1,Math.round(combat.youMaxHit*POISON_TICK_MULT)),
+            until:now+POISON_DUR_MS,
+            last:_bp?_bp.last:now
+          };
+          if(!_bp) cmbLog(`🩸 Your crit opens a bleeding wound on the ${mon.name}!`,'hit');
+        }
       }
       // ── Weapon on-hit effects (1.0.60) — poison / stun procs ─────────────
       // The equipped weapon may carry a `wfx` proc. Poison stacks a bleed;
@@ -28302,8 +28567,24 @@ function combatTick(){
       // that hold their own `once:true` trophy (always rolls).
       let consolationGold=0;
       if(drops.length===0){
-        consolationGold=Math.max(1, Math.ceil(baseMon.coins*0.6*(1+_cmGp)));   // cmast gold mult (1.0.101)
+        /* Scavenger (0.9.130) adds its +25% on top of the gold multiplier, because
+           the node is specifically about the kills that pay nothing. */
+        const _scav=(typeof cmastBonuses==='function')?(cmastBonuses().consolation||0):0;
+        consolationGold=Math.max(1, Math.ceil(baseMon.coins*0.6*(1+_cmGp)*(1+_scav)));
         state.coins += consolationGold * SILVER_PER_GOLD;
+      }
+      /* ── Combat Mastery on-kill procs (0.9.130) ──────────────────────────────
+         Both live on the runtime `combat` object and are cleared by
+         cmastResetFight(), so nothing here reaches the save. */
+      if(state.cmast){
+        if(state.cmast['g_t4_l']>0){                       // Warmonger — stacking kill buff
+          combat.wmStacks=Math.min((combat.wmStacks||0)+1, state.cmast['g_t4_l']);
+          combat.wmUntil=Date.now()+10000;
+        }
+        if(state.cmast['m_cap']>0){                        // Ember Wrath — next attack crits
+          combat.ewUntil=Date.now()+5000;
+          cmbLog('🔥 Ember Wrath — your next strike will land true.','win');
+        }
       }
       let dropLine='';
       if(drops.length){
@@ -28364,7 +28645,7 @@ function combatTick(){
       const nextEff=rareModify(baseMon,combat.rare);
       combat.foeHp=nextEff.hp;
       combat.foeMaxHp=nextEff.hp;   // (1.0.104) cmast HP-conditional procs
-      combat.foeStatus={};   // (1.0.60) fresh foe — poison/stun don't carry to the respawn
+      combat.foeStatus={}; cmastResetFight(false);   // (1.0.60) fresh foe — poison/stun don't carry to the respawn; (0.9.130) re-arm the once-per-fight saves
       if(combat.rare){
         cmbLog(`⚡ A rare ${baseMon.name} materializes from the shadows!`,'rare-spawn');
         if(!combatMode && typeof toast==='function'){ toast(`⚡ Rare ${baseMon.name} appears!`); }
@@ -28421,8 +28702,12 @@ function combatTick(){
     if(foeDmg>0 && state.cmast && state.cmast['r_t3_r']>0 && combat.youMaxHp>0 && (combat.youHp/combat.youMaxHp)<0.30){ foeDmg=Math.round(foeDmg*1.05); }
     combat.youHp=Math.max(0,combat.youHp-foeDmg);
     if(foeDmg>0) cmbSplat(foeDmg,'take');
-    if(foeDmg>0) cmbSplat(foeDmg,'take');
-    if(foeDmg>0) cmbSplat(foeDmg,'take');
+    /* Second Wind (0.9.130) — checked after HP is applied and BEFORE the death check
+       below, so the blow that drops you low is the one it answers. */
+    if(foeDmg>0 && typeof cmastSecondWind==='function'){
+      const _sw=cmastSecondWind();
+      if(_sw){ cmbLog(`✚ Second Wind — you rally for ${_sw}.`,'win'); cmbSplat('+'+_sw,'heal'); }
+    }
     cmbLog(_dodged?`💨 You dodge the ${mon.name}!`:(foeDmg>0?`${mon.name} hits you for ${foeDmg}.`:`${mon.name} misses.`), foeDmg>0?'hit':(_dodged?'':''));
 
     // ── Reflect (1.0.62) — a thorns shield bounces a share of the blow back.
@@ -28431,8 +28716,15 @@ function combatTick(){
     if(foeDmg>0){
       const _shId=(typeof eqCombatShield==='function')?eqCombatShield():((state.combatEquipped&&state.combatEquipped.shield)||'');
       const _shfx=_shId&&ITEMS[_shId]&&ITEMS[_shId].wfx;
-      if(_shfx&&_shfx.reflect&&Math.random()<_shfx.reflect.chance&&combat.foeHp>REFLECT_CLAMP_MIN){
-        const _rfl=Math.min(Math.max(1,Math.round(foeDmg*_shfx.reflect.pct)), combat.foeHp-REFLECT_CLAMP_MIN);
+      let _rflPct=0;
+      if(_shfx&&_shfx.reflect&&Math.random()<_shfx.reflect.chance) _rflPct=_shfx.reflect.pct;
+      /* Retribution (0.9.130) — the Bulwark doctrine reflects a flat 20% of every
+         landed blow, no roll and no shield needed. It stacks with a thorns shield
+         because they are two different sources, and rides the same clamp so neither
+         can land the killing blow — kills stay in the player-swing path. */
+      if(state.cmast && state.cmast['r_t5_l']>0) _rflPct+=0.20;
+      if(_rflPct>0 && combat.foeHp>REFLECT_CLAMP_MIN){
+        const _rfl=Math.min(Math.max(1,Math.round(foeDmg*_rflPct)), combat.foeHp-REFLECT_CLAMP_MIN);
         combat.foeHp-=_rfl;
         cmbLog(`🛡️ Your bulwark reflects ${_rfl} back at the ${mon.name}!`,'hit');
       }
@@ -28440,9 +28732,17 @@ function combatTick(){
 
     if(combat.youHp<=0){
       // (1.0.85) Cheat-death first — a `cheatDeath` unique averts one lethal blow
-      // per fight/run (15% HP). Otherwise resolve death: a raid death forfeits the
-      // run (handleRaidFail), a normal death retreats. _resolvePlayerDeath cleans up.
-      if(!_tryCheatDeath()){ _resolvePlayerDeath(); return; }
+      // per fight/run (15% HP). Then Last Stand (0.9.130), which is the same
+      // contract from the mastery tree: checked second so carrying both gives two
+      // saves rather than one silently swallowing the other. Otherwise resolve
+      // death: a raid death forfeits the run, a normal death retreats.
+      let _saved=_tryCheatDeath();
+      if(!_saved && typeof cmastLastStand==='function' && cmastLastStand()){
+        _saved=true;
+        cmbLog(`✦ Last Stand — you refuse to fall.`,'win');
+        cmbSplat('1 HP','heal');
+      }
+      if(!_saved){ _resolvePlayerDeath(); return; }
     }
 
     // ── Auto-heal check (1.0.63) ─────────────────────────────────────────
@@ -28852,217 +29152,182 @@ let _cmastSelected=null;
    .cmast-canvas max-width keeping the SVG from over-stretching horizontally,
    the whole tree fits in a viewport-friendly slab. */
 // Layout slots: Onslaught | (bridge) | Bulwark | (bridge) | Warfare — all melee.
-const _CMAST_TREE_X={ melee:110, mr:215, ranged:320, rm:425, magic:530 };
-const _CMAST_TIER_Y={ 1:32, 2:82, 3:132, 4:182, 5:232 };
-const _CMAST_CAP_Y=307;
+/* ── Constellation geometry (0.9.130) ──────────────────────────────────────────
+   The tree used to be a 640×350 SVG of flat filled circles with no names on them:
+   a 16px icon and "0/5" was all you got, so the only way to learn what anything
+   did was to click every node in turn. It also sat as a small island in a ~1030px
+   panel.
 
-/* Per-tree colour ramp — bright = active stroke, dim = inactive prereq line.
-   Mirrors the mockup palette. Hybrids picked as a mid-mix tone. */
-// Discipline palettes: Onslaught=ember red, Bulwark=steel, Warfare=gold.
-// Bridges blend their two neighbours.
-const _CMAST_COLOR={
-  melee:{ alloc:'#c44a25', stroke:'#c44a25', dim:'#5a2812', light:'#e8c87c' },
-  ranged:{ alloc:'#6e8296', stroke:'#6e8296', dim:'#33414d', light:'#cfe0ee' },
-  magic:{ alloc:'#d4a04a', stroke:'#d4a04a', dim:'#7a5a25', light:'#f0d59a' },
-  mr:{ alloc:'#9d7868', stroke:'#8a6a5a', dim:'#46342c', light:'#e0d0c0' },
-  rm:{ alloc:'#a39668', stroke:'#8c8055', dim:'#46402a', light:'#e8dcb0' },
+   Rebuilt as HTML pucks positioned over an SVG rail layer. HTML is what buys back
+   the game's actual node material — a recessed dark well (radial gradient under an
+   inset shadow) with the discipline colour carried in the RING and the GLOW rather
+   than the fill. A flat coloured disc is not how anything else in this game draws a
+   node; the skilling tree's .tnode puck is the reference and the two now match.
+
+   The `.node[data-node]` hooks are preserved exactly, so the existing click and
+   hover delegation in renderCombat keeps working untouched. */
+const _CMAST_COL_X={ melee:204, mr:362, ranged:516, rm:670, magic:824 };
+const _CMAST_ROW_Y={ 1:74, 2:186, 3:300, 4:414, 5:524, 6:630 };
+const _CMAST_STAGE_W=980, _CMAST_STAGE_H=722;
+const _CMAST_TIER_NAME={1:'Foundation',2:'Discipline',3:'Technique',4:'Mastery',5:'Doctrine',6:'Capstone'};
+/* Discipline identity in one place. The `tree` keys are legacy layout slots from
+   the old three-tree engine — melee/ranged/magic have not meant those things since
+   1.0.22. These are the names, roles and colours the player actually sees. */
+const _CMAST_DISC={
+  melee:  {name:'Onslaught', pc:'#e0762f', dim:'rgba(224,118,47,.42)',  glow:'rgba(224,118,47,.42)',  far:'rgba(224,118,47,.16)', hot:'#7a3a10', warm:'#3a2109', wash:'rgba(224,118,47,.05)',  role:'Raw offence — damage, crits, attack speed.', sig:'cross_blades'},
+  ranged: {name:'Bulwark',   pc:'#79a8d8', dim:'rgba(121,168,216,.42)', glow:'rgba(121,168,216,.4)',  far:'rgba(121,168,216,.15)', hot:'#24486a', warm:'#16283a', wash:'rgba(121,168,216,.045)', role:'Staying alive — HP, damage reduction, lifesteal.', sig:'shield'},
+  magic:  {name:'Warfare',   pc:'#e0b44a', dim:'rgba(224,180,74,.42)',  glow:'rgba(224,180,74,.4)',   far:'rgba(224,180,74,.15)',  hot:'#6b4c0b', warm:'#382806', wash:'rgba(224,180,74,.045)',  role:'Spoils — combat XP, gold, drop rates.', sig:'crown'},
+  mr:     {name:'Duel',      pc:'#c99a6a', dim:'rgba(201,154,106,.42)', glow:'rgba(201,154,106,.34)', far:'rgba(201,154,106,.13)', hot:'#4e3a1e', warm:'#2c2012', wash:'transparent', role:'Onslaught + Bulwark', sig:'twin_blades'},
+  rm:     {name:'Command',   pc:'#b8b06a', dim:'rgba(184,176,106,.42)', glow:'rgba(184,176,106,.34)', far:'rgba(184,176,106,.13)', hot:'#4a4622', warm:'#2a2812', wash:'transparent', role:'Bulwark + Warfare', sig:'target'},
 };
-
-/* Compute the x coordinate for a node based on tree + branch.
-   l/r get a ±25 offset from the tree centre; m (T5 mid) sits on centre.
-   c (T1, capstone) is centre. h (hybrid) sits on the hybrid column. */
 function _cmastNodeX(node){
-  const treeX=_CMAST_TREE_X[node.tree];
-  if(node.branch==='c'||node.branch==='m') return treeX;
-  if(node.branch==='h') return treeX;
-  // T5 left/right widen further so the 3-node tier (l/m/r) doesn't overlap.
-  const wide=(node.tier===5)?40:25;
-  return node.branch==='l' ? treeX-wide : treeX+wide;
+  const b=_CMAST_COL_X[node.tree];
+  if(node.branch==='c'||node.branch==='m'||node.branch==='h') return b;
+  /* Tier 5 carries three nodes in one column, so its wings have to clear the middle
+     node AND the name label under it. */
+  const w=(node.tier===5)?80:62;
+  return node.branch==='l'?b-w:b+w;
+}
+function _cmastNodeY(node){ return _CMAST_ROW_Y[(node.tier===6||node.capstone)?6:node.tier]; }
+function _cmastNodeD(node){
+  if(node.capstone) return 74;
+  if(node.powerful) return 62;
+  if(node.unique||node.hybrid) return 56;
+  return 50;
 }
 
-function _cmastNodeY(node){
-  if(node.tier===6||node.capstone) return _CMAST_CAP_Y;
-  return _CMAST_TIER_Y[node.tier]||0;
-}
-
-/* Visual radius depends on node category. Capstones use a hex outline so radius
-   matters less but we still use it for the click hit-region. */
-function _cmastNodeR(node){
-  if(node.capstone) return 18;
-  if(node.powerful) return 17;
-  if(node.unique||node.hybrid) return 14;
-  return 12; // multi-rank common
-}
-
-/* Build one SVG <g> for a node — circle/hex/diamond + optional rank text +
-   selection ring. Each node carries data-node="<id>" so clicks delegate cleanly. */
-function _cmastNodeSVG(node){
-  const x=_cmastNodeX(node);
-  const y=_cmastNodeY(node);
-  const r=_cmastNodeR(node);
-  const rank=cmastRank(node.id);
-  const max=node.max;
-  const tree=node.tree;
-  const col=_CMAST_COLOR[tree]||_CMAST_COLOR.melee;
-  const isWlocked=!!node.weaponLocked;
-  const isPrereqMet=cmastPrereqMet(node);
-  const isMaxed=rank>=max;
-  const isPartial=rank>0&&!isMaxed;
-  const isAvail=isPrereqMet&&!isWlocked&&!isMaxed;
-  const isLocked=(!isPrereqMet||isWlocked)&&rank===0;
-  const isSelected=(_cmastSelected===node.id);
-
-  // Fill / stroke per state
-  let fill='#0e0a08', stroke=col.dim, sw=1.5, op=0.75;
-  if(isWlocked){ fill='#100c08'; stroke='#6a5a44'; sw=1.5; op=1; }
-  else if(isMaxed){ fill=col.alloc; stroke=col.light; sw=1.5; op=1; }
-  else if(isPartial){
-    // Partial — fill a darker shade of tree colour, border bright
-    fill = tree==='melee'?'#7a2e15' : tree==='ranged'?'#2c3a45' : tree==='magic'?'#5a4420' : '#4a4030';
-    stroke=col.alloc; sw=1.5; op=1;
+/* ── Rails ────────────────────────────────────────────────────────────────────
+   Links route as stub → crossbar → stub, never as free curves. One curve per
+   prerequisite is what made the old tree unreadable, for two separate reasons:
+     · Every tier-4 node requires BOTH tier-3 nodes, so four curves crossed in an X
+       under each discipline. Those crossings carry no information — they are just
+       what four independent curves sharing one gap look like.
+     · Every bridge joins two nodes on the SAME row, which a vertical bezier draws
+       as an S diving below the row and climbing back, reading as a link to
+       somewhere else entirely.
+   Routing a whole tier transition through one horizontal rail fixes both, and it
+   is the idiom the skilling tree already uses (.tree-tier.branched's crossbar). */
+function _cmastRailsSVG(){
+  const seg=[];
+  const put=(x1,y1,x2,y2,live,d)=>seg.push({x1,y1,x2,y2,live,d});
+  const rows={}, bridges=[];
+  for(const n of CMAST_NODES){
+    if(!n.prereq) continue;
+    for(const req of n.prereq){
+      const p=CMAST_BY_ID[req.split(':')[0]]; if(!p) continue;
+      if(_cmastNodeY(p)===_cmastNodeY(n)) bridges.push({p,n});
+      else { const k=n.tree+'|'+((n.tier===6||n.capstone)?6:n.tier); (rows[k]=rows[k]||[]).push({p,n}); }
+    }
   }
-  else if(isAvail){ fill='#1a0f08'; stroke=col.stroke; sw=2; op=1; }
-  else if(isLocked&&!isWlocked){ fill='#0e0a08'; stroke=col.dim; sw=1.5; op=0.7; }
-
-  // Selection — when a node is the current "detail panel target", boost its
-  // own stroke colour + width so the node visually lights up. No separate
-  // outer ring — keeps the tree tighter and the focus on the node itself.
-  if(isSelected){ stroke=col.light; sw=2.8; op=1; }
-
-  // Shape: hex / diamond / circle
-  let shape='';
-  if(node.capstone){
-    // Hexagon centred on (x, y) — pointy top/bottom, flat sides
-    const pts=[
-      `${x},${y-22}`, `${x+18},${y-12}`, `${x+18},${y+12}`,
-      `${x},${y+22}`, `${x-18},${y+12}`, `${x-18},${y-12}`
-    ].join(' ');
-    shape=`<polygon points="${pts}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" opacity="${op}"/>`;
-  } else if(node.hybrid){
-    // Diamond
-    const pts=`${x},${y-14} ${x+14},${y} ${x},${y+14} ${x-14},${y}`;
-    shape=`<polygon points="${pts}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" opacity="${op}"/>`;
-  } else {
-    shape=`<circle cx="${x}" cy="${y}" r="${r}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" opacity="${op}"/>`;
+  for(const k in rows){
+    const es=rows[k], d=_CMAST_DISC[es[0].n.tree];
+    const uniq=list=>{ const s={},o=[]; for(const x of list){ if(!s[x.id]){s[x.id]=1;o.push(x);} } return o; };
+    const par=uniq(es.map(e=>e.p)), kid=uniq(es.map(e=>e.n));
+    const yTop=Math.max(...par.map(p=>_cmastNodeY(p)+_cmastNodeD(p)/2+10));
+    const yBot=Math.min(...kid.map(c=>_cmastNodeY(c)-_cmastNodeD(c)/2-3));
+    if(par.length===1&&kid.length===1&&_cmastNodeX(par[0])===_cmastNodeX(kid[0])){
+      put(_cmastNodeX(par[0]),yTop,_cmastNodeX(kid[0]),yBot, cmastRank(kid[0].id)>0, d); continue;
+    }
+    const barY=Math.round((yTop+yBot)/2);
+    const xs=par.map(_cmastNodeX).concat(kid.map(_cmastNodeX));
+    put(Math.min(...xs),barY,Math.max(...xs),barY, par.some(p=>cmastRank(p.id)>0), d);
+    for(const p of par) put(_cmastNodeX(p),yTop,_cmastNodeX(p),barY, cmastRank(p.id)>0, d);
+    for(const c of kid) put(_cmastNodeX(c),barY,_cmastNodeX(c),yBot, cmastRank(c.id)>0, d);
   }
-
-  // Icon — always rendered inside the node so the visual identity stays
-  // constant in every state. Color picks the right contrast against the
-  // current fill: dark on bright (maxed) backgrounds, tree-light otherwise.
-  let iconSvg='';
-  const iconKey=CMAST_ICONS[node.id];
-  if(iconKey){
-    // Scale relative to node size
-    const iconScale = node.capstone ? 1.55 : node.powerful ? 1.2 : (node.unique||node.hybrid) ? 1.05 : 0.95;
-    // Colour: dark glyph on filled (maxed/partial) nodes, otherwise tree-light
-    let iconColor=col.light;
-    if(isMaxed) iconColor='#0e0a08';
-    else if(isLocked&&!isWlocked) iconColor=col.dim;
-    else if(isWlocked) iconColor='#8a7a5a';
-    iconSvg=_cmastIconSVG(iconKey, x, y, iconScale, iconColor);
+  for(const e of bridges){
+    const y=_cmastNodeY(e.n), px=_cmastNodeX(e.p), cx=_cmastNodeX(e.n), right=cx>px;
+    put(px+(right?_cmastNodeD(e.p)/2+5:-(_cmastNodeD(e.p)/2+5)), y,
+        cx+(right?-(_cmastNodeD(e.n)/2+5):_cmastNodeD(e.n)/2+5), y, cmastRank(e.n.id)>0, _CMAST_DISC[e.n.tree]);
   }
-
-  // Rank text BELOW the node — always shown so the player can scan the tree
-  // and see at a glance "what have I invested where". Capstones nudge a bit
-  // further down since their hex shape extends past the circle radius.
-  let rankBelow='';
-  const belowY = node.capstone ? (y+30) : (y+r+9);
-  const rankColor = isMaxed ? col.light : (rank>0 ? col.alloc : (isLocked ? col.dim : col.stroke));
-  const rankOp = (rank===0 && isLocked) ? 0.55 : 1;
-  rankBelow=`<text x="${x}" y="${belowY}" text-anchor="middle" font-size="8.5" font-family="var(--num)" font-weight="bold" fill="${rankColor}" opacity="${rankOp}" pointer-events="none">${rank}/${max}</text>`;
-
-  // Lock badge — small padlock at top-right corner whenever the node is
-  // unallocatable (either prereqs not met OR weapon class not implemented).
-  // Colour distinguishes weapon-locks (warm tan) from prereq-locks (ember).
-  let lockBadge='';
-  if(isLocked && rank===0){
-    // Corner offset — circles use r*0.75; hybrid diamonds use 9; capstones use 16
-    const ox = node.capstone ? 16 : (node.hybrid ? 9 : r*0.75);
-    const oy = node.capstone ? -8 : (node.hybrid ? -9 : -r*0.75);
-    const badgeColor = isWlocked ? '#c89c3e' : col.stroke;
-    lockBadge=_cmastLockBadgeSVG(x+ox, y+oy, badgeColor);
+  const out=[];
+  for(const s of seg){
+    const L=(w,c,o,cls)=>`<line${cls?` class="${cls}"`:''} x1="${s.x1}" y1="${s.y1}" x2="${s.x2}" y2="${s.y2}" stroke-linecap="round" stroke="${c}" stroke-width="${w}" opacity="${o}"/>`;
+    /* The glow is a fat translucent underlay, NOT an SVG filter. A filter deletes
+       these lines outright: they are all perfectly horizontal or vertical, so their
+       bounding box is zero in one axis and a filter region given in
+       objectBoundingBox percentages collapses to nothing. */
+    if(s.live) out.push(L(9, s.d.pc, 0.16));
+    out.push(L(s.live?3:2, s.live?s.d.pc:'#3a3020', s.live?0.92:0.72));
+    if(s.live) out.push(L(1.7, '#ffdca8', 0.85, 'cmast-flow'));
   }
-
-  // Selection ring removed — selection now boosted via stroke on the node
-  // itself (see the isSelected branch above).
-
-  return `<g class="node${isLocked?' locked':''}" data-node="${node.id}">${shape}${iconSvg}${lockBadge}${rankBelow}</g>`;
+  return out.join('');
 }
 
-/* Build the inner SVG markup for an icon, translated and scaled to land
-   centered on (cx, cy). Each entry in CMAST_ICON_SVG is drawn in a 16×16
-   coord space; we offset by 8*scale so its center lands on the target. */
-function _cmastIconSVG(iconKey, cx, cy, scale, color){
-  const svg=CMAST_ICON_SVG[iconKey];
-  if(!svg) return '';
-  const tx=cx-8*scale, ty=cy-8*scale;
-  return `<g transform="translate(${tx} ${ty}) scale(${scale})" fill="${color}" stroke="${color}" stroke-linecap="round" stroke-linejoin="round" pointer-events="none">${svg}</g>`;
+/* One puck. Keeps class="node" + data-node so the existing delegation still binds. */
+function _cmastNodeHTML(n){
+  const d=_CMAST_DISC[n.tree], r=cmastRank(n.id), open=cmastPrereqMet(n), full=r>=n.max;
+  const cls=['node'];
+  if(n.capstone) cls.push('cap'); else if(n.powerful) cls.push('key'); else if(n.unique||n.hybrid) cls.push('uniq');
+  if(r) cls.push('on');
+  if(full&&r) cls.push('max');
+  if(!open&&!r) cls.push('locked'); else if(!r&&open) cls.push('ready');
+  if(_cmastSelected===n.id) cls.push('sel');
+  /* Tier 5 is the only row with THREE nodes in one column — 80px apart, against a
+     116px name box, so its labels have to be narrower and allowed to wrap. */
+  if(n.tier===5&&n.branch!=='h') cls.push('t5');
+  if(n.weaponLocked) cls.push('wlock');
+  const hex=n.capstone?' cmast-hex':'';
+  const icoKey=CMAST_ICONS[n.id];
+  const ico=`<svg viewBox="0 0 16 16" fill="currentColor" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">${(CMAST_ICON_SVG[icoKey]||CMAST_ICON_SVG.star||'')}</svg>`;
+  return `<button class="${cls.join(' ')}" data-node="${n.id}" type="button" title="${(n.name||'').replace(/"/g,'&quot;')}"`
+    + ` style="left:${_cmastNodeX(n)}px;top:${_cmastNodeY(n)}px;--d:${_cmastNodeD(n)}px;`
+    + `--pc:${d.pc};--pcglow:${d.glow};--pcdim:${d.dim};--pchot:${d.hot};--pcwarm:${d.warm};--pcfar:${d.far}">`
+    + `<span class="rim${hex}"><span class="puck${hex}">${ico}</span></span>`
+    + `<span class="pill">${r}<s>/${n.max}</s></span>`
+    + `<span class="nm">${n.name}</span></button>`;
 }
 
-/* Build a small padlock badge centered on (cx, cy). Used in the top-right
-   corner of locked nodes. Always renders on top of the node shape so the
-   icon stays visible underneath. */
-function _cmastLockBadgeSVG(cx, cy, color){
-  // 10×10 viewBox; render at native size (no scale, since coords are in tree-space).
-  // Background dark plate so the lock reads even over connection lines.
-  const x=cx-5, y=cy-5;
-  return `<g transform="translate(${x} ${y})" pointer-events="none">
-    <rect x="0" y="0" width="10" height="10" rx="2" fill="#0e0a08" stroke="${color}" stroke-width="1"/>
-    <rect x="2.5" y="4.5" width="5" height="4" fill="${color}" rx="0.5"/>
-    <path d="M3.4 4.5 L3.4 3 A 1.6 1.6 0 0 1 6.6 3 L 6.6 4.5" stroke="${color}" stroke-width="1" fill="none"/>
-  </g>`;
-}
-
-/* Build connection lines per tree. Returns SVG string of <line> elements.
-   Line colour brightens once the source node has a rank > 0 (reads the path
-   visually). Hybrid bridges use dashed lines so they're distinguishable. */
-function _cmastConnectionsSVG(){
-  const parts=[];
-  // Helper — pick the brighter / dimmer line colour based on whether the source
-  // has any ranks at all.
-  const lc=(srcId, tree)=>{
-    const col=_CMAST_COLOR[tree]||_CMAST_COLOR.melee;
-    return cmastRank(srcId)>0 ? col.stroke : col.dim;
-  };
-  // Build a line between two nodes by id. Width 2, brighter if source allocated.
-  const line=(srcId, dstId, tree, dashed)=>{
-    const s=CMAST_BY_ID[srcId], d=CMAST_BY_ID[dstId];
-    if(!s||!d) return;
-    const x1=_cmastNodeX(s), y1=_cmastNodeY(s);
-    const x2=_cmastNodeX(d), y2=_cmastNodeY(d);
-    const c=lc(srcId, tree);
-    parts.push(`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${dashed?1.5:2}"${dashed?' stroke-dasharray="3 3"':''}/>`);
-  };
-  // Tier divider dashed lines (visual ruler across the canvas)
-  Object.keys(_CMAST_TIER_Y).forEach(t=>{
-    const y=_CMAST_TIER_Y[t];
-    parts.push(`<line x1="50" y1="${y}" x2="630" y2="${y}" stroke="#1a130d" stroke-width="0.5" stroke-dasharray="2 4"/>`);
+/* The whole board: territory washes, tier rules + names, rails, then the pucks. */
+function _cmastStageHTML(){
+  const h=[];
+  h.push(`<div class="cmast-canvas"><div class="cmast-stage">`);
+  [['melee',88,236],['ranged',406,220],['magic',716,220]].forEach(t=>{
+    h.push(`<div class="cmast-terr" style="left:${t[1]}px;width:${t[2]}px;--tw:${_CMAST_DISC[t[0]].wash}"></div>`);
   });
-  parts.push(`<line x1="50" y1="${_CMAST_CAP_Y}" x2="630" y2="${_CMAST_CAP_Y}" stroke="#1a130d" stroke-width="0.5" stroke-dasharray="2 4"/>`);
-  // Per-discipline connections — Onslaught (m), Bulwark (r), Warfare (g).
-  const treeKeys=[['melee','m'],['ranged','r'],['magic','g']];
-  for(const [tk,prefix] of treeKeys){
-    line(prefix+'_t1', prefix+'_t2_l', tk);
-    line(prefix+'_t1', prefix+'_t2_r', tk);
-    line(prefix+'_t2_l', prefix+'_t3_l', tk);
-    line(prefix+'_t2_r', prefix+'_t3_r', tk);
-    line(prefix+'_t3_l', prefix+'_t4_l', tk);
-    line(prefix+'_t3_r', prefix+'_t4_r', tk);
-    // T4 → T5 cross-paths (l→l, l→m, r→m, r→r)
-    line(prefix+'_t4_l', prefix+'_t5_l', tk);
-    line(prefix+'_t4_l', prefix+'_t5_m', tk);
-    line(prefix+'_t4_r', prefix+'_t5_m', tk);
-    line(prefix+'_t4_r', prefix+'_t5_r', tk);
-    // Capstone gate — only middle node feeds it
-    line(prefix+'_t5_m', prefix+'_cap', tk);
+  for(let t=1;t<=6;t++){
+    h.push(`<div class="cmast-rule" style="top:${_CMAST_ROW_Y[t]-58}px"></div>`);
+    h.push(`<div class="cmast-tname" style="top:${_CMAST_ROW_Y[t]-48}px">${_CMAST_TIER_NAME[t]}</div>`);
   }
-  // Cross-discipline bridges — dashed, from one column's T3R/T4R out to the
-  // bridge node, then into the next column's T3L/T4L.
-  line('m_t3_r', 'mr_t3', 'mr', true); line('mr_t3', 'r_t3_l', 'mr', true);
-  line('m_t4_r', 'mr_t4', 'mr', true); line('mr_t4', 'r_t4_l', 'mr', true);
-  line('r_t3_r', 'rm_t3', 'rm', true); line('rm_t3', 'g_t3_l', 'rm', true);
-  line('r_t4_r', 'rm_t4', 'rm', true); line('rm_t4', 'g_t4_l', 'rm', true);
-  return parts.join('');
+  h.push(`<svg class="cmast-rails" viewBox="0 0 ${_CMAST_STAGE_W} ${_CMAST_STAGE_H}" preserveAspectRatio="none">${_cmastRailsSVG()}</svg>`);
+  for(const n of CMAST_NODES) h.push(_cmastNodeHTML(n));
+  h.push(`</div></div>`);
+  return h.join('');
+}
+
+/* Crests — what each discipline is FOR, plus how deep you are into it. The old
+   panel labelled the columns with emoji and nothing else. */
+function _cmastCrestsHTML(){
+  return `<div class="cmast-crests">` + ['melee','ranged','magic'].map(tree=>{
+    const d=_CMAST_DISC[tree];
+    const mine=CMAST_NODES.filter(n=>n.tree===tree);
+    const pts=mine.reduce((s,n)=>s+cmastRank(n.id),0), cap=mine.reduce((s,n)=>s+n.max,0);
+    const ico=`<svg viewBox="0 0 16 16" fill="currentColor" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">${CMAST_ICON_SVG[d.sig]||''}</svg>`;
+    return `<div class="cmast-crest" style="--pc:${d.pc};--pcglow:${d.glow}">`
+      + `<div class="sig">${ico}</div><div class="tx"><h4>${d.name}</h4><div class="role">${d.role}</div></div>`
+      + `<div class="n">${pts}<small>/${cap}</small></div></div>`;
+  }).join('') + `</div>`;
+}
+
+/* Running totals — the number the tree never showed. Read straight off
+   cmastBonuses(), the same function combat consumes, so the strip cannot say one
+   thing while the game does another. */
+function _cmastTotalsHTML(){
+  const b=cmastBonuses();
+  const rows=[
+    ['+'+Math.round((b.atkBoost||0)*100)+'%','Damage','melee',b.atkBoost],
+    ['+'+Math.round((b.critChance||0)*100)+'%','Crit','melee',b.critChance],
+    ['+'+Math.round((b.critDmg||0)*100)+'%','Crit Dmg','melee',b.critDmg],
+    ['+'+Math.round((b.aspd||0)*100)+'%','Atk Speed','melee',b.aspd],
+    ['+'+Math.round(b.maxHpFlat||0),'Max HP','ranged',b.maxHpFlat],
+    ['+'+Math.round((b.dmgReduce||0)*100)+'%','Dmg Reduce','ranged',b.dmgReduce],
+    ['+'+Math.round((b.lifesteal||0)*100)+'%','Lifesteal','ranged',b.lifesteal],
+    ['+'+Math.round((b.combatXpMult||0)*100)+'%','Combat XP','magic',b.combatXpMult],
+    ['+'+Math.round((b.gpMult||0)*100)+'%','Combat Gold','magic',b.gpMult],
+    ['+'+Math.round((b.rareDrop||0)*100)+'%','Rare Drops','magic',b.rareDrop],
+  ];
+  return `<div class="cmast-tot">` + rows.map(r=>
+    `<div class="tt${r[3]?'':' nil'}" style="--pc:${r[3]?_CMAST_DISC[r[2]].pc:'#332c1e'}"><b>${r[0]}</b><span>${r[1]}</span><i></i></div>`
+  ).join('') + `</div>`;
 }
 
 /* Build the detail panel for the currently selected node — or an empty hint if
@@ -29157,18 +29422,6 @@ function buildCmastViewHTML(){
       ${shards>0?`<span class="src">Shards <b>${shards}</b></span>`:''}
     </div>
   `;
-  // SVG tree — connections drawn first so nodes appear on top
-  const connSVG=_cmastConnectionsSVG();
-  const nodesSVG=CMAST_NODES.map(_cmastNodeSVG).join('');
-  // Tier labels on the left — Y values match _CMAST_TIER_Y + 4px baseline offset
-  const tierLabels=`
-    <text x="22" y="36" font-size="9" fill="#5a4a38" letter-spacing="1">T1</text>
-    <text x="22" y="86" font-size="9" fill="#5a4a38" letter-spacing="1">T2</text>
-    <text x="22" y="136" font-size="9" fill="#5a4a38" letter-spacing="1">T3</text>
-    <text x="22" y="186" font-size="9" fill="#5a4a38" letter-spacing="1">T4</text>
-    <text x="22" y="236" font-size="9" fill="#5a4a38" letter-spacing="1">T5</text>
-    <text x="22" y="311" font-size="9" fill="#5a4a38" letter-spacing="1">CAP</text>
-  `;
   return `
     <div class="cmast">
       <div class="cmast-head">
@@ -29177,32 +29430,19 @@ function buildCmastViewHTML(){
         <span class="cmast-h-sub">${spent} allocated · cap ${CMAST_CAP}</span>
         ${srcHTML}
       </div>
-      <div class="cmast-canvas">
-        <svg viewBox="0 0 640 350" xmlns="http://www.w3.org/2000/svg" role="img">
-          <title>Combat mastery tree</title>
-          ${tierLabels}
-          ${connSVG}
-          ${nodesSVG}
-        </svg>
-      </div>
-      <div class="cmast-headers">
-        <div class="cmast-tree-h melee">⚔ ONSLAUGHT</div>
-        <div class="cmast-tree-h ranged">🛡 BULWARK</div>
-        <div class="cmast-tree-h magic">⚑ WARFARE</div>
-      </div>
-      <!-- Player-facing summary, not a changelog. The old copy listed every proc by
-           name and narrated which ones were still being wired; per-node detail already
-           lives in the node panel below, and locked nodes explain themselves. -->
-      <div class="cmast-soon-note">Spend points across three disciplines — damage, crit, survivability, and your XP and gold gains. Nodes marked <span class="cmast-d-tag soon">NOT YET ACTIVE</span> are built but not wired into the combat formulas yet; their ranks are saved and will start applying in a later update. Points you can't spend yet bank as Mastery Shards.</div>
+      ${_cmastStageHTML()}
+      ${_cmastCrestsHTML()}
+      <div class="cmast-lab">What Your Mastery Currently Gives You</div>
+      ${_cmastTotalsHTML()}
       <div class="cmast-detail">
         ${_cmastDetailHTML()}
       </div>
       <div class="cmast-legend">
+        <span class="li"><span class="sw ready"></span>ready to buy</span>
         <span class="li"><span class="sw alloc"></span>allocated</span>
-        <span class="li"><span class="sw avail"></span>available</span>
+        <span class="li"><span class="sw maxed"></span>maxed</span>
         <span class="li"><span class="sw locked"></span>locked</span>
-        <span class="li"><span class="sw hyb"></span>bridge</span>
-        <span class="li"><span class="sw cap"></span>capstone</span>
+        <span class="li">Bridges join two disciplines — both sides must reach the tier before one opens.</span>
       </div>
       <div class="cmast-tip" id="cmastTip"></div>
     </div>
@@ -34425,7 +34665,7 @@ function mmQuitToMenu(){
      monster-log entry and Combat Mastery points to the NEXT character loaded. */
   stopCombatTimer();
   combat.active=false; combat.rare=false; combat.raid=null; combat.raidDebuff=null;
-  combat.regens=[]; combat.foeStatus={};
+  combat.regens=[]; combat.foeStatus={}; cmastResetFight();
   combatMode=false;
   mmShowMenu();
 }
