@@ -1132,8 +1132,17 @@ setTimeout(() => {
     ok('drillSocket alone leaves the header stale', drill.before === drill.stale);
     ok('the patched call path repaints it', drill.before !== drill.after,
        JSON.stringify(drill.before) + ' -> ' + JSON.stringify(drill.after));
-    ok('the real call site is wired with renderHeader',
-       /if\(drillSocket\(itemId\)\)\{ renderHeader\(\);/.test(html));
+    /* Structural, not formatting-pinned: the original assertion matched the exact
+       one-line shape `if(drillSocket(itemId)){ renderHeader();` and so failed the
+       moment the socket panel was reformatted in v0.9.128, even though the call was
+       still there. What must hold is that every drillSocket() call site repaints the
+       header within its own block — check that, not the whitespace. */
+    const drillSites = [...html.matchAll(/if\s*\(\s*drillSocket\s*\(/g)].map(m => m.index);
+    ok('drillSocket has a guarded call site at all', drillSites.length > 0,
+       'found ' + drillSites.length);
+    ok('every drillSocket call site repaints the header',
+       drillSites.every(i => /renderHeader\s*\(\s*\)/.test(html.slice(i, i + 400))),
+       drillSites.length + ' site(s)');
 
     /* Static sweep: no gold deduction anywhere may sit without a repaint in its
        enclosing function. 6867 is inside drillSocket() itself, whose sole caller

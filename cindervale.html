@@ -5015,6 +5015,250 @@ body:not(.is-demo) .demo-only{display:none !important}
 .ew-fc .fs{display:block;font-family:var(--num);font-size:10px;color:#7a6a4a;margin-top:2px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ew-empty{font-size:calc(13.5px*var(--tscale));color:var(--muted);font-style:italic;padding:12px 0}
+
+/* ════════ [CSS-36] SOCKET PANEL (0.9.128) ═══════════════════════════════════════
+   Rebuilt on the enchant panel's spine so the two benches read as one thing. What
+   the old panel got wrong: gear was picked from a <select>, every empty socket held
+   a SECOND <select> to pick a gem, nothing anywhere totalled what your gems paid,
+   and the Gem Exchange was a 5x3 grid of tiles showing only an icon, "x0" and a dust
+   number — you had to hover every cell to learn what any gem did.
+
+   Namespace is `so-`, NOT `sk-` — `.sk-banner*` already owns that prefix. And no
+   structural class here may be a bare word the game already defines globally
+   (`.act`, `.chip`, `.node`, `.prog`, `.tab`, `.name`, `.meta`): those are unscoped,
+   so `.so-slot .st.act` silently picked up the activity card's border and radius.
+
+   Lit-surface recipe throughout — cards sit ABOVE the panel ground on
+   --lit-top/--rim/--under, wells are recessed with an inset shadow. */
+#socketView{ --so-card:linear-gradient(178deg,var(--lit-top),var(--lit-bot) 78%);
+  --so-sh:inset 0 1px 0 var(--rim), inset 0 -1px 0 var(--under), 0 3px 8px rgba(0,0,0,.45);
+  --so-sh-hi:inset 0 1px 0 rgba(240,199,114,.32), inset 0 -1px 0 var(--under), 0 5px 14px rgba(0,0,0,.55);
+  --so-well:inset 0 2px 4px rgba(0,0,0,.9), inset 0 -1px 0 rgba(214,170,96,.08); }
+.so-stack{display:flex;flex-direction:column;gap:13px}
+.so-two{display:grid;grid-template-columns:minmax(215px,.8fr) minmax(320px,1.7fr);gap:14px;align-items:start}
+.so-col{display:flex;flex-direction:column;gap:13px;min-width:0}
+@media (max-width:860px){ .so-two{grid-template-columns:1fr} }
+
+.so-lab{font-size:10.5px;color:var(--ember);text-transform:uppercase;letter-spacing:2.2px;
+  margin:0 0 7px;display:flex;align-items:center;gap:8px}
+.so-lab::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(214,170,96,.28),transparent)}
+.so-lab.dim{color:#8a7657}
+.so-lab.dim::after{background:linear-gradient(90deg,rgba(214,170,96,.14),transparent)}
+.so-lab .ct{font-family:var(--num);letter-spacing:1px;color:#7a6a4a;text-transform:none;font-size:10px}
+
+/* ── the pip: one glyph for socket state, used in five places ──
+   filled = the gem's own colour, lit. empty = a black recessed hole.
+   undrilled = a dashed ring, i.e. "a hole COULD go here". */
+.so-pips{display:inline-flex;gap:4px;align-items:center;vertical-align:middle}
+.so-pip{width:11px;height:11px;border-radius:50%;flex:none;background:#0d0905;
+  box-shadow:inset 0 1px 3px rgba(0,0,0,.95), inset 0 -1px 0 rgba(214,170,96,.07)}
+.so-pip.lit{background:radial-gradient(circle at 35% 30%, var(--pc-hi,#fff), var(--pc,#888) 65%);
+  box-shadow:0 0 6px var(--pc,#888), inset 0 -1px 1px rgba(0,0,0,.5)}
+.so-pip.undrilled{background:transparent;box-shadow:none;border:1px dashed #4e4028}
+
+/* ── the totals strip. Combat gems read state.combatEquipped and skilling gems read
+   state.equipped, so the two halves genuinely come from different loadouts — the
+   divider is information, not decoration. ── */
+.so-tot{display:grid;grid-template-columns:repeat(auto-fit,minmax(88px,1fr));gap:7px}
+.so-tot .tt{padding:8px 6px;border-radius:7px;background:#100b06;box-shadow:var(--so-well);text-align:center}
+.so-tot .tt b{display:block;font-family:var(--num);font-size:calc(16px*var(--tscale));
+  color:var(--green);line-height:1}
+.so-tot .tt.nil b{color:#4e4636}
+.so-tot .tt span{display:block;font-size:9.5px;letter-spacing:1.2px;text-transform:uppercase;
+  color:#7a6a4a;margin-top:4px}
+.so-tot .tt i{display:block;width:16px;height:2px;border-radius:1px;margin:6px auto 0;
+  background:var(--pc,#4e4636)}
+.so-totnote{font-size:calc(11px*var(--tscale));color:#7a6a4a;margin-top:6px;line-height:1.4}
+.so-totnote b{color:#8a7657;font-weight:600}
+
+.so-purse{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+.so-chip{display:flex;align-items:center;gap:6px;padding:5px 11px;border-radius:6px;
+  background:var(--so-card);box-shadow:var(--so-sh);font-family:var(--num);
+  font-size:calc(12.5px*var(--tscale));color:#e8d7b0}
+.so-chip .ev-icon{width:15px;height:15px}
+.so-chip em{font-style:normal;color:#7a6a4a;letter-spacing:1.2px;text-transform:uppercase;font-size:9px}
+
+/* ── worn strip ── */
+.so-worn{display:grid;grid-template-columns:repeat(auto-fit,minmax(126px,1fr));gap:9px}
+.so-slot{display:flex;flex-direction:column;gap:6px;padding:9px 9px 8px;border-radius:8px;border:0;
+  width:100%;text-align:left;font-family:inherit;
+  background:var(--so-card);box-shadow:var(--so-sh);cursor:var(--cur-pointer);transition:box-shadow .12s}
+.so-slot:hover{box-shadow:var(--so-sh-hi)}
+.so-slot.sel{box-shadow:var(--so-sh-hi), 0 0 0 1px var(--ember)}
+.so-slot .sw{display:flex;align-items:center;gap:8px}
+.so-slot .well{width:36px;height:36px;flex:none;border-radius:8px;background:#100b06;
+  box-shadow:var(--so-well);display:flex;align-items:center;justify-content:center}
+.so-slot .well .ev-icon{width:23px;height:23px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.9))}
+.so-slot .sl{font-family:var(--num);font-size:9px;letter-spacing:1.6px;text-transform:uppercase;
+  color:#8a7657;line-height:1}
+.so-slot .nm{font-family:'Cinzel',serif;font-size:calc(12px*var(--tscale));color:#e8d7b0;
+  line-height:1.2;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.so-slot .sf{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.so-slot .st{font-family:var(--num);font-size:10px;color:#6e6046;white-space:nowrap}
+.so-slot .st.done{color:var(--ember)}
+.so-slot .st.gap{color:#c99a3a}
+.so-slot.bare .well{opacity:.35}
+.so-slot.bare .nm{color:#6e6046;font-style:italic}
+
+/* ── gear rail ──
+   A full wardrobe is well past what fits beside the bench, so the rail is capped
+   and scrolls on its own, with a fade so a clipped list reads as "more below". */
+.so-railwrap{position:relative}
+.so-railwrap::after{content:'';position:absolute;left:0;right:5px;bottom:0;height:28px;
+  pointer-events:none;border-radius:0 0 8px 8px;
+  background:linear-gradient(180deg,transparent,rgba(37,26,16,.96))}
+.so-railwrap.nofade::after{display:none}
+.so-rail{display:grid;gap:9px;max-height:clamp(230px,44vh,430px);overflow-y:auto;padding-right:5px;
+  scrollbar-width:thin;scrollbar-color:#4a3a20 transparent;overscroll-behavior:contain}
+.so-rail::-webkit-scrollbar{width:8px}
+.so-rail::-webkit-scrollbar-thumb{background:#4a3a20;border-radius:4px;
+  border:2px solid transparent;background-clip:padding-box}
+.so-rail::-webkit-scrollbar-thumb:hover{background:#6a5533;background-clip:padding-box}
+.so-rail::-webkit-scrollbar-track{background:#140d07;border-radius:4px}
+.so-piece{display:flex;align-items:center;gap:9px;padding:8px 10px;border:0;border-radius:8px;
+  width:100%;background:var(--so-card);box-shadow:var(--so-sh);text-align:left;font-family:inherit;
+  position:relative;overflow:hidden;cursor:var(--cur-pointer);
+  transition:transform .12s, box-shadow .12s}
+.so-piece:hover{transform:translateY(-1px);box-shadow:var(--so-sh-hi)}
+.so-piece.sel{box-shadow:var(--so-sh-hi), 0 0 0 1px var(--ember)}
+/* the gem it carries as a left edge — the collection reads as a ladder at a glance */
+.so-piece::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--ec,#6a5533)}
+.so-piece .ev-icon{width:27px;height:27px;flex:none}
+.so-piece .pw{flex:1;min-width:0}
+.so-piece .pn{display:block;font-family:'Cinzel',serif;font-size:calc(13px*var(--tscale));
+  color:#e8d7b0;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.so-piece.sel .pn{color:var(--gold-hi)}
+.so-piece .pr{display:flex;align-items:center;gap:6px;margin-top:4px}
+.so-piece .pr em{font-style:normal;font-family:var(--num);font-size:10px;color:#7a6a4a}
+.so-tag{font-family:var(--num);font-size:9.5px;letter-spacing:1px;text-transform:uppercase;
+  color:var(--green);border:1px solid #3a5018;border-radius:3px;padding:1px 5px;flex:none}
+.so-tag.idle{color:#8a7657;border-color:#4a3a20}
+
+/* ── the bench ── */
+.so-hero{padding:14px;border-radius:10px;background:var(--so-card);box-shadow:var(--so-sh);
+  position:relative;overflow:hidden}
+.so-hero::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--ec,#6a5533)}
+.so-hero .hd{display:flex;align-items:center;gap:13px;margin-bottom:13px}
+.so-hero .well{width:70px;height:70px;flex:none;border-radius:12px;background:#100b06;
+  box-shadow:var(--so-well);display:flex;align-items:center;justify-content:center}
+.so-hero .well .ev-icon{width:42px;height:42px;filter:drop-shadow(0 2px 6px rgba(0,0,0,.9))}
+.so-hero h4{font-family:'Cinzel',serif;font-size:calc(19px*var(--tscale));color:var(--gold-hi);
+  margin:0;line-height:1.15;letter-spacing:.3px}
+.so-hero .sb{font-family:var(--num);font-size:calc(11.5px*var(--tscale));color:#8a7657;margin-top:5px}
+.so-hero .sb .live{color:var(--green)}
+.so-hero .sb .dead{color:#c99a3a}
+
+/* the holes — big enough to be the thing you click, since they ARE the control now */
+.so-holes{display:grid;grid-template-columns:repeat(auto-fit,minmax(158px,1fr));gap:9px}
+.so-hole{padding:9px 10px;border-radius:8px;background:#140d07;box-shadow:var(--so-well);
+  display:flex;align-items:center;gap:9px;min-height:58px;position:relative;width:100%;
+  border:0;text-align:left;font-family:inherit;color:var(--text);cursor:var(--cur-pointer)}
+.so-hole .gw{width:34px;height:34px;flex:none;border-radius:50%;background:#0b0704;
+  box-shadow:inset 0 2px 5px rgba(0,0,0,.95);display:flex;align-items:center;justify-content:center}
+.so-hole .gw .ev-icon{width:23px;height:23px;filter:drop-shadow(0 0 7px var(--pc,transparent))}
+.so-hole .hw{flex:1;min-width:0}
+.so-hole .hn{display:block;font-family:'Cinzel',serif;font-size:calc(12.5px*var(--tscale));
+  color:#e8d7b0;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.so-hole .hv{display:block;font-family:var(--num);font-size:calc(10.5px*var(--tscale));
+  color:var(--green);margin-top:3px}
+.so-hole .hv.dead{color:#8a7657}
+.so-hole .hx{display:block;font-family:var(--num);font-size:9.5px;color:#6e6046;margin-top:3px}
+.so-hole .ix{position:absolute;top:5px;right:8px;font-family:var(--num);font-size:8.5px;
+  letter-spacing:1.4px;color:#4e4028}
+.so-hole.set{box-shadow:var(--so-well), 0 0 0 1px var(--pc)}
+.so-hole.set .hn{color:var(--pc)}
+.so-hole.hollow .hn{color:#8a7657;font-style:italic;font-family:'Crimson Pro',Georgia,serif;
+  font-size:calc(13px*var(--tscale))}
+.so-hole.hollow .gw{opacity:.4}
+.so-hole.armed{box-shadow:var(--so-well), 0 0 0 2px var(--ember), 0 0 14px rgba(224,118,47,.3)}
+.so-hole.armed .hn{color:var(--ember);font-style:normal}
+.so-hole.armed .gw{opacity:1}
+.so-hole.undrilled{background:#120c07;box-shadow:none;border:1px dashed #4e4028;cursor:var(--cur-default)}
+.so-hole.undrilled .gw{opacity:.3}
+.so-hole.undrilled .hn{color:#7a6a4a;font-style:italic;font-family:'Crimson Pro',Georgia,serif}
+.so-pop{position:absolute;right:8px;bottom:7px;font-family:var(--num);font-size:9px;letter-spacing:1px;
+  text-transform:uppercase;color:#8a7657;background:#0b0704;border:0;border-radius:3px;padding:2px 7px;
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.8);cursor:var(--cur-pointer)}
+.so-pop:hover{color:#e08a7a}
+
+.so-drill{margin-top:11px;padding-top:11px;border-top:1px solid rgba(214,170,96,.12);
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.so-drill .dw{flex:1;min-width:170px}
+.so-drill .dl{font-family:'Cinzel',serif;font-size:calc(13px*var(--tscale));color:#e8d7b0}
+.so-drill .dl.quiet{color:#8a7657;font-style:italic}
+.so-drill .dr{display:flex;gap:11px;margin-top:5px;font-family:var(--num);
+  font-size:calc(11.5px*var(--tscale));align-items:center;flex-wrap:wrap}
+.so-drill .dr span{display:flex;align-items:center;gap:5px}
+.so-drill .dr .ev-icon{width:14px;height:14px}
+.so-drill .dr .yes{color:var(--green)}
+.so-drill .dr .no{color:var(--red)}
+.so-btn{font-family:'Cinzel',serif;font-size:calc(13px*var(--tscale));letter-spacing:.5px;
+  padding:8px 18px;border:0;border-radius:6px;color:#1a1005;cursor:var(--cur-pointer);
+  background:linear-gradient(178deg,#f0a24a,#c56a22);transition:filter .12s;
+  box-shadow:inset 0 1px 0 rgba(255,222,170,.45), inset 0 -1px 0 rgba(0,0,0,.4), 0 3px 9px rgba(0,0,0,.5)}
+.so-btn:hover{filter:brightness(1.12)}
+.so-btn.off{background:#241a0f;color:#6e6046;box-shadow:var(--so-well);cursor:var(--cur-na)}
+.so-btn.off:hover{filter:none}
+
+/* ── the drawer: click a hole, then click a gem. This is what replaced the
+   per-socket <select>. ── */
+.so-say{padding:9px 13px;border-radius:8px;background:#100b06;box-shadow:var(--so-well);
+  font-size:calc(13px*var(--tscale));color:#c9b489;display:flex;align-items:center;gap:9px}
+.so-say b{color:var(--ember);font-weight:600}
+.so-say .bd{width:7px;height:7px;border-radius:50%;background:var(--ember);flex:none;
+  box-shadow:0 0 7px rgba(224,118,47,.75)}
+.so-say.quiet .bd{background:#4a3a20;box-shadow:none}
+.so-drawer{display:grid;grid-template-columns:repeat(auto-fill,minmax(186px,1fr));gap:8px}
+.so-gem{display:flex;align-items:center;gap:9px;padding:7px 9px;border:0;border-radius:8px;
+  background:var(--so-card);box-shadow:var(--so-sh);text-align:left;font-family:inherit;
+  color:var(--text);cursor:var(--cur-pointer);position:relative;overflow:hidden;
+  transition:transform .12s,box-shadow .12s}
+.so-gem:hover{transform:translateY(-1px);box-shadow:var(--so-sh-hi)}
+.so-gem::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--pc)}
+.so-gem .ev-icon{width:25px;height:25px;flex:none;filter:drop-shadow(0 0 6px var(--pc))}
+.so-gem .gw{flex:1;min-width:0}
+.so-gem .gn{display:block;font-family:'Cinzel',serif;font-size:calc(11.5px*var(--tscale));
+  color:#e8d7b0;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.so-gem .gv{display:block;font-family:var(--num);font-size:10px;color:var(--green);margin-top:3px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.so-gem .gq{font-family:var(--num);font-size:calc(14px*var(--tscale));color:var(--gold-hi);flex:none}
+.so-empty{font-size:calc(13px*var(--tscale));color:var(--muted);font-style:italic;padding:10px 0}
+
+/* ── the exchange: five colour LINES, each stating what it does, then three
+   readable tier cards. The old grid made you hover a 34px tile to find out. ── */
+.so-ehead,.so-erow{display:grid;grid-template-columns:minmax(112px,150px) repeat(3,minmax(0,1fr));gap:8px}
+.so-ehead{font-family:var(--num);font-size:9px;letter-spacing:1.6px;text-transform:uppercase;
+  color:#6e6046;margin-bottom:5px}
+.so-ehead div{text-align:center}
+.so-ehead div:first-child{text-align:left}
+.so-exch{display:flex;flex-direction:column;gap:8px}
+.so-erow{align-items:stretch}
+.so-eline{display:flex;flex-direction:column;justify-content:center;padding:8px 11px;border-radius:8px;
+  background:var(--so-card);box-shadow:var(--so-sh);position:relative;overflow:hidden}
+.so-eline::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--pc)}
+.so-eline b{font-family:'Cinzel',serif;font-size:calc(13.5px*var(--tscale));color:var(--pc);line-height:1.1}
+.so-eline span{font-size:calc(11px*var(--tscale));color:#8a7657;margin-top:3px}
+.so-tile{display:flex;align-items:center;gap:9px;padding:8px 10px;border:0;border-radius:8px;
+  background:var(--so-card);box-shadow:var(--so-sh);text-align:left;font-family:inherit;
+  cursor:var(--cur-pointer);color:var(--text);transition:box-shadow .12s}
+.so-tile:hover{box-shadow:var(--so-sh-hi)}
+.so-tile.off{opacity:.5;cursor:var(--cur-na)}
+.so-tile.off:hover{box-shadow:var(--so-sh)}
+.so-tile .ev-icon{width:26px;height:26px;flex:none}
+.so-tile .tw{flex:1;min-width:0}
+.so-tile .tv{display:block;font-family:var(--num);font-size:calc(11px*var(--tscale));
+  color:var(--green);line-height:1.15}
+.so-tile .th{display:block;font-family:var(--num);font-size:10px;color:#7a6a4a;margin-top:3px}
+.so-tile .th b{color:#e8d7b0;font-weight:600}
+.so-tile .tc{font-family:var(--num);font-size:calc(11px*var(--tscale));display:flex;
+  align-items:center;gap:4px;flex:none}
+.so-tile .tc .ev-icon{width:13px;height:13px}
+.so-tile .tc.yes{color:var(--green)}
+.so-tile .tc.no{color:var(--red)}
+@media (max-width:720px){
+  .so-ehead{display:none}
+  .so-erow{grid-template-columns:1fr}
+}
 </style>
 
 
@@ -5327,7 +5571,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.127</div>
+  <div class="mm-ver">v0.9.128</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -27007,316 +27251,488 @@ function _socketOwnedList(){
   return out;
 }
 
-function renderSockets(){
-  const box=$('socketView'); box.innerHTML='';
+/* Which empty socket is armed on the selected piece. Clicking a hole arms it,
+   clicking a gem in the drawer fills it. UI-only — never persisted, so nothing
+   here needs a normalizeState guard. */
+var _socketArmed=null;
 
-  // ── Header / intro (tight) ──
+/* Which loadout(s) currently hold this piece. This is the fact the old panel got
+   wrong: it asked state.equipped, which IS state.skillingEquipped, so a worn
+   helmet always read "not equipped" while the gear dropdown right beside it
+   correctly said otherwise. */
+function _soWornIn(id){
+  var out={combat:false,skilling:false};
+  if(!id) return out;
+  var ce=state.combatEquipped||{}, se=state.equipped||{};
+  for(var k in ce){ if(ce[k]===id){ out.combat=true; break; } }
+  for(var k2 in se){ if(se[k2]===id){ out.skilling=true; break; } }
+  return out;
+}
+/* Is this gem in this piece actually paying out right now? Combat gems
+   (sanguine/verdant/azure) are summed from state.combatEquipped; skilling gems
+   (topaz/onyx) from state.equipped. A topaz in a helmet is dead weight forever,
+   so the panel says so on the socket instead of hoping you saw the hint once. */
+function _soGemLive(itemId,gemId){
+  var g=SOCKET_GEMS[gemId]; if(!g) return false;
+  var w=_soWornIn(itemId);
+  return (g.color==='topaz'||g.color==='onyx') ? w.skilling : w.combat;
+}
+/* Gem line identity in one place — the old panel kept it in a legend at the
+   bottom of the page, which is the last thing you read and the first thing you
+   forget. Every card carries its own colour and effect now. */
+const SO_LINE={
+  sanguine:{label:'Sanguine',hex:'#d44a4a',hi:'#ff9c8e',stat:'Attack',    kind:'combat'},
+  verdant: {label:'Verdant', hex:'#5fb056',hi:'#b6f0a0',stat:'Max HP',    kind:'combat'},
+  azure:   {label:'Azure',   hex:'#5a8fd8',hi:'#a9cdff',stat:'Defence',   kind:'combat'},
+  topaz:   {label:'Topaz',   hex:'#e0b440',hi:'#ffe79b',stat:'Sell Value',kind:'skilling'},
+  onyx:    {label:'Onyx',    hex:'#9a9a9a',hi:'#e2e2e2',stat:'Speed & XP',kind:'skilling'},
+};
+const SO_ORDER=['sanguine','verdant','azure','topaz','onyx'];
+const SO_TIER={1:'Chipped',2:'Polished',3:'Flawless'};
+const SO_SLOTLAB={helmet:'Head',chest:'Chest',legs:'Legs',boots:'Boots',
+                  ring_l:'L Ring',ring_r:'R Ring',amulet:'Neck'};
+/* The three gem ids of one colour, tier 1→3. */
+function _soLineGems(color){
+  var out=[];
+  for(var t=1;t<=3;t++){
+    for(var k in SOCKET_GEMS){ if(SOCKET_GEMS[k].color===color&&SOCKET_GEMS[k].tier===t){ out.push(k); break; } }
+  }
+  return out;
+}
+/* "+2% Attack, all skills" → "+2% Attack" for the tight cards. */
+function _soShort(desc){ return String(desc||'').replace(', all skills',''); }
+
+const _soEl=function(cls,html){ var e=document.createElement('div'); if(cls) e.className=cls;
+  if(html!=null) e.innerHTML=html; return e; };
+const _soLab=function(text,dim,count){
+  return _soEl('so-lab'+(dim?' dim':''), text+(count!=null?'<span class="ct">'+count+'</span>':''));
+};
+/* The item's left edge takes the colour of the first gem it carries, so the rail
+   reads as a ladder rather than a list of identical rows. */
+function _soEdge(id){
+  var sd=(state.sockets&&state.sockets[id])||null;
+  if(sd&&sd.gems){ for(var i=0;i<sd.gems.length;i++){ var g=sd.gems[i];
+    if(g&&SOCKET_GEMS[g]) return SO_LINE[SOCKET_GEMS[g].color].hex; } }
+  return '#6a5533';
+}
+function _soPips(id){
+  var sd=(state.sockets&&state.sockets[id])||{slots:0,gems:[]};
+  var cap=maxSocketsFor(id), out='';
+  for(var i=0;i<cap;i++){
+    if(i>=sd.slots) out+='<i class="so-pip undrilled"></i>';
+    else if(sd.gems[i]&&SOCKET_GEMS[sd.gems[i]]){
+      var c=SO_LINE[SOCKET_GEMS[sd.gems[i]].color];
+      out+='<i class="so-pip lit" style="--pc:'+c.hex+';--pc-hi:'+c.hi+'"></i>';
+    }
+    else out+='<i class="so-pip"></i>';
+  }
+  return '<span class="so-pips">'+out+'</span>';
+}
+/* Owned socket gems, colour→tier, as {id,name,desc,qty}. */
+function _ownedSocketGems(){
+  var out=[];
+  for(var ci=0;ci<SO_ORDER.length;ci++){
+    var ids=_soLineGems(SO_ORDER[ci]);
+    for(var i=0;i<ids.length;i++){
+      var q=state.items[ids[i]]||0;
+      if(q>0) out.push({id:ids[i],name:SOCKET_GEMS[ids[i]].name,desc:SOCKET_GEMS[ids[i]].desc,qty:q});
+    }
+  }
+  return out;
+}
+
+function renderSockets(){
+  const box=$('socketView'); if(!box) return;
+  box.innerHTML='';
+
   const intro=document.createElement('div');
   intro.className='skill-intro';
-  intro.innerHTML='<b>Socketing</b> — drill sockets into combat gear &amp; jewelry, then slot gems for bonuses while equipped.'
-    +'<span class="cap">Caps: Helmet 1 · Chest 2 · Legs 2 · Boots 1 · Jewelry 1. Gems drop from combat or craft from Gem Dust below.</span>';
+  intro.innerHTML='<b>Socketing</b> — drill holes into armour and jewelry, then set gems. A gem only pays '
+    +'out while its piece is <span class="k">worn in the right loadout</span>: '
+    +'<span class="k">Sanguine / Verdant / Azure</span> read your combat gear, '
+    +'<span class="k">Topaz / Onyx</span> read your skilling gear.'
+    +'<span class="cap">Sockets per piece — Head 1 · Chest 2 · Legs 2 · Boots 1 · Jewelry 1. '
+    +'Gems drop from combat, or cut them from Gem Dust at the Exchange below.</span>';
   box.appendChild(intro);
 
-  // ── Owned socketable gear ──
-  var owned=_socketOwnedList();
-  var GROUP_ORDER={combat:0,jewelry:1,other:2};
+  /* Rail order is the panel's opinion about what you came here to do. Sorting by
+     type then name (the old order) buried the four pieces you are actually wearing
+     in the middle of a wardrobe, so the first thing on screen was an undrilled item
+     you have no reason to touch. Worn-with-work-to-do leads, then worn, then
+     anything already drilled, then the rest — type and name only break ties. */
+  const owned=_socketOwnedList();
+  const GROUP_ORDER={combat:0,jewelry:1,other:2};
+  const _rank=function(id){
+    var w=_soWornIn(id), sd=getSocketData(id), cap=maxSocketsFor(id);
+    var openHole=sd.gems.slice(0,sd.slots).some(function(g){ return !g; });
+    var worn=w.combat||w.skilling;
+    if(worn&&(openHole||sd.slots<cap)) return 0;   // worn, still has work to do
+    if(worn) return 1;                             // worn and finished
+    if(sd.slots>0) return 2;                       // drilled but on the shelf
+    return 3;
+  };
   owned.sort(function(a,b){
+    var ra=_rank(a), rb=_rank(b);
+    if(ra!==rb) return ra-rb;
     var ga=GROUP_ORDER[_socketGroupOf(a)], gb=GROUP_ORDER[_socketGroupOf(b)];
     if(ga!==gb) return ga-gb;
     var na=(ITEMS[a]&&ITEMS[a].name)||a, nb=(ITEMS[b]&&ITEMS[b].name)||b;
     return na.localeCompare(nb);
   });
 
+  const stack=_soEl('so-stack');
+
+  /* purse first — both the drill and the exchange spend out of it */
+  const purse=_soEl('so-purse');
+  /* fmtCoins brings its own coin/silver icons — pairing it with a second ui_coin
+     put two coins on one chip. */
+  purse.innerHTML='<div class="so-chip"><em>Purse</em>'+fmtCoins(state.coins||0,true)+'</div>'
+    +'<div class="so-chip">'+iconHTML('gem_dust')+'<em>Gem Dust</em>'+(state.items['gem_dust']||0).toLocaleString()+'</div>';
+  stack.appendChild(purse);
+
   if(!owned.length){
-    var emp=document.createElement('div');
-    emp.style.cssText='font-size:calc(14px*var(--tscale));color:var(--muted);font-style:italic;padding:10px 0';
-    emp.textContent='No socketable gear yet. Craft combat gear or jewelry — then come back to drill sockets.';
-    box.appendChild(emp);
-  } else {
-    if(!_socketSel || owned.indexOf(_socketSel)<0) _socketSel=owned[0];
-
-    // Two-column layout: LEFT = gold/dust + gear picker, RIGHT = socket detail —
-    // so the picker and the drill/gem area sit side by side instead of one long stack.
-    var cols=document.createElement('div');
-    cols.style.cssText='display:flex;gap:12px;flex-wrap:wrap;align-items:flex-start';
-    var left=document.createElement('div');
-    left.style.cssText='flex:1 1 230px;min-width:210px';
-    var right=document.createElement('div');
-    right.style.cssText='flex:1.5 1 300px;min-width:270px';
-
-    // LEFT — gold + gem dust chips
-    var matRow=document.createElement('div');
-    matRow.style.cssText='display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px';
-    var goldChip=document.createElement('div');
-    goldChip.style.cssText='background:var(--raised-s);border:1px solid var(--trim-d);border-radius:5px;padding:4px 10px;font-size:calc(13px*var(--tscale));color:var(--text)';
-    goldChip.innerHTML=fmtCoins(state.coins||0,true);
-    matRow.appendChild(goldChip);
-    var dustQty=state.items['gem_dust']||0;
-    var dustChip=document.createElement('div');
-    dustChip.style.cssText='background:var(--raised-s);border:1px solid var(--trim-d);border-radius:5px;padding:4px 10px;font-size:calc(13px*var(--tscale));'+(dustQty>0?'color:var(--text)':'color:var(--muted);opacity:0.55');
-    dustChip.textContent='✨ Gem Dust: '+dustQty.toLocaleString();
-    matRow.appendChild(dustChip);
-    left.appendChild(matRow);
-
-    // LEFT — gear selector dropdown (themed to the panel)
-    var lbl=document.createElement('div');
-    lbl.style.cssText='font-size:11px;color:var(--ember);text-transform:uppercase;letter-spacing:2px;margin-bottom:6px';
-    lbl.textContent='Select Gear';
-    left.appendChild(lbl);
-    var gearSel=document.createElement('select');
-    gearSel.style.cssText='width:100%;background:var(--raised-s);color:var(--text);border:1px solid var(--trim-d);border-radius:6px;padding:7px 9px;font-size:calc(14px*var(--tscale));cursor:var(--cur-pointer)';
-    var groups=[['combat','Combat Gear'],['jewelry','Jewelry']];
-    for(var gi=0;gi<groups.length;gi++){
-      var gtype=groups[gi][0], glabel=groups[gi][1];
-      var inGroup=owned.filter(function(id){return _socketGroupOf(id)===gtype;});
-      if(!inGroup.length) continue;
-      var og=document.createElement('optgroup'); og.label=glabel;
-      for(var ti=0;ti<inGroup.length;ti++){
-        var id=inGroup[ti];
-        var sd=(state.sockets&&state.sockets[id])||null;
-        var slotN=sd?sd.slots:0, filledN=sd?sd.gems.filter(function(g){return !!g;}).length:0;
-        var isEq=(state.combatEquipped&&Object.values(state.combatEquipped).indexOf(id)>=0)||(state.skillingEquipped&&Object.values(state.skillingEquipped).indexOf(id)>=0);
-        var socketStr=slotN>0?(' · '+filledN+'/'+slotN+' gems'):(' · no sockets yet');
-        var o=document.createElement('option'); o.value=id;
-        o.textContent=(isEq?'✓ ':'')+(ITEMS[id]?ITEMS[id].name:id)+socketStr;
-        if(id===_socketSel) o.selected=true;
-        og.appendChild(o);
-      }
-      gearSel.appendChild(og);
-    }
-    gearSel.addEventListener('change',function(){ _socketSel=this.value; hideTooltip(); renderSockets(); });
-    left.appendChild(gearSel);
-
-    // RIGHT — the selected item's sockets + drill
-    renderSocketDetail(right, _socketSel);
-
-    cols.appendChild(left); cols.appendChild(right);
-    box.appendChild(cols);
+    stack.appendChild(_soEl('so-empty','No socketable gear yet. Craft combat armour or jewelry — '
+      +'helmets, chests, legs, boots and rings/amulets all take sockets.'));
+    box.appendChild(stack);
+    renderGemExchange(stack);
+    return;
   }
+  if(!_socketSel || owned.indexOf(_socketSel)<0){ _socketSel=owned[0]; _socketArmed=null; }
+  const redraw=function(){ renderSockets(); };
 
-  // ── Gem Exchange (gem_dust → socket gems) ──
-  renderGemExchange(box);
+  /* ── what you are wearing ──
+     Combat slots come out of the combat loadout, jewelry out of the skilling one,
+     because that is exactly where each half of the totals below is summed from. */
+  stack.appendChild(_soWornStrip(redraw));
+
+  /* ── what it totals ── straight off the real bonus functions, so these numbers
+     can never drift from what combat and skilling actually apply. */
+  const tot=_soEl();
+  tot.appendChild(_soLab('What Your Gems Add Up To',1));
+  tot.appendChild(_soTotals());
+  stack.appendChild(tot);
+
+  /* ── the bench: rail | hero + drawer ── */
+  const two=_soEl('so-two');
+  const c1=_soEl('so-col'), c2=_soEl('so-col');
+
+  const railBox=_soEl();
+  railBox.appendChild(_soLab('Your Gear',0,owned.length+' pieces'));
+  const railWrap=_soEl('so-railwrap'), rail=_soEl('so-rail');
+  owned.forEach(function(id){ rail.appendChild(_soPieceCard(id,redraw)); });
+  railWrap.appendChild(rail);
+  railBox.appendChild(railWrap);
+  c1.appendChild(railBox);
+
+  c2.appendChild(_soBench(_socketSel,redraw));
+  c2.appendChild(_soDrawer(_socketSel,redraw));
+  two.appendChild(c1); two.appendChild(c2);
+  stack.appendChild(two);
+
+  box.appendChild(stack);
+  renderGemExchange(stack);
+
+  /* The fade says "more below". It has to go once the rail is scrolled to the end,
+     and must not show at all when nothing is clipped. Measured after layout — and
+     again next frame, because clientHeight is 0 while the view is display:none. */
+  const syncFade=function(){
+    const clipped=rail.scrollHeight>rail.clientHeight+2;
+    const atEnd=rail.scrollTop+rail.clientHeight>=rail.scrollHeight-2;
+    railWrap.classList.toggle('nofade', !clipped||atEnd);
+  };
+  rail.addEventListener('scroll',syncFade);
+  syncFade();
+  requestAnimationFrame(syncFade);
+  const selCard=rail.querySelector('.so-piece.sel');
+  if(selCard&&rail.scrollHeight>rail.clientHeight+2){
+    rail.scrollTop=Math.max(0,selCard.offsetTop-rail.clientHeight/2+selCard.offsetHeight/2);
+    syncFade();
+  }
 }
 
-/* Owned socket gems, ordered color→tier, as {id,name,desc,qty} — for the slot dropdown. */
-function _ownedSocketGems(){
-  var out=[]; var order=['sanguine','verdant','azure','topaz','onyx'];
-  for(var ci=0;ci<order.length;ci++){ for(var t=1;t<=3;t++){
-    for(var key in SOCKET_GEMS){ var g=SOCKET_GEMS[key];
-      if(g.color===order[ci]&&g.tier===t){ var q=state.items[key]||0; if(q>0) out.push({id:key,name:g.name,desc:g.desc,qty:q}); break; }
+/* Select a piece and arm its first empty socket, so a one-socket item is a single
+   click away from taking a gem. */
+function _soSelect(id,redraw){
+  _socketSel=id;
+  var sd=getSocketData(id);
+  _socketArmed=null;
+  for(var i=0;i<sd.slots;i++){ if(!sd.gems[i]){ _socketArmed=i; break; } }
+  hideTooltip(); redraw();
+}
+
+function _soWornStrip(redraw){
+  const wrap=_soEl();
+  wrap.appendChild(_soLab('What You Are Wearing'));
+  const grid=_soEl('so-worn');
+  const rows=[['helmet','combat'],['chest','combat'],['legs','combat'],['boots','combat'],
+              ['ring_l','skilling'],['ring_r','skilling'],['amulet','skilling']];
+  rows.forEach(function(pair){
+    const slot=pair[0], scope=pair[1];
+    const map=(scope==='combat'?state.combatEquipped:state.equipped)||{};
+    const id=map[slot];
+    const card=document.createElement('button');
+    if(!id||!canSocket(id)){
+      card.className='so-slot bare';
+      card.innerHTML='<div class="sw"><div class="well">'+iconHTML('ui_gem')+'</div>'
+        +'<div style="min-width:0"><div class="sl">'+SO_SLOTLAB[slot]+'</div>'
+        +'<div class="nm">'+(id?(ITEMS[id]?ITEMS[id].name:id):'empty')+'</div></div></div>'
+        +'<div class="sf"><span class="st">'+(id?'not socketable':'—')+'</span></div>';
+      grid.appendChild(card); return;
     }
-  }}
-  return out;
+    const sd=getSocketData(id), filled=sd.gems.filter(Boolean).length;
+    const st=sd.slots===0 ? '<span class="st">no sockets</span>'
+      : filled<sd.slots ? '<span class="st gap">'+(sd.slots-filled)+' empty</span>'
+      : '<span class="st done">'+filled+' set</span>';
+    card.className='so-slot'+(id===_socketSel?' sel':'');
+    card.innerHTML='<div class="sw"><div class="well">'+iconHTML(id)+'</div>'
+      +'<div style="min-width:0"><div class="sl">'+SO_SLOTLAB[slot]+'</div>'
+      +'<div class="nm">'+(ITEMS[id]?ITEMS[id].name:id)+'</div></div></div>'
+      +'<div class="sf">'+_soPips(id)+st+'</div>';
+    card.addEventListener('click',function(){ _soSelect(id,redraw); });
+    grid.appendChild(card);
+  });
+  wrap.appendChild(grid);
+  return wrap;
 }
 
-/* Detail card: drill + per-socket gem swap UI for one selected gear item. */
-function renderSocketDetail(box, itemId){
-  if(!itemId) return;
-  var it=ITEMS[itemId];
-  var sd=getSocketData(itemId);
-  var equipped=state.equipped&&Object.values(state.equipped).indexOf(itemId)>=0;
-  var cap=maxSocketsFor(itemId);
+/* Totals read straight off combatSocketBonuses() / socketBonuses() — the same
+   functions combat and skilling consume — so the strip cannot say one thing while
+   the game does another. */
+function _soTotals(){
+  const cb=combatSocketBonuses(), sb=socketBonuses();
+  const rows=[['atk',cb.atkBoost,'Attack','sanguine'],['hp',cb.hpBoost,'Max HP','verdant'],
+              ['def',cb.defBoost,'Defence','azure'],['gp',sb.gpBoost,'Sell Value','topaz'],
+              ['sp',sb.speed,'Speed','onyx'],['xp',sb.xpBoost,'Skill XP','onyx']];
+  const grid=_soEl('so-tot');
+  grid.innerHTML=rows.map(function(r){
+    const v=r[1]||0, c=SO_LINE[r[3]];
+    return '<div class="tt'+(v?'':' nil')+'" style="--pc:'+(v?c.hex:'#332c1e')+'">'
+      +'<b>+'+Math.round(v*100)+'%</b><span>'+r[2]+'</span><i></i></div>';
+  }).join('');
+  const wrap=_soEl();
+  wrap.appendChild(grid);
+  wrap.appendChild(_soEl('so-totnote','<b>Attack · Max HP · Defence</b> come from gems in your '
+    +'worn <b>combat</b> gear. <b>Sell Value · Speed · Skill XP</b> come from gems in your worn '
+    +'<b>skilling</b> gear. A gem in a piece you are not wearing pays nothing.'));
+  return wrap;
+}
 
-  var card=document.createElement('div');
-  card.style.cssText='border:1px solid '+(sd.slots>0?'var(--ember)':'var(--trim-d)')+';border-radius:6px;padding:8px 10px;margin-top:4px;background:var(--raised)';
+function _soPieceCard(id,redraw){
+  const sd=getSocketData(id), filled=sd.gems.filter(Boolean).length;
+  const w=_soWornIn(id);
+  const btn=document.createElement('button');
+  btn.className='so-piece'+(id===_socketSel?' sel':'');
+  btn.style.setProperty('--ec',_soEdge(id));
+  /* A piece can carry gems that are live and gems that are dead at the same time
+     (a topaz and an azure in the same ring), so the tag reports the piece, and the
+     hole reports the gem. */
+  const anyDead=sd.gems.some(function(g){ return g&&!_soGemLive(id,g); });
+  const tag=(w.combat||w.skilling)
+    ? '<span class="so-tag'+(anyDead?' idle':'')+'">'+(anyDead?'part idle':'worn')+'</span>'
+    : (filled?'<span class="so-tag idle">idle</span>':'');
+  btn.innerHTML=iconHTML(id)+'<span class="pw"><span class="pn">'+(ITEMS[id]?ITEMS[id].name:id)+'</span>'
+    +'<span class="pr">'+_soPips(id)+'<em>'+(sd.slots?filled+'/'+sd.slots+' set':'undrilled')+'</em></span></span>'+tag;
+  btn.addEventListener('click',function(){ _soSelect(id,redraw); });
+  return btn;
+}
 
-  var eqNote=equipped
-    ?'<span style="font-size:11px;color:var(--green)">● equipped</span>'
-    :'<span style="font-size:11px;color:var(--muted)">not equipped</span>';
+/* The bench: the piece being worked on, its holes, and the drill row. Each hole is
+   the control — click an empty one to arm it, then pick a gem from the drawer. */
+function _soBench(itemId,redraw){
+  const it=ITEMS[itemId], sd=getSocketData(itemId), cap=maxSocketsFor(itemId);
+  const w=_soWornIn(itemId);
+  const card=_soEl('so-hero');
+  card.style.setProperty('--ec',_soEdge(itemId));
 
-  var header=document.createElement('div');
-  header.style.cssText='display:flex;align-items:center;gap:7px;margin-bottom:8px';
-  header.innerHTML='<span style="font-size:21px">'+iconHTML(itemId)+'</span>'
-    +'<div style="flex:1;min-width:0"><div style="font-size:calc(13px*var(--tscale));color:var(--trim)">'+(it?it.name:'Unknown')+'  '+eqNote+'</div>'
-    +'<div style="font-size:calc(12px*var(--tscale));color:var(--muted)">'+sd.slots+' / '+cap+' sockets</div></div>';
-  card.appendChild(header);
+  const wornTxt = (w.combat&&w.skilling) ? '<span class="live">● worn — combat &amp; skilling</span>'
+    : w.combat ? '<span class="live">● worn — combat loadout</span>'
+    : w.skilling ? '<span class="live">● worn — skilling loadout</span>'
+    : '<span class="dead">not worn — its gems pay nothing</span>';
+  const head=_soEl('hd');
+  head.innerHTML='<div class="well">'+iconHTML(itemId)+'</div><div style="min-width:0">'
+    +'<h4>'+(it?it.name:itemId)+'</h4>'
+    +'<div class="sb">'+(SO_SLOTLAB[it&&it.cslot]||(JEWELRY_GEM_TIER[itemId]?'Jewelry':'Gear'))
+    +' · holds '+cap+' gem'+(cap>1?'s':'')+' · '+wornTxt+'</div></div>';
+  card.appendChild(head);
 
-  // ── Existing sockets ──
-  if(sd.slots>0){
-    var slotsRow=document.createElement('div');
-    slotsRow.style.cssText='display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px';
-    for(var si=0;si<sd.slots;si++){
-      (function(slotIdx){
-        var gemId=sd.gems[slotIdx];
-        var gem=gemId?SOCKET_GEMS[gemId]:null;
-        var gemItem=gemId?ITEMS[gemId]:null;
-        var slotCard=document.createElement('div');
-        slotCard.style.cssText='display:flex;flex-direction:column;align-items:flex-start;gap:2px;'
-          +'padding:5px 7px;border-radius:5px;min-width:130px;flex:1;'
-          +'background:var(--raised-s);'
-          +'border:1px solid '+(gem?'var(--ember)':'var(--trim-d)');
-        var label='<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px">Socket '+(slotIdx+1)+'</div>';
-        if(gem){
-          slotCard.innerHTML=label
-            +'<div style="font-size:calc(13px*var(--tscale));color:var(--text);line-height:1.2"><span style="font-size:15px;vertical-align:middle">'+iconHTML(gemId)+'</span> <b style="color:var(--ember)">'+gem.name+'</b></div>'
-            +'<div style="font-size:11px;color:var(--muted);line-height:1.25">'+gem.desc+'</div>';
-          var remBtn=document.createElement('button');
-          remBtn.style.cssText='margin-top:3px;font-size:11px;padding:2px 7px;border-radius:4px;background:var(--panel);border:1px solid var(--trim-d);color:var(--muted);cursor:var(--cur-pointer)';
-          remBtn.textContent='✕ Remove';
-          remBtn.title='Pop the gem out — returned to your satchel';
-          remBtn.addEventListener('click',function(){
-            removeSocketGem(itemId, slotIdx);
-            _socketSlotPicker=null;
-            toast('Gem returned to satchel.');
-            renderSockets(); renderGear(); renderRightPanel();
-          });
-          slotCard.appendChild(remBtn);
-        } else {
-          // Empty socket — a dropdown of owned gems slots one instantly on pick.
-          slotCard.innerHTML=label;
-          var ownedGems=_ownedSocketGems();
-          if(!ownedGems.length){
-            slotCard.innerHTML+='<div style="font-size:11px;color:var(--muted);font-style:italic">empty — no gems yet</div>';
-          } else {
-            var gsel=document.createElement('select');
-            gsel.style.cssText='width:100%;margin-top:2px;background:var(--panel);color:var(--text);border:1px solid var(--trim-d);border-radius:5px;padding:3px 5px;font-size:calc(12px*var(--tscale));cursor:var(--cur-pointer)';
-            var opt0=document.createElement('option'); opt0.value=''; opt0.textContent='＋ Slot a gem…'; gsel.appendChild(opt0);
-            ownedGems.forEach(function(g){ var o=document.createElement('option'); o.value=g.id; o.textContent=g.name+' ×'+g.qty+' · '+g.desc; gsel.appendChild(o); });
-            (function(sIdx){ gsel.addEventListener('change',function(){
-              var gid=this.value; if(!gid) return;
-              if(setSocketGem(itemId,sIdx,gid)){ toast('✦ Slotted '+(SOCKET_GEMS[gid]?SOCKET_GEMS[gid].name:'gem')+'!'); hideTooltip(); renderSockets(); renderGear(); renderRightPanel(); }
-            }); })(slotIdx);
-            slotCard.appendChild(gsel);
+  const holes=_soEl('so-holes');
+  for(let i=0;i<cap;i++){
+    (function(idx){
+      const hole=document.createElement('button');
+      if(idx>=sd.slots){
+        const cost=SOCKET_DRILL_COSTS[idx+1];
+        hole.className='so-hole undrilled'; hole.disabled=true;
+        hole.innerHTML='<div class="gw">'+iconHTML('ui_gem')+'</div><div class="hw">'
+          +'<span class="hn">not drilled</span>'
+          +'<span class="hx">'+cost.coins.toLocaleString()+'g + '+cost.gem_dust+' dust</span></div>'
+          +'<span class="ix">'+(idx+1)+'</span>';
+      } else if(sd.gems[idx]){
+        const gid=sd.gems[idx], gem=SOCKET_GEMS[gid], c=SO_LINE[gem.color];
+        const live=_soGemLive(itemId,gid);
+        hole.className='so-hole set'; hole.style.setProperty('--pc',c.hex);
+        hole.innerHTML='<div class="gw">'+iconHTML(gid)+'</div><div class="hw">'
+          +'<span class="hn">'+gem.name+'</span>'
+          +'<span class="hv'+(live?'':' dead')+'">'+(live?_soShort(gem.desc)
+              :_soShort(gem.desc)+' — idle here')+'</span></div>'
+          +'<span class="ix">'+(idx+1)+'</span>';
+        const pop=document.createElement('button');
+        pop.className='so-pop'; pop.textContent='pop out';
+        pop.title='Take the gem back out — it returns to your satchel';
+        pop.addEventListener('click',function(ev){
+          ev.stopPropagation();
+          if(removeSocketGem(itemId,idx)){
+            _socketArmed=idx; toast('Gem returned to satchel.');
+            hideTooltip(); redraw(); renderGear(); renderRightPanel();
           }
-        }
-        slotsRow.appendChild(slotCard);
-      })(si);
-    }
-    card.appendChild(slotsRow);
+        });
+        hole.appendChild(pop);
+        attachTooltip(hole,gid);
+        hole.addEventListener('click',function(){ _socketArmed=idx; hideTooltip(); redraw(); });
+      } else {
+        const armed=(_socketArmed===idx);
+        hole.className='so-hole hollow'+(armed?' armed':'');
+        hole.innerHTML='<div class="gw">'+iconHTML('ui_gem')+'</div><div class="hw">'
+          +'<span class="hn">'+(armed?'choosing a gem…':'empty socket')+'</span>'
+          +'<span class="hx">'+(armed?'pick one from the drawer below':'click to fill this one')+'</span></div>'
+          +'<span class="ix">'+(idx+1)+'</span>';
+        hole.addEventListener('click',function(){
+          _socketArmed=(_socketArmed===idx)?null:idx; hideTooltip(); redraw();
+        });
+      }
+      holes.appendChild(hole);
+    })(i);
   }
+  card.appendChild(holes);
 
-  // ── Drill next socket ──
+  const drill=_soEl('so-drill'), dw=_soEl('dw');
   if(sd.slots<cap){
-    var nextIdx=sd.slots+1;
-    var cost=SOCKET_DRILL_COSTS[nextIdx];
-    var coinHave=state.coins||0, coinNeed=cost.coins*SILVER_PER_GOLD;
-    var dustHave=state.items['gem_dust']||0, dustNeed=cost.gem_dust||0;
-    var canAfford=coinHave>=coinNeed && dustHave>=dustNeed;
-    var costStr='<span style="color:'+(coinHave>=coinNeed?'var(--green)':'var(--red)')+'">'+iconHTML('ui_coin')+' '+cost.coins.toLocaleString()+'g</span>'
-              +'  <span style="color:'+(dustHave>=dustNeed?'var(--green)':'var(--red)')+'">'+iconHTML('gem_dust')+' '+dustNeed+' Gem Dust</span>';
-    var drillRow=document.createElement('div');
-    drillRow.style.cssText='display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding-top:8px;border-top:1px solid var(--trim-d)';
-    drillRow.innerHTML='<div style="font-size:calc(13px*var(--tscale));color:var(--muted)">Drill socket '+nextIdx+' of '+cap+':  '+costStr+'</div>';
-    var drillBtn=document.createElement('button');
-    drillBtn.style.cssText='font-size:calc(13px*var(--tscale));padding:5px 12px;border-radius:4px;cursor:var(--cur-pointer);'
-      +'background:'+(canAfford?'var(--ember)':'var(--raised-s)')+';'
-      +'border:1px solid '+(canAfford?'var(--ember)':'var(--trim-d)')+';'
-      +'color:'+(canAfford?'#fff':'var(--muted)')+';'
-      +(canAfford?'':'opacity:0.6');
-    drillBtn.textContent='Drill Socket';
-    drillBtn.addEventListener('click',function(){
-      // renderHeader is what paints #coins — the drill deducts gold and gem dust, so
-      // without these two the header gold and the satchel both sat on stale numbers.
-      if(drillSocket(itemId)){ renderHeader(); renderSockets(); renderGear(); renderRightPanel(); }
+    const cost=SOCKET_DRILL_COSTS[sd.slots+1];
+    const okC=(state.coins||0)>=cost.coins*SILVER_PER_GOLD;
+    const okD=(state.items['gem_dust']||0)>=(cost.gem_dust||0);
+    dw.innerHTML='<div class="dl">Drill socket '+(sd.slots+1)+' of '+cap+'</div>'
+      +'<div class="dr"><span class="'+(okC?'yes':'no')+'">'+iconHTML('ui_coin')+cost.coins.toLocaleString()+'g</span>'
+      +'<span class="'+(okD?'yes':'no')+'">'+iconHTML('gem_dust')+cost.gem_dust+' Gem Dust</span></div>';
+    drill.appendChild(dw);
+    const b=document.createElement('button');
+    b.className='so-btn'+(okC&&okD?'':' off');
+    b.textContent='Drill Socket';
+    b.addEventListener('click',function(){
+      /* renderHeader is what paints #coins — without it the header gold sits on a
+         stale number after the spend. */
+      if(drillSocket(itemId)){
+        _socketArmed=getSocketData(itemId).slots-1;
+        renderHeader(); redraw(); renderGear(); renderRightPanel();
+      }
     });
-    drillRow.appendChild(drillBtn);
-    card.appendChild(drillRow);
+    drill.appendChild(b);
   } else {
-    var maxRow=document.createElement('div');
-    maxRow.style.cssText='padding-top:8px;border-top:1px solid var(--trim-d);font-size:calc(13px*var(--tscale));color:var(--ember);font-style:italic';
-    maxRow.textContent='Maximum sockets reached.';
-    card.appendChild(maxRow);
+    const openN=sd.gems.slice(0,sd.slots).filter(function(g){ return !g; }).length;
+    dw.innerHTML='<div class="dl quiet">'+(openN
+      ? 'Every socket is drilled — '+(openN>1?'two are':'one is')+' still empty.'
+      : 'Fully socketed. Nothing more to do to this piece.')+'</div>';
+    drill.appendChild(dw);
   }
-
-  box.appendChild(card);
+  card.appendChild(drill);
+  return card;
 }
 
-/* Gem Exchange — compact 5 (color) × 3 (tier) grid. Each cell is a small tile with
-   icon, tier name, owned count, cost, and a craft button. */
-function renderGemExchange(box){
-  var wrap=document.createElement('div');
-  wrap.style.cssText='margin-top:18px;border-top:1px solid var(--trim-d);padding-top:12px';
+/* The gem drawer. This is what replaced the per-socket <select>: your gems are
+   visible with their effects, and clicking one drops it into the armed hole. */
+function _soDrawer(itemId,redraw){
+  const wrap=_soEl();
+  const sd=getSocketData(itemId);
+  const gems=_ownedSocketGems();
 
-  var head=document.createElement('div');
-  head.style.cssText='display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-bottom:8px';
-  head.innerHTML='<div style="font-size:calc(12px*var(--tscale));color:var(--ember);text-transform:uppercase;letter-spacing:2px">Gem Exchange</div>'
-    +'<div style="font-size:calc(12px*var(--tscale));color:var(--muted)">Craft socket gems from <b style="color:var(--text)">Gem Dust</b> — combat drops will supplement supply later.</div>';
+  const openIdx=(function(){
+    if(_socketArmed!=null&&_socketArmed<sd.slots&&!sd.gems[_socketArmed]) return _socketArmed;
+    for(var i=0;i<sd.slots;i++){ if(!sd.gems[i]) return i; }
+    return null;
+  })();
+
+  const say=_soEl('so-say'+(openIdx==null?' quiet':''));
+  say.innerHTML='<span class="bd"></span>'+(
+    !sd.slots ? 'No sockets drilled in this piece yet — drill one above first.'
+    : openIdx==null ? 'Every socket here is filled. Pop one out above to swap it.'
+    : 'Socket <b>'+(openIdx+1)+'</b> is open — pick a gem below to set it.');
+  wrap.appendChild(say);
+
+  wrap.appendChild(_soLab('Gems In Your Satchel',1,gems.length?gems.length+' kinds':null));
+  if(!gems.length){
+    wrap.appendChild(_soEl('so-empty','No socket gems yet. Kill monsters for drops, '
+      +'or cut some from Gem Dust at the Exchange below.'));
+    return wrap;
+  }
+  const drawer=_soEl('so-drawer');
+  gems.forEach(function(g){
+    const c=SO_LINE[SOCKET_GEMS[g.id].color];
+    const btn=document.createElement('button');
+    btn.className='so-gem';
+    btn.style.setProperty('--pc',c.hex);
+    btn.innerHTML=iconHTML(g.id)+'<span class="gw"><span class="gn">'+g.name+'</span>'
+      +'<span class="gv">'+_soShort(g.desc)+'</span></span><span class="gq">'+g.qty+'</span>';
+    attachTooltip(btn,g.id);
+    btn.addEventListener('click',function(){
+      if(!sd.slots){ toast('Drill a socket first.'); return; }
+      if(openIdx==null){ toast('No empty socket — pop one out first.'); return; }
+      if(setSocketGem(itemId,openIdx,g.id)){
+        toast('✦ Set '+g.name+'!');
+        _socketArmed=null;
+        for(var i=0;i<sd.slots;i++){ if(!sd.gems[i]){ _socketArmed=i; break; } }
+        hideTooltip(); redraw(); renderGear(); renderRightPanel();
+      }
+    });
+    drawer.appendChild(btn);
+  });
+  wrap.appendChild(drawer);
+  return wrap;
+}
+
+/* Gem Exchange — five gem LINES, each stating what it does, then three readable
+   tier cards. The old version was a 5x3 grid of 34px tiles carrying an icon, "x0"
+   and a dust number, so you had to hover every single cell to learn anything. */
+function renderGemExchange(parent){
+  const wrap=_soEl();
+  wrap.style.marginTop='5px';
+  wrap.appendChild(_soLab('Gem Exchange — cut new gems from Gem Dust',1));
+
+  const head=_soEl('so-ehead');
+  head.innerHTML='<div>Gem line</div><div>'+SO_TIER[1]+'</div><div>'+SO_TIER[2]+'</div><div>'+SO_TIER[3]+'</div>';
   wrap.appendChild(head);
 
-  var GEM_ORDER=['sanguine','verdant','azure','topaz','onyx'];
-  var TIER_ORDER=[1,2,3];
-  var TIER_LABEL={1:'Chipped',2:'Polished',3:'Flawless'};
-  var COLOR_LABEL={sanguine:'Sanguine',verdant:'Verdant',azure:'Azure',topaz:'Topaz',onyx:'Onyx'};
-  var COLOR_ACCENT={sanguine:'#d44a4a',verdant:'#5fb056',azure:'#5a8fd8',topaz:'#e0b440',onyx:'#9a9a9a'};
-
-  // Tier-header strip
-  var headerRow=document.createElement('div');
-  headerRow.style.cssText='display:grid;grid-template-columns:80px repeat(3, minmax(0,1fr));gap:4px;margin-bottom:4px';
-  var spacer=document.createElement('div'); headerRow.appendChild(spacer);
-  for(var ti=0;ti<TIER_ORDER.length;ti++){
-    var th=document.createElement('div');
-    th.style.cssText='font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;text-align:center';
-    th.textContent=TIER_LABEL[TIER_ORDER[ti]];
-    headerRow.appendChild(th);
-  }
-  wrap.appendChild(headerRow);
-
-  for(var ci=0;ci<GEM_ORDER.length;ci++){
-    var color=GEM_ORDER[ci];
-    var grid=document.createElement('div');
-    grid.style.cssText='display:grid;grid-template-columns:80px repeat(3, minmax(0,1fr));gap:4px;margin-bottom:4px;align-items:stretch';
-
-    // Color label cell
-    var lab=document.createElement('div');
-    lab.style.cssText='display:flex;align-items:center;font-size:calc(12px*var(--tscale));color:'+COLOR_ACCENT[color]+';font-weight:600;letter-spacing:.5px;padding-left:2px';
-    lab.textContent=COLOR_LABEL[color];
-    grid.appendChild(lab);
-
-    for(var tj=0;tj<TIER_ORDER.length;tj++){
-      var tier=TIER_ORDER[tj];
-      var gid=null;
-      for(var key in SOCKET_GEMS){
-        if(SOCKET_GEMS[key].color===color&&SOCKET_GEMS[key].tier===tier){ gid=key; break; }
-      }
-      if(!gid){ var blank=document.createElement('div'); grid.appendChild(blank); continue; }
-      var gem=SOCKET_GEMS[gid];
-      var gIt=ITEMS[gid];
-      var cost=SOCKET_GEM_EXCHANGE_COST[tier];
-      var qty=state.items[gid]||0;
-      var dustHave=state.items['gem_dust']||0;
-      var dustNeed=cost.gem_dust;
-      var canAfford=dustHave>=dustNeed;
-      var accent=COLOR_ACCENT[color];
-      (function(gemId, gemName, gemDesc, gemIcon, gemQty, dustCost, canBuy, accentColor){
-        var tile=document.createElement('button');
-        tile.style.cssText='display:flex;align-items:center;gap:6px;padding:5px 8px;text-align:left;'
-          +'background:var(--raised);border:1px solid '+(canBuy?accentColor:'var(--trim-d)')+';'
-          +'border-radius:4px;cursor:'+(canBuy?'pointer':'default')+';color:var(--text);min-height:34px;'
-          +(canBuy?'':'opacity:0.65');
-        tile.innerHTML='<span style="font-size:16px;line-height:1">'+gemIcon+'</span>'
-          +'<span style="font-size:calc(12px*var(--tscale));color:var(--muted);min-width:24px">x'+gemQty+'</span>'
-          +'<span style="font-size:11px;color:'+(canBuy?'var(--green)':'var(--red)')+';margin-left:auto;white-space:nowrap">✨ '+dustCost+'</span>';
-        attachTooltip(tile, gemId);
-        if(canBuy){
-          tile.addEventListener('click',function(){
-            var have=state.items['gem_dust']||0;
-            if(have<dustCost){ toast('Not enough Gem Dust.'); return; }
-            state.items['gem_dust']=have-dustCost;
-            state.items[gemId]=(state.items[gemId]||0)+1;
-            markDiscovered&&markDiscovered(gemId);
-            saveGame();
-            toast('Crafted 1× '+gemName+'!');
-            hideTooltip();
-            renderSockets(); renderRightPanel();
-          });
-        }
-        grid.appendChild(tile);
-      })(gid, gem.name, gem.desc, iconHTML(gid), qty, dustNeed, canAfford, accent);
-    }
-    wrap.appendChild(grid);
-  }
-
-  // Legend
-  var legend=document.createElement('div');
-  legend.style.cssText='margin-top:8px;font-size:11px;color:var(--muted);line-height:1.5';
-  legend.innerHTML='<span style="color:#d44a4a">Sanguine</span> +Attack · '
-    +'<span style="color:#5fb056">Verdant</span> +HP · '
-    +'<span style="color:#5a8fd8">Azure</span> +Defence · '
-    +'<span style="color:#e0b440">Topaz</span> +Sell Value · '
-    +'<span style="color:#9a9a9a">Onyx</span> +Speed/XP &nbsp;·&nbsp; hover any gem for details';
-  wrap.appendChild(legend);
-
-  box.appendChild(wrap);
+  const exch=_soEl('so-exch');
+  SO_ORDER.forEach(function(color){
+    const c=SO_LINE[color];
+    const row=_soEl('so-erow');
+    row.style.setProperty('--pc',c.hex);
+    const line=_soEl('so-eline','<b>'+c.label+'</b><span>+ '+c.stat+' &nbsp;·&nbsp; '+c.kind+'</span>');
+    row.appendChild(line);
+    _soLineGems(color).forEach(function(gid){
+      const gem=SOCKET_GEMS[gid];
+      const cost=(SOCKET_GEM_EXCHANGE_COST[gem.tier]||{}).gem_dust||0;
+      const have=state.items['gem_dust']||0, own=state.items[gid]||0;
+      const ok=have>=cost;
+      const tile=document.createElement('button');
+      tile.className='so-tile'+(ok?'':' off');
+      tile.innerHTML=iconHTML(gid)+'<span class="tw"><span class="tv">'+_soShort(gem.desc)+'</span>'
+        +'<span class="th">you have <b>'+own+'</b></span></span>'
+        +'<span class="tc '+(ok?'yes':'no')+'">'+iconHTML('gem_dust')+cost.toLocaleString()+'</span>';
+      attachTooltip(tile,gid);
+      if(ok) tile.addEventListener('click',function(){
+        const dust=state.items['gem_dust']||0;
+        if(dust<cost){ toast('Not enough Gem Dust.'); return; }
+        state.items['gem_dust']=dust-cost;
+        state.items[gid]=(state.items[gid]||0)+1;
+        markDiscovered&&markDiscovered(gid);
+        saveGame();
+        toast('Cut 1× '+gem.name+'!');
+        hideTooltip(); renderSockets(); renderRightPanel();
+      });
+      row.appendChild(tile);
+    });
+    exch.appendChild(row);
+  });
+  wrap.appendChild(exch);
+  parent.appendChild(wrap);
 }
 
 /* ════ COMBAT MODULE (base scaffold) ═════════════════════════════════════════════ */
