@@ -5025,6 +5025,7 @@ body:not(.is-demo) .demo-only{display:none !important}
 
 
 
+
 /* ==FULLSTAGE-CSS-START== */
 <style>
 /* ════════ FULL STAGE COMBAT ARENA ══════════════════════════════════════════
@@ -5218,8 +5219,8 @@ body:not(.is-demo) .demo-only{display:none !important}
    not a generic [data-tip] rule. The stage's own classes were never added, so
    every drop row and stat tile carried a data-tip that could never render.
    Same treatment, extended to them. */
-.cvdrop[data-tip],.cvst2[data-tip],.cvarena-foe[data-tip]{position:relative;cursor:var(--cur-help)}
-.cvdrop[data-tip]:hover::after,.cvst2[data-tip]:hover::after,.cvarena-foe[data-tip]:hover::after{
+.cvdrop[data-tip],.cvst2[data-tip]{position:relative;cursor:var(--cur-help)}
+.cvdrop[data-tip]:hover::after,.cvst2[data-tip]:hover::after{
   content:attr(data-tip);position:absolute;left:0;top:calc(100% + 6px);
   min-width:190px;max-width:290px;
   background:linear-gradient(180deg,#231711,#13090a);border:1px solid var(--trim,#c79b4e);
@@ -5256,7 +5257,7 @@ body:not(.is-demo) .demo-only{display:none !important}
    Also: .ev-icon forces width:1em AND height:1em, so a wide creature was being
    letterboxed inside a square by object-fit. Width auto keeps its real aspect. */
 .cvstage .cvarena-foe{width:fit-content;line-height:1}
-.cvstage .cvarena-art{display:block;line-height:1}
+.cvstage .cvarena-art{display:block;line-height:0}
 .cvstage .cvarena-art .ev-icon.art-mon{width:1em;height:1em;object-fit:contain}
 .cvstage .cvarena-art svg{width:1em;height:1em}
 
@@ -5326,7 +5327,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.126</div>
+  <div class="mm-ver">v0.9.127</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -10551,6 +10552,7 @@ function iconHTML(id){
   for(var k in ART_MON){ if(typeof ICONS!=='undefined') ICONS[k]=ART_MON[k]; }
 })();
 /* ==ART-PACK-END== */
+
 
 
 
@@ -27501,6 +27503,9 @@ function startCombatTimer(){
 function stopCombatTimer(){
   if(_combatTimer){ clearInterval(_combatTimer); _combatTimer=null; }
 }
+
+
+
 
 
 
