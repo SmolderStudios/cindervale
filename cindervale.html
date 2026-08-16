@@ -47,6 +47,9 @@
    [CSS-33]   SAILING & TREASURE HUNTING
    [CSS-34]   SKILL PANEL FOOTER
    [CSS-35]   ENCHANTING PANEL
+   [CSS-36]   SOCKET PANEL
+   [CSS-37]   MONSTER LOG (rebuild)
+   [CSS-38]   FORGE RAIL — SKILL TREE
    ════════════════════════════════════════════════════════════════════════════════ */
 /* ════════ [CSS-01] ROOT · RESET · TYPOGRAPHY ════════════════════════════════════ */
 /* Crimson Pro, inlined 0.9.21. This used to be an @import from Google Fonts.
@@ -5894,6 +5897,145 @@ body:not(.is-demo) .demo-only{display:none !important}
 
 
 .ev-icon.art-pet{object-fit:contain;image-rendering:auto;vertical-align:middle}
+
+/* ════════ [CSS-38] FORGE RAIL — SKILL TREE (0.9.135) ════════════════════════════
+   Replaces the [CSS-06] .tnode board. That layout hung the effect text off every
+   node at 11.5px in #7d6a4d, so fourteen nodes each carried three or four wrapped
+   lines of brown-on-brown and the connectors between them were thinner than the
+   gaps. All the reading moves into ONE docked strip at 13.5px; the board keeps
+   only the icon, the name and the rank.
+
+   This is the Combat Mastery board's idiom (HTML pucks over an SVG rail layer,
+   stub → crossbar → stub), so the two trees now render as the same object — see
+   [CSS-29]. Namespace is ft-, which was free; sk- belongs to .sk-banner*, st- to
+   .st-ic, so- to the socket panel.
+
+   Every one of the twelve trees is 12-14 nodes / 98 points / 10-11 points-gates /
+   never more than 3 abreast, so the column maths below fits all of them with no
+   authored coordinates. Layout is absolute over a measured board width because a
+   flex row cannot draw a crossbar between two specific children. */
+.ft-wrap{padding:2px}
+/* The board is a fixed-width drawing (FT_W in [JS-22c]); the scroll lives on the
+   WRAPPER, never on the board itself — an element cannot scroll its own overflow. */
+.ft-scroll{overflow-x:auto;overflow-y:hidden}
+.ft-board{position:relative;width:1032px;margin:0 auto;
+  background:radial-gradient(ellipse 70% 60% at 30% 40%,rgba(0,0,0,.28),transparent 70%)}
+.ft-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.ft-node{position:absolute;transform:translate(-50%,-50%);width:96px;padding:0;border:0;
+  background:0;cursor:var(--cur-pointer);display:flex;flex-direction:column;
+  align-items:center;gap:4px;font-family:inherit;color:inherit}
+.ft-node:focus-visible{outline:2px solid var(--ember);outline-offset:3px;border-radius:8px}
+.ft-puck{position:relative;width:52px;height:52px;border-radius:14px;display:grid;
+  place-items:center;
+  background:radial-gradient(circle at 50% 32%,#241a10,#0c0805 80%);
+  box-shadow:inset 0 2px 6px rgba(0,0,0,.88),0 0 0 1.5px rgba(214,170,96,.15),
+             0 3px 7px rgba(0,0,0,.55);
+  transition:box-shadow .18s,transform .18s}
+.ft-puck .ev-icon,.ft-puck svg{width:28px;height:28px;opacity:.34;filter:grayscale(.8);
+  transition:opacity .18s,filter .18s}
+.ft-node.on .ft-puck{box-shadow:inset 0 2px 6px rgba(0,0,0,.88),0 0 0 2px var(--ember),
+  0 0 15px rgba(224,118,47,.42),0 3px 7px rgba(0,0,0,.55)}
+.ft-node.maxed .ft-puck{box-shadow:inset 0 2px 6px rgba(0,0,0,.88),0 0 0 2px var(--ft-sk,var(--green)),
+  0 0 17px var(--ft-glow,rgba(125,163,63,.42)),0 3px 7px rgba(0,0,0,.55)}
+.ft-node.maxed .ft-puck::after{content:'';position:absolute;inset:8px;border-radius:9px;
+  background:radial-gradient(circle,var(--ft-glow,rgba(125,163,63,.42)),transparent 70%)}
+.ft-node.ready .ft-puck{box-shadow:inset 0 2px 6px rgba(0,0,0,.88),0 0 0 2px var(--trim),
+  0 0 15px rgba(199,155,78,.55),0 3px 7px rgba(0,0,0,.55);
+  animation:ft-avail 2.2s ease-in-out infinite}
+@keyframes ft-avail{0%,100%{filter:brightness(1)}50%{filter:brightness(1.32)}}
+@media(prefers-reduced-motion:reduce){ .ft-node.ready .ft-puck{animation:none} }
+.ft-node.on .ft-puck .ev-icon,.ft-node.maxed .ft-puck .ev-icon,.ft-node.ready .ft-puck .ev-icon,
+.ft-node.on .ft-puck svg,.ft-node.maxed .ft-puck svg,.ft-node.ready .ft-puck svg{opacity:1;filter:none}
+.ft-node:hover .ft-puck{transform:scale(1.06)}
+.ft-node.sel .ft-puck{transform:scale(1.09);outline:1px solid rgba(240,199,114,.6);outline-offset:3px}
+.ft-nm{font-size:calc(11.5px*var(--tscale));color:#8f7d5e;font-weight:600;text-align:center;
+  line-height:1.16;max-width:96px}
+.ft-node.on .ft-nm,.ft-node.maxed .ft-nm,.ft-node.ready .ft-nm{color:#e2d0aa}
+/* Locked has to be distinguishable from merely-not-bought-yet: both pucks are dark,
+   so the difference is carried by the NAME, not by dimming the whole node (that was
+   the [CSS-06] mistake — it dimmed the rank pill out of legibility too). */
+.ft-node.locked .ft-nm{color:#6d5c42}
+.ft-rk{position:absolute;bottom:-5px;right:-6px;min-width:24px;height:17px;padding:0 5px;
+  border-radius:9px;background:#120c07;border:1px solid rgba(214,170,96,.38);
+  font-family:var(--num);font-size:calc(10px*var(--tscale));color:#cbb98a;
+  display:grid;place-items:center;line-height:1}
+.ft-node.maxed .ft-rk{border-color:var(--ft-sk,var(--green));color:#c8e878}
+.ft-gate{position:absolute;transform:translateX(-50%);top:6px;font-family:var(--num);
+  font-size:calc(10px*var(--tscale));color:#6d5c42;letter-spacing:.05em;white-space:nowrap}
+.ft-gate.met{color:var(--gold-hi)}
+.ft-gm{position:absolute;top:0;bottom:0;border-left:1px dashed rgba(224,118,47,.3);
+  background:linear-gradient(90deg,rgba(224,118,47,.09),transparent 60%);pointer-events:none}
+/* Horizontal, in the band's own clear strip above the pucks. Set vertically it
+   landed straight on the first grandmaster node's name. */
+.ft-gm b{position:absolute;left:0;right:0;top:26px;text-align:center;
+  font-family:'Cinzel',serif;font-size:calc(10.5px*var(--tscale));letter-spacing:.24em;
+  color:rgba(224,118,47,.72);font-weight:400}
+.ft-gm b small{display:block;letter-spacing:.04em;font-size:calc(9.5px*var(--tscale));
+  color:#7a6a4a;margin-top:2px}
+
+/* ── the docked strip: everything the board no longer has to say ───────────── */
+.ft-dock{border-top:1px solid rgba(214,170,96,.14);background:rgba(0,0,0,.26);
+  border-radius:0 0 10px 10px;padding:12px 14px}
+.ft-dock-in{display:grid;grid-template-columns:250px minmax(0,1fr) 190px;gap:14px;
+  align-items:start}
+.ft-top{display:flex;align-items:center;gap:10px}
+.ft-top-ic{width:44px;height:44px;flex:0 0 44px;border-radius:11px;display:grid;
+  place-items:center;background:radial-gradient(circle at 50% 34%,#241a10,#0d0906 78%);
+  box-shadow:inset 0 2px 6px rgba(0,0,0,.85),0 0 0 1.5px var(--ft-dim,rgba(125,163,63,.3)),
+             0 0 12px var(--ft-glow,rgba(125,163,63,.4))}
+.ft-top-ic .ev-icon,.ft-top-ic svg{width:26px;height:26px}
+.ft-top-nm{font-family:'Cinzel',serif;font-size:calc(15.5px*var(--tscale));color:var(--text);
+  font-weight:600;line-height:1.15}
+.ft-top-sub{font-size:calc(11.5px*var(--tscale));color:var(--muted);margin-top:2px}
+.ft-top-rank{margin-left:auto;text-align:right;flex:none}
+.ft-top-rank b{font-family:var(--num);font-size:calc(19px*var(--tscale));color:var(--gold-hi)}
+.ft-top-rank s{text-decoration:none;font-family:var(--num);
+  font-size:calc(12.5px*var(--tscale));color:#8a7657}
+.ft-row{display:flex;gap:9px;align-items:flex-start;padding:7px 10px;border-radius:8px;
+  background:rgba(0,0,0,.26);border:1px solid rgba(214,170,96,.10);margin-bottom:6px}
+.ft-row i{font-style:normal;font-size:calc(10px*var(--tscale));letter-spacing:.09em;
+  text-transform:uppercase;color:#8a7657;flex:0 0 52px;padding-top:2px}
+.ft-row span{font-size:calc(13.5px*var(--tscale));color:var(--text);line-height:1.45;
+  text-align:left;min-width:0}
+.ft-row.next span{color:#bda87f}
+.ft-row.lock{border-color:rgba(196,84,58,.35)}
+.ft-row.lock span{color:#d08a5a}
+.ft-flav{font-size:calc(12.5px*var(--tscale));color:#9c8865;font-style:italic;
+  line-height:1.5;padding:1px 2px 0}
+.ft-buy{width:100%;padding:9px;border-radius:9px;cursor:var(--cur-pointer);font-weight:700;
+  font-family:'Cinzel',serif;font-size:calc(13.5px*var(--tscale));letter-spacing:.03em;
+  border:1px solid rgba(240,199,114,.45);color:#f4e0b4;align-self:center;
+  background:linear-gradient(180deg,#5a3d16,#3a2710);box-shadow:0 2px 0 rgba(0,0,0,.5)}
+.ft-buy:hover:not(:disabled){filter:brightness(1.12)}
+.ft-buy:active:not(:disabled){transform:translateY(1px);box-shadow:0 1px 0 rgba(0,0,0,.5)}
+.ft-buy:disabled{opacity:.4;cursor:var(--cur-na);filter:grayscale(.6)}
+
+/* ── header strip ─────────────────────────────────────────────────────────── */
+.ft-head{display:flex;align-items:center;gap:12px;padding:9px 14px;
+  border-bottom:1px solid rgba(214,170,96,.14);background:rgba(0,0,0,.22);
+  border-radius:10px 10px 0 0}
+.ft-head-pts b{font-family:var(--num);font-size:calc(18px*var(--tscale));color:var(--gold-hi)}
+.ft-head-pts span{font-size:calc(11.5px*var(--tscale));color:var(--muted);margin-left:4px}
+.ft-head-bar{flex:1;height:7px;border-radius:4px;background:rgba(0,0,0,.5);overflow:hidden;
+  box-shadow:inset 0 1px 3px rgba(0,0,0,.7)}
+.ft-head-bar i{display:block;height:100%;
+  background:linear-gradient(90deg,#6e552c,var(--gold-hi));transition:width .25s}
+.ft-head-spent{font-family:var(--num);font-size:calc(12px*var(--tscale));color:#a08a64}
+/* Four states on a dark puck are learnable but not guessable, and the old board
+   carried a legend. Keeping it costs one row and saves the question. */
+.ft-legend{display:flex;align-items:center;gap:10px;flex:none;
+  font-size:calc(10.5px*var(--tscale));color:#7a6a4a}
+.ft-legend span{display:flex;align-items:center;gap:4px}
+.ft-legend i{width:8px;height:8px;border-radius:50%;background:#2a1f14;display:block}
+.ft-legend i.lmax{box-shadow:0 0 0 1.5px var(--green),0 0 6px rgba(125,163,63,.5)}
+.ft-legend i.lon{box-shadow:0 0 0 1.5px var(--ember),0 0 6px rgba(224,118,47,.5)}
+.ft-legend i.lrdy{box-shadow:0 0 0 1.5px var(--trim),0 0 6px rgba(199,155,78,.5)}
+.ft-legend i.llock{box-shadow:0 0 0 1.5px rgba(214,170,96,.16)}
+
+@media (max-width:1180px){
+  .ft-dock-in{grid-template-columns:1fr;gap:10px}
+  .ft-legend{display:none}
+}
 </style>
 </head>
 <body>
@@ -5928,7 +6070,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.134</div>
+  <div class="mm-ver">v0.9.135</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -20969,126 +21111,203 @@ function renderActivities(){
 }
 
 /* ════ [JS-22c] passives / skill tree ════════════════════════════════════════════ */
-/* [UI-PREVIEW] The skill tree, rendered as a tree.
+/* The Forge Rail board. See [CSS-38] for why the old .tnode layout went: it hung the
+   effect text off every node at 11.5px in #7d6a4d, so fourteen nodes each carried
+   three or four wrapped lines of brown-on-brown. All the reading now happens in ONE
+   docked strip at 13.5px and the board carries only icon, name and rank.
+
    The data has no explicit parent links — gating is `req` (points-spent) plus, for the
    grandmaster tier, a level + all-bases-maxed check. So the honest shape is a TIERED
-   tree: one row per distinct `req` threshold, joined by a trunk that lights once that
-   threshold is paid. Layout is pure flex + CSS connectors, no absolute pixel coords, so
-   it survives --tscale and the root zoom without re-measuring anything. */
+   tree: one COLUMN per distinct `req` threshold, joined stub → crossbar → stub, which
+   is the idiom the Combat Mastery board already uses ([CSS-29]) — the two trees now
+   render as the same object.
+
+   Geometry is fixed px over a 1032px design width rather than measured, for two
+   reasons: renderPassives can run while #treeView is display:none (clientWidth would
+   be 0), and a measured board would need re-measuring on every root-zoom change.
+   Narrower viewports scroll the board inside .ft-scroll instead.
+
+   All twelve trees are 12-14 nodes / 98 points / 10-11 gates / never more than 3
+   abreast, so the column maths below covers every one with no authored coordinates. */
+const FT_W=1032, FT_PADX=56, FT_TOP=44, FT_ROW0=70, FT_ROW=112;
+/* Selection survives the renderAll() that spendPoint() fires — without this, buying a
+   point throws you back to the top of the tree on every single click. */
+const _ftSel={};
+
+function ftTiers(nodes){
+  const out=[], byReq={};
+  for(const n of nodes){
+    const k=n.req||0;
+    if(!byReq[k]){ byReq[k]={req:k,gm:k>=75,list:[]}; out.push(byReq[k]); }
+    byReq[k].list.push(n);
+  }
+  return out.sort((a,b)=>a.req-b.req);
+}
+
+/* One place decides locked / ready / maxed, so the puck, the dock and the buy button
+   can never disagree about a node — they all read this. */
+function ftNodeState(skill,node,ctx){
+  const rank=treeRank(skill,node.id);
+  const maxed=rank>=node.max;
+  const isGM=node.req>=75;
+  const lvlLocked=isGM&&ctx.lvl<(node.lvl||node.req);
+  const baseLocked=isGM&&!ctx.allBasesMaxed;
+  const ptsSpentLocked=!!node.reqPts&&ctx.spent<node.reqPts;
+  const pointsLocked=!isGM&&!!node.req&&ctx.spent<node.req;
+  const capeLocked=!!node.reqCape&&!hasSkillCape(skill);
+  const locked=lvlLocked||baseLocked||pointsLocked||ptsSpentLocked||capeLocked;
+  /* Order matters: name the gate the player can actually act on next. The cape and
+     points-spent gates outrank the generic column gate, which the column already
+     states above the node. */
+  let why='';
+  if(baseLocked&&lvlLocked)      why='Requires Level '+(node.lvl||node.req)+' and every base node maxed';
+  else if(baseLocked)            why='Max every base node first ('+ctx.baseLeft+' ranks remaining)';
+  else if(lvlLocked&&ptsSpentLocked) why='Requires Level '+(node.lvl||node.req)+' and '+node.reqPts+' points spent';
+  else if(lvlLocked)             why='Requires Level '+(node.lvl||node.req);
+  else if(capeLocked)            why='Requires the '+SKILLS[skill].name+' Cape (Shop)';
+  else if(ptsSpentLocked)        why='Requires '+node.reqPts+' points spent ('+(node.reqPts-ctx.spent)+' more)';
+  else if(pointsLocked)          why='Requires '+node.req+' points spent ('+(node.req-ctx.spent)+' more)';
+  return {rank,maxed,locked,why,
+    canBuy:!maxed&&!locked&&ctx.avail>0,
+    cls:maxed?'maxed':rank>0?'on':locked?'locked':(ctx.avail>0?'ready':'')};
+}
+
+/* The docked strip — the only place in the panel set at reading size. */
+function ftDockHTML(skill,node,ctx){
+  const st=ftNodeState(skill,node,ctx);
+  const cur=st.rank>0?node.desc(st.rank):'';
+  const nxt=st.rank<node.max?node.next(st.rank+1):'';
+  const tip=PASSIVE_TIPS[node.id]||'';
+  const sub=node.req>=75?'Grandmaster · Lv '+(node.lvl||node.req)
+           :node.req?node.req+' points spent'
+           :'Open from the start';
+  let rows='';
+  if(st.locked)        rows+='<div class="ft-row lock"><i>Locked</i><span>'+st.why+'</span></div>';
+  if(cur)              rows+='<div class="ft-row"><i>Now</i><span>'+cur+'</span></div>';
+  if(nxt&&!st.locked)  rows+='<div class="ft-row next"><i>Next</i><span>'+nxt+'</span></div>';
+  if(tip)              rows+='<div class="ft-flav">'+tip+'</div>';
+  const label=st.maxed?'Maxed':st.locked?'Locked'
+             :ctx.avail<=0?'No points to spend'
+             :'Spend a point ('+ctx.avail+' left)';
+  return '<div class="ft-dock-in">'
+   +'<div class="ft-top"><div class="ft-top-ic">'+node.icon+'</div>'
+   +'<div><div class="ft-top-nm">'+node.name+'</div>'
+   +'<div class="ft-top-sub">'+sub+'</div></div>'
+   +'<div class="ft-top-rank"><b>'+st.rank+'</b><s>/'+node.max+'</s></div></div>'
+   +'<div class="ft-rows">'+rows+'</div>'
+   +'<button class="ft-buy" type="button"'+(st.canBuy?'':' disabled')+'>'+label+'</button>'
+   +'</div>';
+}
+
 function renderPassives(){
   const box=$('treeView'); box.innerHTML='';
   box.style.cssText='display:block';
   const skill=selectedSkill;
-  const avail=availPoints(skill);
-  const spent=spentPoints(skill);
-  const lvl=levelFromXp(state.xp[skill]);
   const nodes=TREES[skill]||[];
-  const allBasesMaxed=nodes.filter(n=>n.req<75).every(n=>treeRank(skill,n.id)>=n.max);
+  if(!nodes.length) return;
 
-  const head=document.createElement('div');
-  head.className='tree-head';
-  head.innerHTML='<span class="th-pts"><b>'+avail+'</b> to spend</span>'
-    +'<span class="th-sep"></span><span class="th-spent">'+spent+' of 98 spent</span>'
-    +'<span class="th-legend">'
-    +'<i class="lg maxed"></i>Maxed<i class="lg on"></i>Ranked<i class="lg ready"></i>Can buy<i class="lg lock"></i>Locked'
-    +'</span>';
-  box.appendChild(head);
+  const bases=nodes.filter(n=>n.req<75);
+  const ctx={
+    avail:availPoints(skill),
+    spent:spentPoints(skill),
+    lvl:levelFromXp(state.xp[skill]),
+    allBasesMaxed:bases.every(n=>treeRank(skill,n.id)>=n.max),
+    baseLeft:bases.reduce((a,n)=>a+Math.max(0,n.max-treeRank(skill,n.id)),0),
+  };
 
-  // Bucket nodes by their points-spent threshold, keeping authored order inside a tier.
-  const tiers=[];
-  const byReq={};
-  for(const n of nodes){
-    const k=n.req||0;
-    if(!byReq[k]){ byReq[k]={req:k,gm:k>=75,list:[]}; tiers.push(byReq[k]); }
-    byReq[k].list.push(n);
-  }
-  tiers.sort((a,b)=>a.req-b.req);
+  const tiers=ftTiers(nodes);
+  const COLW=Math.floor((FT_W-FT_PADX*2)/Math.max(1,tiers.length-1));
+  const maxRows=Math.max.apply(null,tiers.map(t=>t.list.length));
+  const H=FT_TOP+FT_ROW0+(maxRows-1)*FT_ROW+60;
+  const xOf=ti=>FT_PADX+ti*COLW;
+  const yOf=i=>FT_TOP+FT_ROW0+i*FT_ROW;
 
   const wrap=document.createElement('div');
-  wrap.className='tree-wrap';
-  let gmShown=false;
+  wrap.className='ft-wrap';
 
-  tiers.forEach((tier,ti)=>{
-    if(tier.gm&&!gmShown){
-      gmShown=true;
-      const gh=document.createElement('div');
-      gh.className='tree-gm-hd';
-      const gmLvl=tier.list[0].lvl||tier.list[0].req;
-      gh.innerHTML='<span>Grandmaster</span><small>Lv '+gmLvl+' · all base nodes maxed</small>';
-      wrap.appendChild(gh);
-    }else if(ti>0){
-      // trunk between tiers — lit once this tier's threshold is actually paid
-      const tr=document.createElement('div');
-      tr.className='tree-trunk'+(spent>=tier.req?' lit':'');
-      tr.innerHTML='<i></i>';
-      wrap.appendChild(tr);
-    }
+  const head=document.createElement('div');
+  head.className='ft-head';
+  head.innerHTML='<span class="ft-head-pts"><b>'+ctx.avail+'</b><span>to spend</span></span>'
+    +'<div class="ft-head-bar"><i style="width:'+(ctx.spent/98*100).toFixed(1)+'%"></i></div>'
+    +'<span class="ft-head-spent">'+ctx.spent+' / 98</span>'
+    +'<span class="ft-legend"><span><i class="lmax"></i>Maxed</span>'
+    +'<span><i class="lon"></i>Ranked</span><span><i class="lrdy"></i>Can buy</span>'
+    +'<span><i class="llock"></i>Locked</span></span>';
+  wrap.appendChild(head);
 
-    const row=document.createElement('div');
-    row.className='tree-tier'+(tier.list.length>1?' branched':'');
-    const gate=document.createElement('div');
-    gate.className='tier-gate'+(tier.req===0||spent>=tier.req?' met':'');
-    gate.textContent=tier.req===0?'Open':tier.req+' pts';
-    row.appendChild(gate);
+  /* Rails: stub → crossbar → stub. One bezier per prerequisite pair drew an X under
+     every branch that carried no information — same fix as the mastery board. */
+  let rails='';
+  for(let i=0;i<tiers.length-1;i++){
+    const ax=xOf(i), bx=xOf(i+1), mid=(ax+bx)/2;
+    const col=ctx.spent>=tiers[i+1].req?'rgba(240,199,114,.5)':'rgba(214,170,96,.16)';
+    const ys=tiers[i].list.map((n,k)=>yOf(k)), yb=tiers[i+1].list.map((n,k)=>yOf(k));
+    ys.forEach(y=>{ rails+='<line x1="'+ax+'" y1="'+y+'" x2="'+mid+'" y2="'+y+'" stroke="'+col+'" stroke-width="2"/>'; });
+    yb.forEach(y=>{ rails+='<line x1="'+mid+'" y1="'+y+'" x2="'+bx+'" y2="'+y+'" stroke="'+col+'" stroke-width="2"/>'; });
+    const y0=Math.min.apply(null,ys.concat(yb)), y1=Math.max.apply(null,ys.concat(yb));
+    if(y1>y0) rails+='<line x1="'+mid+'" y1="'+y0+'" x2="'+mid+'" y2="'+y1+'" stroke="'+col+'" stroke-width="2"/>';
+  }
 
-    for(const node of tier.list){
-      const rank=treeRank(skill,node.id);
-      const maxed=rank>=node.max;
-      const isGM=node.req>=75;
-      const lvlLocked=isGM&&lvl<(node.lvl||node.req);
-      const baseLocked=isGM&&!allBasesMaxed;
-      const ptsSpentLocked=node.reqPts&&spent<node.reqPts;
-      const pointsLocked=!isGM&&node.req&&spent<node.req;
-      const capeLocked=node.reqCape&&!hasSkillCape(skill);
-      const reqLocked=lvlLocked||baseLocked||pointsLocked||ptsSpentLocked||capeLocked;
-      const canBuy=!maxed&&!reqLocked&&avail>0;
+  const scroll=document.createElement('div');
+  scroll.className='ft-scroll';
+  const board=document.createElement('div');
+  board.className='ft-board';
+  board.style.height=H+'px';
 
-      let lockReason='';
-      if(pointsLocked) lockReason='Requires '+node.req+' points spent first';
-      else if(baseLocked&&lvlLocked) lockReason='Requires Level '+(node.lvl||node.req)+' and all base nodes maxed';
-      else if(baseLocked) lockReason='Max all base nodes first ('+nodes.filter(n=>n.req<75).map(n=>n.max-treeRank(skill,n.id)).reduce((a,b)=>a+b,0)+' ranks remaining)';
-      else if(lvlLocked&&ptsSpentLocked) lockReason='Requires Level '+(node.lvl||node.req)+' and '+node.reqPts+' points spent';
-      else if(lvlLocked) lockReason='Requires Level '+(node.lvl||node.req);
-      else if(ptsSpentLocked) lockReason='Requires '+node.reqPts+' points spent ('+(node.reqPts-spent)+' more)';
-      else if(capeLocked) lockReason='Requires the '+SKILLS[skill].name+' Cape (Shop)';
-
-      const el=document.createElement('div');
-      el.className='tnode'+(maxed?' maxed':rank>0?' on':'')+(reqLocked?' locked':canBuy?' ready':'');
-      const tipText=PASSIVE_TIPS[node.id]||'';
-      if(tipText) el.setAttribute('data-tip',tipText);
-      const effect=maxed?node.desc(rank)
-                  :rank>0?node.desc(rank)+' · next: '+node.next(rank+1)
-                  :node.next(rank+1);
-      /* Only surface a lock reason the player cannot already read off the column
-         header. The points gate is the column's own label, and the grandmaster
-         bar is stated once above the whole row — repeating either on every node
-         buried the thing the node actually DOES. */
-      const gateIsRedundant=(pointsLocked&&!lvlLocked&&!ptsSpentLocked&&!capeLocked)
-                          ||(baseLocked&&!lvlLocked&&!ptsSpentLocked&&!capeLocked);
-      const bodyText=(reqLocked&&!gateIsRedundant)?lockReason:effect;
-      el.innerHTML='<div class="tp">'+node.icon
-        +'<span class="tp-rank">'+rank+'<s>/'+node.max+'</s></span></div>'
-        +'<div class="tn-name">'+node.name+'</div>'
-        +'<div class="tn-eff">'+bodyText+'</div>';
-      const buy=document.createElement('button');
-      buy.className='tn-buy';
-      buy.innerHTML='<span>+</span>';
-      buy.disabled=!canBuy;
-      buy.title=maxed?'Maxed':reqLocked?lockReason:avail<=0?'No points to spend':'Spend a point';
-      buy.addEventListener('click',e=>{ e.stopPropagation(); spendPoint(skill,node.id); });
-      el.appendChild(buy);
-      row.appendChild(el);
-    }
-    wrap.appendChild(row);
+  const gmi=tiers.findIndex(t=>t.gm);
+  let inner='';
+  if(gmi>0){
+    const gmLvl=tiers[gmi].list[0].lvl||tiers[gmi].list[0].req;
+    inner+='<div class="ft-gm" style="left:'+(xOf(gmi)-COLW/2)+'px;right:0">'
+      +'<b>GRANDMASTER<small>Lv '+gmLvl+' · all base nodes maxed</small></b></div>';
+  }
+  inner+='<svg class="ft-svg" viewBox="0 0 '+FT_W+' '+H+'" preserveAspectRatio="none">'+rails+'</svg>';
+  tiers.forEach((t,ti)=>{
+    inner+='<div class="ft-gate'+(ctx.spent>=t.req?' met':'')+'" style="left:'+xOf(ti)+'px">'
+      +(t.req?t.req:'open')+'</div>';
   });
+  board.innerHTML=inner;   // must precede the node appends, or it wipes them
 
+  /* Default selection: whatever was open last, else the first thing actually buyable,
+     else the first node. */
+  let selId=_ftSel[skill];
+  if(!selId||!nodes.some(n=>n.id===selId)){
+    const ready=nodes.find(n=>ftNodeState(skill,n,ctx).canBuy);
+    selId=(ready||nodes[0]).id;
+  }
+
+  tiers.forEach((t,ti)=>{
+    t.list.forEach((node,i)=>{
+      const st=ftNodeState(skill,node,ctx);
+      const el=document.createElement('button');
+      el.type='button';
+      el.className='ft-node '+st.cls+(node.id===selId?' sel':'');
+      el.setAttribute('data-ftn',node.id);
+      el.style.left=xOf(ti)+'px';
+      el.style.top=yOf(i)+'px';
+      el.innerHTML='<span class="ft-puck">'+node.icon
+        +'<span class="ft-rk">'+st.rank+'/'+node.max+'</span></span>'
+        +'<span class="ft-nm">'+node.name+'</span>';
+      el.addEventListener('click',()=>{ _ftSel[skill]=node.id; renderPassives(); });
+      board.appendChild(el);
+    });
+  });
+  scroll.appendChild(board);
+  wrap.appendChild(scroll);
+
+  const sel=nodes.find(n=>n.id===selId);
+  const dock=document.createElement('div');
+  dock.className='ft-dock';
+  dock.innerHTML=ftDockHTML(skill,sel,ctx);
+  const buy=dock.querySelector('.ft-buy');
+  if(buy&&!buy.disabled) buy.addEventListener('click',()=>{ _ftSel[skill]=sel.id; spendPoint(skill,sel.id); });
+  wrap.appendChild(dock);
   box.appendChild(wrap);
 
-  if(spent>0){
+  if(ctx.spent>0){
     const cost=respecCost(skill);
     const rb=document.createElement('button');
     rb.className='respec-btn';
-    rb.style.gridColumn='1/-1';
     rb.textContent=cost>0?`Refund skill points · Cost 🪙 ${cost.toLocaleString()}g`
                          :'Refund skill points · Free';
     rb.addEventListener('click',()=>doRespec(skill));

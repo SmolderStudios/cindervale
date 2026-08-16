@@ -1540,6 +1540,101 @@ setTimeout(() => {
       });
   }
 
+  section('Forge Rail skill tree (v0.9.135)');
+  {
+    /* The rebuild gave the board its OWN gate evaluation (ftNodeState) beside the one
+       spendPoint has always had. Two implementations of the same rules is exactly how
+       a UI starts lying: the dock offers a buy the engine refuses, or greys out one it
+       would allow. Neither throws. So assert they agree on every node of every tree,
+       from several different points-spent positions. */
+    const verdicts = ev(`(function(){
+      var bad=[], checked=0;
+      for(var s in TREES){
+        var nodes=TREES[s];
+        /* three save shapes per tree: empty, bases half-paid, bases fully maxed */
+        var shapes=[{}, null, null];
+        var half={}, full={};
+        nodes.filter(function(n){return n.req<75;}).forEach(function(n,i){
+          if(i%2===0) half[n.id]=Math.ceil(n.max/2);
+          full[n.id]=n.max;
+        });
+        shapes[1]=half; shapes[2]=full;
+        shapes.forEach(function(shape,si){
+          state=defaultState(); normalizeState();
+          state.xp[s]=XP_CUM[99];
+          state.tree[s]=JSON.parse(JSON.stringify(shape));
+          /* grant plenty of points so 'no points left' never masks a gate mismatch */
+          var bases=nodes.filter(function(n){return n.req<75;});
+          var ctx={avail:availPoints(s),spent:spentPoints(s),lvl:levelFromXp(state.xp[s]),
+            allBasesMaxed:bases.every(function(n){return treeRank(s,n.id)>=n.max;}),
+            baseLeft:bases.reduce(function(a,n){return a+Math.max(0,n.max-treeRank(s,n.id));},0)};
+          if(ctx.avail<=0) return;
+          nodes.forEach(function(n){
+            checked++;
+            var said=ftNodeState(s,n,ctx).canBuy;
+            var r0=treeRank(s,n.id);
+            spendPoint(s,n.id);
+            var did=treeRank(s,n.id)>r0;
+            if(did) state.tree[s][n.id]=r0;   // undo, keep the shape intact
+            if(said!==did) bad.push(s+'/'+n.id+'@shape'+si+' ui='+said+' engine='+did);
+          });
+        });
+      }
+      return {bad:bad,checked:checked};
+    })()`);
+    ok('board and engine agree on every gate, every tree',
+       verdicts.bad.length === 0, verdicts.bad.length ? verdicts.bad.slice(0, 6).join(' | ')
+                                                      : verdicts.checked + ' node/state pairs');
+
+    /* Layout maths, not layout: every node must land in a column that exists, and the
+       board must stay inside its design width. jsdom has no layout, so this checks the
+       arithmetic renderPassives does rather than the pixels it produces. */
+    const geom = ev(`(function(){
+      var out=[];
+      for(var s in TREES){
+        var t=ftTiers(TREES[s]);
+        var colw=Math.floor((FT_W-FT_PADX*2)/Math.max(1,t.length-1));
+        var right=FT_PADX+(t.length-1)*colw+48;   // +48 = half a 96px node box
+        out.push({s:s,tiers:t.length,colw:colw,right:right,
+                  placed:t.reduce(function(a,x){return a+x.list.length;},0),
+                  total:TREES[s].length,
+                  widest:Math.max.apply(null,t.map(function(x){return x.list.length;}))});
+      }
+      return out;
+    })()`);
+    const lost = geom.filter(g => g.placed !== g.total);
+    ok('every node lands in a column', lost.length === 0, JSON.stringify(lost));
+    const spill = geom.filter(g => g.right > 1032);
+    ok('no tree overruns the 1032px design width', spill.length === 0, JSON.stringify(spill));
+    const crowded = geom.filter(g => g.colw < 64);
+    ok('columns never squeeze below a puck width', crowded.length === 0, JSON.stringify(crowded));
+    const abreast = geom.filter(g => g.widest > 3);
+    ok('no tier is more than 3 nodes abreast', abreast.length === 0, JSON.stringify(abreast));
+
+    /* The dock is the ONLY place the effect text is now stated. If a node's desc/next
+       ever returns empty, the old board still showed a name and an icon — the new one
+       shows a node that appears to do nothing at all. */
+    const mute = ev(`(function(){
+      state=defaultState(); normalizeState();
+      var bad=[];
+      for(var s in TREES) TREES[s].forEach(function(n){
+        var d='',x='';
+        try{ d=String(n.desc(n.max)); }catch(e){ d='THREW:'+e.message; }
+        try{ x=String(n.next(1)); }catch(e){ x='THREW:'+e.message; }
+        if(!d.trim()||!x.trim()||/THREW/.test(d+x)) bad.push(s+'/'+n.id);
+      });
+      return bad;
+    })()`);
+    ok('every node can state what it does and what it would do next',
+       mute.length === 0, mute.slice(0, 8).join(' '));
+
+    /* The legacy .tnode board is gone from the renderer. Its CSS is deliberately left
+       in place ([CSS-06]) because .respec-btn and the offline overlay still live there,
+       but nothing may render a .tnode again — two boards would both "work". */
+    ok('renderPassives no longer emits the legacy board',
+       !/className\s*=\s*'tnode'|class="tnode/.test(html), 'a .tnode is still being built');
+  }
+
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));
   process.exit(fail ? 1 : 0);
 }, 2500);
