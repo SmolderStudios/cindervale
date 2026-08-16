@@ -5696,6 +5696,188 @@ body:not(.is-demo) .demo-only{display:none !important}
   .cvstage-bottom{position:static;transform:none;width:auto;margin-top:10px}
 }
 /* ==FULLSTAGE-CSS-END== */
+
+/* ════════ [CSS-37] MONSTER LOG (0.9.131) ═══════════════════════════════════════
+   The log is a COLLECTION log, so completion is the headline. The old panel gave
+   "Times Slain" a full-width billboard while the drops it exists to track were
+   crushed into chips that truncated to "Beast Si…", offered no completion figure
+   anywhere — per monster, per zone or overall — and printed "1/4 ×241 ✓" with no
+   labels for any of the three numbers.
+
+   These rules deliberately live at the END of the stylesheet and are scoped under
+   .mlog-wrap: the original .mlog-* rules are spread across ~1000 lines with the
+   raid-log rules interleaved, so overriding by position is far safer than trying
+   to excise them. buildRaidLogBody reuses .mlog-mon and .mlog-drop, which means
+   the raid view inherits this restyle for free. */
+.mlog-wrap{display:flex;flex-direction:column;gap:12px;padding:4px;
+  --ml-card:linear-gradient(178deg,var(--lit-top),var(--lit-bot) 78%);
+  --ml-sh:inset 0 1px 0 var(--rim), inset 0 -1px 0 var(--under), 0 3px 8px rgba(0,0,0,.45);
+  --ml-sh-hi:inset 0 1px 0 rgba(240,199,114,.32), inset 0 -1px 0 var(--under), 0 5px 14px rgba(0,0,0,.55);
+  --ml-well:inset 0 2px 4px rgba(0,0,0,.9), inset 0 -1px 0 rgba(214,170,96,.08)}
+
+/* ── the headline ── */
+.mlog-wrap .mlog-summary{display:flex;align-items:center;gap:18px;padding:12px 15px;border-radius:9px;
+  background:var(--ml-card);box-shadow:var(--ml-sh);flex-wrap:wrap}
+.mlog-wrap .mlog-summary .n{font-family:var(--num);font-size:calc(25px*var(--tscale));color:var(--gold-hi);line-height:1}
+.mlog-wrap .mlog-summary .n small{font-size:calc(14px*var(--tscale));color:#6e6046}
+.mlog-wrap .mlog-summary .l{font-size:calc(9.5px*var(--tscale));letter-spacing:1.7px;text-transform:uppercase;
+  color:#7a6a4a;margin-top:4px}
+.mlog-wrap .mlp-bars{flex:1;min-width:230px;display:flex;flex-direction:column;gap:6px;margin-left:auto}
+.mlog-wrap .mlp-bar{display:flex;align-items:center;gap:9px;font-family:var(--num);
+  font-size:calc(10.5px*var(--tscale));color:#8a7657}
+.mlog-wrap .mlp-bar .t{width:76px;flex:none;white-space:nowrap;text-transform:uppercase;letter-spacing:1.1px;font-size:calc(9px*var(--tscale))}
+.mlog-wrap .mlp-bar .track{flex:1;height:6px;border-radius:3px;background:#0d0905;
+  box-shadow:var(--ml-well);overflow:hidden}
+.mlog-wrap .mlp-bar .track i{display:block;height:100%;border-radius:3px;background:var(--bc)}
+.mlog-wrap .mlp-bar .v{width:58px;text-align:right;flex:none;color:#e8d7b0}
+
+/* ── zone rail ── */
+.mlog-wrap .mlog-zonetabs{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));
+  gap:7px;border:0;padding:0;margin:0;background:none}
+.mlog-wrap .mlog-zone-tab{display:flex;align-items:center;gap:8px;padding:7px 9px;border:0;border-radius:8px;
+  width:100%;background:var(--ml-card);box-shadow:var(--ml-sh);text-align:left;font-family:inherit;
+  color:var(--text);cursor:var(--cur-pointer);position:relative;overflow:hidden;
+  transition:transform .12s,box-shadow .12s}
+.mlog-wrap .mlog-zone-tab:hover:not(.locked){transform:translateY(-1px);box-shadow:var(--ml-sh-hi)}
+.mlog-wrap .mlog-zone-tab.on{box-shadow:var(--ml-sh-hi), 0 0 0 1px var(--zone-accent)}
+.mlog-wrap .mlog-zone-tab::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
+  background:var(--zone-accent)}
+.mlog-wrap .mlz-ic{width:20px;height:20px;flex:none;display:flex;align-items:center;justify-content:center;font-size:20px}
+.mlog-wrap .mlz-ic .ev-icon{width:20px;height:20px}
+.mlog-wrap .mlz-info{flex:1;min-width:0}
+.mlog-wrap .mlz-nm{display:block;font-family:'Cinzel',serif;font-size:calc(11.5px*var(--tscale));
+  color:#c9b489;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mlog-wrap .mlog-zone-tab.on .mlz-nm{color:var(--gold-hi)}
+.mlog-wrap .mlz-track{display:block;height:3px;border-radius:2px;background:#0d0905;margin-top:5px;
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.9);overflow:hidden}
+.mlog-wrap .mlz-track i{display:block;height:100%;background:var(--zone-accent);border-radius:2px}
+.mlog-wrap .mlz-track.raid i{opacity:.35}
+.mlog-wrap .mlz-pct{font-family:var(--num);font-size:calc(9.5px*var(--tscale));color:#7a6a4a;flex:none}
+.mlog-wrap .mlog-zone-tab.done .mlz-pct{color:var(--green)}
+.mlog-wrap .mlog-zone-tab.locked{opacity:.4;cursor:var(--cur-na)}
+
+/* ── two-pane body ── */
+.mlog-wrap .mlog-cols{display:grid;grid-template-columns:minmax(226px,.72fr) minmax(330px,1.9fr);
+  gap:12px;align-items:start}
+@media (max-width:860px){ .mlog-wrap .mlog-cols{grid-template-columns:1fr} }
+.mlog-wrap .mlog-monlist{display:flex;flex-direction:column;gap:6px;border:0;padding:0;background:none;
+  max-height:clamp(300px,58vh,620px);overflow-y:auto;padding-right:5px;
+  scrollbar-width:thin;scrollbar-color:#4a3a20 transparent}
+.mlog-wrap .mlog-monlist::-webkit-scrollbar{width:8px}
+.mlog-wrap .mlog-monlist::-webkit-scrollbar-thumb{background:#4a3a20;border-radius:4px}
+.mlog-wrap .mlog-mon{display:flex;align-items:center;gap:9px;padding:7px 9px;border:0;border-radius:8px;
+  width:100%;background:var(--ml-card);box-shadow:var(--ml-sh);text-align:left;font-family:inherit;
+  color:var(--text);cursor:var(--cur-pointer);position:relative;overflow:hidden;
+  transition:transform .12s,box-shadow .12s}
+.mlog-wrap .mlog-mon:hover{transform:translateY(-1px);box-shadow:var(--ml-sh-hi)}
+.mlog-wrap .mlog-mon.on{box-shadow:var(--ml-sh-hi), 0 0 0 1px var(--ember)}
+.mlog-wrap .mlog-mon.boss::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--gold-hi)}
+.mlog-wrap .mlm-ic{width:26px;height:26px;flex:none;font-size:26px;display:flex;align-items:center}
+.mlog-wrap .mlm-ic .ev-icon{width:26px;height:26px}
+.mlog-wrap .mlog-mon.unseen .mlm-ic{filter:grayscale(1) brightness(.5);opacity:.5}
+.mlog-wrap .mlm-nm{flex:1;min-width:0;font-family:'Cinzel',serif;font-size:calc(12.5px*var(--tscale));
+  color:#e8d7b0;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mlog-wrap .mlog-mon.unseen .mlm-nm{color:#6e6046}
+.mlog-wrap .mlog-mon.on .mlm-nm{color:var(--gold-hi)}
+.mlog-wrap .mlm-meta{display:flex;align-items:center;gap:6px;font-family:var(--num);
+  font-size:calc(9.5px*var(--tscale));color:#7a6a4a;margin-top:4px;font-variant:normal;letter-spacing:0}
+.mlog-wrap .mlm-kc{font-family:var(--num);font-size:calc(11.5px*var(--tscale));color:var(--green);flex:none}
+.mlog-wrap .mlm-kc.zero{color:#4e4636}
+/* the drop pips — "does this thing still owe me anything", answerable by looking */
+.mlog-wrap .mlog-pips{display:inline-flex;gap:3px}
+.mlog-wrap .mlog-pip{width:6px;height:6px;border-radius:50%;background:#0d0905;flex:none;
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.95)}
+.mlog-wrap .mlog-pip.got{background:var(--green);box-shadow:0 0 4px rgba(125,163,63,.7)}
+.mlog-wrap .mlog-pip.rare{background:#0d0905;box-shadow:inset 0 1px 2px rgba(0,0,0,.95), 0 0 0 1px #6a5533}
+.mlog-wrap .mlog-pip.rare.got{background:var(--gold-hi);box-shadow:0 0 5px rgba(240,199,114,.8)}
+
+/* ── detail ── */
+.mlog-wrap .mlog-details{display:flex;flex-direction:column;gap:11px;border:0;padding:0;background:none}
+.mlog-wrap .mlog-head{display:flex;align-items:center;gap:13px;padding:12px 14px;border:0;border-radius:10px;
+  background:var(--ml-card);box-shadow:var(--ml-sh);position:relative;overflow:hidden;margin:0}
+.mlog-wrap .mlog-head::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--zone-accent)}
+.mlog-wrap .mlh-face{width:60px;height:60px;flex:none;border-radius:12px;background:#0d0905;
+  box-shadow:var(--ml-well);display:flex;align-items:center;justify-content:center;font-size:40px}
+.mlog-wrap .mlh-face .ev-icon{width:40px;height:40px}
+.mlog-wrap .mlh-title{flex:1;min-width:0;font-family:'Cinzel',serif;font-size:calc(19px*var(--tscale));
+  color:var(--gold-hi);line-height:1.15}
+.mlog-wrap .mlh-sub{display:block;font-family:var(--num);font-size:calc(11.5px*var(--tscale));
+  color:#8a7657;margin-top:5px;letter-spacing:0}
+.mlog-wrap .mlh-kills{flex:none;text-align:right}
+.mlog-wrap .mlh-kills b{display:block;font-family:var(--num);font-size:calc(22px*var(--tscale));
+  color:var(--green);line-height:1}
+.mlog-wrap .mlh-kills span{display:block;font-size:calc(9px*var(--tscale));letter-spacing:1.4px;
+  text-transform:uppercase;color:#7a6a4a;margin-top:4px}
+
+.mlog-wrap .mlog-seclab{font-size:calc(10.5px*var(--tscale));color:#8a7657;text-transform:uppercase;
+  letter-spacing:2.2px;display:flex;align-items:center;gap:8px;margin:0}
+.mlog-wrap .mlog-seclab::after{content:'';flex:1;height:1px;
+  background:linear-gradient(90deg,rgba(214,170,96,.14),transparent)}
+.mlog-wrap .mlog-secct{font-family:var(--num);font-size:calc(10px*var(--tscale));color:#7a6a4a;
+  letter-spacing:1px;text-transform:none;order:3}
+
+/* stat grid — the old rows floated their values, so HP and Attack never lined up */
+.mlog-wrap .mlog-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(76px,1fr));gap:7px;
+  border:0;padding:0;background:none;margin:0}
+.mlog-wrap .mls-cell{padding:8px 6px;border-radius:7px;background:#100b06;box-shadow:var(--ml-well);text-align:center}
+.mlog-wrap .mls-cell b{display:block;font-family:var(--num);font-size:calc(15px*var(--tscale));
+  color:#e8d7b0;line-height:1}
+.mlog-wrap .mls-cell span{display:block;font-size:calc(9px*var(--tscale));letter-spacing:1.2px;
+  text-transform:uppercase;color:#7a6a4a;margin-top:4px}
+
+.mlog-wrap .mlog-dmgtype{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;margin:0}
+.mlog-wrap .mldt-tag{display:flex;align-items:center;gap:9px;padding:8px 11px;border:0;border-radius:8px;
+  background:var(--ml-card);box-shadow:var(--ml-sh);position:relative;overflow:hidden;--mc:#3a3020}
+.mlog-wrap .mldt-tag::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--mc)}
+.mlog-wrap .mldt-tag.weak{--mc:#7da33f}
+.mlog-wrap .mldt-tag.resist{--mc:#c4543a}
+.mlog-wrap .mldt-tag.swings{--mc:#79a8d8}
+.mlog-wrap .mldt-t{flex:1;min-width:0}
+.mlog-wrap .mldt-k{display:block;font-family:var(--num);font-size:calc(9px*var(--tscale));
+  letter-spacing:1.3px;text-transform:uppercase;color:#7a6a4a}
+.mlog-wrap .mldt-v{display:block;font-family:'Cinzel',serif;font-size:calc(13px*var(--tscale));
+  color:#e8d7b0;margin-top:3px}
+.mlog-wrap .mldt-tag.none .mldt-v{color:#6e6046}
+.mlog-wrap .mldt-n{font-family:var(--num);font-size:calc(13px*var(--tscale));color:var(--mc);flex:none}
+
+/* drops — one readable row each, nothing truncated, every number labelled */
+.mlog-wrap .mlog-drops{display:flex;flex-direction:column;gap:6px;border:0;padding:0;background:none;margin:0}
+.mlog-wrap .mlog-drop{display:flex;align-items:center;gap:10px;padding:8px 11px;border:0;border-radius:8px;
+  background:var(--ml-card);box-shadow:var(--ml-sh);position:relative;overflow:hidden}
+.mlog-wrap .mlog-drop::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:#2e2517}
+.mlog-wrap .mlog-drop.got::before{background:var(--green)}
+.mlog-wrap .mlog-drop.got.rare::before{background:var(--gold-hi)}
+.mlog-wrap .mld-ic{width:26px;height:26px;flex:none;font-size:26px;display:flex;align-items:center}
+.mlog-wrap .mld-ic .ev-icon{width:26px;height:26px}
+.mlog-wrap .mlog-drop.miss .mld-ic{filter:grayscale(1) brightness(.55);opacity:.55}
+.mlog-wrap .mld-nm{flex:1;min-width:0;font-size:calc(13px*var(--tscale));color:#e8d7b0;line-height:1.2}
+.mlog-wrap .mlog-drop.miss .mld-nm{color:#8a7657}
+.mlog-wrap .mld-nm small{display:block;font-family:var(--num);font-size:calc(10px*var(--tscale));
+  color:#7a6a4a;margin-top:3px}
+.mlog-wrap .mld-rate{font-family:var(--num);font-size:calc(11.5px*var(--tscale));color:#a8926a;
+  flex:none;text-align:right;min-width:62px}
+.mlog-wrap .mld-cnt{font-family:var(--num);font-size:calc(13px*var(--tscale));color:var(--green);
+  flex:none;text-align:right;min-width:56px}
+.mlog-wrap .mlog-drop.miss .mld-cnt{color:#4e4636}
+.mlog-wrap .mld-rate em,.mlog-wrap .mld-cnt em{display:block;font-style:normal;
+  font-size:calc(9px*var(--tscale));letter-spacing:1.1px;text-transform:uppercase;color:#6e6046;margin-top:3px}
+
+.mlog-wrap .mlog-pet{display:flex;align-items:center;gap:11px;padding:10px 12px;border:0;border-radius:9px;
+  background:var(--ml-card);box-shadow:var(--ml-sh);position:relative;overflow:hidden}
+.mlog-wrap .mlog-pet::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:#6a5533}
+.mlog-wrap .mlog-pet.got::before{background:var(--gold-hi)}
+.mlog-wrap .mlp-ic{width:32px;height:32px;flex:none;font-size:32px;display:flex;align-items:center}
+.mlog-wrap .mlp-ic .ev-icon{width:32px;height:32px}
+.mlog-wrap .mlog-pet:not(.got) .mlp-ic{filter:grayscale(1) brightness(.5);opacity:.5}
+.mlog-wrap .mlp-info{flex:1;min-width:0}
+.mlog-wrap .mlp-nm{display:block;font-family:'Cinzel',serif;font-size:calc(13.5px*var(--tscale));color:#e8d7b0}
+.mlog-wrap .mlog-pet:not(.got) .mlp-nm{color:#8a7657}
+.mlog-wrap .mlp-tag{display:block;font-size:calc(11.5px*var(--tscale));color:#7a6a4a;margin-top:3px;line-height:1.4}
+.mlog-wrap .mlp-mark{font-family:var(--num);font-size:calc(9px*var(--tscale));letter-spacing:1.3px;
+  text-transform:uppercase;color:#6e6046;flex:none}
+.mlog-wrap .mlog-pet.got .mlp-mark{color:var(--gold-hi)}
+.mlog-wrap .mlog-bosslock{padding:9px 12px;border-radius:8px;background:#2a0f08;box-shadow:var(--ml-well);
+  border:0;font-size:calc(12.5px*var(--tscale));color:#e0a090;line-height:1.5}
 </style>
 </head>
 <body>
@@ -5730,7 +5912,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.130</div>
+  <div class="mm-ver">v0.9.131</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -21438,26 +21620,95 @@ function _fmtMonChance(c){
   const den=Math.max(2, Math.round(1/c));
   return '1/'+den;
 }
+/* ── Monster Log helpers (0.9.131) ─────────────────────────────────────────────
+   The panel is a COLLECTION log, so its headline is collection progress. The old
+   one gave "Times Slain" a full-width billboard while the drops it exists to track
+   were squeezed into chips that truncated to "Beast Si…", and offered no notion of
+   completion anywhere — not per monster, not per zone, not overall.
+
+   Everything below reads the same state the old body did; nothing new is stored. */
+function _mlDrops(id){ return (typeof MONSTER_DROPS!=='undefined'&&MONSTER_DROPS[id])||[]; }
+function _mlHave(mid,did){ return (state.monDrops&&state.monDrops[mid]&&state.monDrops[mid][did])||0; }
+function _mlKills(id){ return (state.monKills&&state.monKills[id])||0; }
+function _mlGot(id){ const ds=_mlDrops(id); let n=0; for(const d of ds) if(_mlHave(id,d.id)>0) n++; return n; }
+/* A drop is "rare" for pip purposes at 2% or below — the band the tier-gating
+   materials live in, so a hollow pip reads as "this one is a grind". */
+function _mlIsRare(d){ return d.chance<=0.02; }
+function _mlPct(a,b){ return b>0?Math.round(a/b*100):0; }
+
+/* Per-zone completion, so the rail can show where the holes are without the player
+   opening all sixteen tabs. */
+function _mlZoneStat(zid){
+  const mons=monstersInZone(zid);
+  let got=0,tot=0,seen=0;
+  for(const m of mons){
+    if(_mlKills(m.id)) seen++;
+    for(const d of _mlDrops(m.id)){ tot++; if(_mlHave(m.id,d.id)) got++; }
+  }
+  return {got,tot,seen,mons:mons.length,pct:_mlPct(got,tot)};
+}
+/* Whole-log completion across every non-raid zone. */
+function _mlTotals(){
+  let got=0,tot=0,seen=0,mons=0;
+  for(const z of ZONES){
+    const s=_mlZoneStat(z.id);
+    got+=s.got; tot+=s.tot; seen+=s.seen; mons+=s.mons;
+  }
+  let petsGot=0,petsTot=0;
+  for(const zid in PETS){ petsTot++; if(hasPet(PETS[zid].id)) petsGot++; }
+  return {got,tot,seen,mons,petsGot,petsTot,pct:_mlPct(got,tot)};
+}
+function _mlProgHTML(){
+  const t=_mlTotals();
+  const bar=(lab,a,b,c)=>`<div class="mlp-bar" style="--bc:${c}"><span class="t">${lab}</span>`
+    +`<span class="track"><i style="width:${_mlPct(a,b)}%"></i></span>`
+    +`<span class="v">${a} / ${b}</span></div>`;
+  return `<div class="mlog-summary">
+    <div><div class="n">${t.pct}<small>%</small></div><div class="l">Log complete</div></div>
+    <div class="mlp-bars">
+      ${bar('Bestiary',t.seen,t.mons,'#d2643a')}
+      ${bar('Drops',t.got,t.tot,'#7da33f')}
+      ${bar('Zone pets',t.petsGot,t.petsTot,'#e0b44a')}
+    </div></div>`;
+}
+/* Rank pips for a monster row — filled = collected, hollow ring = a rare you have
+   not landed. This is the whole point of the rebuild: "does this thing still owe
+   me anything" is answerable by looking, not by clicking all of them. */
+function _mlPipsHTML(id){
+  const ds=_mlDrops(id);
+  if(!ds.length) return '';
+  return '<span class="mlog-pips">'+ds.map(d=>
+    `<i class="mlog-pip${_mlIsRare(d)?' rare':''}${_mlHave(id,d.id)?' got':''}"></i>`).join('')+'</span>';
+}
+
 function buildMonLogHTML(){
   // Resolve current selection — fall back if state points at a stale id.
   let zid = state.monLogZone || 'rat_warrens';
   const isRaid = !!(typeof RAID_BY_ID!=='undefined' && RAID_BY_ID[zid]);
   if(!isRaid && !ZONES.find(z=>z.id===zid)) zid='rat_warrens';
 
-  // Zone tabs (top strip) — normal zones, then raid entries. Locked = disabled.
+  /* Zone rail — every tile carries its own completion bar and %, so the holes in
+     the log are visible without opening all sixteen. Raid entries keep their own
+     tile (their body is raid-wide clear loot, not per-monster drops) and show a
+     lock level instead of a percentage. */
   const zoneTabs = ZONES.map(z=>{
     const unlocked = zoneUnlocked(z);
     const onZ = z.id===zid;
-    return `<button class="mlog-zone-tab${onZ?' on':''}${unlocked?'':' locked'}" data-mlog-zone="${z.id}" ${unlocked?'':'disabled'} style="--zone-accent:${z.accent}">
+    const st = unlocked?_mlZoneStat(z.id):null;
+    return `<button class="mlog-zone-tab${onZ?' on':''}${unlocked?'':' locked'}${st&&st.pct===100?' done':''}" data-mlog-zone="${z.id}" ${unlocked?'':'disabled'} style="--zone-accent:${z.accent}">
       <span class="mlz-ic">${iconHTML(z.id)}</span>
-      <span class="mlz-nm">${z.name}</span>
+      <span class="mlz-info"><span class="mlz-nm">${z.name}</span>
+        <span class="mlz-track"><i style="width:${st?st.pct:0}%"></i></span></span>
+      <span class="mlz-pct">${unlocked?(st.pct+'%'):('Lv '+z.unlockLvl)}</span>
     </button>`;
   }).join('') + ((typeof RAIDS!=='undefined')?RAIDS.map(r=>{
     const unlocked = raidUnlocked(r);
     const onZ = r.id===zid;
     return `<button class="mlog-zone-tab mlog-raid-tab${onZ?' on':''}${unlocked?'':' locked'}" data-mlog-zone="${r.id}" ${unlocked?'':'disabled'} style="--zone-accent:${r.accent}">
       <span class="mlz-ic">${iconHTML(r.icon)}</span>
-      <span class="mlz-nm">${r.name}</span>
+      <span class="mlz-info"><span class="mlz-nm">${r.name}</span>
+        <span class="mlz-track raid"><i style="width:100%"></i></span></span>
+      <span class="mlz-pct">raid</span>
     </button>`;
   }).join(''):'');
 
@@ -21477,13 +21728,15 @@ function buildMonLogHTML(){
   const selZone = getZone(sel.zone);
   const bossLocked = sel.boss && !bossUnlocked(sel);
 
-  // Left monster list — kill count badge per row. Boss tiles get a gold accent.
+  /* Left monster list — each row now carries a drop-pip strip and an n/m count, so
+     "which of these still owes me something" is answerable by looking. */
   const monRows = zoneMons.map(m=>{
     const kills = (state.monKills&&state.monKills[m.id])||0;
     const isSel = m.id===selId;
-    return `<button class="mlog-mon${isSel?' on':''}${m.boss?' boss':''}${kills>0?' seen':''}" data-mlog-mon="${m.id}">
+    const ds = _mlDrops(m.id);
+    return `<button class="mlog-mon${isSel?' on':''}${m.boss?' boss':''}${kills>0?' seen':' unseen'}" data-mlog-mon="${m.id}">
       <span class="mlm-ic">${iconHTML(m.id)}</span>
-      <span class="mlm-nm">${m.name}<span class="mlm-meta">Lv ${m.lvl}</span></span>
+      <span class="mlm-nm">${m.name}<span class="mlm-meta">Lv ${m.lvl}${ds.length?` ${_mlPipsHTML(m.id)} ${_mlGot(m.id)}/${ds.length}`:''}</span></span>
       <span class="mlm-kc${kills>0?'':' zero'}">${kills>0?kills.toLocaleString():'—'}</span>
     </button>`;
   }).join('');
@@ -21496,14 +21749,15 @@ function buildMonLogHTML(){
     const it = ITEMS[d.id];
     const got = sDrops[d.id]||0;
     const has = got>0;
-    const qtyTag = Array.isArray(d.qty)?` <span class="mld-qty">×${d.qty[0]}–${d.qty[1]}</span>`:'';
+    /* One readable row each. The old chips packed "1/4 ×241 ✓" into a strip that
+       truncated the item name and never said which number meant what. */
+    const qtyTag = Array.isArray(d.qty)?`${d.qty[0]}–${d.qty[1]} at a time`:(d.once?'first kill only':'');
     const disc = !!(state.discovered&&state.discovered[d.id]);
-    return `<div class="mlog-drop${has?' got':''}" data-mldrop="${d.id}" data-disc="${disc?1:0}" style="cursor:var(--cur-help)">
+    return `<div class="mlog-drop${has?' got':' miss'}${_mlIsRare(d)?' rare':''}" data-mldrop="${d.id}" data-disc="${disc?1:0}" style="cursor:var(--cur-help)">
       <span class="mld-ic">${iconHTML(d.id)}</span>
-      <span class="mld-nm">${it?it.name:d.id}${qtyTag}</span>
-      <span class="mld-rate">${_fmtMonChance(effDropChance(d.chance,true))}</span>
-      <span class="mld-cnt">${has?'×'+got.toLocaleString():'—'}</span>
-      <span class="mld-mark">${has?'✓':'✗'}</span>
+      <span class="mld-nm">${it?it.name:d.id}${qtyTag?`<small>${qtyTag}</small>`:''}</span>
+      <span class="mld-rate">${_fmtMonChance(effDropChance(d.chance,true))}<em>chance</em></span>
+      <span class="mld-cnt">${has?got.toLocaleString():'—'}<em>collected</em></span>
     </div>`;
   }).join('') || '<div class="mlog-drop-empty">No drop table for this monster.</div>';
 
@@ -21514,12 +21768,12 @@ function buildMonLogHTML(){
   if(pet){
     const has = hasPet(pet.id);
     const ic  = has ? iconHTML(pet.id) : iconHTML('pet_unknown');
-    petBlock = `<div class="mlog-section-head">Rare Spawn Bonus</div>
+    petBlock = `<div class="mlog-seclab">Zone Pet</div>
       <div class="mlog-pet${has?' got':''}">
         <span class="mlp-ic">${ic}</span>
         <div class="mlp-info">
           <span class="mlp-nm">${has?pet.name:'???'}</span>
-          <span class="mlp-tag">Zone pet · only drops from rare variants in this zone</span>
+          <span class="mlp-tag">Only drops from rare variants anywhere in this zone — not from one monster.</span>
         </div>
         <span class="mlp-mark">${has?'✓':'✗'}</span>
       </div>`;
@@ -21533,42 +21787,45 @@ function buildMonLogHTML(){
     ? `<div class="mlog-bosslock">🔒 Obtain a <b>${iconHTML(sel.bossReq)} ${ITEMS[sel.bossReq]?ITEMS[sel.bossReq].name:sel.bossReq}</b> from this zone to challenge ${sel.name}.</div>`
     : '';
 
+  const selDrops=_mlDrops(sel.id);
   return `<div class="mlog-wrap">
+    ${_mlProgHTML()}
     <div class="mlog-zonetabs">${zoneTabs}</div>
     <div class="mlog-cols">
       <div class="mlog-monlist">${monRows||'<div class="mlog-empty">No monsters in this zone.</div>'}</div>
       <div class="mlog-details">
-        <div class="mlog-head${sel.boss?' boss':''}${bossLocked?' locked':''}">
+        <div class="mlog-head${sel.boss?' boss':''}${bossLocked?' locked':''}" style="--zone-accent:${selZone&&selZone.accent?selZone.accent:'#6a5533'}">
           <span class="mlh-face">${iconHTML(sel.id)}</span>
-          <div class="mlh-title">${sel.name}<span class="mlh-sub">${headSub}</span></div>
+          <div class="mlh-title">${sel.name}<span class="mlh-sub">${headSub}${selDrops.length?` &middot; ${_mlGot(sel.id)} of ${selDrops.length} drops collected`:''}</span></div>
+          <div class="mlh-kills"><b>${sKills.toLocaleString()}</b><span>Times slain</span></div>
         </div>
+        <div class="mlog-seclab">Statistics</div>
         <div class="mlog-stats">
-          <div class="mls-row"><span>HP</span><b>${sel.hp}</b></div>
-          <div class="mls-row"><span>Atk</span><b>${sel.atk}</b></div>
-          <div class="mls-row"><span>Str</span><b>${sel.str}</b></div>
-          <div class="mls-row"><span>Def</span><b>${sel.def}</b></div>
-          <div class="mls-row wide"><span>Swing</span><b>${(sel.swingMs/1000).toFixed(2)}s</b></div>
+          ${[['HP',sel.hp],['Attack',sel.atk],['Strength',sel.str],['Defence',sel.def],
+             ['Swing',(sel.swingMs/1000).toFixed(2)+'s'],['Gold',sel.coins],['XP',sel.xp]]
+            .map(s=>`<div class="mls-cell"><b>${s[1]}</b><span>${s[0]}</span></div>`).join('')}
         </div>
-        ${(sel.weakTo||sel.resistTo) ? `<div class="mlog-dmgtype">
-          ${sel.weakTo ? `<span class="mldt-tag weak"><span class="mldt-icon">${iconHTML('bronze_'+(sel.weakTo==='slash'?'sword':sel.weakTo==='stab'?'dagger':'hammer'))}</span><span class="mldt-lbl">Weak to ${sel.weakTo}</span><span class="mldt-val">+15% dmg</span></span>`:''}
-          ${sel.resistTo ? `<span class="mldt-tag resist"><span class="mldt-icon">${iconHTML('bronze_'+(sel.resistTo==='slash'?'sword':sel.resistTo==='stab'?'dagger':'hammer'))}</span><span class="mldt-lbl">Resists ${sel.resistTo}</span><span class="mldt-val">−15% dmg</span></span>`:''}
-        </div>` : ''}
-        <div class="mlog-reward">
-          <span class="mlr-coin">+${sel.coins}g</span>
-          <span class="mlr-sep">·</span>
-          <span class="mlr-xp">+${sel.xp} xp</span>
-        </div>
-        <div class="mlog-kills">
-          <span class="mlk-label">Times Slain</span>
-          <span class="mlk-value">${sKills.toLocaleString()}</span>
+        <!-- Weakness AND resistance both get a row. The old strip only ever rendered
+             whichever the monster happened to have, so half the matchup was invisible
+             and the damage-type system was never legible in the UI. -->
+        <div class="mlog-seclab">Damage Matchup</div>
+        <div class="mlog-dmgtype">
+          <span class="mldt-tag weak"><span class="mldt-t"><span class="mldt-k">Weak to</span>
+            <span class="mldt-v">${sel.weakTo||'nothing'}</span></span>
+            <span class="mldt-n">${sel.weakTo?'+15%':''}</span></span>
+          <span class="mldt-tag${sel.resistTo?' resist':' none'}"><span class="mldt-t"><span class="mldt-k">Resists</span>
+            <span class="mldt-v">${sel.resistTo||'nothing'}</span></span>
+            <span class="mldt-n">${sel.resistTo?'−15%':''}</span></span>
+          <span class="mldt-tag swings"><span class="mldt-t"><span class="mldt-k">Swings</span>
+            <span class="mldt-v">${sel.dmgType||'—'}</span></span></span>
         </div>
         ${bossLockHint}
-        <div class="mlog-section-head">Drops${(function(){
+        <div class="mlog-seclab">Drops${(function(){
           var dm=charDropMult(); if(dm===1) return '';   // Normal — no adjustment to flag
           var td=charTypeDef();
           // Rates below already reflect the dial; the chip just names the active profile.
           return ` <span class="mlog-dropmod" style="background:${td.col}">${td.name} rates</span>`;
-        })()}</div>
+        })()}<span class="mlog-secct">${selDrops.length?`${_mlGot(sel.id)} / ${selDrops.length} collected`:''}</span></div>
         <div class="mlog-drops">${dropList}</div>
         ${petBlock}
       </div>
