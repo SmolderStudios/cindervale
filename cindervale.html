@@ -6086,7 +6086,13 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.139</div>
+  <!-- Two numbers, on purpose. See CLAUDE.md "Versioning".
+       The BANNER is the release number players and Steam see; it moves once per
+       Steam depot push. data-build is the web build, which moves on EVERY push to
+       GitHub Pages and never repeats — version.json carries the same string, and
+       the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
+       reports send the build, so two web builds of one release stay tellable apart. -->
+  <div class="mm-ver" data-build="0.9.118.1">v0.9.118</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -6961,6 +6967,17 @@ function _hasSlur(text){
   for(let i=0;i<_SLURS.length;i++){ if(n.indexOf(_SLURS[i])>=0 || c.indexOf(_SLURS[i])>=0) return true; }
   return false;
 }
+/* What every report and ping should quote. The banner shows the RELEASE (v0.9.118),
+   which is deliberately the same across many web pushes — so a report carrying only
+   that cannot tell two builds apart. data-build is the unique one. Falls back to the
+   banner text if the attribute is ever missing, so this can never come back empty. */
+function cvBuild(){
+  try{
+    const el=document.querySelector('.mm-ver');
+    if(!el) return '?';
+    return (el.getAttribute('data-build')||el.textContent||'?').trim();
+  }catch(e){ return '?'; }
+}
 function _auditPing(reason, extraFields, dedupeKey){
   if(_devMute) return;                                     // see DEV_MUTE_KEY above
   const key = dedupeKey || reason;
@@ -6978,7 +6995,7 @@ function _auditPing(reason, extraFields, dedupeKey){
     {name:'Character',value:String((typeof state!=='undefined'&&state.charName)||'?').slice(0,64),inline:true},
     {name:'Gold',value:gold.toLocaleString(),inline:true},
     {name:'Slot',value:String(typeof mmSlot!=='undefined'?mmSlot:'?'),inline:true},
-    {name:'Version',value:(document.querySelector('.mm-ver')?document.querySelector('.mm-ver').textContent.trim():'?'),inline:true}
+    {name:'Version',value:cvBuild(),inline:true}
   ].concat(extraFields||[]);
   const payload={username:'Cindervale Audit',embeds:[{title:'Audit flag',color:0xc4543a,description:String(reason).slice(0,200),fields:fields.slice(0,25)}]};
   try{ fetch(hook,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}); }catch(e){}
@@ -7005,7 +7022,7 @@ function _signupPing(name, type, cls, slot){
   const acct=_bumpCount('cindervale_acct_seq');                  // this device's Nth character
   const alt=acct>1;
   const build=(typeof IS_DEMO!=='undefined'&&IS_DEMO)?'🖥️ Demo (browser)':'✅ Full game';
-  const ver=(document.querySelector('.mm-ver')?document.querySelector('.mm-ver').textContent.trim():'?');
+  const ver=cvBuild();
   const payload={username:'Cindervale Signups',embeds:[{
     title:'New character created'+(alt?'  •  #'+acct+' from this device':''),
     color:alt?0xe0762f:0x7da33f,
@@ -35934,7 +35951,7 @@ $('mmSettingsClose').addEventListener('click', function(){ $('mmSettingsModal').
 // ── Bug report dialog (0.9.29) ──────────────────────────────────────────────
 function mmBugContext(){
   const g=(fn,d)=>{try{const v=fn();return (v===undefined||v===null||v==='')?d:v;}catch(e){return d;}};
-  const ver=g(()=>document.querySelector('.mm-ver').textContent.trim(),'?');
+  const ver=g(()=>cvBuild(),'?');
   const loaded=!mmAtMenu && !!mmSlot;
   const who=loaded
     ? g(()=>((state.charName||'—')+' · '+(state.charType||'')+' '+(state.charClass||'')+' · CmbLv '+combatLevel()).replace(/\s+/g,' ').trim(),'(character)')
@@ -36067,7 +36084,7 @@ async function mmSendIdea(){
   btn.disabled=true; btn.textContent='Sending…'; msg.className='rep-msg'; msg.textContent='';
   let dev='?'; try{ dev=lsGet(DEVICE_KEY)||'?'; }catch(e){}
   const who=(state&&state.charName)?String(state.charName):'(no character)';
-  const ver=(document.querySelector('.mm-ver')?document.querySelector('.mm-ver').textContent.trim():'?');
+  const ver=cvBuild();
   // Same worker-first, webhook-fallback path as the bug reporter above.
   const _mbox=mailboxId();
   if(MAIL_API && _mbox){

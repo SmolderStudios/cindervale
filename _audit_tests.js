@@ -1675,6 +1675,27 @@ setTimeout(() => {
        splatRules.filter(r => /inset-inline/.test(r)).join(' '));
     ok('the splat column still sets an explicit left',
        splatRules.some(r => /left\s*:\s*50%/.test(r)), splatRules.join(' | ').slice(0, 160));
+
+    /* Versioning (v0.9.118 scheme). Two numbers on the banner: the RELEASE players
+       and Steam see, which moves once per depot push, and data-build, which moves on
+       every web push and is what version.json carries. The wrapper compares
+       version.json by plain string inequality, so a desynced pair means players
+       either never update or update to a build whose banner lies about it. */
+    const banner = (html.match(/mm-ver[^>]*>v([0-9][0-9.a-z-]*)/) || [])[1] || null;
+    const build  = (html.match(/mm-ver[^>]*data-build="([^"]+)"/) || [])[1] || null;
+    let vjson = null;
+    try { vjson = JSON.parse(fs.readFileSync(path.join(ROOT, 'version.json'), 'utf8')).version; } catch (e) {}
+    ok('banner carries a release number', !!banner, String(banner));
+    ok('banner carries a data-build stamp', !!build, String(build));
+    ok('version.json matches the build stamp', vjson === build, vjson + ' vs ' + build);
+    ok('the build belongs to the release on the banner',
+       !!(build && banner) && build.indexOf(banner + '.') === 0, build + ' / ' + banner);
+    /* A BOM in version.json makes JSON.parse throw inside the wrapper, which kills
+       auto-update silently. It has happened once already. */
+    try {
+      const raw = fs.readFileSync(path.join(ROOT, 'version.json'));
+      ok('version.json has no BOM', raw[0] !== 0xEF, 'first byte 0x' + raw[0].toString(16));
+    } catch (e) { ok('version.json is readable', false, e.message); }
   }
 
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));

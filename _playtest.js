@@ -32,21 +32,29 @@ const verOf = (p) => { try { return JSON.parse(fs.readFileSync(p, 'utf8')).versi
    _playtest-ui.js is stamped like `0.9.104-ui`; reading only [0-9.] truncated it
    to `0.9.104`, so the status table showed the channel carrying the same banner
    as live and gave no hint the rework was there at all. */
-const stampOf = (p) => { try { return (fs.readFileSync(p, 'utf8').match(/mm-ver">v([0-9][0-9.a-z-]*)/) || [])[1] || null; } catch (e) { return null; } };
+const stampOf = (p) => { try { return (fs.readFileSync(p, 'utf8').match(/mm-ver[^>]*>v([0-9][0-9.a-z-]*)/) || [])[1] || null; } catch (e) { return null; } };
+/* The BUILD stamp — the string version.json carries and the wrapper actually
+   compares. The banner holds the RELEASE (0.9.118) and repeats across many web
+   pushes by design, so it can no longer be what version.json is checked against.
+   Note both regexes now allow attributes before the `>`; the banner carries
+   data-build, and the old `mm-ver">v` pattern silently stopped matching. */
+const buildOf = (p) => { try { return (fs.readFileSync(p, 'utf8').match(/mm-ver[^>]*data-build="([^"]+)"/) || [])[1] || null; } catch (e) { return null; } };
 const read = (dir) => ({
   ver: verOf(path.join(root, dir, 'version.json')),
-  html: stampOf(path.join(root, dir, 'cindervale.html'))
+  html: stampOf(path.join(root, dir, 'cindervale.html')),
+  build: buildOf(path.join(root, dir, 'cindervale.html'))
 });
 
-const live = { ver: verOf(path.join(root, 'version.json')), html: stampOf(path.join(root, 'cindervale.html')) };
+const live = { ver: verOf(path.join(root, 'version.json')), html: stampOf(path.join(root, 'cindervale.html')),
+               build: buildOf(path.join(root, 'cindervale.html')) };
 
 if (process.argv.includes('--status')) {
-  console.log('\n  channel    version.json   html banner');
-  console.log('  ---------- -------------- -----------');
-  console.log(`  live       ${String(live.ver).padEnd(14)} ${live.html}`);
+  console.log('\n  channel    version.json   build stamp    release');
+  console.log('  ---------- -------------- -------------- -------');
+  console.log(`  live       ${String(live.ver).padEnd(14)} ${String(live.build).padEnd(14)} ${live.html}`);
   for (const c of CHANNELS) {
     const s = read(c);
-    console.log(`  ${c.padEnd(10)} ${String(s.ver).padEnd(14)} ${s.html}`);
+    console.log(`  ${c.padEnd(10)} ${String(s.ver).padEnd(14)} ${String(s.build).padEnd(14)} ${s.html}`);
   }
   console.log();
   for (const c of CHANNELS) {
@@ -65,10 +73,24 @@ const dir = path.join(root, channel);
 if (!live.ver) { console.error('No version.json at repo root. Wrong directory?'); process.exit(1); }
 
 // The wrapper only re-downloads when the version STRING differs, so a mismatched
-// pair means players either never update or update to a wrong banner.
-if (live.ver !== live.html) {
-  console.error(`Refusing to publish: version.json says ${live.ver} but the HTML banner says ${live.html}.`);
+// pair means players either never update or update to a wrong banner. Since 0.9.118
+// the pair to check is version.json against the BUILD stamp, not the banner — the
+// banner is the release and repeats on purpose.
+if (!live.build) {
+  console.error('Refusing to publish: the banner has no data-build attribute.');
+  console.error('The HTML must carry <div class="mm-ver" data-build="X.Y.Z.N">vX.Y.Z</div>.');
+  process.exit(1);
+}
+if (live.ver !== live.build) {
+  console.error(`Refusing to publish: version.json says ${live.ver} but the build stamp says ${live.build}.`);
   console.error('Bump both, then re-run.');
+  process.exit(1);
+}
+// And the build must belong to the release the banner claims, or players see one
+// number while reports quote a build from a different release entirely.
+if (live.build.indexOf(live.html + '.') !== 0) {
+  console.error(`Refusing to publish: build ${live.build} is not a build of release ${live.html}.`);
+  console.error('Expected the build to start with "' + live.html + '.".');
   process.exit(1);
 }
 
