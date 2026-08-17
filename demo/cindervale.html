@@ -5557,7 +5557,7 @@ body:not(.is-demo) .demo-only{display:none !important}
    panel is rebuilt underneath it. */
 .cvsplats{position:absolute;inset:0;z-index:4;pointer-events:none;overflow:hidden}
 .cvsplat{position:absolute;bottom:52%;font-family:'Crimson Pro',Georgia,serif;font-weight:700;
-  font-size:calc(30px*var(--tscale));line-height:1;white-space:nowrap;
+  font-size:calc(24px*var(--tscale));line-height:1;white-space:nowrap;
   text-shadow:0 2px 5px rgba(0,0,0,.95),0 0 12px rgba(0,0,0,.8);
   animation:cvsplat-rise 1.05s cubic-bezier(.22,.9,.3,1) forwards}
 @keyframes cvsplat-rise{
@@ -5566,15 +5566,15 @@ body:not(.is-demo) .demo-only{display:none !important}
   30%{transform:translate(-50%,-12px) scale(1)}
   100%{opacity:0;transform:translate(-50%,-74px) scale(.96)}}
 .cvsplat.hit{color:#f4e4bd}
-.cvsplat.crit{color:#ffd24a;font-size:calc(40px*var(--tscale))}
-.cvsplat.cleave{color:#ffab5e;font-size:calc(34px*var(--tscale))}
-.cvsplat.miss{color:#8a7550;font-size:calc(21px*var(--tscale));font-style:italic;font-weight:600}
+.cvsplat.crit{color:#ffd24a;font-size:calc(32px*var(--tscale))}
+.cvsplat.cleave{color:#ffab5e;font-size:calc(27px*var(--tscale))}
+.cvsplat.miss{color:#8a7550;font-size:calc(17px*var(--tscale));font-style:italic;font-weight:600}
 .cvsplat.poison{color:#8fd44e}
 .cvsplat.burn{color:#ff8a3d}
 /* Damage you take falls instead of rising, so it is never confused with damage
    you dealt. It sits high-left of the creature rather than low-centre: at the
    bottom of the stage it was hidden behind the health panel entirely. */
-.cvsplat.take{color:#ff6b52;bottom:74%;font-size:calc(25px*var(--tscale));
+.cvsplat.take{color:#ff6b52;bottom:74%;font-size:calc(20px*var(--tscale));
   animation:cvsplat-fall 1.05s cubic-bezier(.22,.9,.3,1) forwards}
 @keyframes cvsplat-fall{
   0%{opacity:0;transform:translate(-50%,-8px) scale(.8)}
@@ -6086,7 +6086,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.138</div>
+  <div class="mm-ver">v0.9.139</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
