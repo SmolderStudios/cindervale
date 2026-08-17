@@ -27,10 +27,19 @@ fs.mkdirSync(stage, { recursive: true });
 fs.copyFileSync(src, path.join(stage, 'cindervale.html'));
 for (const h of ['_validate.js', '_audit_tests.js']) fs.copyFileSync(path.join(root, h), path.join(stage, h));
 
-const ver = (fs.readFileSync(src, 'utf8').match(/mm-ver">v([0-9][0-9.a-z-]*)/) || [])[1];
+/* Since 0.9.118 the banner carries the RELEASE and version.json carries the BUILD, so
+   the pair to compare is version.json against data-build. Two regex notes, both of
+   which cost a false MISMATCH on a good build: the pattern must allow attributes
+   before the `>` (the old `mm-ver">v` stopped matching the moment data-build landed
+   and returned undefined), and it is the build that must match, not the banner. */
+const src8  = fs.readFileSync(src, 'utf8');
+const rel   = (src8.match(/mm-ver[^>]*>v([0-9][0-9.a-z-]*)/) || [])[1];
+const ver   = (src8.match(/mm-ver[^>]*data-build="([^"]+)"/) || [])[1];
 const declared = JSON.parse(fs.readFileSync(path.join(root, 'playtest', 'version.json'), 'utf8')).version;
-console.log(`playtest: banner v${ver}  version.json ${declared}`);
-if (ver !== declared) { console.error('MISMATCH — the wrapper keys off version.json and testers read the banner.'); process.exit(1); }
+console.log(`playtest: release v${rel}  build ${ver}  version.json ${declared}`);
+if (!ver) { console.error('NO BUILD STAMP — the banner needs data-build="X.Y.Z.N".'); process.exit(1); }
+if (ver !== declared) { console.error('MISMATCH — the wrapper keys off version.json, which must equal the build stamp.'); process.exit(1); }
+if (ver.indexOf(rel + '.') !== 0) { console.error(`MISMATCH — build ${ver} is not a build of release ${rel}.`); process.exit(1); }
 
 let bad = 0;
 for (const h of ['_validate.js', '_audit_tests.js']) {
