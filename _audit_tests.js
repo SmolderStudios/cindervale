@@ -1662,6 +1662,19 @@ setTimeout(() => {
       const mb = fs.statSync(path.join(ROOT, process.env.CV_FILE || 'cindervale.html')).size / 1048576;
       ok('file stays under the 7 MB wrapper-fetch ceiling', mb < 7, mb.toFixed(2) + ' MB');
     }
+
+    /* Hit splats (v0.9.137). `inset-inline` is the logical shorthand for left/right, so
+       one appearing in a .cvsplats rule silently resets the `left:50%` beside it — the
+       column then falls back to its static position and every damage number lands on
+       the stats rail. Renders fine, throws nothing, and jsdom has no layout to see it.
+       The positional proof lives in _treepreview/splat.js; this is the cheap tripwire. */
+    const splatRules = (html.match(/\.cvsplats\s*\{[^}]*\}/g) || []);
+    ok('.cvsplats rules exist', splatRules.length >= 1, splatRules.length + ' rules');
+    ok('no .cvsplats rule uses inset-inline (it resets left)',
+       !splatRules.some(r => /inset-inline/.test(r)),
+       splatRules.filter(r => /inset-inline/.test(r)).join(' '));
+    ok('the splat column still sets an explicit left',
+       splatRules.some(r => /left\s*:\s*50%/.test(r)), splatRules.join(' | ').slice(0, 160));
   }
 
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));
