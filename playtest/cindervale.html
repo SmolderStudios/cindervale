@@ -5627,8 +5627,15 @@ body:not(.is-demo) .demo-only{display:none !important}
 .cvrail .cvfood-scroll::-webkit-scrollbar-thumb{background:rgba(199,155,78,.35);border-radius:3px}
 .cvrail .cvfood-scroll::-webkit-scrollbar-track{background:transparent}
 
-/* ── hit splats: a contained column over the foe, not the whole stage ───── */
-.cvsplats{left:50%;right:auto;transform:translateX(-50%);width:calc(300px*var(--tscale));inset-inline:auto}
+/* ── hit splats: a contained column over the foe, not the whole stage ─────
+   Every offset is written out; do NOT reintroduce `inset-inline:auto` here. It is
+   the logical shorthand for left/right, so as the LAST declaration in this block it
+   reset the `left:50%` above it back to auto. With left AND right auto the column
+   fell back to its static position at the stage's top-left, and translateX(-50%)
+   dragged it a further 150px, landing every damage number on the stats panel.
+   The base rule's `inset:0` is what supplies top/bottom, hence both are restated. */
+.cvsplats{top:0;bottom:0;left:50%;right:auto;transform:translateX(-50%);
+  width:calc(300px*var(--tscale))}
 
 
 /* ── TOOLTIPS FOR THE STAGE PANELS ───────────────────────────────────────────
@@ -6079,7 +6086,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="mm-btn mm-buy demo-only" id="mmBuy">Get the Full Game</button>
     </div>
   </div>
-  <div class="mm-ver">v0.9.136</div>
+  <div class="mm-ver">v0.9.137</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
