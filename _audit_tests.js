@@ -1633,6 +1633,35 @@ setTimeout(() => {
        but nothing may render a .tnode again — two boards would both "work". */
     ok('renderPassives no longer emits the legacy board',
        !/className\s*=\s*'tnode'|class="tnode/.test(html), 'a .tnode is still being built');
+
+    /* Node art (v0.9.136). It is applied by MUTATING TREES[*].icon at parse time, so a
+       missing id does not throw — that node just keeps its old inline SVG and the board
+       renders one icon in a different style with nothing reported. Assert coverage. */
+    const art = ev(`(function(){
+      if(typeof NODE_ART==='undefined') return {absent:true};
+      var miss=[], notimg=[], stale=[];
+      var known={};
+      for(var s in TREES) for(var n of TREES[s]){
+        known[n.id]=1;
+        if(!NODE_ART[n.id]) miss.push(s+'/'+n.id);
+        else if(!/^<img /.test(String(n.icon))) notimg.push(s+'/'+n.id);
+      }
+      for(var k in NODE_ART) if(!known[k]) stale.push(k);
+      return {absent:false,total:Object.keys(NODE_ART).length,miss:miss,notimg:notimg,stale:stale};
+    })()`);
+    ok('node art pack is present', !art.absent, 'NODE_ART is undefined');
+    if (!art.absent) {
+      ok('every tree node has art', art.miss.length === 0,
+         art.miss.length ? art.miss.slice(0, 8).join(' ') : art.total + ' icons');
+      ok('every node actually took the art', art.notimg.length === 0,
+         art.notimg.slice(0, 8).join(' '));
+      ok('no art entry names a node that no longer exists', art.stale.length === 0,
+         art.stale.slice(0, 8).join(' '));
+      /* Size is the live ship constraint — the wrapper aborts the whole fetch at 6s.
+         Fail loudly well before the file becomes undownloadable on a slow line. */
+      const mb = fs.statSync(path.join(ROOT, process.env.CV_FILE || 'cindervale.html')).size / 1048576;
+      ok('file stays under the 7 MB wrapper-fetch ceiling', mb < 7, mb.toFixed(2) + ' MB');
+    }
   }
 
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));
