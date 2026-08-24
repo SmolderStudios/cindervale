@@ -1676,6 +1676,22 @@ setTimeout(() => {
     ok('the splat column still sets an explicit left',
        splatRules.some(r => /left\s*:\s*50%/.test(r)), splatRules.join(' | ').slice(0, 160));
 
+    /* No credential ships in the client (v0.9.118). Three Discord webhook URLs used
+       to sit in this file; a scanner found one and posted through it on 2026-08-24.
+       They live on the mail worker as secrets now. This is a silent defect of the
+       worst kind — pasting one back in "just to test" boots, renders, and passes
+       every other assertion here, and the leak is only visible from outside. */
+    const leaks = html.match(/https:\/\/(?:\w+\.)?discord(?:app)?\.com\/api\/webhooks\/[^\s'"]+/g) || [];
+    ok('no Discord webhook URL is hardcoded in the client', leaks.length === 0,
+       leaks.map(u => u.slice(0, 60) + '…').join(' '));
+    /* Base64 was floated as a fix and is not one, but it would at least dodge the
+       regex above — so catch the obvious encodings too rather than be reassured. */
+    const b64hook = (html.match(/[A-Za-z0-9+/]{24,}={0,2}/g) || []).some(t => {
+      try { return /discord.*api\/webhooks/i.test(Buffer.from(t, 'base64').toString('utf8')); }
+      catch (e) { return false; }
+    });
+    ok('no base64-encoded webhook URL either', !b64hook);
+
     /* Versioning (v0.9.118 scheme). Two numbers on the banner: the RELEASE players
        and Steam see, which moves once per depot push, and data-build, which moves on
        every web push and is what version.json carries. The wrapper compares

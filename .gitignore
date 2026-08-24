@@ -38,3 +38,8 @@ _treepreview/
 
 # guild panel preview scratch (build artifacts, not shipped)
 _guildpreview/
+
+# local Python venv (py -m venv here); never shipped, never committed
+Lib/
+Scripts/
+pyvenv.cfg
