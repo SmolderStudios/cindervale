@@ -6092,7 +6092,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.118.2">v0.9.118</div>
+  <div class="mm-ver" data-build="0.9.118.3">v0.9.118</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -6849,24 +6849,32 @@ let mmSlot = 0;        // 0 = none chosen yet
 let mmAtMenu = true;   // pause game logic + autosave while on the menu
 let mmStarted = false; // start gameplay loops only once
 
-/* ── Bug reporting (0.9.29) ──────────────────────────────────────────────────
-   Posts to a Discord webhook. This URL ships inside the public client, so treat
-   it as disposable: if it ever gets spammed, delete it in Discord
-   (Channel → Integrations → Webhooks) and paste a fresh one below. One-way —
-   players can only post, never read the channel. Leave BUG_WEBHOOK empty to
-   hide the Report-a-bug buttons entirely. */
-const BUG_WEBHOOK = 'https://discord.com/api/webhooks/1525224836258070528/LQk3rRgxUPgOwG4n30z_NUSXXIaA7S6OpivvNdDey-mTyao5JxCRbIOHyjCGu48p9CI9';   // <-- public in the client; regenerate in Discord if spammed
-/* Ideas & suggestions — same one-way Discord webhook trick as bug reports.
-   Leave this empty and suggestions fall back to the bug channel, tagged and
-   coloured differently so they're still easy to tell apart. Paste a dedicated
-   webhook here to split them into their own channel. */
-const IDEA_WEBHOOK = '';
-function ideaHook(){ return IDEA_WEBHOOK || BUG_WEBHOOK; }
+/* ── Bug reporting (0.9.29; webhooks pulled out 0.9.118) ──────────────────────
+   NO WEBHOOK URL LIVES IN THIS FILE ANY MORE. Do not put one back.
+
+   Reports used to POST straight from here to a Discord webhook, which meant
+   that URL shipped inside a public HTML file across all three channels. On
+   2026-08-24 a scanner found it and posted an @everyone through it.
+
+   Obfuscation does not fix this and never could: base64, string-splitting,
+   whatever — the client has to hand the real URL to fetch() in the end, and
+   anyone with devtools can read it there. The only fix is not having it here.
+
+   All three webhooks (bug, audit, signup) are secrets on the mail worker now,
+   and the WORKER builds the embed, so what can reach the channel is a fixed
+   shape decided server-side rather than whatever the caller hands over.
+
+   There is deliberately no direct-webhook fallback left: a fallback is a
+   credential in the client, which is the entire bug. Worker unreachable means
+   the report fails and says so. Point MAIL_API at nothing to switch reporting
+   off — that is the kill switch now, not an empty URL constant. */
+function reportsOn(){ return !!MAIL_API; }
 /* ── Mail (0.9.121) ──────────────────────────────────────────────────────────
-   The webhooks above are a shout into a channel; nothing can ever come back
-   from them. Reports routed through this worker instead carry a ticket bound to
+   A bare webhook post is a shout into a channel; nothing can ever come back
+   from one. Reports routed through this worker instead carry a ticket bound to
    a MAILBOX ID, and replying to that ticket in Discord delivers into this game
-   and no other.
+   and no other. Since 0.9.118 the worker is also the ONLY path — it holds every
+   webhook as a secret, and the client holds none.
 
    MAIL_KEY is that mailbox: a secret this machine mints on its first report and
    shows nobody. Deliberately NOT the device id — that one is printed in every
@@ -6920,8 +6928,8 @@ window.addEventListener('unhandledrejection', function(e){
 
    Bug and idea reports are deliberately NOT muted — a person typed those on
    purpose. This is not a cheat hole worth defending: the hooks are visibility
-   only, they block nothing, and the webhook URLs are already public in the
-   shipped file, so anyone wanting to dodge them can simply drop the request. */
+   only and they block nothing, and anyone wanting to dodge them can simply
+   drop the request — the endpoint is called from the client either way. */
 const DEV_MUTE_KEY = 'cindervale_dev';
 let _devMute = false;
 try{
@@ -6936,7 +6944,8 @@ try{
 if(_devMute && typeof console!=='undefined' && console.info)
   console.info('[cindervale] DEV MUTE ON — audit and signup webhooks suppressed for this browser. Load with ?cvdev=0 to clear.');
 
-const AUDIT_WEBHOOK = 'https://discord.com/api/webhooks/1525231467414683819/sjRUdB8oEWW8jcNVajon9pmxnjFbuzolpl7apJKrYt7ObQIrsGfAlvOQTOdfjuy3BGRJ';
+/* Audit flags post to the mail worker, which holds the webhook. See the
+   bug-reporting block above for why there is no URL here. */
 const _CHEAT_SALT = 'cv_a9f31c7e_seal_v1';
 const GOLD_SPIKE = 50000000;          // gold gained between saves that trips a spike alert (tunable)
 let _coinsBaseline = null;            // reset when a character enters the world (after offline)
@@ -6983,33 +6992,35 @@ function _auditPing(reason, extraFields, dedupeKey){
   const key = dedupeKey || reason;
   if(_auditSent[key]) return; _auditSent[key]=true;
   if(_auditCount>=25) return; _auditCount++;               // session backstop
-  const hook = AUDIT_WEBHOOK || (typeof BUG_WEBHOOK!=='undefined' ? BUG_WEBHOOK : '');
-  if(!hook) return;
+  if(!MAIL_API) return;
   let dev='?'; try{ dev=lsGet(DEVICE_KEY)||'?'; }catch(e){}
   const flagN=(typeof _bumpCount==='function')?_bumpCount('cindervale_flag_seq'):0;
   const gold = Math.floor((((typeof state!=='undefined'&&state.coins)||0))/(typeof SILVER_PER_GOLD!=='undefined'?SILVER_PER_GOLD:100));
-  const fields=[
-    {name:'Flag',value:String(reason).slice(0,80),inline:true},
-    {name:'Device',value:String(dev).slice(0,40),inline:true},
-    {name:'Flags from device',value:'#'+flagN,inline:true},
-    {name:'Character',value:String((typeof state!=='undefined'&&state.charName)||'?').slice(0,64),inline:true},
-    {name:'Gold',value:gold.toLocaleString(),inline:true},
-    {name:'Slot',value:String(typeof mmSlot!=='undefined'?mmSlot:'?'),inline:true},
-    {name:'Version',value:cvBuild(),inline:true}
-  ].concat(extraFields||[]);
-  const payload={username:'Cindervale Audit',embeds:[{title:'Audit flag',color:0xc4543a,description:String(reason).slice(0,200),fields:fields.slice(0,25)}]};
-  try{ fetch(hook,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}); }catch(e){}
+  /* Named pieces, not a finished embed — the worker assembles it, so this
+     endpoint can only ever emit an audit-flag-shaped message. FormData for the
+     same reason the report path uses it: multipart is CORS-safelisted, so no
+     preflight round trip. Fire-and-forget; the answer is never read. */
+  try{
+    const fd=new FormData();
+    fd.append('reason',String(reason).slice(0,200));
+    fd.append('dev',String(dev).slice(0,40));
+    fd.append('n',String(flagN));
+    fd.append('who',String((typeof state!=='undefined'&&state.charName)||'?').slice(0,64));
+    fd.append('gold',gold.toLocaleString());
+    fd.append('slot',String(typeof mmSlot!=='undefined'?mmSlot:'?'));
+    fd.append('ver',cvBuild());
+    fd.append('extra',JSON.stringify(extraFields||[]));
+    fetch(MAIL_API+'/api/audit',{method:'POST',body:fd});
+  }catch(e){}
 }
 
 /* ── New-account notification + repeat-event counters (0.9.38) ───────────────
-   Pings a Discord webhook when a character is created, tagged with the device id
+   Pings the mail worker when a character is created, tagged with the device id
    and a per-device account counter so alts from the same device read as #2, #3…
    The same _bumpCount also feeds a "how many times" tally into the audit + bug
-   pings. Same honest limits as the audit hook: the webhook is public in the
-   client (regenerate it in Discord if it ever gets spammed) and a user who
-   clears localStorage resets their own counters. Visibility only — nothing here
-   blocks or alters gameplay. */
-const SIGNUP_WEBHOOK = 'https://discord.com/api/webhooks/1525421043458637875/EpMJrV60uW1VlQxO8iJhEWP3R1SVpefTUXr1wxacPuliuDyTBeqDyUqwsHem_UhAgEyF';   // <-- public in the client; regenerate in Discord if spammed
+   pings. The webhook itself is a worker secret — see the bug-reporting block
+   above. Honest limit that remains: a user who clears localStorage resets their
+   own counters. Visibility only — nothing here blocks or alters gameplay. */
 function _bumpCount(key){
   let n=1; try{ n=(parseInt(lsGet(key),10)||0)+1; lsSet(key,String(n)); }catch(e){ n=1; }
   return n;
@@ -7017,26 +7028,21 @@ function _bumpCount(key){
 let _signupSent=0;
 function _signupPing(name, type, cls, slot){
   if(_devMute) return;                                           // see DEV_MUTE_KEY above
-  if(!SIGNUP_WEBHOOK || _signupSent>=5) return; _signupSent++;   // session backstop
+  if(!MAIL_API || _signupSent>=5) return; _signupSent++;         // session backstop
   let dev='?'; try{ dev=lsGet(DEVICE_KEY)||'?'; }catch(e){}
   const acct=_bumpCount('cindervale_acct_seq');                  // this device's Nth character
-  const alt=acct>1;
-  const build=(typeof IS_DEMO!=='undefined'&&IS_DEMO)?'🖥️ Demo (browser)':'✅ Full game';
-  const ver=cvBuild();
-  const payload={username:'Cindervale Signups',embeds:[{
-    title:'New character created'+(alt?'  •  #'+acct+' from this device':''),
-    color:alt?0xe0762f:0x7da33f,
-    fields:[
-      {name:'Character',value:String(name||'?').slice(0,64),inline:true},
-      {name:'Build',value:build,inline:true},
-      {name:'Account #',value:'#'+acct+(alt?' (alt — same device)':' (first here)'),inline:true},
-      {name:'Device',value:String(dev).slice(0,40),inline:true},
-      {name:'Path / Class',value:(String(type||'?')+' / '+String(cls||'?')).slice(0,64),inline:true},
-      {name:'Slot',value:String(slot||'?'),inline:true},
-      {name:'Version',value:ver,inline:true}
-    ]
-  }]};
-  try{ fetch(SIGNUP_WEBHOOK,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}); }catch(e){}
+  // Named pieces again — the worker builds the embed. See _auditPing above.
+  try{
+    const fd=new FormData();
+    fd.append('name',String(name||'?').slice(0,64));
+    fd.append('dev',String(dev).slice(0,40));
+    fd.append('acct',String(acct));
+    fd.append('demo',(typeof IS_DEMO!=='undefined'&&IS_DEMO)?'1':'0');
+    fd.append('cls',(String(type||'?')+' / '+String(cls||'?')).slice(0,64));
+    fd.append('slot',String(slot||'?'));
+    fd.append('ver',cvBuild());
+    fetch(MAIL_API+'/api/signup',{method:'POST',body:fd});
+  }catch(e){}
 }
 function mmKey(n){ return DEVICE_SAVE_KEY + '_c' + n; }
 
@@ -35999,7 +36005,7 @@ function mmOpenReport(){
 async function mmSendReport(){
   const msg=$('mmReportMsg'), btn=$('mmReportSend');
   const text=$('mmReportText').value.trim();
-  if(!BUG_WEBHOOK){ msg.className='rep-msg err'; msg.textContent='Bug reporting is not set up yet.'; return; }
+  if(!reportsOn()){ msg.className='rep-msg err'; msg.textContent='Bug reporting is not set up yet.'; return; }
   if(text.length<4){ msg.className='rep-msg err'; msg.textContent='Please describe the bug first.'; return; }
   const wait=BUG_COOLDOWN_MS-(Date.now()-_bugLastSent);
   if(wait>0){ msg.className='rep-msg err'; msg.textContent='Please wait '+Math.ceil(wait/1000)+'s before sending another.'; return; }
@@ -36009,57 +36015,24 @@ async function mmSendReport(){
   const _flagged = (function(){ try{ return _hasSlur(text); }catch(e){ return false; } })();
   let _dev='?'; try{ _dev=lsGet(DEVICE_KEY)||'?'; }catch(e){}
   const _bugN=(typeof _bumpCount==='function')?_bumpCount('cindervale_bug_seq'):0;
-  // Worker first. It posts the same embed AND files a ticket against this
-  // machine's mailbox, which is the only reason a reply can ever come back. If
-  // it is unreachable we fall through to the direct webhook below — a report
-  // that lands unrepliable still beats a report that is lost.
+  // The worker posts the embed AND files a ticket against this machine's
+  // mailbox, which is the only reason a reply can ever come back. It used to
+  // fall through to a direct webhook when unreachable; that fallback was the
+  // leaked credential, so it is gone. Unreachable now means the send fails.
   const _mbox=mailboxId();
-  if(MAIL_API && _mbox){
-    const t=await _mailSend('bug',_mbox,text,c,_dev,_bugN,_flagged,_bugFile);
-    if(t){
-      _bugLastSent=Date.now();
-      msg.className='rep-msg ok';
-      msg.textContent='Thank you — report #'+t+' sent. Any reply shows up in Menu → Mail.';
-      btn.textContent='Sent';
-      mailStart();
-      setTimeout(function(){ $('mmReportModal').classList.add('mm-hidden'); },2200);
-      return;
-    }
-  }
-  const payload={username:'Cindervale Bug Report',embeds:[{title:_flagged?'Bug report — flagged language':'Bug report',description:text.slice(0,1400),color:_flagged?0x8a2f2f:0xc05149,
-    fields:[
-      {name:'Version',value:c.ver,inline:true},
-      {name:'Character',value:c.who.slice(0,256),inline:true},
-      {name:'Device',value:String(_dev).slice(0,40),inline:true},
-      {name:'Report # (this device)',value:'#'+_bugN,inline:true},
-      {name:'Location',value:c.where.slice(0,256),inline:true},
-      {name:'Platform',value:c.plat.slice(0,256),inline:false},
-      {name:'Recent errors',value:('```'+c.errs+'```').slice(0,1024),inline:false}
-    ]}]};
-  try{
-    let res;
-    if(_bugFile){
-      // Attach as a plain file — Discord shows it below the embed. (Referencing
-      // it via attachment:// inside the embed silently drops the upload unless
-      // the modern attachments[] array is also declared, so keep it simple.)
-      const name='screenshot'+_bugExt(_bugFile.type);
-      const fd=new FormData();
-      fd.append('payload_json', JSON.stringify(payload));
-      fd.append('files[0]', _bugFile, name);
-      res=await fetch(BUG_WEBHOOK,{method:'POST',body:fd});   // browser sets multipart boundary
-    }else{
-      res=await fetch(BUG_WEBHOOK,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
-    }
-    if(!(res.ok||res.status===204)) throw new Error('HTTP '+res.status);
+  const _t=await _mailSend('bug',_mbox,text,c,_dev,_bugN,_flagged,_bugFile);
+  if(_t){
     _bugLastSent=Date.now();
-    msg.className='rep-msg ok'; msg.textContent='Thank you — report sent!';
+    msg.className='rep-msg ok';
+    msg.textContent='Thank you — report #'+_t+' sent. Any reply shows up in Menu → Mail.';
     btn.textContent='Sent';
-    setTimeout(function(){ $('mmReportModal').classList.add('mm-hidden'); },1400);
-  }catch(err){
-    msg.className='rep-msg err';
-    msg.textContent='Could not send ('+String(err.message||err).slice(0,50)+'). Please post in Discord instead.';
-    btn.disabled=false; btn.textContent='Try again';
+    mailStart();
+    setTimeout(function(){ $('mmReportModal').classList.add('mm-hidden'); },2200);
+    return;
   }
+  msg.className='rep-msg err';
+  msg.textContent='Could not send — no connection to the report server. Please post in Discord instead.';
+  btn.disabled=false; btn.textContent='Try again';
 }
 /* ── Ideas & suggestions ──────────────────────────────────────────────────────
    Deliberately lighter than the bug reporter: no screenshot, and none of the
@@ -36077,7 +36050,7 @@ function mmOpenIdea(){
 async function mmSendIdea(){
   const msg=$('mmIdeaMsg'), btn=$('mmIdeaSend');
   const text=$('mmIdeaText').value.trim();
-  if(!ideaHook()){ msg.className='rep-msg err'; msg.textContent='Suggestions are not set up yet.'; return; }
+  if(!reportsOn()){ msg.className='rep-msg err'; msg.textContent='Suggestions are not set up yet.'; return; }
   if(text.length<4){ msg.className='rep-msg err'; msg.textContent='Please describe your idea first.'; return; }
   const wait=BUG_COOLDOWN_MS-(Date.now()-_ideaLastSent);
   if(wait>0){ msg.className='rep-msg err'; msg.textContent='Please wait '+Math.ceil(wait/1000)+'s before sending another.'; return; }
@@ -36085,44 +36058,24 @@ async function mmSendIdea(){
   let dev='?'; try{ dev=lsGet(DEVICE_KEY)||'?'; }catch(e){}
   const who=(state&&state.charName)?String(state.charName):'(no character)';
   const ver=cvBuild();
-  // Same worker-first, webhook-fallback path as the bug reporter above.
+  // Same worker-only path as the bug reporter above — no webhook fallback.
   const _mbox=mailboxId();
-  if(MAIL_API && _mbox){
-    const t=await _mailSend('idea',_mbox,text,{who:who,ver:ver},dev,0,false,null);
-    if(t){
-      _ideaLastSent=Date.now();
-      msg.className='rep-msg ok';
-      msg.textContent='Thank you — idea #'+t+' sent. Any reply shows up in Menu → Mail.';
-      btn.textContent='Sent';
-      mailStart();
-      setTimeout(function(){ $('mmIdeaModal').classList.add('mm-hidden'); },2200);
-      return;
-    }
-  }
-  const payload={embeds:[{
-    title:'💡 Suggestion',
-    description:text.slice(0,3800),
-    color:0x4ea3c7,                      // blue — reads apart from the red bug embeds
-    timestamp:new Date().toISOString(),
-    fields:[
-      {name:'Character',value:who.slice(0,256),inline:true},
-      {name:'Version',value:String(ver).slice(0,32),inline:true},
-      {name:'Device',value:String(dev).slice(0,40),inline:true}
-    ]}]};
-  try{
-    const res=await fetch(ideaHook(),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
-    if(!(res.ok||res.status===204)) throw new Error('HTTP '+res.status);
+  const _t=await _mailSend('idea',_mbox,text,{who:who,ver:ver},dev,0,false,null);
+  if(_t){
     _ideaLastSent=Date.now();
-    msg.className='rep-msg ok'; msg.textContent='Thank you — idea sent!';
+    msg.className='rep-msg ok';
+    msg.textContent='Thank you — idea #'+_t+' sent. Any reply shows up in Menu → Mail.';
     btn.textContent='Sent';
-    setTimeout(function(){ $('mmIdeaModal').classList.add('mm-hidden'); },1400);
-  }catch(err){
-    msg.className='rep-msg err';
-    msg.textContent='Could not send ('+String(err.message||err).slice(0,50)+'). Please post in Discord instead.';
-    btn.disabled=false; btn.textContent='Try again';
+    mailStart();
+    setTimeout(function(){ $('mmIdeaModal').classList.add('mm-hidden'); },2200);
+    return;
   }
+  msg.className='rep-msg err';
+  msg.textContent='Could not send — no connection to the report server. Please post in Discord instead.';
+  btn.disabled=false; btn.textContent='Try again';
 }
-if(ideaHook()){ ['gmIdea','mmIdeaRow'].forEach(function(id){ var el=$(id); if(el) el.hidden=false; }); }
+
+if(reportsOn()){ ['gmIdea','mmIdeaRow'].forEach(function(id){ var el=$(id); if(el) el.hidden=false; }); }
 $('gmIdea').addEventListener('click', function(){ gmClose(); mmOpenIdea(); });
 $('mmSetIdea').addEventListener('click', function(){ $('mmSettingsModal').classList.add('mm-hidden'); mmOpenIdea(); });
 $('mmIdeaCancel').addEventListener('click', function(){ $('mmIdeaModal').classList.add('mm-hidden'); });
@@ -36147,11 +36100,21 @@ function _mailRand(){
   return s.slice(0,24).replace(/[^a-z0-9]/g,'0');
 }
 function mailboxPeek(){ return lsGet(MAIL_KEY)||''; }
-/* Minted on the first report, never before. Storage blocked returns '' and mail
-   stays off for good — an address that does not survive a reload can't receive. */
+/* Minted on the first report, never before.
+
+   Storage blocked used to return '' and the send fell through to the direct
+   webhook. That webhook is gone, so '' would now mean the report itself is lost
+   — a much worse trade than an unrepliable one. Mint a session-only address
+   instead: the report lands, the ticket is real, and only the reply path is
+   forfeit (mailSync keys off mailboxPeek(), so no Mail row is ever shown for an
+   address that cannot survive a reload). */
+let _mailMem = '';
 function mailboxId(){
   let id = mailboxPeek();
-  if(!id){ id=_mailRand(); if(!lsSet(MAIL_KEY,id)) return ''; }
+  if(!id){
+    id=_mailRand();
+    if(!lsSet(MAIL_KEY,id)){ _mailMem = _mailMem || id; return _mailMem; }
+  }
   return id;
 }
 /* `ok` means a ticket was really filed — the worker answered with a number.
@@ -36322,7 +36285,7 @@ $('mmMailReplySend').addEventListener('click', mailSendReply);
 mailSync();
 mailStart();
 
-if(BUG_WEBHOOK){ ['gmReport','mmReportRow'].forEach(function(id){ var el=$(id); if(el) el.hidden=false; }); }
+if(reportsOn()){ ['gmReport','mmReportRow'].forEach(function(id){ var el=$(id); if(el) el.hidden=false; }); }
 $('gmReport').addEventListener('click', function(){ gmClose(); mmOpenReport(); });
 $('mmSetReport').addEventListener('click', function(){ $('mmSettingsModal').classList.add('mm-hidden'); mmOpenReport(); });
 $('mmReportCancel').addEventListener('click', function(){ $('mmReportModal').classList.add('mm-hidden'); });
