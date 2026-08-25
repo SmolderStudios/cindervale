@@ -1784,6 +1784,73 @@ setTimeout(() => {
       var h=document.getElementById('_selTestHost'); if(h && h.parentNode) h.parentNode.removeChild(h); })()`);
   }
 
+  section('Player reports batch (0.9.119.3)');
+  {
+    /* --- Ticket #5: the log read the same colour whoever was swinging --------
+       The red `foe` lane already existed and was simply never used: the
+       monster's swing was tagged 'hit', which is the GREEN player lane. */
+    const lanes = ev(`(function(){
+      const box=document.createElement('div'); box.className='cmb-log';
+      ['hit','foe','status','miss','dodge'].forEach(function(c){
+        const d=document.createElement('div'); d.className='ln '+c; d.textContent='x'; box.appendChild(d); });
+      document.body.appendChild(box);
+      const out={};
+      Array.prototype.forEach.call(box.children,function(d){
+        out[d.className.split(' ')[1]]=getComputedStyle(d).color; });
+      box.parentNode.removeChild(box);
+      return out; })()`);
+    ok('the foe lane is a different colour from your own hits', lanes.hit !== lanes.foe,
+       'hit=' + lanes.hit + ' foe=' + lanes.foe);
+    ok('statuses read apart from both', lanes.status !== lanes.hit && lanes.status !== lanes.foe, lanes.status);
+    ok('a miss reads apart from a landed blow', lanes.miss !== lanes.hit, lanes.miss);
+    /* The tagging itself is buried in the swing tick, so this one is asserted on
+       the call site. It is the exact line that regressed, and a behavioural
+       version would have to drive a whole fight to reach it. */
+    ok('the monster swing is tagged foe, never hit',
+       /_dodged\?'dodge':\(foeDmg>0\?'foe':'miss'\)/.test(html) &&
+       !/hits you for \$\{foeDmg\}\.`\), foeDmg>0\?'hit'/.test(html));
+
+    /* --- Ticket #4: Offline Skilling takes over when materials run out ------- */
+    ev(`state=defaultState(); normalizeState(); state.xp.woodcutting=XP_CUM[50];`);
+    const wcAct = ev(`SKILLS.woodcutting.acts[0].id`);
+    ev(`state.offlineConfig={skill:'woodcutting',actId:'${wcAct}'}; state.action=null;`);
+    const took = ev(`offlineFallbackTakeover('cooking','ck1')`);
+    ok('an exhausted activity hands over to the configured offline one',
+       !!took && ev(`state.action&&state.action.skill`) === 'woodcutting', String(took));
+    /* Handing back to the activity that just ran dry would stop again next cycle. */
+    ev(`state.action=null;`);
+    const same = ev(`offlineFallbackTakeover('woodcutting','${wcAct}')`);
+    ok('it never hands back to the activity that just ran dry',
+       same === '' && ev(`state.action`) === null, JSON.stringify(same));
+    /* No config means the old behaviour: stop. */
+    ev(`state.offlineConfig=null; state.action=null;`);
+    ok('with no offline config it still just stops',
+       ev(`offlineFallbackTakeover('cooking','ck1')`) === '' && ev(`state.action`) === null);
+
+    /* --- Skill rail order is the player's choice --------------------------- */
+    ev(`state=defaultState(); normalizeState();
+        state.action={skill:'mining',actId:SKILLS.mining.acts[0].id};
+        _railGroup='all';`);
+    /* Ordering is compared INSIDE the page. Marshalling the ids out and sorting
+       them here picked up rows the test did not expect and compared nulls —
+       a bug in the test, not in the rail. */
+    const order = (mode) => ev(`(function(){ setSkillSort('${mode}');
+      const got=Array.prototype.map.call(document.querySelectorAll('#skillList .skill-row'),
+        function(b){ return b.getAttribute('data-skill'); }).filter(Boolean);
+      const want=got.slice().sort(function(x,y){ return SKILLS[x].name.localeCompare(SKILLS[y].name); });
+      return { first:got[0], n:got.length,
+               isAlphabetical: JSON.stringify(got)===JSON.stringify(want) }; })()`);
+    const az = order('az'), act = order('active');
+    ok('A-Z never pins the running skill',
+       az.n > 3 && az.first !== 'mining' && az.isAlphabetical === true,
+       az.n + ' rows, first=' + az.first);
+    ok('Active-first still pins it (unchanged default behaviour)', act.first === 'mining', act.first);
+    ok('the default is Active-first', ev(`lsDel(SKILL_SORT_KEY); skillSort()`) === 'active');
+    ok('an unknown stored value falls back rather than emptying the rail',
+       ev(`lsSet(SKILL_SORT_KEY,'nonsense'); skillSort()`) === 'active');
+    ev(`lsDel(SKILL_SORT_KEY);`);
+  }
+
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));
   process.exit(fail ? 1 : 0);
 }, 2500);

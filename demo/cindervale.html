@@ -472,6 +472,12 @@ header h1 .flame{color:var(--ember)}
 /* In-card style picker — three small icon buttons inside the player fighter card.
    Compact full-width row that lets you switch training without leaving the arena. */
 .cmb-style-pick{display:flex;gap:3px;width:100%;margin-top:3px}
+/* Ticket #8 (0.9.119.3): the levels used to live only in a data-tip on the
+   Your-stats card, which shows derived numbers. Now they read at a glance. */
+.cmb-style .cst-lv{margin-left:5px;font-family:var(--num);font-weight:700;
+  font-size:calc(10.5px*var(--tscale));color:var(--trim);letter-spacing:.3px}
+.cmb-style.sel .cst-lv{color:#ffd0a0}
+.cmb-style:disabled .cst-lv{color:var(--muted)}
 .cmb-style-pick .cmb-style{flex:1;padding:3px 0;font-size:calc(14px*var(--tscale));text-align:center;line-height:1.1;
   background:var(--raised);border:1px solid var(--trim-d);color:var(--text);
   border-radius:3px;cursor:var(--cur-pointer);letter-spacing:0;font-variant:normal;
@@ -776,7 +782,7 @@ header h1 .flame{color:var(--ember)}
   background:#1a1108; border:1px solid var(--trim);
   border-radius:5px; padding:0;
   text-align:left;
-  pointer-events:none; opacity:0; transition:opacity .12s;
+  pointer-events:none; opacity:0;
   z-index:500; box-shadow:var(--sh-2);
   font-family:'Crimson Pro',serif;
 }
@@ -848,7 +854,7 @@ header h1 .flame{color:var(--ember)}
   background:#1a1108; border:1px solid var(--zone-accent,#c79b4e);
   border-radius:5px; padding:0;
   text-align:left;
-  pointer-events:none; opacity:0; transition:opacity .12s;
+  pointer-events:none; opacity:0;
   z-index:500; box-shadow:var(--sh-2);
   font-family:'Crimson Pro',serif;
 }
@@ -1152,6 +1158,13 @@ header h1 .flame{color:var(--ember)}
 .cmb-log .ln.rare-win::before{content:'★';color:#fbd24e}
 .cmb-log .ln.rare-pet{color:#a878e0;font-weight:600}
 .cmb-log .ln.rare-pet::before{content:'❀';color:#a878e0}
+/* Statuses get their own lane (0.9.119.3). They used to be tagged 'hit',
+   which is the green YOUR-attack style, so a poison landing on the foe and
+   your own sword landing were the same colour with the same marker. */
+.cmb-log .ln.status{color:#b184d8}
+.cmb-log .ln.status::before{content:'❖';color:#9a6fc0}
+.cmb-log .ln.dodge{color:#6fa8c0;font-style:italic}
+.cmb-log .ln.dodge::before{content:'∿';color:#5b8ea3}
 /* Old pot+log grid layout collapses (potions now in hotbar) */
 .cmb-pot-log-row{display:block;grid-template-columns:none;gap:0}
 .cmb-pot-log-row .cmb-log-col{display:block;min-width:0}
@@ -1189,8 +1202,16 @@ header h1 .flame{color:var(--ember)}
   background:#0f0905;border:1px solid var(--trim-d);border-radius:3px;padding:3px}
 .cmb-zicons .cmb-zone-tile{position:relative;background:transparent;border:1px solid transparent;
   border-radius:2px;padding:6px 0;cursor:var(--cur-pointer);color:var(--text);
-  display:block;text-align:center;font-family:inherit;transition:all .12s;
+  display:block;text-align:center;font-family:inherit;
+  transition:background-color .12s,border-color .12s;
   flex-direction:initial;align-items:initial;gap:0;box-shadow:none;transform:none}
+/* z-index is deliberately NOT in these transition lists. `transition:all`
+   ANIMATES z-index, so the :hover lift that is meant to put a tooltip above
+   its neighbours instead crawls toward it and never reliably lands - the
+   tile sits at or near its base z-index of 1, ties with .cmb-mon (also 1),
+   and loses the tie on DOM order because .cmb-zicons comes before
+   .cmb-zright. Result: the zone tooltip is painted over by the creature
+   list. Naming the properties keeps the fade and applies z-index instantly. */
 .cmb-zicons .cmb-zone-tile:hover:not(:disabled){background:#231811;border-color:var(--trim-d);
   transform:none;box-shadow:none;z-index:600}
 .cmb-zicons .cmb-zone-tile.sel{background:linear-gradient(180deg,#3a2814,#1a0e04);
@@ -1213,7 +1234,7 @@ header h1 .flame{color:var(--ember)}
 /* Tooltip stays fully visible regardless of locked state (it's a child of the
    tile, so without the opacity fix above its rendering would inherit the dim). */
 .cmb-zicons .cmb-zone-tip{position:absolute;top:50%;left:100%;transform:translate(8px,-50%);
-  z-index:1000;margin-top:0;opacity:0;pointer-events:none;transition:opacity .12s}
+  z-index:1000;margin-top:0;opacity:0;pointer-events:none}
 .cmb-zicons .cmb-zone-tile:hover .cmb-zone-tip{opacity:1}
 .cmb-zright{flex:1 1 0;min-width:0;display:flex;flex-direction:column}
 .cmb-zright .cmb-zone-strip{margin-top:0;margin-bottom:5px;padding:5px 10px;
@@ -1231,7 +1252,7 @@ header h1 .flame{color:var(--ember)}
 .cmb-zright .cmb-mon{display:flex;align-items:center;gap:9px;background:#1a1208;
   border:1px solid var(--trim-d);border-radius:3px;padding:5px 10px 5px 6px;cursor:var(--cur-pointer);
   position:relative;text-align:left;color:var(--text);font-family:inherit;
-  transition:all .12s;box-shadow:none;flex-direction:row}
+  transition:background-color .12s,border-color .12s;box-shadow:none;flex-direction:row}
 .cmb-zright .cmb-mon:hover:not(:disabled){border-color:#5a3818;background:#231510}
 .cmb-zright .cmb-mon.sel{border-color:var(--ember);background:#231510;box-shadow:none}
 .cmb-zright .cmb-mon.boss{border-color:#5a3818;background:#1d1408}
@@ -1299,6 +1320,11 @@ header h1 .flame{color:var(--ember)}
 /* Ember dot on the tab that holds the running skill, so filtering strictly never
    hides the fact that something is training. Only shown on tabs you are NOT on. */
 .rail-groups .rg{position:relative}
+.rail-sort{display:flex;align-items:center;gap:6px;margin:0 0 6px}
+.rail-sort label{font-family:var(--num);font-size:calc(10px*var(--tscale));letter-spacing:.9px;
+  color:var(--muted);text-transform:uppercase;flex:none}
+.rail-sort select{flex:1;min-width:0;padding:3px 22px 3px 7px;
+  font-size:calc(11.5px*var(--tscale))}
 .rail-groups .rg.running::after{content:'';position:absolute;top:3px;right:4px;
   width:5px;height:5px;border-radius:50%;background:var(--ember);
   box-shadow:0 0 4px var(--ember);animation:rg-run-dot 1.6s ease-in-out infinite}
@@ -6105,7 +6131,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.119.2">v0.9.119</div>
+  <div class="mm-ver" data-build="0.9.120.1">v0.9.120</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -6479,6 +6505,14 @@ body:not(.is-demo) .demo-only{display:none !important}
         <button class="rg" data-rg="gather">Gather</button>
         <button class="rg" data-rg="produce">Craft</button>
         <button class="rg" data-rg="support">Support</button>
+      </div>
+      <div class="rail-sort">
+        <label for="skillSort">Sort</label>
+        <select id="skillSort">
+          <option value="active">Active first</option>
+          <option value="az">A – Z</option>
+          <option value="level">Level</option>
+        </select>
       </div>
       <div id="skillList"></div>
     </div>
@@ -19624,11 +19658,15 @@ function tick(){
   const done=completeAction(act,skill,cycles);
   // Material exhaustion (applies to cooking too — raw fish input)
   if(act.inp&&done<cycles&&!state.action){
-    // applyContinuousBurn already nulled state.action and toasted (fire-out case)
-    // Nothing else to do.
+    // applyContinuousBurn already nulled state.action and toasted (fire-out case).
+    // Ticket #4: the session can still be handed to Offline Skilling from here.
+    const _fbFire=offlineFallbackTakeover(skill,act.id);
+    if(_fbFire) toast('↻ Switched to '+_fbFire+'.');
   } else if(act.inp&&done<cycles){
     state.action=null;
-    toast(skill==='cooking'?'Out of raw fish — stopped.':'Out of materials — stopped.');
+    const _fb=offlineFallbackTakeover(skill,act.id);
+    if(_fb) toast('↻ Out of materials — switched to '+_fb+'.');
+    else toast(skill==='cooking'?'Out of raw fish — stopped.':'Out of materials — stopped.');
   } else {
     state.actionStart+=cycles*ms;
     // Shortcutter (ag_shortcut) — each completed lap has a 4%/rank chance to cut a
@@ -19643,6 +19681,31 @@ function tick(){
   }
   saveGame();
   renderTick();
+}
+
+/* Ticket #4 (0.9.119.3) - hand an exhausted session over to Offline Skilling.
+
+   An input-hungry activity (cooking, alchemy, smithing) used to dead-stop the
+   moment its materials ran out, so an AFK session earned nothing from that
+   point on even though the player had already told the game what to train when
+   they are not driving it.
+
+   Gated on the same conditions setAction() gates on, but checked HERE rather
+   than by calling setAction(): that function toasts its own refusals and calls
+   renderAll(), and this runs inside the tick. Returns the activity name on a
+   successful handover, '' otherwise. Never picks the activity that just ran
+   dry, or it would stop again on the very next cycle. */
+function offlineFallbackTakeover(fromSkill, fromActId){
+  const cfg = state && state.offlineConfig;
+  if(!cfg) return '';
+  if(cfg.skill===fromSkill && cfg.actId===fromActId) return '';
+  const act = getAct(cfg.skill, cfg.actId);
+  if(!act) return '';
+  if(cfg.skill==='cooking' && typeof fireIsLit==='function' && !fireIsLit()) return '';
+  if(act.inp && canAfford(act,1,mods(cfg.skill))<=0) return '';
+  state.action = {skill:cfg.skill, actId:cfg.actId};
+  state.actionStart = Date.now();
+  return act.name || cfg.actId;
 }
 
 /* ════ [JS-21f] offline grant & summary ══════════════════════════════════════════ */
@@ -19927,15 +19990,34 @@ function railRunDot(){
   });
 }
 
+/* Player-chosen rail order (0.9.119.3). Pinning the running skill to the top is
+   what makes rows move underneath you mid-session, which is what was asked
+   about. A view preference, so it lives in localStorage beside the other UI
+   prefs rather than in the save - it belongs to the player, not a character.
+   'active' stays the default so nobody's rail reorders itself unasked. */
+const SKILL_SORT_KEY='cindervale_skill_sort';
+const SKILL_SORTS={active:1, az:1, level:1};
+function skillSort(){ const v=lsGet(SKILL_SORT_KEY); return SKILL_SORTS[v]?v:'active'; }
+function setSkillSort(v){
+  if(!SKILL_SORTS[v]) v='active';
+  lsSet(SKILL_SORT_KEY,v);
+  renderSkillList();
+}
+
 function renderSkillList(){
   const box=$('skillList'); box.innerHTML='';
-  // Active (currently-running) skill pinned to the top; everyone else stays in a
-  // fixed alphabetical order. The SELECTED skill is only highlighted in place —
-  // clicking a skill no longer yanks it to the top (that reorder was confusing).
+  // Order is the player's choice; see SKILL_SORT_KEY. The SELECTED skill is only
+  // highlighted in place — clicking a skill never yanks it to the top.
   const activeKey=(state.action&&state.action.skill)||null;
+  const _sortMode=skillSort();
   const sortedKeys=Object.keys(SKILLS).sort(function(a,b){
-    const aActive=a===activeKey, bActive=b===activeKey;
-    if(aActive!==bActive) return aActive?-1:1;
+    if(_sortMode==='active'){
+      const aActive=a===activeKey, bActive=b===activeKey;
+      if(aActive!==bActive) return aActive?-1:1;
+    }else if(_sortMode==='level'){
+      const d=levelFromXp(state.xp[b])-levelFromXp(state.xp[a]);
+      if(d) return d;
+    }
     return SKILLS[a].name.localeCompare(SKILLS[b].name);
   });
   for(const key of sortedKeys){
@@ -24790,7 +24872,7 @@ function tickBossMechanic(now){
     if(now>=bf.nextAt){ bf.nextAt=now+(bf.tickMs||2600);
       const dmg=Math.max(1,Math.round(combat.youMaxHp*(bf.frac||0.05)));
       combat.youHp=Math.max(0,combat.youHp-dmg);
-      cmbLog(`🔥 ${bf.label||'Burning'} sears you for ${dmg}.`,'hit');
+      cmbLog(`🔥 ${bf.label||'Burning'} sears you for ${dmg}.`,'foe');
       if(combat.youHp<=0 && !_tryCheatDeath()) return _resolvePlayerDeath();
     }
   } else if(bf.kind==='voidbomb'){
@@ -28935,7 +29017,7 @@ function combatTick(){
       if(combat.foeHp>REFLECT_CLAMP_MIN){
         const pd=Math.min(_psn.tickDmg, combat.foeHp-REFLECT_CLAMP_MIN);
         combat.foeHp-=pd;
-        cmbLog(`☠ Poison saps the ${mon.name} for ${pd}.`,'');
+        cmbLog(`☠ Poison saps the ${mon.name} for ${pd}.`,'status');
         cmbSplat(pd,'poison');
       }
     }
@@ -29062,7 +29144,7 @@ function combatTick(){
             until:now+POISON_DUR_MS,
             last:_bp?_bp.last:now
           };
-          if(!_bp) cmbLog(`🩸 Your crit opens a bleeding wound on the ${mon.name}!`,'hit');
+          if(!_bp) cmbLog(`🩸 Your crit opens a bleeding wound on the ${mon.name}!`,'status');
         }
       }
       // ── Weapon on-hit effects (1.0.60) — poison / stun procs ─────────────
@@ -29084,8 +29166,8 @@ function combatTick(){
             until:now+POISON_DUR_MS,
             last:_pp?_pp.last:now
           };
-          if(!_pp) cmbLog(`☠ The ${mon.name} is poisoned!`,'hit');
-          else if(_stk>_pp.stacks) cmbLog(`☠ Poison deepens on the ${mon.name} (×${_stk}).`,'');
+          if(!_pp) cmbLog(`☠ The ${mon.name} is poisoned!`,'status');
+          else if(_stk>_pp.stacks) cmbLog(`☠ Poison deepens on the ${mon.name} (×${_stk}).`,'status');
         }
         // Burn — hotter pure DoT, no defence shred, no stacking (refreshes).
         if(_wfx.burn&&Math.random()<BURN_CHANCE){
@@ -29101,11 +29183,11 @@ function combatTick(){
         if(_wfx.stun&&Math.random()<_wfx.stun.chance){
           combat.foeStatus.stun={until:now+_wfx.stun.dur*1000};
           combat.foeSwingStart=now;   // reset the foe's swing so the stun costs it a full cycle
-          cmbLog(`💫 You stun the ${mon.name}!`,'hit');
+          cmbLog(`💫 You stun the ${mon.name}!`,'status');
         }
       }
     } else {
-      cmbLog(`You miss the ${mon.name}.`,'');
+      cmbLog(`You miss the ${mon.name}.`,'miss');
     }
 
     // Foe down? Award kill XP and respawn for idle farming.
@@ -29298,7 +29380,9 @@ function combatTick(){
       const _sw=cmastSecondWind();
       if(_sw){ cmbLog(`✚ Second Wind — you rally for ${_sw}.`,'win'); cmbSplat('+'+_sw,'heal'); }
     }
-    cmbLog(_dodged?`💨 You dodge the ${mon.name}!`:(foeDmg>0?`${mon.name} hits you for ${foeDmg}.`:`${mon.name} misses.`), foeDmg>0?'hit':(_dodged?'':''));
+    // The foe's swing is tagged 'foe' (red), never 'hit' - 'hit' is the GREEN
+    // style for YOUR attacks, which is what made both sides read alike.
+    cmbLog(_dodged?`💨 You dodge the ${mon.name}!`:(foeDmg>0?`${mon.name} hits you for ${foeDmg}.`:`${mon.name} misses.`), _dodged?'dodge':(foeDmg>0?'foe':'miss'));
 
     // ── Reflect (1.0.62) — a thorns shield bounces a share of the blow back.
     // Only on a landed hit; clamped so it never lands the kill (kills stay in
@@ -30623,9 +30707,9 @@ ${combat.raid?buildRaidProgressHTML():''}
         <div class="cvglass">
           <h4>Training</h4>
           <div class="cstyle-btns">
-            <button class="cmb-style ${style==='attack'?'sel':''}" data-style="attack" title="Train Attack" ${active?'disabled':''}>Attack</button>
-            <button class="cmb-style ${style==='strength'?'sel':''}" data-style="strength" title="Train Strength" ${active?'disabled':''}>Strength</button>
-            <button class="cmb-style ${style==='defence'?'sel':''}" data-style="defence" title="Train Defence" ${active?'disabled':''}>Defence</button>
+            <button class="cmb-style ${style==='attack'?'sel':''}" data-style="attack" title="Train Attack — currently Lv ${aLvl}" ${active?'disabled':''}>Attack<b class="cst-lv">${aLvl}</b></button>
+            <button class="cmb-style ${style==='strength'?'sel':''}" data-style="strength" title="Train Strength — currently Lv ${sLvl}" ${active?'disabled':''}>Strength<b class="cst-lv">${sLvl}</b></button>
+            <button class="cmb-style ${style==='defence'?'sel':''}" data-style="defence" title="Train Defence — currently Lv ${dLvl}" ${active?'disabled':''}>Defence<b class="cst-lv">${dLvl}</b></button>
           </div>
         </div>
         <div class="cvglass">
@@ -32870,7 +32954,11 @@ function sailForm(isle){ return SAIL_FORMS[sailArt(isle).t]||SAIL_FORMS.isle; }
 /* On-screen radius of an island's land, used to size the marker hit area and to
    park its label clear of its own coastline. */
 function sailIsleR(isle){ return sailForm(isle).r; }
-let sailView={z:1, ox:0, oy:0};
+/* `auto` = the view is still the automatic fit, so it may be re-fitted when
+   the stage changes size. Any manual zoom or pan clears it, and FIT sets it
+   again - so a resize never yanks a view the player positioned themselves. */
+let sailView={z:1, ox:0, oy:0, auto:true};
+let _slStageRO=null;   // ResizeObserver on the chart stage (ticket #3)
 let sailTab='voyage';
 /* Which hull the Voyage tab is dispatching (0.9.118). Reset to the flagship
    whenever the consort does not exist, so the switcher can never strand the panel
@@ -32950,6 +33038,7 @@ function sailClamp(){
 /* Zoom about a point so the water under the cursor stays under the cursor. */
 function sailZoomAt(cx,cy,nz){
   const v=sailView;
+  v.auto=false;   // the player chose this zoom; stop re-fitting it
   nz=Math.max(SAIL_ZMIN, Math.min(SAIL_ZMAX, nz));
   const wx=(cx-v.ox)/(SAIL_WORLD_W*v.z), wy=(cy-v.oy)/(SAIL_WORLD_H*v.z);
   v.z=nz; v.ox=cx-wx*SAIL_WORLD_W*v.z; v.oy=cy-wy*SAIL_WORLD_H*v.z;
@@ -34650,7 +34739,7 @@ function renderSail(){
   on('slTabAdm','click',()=>{ sailTab='admiralty'; renderSail(); });
   on('slZIn','click',()=>sailSetZoom(sailView.z*1.35));
   on('slZOut','click',()=>sailSetZoom(sailView.z/1.35));
-  on('slZFit','click',()=>{ sailFitView(); sailPaintView(); });
+  on('slZFit','click',()=>{ sailView.auto=true; sailFitView(); sailPaintView(); });
   on('slZFind','click',()=>{ if(sailView.z<1.25) sailView.z=1.25; sailCenterOn(sailSel); });
 
   p.querySelectorAll('[data-slbuild]').forEach(b=>{
@@ -34682,9 +34771,12 @@ function renderSail(){
   slBindDataTips();
   slDataTipHide();          // the element the cursor was over no longer exists
   sailFit();
-  /* Fit once per visit to the panel, never on a re-render or a resize — see the
-     note on SAIL_WORLD_W. */
-  if(!_slViewInit){ _slViewInit=true; sailFitView(); }
+  /* Re-fit while the view is still the automatic one. This used to fit ONCE
+     per visit, so going fullscreen on a wide monitor grew the stage and left
+     the chart at its old small zoom, marooned in empty space (ticket #3).
+     Idempotent when the stage has not resized, so voyage re-renders are free. */
+  if(!_slViewInit){ _slViewInit=true; sailView.auto=true; }
+  if(sailView.auto) sailFitView();
   sailClamp();
   sailPaintView();
 
@@ -34701,6 +34793,24 @@ function renderSail(){
 let _slDragged=false;
 function sailBindStage(){
   const st=$('slStage'); if(!st) return;
+
+  /* The fit follows the stage, rather than being computed once and hoped for.
+     sailFit() writes the wrap height and sailFitView() reads the stage back,
+     but the stage settles to its final height after that read on some
+     layouts - measured 341px at fit time against a real 434px - so the chart
+     stopped short of the bottom and stayed there. Observing the stage means
+     any size change re-fits, whatever caused it: opening the panel, a window
+     resize, entering fullscreen, or the interface-scale slider.
+     Safe against feedback: sailFitView only writes z/ox/oy, never layout. */
+  if(typeof ResizeObserver==='function'){
+    if(_slStageRO){ try{ _slStageRO.disconnect(); }catch(e){} }
+    _slStageRO=new ResizeObserver(()=>{
+      if(!sailMode||!sailView.auto) return;
+      sailFitView(); sailPaintView();
+    });
+    _slStageRO.observe(st);
+  }
+
   let down=false, sx=0, sy=0, ox0=0, oy0=0;
   const z=()=>sailRootZoom();
 
@@ -34714,7 +34824,7 @@ function sailBindStage(){
   st.addEventListener('pointermove',e=>{
     if(!down) return;
     const dx=(e.clientX-sx)/z(), dy=(e.clientY-sy)/z();
-    if(Math.abs(dx)>4||Math.abs(dy)>4) _slDragged=true;
+    if(Math.abs(dx)>4||Math.abs(dy)>4){ _slDragged=true; sailView.auto=false; }
     sailView.ox=ox0+dx; sailView.oy=oy0+dy;
     sailClamp(); sailPaintView();
   });
@@ -34737,7 +34847,10 @@ function sailBindStage(){
 function sailScheduleRefit(){
   if(!sailMode) return;
   clearTimeout(_sailRedrawT);
-  _sailRedrawT=setTimeout(()=>{ if(!sailMode) return; sailFit(); sailClamp(); sailPaintView(); },140);
+  _sailRedrawT=setTimeout(()=>{ if(!sailMode) return;
+    sailFit();
+    if(sailView.auto) sailFitView();   // the whole point of ticket #3
+    sailClamp(); sailPaintView(); },140);
 }
 window.addEventListener('resize', sailScheduleRefit);
 /* visualViewport also fires for browser zoom and for on-screen keyboards, neither
@@ -34765,6 +34878,13 @@ $('btnReset').addEventListener('click',async()=>{
   toast('Save reset. Starting fresh!');
 });
 /* Left-rail category filter (All / Gather / Craft / Support) */
+/* The rail rebuilds #skillList only, so this select survives every render and
+   is bound once. */
+(function(){
+  const _ss=$('skillSort'); if(!_ss) return;
+  _ss.value=skillSort();
+  _ss.addEventListener('change',function(){ setSkillSort(this.value); });
+})();
 document.querySelectorAll('#railGroups .rg').forEach(b=>{
   b.addEventListener('click',()=>setRailGroup(b.dataset.rg));
 });
