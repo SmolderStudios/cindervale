@@ -1721,6 +1721,69 @@ setTimeout(() => {
     }
   }
 
+  section('Linux dropdowns (v0.9.120)');
+  {
+    /* Chromium paints a <select>'s option list as a NATIVE OS popup window.
+       Wine/Proton frequently fails to create it, so under Proton every dropdown
+       in the game was dead: click, nothing happens, nothing logged, nothing to
+       screenshot. Reported from Fedora/Gnome at 0.9.119.
+
+       The load-bearing assertion is `prevented`. Drawing our own list is not
+       the fix on its own - cancelling the mousedown is what stops Chromium
+       reaching for the OS window in the first place. Lose that and the bug
+       comes back on Linux only, silently, with both harnesses still green. */
+    ev(`(function(){
+      var h=document.createElement('div'); h.id='_selTestHost';
+      var s=document.createElement('select'); s.id='_selTest';
+      ['alpha','beta','gamma'].forEach(function(t){
+        var o=document.createElement('option'); o.value=t; o.textContent=t; s.appendChild(o); });
+      s.options[2].disabled=true;
+      h.appendChild(s); document.body.appendChild(h);
+      window.__selChanges=[];
+      s.addEventListener('change',function(){ window.__selChanges.push(this.value); });
+    })()`);
+
+    const md = ev(`(function(){
+      var s=document.getElementById('_selTest');
+      var e=new MouseEvent('mousedown',{bubbles:true,cancelable:true});
+      s.dispatchEvent(e);
+      return { prevented:e.defaultPrevented,
+               popup:!!document.querySelector('.cv-selpop'),
+               opts:document.querySelectorAll('.cv-selopt').length,
+               activeIsSelect:!!(document.activeElement && document.activeElement.tagName==='SELECT') };
+    })()`);
+    ok('mousedown on a select is default-prevented (no native OS popup)', md.prevented === true);
+    ok('an in-page list is drawn instead', md.popup === true && md.opts === 3, JSON.stringify(md));
+    /* renderCenter() skips its rebuild while activeElement is a SELECT. If the
+       list stole focus, a background tick could tear the panel out mid-click. */
+    ok('focus stays on the select, so the panel rebuild lock still holds', md.activeIsSelect === true);
+
+    const ch = ev(`(function(){
+      var rows=document.querySelectorAll('.cv-selopt');
+      rows[1].dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true}));
+      return { value:document.getElementById('_selTest').value,
+               changes:window.__selChanges.slice(),
+               closed:!document.querySelector('.cv-selpop') };
+    })()`);
+    ok('choosing a row writes the value back to the <select>', ch.value === 'beta', ch.value);
+    ok('and fires a bubbling change, so existing listeners still run',
+       ch.changes.length === 1 && ch.changes[0] === 'beta', JSON.stringify(ch.changes));
+    ok('the list closes after choosing', ch.closed === true);
+
+    const dis = ev(`(function(){
+      var s=document.getElementById('_selTest');
+      s.dispatchEvent(new MouseEvent('mousedown',{bubbles:true,cancelable:true}));
+      var rows=document.querySelectorAll('.cv-selopt');
+      rows[2].dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true}));
+      return { value:s.value, changes:window.__selChanges.length,
+               stillOpen:!!document.querySelector('.cv-selpop') };
+    })()`);
+    ok('a disabled option cannot be chosen', dis.value === 'beta' && dis.changes === 1, JSON.stringify(dis));
+
+    ev(`(function(){ _cvSelClose();
+      var h=document.getElementById('_selTestHost'); if(h && h.parentNode) h.parentNode.removeChild(h); })()`);
+  }
+
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));
   process.exit(fail ? 1 : 0);
 }, 2500);
