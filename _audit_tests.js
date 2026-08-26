@@ -1851,6 +1851,56 @@ setTimeout(() => {
     ev(`lsDel(SKILL_SORT_KEY);`);
   }
 
+  section('Player reports batch 2 (0.9.121)');
+  {
+    /* --- Ticket #12: the zone tooltip slips behind the creatures IN COMBAT ---
+       0.9.120 took z-index out of the tile's transition, which fixed the idle
+       case, but the lift still only existed while :hover matched. #combatPanel
+       replaces its innerHTML every combat tick and the rebuilt tile is not
+       :hover until the browser re-hit-tests - measured with the mouse held
+       still, the tile read 600 hovered and 1 immediately after a tick, tying
+       with .cmb-mon and losing on DOM order.
+
+       So the assertion is deliberately made with NOTHING hovered: the column
+       must outrank the creature list on its own. A hover-dependent fix passes
+       a hover-based test and still flickers once per tick in a real fight. */
+    ev(`state=defaultState(); normalizeState();
+        ['attack','strength','defence','hitpoints'].forEach(function(k){ state.combatXp[k]=XP_CUM[40]; });
+        combatMode=true; document.getElementById('combatPanel').style.display=''; renderCombat();`);
+    const stack = ev(`(function(){
+      var col=document.querySelector('.cmb-zicons'), mon=document.querySelector('.cmb-zright .cmb-mon');
+      if(!col||!mon) return {missing:true};
+      var cz=parseInt(getComputedStyle(col).zIndex,10), mz=parseInt(getComputedStyle(mon).zIndex,10);
+      return {colZ:cz, monZ:mz, colPos:getComputedStyle(col).position, beats:cz>mz}; })()`);
+    ok('the zone column outranks the creature list with nothing hovered',
+       stack.beats === true, JSON.stringify(stack));
+    ok('and it is positioned, so its z-index actually applies',
+       stack.colPos === 'relative' || stack.colPos === 'absolute', stack.colPos);
+
+    /* --- Ticket #17: the panel promised skilling runs through a fight -------
+       It does not, and has not since v0.9.109. Assert the PROMISE with a phrase
+       regex rather than a fixed string, so the wording stays free to change. */
+    const CONCURRENT = new RegExp('keeps? (running|going)|in the background|through the fight|while you fight', 'i');
+    ev(`state.action=null; renderCombat();`);
+    const idleNote = ev(`(function(){ var n=document.querySelector('.cmb-skilling-note');
+      return n?n.textContent:''; })()`);
+    ok('the idle note does not promise skilling runs through a fight',
+       !!idleNote && !CONCURRENT.test(idleNote), idleNote.slice(0, 80));
+
+    ev(`state.xp.woodcutting=XP_CUM[20];
+        state.action={skill:'woodcutting',actId:SKILLS.woodcutting.acts[0].id}; renderCombat();`);
+    const busyNote = ev(`(function(){ var n=document.querySelector('.cmb-skilling-note');
+      return n?n.textContent:''; })()`);
+    ok('nor does the training note', !!busyNote && !CONCURRENT.test(busyNote), busyNote.slice(0, 80));
+
+    /* The behaviour the copy now describes, so the two can never drift apart
+       again without one of these two failing. */
+    ok('engaging really does stop training',
+       ev(`(function(){ state.action={skill:'woodcutting',actId:SKILLS.woodcutting.acts[0].id};
+         if(state.hints) state.hints.combat_unarmed=1;
+         engageCombat(); return state.action===null; })()`) === true);
+  }
+
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));
   process.exit(fail ? 1 : 0);
 }, 2500);

@@ -1197,7 +1197,14 @@ header h1 .flame{color:var(--ember)}
 .cmb-mode-placeholder .mph-txt{max-width:380px}
 .cmb-zmsplit{display:flex;gap:7px;align-items:stretch}
 /* Zone icon rail — 1.0.85: 2-col grid, max 6 per column (rolls over after 6) */
-.cmb-zicons{flex:0 0 auto;display:grid;grid-template-rows:repeat(6,auto);
+/* Above the creature list ALWAYS, not only while a tile is hovered (ticket
+   #12). #combatPanel rebuilds its innerHTML every combat tick and the new
+   tile is not :hover until the browser re-hit-tests, so a hover-only lift
+   collapses to the base z-index once per tick and the tooltip drops behind
+   the creatures. The tooltip is opacity:0 + pointer-events:none until
+   hovered, so raising the column costs nothing and blocks no clicks. */
+.cmb-zicons{position:relative;z-index:20;
+  flex:0 0 auto;display:grid;grid-template-rows:repeat(6,auto);
   grid-auto-flow:column;grid-auto-columns:38px;gap:2px;
   background:#0f0905;border:1px solid var(--trim-d);border-radius:3px;padding:3px}
 .cmb-zicons .cmb-zone-tile{position:relative;background:transparent;border:1px solid transparent;
@@ -6131,7 +6138,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.120.1">v0.9.120</div>
+  <div class="mm-ver" data-build="0.9.120.2">v0.9.120</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -30373,9 +30380,9 @@ function renderCombat(){
   let noteHtml;
   if(state.action){
     const sk=SKILLS[state.action.skill]; const act=getAct(state.action.skill,state.action.actId);
-    noteHtml=`<div class="cmb-skilling-note">🌿 Training in the background: ${sk?sk.icon:''} ${sk?sk.name:''}${act?` — ${act.name}`:''}. It keeps running while you fight.</div>`;
+    noteHtml=`<div class="cmb-skilling-note">🌿 Training: ${sk?sk.icon:''} ${sk?sk.name:''}${act?` — ${act.name}`:''}. Engaging a foe stops it.</div>`;
   }else{
-    noteHtml=`<div class="cmb-skilling-note">🌿 No skill is training. You can start one from the Skills tab and it will keep going through the fight.</div>`;
+    noteHtml=`<div class="cmb-skilling-note">🌿 No skill is training. Skilling and combat are one or the other — starting one stops the other.</div>`;
   }
 
   const foePct=active?Math.max(0,100*combat.foeHp/mon.hp):100;
