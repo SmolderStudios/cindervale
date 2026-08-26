@@ -1965,6 +1965,64 @@ setTimeout(() => {
        ev(`ITEMS.ratskin_cape.name`) + ' / ' + ev(`ITEMS.ratskin_tunic.name`));
   }
 
+  section('Item tooltips everywhere (0.9.121, #20)');
+  {
+    /* The contract is that data-item="<id>" in the markup is ENOUGH - no JS
+       wiring, no re-binding after a render. attachTooltip() used to bind hover
+       per element, which is why only eight hand-wired surfaces had tooltips and
+       nothing built from a template string could have one. Assert the contract
+       against an element the game has never seen and nothing ever wired. */
+    ev(`state=defaultState(); normalizeState();`);
+    const virgin = ev(`(function(){
+      var d=document.createElement('div');
+      d.id='_tipProbe'; d.setAttribute('data-item','copper_ore');
+      d.setAttribute('data-itemnote','have 2, need 7 per craft');
+      d.textContent='probe';
+      document.body.appendChild(d);
+      d.dispatchEvent(new MouseEvent('mouseover',{bubbles:true,clientX:60,clientY:60}));
+      var tt=document.getElementById('itemTooltip');
+      return { shown: tt.style.display==='block',
+               name: (tt.querySelector('.tt-name')||{}).textContent||'',
+               note: (tt.querySelector('.tt-note')||{}).textContent||'',
+               sources: tt.querySelectorAll('.tt-source').length }; })()`);
+    ok('an element nothing wired still gets a tooltip from data-item alone',
+       virgin.shown === true && /Copper Ore/.test(virgin.name), JSON.stringify(virgin.name));
+    ok('data-itemnote adds the surface-specific line',
+       virgin.note === 'have 2, need 7 per craft', virgin.note);
+    ok('and it still lists where to get the item',
+       virgin.sources > 0, virgin.sources + ' source rows');
+
+    ok('leaving the element hides it again',
+       ev(`(function(){ var d=document.getElementById('_tipProbe');
+         d.dispatchEvent(new MouseEvent('mouseout',{bubbles:true}));
+         var tt=document.getElementById('itemTooltip');
+         var hidden = tt.style.display!=='block';
+         if(d.parentNode) d.parentNode.removeChild(d);
+         return hidden; })()`) === true);
+
+    /* The headline surface: a recipe ingredient carries data-item, not the thin
+       data-tip it used to have. That thin tooltip only said how many you had -
+       it could not say where to go and get more, which was the request. */
+    ev(`state.xp.smithing=XP_CUM[40]; state.items={copper_ore:12};
+        selectedSkill='smithing'; viewTab='acts'; renderAll();`);
+    const chips = ev(`(function(){
+      var all=document.querySelectorAll('.mat');
+      var tagged=document.querySelectorAll('.mat[data-item]');
+      var stale=document.querySelectorAll('.mat[data-tip]');
+      var withNote=document.querySelectorAll('.mat[data-itemnote]');
+      return { all:all.length, tagged:tagged.length, stale:stale.length, withNote:withNote.length }; })()`);
+    ok('every recipe ingredient chip carries data-item',
+       chips.all > 0 && chips.tagged === chips.all, JSON.stringify(chips));
+    ok('and none is left on the old thin data-tip', chips.stale === 0, String(chips.stale));
+    ok('each one carries its have/need note', chips.withNote === chips.all, String(chips.withNote));
+
+    /* One tooltip, not two. The arena drop rows had a second, thinner card of
+       their own; the request was explicitly for the same one as the inventory. */
+    ok('the arena drop rows no longer run a second tooltip',
+       ev(`(function(){ var t=document.getElementById('cvItemTip');
+         return !t || !t.classList.contains('on'); })()`) === true);
+  }
+
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));
   process.exit(fail ? 1 : 0);
 }, 2500);

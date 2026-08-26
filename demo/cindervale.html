@@ -2535,6 +2535,8 @@ body:not(.is-demo) .demo-only{display:none !important}
 /* tooltip */
 #itemTooltip .tt-name{font-size:calc(15px*var(--tscale));color:#c79b4e;margin-bottom:4px;font-weight:bold}
 #itemTooltip .tt-sub{font-size:calc(13px*var(--tscale));color:#a08a64;margin-bottom:6px}
+#itemTooltip .tt-note{font-size:calc(12.5px*var(--tscale));color:var(--ember);
+  font-family:var(--num);margin:-2px 0 6px}
 #itemTooltip .tt-source{font-size:calc(13px*var(--tscale));color:#ead9b5;margin:2px 0;display:flex;justify-content:space-between;gap:8px}
 #itemTooltip .tt-chance{color:#e0762f;font-family:var(--num);white-space:nowrap}
 #itemTooltip .tt-rare{color:#ffd700;font-size:calc(12px*var(--tscale));letter-spacing:1px}
@@ -6147,7 +6149,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.121.1">v0.9.121</div>
+  <div class="mm-ver" data-build="0.9.121.2">v0.9.121</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -20167,7 +20169,10 @@ function needsHtml(act,m){
     const have=matHave(id);   // tool inputs (T6 Everflame) are held in state.gear, not state.items
     const it=ITEMS[id];
     const nm=it?it.name:id;
-    return `<span class="mat${have>=need?'':' miss'}" data-tip="${nm} — have ${have}, need ${need} per craft">`
+    /* data-item, not data-tip: the thin CSS tooltip only said how many you had.
+       The real card says where to GO and get more, which is the whole point of
+       the request. The have/need line rides along as the note. */
+    return `<span class="mat${have>=need?'':' miss'}" data-item="${id}" data-itemnote="have ${have}, need ${need} per craft">`
       +`${iconHTML(id)}<b>${have}</b><span class="sl">/${need}</span></span>`;
   }).filter(Boolean).join('');
   // When you can't craft, show no label — the red chip(s) + the dimmed card already say it.
@@ -20258,7 +20263,7 @@ function buildActBtn(act,reqLvl,lvl,m,bestXph,bestRph){
   const primaryOutId=Object.keys(act.out||{})[0];
   const iconMarkup=primaryOutId?iconHTML(primaryOutId):iconHTML(selectedSkill);
 
-  const outName=Object.keys(act.out||{}).map(id=>ITEMS[id]?`${iconHTML(id)} ${ITEMS[id].name}`:id).join(', ');
+  const outName=Object.keys(act.out||{}).map(id=>ITEMS[id]?`<span data-item="${id}">${iconHTML(id)} ${ITEMS[id].name}</span>`:id).join(', ');
   // For agility: show effective coin reward including tree bonuses
   let coinDisplay='';
   if(IS_AGILITY_SKILL[selectedSkill]&&act.coins){
@@ -21146,7 +21151,7 @@ function renderActivities(){
         const {xph,rph,rphLabel}=ratesFor(act,'mining');
         const secXph=Math.round(xph*0.5);
         const secRph=Math.round(rph*0.5);
-        const outName=Object.keys(act.out).map(id=>ITEMS[id]?`${iconHTML(id)} ${ITEMS[id].name}`:id).join(', ');
+        const outName=Object.keys(act.out).map(id=>ITEMS[id]?`<span data-item="${id}">${iconHTML(id)} ${ITEMS[id].name}</span>`:id).join(', ');
         const tIdx=tierIndexForAct(sk,act);
         const primId=Object.keys(act.out||{})[0];
         const icoM=primId?iconHTML(primId):iconHTML('mining');
@@ -21196,7 +21201,7 @@ function renderActivities(){
         const {xph,rph,rphLabel}=ratesFor(act,'woodcutting');
         const secXph=Math.round(xph*0.5);
         const secRph=Math.round(rph*0.5);
-        const outName=Object.keys(act.out).map(id=>ITEMS[id]?`${iconHTML(id)} ${ITEMS[id].name}`:id).join(', ');
+        const outName=Object.keys(act.out).map(id=>ITEMS[id]?`<span data-item="${id}">${iconHTML(id)} ${ITEMS[id].name}</span>`:id).join(', ');
         const tIdx=tierIndexForAct(sk,act);
         const primId=Object.keys(act.out||{})[0];
         const icoM=primId?iconHTML(primId):iconHTML('woodcutting');
@@ -21246,7 +21251,7 @@ function renderActivities(){
         const {xph,rph,rphLabel}=ratesFor(act,'fishing');
         const secXph=Math.round(xph*0.5);
         const secRph=Math.round(rph*0.5);
-        const outName=Object.keys(act.out).map(id=>ITEMS[id]?`${iconHTML(id)} ${ITEMS[id].name}`:id).join(', ');
+        const outName=Object.keys(act.out).map(id=>ITEMS[id]?`<span data-item="${id}">${iconHTML(id)} ${ITEMS[id].name}</span>`:id).join(', ');
         const tIdx=tierIndexForAct(sk,act);
         const primId=Object.keys(act.out||{})[0];
         const icoM=primId?iconHTML(primId):iconHTML('fishing');
@@ -26258,7 +26263,7 @@ let _usageMap=null;
 function usageMap(){ if(!_usageMap) _usageMap=buildUsageMap(); return _usageMap; }
 
 /* ════ [JS-23b] item tooltip show / hide ═════════════════════════════════════════ */
-function showItemTooltip(itemId, x, y){
+function showItemTooltip(itemId, x, y, note){
   const it=ITEMS[itemId]; if(!it) return;
   const tt=ttEl(); if(!tt) return;
   const sources=sourceMap()[itemId]||[];
@@ -26266,6 +26271,10 @@ function showItemTooltip(itemId, x, y){
   const isRare=!!it.rare;
 
   let html=`<div class="tt-name">${iconHTML(itemId)} ${it.name}</div>`;
+  /* Context the hovered surface wants to add - "have 3, need 5 per craft"
+     from a recipe chip. Carried by data-itemnote so the surface does not
+     need a second tooltip of its own. */
+  if(note) html+=`<div class="tt-note">${escapeHTML(String(note))}</div>`;
   if(isRare) html+=`<div class="tt-rare">✦ Rare Item</div>`;
   // Combat gear — slot/tier label + atk/str/def stats (skipped for skilling gear, which has its own block below)
   if(it.cgear){
@@ -26535,12 +26544,15 @@ function clearSkillHighlights(){
   for(const row of rows) row.classList.remove('item-highlight');
 }
 
-/* Attach tooltip to any element with data-item attribute */
+/* Attach the CLICK behaviour to an element and tag it for the tooltip.
+
+   Hover is no longer bound here - it is delegated from document (see below), so
+   setting data-item is enough on its own and markup built as a template string
+   gets a tooltip with no wiring at all. Binding hover here as well would double
+   up and, worse, re-render the card without whatever data-itemnote the surface
+   had supplied. */
 function attachTooltip(el, itemId){
   el.setAttribute('data-item',itemId);
-  el.addEventListener('mouseenter',e=>showItemTooltip(itemId,e.clientX,e.clientY));
-  el.addEventListener('mousemove',e=>positionTooltip(ttEl(),e.clientX,e.clientY));
-  el.addEventListener('mouseleave',hideTooltip);
   // Click toggles skill highlight for this item
   el.addEventListener('click',e=>{
     if(_highlightedItemId===itemId){
@@ -26551,6 +26563,34 @@ function attachTooltip(el, itemId){
     e.stopPropagation(); // don't let it bubble to document clear-handler
   });
 }
+
+/* Delegated item tooltips (0.9.121, suggestion #20).
+
+   One handler for every [data-item] in the game, present or future. Capture
+   phase so it runs before anything a panel binds itself. `data-itemnote` adds a
+   line of context from the hovered surface. */
+let _ttHoverEl=null;
+document.addEventListener('mouseover',function(e){
+  const el=(e.target&&e.target.closest)?e.target.closest('[data-item]'):null;
+  if(!el||el===_ttHoverEl) return;
+  const id=el.getAttribute('data-item');
+  if(!id||typeof ITEMS==='undefined'||!ITEMS[id]) return;
+  _ttHoverEl=el;
+  showItemTooltip(id,e.clientX,e.clientY,el.getAttribute('data-itemnote')||'');
+},true);
+document.addEventListener('mouseout',function(e){
+  if(!_ttHoverEl) return;
+  /* Moving between children of the same tagged element is not a leave - without
+     this the card flickers as the pointer crosses the icon inside a chip. */
+  const to=e.relatedTarget;
+  if(to&&_ttHoverEl.contains&&_ttHoverEl.contains(to)) return;
+  _ttHoverEl=null;
+  hideTooltip();
+},true);
+document.addEventListener('mousemove',function(e){
+  if(!_ttHoverEl) return;
+  positionTooltip(ttEl(),e.clientX,e.clientY);
+},true);
 
 // Clicking anywhere outside a data-item element clears the highlight
 document.addEventListener('click',e=>{
@@ -28943,6 +28983,14 @@ function cvItemTipInit(){
   var t=document.createElement("div");
   t.id="cvItemTip"; t.className="cv-itemtip";
   document.body.appendChild(t);
+  /* RETIRED (0.9.121). This drew a second, thinner card for arena drop rows -
+     name, drop rate, sell - while the inventory showed a much richer one for the
+     same item. The request was explicitly for "the same tooltip we got if we
+     were to hover over the item in our inventory", so .cvdrop rows now fall
+     through to the delegated handler like everything else. Their data-item
+     attribute is what feeds it, so nothing about the markup changed.
+     The element and its CSS stay put in case a compact variant is wanted back. */
+  if(true) return;
   document.addEventListener("mouseover",function(e){
     var row=(e.target&&e.target.closest)?e.target.closest(".cvdrop[data-item]"):null;
     if(!row){ t.classList.remove("on"); return; }
