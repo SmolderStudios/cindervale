@@ -474,6 +474,11 @@ header h1 .flame{color:var(--ember)}
 .cmb-style-pick{display:flex;gap:3px;width:100%;margin-top:3px}
 /* Ticket #8 (0.9.119.3): the levels used to live only in a data-tip on the
    Your-stats card, which shows derived numbers. Now they read at a glance. */
+/* Suggestion #16: combat level at a glance in the arena, so it does not mean
+   switching panels to compare it against the foe. */
+.cvglass h4 .cvh-cmb{float:right;font-family:var(--num);font-weight:700;
+  font-size:calc(11px*var(--tscale));color:var(--ember);letter-spacing:.4px;
+  cursor:var(--cur-help)}
 .cmb-style .cst-lv{margin-left:5px;font-family:var(--num);font-weight:700;
   font-size:calc(10.5px*var(--tscale));color:var(--trim);letter-spacing:.3px}
 .cmb-style.sel .cst-lv{color:#ffd0a0}
@@ -3898,9 +3903,13 @@ body:not(.is-demo) .demo-only{display:none !important}
 .sl-result{border-radius:8px;padding:11px 13px;border:1px solid}
 .sl-result h5{font-family:'Cinzel',serif;font-size:calc(16.2px*var(--tscale));margin:0 0 3px}
 .sl-result p{font-size:calc(13.8px*var(--tscale));margin:0;line-height:1.45;color:#b8ccd6}
-.sl-r1{background:#1d1707;border-color:#6a5420}.sl-r1 h5{color:#dfb03c}
+/* Voyage grades, recoloured (suggestion #21). Triumphant #dfb03c and
+   Battered #c9822e were both warm amber and were being read as each other,
+   with Wrecked's red-orange close behind. Now one hue each: gold, green,
+   slate, red - distinguishable by hue alone, not just by lightness. */
+.sl-r1{background:#201907;border-color:#7a6224}.sl-r1 h5{color:#f0c850}
 .sl-r2{background:#141d0c;border-color:#41591f}.sl-r2 h5{color:#7da33f}
-.sl-r3{background:#1f1509;border-color:#6a4520}.sl-r3 h5{color:#c9822e}
+.sl-r3{background:#101a20;border-color:#3f5a68}.sl-r3 h5{color:#8fb0c4}
 .sl-r4{background:#1d0d09;border-color:#63281c}.sl-r4 h5{color:#c4543a}
 .sl-result .sl-chips{margin-top:8px}
 /* Ship's log (0.9.73). Sits inside the result card under the chips, dimmer than
@@ -6138,7 +6147,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.120.2">v0.9.120</div>
+  <div class="mm-ver" data-build="0.9.121.1">v0.9.121</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -7753,13 +7762,13 @@ const ITEMS={
   // ─── Themed combat-drop capes (1.0.96) — back-slot, monster-themed ─────
   // Each cape uses unused drops from its source zone. Stat budget sits between
   // base tier capes; flavor adds a sliver of atk or str on top of pure def.
-  ratskin_cape:      {name:'Ratskin Cape',       icon:'🧣', sell:220,  cgear:true, ctier:1, cslot:'cape', desc:"A patchwork cape stitched from cured rat-hide and gnawed bone-buttons. Smells of the warrens; nothing in the warrens will smell you coming."},
+  ratskin_cape:      {name:'Roughhide Cape',     icon:'🧣', sell:220,  cgear:true, ctier:1, cslot:'cape', desc:"A patchwork cape stitched from cured rat-hide and gnawed bone-buttons. Smells of the warrens; nothing in the warrens will smell you coming."},
   silkwoven_cape:    {name:'Silkwoven Cape',     icon:'🧣', sell:680,  cgear:true, ctier:2, cslot:'cape', desc:"Woven from spider silk and dipped in diluted venom. The fabric moves like it's still alive."},
   warband_cape:      {name:'Warband Cape',       icon:'🧣', sell:1400, cgear:true, ctier:3, cslot:'cape', desc:"A goblin chieftain's mantle — tanned hide draped over the shoulders, hung with feathers and tribal fetishes that rattle when you walk."},
   wraithweave_cape:  {name:'Wraithweave Cape',   icon:'🧣', sell:2900, cgear:true, ctier:4, cslot:'cape', desc:"Cloth pulled from a captured wraith and pinned with cursed dust. It billows in still air and chills the spine of anyone behind you."},
   pack_alpha_cape:   {name:'Pack Alpha Cape',    icon:'🧣', sell:5400, cgear:true, ctier:5, cslot:'cape', desc:"A heavy mantle of dire-wolf pelt lined with frostfur. Worn by those who lead the pack — or by those bold enough to claim the right."},
   // ─── Themed combat-drop chestplates (1.0.96) — body slot, set-piece feel ──
-  ratskin_tunic:     {name:'Ratskin Tunic',      icon:'🦺', sell:380,  cgear:true, ctier:1, cslot:'chest', desc:"Layered ratskin patches sewn over a leather core. Cheap, stinking, and surprisingly tough."},
+  ratskin_tunic:     {name:'Roughhide Tunic',    icon:'🦺', sell:380,  cgear:true, ctier:1, cslot:'chest', desc:"Layered hide patches sewn over a leather core. Cheap, stinking, and surprisingly tough."},
   chitin_plate:      {name:'Chitin Plate',       icon:'🦺', sell:1100, cgear:true, ctier:2, cslot:'chest', desc:"Overlapping spider-plate scales stitched with silk. The chitin still has its faint violet sheen, and the joints are sharp enough to cut a careless grappler."},
   warband_armor:     {name:'Warband Hide Armour', icon:'🦺', sell:2200, cgear:true, ctier:3, cslot:'chest', desc:"Goblin warrior plate — boiled hide reinforced with crude iron studs and bone charms. The tribal markings still glisten with old paint."},
   bone_plate_cuirass:{name:'Bone Plate Cuirass', icon:'🦺', sell:4400, cgear:true, ctier:4, cslot:'chest', desc:"A breastplate of riveted rib-plates and ancient bone, lashed to a mithril frame. Heavy as guilt; turns blades that would gut a knight."},
@@ -7787,7 +7796,11 @@ const ITEMS={
   // ─── Combat drops · Rat Warrens ─── misc materials (reserved for future crafting/alchemy uses)
   rat_tail:         {name:'Rat Tail',          icon:'〰️',sell:6,    desc:'Tough sinewy tail. Crafters and alchemists may want these later.'},
   gnawed_bone:      {name:'Gnawed Bone',       icon:'🦴',sell:10,   desc:'A small bone worried smooth by rodent teeth.'},
-  ratskin:          {name:'Ratskin',           icon:'🟫',sell:22,   desc:'Coarse pelt — stitched into Roughhide leather armour at the Crafting bench.'},
+  /* Renamed from 'Ratskin' (suggestion #22): boars, stags and lynxes drop it
+     too, and a Thornback Stag yielding Ratskin reads as a bug. Display name
+     only - the item id stays `ratskin`, so no save, recipe or drop table
+     moves. */
+  ratskin:          {name:'Raw Hide',          icon:'🟫',sell:22,   desc:'Coarse pelt — stitched into Roughhide leather armour at the Crafting bench.'},
   chitin:           {name:'Chitin Plating',    icon:'🟪',sell:65,   desc:'Overlapping plates prised from a cave spider. Light, glossy, and stubbornly hard — the makings of Chitinweave leather armour.'},
   drake_hide:       {name:'Drake Hide',        icon:'🟧',sell:760,  desc:'Supple wyrm-leather beneath the scales, still warm. The finest hide a crafter can work into Drakehide armour.'},
   rat_fang:         {name:'Rat Fang',          icon:'🦷',sell:48,   desc:'A wickedly sharp incisor. Alchemists grind them into reagents.'},
@@ -7803,7 +7816,7 @@ const ITEMS={
   // ── Goblin Cave drops ──────────────────────────────────────────────────────
   goblin_ear:       {name:'Goblin Ear',        icon:'👂',sell:8,    desc:'A grisly trophy strung on twine. Goblin scouts trade these for status.'},
   goblin_tooth:     {name:'Goblin Tooth',      icon:'🦷',sell:14,   desc:'A jagged yellow incisor. Alchemists powder them for bitter tonics.'},
-  tanned_hide:      {name:'Tanned Hide',       icon:'🟫',sell:30,   desc:'Crudely cured goblin leather. Tougher than ratskin — alchemists cure it further, cooks wrap provisions in it.'},
+  tanned_hide:      {name:'Tanned Hide',       icon:'🟫',sell:30,   desc:'Crudely cured goblin leather. Tougher than raw hide — alchemists cure it further, cooks wrap provisions in it.'},
   rusted_blade:     {name:'Rusted Blade',      icon:'🗡️',sell:65,   desc:'A pitted shortsword salvaged from a fallen goblin. Too pitted to reforge. The scrap merchants still pay.'},
   crude_cleaver:    {name:'Crude Cleaver',     icon:'🪓',sell:90,   desc:'A brute-forged chopping blade, heavy and unbalanced. No smith would waste a forge on it. It sells for its weight.'},
   tribal_fetish:    {name:'Tribal Fetish',     icon:'🪬',sell:75,   desc:"A bound bundle of bone, feather, and hair. Goblin shamans hang them from their belts — and alchemists unbind them for their reagents."},
@@ -11632,7 +11645,7 @@ function showGearTip(html,x,y){
   // flip above the cursor rather than clamp, so a tall tip near the bottom of
   // the screen never covers the item it describes. See _ttFlipY.
   var tx=cx+14,ty=cy-10;
-  if(tx+tw>W-10) tx=Math.max(10, W-tw-10);
+  tx=_ttFlipX(tx, cx, tw, W);   // see _ttFlipX (suggestion #15)
   ty=_ttFlipY(ty, cy, th, H);
   el.style.left=tx+'px'; el.style.top=ty+'px';
 }
@@ -26375,11 +26388,13 @@ function positionTooltip(tt, x, y){
   const W=window.innerWidth/z, H=window.innerHeight/z;
   const tw=tt.offsetWidth||260, th=tt.offsetHeight||120;
   const cx=x/z, cy=y/z;
-  // Always sit to the RIGHT of the cursor. Near the right edge we clamp the
-  // tooltip onto the screen rather than flipping it to the left of the cursor,
-  // so hovers never jump sides depending on mouse position.
-  let tx=cx+14;
-  if(tx+tw>W-10) tx=Math.max(10, W-tw-10);
+  /* Right of the cursor by default, LEFT of it when that would not fit
+     (suggestion #15). This reverses a deliberate 0.9.11x choice to clamp rather
+     than flip, on the grounds that hovers should never jump sides. In practice
+     clamping slides the card back across the cursor and over the row you are
+     reading, which is worse than the jump it avoided - and the vertical axis
+     has always flipped, so clamping X was the odd one out. */
+  let tx=_ttFlipX(cx+14, cx, tw, W);
   /* ALWAYS below the cursor (0.9.112). This was `cy-10` — the box top sat just
      above the pointer, so the card always covered the row being hovered and its
      Sell / Equip buttons. It is pointer-events:none so the click still landed, you
@@ -26398,6 +26413,17 @@ function positionTooltip(tt, x, y){
   let ty=cy+24;
   ty=_ttFlipY(ty, cy, th, H);
   tt.style.left=tx+'px'; tt.style.top=ty+'px';
+}
+
+/* Shared horizontal placement, mirroring _ttFlipY: right of the cursor by
+   default, left of it when the card would run off the right edge, clamped only
+   when it fits on neither side. Clamping alone used to slide the card back over
+   the row being hovered, which is what made tooltips unreadable near the edge. */
+function _ttFlipX(tx, cx, tw, W){
+  if(tx+tw<=W-10) return tx;
+  const left=cx-14-tw;
+  if(left>=10) return left;
+  return Math.max(10, W-tw-10);
 }
 
 /* Shared vertical placement: below-cursor by default, above-cursor when that
@@ -30686,7 +30712,7 @@ ${combat.raid?buildRaidProgressHTML():''}
 
       <div class="cvrail l">
         <div class="cvglass">
-          <h4>Your stats</h4>
+          <h4>Your stats<span class="cvh-cmb" data-tip="Your overall Combat level.">Cmb ${combatLevel()}</span></h4>
           <div class="cvsg">
             <div class="cvst2${(accBase+accGear)>mon.def?' up':''}" data-tip="ACCURACY — how often your blows land.&#10;&#10;Rolled against the foe&#39;s Defence.&#10;Attack lvl ${aLvl}&#10;Foe Defence: ${mon.def}"><b>${accBase+accGear}</b><i>Accuracy</i></div>
             <div class="cvst2${(hitBase+hitGear)>mon.str?' up':''}" data-tip="DAMAGE CEILING — the most one blow can deal.&#10;&#10;Strength lvl ${sLvl}&#10;Foe Max Hit: ${mon.str}"><b>${hitBase+hitGear}</b><i>Max hit</i></div>

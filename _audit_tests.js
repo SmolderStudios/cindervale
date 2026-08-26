@@ -1901,6 +1901,70 @@ setTimeout(() => {
          engageCombat(); return state.action===null; })()`) === true);
   }
 
+  section('Small suggestions (0.9.121)');
+  {
+    /* --- #15: tooltips flip left of the cursor instead of clamping over it --- */
+    const W = 1000, tw = 260;
+    ok('a tooltip with room on the right is left alone',
+       ev(`_ttFlipX(100+14, 100, ${tw}, ${W})`) === 114);
+    const flipped = ev(`_ttFlipX(950+14, 950, ${tw}, ${W})`);
+    ok('near the right edge it flips to the LEFT of the cursor',
+       flipped === 950 - 14 - tw, String(flipped));
+    ok('and the flipped card is fully on screen', flipped >= 10 && flipped + tw <= W - 10,
+       flipped + '..' + (flipped + tw));
+    /* The old behaviour clamped, which slid the card back across the cursor and
+       over the row being read. Assert we are not doing that any more. */
+    ok('it no longer clamps back over the cursor when a flip would fit',
+       flipped + tw < 950, 'right edge ' + (flipped + tw) + ' vs cursor 950');
+    /* A card too wide for either side still has to land on screen. */
+    const squeezed = ev(`_ttFlipX(20+14, 20, 990, ${W})`);
+    ok('a card that fits on neither side is clamped on screen, not off it',
+       squeezed >= 0 && squeezed <= 10, String(squeezed));
+
+    /* --- #16: combat level readable in the arena --- */
+    ev(`state=defaultState(); normalizeState();
+        ['attack','strength','defence','hitpoints'].forEach(function(k){ state.combatXp[k]=XP_CUM[40]; });
+        combatMode=true; document.getElementById('combatPanel').style.display=''; renderCombat();`);
+    const cmbChip = ev(`(function(){ var e=document.querySelector('.cvh-cmb');
+      return e?e.textContent.trim():''; })()`);
+    ok('the arena shows your combat level without switching panels',
+       /^Cmb\s+\d+$/.test(cmbChip), cmbChip);
+    ok('and it is the real combat level',
+       cmbChip === 'Cmb ' + ev(`combatLevel()`), cmbChip);
+
+    /* --- #21: voyage grades must differ by HUE, not just lightness ---------- */
+    const grades = ev(`(function(){
+      var out={};
+      ['sl-r1','sl-r2','sl-r3','sl-r4'].forEach(function(c){
+        var d=document.createElement('div'); d.className=c;
+        var h=document.createElement('h5'); h.textContent='x'; d.appendChild(h);
+        document.body.appendChild(d);
+        out[c]=getComputedStyle(h).color;
+        d.parentNode.removeChild(d);
+      });
+      return out; })()`);
+    const vals = Object.keys(grades).map(k => grades[k]);
+    ok('all four voyage grades are distinct colours',
+       new Set(vals).size === 4, JSON.stringify(grades));
+    /* Triumphant vs Battered is the pair that was actually confused. Compare the
+       hue channels rather than eyeballing: warm-amber vs warm-amber was the bug. */
+    const rgb = t => (t.match(/\d+/g) || []).map(Number);
+    const t1 = rgb(grades['sl-r1']), t3 = rgb(grades['sl-r3']);
+    const chanGap = Math.abs((t1[2] - t1[0]) - (t3[2] - t3[0]));
+    ok('Triumphant and Battered differ in hue, not just brightness',
+       chanGap > 80, 'blue-minus-red gap ' + chanGap);
+
+    /* --- #22: no stag drops "Ratskin" any more ----------------------------- */
+    ok('the shared pelt is no longer named after rats',
+       ev(`ITEMS.ratskin.name`) === 'Raw Hide', ev(`ITEMS.ratskin.name`));
+    ok('but its id is untouched, so saves and recipes still resolve',
+       ev(`!!ITEMS.ratskin && !!getAct('cooking','co_rs')`) === true);
+    ok('and the T1 armour matches the set name its own description uses',
+       ev(`ITEMS.ratskin_cape.name`) === 'Roughhide Cape' &&
+       ev(`ITEMS.ratskin_tunic.name`) === 'Roughhide Tunic',
+       ev(`ITEMS.ratskin_cape.name`) + ' / ' + ev(`ITEMS.ratskin_tunic.name`));
+  }
+
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));
   process.exit(fail ? 1 : 0);
 }, 2500);
