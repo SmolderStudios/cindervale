@@ -2023,6 +2023,39 @@ setTimeout(() => {
          return !t || !t.classList.contains('on'); })()`) === true);
   }
 
+  section('Farming rework (0.9.122)');
+  {
+    ev(`state=defaultState(); normalizeState(); state.xp.farming=XP_CUM[45];
+        selectedSkill='farming'; viewTab='acts'; _farmInteractAt=0; renderFarming();`);
+    const fm = ev(`(function(){
+      var box=document.getElementById('activityGrid');
+      var stage=box.querySelector('.fm2-stage');
+      var img=stage?stage.querySelector('img'):null;
+      var left=box.querySelector('.fm2-col.l');
+      var rows=left?left.querySelectorAll('.fm2-col.l > div > div'):[];
+      var lockedText='';
+      Array.prototype.forEach.call(rows,function(r){
+        if(r.textContent.indexOf('LOCKED')>=0) lockedText=r.textContent.split(/\\s+/).join(' ').trim(); });
+      return { stage:!!stage, hasArt:!!(img&&img.src.indexOf('data:image/webp')===0),
+               twoCol:!!box.querySelector('.fm2-body'),
+               rowCount:rows.length, lockedText:lockedText }; })()`);
+    ok('the farming panel has a painted stage', fm.stage === true);
+    ok('and the backdrop is webp, like every other backdrop', fm.hasArt === true);
+    ok('patches and reference sit in two columns', fm.twoCol === true);
+    /* Eight patches used to mean eight rows even when four were locked - about
+       300px of "Locked / Unlocks at Lv N" and nothing else. */
+    ok('locked patches collapse into ONE summary row',
+       /LOCKED/.test(fm.lockedText) && /Lv 55/.test(fm.lockedText) && /Lv 99/.test(fm.lockedText),
+       fm.lockedText);
+
+    /* The wrapper aborts its update fetch at 6s and the file already needs about
+       8 Mbps to make it, so backdrop art is the easiest way to break auto-update
+       for slow connections. The farm image is held to the same budget as the
+       zone backdrops it sits beside (those run 11-21 KB). */
+    const kb = ev(`Math.round(FARM_BG.length*0.75/1024)`);
+    ok('the farm backdrop stays inside the zone-art budget', kb <= 30, kb + ' KB');
+  }
+
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));
   process.exit(fail ? 1 : 0);
 }, 2500);

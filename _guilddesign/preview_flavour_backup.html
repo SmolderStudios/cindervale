@@ -1,0 +1,794 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Hall — Cindervale guild design</title>
+<style>
+:root{
+  --bg:#140e07;--panel:#251a10;--raised:#32241566;--raised-s:#322415;
+  --trim:#c79b4e;--trim-d:#6e552c;--text:#ead9b5;--muted:#a08a64;--dim:#7a6748;
+  --ember:#e0762f;--green:#7da33f;--red:#c4543a;--blue:#5a8fcb;--purple:#9a6fc4;
+  --num:ui-monospace,'Cascadia Mono','SF Mono','Segoe UI Mono',Menlo,Consolas,monospace;
+  --rim:rgba(214,170,96,.17);--under:rgba(0,0,0,.55);
+  --lit-top:#33240f;--lit-bot:#1b1208;--gold-hi:#f0c772;
+  --sh-2:0 6px 16px rgba(0,0,0,.55);--sh-3:0 18px 46px rgba(0,0,0,.72);
+  color-scheme:dark;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);
+  font-family:'Crimson Pro',Georgia,'Times New Roman',serif;font-size:17px;line-height:1.5;
+  font-variant-numeric:tabular-nums lining-nums;-webkit-font-smoothing:antialiased}
+.w{max-width:1180px;margin:0 auto;padding:0 28px}
+.w-nar{max-width:820px;margin:0 auto;padding:0 28px}
+
+/* ═══ nav ═══ */
+nav{position:sticky;top:0;z-index:90;background:rgba(20,14,7,.9);backdrop-filter:blur(10px);
+  border-bottom:1px solid #2e2214}
+nav .w{display:flex;align-items:center;gap:6px;height:52px}
+nav .lg{font-size:16px;color:var(--gold-hi);font-weight:600;letter-spacing:.3px;margin-right:auto}
+nav .lg em{color:var(--ember);font-style:normal}
+nav a{font-size:12.5px;letter-spacing:.05em;color:var(--dim);text-decoration:none;padding:6px 11px;
+  border-radius:5px}
+nav a:hover{color:var(--trim);background:#241a0e}
+@media(max-width:860px){nav a{display:none}nav .lg{margin-right:0}}
+
+/* ═══ hero ═══ */
+.hero{position:relative;overflow:hidden;padding:112px 0 84px;
+  background:
+    radial-gradient(ellipse 60% 52% at 50% 0%,rgba(224,118,47,.16),transparent 68%),
+    radial-gradient(ellipse 90% 60% at 50% -18%,#33230f 0%,var(--bg) 62%)}
+.hero::after{content:'';position:absolute;left:0;right:0;bottom:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--trim-d) 22%,var(--trim-d) 78%,transparent)}
+.kick{font-family:var(--num);font-size:11.5px;letter-spacing:.32em;text-transform:uppercase;
+  color:var(--ember);margin-bottom:22px}
+.hero h1{font-size:clamp(50px,7.4vw,86px);line-height:.98;font-weight:600;letter-spacing:-1px;
+  color:var(--gold-hi);margin-bottom:8px}
+.hero h1 em{display:block;color:var(--ember);font-style:normal}
+.hero .sub{font-size:clamp(20px,2.3vw,27px);color:var(--text);max-width:24ch;line-height:1.28;
+  margin:26px 0 30px}
+.hero .sub b{color:var(--gold-hi);font-weight:600}
+.hero .pills{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:34px}
+.pill{font-family:var(--num);font-size:12px;letter-spacing:.06em;border:1px solid var(--trim-d);
+  border-radius:100px;padding:6px 15px;color:var(--trim);background:#221809}
+.pill b{color:var(--gold-hi);font-weight:600}
+.hero .foot{font-size:14.5px;color:var(--dim);font-style:italic}
+.hero .w{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.92fr);gap:56px;align-items:center}
+.hero .art{position:relative}
+.hero .art .shot{transform:rotate(-1.1deg)}
+.hero .art .shot+.shot{transform:rotate(1.4deg);margin-top:-8px;margin-left:52px;position:relative;z-index:2}
+@media(max-width:1080px){.hero .w{grid-template-columns:1fr}.hero .art{display:none}}
+
+/* ═══ section frame ═══ */
+section{padding:92px 0;border-bottom:1px solid #241a0f}
+section.tight{padding:64px 0}
+section.dark{background:linear-gradient(180deg,#100b05,#160f08)}
+.eyebrow{font-family:var(--num);font-size:11px;letter-spacing:.3em;text-transform:uppercase;
+  color:var(--ember);margin-bottom:16px;display:flex;align-items:center;gap:11px}
+.eyebrow::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,#4a3a22,transparent);max-width:180px}
+h2.big{font-size:clamp(31px,4.1vw,46px);line-height:1.08;font-weight:600;color:var(--gold-hi);
+  letter-spacing:-.5px;margin-bottom:16px;max-width:19ch}
+h2.big em{color:var(--ember);font-style:normal}
+.lead{font-size:19.5px;color:var(--muted);max-width:56ch;line-height:1.5}
+.lead b{color:var(--text);font-weight:600}
+.center{text-align:center}
+.center h2.big,.center .lead{margin-left:auto;margin-right:auto}
+.center .eyebrow{justify-content:center}.center .eyebrow::after{display:none}
+
+/* ═══ pieces ═══ */
+.cards{display:grid;gap:18px;margin-top:44px}
+.c3{grid-template-columns:repeat(3,1fr)}
+.c2{grid-template-columns:repeat(2,1fr)}
+.c4{grid-template-columns:repeat(4,1fr)}
+@media(max-width:900px){.c3,.c4,.c2{grid-template-columns:1fr}}
+.box{background:linear-gradient(180deg,var(--lit-top),var(--lit-bot));border:1px solid var(--trim-d);
+  border-radius:12px;padding:26px 24px;box-shadow:inset 0 1px 0 var(--rim),0 6px 20px var(--under)}
+.box h3{font-size:21px;color:var(--gold-hi);font-weight:600;margin-bottom:9px;line-height:1.2}
+.box p{font-size:15.5px;color:var(--muted);line-height:1.52}
+.box p b{color:var(--text);font-weight:600}
+.box .ic{width:44px;height:44px;border-radius:10px;border:1px solid var(--trim-d);background:#1a1208;
+  display:grid;place-items:center;color:var(--ember);margin-bottom:16px;box-shadow:inset 0 1px 0 var(--rim)}
+.box .ic svg{width:24px;height:24px}
+
+/* problem cards */
+.prob{border-left:3px solid var(--red)}
+.prob h3{color:#e8b0a2}
+.prob .n{font-family:var(--num);font-size:11px;letter-spacing:.2em;color:var(--red);margin-bottom:10px}
+
+/* the big statement */
+.stmt{padding:76px 0;text-align:center;
+  background:radial-gradient(ellipse 62% 130% at 50% 50%,rgba(224,118,47,.11),transparent 70%)}
+.stmt p{font-size:clamp(25px,3.5vw,40px);line-height:1.22;color:var(--gold-hi);font-weight:600;
+  max-width:20ch;margin:0 auto;letter-spacing:-.4px}
+.stmt p em{color:var(--ember);font-style:normal}
+.stmt .cap{font-size:15px;color:var(--dim);margin-top:20px;font-style:italic}
+
+/* steps */
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-top:48px;
+  border:1px solid var(--trim-d);border-radius:12px;overflow:hidden;background:#1d1409}
+.steps .s{padding:26px 22px;border-right:1px solid #33261599;position:relative}
+.steps .s:last-child{border-right:none}
+.steps .s .n{font-family:var(--num);font-size:12px;color:var(--ember);letter-spacing:.16em;margin-bottom:12px}
+.steps .s h4{font-size:19px;color:var(--gold-hi);font-weight:600;margin-bottom:7px}
+.steps .s p{font-size:14.5px;color:var(--muted);line-height:1.45}
+@media(max-width:900px){.steps{grid-template-columns:1fr}.steps .s{border-right:none;border-bottom:1px solid #33261599}}
+
+/* feature row: copy + screen */
+.feat{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.28fr);gap:52px;align-items:center;
+  margin-top:56px}
+.feat.rev{grid-template-columns:minmax(0,1.28fr) minmax(0,1fr)}
+.feat.rev .copy{order:2}.feat.rev .shot{order:1}
+@media(max-width:1000px){.feat,.feat.rev{grid-template-columns:1fr;gap:30px}
+  .feat.rev .copy{order:1}.feat.rev .shot{order:2}}
+.feat .tag{display:inline-block;font-family:var(--num);font-size:10.5px;letter-spacing:.2em;
+  text-transform:uppercase;color:#1b1208;background:var(--ember);border-radius:4px;padding:3px 9px;
+  margin-bottom:16px;font-weight:700}
+.feat h3{font-size:clamp(26px,3vw,34px);line-height:1.12;color:var(--gold-hi);font-weight:600;
+  margin-bottom:14px;letter-spacing:-.3px}
+.feat p{font-size:16.5px;color:var(--muted);line-height:1.55;margin-bottom:13px}
+.feat p b{color:var(--text);font-weight:600}
+.feat ul{list-style:none;margin-top:16px}
+.feat ul li{font-size:15.5px;color:var(--muted);padding:7px 0 7px 26px;position:relative;line-height:1.45}
+.feat ul li::before{content:'';position:absolute;left:2px;top:15px;width:7px;height:7px;border-radius:2px;
+  background:var(--ember);transform:rotate(45deg)}
+.feat ul li b{color:var(--text);font-weight:600}
+
+/* screen frame */
+.shot{border:1px solid var(--trim-d);border-radius:12px;background:var(--panel);
+  box-shadow:var(--sh-3);overflow:hidden}
+.shot-bar{background:linear-gradient(180deg,#2e2113,#1e1509);border-bottom:1px solid var(--trim-d);
+  padding:9px 14px;display:flex;align-items:center;gap:9px}
+.shot-bar .t{font-family:var(--num);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--trim)}
+.shot-bar .r{margin-left:auto;font-family:var(--num);font-size:10.5px;color:var(--dim)}
+.shot-body{padding:18px}
+.shot-cap{font-size:14px;color:var(--dim);font-style:italic;margin-top:12px;padding-left:2px}
+
+/* order tiles */
+.orders{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:44px}
+@media(max-width:1000px){.orders{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:700px){.orders{grid-template-columns:1fr}}
+.otile{background:linear-gradient(180deg,var(--lit-top),var(--lit-bot));border:1px solid var(--trim-d);
+  border-radius:12px;padding:22px;box-shadow:inset 0 1px 0 var(--rim),0 6px 20px var(--under);
+  display:flex;flex-direction:column}
+.otile .hd{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.otile .sig{width:42px;height:42px;border-radius:10px;border:1px solid var(--trim-d);background:#1a1208;
+  display:grid;place-items:center;color:var(--trim);flex:none;box-shadow:inset 0 1px 0 var(--rim)}
+.otile .sig svg{width:23px;height:23px}
+.otile h3{font-size:19px;color:var(--gold-hi);font-weight:600;line-height:1.15}
+.otile .verb{font-family:var(--num);font-size:10px;letter-spacing:.18em;color:var(--ember);margin-top:3px}
+.otile .q{font-size:15px;font-style:italic;color:var(--muted);line-height:1.4;margin-bottom:13px}
+.otile .sg{margin-top:auto;padding-top:13px;border-top:1px solid #33261599;font-size:14.5px;color:var(--text)}
+.otile .sg b{color:var(--gold-hi);font-weight:600;display:block;font-size:12px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--dim);margin-bottom:4px}
+.otile.hid{border-style:dashed;opacity:.86}
+.otile.hid .sig{border-style:dashed}
+.otile.hid .verb{color:var(--purple)}
+
+/* gallery */
+.gal{display:grid;grid-template-columns:repeat(2,1fr);gap:34px 26px;margin-top:44px;align-items:start}
+@media(max-width:1000px){.gal{grid-template-columns:1fr}}
+.gal .item h4{font-size:20px;color:var(--gold-hi);font-weight:600;margin-bottom:5px}
+.gal .item .sl{font-size:15px;color:var(--muted);margin-bottom:14px;line-height:1.45}
+.gal .item .sl b{color:var(--text);font-weight:600}
+
+/* sink tiles */
+.sinks{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:44px}
+@media(max-width:1050px){.sinks{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:640px){.sinks{grid-template-columns:1fr}}
+.sink{background:#1d1409;border:1px solid var(--trim-d);border-radius:10px;padding:19px}
+.sink .amt{font-family:var(--num);font-size:19px;color:var(--gold-hi);margin-bottom:3px}
+.sink h4{font-size:16px;color:var(--text);font-weight:600;margin-bottom:7px}
+.sink p{font-size:13.5px;color:var(--muted);line-height:1.42}
+.sink.hero-sink{border-color:#c98a3f;background:linear-gradient(180deg,#3a2a17,#1e1509)}
+
+/* roadmap */
+.road{display:grid;grid-template-columns:repeat(5,1fr);gap:0;margin-top:46px;
+  border:1px solid var(--trim-d);border-radius:12px;overflow:hidden}
+@media(max-width:950px){.road{grid-template-columns:1fr}}
+.road .ph{padding:22px 20px;border-right:1px solid #33261599;background:#1a1208}
+.road .ph:last-child{border-right:none}
+.road .ph.now{background:linear-gradient(180deg,#3a2a17,#211709)}
+.road .ph .n{font-family:var(--num);font-size:11px;letter-spacing:.2em;color:var(--ember);margin-bottom:9px}
+.road .ph h4{font-size:17px;color:var(--gold-hi);font-weight:600;margin-bottom:7px;line-height:1.2}
+.road .ph p{font-size:13.5px;color:var(--muted);line-height:1.42}
+.road .ph .wt{font-family:var(--num);font-size:11px;color:var(--dim);margin-top:11px}
+@media(max-width:950px){.road .ph{border-right:none;border-bottom:1px solid #33261599}}
+
+/* callouts */
+.call{border-left:3px solid var(--green);background:#1b2610aa;border-radius:0 8px 8px 0;
+  padding:16px 20px;margin-top:26px;font-size:16px;color:#c8d8a8;line-height:1.5}
+.call b{color:#dcecb8;font-weight:600}
+.call.warn{border-left-color:var(--red);background:#2a1512aa;color:#e6bcb0}
+.call.warn b{color:#f5d2c6}
+
+/* two-col close */
+.close{display:grid;grid-template-columns:1fr 1fr;gap:36px;margin-top:44px}
+@media(max-width:900px){.close{grid-template-columns:1fr}}
+.close .col h4{font-size:13px;letter-spacing:.2em;text-transform:uppercase;margin-bottom:14px;font-family:var(--num)}
+.close .for h4{color:var(--green)}.close .agn h4{color:var(--red)}
+.close .col p{font-size:16.5px;color:var(--muted);line-height:1.55}
+.close .col p b{color:var(--text);font-weight:600}
+
+footer{padding:56px 0 80px;text-align:center}
+footer p{font-size:13.5px;color:#5c4c34;font-style:italic}
+
+/* ── mock UI atoms (reused inside .shot) ── */
+.mrow{display:flex;align-items:center;gap:10px}
+.sp{margin-left:auto}
+.mcard{background:linear-gradient(180deg,var(--lit-top),var(--lit-bot));border:1px solid var(--trim-d);
+  border-radius:8px;padding:12px 13px;box-shadow:inset 0 1px 0 var(--rim)}
+.mg{display:grid;gap:10px}
+.mg2{grid-template-columns:1fr 1fr}.mg3{grid-template-columns:repeat(3,1fr)}
+.mg4{grid-template-columns:repeat(4,1fr)}
+.n{font-family:var(--num);font-variant-numeric:tabular-nums}
+.gold{color:var(--gold-hi)}.em{color:var(--ember)}.gr{color:var(--green)}.mu{color:var(--muted)}
+.rd{color:var(--red)}.bl{color:var(--blue)}.pu{color:var(--purple)}
+.t11{font-size:11.5px;color:var(--muted);line-height:1.35}
+.t13{font-size:13px;line-height:1.4}
+.h15{font-size:15px;color:var(--gold-hi);font-weight:600}
+.chip{display:inline-flex;align-items:center;gap:5px;font-family:var(--num);font-size:10px;
+  letter-spacing:.04em;border:1px solid var(--trim-d);border-radius:3px;padding:1.5px 6px;
+  color:var(--muted);background:var(--raised);white-space:nowrap}
+.chip.on{color:var(--ember);border-color:#7a4520;background:#33200f}
+.chip.g{color:var(--green);border-color:#4b5c28;background:#1e2712}
+.chip.b{color:var(--blue);border-color:#2f4a68;background:#141e2a}
+.chip.p{color:var(--purple);border-color:#523a6b;background:#1e142a}
+.chip.r{color:var(--red);border-color:#6d3227;background:#2a1512}
+.btn{display:inline-flex;align-items:center;gap:6px;font-family:'Crimson Pro',Georgia,serif;font-size:13px;
+  border:1px solid var(--trim-d);border-radius:5px;padding:4px 11px;color:var(--trim);
+  background:linear-gradient(180deg,#3a2a17,#241a0e);box-shadow:inset 0 1px 0 var(--rim)}
+.btn.pri{color:#1b1208;border-color:#c98a3f;background:linear-gradient(180deg,#e8a04c,#c3762c);font-weight:600}
+.btn.dim{color:#6d5c40;border-color:#3e3220;background:#1d150c;box-shadow:none}
+.bar{height:6px;border-radius:3px;background:#140e07;border:1px solid #3e2f1a;overflow:hidden}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,#8a4f1e,var(--ember))}
+.bar.g i{background:linear-gradient(90deg,#4d6524,var(--green))}
+.bar.b i{background:linear-gradient(90deg,#2f4a68,var(--blue))}
+.bar.p i{background:linear-gradient(90deg,#523a6b,var(--purple))}
+.bar.r i{background:linear-gradient(90deg,#7a3b26,var(--red))}
+.msig{width:26px;height:26px;border:1px solid var(--trim-d);border-radius:6px;background:#1b1208;
+  display:grid;place-items:center;color:var(--trim);flex:none}
+.msig svg{width:15px;height:15px}
+.msig.lg{width:46px;height:46px;border-radius:9px}.msig.lg svg{width:26px;height:26px}
+.kv{display:flex;justify-content:space-between;font-size:13px;padding:4px 0;border-bottom:1px dotted #33261599}
+.kv:last-child{border-bottom:none}
+.kv span{color:var(--muted)}.kv b{font-family:var(--num);color:var(--text);font-weight:400}
+.mtabs{display:flex;gap:4px;margin:-18px -18px 14px;padding:9px 14px 0;border-bottom:1px solid var(--trim-d)}
+.mtabs b,.mtabs span{font-size:12.5px;padding:5px 11px;border-radius:5px 5px 0 0;border:1px solid transparent;
+  color:var(--dim);font-weight:400}
+.mtabs b{color:var(--gold-hi);border-color:var(--trim-d);border-bottom-color:var(--panel);
+  background:var(--raised-s);font-weight:600;margin-bottom:-1px}
+.ret{background:linear-gradient(180deg,var(--lit-top),var(--lit-bot));border:1px solid var(--trim-d);
+  border-radius:8px;padding:11px}
+.ret .rt{display:flex;gap:9px;align-items:center;margin-bottom:8px}
+.ret .face{width:34px;height:34px;border-radius:7px;border:1px solid var(--trim-d);flex:none;
+  background:radial-gradient(circle at 50% 32%,#4a3620,#1a1208);display:grid;place-items:center;color:#6b5638}
+.ret .nm{font-size:14.5px;color:var(--gold-hi);font-weight:600;line-height:1.15}
+.ret .fr{font-size:10.5px;color:var(--dim)}
+.ret .lv{margin-left:auto;font-family:var(--num);font-size:10.5px;color:var(--trim);
+  border:1px solid var(--trim-d);border-radius:3px;padding:1px 6px;background:var(--raised)}
+.ret .job{display:flex;align-items:center;gap:7px;font-size:12.5px;margin:8px 0 6px;
+  border:1px solid #3e3220;border-radius:5px;padding:4px 8px;background:#1a1208}
+.ret .job .lab{font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+.jobrow{display:flex;align-items:center;gap:10px;padding:9px 11px;border:1px solid #3e3220;
+  border-radius:7px;background:#1c1409;margin-bottom:7px}
+.jobrow .jn{width:118px;flex:none}
+.jobrow .jn b{display:block;color:var(--gold-hi);font-size:14px}
+.jobrow .jn span{font-size:11px;color:var(--dim)}
+.slots{display:flex;gap:5px;flex-wrap:wrap;flex:1}
+.slot{border:1px dashed #4a3a22;border-radius:5px;padding:3px 8px;font-size:12px;color:var(--dim);background:#170f07}
+.slot.f{border-style:solid;border-color:var(--trim-d);color:var(--text);background:var(--raised-s)}
+.jobrow .tot{font-family:var(--num);font-size:11.5px;color:var(--green);white-space:nowrap;text-align:right;width:126px}
+.cons{display:grid;grid-template-columns:1.25fr 1fr .55fr .85fr 1fr;gap:10px;align-items:center;
+  padding:9px 11px;border:1px solid #3e3220;border-radius:7px;background:#1c1409;margin-bottom:6px;font-size:13px}
+.cons.hd{background:transparent;border:none;padding:2px 11px;font-family:var(--num);font-size:9.5px;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-bottom:2px}
+@media(max-width:760px){
+  .cons{grid-template-columns:1fr 1fr;gap:7px}
+  .cons.hd{display:none}
+  .jobrow{flex-wrap:wrap}.jobrow .jn,.jobrow .tot{width:auto}.jobrow .tot{text-align:left}
+  .mg2,.mg3,.mg4{grid-template-columns:1fr}
+  .mtabs{overflow-x:auto}
+  .shot-body{padding:13px}
+}
+</style></head><body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<g id="s-table"><path d="M3 9h18M5 9v11M19 9v11M3 9l3-5h12l3 5M9 14h6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></g>
+<g id="s-assay"><path d="M12 3v18M7 21h10M5 7h14M5 7l-3 6a3.2 3.2 0 0 0 6 0zM19 7l3 6a3.2 3.2 0 0 1-6 0z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></g>
+<g id="s-banner"><path d="M6 3v18M6 4h13l-3 4 3 4H6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></g>
+<g id="s-reck"><path d="M4 5h16v14H4zM4 9h16M8 13h3M8 16h3M14 13h3M14 16h3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></g>
+<g id="s-coll"><path d="M4 5a8 8 0 0 1 8 1 8 8 0 0 1 8-1v13a8 8 0 0 0-8 1 8 8 0 0 0-8-1zM12 6v13" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></g>
+<g id="s-choir"><path d="M12 3c1.4 3.6-2.6 4.6-2.6 8a2.6 2.6 0 0 0 5.2 0c0-1-.8-1.8-.8-2.7 1.7.9 2.6 2.6 2.6 4.4a4.4 4.4 0 0 1-8.8 0M6 20h12" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></g>
+<g id="s-quiet"><path d="M4 9c3-3 5-4 8-4s5 1 8 4c-1.5 5-4 8-8 8s-6.5-3-8-8zM9 10.5h.01M15 10.5h.01" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></g>
+<g id="s-hall"><path d="M3 20h18M5 20V9l7-5 7 5v11M9 20v-6h6v6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></g>
+<g id="s-face"><path d="M12 12a3.4 3.4 0 1 0 0-6.8 3.4 3.4 0 0 0 0 6.8zM4.5 20a7.5 7.5 0 0 1 15 0" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></g>
+<g id="s-clock"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 7v5l3.5 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></g>
+<g id="s-stack"><path d="M3 8l9-4 9 4-9 4zM3 12l9 4 9-4M3 16l9 4 9-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></g>
+<g id="s-away"><path d="M12 3v9M8 6.5a6.5 6.5 0 1 0 8 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></g>
+</defs></svg>
+
+<nav><div class="w">
+  <span class="lg">The <em>Hall</em></span>
+  <a href="#problem">Problem</a><a href="#loop">How it works</a><a href="#ideas">The ideas</a>
+  <a href="#orders">Orders</a><a href="#screens">Screens</a><a href="#gold">Gold</a><a href="#build">Build order</a>
+</div></nav>
+
+<!-- ═══════════ HERO ═══════════ -->
+<header class="hero"><div class="w">
+  <div class="copy">
+  <div class="kick">Cindervale Idle · design proposal</div>
+  <h1>The Hall<em>works while you do.</em></h1>
+  <p class="sub">Seven Orders. One hall you own. A crew that keeps producing <b>while you're doing something else.</b></p>
+  <div class="pills">
+    <span class="pill"><b>7</b> Orders</span>
+    <span class="pill"><b>6</b> retainer jobs</span>
+    <span class="pill"><b>1</b> automatic material sink</span>
+    <span class="pill"><b>7</b> gold sinks</span>
+    <span class="pill"><b>5</b> phases · phase 1 ships alone</span>
+  </div>
+  <p class="foot">Guilds, but not a reputation bar and not a chore list.</p>
+  </div>
+
+  <div class="art">
+    <div class="shot"><div class="shot-bar"><span class="t">The Hall</span><span class="r">Ashfall House · Lv 14</span></div>
+    <div class="shot-body">
+      <div class="mrow" style="gap:12px;margin-bottom:13px">
+        <div class="msig lg"><svg><use href="#s-hall"/></svg></div>
+        <div><div class="gold" style="font-size:18px">Ashfall House</div>
+          <div class="t11">9 of 11 retainers working</div></div>
+        <div class="sp" style="text-align:right"><div class="n gr" style="font-size:15px">+31,600g</div><div class="t11">/hr net</div></div>
+      </div>
+      <div class="mg mg2">
+        <div class="mcard"><div class="t11">Producing now</div><div class="n gr t13">+2.1k Smith XP/hr</div><div class="t11">2 on Assist, off your Mining</div></div>
+        <div class="mcard"><div class="t11">Consigned this hour</div><div class="n gold t13">1,840 items</div><div class="t11">automatically</div></div>
+      </div>
+    </div></div>
+
+    <div class="shot"><div class="shot-bar"><span class="t">Consignments</span><span class="r">running</span></div>
+    <div class="shot-body" style="padding:13px">
+      <div class="mrow" style="gap:9px;margin-bottom:7px"><span class="msig"><svg><use href="#s-table"/></svg></span>
+        <span class="t13 gold">Oak logs</span><span class="t11">keep 200</span>
+        <span class="sp n t11 gr">+12g each</span></div>
+      <div class="bar g" style="margin-bottom:11px"><i style="width:88%"></i></div>
+      <div class="mrow" style="gap:9px;margin-bottom:7px"><span class="msig"><svg><use href="#s-assay"/></svg></span>
+        <span class="t13 gold">Cobalt ore</span><span class="t11">keep 500</span>
+        <span class="sp n t11 gr">+31g each</span></div>
+      <div class="bar g"><i style="width:96%"></i></div>
+    </div></div>
+  </div>
+</div></header>
+
+<!-- ═══════════ PROBLEM ═══════════ -->
+<section id="problem" class="dark"><div class="w">
+  <div class="eyebrow">The problem</div>
+  <h2 class="big">Cindervale only moves <em>one axis at a time.</em></h2>
+  <p class="lead">Three complaints that look separate and aren't.</p>
+
+  <div class="cards c3">
+    <div class="box prob"><div class="n">01</div><h3>Fight or skill. Never both.</h3>
+      <p>Every hour in the Arena is an hour your Woodcutting doesn't move. The player is always choosing what <b>not</b> to do.</p></div>
+    <div class="box prob"><div class="n">02</div><h3>4,000 oak logs.</h3>
+      <p>Material stops mattering the moment you out-level it. It piles up, fills the satchel, and gets deleted.</p></div>
+    <div class="box prob"><div class="n">03</div><h3>One number to come back to.</h3>
+      <p>The welcome-back box reports offline XP and nothing else. That's the entire retention hook.</p></div>
+  </div>
+</div></section>
+
+<div class="stmt"><div class="w">
+  <p>So build a second axis — <em>and run it off the first.</em></p>
+  <p class="cap">Not another thing to click. A layer that produces because of what you're already doing.</p>
+</div></div>
+
+<!-- ═══════════ LOOP ═══════════ -->
+<section id="loop"><div class="w">
+  <div class="eyebrow">How it works</div>
+  <h2 class="big">Four nouns. That's the whole system.</h2>
+  <p class="lead">Everything else on this page is decoration on this loop.</p>
+
+  <div class="steps">
+    <div class="s"><div class="n">01 — ORDERS</div><h4>Seven factions</h4>
+      <p>They post work and they have people. You earn <b class="em">Standing</b> with each.</p></div>
+    <div class="s"><div class="n">02 — STANDING</div><h4>A balance, not a rank</h4>
+      <p>You <b class="gold">spend</b> it. Mostly on hiring their people away from them.</p></div>
+    <div class="s"><div class="n">03 — RETAINERS</div><h4>Named people</h4>
+      <p>One trait, one job, a level that rises, an upkeep in gold.</p></div>
+    <div class="s"><div class="n">04 — THE HALL</div><h4>Six wings you upgrade</h4>
+      <p>How many you can hold, and how well they work.</p></div>
+  </div>
+
+  <div class="call"><b>Hired → member → employer → institution.</b> Four different relationships to the same seven NPCs, without a single new zone or skill.</div>
+</div></section>
+
+<!-- ═══════════ THE THREE IDEAS ═══════════ -->
+<section id="ideas" class="dark"><div class="w">
+  <div class="eyebrow">The three ideas</div>
+  <h2 class="big">What makes it <em>not</em> a reputation grind.</h2>
+
+  <!-- idea 1 -->
+  <div class="feat">
+    <div class="copy">
+      <span class="tag">The sink</span>
+      <h3>Set it once. It never asks again.</h3>
+      <p>Pick an item, an Order, and a <b>keep-floor</b>. From then on everything you produce above that floor is taken <b>as it's produced</b>, paid in gold and Standing.</p>
+      <p>No hand-in button. No board to visit. An idle game shouldn't ask you to click "deliver 300 cobalt."</p>
+      <ul>
+        <li>Satchel stops filling — consigned items never need a slot</li>
+        <li>Oak logs still have a price at level 99</li>
+        <li>Flood one material and its rate <b>saturates</b>, recovering over days — so you rotate what you produce</li>
+      </ul>
+    </div>
+    <div class="shot-wrap">
+      <div class="shot"><div class="shot-bar"><span class="t">The Hall ▸ Consignments</span><span class="r">5 of 8 slots</span></div>
+      <div class="shot-body">
+        <div class="cons hd"><span>Item</span><span>Consigned to</span><span>Keep</span><span>Rate each</span><span>Saturation</span></div>
+        <div class="cons"><span><b class="gold">Oak logs</b><br><span class="t11">4,120 held</span></span>
+          <span class="mrow" style="gap:7px"><span class="msig"><svg><use href="#s-table"/></svg></span> Long Table</span>
+          <span class="n">200</span><span class="n"><span class="gold">12g</span> + <span class="em">1.4</span></span>
+          <span><div class="bar g"><i style="width:88%"></i></div><span class="t11">88% healthy</span></span></div>
+        <div class="cons"><span><b class="gold">Trout</b><br><span class="t11">9,880 held</span></span>
+          <span class="mrow" style="gap:7px"><span class="msig"><svg><use href="#s-table"/></svg></span> Long Table</span>
+          <span class="n">0</span><span class="n"><span class="gold">4g</span> + <span class="em">0.6</span></span>
+          <span><div class="bar r"><i style="width:41%"></i></div><span class="t11 rd">41% flooded</span></span></div>
+        <div class="cons"><span><b class="gold">Cobalt ore</b><br><span class="t11">1,640 held</span></span>
+          <span class="mrow" style="gap:7px"><span class="msig"><svg><use href="#s-assay"/></svg></span> The Assay</span>
+          <span class="n">500</span><span class="n"><span class="gold">31g</span> + <span class="em">2.1</span></span>
+          <span><div class="bar g"><i style="width:96%"></i></div><span class="t11">96% healthy</span></span></div>
+        <div class="cons"><span><b class="gold">Rat hide</b><br><span class="t11">602 held</span></span>
+          <span class="mrow" style="gap:7px"><span class="msig"><svg><use href="#s-choir"/></svg></span> Hollow Choir</span>
+          <span class="n">0</span><span class="n mu">blessing</span>
+          <span><div class="bar p"><i style="width:100%"></i></div><span class="t11">no saturation</span></span></div>
+        <div class="mrow" style="margin-top:12px;padding-top:11px;border-top:1px solid #33261599">
+          <span class="t11">This hour <b class="gold n">1,840 items</b> · <b class="gold n">+28,400g</b> · <b class="em n">+2,190 Standing</b></span></div>
+      </div></div>
+      <p class="shot-cap">Four rows and a keep column. That's the entire material-overflow problem, solved once.</p>
+    </div>
+  </div>
+
+  <!-- idea 2 -->
+  <div class="feat rev">
+    <div class="shot-wrap shot">
+      <div class="shot-bar"><span class="t">The Hall ▸ Assignments</span><span class="r">9 assigned · 2 idle</span></div>
+      <div class="shot-body">
+        <div class="jobrow"><div class="jn"><b>Assist</b><span>mirror your rate</span></div>
+          <div class="slots"><span class="slot f">Bram Colt <span class="mu">→ Smithing</span></span><span class="slot f">Ilma Rook <span class="mu">→ Cooking</span></span><span class="slot">+</span></div>
+          <div class="tot gr">26% + 19%</div></div>
+        <div class="jobrow"><div class="jn"><b>Gather</b><span>raw materials</span></div>
+          <div class="slots"><span class="slot f">Wren <span class="mu">· yew</span></span><span class="slot f">Doss <span class="mu">· cobalt</span></span><span class="slot f">Tarn <span class="mu">· trout</span></span><span class="slot">+</span></div>
+          <div class="tot gr">+1,240 /hr</div></div>
+        <div class="jobrow"><div class="jn"><b>Craft</b><span>process</span></div>
+          <div class="slots"><span class="slot f">Maren Vosk</span><span class="slot f">Hedde</span><span class="slot">+</span></div>
+          <div class="tot gr">+1,180 /hr</div></div>
+        <div class="jobrow"><div class="jn"><b>Guard</b><span>Bannerhouse</span></div>
+          <div class="slots"><span class="slot f">Old Hask</span><span class="slot">+</span></div>
+          <div class="tot gr">22% soaked</div></div>
+        <div class="jobrow"><div class="jn"><b>Study</b><span>Collegium</span></div>
+          <div class="slots"><span class="slot f">Silje Ashwright</span><span class="slot">+</span></div>
+          <div class="tot bl">+1.9% /hr</div></div>
+        <div class="jobrow" style="opacity:.6"><div class="jn"><b>Idle</b><span>no upkeep</span></div>
+          <div class="slots"><span class="slot f">Perrin</span><span class="slot f">Voss</span></div>
+          <div class="tot mu">—</div></div>
+        <div class="mrow" style="margin-top:12px;padding-top:11px;border-top:1px solid #33261599">
+          <span class="t11">Upkeep <b class="rd n">4,180g/hr</b></span>
+          <span class="t11 sp">Net <b class="gr n">+31,600g/hr</b></span>
+          <span class="btn pri" style="margin-left:12px">Confirm</span></div>
+      </div>
+    </div>
+    <div class="copy">
+      <span class="tag">The parallel axis</span>
+      <h3>Your crew works off <em style="color:var(--ember);font-style:normal">your</em> clock.</h3>
+      <p>A retainer's output is <b>a fraction of your current rate</b> — not a wall-clock timer.</p>
+      <p>Fight in the Arena with two on <b>Assist</b> and they chop and smelt at 25% of your rate for the whole fight. That's the fix for combat and skilling being mutually exclusive.</p>
+      <p>It can never out-earn active play, because it <b>is</b> a slice of active play.</p>
+    </div>
+  </div>
+
+  <!-- idea 3 -->
+  <div class="feat">
+    <div class="copy">
+      <span class="tag">The ladder</span>
+      <h3>Standing is spent, not stacked.</h3>
+      <p>Standard guild rep tops out and the tab dies. Here Standing is a <b>balance</b> — spent hiring, buying, and calling in favours.</p>
+      <p>A separate <b>lifetime high-water mark</b> drives your title, so you still get the prestige beats. Two numbers, two jobs, neither goes stale.</p>
+      <ul>
+        <li>Because you buy <b>people</b>, and people can always be better people</li>
+        <li>No Order ever reaches "max rank, nothing left here"</li>
+        <li>Poaching costs Standing with every <b>other</b> Order — that's the whole rivalry system, and it's recoverable</li>
+      </ul>
+    </div>
+    <div class="shot-wrap">
+      <div class="shot"><div class="shot-bar"><span class="t">The Long Table ▸ Take on staff</span><span class="r">Standing 8,420</span></div>
+      <div class="shot-body"><div class="mg mg3">
+        <div class="ret"><div class="rt"><div class="face"><svg style="width:19px;height:19px"><use href="#s-face"/></svg></div>
+          <div><div class="nm">Halda Crane</div><div class="fr">Cook · Lv 1</div></div></div>
+          <div style="margin-bottom:9px"><span class="chip g">TIRELESS</span></div>
+          <div class="t11" style="margin-bottom:10px">"I've fed worse than you for less."</div>
+          <div class="mrow"><span class="n gold t13">1,200</span><span class="btn pri sp">Hire</span></div></div>
+        <div class="ret"><div class="rt"><div class="face"><svg style="width:19px;height:19px"><use href="#s-face"/></svg></div>
+          <div><div class="nm">Otho Bell</div><div class="fr">Porter · Lv 8</div></div></div>
+          <div style="margin-bottom:9px"><span class="chip on">OLD HAND</span> <span class="chip">LIGHT-FINGERED</span></div>
+          <div class="t11" style="margin-bottom:10px">"Nothing goes missing. Things relocate."</div>
+          <div class="mrow"><span class="n gold t13">2,900</span><span class="btn pri sp">Hire</span></div></div>
+        <div class="ret" style="opacity:.55"><div class="rt"><div class="face"><svg style="width:19px;height:19px"><use href="#s-face"/></svg></div>
+          <div><div class="nm">Sef Almar</div><div class="fr">Victualler · Lv 12</div></div></div>
+          <div style="margin-bottom:9px"><span class="chip">DEFT</span> <span class="chip b">SHARP-EYED</span></div>
+          <div class="t11" style="margin-bottom:10px">Requires the title <b class="gold">Quartermaster</b>.</div>
+          <div class="mrow"><span class="n mu t13">6,400</span><span class="btn dim sp">Locked</span></div></div>
+      </div>
+      <div class="mrow" style="margin-top:12px;padding-top:11px;border-top:1px solid #33261599">
+        <span class="t11">Traits are face-up before you pay.</span>
+        <span class="btn sp">Re-roll — <span class="gold n">45,000g</span></span></div>
+      </div></div>
+      <p class="shot-cap">Considered purchase, not a gacha pull. The <b>re-roll</b> is the gamble, and it costs gold.</p>
+    </div>
+  </div>
+</div></section>
+
+<!-- ═══════════ ORDERS ═══════════ -->
+<section id="orders"><div class="w">
+  <div class="eyebrow">The roster</div>
+  <h2 class="big">Seven Orders, sorted by <em>what they want.</em></h2>
+  <p class="lead">Not by skill cluster. A "mining guild" goes dead the second you switch to combat, and half your roster sleeps. Sorted this way, <b>all seven stay live no matter what you're training.</b></p>
+
+  <div class="orders">
+    <div class="otile"><div class="hd"><div class="sig"><svg><use href="#s-table"/></svg></div>
+      <div><h3>The Long Table</h3><div class="verb">SUPPLY</div></div></div>
+      <p class="q">"An army is a stomach with opinions. Fill it."</p>
+      <div class="sg"><b>Signature</b>Wants volume, forever. Best consignment rates in the game. The bulk sink of record.</div></div>
+
+    <div class="otile"><div class="hd"><div class="sig"><svg><use href="#s-assay"/></svg></div>
+      <div><h3>The Assay</h3><div class="verb">CERTIFY</div></div></div>
+      <p class="q">"Bring me one good thing. I've no use for a thousand poor ones."</p>
+      <div class="sg"><b>Signature</b>Item <b class="gold" style="display:inline;font-size:inherit;text-transform:none;letter-spacing:0;color:var(--gold-hi)">grading</b> — crafted gear rolls a hidden quality. Gives maxed crafting a chase again.</div></div>
+
+    <div class="otile"><div class="hd"><div class="sig"><svg><use href="#s-banner"/></svg></div>
+      <div><h3>The Bannerhouse</h3><div class="verb">MUSTER</div></div></div>
+      <p class="q">"We don't need you strong. We need you <i>there</i>."</p>
+      <div class="sg"><b>Signature</b>A rotating focus zone that pays more for <i>low</i> zones. Guard retainers who soak your hits.</div></div>
+
+    <div class="otile"><div class="hd"><div class="sig"><svg><use href="#s-reck"/></svg></div>
+      <div><h3>The Reckoners</h3><div class="verb">INVEST</div></div></div>
+      <p class="q">"We're not a bank. A bank gives it back."</p>
+      <div class="sg"><b>Signature</b>The Float — deposit gold, it matures over real time. Bulk-sell without tanking prices.</div></div>
+
+    <div class="otile"><div class="hd"><div class="sig"><svg><use href="#s-coll"/></svg></div>
+      <div><h3>Ashwalk Collegium</h3><div class="verb">STUDY</div></div></div>
+      <p class="q">"Burn it, weigh the ash, write down what it was."</p>
+      <div class="sg"><b>Signature</b>Pays in <i>information</i>. The delivery vehicle for T6 tools, Ember Dust, combat-tier recipes.</div></div>
+
+    <div class="otile"><div class="hd"><div class="sig"><svg><use href="#s-choir"/></svg></div>
+      <div><h3>The Hollow Choir</h3><div class="verb">OFFER</div></div></div>
+      <p class="q">"Give it to the fire. The fire doesn't ask what it was worth."</p>
+      <div class="sg"><b>Signature</b>Takes <i>any</i> item in the game for a timed blessing. Nothing is ever worthless again.</div></div>
+
+    <div class="otile hid"><div class="hd"><div class="sig"><svg><use href="#s-quiet"/></svg></div>
+      <div><h3>The Quiet Market</h3><div class="verb">WAGER · HIDDEN</div></div></div>
+      <p class="q">"You didn't apply. You were noticed."</p>
+      <div class="sg"><b>Signature</b>Contracts you can <b style="display:inline;font-size:inherit;text-transform:none;letter-spacing:0;color:var(--red)">fail</b>. Stake Standing, double or nothing. Opt-in, and found by rare drop.</div></div>
+
+    <div class="otile" style="border-color:#c98a3f;background:linear-gradient(180deg,#3a2a17,#1e1509)">
+      <div class="hd"><div class="sig" style="border-color:#c98a3f"><svg><use href="#s-hall"/></svg></div>
+      <div><h3>Your own Charter</h3><div class="verb">ENDGAME</div></div></div>
+      <p class="q">At Hall Level 25, you become the eighth house — and the flow reverses.</p>
+      <div class="sg"><b>Signature</b>You post the contracts. The other Orders fulfil them and pay <i>you</i>. Costs 12,000,000g.</div></div>
+
+    <div class="otile" style="border-style:dashed;background:none;box-shadow:none;justify-content:center">
+      <p class="q" style="margin:0">Six is the shippable number. The Quiet Market is a bolt-on — build it last, or never.</p></div>
+  </div>
+</div></section>
+
+<!-- ═══════════ SCREENS ═══════════ -->
+<section id="screens" class="dark"><div class="w">
+  <div class="eyebrow">The screens</div>
+  <h2 class="big">What it looks like in the game.</h2>
+  <p class="lead">Everything below renders into the centre panel, same as <b>#shopView</b>. Header nav, beside Shop and Mastery.</p>
+
+  <!-- hall landing, full width -->
+  <div style="margin-top:44px">
+    <h4 style="font-size:22px;color:var(--gold-hi);font-weight:600;margin-bottom:5px">The Hall — landing screen</h4>
+    <p class="lead" style="font-size:16.5px;margin-bottom:16px">Open it, read one line, close it. Nothing here is a chore list.</p>
+    <div class="shot"><div class="shot-bar"><span class="t">The Hall</span><span class="r">centre panel</span></div>
+    <div class="shot-body">
+      <div class="mtabs"><b>Hall</b><span>The Roll</span><span>Assignments</span><span>Consignments</span><span>Orders</span><span>Wings</span></div>
+      <div class="mrow" style="gap:14px;margin-bottom:14px">
+        <div class="msig lg" style="width:56px;height:56px"><svg style="width:32px;height:32px"><use href="#s-hall"/></svg></div>
+        <div><div style="font-size:21px" class="gold">Ashfall House</div>
+          <div class="t11">Hall Level 14 · 9 of 11 retainers working · founded 41 days ago</div></div>
+        <div class="sp" style="text-align:right">
+          <div class="n t13"><span class="rd">−4,180g</span> <span class="t11">/hr upkeep</span></div>
+          <div class="n" style="font-size:15px"><span class="gr">+31,600g</span> <span class="t11">/hr net</span></div></div>
+      </div>
+      <div class="mg mg4" style="margin-bottom:14px">
+        <div class="mcard"><div class="t11">Producing now</div><div class="n gr" style="font-size:16px">+2.1k Smith XP/hr</div><div class="t11">2 on Assist, mirroring your Mining</div></div>
+        <div class="mcard"><div class="t11">Consigned this hour</div><div class="n gold" style="font-size:16px">1,840 items</div><div class="t11">oak logs, trout, cobalt ore</div></div>
+        <div class="mcard"><div class="t11">Research</div><div class="n bl" style="font-size:16px">Starsteel Survey</div><div class="bar b" style="margin-top:5px"><i style="width:71%"></i></div><div class="t11">71% · 6h left</div></div>
+        <div class="mcard"><div class="t11">Muster</div><div class="n em" style="font-size:16px">Frostfang Tundra</div><div class="t11">×2.4 Standing · rotates 2d 04h</div></div>
+      </div>
+      <div class="mg mg3">
+        <div class="mcard"><div class="mrow"><div class="msig"><svg><use href="#s-table"/></svg></div><div><div class="t13 gold">The Long Table</div><div class="t11">Quartermaster</div></div><div class="sp n gold t13">8,420</div></div>
+          <div class="bar" style="margin-top:8px"><i style="width:78%"></i></div><div class="t11" style="margin-top:3px">3 recruits available</div></div>
+        <div class="mcard"><div class="mrow"><div class="msig"><svg><use href="#s-banner"/></svg></div><div><div class="t13 gold">The Bannerhouse</div><div class="t11">Sworn</div></div><div class="sp n gold t13">2,190</div></div>
+          <div class="bar" style="margin-top:8px"><i style="width:41%"></i></div><div class="t11" style="margin-top:3px">Muster active ×2.4</div></div>
+        <div class="mcard"><div class="mrow"><div class="msig"><svg><use href="#s-coll"/></svg></div><div><div class="t13 gold">Ashwalk Collegium</div><div class="t11">Ashwright</div></div><div class="sp n gold t13">640</div></div>
+          <div class="bar" style="margin-top:8px"><i style="width:22%"></i></div><div class="t11" style="margin-top:3px">1 research running</div></div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- gallery -->
+  <div class="gal">
+    <div class="item">
+      <h4>The Roll</h4>
+      <p class="sl">Your people. One trait, one job, a level that rises from doing the work. <b>A two-week-old Tireless Lv 20 cook is genuinely irreplaceable</b> — that's the build-up fantasy.</p>
+      <div class="shot"><div class="shot-bar"><span class="t">The Roll</span><span class="r">11 of 14 slots</span></div>
+      <div class="shot-body"><div class="mg mg2">
+        <div class="ret"><div class="rt"><div class="face"><svg style="width:19px;height:19px"><use href="#s-face"/></svg></div>
+          <div><div class="nm">Maren Vosk</div><div class="fr">of the Long Table</div></div><div class="lv">Lv 17</div></div>
+          <div><span class="chip g">TIRELESS</span> <span class="t11">no upkeep, ever</span></div>
+          <div class="job"><span class="lab">Job</span><span class="gold">Craft — Cooking</span><span class="sp t11">▾</span></div>
+          <div class="mrow"><span class="n gr t11">+840 shark/hr</span><span class="sp n t11">0g/hr</span></div></div>
+        <div class="ret"><div class="rt"><div class="face"><svg style="width:19px;height:19px"><use href="#s-face"/></svg></div>
+          <div><div class="nm">Old Hask</div><div class="fr">of the Bannerhouse</div></div><div class="lv">Lv 20</div></div>
+          <div><span class="chip r">SCARRED</span> <span class="t11">heals 2× faster</span></div>
+          <div class="job"><span class="lab">Job</span><span class="gold">Guard — Arena</span><span class="sp t11">▾</span></div>
+          <div class="mrow"><span class="n gr t11">soaks 22% of hits</span><span class="sp n t11">340g/hr</span></div></div>
+        <div class="ret"><div class="rt"><div class="face"><svg style="width:19px;height:19px"><use href="#s-face"/></svg></div>
+          <div><div class="nm">Silje Ashwright</div><div class="fr">of the Collegium</div></div><div class="lv">Lv 6</div></div>
+          <div><span class="chip b">DEVOUT</span> <span class="t11">+20% under a blessing</span></div>
+          <div class="job"><span class="lab">Job</span><span class="gold">Study — Starsteel</span><span class="sp t11">▾</span></div>
+          <div class="mrow"><span class="n gr t11">+1.9%/hr research</span><span class="sp n t11">120g/hr</span></div></div>
+        <div class="ret"><div class="rt"><div class="face"><svg style="width:19px;height:19px"><use href="#s-face"/></svg></div>
+          <div><div class="nm">Wren</div><div class="fr">of the Long Table</div></div><div class="lv">Lv 3</div></div>
+          <div><span class="chip p">GREEN</span> <span class="t11">levels 2× faster</span></div>
+          <div class="job"><span class="lab">Job</span><span class="gold">Gather — Yew logs</span><span class="sp t11">▾</span></div>
+          <div class="mrow"><span class="n gr t11">+310 yew/hr</span><span class="sp n t11">45g/hr</span></div></div>
+      </div></div></div>
+    </div>
+
+    <div class="item">
+      <h4>The Offering</h4>
+      <p class="sl">The Hollow Choir takes <b>every item id in the game</b>. <b>"Add all junk"</b> empties every worthless stack in the satchel into a real buff — the single best quality-of-life button here.</p>
+      <div class="shot"><div class="shot-bar"><span class="t">The Offering</span><span class="r">Devotion: Burning</span></div>
+      <div class="shot-body"><div class="mg mg2">
+        <div><div class="mcard"><div class="kv"><span>Bronze dagger ×14</span><b>112</b></div>
+          <div class="kv"><span>Raw shrimp ×400</span><b>1,200</b></div>
+          <div class="kv"><span>Rat hide ×602</span><b>2,408</b></div>
+          <div class="kv"><span>Oak logs ×2,000</span><b>9,000</b></div>
+          <div class="kv" style="border-top:1px solid var(--trim-d);margin-top:4px;padding-top:6px"><span class="gold">Weight</span><b class="gold">12,720</b></div></div>
+          <div style="margin-top:9px"><span class="btn dim">+ Satchel</span> <span class="btn">Add all junk</span></div></div>
+        <div class="mcard" style="background:linear-gradient(180deg,#2a1a2e,#180f1a);border-color:#523a6b">
+          <div class="mrow"><div class="msig" style="border-color:#523a6b;color:var(--purple)"><svg><use href="#s-choir"/></svg></div>
+            <div><div class="pu t13" style="font-weight:600">Ashen Favour</div><div class="t11">4h 20m</div></div></div>
+          <div style="margin-top:10px">
+            <div class="kv"><span>All skill XP</span><b class="gr">+7%</b></div>
+            <div class="kv"><span>Rare drop chance</span><b class="gr">+4%</b></div>
+            <div class="kv"><span>Retainer output</span><b class="gr">+12%</b></div></div>
+          <div class="bar p" style="margin-top:10px"><i style="width:64%"></i></div>
+          <div class="t11" style="margin-top:4px">Devotion 64% → <b class="pu">Ashen</b> at 80%</div></div>
+      </div></div></div>
+    </div>
+
+    <div class="item">
+      <h4>The Muster</h4>
+      <p class="sl">One zone at a time carries a big multiplier — and it pays <b>more for low zones</b>. The only mechanic that makes early content more valuable than late content.</p>
+      <div class="shot"><div class="shot-bar"><span class="t">The Muster</span><span class="r">Sworn · 2,190</span></div>
+      <div class="shot-body">
+        <div class="mcard" style="border-color:#7a4520;background:linear-gradient(180deg,#3a2412,#1e1208);margin-bottom:11px">
+          <div class="mrow"><div class="msig lg" style="border-color:#7a4520"><svg><use href="#s-banner"/></svg></div>
+            <div><div class="em" style="font-size:10px;letter-spacing:.2em">MUSTERED</div>
+              <div class="gold" style="font-size:19px">Frostfang Tundra</div>
+              <div class="t11">rotates in 2d 04h</div></div>
+            <div class="sp" style="text-align:right"><div class="n em" style="font-size:27px">×2.4</div><div class="t11">Standing</div></div></div>
+          <div class="mrow" style="margin-top:10px;gap:7px;flex-wrap:wrap"><span class="chip on">+40% beast sinew</span><span class="chip on">rare spawns ×1.5</span><span class="chip g">Guards take 30% less</span></div></div>
+        <div class="mg mg3">
+          <div class="mcard" style="opacity:.6"><div class="t11">Next</div><div class="gold t13">Silkweaver Hollow</div><div class="t11 n">×2.1</div></div>
+          <div class="mcard" style="opacity:.5"><div class="t11">Then</div><div class="gold t13">Rat Warrens</div><div class="t11 n em">×3.6 — low zone</div></div>
+          <div class="mcard"><div class="t11">Call it early</div><div class="n gold t13">180,000g</div><div class="t11">once per rotation</div></div>
+        </div>
+      </div></div>
+    </div>
+
+    <div class="item">
+      <h4>While you were away</h4>
+      <p class="sl">Your strongest retention surface currently reports <b>one number</b>. Now it reports five kinds of news, every session.</p>
+      <div class="shot"><div class="shot-bar"><span class="t">Offline overlay</span><span class="r">7h 12m</span></div>
+      <div class="shot-body">
+        <div class="kv"><span>Offline skill — Mining</span><b class="gr">+412k XP</b></div>
+        <div class="kv"><span>Consigned automatically</span><b class="gr">9,840 items · +186,000g</b></div>
+        <div class="kv"><span>Retainers produced</span><b class="gr">+2,190 shark, +840 mithril bar</b></div>
+        <div class="kv"><span>Wren reached</span><b class="gold">Level 10</b></div>
+        <div class="kv"><span>Starsteel Survey</span><b class="bl">completed — T6 tools unlocked</b></div>
+        <div class="kv"><span>Upkeep paid</span><b class="rd">−30,100g</b></div>
+      </div></div>
+    </div>
+
+    <div class="item">
+        <h4>The Hall's six wings</h4>
+        <p class="sl">Flat upgrade cards. No map, no isometric anything, <b>zero art debt</b>. The only place Standing from different Orders is spent together.</p>
+        <div class="shot"><div class="shot-body"><div class="mg mg2">
+          <div class="mcard"><div class="mrow"><b class="gold t13">The Roll</b><span class="chip on sp">T4</span></div><div class="t11">Retainer capacity. 3 → 5 → 8 → 11 → 14.</div></div>
+          <div class="mcard"><div class="mrow"><b class="gold t13">The Yard</b><span class="chip on sp">T3</span></div><div class="t11">Gather output +12%/tier.</div></div>
+          <div class="mcard"><div class="mrow"><b class="gold t13">The Workshop</b><span class="chip on sp">T3</span></div><div class="t11">Craft +12%/tier. Free-craft proc.</div></div>
+          <div class="mcard"><div class="mrow"><b class="gold t13">Reading Room</b><span class="chip on sp">T2</span></div><div class="t11">Study speed. T4 = second offline skill.</div></div>
+          <div class="mcard"><div class="mrow"><b class="gold t13">The Infirmary</b><span class="chip sp">T1</span></div><div class="t11">Guard recovery −25%/tier.</div></div>
+          <div class="mcard"><div class="mrow"><b class="gold t13">Counting House</b><span class="chip on sp">T3</span></div><div class="t11">+1 consignment slot/tier. Upkeep −10%.</div></div>
+        </div></div></div>
+    </div>
+  </div>
+</div></section>
+
+<!-- ═══════════ GOLD ═══════════ -->
+<section id="gold"><div class="w">
+  <div class="eyebrow">Gold</div>
+  <h2 class="big">Seven sinks — and only <em>one</em> deletes gold.</h2>
+  <p class="lead">A sink that just burns money reads as a tax. A sink that trades money for <b>tempo</b> reads as a decision.</p>
+
+  <div class="sinks">
+    <div class="sink hero-sink"><div class="amt">per head / hr</div><h4>Retainer upkeep</h4>
+      <p>The backbone. Scales with a roster you chose to grow — and <b style="color:var(--text)">Idle costs nothing</b>, so it can never trap you.</p></div>
+    <div class="sink"><div class="amt">45k–400k</div><h4>Recruit re-rolls</h4>
+      <p>Gold buys rolls, never outcomes. Makes gold matter when you have plenty and want nothing.</p></div>
+    <div class="sink"><div class="amt">up to ⅓ held</div><h4>The Float</h4>
+      <p><b style="color:var(--text)">Parks</b> gold instead of burning it. The cost is opportunity, not money.</p></div>
+    <div class="sink"><div class="amt">180k</div><h4>Call the Muster early</h4>
+      <p>Buys tempo. Capped once per rotation so it can't be spammed.</p></div>
+    <div class="sink"><div class="amt">gold + Standing</div><h4>Hall wings</h4>
+      <p>Mixed currency, so no amount of gold alone finishes the Hall.</p></div>
+    <div class="sink"><div class="amt">12,000,000g</div><h4>The Charter fee</h4>
+      <p>The terminal sink. One enormous, voluntary, permanent purchase at the top of the curve.</p></div>
+    <div class="sink"><div class="amt">flat</div><h4>Crests &amp; banners</h4>
+      <p>Pure vanity, zero balance risk, and players reliably buy it.</p></div>
+    <div class="sink" style="border-style:dashed;background:none"><div class="amt mu">—</div><h4 style="color:var(--muted)">Not a sink</h4>
+      <p>Nothing here gates content. Gold only ever buys it <b style="color:var(--text)">sooner</b>.</p></div>
+  </div>
+
+  <div class="call warn"><b>The rule I'd hold hardest:</b> the moment gold is required to <i>reach</i> something rather than reach it sooner, the economy becomes a soft paywall on your own game — and Cindervale has three character slots, so that mistake gets made three times.</div>
+</div></section>
+
+<!-- ═══════════ BUILD ═══════════ -->
+<section id="build" class="dark"><div class="w">
+  <div class="eyebrow">Build order</div>
+  <h2 class="big">Phase 1 ships <em>on its own.</em></h2>
+  <p class="lead">It solves the material-overflow problem by itself, and nothing above it is a prerequisite. If it lands, the rest gets easy to justify.</p>
+
+  <div class="road">
+    <div class="ph now"><div class="n">PHASE 1</div><h4>Consignments + 2 Orders</h4>
+      <p>Standing, titles, the auto-sink. No retainers, no Hall. Complete and shippable alone.</p><div class="wt">medium</div></div>
+    <div class="ph"><div class="n">PHASE 2</div><h4>The Hall + retainers</h4>
+      <p>The Roll, the assignment board, Assist / Gather / Craft / Idle. Where it proves it's fun.</p><div class="wt">large</div></div>
+    <div class="ph"><div class="n">PHASE 3</div><h4>Four more Orders</h4>
+      <p>Hall wings, recruiting draw. Mostly data against render functions that exist.</p><div class="wt">medium</div></div>
+    <div class="ph"><div class="n">PHASE 4</div><h4>Signature mechanics</h4>
+      <p>Guard, Study, the Muster, the Float, the Offering. Independent — one per release.</p><div class="wt">per feature</div></div>
+    <div class="ph"><div class="n">PHASE 5</div><h4>The Charter</h4>
+      <p>Endgame, crest builder, the Quiet Market.</p><div class="wt">medium</div></div>
+  </div>
+
+  <div class="cards c3" style="margin-top:40px">
+    <div class="box"><div class="ic"><svg><use href="#s-stack"/></svg></div>
+      <h3>Save surface is the real cost</h3>
+      <p>Retainers are an array of objects with levels and jobs — the largest new state shape the game has taken. Every field needs a <b>normalizeState</b> guard and an <b>_audit_tests.js</b> assertion, because none of it throws when it breaks.</p></div>
+    <div class="box"><div class="ic"><svg><use href="#s-clock"/></svg></div>
+      <h3>Assist touches every skill</h3>
+      <p>It's a multiplier on every rate at once. It wants to be <b>one function reading mods()</b>, not a per-skill special case — or it drifts out of sync exactly like the tooltip numbers did before the audit.</p></div>
+    <div class="box"><div class="ic"><svg><use href="#s-away"/></svg></div>
+      <h3>Grading is its own release</h3>
+      <p>It touches every crafted item — tooltip, satchel, presets, sockets, enchants, sell path, compendium. <b>Ship the Assay without it first.</b> Add grading only if the Orders land.</p></div>
+  </div>
+</div></section>
+
+<!-- ═══════════ CLOSE ═══════════ -->
+<section class="tight"><div class="w center">
+  <div class="eyebrow">The honest version</div>
+  <h2 class="big" style="max-width:24ch">Cindervale has plenty to <em>do</em> and very little to <em>decide.</em></h2>
+</div>
+<div class="w"><div class="close">
+  <div class="col for"><h4>The case for</h4>
+    <p>A second axis that only pays for commitment. A permanent automatic sink for the mountains of material the game already produces. A parallel ladder that keeps ticking through the skill-tree dead zones. And a doorway for <b>four features currently parked on the horizon</b> with no path into a player's hands.</p></div>
+  <div class="col agn"><h4>The case against</h4>
+    <p>It's the biggest thing you'd have built since combat. But <b>Phase 1 is small and self-contained</b> and answers the overflow problem on its own — if it lands, everything above it gets easier to justify. If it doesn't, you've lost one release, not a quarter.</p></div>
+</div></div></section>
+
+<footer><div class="w">
+  <p>Order sigils, retainer portraits, job icons, crest parts and the Hall banner are all ART TBD — every mark on this page is a placeholder glyph, not a proposal.</p>
+</div></footer>
+
+</body></html>
