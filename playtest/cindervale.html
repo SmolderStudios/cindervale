@@ -6149,7 +6149,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.121.4">v0.9.121</div>
+  <div class="mm-ver" data-build="0.9.121.5">v0.9.121</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -26493,10 +26493,10 @@ function grantItem(id, qty){
     }catch(e){}
     return 1;
   }
-  // Log rare drops to the notification log
-  if(it.rare){
-    logNotification('rare', id, `Found ${qty>1?qty+'× ':''}${it.name}`);
-  }
+  /* The rare notification USED to be written here, above the satchel check —
+     so a refused rare still announced itself in the alerts log while handing
+     over nothing, and markDiscovered never ran so it never reached the
+     compendium either. It now fires on the two paths that actually grant. */
   /* Two things the Crafting panel cannot tell you, caught at the moment the item
      lands: combat gear carries a WIELD level (Attack for weapons, Defence for the
      rest) that is separate from the crafting level on the card, and gem jewelry
@@ -26509,16 +26509,22 @@ function grantItem(id, qty){
   if((state.items[id]||0)>0){
     state.items[id]=(state.items[id]||0)+qty;
     markDiscovered(id);
+    if(it.rare) logNotification('rare', id, `Found ${qty>1?qty+'\u00d7 ':''}${it.name}`);
     showItemPop(id,qty);
     return qty;
   }
   // New item type: check satchel cap
   if(satchelUsed()>=satchelCap()){
-    toast('🎒 Satchel full! Expand it or sell items to make room.');
+    /* Name the item. A bare "Satchel full!" is survivable when it is the
+       twentieth Oak Log, and much less so when the thing turned away is a rare
+       worth tens of thousands that only drops in the deepest water. */
+    if(it.rare) toast('\ud83c\udf92 Satchel full \u2014 ' + it.name + ' was left behind! Make room and sail again.');
+    else toast('\ud83c\udf92 Satchel full! Expand it or sell items to make room.');
     return 0;
   }
   state.items[id]=qty;
   markDiscovered(id);
+  if(it.rare) logNotification('rare', id, `Found ${qty>1?qty+'\u00d7 ':''}${it.name}`);
   showItemPop(id,qty);
   return qty;
 }

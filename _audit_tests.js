@@ -2023,6 +2023,60 @@ setTimeout(() => {
          return !t || !t.classList.contains('on'); })()`) === true);
   }
 
+  section('Refused rares must not announce themselves (0.9.121.5)');
+  {
+    /* Reported as "Tidewrought Heart doesn't drop" at 99 Sailing on Blackreef
+       Hollow. The drop was fine — 400 simulated voyages returned it on 58, 14.5%
+       against a declared 16%. With the satchel FULL the same 400 returned it 0
+       times and refused it 60. grantItem logged the rare notification above the
+       space check, so a refused rare still wrote "Found X" to the alerts log
+       while handing over nothing, and markDiscovered never ran — alert, no item,
+       no compendium entry, which reads exactly like "not implemented". */
+    const rareId = ev(`Object.keys(ITEMS).filter(function(id){
+      return ITEMS[id].rare && !ITEMS[id].skillGear && !ITEMS[id].tool; })[0]`);
+    ok('there is a rare item to test with', !!rareId, String(rareId));
+
+    const full = ev(`(function(){
+      state=defaultState(); normalizeState();
+      state.notifications=[];
+      var ids=Object.keys(ITEMS).filter(function(id){
+        return !ITEMS[id].skillGear && !ITEMS[id].tool && id!=='${rareId}'; });
+      state.items={};
+      for(var j=0;j<satchelCap()+4 && j<ids.length;j++) state.items[ids[j]]=1;
+      var granted=grantItem('${rareId}', 3);
+      var logged=(state.notifications||[]).filter(function(n){
+        return n && n.icon==='${rareId}'; }).length;
+      return { granted:granted, held:(state.items['${rareId}']||0),
+               logged:logged, discovered:!!(state.discovered&&state.discovered['${rareId}']) }; })()`);
+    ok('a full satchel still refuses the item', full.granted === 0 && full.held === 0,
+       JSON.stringify(full));
+    /* The load-bearing one. */
+    ok('and it does NOT claim the find in the alerts log', full.logged === 0, full.logged + ' entries');
+    ok('nor mark it discovered', full.discovered === false);
+
+    const room = ev(`(function(){
+      state=defaultState(); normalizeState();
+      state.notifications=[]; state.items={};
+      var granted=grantItem('${rareId}', 3);
+      var logged=(state.notifications||[]).filter(function(n){
+        return n && n.icon==='${rareId}'; }).length;
+      return { granted:granted, held:(state.items['${rareId}']||0),
+               logged:logged, discovered:!!(state.discovered&&state.discovered['${rareId}']) }; })()`);
+    ok('with room it is granted', room.granted === 3 && room.held === 3, JSON.stringify(room));
+    ok('and THEN it announces the find', room.logged === 1, room.logged + ' entries');
+    ok('and is discovered', room.discovered === true);
+
+    /* Topping up a stack the player already holds must announce it too. */
+    const stack = ev(`(function(){
+      state.notifications=[];
+      var granted=grantItem('${rareId}', 2);
+      return { granted:granted, held:(state.items['${rareId}']||0),
+               logged:(state.notifications||[]).filter(function(n){
+                 return n && n.icon==='${rareId}'; }).length }; })()`);
+    ok('a top-up of an existing rare stack still announces', stack.logged === 1 && stack.held === 5,
+       JSON.stringify(stack));
+  }
+
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));
   process.exit(fail ? 1 : 0);
 }, 2500);
