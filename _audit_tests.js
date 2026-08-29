@@ -2185,6 +2185,119 @@ setTimeout(() => {
        html.indexOf("_offCombat.capped?' (capped") >= 0);
   }
 
+  section('Matched jewelry & the auto-eat readout (0.9.122.2)');
+  {
+    /* Player-reported: "I made a second sapphire ring which stacked with the first.
+       Now when I go to equip the ring it will only let me put the one on top of the
+       stack, and a second ring only gives me the option to move the already equipped
+       one." equipBodyItem stripped an id from every other slot of the loadout with
+       no regard for how many the player owned, so a matched pair could never be
+       worn. It caps on ownership now — which makes the cap itself the thing that
+       has to stay honest, or one ring quietly becomes two. */
+    const eq = (owned, order) => ev(`(function(){
+      state=defaultState(); normalizeState();
+      state.items['sapphire_ring']=${owned};
+      state.skillingEquipped={}; state.combatEquipped={}; state.equipped=state.skillingEquipped;
+      ${order.map(sl => `equipBodyItem('sapphire_ring','${sl}','skilling');`).join(' ')}
+      return { worn:Object.keys(state.skillingEquipped).length,
+               reserved:reservedForEquip('sapphire_ring'),
+               sellable:sellableQty('sapphire_ring') }; })()`);
+
+    const one = eq(1, ['ring_l', 'ring_r']);
+    ok('one ring owned still only ever reaches one hand', one.worn === 1, JSON.stringify(one));
+    ok('and the worn copy is not sellable out from under you', one.sellable === 0);
+
+    const two = eq(2, ['ring_l', 'ring_r']);
+    ok('a matched pair goes on both hands', two.worn === 2, JSON.stringify(two));
+    ok('and both copies are held back from the sell paths',
+       two.reserved === 2 && two.sellable === 0, JSON.stringify(two));
+
+    /* reservedForEquip returned a flat 1 before this, so under the new equip rule a
+       bulk sell would have taken a ring off the player's own hand. */
+    ok('a third copy is still the spare, and still sellable',
+       ev(`(function(){ state.items['sapphire_ring']=3; return sellableQty('sapphire_ring'); })()`) === 1);
+
+    /* Nothing decrements the satchel on equip, so a loadout can outlive its stack.
+       Consumption paths call releaseIfGone; it has to trim now, not just clear. */
+    ok('shrinking the stack takes the extra ring back off',
+       ev(`(function(){ state.items['sapphire_ring']=1; releaseIfGone('sapphire_ring');
+         return Object.keys(state.skillingEquipped).length; })()`) === 1);
+    ok('and emptying it takes off the last one',
+       ev(`(function(){ state.items['sapphire_ring']=0; releaseIfGone('sapphire_ring');
+         return Object.keys(state.skillingEquipped).length; })()`) === 0);
+
+    /* A preset writes the loadout directly rather than through equipBodyItem, so it
+       needs its own copy of the cap or it becomes the duplication path. */
+    ok('a preset naming one ring in both hands only applies what you own',
+       ev(`(function(){
+         state.items['sapphire_ring']=1;
+         state.skillingEquipped={}; state.equipped=state.skillingEquipped;
+         state.gearPresets={woodcutting:{ring_l:'sapphire_ring',ring_r:'sapphire_ring'}};
+         equipGearPreset('woodcutting',true);
+         return Object.keys(state.skillingEquipped).length; })()`) === 1);
+
+    /* Sockets and enchants are keyed by ITEM ID, so a worn pair genuinely pays out
+       twice off one gem. That is the deliberate rule and the panels now state it —
+       if this reads 0.03 again, the equip fix has silently stopped working. */
+    ok('a worn pair pays its shared gem out per hand',
+       Math.abs(ev(`(function(){
+         state.items['sapphire_ring']=2;
+         state.skillingEquipped={}; state.equipped=state.skillingEquipped;
+         state.sockets={sapphire_ring:{slots:1,gems:['onyx_flaw']}};
+         equipBodyItem('sapphire_ring','ring_l','skilling');
+         equipBodyItem('sapphire_ring','ring_r','skilling');
+         return socketBonuses().speed; })()`) - 0.06) < 1e-9);
+
+    /* _enchantSetActive marks each hand used, so a pair must not satisfy both legs
+       of a ring+amulet set. Allowing the pair is exactly what would break that. */
+    ok('but a pair still cannot stand in for the amulet leg of a set',
+       ev(`(function(){ state.enchantments={sapphire_ring:'swift_i'};
+         return activeSetBonuses().length; })()`) === 0);
+
+    /* The panels used to state the old rule as fact. Stale copy is worse than none:
+       it tells a player not to craft the second ring that now works. */
+    ok('no panel still claims a second copy cannot be worn',
+       html.indexOf('Only one can be worn at a time') < 0 &&
+       html.indexOf('a 2nd can\'t be worn') < 0 &&
+       html.indexOf('Only one of a given piece can be worn') < 0);
+
+    /* Suggestion: show the exact HP auto-eat fires at. The number is only worth
+       anything if it is the number combatTick actually compares against — an
+       off-by-one tells a player a fight is safe to idle when it is not. */
+    ev(`state=defaultState(); normalizeState();
+        state.autoHeal={enabled:true,thresholdPct:50,itemId:''};`);
+    ok('the auto-eat readout floors to the HP the check really trips at',
+       ev('autoEatAtHp(85)') === 42 && ev('autoEatAtHp(101)') === 50,
+       ev('autoEatAtHp(85)') + ' / ' + ev('autoEatAtHp(101)'));
+    ok('and HP at that value trips it, one above does not',
+       ev(`(function(){ var mx=85, at=autoEatAtHp(mx), t=state.autoHeal.thresholdPct/100;
+         return (at/mx <= t) && !((at+1)/mx <= t); })()`) === true);
+
+    /* The whole point of the cue is the comparison, so the blow it reports has to
+       run the same mitigation chain combatTick does. */
+    ok('the biggest-blow figure is a full roll after mitigation',
+       ev('foeMaxBlow({str:40})') === 40 && ev('foeMaxBlow(null)') === 0);
+    ok('the cue reads risk when one blow clears the line',
+       ev(`(function(){ var f=null; for(var id in ITEMS){ var it=ITEMS[id];
+             if(it&&it.potion&&it.potion.heal&&!it.potion.dur){ f=id; break; } }
+           state.items[f]=20;
+           return autoEatCue({str:80,name:'x'},100).state; })()`) === 'risk');
+    ok('and safe when none can', ev(`autoEatCue({str:10,name:'x'},100).state`) === 'safe');
+    ok('an empty satchel reads as no food, not as safe',
+       ev(`(function(){ state.items={}; return autoEatCue({str:10},100).state; })()`) === 'nofood');
+
+    /* Suggestion: fill the training buttons with level progress. It reuses the
+       skilling XP window, so it has to clamp at 99 rather than divide by zero. */
+    ok('training-button progress spans the level window',
+       ev(`(function(){ state=defaultState(); normalizeState();
+         state.combatXp.attack=Math.floor((XP_CUM[1]+XP_CUM[2])/2);
+         var p=cmbLvlProgress('attack'); return p.lvl===1 && p.pct>=49 && p.pct<=51; })()`) === true);
+    ok('and pins at max level instead of dividing by zero',
+       ev(`(function(){ state.combatXp.attack=XP_CUM[MAX_LEVEL];
+         var p=cmbLvlProgress('attack');
+         return p.max===true && p.pct===100 && p.need===0; })()`) === true);
+  }
+
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));
   process.exit(fail ? 1 : 0);
 }, 2500);
