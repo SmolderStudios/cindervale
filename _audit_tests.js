@@ -2077,6 +2077,114 @@ setTimeout(() => {
        JSON.stringify(stack));
   }
 
+  section('Offline combat (0.9.122)');
+  {
+    /* Combat lived in a module-level `combat` object and was never save state, so
+       closing the game threw the fight away. It now leaves a session behind,
+       grantOffline resolves the away time, and the fight resumes on the way in.
+
+       Food is the limiter by design: auto-eat consumes real food and the fight
+       stops when it runs out, keeping everything earned. You never die away. */
+    const arm = (hours, food, style) => ev(`(function(){
+      state=defaultState(); normalizeState();
+      /* Zero, not XP_CUM[40]: this suite runs as the DEMO build and the level-10
+         cap would clamp a level-40 stat DOWNWARD, turning every gain negative. */
+      ['attack','strength','defence','hitpoints'].forEach(function(k){ state.combatXp[k]=0; });
+      state.combatStyle='${style}';
+      state.items={};
+      var f=null; for(var id in ITEMS){ var it=ITEMS[id];
+        if(it&&it.potion&&it.potion.heal&&!it.potion.dur){ f=id; break; } }
+      if(f && ${food}>0) state.items[f]=${food};
+      combat.monId='rat'; if(state.hints) state.hints.combat_unarmed=1;
+      engageCombat(); saveGame();
+      var hadSession=!!state.combatSession, sessStyle=state.combatSession&&state.combatSession.style;
+      state.lastSeen=Date.now()-${hours}*3600000;
+      stopCombatTimer(); combat.active=false;
+      var before={a:state.combatXp.attack,s:state.combatXp.strength,h:state.combatXp.hitpoints,c:state.coins||0};
+      grantOffline();
+      var resumed=false; try{ resumed=resumeCombatSession(); }catch(e){}
+      return { hadSession:hadSession, sessStyle:sessStyle,
+               atk:state.combatXp.attack-before.a, str:state.combatXp.strength-before.s,
+               hp:state.combatXp.hitpoints-before.h, coins:(state.coins||0)-before.c,
+               foodLeft:(function(){var n=0;for(var id in state.items){var it=ITEMS[id];
+                 if(it&&it.potion&&it.potion.heal&&!it.potion.dur) n+=state.items[id];} return n;})(),
+               resumed:resumed, fighting:combat.active, session:!!state.combatSession }; })()`);
+
+    const fed = arm(8, 500, 'attack');
+    ok('a live fight is written into the save', fed.hadSession === true);
+    ok('and eight hours away pays combat xp', fed.atk > 0, 'atk ' + fed.atk);
+    /* Hitpoints takes the other 25%. Asserted on what offlineCombatResolve
+       RETURNS rather than on the stat, because this suite runs as the demo build
+       where hitpoints already sits pinned at the level-10 cap and cannot visibly
+       move. The split is the thing worth guarding: an early cut rounded per kill
+       instead of per batch, so against a low-xp monster hitpoints earned nothing
+       at all across thousands of offline kills. */
+    const split = ev(`(function(){
+      state=defaultState(); normalizeState();
+      ['attack','strength','defence','hitpoints'].forEach(function(k){ state.combatXp[k]=0; });
+      var f=null; for(var id in ITEMS){ var it=ITEMS[id];
+        if(it&&it.potion&&it.potion.heal&&!it.potion.dur){ f=id; break; } }
+      state.items={}; if(f) state.items[f]=500;
+      combat.monId='rat'; if(state.hints) state.hints.combat_unarmed=1;
+      engageCombat(); saveGame(); stopCombatTimer(); combat.active=false;
+      var atk0=state.combatXp.attack;
+      var oc=offlineCombatResolve(8*3600000, offlineMods());
+      return { total:oc?oc.xp:0, toAttack:state.combatXp.attack-atk0 }; })()`);
+    ok('and hitpoints gets its 25% share, not zero',
+       split.total > split.toAttack && split.toAttack > 0,
+       'total ' + split.total + ' vs attack ' + split.toAttack);
+    ok('and coins', fed.coins > 0, String(fed.coins));
+    ok('food is eaten for it', fed.foodLeft < 500, fed.foodLeft + ' left of 500');
+    ok('and the fight is still standing when you return', fed.resumed === true && fed.fighting === true);
+
+    /* The style is read from state.combatStyle. A first cut read a field that does
+       not exist, which silently paid Attack xp to a Strength trainer for the whole
+       away period — no error, just the wrong stat. */
+    const str = arm(8, 500, 'strength');
+    ok('xp follows the training style, not always Attack',
+       str.str > 0 && str.atk === 0, 'str ' + str.str + ' atk ' + str.atk);
+    ok('and the session records that style', str.sessStyle === 'strength', String(str.sessStyle));
+
+    /* Out of food it stops cleanly rather than dying, and does not resume onto a
+       body it cannot heal. */
+    const starved = arm(8, 0, 'attack');
+    /* How far an empty satchel gets you depends entirely on the matchup — against
+       anything that hits back it can be zero kills. What matters is that it stops. */
+    ok('with no food nothing is eaten', starved.foodLeft === 0, String(starved.foodLeft));
+    ok('then stops, and does NOT resume', starved.resumed === false && starved.fighting === false);
+    ok('and the session is cleared so it cannot silently restart', starved.session === false);
+
+    /* Combat and skilling have been one-or-the-other since v0.9.109. Paying both
+       for the same hours offline would quietly undo that. */
+    const both = ev(`(function(){
+      state=defaultState(); normalizeState();
+      ['attack','strength','defence','hitpoints'].forEach(function(k){ state.combatXp[k]=0; });
+      state.xp.woodcutting=XP_CUM[30];
+      state.offlineConfig={skill:'woodcutting',actId:SKILLS.woodcutting.acts[0].id};
+      var f=null; for(var id in ITEMS){ var it=ITEMS[id];
+        if(it&&it.potion&&it.potion.heal&&!it.potion.dur){ f=id; break; } }
+      state.items={}; if(f) state.items[f]=500;
+      combat.monId='rat'; if(state.hints) state.hints.combat_unarmed=1;
+      engageCombat(); saveGame();
+      state.lastSeen=Date.now()-8*3600000;
+      stopCombatTimer(); combat.active=false;
+      var wc=state.xp.woodcutting, atk=state.combatXp.attack;
+      grantOffline();
+      return { wc:state.xp.woodcutting-wc, atk:state.combatXp.attack-atk }; })()`);
+    ok('a fight offline stands the skilling action award down',
+       both.wc === 0 && both.atk > 0, JSON.stringify(both));
+
+    /* A malformed session drives xp and loot, so it is dropped rather than trusted. */
+    ok('a session naming a monster that does not exist is discarded',
+       ev(`(function(){ state=defaultState(); state.combatSession={monId:'not_a_monster'};
+         normalizeState(); return state.combatSession===null; })()`) === true);
+
+    /* The cap must announce itself rather than eating the remainder. */
+    ok('the kill cap is reported, not silent',
+       /capped \u2014 '\+_offCombat\.wanted/.test(html) || html.indexOf("capped ? ' (capped") >= 0 ||
+       html.indexOf("_offCombat.capped?' (capped") >= 0);
+  }
+
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));
   process.exit(fail ? 1 : 0);
 }, 2500);

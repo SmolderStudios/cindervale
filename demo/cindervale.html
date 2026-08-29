@@ -6149,7 +6149,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.121.5">v0.9.121</div>
+  <div class="mm-ver" data-build="0.9.121.6">v0.9.121</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -6867,6 +6867,11 @@ body:not(.is-demo) .demo-only{display:none !important}
 const MAX_LEVEL = 99;
 const OFFLINE_CAP_MS   = 24 * 3600 * 1000; // 24h base offline cap (extendable via the Offline tree)
 const OFFLINE_RATE     = 0.30;              // 1.0.11 nerf: 40% -> 30% base offline efficiency
+/* Offline COMBAT runs on its own number rather than sharing OFFLINE_RATE.
+   A skilling action offline pays xp and one output; a combat kill pays xp,
+   coins AND a drop roll, so the same percentage would be worth noticeably
+   more per hour. Tuned separately for that reason. */
+const OFFLINE_COMBAT_RATE = 0.20;
 const OFFLINE_XP_RATE  = 90;                // 1.0.11 nerf: 120 -> 90 offline-skill xp/min (base)
 /* Renamed for the Cindervale reset (0.9.14). This is a hard save wipe by design:
    nothing reads the old 'embervale_save_v2' keys any more, so every character from
@@ -15556,6 +15561,10 @@ function defaultState(){
     // potion when HP drops to/below `thresholdPct` of max. ON @ 50% by default
     // (1.0.100) so new players survive — the old off/30% default lost fights.
     autoHeal:{enabled:true, thresholdPct:50, itemId:''},
+    /* The fight you were in when the game closed. `combat` itself is a
+       module-level object and has never been save state, which is why
+       closing mid-fight used to throw the fight away. */
+    combatSession:null,
     autoBuff:{enabled:false, itemId:''}, // (1.0.30) keep combat buff potions topped up; itemId='' = keep all
     // Combat Mastery (v1.0.69) — separate from the activity-card mastery system.
     //   cmast            — {nodeId: rank} allocated ranks on combat mastery nodes
@@ -15914,6 +15923,17 @@ function normalizeState(){
   // Auto-heal config default for older saves (1.0.63 introduced this field).
   // (1.0.100) Default is now ON @ 50% — the old off/30% default was a survival trap
   // (fights & raids lost because new players never found the toggle).
+  /* combatSession is written by saveGame while a fight is live and consumed
+     by grantOffline on the way back in. Anything malformed is dropped rather
+     than trusted - it drives xp and loot awards. */
+  /* getMonster() falls back to MONSTERS[0] for an unknown id, so it can never
+     report "no such monster" - checking it would have let a corrupt session
+     silently become a rat and pay out for it. Ask the table directly. */
+  if(state.combatSession && (typeof state.combatSession!=='object'
+     || !state.combatSession.monId
+     || !(typeof MONSTERS!=='undefined' && MONSTERS.some(function(m){ return m.id===state.combatSession.monId; })))){
+    state.combatSession=null;
+  }
   if(!state.autoHeal||typeof state.autoHeal!=='object'){
     state.autoHeal={enabled:true, thresholdPct:50, itemId:''};
   } else {
@@ -16732,6 +16752,17 @@ function _serializeState(){
   return JSON.stringify(state);
 }
 function saveGame(){
+  /* Snapshot the live fight so closing the game does not discard it. Kept
+     here rather than mirrored on every combat mutation: saveGame is the one
+     place that definitely runs before the tab goes away. */
+  try{
+    if(typeof combat!=='undefined' && combat && combat.active && !combat.raid){
+      state.combatSession={ monId:combat.monId, style:(state.combatStyle||'attack'),
+                            youHp:Math.round(combat.youHp), rare:!!combat.rare, at:Date.now() };
+    } else if(typeof combat!=='undefined' && combat && !combat.active){
+      state.combatSession=null;
+    }
+  }catch(e){}
   if(mmAtMenu || !mmSlot) return;
   state.lastSeen=Date.now();
   // Gold-spike watch: an impossibly large jump since the last save (a runtime
@@ -16851,7 +16882,7 @@ $('smAction').addEventListener('click',()=>{
         toast("That doesn't look like a valid save code — nothing was changed.");
         return;
       }
-      grantOffline(); renderAll();
+      grantOffline(); try{ resumeCombatSession(); }catch(e){} renderAll();
       $('saveModal').classList.add('hidden');
       toast('Save loaded!');
     }catch(e){ toast('Invalid save code.'); }
@@ -19730,6 +19761,128 @@ function offlineFallbackTakeover(fromSkill, fromActId){
   return act.name || cfg.actId;
 }
 
+/* ==== Offline combat (0.9.122) ==============================================
+   Resolved as arithmetic, not by ticking sixty hours of 100ms swings. Expected
+   damage per swing on both sides gives a time-to-kill and a damage-taken-per-kill,
+   which turns the whole away period into a division.
+
+   FOOD IS THE LIMITER and that is the whole design. Auto-eat consumes real food
+   out of the satchel; the moment it runs out, combat stops and you keep
+   everything earned up to that point. You never die while away, and cooking
+   becomes something combat actually needs.
+
+   Drops go through the real rollDrops() per kill rather than an expected-value
+   approximation, so passives, rare multipliers, once-only boss trophies and the
+   satchel all behave exactly as they do live. That fidelity is why there is a
+   kill cap at all: the loop costs ~26us a kill, so 20k is about half a second
+   on the boot path and a 60h away time against a trivial monster would other-
+   wise spin for seconds.
+
+   The cap is REPORTED when it binds rather than quietly eating the remainder.
+   It only binds when you are farming something you one-shot — at 20% of a 24h
+   cap that is 17,280 credited seconds, so anything taking a second or more to
+   kill never reaches it. */
+const OFFLINE_COMBAT_MAX_KILLS=20000;
+function offlineCombatResolve(awayMs, om){
+  const cs=state.combatSession;
+  if(!cs || !(awayMs>0)) return null;
+  const base=getMonster(cs.monId); if(!base) return null;
+  if(typeof refreshCombatStats==='function') refreshCombatStats();
+
+  const mon=(typeof rareModify==='function')?rareModify(base,false):base;
+  const acc=(typeof playerAccuracy==='function')?playerAccuracy():1;
+  const maxHit=(typeof playerMaxHit==='function')?playerMaxHit():1;
+  const def=(typeof playerDefence==='function')?playerDefence():1;
+  const youMaxHp=(typeof maxHpFromStats==='function')?maxHpFromStats():combat.youMaxHp||10;
+  const youSwingMs=Math.max(200, combat.youSwingMs||1100);
+  const foeSwingMs=Math.max(200, mon.swingMs||1100);
+
+  /* Same rolls the live tick makes, taken at their expected value. A landed hit
+     rolls HIT_MIN..1.0 of max hit, so it averages the midpoint. */
+  const avgFrac=COMBAT_P.HIT_MIN+(1-COMBAT_P.HIT_MIN)/2;
+  const youHitP=Math.max(0.03, Math.min(0.97, acc/(acc+mon.def)));
+  const foeHitP=Math.max(0.03, Math.min(0.97, mon.atk/(mon.atk+def)));
+  const youDps=(youHitP*Math.max(1,maxHit*avgFrac))/(youSwingMs/1000);
+  const foeDps=(foeHitP*Math.max(1,mon.str*avgFrac))/(foeSwingMs/1000);
+  if(!(youDps>0)) return null;
+
+  const ttkMs=(mon.hp/youDps)*1000;
+  if(!(ttkMs>0) || !isFinite(ttkMs)) return null;
+  const dmgPerKill=foeDps*(ttkMs/1000);
+
+  /* Time you are credited with: the away window, capped, then scaled. */
+  const usableMs=Math.max(0, awayMs)*OFFLINE_COMBAT_RATE;
+  let kills=Math.floor(usableMs/ttkMs);
+  if(kills<=0) return null;
+
+  /* What the body and the satchel can absorb. Your own HP bar is the first
+     buffer; every point beyond it has to come out of food. */
+  const foods=(typeof combatHealItems==='function')?combatHealItems():[];
+  let healPool=youMaxHp-1;
+  for(const f of foods) healPool+=f.heal*f.cnt;
+  let ranOut=false;
+  if(dmgPerKill>0){
+    const killsByFood=Math.floor(healPool/dmgPerKill);
+    if(killsByFood<kills){ kills=killsByFood; ranOut=true; }
+  }
+  if(kills<=0){
+    /* Nothing to eat and not enough HP for even one kill. Clear the session:
+       resuming onto a body that cannot be healed just walks it into a death the
+       moment the player looks away again. */
+    state.combatSession=null;
+    return {kills:0, wanted:0, capped:false, ranOut:true, xp:0, coins:0, items:{}, mon:base.name};
+  }
+  const wanted=kills;
+  kills=Math.min(kills, OFFLINE_COMBAT_MAX_KILLS);
+  const capped=kills<wanted;
+
+  /* Eat for it, smallest food first - the same order smartHealPick() prefers. */
+  let toHeal=Math.max(0, dmgPerKill*kills-(youMaxHp-1)), eaten=0;
+  for(const f of foods){
+    if(toHeal<=0) break;
+    const need=Math.min(f.cnt, Math.ceil(toHeal/Math.max(1,f.heal)));
+    if(need>0){
+      state.items[f.id]=Math.max(0,(state.items[f.id]||0)-need);
+      if(state.items[f.id]<=0) delete state.items[f.id];
+      toHeal-=need*f.heal; eaten+=need;
+    }
+  }
+
+  /* Rewards, through the same functions the live kill path uses. */
+  const style=cs.style||'attack';
+  /* Rounded over the BATCH, not per kill. Per-kill rounding is what the live
+     path does, and against a low-xp monster Math.round(xp*0.25) is 0 — so
+     hitpoints earned nothing at all across thousands of offline kills. */
+  const xpMain=Math.round(mon.xp*0.75*kills), xpHp=Math.round(mon.xp*0.25*kills);
+  let xpGained=0;
+  if(typeof grantCombatXp==='function'){
+    xpGained+=grantCombatXp(style,xpMain)||0;
+    xpGained+=grantCombatXp('hitpoints',xpHp)||0;
+  }
+  const coins=Math.round(mon.coins*kills);
+  state.coins=(state.coins||0)+coins*SILVER_PER_GOLD;
+
+  const items={};
+  if(typeof rollDrops==='function' && typeof grantItem==='function'){
+    for(let k=0;k<kills;k++){
+      const drops=rollDrops(base.id,false)||[];
+      for(const d of drops){
+        const n=grantItem(d.id,d.qty||1);
+        if(n>0) items[d.id]=(items[d.id]||0)+n;
+      }
+    }
+  }
+  if(typeof state.monsterKills==='object' && state.monsterKills)
+    state.monsterKills[base.id]=(state.monsterKills[base.id]||0)+kills;
+
+  /* Out of food means the fight is over - do not silently resume it on a body
+     that cannot be healed. Otherwise the session stands and the fight picks up. */
+  if(ranOut) state.combatSession=null;
+  else if(state.combatSession) state.combatSession.at=Date.now();
+
+  return {kills, wanted, capped, ranOut, xp:xpMain+xpHp, xpGained, coins, items, eaten, mon:base.name};
+}
+
 /* ════ [JS-21f] offline grant & summary ══════════════════════════════════════════ */
 function grantOffline(){
   if(!state.lastSeen) return;
@@ -19751,9 +19904,32 @@ function grantOffline(){
   const offAfter=offlineLevelFromXp(state.offlineXp);
   summary.push({icon:'🌙',label:'Offline Skill',xp:offXpGained,lvlUp:offAfter>offBefore?offAfter:0});
 
+  /* 1b. Offline combat (0.9.122) — the fight you left running.
+     Resolved BEFORE the skill-action award, because combat and skilling have
+     been one-or-the-other since v0.9.109 and paying both for the same hours
+     would quietly undo that. The passive offline-skill trickle above is
+     unaffected; it is paid no matter what you were doing. */
+  let _offCombat=null;
+  try{ _offCombat=offlineCombatResolve(away, om); }catch(e){ _offCombat=null; }
+  if(_offCombat && _offCombat.kills>0){
+    const _its=Object.keys(_offCombat.items).map(function(id){ return {id:id, qty:_offCombat.items[id]}; });
+    summary.push({icon:'\u2694', label:'Offline Combat \u2014 '+_offCombat.mon+' \u00d7'+_offCombat.kills
+                    +(_offCombat.capped?' (capped \u2014 '+_offCombat.wanted.toLocaleString()+' possible)':''),
+                  xp:_offCombat.xp, items:_its});
+    if(_offCombat.capped && typeof toast==='function')
+      toast('\u2694 Offline combat capped at '+OFFLINE_COMBAT_MAX_KILLS.toLocaleString()
+            +' kills \u2014 try a tougher target.');
+    if(_offCombat.ranOut && typeof toast==='function')
+      toast('\ud83c\udf56 Ran out of food \u2014 the fight stopped early.');
+  } else if(_offCombat && _offCombat.ranOut){
+    summary.push({icon:'\ud83c\udf56', label:'Offline Combat \u2014 out of food', xp:0});
+  }
+  const _fought = !!(_offCombat && _offCombat.kills>0);
+
   // 2. Active skill action (reduced rate)
   // Use explicit offline config if set, fall back to whatever was last active
-  const offlineAction = state.offlineConfig ||(state.action?{skill:state.action.skill,actId:state.action.actId}:null);
+  const offlineAction = _fought ? null
+    : (state.offlineConfig ||(state.action?{skill:state.action.skill,actId:state.action.actId}:null));
   if(offlineAction){
     const {skill,actId}=offlineAction;
     const act=getAct(skill,actId);
@@ -28920,6 +29096,32 @@ function fleeCombat(){
   refreshCombatTabIndicator();
 }
 
+/* Resume the fight the save was holding (0.9.122). Called after grantOffline,
+   which has already paid out the away time and cleared the session if food ran
+   out — so reaching here means there is still a fight worth standing in. */
+function resumeCombatSession(){
+  const cs=state && state.combatSession;
+  if(!cs) return false;
+  const mon=(typeof getMonster==='function')?getMonster(cs.monId):null;
+  if(!mon){ state.combatSession=null; return false; }
+  if(state.action) return false;          // one or the other; skilling wins a tie
+  combat.monId=cs.monId;
+  refreshCombatStats();
+  combat.rare=false;                      // the rare roll is per-spawn, never banked
+  const eff=(typeof rareModify==='function')?rareModify(mon,false):mon;
+  combat.active=true;
+  combat.foeHp=eff.hp; combat.foeMaxHp=eff.hp;
+  combat.youHp=Math.max(1, Math.min(combat.youMaxHp, cs.youHp||combat.youMaxHp));
+  combat.bossfx=null; combat.cheatDeathReady=true;
+  combat.regens=[]; combat.foeStatus={};
+  if(typeof cmastResetFight==='function') cmastResetFight();
+  combat.foeSwingMs=mon.swingMs||COMBAT_BASE_SWING_MS;
+  combat.youSwingStart=Date.now(); combat.foeSwingStart=Date.now();
+  cmbLog('\u2694 You take up the fight against the '+eff.name+' again.','sys');
+  startCombatTimer();
+  if(typeof refreshCombatTabIndicator==='function') refreshCombatTabIndicator();
+  return true;
+}
 function startCombatTimer(){
   stopCombatTimer();
   // Fast tick — each side fires on its own swingMs schedule, not on tick boundaries.
@@ -35426,7 +35628,7 @@ function mmFinishStart(slot,isNew){
   $('charSelect').classList.add('mm-hidden');
   $('mmDestiny').classList.add('mm-hidden');
   selectedSkill='woodcutting'; viewTab='acts'; rightTab='satchel';
-  if(!isNew) grantOffline();
+  if(!isNew){ grantOffline(); try{ resumeCombatSession(); }catch(e){} }
   _coinsBaseline = state.coins||0;   // baseline AFTER offline is applied, so honest offline gold never trips the spike watch
   renderAll();
   if(state._treeResetNotifs&&state._treeResetNotifs.length){
