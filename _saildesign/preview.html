@@ -1,0 +1,859 @@
+<title>Cindervale Sailing Rework</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Public+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&family=Cinzel:wght@500;600&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&display=swap">
+
+<style>
+:root{
+  /* page chrome — a cold chart-room slate, deliberately NOT the game's warm brown,
+     so the mockups read as objects sitting on a table rather than more of the page */
+  --ground:#eef1f1; --surface:#ffffff; --sunk:#e3e9ea;
+  --rule:#c8d3d5; --rule-hi:#aebbbe;
+  --ink:#151d21; --body:#3c4a4f; --dim:#6b7c82;
+  --brass:#8a6520; --ember:#b4520f;
+  --bad:#a8371f; --good:#4a6b1c; --warn:#8a6a12;
+  --shadow:0 1px 2px rgba(21,29,33,.07), 0 8px 24px rgba(21,29,33,.06);
+  --frame-sh:0 2px 4px rgba(21,29,33,.10), 0 22px 48px rgba(21,29,33,.16);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#0e1419; --surface:#161e25; --sunk:#111920;
+    --rule:#24313a; --rule-hi:#33454f;
+    --ink:#dde7ec; --body:#b0c0c8; --dim:#7f919e;
+    --brass:#c79b4e; --ember:#e0762f;
+    --bad:#d0674c; --good:#8fb84f; --warn:#e0c060;
+    --shadow:0 1px 2px rgba(0,0,0,.5), 0 8px 24px rgba(0,0,0,.36);
+    --frame-sh:0 2px 4px rgba(0,0,0,.6), 0 22px 48px rgba(0,0,0,.5);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0e1419; --surface:#161e25; --sunk:#111920;
+  --rule:#24313a; --rule-hi:#33454f;
+  --ink:#dde7ec; --body:#b0c0c8; --dim:#7f919e;
+  --brass:#c79b4e; --ember:#e0762f;
+  --bad:#d0674c; --good:#8fb84f; --warn:#e0c060;
+  --shadow:0 1px 2px rgba(0,0,0,.5), 0 8px 24px rgba(0,0,0,.36);
+  --frame-sh:0 2px 4px rgba(0,0,0,.6), 0 22px 48px rgba(0,0,0,.5);
+}
+
+*{box-sizing:border-box}
+body{
+  background:var(--ground); color:var(--body);
+  font-family:'Public Sans',-apple-system,'Segoe UI',sans-serif;
+  font-size:15px; line-height:1.62; margin:0;
+  font-variant-numeric:tabular-nums lining-nums;
+  -webkit-font-smoothing:antialiased;
+}
+.w{max-width:1180px; margin:0 auto; padding:0 32px}
+.wide{max-width:1480px; margin:0 auto; padding:0 32px}
+h1,h2,h3,h4{font-family:'Fraunces','Iowan Old Style',Georgia,serif; color:var(--ink);
+  margin:0; text-wrap:balance; font-weight:600; letter-spacing:-.01em}
+p{margin:0}
+a{color:var(--ember)}
+
+/* ── masthead ─────────────────────────────────────────────────────────── */
+.mast{padding:64px 0 40px; border-bottom:1px solid var(--rule)}
+.eyebrow{font-family:'JetBrains Mono',ui-monospace,monospace; font-size:11px;
+  letter-spacing:.16em; text-transform:uppercase; color:var(--brass); margin-bottom:18px}
+.mast h1{font-size:clamp(34px,5vw,52px); line-height:1.04; max-width:20ch}
+.mast .lede{margin-top:20px; max-width:62ch; font-size:17px; color:var(--body)}
+.mast .lede b{color:var(--ink); font-weight:600}
+
+/* ── section frame ────────────────────────────────────────────────────── */
+section{padding:56px 0; border-bottom:1px solid var(--rule)}
+.shead{display:flex; align-items:baseline; gap:16px; margin-bottom:28px}
+.shead .num{font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--dim);
+  letter-spacing:.1em; padding-top:6px; flex:0 0 auto}
+.shead h2{font-size:27px; line-height:1.2}
+.shead .sub{margin-left:auto; font-size:13px; color:var(--dim); text-align:right; max-width:34ch}
+
+/* ── measured evidence ────────────────────────────────────────────────── */
+.metrics{display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:1px;
+  background:var(--rule); border:1px solid var(--rule); border-radius:3px; overflow:hidden}
+.metric{background:var(--surface); padding:20px 22px}
+.metric .k{font-family:'JetBrains Mono',monospace; font-size:10.5px; letter-spacing:.11em;
+  text-transform:uppercase; color:var(--dim); margin-bottom:10px}
+.metric .v{font-family:'Fraunces',Georgia,serif; font-size:33px; line-height:1; color:var(--ink); font-weight:600}
+.metric .v.alarm{color:var(--bad)}
+.metric .n{font-size:12.5px; color:var(--dim); margin-top:8px; line-height:1.45}
+
+.callout{margin-top:22px; padding:18px 22px; background:var(--surface);
+  border:1px solid var(--rule); border-left:3px solid var(--bad); border-radius:3px;
+  font-size:15px; color:var(--body)}
+.callout b{color:var(--ink)}
+
+.faults{margin-top:26px; display:grid; gap:1px; background:var(--rule);
+  border:1px solid var(--rule); border-radius:3px; overflow:hidden}
+.fault{background:var(--surface); padding:15px 20px; display:grid;
+  grid-template-columns:26px 1fr; gap:14px; align-items:start}
+.fault .ix{font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--dim); padding-top:3px}
+.fault b{color:var(--ink); font-weight:600}
+.fault span{display:block; font-size:13.5px; color:var(--dim); margin-top:2px}
+
+/* ── the three frames ─────────────────────────────────────────────────── */
+.rack{display:flex; gap:34px; overflow-x:auto; padding:6px 4px 26px;
+  scroll-snap-type:x proximity}
+.opt{flex:0 0 auto; width:440px; scroll-snap-align:start}
+.opt > header{margin-bottom:16px; min-height:118px}
+.opt .tag{font-family:'JetBrains Mono',monospace; font-size:10.5px; letter-spacing:.13em;
+  text-transform:uppercase; color:var(--brass); display:block; margin-bottom:7px}
+.opt h3{font-size:22px; margin-bottom:7px}
+.opt .why{font-size:13.5px; color:var(--dim); line-height:1.5}
+.opt .verdict{margin-top:16px; display:flex; flex-direction:column; gap:7px}
+.vrow{display:grid; grid-template-columns:16px 1fr; gap:9px; font-size:13px; align-items:start}
+.vrow .m{font-family:'JetBrains Mono',monospace; font-size:12px; line-height:1.5}
+.vrow.up .m{color:var(--good)} .vrow.dn .m{color:var(--bad)}
+.vrow span{color:var(--body); line-height:1.5}
+
+/* device frame — the real column size, 1:1 */
+.frame{width:440px; height:846px; border-radius:8px; overflow:hidden; position:relative;
+  box-shadow:var(--frame-sh); border:1px solid var(--rule-hi)}
+.scalenote{font-family:'JetBrains Mono',monospace; font-size:10.5px; color:var(--dim);
+  margin-top:11px; letter-spacing:.04em}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   GAME SKIN — everything below is the real Cindervale palette, so the
+   mockups read as the game and not as this document.
+   ═══════════════════════════════════════════════════════════════════════ */
+.g{
+  --bg:#0b1520; --pan:#0e1c28; --card:#122334; --card2:#0d1a26;
+  --line:#1d3547; --line2:#26455c;
+  --txt:#dce8ef; --mut:#7d99ab; --gold:#e8d7b0; --goldhi:#f0c772;
+  --amber:#e0762f; --brs:#c79b4e;
+  --ok:#7da33f; --warn2:#e0c060; --danger:#c4543a;
+  --mono:ui-monospace,'JetBrains Mono','Cascadia Mono',Consolas,monospace;
+  background:var(--pan); color:var(--txt);
+  font-family:'Crimson Pro',Georgia,serif; font-size:15px; line-height:1.45;
+  height:100%; display:flex; flex-direction:column;
+}
+.g *{box-sizing:border-box}
+.g h4,.g h5{font-family:'Cinzel',Georgia,serif; color:var(--gold); margin:0; font-weight:600}
+
+/* tab strip, shared by all three */
+.gtabs{display:flex; gap:3px; padding:9px 10px 0; flex:0 0 auto}
+.gtabs button{flex:1; background:none; border:0; border-bottom:2px solid transparent;
+  color:var(--mut); font-family:'Cinzel',Georgia,serif; font-size:13.5px; padding:8px 2px 9px;
+  cursor:pointer; position:relative; border-radius:4px 4px 0 0}
+.gtabs button.on{color:var(--goldhi); border-bottom-color:var(--amber); background:#132534}
+.gtabs button .bdg{position:absolute; top:3px; right:6px; width:6px; height:6px;
+  border-radius:50%; background:var(--amber)}
+.gscroll{flex:1; min-height:0; overflow-y:auto; padding:10px; display:flex;
+  flex-direction:column; gap:9px; scrollbar-width:thin}
+.gscroll::-webkit-scrollbar{width:7px}
+.gscroll::-webkit-scrollbar-thumb{background:#24455c; border-radius:4px}
+
+.lab{font-family:var(--mono); font-size:9.5px; letter-spacing:.13em; text-transform:uppercase;
+  color:var(--mut); display:flex; align-items:center; gap:9px; margin:2px 0 -1px}
+.lab::after{content:''; flex:1; height:1px; background:var(--line)}
+
+.card{background:var(--card); border:1px solid var(--line); border-radius:7px; padding:12px}
+.chip{display:inline-flex; align-items:center; gap:5px; font-family:var(--mono); font-size:11px;
+  padding:3px 8px; border-radius:4px; background:#0d1a26; border:1px solid var(--line2); color:var(--mut)}
+.chip.gold{color:var(--goldhi); border-color:#5a4526}
+.chip.ok{color:var(--ok); border-color:#3a5018}
+.chip.bad{color:var(--danger); border-color:#5a2418}
+.flav{font-style:italic; color:#9fb6c4; font-size:14px; line-height:1.42;
+  border-left:2px solid var(--line2); padding-left:10px}
+
+/* outcome bar */
+.obar{display:flex; height:22px; border-radius:4px; overflow:hidden; border:1px solid var(--line2)}
+.obar i{display:flex; align-items:center; justify-content:center; font-family:var(--mono);
+  font-size:10px; font-style:normal; color:#0b1520; font-weight:700; min-width:0; overflow:hidden;
+  white-space:nowrap}
+.o1{background:#dfb03c} .o2{background:#7da33f} .o3{background:#c9822e} .o4{background:#a8412c}
+.obar.tall{height:30px}
+.obar.tall i{flex-direction:column; line-height:1.05; font-size:9.5px; gap:1px; padding:0 2px}
+.obar.tall i em{font-style:normal; font-size:8px; opacity:.8; font-weight:500}
+
+/* orders */
+.ords{display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px}
+.ord{background:var(--card2); border:1px solid var(--line); border-radius:6px; padding:8px 7px;
+  cursor:pointer; text-align:left; color:var(--txt); font-family:inherit}
+.ord.on{border-color:var(--amber); background:#231a12}
+.ord b{display:block; font-family:'Cinzel',Georgia,serif; font-size:12.5px; color:var(--gold)}
+.ord.on b{color:var(--goldhi)}
+.ord i{display:block; font-style:normal; font-family:var(--mono); font-size:9.5px;
+  color:var(--mut); line-height:1.4; margin-top:3px}
+.ord em{display:block; font-style:normal; font-family:var(--mono); font-size:11px;
+  color:var(--brs); margin-top:5px}
+
+.go{width:100%; background:linear-gradient(180deg,#e88a3c,#c25e18); border:1px solid #7a3a0e;
+  color:#1a0f06; font-family:'Cinzel',Georgia,serif; font-size:16px; font-weight:600;
+  padding:12px; border-radius:6px; cursor:pointer; box-shadow:0 2px 0 #6a3209}
+.go:hover{filter:brightness(1.07)}
+.go.sm{font-size:13px; padding:8px 14px; width:auto}
+
+.tiles{display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px}
+.tile{background:var(--card2); border:1px solid var(--line); border-radius:6px; padding:8px}
+.tile .k{font-family:var(--mono); font-size:9px; letter-spacing:.09em; text-transform:uppercase; color:var(--mut)}
+.tile .v{font-family:'Cinzel',Georgia,serif; font-size:17px; color:var(--gold); margin-top:3px; line-height:1.1}
+.tile .s{font-family:var(--mono); font-size:9.5px; color:var(--mut); margin-top:3px}
+.tile.warn{border-color:#5a4526}
+
+/* ── A: pinned helm bar ───────────────────────────────────────────────── */
+.helm{flex:0 0 auto; background:linear-gradient(180deg,#132635,#0c1a26);
+  border-top:1px solid var(--line2); padding:10px 11px 12px;
+  box-shadow:0 -12px 22px rgba(0,0,0,.42)}
+.helm .top{display:flex; align-items:baseline; gap:8px; margin-bottom:8px}
+.helm .top h5{font-size:15px}
+.helm .top .rt{margin-left:auto; font-family:var(--mono); font-size:11px; color:var(--mut)}
+.banner{display:flex; align-items:center; gap:9px; background:#16281a;
+  border:1px solid #33521f; border-left:3px solid var(--ok); border-radius:6px; padding:8px 10px;
+  cursor:pointer}
+.banner .ic{color:var(--ok); font-size:15px; line-height:1}
+.banner .tx{flex:1; min-width:0; font-size:13.5px; line-height:1.32}
+.banner .tx b{color:#c8e39a; font-family:'Cinzel',Georgia,serif; font-size:13px}
+.banner .tx span{display:block; font-family:var(--mono); font-size:10.5px; color:#88a874;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.banner .cv{font-family:var(--mono); font-size:15px; color:#7d99ab}
+
+/* ── B: fixed decision deck ───────────────────────────────────────────── */
+.deck{flex:0 0 auto; padding:10px; display:flex; flex-direction:column; gap:8px;
+  background:linear-gradient(180deg,#12222f,#0e1c28); border-bottom:1px solid var(--line2)}
+.deckhd{display:flex; align-items:center; gap:8px}
+.deckhd h4{font-size:19px; flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.pill{font-family:var(--mono); font-size:10px; padding:3px 9px; border-radius:20px;
+  border:1px solid; display:inline-flex; align-items:center; gap:5px}
+.pill.risky{color:#e0c060; border-color:#5c4a18; background:#231d0c}
+.pill em{width:6px; height:6px; border-radius:50%; background:currentColor; font-style:normal}
+.dgrid{display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--line);
+  border:1px solid var(--line); border-radius:6px; overflow:hidden}
+.dg{background:var(--card2); padding:7px 6px; text-align:center}
+.dg .k{font-family:var(--mono); font-size:8.5px; letter-spacing:.07em; text-transform:uppercase; color:var(--mut)}
+.dg .v{font-family:'Cinzel',Georgia,serif; font-size:14px; color:var(--gold); margin-top:2px}
+.dg.warn .v{color:var(--warn2)}
+.drawtabs{display:flex; gap:4px; padding:9px 10px 0; flex:0 0 auto; border-top:1px solid var(--line)}
+.drawtabs button{background:#0d1a26; border:1px solid var(--line); border-bottom:0;
+  border-radius:5px 5px 0 0; color:var(--mut); font-family:var(--mono); font-size:10.5px;
+  letter-spacing:.06em; text-transform:uppercase; padding:6px 11px; cursor:pointer; position:relative}
+.drawtabs button.on{color:var(--goldhi); background:var(--card); border-color:var(--line2)}
+.drawtabs button .n{position:absolute; top:-4px; right:-4px; background:var(--amber); color:#1a0f06;
+  font-size:9px; font-weight:700; border-radius:9px; padding:0 4px; line-height:13px}
+
+/* ── C: dispatch sheet ────────────────────────────────────────────────── */
+.ilist{display:flex; flex-direction:column; gap:5px}
+.irow{display:grid; grid-template-columns:9px 1fr auto; gap:10px; align-items:center;
+  background:var(--card2); border:1px solid var(--line); border-radius:6px; padding:8px 10px;
+  cursor:pointer; text-align:left; color:var(--txt); font-family:inherit; width:100%}
+.irow:hover{border-color:var(--line2); background:#132434}
+.irow.on{border-color:var(--amber); background:#1c1a16}
+.irow .dot{width:9px; height:9px; border-radius:50%}
+.irow .nm{min-width:0}
+.irow .nm b{display:block; font-family:'Cinzel',Georgia,serif; font-size:13.5px; color:var(--gold);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.irow .nm span{display:block; font-family:var(--mono); font-size:9.5px; color:var(--mut)}
+.irow .rt{font-family:var(--mono); font-size:11px; color:var(--brs); text-align:right; white-space:nowrap}
+.sheet{position:absolute; inset:0; background:rgba(6,12,18,.9); backdrop-filter:blur(3px);
+  display:flex; flex-direction:column; padding:12px; gap:9px; z-index:5}
+.sheet .shd{display:flex; align-items:center; gap:9px}
+.sheet .shd h4{font-size:20px; flex:1}
+.sheet .x{background:none; border:1px solid var(--line2); color:var(--mut); border-radius:5px;
+  width:26px; height:26px; cursor:pointer; font-family:var(--mono); font-size:13px; line-height:1}
+.sheet .body{flex:1; min-height:0; overflow-y:auto; display:flex; flex-direction:column; gap:9px}
+
+/* ── wording table ────────────────────────────────────────────────────── */
+.wtwrap{overflow-x:auto; border:1px solid var(--rule); border-radius:3px; background:var(--surface)}
+table.wt{width:100%; border-collapse:collapse; font-size:14px; min-width:760px}
+table.wt th{font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.12em;
+  text-transform:uppercase; color:var(--dim); text-align:left; padding:13px 18px;
+  border-bottom:1px solid var(--rule); font-weight:500; background:var(--sunk)}
+table.wt td{padding:13px 18px; border-bottom:1px solid var(--rule); vertical-align:top; line-height:1.5}
+table.wt tr:last-child td{border-bottom:0}
+table.wt .where{font-family:'JetBrains Mono',monospace; font-size:10.5px; color:var(--dim);
+  letter-spacing:.05em; text-transform:uppercase; white-space:nowrap}
+table.wt .cur{font-family:'JetBrains Mono',monospace; font-size:12.5px; color:var(--bad)}
+table.wt .new{font-family:'JetBrains Mono',monospace; font-size:12.5px; color:var(--good); font-weight:500}
+table.wt .why{font-size:13.5px; color:var(--dim); max-width:38ch}
+tr.grp td{background:var(--sunk); font-family:'JetBrains Mono',monospace; font-size:10px;
+  letter-spacing:.13em; text-transform:uppercase; color:var(--brass); padding:9px 18px}
+
+/* ── ask ──────────────────────────────────────────────────────────────── */
+.ask{padding:52px 0 76px}
+.ask h2{font-size:25px; margin-bottom:16px}
+.ask ol{margin:0; padding-left:22px; max-width:64ch}
+.ask li{margin-bottom:11px; color:var(--body)}
+.ask li b{color:var(--ink)}
+
+.foot{padding:26px 0 60px; font-family:'JetBrains Mono',monospace; font-size:11px;
+  color:var(--dim); letter-spacing:.05em}
+
+@media(max-width:820px){
+  .w,.wide{padding:0 20px}
+  .shead{flex-direction:column; gap:6px}
+  .shead .sub{margin-left:0; text-align:left}
+}
+</style>
+
+<div class="w mast">
+  <div class="eyebrow">Cindervale Idle · design review · build 0.9.122.2</div>
+  <h1>The right side of Sailing</h1>
+  <p class="lede">The chart is the best-looking thing in the game. The column beside it is where
+  the feature actually gets used, and right now <b>the Set sail button sits 1,134px down a 741px
+  column</b> — you scroll to sail, and scroll again to claim. Three ways out, at true size,
+  plus a pass over the wording.</p>
+</div>
+
+<section class="w">
+  <div class="shead">
+    <span class="num">01</span>
+    <h2>What's measured</h2>
+    <span class="sub">Taken from the live panel at 1920×1080, Sailing 62, Kelp Warren selected,
+    one voyage result showing.</span>
+  </div>
+
+  <div class="metrics">
+    <div class="metric">
+      <div class="k">Column height</div>
+      <div class="v">741<span style="font-size:16px;color:var(--dim)">px</span></div>
+      <div class="n">All five tabs share it.</div>
+    </div>
+    <div class="metric">
+      <div class="k">Set sail sits at</div>
+      <div class="v alarm">1134<span style="font-size:16px;color:var(--dim)">px</span></div>
+      <div class="n">393px below the fold. Never visible on arrival.</div>
+    </div>
+    <div class="metric">
+      <div class="k">Voyage tab overflow</div>
+      <div class="v alarm">335<span style="font-size:16px;color:var(--dim)">px</span></div>
+      <div class="n">Seven stacked sections, equal weight.</div>
+    </div>
+    <div class="metric">
+      <div class="k">Admiralty overflow</div>
+      <div class="v alarm">1486<span style="font-size:16px;color:var(--dim)">px</span></div>
+      <div class="n">Where the Claim buttons live.</div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <b>The scroll is a symptom.</b> The column asks you to read a receipt, a travel brochure,
+    a risk table and a reference manual before it offers you the one button you came for.
+    Every option below starts by deciding what is a <b>decision</b> and what is <b>reference</b>,
+    and only then worries about where things go.
+  </div>
+
+  <div class="faults">
+    <div class="fault"><span class="ix">01</span><div>
+      <b>The receipt outranks the decision.</b>
+      <span>The last voyage's result card renders above the island card, so a good haul pushes
+      Set sail further off screen than a bad one.</span></div></div>
+    <div class="fault"><span class="ix">02</span><div>
+      <b>The odds legend restates the odds bar.</b>
+      <span>Four lines of prose — "Triumphant · +40% cargo", "Wrecked · keep 30%, ship damaged" —
+      under a bar that is already colour-coded and labelled. ~120px, read once.</span></div></div>
+    <div class="fault"><span class="ix">03</span><div>
+      <b>Flavour occupies stat positions.</b>
+      <span>"Conditions → Wrecker's Weather → Squalls that chew hulls apart." A full tile,
+      no number in it, directly above the bar whose numbers it is describing.</span></div></div>
+    <div class="fault"><span class="ix">04</span><div>
+      <b>Nothing signals which tab needs you.</b>
+      <span>Only Admiralty gets a dot, and only for commissions. A ship laid up, a return
+      waiting, a berth free — all silent.</span></div></div>
+    <div class="fault"><span class="ix">05</span><div>
+      <b>The fleet strip is always there, rarely relevant.</b>
+      <span>Two buttons and 60px at the top of every render, once a consort exists,
+      whether or not either ship needs anything.</span></div></div>
+  </div>
+</section>
+
+<section class="wide">
+  <div class="shead">
+    <span class="num">02</span>
+    <h2>Three ways to build it</h2>
+    <span class="sub">Rendered at 440×846 — the real column. Click the orders and tabs;
+    they work. Scroll each one and see where it ends.</span>
+  </div>
+
+  <div class="rack">
+
+    <!-- ══════════════════ OPTION A ══════════════════ -->
+    <div class="opt">
+      <header>
+        <span class="tag">Option A</span>
+        <h3>The Helm</h3>
+        <p class="why">Keep the column as one scroll, but tear the primary action out of it and
+        pin it to the bottom. Smallest change, most of the benefit.</p>
+      </header>
+
+      <div class="frame">
+        <div class="g">
+          <div class="gtabs">
+            <button class="on">Voyage</button><button>Shipyard</button>
+            <button>Crew</button><button>Relics</button>
+            <button>Admiralty<span class="bdg"></span></button>
+          </div>
+          <div class="gscroll">
+            <div class="banner" title="Tap to open the full return">
+              <span class="ic">✓</span>
+              <span class="tx"><b>Frostfang Skerry came home</b>
+                <span>+4,820g · 11 items · +1,960 xp · hold was full</span></span>
+              <span class="cv">›</span>
+            </div>
+
+            <div class="card">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
+                <h4 style="font-size:19px;flex:1">Kelp Warren</h4>
+                <span class="pill risky"><em></em>Risky</span>
+              </div>
+              <div style="display:flex;gap:5px;margin-bottom:9px">
+                <span class="chip">The Shallows</span><span class="chip">Sailing 30</span>
+              </div>
+              <p class="flav">A forest, but underneath. Rudders foul, crews get nervous, and
+              something down there is patient.</p>
+            </div>
+
+            <div class="lab">This voyage</div>
+            <div class="tiles">
+              <div class="tile"><div class="k">Time at sea</div><div class="v">1h 50m</div><div class="s">under Steady</div></div>
+              <div class="tile"><div class="k">Range</div><div class="v">85</div><div class="s">you have 220</div></div>
+              <div class="tile"><div class="k">Rare find</div><div class="v">11%</div><div class="s">per voyage</div></div>
+            </div>
+
+            <div class="lab">Chance of each outcome</div>
+            <div class="obar tall">
+              <i class="o1" style="flex-grow:14">14%<em>Great</em></i>
+              <i class="o2" style="flex-grow:68">68%<em>Fine</em></i>
+              <i class="o3" style="flex-grow:16">16%<em>Rough</em></i>
+              <i class="o4" style="flex-grow:2"></i>
+            </div>
+            <div style="font-family:var(--mono);font-size:10.5px;color:#7d99ab;display:flex;gap:9px">
+              <span style="color:#c4543a">■ 2% wreck</span>
+              <span>Wrecker's Weather adds most of it</span>
+            </div>
+
+            <div class="lab">How hard to push</div>
+            <div class="ords" data-ords>
+              <button class="ord on"><b>Steady</b><i>nothing gained,<br>nothing risked</i><em>1h 50m</em></button>
+              <button class="ord"><b>Run hard</b><i>−10% cargo<br>+8% wreck</i><em>1h 19m</em></button>
+              <button class="ord"><b>Search</b><i>−20% cargo<br>+75% rare</i><em>2h 34m</em></button>
+            </div>
+
+            <div class="lab">Reference</div>
+            <div class="card" style="padding:9px 12px;display:flex;align-items:center;gap:8px;cursor:pointer">
+              <span style="font-family:var(--mono);font-size:12px;color:#7d99ab">▸</span>
+              <span style="flex:1;font-size:14px">What you can bring back</span>
+              <span class="chip">5 bulk · 2 rare</span>
+            </div>
+            <div class="card" style="padding:9px 12px;display:flex;align-items:center;gap:8px;cursor:pointer">
+              <span style="font-family:var(--mono);font-size:12px;color:#7d99ab">▸</span>
+              <span style="flex:1;font-size:14px">Your fleet</span>
+              <span class="chip">2 ships · both in port</span>
+            </div>
+          </div>
+
+          <div class="helm">
+            <div class="top">
+              <h5>Kelp Warren</h5>
+              <span class="rt">Steady · 1h 50m · no wages</span>
+            </div>
+            <button class="go">Set sail</button>
+          </div>
+        </div>
+      </div>
+      <div class="scalenote">440 × 846 · 1:1</div>
+
+      <div class="verdict">
+        <div class="vrow up"><span class="m">+</span><span>Set sail can never scroll away. Same bar
+        becomes <b>Claim 2 commissions</b> on the Admiralty tab.</span></div>
+        <div class="vrow up"><span class="m">+</span><span>Result collapses to one line; the full
+        return is one tap. Frees ~180px.</span></div>
+        <div class="vrow up"><span class="m">+</span><span>Least invasive — the existing sections
+        stay, they just lose weight.</span></div>
+        <div class="vrow dn"><span class="m">−</span><span>The helm bar costs ~86px permanently,
+        on every tab.</span></div>
+        <div class="vrow dn"><span class="m">−</span><span>Still a scroll. Reference is closer,
+        but it is still below.</span></div>
+      </div>
+    </div>
+
+    <!-- ══════════════════ OPTION B ══════════════════ -->
+    <div class="opt">
+      <header>
+        <span class="tag">Option B</span>
+        <h3>Two Decks</h3>
+        <p class="why">Split the column in half. The top deck holds the whole decision and never
+        scrolls. The bottom is a drawer for everything you read once.</p>
+      </header>
+
+      <div class="frame">
+        <div class="g">
+          <div class="gtabs">
+            <button class="on">Voyage</button><button>Shipyard</button>
+            <button>Crew</button><button>Relics</button>
+            <button>Admiralty<span class="bdg"></span></button>
+          </div>
+
+          <div class="deck">
+            <div class="deckhd">
+              <h4>Kelp Warren</h4>
+              <span class="pill risky"><em></em>Risky</span>
+            </div>
+            <div class="dgrid">
+              <div class="dg"><div class="k">Sea</div><div class="v" style="font-size:12px">Shallows</div></div>
+              <div class="dg"><div class="k">Needs</div><div class="v">Lv 30</div></div>
+              <div class="dg"><div class="k">Range</div><div class="v">85</div></div>
+              <div class="dg warn"><div class="k">Wreck</div><div class="v">2%</div></div>
+            </div>
+            <div class="obar">
+              <i class="o1" style="flex-grow:14">14%</i>
+              <i class="o2" style="flex-grow:68">68% fine</i>
+              <i class="o3" style="flex-grow:16">16%</i>
+              <i class="o4" style="flex-grow:2"></i>
+            </div>
+            <div class="ords" data-ords>
+              <button class="ord on"><b>Steady</b><i>no trade-off</i><em>1h 50m</em></button>
+              <button class="ord"><b>Run hard</b><i>−10% cargo<br>+8% wreck</i><em>1h 19m</em></button>
+              <button class="ord"><b>Search</b><i>−20% cargo<br>+75% rare</i><em>2h 34m</em></button>
+            </div>
+            <button class="go">Set sail · 1h 50m</button>
+          </div>
+
+          <div class="drawtabs" data-draw>
+            <button class="on">Last trip<span class="n">1</span></button>
+            <button>Haul</button>
+            <button>Island</button>
+            <button>Fleet</button>
+          </div>
+          <div class="gscroll" style="padding-top:9px">
+            <div class="card" style="border-color:#33521f">
+              <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:8px">
+                <h5 style="color:#c8e39a;font-size:15px;flex:1">Successful — Frostfang Skerry</h5>
+                <span class="chip ok">no damage</span>
+              </div>
+              <p style="font-size:14px;color:#a8bcc8;margin-bottom:9px">The full haul, and a
+              normal rare roll.</p>
+              <div style="display:flex;flex-wrap:wrap;gap:5px">
+                <span class="chip gold">+4,820g</span>
+                <span class="chip">Salt-Forged Iron ×6</span>
+                <span class="chip">Pearl ×3</span>
+                <span class="chip">Kraken Ink ×2</span>
+                <span class="chip ok">+1,960 xp</span>
+                <span class="chip bad">hold was full — rest left behind</span>
+              </div>
+              <p class="flav" style="margin-top:10px;font-size:13.5px">The glass fell all
+              afternoon and the master shortened sail before dusk.</p>
+            </div>
+            <p style="font-family:var(--mono);font-size:10.5px;color:#7d99ab;text-align:center;padding:4px">
+              Fit a bigger hold, or a Cooper, to stop losing cargo.</p>
+          </div>
+        </div>
+      </div>
+      <div class="scalenote">440 × 846 · 1:1 · deck 268px, drawer 470px</div>
+
+      <div class="verdict">
+        <div class="vrow up"><span class="m">+</span><span>Nothing you act on ever moves. Island,
+        risk, orders and the button are one fixed block.</span></div>
+        <div class="vrow up"><span class="m">+</span><span>Clicking around the chart only repaints
+        the deck — no scroll position to restore.</span></div>
+        <div class="vrow up"><span class="m">+</span><span>The drawer's tabs give the result, the
+        haul table and the fleet each a real home with a badge.</span></div>
+        <div class="vrow dn"><span class="m">−</span><span>Biggest rewrite of the three. The deck
+        has to fit in 268px at every level and island.</span></div>
+        <div class="vrow dn"><span class="m">−</span><span>Two scroll regions in one column can
+        feel cramped on a short window.</span></div>
+      </div>
+    </div>
+
+    <!-- ══════════════════ OPTION C ══════════════════ -->
+    <div class="opt">
+      <header>
+        <span class="tag">Option C</span>
+        <h3>Dispatch</h3>
+        <p class="why">The column becomes a fast island list. Committing to a voyage opens a
+        sheet over the chart with everything on one screen, and closes.</p>
+      </header>
+
+      <div class="frame">
+        <div class="g" style="position:relative">
+          <div class="gtabs">
+            <button class="on">Voyage</button><button>Shipyard</button>
+            <button>Crew</button><button>Relics</button>
+            <button>Admiralty<span class="bdg"></span></button>
+          </div>
+          <div class="gscroll">
+            <div class="banner">
+              <span class="ic">✓</span>
+              <span class="tx"><b>Frostfang Skerry came home</b>
+                <span>+4,820g · 11 items · +1,960 xp</span></span>
+              <span class="cv">›</span>
+            </div>
+            <div class="lab">The Shallows · 9 islands</div>
+            <div class="ilist">
+              <button class="irow"><span class="dot" style="background:#a8cc72"></span>
+                <span class="nm"><b>Shalefoot Shoals</b><span>Lv 1 · safe</span></span>
+                <span class="rt">20m<br><span style="color:#7d99ab">~180g</span></span></button>
+              <button class="irow"><span class="dot" style="background:#a8cc72"></span>
+                <span class="nm"><b>Gullstone Reef</b><span>Lv 8 · safe</span></span>
+                <span class="rt">35m<br><span style="color:#7d99ab">~420g</span></span></button>
+              <button class="irow on"><span class="dot" style="background:#e0c060"></span>
+                <span class="nm"><b>Kelp Warren</b><span>Lv 30 · risky</span></span>
+                <span class="rt">1h 50m<br><span style="color:#7d99ab">~2,400g</span></span></button>
+              <button class="irow"><span class="dot" style="background:#e0c060"></span>
+                <span class="nm"><b>Saltmarrow Cay</b><span>Lv 34 · risky</span></span>
+                <span class="rt">2h 05m<br><span style="color:#7d99ab">~2,900g</span></span></button>
+              <button class="irow"><span class="dot" style="background:#e09a52"></span>
+                <span class="nm"><b>Cutter's Rock</b><span>Lv 41 · dangerous</span></span>
+                <span class="rt">2h 40m<br><span style="color:#7d99ab">~3,800g</span></span></button>
+              <button class="irow"><span class="dot" style="background:#e09a52"></span>
+                <span class="nm"><b>The Herring Banks</b><span>Lv 45 · dangerous</span></span>
+                <span class="rt">3h 10m<br><span style="color:#7d99ab">~4,400g</span></span></button>
+              <button class="irow" style="opacity:.5"><span class="dot" style="background:#5a6a74"></span>
+                <span class="nm"><b>Tallow Key</b><span>needs a map</span></span>
+                <span class="rt">—</span></button>
+            </div>
+          </div>
+
+          <!-- the dispatch sheet, shown open -->
+          <div class="sheet">
+            <div class="shd">
+              <h4>Kelp Warren</h4>
+              <span class="pill risky"><em></em>Risky</span>
+              <button class="x">✕</button>
+            </div>
+            <div class="body">
+              <div class="dgrid">
+                <div class="dg"><div class="k">Time</div><div class="v" style="font-size:12.5px">1h 50m</div></div>
+                <div class="dg"><div class="k">Range</div><div class="v">85</div></div>
+                <div class="dg"><div class="k">Rare</div><div class="v">11%</div></div>
+                <div class="dg warn"><div class="k">Wreck</div><div class="v">2%</div></div>
+              </div>
+              <div class="obar tall">
+                <i class="o1" style="flex-grow:14">14%<em>Great</em></i>
+                <i class="o2" style="flex-grow:68">68%<em>Fine</em></i>
+                <i class="o3" style="flex-grow:16">16%<em>Rough</em></i>
+                <i class="o4" style="flex-grow:2"></i>
+              </div>
+              <div class="lab">How hard to push</div>
+              <div class="ords" data-ords>
+                <button class="ord on"><b>Steady</b><i>no trade-off</i><em>1h 50m</em></button>
+                <button class="ord"><b>Run hard</b><i>−10% cargo<br>+8% wreck</i><em>1h 19m</em></button>
+                <button class="ord"><b>Search</b><i>−20% cargo<br>+75% rare</i><em>2h 34m</em></button>
+              </div>
+              <div class="lab">Which ship</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+                <button class="ord on" style="text-align:center"><b>Frostwood Galleon</b><i>in port · cargo 1100</i></button>
+                <button class="ord" style="text-align:center"><b>The consort</b><i>in port · cargo 720</i></button>
+              </div>
+              <div class="lab">What she can bring back</div>
+              <div style="display:flex;flex-wrap:wrap;gap:5px">
+                <span class="chip">Kelp Bundle 34%</span><span class="chip">Driftwood 26%</span>
+                <span class="chip">Salt-Forged Iron 21%</span><span class="chip">Pearl 12%</span>
+                <span class="chip">Sea Silk 7%</span>
+                <span class="chip gold">✦ Drowned Ledger 1.4%</span>
+                <span class="chip gold">✦ Steady Lantern 0.3%</span>
+              </div>
+            </div>
+            <button class="go">Set sail · 1h 50m</button>
+          </div>
+        </div>
+      </div>
+      <div class="scalenote">440 × 846 · 1:1 · sheet shown open</div>
+
+      <div class="verdict">
+        <div class="vrow up"><span class="m">+</span><span>Kills the scroll on both sides — the list
+        is short rows, the sheet is one screen.</span></div>
+        <div class="vrow up"><span class="m">+</span><span>Ship choice moves into the commit step,
+        so the fleet strip disappears entirely.</span></div>
+        <div class="vrow up"><span class="m">+</span><span>The list answers "where should I go"
+        far better than clicking 26 islands to compare.</span></div>
+        <div class="vrow dn"><span class="m">−</span><span>One extra click per voyage. In an idle
+        game that is a real cost, repeated forever.</span></div>
+        <div class="vrow dn"><span class="m">−</span><span>A sheet over the chart hides the thing
+        that makes the panel beautiful.</span></div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<section class="w">
+  <div class="shead">
+    <span class="num">03</span>
+    <h2>The wording</h2>
+    <span class="sub">Independent of which layout wins. Every line below is live copy
+    in build 0.9.122.2.</span>
+  </div>
+
+  <div class="wtwrap">
+    <table class="wt">
+      <thead><tr><th>Where</th><th>Now</th><th>Proposed</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr class="grp"><td colspan="4">Names that collide</td></tr>
+        <tr>
+          <td class="where">Ship stat</td>
+          <td class="cur">Hull 360</td>
+          <td class="new">Seaworthiness 360</td>
+          <td class="why">"Hull" is also the thing you buy in the Shipyard. One word, two meanings,
+          both on screen at once.</td>
+        </tr>
+        <tr>
+          <td class="where">Header</td>
+          <td class="cur">ship 5 of 7</td>
+          <td class="new">hull 5 of 7</td>
+          <td class="why">Reads as "you own 5 ships". It is the tier of the one you're on.</td>
+        </tr>
+        <tr>
+          <td class="where">Tile</td>
+          <td class="cur">Treasure · 11%</td>
+          <td class="new">Rare find · 11%</td>
+          <td class="why">"Treasure" already means treasure maps and the Trove. Three things,
+          one word.</td>
+        </tr>
+        <tr>
+          <td class="where">Tab</td>
+          <td class="cur">Trove</td>
+          <td class="new">Relics</td>
+          <td class="why">It holds five permanent passives, not loot. "Trove" sounds like storage.</td>
+        </tr>
+
+        <tr class="grp"><td colspan="4">Jargon with no in-game referent</td></tr>
+        <tr>
+          <td class="where">Section</td>
+          <td class="cur">Orders to the master</td>
+          <td class="new">How hard to push</td>
+          <td class="why">"The master" is a character who is never introduced anywhere else.</td>
+        </tr>
+        <tr>
+          <td class="where">Order</td>
+          <td class="cur">Press her</td>
+          <td class="new">Run hard</td>
+          <td class="why">Nautical idiom. Nothing else in the game speaks like this.</td>
+        </tr>
+        <tr>
+          <td class="where">Order</td>
+          <td class="cur">Sweep</td>
+          <td class="new">Search the water</td>
+          <td class="why">"Sweep" alone gives no clue it is the treasure-hunting option.</td>
+        </tr>
+        <tr>
+          <td class="where">Toggle</td>
+          <td class="cur">Full manifest</td>
+          <td class="new">What you can bring back</td>
+          <td class="why">A manifest is a cargo document. This is a drop table.</td>
+        </tr>
+        <tr>
+          <td class="where">Commission</td>
+          <td class="cur">in hand</td>
+          <td class="new">in progress</td>
+          <td class="why">"In hand" reads as already collected — the opposite of what it means.</td>
+        </tr>
+
+        <tr class="grp"><td colspan="4">Vague where a number exists</td></tr>
+        <tr>
+          <td class="where">Order</td>
+          <td class="cur">worse odds</td>
+          <td class="new">+8% wreck risk</td>
+          <td class="why">The game knows the exact figure. Printing "worse" instead is a choice
+          to withhold it.</td>
+        </tr>
+        <tr>
+          <td class="where">Order</td>
+          <td class="cur">no trade</td>
+          <td class="new">no trade-off</td>
+          <td class="why">Currently parses as "trading is disabled".</td>
+        </tr>
+        <tr>
+          <td class="where">Conditions</td>
+          <td class="cur">Wrecker's Weather<br>Squalls that chew hulls apart.</td>
+          <td class="new">Wrecker's Weather<br>+9% wreck risk</td>
+          <td class="why">Keep the name, keep the flavour in the tooltip. The tile position
+          should carry the number.</td>
+        </tr>
+        <tr>
+          <td class="where">Chart marker</td>
+          <td class="cur">sealed</td>
+          <td class="new">needs a map</td>
+          <td class="why">"Sealed" states a condition. "Needs a map" states the fix.</td>
+        </tr>
+        <tr>
+          <td class="where">Blocked</td>
+          <td class="cur">Your own ship must land here first</td>
+          <td class="new">Send your flagship here first</td>
+          <td class="why">"Your own ship" versus what? The consort is also yours.</td>
+        </tr>
+
+        <tr class="grp"><td colspan="4">Long where short would do</td></tr>
+        <tr>
+          <td class="where">Section</td>
+          <td class="cur">How the voyage usually ends</td>
+          <td class="new">Chance of each outcome</td>
+          <td class="why">Says what the bar is rather than narrating it.</td>
+        </tr>
+        <tr>
+          <td class="where">Section</td>
+          <td class="cur">The crossing</td>
+          <td class="new">This voyage</td>
+          <td class="why">Plain word, same meaning.</td>
+        </tr>
+        <tr>
+          <td class="where">Odds legend</td>
+          <td class="cur">Triumphant · +40% cargo<br>Successful · full cargo<br>Battered · keep 65%<br>Wrecked · keep 30%, ship damaged</td>
+          <td class="new">Labels inside the bar:<br>Great · Fine · Rough · Wreck</td>
+          <td class="why">Four lines under a bar that is already coloured and numbered. Full
+          detail moves to hover.</td>
+        </tr>
+        <tr>
+          <td class="where">Admiralty</td>
+          <td class="cur">The Ledger · what is left</td>
+          <td class="new">Progress · what's left to find</td>
+          <td class="why">"Ledger" is a third book-shaped noun after Log and Papers.</td>
+        </tr>
+        <tr>
+          <td class="where">Admiralty</td>
+          <td class="cur">three at a time</td>
+          <td class="new">3 open at once</td>
+          <td class="why">Reads as a rate, not a cap.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<div class="w ask">
+  <h2>What I need from you</h2>
+  <ol>
+    <li><b>Pick a layout</b> — A, B, C, or a mix. A is a day; B is the real fix and a bigger
+    job; C changes how sailing is played.</li>
+    <li><b>The wording table is separable.</b> Say yes to it and it ships regardless of which
+    layout wins. Strike any line you disagree with — the nautical voice is deliberate in places
+    and I may be sanding off something you want.</li>
+    <li><b>Seaworthiness</b> is the one rename with real reach — it appears in tooltips, the
+    Shipyard and the odds explainer. Worth confirming before I touch it.</li>
+    <li>Anything the mockups get wrong about how you actually play the panel. I staged these
+    from a Sailing 62 save with a consort and one voyage back.</li>
+  </ol>
+</div>
+
+<div class="w foot">
+  Mockups are static HTML at true column size — orders and drawer tabs respond, nothing else does.
+  Palette and type match the live panel.
+</div>
+
+<script>
+document.querySelectorAll('[data-ords]').forEach(function(g){
+  g.querySelectorAll('.ord').forEach(function(b){
+    b.addEventListener('click',function(){
+      g.querySelectorAll('.ord').forEach(function(x){x.classList.remove('on');});
+      b.classList.add('on');
+    });
+  });
+});
+document.querySelectorAll('[data-draw]').forEach(function(g){
+  g.querySelectorAll('button').forEach(function(b){
+    b.addEventListener('click',function(){
+      g.querySelectorAll('button').forEach(function(x){x.classList.remove('on');});
+      b.classList.add('on');
+    });
+  });
+});
+document.querySelectorAll('.gtabs').forEach(function(g){
+  g.querySelectorAll('button').forEach(function(b){
+    b.addEventListener('click',function(){
+      g.querySelectorAll('button').forEach(function(x){x.classList.remove('on');});
+      b.classList.add('on');
+    });
+  });
+});
+document.querySelectorAll('.sheet .x').forEach(function(x){
+  x.addEventListener('click',function(){ x.closest('.sheet').style.display='none'; });
+});
+</script>

@@ -2298,6 +2298,159 @@ setTimeout(() => {
          return p.max===true && p.pct===100 && p.need===0; })()`) === true);
   }
 
+  section('Sailing: the decision deck (0.9.122.3)');
+  {
+    /* The right column used to be one 741px scroller holding seven stacked
+       sections, and Set sail rendered at 1134px — the primary action of the whole
+       feature was never on screen when you arrived, and a good voyage pushed it
+       further down than a bad one because the result card sat above the island.
+       It is a fixed deck plus a scrolling drawer now. None of what follows throws
+       when it breaks; the panel just quietly goes back to being a long scroll. */
+    const render = (setup) => ev(`(function(){
+      state=defaultState(); normalizeState();
+      state.sail.xp=XP_CUM[62]; state.sail.hull=4;
+      state.sail.seen={}; state.sail.found={};
+      SAIL_ISLES.forEach(function(is,i){ state.sail.seen[i]=1; state.sail.found[i]=1; });
+      sailTab='voyage'; sailSlot=0; sailSel=0; sailOrd='steady'; sailDraw='last'; sailAdmTab='comms';
+      ${setup || ''}
+      renderSail();
+      return document.getElementById('sailPanel').innerHTML; })()`);
+
+    const base = render('');
+    ok('the voyage tab renders a deck', base.indexOf('class="sl-deck"') > 0);
+    ok('and a drawer with its own tab strip', base.indexOf('data-sldraw=') > 0);
+
+    /* The whole point: the button is in the block that does not scroll. Comparing
+       indices is enough — the deck is emitted before the scroller. */
+    const deckAt = base.indexOf('class="sl-deck"');
+    const bodyAt = base.indexOf('class="sl-sidebody"');
+    const goAt = base.indexOf('id="slGo"');
+    ok('Set sail sits in the deck, above the scroller',
+       deckAt > 0 && bodyAt > deckAt && goAt > deckAt && goAt < bodyAt,
+       'deck ' + deckAt + ' go ' + goAt + ' body ' + bodyAt);
+
+    /* The legend the bar needed. Every grade names itself, its share and what it
+       costs — the old .sl-oddkey wrapped four prose lines mid-phrase, and the bar
+       had to letterboard a number into a 2% sliver. */
+    ok('every outcome is named in the legend',
+       ['Triumphant', 'Successful', 'Battered', 'Wrecked'].every(g => base.indexOf('>' + g + '<') > 0));
+    ok('and each carries what it actually costs you',
+       base.indexOf('+40% haul') > 0 && base.indexOf('full haul') > 0 &&
+       base.indexOf('65% haul') > 0 && base.indexOf('ship needs repair') > 0);
+    /* Scoped so it cannot also count the .sl-oddrows container that wraps them. */
+    ok('the legend has one row per grade',
+       (base.match(/class="sl-oddrow[ "]/g) || []).length === 4,
+       String((base.match(/class="sl-oddrow[ "]/g) || []).length));
+
+    /* The swatches are hand-kept hexes that have to equal the bar's own CSS. If
+       these drift the legend says one colour and the bar shows another. */
+    ok('the legend swatches match the bar colours in CSS-33',
+       ev('SAIL_GRADE_COL.join(",")') === '#dfb03c,#7da33f,#c9822e,#a8412c' &&
+       html.indexOf('.sl-o1{background:#dfb03c}.sl-o2{background:#7da33f}.sl-o3{background:#c9822e}') > 0);
+    ok('and there is one short line per grade',
+       ev('SAIL_GRADE_SHORT.length') === 4 && ev('SAIL_GRADES.length') === 4);
+
+    /* Four states share the deck. Each replaces the orders and the button, so each
+       has to leave something actionable or informative in their place. */
+    const atSea = render(`state.sail.voy={i:0,endsAt:Date.now()+600000,dur:1200000,ord:'steady',
+      outRoll:0.5,troveRoll:0.9,chartRoll:0.9,petRoll:0.9,matQtyRolls:{},bulkRolls:[0.3],rareRolls:[0.9]};`);
+    ok('a ship at sea shows her clock in the deck, not a Set sail button',
+       atSea.indexOf('id="slClock"') > 0 && atSea.indexOf('id="slGo"') < 0);
+    ok('and the clock is above the drawer',
+       atSea.indexOf('id="slClock"') < atSea.indexOf('class="sl-sidebody"'));
+
+    const laid = render('state.sail.damaged=true;');
+    ok('a laid-up ship offers the repair from the deck',
+       laid.indexOf('data-slfixslot="0"') > 0 &&
+       laid.indexOf('data-slfixslot="0"') < laid.indexOf('class="sl-sidebody"'));
+    ok('and badges the Ship drawer tab so the bill is findable',
+       /data-sldraw="ship"/.test(laid) && /class="[^"]*dot[^"]*" data-sldraw="ship"/.test(laid));
+
+    /* An island you cannot reach must say why on the button rather than leaving a
+       dead control. */
+    const far = render(`var deep=0; SAIL_ISLES.forEach(function(is,i){ if(is.lv>SAIL_ISLES[deep].lv) deep=i; });
+      sailSel=deep; state.sail.xp=0;`);
+    ok('an unreachable island puts the reason on the button itself',
+       far.indexOf('id="slGo"') > 0 && /Needs (Sailing|Range|a treasure map|\d)/.test(far));
+
+    /* Every drawer section has to render for every deck state. None of them are on
+       screen by default, so a throw here would only show up as a blank column. */
+    let drawOk = true, drawWhich = '';
+    ['last', 'haul', 'isle', 'ship'].forEach(d => {
+      ['', 'state.sail.damaged=true;', 'state.sail.consort=true;state.sail.hull2=1;'].forEach(st => {
+        let h = '';
+        try { h = render(st + "sailDraw='" + d + "';"); } catch (e) { h = ''; }
+        if (h.indexOf('class="sl-sidebody"') < 0) { drawOk = false; drawWhich = d + ' / ' + st; }
+      });
+    });
+    ok('all four drawer sections render in every deck state', drawOk, drawWhich);
+
+    /* 'last' is an empty card until something comes back, so it must not be the
+       landing tab on a save with no history. */
+    ok('a save with no voyage back does not land on an empty drawer',
+       render("sailDraw='last';").indexOf('class="on" data-sldraw="isle"') > 0);
+    ok('and lands on the return once there is one',
+       render(`state.sail.last={slot:0,i:0,g:1,gold:10,xp:10,got:{}};sailDraw='last';`)
+         .indexOf('data-sldraw="last"') > 0);
+
+    /* The Admiralty was 1,486px of overflow with the Claim buttons inside it. */
+    const adm = (t) => ev(`(function(){ sailTab='admiralty'; sailAdmTab='${t}'; renderSail();
+      return document.getElementById('sailPanel').innerHTML; })()`);
+    const comms = adm('comms');
+    ok('the Admiralty splits into three sub-tabs',
+       ['comms', 'ledger', 'papers'].every(t => comms.indexOf('data-sladm="' + t + '"') > 0));
+    ok('and shows only the section you picked',
+       comms.indexOf('>Commissions</h4>') > 0 && comms.indexOf('>Progress</h4>') < 0);
+    ok('the progress sheet is its own section',
+       adm('ledger').indexOf('>Progress</h4>') > 0 && adm('ledger').indexOf('>Commissions</h4>') < 0);
+    ok('and the papers theirs', adm('papers').indexOf('Admiralty Papers') > 0);
+  }
+
+  section('Sailing: the wording pass (0.9.122.3)');
+  {
+    /* Jordan signed off the whole table except "ship N of 7", which stays. These
+       are string assertions on purpose: the whole point of the pass was that the
+       old copy read wrong, and nothing about it throws. */
+    const gone = [
+      ['Hull <b>', '"Hull" named both the weather stat and the thing you buy'],
+      ['Orders to the master', 'an unintroduced character'],
+      ["n:'Press her'", 'nautical idiom'],
+      ["n:'Sweep'", 'meaningless out of context'],
+      ['No trade either way', 'parses as "trading is disabled"'],
+      ['Full manifest', 'a manifest is a cargo document'],
+      ['>in hand<', 'reads as already collected'],
+      ['>3 at a time<', 'reads as a rate, not a cap'],
+      ['How the voyage usually ends', 'narrates the bar instead of naming it'],
+      ['normal treasure roll', '"treasure" now means maps only'],
+      ['>Trove</button>', 'the tab holds passives, not storage']
+    ];
+    gone.forEach(g => ok('gone: ' + g[0] + ' — ' + g[1], html.indexOf(g[0]) < 0));
+
+    const kept = [
+      ["'Seaworthiness <b>'", 'the weather stat has its own name now'],
+      ["n:'Run hard'", ''], ["n:'Search'", ''],
+      ['Nothing gained, nothing risked', ''],
+      ['What you can bring back', ''],
+      ['>in progress<', ''], ['3 open at once', ''],
+      ['>Relics</button>', ''],
+      ["?'needs a map':", 'the chart marker states the fix, not the condition'],
+      ['Send your flagship here first', '"your own ship" versus what?']
+    ];
+    kept.forEach(k => ok('present: ' + k[0] + (k[1] ? ' — ' + k[1] : ''), html.indexOf(k[0]) > 0));
+
+    /* Explicitly rejected. The rest of the table shipped; this line did not, and a
+       later tidy-up must not "finish the job". */
+    ok('"ship N of 7" was kept on purpose',
+       html.indexOf("'Emberwatch Harbour · ship '+(s.hull+1)+' of '") > 0);
+
+    /* The order rows print the real wreck delta instead of the word "worse". Press
+       has to move the number it claims to move. */
+    ok('Run hard genuinely raises the wreck odds it now advertises',
+       ev(`(function(){ state=defaultState(); normalizeState();
+         state.sail.xp=XP_CUM[20]; state.sail.hull=1; sailSel=6;
+         return sailOdds(sailSel,'press',0)[3] > sailOdds(sailSel,'steady',0)[3]; })()`) === true);
+  }
+
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));
   process.exit(fail ? 1 : 0);
 }, 2500);

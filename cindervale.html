@@ -3873,6 +3873,81 @@ body:not(.is-demo) .demo-only{display:none !important}
 .sl-oddkey span{font-family:var(--num);font-size:calc(11.6px*var(--tscale));color:#6d8c9c;display:flex;align-items:center;gap:5px}
 .sl-oddkey em{width:8px;height:8px;border-radius:2px;display:block;flex:none}
 
+/* ── the decision deck (0.9.122.3) ─────────────────────────────────────────────
+   Measured on the old column: 741px tall, and Set sail rendered at 1134px. The
+   primary action of the whole feature was never on screen when you arrived, and a
+   good voyage pushed it further down than a bad one because the result card sat
+   above the island card. The column is two regions now. Everything you ACT on is
+   in here and never scrolls — island, its numbers, the odds, the orders, the
+   button. Everything you read once went into the drawer below. */
+.sl-deck{flex:0 0 auto;display:flex;flex-direction:column;gap:8px;
+  background:linear-gradient(180deg,#16242f,#0e1a24);border:1px solid #2c4d5e;
+  border-radius:9px;padding:11px}
+.sl-deckhd{display:flex;align-items:center;gap:8px}
+.sl-deckhd h4{font-family:'Cinzel',serif;font-size:calc(19px*var(--tscale));color:#fbeed0;
+  margin:0;line-height:1.15;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* Four numbers, equal weight, no wrapping. Replaces the three auto-fit tiles that
+   reflowed to two rows the moment a Crew-needed tile appeared. */
+.sl-dgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:#23404e;
+  border:1px solid #23404e;border-radius:6px;overflow:hidden}
+.sl-dg{background:#0d1a24;padding:6px 4px;text-align:center;min-width:0}
+.sl-dg .k{font-family:var(--num);font-size:calc(10px*var(--tscale));letter-spacing:.07em;
+  text-transform:uppercase;color:#5f8496;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sl-dg .v{font-family:'Cinzel',serif;font-size:calc(15px*var(--tscale));color:#fbeed0;
+  margin-top:2px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sl-dg.warn .v{color:#e0c060}
+.sl-dg.bad .v{color:#e0917c}
+/* The legend the bar always needed. The old .sl-oddkey was four lines of prose in a
+   two-column grid, and every one of them wrapped mid-phrase ("Triumphant · +40% /
+   cargo"). This is a table — swatch, grade, its share, what it costs you — which
+   means the bar itself no longer has to letterbox a number into a 2% sliver. */
+.sl-oddrows{display:flex;flex-direction:column;gap:2px;margin-top:6px}
+.sl-oddrow{display:grid;grid-template-columns:9px calc(74px*var(--tscale)) calc(34px*var(--tscale)) 1fr;
+  gap:7px;align-items:center;font-family:var(--num);font-size:calc(11.4px*var(--tscale));line-height:1.55}
+.sl-oddrow em{width:9px;height:9px;border-radius:2px;display:block}
+.sl-oddrow .g{color:#c8dbe4}
+.sl-oddrow .p{color:#fbeed0;text-align:right;font-weight:700}
+.sl-oddrow .d{color:#6d8c9c;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sl-oddrow.nil em,.sl-oddrow.nil .g,.sl-oddrow.nil .p,.sl-oddrow.nil .d{opacity:.42}
+/* Which hull is being dispatched. Moved out of the old .sl-fleet strip and into the
+   deck, because it is part of the decision rather than a status readout. `em` is
+   load-bearing: sailTickVoyage() writes the live clock into it every second. */
+.sl-ships{display:flex;gap:4px}
+.sl-ships button{flex:1;min-width:0;background:#0d1a24;border:1px solid #23404e;border-radius:6px;
+  padding:5px 8px;cursor:var(--cur-pointer);font-family:'Cinzel',serif;text-align:left;
+  font-size:calc(12.5px*var(--tscale));color:#7fa4b4;line-height:1.2}
+.sl-ships button:hover{border-color:#3d6274;color:#c8dbe4}
+.sl-ships button.on{border-color:#4d9bb0;background:#1a3543;color:#e8f2f6}
+.sl-ships button em{display:block;font-style:normal;font-family:var(--num);
+  font-size:calc(10px*var(--tscale));color:#5f8496;margin-top:1px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sl-ships button.out em{color:#c9822e}
+.sl-ships button.bad em{color:#e0917c}
+/* One line of state where the orders and the button would otherwise be — laid up,
+   blocked, or the reason a crossing cannot start. */
+.sl-deckmsg{background:#0d1a24;border:1px solid #23404e;border-radius:6px;padding:8px 10px;
+  font-size:calc(13.4px*var(--tscale));color:#9fbccb;line-height:1.42}
+.sl-deckmsg.bad{border-color:#5c2c20;background:#1c100c;color:#e0a89a}
+.sl-deckmsg b{color:#fbeed0}
+.sl-deck .sl-clock{margin-bottom:6px}
+.sl-deck .sl-clock b{font-size:calc(26px*var(--tscale))}
+
+/* ── the drawer ── everything read once, one section at a time. Same segmented
+   pattern the Shipyard already uses, so the panel has one idea of a sub-tab. */
+.sl-drawseg{display:flex;gap:4px;flex:none}
+.sl-drawseg button{flex:1;min-width:0;position:relative;background:#0a141d;
+  border:1px solid #23404e;border-radius:6px;padding:5px 4px;color:#6d8c9c;
+  font-family:var(--num);font-size:calc(11px*var(--tscale));letter-spacing:.07em;
+  text-transform:uppercase;cursor:var(--cur-pointer);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:background .14s,color .14s}
+.sl-drawseg button:hover{color:#c8dbe4}
+.sl-drawseg button.on{background:#16242f;border-color:#4d9bb0;color:#e8f2f6}
+.sl-drawseg button:focus-visible{outline:2px solid var(--trim);outline-offset:1px}
+.sl-drawseg button.dot::after{content:"";position:absolute;top:3px;right:4px;width:5px;height:5px;
+  border-radius:50%;background:var(--ember);box-shadow:0 0 5px var(--ember)}
+.sl-drawempty{font-family:var(--num);font-size:calc(12.4px*var(--tscale));color:#5f8496;
+  text-align:center;padding:22px 12px;line-height:1.6}
+
 .sl-chips{display:flex;flex-wrap:wrap;gap:5px}
 .sl-chip{display:inline-flex;align-items:center;gap:4px;font-family:var(--num);font-size:calc(12.8px*var(--tscale));
   padding:3px 8px;border-radius:5px;border:1px solid #2c4d5e;background:#0d1a24;color:#a9c4d0}
@@ -6181,7 +6256,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.122.2">v0.9.122</div>
+  <div class="mm-ver" data-build="0.9.122.3">v0.9.122</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -7952,7 +8027,7 @@ const ITEMS={
   /* ─── Sailing troves (0.9.60) — one per archipelago, pulled up on expeditions.
      Rarity climbs with distance from Emberwatch. Passive effects land in a later
      slice; for now they are collectable, sellable and Compendium-visible. ─── */
-  trove_shallows:{name:'Barnacled Coin-Purse', icon:'👛',sell:900, sea:1,   rare:true, desc:"Someone's wages, lost in the shallows a long time ago and grown over twice since. Sells for a pittance. Counts toward the Trove all the same."},
+  trove_shallows:{name:'Barnacled Coin-Purse', icon:'👛',sell:900, sea:1,   rare:true, desc:"Someone's wages, lost in the shallows a long time ago and grown over twice since. Sells for a pittance. Counts toward the relic set all the same."},
   trove_wracks:  {sea:1, name:'The Ninth Bell',       icon:'🔔',sell:4800,  rare:true, desc:"Cut from the ninth ship to die on Widow's Wrack. It rings a half-beat before bad weather, which the crew find useful and deeply unpleasant."},
   trove_mist:    {sea:1, name:'Hollowtide Almanac',   icon:'📖',sell:16000, rare:true, desc:"Salt-swollen and still legible. It predicts the great ebb to the hour, in a hand nobody at the Admiralty recognises."},
   trove_far:     {sea:1, name:'Scale of the Old Thing',icon:'🐉',sell:52000, rare:true, desc:"Broader than a shield and lighter than paper. Nothing marks it — not fire, not starsteel, not the void. It was shed, not taken."},
@@ -32371,10 +32446,21 @@ function _sailChainAudit(){
   return problems;
 }
 
+/* The four bar colours, and what each grade actually costs you in one line. Both
+   feed the outcome legend on the Voyage deck; keeping them beside SAIL_GRADES is
+   what stops the swatch, the name and the effect from drifting apart. The hexes
+   must stay equal to .sl-o1 … .sl-o4 in [CSS-33]. */
+const SAIL_GRADE_COL=['#dfb03c','#7da33f','#c9822e','#a8412c'];
+const SAIL_GRADE_SHORT=[
+  '+40% haul, best rare odds',
+  'full haul, normal rare roll',
+  '65% haul, no rare roll',
+  '30% haul, ship needs repair'
+];
 const SAIL_GRADES=[
-  {n:'Triumphant', c:'sl-r1', mult:1.40, p:'Clean crossing. 140% of the haul, and the best odds on treasure.'},
-  {n:'Successful', c:'sl-r2', mult:1.00, p:'No trouble. The full haul, and a normal treasure roll.'},
-  {n:'Battered',   c:'sl-r3', mult:0.65, p:'Rough return. 65% of the haul, no treasure roll, but no damage to the ship.'},
+  {n:'Triumphant', c:'sl-r1', mult:1.40, p:'Clean crossing. 140% of the haul, and the best odds on a rare find.'},
+  {n:'Successful', c:'sl-r2', mult:1.00, p:'No trouble. The full haul, and a normal rare-find roll.'},
+  {n:'Battered',   c:'sl-r3', mult:0.65, p:'Rough return. 65% of the haul, no rare-find roll, but no damage to the ship.'},
   {n:'Wrecked',    c:'sl-r4', mult:0.30, p:'Barely made it back. 30% of the haul, and the ship needs repairs before sailing again.'}
 ];
 
@@ -32511,11 +32597,11 @@ function sailSpeed(){ return 1; }
    deliberately retuned in 0.9.76. */
 const SAIL_ORDERS=[
   {id:'steady', n:'Steady',    dur:1.00, odds: 0.00, bulk:1.00, find:1.00,
-   d:'Ordinary seamanship. No trade either way.'},
-  {id:'press',  n:'Press her', dur:0.72, odds:-0.14, bulk:0.90, find:1.00,
+   d:'Ordinary seamanship. Nothing gained, nothing risked.'},
+  {id:'press',  n:'Run hard',  dur:0.72, odds:-0.14, bulk:0.90, find:1.00,
    d:'Crowd on sail and run the weather. Home sooner, and rougher.'},
-  {id:'sweep',  n:'Sweep',     dur:1.40, odds: 0.00, bulk:0.80, find:1.75,
-   d:'Work the water properly instead of crossing it. Slower, less cargo, far more treasure.'}
+  {id:'sweep',  n:'Search',    dur:1.40, odds: 0.00, bulk:0.80, find:1.75,
+   d:'Work the water properly instead of crossing it. Slower, less cargo, far more rare finds.'}
 ];
 const SAIL_ORDER_BY_ID={};
 SAIL_ORDERS.forEach(o=>{ SAIL_ORDER_BY_ID[o.id]=o; });
@@ -32636,7 +32722,7 @@ function sailLaunch(i, slot, ordId){
     toast(why==='lvl' ? 'Sailing level too low for that crossing.'
         : why==='stores' ? (slot===1?'The consort cannot sail that far. Build her a bigger hull.'
                                     :'Your ship cannot sail that far. Build a bigger hull.')
-        : why==='chart' ? ('Sealed — you need the '+ITEMS[sailChartFor(i)].name+' first.')
+        : why==='chart' ? ('You need the '+ITEMS[sailChartFor(i)].name+' before you can go there.')
         : why==='unknown' ? 'The consort only sails water your own ship has already made landfall in.'
         : why==='crew' ? ('That water needs '+sailCrewNeed(sailIsle(i))+' crew — you have '+sailCrewCount()+'.')
         : 'That island is not on your chart.');
@@ -33486,10 +33572,17 @@ let sailOrd='steady';
 /* Whether the island's reference tables are expanded. Session-only on purpose:
    the drop rates matter enormously the first time you weigh an island up and
    almost never again, so the default is collapsed every time the game opens. */
-let sailManifest=false;
+let sailManifest=false;   /* vestigial: the Haul drawer tab replaced the toggle in 0.9.122.3 */
 /* Which Shipyard slot is open. The yard rendered hull + five part slots stacked,
    every tier of each, which was a very long scroll to reach one row. */
 let sailYardTab='hull';
+/* Which drawer section the Voyage tab is showing (0.9.122.3). Session-only, like
+   sailManifest — the drawer is reference, and where you left it last week is not
+   worth restoring. Falls back to 'isle' while no voyage has come back. */
+let sailDraw='last';
+/* Admiralty sub-tab. The tab used to render commissions, the ledger and every
+   chapter in one column — 1,486px of overflow, with the Claim buttons inside it. */
+let sailAdmTab='comms';
 let _slShipT=0, _slViewInit=false, _slRenderedTab='voyage';
 /* ZMIN has to go below 1 now that the world no longer shrinks to fit — a small
    window needs to be able to zoom out far enough to see the whole sheet.
@@ -34504,14 +34597,15 @@ function renderSail(){
         ?'the consort · hull '+(sailHullIdx(1)+1)+' of '+SAIL_HULLS.length
         :'Emberwatch Harbour · ship '+(s.hull+1)+' of '+SAIL_HULLS.length)+'</div></div></div>'
     +'<div class="sl-stats">'
-    +'<span class="sl-stat"'+_slTip('Weather resistance. Each island wants about 40 + 7.4 per its Sailing level. '
+    +'<span class="sl-stat"'+_slTip('How well she stands up to weather. Each island wants about 40 + 7.4 per its Sailing level. '
       +'Above that your odds shift toward Successful and Triumphant; below it, toward Battered and Wrecked. '
-      +'Hull matters more than anything else you can change.')+'>'+iconHTML('ui_shield')+'Hull <b>'+sailSound(sailSlot)+'</b></span>'
+      +'A bigger hull raises it more than anything else you can change.')+'>'+iconHTML('ui_shield')
+      +'Seaworthiness <b>'+sailSound(sailSlot)+'</b></span>'
     +'<span class="sl-stat"'+_slTip('How far you can sail. An island needing more Range than this cannot be attempted.')
       +'>'+iconHTML('ui_wind')+'Range <b>'+h.stores+'</b></span>'
     +'<span class="sl-stat"'+_slTip('How much bulk cargo fits in the hold. Anything over this is left behind. Rare finds and salvage do not use cargo space.')
       +'>'+iconHTML('ui_coin')+'Cargo <b>'+sailCargo(sailSlot)+'</b></span>'
-    +'<span class="sl-stat"'+_slTip('Only used in The Maw, where it shifts the odds the same way Hull does. No effect anywhere else.')
+    +'<span class="sl-stat"'+_slTip('Only used in The Maw, where it shifts the odds the same way Seaworthiness does. No effect anywhere else.')
       +'>'+iconHTML('ui_sword')+'Guns <b>'+sailArms(sailSlot)+'</b></span>'
     +(sailRig()>0?'<span class="sl-stat" data-tip="Cuts voyage time.">'+iconHTML('sl_sails')+'Rigging <b>'+Math.round(sailRig()*100)+'%</b></span>':'')
     /* Steering and the wage cut only appear once fitted, same as Rigging — an
@@ -34576,7 +34670,7 @@ function renderSail(){
     html+='<button class="'+cls+'" data-slisle="'+ix+'" style="--mkc:'+col+'">'
       +'<span class="d"></span>'
       +'<span class="n">'+is.n+'</span>'
-      +'<span class="lv">'+(why==='chart'?'sealed':(why==='ok'?'lv '+is.lv:'lv '+is.lv+' · locked'))+'</span>'
+      +'<span class="lv">'+(why==='chart'?'needs a map':(why==='ok'?'lv '+is.lv:'lv '+is.lv+' · locked'))+'</span>'
       +'</button>';
   });
   html+='</div></div>';
@@ -34587,276 +34681,326 @@ function renderSail(){
     +'<button id="slTabVoy" class="'+(sailTab==='voyage'?'on':'')+'">Voyage</button>'
     +'<button id="slTabYard" class="'+(sailTab==='yard'?'on':'')+'">Shipyard</button>'
     +'<button id="slTabCrew" class="'+(sailTab==='crew'?'on':'')+'">Crew</button>'
-    +'<button id="slTabHold" class="'+(sailTab==='hold'?'on':'')+'">Trove</button>'
+    +'<button id="slTabHold" class="'+(sailTab==='hold'?'on':'')+'">Relics</button>'
     /* The dot is the only nag in the panel: a commission is finished and unclaimed. */
     +'<button id="slTabAdm" class="'+(sailTab==='admiralty'?'on':'')
       +((state.sail.comms||[]).some(sailCommDone)?' dot':'')+'">Admiralty</button>'
-    +'</div><div class="sl-sidebody">';
+    +'</div>';
+  /* Each tab opens its own body now. Voyage puts a fixed deck above the scroller;
+     the rest are a scroller alone. */
 
   if(sailTab==='voyage'){
     const odds=sailOdds(sailSel, sailOrd, sailSlot), why=sailReach(sailSel, sailSlot),
           diff=sailDifficulty(sailSel, sailOrd, sailSlot);
     const reachOk=why==='ok';
     const myVoy=sailVoyOf(sailSlot);
+    const hasLast=!!(s.last && (s.last.slot|0)===sailSlot);
+    /* 'last' is the useful landing tab once anything has come back, and an empty
+       card the rest of the time — so resolve it here rather than storing a value
+       that depends on save history. */
+    let draw=sailDraw;
+    if(draw==='last' && !hasLast) draw='isle';
 
-    /* ── the fleet strip ──
-       Only drawn once a consort exists, so a single-ship captain never sees a
-       switcher with one option in it. Each button is the whole status of that
-       hull: what she is, and whether she is out. */
+    /* ════════════════════════════════════════════════════════════════════════
+       THE DECK — fixed. Island, its numbers, the odds, the orders, the button.
+       ════════════════════════════════════════════════════════════════════════ */
+    html+='<div class="sl-deck">';
+
+    /* Which hull. Only when there is a second one to choose between. */
     if(sailHasConsort()){
-      html+='<div class="sl-fleet">';
+      html+='<div class="sl-ships">';
       for(let k=0;k<SAIL_SLOTS;k++){
         const kv=sailVoyOf(k), kh=sailHullOf(k);
-        const st=kv?('at sea · '+sailFmtClock(kv.endsAt-Date.now()))
-                 :(sailDamaged(k)?'needs repair':'in port');
-        html+='<button class="sl-fl'+(sailSlot===k?' on':'')+(kv?' out':'')+(sailDamaged(k)?' bad':'')+'" data-slslot="'+k+'">'
-          +'<b>'+(k===0?'Your ship':'The consort')+'</b>'
-          +'<i>'+kh.n+'</i>'
+        const st=kv?('at sea \u00b7 '+sailFmtClock(kv.endsAt-Date.now()))
+                 :(sailDamaged(k)?'needs repair':'in port \u00b7 '+kh.n);
+        html+='<button class="'+(sailSlot===k?'on':'')+(kv?' out':'')+(sailDamaged(k)?' bad':'')
+          +'" data-slslot="'+k+'"><b>'+(k===0?'Your ship':'The consort')+'</b>'
           +'<em>'+st+'</em></button>';
       }
       html+='</div>';
     }
 
-    /* ── laid up ──
-       A damaged ship stops everything, and until 0.9.120 the only thing saying so
-       on this tab was the word "Repair her first" greying out Set sail — the bill
-       and the button both lived two clicks away in the Shipyard, and a player
-       reported having no idea what repair meant or wanted. It is the first thing
-       on the tab now, itemised, with the button in reach. */
-    if(slotDmg){
-      const bill=sailRepairBill(sailSlot);
-      const ids=Object.keys(bill);
-      const canFix=ids.every(id=>(state.items[id]||0)>=bill[id]);
-      html+='<div class="sl-laidup"><h5>'+iconHTML('ui_shield')+' '
-        +(sailSlot===1?'The consort is':'Your ship is')+' laid up</h5>'
-        +'<p>She came home <b>Wrecked</b>, which is the only outcome that damages a hull. '
-        +'She cannot leave the dock until the yard has her back together — no voyage, from this ship, at all.</p>'
-        +'<div class="sl-lab">What the yard wants</div><div class="sl-chips">'
-        +ids.map(id=>{
-            const have=state.items[id]||0, need=bill[id], ok=have>=need;
-            return '<span class="sl-chip'+(ok?' good':' bad')+'"'+_slItemTip(id,
-              ok?('You have '+have.toLocaleString()+'.')
-                :('You have '+have.toLocaleString()+' — '+(need-have).toLocaleString()+' short.'))
-              +'>'+iconHTML(id)+need.toLocaleString()+'× '+(ITEMS[id]?ITEMS[id].name:id)+'</span>';
-          }).join('')
-        +'</div>'
-        +'<p class="sl-note" style="margin-top:8px">A quarter of her build cost, in <b>land materials only</b> — '
-        +'logs and bars, never salvage. That rule exists so an empty hold can never strand you: '
-        +'salvage only comes back from voyages, and a laid-up ship cannot make one.</p>'
-        +'<div class="sl-btnrow" style="margin-top:9px">'
-        +'<button class="sl-btn" data-slfixslot="'+sailSlot+'"'+(canFix?'':' disabled')+'>'
-        +(canFix?'Repair her — '+ids.length+' material'+(ids.length===1?'':'s'):'Not enough materials')+'</button></div>'
-        +'</div>';
-    }
+    html+='<div class="sl-deckhd"><h4>'+isle.n+'</h4>'
+      +'<span class="sl-pill '+diff.c+'"'+_slTip(diff.n+' \u2014 '+odds[3].toFixed(1)
+        +'% of voyages here come back wrecked.')+'>'
+      +'<em style="background:'+diff.col+'"></em>'+diff.n+'</span>'
+      +(why==='chart'?'<span class="sl-chip vio">'+iconHTML(sailChartFor(sailSel))+'needs a map</span>':'')
+      +'</div>';
 
-    /* live voyage first — it is the thing you came back to check */
+    /* Four numbers that decide whether to go. Crew replaces Rare find on the
+       islands that ask for hands, because that is the one that blocks you. */
+    const needCrew=sailCrewNeed(isle);
+    const ordDur=m=>sailFmtMins(Math.max(1,Math.round(m*(1-sailRig())*sailOrder(sailOrd).dur)));
+    html+='<div class="sl-dgrid">'
+      +'<div class="sl-dg"'+_slTip('How long this crossing takes under the orders you have picked.')
+        +'><div class="k">Time</div><div class="v">'+ordDur(isle.m)+'</div></div>'
+      +'<div class="sl-dg'+(h.stores<isle.st?' bad':'')+'"'
+        +_slTip('Range needed to reach it. Yours is '+h.stores+'.')
+        +'><div class="k">Range</div><div class="v">'+isle.st+'</div></div>'
+      +(needCrew>0
+        ?'<div class="sl-dg'+(sailCrewCount()<needCrew?' bad':'')+'"'
+          +_slTip('Hands needed to work her in this water. You have '+sailCrewCount()+'.')
+          +'><div class="k">Crew</div><div class="v">'+sailCrewCount()+'/'+needCrew+'</div></div>'
+        :'<div class="sl-dg"'+_slTip('Chance of a rare find on top of the ordinary haul. Rare finds do not use cargo space.')
+          +'><div class="k">Rare find</div><div class="v">'
+          +sailPct(isle.find/Math.max(0.01,sailFindMult()))+'</div></div>')
+      +'<div class="sl-dg'+(odds[3]>=6?' bad':(odds[3]>=1.5?' warn':''))+'"'
+        +_slTip(isle.w+' \u2014 '+(SAIL_WATER_PLAIN[isle.w]||'')+' Most of the wreck risk here is the weather.')
+        +'><div class="k">Wreck</div><div class="v">'+(odds[3]<1?odds[3].toFixed(1):Math.round(odds[3]))+'%</div></div>'
+      +'</div>';
+
+    /* The bar, then the legend that says what each colour costs you. The bar
+       carries no text of its own now — a 2% sliver could never hold a number, and
+       the legend is where the reading actually happens. */
+    html+='<div>';
+    html+='<div class="sl-odds">';
+    ['sl-o1','sl-o2','sl-o3','sl-o4'].forEach((c,k)=>{
+      html+='<i class="'+c+'" style="flex-grow:'+odds[k].toFixed(2)+'"></i>';
+    });
+    html+='</div><div class="sl-oddrows">';
+    SAIL_GRADES.forEach((gd,k)=>{
+      html+='<div class="sl-oddrow'+(odds[k]<0.05?' nil':'')+'"'+_slTip(gd.p)+'>'
+        +'<em style="background:'+SAIL_GRADE_COL[k]+'"></em>'
+        +'<span class="g">'+gd.n+'</span>'
+        +'<span class="p">'+(odds[k]<1&&odds[k]>0?odds[k].toFixed(1):Math.round(odds[k]))+'%</span>'
+        +'<span class="d">'+SAIL_GRADE_SHORT[k]+'</span></div>';
+    });
+    html+='</div></div>';
+
+    /* ── one of three states below the odds: at sea, laid up, or ready ── */
     if(myVoy){
       const v=myVoy, dest=sailIsle(v.i), left=v.endsAt-Date.now();
-      const vo=sailOrder(v.ord);
-      html+='<div class="sl-card"><div class="sl-cardhd"><div>'
-        +'<h4>'+dest.n+'</h4><div class="sl-metarow"><span class="sl-chip good">at sea</span>'
-        +'<span class="sl-chip mut">'+sailFmtMins(Math.round(v.dur/60000))+' crossing</span>'
-        +'<span class="sl-chip mut">under '+vo.n.toLowerCase()+'</span></div></div></div>'
-        +'<div class="sl-lab">Time remaining</div>'
+      html+='<div>'
         +'<div class="sl-clock"><b id="slClock">'+sailFmtClock(left)+'</b>'
         +'<span id="slEta">back at '+new Date(v.endsAt).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})+'</span></div>'
         +'<div class="sl-pbar"><i id="slPBar" style="width:'+Math.min(100,Math.max(0,(1-left/v.dur)*100))+'%"></i></div>'
-        +'<p class="sl-note">Voyages run in real time. You can close the game — it still finishes.'
-        +(sailHasConsort()&&!sailVoyOf(sailSlot===0?1:0)?' The other hull is idle — send her out too.':'')+'</p>'
+        +'<p class="sl-note" style="margin-top:7px">At sea for <b>'+dest.n+'</b>, under '
+        +sailOrder(v.ord).n.toLowerCase()+'. Voyages run in real time \u2014 you can close the game.'
+        +(sailHasConsort()&&!sailVoyOf(sailSlot===0?1:0)?' The other hull is idle.':'')+'</p>'
         +'</div>';
-    }
-
-    /* last result */
-    /* The return card belongs to whichever hull wrote it, so it shows on that
-       ship's tab and only while she is back in port. */
-    if(!myVoy && s.last && (s.last.slot|0)===sailSlot){
-      const L=s.last, gr=SAIL_GRADES[L.g], di=sailIsle(L.i);
-      html+='<div class="sl-result '+gr.c+'"><h5>'+gr.n+' — '+di.n
-        +(L.ord&&L.ord!=='steady'?' <span style="font-size:calc(12px*var(--tscale));opacity:.7">('+sailOrder(L.ord).n.toLowerCase()+')</span>':'')
-        +'</h5><p>'
-        +(L.fogged?'<b>Blackfog took her off course.</b> She made landfall at '+di.n+', which is on no Admiralty chart. It is on yours now. ':'')
-        +gr.p+'</p><div class="sl-chips">';
-      if(L.gold) html+='<span class="sl-chip gold"'+_slTip('Paid on return. Every voyage pays gold; the grade multiplies it.')
-        +'>'+iconHTML('ui_coin')+'+'+L.gold.toLocaleString()+'g</span>';
-      for(const id in L.got){
-        const rare=ITEMS[id]&&ITEMS[id].rare;
-        html+='<span class="sl-chip'+(rare?' vio':'')+'"'+_slItemTip(id)+'>'+(rare?'✦ ':'')+iconHTML(id)
-          +(ITEMS[id]?ITEMS[id].name:id)+' ×'+L.got[id].toLocaleString()+'</span>';
-      }
-      html+='<span class="sl-chip good"'+_slTip('Scales with voyage length, the island level and the grade.')
-        +'>+'+L.xp.toLocaleString()+' Sailing xp</span>';
-      if(L.trove) html+='<span class="sl-chip vio"'+_slItemTip(L.trove,'Trove item — permanent bonus, stacks up to five. See the Trove tab.')
-        +'>'+iconHTML(L.trove)+ITEMS[L.trove].name+'</span>';
-      if(L.chart) html+='<span class="sl-chip gold"'+_slItemTip(L.chart,'Treasure map — '+sailIsle(SAIL_CHARTS[L.chart].isle).n+' is now open to you.')
-        +'>'+iconHTML(L.chart)+ITEMS[L.chart].name+' — '
-        +sailIsle(SAIL_CHARTS[L.chart].isle).n+' unsealed!</span>';
-      if(L.pet)  html+='<span class="sl-chip vio"'+_slItemTip('spet_sailing')+'>'+iconHTML('spet_sailing')+'A Storm Petrel followed her home!</span>';
-      if(L.cape) html+='<span class="sl-chip gold"'+_slItemTip('cape_sailing')+'>'+iconHTML('cape_sailing')+'Sailing Cape awarded!</span>';
-      if(L.capped) html+='<span class="sl-chip bad"'+_slTip('The hold ran out of space. Fit a bigger Cargo hold, a bigger hull, or hire a Cooper.')
-        +'>cargo full — the rest was left behind</span>';
-      /* Satchel refusals (0.9.75) are named, not summarised — if a voyage turned away
-         Salt-Forged Iron you need to know WHICH material to make room for. */
-      if(L.refused){
-        for(const id in L.refused)
-          html+='<span class="sl-chip bad"'+_slItemTip(id,'No free satchel slot, so it was left behind. Clear a slot before the next voyage.')
-            +'>'+iconHTML(id)+'no room for '+(ITEMS[id]?ITEMS[id].name:id)
-               +' ×'+L.refused[id].toLocaleString()+' — satchel full</span>';
-      }
-      if(L.g===3) html+='<span class="sl-chip bad"'+_slTip('A Wrecked return always damages the ship. You cannot sail again until the Shipyard repairs it.')
-        +'>ship needs repair</span>';
-      html+='</div>';
-      /* Ship's log (0.9.73, trimmed 0.9.78). Guarded on L.log so a `last` written by
-         an older version still renders — those entries are {d,t} objects, this one
-         writes plain strings, and both are handled here. */
-      if(L.log&&L.log.length){
-        html+='<div class="sl-log">';
-        L.log.forEach(e=>{ html+='<p>'+(typeof e==='string'?e:(e&&e.t)||'')+'</p>'; });
-        html+='</div>';
-      }
-      html+='</div>';
-    }
-
-    /* selected island */
-    html+='<div class="sl-card"><div class="sl-cardhd"><div>'
-      +'<h4>'+isle.n+'</h4>'
-      +'<div class="sl-metarow">'
-      +'<span class="sl-chip mut">'+(isle.hid?'Unlogged':SAIL_BANDS[isle.b].n)+'</span>'
-      +'<span class="sl-chip mut">Sailing '+isle.lv+'</span>'
-      +'<span class="sl-pill '+diff.c+'" data-tip="'+Math.round(odds[3])+'% of voyages here end wrecked.">'
-      +'<em style="background:'+diff.col+'"></em>'+diff.n+'</span>'
-      +(why==='chart'?'<span class="sl-chip vio">'+iconHTML(sailChartFor(sailSel))+'sealed</span>':'')
-      +'</div></div></div>'
-      +'<p class="sl-flavor">'+isle.f+'</p>'
-      +(sailChartHint(sailSel)?'<div class="sl-lab">Treasure map here</div>'
-        +'<div class="sl-tile" style="border-color:#5a4526;background:#1a1409">'
-        +'<div class="v sm" style="color:#e8d7b0">'+sailChartHint(sailSel)+'</div></div>':'')
-      +'<div class="sl-lab">The crossing</div><div class="sl-tiles">'
-      +'<div class="sl-tile" data-tip="How long the voyage takes.">'
-      +'<div class="k">Time at sea</div><div class="v">'+sailFmtMins(isle.m)+'</div></div>'
-      +'<div class="sl-tile'+(h.stores<isle.st?' bad':'')+'" data-tip="Range needed to sail here.">'
-      +'<div class="k">Range needed</div><div class="v">'+isle.st+'</div>'
-      +'<div class="sub">you have '+h.stores+'</div></div>'
-      +'<div class="sl-tile" data-tip="Chance of a treasure per voyage.">'
-      +'<div class="k">Treasure</div><div class="v">'+sailPct(isle.find/Math.max(0.01,sailFindMult()))+'</div>'
-      +'<div class="sub">per voyage</div></div>'
-      +(sailCrewNeed(isle)>0?'<div class="sl-tile'+(sailCrewCount()<sailCrewNeed(isle)?' bad':'')
-        +'" data-tip="Hands needed to work her in this water."><div class="k">Crew needed</div>'
-        +'<div class="v">'+sailCrewNeed(isle)+'</div><div class="sub">you have '+sailCrewCount()+'</div></div>':'')
-      +'</div>'
-      +'<div class="sl-lab">Conditions</div>'
-      +'<div class="sl-tile"><div class="k">'+isle.w+'</div><div class="v sm">'+(SAIL_WATER_PLAIN[isle.w]||'')+'</div></div>'
-      +'<div class="sl-lab">How the voyage usually ends</div><div class="sl-odds">';
-    ['sl-o1','sl-o2','sl-o3','sl-o4'].forEach((c,k)=>{
-      html+='<i class="'+c+'" style="flex-grow:'+odds[k].toFixed(2)+'">'+(odds[k]>=8?Math.round(odds[k])+'%':'')+'</i>';
-    });
-    html+='</div><div class="sl-oddkey">'
-      +'<span><em style="background:#dfb03c"></em>Triumphant · +40% cargo</span>'
-      +'<span><em style="background:#7da33f"></em>Successful · full cargo</span>'
-      +'<span><em style="background:#c9822e"></em>Battered · keep 65%</span>'
-      +'<span><em style="background:#a8412c"></em>Wrecked · keep 30%, ship damaged</span></div>';
-
-    /* ── the manifest ─────────────────────────────────────────────────────────
-       Everything below is reference, not decision: four chip walls listing every
-       possible drop and its rate. It used to sit BETWEEN the odds bar and the Set
-       sail button, which put the two controls that matter — the order and the
-       button — a full screen below the fold on every island. It is built into its
-       own string here and emitted after them, behind a toggle.
-
-       Collapsed by default and remembered for the session, because the numbers
-       matter enormously the first time you consider an island and almost never
-       again after that. */
-    let man='';
-    /* Possible loot, not a fixed list — bulk shows each entry's share of the draw,
-       rares show their flat per-voyage chance. */
-    man+='<div class="sl-lab">Possible haul · '+(isle.pk?isle.pk[0]+'–'+isle.pk[1]:'2')+' of '
-      +(isle.d?isle.d.length:0)+' per voyage</div><div class="sl-chips">';
-    const _tw=(isle.d||[]).reduce((a,e)=>a+e.w,0)||1;
-    (isle.d||[]).forEach(e=>{
-      man+='<span class="sl-chip"'+_slItemTip(e.i, Math.round(e.w/_tw*100)+'% share of each draw · '+e.q[0]+'–'+e.q[1]+' per pick.')
-        +'>'+iconHTML(e.i)
-        +(ITEMS[e.i]?ITEMS[e.i].name:e.i)+' <b style="color:#6d8c9c">'+Math.round(e.w/_tw*100)+'%</b></span>';
-    });
-    man+='</div>';
-    if(isle.r&&isle.r.length){
-      man+='<div class="sl-lab">Rare finds</div><div class="sl-chips">';
-      isle.r.forEach(e=>{
-        const pc=e.c*100;
-        man+='<span class="sl-chip gold"'+_slItemTip(e.i, 'Rolled on its own every voyage, at '+(pc<1?pc.toFixed(1):Math.round(pc))+'%. Does not use up a bulk pick.')
-          +'>'+iconHTML(e.i)
-          +(ITEMS[e.i]?ITEMS[e.i].name:e.i)+' <b>'+(pc<1?pc.toFixed(1):Math.round(pc))+'%</b></span>';
-      });
-      man+='</div>';
-    }
-    man+='<div class="sl-lab">Gold</div><div class="sl-chips">'
-      +'<span class="sl-chip gold" data-tip="Paid on every voyage, win or lose.">'+iconHTML('ui_coin')
-      +'~'+Math.round(isle.m*(isle.g||2)).toLocaleString()+'g</span></div>';
-
-    /* Shipwright materials, with the rate spelled out — these gate the top four
-       hulls and are sea-only, so a player has to be able to see where to farm. */
-    const mds=sailMatDrops(isle);
-    if(mds.length){
-      man+='<div class="sl-lab">Shipwright materials</div><div class="sl-chips">';
-      mds.forEach(md=>{
-        man+='<span class="sl-chip gold"'+_slItemTip(md.id, Math.round(md.chance*100)+'% per voyage here. Salvage — it can only be brought back by sailing, and the top hulls, guns and sails are built from it.')
-          +'>'+iconHTML(md.id)
-          +ITEMS[md.id].name+' · '+Math.round(md.chance*100)+'%</span>';
-      });
-      man+='</div>';
-    }
-
-    if(!myVoy){
+    } else if(slotDmg){
+      const bill=sailRepairBill(sailSlot);
+      const ids=Object.keys(bill);
+      const canFix=ids.every(id=>(state.items[id]||0)>=bill[id]);
+      html+='<div class="sl-deckmsg bad"><b>'+(sailSlot===1?'The consort':'Your ship')+' is laid up.</b> '
+        +'A Wrecked return is the only thing that damages a hull, and she cannot leave the dock '
+        +'until the yard has her back together. The bill is under <b>Ship</b> below.</div>'
+        +'<button class="sl-btn go" data-slfixslot="'+sailSlot+'"'+(canFix?'':' disabled')+'>'
+        +(canFix?'Repair her \u2014 '+ids.length+' material'+(ids.length===1?'':'s')
+                :'Not enough materials to repair')+'</button>';
+    } else {
       const wages=sailSlot===1?0:sailWageTotal();
-      const blocked = slotDmg?'Repair her first'
-        : !reachOk?(why==='chart'?'Sealed — find the map'
+      const blocked = !reachOk?(why==='chart'?'Needs a treasure map'
                   : why==='lvl'?('Needs Sailing '+isle.lv)
                   : why==='crew'?('Needs '+sailCrewNeed(isle)+' crew')
-                  : why==='unknown'?'Your own ship must land here first'
+                  : why==='unknown'?'Send your flagship here first'
                   : ('Needs Range '+isle.st))
         : (wages>0&&(state.coins||0)<wages*SILVER_PER_GOLD)?('Need '+wages.toLocaleString()+'g for wages')
         : null;
 
-      /* ── orders (0.9.118) ──
-         Sits directly above Set sail because it is the last decision before you
-         commit, and directly below the odds bar because the bar is what it
-         changes — picking Press her visibly slides the outcome bar as you click,
-         which is the whole explanation the mechanic needs. */
-      const ordDur=m=>sailFmtMins(Math.max(1,Math.round(m*(1-sailRig())*sailOrder(sailOrd).dur)));
-      html+='<div class="sl-lab">Orders to the master</div><div class="sl-orders">';
+      /* Orders sit directly under the bar they move: picking one visibly slides the
+         outcome bar, which is the whole explanation the mechanic needs. Each one
+         names the real wreck delta rather than the word "worse". */
+      const baseWreck=sailOdds(sailSel,'steady',sailSlot)[3];
+      html+='<div><div class="sl-lab" style="margin-top:0">How hard to push</div><div class="sl-orders">';
       SAIL_ORDERS.forEach(o=>{
         const dm=Math.round((o.dur-1)*100), fm=Math.round((o.find-1)*100), bm=Math.round((o.bulk-1)*100);
+        const wd=sailOdds(sailSel,o.id,sailSlot)[3]-baseWreck;
         const bits=[];
-        if(dm) bits.push((dm>0?'+':'')+dm+'% time');
-        if(o.odds) bits.push('worse odds');
         if(bm) bits.push((bm>0?'+':'')+bm+'% cargo');
-        if(fm) bits.push((fm>0?'+':'')+fm+'% treasure');
+        if(fm) bits.push((fm>0?'+':'')+fm+'% rare');
+        if(Math.abs(wd)>=0.05) bits.push((wd>0?'+':'')+(Math.abs(wd)<1?wd.toFixed(1):Math.round(wd))+'% wreck');
+        if(!bits.length) bits.push('no trade-off');
         html+='<button class="sl-ord'+(sailOrd===o.id?' on':'')+'" data-slord="'+o.id+'"'+_slTip(o.d)+'>'
           +'<b>'+o.n+'</b>'
-          +'<i>'+(bits.length?bits.join(' · '):'no trade')+'</i>'
+          +'<i>'+bits.join(' \u00b7 ')+'</i>'
           +'<em>'+sailFmtMins(Math.max(1,Math.round(isle.m*(1-sailRig())*o.dur)))+'</em>'
           +'</button>';
       });
-      html+='</div>';
+      html+='</div></div>';
 
-      html+='<div style="margin-top:11px"><button class="sl-btn go" id="slGo"'+(blocked?' disabled':'')+'>'
-        +(blocked?blocked:'Set sail · '+ordDur(isle.m))+'</button>'
-        +(sailWhyText(sailSel)?'<p class="sl-note">'+sailWhyText(sailSel)+'</p>':'')
-        +(wages>0?'<p class="sl-note" style="margin-top:6px">Crew wages: <b style="color:var(--ember)">'
-          +wages.toLocaleString()+'g</b>, paid at the dock.'
-          +(sailRig()>0?' Rigging cuts the crossing from '+sailFmtMins(isle.m)+'.':'')+'</p>'
-         :(sailRig()>0?'<p class="sl-note" style="margin-top:6px">Rigging cuts the crossing from '+sailFmtMins(isle.m)+'.</p>':''))
-        +(sailSlot===1?'<p class="sl-note" style="margin-top:6px">The consort sails free — no crew, so no wages.</p>':'')
-        +'</div>';
+      html+='<button class="sl-btn go" id="slGo"'+(blocked?' disabled':'')+'>'
+        +(blocked?blocked:'Set sail \u00b7 '+ordDur(isle.m))+'</button>';
+      if(blocked&&sailWhyText(sailSel))
+        html+='<div class="sl-deckmsg">'+sailWhyText(sailSel)+'</div>';
+      else if(wages>0)
+        html+='<p class="sl-note" style="margin:0">Crew wages <b style="color:var(--ember)">'
+          +wages.toLocaleString()+'g</b>, paid at the dock.</p>';
+    }
+    html+='</div>';   /* /sl-deck */
+
+    /* ════════════════════════════════════════════════════════════════════════
+       THE DRAWER — read-once material, one section at a time.
+       ════════════════════════════════════════════════════════════════════════ */
+    const drawTabs=[
+      {id:'last', n:'Last trip', dot:hasLast},
+      {id:'haul', n:'Haul',      dot:false},
+      {id:'isle', n:'Island',    dot:false},
+      {id:'ship', n:'Ship',      dot:sailDamaged(0)||sailDamaged(1)}
+    ];
+    html+='<div class="sl-drawseg">'+drawTabs.map(t=>
+      '<button class="'+(draw===t.id?'on':'')+(t.dot?' dot':'')+'" data-sldraw="'+t.id+'">'
+      +t.n+'</button>').join('')+'</div>';
+
+    html+='<div class="sl-sidebody">';
+
+    if(draw==='last'){
+      if(!hasLast){
+        html+='<div class="sl-drawempty">Nothing has come back from this ship yet.<br>'
+          +'Pick an island and set sail.</div>';
+      } else {
+        const L=s.last, gr=SAIL_GRADES[L.g], di=sailIsle(L.i);
+        html+='<div class="sl-result '+gr.c+'"><h5>'+gr.n+' \u2014 '+di.n
+          +(L.ord&&L.ord!=='steady'?' <span style="font-size:calc(12px*var(--tscale));opacity:.7">('+sailOrder(L.ord).n.toLowerCase()+')</span>':'')
+          +'</h5><p>'
+          +(L.fogged?'<b>Blackfog took her off course.</b> She made landfall at '+di.n+', which is on no Admiralty chart. It is on yours now. ':'')
+          +gr.p+'</p><div class="sl-chips">';
+        if(L.gold) html+='<span class="sl-chip gold"'+_slTip('Paid on return. Every voyage pays gold; the grade multiplies it.')
+          +'>'+iconHTML('ui_coin')+'+'+L.gold.toLocaleString()+'g</span>';
+        for(const id in L.got){
+          const rare=ITEMS[id]&&ITEMS[id].rare;
+          html+='<span class="sl-chip'+(rare?' vio':'')+'"'+_slItemTip(id)+'>'+(rare?'\u2726 ':'')+iconHTML(id)
+            +(ITEMS[id]?ITEMS[id].name:id)+' \u00d7'+L.got[id].toLocaleString()+'</span>';
+        }
+        html+='<span class="sl-chip good"'+_slTip('Scales with voyage length, the island level and the grade.')
+          +'>+'+L.xp.toLocaleString()+' Sailing xp</span>';
+        if(L.trove) html+='<span class="sl-chip vio"'+_slItemTip(L.trove,'Relic \u2014 permanent bonus, stacks up to five. See the Relics tab.')
+          +'>'+iconHTML(L.trove)+ITEMS[L.trove].name+'</span>';
+        if(L.chart) html+='<span class="sl-chip gold"'+_slItemTip(L.chart,'Treasure map \u2014 '+sailIsle(SAIL_CHARTS[L.chart].isle).n+' is now open to you.')
+          +'>'+iconHTML(L.chart)+ITEMS[L.chart].name+' \u2014 '
+          +sailIsle(SAIL_CHARTS[L.chart].isle).n+' unsealed!</span>';
+        if(L.pet)  html+='<span class="sl-chip vio"'+_slItemTip('spet_sailing')+'>'+iconHTML('spet_sailing')+'A Storm Petrel followed her home!</span>';
+        if(L.cape) html+='<span class="sl-chip gold"'+_slItemTip('cape_sailing')+'>'+iconHTML('cape_sailing')+'Sailing Cape awarded!</span>';
+        if(L.capped) html+='<span class="sl-chip bad"'+_slTip('The hold ran out of space. Fit a bigger Cargo hold, a bigger hull, or hire a Cooper.')
+          +'>cargo full \u2014 the rest was left behind</span>';
+        if(L.refused){
+          for(const id in L.refused)
+            html+='<span class="sl-chip bad"'+_slItemTip(id,'No free satchel slot, so it was left behind. Clear a slot before the next voyage.')
+              +'>'+iconHTML(id)+'no room for '+(ITEMS[id]?ITEMS[id].name:id)
+                 +' \u00d7'+L.refused[id].toLocaleString()+' \u2014 satchel full</span>';
+        }
+        if(L.g===3) html+='<span class="sl-chip bad"'+_slTip('A Wrecked return always damages the ship. Repair her under Ship.')
+          +'>ship needs repair</span>';
+        html+='</div>';
+        if(L.log&&L.log.length){
+          html+='<div class="sl-log">';
+          L.log.forEach(e=>{ html+='<p>'+(typeof e==='string'?e:(e&&e.t)||'')+'</p>'; });
+          html+='</div>';
+        }
+        html+='</div>';
+      }
+
+    } else if(draw==='haul'){
+      /* Every possible drop and its rate. Reference, not decision — which is why it
+         is behind a tab now instead of sitting between the odds bar and the button. */
+      html+='<div class="sl-lab" style="margin-top:0">What you can bring back</div>'
+        +'<div class="sl-lab">Ordinary haul \u00b7 '
+        +(isle.pk?isle.pk[0]+'\u2013'+isle.pk[1]:'2')+' of '+(isle.d?isle.d.length:0)+' per voyage</div>'
+        +'<div class="sl-chips">';
+      const _tw=(isle.d||[]).reduce((a,e)=>a+e.w,0)||1;
+      (isle.d||[]).forEach(e=>{
+        html+='<span class="sl-chip"'+_slItemTip(e.i, Math.round(e.w/_tw*100)+'% share of each draw \u00b7 '+e.q[0]+'\u2013'+e.q[1]+' per pick.')
+          +'>'+iconHTML(e.i)+(ITEMS[e.i]?ITEMS[e.i].name:e.i)
+          +' <b style="color:#6d8c9c">'+Math.round(e.w/_tw*100)+'%</b></span>';
+      });
+      html+='</div>';
+      if(isle.r&&isle.r.length){
+        html+='<div class="sl-lab">Rare finds</div><div class="sl-chips">';
+        isle.r.forEach(e=>{
+          const pc=e.c*100;
+          html+='<span class="sl-chip gold"'+_slItemTip(e.i, 'Rolled on its own every voyage, at '+(pc<1?pc.toFixed(1):Math.round(pc))+'%. Does not use up a bulk pick.')
+            +'>'+iconHTML(e.i)+(ITEMS[e.i]?ITEMS[e.i].name:e.i)
+            +' <b>'+(pc<1?pc.toFixed(1):Math.round(pc))+'%</b></span>';
+        });
+        html+='</div>';
+      }
+      const mds=sailMatDrops(isle);
+      if(mds.length){
+        html+='<div class="sl-lab">Shipwright materials</div><div class="sl-chips">';
+        mds.forEach(md=>{
+          html+='<span class="sl-chip gold"'+_slItemTip(md.id, Math.round(md.chance*100)+'% per voyage here. Salvage \u2014 it can only be brought back by sailing, and the top hulls, guns and sails are built from it.')
+            +'>'+iconHTML(md.id)+ITEMS[md.id].name+' \u00b7 '+Math.round(md.chance*100)+'%</span>';
+        });
+        html+='</div>';
+      }
+      html+='<div class="sl-lab">Gold</div><div class="sl-chips">'
+        +'<span class="sl-chip gold"'+_slTip('Paid on every voyage, win or lose. The grade multiplies it.')+'>'
+        +iconHTML('ui_coin')+'~'+Math.round(isle.m*(isle.g||2)).toLocaleString()+'g</span></div>';
+
+    } else if(draw==='isle'){
+      html+='<div class="sl-card"><div class="sl-cardhd"><div><h4>'+isle.n+'</h4>'
+        +'<div class="sl-metarow">'
+        +'<span class="sl-chip mut">'+(isle.hid?'Unlogged':SAIL_BANDS[isle.b].n)+'</span>'
+        +'<span class="sl-chip mut">Sailing '+isle.lv+'</span>'
+        +'</div></div></div>'
+        +'<p class="sl-flavor">'+isle.f+'</p></div>';
+      html+='<div class="sl-lab" style="margin-top:0">Water</div>'
+        +'<div class="sl-tile"><div class="k">'+isle.w+'</div>'
+        +'<div class="v sm">'+(SAIL_WATER_PLAIN[isle.w]||'')+'</div></div>';
+      if(sailChartHint(sailSel)){
+        html+='<div class="sl-lab">Treasure map here</div>'
+          +'<div class="sl-tile" style="border-color:#5a4526;background:#1a1409">'
+          +'<div class="v sm" style="color:#e8d7b0">'+sailChartHint(sailSel)+'</div></div>';
+      }
+      if(!reachOk&&sailWhyText(sailSel)){
+        html+='<div class="sl-lab">Why you cannot go</div>'
+          +'<div class="sl-deckmsg">'+sailWhyText(sailSel)+'</div>';
+      }
+
+    } else {   /* ship */
+      for(let k=0;k<SAIL_SLOTS;k++){
+        if(k===1&&!sailHasConsort()) continue;
+        const kh=sailHullOf(k), kv=sailVoyOf(k), kd=sailDamaged(k);
+        html+='<div class="sl-card"><div class="sl-cardhd"><div>'
+          +'<h4>'+(k===0?'Your ship':'The consort')+'</h4>'
+          +'<div class="sl-metarow"><span class="sl-chip mut">'+kh.n+'</span>'
+          +(kv?'<span class="sl-chip gold">at sea</span>'
+              :(kd?'<span class="sl-chip bad">laid up</span>':'<span class="sl-chip good">in port</span>'))
+          +'</div></div></div>';
+        if(kd){
+          const bill=sailRepairBill(k), ids=Object.keys(bill);
+          const canFix=ids.every(id=>(state.items[id]||0)>=bill[id]);
+          html+='<p class="sl-note" style="margin:0 0 8px">She came home <b>Wrecked</b> and cannot '
+            +'leave the dock until the yard has her back together.</p>'
+            +'<div class="sl-lab" style="margin-top:0">What the yard wants</div><div class="sl-chips">'
+            +ids.map(id=>{
+                const have=state.items[id]||0, need=bill[id], ok=have>=need;
+                return '<span class="sl-chip'+(ok?' good':' bad')+'"'+_slItemTip(id,
+                  ok?('You have '+have.toLocaleString()+'.')
+                    :('You have '+have.toLocaleString()+' \u2014 '+(need-have).toLocaleString()+' short.'))
+                  +'>'+iconHTML(id)+need.toLocaleString()+'\u00d7 '+(ITEMS[id]?ITEMS[id].name:id)+'</span>';
+              }).join('')
+            +'</div>'
+            +'<p class="sl-note" style="margin-top:8px">A quarter of her build cost, in <b>land '
+            +'materials only</b> \u2014 logs and bars, never salvage. That rule exists so an empty '
+            +'hold can never strand you: salvage only comes back from voyages, and a laid-up ship '
+            +'cannot make one.</p>'
+            +'<div class="sl-btnrow" style="margin-top:9px"><button class="sl-btn" data-slfixslot="'+k+'"'
+            +(canFix?'':' disabled')+'>'+(canFix?'Repair her':'Not enough materials')+'</button></div>';
+        } else {
+          html+='<div class="sl-tiles">'
+            +'<div class="sl-tile"><div class="k">Seaworthiness</div><div class="v">'+sailSound(k)+'</div></div>'
+            +'<div class="sl-tile"><div class="k">Range</div><div class="v">'+kh.stores+'</div></div>'
+            +'<div class="sl-tile"><div class="k">Cargo</div><div class="v">'+sailCargo(k)+'</div></div>'
+            +'</div>';
+          if(k===1) html+='<p class="sl-note" style="margin-top:8px">The consort sails with no hired '
+            +'hands \u2014 no crew bonuses, and no wages. She is always kept a tier below the flagship.</p>';
+          else if(sailWageTotal()>0) html+='<p class="sl-note" style="margin-top:8px">Crew wages '
+            +'<b style="color:var(--ember)">'+sailWageTotal().toLocaleString()+'g</b> a voyage, paid at the dock.'
+            +(sailRig()>0?' Rigging cuts every crossing by '+Math.round(sailRig()*100)+'%.':'')+'</p>';
+        }
+        html+='</div>';
+      }
+      if(!sailHasConsort()){
+        html+='<div class="sl-card"><div class="sl-cardhd"><div><h4>A second hull</h4>'
+          +'<div class="sl-metarow"><span class="sl-chip mut">two voyages at once</span></div></div></div>'
+          +'<p class="sl-note" style="margin:0">A consort sails her own crossings alongside your '
+          +'flagship, one tier below her and with no crew. Build her in the Shipyard.</p></div>';
+      }
     }
 
-    /* The reference tables, after the controls and behind a toggle. */
-    html+='<button class="sl-manbtn'+(sailManifest?' on':'')+'" id="slMan">'
-      +(sailManifest?'▾':'▸')+' Full manifest'
-      +'<i>'+(isle.d?isle.d.length:0)+' bulk · '+((isle.r&&isle.r.length)||0)+' rare'
-      +(mds.length?' · '+mds.length+' salvage':'')+'</i></button>'
-      +(sailManifest?'<div class="sl-man">'+man+'</div>':'');
-    html+='</div>';
-
   } else if(sailTab==='yard'){
+    html+='<div class="sl-sidebody">';
     /* ── shipyard ── */
     /* Fitted parts — cannons and sails share one row renderer. */
     /* Five slots share this renderer (0.9.72). `stat` is the one line that differs
@@ -35007,7 +35151,7 @@ function renderSail(){
         const cap=(s.hull|0)-1, cur=sailHullIdx(1);
         html+='<p class="sl-note" style="margin:0 0 10px">The consort is built from the same table as your own ship '
           +'and is capped one tier below her — build your own hull up first and the consort can follow. '
-          +'Fitted parts and the Trove are shared with the flagship; crew are not.</p>';
+          +'Fitted parts and your relics are shared with the flagship; crew are not.</p>';
         SAIL_HULLS.forEach((hh,t)=>{
           if(t>cap+1) return;
           const isCur=t===cur, owned=t<=cur, canLvl=lvl>=hh.lv, overCap=t>cap;
@@ -35054,6 +35198,7 @@ function renderSail(){
       +'<b>Rudder</b>. A rudder never improves a voyage — it only converts some Wrecked results into Battered.</p></div>';
 
   } else if(sailTab==='crew'){
+    html+='<div class="sl-sidebody">';
     /* ── crew ── */
     const berths=sailBerths(), have=sailCrewCount(), wages=sailWageTotal();
     html+='<div class="sl-card"><div class="sl-cardhd"><div><h4>Ship\'s Company</h4>'
@@ -35090,6 +35235,7 @@ function renderSail(){
     html+='</div>';
 
   } else if(sailTab==='hold'){
+    html+='<div class="sl-sidebody">';
     /* ── the Trove (0.9.71, rewritten for clarity 0.9.78) ──
        The mechanics never changed; the words did. The old copy said "counted",
        showed an unlabelled per-copy figure in the right-hand chip, and described
@@ -35099,13 +35245,13 @@ function renderSail(){
        you hold, what they are giving you right now, and what one more would add. */
     const setOn=sailTroveSet();
     const kept=SAIL_TROVES.filter(t=>sailTroveCount(t.id)>0).length;
-    html+='<div class="sl-card"><div class="sl-cardhd"><div><h4>The Trove</h4>'
+    html+='<div class="sl-card"><div class="sl-cardhd"><div><h4>Relics</h4>'
       +'<div class="sl-metarow"><span class="sl-chip mut">'+kept+' of '+SAIL_TROVES.length+' kinds found</span>'
       +'<span class="sl-chip '+(setOn?'gold':'mut')+'">'+(setOn?'full set — +'+Math.round(SAIL_TROVE_SET_XP*100)+'% Sailing xp':'full set not yet held')+'</span>'
       +'</div></div></div>'
-      +'<p class="sl-note" style="margin:0 0 10px">Five trove items, one per region of the chart. '
+      +'<p class="sl-note" style="margin:0 0 10px">Five relics, one per region of the chart. '
       +'A <b>Successful</b> or <b>Triumphant</b> voyage rolls once for the item belonging to that region, at the island\'s '
-      +'<b>Treasure</b> chance — doubled on a Triumphant return.</p>'
+      +'<b>Rare find</b> chance — doubled on a Triumphant return.</p>'
       +'<p class="sl-note" style="margin:0 0 10px">Nothing to equip or activate — just holding one applies its bonus. '
       +'Each copy stacks, up to five; extras past that do nothing. They cannot be bought, sold or used up.</p>';
     SAIL_TROVES.forEach(tv=>{
@@ -35134,14 +35280,24 @@ function renderSail(){
     html+='</div>';
 
   } else if(sailTab==='admiralty'){
-    /* ── the Admiralty (0.9.118) ──
-       Three things in reading order: what to do next, how far along you are, and
-       what any of it has been about. Commissions first because they are the only
-       part with a button. */
+    /* ── the Admiralty (0.9.118, split 0.9.122.3) ──
+       Commissions, the progress sheet and the papers used to render stacked in one
+       column: 1,486px of overflow with the Claim buttons buried inside it. Same
+       three things in the same reading order, one at a time. */
     const board=sailCommBoard();
+    const admTabs=[
+      {id:'comms',  n:'Commissions', dot:board.some(sailCommDone)},
+      {id:'ledger', n:'Progress',    dot:false},
+      {id:'papers', n:'Papers',      dot:false}
+    ];
+    html+='<div class="sl-drawseg">'+admTabs.map(t=>
+      '<button class="'+(sailAdmTab===t.id?'on':'')+(t.dot?' dot':'')+'" data-sladm="'+t.id+'">'
+      +t.n+'</button>').join('')+'</div>';
+    html+='<div class="sl-sidebody">';
+    if(sailAdmTab==='comms'){
     html+='<div class="sl-card"><div class="sl-cardhd"><div><h4>Commissions</h4>'
       +'<div class="sl-metarow"><span class="sl-chip mut">'+((s.commsDone|0)).toLocaleString()+' paid</span>'
-      +'<span class="sl-chip mut">three at a time</span></div></div></div>'
+      +'<span class="sl-chip mut">3 open at once</span></div></div></div>'
       +'<p class="sl-note" style="margin:0 0 10px">The Admiralty pays for work it could do itself and would rather not. '
       +'A commission fills as you sail — nothing to start and nothing to fail. Claiming one immediately '
       +'posts another in its place.</p>';
@@ -35159,14 +35315,15 @@ function renderSail(){
         +'<span class="pay">pays '+rw.gold.toLocaleString()+'g</span>'
         +'<span class="pay">'+rw.xp.toLocaleString()+' Sailing xp</span></div></div>'
         +(done?'<button class="sl-btn sm" data-slclaim="'+ci+'">Claim</button>'
-              :'<span class="sl-chip mut">in hand</span>')
+              :'<span class="sl-chip mut">in progress</span>')
         +'</div>';
     });
     html+='</div>';
 
-    /* the Ledger — everything sailing counts, derived, never stored */
-    html+='<div class="sl-card"><div class="sl-cardhd"><div><h4>The Ledger</h4>'
-      +'<div class="sl-metarow"><span class="sl-chip mut">what is left</span></div></div></div>';
+    } else if(sailAdmTab==='ledger'){
+    /* the progress sheet — everything sailing counts, derived, never stored */
+    html+='<div class="sl-card"><div class="sl-cardhd"><div><h4>Progress</h4>'
+      +'<div class="sl-metarow"><span class="sl-chip mut">what\'s left to find</span></div></div></div>';
     sailLedger().forEach(row=>{
       const full=row.b!=null&&row.a>=row.b;
       /* A row with no ceiling gets no bar. Rendering one at 100% made "Commissions
@@ -35180,6 +35337,7 @@ function renderSail(){
     });
     html+='</div>';
 
+    } else {
     /* the papers */
     const got=s.chapters||{};
     html+='<div class="sl-card"><div class="sl-cardhd"><div><h4>Admiralty Papers</h4>'
@@ -35195,6 +35353,7 @@ function renderSail(){
         +'</div>';
     });
     html+='</div>';
+    }
   }
 
   html+='</div></div></div></div>';
@@ -35221,7 +35380,6 @@ function renderSail(){
   on('slGoLog','click',   ()=>{ closeSailPanel(); $('tabComp').click(); });
   on('slGo','click',()=>sailLaunch(sailSel, sailSlot, sailOrd));
   on('slConsort','click',sailBuildConsort);
-  on('slMan','click',()=>{ sailManifest=!sailManifest; renderSail(); });
   on('slFix2','click',()=>sailRepair(1));
   p.querySelectorAll('[data-slfixslot]').forEach(b=>{
     b.addEventListener('click',()=>sailRepair(+b.getAttribute('data-slfixslot')||0));
@@ -35233,6 +35391,14 @@ function renderSail(){
   });
   p.querySelectorAll('[data-slord]').forEach(b=>{
     b.addEventListener('click',()=>{ sailOrd=b.getAttribute('data-slord'); renderSail(); });
+  });
+  /* Drawer and Admiralty sub-tabs. Both are view state only — neither writes save
+     data, so the scroll reset below is the whole of their side effect. */
+  p.querySelectorAll('[data-sldraw]').forEach(b=>{
+    b.addEventListener('click',()=>{ sailDraw=b.getAttribute('data-sldraw'); renderSail(); });
+  });
+  p.querySelectorAll('[data-sladm]').forEach(b=>{
+    b.addEventListener('click',()=>{ sailAdmTab=b.getAttribute('data-sladm'); renderSail(); });
   });
   p.querySelectorAll('[data-slclaim]').forEach(b=>{
     b.addEventListener('click',()=>sailCommClaim(+b.getAttribute('data-slclaim')));
