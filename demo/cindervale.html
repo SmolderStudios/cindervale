@@ -640,6 +640,7 @@ header h1 .flame{color:var(--ember)}
 .sl-tile[data-tip]:hover::after,
 .sl-pill[data-tip]:hover::after,
 .sl-chip[data-tip]:hover::after,
+.cveat[data-tip]:hover::after,
 .cmb-slot[data-tip]:hover::after{
   content:attr(data-tip);
   position:absolute;
@@ -4953,6 +4954,25 @@ body:not(.is-demo) .demo-only{display:none !important}
 .cvswing.foe i{background:#8e4a3a}
 .cvswing.you i{background:#6a8a3a}
 .cvhp .cmb-status{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px;min-height:calc(15px*var(--tscale))}
+/* ── auto-eat line (0.9.122.2) ──────────────────────────────────────────────────
+   The threshold lived only as a percent in the food menu, so nobody could tell
+   whether it sat above the biggest blow the foe throws — which is the whole
+   question behind "can I leave this running". The chip carries the HP number and
+   the line marks it on the track, both coloured by that comparison. */
+.cveat{position:relative;display:inline-flex;align-items:center;gap:3px;align-self:center;
+  font-family:var(--num);font-size:calc(11px*var(--tscale));line-height:1;
+  padding:2px 5px;border-radius:3px;background:#0d0a06;border:1px solid #3a4a1e;
+  color:#a8cf60;cursor:var(--cur-help);white-space:nowrap}
+.cveat .ev-icon{width:calc(11px*var(--tscale));height:calc(11px*var(--tscale));flex:none}
+.cveat b{font-weight:700}
+.cveat.risk{border-color:#6a3a18;color:#e0a24a}
+.cveat.nofood{border-color:#6a2a20;color:#d8705a}
+.cveat.off{border-color:#3a3025;color:#7a6a4a}
+.cveat-mark{position:absolute;top:0;bottom:0;width:2px;margin-left:-1px;border-radius:1px;
+  background:#eef3d4;box-shadow:0 0 0 1px rgba(0,0,0,.75);opacity:.9;pointer-events:none}
+.cveat-mark.risk{background:#ffb35c}
+.cveat[data-tip]:hover::after{top:auto;bottom:calc(100% + 6px);left:auto;right:0;
+  min-width:0;max-width:280px;font-size:calc(13px*var(--tscale))}
 
 /* ── the strip. Green means you beat its matching number. ────────────────────── */
 .cvarena-strip{display:flex;background:#140e07;border-top:1px solid rgba(199,155,78,.13)}
@@ -5044,7 +5064,7 @@ body:not(.is-demo) .demo-only{display:none !important}
 
 .ev-icon.art-mon{object-fit:contain;image-rendering:auto;vertical-align:middle}
 
-/* ════════ [CSS-35] ENCHANTING PANEL (0.9.123) ═══════════════════════════════════
+/* ════════ [CSS-35] ENCHANTING PANEL (0.9.122.2) ═══════════════════════════════════
    The panel used to be a <select> plus a column of thin flex strips, so your
    collection was invisible (one dropdown entry at a time), the set bonuses only
    appeared once they were already live, and nothing anywhere told you what your
@@ -5580,6 +5600,18 @@ body:not(.is-demo) .demo-only{display:none !important}
 .cvrail .cmb-log{max-height:calc(132px*var(--tscale));overflow:hidden;background:transparent;border:0;padding:0}
 .cvrail .cstyle-btns{display:flex;flex-wrap:wrap;gap:5px}
 .cvrail .cmb-style{padding:5px 9px;font-size:calc(11.5px*var(--tscale))}
+/* ── training-button level progress (0.9.122.2) ─────────────────────────────────
+   The level number was already on the button; this is the run-up to the next
+   one. It fills the button rather than sitting under it because the rail has no
+   room for a second row, and because that is what was asked for. */
+.cmb-style{position:relative;overflow:hidden}
+.cmb-style .cst-prog{position:absolute;left:0;top:0;bottom:0;z-index:0;
+  background:linear-gradient(90deg,rgba(224,118,47,.13),rgba(224,118,47,.26));
+  border-right:1px solid rgba(255,180,120,.42);
+  transition:width .25s ease;pointer-events:none}
+.cmb-style.sel .cst-prog{background:linear-gradient(90deg,rgba(255,176,110,.16),rgba(255,176,110,.34));
+  border-right-color:rgba(255,214,170,.7)}
+.cmb-style .cst-nm,.cmb-style .cst-lv{position:relative;z-index:1}
 .cvrail .cmb-foodmenu{background:transparent;border:0;padding:0}
 .cvrail .cmb-foodmenu-head{display:none}
 /* The empty-state line is .fm-empty and inherits a serif body size; at rail
@@ -6149,7 +6181,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.122.1">v0.9.122</div>
+  <div class="mm-ver" data-build="0.9.122.2">v0.9.122</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -8562,8 +8594,44 @@ function ownsItemAnywhere(id){
 function reservedForEquip(id){
   if(!id) return 0;
   const maps=[state.equipped,state.combatEquipped,state.skillingEquipped];
-  for(const mp of maps){ if(!mp) continue; for(const s in mp){ if(mp[s]===id) return 1; } }
+  let most=0;
+  for(const mp of maps){
+    if(!mp) continue;
+    let n=0;
+    for(const s in mp){ if(mp[s]===id) n++; }
+    if(n>most) most=n;
+  }
+  return most;
+}
+/* How many physical copies of an item the player has. Satchel stacks report their
+   quantity; state.gear (shop permanents) and state.skillingGear (set pieces) are
+   one-of collections, so they are worth exactly one. This is the cap on how many
+   slots of a single loadout may name the same id — a matched pair of rings is two
+   rings or it is nothing. */
+function ownedCopies(id){
+  if(!id) return 0;
+  const n=(state.items&&state.items[id])||0;
+  if(n>0) return n;
+  if(Array.isArray(state.gear)&&state.gear.indexOf(id)>=0) return 1;
+  if(state.skillingGear&&state.skillingGear[id]) return 1;
   return 0;
+}
+/* Drop duplicate copies a loadout is holding beyond what the satchel can back.
+   Sell paths clamp to sellableQty so they cannot get here, but crafting inputs and
+   consumption paths decrement directly — without this, wearing two rings and then
+   spending one leaves a phantom on the doll. */
+function trimLoadoutCopies(id){
+  if(!id) return;
+  const cap=Math.max(0,ownedCopies(id));
+  const maps=[state.equipped,state.combatEquipped,state.skillingEquipped];
+  const done=[];
+  for(const mp of maps){
+    if(!mp||done.indexOf(mp)>=0) continue;
+    done.push(mp);
+    const slots=[];
+    for(const s in mp){ if(mp[s]===id) slots.push(s); }
+    while(slots.length>cap) delete mp[slots.pop()];
+  }
 }
 /* Satchel quantity the player is actually allowed to sell — the worn copy is
    held back. Every sell path must clamp to this, not to the raw stack. */
@@ -8587,7 +8655,7 @@ function unequipEverywhere(id){
    paper doll first, THEN reclaim its gems. Order matters — reclaimSocketsFor is
    gated on ownsItemAnywhere, which stays true while a loadout still names it. */
 function releaseIfGone(id){
-  if((state.items&&state.items[id]||0)>0) return;
+  if((state.items&&state.items[id]||0)>0){ trimLoadoutCopies(id); return; }
   unequipEverywhere(id);
   if(!ownsItemAnywhere(id)) reclaimSocketsFor(id);
 }
@@ -15022,12 +15090,19 @@ function equipBodyItem(id,slot,scope){
   var fromSkilling=!!(state.skillingGear&&state.skillingGear[id]);
   if(!fromSatchel&&!fromShop&&!fromSkilling){toast('You do not have that item.');return;}
   var loadout=_loadoutFor(scope);
-  // Remove from any other slot in the SAME loadout first — prevents double-equip
-  // of multi-slot items (rings) within the same loadout. Cross-loadout doesn't
-  // collide because each loadout is independent.
+  /* (0.9.122.2) A loadout may name the same id in more than one slot — a matched pair
+     of rings — but never more times than the player owns copies. The old rule
+     deleted every other slot unconditionally, so a player who crafted a second
+     Sapphire Ring could only ever wear one and the picker offered "Move here"
+     instead of "Equip". Trim the oldest duplicates until the pair fits what is
+     actually in the satchel. Cross-loadout is still unbounded on purpose: combat
+     and skilling naming one id is one physical item worn in two saved loadouts. */
+  var _dupes=[];
   for(var oSlot in loadout){
-    if(oSlot!==slot&&loadout[oSlot]===id) delete loadout[oSlot];
+    if(oSlot!==slot&&loadout[oSlot]===id) _dupes.push(oSlot);
   }
+  var _cap=Math.max(1,ownedCopies(id));
+  while(_dupes.length+1>_cap) delete loadout[_dupes.shift()];
   // Two-handed weapons (1.0.66) occupy both hands — equipping one drops the
   // shield, and equipping a shield drops a worn two-hander. Only relevant to the
   // combat loadout, where weapon+shield coexist.
@@ -15078,15 +15153,20 @@ function equipGearPreset(skillKey, silent){
   var preset=state.gearPresets[skillKey];
   // Apply only to the skilling loadout — combat loadout stays untouched.
   BODY_SLOTS.forEach(function(s){ delete state.skillingEquipped[s.slot]; });
-  var applied=0, missing=0;
+  var applied=0, missing=0, used={};
   Object.keys(preset).forEach(function(slot){
     var itemId=preset[slot];
     if(!itemId) return;
     var ownedSatchel=ITEMS[itemId]&&(state.items[itemId]||0)>0;
     var ownedSkilling=!!(state.skillingGear&&state.skillingGear[itemId]);
     var ownedShop=state.gear&&state.gear.includes(itemId);
-    if(ownedSatchel||ownedSkilling||ownedShop){ state.skillingEquipped[slot]=itemId; applied++; }
-    else missing++;
+    if(!(ownedSatchel||ownedSkilling||ownedShop)){ missing++; return; }
+    // A preset may name one id in both ring hands, but only if the pair exists —
+    // this writes the loadout directly and so has to enforce the cap itself.
+    var cap=Math.max(1,ownedCopies(itemId));
+    if((used[itemId]||0)>=cap){ missing++; return; }
+    used[itemId]=(used[itemId]||0)+1;
+    state.skillingEquipped[slot]=itemId; applied++;
   });
   renderAll(); saveGame();
   if(!silent){
@@ -17409,6 +17489,15 @@ const COMBAT_STATS={
 
 function cmbXp(stat){ return (state&&state.combatXp&&state.combatXp[stat])||0; }
 function cmbLvl(stat){ return levelFromXp(cmbXp(stat)); }
+/* Level progress for a combat stat, in the one shape every readout of it needs.
+   Mirrors the skilling XP bar's maths (XP_CUM window, clamped at MAX_LEVEL). */
+function cmbLvlProgress(stat){
+  const xp=cmbXp(stat), lvl=levelFromXp(xp);
+  if(lvl>=MAX_LEVEL) return {lvl:lvl, pct:100, need:0, xp:xp, max:true};
+  const lo=XP_CUM[lvl]||0, hi=XP_CUM[lvl+1]||lo;
+  const pct=Math.max(0,Math.min(100,Math.floor(100*(xp-lo)/Math.max(1,hi-lo))));
+  return {lvl:lvl, pct:pct, need:Math.max(0,hi-xp), xp:xp, max:false};
+}
 
 /* Combat level — clean average of the four stats. Range 1-99. */
 function combatLevel(){
@@ -18363,6 +18452,66 @@ function autoUseHealPotion(){
   let pickR=null;
   for(const r of regens){ if(r.total<=(missing-pending)) pickR=r; }
   return useRegenFood((selR||pickR||regens[0]).id);
+}
+
+/* ── Auto-eat readout (0.9.122.2) ────────────────────────────────────────────────
+   Requested by a player: "it would be nice to see the exact hp value the auto eat
+   is going to trigger — that way you know if your auto eat is more than the max
+   damage a monster will do, so you know if you can safely idle."
+
+   autoEatCue() answers exactly that question in one object: the HP number the
+   check below trips at, the biggest single blow this foe can land through your
+   current mitigation, and whether the first is at least the second. */
+
+/* The HP the auto-eat check trips at. combatTick compares youHp/youMaxHp <= pct,
+   and HP is an integer, so the real trip point is the floor. */
+function autoEatAtHp(maxHp){
+  const mx=maxHp||(typeof combat!=='undefined'?combat.youMaxHp:0)||0;
+  const ah=state.autoHeal||{};
+  return Math.floor(mx*((ah.thresholdPct||50)/100));
+}
+/* Worst single swing a foe can put through you: a full-roll hit (str), then shield
+   block, then mastery reduction — the same order combatTick applies them, so the
+   number on screen is the number the fight can actually produce. Berserker's
+   below-30% penalty is folded in for anyone carrying it, because that is precisely
+   the band where this readout matters. */
+function foeMaxBlow(mon){
+  if(!mon) return 0;
+  let d=Math.max(1,Math.round(mon.str||0));
+  const sdr=(typeof shieldDamageReduction==='function')?shieldDamageReduction():0;
+  if(sdr>0) d=Math.max(1,Math.round(d*(1-sdr)));
+  const cdr=(typeof cmastBonuses==='function')?Math.min(0.60,cmastBonuses().dmgReduce||0):0;
+  if(cdr>0) d=Math.max(1,Math.round(d*(1-cdr)));
+  if(state.cmast&&state.cmast['r_t3_r']>0) d=Math.round(d*1.05);
+  return d;
+}
+/* Everything the HP-bar cue needs. `state` is one of off / nofood / safe / risk. */
+function autoEatCue(mon,maxHp){
+  const ah=state.autoHeal||{};
+  const mx=maxHp||(typeof combat!=='undefined'?combat.youMaxHp:0)||0;
+  const at=autoEatAtHp(mx);
+  const pct=ah.thresholdPct||50;
+  const blow=foeMaxBlow(mon);
+  let st='safe';
+  if(!ah.enabled) st='off';
+  else if(!(combatHealItems().length||combatRegenFoods().length)) st='nofood';
+  else if(blow>at) st='risk';
+  return {at:at, pct:pct, blow:blow, state:st, maxHp:mx};
+}
+/* Tooltip body for the cue. Plain text — this rides the CSS attr(data-tip)
+   tooltip, which cannot render markup. */
+function autoEatCueTip(cue,monName){
+  const head='Auto-eat trips at '+cue.at+' HP  ('+cue.pct+'% of '+cue.maxHp+')';
+  const foe=(monName||'This foe')+' hits for up to '+cue.blow+' a swing.';
+  if(cue.state==='off') return 'Auto-eat is OFF.\nIt would trip at '+cue.at+' HP ('+cue.pct+'%).\n'+foe
+    +'\n\nTurn it on under Food & potions.';
+  if(cue.state==='nofood') return head+'\n'+foe
+    +'\n\nNo food in the satchel \u2014 nothing to eat when it trips.';
+  if(cue.state==='risk') return head+'\n'+foe
+    +'\n\nA single blow can take you past the line, so this fight is NOT safe to idle.'
+    +'\nRaise the threshold, or bring more Defence.';
+  return head+'\n'+foe
+    +'\n\nNo single blow can take you past the line \u2014 safe to idle.';
 }
 
 /* All owned heal-over-time regen foods (1.0.21) — items with potion.regen.
@@ -20468,12 +20617,13 @@ function buildActBtn(act,reqLvl,lvl,m,bestXph,bestRph){
   // kept here because it's a cooking blocker the needs row doesn't cover.
   /* [UI-PREVIEW] The plain rate case now lives in the hero line, so rendering it
      here too cost every card a whole extra row. Keep meta only for real states. */
-  /* Jewelry you already own (0.9.122). Enchants and sockets are keyed by ITEM ID and
-     equipBodyItem strips an id from any other slot in the same loadout, so a second
-     Sapphire Ring cannot be worn beside the first and cannot carry its own enchant.
-     Players were crafting spares expecting a second enchant slot. WARN, never block
-     like toolOwned does — jewelry sells well and the jeweler XP loop is built on
-     crafting pieces you have no intention of wearing. */
+  /* Jewelry you already own (0.9.122, reworded 0.9.122.2). A second copy CAN now be
+     worn beside the first — that was the reported bug — but enchants and sockets
+     stay keyed by ITEM ID, so the pair shares one enchant and one set of gems
+     rather than giving you a second enchant slot. Players were crafting spares
+     expecting the latter. WARN, never block like toolOwned does — jewelry sells
+     well and the jeweler XP loop is built on crafting pieces you have no
+     intention of wearing. */
   const dupeJewel = !isActive && !locked && typeof JEWELRY_GEM_TIER!=='undefined'
     && Object.keys(act.out||{}).some(function(id){
         return JEWELRY_GEM_TIER[id] && ((state.items[id]||0)>0 || anyLoadoutHas(id));
@@ -20482,7 +20632,7 @@ function buildActBtn(act,reqLvl,lvl,m,bestXph,bestRph){
   const metaState = locked?`Unlocks at Lv ${reqLvl}`
                  : toolOwned?`✓ Already owned`
                  : (fireOut&&!isActive)?`⚠ Fire is out`
-                 : dupeJewel?`⚠ Owned — a 2nd can't be worn`
+                 : dupeJewel?`⚠ Owned — a 2nd shares its enchant`
                  : metaExtra||'';
   const metaText = metaState;
 
@@ -20544,9 +20694,9 @@ function buildActBtn(act,reqLvl,lvl,m,bestXph,bestRph){
      line was capped to one row — keep them a hover away rather than losing them. */
   btn.title=act.name+' · '+act.xp+' XP per action · '+(ms/1000).toFixed(1)+'s'
     +(locked?' · unlocks at Lv '+reqLvl:' · '+fmtK(xph)+' xp/hr')
-    +(dupeJewel?'\n\nYou already own one. Only one of a given piece can be worn at a time, and the'
-       +' enchant binds to the piece — a spare cannot carry a second, different enchant.'
-       +' Craft it for the XP or the sale, not for a second enchant slot.':'');
+    +(dupeJewel?'\n\nYou already own one. A second ring can be worn in your other hand, but the'
+       +' enchant and sockets bind to the piece — every copy carries the same ones, so a spare'
+       +' cannot hold a second, different enchant.':'');
   if(!locked&&!depleted&&!toolOwned) btn.addEventListener('click',()=>setAction(selectedSkill,act.id));
   return btn;
 }
@@ -25928,12 +26078,20 @@ function openGearSlotModal(slotKey,def,currentId){
     // two are fully independent so a swap here doesn't touch the other side.
     var modalLoadout=_gearFilter==='combat'?state.combatEquipped:state.skillingEquipped;
     var modalScope=_gearFilter==='combat'?'combat':'skilling';
-    var equippedElsewhere=null;
+    var equippedElsewhere=null, wornElsewhere=0;
     if(!isEquipped){
       for(var eSlot in modalLoadout){
-        if(modalLoadout[eSlot]===itemId&&eSlot!==slotKey){ equippedElsewhere=eSlot; break; }
+        if(modalLoadout[eSlot]===itemId&&eSlot!==slotKey){
+          if(!equippedElsewhere) equippedElsewhere=eSlot;
+          wornElsewhere++;
+        }
       }
     }
+    /* (0.9.122.2) Owning a spare turns "Move here" into a genuine second equip.
+       Without this the picker looked broken to anyone who crafted a matched pair:
+       the only offer was to shuffle the ring they were already wearing. */
+    var _copies=ownedCopies(itemId);
+    var haveSpare=wornElsewhere>0&&_copies>wornElsewhere;
     // Pretty label for the other slot
     var otherSlotLabel=equippedElsewhere?(BODY_SLOTS.find(function(b){return b.slot===equippedElsewhere;})||{label:equippedElsewhere}).label:'';
 
@@ -25944,7 +26102,8 @@ function openGearSlotModal(slotKey,def,currentId){
       +'border-radius:5px;margin-bottom:6px';
     var label='';
     if(isEquipped) label=' <span style="font-size:calc(12px*var(--tscale));color:var(--ember)">● Equipped</span>';
-    else if(equippedElsewhere) label=' <span style="font-size:calc(12px*var(--tscale));color:var(--ember)">● In '+otherSlotLabel+'</span>';
+    else if(equippedElsewhere) label=' <span style="font-size:calc(12px*var(--tscale));color:var(--ember)">● In '+otherSlotLabel
+      +(haveSpare?' · '+_copies+' owned':'')+'</span>';
     // Stat delta vs the item currently equipped in this slot. Only for the
     // alternatives — the equipped row has nothing to compare against itself.
     var deltaHTML=(!isEquipped && typeof gearDeltaHTML==='function')?gearDeltaHTML(itemId,currentId):'';
@@ -25971,7 +26130,8 @@ function openGearSlotModal(slotKey,def,currentId){
       var eqBtn=document.createElement('button');
       eqBtn.className='m-btn primary';
       eqBtn.style.cssText='font-size:calc(13px*var(--tscale));padding:5px 10px';
-      eqBtn.textContent=equippedElsewhere?'Move here':'Equip';
+      eqBtn.textContent=(equippedElsewhere&&!haveSpare)?'Move here':'Equip';
+      if(haveSpare) eqBtn.title='You own '+_copies+' — wear a second one here';
       eqBtn.addEventListener('click',function(){
         equipBodyItem(itemId,slotKey,modalScope);
         modal.classList.add('hidden');
@@ -27979,7 +28139,7 @@ function openOfflineOverlay(){
   if(closeBtn) closeBtn.addEventListener('click',()=>overlay.remove());
 }
 
-/* ════ [JS-24f] enchanting view (rebuilt 0.9.123) ════════════════════════════════
+/* ════ [JS-24f] enchanting view (rebuilt 0.9.122.2) ════════════════════════════════
    Loadout-first. The old panel led with a <select> — your collection was invisible
    one entry at a time, set bonuses only appeared once they were already live, and
    the panel never told you what any of it totalled. Order here is: what you are
@@ -28021,6 +28181,13 @@ function _ewWornSlot(id){
   for(var s in state.equipped) if(state.equipped[s]===id) return s;
   return null;
 }
+/* How many slots of the skilling loadout are wearing this piece — a matched pair of
+   rings is two, and the collection card has to say so or the second one looks lost. */
+function _ewWornCount(id){
+  var n=0;
+  for(var s in state.equipped) if(state.equipped[s]===id) n++;
+  return n;
+}
 /* Reagent cost for a piece — driven by its gem's tier, same table the old panel used. */
 function _ewCostFor(itemId){
   var gem=JEWELRY_GEM_TIER[itemId];
@@ -28055,7 +28222,8 @@ function _ewPieceCard(id,redraw){
     +'<span class="pi"><span class="pn">'+(ITEMS[id]?ITEMS[id].name:id)
     +(copies>1?' <small>x'+copies+'</small>':'')+'</span>'
     +'<span class="ps'+(ed?' on':'')+'">'+(ed?'✦ '+ed.name:'unenchanted')+'</span></span>'
-    +(worn?'<span class="ew-worn">'+(EW_SLOT_LABEL[worn]||'worn').replace('Ring · ','')+'</span>':'')
+    +(worn?'<span class="ew-worn">'+(_ewWornCount(id)>1?'L+R'
+        :(EW_SLOT_LABEL[worn]||'worn').replace('Ring · ',''))+'</span>':'')
     +'<span class="ew-dot'+(ed?' on':'')+'"></span>';
   b.addEventListener('click',function(){ _enchantSel=id; hideTooltip(); redraw(); });
   return b;
@@ -28253,23 +28421,31 @@ function _ewTotals(){
 function _ewHero(itemId){
   var gem=JEWELRY_GEM_TIER[itemId], ench=state.enchantments[itemId], ed=ench?ENCHANTS[ench]:null;
   var worn=_ewWornSlot(itemId), copies=Math.max(state.items[itemId]||0, worn?1:0);
+  var wornN=_ewWornCount(itemId);
+  var wornTxt=!worn ? 'in the satchel, not worn'
+    : wornN>1 ? 'worn — both ring hands'
+    : 'worn — '+(EW_SLOT_LABEL[worn]||worn);
   var h=_ewEl('ew-hero'); h.style.setProperty('--gc',EW_GEMC[gem]||'#6a5533');
   h.innerHTML='<div class="hr"><div class="well">'+iconHTML(itemId)+'</div>'
     +'<div style="flex:1;min-width:0"><h4>'+(ITEMS[itemId]?ITEMS[itemId].name:itemId)+'</h4>'
-    +'<div class="sub">'+(worn?'worn — '+(EW_SLOT_LABEL[worn]||worn):'in the satchel, not worn')
+    +'<div class="sub">'+wornTxt
     +(copies>1?' · '+copies+' owned':'')+'</div>'
     +'<div class="cur">'+(ed?'✦ '+ed.name+' — '+ed.desc
         :'<span class="no">no enchant bound</span>')+'</div>'
     +'</div></div>';
-  /* Spare copies (0.9.122). Enchants bind to the ITEM ID and equipBodyItem strips an id
-     from any other slot in the same loadout, so a second copy cannot be worn beside the
-     first or hold its own enchant. Say it on the piece rather than letting players
-     stockpile duplicates for a second enchant slot that does not exist. */
+  /* Spare copies (0.9.122, corrected 0.9.122.2). This used to read "only one can be
+     worn at a time", which was true of the old equip rule and is not any more — a
+     matched pair goes on both hands. What is still true is that the enchant binds
+     to the ITEM ID, so the pair shares one enchant: worth saying, because that is
+     the thing a player stockpiling duplicates is usually hoping to beat. */
   if(copies>1){
-    h.appendChild(_ewEl('ew-dupe','You own <b>'+copies+'</b> of these. Only one can be worn at a time, '
-      +'and the enchant binds to the piece itself — a spare cannot carry a second, different '
-      +'enchant. To run two enchants at once, wear a <b class="k">different gem</b> in your other '
-      +'ring slot. Spares are safe to sell; the enchant stays on the one you keep.'));
+    var isRing=(_jwType(itemId)==='ring');
+    h.appendChild(_ewEl('ew-dupe','You own <b>'+copies+'</b> of these. '
+      +(isRing?'A matched pair goes on <b class="k">both ring hands</b> and pays out twice. '
+             :'There is only one neck slot, so only one can be worn. ')
+      +'The enchant binds to the piece itself, so every copy carries the same one — a spare '
+      +'cannot hold a second, different enchant. For two different enchants at once, wear a '
+      +'<b class="k">different gem</b> in your other ring slot.'));
   }
   var f=_ewCostFor(itemId);
   var cost=_ewEl('ew-cost','<span class="cl">Cost per enchant</span>');
@@ -28318,7 +28494,10 @@ function renderEnchanting(){
   intro.innerHTML='<b>Enchanting</b> — bind one enchant per jewelry piece; the bonus works while '
     +'it\'s equipped. Pendants &amp; amulets share the neck slot: a ring + <span class="k">amulet</span> '
     +'unlocks a skilling <span class="k">Set Bonus</span>, a ring + <span class="k">pendant</span> '
-    +'unlocks a combat one (atk / lifesteal / crit).';
+    +'unlocks a combat one (atk / lifesteal / crit).'
+    +'<span class="cap">An enchant binds to the <b>piece</b>, not the copy — every '
+    +'Sapphire Ring you own carries it, so a matched pair pays out in both hands. '
+    +'A set leg still counts each hand once: a pair of rings cannot stand in for the neck.</span>';
   box.appendChild(intro);
 
   const pieces=_ewOwned();
@@ -28537,6 +28716,8 @@ function renderSockets(){
     +'<span class="k">Sanguine / Verdant / Azure</span> read your combat gear, '
     +'<span class="k">Topaz / Onyx</span> read your skilling gear.'
     +'<span class="cap">Sockets per piece — Head 1 · Chest 2 · Legs 2 · Boots 1 · Jewelry 1. '
+    +'Sockets belong to the <b>piece</b>, not the copy — drill one Sapphire Ring and every '
+    +'Sapphire Ring you own is drilled, so a matched pair is worth wearing in both hands. '
     +'Gems drop from combat, or cut them from Gem Dust at the Exchange below.</span>';
   box.appendChild(intro);
 
@@ -28715,8 +28896,13 @@ function _soPieceCard(id,redraw){
   const tag=(w.combat||w.skilling)
     ? '<span class="so-tag'+(anyDead?' idle':'')+'">'+(anyDead?'part idle':'worn')+'</span>'
     : (filled?'<span class="so-tag idle">idle</span>':'');
+  /* One card per item id, because one socket record covers every copy. Owning a
+     stack and seeing a single card read as "the panel won't let me socket the
+     other one" — the count says outright that the card IS all of them. */
+  const copies=ownedCopies(id);
+  const cnt=copies>1?'<em>×'+copies+'</em>':'';
   btn.innerHTML=iconHTML(id)+'<span class="pw"><span class="pn">'+(ITEMS[id]?ITEMS[id].name:id)+'</span>'
-    +'<span class="pr">'+_soPips(id)+'<em>'+(sd.slots?filled+'/'+sd.slots+' set':'undrilled')+'</em></span></span>'+tag;
+    +'<span class="pr">'+_soPips(id)+'<em>'+(sd.slots?filled+'/'+sd.slots+' set':'undrilled')+'</em>'+cnt+'</span></span>'+tag;
   btn.addEventListener('click',function(){ _soSelect(id,redraw); });
   return btn;
 }
@@ -28733,11 +28919,18 @@ function _soBench(itemId,redraw){
     : w.combat ? '<span class="live">● worn — combat loadout</span>'
     : w.skilling ? '<span class="live">● worn — skilling loadout</span>'
     : '<span class="dead">not worn — its gems pay nothing</span>';
+  const nCopies=ownedCopies(itemId);
+  /* Sockets are stored per ITEM ID, so drilling one Sapphire Ring drills every
+     Sapphire Ring you own. Say it here — the panel showing a single card for a
+     stack of two was reported as "it won't let me socket the other one". */
+  const copyTxt=nCopies>1
+    ? ' · <span class="live">all '+nCopies+' copies share these sockets</span>'
+    : '';
   const head=_soEl('hd');
   head.innerHTML='<div class="well">'+iconHTML(itemId)+'</div><div style="min-width:0">'
     +'<h4>'+(it?it.name:itemId)+'</h4>'
     +'<div class="sb">'+(SO_SLOTLAB[it&&it.cslot]||(JEWELRY_GEM_TIER[itemId]?'Jewelry':'Gear'))
-    +' · holds '+cap+' gem'+(cap>1?'s':'')+' · '+wornTxt+'</div></div>';
+    +' · holds '+cap+' gem'+(cap>1?'s':'')+' · '+wornTxt+copyTxt+'</div></div>';
   card.appendChild(head);
 
   const holes=_soEl('so-holes');
@@ -29863,9 +30056,29 @@ function updateCombatBars(){
      styled differently now, and textContent would strip the <s> on the first tick. */
   const ft=$('cmbFoeHpText'); if(ft) ft.innerHTML=(combat.active?combat.foeHp:mon.hp)+`<s> / ${mon.hp}</s>`;
   const yt=$('cmbYouHpText'); if(yt) yt.innerHTML=combat.youHp+`<s> / ${combat.youMaxHp}</s>`;
+  /* (0.9.122.2) Keep the auto-eat line honest without a panel rebuild — max HP moves
+     on a buff food, the threshold moves in the food menu, and eating the last
+     steak flips the cue to "no food" mid-fight. */
+  const ec=$('cmbEatCue');
+  if(ec){
+    const cue=autoEatCue(mon,combat.youMaxHp);
+    ec.className='cveat '+cue.state;
+    ec.setAttribute('data-tip',autoEatCueTip(cue,mon.name));
+    const en=$('cmbEatNum'); if(en) en.textContent=(cue.state==='off'?'off':cue.at);
+    const em=$('cmbEatMark');
+    if(em){ em.style.left=(cue.state==='off'?-99:cue.pct)+'%'; em.classList.toggle('risk',cue.state==='risk'); }
+  }
   // Live raid timer (1.0.66) — updated in-place so the run clock ticks without a
   // full panel re-render.
   if(combat.raid){ const rt=$('raidTimer'); if(rt) rt.textContent=_fmtRaidTime(Date.now()-combat.raid.startMs); }
+  /* (0.9.122.2) Training-button fills, refreshed in place — the panel only rebuilds
+     on a kill, so without this the bar sat still through a whole fight. */
+  document.querySelectorAll('.cstyle-btns .cmb-style').forEach(b=>{
+    const k=b.getAttribute('data-style'); if(!k||!COMBAT_STATS[k]) return;
+    const pr=cmbLvlProgress(k), f=b.querySelector('.cst-prog'), l=b.querySelector('.cst-lv');
+    if(f) f.style.width=pr.pct+'%';
+    if(l) l.textContent=pr.lvl;
+  });
   _syncChipRow($('cmbFoeStatus'),'foe',()=>_foeChipSig,v=>_foeChipSig=v);
   _syncChipRow($('cmbYouStatus'),'you',()=>_youChipSig,v=>_youChipSig=v);
   const logEl=$('cmbLog');
@@ -30671,6 +30884,20 @@ function renderCombat(){
   const youPct=active?Math.max(0,100*combat.youHp/combat.youMaxHp):100;
   const foeHpTxt=active?`${combat.foeHp} / ${mon.hp}`:`${mon.hp} / ${mon.hp}`;
   const youHpTxt=`${active?combat.youHp:combat.youMaxHp} / ${combat.youMaxHp}`;
+  // (0.9.122.2) Auto-eat trip point, drawn as a line on your own HP bar.
+  const eatCue=autoEatCue(mon,combat.youMaxHp);
+  /* (0.9.122.2) Requested by a player: the training buttons already carry the level,
+     so give them the progress toward the next one the way a skill card does. The
+     fill is the button's own background, not a separate strip — at rail width
+     there is no room for one, and "fills the button" is what was asked for. */
+  const styleBtnHTML=(k)=>{
+    const c=COMBAT_STATS[k], pr=cmbLvlProgress(k);
+    const tip=`Train ${c.name} — Lv ${pr.lvl}`
+      +(pr.max?' (max)':` · ${pr.pct}% to ${pr.lvl+1} · ${pr.need.toLocaleString()} xp to go`);
+    return `<button class="cmb-style ${style===k?'sel':''}" data-style="${k}" title="${mmEsc(tip)}" ${active?'disabled':''}>`
+      +`<i class="cst-prog" style="width:${pr.pct}%"></i>`
+      +`<span class="cst-nm">${c.name}</span><b class="cst-lv">${pr.lvl}</b></button>`;
+  };
 
   // Combat stats block — four levels + combat level + derived stats
   const statRow=(k)=>{
@@ -30996,9 +31223,7 @@ ${combat.raid?buildRaidProgressHTML():''}
         <div class="cvglass">
           <h4>Training</h4>
           <div class="cstyle-btns">
-            <button class="cmb-style ${style==='attack'?'sel':''}" data-style="attack" title="Train Attack — currently Lv ${aLvl}" ${active?'disabled':''}>Attack<b class="cst-lv">${aLvl}</b></button>
-            <button class="cmb-style ${style==='strength'?'sel':''}" data-style="strength" title="Train Strength — currently Lv ${sLvl}" ${active?'disabled':''}>Strength<b class="cst-lv">${sLvl}</b></button>
-            <button class="cmb-style ${style==='defence'?'sel':''}" data-style="defence" title="Train Defence — currently Lv ${dLvl}" ${active?'disabled':''}>Defence<b class="cst-lv">${dLvl}</b></button>
+            ${['attack','strength','defence'].map(styleBtnHTML).join('')}
           </div>
         </div>
         <div class="cvglass">
@@ -31023,8 +31248,9 @@ ${combat.raid?buildRaidProgressHTML():''}
             </div>
             <div class="cvhp you">
               <div class="lab"><span class="who">${mmEsc(state.charName||'You')}</span>
+                <span class="cveat ${eatCue.state}" id="cmbEatCue" data-tip="${mmEsc(autoEatCueTip(eatCue,mon.name))}">${iconHTML('ui_food')}<b id="cmbEatNum">${eatCue.state==='off'?'off':eatCue.at}</b></span>
                 <span class="num" id="cmbYouHpText">${active?combat.youHp:combat.youMaxHp}<s> / ${combat.youMaxHp}</s></span></div>
-              <div class="cvtrack" id="cmbYouBar"><i style="width:${youPct}%"></i></div>
+              <div class="cvtrack" id="cmbYouBar"><i style="width:${youPct}%"></i><span class="cveat-mark${eatCue.state==='risk'?' risk':''}" id="cmbEatMark" style="left:${eatCue.state==='off'?-99:eatCue.pct}%"></span></div>
               <div class="cvswing you"><i id="cmbYouSwing" style="width:0%"></i></div>
               <div class="cmb-status" id="cmbYouStatus">${statusIconsHTML('you')}</div>
             </div>
