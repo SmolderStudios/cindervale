@@ -1,0 +1,799 @@
+<title>Cindervale Farming Rework</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Public+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&family=Cinzel:wght@500;600;700&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&display=swap">
+
+<style>
+:root{
+  /* A drafting surface with a green-earth bias — the subject is soil, and the
+     mockups below carry the game's own warm brown, so the page around them leans
+     cooler and greener to keep them looking like objects on a table. */
+  --ground:#eef0ea; --surface:#ffffff; --sunk:#e2e7dd;
+  --rule:#c9d1c4; --rule-hi:#adb8a6;
+  --ink:#161d15; --body:#3d4a3b; --dim:#6c7a68;
+  --brass:#7d6118; --ember:#a84e0c;
+  --bad:#9c3418; --good:#43671a; --warn:#7f6410;
+  --shadow:0 1px 2px rgba(20,28,18,.07), 0 8px 24px rgba(20,28,18,.06);
+  --frame-sh:0 2px 4px rgba(20,28,18,.10), 0 22px 48px rgba(20,28,18,.15);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#0f130d; --surface:#181d15; --sunk:#12170f;
+    --rule:#2a3324; --rule-hi:#3c4834;
+    --ink:#e2e8dc; --body:#b4c0ac; --dim:#7f8d79;
+    --brass:#c79b4e; --ember:#e0762f;
+    --bad:#d0674c; --good:#8fb84f; --warn:#e0c060;
+    --shadow:0 1px 2px rgba(0,0,0,.5), 0 8px 24px rgba(0,0,0,.36);
+    --frame-sh:0 2px 4px rgba(0,0,0,.6), 0 22px 48px rgba(0,0,0,.5);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0f130d; --surface:#181d15; --sunk:#12170f;
+  --rule:#2a3324; --rule-hi:#3c4834;
+  --ink:#e2e8dc; --body:#b4c0ac; --dim:#7f8d79;
+  --brass:#c79b4e; --ember:#e0762f;
+  --bad:#d0674c; --good:#8fb84f; --warn:#e0c060;
+  --shadow:0 1px 2px rgba(0,0,0,.5), 0 8px 24px rgba(0,0,0,.36);
+  --frame-sh:0 2px 4px rgba(0,0,0,.6), 0 22px 48px rgba(0,0,0,.5);
+}
+
+*{box-sizing:border-box}
+body{background:var(--ground); color:var(--body); margin:0;
+  font-family:'Public Sans',-apple-system,'Segoe UI',sans-serif;
+  font-size:15px; line-height:1.62; font-variant-numeric:tabular-nums lining-nums;
+  -webkit-font-smoothing:antialiased}
+.w{max-width:1180px; margin:0 auto; padding:0 32px}
+.wide{max-width:1290px; margin:0 auto; padding:0 32px}
+h1,h2,h3,h4{font-family:'Fraunces','Iowan Old Style',Georgia,serif; color:var(--ink);
+  margin:0; text-wrap:balance; font-weight:600; letter-spacing:-.01em}
+p{margin:0}
+
+.mast{padding:64px 0 40px; border-bottom:1px solid var(--rule)}
+.eyebrow{font-family:'JetBrains Mono',ui-monospace,monospace; font-size:11px;
+  letter-spacing:.16em; text-transform:uppercase; color:var(--brass); margin-bottom:18px}
+.mast h1{font-size:clamp(34px,5vw,52px); line-height:1.04; max-width:20ch}
+.mast .lede{margin-top:20px; max-width:64ch; font-size:17px}
+.mast .lede b{color:var(--ink); font-weight:600}
+.prior{margin-top:24px; padding:16px 20px; background:var(--surface); border:1px solid var(--rule);
+  border-left:3px solid var(--brass); border-radius:3px; font-size:14px; max-width:70ch}
+.prior b{color:var(--ink)}
+.prior code{font-family:'JetBrains Mono',monospace; font-size:12.5px; color:var(--dim)}
+
+section{padding:56px 0; border-bottom:1px solid var(--rule)}
+.shead{display:flex; align-items:baseline; gap:16px; margin-bottom:28px}
+.shead .num{font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--dim);
+  letter-spacing:.1em; padding-top:6px; flex:0 0 auto}
+.shead h2{font-size:27px; line-height:1.2}
+.shead .sub{margin-left:auto; font-size:13px; color:var(--dim); text-align:right; max-width:36ch}
+
+.metrics{display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:1px;
+  background:var(--rule); border:1px solid var(--rule); border-radius:3px; overflow:hidden}
+.metric{background:var(--surface); padding:20px 22px}
+.metric .k{font-family:'JetBrains Mono',monospace; font-size:10.5px; letter-spacing:.11em;
+  text-transform:uppercase; color:var(--dim); margin-bottom:10px}
+.metric .v{font-family:'Fraunces',Georgia,serif; font-size:33px; line-height:1; color:var(--ink); font-weight:600}
+.metric .v.alarm{color:var(--bad)}
+.metric .n{font-size:12.5px; color:var(--dim); margin-top:8px; line-height:1.45}
+
+.faults{margin-top:26px; display:grid; gap:1px; background:var(--rule);
+  border:1px solid var(--rule); border-radius:3px; overflow:hidden}
+.fault{background:var(--surface); padding:15px 20px; display:grid;
+  grid-template-columns:26px 1fr; gap:14px; align-items:start}
+.fault .ix{font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--dim); padding-top:3px}
+.fault b{color:var(--ink); font-weight:600}
+.fault span{display:block; font-size:13.5px; color:var(--dim); margin-top:2px}
+
+/* option blocks */
+.opt{margin-bottom:52px}
+.opt > header{display:grid; grid-template-columns:minmax(0,1fr) minmax(300px,.62fr);
+  gap:36px; align-items:start; margin-bottom:18px}
+.opt .tag{font-family:'JetBrains Mono',monospace; font-size:10.5px; letter-spacing:.13em;
+  text-transform:uppercase; color:var(--brass); display:block; margin-bottom:7px}
+.opt h3{font-size:24px; margin-bottom:8px}
+.opt .why{font-size:14.5px; color:var(--body); max-width:56ch}
+.verdict{display:flex; flex-direction:column; gap:6px; padding-top:4px}
+.vrow{display:grid; grid-template-columns:14px 1fr; gap:9px; font-size:13.2px; align-items:start}
+.vrow .m{font-family:'JetBrains Mono',monospace; font-size:12px; line-height:1.55}
+.vrow.up .m{color:var(--good)} .vrow.dn .m{color:var(--bad)}
+.vrow span{line-height:1.5}
+.scalenote{font-family:'JetBrains Mono',monospace; font-size:10.5px; color:var(--dim);
+  margin-top:10px; letter-spacing:.04em}
+.frame{border-radius:8px; overflow:hidden; box-shadow:var(--frame-sh);
+  border:1px solid var(--rule-hi); width:100%}
+
+/* ═══ GAME SKIN — the real Cindervale palette ═══ */
+.g{
+  --pan:#20160c; --card:#2b1e10; --card2:#1b1208; --raised:#33240f;
+  --line:#4a3a1e; --line2:#6e552c;
+  --txt:#ead9b5; --mut:#a08a64; --dim2:#7a6748; --gold:#f0c772; --trim:#c79b4e;
+  --amber:#e0762f; --green:#7da33f; --red:#c4543a;
+  --mono:ui-monospace,'JetBrains Mono','Cascadia Mono',Consolas,monospace;
+  background:var(--pan); color:var(--txt); padding:14px;
+  font-family:'Crimson Pro',Georgia,serif; font-size:15px; line-height:1.45;
+}
+.g *{box-sizing:border-box}
+.g h4{font-family:'Cinzel',Georgia,serif; color:var(--gold); margin:0; font-weight:600}
+.lab{font-family:var(--mono); font-size:10px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--dim2); display:flex; align-items:center; gap:9px; margin:14px 0 8px}
+.lab::after{content:''; flex:1; height:1px; background:var(--line)}
+.lab:first-child{margin-top:0}
+.lab b{color:var(--trim); font-weight:400}
+
+.chip{display:inline-flex; align-items:center; gap:5px; font-family:var(--mono); font-size:11px;
+  padding:3px 8px; border-radius:4px; background:var(--card2); border:1px solid var(--line); color:var(--mut)}
+.chip.gold{color:var(--gold); border-color:#5a4526}
+.chip.ok{color:var(--green); border-color:#3a5018}
+
+.btn{font-family:'Cinzel',Georgia,serif; border-radius:6px; cursor:pointer; border:1px solid var(--line2);
+  background:linear-gradient(180deg,#3a2a15,#241906); color:var(--txt); padding:9px 14px; font-size:14px}
+.btn:hover{border-color:var(--trim); color:var(--gold)}
+.btn.pri{background:linear-gradient(180deg,#e88a3c,#c25e18); border-color:#7a3a0e; color:#1a0f06;
+  font-weight:700; box-shadow:0 2px 0 #6a3209}
+.btn.pri:hover{filter:brightness(1.07); color:#1a0f06}
+.btn.ok{background:linear-gradient(180deg,#7fa83f,#4d6b22); border-color:#33501a; color:#0e1405; font-weight:700;
+  box-shadow:0 2px 0 #2c4415}
+.btn.wide{width:100%; display:block}
+.btn:disabled{opacity:.42; cursor:not-allowed}
+
+/* ── patch cards, shared ── */
+.field{display:grid; grid-template-columns:repeat(4,1fr); gap:9px}
+.pc{background:linear-gradient(178deg,var(--raised),var(--card2) 78%);
+  border:1px solid var(--line); border-radius:9px; padding:11px; position:relative; overflow:hidden;
+  display:flex; flex-direction:column; gap:8px}
+.pc.ready{border-color:#5a7a28; box-shadow:inset 0 0 22px rgba(125,163,63,.13)}
+.pc.grow{border-color:#5a4526}
+.pc.lock{opacity:.5; border-style:dashed}
+.pc .top{display:flex; align-items:center; gap:9px; min-width:0}
+.pc .ic{width:38px; height:38px; flex:none; border-radius:9px; background:#150e06;
+  box-shadow:inset 0 2px 6px rgba(0,0,0,.85); display:flex; align-items:center; justify-content:center}
+.pc .ic svg{width:26px; height:26px}
+.pc .nm{min-width:0; flex:1}
+.pc .nm b{display:block; font-family:'Cinzel',Georgia,serif; font-size:14px; color:var(--gold);
+  line-height:1.15; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.pc .nm i{display:block; font-style:normal; font-family:var(--mono); font-size:9.5px;
+  letter-spacing:.08em; text-transform:uppercase; color:var(--dim2); margin-top:2px}
+.pc .hero{font-family:'Cinzel',Georgia,serif; font-size:23px; line-height:1; color:var(--txt)}
+.pc.ready .hero{color:#b4d472}
+.pc .hero small{font-family:var(--mono); font-size:10.5px; color:var(--dim2); margin-left:6px}
+.bar{height:8px; border-radius:5px; background:#120c05; overflow:hidden;
+  box-shadow:inset 0 2px 4px rgba(0,0,0,.85)}
+.bar i{display:block; height:100%; border-radius:5px;
+  background:linear-gradient(90deg,#6d8c2e,#a8cc52)}
+.bar.amb i{background:linear-gradient(90deg,#a3651c,#e0a24a)}
+.bar.lvl i{background:linear-gradient(90deg,#6e552c,#c79b4e)}
+.pc .n{font-family:var(--mono); font-size:10px; color:var(--dim2)}
+
+/* ── B: hero action ── */
+.hero-act{display:flex; align-items:center; gap:16px; padding:15px 18px;
+  background:linear-gradient(180deg,#33240f,#1b1208); border:1px solid var(--line2);
+  border-radius:10px; box-shadow:inset 0 1px 0 rgba(240,199,114,.14)}
+.hero-act .hi{width:52px; height:52px; flex:none; border-radius:11px; background:#150e06;
+  box-shadow:inset 0 2px 8px rgba(0,0,0,.9); display:flex; align-items:center; justify-content:center}
+.hero-act .hi svg{width:34px; height:34px}
+.hero-act .ht{flex:1; min-width:0}
+.hero-act .ht b{display:block; font-family:'Cinzel',Georgia,serif; font-size:20px; color:var(--gold); line-height:1.15}
+.hero-act .ht span{display:block; font-family:var(--mono); font-size:11.5px; color:var(--mut); margin-top:3px}
+.hero-act .btn{flex:0 0 auto; font-size:16px; padding:12px 26px}
+.mini{display:grid; grid-template-columns:repeat(8,1fr); gap:6px}
+.mp{background:var(--card2); border:1px solid var(--line); border-radius:7px; padding:8px 6px;
+  text-align:center; position:relative; overflow:hidden}
+.mp.ready{border-color:#5a7a28; background:#1d2410}
+.mp.lock{opacity:.42; border-style:dashed}
+.mp svg{width:22px; height:22px; display:block; margin:0 auto 4px}
+.mp .t{font-family:var(--mono); font-size:10.5px; color:var(--txt)}
+.mp.ready .t{color:#b4d472}
+.mp .p{position:absolute; left:0; bottom:0; height:3px; background:#a8cc52}
+
+/* ── C: three beds ── */
+.beds{display:grid; grid-template-columns:repeat(3,1fr); gap:11px; align-items:start}
+.bed{background:var(--card2); border:1px solid var(--line); border-radius:10px; padding:11px;
+  display:flex; flex-direction:column; gap:9px}
+.bed.ready{border-color:#5a7a28}
+.bed > .bh{display:flex; align-items:center; gap:8px}
+.bed > .bh h4{font-size:16px; flex:1}
+.bed .list{display:flex; flex-direction:column; gap:7px}
+.br{display:flex; align-items:center; gap:9px; background:var(--raised); border:1px solid var(--line);
+  border-radius:7px; padding:8px 10px}
+.br svg{width:24px; height:24px; flex:none}
+.br .bt{flex:1; min-width:0}
+.br .bt b{display:block; font-family:'Cinzel',Georgia,serif; font-size:13.5px; color:var(--gold); line-height:1.2}
+.br .bt i{display:block; font-style:normal; font-family:var(--mono); font-size:10px; color:var(--dim2); margin-top:1px}
+.br .bv{font-family:var(--mono); font-size:12.5px; color:var(--trim); white-space:nowrap}
+.bed .empty{font-family:var(--mono); font-size:11px; color:var(--dim2); text-align:center; padding:16px 8px}
+
+/* ── D: extra-large cards ── */
+.xl{display:grid; grid-template-columns:repeat(4,1fr); gap:11px}
+.xc{position:relative; border:1px solid var(--line); border-radius:11px; overflow:hidden;
+  background:linear-gradient(178deg,#33240f,#150e06 76%); min-height:196px;
+  display:flex; flex-direction:column; padding:13px; gap:9px}
+.xc .fill{position:absolute; left:0; right:0; bottom:0; pointer-events:none;
+  background:linear-gradient(180deg,rgba(125,163,63,.05),rgba(125,163,63,.24));
+  border-top:1px solid rgba(168,204,82,.42)}
+.xc.ready .fill{background:linear-gradient(180deg,rgba(125,163,63,.10),rgba(125,163,63,.34))}
+.xc > *{position:relative}
+.xc .cap{display:flex; align-items:center; justify-content:space-between; gap:8px;
+  font-family:var(--mono); font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--dim2)}
+.xc .art{flex:1; display:flex; align-items:center; justify-content:center}
+.xc .art svg{width:74px; height:74px; filter:drop-shadow(0 4px 10px rgba(0,0,0,.75))}
+.xc.lock .art svg{opacity:.22}
+.xc h4{font-size:16px; text-align:center}
+.xc .sub{font-family:var(--mono); font-size:11px; color:var(--mut); text-align:center; margin-top:-4px}
+.xc.ready h4{color:#c8e39a}
+
+/* ── the crops problem ── */
+.cmp{display:grid; grid-template-columns:1fr 1fr; gap:22px; align-items:start}
+.cmp > div > h4{font-family:'Fraunces',Georgia,serif; font-size:15px; margin-bottom:10px; color:var(--ink)}
+.cmp .frame{margin-bottom:8px}
+.crops{display:grid; grid-template-columns:repeat(3,1fr); gap:8px}
+.cc{background:var(--card); border:1px solid var(--line); border-radius:8px; padding:10px;
+  display:flex; gap:9px; align-items:flex-start}
+.cc svg{width:28px; height:28px; flex:none; margin-top:1px}
+.cc .ct{min-width:0}
+.cc .ct b{display:block; font-family:'Cinzel',Georgia,serif; font-size:13.5px; color:var(--gold); line-height:1.2}
+.cc .ct i{display:block; font-style:normal; font-family:var(--mono); font-size:10px; color:var(--mut); margin-top:3px; line-height:1.5}
+.cc .ct em{display:block; font-style:normal; font-family:var(--mono); font-size:10px; color:var(--dim2); margin-top:2px}
+.oldtbl{display:grid; grid-template-columns:repeat(3,1fr); gap:8px}
+.ot{background:var(--card); border:1px solid var(--line); border-radius:8px; padding:10px;
+  font-family:var(--mono); font-size:10.5px; color:var(--mut); overflow:hidden}
+.ot b{display:block; font-family:'Cinzel',Georgia,serif; font-size:13px; color:var(--gold); margin-bottom:5px}
+.ot span{display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+
+.ask{padding:52px 0 76px}
+.ask h2{font-size:25px; margin-bottom:16px}
+.ask ol{margin:0; padding-left:22px; max-width:66ch}
+.ask li{margin-bottom:12px}
+.ask li b{color:var(--ink)}
+.foot{padding:26px 0 60px; font-family:'JetBrains Mono',monospace; font-size:11px;
+  color:var(--dim); letter-spacing:.05em}
+
+@media(max-width:980px){
+  .w,.wide{padding:0 20px}
+  .opt > header{grid-template-columns:1fr; gap:18px}
+  .cmp{grid-template-columns:1fr}
+  .shead{flex-direction:column; gap:6px}
+  .shead .sub{margin-left:0; text-align:left}
+}
+</style>
+
+<!-- crop glyphs, drawn once and reused -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <symbol id="cBerry" viewBox="0 0 64 64">
+    <path d="M32 46 C24 46 18 40 20 32 C22 25 28 22 32 22 C36 22 42 25 44 32 C46 40 40 46 32 46Z" fill="#5a3a86"/>
+    <circle cx="26" cy="33" r="6.5" fill="#7d55b0"/><circle cx="38" cy="33" r="6.5" fill="#6a46a0"/>
+    <circle cx="32" cy="41" r="6.5" fill="#8a62c0"/>
+    <circle cx="24.5" cy="30.5" r="2" fill="#cfa8ee" opacity=".8"/>
+    <path d="M32 22 L32 12 M32 15 Q24 12 22 6 Q31 7 32 15 M32 15 Q40 12 42 6 Q33 7 32 15" stroke="#5f8a2e" stroke-width="3" fill="#6d9c33" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="cCap" viewBox="0 0 64 64">
+    <path d="M32 16 C44 16 52 26 52 33 L12 33 C12 26 20 16 32 16Z" fill="#a8341f"/>
+    <path d="M32 16 C40 16 47 24 49 33 L36 33 C36 24 34 18 32 16Z" fill="#c4472c" opacity=".7"/>
+    <circle cx="24" cy="26" r="3.2" fill="#f0dcc0" opacity=".85"/><circle cx="38" cy="24" r="2.4" fill="#f0dcc0" opacity=".8"/>
+    <path d="M26 33 L26 48 Q32 53 38 48 L38 33Z" fill="#e0cba8"/>
+    <path d="M26 33 L26 48 Q29 51 32 51 L32 33Z" fill="#f2e2c6"/>
+  </symbol>
+  <symbol id="cHerb" viewBox="0 0 64 64">
+    <path d="M32 54 L32 22" stroke="#4d7a24" stroke-width="3.4" stroke-linecap="round"/>
+    <path d="M32 44 Q18 42 14 30 Q28 30 32 44Z" fill="#6d9c33"/>
+    <path d="M32 36 Q46 34 50 22 Q36 22 32 36Z" fill="#7fb03d"/>
+    <path d="M32 26 Q22 22 20 12 Q32 14 32 26Z" fill="#8cbf46"/>
+  </symbol>
+  <symbol id="cThorn" viewBox="0 0 64 64">
+    <path d="M20 56 Q22 34 34 20 Q42 11 48 8" stroke="#4d6b22" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <path d="M26 40 L16 34 M30 30 L40 26 M22 48 L13 46 M36 20 L44 22" stroke="#6d8c2e" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="16" cy="34" r="3" fill="#c4543a"/><circle cx="40" cy="26" r="3" fill="#c4543a"/>
+    <circle cx="13" cy="46" r="2.6" fill="#c4543a"/><circle cx="44" cy="22" r="2.6" fill="#c4543a"/>
+  </symbol>
+  <symbol id="cHazel" viewBox="0 0 64 64">
+    <path d="M32 56 L32 34" stroke="#4d7a24" stroke-width="3.2" stroke-linecap="round"/>
+    <g fill="#e8c94a"><ellipse cx="32" cy="20" rx="5.5" ry="10"/><ellipse cx="32" cy="20" rx="10" ry="5.5"/>
+    <ellipse cx="32" cy="20" rx="8" ry="8" transform="rotate(45 32 20)" opacity=".85"/></g>
+    <circle cx="32" cy="20" r="4.4" fill="#a3701a"/>
+    <path d="M32 42 Q20 40 17 31 Q29 32 32 42Z" fill="#6d9c33"/>
+  </symbol>
+  <symbol id="cRoot" viewBox="0 0 64 64">
+    <path d="M32 20 Q42 24 40 38 Q38 52 32 58 Q26 52 24 38 Q22 24 32 20Z" fill="#d2721e"/>
+    <path d="M32 20 Q38 24 37 38 Q36 50 32 56Z" fill="#e88b32" opacity=".75"/>
+    <path d="M28 30 L36 32 M27 38 L37 40 M28 46 L36 47" stroke="#a3520e" stroke-width="1.6" opacity=".6"/>
+    <path d="M32 20 L32 10 M32 14 Q24 10 22 4 Q31 6 32 14 M32 14 Q40 10 42 4 Q33 6 32 14" stroke="#5f8a2e" stroke-width="3" fill="#6d9c33" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="cFrost" viewBox="0 0 64 64">
+    <path d="M32 56 L32 36" stroke="#4d7a24" stroke-width="3" stroke-linecap="round"/>
+    <g stroke="#9fd8e8" stroke-width="3.4" stroke-linecap="round">
+      <path d="M32 6 L32 34 M20 13 L44 27 M44 13 L20 27"/>
+      <path d="M32 13 L27 9 M32 13 L37 9 M32 22 L27 19 M32 22 L37 19"/>
+    </g>
+    <circle cx="32" cy="20" r="4" fill="#dff3fa"/>
+  </symbol>
+  <symbol id="cEmber" viewBox="0 0 64 64">
+    <path d="M32 54 L32 36" stroke="#4d7a24" stroke-width="3" stroke-linecap="round"/>
+    <path d="M32 8 Q22 20 20 30 Q18 40 26 43 Q22 34 30 27 Q28 36 34 39 Q42 42 44 32 Q46 20 32 8Z" fill="#e0762f"/>
+    <path d="M32 18 Q26 26 26 32 Q26 38 31 39 Q29 33 34 29 Q36 34 34 38 Q40 36 39 30 Q38 23 32 18Z" fill="#fbd24e"/>
+  </symbol>
+  <symbol id="cVoid" viewBox="0 0 64 64">
+    <path d="M32 56 L32 38" stroke="#3c5a1c" stroke-width="3" stroke-linecap="round"/>
+    <g fill="#7d3ca8"><ellipse cx="32" cy="24" rx="6" ry="13"/>
+      <ellipse cx="32" cy="24" rx="6" ry="13" transform="rotate(60 32 24)"/>
+      <ellipse cx="32" cy="24" rx="6" ry="13" transform="rotate(120 32 24)"/></g>
+    <circle cx="32" cy="24" r="6" fill="#150720"/><circle cx="32" cy="24" r="2.6" fill="#c79bee"/>
+  </symbol>
+  <symbol id="cSeed" viewBox="0 0 64 64">
+    <path d="M14 30 Q14 22 22 20 L42 20 Q50 22 50 30 L52 46 Q48 55 32 55 Q16 55 12 46Z" fill="#8a6b40"/>
+    <path d="M18 26 Q15 34 16 46 Q17 51 22 54 Q19 48 19 42 Q19 32 22 26Z" fill="#a88a5c" opacity=".55"/>
+    <ellipse cx="32" cy="21" rx="13" ry="3.4" fill="#3a2c17"/>
+    <circle cx="26" cy="35" r="4" fill="#c4543a"/><circle cx="37" cy="32" r="3.4" fill="#7da33f"/>
+    <circle cx="33" cy="43" r="3.6" fill="#c79b4e"/>
+  </symbol>
+  <symbol id="cTilled" viewBox="0 0 64 64">
+    <rect x="8" y="18" width="48" height="34" rx="4" fill="#3a2a16"/>
+    <path d="M12 26 H52 M12 34 H52 M12 42 H52" stroke="#241905" stroke-width="3" stroke-linecap="round"/>
+    <path d="M12 24 H52 M12 32 H52 M12 40 H52" stroke="#4d3a1e" stroke-width="1.4" stroke-linecap="round"/>
+  </symbol>
+</defs></svg>
+
+<div class="w mast">
+  <div class="eyebrow">Cindervale Idle · design review · build 0.9.122.3</div>
+  <h1>Farming, on the fourth attempt</h1>
+  <p class="lede">The panel is <b>1,018px tall</b> — the only skill that pushes the page past the
+  window — and most of that height is chrome. Five identical seed dropdowns, three grey rectangles
+  that say "Locked", and a paginated table where every crop's output is cut off mid-word.
+  Four new directions, all at the real panel width.</p>
+
+  <p class="prior"><b>What I'm not doing again.</b> Ten concepts were previewed in August and all
+  ten were turned down — <code>field rows · two-column workbench · full stage farm · seed-first ·
+  painted plots only · ledger · one field card · master–detail · timeline · crop-art cards</code>
+  — and the one that shipped as <code>0.9.121.3</code> was reverted the same night. None of the
+  four below reuses those shapes, and none of them puts a painted backdrop behind the controls.
+  The note in memory is <b>chunky cards and grids with visible buttons, no tiny click-tiles and no
+  long tables</b>, so that is the brief I built to.</p>
+</div>
+
+<section class="w">
+  <div class="shead">
+    <span class="num">01</span>
+    <h2>What's wrong, measured</h2>
+    <span class="sub">Live panel at 1920×1080, Farming 62, five patches unlocked,
+    forty of every seed in the satchel.</span>
+  </div>
+
+  <div class="metrics">
+    <div class="metric"><div class="k">Panel height</div><div class="v alarm">1018<span style="font-size:16px;color:var(--dim)">px</span></div>
+      <div class="n">Overflows a 1080p window by 32px.</div></div>
+    <div class="metric"><div class="k">Seed dropdowns</div><div class="v alarm">5</div>
+      <div class="n">On screen at once, all set to the same seed. Every one truncates its own label.</div></div>
+    <div class="metric"><div class="k">Dead grey boxes</div><div class="v alarm">3</div>
+      <div class="n">Locked patches take a card each and say only "Locked".</div></div>
+    <div class="metric"><div class="k">Crops readable</div><div class="v alarm">0<span style="font-size:16px;color:var(--dim)"> / 18</span></div>
+      <div class="n">Every output line in the table is ellipsised.</div></div>
+  </div>
+
+  <div class="faults">
+    <div class="fault"><span class="ix">01</span><div>
+      <b>An empty patch spends five elements saying "empty".</b>
+      <span>Title, the word Empty, "Select a seed to plant", a dropdown and a Plant button — and
+      the dropdown is narrow enough that <i>Wildberry</i> renders as <i>Wildberr</i>.</span></div></div>
+    <div class="fault"><span class="ix">02</span><div>
+      <b>The patch card carries no number at all.</b>
+      <span>Every other skill's card leads with one — 37.2k xp/hr on a woodcutting card. A farm
+      patch never tells you how long is left, what it will yield, or what it is worth.</span></div></div>
+    <div class="fault"><span class="ix">03</span><div>
+      <b>Farmer for Hire is 130px of permanent furniture.</b>
+      <span>Three cards, two of them locked behind the first, for a decision you make once and
+      never revisit.</span></div></div>
+    <div class="fault"><span class="ix">04</span><div>
+      <b>Four bulk controls in a 2×2, one of which is not a button.</b>
+      <span>Harvest All and Tend All on one row; the seed picker and Plant All on the next. The
+      picker is styled like its neighbours and does nothing when clicked.</span></div></div>
+    <div class="fault"><span class="ix">05</span><div>
+      <b>Nothing says when the next thing is ready.</b>
+      <span>The panel's whole job is a timer you come back to, and there is no timer anywhere
+      on it.</span></div></div>
+  </div>
+</section>
+
+<section class="wide">
+  <div class="shead">
+    <span class="num">02</span>
+    <h2>Four directions</h2>
+    <span class="sub">Drawn at the panel's real 1,100px width. Same save in all four:
+    two ready, two growing, one empty, three still locked.</span>
+  </div>
+
+  <!-- ══════════════ A ══════════════ -->
+  <div class="opt">
+    <header>
+      <div>
+        <span class="tag">Option A</span>
+        <h3>Patches as activity cards</h3>
+        <p class="why">Farming's cards are the only ones in the game that don't look like the
+        skilling cards — which already work, and which you already like. So give a patch the same
+        anatomy: icon in a well, name, one big number, a bar, one wide button. The seed is chosen
+        once at the top, so no card ever holds a dropdown.</p>
+      </div>
+      <div class="verdict">
+        <div class="vrow up"><span class="m">+</span><span>Nothing new to learn — it reads like Woodcutting.</span></div>
+        <div class="vrow up"><span class="m">+</span><span>Five dropdowns become one seed strip.</span></div>
+        <div class="vrow up"><span class="m">+</span><span>Locked patches keep the card shape and say what unlocks them.</span></div>
+        <div class="vrow dn"><span class="m">−</span><span>Still eight cards of similar weight; nothing points at what to do first.</span></div>
+      </div>
+    </header>
+
+    <div class="frame"><div class="g">
+      <div class="lab">Sowing <b>Wildberry ×40</b></div>
+      <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:4px">
+        <button class="btn" style="border-color:var(--trim);color:var(--gold)"><svg style="width:16px;height:16px;vertical-align:-3px;margin-right:5px"><use href="#cBerry"/></svg>Wildberry <span style="font-family:var(--mono);font-size:11px;opacity:.7">×40</span></button>
+        <button class="btn"><svg style="width:16px;height:16px;vertical-align:-3px;margin-right:5px"><use href="#cCap"/></svg>Bloodcap <span style="font-family:var(--mono);font-size:11px;opacity:.7">×40</span></button>
+        <button class="btn"><svg style="width:16px;height:16px;vertical-align:-3px;margin-right:5px"><use href="#cHerb"/></svg>Wild Herb <span style="font-family:var(--mono);font-size:11px;opacity:.7">×40</span></button>
+        <button class="btn"><svg style="width:16px;height:16px;vertical-align:-3px;margin-right:5px"><use href="#cRoot"/></svg>Sunroot <span style="font-family:var(--mono);font-size:11px;opacity:.7">×40</span></button>
+        <button class="btn" style="margin-left:auto">All 18 seeds ▾</button>
+      </div>
+      <div class="lab">Your field <b>2 ready · 2 growing · 1 empty</b></div>
+      <div class="field">
+        <div class="pc ready">
+          <div class="top"><span class="ic"><svg><use href="#cBerry"/></svg></span>
+            <span class="nm"><b>Wildberry</b><i>Patch 1 · ready</i></span></div>
+          <div class="hero">×3 <small>+200 xp</small></div>
+          <div class="bar"><i style="width:100%"></i></div>
+          <button class="btn ok wide">Harvest</button>
+        </div>
+        <div class="pc ready">
+          <div class="top"><span class="ic"><svg><use href="#cCap"/></svg></span>
+            <span class="nm"><b>Bloodcap</b><i>Patch 2 · ready</i></span></div>
+          <div class="hero">×3 <small>+250 xp</small></div>
+          <div class="bar"><i style="width:100%"></i></div>
+          <button class="btn ok wide">Harvest</button>
+        </div>
+        <div class="pc grow">
+          <div class="top"><span class="ic"><svg><use href="#cHerb"/></svg></span>
+            <span class="nm"><b>Wild Herb</b><i>Patch 3 · growing</i></span></div>
+          <div class="hero">2:14 <small>of 5m</small></div>
+          <div class="bar amb"><i style="width:56%"></i></div>
+          <button class="btn wide">Tend · −25%</button>
+        </div>
+        <div class="pc grow">
+          <div class="top"><span class="ic"><svg><use href="#cRoot"/></svg></span>
+            <span class="nm"><b>Sunroot</b><i>Patch 4 · growing</i></span></div>
+          <div class="hero">6:41 <small>of 8m</small></div>
+          <div class="bar amb"><i style="width:17%"></i></div>
+          <button class="btn wide" disabled>Tended 1m ago</button>
+        </div>
+        <div class="pc">
+          <div class="top"><span class="ic"><svg><use href="#cTilled"/></svg></span>
+            <span class="nm"><b>Empty</b><i>Patch 5 · tilled</i></span></div>
+          <div class="hero" style="color:var(--dim2);font-size:19px">Wildberry</div>
+          <div class="bar"><i style="width:0"></i></div>
+          <button class="btn pri wide">Sow</button>
+        </div>
+        <div class="pc lock">
+          <div class="top"><span class="ic"><svg><use href="#cTilled"/></svg></span>
+            <span class="nm"><b>Patch 6</b><i>locked</i></span></div>
+          <div class="hero" style="font-size:19px">Lv 70</div>
+          <div class="bar lvl"><i style="width:88%"></i></div>
+          <div class="n">8 levels away</div>
+        </div>
+        <div class="pc lock">
+          <div class="top"><span class="ic"><svg><use href="#cTilled"/></svg></span>
+            <span class="nm"><b>Patch 7</b><i>locked</i></span></div>
+          <div class="hero" style="font-size:19px">Lv 85</div>
+          <div class="bar lvl"><i style="width:73%"></i></div>
+          <div class="n">23 levels away</div>
+        </div>
+        <div class="pc lock">
+          <div class="top"><span class="ic"><svg><use href="#cTilled"/></svg></span>
+            <span class="nm"><b>Patch 8</b><i>locked</i></span></div>
+          <div class="hero" style="font-size:19px">Lv 99</div>
+          <div class="bar lvl"><i style="width:63%"></i></div>
+          <div class="n">37 levels away</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:11px">
+        <button class="btn ok" style="flex:1">Harvest all · 2 ready</button>
+        <button class="btn" style="flex:1">Tend all</button>
+        <button class="btn pri" style="flex:1">Sow all empty · 1</button>
+      </div>
+    </div></div>
+    <div class="scalenote">1100px · 1:1 · panel height ≈ 620px (was 1018)</div>
+  </div>
+
+  <!-- ══════════════ B ══════════════ -->
+  <div class="opt">
+    <header>
+      <div>
+        <span class="tag">Option B</span>
+        <h3>One big button</h3>
+        <p class="why">The Arena gives you one Engage button and everything else is context. Do the
+        same here: one hero action that always names the single best next move and does it, with the
+        eight patches under it as a status board rather than eight separate controls. Come back,
+        press the big thing, leave.</p>
+      </div>
+      <div class="verdict">
+        <div class="vrow up"><span class="m">+</span><span>The 2×2 bulk block disappears into one control.</span></div>
+        <div class="vrow up"><span class="m">+</span><span>Always says when the next patch ripens — the timer the panel never had.</span></div>
+        <div class="vrow up"><span class="m">+</span><span>Shortest panel of the four by a distance.</span></div>
+        <div class="vrow dn"><span class="m">−</span><span>Per-patch control moves to a click on the tile; less direct if you want one specific patch.</span></div>
+        <div class="vrow dn"><span class="m">−</span><span>The status tiles are small — closest of the four to the click-tiles you rejected.</span></div>
+      </div>
+    </header>
+
+    <div class="frame"><div class="g">
+      <div class="hero-act">
+        <span class="hi"><svg><use href="#cBerry"/></svg></span>
+        <span class="ht"><b>2 patches are ready</b>
+          <span>Wildberry ×3 · Bloodcap ×3 · +450 xp · next ripens in 2:14</span></span>
+        <button class="btn ok">Harvest both</button>
+      </div>
+      <div class="lab">The field</div>
+      <div class="mini">
+        <div class="mp ready"><svg><use href="#cBerry"/></svg><div class="t">ready</div><i class="p" style="width:100%"></i></div>
+        <div class="mp ready"><svg><use href="#cCap"/></svg><div class="t">ready</div><i class="p" style="width:100%"></i></div>
+        <div class="mp"><svg><use href="#cHerb"/></svg><div class="t">2:14</div><i class="p" style="width:56%;background:#e0a24a"></i></div>
+        <div class="mp"><svg><use href="#cRoot"/></svg><div class="t">6:41</div><i class="p" style="width:17%;background:#e0a24a"></i></div>
+        <div class="mp"><svg><use href="#cTilled"/></svg><div class="t">empty</div></div>
+        <div class="mp lock"><svg><use href="#cTilled"/></svg><div class="t">Lv 70</div></div>
+        <div class="mp lock"><svg><use href="#cTilled"/></svg><div class="t">Lv 85</div></div>
+        <div class="mp lock"><svg><use href="#cTilled"/></svg><div class="t">Lv 99</div></div>
+      </div>
+      <div class="lab">Then <b>after the harvest</b></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn pri" style="flex:2">Sow the empty patch with Wildberry</button>
+        <button class="btn" style="flex:1">Change seed ▾</button>
+        <button class="btn" style="flex:1">Tend all growing</button>
+      </div>
+      <div class="lab">Farmhand <b>none hired</b></div>
+      <div style="display:flex;align-items:center;gap:12px;background:var(--card2);
+                  border:1px solid var(--line);border-radius:8px;padding:10px 13px">
+        <span style="flex:1;font-size:14px">An <b style="color:var(--gold)">Apprentice</b> harvests
+          your patches while you are away, for 75g a harvest.</span>
+        <span class="chip gold">5,000g to hire</span>
+        <button class="btn">Hire</button>
+      </div>
+    </div></div>
+    <div class="scalenote">1100px · 1:1 · panel height ≈ 430px (was 1018)</div>
+  </div>
+
+  <!-- ══════════════ C ══════════════ -->
+  <div class="opt">
+    <header>
+      <div>
+        <span class="tag">Option C</span>
+        <h3>Three beds</h3>
+        <p class="why">Patches sort themselves by what they need. Ready, Growing, Empty — three
+        chunky columns, and each column's header carries the button that acts on everything in it.
+        You never scan eight cards to find the two that matter, because the ones that matter are
+        always in the left-hand column with a green border round them.</p>
+      </div>
+      <div class="verdict">
+        <div class="vrow up"><span class="m">+</span><span>What needs you is always in the same place — no hunting.</span></div>
+        <div class="vrow up"><span class="m">+</span><span>Bulk actions stop being a separate block; they're the column headers.</span></div>
+        <div class="vrow up"><span class="m">+</span><span>Locked patches collapse to one quiet line instead of three dead cards.</span></div>
+        <div class="vrow dn"><span class="m">−</span><span>Patches move between columns as they ripen, so "patch 3" isn't in a fixed spot.</span></div>
+        <div class="vrow dn"><span class="m">−</span><span>Rows inside the columns are closer to a list than a card grid.</span></div>
+      </div>
+    </header>
+
+    <div class="frame"><div class="g">
+      <div class="beds">
+        <div class="bed ready">
+          <div class="bh"><h4 style="color:#c8e39a">Ready</h4><span class="chip ok">2</span></div>
+          <button class="btn ok wide">Harvest both · +450 xp</button>
+          <div class="list">
+            <div class="br"><svg><use href="#cBerry"/></svg>
+              <span class="bt"><b>Wildberry</b><i>patch 1</i></span><span class="bv">×3</span></div>
+            <div class="br"><svg><use href="#cCap"/></svg>
+              <span class="bt"><b>Bloodcap</b><i>patch 2</i></span><span class="bv">×3</span></div>
+          </div>
+        </div>
+        <div class="bed">
+          <div class="bh"><h4>Growing</h4><span class="chip">2</span></div>
+          <button class="btn wide">Tend what can be tended · 1</button>
+          <div class="list">
+            <div class="br"><svg><use href="#cHerb"/></svg>
+              <span class="bt"><b>Wild Herb</b><i>patch 3 · tend ready</i></span><span class="bv">2:14</span></div>
+            <div class="br"><svg><use href="#cRoot"/></svg>
+              <span class="bt"><b>Sunroot</b><i>patch 4 · tended 1m ago</i></span><span class="bv">6:41</span></div>
+          </div>
+        </div>
+        <div class="bed">
+          <div class="bh"><h4>Empty</h4><span class="chip">1</span></div>
+          <button class="btn pri wide">Sow with Wildberry</button>
+          <div class="list">
+            <div class="br"><svg><use href="#cTilled"/></svg>
+              <span class="bt"><b>Patch 5</b><i>tilled, nothing in it</i></span><span class="bv">—</span></div>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <span class="chip"><svg style="width:13px;height:13px"><use href="#cBerry"/></svg>Wildberry ×40</span>
+            <button class="btn" style="padding:3px 9px;font-size:12px">change ▾</button>
+          </div>
+        </div>
+      </div>
+      <div class="lab">Not yet yours</div>
+      <div style="display:flex;gap:8px">
+        <div class="br" style="flex:1;opacity:.6"><svg><use href="#cTilled"/></svg>
+          <span class="bt"><b>Patch 6</b><i>Farming 70 — 8 levels away</i></span></div>
+        <div class="br" style="flex:1;opacity:.6"><svg><use href="#cTilled"/></svg>
+          <span class="bt"><b>Patch 7</b><i>Farming 85</i></span></div>
+        <div class="br" style="flex:1;opacity:.6"><svg><use href="#cTilled"/></svg>
+          <span class="bt"><b>Patch 8</b><i>Farming 99</i></span></div>
+      </div>
+    </div></div>
+    <div class="scalenote">1100px · 1:1 · panel height ≈ 400px (was 1018)</div>
+  </div>
+
+  <!-- ══════════════ D ══════════════ -->
+  <div class="opt">
+    <header>
+      <div>
+        <span class="tag">Option D</span>
+        <h3>Grow beds</h3>
+        <p class="why">The chunkiest of the four. Each patch is a tall card and the card itself is
+        the progress bar — soil fills it from the bottom as the crop grows, and the crop is drawn
+        big in the middle. You can read the whole field's state from across the room without a
+        single number, and the numbers are still there when you look.</p>
+      </div>
+      <div class="verdict">
+        <div class="vrow up"><span class="m">+</span><span>Growth is legible at a glance, which is the one thing the panel is for.</span></div>
+        <div class="vrow up"><span class="m">+</span><span>Biggest, most tappable buttons of the four.</span></div>
+        <div class="vrow up"><span class="m">+</span><span>No painted backdrop — the fill is CSS, so it costs nothing and themes correctly.</span></div>
+        <div class="vrow dn"><span class="m">−</span><span>Eight of these need two rows; the panel stays fairly tall.</span></div>
+        <div class="vrow dn"><span class="m">−</span><span>The crop art has to be good at 74px, which is bigger than the icons were drawn for.</span></div>
+      </div>
+    </header>
+
+    <div class="frame"><div class="g">
+      <div class="lab">Your field <b>2 ready · 2 growing · 1 empty · 3 locked</b></div>
+      <div class="xl">
+        <div class="xc ready"><div class="fill" style="height:100%"></div>
+          <div class="cap"><span>Patch 1</span><span style="color:#b4d472">ready</span></div>
+          <div class="art"><svg><use href="#cBerry"/></svg></div>
+          <h4>Wildberry</h4><div class="sub">×3 · +200 xp</div>
+          <button class="btn ok wide">Harvest</button></div>
+        <div class="xc ready"><div class="fill" style="height:100%"></div>
+          <div class="cap"><span>Patch 2</span><span style="color:#b4d472">ready</span></div>
+          <div class="art"><svg><use href="#cCap"/></svg></div>
+          <h4>Bloodcap</h4><div class="sub">×3 · +250 xp</div>
+          <button class="btn ok wide">Harvest</button></div>
+        <div class="xc"><div class="fill" style="height:56%"></div>
+          <div class="cap"><span>Patch 3</span><span>2:14 left</span></div>
+          <div class="art"><svg><use href="#cHerb"/></svg></div>
+          <h4>Wild Herb</h4><div class="sub">×2 · +340 xp</div>
+          <button class="btn wide">Tend · −25% time</button></div>
+        <div class="xc"><div class="fill" style="height:17%"></div>
+          <div class="cap"><span>Patch 4</span><span>6:41 left</span></div>
+          <div class="art"><svg><use href="#cRoot"/></svg></div>
+          <h4>Sunroot</h4><div class="sub">×2 · +550 xp</div>
+          <button class="btn wide" disabled>Tended 1m ago</button></div>
+      </div>
+      <div class="xl" style="margin-top:9px">
+        <div class="xc">
+          <div class="cap"><span>Patch 5</span><span>empty</span></div>
+          <div class="art"><svg><use href="#cSeed"/></svg></div>
+          <h4 style="color:var(--mut)">Nothing sown</h4><div class="sub">Wildberry ×40 in hand</div>
+          <button class="btn pri wide">Sow Wildberry</button></div>
+        <div class="xc lock">
+          <div class="cap"><span>Patch 6</span><span>locked</span></div>
+          <div class="art"><svg><use href="#cTilled"/></svg></div>
+          <h4 style="color:var(--dim2)">Farming 70</h4><div class="sub">8 levels away</div>
+          <div class="bar lvl" style="margin-top:2px"><i style="width:88%"></i></div></div>
+        <div class="xc lock">
+          <div class="cap"><span>Patch 7</span><span>locked</span></div>
+          <div class="art"><svg><use href="#cTilled"/></svg></div>
+          <h4 style="color:var(--dim2)">Farming 85</h4><div class="sub">23 levels away</div>
+          <div class="bar lvl" style="margin-top:2px"><i style="width:73%"></i></div></div>
+        <div class="xc lock">
+          <div class="cap"><span>Patch 8</span><span>locked</span></div>
+          <div class="art"><svg><use href="#cTilled"/></svg></div>
+          <h4 style="color:var(--dim2)">Farming 99</h4><div class="sub">37 levels away</div>
+          <div class="bar lvl" style="margin-top:2px"><i style="width:63%"></i></div></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:11px">
+        <button class="btn ok" style="flex:1">Harvest all · 2</button>
+        <button class="btn" style="flex:1">Tend all · 1</button>
+        <button class="btn pri" style="flex:1">Sow all empty · 1</button>
+        <button class="btn" style="flex:0 0 auto">Seed: Wildberry ×40 ▾</button>
+      </div>
+    </div></div>
+    <div class="scalenote">1100px · 1:1 · panel height ≈ 690px (was 1018)</div>
+  </div>
+</section>
+
+<section class="w">
+  <div class="shead">
+    <span class="num">03</span>
+    <h2>The crops table, whichever direction wins</h2>
+    <span class="sub">This half of the panel is broken independently of the field, so the fix
+    is the same in all four.</span>
+  </div>
+
+  <div class="cmp">
+    <div>
+      <h4>Now — 3 pages, everything cut off</h4>
+      <div class="frame"><div class="g" style="padding:11px">
+        <div class="oldtbl">
+          <div class="ot"><b>Wildberry</b><span>3m · tend/1m</span><span>200 xp · Wildberries ×3</span></div>
+          <div class="ot"><b>Bloodcap</b><span>4m · tend/1m 1…</span><span>250 xp · Bloodcap ×3</span></div>
+          <div class="ot"><b>Wild Herb</b><span>5m · tend/1m 3…</span><span>340 xp · Wild Herb ×2</span></div>
+          <div class="ot"><b>Thornvine</b><span>5m · tend/1m 3…</span><span>380 xp · Thornvine ×2, W…</span></div>
+          <div class="ot"><b>Witchhazel</b><span>6m · tend/1m 4…</span><span>420 xp · Witchhazel ×2, …</span></div>
+          <div class="ot"><b>Sunroot</b><span>8m · tend/2m</span><span>550 xp · Sunroot ×2, Gard…</span></div>
+        </div>
+        <div style="text-align:center;font-family:var(--mono);font-size:11px;color:var(--dim2);margin-top:10px">
+          ‹ &nbsp; Page 1 / 3 &nbsp; ›</div>
+      </div></div>
+      <p style="font-size:13.5px;color:var(--dim)">Six of eighteen crops, and not one of them shows
+      its full yield. The pager is the only way to see the rest.</p>
+    </div>
+    <div>
+      <h4>Proposed — one grid, nothing hidden</h4>
+      <div class="frame"><div class="g" style="padding:11px">
+        <div class="crops">
+          <div class="cc"><svg><use href="#cBerry"/></svg><span class="ct"><b>Wildberry</b>
+            <i>3m grow · tend every 1m</i><em>Wildberries ×3 · 200 xp</em></span></div>
+          <div class="cc"><svg><use href="#cCap"/></svg><span class="ct"><b>Bloodcap</b>
+            <i>4m grow · tend every 1m 10s</i><em>Bloodcap ×3 · 250 xp</em></span></div>
+          <div class="cc"><svg><use href="#cHerb"/></svg><span class="ct"><b>Wild Herb</b>
+            <i>5m grow · tend every 1m 30s</i><em>Wild Herb ×2 · 340 xp</em></span></div>
+          <div class="cc"><svg><use href="#cThorn"/></svg><span class="ct"><b>Thornvine</b>
+            <i>5m grow · tend every 1m 35s</i><em>Thornvine ×2, Wild Herb ×1 · 380 xp</em></span></div>
+          <div class="cc"><svg><use href="#cHazel"/></svg><span class="ct"><b>Witchhazel</b>
+            <i>6m grow · tend every 1m 40s</i><em>Witchhazel ×2, Wild Herb ×1 · 420 xp</em></span></div>
+          <div class="cc"><svg><use href="#cRoot"/></svg><span class="ct"><b>Sunroot</b>
+            <i>8m grow · tend every 2m</i><em>Sunroot ×2, Garden Root ×1 · 550 xp</em></span></div>
+          <div class="cc"><svg><use href="#cFrost"/></svg><span class="ct"><b>Frostcrocus</b>
+            <i>10m grow · tend every 2m 15s</i><em>Frostcrocus ×2, Wild Herb ×1 · 700 xp</em></span></div>
+          <div class="cc"><svg><use href="#cEmber"/></svg><span class="ct"><b>Emberbloom</b>
+            <i>11m grow · tend every 2m 25s</i><em>Emberbloom ×2, Wild Herb ×1 · 820 xp</em></span></div>
+          <div class="cc"><svg><use href="#cVoid"/></svg><span class="ct"><b>Voidbloom</b>
+            <i>18m grow · tend every 3m 20s</i><em>Voidbloom ×1, Nightbloom ×1 · 1,600 xp</em></span></div>
+        </div>
+      </div></div>
+      <p style="font-size:13.5px;color:var(--dim)">Same footprint, nine crops instead of six, and
+      every yield legible. It moves behind a <b>Field / Crops</b> toggle so it isn't in the way
+      of the field at all.</p>
+    </div>
+  </div>
+</section>
+
+<section class="w">
+  <div class="shead">
+    <span class="num">04</span>
+    <h2>On generating art for this</h2>
+    <span class="sub">You asked me to try it. Here's the honest answer before I spend a night
+    on it.</span>
+  </div>
+  <div style="max-width:70ch;display:flex;flex-direction:column;gap:16px">
+    <p><b style="color:var(--ink)">The painted farm backdrop is the thing that got the last
+    attempt rejected</b>, and it also cost real weight: that one WebP was ~40KB of base64 inside
+    the HTML. <code style="font-family:'JetBrains Mono',monospace;font-size:13px">cindervale.html</code>
+    is already <b style="color:var(--bad)">5.87 MB</b> against a measured wrapper budget of about
+    3.4 MB — past that, a slow connection hits the 6-second fetch abort, silently falls back to
+    cache, and stops receiving updates. So raster art in this panel is expensive twice over.</p>
+    <p>Everything you see above is <b style="color:var(--ink)">SVG and CSS</b>: the crop glyphs, the
+    soil fill in option D, the growth bars. It costs a few hundred bytes each, scales to any size,
+    recolours with the theme, and never blurs.</p>
+    <p>Where generated art <i>would</i> genuinely pay off is the eighteen crops themselves — but
+    those already have hand-drawn SVGs in <code style="font-family:'JetBrains Mono',monospace;font-size:13px">ICONS</code>,
+    and the ones above are my quick stand-ins for the mockup. If you want the crops to look
+    better, the move is to redraw those eighteen SVGs bigger and richer, not to replace them with
+    images. Say the word and that's a separate pass.</p>
+  </div>
+</section>
+
+<div class="w ask">
+  <h2>What I need from you</h2>
+  <ol>
+    <li><b>Pick a direction</b> — or tell me which bits of which. A and D are the same idea at two
+    sizes; B and C are genuinely different bets. If none of these land either, say so plainly and
+    I'll stop guessing and ask you what farming should feel like instead.</li>
+    <li><b>The crops grid and the Farmhand collapse ship regardless.</b> Both are strict
+    improvements on what's there and neither depends on which field layout wins.</li>
+    <li><b>Should locked patches show a progress bar toward their level?</b> I put one in A and D.
+    It might read as encouragement or as clutter — your call.</li>
+    <li>Tell me if the <b>one seed strip instead of five dropdowns</b> is wrong. It assumes you
+    almost always sow the whole field with one crop, which is what the Plant All button implies,
+    but you know how it actually gets played.</li>
+  </ol>
+</div>
+
+<div class="w foot">
+  Static mockups at the panel's real width. Crop glyphs are stand-ins drawn for this document;
+  the game's own crop SVGs would be used. Palette and type match the live panel.
+</div>
