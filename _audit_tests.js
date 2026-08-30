@@ -2605,6 +2605,47 @@ setTimeout(() => {
        html.indexOf('_farmSeedSel.plantAll=') < 0);
   }
 
+  section('The skill footer is gone (0.9.122.5)');
+  {
+    /* Four cards under every skill panel — Next in <skill>, Right now, What this
+       skill drops, Mastery. Removed on Jordan's call, and it was also the page
+       shake he reported: renderSkillFooter ran from four render sites through
+       setTimeout(...,0), so every rebuild of a panel removed the footer and
+       re-appended it a frame later. Measured on farming, the document height
+       dropped 1105 -> 1080 and back inside ~6ms about every two seconds; with the
+       function stubbed that went from seven height changes in twelve seconds to
+       one. If any of this returns, the shake returns with it. */
+    ok('renderSkillFooter and its helpers are gone',
+       html.indexOf('function renderSkillFooter') < 0 &&
+       html.indexOf('function _sfRoom') < 0 && html.indexOf('function _sfActive') < 0 &&
+       html.indexOf('function _sfNextUnlock') < 0 && html.indexOf('function _sfDrops') < 0 &&
+       html.indexOf('function _sfMastery') < 0);
+    ok('no render site still schedules it', html.indexOf('renderSkillFooter($(') < 0);
+    ok('and its stylesheet went with it',
+       html.indexOf('.sf-wrap') < 0 && html.indexOf('.sf-card') < 0 &&
+       html.indexOf('[CSS-34]') < 0);
+
+    /* The one rule inside that CSS block that was not the footer's: without it a
+       short activity card stretches to its tallest row neighbour. */
+    ok('but #activityGrid keeps align-items:start',
+       html.indexOf('#activityGrid{align-items:start}') > 0);
+
+    /* The line Jordan named specifically. */
+    ok('the "run on their own clocks" note is gone',
+       html.indexOf('run on their own clocks') < 0);
+
+    /* Every skill panel still renders without it. */
+    let bad = '';
+    ['woodcutting','mining','fishing','foraging','smithing','cooking','alchemy',
+     'firemaking','agility','jeweler','farming','crafting'].forEach(k => {
+      const h = ev(`(function(){ selectedSkill='${k}'; _farmInteractAt=0;
+        try{ renderActivities(); }catch(e){ return 'THREW: '+e.message; }
+        return document.getElementById('activityGrid').innerHTML.length; })()`);
+      if (typeof h !== 'number' || h < 50) bad = k + ' -> ' + h;
+    });
+    ok('all twelve skill panels still render', !bad, bad);
+  }
+
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));
   process.exit(fail ? 1 : 0);
 }, 2500);
