@@ -2451,6 +2451,160 @@ setTimeout(() => {
          return sailOdds(sailSel,'press',0)[3] > sailOdds(sailSel,'steady',0)[3]; })()`) === true);
   }
 
+  section('Farming: the seed shelf and the field (0.9.122.4)');
+  {
+    /* The panel was 1018px of mostly chrome — five per-patch seed selects all set
+       to the same crop and each too narrow to print "Wildberry", three grey boxes
+       reading only "Locked", a 130px farmer block for a once-per-save decision,
+       and a paginated crop table with every yield line ellipsised. None of that
+       threw; it was just bad, which is why it needs assertions rather than a
+       boot test. */
+    const render = (setup) => ev(`(function(){
+      state=defaultState(); normalizeState();
+      state.xp.farming=XP_CUM[62];
+      state.patches={}; state.farmSeed=null;
+      state.farmer={tier:0,maxTier:0,enabled:false,seedId:null};
+      _farmInteractAt=0; _farmCropsOpen=false; _farmerTiersOpen=false;
+      selectedSkill='farming';
+      ${setup || ''}
+      renderFarming();
+      return document.getElementById('activityGrid').innerHTML; })()`);
+
+    const seeds = "CROPS.forEach(function(c){ state.items[c.id]=40; });";
+
+    const base = render(seeds);
+    ok('the panel renders a seed shelf', base.indexOf('class="fm-seeds"') > 0);
+    ok('and eight patch cards', (base.match(/class="fm-p[ "]/g) || []).length === 8,
+       String((base.match(/class="fm-p[ "]/g) || []).length));
+
+    /* The whole point of the shelf: no card holds a dropdown any more. */
+    ok('no patch card contains a <select>',
+       ev(`(function(){ var n=0;
+         document.querySelectorAll('.fm-p select').forEach(function(){ n++; });
+         return n; })()`) === 0);
+    /* The farmhand's own picker is still a select, and must stay one — it is a
+       different setting from the shelf (what it replants while you are away). */
+    ok('but the farmhand keeps its own auto-plant picker',
+       render(seeds + "state.farmer={tier:2,maxTier:2,enabled:true,seedId:null};")
+         .indexOf('farmerSeedSel') > 0);
+
+    /* One chip per seed you actually hold, and none for seeds you do not. */
+    ok('the shelf lists exactly the seeds you own',
+       ev(`(function(){ state=defaultState(); normalizeState();
+         state.xp.farming=XP_CUM[62]; state.patches={}; _farmInteractAt=0;
+         state.items[CROPS[0].id]=5; state.items[CROPS[1].id]=2;
+         selectedSkill='farming'; renderFarming();
+         return document.querySelectorAll('.fm-seed').length; })()`) === 2);
+    ok('an empty satchel says so instead of drawing an empty shelf',
+       ev(`(function(){ state=defaultState(); normalizeState();
+         state.xp.farming=XP_CUM[62]; state.patches={}; _farmInteractAt=0;
+         selectedSkill='farming'; renderFarming();
+         return document.getElementById('activityGrid').innerHTML; })()`)
+         .indexOf('No seeds in your satchel') > 0);
+
+    /* Selection drives every Plant control on the panel, so it has to survive a
+       save round-trip — the old _farmSeedSel.plantAll was session-only. */
+    ok('the chosen seed is persisted, not session-only',
+       ev(`(function(){ state.farmSeed='herb_seed'; normalizeState();
+         return state.farmSeed; })()`) === 'herb_seed');
+    ok('and a crop that no longer exists is dropped on load',
+       ev(`(function(){ state.farmSeed='not_a_crop'; normalizeState();
+         return state.farmSeed; })()`) === null);
+
+    /* Running out of the chosen seed must not stall the panel — it falls to the
+       best crop you can still grow, which is what Plant All always did. */
+    ok('an exhausted choice falls back to the best crop you can grow',
+       ev(`(function(){ state=defaultState(); normalizeState();
+         state.xp.farming=XP_CUM[62]; state.items={};
+         state.items['wildberry_seed']=3; state.items['herb_seed']=3;
+         state.farmSeed='voidbloom_seed';
+         var s=fmSelectedSeed(); return s&&s.id; })()`) === 'herb_seed');
+    ok('and no seeds at all returns nothing rather than throwing',
+       ev(`(function(){ state.items={}; return fmSelectedSeed(); })()`) === null);
+
+    /* Plant All names what it will sow. It used to read "Plant All" beside a
+       separate dropdown, which is how you end up planting the wrong crop. */
+    const pa = render(seeds + "state.farmSeed='wildberry_seed';");
+    ok('Plant all names the seed and the count',
+       /Plant all empty \u00b7 \d+ \u00d7 Wildberry|Plant all empty · \d+ × Wildberry/.test(pa),
+       pa.indexOf('Plant all empty') > 0 ? 'found the button' : 'no button');
+    ok('and the empty-patch button names it too', pa.indexOf('Plant Wildberry') > 0);
+
+    /* Bulk buttons disable rather than firing a "nothing to do" toast. */
+    ok('Harvest all is disabled with nothing ready', /Nothing ready/.test(pa));
+    ok('Plant all is disabled with no empty patches',
+       render(seeds + `state.farmSeed='wildberry_seed';
+         PATCHES.forEach(function(p){ if(farmingLvl()>=p.unlockLvl)
+           state.patches[p.id]={seedId:'wildberry_seed',plantedAt:Date.now(),growMs:180000,tendedMs:0,lastTended:0}; });`)
+         .indexOf('No empty patches') > 0);
+
+    /* A locked patch says what unlocks it instead of the word "Locked". */
+    ok('locked patches name their level and how far off it is',
+       pa.indexOf('Lv 70') > 0 && /levels away/.test(pa));
+    ok('and their bar is the level colour, not the growth colour',
+       pa.indexOf('fm-bar lvl') > 0);
+
+    /* Planting through the panel actually plants. */
+    ok('clicking a patch plants the selected seed',
+       ev(`(function(){ state=defaultState(); normalizeState();
+         state.xp.farming=XP_CUM[62]; state.patches={}; state.items={};
+         state.items['wildberry_seed']=5; state.farmSeed='wildberry_seed';
+         plantPatch('p1','wildberry_seed',true);
+         return state.patches.p1 && state.patches.p1.seedId; })()`) === 'wildberry_seed');
+
+    /* The crop reference is 18 cards. Rendering it open added ~460px and took the
+       panel to 1605px, past a 1080p window, so it opens closed. */
+    ok('the crop reference is collapsed by default',
+       pa.indexOf('fm-cropbtn') > 0 && pa.indexOf('class="fm-crop"') < 0);
+    ok('and opens to every crop, with no pager',
+       ev(`(function(){ _farmCropsOpen=true; renderFarming();
+         var h=document.getElementById('activityGrid').innerHTML;
+         _farmCropsOpen=false;
+         return document.querySelectorAll('.fm-crop').length; })()`) === ev('CROPS.length'));
+
+    /* Each tier card must list only what that tier does. The first cut built them
+       by stripping the <s> tags off the row's full ladder, which advertised
+       tending on the Apprentice — a 200,000g feature on a 5,000g hire. */
+    ok('a tier card lists only that tier\'s own capabilities',
+       ev(`_fmCapsOnly(FARMER_TIERS[0])`) === 'harvests' &&
+       ev(`_fmCapsOnly(FARMER_TIERS[1])`) === 'harvests \u00b7 replants \u00b7 plants empty' &&
+       ev(`_fmCapsOnly(FARMER_TIERS[2]).indexOf('tends')`) > 0,
+       ev(`_fmCapsOnly(FARMER_TIERS[0])`));
+    ok('while the row strikes through what the tier cannot do',
+       ev(`_fmCapsLine(FARMER_TIERS[0]).indexOf('<s>tends</s>')`) > 0 &&
+       ev(`_fmCapsLine(FARMER_TIERS[2]).indexOf('<s>')`) < 0);
+
+    /* All four farmhand controls have to survive on the row. */
+    const hired = render(seeds + "state.farmer={tier:2,maxTier:2,enabled:true,seedId:null};");
+    ok('the farmhand row carries pause, the seed picker and the upgrade',
+       hired.indexOf('Pause') > 0 && hired.indexOf('farmerSeedSel') > 0 &&
+       /Upgrade/.test(hired));
+    ok('and a paused farmhand offers Resume instead',
+       render(seeds + "state.farmer={tier:2,maxTier:2,enabled:false,seedId:null};")
+         .indexOf('Resume') > 0);
+    ok('the tier list is closed until asked for',
+       hired.indexOf('fm-tiers') < 0 && /All three/.test(hired));
+    ok('and opening it offers the tier you already hired',
+       render(seeds + `state.farmer={tier:2,maxTier:2,enabled:true,seedId:null};
+         _farmerTiersOpen=true;`).indexOf('Use this one') > 0);
+
+    /* Namespacing. .seed / .field / .hand / .bar are exactly the bare classes that
+       already bleed between panels in this file. */
+    ok('every farming class is fm- namespaced',
+       html.indexOf('.fm-seed{') > 0 && html.indexOf('.fm-field{') > 0 &&
+       html.indexOf('.fm-hand{') > 0 &&
+       html.indexOf('\n.seed{') < 0 && html.indexOf('\n.field{') < 0);
+
+    /* The vars the rewrite orphaned must not linger — a stale _farmCropGuidePage
+       reads as if pagination is still a thing. */
+    /* Scoped to declarations and reads, not mentions: the comment above the removal
+       names all three on purpose, so a bare indexOf would fail on its own tombstone. */
+    ok('the old pagination and per-patch select state are gone',
+       html.indexOf('var _farmCropGuidePage') < 0 && html.indexOf('var _farmSeedSel') < 0 &&
+       html.indexOf('var CROPS_PER_PAGE') < 0 && html.indexOf('_farmSeedSel[') < 0 &&
+       html.indexOf('_farmSeedSel.plantAll=') < 0);
+  }
+
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));
   process.exit(fail ? 1 : 0);
 }, 2500);
