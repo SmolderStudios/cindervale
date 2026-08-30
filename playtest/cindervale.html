@@ -45,7 +45,6 @@
    [CSS-31]   MONSTER LOG
    [CSS-32]   RAIDS
    [CSS-33]   SAILING & TREASURE HUNTING
-   [CSS-34]   SKILL PANEL FOOTER
    [CSS-35]   ENCHANTING PANEL
    [CSS-36]   SOCKET PANEL
    [CSS-37]   MONSTER LOG (rebuild)
@@ -3551,61 +3550,9 @@ body:not(.is-demo) .demo-only{display:none !important}
 .sl-tasks .sl-tk-list{font-size:calc(11.5px*var(--tscale));color:var(--muted);line-height:1.5;margin-top:1px}
 /* ════════ [CSS-32 END] RAIDS ══════════════════════════════════════════════════════ */
 
-/* ════════ [CSS-34] SKILL PANEL FOOTER ═══════════════════════════════════════════
-   The centre panel used to run 430px (fishing) to 905px (farming) on a 1080-tall
-   window — the core loop was the emptiest screen in the game while Combat and
-   Sailing filled theirs. This is the fill: bordered like every other card so it
-   reads as a real surface, but the type stays monospace and muted rather than
-   gold Cinzel, so it supports the activity grid instead of competing with it.
-
-   grid-column:1/-1 is load-bearing. #activityGrid is itself a CSS grid; without
-   the span the footer becomes a COLUMN of it and stretches every locked activity
-   card to full height. */
-.sf-wrap{display:grid;gap:10px;margin-top:14px;grid-column:1/-1;width:100%;
-  align-items:stretch;grid-template-columns:repeat(auto-fit,minmax(400px,1fr))}
+/* Survives the skill footer that used to live here (removed 0.9.122.5): without
+   align-items:start a short activity card stretches to its tallest row neighbour. */
 #activityGrid{align-items:start}
-.sf-card{background:var(--panel);border:1px solid var(--trim-d);border-radius:8px;
-  padding:11px 13px;min-width:0;box-shadow:var(--sh-1)}
-.sf-card h5{margin:0 0 8px;font-family:var(--num);font-size:calc(11px*var(--tscale));letter-spacing:1.5px;
-  text-transform:uppercase;color:var(--trim);font-weight:400}
-.sf-next{display:flex;align-items:baseline;gap:9px}
-.sf-next .lvl{font-family:var(--num);font-size:calc(14px*var(--tscale));color:var(--ember);flex:none}
-.sf-next .lvl small{font-size:calc(14px*var(--tscale));color:var(--ember)}
-.sf-next .body{flex:1;min-width:0}
-.sf-next .body b{color:var(--text);font-size:calc(13.5px*var(--tscale));font-weight:400}
-.sf-next .body .sub{font-family:var(--num);font-size:calc(11px*var(--tscale));color:var(--muted);
-  margin-top:4px;line-height:1.5}
-.sf-next .body .sub em{color:var(--green);font-style:normal}
-.sf-row{display:flex;align-items:center;gap:9px;padding:4px 0}
-.sf-row+.sf-row{border-top:1px solid #2e221388}
-.sf-row .dot{width:6px;height:6px;border-radius:50%;flex:none}
-.sf-row .nm{flex:1;min-width:0;font-size:calc(13px*var(--tscale));color:var(--muted);
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sf-row .nm b{color:var(--text);font-weight:400}
-.sf-row .st{font-family:var(--num);font-size:calc(11px*var(--tscale));color:#8a7550;flex:none}
-.sf-mini{height:3px;width:58px;flex:none;background:#241a0e;border-radius:2px;overflow:hidden}
-.sf-mini i{display:block;height:100%}
-/* Explanatory line inside a footer card (0.9.120) — used where the card would
-   otherwise be either absent or a single unexplained chip. */
-.sf-note{margin-top:7px;font-size:calc(11.5px*var(--tscale));line-height:1.5;color:var(--muted)}
-.sf-note b{color:var(--trim);font-weight:normal}
-.sf-chips{display:flex;flex-wrap:wrap;gap:6px 14px}
-.sf-chip{font-family:var(--num);font-size:calc(11px*var(--tscale));color:var(--muted);
-  display:flex;align-items:center;gap:5px;white-space:nowrap}
-.sf-chip .ev-icon{width:13px;height:13px}
-.sf-chip b{color:#8a7550;font-weight:400}
-/* A path that moves your drop rate should be visible where the rate is shown,
-   not only on the character-creation screen. */
-.sf-chip b.rate.up{color:var(--green)}
-.sf-chip b.rate.down{color:#b0724a}
-.sf-mbar{height:3px;background:#241a0e;border-radius:2px;overflow:hidden;margin-top:7px;max-width:280px}
-.sf-mbar i{display:block;height:100%}
-/* solo — one inline strip for panels that are already full (farming, cooking) */
-.sf-wrap.solo{grid-template-columns:1fr}
-.sf-wrap.solo .sf-card{display:flex;align-items:center;gap:18px;flex-wrap:wrap;padding:9px 13px}
-.sf-wrap.solo .sf-card h5{margin:0;flex:none}
-.sf-wrap.solo .sf-row{padding:0;border:none}
-.sf-wrap.solo .sf-row+.sf-row{border:none}
 
 /* ════════ [CSS-33] SAILING & TREASURE HUNTING (0.9.61) ═══════════════════════════
    The sailing panel is its own visual world — an admiralty sea chart read by
@@ -6421,7 +6368,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.122.4">v0.9.122</div>
+  <div class="mm-ver" data-build="0.9.122.5">v0.9.122</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -14686,7 +14633,6 @@ function fmSelectedSeed(){
 }
 
 function renderFarming(){
-  setTimeout(function(){ try{ renderSkillFooter($('activityGrid'), selectedSkill); }catch(e){} },0);
   var box=$('activityGrid');
   if(!box) return;
   // Farming content is laid out for display:block (its inner sections are their
@@ -20936,7 +20882,6 @@ const JW_CATS=[
   {key:'sea',    label:'Sea',     icon:'⚓', desc:'Sea material + cut gem → a unique piece with an always-on bonus. Every stone here comes back from a voyage and nowhere else.'},
 ];
 function renderJeweler(){
-  setTimeout(function(){ try{ renderSkillFooter($('activityGrid'), selectedSkill); }catch(e){} },0);
   const sk=SKILLS.jeweler;
   const grid=$('activityGrid'); grid.innerHTML='';
   grid.style.display='block'; // override the parent CSS grid — tab bar + panel span full width
@@ -21056,7 +21001,6 @@ const CR_CATS=[
   {key:'tool',   label:'Tools',   icon:CR_CAT_ICONS.tool,   desc:'Bar + log → skilling tool. One-time unlock — equips into its skill slot for a permanent speed bonus. Used to be sold in the Shop.'},
 ];
 function renderCrafting(){
-  setTimeout(function(){ try{ renderSkillFooter($('activityGrid'), selectedSkill); }catch(e){} },0);
   const sk=SKILLS.crafting;
   const grid=$('activityGrid'); grid.innerHTML='';
   grid.style.display='block'; // override the parent CSS grid — tab bar + panel span full width
@@ -21233,215 +21177,7 @@ function renderCrafting(){
 }
 
 /* ════ [JS-22b] activities grid ══════════════════════════════════════════════════ */
-/* ════ [JS-22i] skill panel footer ═══════════════════════════════════════════════
-   Four things the game already tracks but never showed: what unlocks next in this
-   skill, what is running everywhere, what this skill drops, and mastery on the
-   active activity.
-
-   ADAPTIVE ON PURPOSE. The panels are not the same height — fishing ends at 430px
-   and farming at 905px on a 1080 window — so a fixed block would overflow farming
-   while still leaving fishing short. This measures the room left and picks a
-   shape: four cards in a 2x2 when there is real space, two side by side when there
-   is some, and a single inline strip when there is almost none. */
-function _sfRoom(afterEl){
-  try{
-    const z=(typeof _rootZoom==='function')?_rootZoom():1;
-    const vh=window.innerHeight/z;
-    const b=afterEl.getBoundingClientRect().bottom/z;
-    return Math.max(0, vh-b-28);
-  }catch(e){ return 0; }
-}
-function _sfNextUnlock(skill){
-  const sk=SKILLS[skill]; if(!sk||!sk.acts.length) return null;
-  const lvl=levelFromXp(state.xp[skill]||0);
-  const locked=sk.acts.filter(a=>a.lvl>lvl).sort((a,b)=>a.lvl-b.lvl);
-  if(!locked.length) return null;
-  const next=locked[0];
-  const open=sk.acts.filter(a=>a.lvl<=lvl);
-  let bestNow=0;
-  open.forEach(a=>{ try{ bestNow=Math.max(bestNow, ratesFor(a,skill).xph||0);}catch(e){} });
-  let nextXph=0; try{ nextXph=ratesFor(next,skill).xph||0; }catch(e){}
-  const out=Object.keys(next.out||{})[0];
-  return {act:next, away:next.lvl-lvl, gain:(bestNow>0&&nextXph>0)?(nextXph/bestNow-1):0,
-          outName:(out&&ITEMS[out])?ITEMS[out].name:null};
-}
-function _sfActive(){
-  const rows=[];
-  if(state.action&&state.action.skill){
-    const sk=SKILLS[state.action.skill];
-    const a=sk?sk.acts.find(x=>x.id===state.action.actId):null;
-    rows.push({c:'var(--green)', n:(sk?sk.name:state.action.skill), sub:a?a.name:'', st:'running', pct:null});
-  }
-  try{
-    let ready=0, growing=0;
-    (typeof PATCH_IDS!=='undefined'?PATCH_IDS:['p1','p2','p3','p4','p5','p6','p7','p8']).forEach(id=>{
-      const ps=getPatchState(id); if(!ps) return;
-      if(patchReady(ps)) ready++; else growing++;
-    });
-    if(ready)   rows.push({c:'var(--ember)', n:'Farming', sub:ready+' patch'+(ready>1?'es':'')+' ready', st:'collect', pct:100});
-    else if(growing) rows.push({c:'var(--blue)', n:'Farming', sub:growing+' growing', st:'', pct:null});
-  }catch(e){}
-  try{
-    /* Both hulls since 0.9.118 — this read state.sail.voy directly and so went
-       blind to the consort, which is exactly the ship most likely to be out while
-       you are stood in a skill panel. */
-    let anyOut=false;
-    (typeof sailVoyages==='function'?sailVoyages():[{slot:0,v:(state.sail||{}).voy}]).forEach(sv=>{
-      if(!sv.v) return;
-      anyOut=true;
-      const left=Math.max(0,sv.v.endsAt-Date.now());
-      const pct=100*(1-left/(sv.v.dur||1));
-      const mins=Math.round(left/60000);
-      rows.push({c:'var(--blue)', n:'Sailing', sub:sailIsle(sv.v.i).n+(sv.slot===1?' · consort':''),
-                 st:(mins>60?(Math.floor(mins/60)+'h '+(mins%60)+'m'):(mins+'m')), pct:Math.max(0,Math.min(100,pct))});
-    });
-    if(!anyOut && state.sail && state.sail.last){
-      rows.push({c:'var(--ember)', n:'Sailing', sub:'ship home — haul waiting', st:'collect', pct:100});
-    }
-  }catch(e){}
-  return rows;
-}
-/* Rates go through effDropChance — the same funnel the roll uses, so the number
-   shown is the number that fires: character path, Lucky Stride and RARE_DROP_CAP.
-   A raw DROPS chance here would show every player the Normal-path figure. */
-function _sfDrops(skill){
-  const sk=SKILLS[skill]; if(!sk) return [];
-  const lvl=levelFromXp(state.xp[skill]||0);
-  const seen={}, out=[];
-  sk.acts.forEach(a=>{
-    if(a.lvl>lvl) return;
-    (typeof DROPS!=='undefined'?(DROPS[a.id]||[]):[]).forEach(d=>{
-      if(seen[d.id]||!ITEMS[d.id]) return;
-      seen[d.id]=1;
-      const eff=(typeof effDropChance==='function')?effDropChance(d.chance):d.chance;
-      out.push({id:d.id, eff:eff, base:d.chance});
-    });
-  });
-  return out.sort((a,b)=>b.eff-a.eff).slice(0,4);
-}
-function _sfMastery(skill){
-  const sk=SKILLS[skill]; if(!sk||!sk.acts.length) return null;
-  let actId=(state.action&&state.action.skill===skill)?state.action.actId:null;
-  if(!actId){
-    const lvl=levelFromXp(state.xp[skill]||0);
-    const open=sk.acts.filter(a=>a.lvl<=lvl);
-    if(!open.length) return null;
-    actId=open.reduce((m,a)=>(masteryLevel(a.id)>masteryLevel(m.id)?a:m),open[0]).id;
-  }
-  const act=sk.acts.find(a=>a.id===actId); if(!act) return null;
-  const lv=masteryLevel(actId), have=state.mastery[actId]||0;
-  const cur=masteryXpNeeded(lv), nxt=masteryXpNeeded(lv+1);
-  return {act, lv, have, cur, nxt, pct:Math.max(0,Math.min(100,(have-cur)/Math.max(1,nxt-cur)*100)),
-          tier:masteryTier(lv)};
-}
-
-function renderSkillFooter(host, skill){
-  if(!host||!SKILLS[skill]) return;
-  const old=host.querySelector('.sf-wrap'); if(old) old.remove();
-  const room=_sfRoom(host);
-  if(room<70) return;
-
-  const next=_sfNextUnlock(skill), active=_sfActive(),
-        drops=_sfDrops(skill), mast=_sfMastery(skill);
-
-  const wrap=document.createElement('div');
-  wrap.className='sf-wrap';
-
-  const cardNext=()=>{
-    /* No next unlock means everything is open — say so rather than dropping the
-       card, which left a hole in the footer at the exact moment the player had
-       most earned the opposite. */
-    if(!next){
-      const lvl=levelFromXp(state.xp[skill]||0);
-      if(lvl<MAX_LEVEL) return null;   // mid-game with nothing pending: genuinely nothing to say
-      const d=document.createElement('div'); d.className='sf-card';
-      d.innerHTML='<h5>Next in '+SKILLS[skill].name+'</h5>'
-        +'<div class="sf-note">Every activity in this skill is unlocked. '
-        +'Mastery keeps going.</div>';
-      return d;
-    }
-    const d=document.createElement('div'); d.className='sf-card';
-    const pct=next.gain>0?('<em>+'+Math.round(next.gain*100)+'% xp/hr</em>'):'';
-    d.innerHTML='<h5>Next in '+SKILLS[skill].name+'</h5>'+
-      '<div class="sf-next"><span class="lvl">'+next.away+'<small>&nbsp;lv</small></span>'+
-      '<div class="body"><b>'+next.act.name+'</b><div class="sub">'+
-      [pct, next.outName?('unlocks '+next.outName):'', 'Lv '+next.act.lvl]
-        .filter(Boolean).join(' · ')+'</div></div></div>';
-    return d;
-  };
-  const cardActive=()=>{
-    const d=document.createElement('div'); d.className='sf-card';
-    let rows=active.map(r=>'<div class="sf-row"><span class="dot" style="background:'+r.c+'"></span>'+
-      '<span class="nm"><b>'+r.n+'</b>'+(r.sub?' — '+r.sub:'')+'</span>'+
-      (r.pct!=null?'<span class="sf-mini"><i style="width:'+r.pct+'%;background:'+r.c+'"></i></span>':'')+
-      '<span class="st">'+(r.st||'')+'</span></div>').join('');
-    if(!rows) rows='<div class="sf-row"><span class="nm">Nothing running. Pick an activity above.</span></div>';
-    /* The rule itself, written down (0.9.120). This card has always LISTED the
-       things running in parallel, but never said which skills can do that — a
-       player asked outright which ones level passively alongside an activity.
-       Exactly two do, and everything else shares one slot. */
-    d.innerHTML='<h5>Right now</h5>'+rows
-      +'<div class="sf-note"><b>Farming</b> and <b>Sailing</b> run on their own clocks — '
-      +'they keep going alongside whatever activity you pick, and while you are away. '
-      +'Every other skill shares the single activity slot, so starting one stops the last.</div>';
-    return d;
-  };
-  /* Always rendered since 0.9.120. It used to bail whenever the skill had no
-     entries in DROPS, which silently hid it on SEVEN of the twelve — smithing,
-     cooking, alchemy, firemaking, jeweler, farming and crafting — so the footer
-     had a different number of cards depending on which skill you opened, and a
-     player reported exactly that inconsistency.
-
-     "Nothing" was also untrue: every one of the twelve drops its own 4-piece
-     skilling set while you train it. That was already being rendered here, but
-     only ever as a tail chip on skills that happened to have a DROPS table too. */
-  const cardDrops=()=>{
-    const d=document.createElement('div'); d.className='sf-card';
-    const set=SKILLING_SETS[skill];
-    const fmt=(typeof _fmtMonChance==='function')?_fmtMonChance:(c=>'1/'+Math.max(2,Math.round(1/c)));
-    let chips=drops.map(x=>{
-      const cls=x.eff>x.base+1e-12?' up':(x.eff<x.base-1e-12?' down':'');
-      return '<span class="sf-chip">'+iconHTML(x.id)+ITEMS[x.id].name+
-             ' <b class="rate'+cls+'">'+fmt(x.eff)+'</b></span>';
-    }).join('');
-    if(set){
-      const owned=set.pieces.filter(p=>(state.skillingGear&&state.skillingGear[p])||
-        Object.values(state.equipped||{}).indexOf(p)>=0 ||
-        Object.values(state.skillingEquipped||{}).indexOf(p)>=0).length;
-      chips+='<span class="sf-chip">'+(set.icon||'')+' '+set.name+' <b>'+owned+' / '+set.pieces.length+'</b></span>';
-    }
-    d.innerHTML='<h5>What this skill drops</h5><div class="sf-chips">'+chips+'</div>'
-      /* Say it in words on the processing skills, where the set is the ONLY thing
-         that drops — otherwise a lone set chip reads like the card failed to load. */
-      +(drops.length?''
-        :'<div class="sf-note">No extra materials — the '+(set?set.name:'skilling set')
-         +' is what this skill drops. Rarer from higher-level activities.</div>');
-    return d;
-  };
-  const cardMastery=()=>{
-    if(!mast) return null;
-    const d=document.createElement('div'); d.className='sf-card';
-    const col=MASTERY_BAR_COLOR[mast.tier]||'#3a2a17';
-    d.innerHTML='<h5>Mastery · '+mast.act.name+'</h5>'+
-      '<div class="sf-next"><div class="body"><b>Level '+mast.lv+'</b>'+
-      '<div class="sub">'+(mast.have-mast.cur).toLocaleString()+' / '+(mast.nxt-mast.cur).toLocaleString()+
-      ' actions to '+(mast.lv+1)+(MASTERY_LABEL[masteryTier(mast.lv+1)]?' · next tier '+MASTERY_LABEL[masteryTier(mast.lv+1)]:'')+
-      '</div></div></div><div class="sf-mbar"><i style="width:'+mast.pct+'%;background:'+col+'"></i></div>';
-    return d;
-  };
-
-  /* Two columns roughly halve what a set of cards costs in height, so these
-     thresholds are per-ROW, not per-card. */
-  let cards;
-  if(room>=250){ cards=[cardNext(),cardActive(),cardDrops(),cardMastery()]; }
-  else if(room>=130){ cards=[cardNext(),cardActive()]; }
-  else { cards=[cardActive()||cardNext()]; wrap.classList.add('solo'); }
-  cards.filter(Boolean).forEach(c=>wrap.appendChild(c));
-  if(wrap.children.length) host.appendChild(wrap);
-}
-
 function renderActivities(){
-  setTimeout(function(){ try{ renderSkillFooter($('activityGrid'), selectedSkill); }catch(e){} },0);
   // Farming uses the patch system — render it directly into the activity grid
   if(selectedSkill==='farming'){ renderFarming(); return; }
   // Jeweler uses a category-menu layout (Refine / Rings / Amulets / Pendants)
