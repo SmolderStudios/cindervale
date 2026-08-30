@@ -4134,6 +4134,171 @@ body:not(.is-demo) .demo-only{display:none !important}
 .sl-laidup p{margin:0;font-size:calc(12.8px*var(--tscale));line-height:1.5;color:#c8b2a4}
 .sl-laidup p b{color:#e8d7b0}
 .sl-laidup .sl-lab{margin-top:9px}
+/* ════════ [CSS-42] FARMING (0.9.122.4) ══════════════════════════
+   The panel was 1018px of mostly chrome: five per-patch seed <select>s all set to
+   the same crop and each narrow enough to render "Wildberry" as "Wildberr", three
+   grey boxes reading only "Locked", a 130px farmer block of three cards for a
+   decision you make once, and a paginated crop table where every yield line was
+   ellipsised. Not one patch card carried a number, while every other skill's card
+   leads with one.
+
+   A patch is an activity card now — icon in a well, name, one big number, a bar,
+   one wide button — because those already work. The seed is picked once on a
+   shelf above the field, so no card holds a dropdown at all.
+
+   fm- namespaced on purpose: .seed, .field, .hand, .caps and .bar are exactly the
+   kind of bare class that already bleeds between panels in this file. */
+.fm-hint{display:flex;align-items:center;gap:8px;font-size:calc(13px*var(--tscale));
+  color:var(--muted);line-height:1.4;padding:4px 10px 6px;margin-bottom:7px;
+  border-bottom:1px solid var(--trim-d)}
+.fm-hint .ev-icon{width:17px;height:17px}
+.fm-lab{display:flex;align-items:center;gap:9px;font-family:var(--num);
+  font-size:calc(11px*var(--tscale));letter-spacing:.14em;text-transform:uppercase;
+  color:var(--dim,#7a6748);margin:9px 0 6px}
+.fm-lab::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--trim-d),transparent)}
+.fm-lab b{color:var(--trim);font-weight:400}
+.fm-lab:first-child{margin-top:0}
+
+/* ── the seed shelf ── every seed you hold, wrapped, nothing hidden. Capped at
+   three rows so a nineteenth crop cannot grow the panel; at eighteen it never bites. */
+.fm-seeds{display:flex;flex-wrap:wrap;gap:6px;max-height:calc(124px*var(--tscale));
+  overflow-y:auto;scrollbar-width:thin}
+.fm-seed{display:inline-flex;align-items:center;gap:6px;flex:0 0 auto;
+  background:var(--raised-s);border:1px solid var(--trim-d);border-radius:7px;
+  padding:6px 10px;cursor:var(--cur-pointer);font-family:'Cinzel',serif;
+  font-size:calc(13px*var(--tscale));color:var(--muted);line-height:1.2;
+  transition:border-color .12s,color .12s,background .12s}
+.fm-seed:hover{border-color:var(--trim);color:var(--text)}
+.fm-seed.on{border-color:var(--trim);background:#2d200e;color:var(--gold-hi,#f0c772)}
+.fm-seed:focus-visible{outline:2px solid var(--trim);outline-offset:1px}
+.fm-seed .ev-icon{width:17px;height:17px;flex:none}
+.fm-seed i{font-style:normal;font-family:var(--num);font-size:calc(10.5px*var(--tscale));
+  color:var(--dim,#7a6748)}
+.fm-seed.on i{color:var(--trim)}
+.fm-noseed{font-size:calc(13.5px*var(--tscale));color:var(--muted);font-style:italic;padding:3px 2px}
+
+/* ── the field ── */
+.fm-field{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+@media(max-width:1100px){.fm-field{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.fm-p{background:linear-gradient(178deg,var(--lit-top,#33240f),var(--lit-bot,#1b1208) 78%);
+  border:1px solid var(--trim-d);border-radius:9px;padding:10px;
+  display:flex;flex-direction:column;gap:7px;min-width:0}
+.fm-p.ready{border-color:#5a7a28;box-shadow:inset 0 0 22px rgba(125,163,63,.13)}
+.fm-p.grow{border-color:#5a4526}
+.fm-p.lock{opacity:.5;border-style:dashed}
+.fm-p .fm-top{display:flex;align-items:center;gap:9px;min-width:0}
+.fm-p .fm-well{width:38px;height:38px;flex:none;border-radius:9px;background:#150e06;
+  box-shadow:inset 0 2px 6px rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center}
+.fm-p .fm-well .ev-icon{width:26px;height:26px}
+.fm-p .fm-nm{min-width:0;flex:1}
+.fm-p .fm-nm b{display:block;font-family:'Cinzel',serif;font-size:calc(14px*var(--tscale));
+  color:var(--gold-hi,#f0c772);line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fm-p .fm-nm i{display:block;font-style:normal;font-family:var(--num);
+  font-size:calc(9.5px*var(--tscale));letter-spacing:.08em;text-transform:uppercase;
+  color:var(--dim,#7a6748);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fm-p .fm-hero{font-family:'Cinzel',serif;font-size:calc(21px*var(--tscale));line-height:1;
+  color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fm-p.ready .fm-hero{color:#b4d472}
+.fm-p .fm-hero small{font-family:var(--num);font-size:calc(10.5px*var(--tscale));
+  color:var(--dim,#7a6748);margin-left:6px}
+.fm-p .fm-sub{font-family:var(--num);font-size:calc(10px*var(--tscale));color:var(--dim,#7a6748);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fm-bar{height:8px;border-radius:5px;background:#120c05;overflow:hidden;
+  box-shadow:inset 0 2px 4px rgba(0,0,0,.85)}
+.fm-bar i{display:block;height:100%;border-radius:5px;
+  background:linear-gradient(90deg,#6d8c2e,#a8cc52);transition:width .3s linear}
+.fm-bar.amb i{background:linear-gradient(90deg,#a3651c,#e0a24a)}
+/* Level progress toward unlocking a patch. Deliberately NOT the growth green —
+   a green bar on a locked card reads as "something is growing in there". */
+.fm-bar.lvl i{background:linear-gradient(90deg,#6e552c,#c79b4e)}
+
+/* ── buttons ── */
+.fm-btn{font-family:'Cinzel',serif;border-radius:6px;cursor:var(--cur-pointer);
+  border:1px solid var(--trim-d);background:linear-gradient(180deg,#3a2a15,#241906);
+  color:var(--text);padding:8px 14px;font-size:calc(14px*var(--tscale));
+  transition:filter .12s,border-color .12s,color .12s}
+.fm-btn:hover:not(:disabled){border-color:var(--trim);color:var(--gold-hi,#f0c772)}
+.fm-btn:focus-visible{outline:2px solid var(--trim);outline-offset:1px}
+.fm-btn.wide{width:100%;display:block}
+.fm-btn.pri{background:linear-gradient(180deg,#e88a3c,#c25e18);border-color:#7a3a0e;
+  color:#1a0f06;font-weight:700;box-shadow:0 2px 0 #6a3209}
+.fm-btn.pri:hover:not(:disabled){filter:brightness(1.07);color:#1a0f06}
+.fm-btn.ok{background:linear-gradient(180deg,#7fa83f,#4d6b22);border-color:#33501a;
+  color:#0e1405;font-weight:700;box-shadow:0 2px 0 #2c4415}
+.fm-btn.ok:hover:not(:disabled){filter:brightness(1.07);color:#0e1405}
+.fm-btn:disabled{opacity:.42;cursor:var(--cur-na)}
+.fm-bulk{display:flex;gap:8px;margin-top:9px;flex-wrap:wrap}
+.fm-bulk .fm-btn{flex:1 1 180px;min-width:0}
+
+/* ── the farmhand ── one row, not three cards. The tier list opens under it. */
+.fm-hand{display:flex;align-items:center;gap:11px;margin-top:9px;padding:8px 12px;
+  background:var(--raised-s);border:1px solid var(--trim-d);border-radius:8px;flex-wrap:wrap}
+.fm-hand.open{border-radius:8px 8px 0 0;border-bottom:0;margin-bottom:0}
+.fm-hand .fm-hi{width:32px;height:32px;flex:none;border-radius:7px;background:#150e06;
+  box-shadow:inset 0 2px 5px rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center}
+.fm-hand .fm-hi .ev-icon{width:22px;height:22px}
+.fm-hand .fm-ht{flex:1 1 220px;min-width:0}
+.fm-hand .fm-l1{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.fm-hand .fm-l1 b{font-family:'Cinzel',serif;font-size:calc(14px*var(--tscale));
+  color:var(--gold-hi,#f0c772);line-height:1.2}
+.fm-hand .fm-ht p{margin:1px 0 0;font-size:calc(13.5px*var(--tscale));color:var(--muted)}
+.fm-hand .fm-ht p em{font-style:normal;color:var(--text)}
+.fm-hand .fm-ht p s{text-decoration:line-through;text-decoration-thickness:1px;
+  color:var(--dim,#7a6748);opacity:.75}
+.fm-wk{font-family:var(--num);font-size:calc(10px*var(--tscale));letter-spacing:.08em;
+  text-transform:uppercase;color:var(--green);border:1px solid #3a5018;border-radius:3px;
+  padding:1px 6px}
+.fm-wk.off{color:var(--muted);border-color:var(--trim-d)}
+.fm-hand .fm-btn{padding:6px 12px;font-size:calc(13px*var(--tscale));flex:0 0 auto}
+.fm-hand .fm-btn.up{border-color:var(--trim);color:var(--gold-hi,#f0c772)}
+.fm-pick{display:inline-flex;align-items:center;gap:7px;flex:0 0 auto}
+.fm-pick > i{font-style:normal;font-family:var(--num);font-size:calc(10px*var(--tscale));
+  letter-spacing:.09em;text-transform:uppercase;color:var(--dim,#7a6748)}
+.fm-pick select{background:var(--raised-s);color:var(--text);border:1px solid var(--trim-d);
+  border-radius:5px;padding:5px 8px;font-size:calc(13px*var(--tscale));font-family:inherit;
+  cursor:var(--cur-pointer);max-width:180px}
+.fm-tiers{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;
+  background:var(--trim-d);border:1px solid var(--trim-d);border-top:0;
+  border-radius:0 0 8px 8px;overflow:hidden;margin-bottom:11px}
+@media(max-width:820px){.fm-tiers{grid-template-columns:1fr}}
+.fm-tier{background:var(--raised-s);padding:11px 13px;display:flex;flex-direction:column;gap:4px}
+.fm-tier.on{background:#1d2410;border-left:2px solid var(--green)}
+.fm-tier b{font-family:'Cinzel',serif;font-size:calc(14.5px*var(--tscale));color:var(--gold-hi,#f0c772)}
+.fm-tier.lock b{color:var(--muted)}
+.fm-tier i{font-style:normal;font-family:var(--num);font-size:calc(10px*var(--tscale));
+  letter-spacing:.08em;text-transform:uppercase;color:var(--dim,#7a6748)}
+.fm-tier em{font-style:normal;font-family:var(--num);font-size:calc(11.5px*var(--tscale));
+  color:var(--trim);margin-top:2px}
+.fm-tier .fm-btn{margin-top:6px}
+.fm-tier .fm-need{font-family:var(--num);font-size:calc(11px*var(--tscale));
+  color:var(--dim,#7a6748);margin-top:9px}
+.fm-tier .fm-inuse{font-family:var(--num);font-size:calc(11px*var(--tscale));
+  color:var(--green);margin-top:9px}
+
+/* ── the crop reference ── one grid, no pager, nothing ellipsised ── */
+.fm-cropbtn{display:flex;align-items:center;gap:9px;width:100%;margin-top:10px;
+  padding:7px 12px;border-radius:7px;border:1px solid var(--trim-d);background:var(--raised-s);
+  color:var(--muted);font-family:'Cinzel',serif;font-size:calc(14px*var(--tscale));
+  cursor:var(--cur-pointer);text-align:left}
+.fm-cropbtn:hover{border-color:var(--trim);color:var(--text)}
+.fm-cropbtn.on{color:var(--text)}
+.fm-cropbtn:focus-visible{outline:2px solid var(--trim);outline-offset:1px}
+.fm-cropbtn i{margin-left:auto;font-style:normal;font-family:var(--num);
+  font-size:calc(11px*var(--tscale));color:var(--dim,#7a6748)}
+.fm-crops{margin-top:8px;display:grid;grid-template-columns:repeat(auto-fill,minmax(238px,1fr));gap:8px}
+.fm-crop{background:var(--raised);border:1px solid var(--trim-d);border-radius:8px;
+  padding:10px;display:flex;gap:9px;align-items:flex-start;min-width:0}
+.fm-crop.lock{opacity:.5}
+.fm-crop .ev-icon{width:28px;height:28px;flex:none;margin-top:1px}
+.fm-crop .fm-ct{min-width:0}
+.fm-crop .fm-ct b{display:block;font-family:'Cinzel',serif;font-size:calc(13.5px*var(--tscale));
+  color:var(--gold-hi,#f0c772);line-height:1.2}
+.fm-crop .fm-ct i{display:block;font-style:normal;font-family:var(--num);
+  font-size:calc(10.5px*var(--tscale));color:var(--muted);margin-top:3px;line-height:1.5}
+.fm-crop .fm-ct em{display:block;font-style:normal;font-family:var(--num);
+  font-size:calc(10.5px*var(--tscale));color:var(--dim,#7a6748);margin-top:2px;line-height:1.5}
+/* ════════ [CSS-42 END] FARMING ══════════════════════════════════ */
+
 /* ════════ [CSS-33 END] SAILING ═══════════════════════════════════════════════════ */
 
 /* ════════ [CSS-99] UI PREVIEW PASS ══════════════════════════════════════════════
@@ -6256,7 +6421,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.122.3">v0.9.122</div>
+  <div class="mm-ver" data-build="0.9.122.4">v0.9.122</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -14273,18 +14438,19 @@ function tickFarmingNotifications(){
   if(anyNew&&viewTab==='acts'&&selectedSkill==='farming') renderFarming();
 }
 
-// Preserve farming dropdown selections across re-renders so background ticks
-// don't reset the user's choice. Keyed by patch id for per-patch selects,
-// plus a 'plantAll' key for the Plant All seed dropdown.
-var _farmSeedSel={};
 // Timestamp of last user interaction with a farming dropdown. We lock rebuilds
 // while this is recent because document.activeElement isn't reliable when
-// a native <select> popup is open (OS takes focus away on Mac/mobile).
+// a native <select> popup is open (OS takes focus away on Mac/mobile). Only the
+// farmhand's seed picker is a <select> now, but that one still needs the guard.
 var _farmInteractAt=0;
-var _farmerTiersOpen=false; // collapsible tier list in the Farmer-for-Hire panel
-var _farmerGuideOpen=false; // whether "How hired farmers work" guide is expanded
-// Crop guide pagination — index of currently visible page (0-based)
-var _farmCropGuidePage=0;
+/* Whether the crop reference is expanded. Session-only on purpose: the grow
+   times matter the first time you weigh a crop up and almost never after, so
+   the panel opens compact every time the game does. */
+var _farmCropsOpen=false;
+/* Gone with the 0.9.122.4 panel: _farmSeedSel (five per-patch selects and a Plant
+   All select, all replaced by the seed shelf), _farmCropGuidePage (the crop
+   reference is one grid now) and _farmerGuideOpen (the "How hired farmers work"
+   expander). _farmerTiersOpen moved next to buildFarmerPanel, which owns it. */
 // Alchemy tab — 'skilling' shows speed/xp/gp/yield brews; 'combat' shows
 // heal + atk/str/def brews. Persists across re-renders.
 var _alchTab='skilling';
@@ -14335,158 +14501,188 @@ function _wireFarmSelInteraction(sel){
   sel.addEventListener('keydown',mark);
 }
 
+/* ── the farmhand, in one row (0.9.122.4) ─────────────────────────────────────
+   Was three cards and an expander, ~130px, permanently on screen for a decision
+   you make once. All four of its controls survive: which tier is ACTIVE (you keep
+   every tier you hire and the active one sets the wage), pause/resume, the
+   auto-plant seed, and hiring the next tier. The tier cards open under the row
+   instead of living there. */
+var _farmerTiersOpen=false;
+
+var _FM_CAP_NAMES=['harvests','replants','plants empty','tends'];
+function _fmCapsOf(def){ return [def.autoHarvest,def.autoReplant,def.autoPlant,def.autoTend]; }
+/* The row: the whole ladder, with what this tier CANNOT do struck through. */
+function _fmCapsLine(def){
+  var have=_fmCapsOf(def), out=[];
+  for(var i=0;i<_FM_CAP_NAMES.length;i++){
+    out.push(have[i]?_FM_CAP_NAMES[i]:'<s>'+_FM_CAP_NAMES[i]+'</s>');
+  }
+  return out.join(' \u00b7 ');
+}
+/* A tier card: only what that tier does. Stripping the <s> tags off the row's
+   version instead advertised tending on the Apprentice. */
+function _fmCapsOnly(def){
+  var have=_fmCapsOf(def), out=[];
+  for(var i=0;i<_FM_CAP_NAMES.length;i++){ if(have[i]) out.push(_FM_CAP_NAMES[i]); }
+  return out.join(' \u00b7 ');
+}
+
 function buildFarmerPanel(){
-  var wrap=document.createElement('div');
-  var f=state.farmer||{tier:0,maxTier:0,enabled:false,seedId:null};
-  var maxTier=f.maxTier||0;
-  var activeDef=f.tier>0?FARMER_TIERS[f.tier-1]:null;
   var lvl=farmingLvl();
+  var f=state.farmer||{tier:0,maxTier:0,enabled:false,seedId:null};
+  var maxT=f.maxTier||0, activeDef=farmerDef();
+  var wrap=document.createElement('div');
 
-  wrap.style.cssText='margin-bottom:8px;border:1px solid '+(activeDef&&f.enabled?'var(--green)':'var(--trim-d)')
-    +';border-radius:7px;background:var(--raised);padding:8px 11px';
+  var row=document.createElement('div');
+  row.className='fm-hand'+(_farmerTiersOpen?' open':'');
 
-  // ── Header: title left · live status chip right ──
-  var head=document.createElement('div');
-  head.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:6px';
-  var statusChip;
-  if(activeDef&&f.enabled) statusChip='<span style="font-size:calc(11px*var(--tscale));color:var(--green);background:#16220a66;border:1px solid #3a5018;border-radius:10px;padding:2px 9px">● Working</span>';
-  else if(activeDef)       statusChip='<span style="font-size:calc(11px*var(--tscale));color:var(--muted);background:var(--raised-s);border:1px solid var(--trim-d);border-radius:10px;padding:2px 9px">⏸ Paused</span>';
-  else                     statusChip='<span style="font-size:calc(11px*var(--tscale));color:var(--muted)">no farmer hired</span>';
-  head.innerHTML='<span style="font-size:calc(19px*var(--tscale));line-height:1;display:inline-flex">'+iconHTML('farmer_t'+(activeDef?activeDef.tier:1))+'</span>'
-    +'<span style="flex:1;font-size:calc(13px*var(--tscale));color:var(--trim);font-variant:small-caps;letter-spacing:1px">Farmer for Hire'
-    +(activeDef?' <span style="font-variant:normal;letter-spacing:0;color:var(--text)">— '+activeDef.name+'</span> <span style="font-variant:normal;letter-spacing:0;font-size:calc(12px*var(--tscale));color:var(--ember)">'+activeDef.wage.toLocaleString()+'g / harvest</span>':'')
-    +'</span>'+statusChip;
-  wrap.appendChild(head);
+  var well=document.createElement('span');
+  well.className='fm-hi';
+  well.innerHTML=iconHTML('farming');
+  row.appendChild(well);
 
-  // ── How Farmers Work guide (collapsible) ──
-  var guideWrap=document.createElement('div');
-  guideWrap.style.cssText='margin-bottom:7px;position:relative';
-  var guideToggle=document.createElement('button');
-  guideToggle.style.cssText='background:none;border:none;color:var(--muted);font-size:calc(12px*var(--tscale));font-family:inherit;'
-    +'cursor:var(--cur-pointer);padding:0;letter-spacing:0.5px;display:flex;align-items:center;gap:4px';
-  guideToggle.innerHTML='<span id="farmerGuideArrow">'+(_farmerGuideOpen?'▼':'▶')+'</span> How hired farmers work';
-  var guideBody=document.createElement('div');
-  guideBody.id='farmerGuideBody';
-  // Floating overlay (position:absolute) so opening it pops OVER the tier cards
-  // instead of pushing the whole panel down.
-  guideBody.style.cssText='display:'+(_farmerGuideOpen?'block':'none')+';position:absolute;left:0;top:100%;margin-top:4px;'
-    +'z-index:60;width:320px;max-width:calc(100vw - 40px);font-size:calc(12px*var(--tscale));color:var(--muted);line-height:1.6;'
-    +'background:#1a0e07;border:1px solid var(--trim-d);border-radius:5px;padding:9px 11px;box-shadow:0 8px 22px #000c';
-  guideBody.innerHTML=
-    'Farmers work your patches <b style="color:var(--text)">automatically while offline</b> and between your actions.<br><br>'
-    +'<b style="color:var(--green)">Apprentice</b> — harvests ready patches. You still plant manually.<br>'
-    +'<b style="color:var(--green)">Journeyman</b> — harvests, replants, and plants empty patches with your selected seed.<br>'
-    +'<b style="color:var(--green)">Master</b> — all of the above, plus tends crops to speed growth.<br><br>'
-    +'Each farmer charges a <b style="color:var(--ember)">gold wage per harvest</b> — if you can\'t pay, they pause. '
-    +'Set the auto-plant seed below; <i>Auto (best owned)</i> uses the highest-level seed in your satchel. '
-    +'Stock up on seeds before going offline, and mastery perks still apply to the farmer\'s harvests.';
-  guideToggle.addEventListener('click',function(){
-    var open=guideBody.style.display!=='none';
-    _farmerGuideOpen=!open;
-    guideBody.style.display=open?'none':'block';
-    document.getElementById('farmerGuideArrow').textContent=open?'▶':'▼';
-  });
-  guideWrap.appendChild(guideToggle);
-  guideWrap.appendChild(guideBody);
-  wrap.appendChild(guideWrap);
-
-  // ── Tier cards: name · what they do (in words) · state. Replaces the old
-  //    emoji-caps buttons (✓🌱💧) + separate legend, which read as noise. ──
-  var tierRow=document.createElement('div');
-  tierRow.style.cssText='display:flex;gap:6px;flex-wrap:wrap';
-  for(var i=0;i<FARMER_TIERS.length;i++){
-    var t=FARMER_TIERS[i];
-    var unlocked=t.tier<=maxTier;
-    var isNext=t.tier===maxTier+1;
-    var isActive=f.tier===t.tier;
-    var caps=['Harvests'];
-    if(t.autoPlant) caps.push('Plants');
-    if(t.autoTend) caps.push('Tends');
-    var capStr=caps.join(' · ');
-
-    var btn=document.createElement('button');
-    btn.className='tab';
-    btn.style.cssText='flex:1;min-width:118px;padding:6px 8px;font-size:calc(12px*var(--tscale));text-align:left;line-height:1.45;border-radius:6px;';
-    var stateLine;
-    if(unlocked){
-      btn.style.cssText+='background:'+(isActive?'#22300f':'var(--raised-s)')
-        +';border-color:'+(isActive?'var(--green)':'var(--trim-d)')+';color:var(--text);cursor:var(--cur-pointer)';
-      stateLine=isActive
-        ?'<span style="color:var(--green)">● Active — click to stand down</span>'
-        :'<span style="color:var(--muted)">Hired — click to put to work</span>';
-      (function(tt){ btn.addEventListener('click',function(){ setFarmerTier(tt); }); })(t.tier);
-    } else if(isNext){
-      var lvlOk=lvl>=t.reqLvl;
-      var canHire=lvlOk&&(state.coins||0)>=t.hireCost*SILVER_PER_GOLD;
-      btn.style.cssText+='background:var(--raised-s);border-color:'+(canHire?'var(--blue)':'var(--trim-d)')
-        +';color:var(--text);cursor:var(--cur-pointer);'+(canHire?'':'opacity:0.7');
-      stateLine=lvlOk
-        ?'<span style="color:'+(canHire?'var(--blue)':'var(--red)')+'">Hire — '+t.hireCost.toLocaleString()+'g</span>'
-        :'<span style="color:var(--muted)">🔒 Farming Lv '+t.reqLvl+'</span>';
-      (function(tt){ btn.addEventListener('click',function(){ hireFarmer(tt); }); })(t.tier);
-    } else {
-      /* Farmers unlock in sequence, so a later tier can be locked for TWO different
-         reasons. This branch used to blame the level requirement either way, which
-         meant a Lv99 player with no farmer saw "Farming Lv 25" on the Journeyman —
-         a level they cleared 70 levels ago — and reasonably concluded hiring was
-         broken. Name the blocker that actually applies. */
-      btn.disabled=true;
-      btn.style.cssText+='background:var(--raised-s);border-color:var(--trim-d);color:var(--muted);opacity:0.5;cursor:default';
-      stateLine=lvl>=t.reqLvl
-        ?'<span>🔒 Hire the '+FARMER_TIERS[t.tier-2].name.split(' ')[0]+' first</span>'
-        :'<span>🔒 Farming Lv '+t.reqLvl+'</span>';
-    }
-    btn.innerHTML='<div style="display:flex;align-items:center;gap:6px"><span style="font-size:calc(17px*var(--tscale));line-height:1;display:inline-flex">'+iconHTML('farmer_t'+t.tier)+'</span>'
-      +'<b style="font-size:calc(12px*var(--tscale));color:'+(isActive?'var(--green)':'var(--trim)')+'">'+t.name.split(' ')[0]+'</b>'
-      +'<span style="margin-left:auto;font-size:calc(10px*var(--tscale));color:var(--ember);font-family:var(--num)">'+t.wage+'g</span></div>'
-      +'<div style="font-size:calc(11px*var(--tscale));color:var(--muted)">'+capStr+'</div>'
-      +'<div style="font-size:calc(11px*var(--tscale))">'+stateLine+'</div>';
-    btn.title=t.name+' — '+t.desc+' Wage: '+t.wage.toLocaleString()+'g per harvest.';
-    tierRow.appendChild(btn);
-  }
-  wrap.appendChild(tierRow);
-
-  // ── Controls (only when a farmer is active) ──
+  var txt=document.createElement('div');
+  txt.className='fm-ht';
   if(activeDef){
-    var ctl=document.createElement('div');
-    ctl.style.cssText='display:flex;gap:6px;margin-top:7px;align-items:center;flex-wrap:wrap';
+    txt.innerHTML='<div class="fm-l1"><b>'+activeDef.name+'</b>'
+      +'<span class="fm-wk'+(f.enabled?'':' off')+'">'+(f.enabled?'working':'paused')+'</span></div>'
+      +'<p>'+_fmCapsLine(activeDef)+' \u00b7 <em>'+activeDef.wage.toLocaleString()+'g a harvest</em></p>';
+  } else {
+    var first=FARMER_TIERS[0];
+    txt.innerHTML='<div class="fm-l1"><b>No farmhand</b></div>'
+      +'<p>An <em>'+first.name+'</em> harvests your ready patches while you are away. '
+      +first.wage.toLocaleString()+'g a harvest.</p>';
+  }
+  row.appendChild(txt);
 
-    var tog=document.createElement('button');
-    tog.className='tab';
-    tog.style.cssText='padding:5px 10px;font-size:calc(13px*var(--tscale));background:'+(f.enabled?'#2a3a18':'var(--raised-s)')
-      +';border-color:'+(f.enabled?'var(--green)':'var(--trim-d)')+';color:'+(f.enabled?'var(--green)':'var(--muted)');
-    tog.textContent=f.enabled?'⏸ Pause':'▶ Resume';
-    tog.addEventListener('click',toggleFarmer);
-    ctl.appendChild(tog);
-
-    if(activeDef.autoPlant){
-      var lbl=document.createElement('span');
-      lbl.style.cssText='font-size:calc(12px*var(--tscale));color:var(--muted)';
-      lbl.textContent='Auto-plant:';
-      ctl.appendChild(lbl);
-      var sel=document.createElement('select');
-      sel.id='farmerSeedSel';
-      sel.style.cssText='flex:1;min-width:110px;background:var(--raised-s);color:var(--text);border:1px solid var(--trim-d);border-radius:5px;padding:4px 7px;font-size:calc(13px*var(--tscale));font-family:inherit;cursor:var(--cur-pointer)';
-      var autoOpt=document.createElement('option'); autoOpt.value=''; autoOpt.textContent='Auto (best owned)';
-      sel.appendChild(autoOpt);
-      for(var ci=0;ci<CROPS.length;ci++){
-        var c=CROPS[ci];
-        if(lvl<c.lvl) continue;
-        var o=document.createElement('option'); o.value=c.id;
-        o.textContent=c.icon+' '+c.name+' (×'+(state.items[c.id]||0)+')';
-        if(f.seedId===c.id) o.selected=true;
-        sel.appendChild(o);
-      }
-      sel.addEventListener('change',function(){
-        state.farmer.seedId=this.value||null; _farmInteractAt=Date.now(); saveGame();
-      });
-      if(typeof _wireFarmSelInteraction==='function') _wireFarmSelInteraction(sel);
-      ctl.appendChild(sel);
+  /* The seed the farmer replants with. Tier 2+ only, exactly as before — a tier
+     that cannot plant has nothing to choose. "Auto (best owned)" is the default;
+     a named seed is planted STRICTLY, so running out plants nothing rather than
+     quietly dropping to a worse crop. */
+  if(activeDef&&activeDef.autoPlant){
+    var pick=document.createElement('span');
+    pick.className='fm-pick';
+    pick.innerHTML='<i>Plants</i>';
+    var sel=document.createElement('select');
+    sel.id='farmerSeedSel';
+    var autoOpt=document.createElement('option');
+    autoOpt.value=''; autoOpt.textContent='Auto \u2014 best owned';
+    sel.appendChild(autoOpt);
+    for(var ci=0;ci<CROPS.length;ci++){
+      var c=CROPS[ci];
+      if(lvl<c.lvl) continue;
+      var o=document.createElement('option');
+      o.value=c.id;
+      o.textContent=c.name+' (\u00d7'+(state.items[c.id]||0)+')';
+      if(f.seedId===c.id) o.selected=true;
+      sel.appendChild(o);
     }
-    wrap.appendChild(ctl);
+    sel.addEventListener('change',function(){
+      state.farmer.seedId=this.value||null; _farmInteractAt=Date.now(); saveGame();
+    });
+    if(typeof _wireFarmSelInteraction==='function') _wireFarmSelInteraction(sel);
+    pick.appendChild(sel);
+    row.appendChild(pick);
   }
 
+  /* Upgrade names what it buys, so the reason to spend 200,000g is on the row
+     rather than two clicks inside the tier list. */
+  if(activeDef&&activeDef.tier<FARMER_TIERS.length){
+    var nxt=FARMER_TIERS[activeDef.tier];
+    var gains=[];
+    if(nxt.autoReplant&&!activeDef.autoReplant) gains.push('replants');
+    if(nxt.autoPlant&&!activeDef.autoPlant) gains.push('plants');
+    if(nxt.autoTend&&!activeDef.autoTend) gains.push('tends');
+    var up=document.createElement('button');
+    up.className='fm-btn up';
+    up.textContent=(maxT>=nxt.tier?'Switch to ':'Upgrade \u2192 also ')
+      +(maxT>=nxt.tier?nxt.name.split(' ')[0]:(gains.join(' & ')||'better'));
+    up.addEventListener('click',function(){
+      if(maxT>=nxt.tier) setFarmerTier(nxt.tier); else hireFarmer(nxt.tier);
+    });
+    row.appendChild(up);
+  }
+
+  if(activeDef){
+    var tog=document.createElement('button');
+    tog.className='fm-btn';
+    tog.textContent=f.enabled?'\u23f8 Pause':'\u25b6 Resume';
+    tog.addEventListener('click',toggleFarmer);
+    row.appendChild(tog);
+  } else {
+    var hire=document.createElement('button');
+    hire.className='fm-btn pri';
+    var f1=FARMER_TIERS[0];
+    var canHire=lvl>=f1.reqLvl&&(state.coins||0)>=f1.hireCost*SILVER_PER_GOLD;
+    hire.textContent=lvl<f1.reqLvl?('Farming '+f1.reqLvl+' to hire')
+      :('Hire \u00b7 '+f1.hireCost.toLocaleString()+'g');
+    hire.disabled=!canHire;
+    hire.addEventListener('click',function(){ hireFarmer(1); });
+    row.appendChild(hire);
+  }
+
+  var all=document.createElement('button');
+  all.className='fm-btn';
+  all.textContent='All three '+(_farmerTiersOpen?'\u25b4':'\u25be');
+  all.addEventListener('click',function(){ _farmerTiersOpen=!_farmerTiersOpen; renderFarming(); });
+  row.appendChild(all);
+
+  wrap.appendChild(row);
+
+  if(_farmerTiersOpen){
+    var tiers=document.createElement('div');
+    tiers.className='fm-tiers';
+    for(var ti=0;ti<FARMER_TIERS.length;ti++){
+      (function(t){
+        var owned=maxT>=t.tier, active=f.tier===t.tier;
+        var lvlOk=lvl>=t.reqLvl, prevOk=t.tier===1||maxT>=t.tier-1;
+        var card=document.createElement('div');
+        card.className='fm-tier'+(active?' on':'')+((!owned&&(!lvlOk||!prevOk))?' lock':'');
+        card.innerHTML='<b>'+t.name+'</b><i>'+_fmCapsOnly(t)+'</i>'
+          +'<em>'+t.wage.toLocaleString()+'g a harvest</em>';
+        if(active){
+          card.innerHTML+='<span class="fm-inuse">\u2713 in use</span>';
+        } else if(owned){
+          var use=document.createElement('button');
+          use.className='fm-btn'; use.textContent='Use this one';
+          use.addEventListener('click',function(){ setFarmerTier(t.tier); });
+          card.appendChild(use);
+        } else if(!prevOk){
+          card.innerHTML+='<span class="fm-need">Hire the '
+            +FARMER_TIERS[t.tier-2].name.split(' ')[0]+' first</span>';
+        } else if(!lvlOk){
+          card.innerHTML+='<span class="fm-need">Farming '+t.reqLvl+' \u00b7 '
+            +t.hireCost.toLocaleString()+'g</span>';
+        } else {
+          var buy=document.createElement('button');
+          buy.className='fm-btn pri';
+          buy.textContent='Hire \u00b7 '+t.hireCost.toLocaleString()+'g';
+          buy.disabled=(state.coins||0)<t.hireCost*SILVER_PER_GOLD;
+          buy.addEventListener('click',function(){ hireFarmer(t.tier); });
+          card.appendChild(buy);
+        }
+        tiers.appendChild(card);
+      })(FARMER_TIERS[ti]);
+    }
+    wrap.appendChild(tiers);
+  }
   return wrap;
+}
+
+/* Which seed the shelf has selected. Persisted (state.farmSeed) rather than the
+   old session-only _farmSeedSel.plantAll, because it is now the seed every Plant
+   button on the panel uses, not just Plant All. */
+function fmSelectedSeed(){
+  var lvl=farmingLvl();
+  var owned=CROPS.filter(function(c){ return lvl>=c.lvl&&(state.items[c.id]||0)>0; });
+  if(!owned.length) return null;
+  var want=state.farmSeed;
+  for(var i=0;i<owned.length;i++){ if(owned[i].id===want) return owned[i]; }
+  /* Nothing chosen, or the chosen crop ran out: fall to the best you can grow,
+     which is what Plant All has always defaulted to. */
+  var best=owned[0];
+  for(var j=1;j<owned.length;j++){ if(owned[j].lvl>best.lvl) best=owned[j]; }
+  return best;
 }
 
 function renderFarming(){
@@ -14498,374 +14694,240 @@ function renderFarming(){
   // every call, so we must re-assert block FIRST — before any early-return —
   // otherwise a skipped rebuild leaves block content reflowing inside a grid.
   box.style.display='block';
-  // Two-layer guard: skip rebuild if a select inside this panel is focused,
-  // OR if the user interacted with any farming select in the last 3 seconds.
-  // The second check handles native dropdowns that steal focus from the document.
+  // The farmhand's seed picker is still a <select>, so the focus guard stays:
+  // a rebuild mid-choice would close the list out from under the player.
   var _af=document.activeElement;
   if(_af && _af.tagName==='SELECT' && box.contains(_af)) return;
   if(Date.now()-_farmInteractAt<3000) return;
   box.innerHTML='';
-  // Parent .activity-grid is itself a CSS grid; override to block so our inner grids span full width
-  box.style.display='block';
   var lvl=farmingLvl();
+  var m=mods('farming');
+  var speedMult=1-Math.min(0.70,m.speed);
 
-  // Info bar — full width, sits above patches
-  var hdr=document.createElement('div');
-  hdr.style.cssText='margin-bottom:7px;font-size:calc(13px*var(--tscale));color:var(--muted);line-height:1.4;'
-    +'padding:4px 10px 6px;background:transparent;border-bottom:1px solid var(--trim-d);display:flex;align-items:center;gap:8px';
-  hdr.innerHTML='<span style="font-size:calc(17px*var(--tscale))">'+iconHTML('farming')+'</span>'
-    +'<span>Plant seeds, tend to speed growth, harvest when ready. Patches grow passively.</span>';
-  box.appendChild(hdr);
-
-  // ── Farmer for Hire panel ──
-  box.appendChild(buildFarmerPanel());
-
-  // Harvest All / Tend All / Plant All action bar
-  var bulkBar=document.createElement('div');
-  bulkBar.style.cssText='display:flex;gap:8px;margin-bottom:6px;flex-wrap:wrap';
-
-  var harvAllBtn=document.createElement('button');
-  harvAllBtn.className='tab on';
-  harvAllBtn.style.cssText='flex:1;min-width:90px;padding:6px 10px;font-size:calc(14px*var(--tscale));text-align:center;background:var(--raised-s);border-color:var(--green);color:var(--green)';
-  harvAllBtn.textContent='✓ Harvest All';
-  harvAllBtn.addEventListener('click',function(){
-    var anyHarvested=false;
-    if(!state.patches) return;
-    for(var pid in state.patches){
-      var pss=state.patches[pid];
-      if(pss&&patchReady(pss)&&patchUnlocked(pid)){
-        harvestPatch(pid);
-        anyHarvested=true;
-      }
-    }
-    if(!anyHarvested) toast('No patches are ready to harvest.');
-  });
-  bulkBar.appendChild(harvAllBtn);
-
-  var tendAllBtn=document.createElement('button');
-  tendAllBtn.className='tab';
-  tendAllBtn.style.cssText='flex:1;min-width:90px;padding:6px 10px;font-size:calc(14px*var(--tscale));text-align:center;background:var(--raised-s);border-color:var(--ember);color:var(--ember)';
-  tendAllBtn.textContent='🌱 Tend All';
-  tendAllBtn.addEventListener('click',function(){
-    var anyTended=false;
-    if(!state.patches) return;
-    for(var pid in state.patches){
-      var pss=state.patches[pid];
-      if(pss&&!patchReady(pss)&&patchUnlocked(pid)){
-        try{ tendPatch(pid); anyTended=true; }catch(e){}
-      }
-    }
-    if(!anyTended) toast('No patches available to tend.');
-  });
-  bulkBar.appendChild(tendAllBtn);
-  box.appendChild(bulkBar);
-
-  // Plant All row — seed dropdown + button
-  var plantBar=document.createElement('div');
-  plantBar.style.cssText='display:flex;gap:8px;margin-bottom:8px;align-items:center';
-  var availSeeds=CROPS.filter(function(c){ return farmingLvl()>=c.lvl&&(state.items[c.id]||0)>0; });
-  if(availSeeds.length>0){
-    var seedSel=document.createElement('select');
-    seedSel.id='farmPlantAllSeed';
-    seedSel.style.cssText='flex:1;background:#0d0905;color:var(--text);border:1px solid var(--trim-d);border-radius:4px;padding:4px 8px;font-size:calc(14px*var(--tscale));font-family:inherit';
-    var _savedAllSeed=_farmSeedSel.plantAll;
-    var _foundIdx=-1;
-    for(var si=0;si<availSeeds.length;si++){
-      var sc=availSeeds[si];
-      var opt=document.createElement('option');
-      opt.value=sc.id;
-      opt.textContent=sc.icon+' '+sc.name+' (×'+(state.items[sc.id]||0)+')';
-      seedSel.appendChild(opt);
-      if(_savedAllSeed===sc.id) _foundIdx=si;
-    }
-    if(_foundIdx>=0) seedSel.selectedIndex=_foundIdx;
-    seedSel.addEventListener('change',function(){ _farmSeedSel.plantAll=this.value; _farmInteractAt=Date.now(); });
-    _wireFarmSelInteraction(seedSel);
-    plantBar.appendChild(seedSel);
-    var plantAllBtn=document.createElement('button');
-    plantAllBtn.className='tab';
-    plantAllBtn.style.cssText='padding:6px 12px;font-size:calc(14px*var(--tscale));background:var(--raised-s);border-color:var(--blue);color:var(--blue);white-space:nowrap';
-    plantAllBtn.textContent='🌾 Plant All';
-    plantAllBtn.addEventListener('click',function(){
-      var selSeed=$('farmPlantAllSeed');
-      if(!selSeed) return;
-      var seedId=selSeed.value;
-      var crop=getCrop(seedId);
-      if(!crop) return;
-
-      // Pre-flight: count empty unlocked patches and available seeds
-      var emptyPatches=PATCHES.filter(function(pt){
-        return patchUnlocked(pt.id)&&!getPatchState(pt.id);
-      });
-      var seedsAvail=state.items[seedId]||0;
-
-      if(emptyPatches.length===0){
-        toast('All unlocked patches are already occupied.');
-        return;
-      }
-      if(seedsAvail===0){
-        toast('No '+crop.name+' seeds in satchel — nothing to plant.');
-        return;
-      }
-
-      // Plant silently — no per-patch toasts or re-renders
-      var planted=0;
-      for(var pi2=0;pi2<emptyPatches.length;pi2++){
-        if((state.items[seedId]||0)<1) break; // ran out of seeds
-        if(plantPatch(emptyPatches[pi2].id,seedId,true)) planted++;
-      }
-
-      // Single render + save after all planting is done
-      renderFarming(); saveGame();
-
-      // Summary toast telling player exactly what happened
-      if(planted===0){
-        toast('Could not plant any patches.');
-      } else {
-        var msg=crop.icon+' Planted '+planted+' patch'+(planted!==1?'es':'')+' with '+crop.name;
-        var leftEmpty=emptyPatches.length-planted;
-        if(leftEmpty>0){
-          msg+=' · ran out of seeds ('+leftEmpty+' patch'+(leftEmpty!==1?'es':'')+' left empty)';
-        }
-        toast(msg);
-      }
-    });
-    plantBar.appendChild(plantAllBtn);
-  } else {
-    var noSeedMsg=document.createElement('span');
-    noSeedMsg.style.cssText='font-size:calc(14px*var(--tscale));color:var(--muted);font-style:italic;padding:4px 0';
-    noSeedMsg.textContent='No seeds in satchel — forage or buy some to get started.';
-    plantBar.appendChild(noSeedMsg);
+  /* Onboarding, not chrome: it goes once you have clearly got the idea. Worth 41px
+     of the panel's height, and a Farming 20 player has read it several hundred
+     times. Patch 2 unlocks at 10, so 20 is comfortably past "new". */
+  if(lvl<20){
+    var hint=document.createElement('div');
+    hint.className='fm-hint';
+    hint.innerHTML=iconHTML('farming')
+      +'<span>Plant seeds, tend to speed growth, harvest when ready. Patches grow passively.</span>';
+    box.appendChild(hint);
   }
-  box.appendChild(plantBar);
 
-  // Patch grid — uniform columns so all patches are the same width/height baseline
-  var patchGrid=document.createElement('div');
-  patchGrid.style.cssText='display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:7px;margin-bottom:8px';
+  /* ── the seed shelf ───────────────────────────────────────────────────────
+     Every seed you hold, sorted best crop first because that is what you almost
+     always want to plant. This replaced five per-patch <select>s that were all
+     set to the same thing and each too narrow to print a crop name. */
+  var owned=CROPS.filter(function(c){ return lvl>=c.lvl&&(state.items[c.id]||0)>0; })
+                 .sort(function(a,b){ return b.lvl-a.lvl; });
+  var sel=fmSelectedSeed();
+  var seedLab=document.createElement('div');
+  seedLab.className='fm-lab';
+  seedLab.innerHTML='Seeds'+(owned.length?' <b>'+owned.length+' kind'+(owned.length===1?'':'s')
+    +' in your satchel</b>':'');
+  box.appendChild(seedLab);
 
-  for(var pi=0;pi<PATCHES.length;pi++){
-    var patch=PATCHES[pi];
-    var unlocked=lvl>=patch.unlockLvl;
-    var ps=getPatchState(patch.id);
-    var ready=ps&&patchReady(ps);
-    var growing=ps&&!ready;
+  if(!owned.length){
+    var none=document.createElement('div');
+    none.className='fm-noseed';
+    none.textContent='No seeds in your satchel \u2014 forage or buy some to get started.';
+    box.appendChild(none);
+  } else {
+    var shelf=document.createElement('div');
+    shelf.className='fm-seeds';
+    owned.forEach(function(c){
+      var b=document.createElement('button');
+      b.className='fm-seed'+(sel&&sel.id===c.id?' on':'');
+      b.innerHTML=iconHTML(cropDisplayIconId(c)||c.id)+'<span>'+c.name+'</span>'
+        +'<i>\u00d7'+(state.items[c.id]||0).toLocaleString()+'</i>';
+      b.addEventListener('click',function(){
+        state.farmSeed=c.id; saveGame(); renderFarming();
+      });
+      shelf.appendChild(b);
+    });
+    box.appendChild(shelf);
+  }
 
+  /* ── the field ────────────────────────────────────────────────────────────
+     A patch is an activity card: icon, name, one big number, a bar, one wide
+     button. Locked patches keep the shape and say what unlocks them rather than
+     being a grey rectangle reading "Locked". */
+  var ready=0, growing=0, empty=0;
+  PATCHES.forEach(function(p){
+    if(lvl<p.unlockLvl) return;
+    var ps=getPatchState(p.id);
+    if(!ps) empty++; else if(patchReady(ps)) ready++; else growing++;
+  });
+  var fieldLab=document.createElement('div');
+  fieldLab.className='fm-lab';
+  fieldLab.innerHTML='Your field <b>'+ready+' ready \u00b7 '+growing+' growing \u00b7 '+empty+' empty</b>';
+  box.appendChild(fieldLab);
+
+  var field=document.createElement('div');
+  field.className='fm-field';
+  PATCHES.forEach(function(p){
+    var unlocked=lvl>=p.unlockLvl;
+    var ps=unlocked?getPatchState(p.id):null;
+    var isReady=ps&&patchReady(ps);
     var card=document.createElement('div');
-    var isPatchNotified=ready&&state.patchNotified&&state.patchNotified[patch.id];
-    // Fixed min-height so all cards are the same size regardless of state
-    card.style.cssText='border:1px solid '+(ready?'var(--green)':growing?'var(--ember)':'var(--trim-d)')
-      +';border-radius:6px;padding:8px;background:var(--raised);'
-      +'display:flex;flex-direction:column;gap:4px;min-height:96px;'
-      +(unlocked?'':'opacity:0.45');
-    if(isPatchNotified) card.classList.add('farm-patch-ready-alert');
-
-    // Patch label row
-    var labelRow='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px">'
-      +'<span style="font-size:calc(14px*var(--tscale));color:var(--trim);font-variant:small-caps;letter-spacing:1px">'+patch.label+'</span>';
+    card.className='fm-p'+(!unlocked?' lock':isReady?' ready':ps?' grow':'');
 
     if(!unlocked){
-      labelRow+='<span style="font-size:calc(12px*var(--tscale));color:var(--muted)">Lv '+patch.unlockLvl+'</span></div>'
-        +'<div style="flex:1;display:flex;align-items:center;justify-content:center">'
-        +'<span style="font-size:calc(13px*var(--tscale));color:var(--muted);font-style:italic">Locked</span></div>';
-      card.innerHTML=labelRow;
-      patchGrid.appendChild(card);
-      continue;
+      var away=p.unlockLvl-lvl;
+      var lo=XP_CUM[lvl]||0, hi=XP_CUM[Math.min(MAX_LEVEL,p.unlockLvl)]||lo;
+      var pct=hi>lo?Math.max(0,Math.min(100,Math.round(((state.xp.farming||0)-0)/hi*100))):0;
+      card.innerHTML='<div class="fm-top"><span class="fm-well">'+iconHTML('farming')+'</span>'
+        +'<span class="fm-nm"><b>'+p.label+'</b><i>locked</i></span></div>'
+        +'<div class="fm-hero" style="font-size:calc(19px*var(--tscale))">Lv '+p.unlockLvl+'</div>'
+        +'<div class="fm-bar lvl"><i style="width:'+pct+'%"></i></div>'
+        +'<div class="fm-sub">'+away+' level'+(away===1?'':'s')+' away</div>';
+      field.appendChild(card);
+      return;
     }
 
-    if(ready){
-      labelRow+='<span style="font-size:calc(12px*var(--tscale));color:var(--green);font-weight:bold">✓ Ready!</span>';
-    } else if(growing){
-      var pct=patchGrowthPct(ps);
-      var remaining2=Math.max(0,ps.growMs-(Date.now()-ps.plantedAt+ps.tendedMs));
-      labelRow+='<span style="font-size:calc(12px*var(--tscale));color:var(--ember)">'+pct+'%</span>';
-    } else {
-      labelRow+='<span style="font-size:calc(12px*var(--tscale));color:var(--muted)">Empty</span>';
+    if(!ps){
+      card.innerHTML='<div class="fm-top"><span class="fm-well">'+iconHTML('farming')+'</span>'
+        +'<span class="fm-nm"><b>Empty</b><i>'+p.label+' \u00b7 tilled</i></span></div>'
+        +'<div class="fm-hero" style="font-size:calc(19px*var(--tscale));color:var(--dim,#7a6748)">'
+        +(sel?sel.name:'no seeds')+'</div>'
+        +'<div class="fm-bar"><i style="width:0"></i></div>';
+      var plant=document.createElement('button');
+      plant.className='fm-btn pri wide';
+      plant.textContent=sel?('Plant '+sel.name):'No seeds';
+      plant.disabled=!sel;
+      if(sel) plant.addEventListener('click',function(){ plantPatch(p.id, sel.id); });
+      card.appendChild(plant);
+      field.appendChild(card);
+      return;
     }
-    labelRow+='</div>';
 
-    // Crop display area — always same height via flex spacer
-    var cropArea='<div style="flex:1;display:flex;align-items:center;gap:7px;min-height:36px">';
-    if(growing&&ps){
-      var cr=getCrop(ps.seedId);
-      var pct2=patchGrowthPct(ps);
-      var rem2=Math.max(0,ps.growMs-(Date.now()-ps.plantedAt+ps.tendedMs));
-      var crIcoId=cropDisplayIconId(cr);
-      cropArea+='<span style="font-size:calc(28px*var(--tscale));line-height:1;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;flex-shrink:0">'+(crIcoId?iconHTML(crIcoId):'🌱')+'</span>'
-        +'<div style="flex:1;min-width:0">'
-        +'<div style="font-size:calc(13px*var(--tscale));color:var(--text);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(cr?cr.name:ps.seedId)+'</div>'
-        +'<div class="xp-detail-bar" style="margin-bottom:3px"><div class="xp-detail-fill" style="width:'+pct2+'%;background:linear-gradient(90deg,var(--green),#b0e060)"></div></div>'
-        +'<div style="font-size:calc(11px*var(--tscale));color:var(--muted);font-family:var(--num)">'+fmtTime(rem2)+' left</div>'
-        +'</div>';
-    } else if(ready&&ps){
-      var crR=getCrop(ps.seedId);
-      var crRIcoId=cropDisplayIconId(crR);
-      cropArea+='<span style="font-size:calc(34px*var(--tscale));line-height:1;display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;flex-shrink:0">'+(crRIcoId?iconHTML(crRIcoId):'🌱')+'</span>'
-        +'<div style="min-width:0">'
-        +'<div style="font-size:calc(14px*var(--tscale));color:var(--green);font-weight:bold;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(crR?crR.name:'Crop')+'</div>'
-        +'<div style="font-size:calc(12px*var(--tscale));color:var(--muted)">Ready to harvest</div>'
-        +'</div>';
-    } else {
-      // Empty patch — seed selector is in the button row below
-      var availSeedsCheck=CROPS.filter(function(c){return lvl>=c.lvl&&(state.items[c.id]||0)>0;});
-      if(availSeedsCheck.length===0){
-        cropArea+='<span style="font-size:calc(12px*var(--tscale));color:var(--muted);font-style:italic">No seeds available</span>';
-      } else {
-        cropArea+='<span style="font-size:calc(12px*var(--tscale));color:var(--muted);font-style:italic">Select a seed to plant</span>';
-      }
+    var crop=getCrop(ps.seedId)||{name:ps.seedId,out:{},xp:0,tendBoost:0,tendInterval:60000};
+    var ico=iconHTML(cropDisplayIconId(crop)||ps.seedId);
+    if(isReady){
+      var yieldTxt=Object.keys(crop.out||{}).map(function(id){ return '\u00d7'+crop.out[id]; })[0]||'\u00d71';
+      card.innerHTML='<div class="fm-top"><span class="fm-well">'+ico+'</span>'
+        +'<span class="fm-nm"><b>'+crop.name+'</b><i>'+p.label+' \u00b7 ready</i></span></div>'
+        +'<div class="fm-hero">'+yieldTxt+' <small>+'+Math.round(crop.xp*m.xpMult).toLocaleString()+' xp</small></div>'
+        +'<div class="fm-bar"><i style="width:100%"></i></div>';
+      var h=document.createElement('button');
+      h.className='fm-btn ok wide'; h.textContent='Harvest';
+      h.addEventListener('click',function(){ harvestPatch(p.id); });
+      card.appendChild(h);
+      field.appendChild(card);
+      return;
     }
-    cropArea+='</div>';
 
-    card.innerHTML=labelRow+cropArea;
+    var pct2=patchGrowthPct(ps);
+    var left=Math.max(0,ps.growMs-(Date.now()-ps.plantedAt+(ps.tendedMs||0)));
+    var tendEvery=Math.max(15000,Math.round(crop.tendInterval*speedMult));
+    var since=Date.now()-(ps.lastTended||ps.plantedAt);
+    var canTend=since>=tendEvery;
+    card.innerHTML='<div class="fm-top"><span class="fm-well">'+ico+'</span>'
+      +'<span class="fm-nm"><b>'+crop.name+'</b><i>'+p.label+' \u00b7 growing</i></span></div>'
+      +'<div class="fm-hero">'+fmtTime(left)+' <small>of '+fmtTime(ps.growMs)+'</small></div>'
+      +'<div class="fm-bar amb"><i style="width:'+pct2+'%"></i></div>';
+    var t=document.createElement('button');
+    t.className='fm-btn wide';
+    t.textContent=canTend?('Tend \u00b7 \u2212'+Math.round(crop.tendBoost*100)+'%')
+      :('Tend in '+fmtTime(tendEvery-since));
+    t.disabled=!canTend;
+    if(canTend) t.addEventListener('click',function(){ tendPatch(p.id); });
+    card.appendChild(t);
+    field.appendChild(card);
+  });
+  box.appendChild(field);
 
-    // Action button row — always at the bottom
-    var btnRow=document.createElement('div');
-    btnRow.style.cssText='display:flex;gap:6px;flex-wrap:wrap;margin-top:auto';
+  /* ── bulk row ── the three buttons name what they will do, including which
+     seed Plant All is about to sow. */
+  var bulk=document.createElement('div');
+  bulk.className='fm-bulk';
 
-    if(ready){
-      var harvBtn=document.createElement('button');
-      harvBtn.className='m-btn primary';
-      harvBtn.style.cssText='font-size:calc(13px*var(--tscale));padding:4px 10px';
-      harvBtn.textContent='Harvest';
-      (function(pid){harvBtn.addEventListener('click',function(){harvestPatch(pid);});})(patch.id);
-      btnRow.appendChild(harvBtn);
-    } else if(growing){
-      var cr3=getCrop(ps.seedId);
-      var now3=Date.now();
-      var farmM=mods('farming');
-      var farmSpd=1-Math.min(0.70,farmM.speed);
-      var effInt3=Math.max(15000,Math.round((cr3&&cr3.tendInterval||120000)*farmSpd));
-      var canTend3=ps&&(now3-(ps.lastTended||ps.plantedAt))>=effInt3;
-      var tendBtn=document.createElement('button');
-      tendBtn.className='m-btn'+(canTend3?'':' disabled');
-      tendBtn.disabled=!canTend3;
-      tendBtn.style.cssText='font-size:calc(13px*var(--tscale));padding:4px 10px';
-      var tendWait=canTend3?0:Math.ceil((effInt3-(now3-(ps.lastTended||ps.plantedAt)))/1000);
-      tendBtn.textContent=canTend3?'Tend (+'+Math.round((cr3&&cr3.tendBoost||0.25)*100)+'%)':'Tend in '+tendWait+'s';
-      (function(pid){tendBtn.addEventListener('click',function(){tendPatch(pid);});})(patch.id);
-      btnRow.appendChild(tendBtn);
-    } else {
-      var availSeeds2=CROPS.filter(function(c){return lvl>=c.lvl&&(state.items[c.id]||0)>0;});
-      if(availSeeds2.length===0){
-        var noSeed=document.createElement('span');
-        noSeed.style.cssText='font-size:calc(13px*var(--tscale));color:var(--muted);font-style:italic';
-        noSeed.textContent='Gather seeds from Foraging';
-        btnRow.appendChild(noSeed);
-      } else {
-        var patchSel=document.createElement('select');
-        patchSel.style.cssText='flex:1;min-width:0;background:#0d0905;color:var(--text);border:1px solid var(--trim-d);border-radius:4px;padding:3px 6px;font-size:calc(13px*var(--tscale));font-family:inherit;cursor:var(--cur-pointer)';
-        var _savedPatchSeed=_farmSeedSel[patch.id];
-        var _patchFoundIdx=-1;
-        for(var si3=0;si3<availSeeds2.length;si3++){
-          var seed2=availSeeds2[si3];
-          var patchOpt=document.createElement('option');
-          patchOpt.value=seed2.id;
-          patchOpt.textContent=seed2.icon+' '+seed2.name+' ('+((state.items[seed2.id])||0)+')';
-          patchSel.appendChild(patchOpt);
-          if(_savedPatchSeed===seed2.id) _patchFoundIdx=si3;
-        }
-        if(_patchFoundIdx>=0) patchSel.selectedIndex=_patchFoundIdx;
-        (function(pid3){ patchSel.addEventListener('change',function(){ _farmSeedSel[pid3]=this.value; _farmInteractAt=Date.now(); }); })(patch.id);
-        _wireFarmSelInteraction(patchSel);
-        btnRow.style.cssText='display:flex;gap:6px;flex-wrap:nowrap;margin-top:auto;align-items:center';
-        btnRow.appendChild(patchSel);
-        var plantBtn2=document.createElement('button');
-        plantBtn2.className='m-btn primary';
-        plantBtn2.style.cssText='font-size:calc(13px*var(--tscale));padding:4px 8px;white-space:nowrap;flex-shrink:0';
-        plantBtn2.textContent='Plant';
-        (function(pid2,sel2){ plantBtn2.addEventListener('click',function(){_farmInteractAt=0; plantPatch(pid2,sel2.value);}); })(patch.id,patchSel);
-        btnRow.appendChild(plantBtn2);
-      }
+  var hAll=document.createElement('button');
+  hAll.className='fm-btn ok';
+  hAll.textContent=ready?('Harvest all \u00b7 '+ready+' ready'):'Nothing ready';
+  hAll.disabled=!ready;
+  hAll.addEventListener('click',function(){
+    var n=0;
+    for(var pid in (state.patches||{})){
+      var pss=state.patches[pid];
+      if(pss&&patchReady(pss)&&patchUnlocked(pid)){ harvestPatch(pid,true); n++; }
     }
-    card.appendChild(btnRow);
-    patchGrid.appendChild(card);
-  }
-  box.appendChild(patchGrid);
+    renderFarming(); saveGame();
+    toast(n?('\ud83c\udf3e Harvested '+n+' patch'+(n===1?'':'es')+'.'):'No patches are ready to harvest.');
+  });
+  bulk.appendChild(hAll);
 
-  // Crop guide — at the bottom, with tabs grouping crops by tier so the list
-  // stays manageable. Tiers: Early (1-25), Mid (26-50), Late (51-99).
-  var guideLabel=document.createElement('div');
-  guideLabel.style.cssText='font-size:calc(12px*var(--tscale));color:var(--ember);text-transform:uppercase;letter-spacing:2px;margin-bottom:6px';
-  guideLabel.textContent='Crops & Grow Times';
-  box.appendChild(guideLabel);
+  var tAll=document.createElement('button');
+  tAll.className='fm-btn';
+  tAll.textContent=growing?'Tend all':'Nothing growing';
+  tAll.disabled=!growing;
+  tAll.addEventListener('click',function(){
+    var n=0;
+    for(var pid in (state.patches||{})){
+      var pss=state.patches[pid];
+      if(pss&&!patchReady(pss)&&patchUnlocked(pid)){ if(tendPatch(pid,true)) n++; }
+    }
+    renderFarming(); saveGame();
+    toast(n?('\ud83c\udf31 Tended '+n+' patch'+(n===1?'':'es')+'.'):'No patches are ready to tend yet.');
+  });
+  bulk.appendChild(tAll);
 
-  // Pagination — top tab slot is reserved for future category tabs (Herbs,
-  // Food, etc.), so pagination goes as a small control below the grid instead.
-  var CROPS_PER_PAGE=8;
-  var pagedCrops=CROPS.slice().sort(function(a,b){return a.lvl-b.lvl;});
-  var pageCount=Math.max(1,Math.ceil(pagedCrops.length/CROPS_PER_PAGE));
-  if(_farmCropGuidePage<0||_farmCropGuidePage>=pageCount) _farmCropGuidePage=0;
+  var pAll=document.createElement('button');
+  pAll.className='fm-btn pri';
+  pAll.textContent=(!sel)?'No seeds'
+    :(!empty)?'No empty patches'
+    :('Plant all empty \u00b7 '+empty+' \u00d7 '+sel.name);
+  pAll.disabled=!sel||!empty;
+  if(sel&&empty) pAll.addEventListener('click',function(){
+    var planted=0;
+    PATCHES.forEach(function(p){
+      if(!patchUnlocked(p.id)||getPatchState(p.id)) return;
+      if((state.items[sel.id]||0)<1) return;
+      if(plantPatch(p.id, sel.id, true)) planted++;
+    });
+    renderFarming(); saveGame();
+    if(!planted){ toast('Could not plant any patches.'); return; }
+    var msg=sel.icon+' Planted '+planted+' patch'+(planted===1?'':'es')+' with '+sel.name;
+    var leftOver=empty-planted;
+    if(leftOver>0) msg+=' \u00b7 ran out of seeds ('+leftOver+' left empty)';
+    toast(msg);
+  });
+  bulk.appendChild(pAll);
+  box.appendChild(bulk);
 
-  var cropGrid=document.createElement('div');
-  cropGrid.style.cssText='display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:7px';
-  var farmMods=mods('farming');
-  var farmSpeedMult=1-Math.min(0.70,farmMods.speed);
-  var pageStart=_farmCropGuidePage*CROPS_PER_PAGE;
-  var visibleCrops=pagedCrops.slice(pageStart,pageStart+CROPS_PER_PAGE);
-  cropGrid.innerHTML=visibleCrops.map(function(c){
+  // ── the farmhand ──
+  box.appendChild(buildFarmerPanel());
+
+  /* ── the crop reference ───────────────────────────────────────────────────
+     Was three pages of eight, every yield line ellipsised mid-word. One grid
+     now, wide enough that nothing is cut, and no pager. */
+  var unlockedCrops=CROPS.filter(function(c){return lvl>=c.lvl;}).length;
+  var cropBtn=document.createElement('button');
+  cropBtn.className='fm-cropbtn'+(_farmCropsOpen?' on':'');
+  cropBtn.innerHTML=(_farmCropsOpen?'▾':'▸')+' What you can grow'
+    +'<i>'+unlockedCrops+' of '+CROPS.length+' unlocked</i>';
+  cropBtn.addEventListener('click',function(){ _farmCropsOpen=!_farmCropsOpen; renderFarming(); });
+  box.appendChild(cropBtn);
+  if(!_farmCropsOpen) return;
+
+  var grid=document.createElement('div');
+  grid.className='fm-crops';
+  CROPS.slice().sort(function(a,b){ return a.lvl-b.lvl; }).forEach(function(c){
     var locked=lvl<c.lvl;
-    var effInterval=Math.max(15000,Math.round(c.tendInterval*farmSpeedMult));
-    var effXp=Math.round(c.xp*farmMods.xpMult);
-    var tendLabel=farmMods.speed>0
-      ?fmtTime(effInterval)+' <span style="color:var(--green);font-size:calc(11px*var(--tscale))">(↓'+Math.round(farmMods.speed*100)+'%)</span>'
-      :fmtTime(effInterval);
-    var xpLabel=farmMods.xpMult>1
-      ?effXp+' <span style="color:var(--green);font-size:calc(11px*var(--tscale))">(×'+farmMods.xpMult.toFixed(2)+')</span>'
-      :effXp+'';
-    var icoId=cropDisplayIconId(c);
-    var icoHTML=icoId?iconHTML(icoId):(c.icon||'🌱');
-    // Fixed-height card — long output / rareDrops lines on later pages would
-    // otherwise wrap and grow the card; we clamp each text row to a single
-    // line with ellipsis so all crop cards stay at the same compact size.
-    var outListHTML=Object.keys(c.out).map(function(id){return (ITEMS[id]?ITEMS[id].name:id)+' ×'+c.out[id];}).join(', ')
-      +(c.rareDrops?' · '+c.rareDrops.map(function(rd){return (ITEMS[rd.id]?ITEMS[rd.id].name:rd.id)+' '+_fmtMonChance(effDropChance(rd.chance));}).join(', '):'');
-    var outTitle=(c.name+' produces: '+outListHTML).replace(/"/g,'&quot;');
-    return '<div style="background:var(--raised);border:1px solid var(--trim-d);border-radius:6px;padding:7px 8px;'
-      +'display:flex;flex-direction:column;gap:3px;height:78px;overflow:hidden;'+(locked?'opacity:0.5':'')+'\">'
-      +'<div style="display:flex;align-items:center;gap:6px;min-width:0">'
-      +'<span style="font-size:calc(22px*var(--tscale));line-height:1;display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;flex-shrink:0">'+icoHTML+'</span>'
-      +'<span style="font-size:calc(14px*var(--tscale));color:var(--trim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0">'+c.name+(locked?' <span style="font-size:calc(11px*var(--tscale));color:var(--muted)">(Lv '+c.lvl+')</span>':'')+'</span>'
-      +'</div>'
-      +'<div style="font-size:calc(12px*var(--tscale));color:var(--muted);font-family:var(--num);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">⏱ '+fmtTime(c.growMs)+' · tend/'+tendLabel+'</div>'
-      +'<div style="font-size:calc(12px*var(--tscale));color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+outTitle+'">'+xpLabel+' xp · '+outListHTML+'</div>'
-      +'</div>';
-  }).join('');
-  box.appendChild(cropGrid);
-
-  // Compact page nav — only shows when there's more than one page. Centered,
-  // small, sits just under the grid. Prev / "Page X / Y" / Next.
-  if(pageCount>1){
-    var pageNav=document.createElement('div');
-    pageNav.style.cssText='display:flex;justify-content:center;align-items:center;gap:8px;margin-top:8px';
-
-    var prevBtn=document.createElement('button');
-    prevBtn.className='m-btn';
-    var atStart=_farmCropGuidePage<=0;
-    prevBtn.disabled=atStart;
-    prevBtn.style.cssText='font-size:calc(13px*var(--tscale));padding:3px 10px;min-width:32px'+(atStart?';opacity:0.4':'');
-    prevBtn.textContent='‹';
-    prevBtn.addEventListener('click',function(){
-      if(_farmCropGuidePage>0){ _farmCropGuidePage--; renderFarming(); }
-    });
-    pageNav.appendChild(prevBtn);
-
-    var pageLabel=document.createElement('span');
-    pageLabel.style.cssText='font-size:calc(12px*var(--tscale));color:var(--muted);font-variant:small-caps;letter-spacing:1.5px;min-width:80px;text-align:center';
-    pageLabel.textContent='Page '+(_farmCropGuidePage+1)+' / '+pageCount;
-    pageNav.appendChild(pageLabel);
-
-    var nextBtn=document.createElement('button');
-    nextBtn.className='m-btn';
-    var atEnd=_farmCropGuidePage>=pageCount-1;
-    nextBtn.disabled=atEnd;
-    nextBtn.style.cssText='font-size:calc(13px*var(--tscale));padding:3px 10px;min-width:32px'+(atEnd?';opacity:0.4':'');
-    nextBtn.textContent='›';
-    nextBtn.addEventListener('click',function(){
-      if(_farmCropGuidePage<pageCount-1){ _farmCropGuidePage++; renderFarming(); }
-    });
-    pageNav.appendChild(nextBtn);
-
-    box.appendChild(pageNav);
-  }
+    var effInterval=Math.max(15000,Math.round(c.tendInterval*speedMult));
+    var effXp=Math.round(c.xp*m.xpMult);
+    var out=Object.keys(c.out).map(function(id){
+      return (ITEMS[id]?ITEMS[id].name:id)+' \u00d7'+c.out[id]; }).join(', ');
+    var d=document.createElement('div');
+    d.className='fm-crop'+(locked?' lock':'');
+    d.innerHTML=iconHTML(cropDisplayIconId(c)||c.id)
+      +'<span class="fm-ct"><b>'+c.name+(locked?' \u00b7 Lv '+c.lvl:'')+'</b>'
+      +'<i>'+fmtTime(c.growMs)+' grow \u00b7 tend every '+fmtTime(effInterval)+'</i>'
+      +'<em>'+out+' \u00b7 '+effXp.toLocaleString()+' xp</em></span>';
+    grid.appendChild(d);
+  });
+  box.appendChild(grid);
 }
 
 /* ════════ [JS-07] BODY SLOTS — equipment paper-doll slots ═══════════════════════ */
@@ -16235,6 +16297,11 @@ function normalizeState(){
   if(state.farmer.maxTier>3) state.farmer.maxTier=3;
   if(typeof state.farmer.enabled!=='boolean') state.farmer.enabled=false;
   if(state.farmer.seedId!==null&&!getCrop(state.farmer.seedId)) state.farmer.seedId=null;
+  /* (0.9.122.4) The seed the shelf has selected. Persisted now that every Plant
+     button on the panel uses it, not just Plant All. A crop that no longer exists
+     — or a save from before this shipped — falls back to "best owned". */
+  if(state.farmSeed!==undefined&&state.farmSeed!==null&&!getCrop(state.farmSeed)) state.farmSeed=null;
+  if(state.farmSeed===undefined) state.farmSeed=null;
   if(!state.patchNotified||typeof state.patchNotified!=='object'||Array.isArray(state.patchNotified)) state.patchNotified={};
   if(typeof state.mineStrikes!=='number') state.mineStrikes=0;
   if(state.mineDoubleAct!==undefined&&state.mineDoubleAct!==null&&typeof state.mineDoubleAct!=='object') state.mineDoubleAct=null;
