@@ -6507,7 +6507,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.122.6">v0.9.122</div>
+  <div class="mm-ver" data-build="0.9.122.7">v0.9.122</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -28742,13 +28742,14 @@ function renderEnchanting(){
 
   const intro=document.createElement('div');
   intro.className='skill-intro';
-  intro.innerHTML='<b>Enchanting</b> — bind one enchant per jewelry piece; the bonus works while '
-    +'it\'s equipped. Pendants &amp; amulets share the neck slot: a ring + <span class="k">amulet</span> '
-    +'unlocks a skilling <span class="k">Set Bonus</span>, a ring + <span class="k">pendant</span> '
-    +'unlocks a combat one (atk / lifesteal / crit).'
-    +'<span class="cap">An enchant binds to the <b>piece</b>, not the copy — every '
-    +'Sapphire Ring you own carries it, so a matched pair pays out in both hands. '
-    +'A set leg still counts each hand once: a pair of rings cannot stand in for the neck.</span>';
+  /* Four lines of hedged prose became three plain facts (0.9.122.7). The neck-slot
+     rule and the "a pair of rings cannot stand in for the neck" caveat both came
+     out: the Set Bonuses row directly below already prints the Ring/Amulet and
+     Ring/Pendant chips for every set, which states the same rule as data. */
+  intro.innerHTML='<b>Enchanting</b> — one enchant per piece, active while it\'s worn. '
+    +'The enchant binds to the item, so every copy you own has it. '
+    +'Ring + <span class="k">amulet</span> = skilling set bonus. '
+    +'Ring + <span class="k">pendant</span> = combat set bonus.';
   box.appendChild(intro);
 
   const pieces=_ewOwned();
@@ -28962,14 +28963,14 @@ function renderSockets(){
 
   const intro=document.createElement('div');
   intro.className='skill-intro';
-  intro.innerHTML='<b>Socketing</b> — drill holes into armour and jewelry, then set gems. A gem only pays '
-    +'out while its piece is <span class="k">worn in the right loadout</span>: '
-    +'<span class="k">Sanguine / Verdant / Azure</span> read your combat gear, '
-    +'<span class="k">Topaz / Onyx</span> read your skilling gear.'
-    +'<span class="cap">Sockets per piece — Head 1 · Chest 2 · Legs 2 · Boots 1 · Jewelry 1. '
-    +'Sockets belong to the <b>piece</b>, not the copy — drill one Sapphire Ring and every '
-    +'Sapphire Ring you own is drilled, so a matched pair is worth wearing in both hands. '
-    +'Gems drop from combat, or cut them from Gem Dust at the Exchange below.</span>';
+  /* Five lines became three facts (0.9.122.7). Everything cut is already stated
+     somewhere it is more useful: the combat/skilling gem split is the caption under
+     the totals ("Attack · Max HP · Defence come from gems in your worn combat
+     gear…"), the per-piece socket counts are on every card as "Drill socket 1 of 2",
+     and the Gem Exchange is a labelled block at the bottom of this same panel. */
+  intro.innerHTML='<b>Socketing</b> — drill a piece, then set gems in it. '
+    +'A gem only pays out while its piece is <span class="k">worn</span>. '
+    +'Drilling binds to the item, so every copy you own is drilled.';
   box.appendChild(intro);
 
   /* Rail order is the panel's opinion about what you came here to do. Sorting by
