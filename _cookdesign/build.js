@@ -25,6 +25,12 @@ const FIRE = [
   { id: 'b-stored', title: 'Banked',   sub: 'fuel loaded, not lit' },
   { id: 'b-out',    title: 'Cold',     sub: 'nothing cooks' },
 ];
+const BLIST = [
+  { id: 'b',           title: 'B · three up',  sub: 'panel 1165px · 19 cards' },
+  { id: 'b-grid4',     title: 'B · four up',   sub: 'panel 983px · 19 cards' },
+  { id: 'b-filtered',  title: 'B · filtered',  sub: 'panel 1225px · 16 cards' },
+  { id: 'b-leanfilt',  title: 'filtered, lean save', sub: 'panel 1052px · 8 cards' },
+];
 const PLATES = [
   { file: 'fire/burn-2.png', title: 'Burning',  sub: '15KB shipped' },
   { file: 'fire/bank-1.png', title: 'Banked',   sub: '13KB shipped' },
@@ -52,7 +58,7 @@ const PLATES = [
   }
 
   const shots = {};
-  for (const c of CTX.concat(FIRE)) {
+  for (const c of CTX.concat(FIRE).concat(BLIST)) {
     if (shots[c.id]) continue;
     shots[c.id] = await webp('shots/' + c.id + '.png', 1560, 0.76);
     console.log('  ' + c.id + '  ' + Math.round(shots[c.id].length * 0.75 / 1024) + 'KB');
@@ -68,6 +74,11 @@ const PLATES = [
   const ctxPanes = CTX.map((c, i) =>
     `<div class="ctxpane" data-pane="${c.id}"${i ? ' hidden' : ''}><div class="ctxshot">`
     + `<img alt="${c.title} in the live game page at 1920x1080" src="${shots[c.id]}"></div></div>`).join('');
+  const bBtns = BLIST.map((c, i) =>
+    `<button class="${i === 1 ? 'on' : ''}" data-b="${c.id}"><b>${c.title}</b><i>${c.sub}</i></button>`).join('');
+  const bPanes = BLIST.map((c, i) =>
+    `<div class="bpane" data-bpane="${c.id}"${i === 1 ? '' : ' hidden'}><div class="ctxshot">`
+    + `<img alt="${c.title}" src="${shots[c.id]}"></div></div>`).join('');
   const firePanes = FIRE.map(f =>
     `<figure><img alt="${f.title} hearth state" src="${shots[f.id]}"><figcaption><b>${f.title}</b> ${f.sub}</figcaption></figure>`).join('');
   const plateFigs = PLATES.map(pl =>
@@ -77,7 +88,9 @@ const PLATES = [
     .replace('<!--CTXBTNS-->', ctxBtns)
     .replace('<!--CTXPANES-->', ctxPanes)
     .replace('<!--FIREPANES-->', firePanes)
-    .replace('<!--PLATES-->', plateFigs);
+    .replace('<!--PLATES-->', plateFigs)
+    .replace('<!--BBTNS-->', bBtns)
+    .replace('<!--BPANES-->', bPanes);
 
   fs.writeFileSync(path.join(__dirname, 'preview.html'), html);
   console.log('preview.html  ' + Math.round(html.length / 1024) + 'KB');

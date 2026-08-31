@@ -354,6 +354,45 @@ figcaption b{color:var(--ink); font-weight:600}
   </div>
 </section>
 
+
+<section class="wide">
+  <div class="shead">
+    <span class="num">02b</span>
+    <h2>B&rsquo;s list, shortened</h2>
+    <span class="sub">Nineteen chunky cards is a lot of panel however you cut it.
+    Two levers, measured on the same save.</span>
+  </div>
+  <div class="ctx">
+    <div class="ctxbar" id="bbar"><!--BBTNS--></div>
+    <!--BPANES-->
+  </div>
+  <div class="tbl" style="margin-top:22px"><div class="scroll"><table>
+    <thead><tr><th>Variant</th><th>Panel</th><th>Cards</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr><td class="m">shipped</td><td class="m">1182px</td><td class="m">19</td><td class="d">the panel as it is today</td></tr>
+      <tr><td class="m">B · three up</td><td class="m">1165px</td><td class="m">19</td><td class="d">B as first drawn — 7 rows of cards</td></tr>
+      <tr><td class="m">B · four up</td><td class="up">983px</td><td class="m">19</td><td class="d">5 rows instead of 7. Nothing hidden.</td></tr>
+      <tr><td class="m">B · filtered</td><td class="dn">1225px</td><td class="m">16</td><td class="d">on a stocked character the strip costs more than the 3 cards it saves</td></tr>
+      <tr><td class="m">B · filtered <span class="d">(lean save)</span></td><td class="up">1052px</td><td class="m">8</td><td class="d">on a character short on drops it saves 208px <i>and</i> becomes a shopping list</td></tr>
+      <tr><td class="m">B · both</td><td class="m">1048px</td><td class="m">16</td><td class="d">worse than four-up alone when you are stocked</td></tr>
+    </tbody>
+  </table></div></div>
+  <div class="ask" style="margin-top:22px">
+    <div><b>Four-up is the fix.</b>
+      <span>1165px &rarr; <b>983px</b>, every recipe still a full card, works on every save.
+      It costs 108px of card width, paid for by dropping the dish name 19.5px &rarr; 16.7px,
+      the icon well 40px &rarr; 34px and the hero 25px &rarr; 22px. Two names clip by a
+      character or two — "Bone Marrow St&hellip;", "Infernal R&hellip;". On the three buffed
+      dishes the <i>instant</i> chip and the buff's duration drop out so "+2 STR" and the
+      xp/hr both fit; the buff is why you cook Ogre Roast, the 60s is a detail.</span></div>
+    <div><b>Filtering is a different feature wearing a height costume.</b>
+      <span>It does not reliably shorten anything — on a stocked character it is
+      <i>taller</i>. What it actually does is turn ten dead cards into ten lines that
+      each name an errand: "Ogre Roast 240 HP needs Ogre Hide + Ogre Tusk". Worth having
+      for that, not for the pixels. Ships with a "Show all 19 recipes" toggle either way.</span></div>
+  </div>
+</section>
+
 <section class="wide">
   <div class="shead">
     <span class="num">03</span>
@@ -412,12 +451,16 @@ figcaption b{color:var(--ink); font-weight:600}
 </div>
 
 <script>
-document.getElementById('ctxbar').addEventListener('click', function(e){
-  var b = e.target.closest('button[data-ctx]'); if(!b) return;
-  var id = b.getAttribute('data-ctx');
-  this.querySelectorAll('button').forEach(function(x){ x.classList.toggle('on', x===b); });
-  document.querySelectorAll('.ctxpane').forEach(function(p){
-    p.hidden = p.getAttribute('data-pane') !== id;
+['ctxbar','bbar'].forEach(function(id){ var el=document.getElementById(id); if(!el) return;
+  var sel = id==='bbar' ? '.bpane' : '.ctxpane';
+  var attr = id==='bbar' ? 'data-b' : 'data-ctx';
+  var pane = id==='bbar' ? 'data-bpane' : 'data-pane';
+  el.addEventListener('click', function(e){
+    var b=e.target.closest('button['+attr+']'); if(!b) return;
+    var v=b.getAttribute(attr);
+    this.querySelectorAll('button').forEach(function(x){ x.classList.toggle('on', x===b); });
+    document.querySelectorAll(sel).forEach(function(q){ q.hidden = q.getAttribute(pane)!==v; });
   });
 });
+
 </script>
