@@ -105,11 +105,11 @@ section{padding:50px 0;border-top:1px solid var(--rule)}
 .scr-t .tok svg{width:15px;height:15px}
 
 /* ── art gallery ─────────────────────────────────────────────────────────── */
-.crests{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;
+.crests{display:grid;grid-template-columns:repeat(auto-fit,minmax(258px,1fr));gap:12px;
   margin-top:24px}
 .crest{background:#181109;border:1px solid var(--rule-hi);border-radius:9px;
   padding:12px;text-align:center;box-shadow:var(--sh)}
-.crest img{width:100%;height:auto;display:block;border-radius:6px}
+.crest .strip{display:block;aspect-ratio:3/1;border-radius:6px;overflow:hidden}
 .crest b{display:block;font-family:'Cinzel',serif;font-size:13px;color:#f0c772;
   margin-top:10px}
 .crest i{display:block;font-style:normal;font-family:'JetBrains Mono',monospace;
@@ -118,7 +118,7 @@ section{padding:50px 0;border-top:1px solid var(--rule)}
   margin-top:16px}
 .hall{border:1px solid var(--rule-hi);border-radius:9px;overflow:hidden;
   box-shadow:var(--sh);background:#0d0a07;line-height:0}
-.hall img{width:100%;height:auto;display:block}
+.hall{aspect-ratio:8/3}
 
 /* ── shared game bits ────────────────────────────────────────────────────── */
 .g-bar{height:5px;border-radius:3px;background:#0a0604;overflow:hidden;
@@ -148,13 +148,14 @@ section{padding:50px 0;border-top:1px solid var(--rule)}
 .la .h{display:flex;align-items:center;gap:9px;min-width:0}
 .la .ic{width:30px;height:30px;flex:none;border-radius:7px;overflow:hidden;
   background:#150e06;box-shadow:inset 0 2px 6px rgba(0,0,0,.85)}
-.la .ic img{width:100%;height:100%;display:block;object-fit:cover}
+
 .la .n{flex:1;min-width:0}
 .la .n b{display:block;font-family:'Cinzel',serif;font-size:13.5px;color:var(--g-gold);
   line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .la .n i{display:block;font-style:normal;font-family:var(--g-num);font-size:9.5px;
   color:var(--g-dim);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.la .r{font-family:var(--g-num);font-size:10px;color:var(--g-trim);flex:none}
+.la .r{font-family:var(--g-num);font-size:9.5px;color:var(--g-trim);flex:none;
+  max-width:82px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right}
 .la .f{font-family:var(--g-num);font-size:10px;color:var(--g-dim);
   display:flex;justify-content:space-between;gap:6px}
 .la .f em{font-style:normal;color:#7ec8a0}
@@ -167,14 +168,15 @@ section{padding:50px 0;border-top:1px solid var(--rule)}
   border:1px solid var(--g-trimd);border-radius:10px;overflow:hidden;min-width:0;
   display:flex;flex-direction:column}
 .lb .c.joined{border-color:var(--g-trim)}
-.lb .art{height:112px;position:relative;overflow:hidden;
+.lb .art{height:116px;position:relative;overflow:hidden;
   background:radial-gradient(90% 110% at 50% 40%,#2a1d0c,#120b05)}
-.lb .art img{width:100%;height:100%;object-fit:contain;display:block;opacity:.95}
+
 .lb .art::after{content:"";position:absolute;inset:0;
   background:linear-gradient(180deg,transparent 40%,#1b1208 100%)}
 .lb .art .rk{position:absolute;top:8px;right:9px;z-index:2;font-family:var(--g-num);
-  font-size:10.5px;color:var(--g-gold);background:rgba(12,7,4,.8);border-radius:4px;
-  padding:2px 7px}
+  font-size:10.5px;color:var(--g-gold);background:rgba(12,7,4,.86);border-radius:4px;
+  padding:3px 8px;max-width:calc(100% - 18px);white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis}
 .lb .b{padding:11px 13px 13px;display:flex;flex-direction:column;gap:8px;flex:1}
 .lb .b h4{font-family:'Cinzel',serif;font-size:15.5px;color:var(--g-gold);
   line-height:1.15;font-weight:600}
@@ -193,7 +195,7 @@ section{padding:50px 0;border-top:1px solid var(--rule)}
 .lc .r.joined{border-color:var(--g-trim)}
 .lc .ic{width:44px;height:44px;flex:none;border-radius:9px;overflow:hidden;
   background:#150e06;box-shadow:inset 0 2px 6px rgba(0,0,0,.85);position:relative;z-index:2}
-.lc .ic img{width:100%;height:100%;object-fit:cover;display:block}
+
 .lc .n{flex:1;min-width:160px;position:relative;z-index:2}
 .lc .n b{display:block;font-family:'Cinzel',serif;font-size:16px;color:var(--g-gold);line-height:1.15}
 .lc .n i{display:block;font-style:normal;font-family:var(--g-num);font-size:10.5px;
@@ -210,7 +212,7 @@ section{padding:50px 0;border-top:1px solid var(--rule)}
 /* ── list D · hall header ────────────────────────────────────────────────── */
 .ld-hero{position:relative;border-radius:10px;overflow:hidden;margin-bottom:13px;
   border:1px solid var(--g-trimd);line-height:0}
-.ld-hero img{width:100%;height:170px;object-fit:cover;display:block}
+.ld-hero .ph{height:170px}
 .ld-hero .ov{position:absolute;inset:0;display:flex;flex-direction:column;
   justify-content:flex-end;padding:14px 16px;line-height:1.4;
   background:linear-gradient(180deg,rgba(12,7,4,.15) 30%,rgba(12,7,4,.94) 100%)}
@@ -224,7 +226,7 @@ section{padding:50px 0;border-top:1px solid var(--rule)}
   border:1px solid var(--g-trimd);margin-bottom:13px;flex-wrap:wrap}
 .d-hero .ic{width:52px;height:52px;flex:none;border-radius:10px;overflow:hidden;
   background:#150e06;box-shadow:inset 0 2px 6px rgba(0,0,0,.85)}
-.d-hero .ic img{width:100%;height:100%;object-fit:cover;display:block}
+
 .d-hero .t{flex:1;min-width:180px}
 .d-hero .t b{display:block;font-family:'Cinzel',serif;font-size:20px;color:var(--g-gold);line-height:1.1}
 .d-hero .t i{display:block;font-style:normal;font-family:var(--g-num);font-size:11px;
@@ -296,6 +298,16 @@ section{padding:50px 0;border-top:1px solid var(--rule)}
   font-family:'Cinzel',serif;font-size:13.5px;color:var(--g-dim);border:1px solid transparent}
 .d-tabs span.on{background:#322415;border-color:var(--g-trimd);color:var(--g-gold)}
 
+.states{display:grid;grid-template-columns:repeat(auto-fit,minmax(232px,1fr));gap:12px;
+  margin-top:24px}
+.stbox{background:#181109;border:1px solid var(--rule-hi);border-radius:9px;
+  padding:15px 16px;box-shadow:var(--sh)}
+.stbox .g-btn{width:auto;display:inline-block;padding:7px 16px;margin-bottom:11px}
+.stbox p{font-family:var(--g-num);font-size:11.5px;color:#94805f;line-height:1.6}
+.stbox p b{color:#ead9b5;font-weight:600}
+/* a Deliver quest you can actually complete gets the same green edge as a finished one */
+.q-row.ready{border-color:#7a5a1a}
+
 .ask{display:grid;gap:1px;background:var(--rule);border:1px solid var(--rule);
   border-radius:6px;overflow:hidden;margin-top:24px}
 .ask>div{background:var(--surface);padding:18px 22px}
@@ -305,6 +317,7 @@ section{padding:50px 0;border-top:1px solid var(--rule)}
 .foot{padding:34px 0 66px;font-size:13.5px;color:var(--dim);border-top:1px solid var(--rule)}
 .foot code{font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--body)}
 </style>
+{{IMGCSS}}
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
   <symbol id="s-book" viewBox="0 0 32 32"><path d="M5 6h9a3 3 0 0 1 3 3v17a3 3 0 0 0-3-3H5z" fill="#6b4a28" stroke="#3d2a16" stroke-width="1.2"/><path d="M27 6h-9a3 3 0 0 0-3 3v17a3 3 0 0 1 3-3h9z" fill="#8a6338" stroke="#3d2a16" stroke-width="1.2"/></symbol>
@@ -317,6 +330,7 @@ section{padding:50px 0;border-top:1px solid var(--rule)}
   <span class="brand">Guild Layouts</span>
   <a href="#art">The art</a>
   <a href="#list">Guild list &mdash; 4 ways</a>
+  <a href="#turnin">Finishing a quest</a>
   <a href="#detail">One guild &mdash; 3 ways</a>
   <a href="#ask">Decisions</a>
 </div></nav>
@@ -368,12 +382,12 @@ section{padding:50px 0;border-top:1px solid var(--rule)}
     </div>
 
     <div class="opt">
-      <div class="ohead"><span class="oletter">B</span><h3>Emblem cards</h3>
+      <div class="ohead"><span class="oletter">B</span><h3>Picture cards</h3>
         <span class="tag">all 10 &middot; panel 1,111px</span></div>
-      <p class="owhy">Three across, each with the emblem as a 104px banner across the
-      top. This is the version that makes the art worth generating &mdash; a guild is
-      recognisable before you read its name. It is also easily the tallest: four rows
-      of cards is <b>1,111px</b>, so you scroll no matter what.</p>
+      <p class="owhy">Three across, each with a painting of the guild filling a 116px
+      banner across the top &mdash; the armoury, the mine, the harbour. A guild is
+      recognisable before you read its name. The cost is height: four rows of cards is
+      the tallest of the four options, so you scroll no matter what.</p>
       <div class="screen cv">
         <div class="scr-t"><svg><use href="#s-book"/></svg><b>Guilds</b>
           <span class="tok"><svg><use href="#s-token"/></svg>184 tokens</span></div>
@@ -421,24 +435,37 @@ section{padding:50px 0;border-top:1px solid var(--rule)}
     </div>
   </section>
 
+  <section id="turnin">
+    <div class="shead"><div class="kicker">The bit that was missing</div><h2>Finishing a quest</h2></div>
+    <p class="lead">Every quest row ends in one button, and the button says exactly
+    what pressing it will do. There are only four things it can say.</p>
+    <div class="states">{{STATES}}</div>
+    <p class="small"><b>Deliver quests never take your items quietly.</b> The counter
+    reads what is in your satchel right now, and it can go down again if you use the
+    items for something else. Nothing leaves your bag until you press <b>Hand in</b>.</p>
+    <p class="small"><b>The other three kinds count themselves.</b> Kill, Gather and
+    Make quests tick up as you play &mdash; and as your helpers work, since their
+    output counts too. When the bar fills, the button turns into <b>Claim</b>.</p>
+  </section>
+
   <section id="detail">
     <div class="shead"><div class="kicker">Screen two</div><h2>One guild &mdash; three ways</h2></div>
-    <p class="lead">This screen has four things on it: where you stand, the three
-    quests, the six ranks, and the shop. The question is whether they stack, sit side
+    <p class="lead">This screen has four things on it: your title, the three
+    quests, the six titles you can earn, and the shop. The question is whether they stack, sit side
     by side, or hide behind tabs.</p>
 
     <div class="opt">
       <div class="ohead"><span class="oletter">A</span><h3>Everything stacked</h3>
         <span class="tag">panel 969px &middot; scrolls</span></div>
-      <p class="owhy">Rank, quests, ranks, shop, in that order. Nothing is hidden and
-      the order matches how often you look at each part.</p>
+      <p class="owhy">Your standing, then quests, then titles, then the shop. Nothing is
+      hidden, and the order matches how often you look at each part.</p>
       <div class="screen cv">
         <div class="scr-t">{{FURROW_ICON}}<b>The Furrow</b>
           <span class="tok"><svg><use href="#s-token"/></svg>184 tokens</span></div>
         {{D_HERO}}
         <div class="g-lab"><span>Quests</span><span class="rt">New ones tomorrow &middot; one skip left</span></div>
         {{QUESTS}}
-        <div class="g-lab"><span>Ranks</span><span class="rt">Reputation only</span></div>
+        <div class="g-lab"><span>Titles</span><span class="rt">Earned with reputation &mdash; nothing to spend</span></div>
         {{RANKS}}
         <div class="g-lab"><span>Shop</span><span class="rt">You have 184 tokens</span></div>
         <div class="s-grid">{{SHOP}}</div>
@@ -451,7 +478,7 @@ section{padding:50px 0;border-top:1px solid var(--rule)}
     <div class="opt">
       <div class="ohead"><span class="oletter">B</span><h3>Two columns</h3>
         <span class="tag">panel 735px</span></div>
-      <p class="owhy">Quests on the left because that is what you came for; ranks and
+      <p class="owhy">Quests on the left because that is what you came for; titles and
       shop stacked on the right. Uses the width the panel already has instead of
       running down the page.</p>
       <div class="screen cv">
@@ -466,7 +493,7 @@ section{padding:50px 0;border-top:1px solid var(--rule)}
             <div class="s-grid" style="grid-template-columns:repeat(2,minmax(0,1fr))">{{SHOP2}}</div>
           </div>
           <div>
-            <div class="g-lab" style="margin-top:0"><span>Ranks</span><span class="rt">Reputation only</span></div>
+            <div class="g-lab" style="margin-top:0"><span>Titles</span><span class="rt">Earned with reputation &mdash; nothing to spend</span></div>
             {{RANKS}}
           </div>
         </div>
@@ -480,19 +507,19 @@ section{padding:50px 0;border-top:1px solid var(--rule)}
     <div class="opt">
       <div class="ohead"><span class="oletter">C</span><h3>Sub-tabs</h3>
         <span class="tag">panel 435px &middot; two parts hidden</span></div>
-      <p class="owhy">Quests, Ranks and Shop as three tabs. The shortest by a long way,
-      and the only one where you have to click to find out what your next rank gives
+      <p class="owhy">Quests, Titles and Shop as three tabs. The shortest by a long way,
+      and the only one where you have to click to find out what your next title gives
       you.</p>
       <div class="screen cv">
         <div class="scr-t">{{FURROW_ICON}}<b>The Furrow</b>
           <span class="tok"><svg><use href="#s-token"/></svg>184 tokens</span></div>
         {{D_HERO}}
-        <div class="d-tabs"><span class="on">Quests</span><span>Ranks</span><span>Shop</span></div>
+        <div class="d-tabs"><span class="on">Quests</span><span>Titles</span><span>Shop</span></div>
         {{QUESTS}}
       </div>
       <div class="verdict"><span class="vp">534px shorter than stacking everything</span>
         <span class="vp">the guild page never scrolls</span>
-        <span class="vm">your next rank is behind a click, so you forget it exists</span>
+        <span class="vm">your next title is behind a click, so you forget it exists</span>
         <span class="vm">a third level of tabs inside a tab inside the game</span></div>
     </div>
   </section>
