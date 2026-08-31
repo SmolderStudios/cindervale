@@ -46,18 +46,26 @@ const ORES = [
   S('gem_dust',      'A small conical heap of fine sparkling gem dust, prismatic pale glitter', { pale: true }),
 ];
 
-/* ── bars: one trapezoid ingot, three quarter view, same casting every tier ──── */
+/* ── bars: one long ingot, lying flat, same casting every tier ─────────────────
+   "trapezoid bar shape" was the bug. It reads as the END PROFILE, so cobalt came
+   back as a tub seen end-on and runite, mithril and silver as cubes and slabs —
+   Jordan's note that four of the ten "don't look like a bar". The shape has to be
+   stated as a LENGTH: long, lying flat, seen from a raised three quarter angle.
+   Every tier shares this sentence verbatim; only the metal words after it change,
+   which is what keeps the ladder reading as one family. */
+const BAR = 'A single long rectangular cast metal ingot lying flat, clearly longer than it is'
+  + ' wide, gently tapered sides and a flat top face, seen from a raised three quarter angle,';
 const BARS = [
-  S('bronze_bar',    'A single cast metal ingot, trapezoid bar shape, three quarter view, warm reddish bronze, softly polished top face'),
-  S('iron_bar',      'A single cast metal ingot, trapezoid bar shape, three quarter view, dull dark grey iron, hammered surface', { dark: true }),
-  S('steel_bar',     'A single cast metal ingot, trapezoid bar shape, three quarter view, cool blue grey polished steel', { pale: true }),
-  S('gold_bar',      'A single cast metal ingot, trapezoid bar shape, three quarter view, rich yellow gold, mirror bright top face', { pale: true }),
-  S('silver_bar',    'A single cast metal ingot, trapezoid bar shape, three quarter view, bright white silver, mirror bright top face', { pale: true }),
-  S('mithril_bar',   'A single cast metal ingot, trapezoid bar shape, three quarter view, luminous sky blue mithril with a faint inner glow'),
-  S('cobalt_bar',    'A single cast metal ingot, trapezoid bar shape, three quarter view, deep vivid indigo blue metal', { dark: true }),
-  S('runite_bar',    'A single cast metal ingot, trapezoid bar shape, three quarter view, glowing emerald green metal'),
-  S('starsteel_bar', 'A single cast metal ingot, trapezoid bar shape, three quarter view, pale violet white metal with tiny star glints', { pale: true }),
-  S('starfall_bar',  'A single cast metal ingot, trapezoid bar shape, three quarter view, molten white gold metal wreathed in faint falling sparks', { pale: true }),
+  S('bronze_bar',     BAR + ' warm reddish bronze, softly polished top face'),
+  S('iron_bar',       BAR + ' dull dark grey iron, hammered surface'),
+  S('steel_bar',      BAR + ' cool blue grey polished steel', { pale: true }),
+  S('gold_bar',       BAR + ' rich yellow gold, mirror bright top face', { pale: true }),
+  S('silver_bar',     BAR + ' bright white silver, mirror bright top face', { pale: true }),
+  S('mithril_bar',    BAR + ' luminous sky blue mithril with a faint inner glow'),
+  S('cobalt_bar',     BAR + ' vivid bright cobalt blue metal'),
+  S('runite_bar',     BAR + ' glowing emerald green metal'),
+  S('starsteel_bar',  BAR + ' pale violet white metal with tiny star glints', { pale: true }),
+  S('starfall_bar',   BAR + ' molten white gold metal wreathed in faint falling sparks', { pale: true }),
 ];
 
 /* ── fish: one whole fish, side on, head to the left ─────────────────────────── */

@@ -87,6 +87,9 @@ const NEG = [
   'hand, hands, fist, fingers, knuckles, arm, holding, grip,',
   // and the face pareidolia it left behind on iron ore
   'face, eyes, skull, mask, symmetrical features,',
+  // shape contamination: "trapezoid bar shape" produced tubs, cubes and slabs
+  // instead of ingots — negate the solids it kept reaching for
+  'cube, brick, block, box, dice, bucket, tub, barrel, pot, wedge, pyramid,',
   // multiplicity — a "pile of ore" is mud at 15px
   'multiple objects, collection, set, group, pile, heap, scattered, tiled, grid, collage,',
   // chrome
