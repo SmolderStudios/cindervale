@@ -83,6 +83,10 @@ section{padding:50px 0;border-top:1px solid var(--rule)}
 .oletter{font-family:'Fraunces',Georgia,serif;font-size:26px;color:var(--ember);
   font-weight:700;line-height:1;flex:none}
 .ohead h3{font-size:23px;line-height:1.15}
+.chosen{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--good);border:1px solid var(--good);
+  border-radius:99px;padding:3px 10px;flex:none}
+.opt.picked .screen{border-color:var(--good);box-shadow:var(--sh),0 0 0 1px var(--good)}
 .ohead .tag{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11.5px;
   color:var(--dim);white-space:nowrap}
 .owhy{font-size:15.5px;max-width:68ch}
@@ -339,9 +343,11 @@ section{padding:50px 0;border-top:1px solid var(--rule)}
   <div class="mast">
     <div class="eyebrow">Cindervale Idle &middot; layout options &middot; build 0.9.122.9</div>
     <h1>Guild page layouts</h1>
-    <p class="lede">Seven ways to draw the same two screens, with <b>ten guild emblems
-    and two hall paintings</b> generated for them. Every panel below is real markup at
-    the width the centre panel actually has, so what you see is what it would measure.</p>
+    <p class="lede">Seven ways to draw the same two screens, with <b>ten guild
+    paintings</b> generated for them. Every panel below is real markup at the width the
+    centre panel actually has, so what you see is what it would measure.</p>
+    <p class="lede" style="font-size:16px;color:var(--dim)"><b style="color:var(--good)">Picked:</b>
+    picture cards for the list, two columns for the guild page. Both are marked below.</p>
   </div>
 
   <section id="art">
@@ -381,8 +387,9 @@ section{padding:50px 0;border-top:1px solid var(--rule)}
         <span class="vm">ten near-identical tiles is a plain-looking screen</span></div>
     </div>
 
-    <div class="opt">
+    <div class="opt picked">
       <div class="ohead"><span class="oletter">B</span><h3>Picture cards</h3>
+        <span class="chosen">Chosen</span>
         <span class="tag">all 10 &middot; panel 1,111px</span></div>
       <p class="owhy">Three across, each with a painting of the guild filling a 116px
       banner across the top &mdash; the armoury, the mine, the harbour. A guild is
@@ -475,8 +482,9 @@ section{padding:50px 0;border-top:1px solid var(--rule)}
         <span class="vm">the shop is below the fold every time</span></div>
     </div>
 
-    <div class="opt">
+    <div class="opt picked">
       <div class="ohead"><span class="oletter">B</span><h3>Two columns</h3>
+        <span class="chosen">Chosen</span>
         <span class="tag">panel 735px</span></div>
       <p class="owhy">Quests on the left because that is what you came for; titles and
       shop stacked on the right. Uses the width the panel already has instead of
@@ -525,26 +533,30 @@ section{padding:50px 0;border-top:1px solid var(--rule)}
   </section>
 
   <section id="ask">
-    <div class="shead"><div class="kicker">Pick two</div><h2>Decisions</h2></div>
+    <div class="shead"><div class="kicker">Settled, and what is left</div><h2>Decisions</h2></div>
+    <p class="lead"><b>Picture cards for the list, two columns for the guild page.</b>
+    Both are marked above. What is left is everything that is not layout.</p>
     <div class="ask">
-      <div><b>My pick: C for the list, B for the guild page.</b>
-        <span>Rows read best and show all ten without scrolling, and two columns fit a
-        whole guild on one screen. If you want the atmosphere, D is C with a painting
-        on top &mdash; you can add it later without redrawing anything.</span></div>
-      <div><b>Is one hall painting enough, or does each guild want its own?</b>
-        <span>One painting for all ten reads a bit generic. Ten paintings is about
-        <b>250KB</b> more and a much better screen. The emblems already give each guild
-        an identity, so this is a nice-to-have rather than a must.</span></div>
-      <div><b>Are the emblems good enough to ship?</b>
-        <span>They are generated, so they are close but not perfect &mdash; a couple
-        read better than others at 30px. If A or C wins, the small size hides most of
-        it. If B wins, the art is on screen at 104px and the weaker ones want
-        redrawing.</span></div>
-      <div><b>File size.</b>
-        <span>The game file is already 5.96&nbsp;MB and the desktop updater aborts a
-        download at six seconds, which needs about 8.4&nbsp;Mbps. {{TOTALKB}}KB of guild
-        art is not what breaks that, but it is worth knowing the budget is already
-        thin.</span></div>
+      <div><b>Ten hall paintings, or the one?</b>
+        <span>Picture cards put a painting on screen at 116px, so the art is doing
+        real work now &mdash; which makes a single shared hall header look thin if
+        direction D ever gets added on top. Ten costs about <b>250KB</b> more.</span></div>
+      <div><b>Which three guilds get built first?</b>
+        <span>My pick: <b>The Furrow, The Timberhall, The Iron Legion</b> &mdash; one
+        that takes over the existing farmhand, one pure gathering, one combat. The
+        other seven are the same two screens with different words.</span></div>
+      <div><b>Do the titles need a pass?</b>
+        <span>Sixty of them, six per guild, and I wrote them in one sitting. Field
+        Hand / Tenant / Yeoman / Reeve / Steward / Master of the Furrow reads well;
+        Bellows Hand / Striker / Forgehand / Smith / Mastersmith / Emberwright has two
+        that are nearly the same word. Worth a read before they are in the save.</span></div>
+      <div><b>Does quest progress count things done before you took the quest?</b>
+        <span>I say no. A Deliver quest reads your satchel, but "mine 400 ore" starts
+        at zero. Counting backwards makes the daily refresh a free win.</span></div>
+      <div><b>What happens to the farmhand people already paid for?</b>
+        <span>They keep it. An old save with a farmhand tier is given enough Furrow
+        reputation to match. This has to be right the first time &mdash; there is no
+        second chance at a save migration.</span></div>
     </div>
   </section>
 
