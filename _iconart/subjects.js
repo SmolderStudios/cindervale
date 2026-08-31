@@ -40,7 +40,7 @@ const ORES = [
   S('gold_ore',      'A single rough broken lump of raw gold ore, grey quartz rock laced with bright yellow gold veins'),
   S('mithril_ore',   'A single rough broken lump of raw mithril ore, dark rock laced with luminous sky blue metallic veins', { dark: true }),
   S('silver_ore',    'A single rough broken lump of raw silver ore, pale grey rock threaded with bright white silver veins', { pale: true }),
-  S('cobalt_ore',    'A single rough broken lump of raw cobalt ore, dark rock threaded with deep vivid indigo blue mineral', { dark: true }),
+  S('cobalt_ore',    'A single rough broken lump of raw cobalt ore, pale grey rock threaded with vivid bright cobalt blue mineral', { dark: true }),
   S('runite_ore',    'A single rough broken lump of raw runite ore, dark rock threaded with glowing emerald green metal'),
   S('starsteel_ore', 'A single rough broken lump of raw starsteel ore, dark meteoric rock shot through with pale violet white metal and tiny star glints', { dark: true }),
   S('gem_dust',      'A small conical heap of fine sparkling gem dust, prismatic pale glitter', { pale: true }),
@@ -67,7 +67,7 @@ const FISH = [
   S('raw_trout',     'A single speckled brown trout, side on, head to the left, olive back with rust spots'),
   S('raw_tuna',      'A single tuna, side on, head to the left, steel blue back, muscular torpedo body'),
   S('raw_salmon',    'A single salmon, side on, head to the left, silver flank flushed pink'),
-  S('raw_swordfish', 'A single swordfish with its long flat bill, side on, head to the left, dark blue back'),
+  S('raw_swordfish', 'A single swordfish with its long flat bill, side on, head to the left, dark blue back', { dark: true }),
   S('raw_shark',     'A single small shark, side on, head to the left, slate grey back and pale belly'),
   S('raw_voideel',   'A single eel of living shadow, side on, head to the left, near black body with faint violet glow along its length', { dark: true }),
 ];
@@ -102,7 +102,7 @@ const FIRE = [
 const GEMS_ROUGH = [
   S('sapphire',     'A single rough uncut sapphire crystal, deep blue, rocky matrix still on one side'),
   S('emerald',      'A single rough uncut emerald crystal, deep green, rocky matrix still on one side'),
-  S('ruby',         'A single rough uncut ruby crystal, deep red, rocky matrix still on one side'),
+  S('ruby',         'A single rough uncut ruby crystal, vivid bright scarlet red, rocky matrix still on one side'),
   S('diamond',      'A single rough uncut diamond crystal, clear white, rocky matrix still on one side', { pale: true }),
   S('amethyst',     'A single rough uncut amethyst crystal, violet purple, rocky matrix still on one side'),
   S('dragon_gem',   'A single rough uncut dragonstone crystal, molten orange red with an inner fire, rocky matrix on one side'),

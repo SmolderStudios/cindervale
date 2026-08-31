@@ -16,8 +16,9 @@ const KIT = 'C:/Users/Jordan/Desktop/cindervale-trailer-kit';
 const puppeteer = require(KIT + '/node_modules/puppeteer-core');
 const CHROME = KIT + '/browsers/chrome/win64-151.0.7922.71/chrome-win64/chrome.exe';
 
-const FILE = process.argv[2] || path.join(__dirname, '_test.html');
-const OUT  = process.argv[3] || path.join(__dirname, '_ingame.png');
+// resolve, so a relative path from the repo root works as well as an absolute one
+const FILE = process.argv[2] ? path.resolve(process.argv[2]) : path.join(__dirname, '_test.html');
+const OUT  = process.argv[3] ? path.resolve(process.argv[3]) : path.join(__dirname, '_ingame.png');
 
 /* Whatever exists in the pack; the boot script filters to real ITEMS anyway. */
 const STOCK = ['pine_log','oak_log','ironbark_log','ember_log','frost_log','shadow_log','ancient_log',

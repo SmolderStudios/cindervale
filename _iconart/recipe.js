@@ -67,7 +67,11 @@ const STYLES = {
    glow. */
 const OUTLINE = {
   normal: 'a thick dark outline',
-  dark:   'a warm ember orange rim light tracing the whole silhouette',
+  /* A rim alone draws the edge but leaves the body black, and at 15px a black body
+     with a thin edge still reads as a hole. These also need a LIT top surface so
+     there is some actual value in the shape. */
+  dark:   'a warm ember orange rim light tracing the whole silhouette, and a bright '
+        + 'lit upper surface catching a strong light from above',
 };
 
 /* Realism has many names; so does "put my object in a scene". */
@@ -111,7 +115,8 @@ function buildPrompt(subject, styleKey) {
   let clause = st.clause.replace('OUTLINE', OUTLINE[subject.dark ? 'dark' : 'normal']);
   // painted already asks for a rim; for a dark body, say how much it matters
   if (subject.dark && styleKey === 'painted') {
-    clause += ', very bright rim light so the silhouette stays readable against a dark background';
+    clause += ', very bright rim light and a strongly lit upper surface so the shape stays'
+            + ' readable against a dark background, not a black silhouette';
   }
   return subject.p + clause + back;
 }
