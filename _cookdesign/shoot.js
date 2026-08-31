@@ -89,7 +89,8 @@ window.__cook=function(opt){
     const st=c.indexOf(':')>0?c.split(':'):[c,'burning'];
     c=st[0];
     if(c==='view'){ return {id:'view-'+st[1],view:st[1],inject:''}; }
-    const BMODE={grid3:1,grid4:1,filtered:1,lean:1,leanfilt:1,both:1,leanboth:1};
+    const BMODE={grid3:1,grid4:1,grid5:1,filtered:1,lean:1,leanfilt:1,both:1,leanboth:1,
+                 slim3:1,slim4:1,slim5:1,scroll3:1,scroll4:1,slimfilt:1};
     const bmode=BMODE[st[1]]?st[1]:null;
     const f=path.join(__dirname,'concept-'+c+'.js');
     const sh=fs.readFileSync(path.join(__dirname,'fire-plates.js'),'utf8')+String.fromCharCode(10)+fs.readFileSync(path.join(__dirname,'_shared.js'),'utf8');
@@ -116,7 +117,9 @@ window.__cook=function(opt){
     await p.goto('file:///'+tmp.split(String.fromCharCode(92)).join('/')+'?cvdev=1',{waitUntil:'load'});
     await new Promise(r=>setTimeout(r,2600));
     if(job.bmode) await p.evaluate(m=>{
-      window._ckB = (m==='lean')?'grid3':(m==='leanfilt')?'filtered':(m==='both'||m==='leanboth')?'grid4filtered':m;
+      window._ckB = (m==='lean')?'grid3':(m==='leanfilt')?'filtered'
+        :(m==='both'||m==='leanboth')?'grid4filtered'
+        :(m==='slim3')?'slim':(m==='slimfilt')?'slim4filtered':m;
     },job.bmode);
     await p.evaluate(o=>window.__cook(o),{fire:job.fire||'burning',view:job.view||null,
       lean:(job.bmode==='lean'||job.bmode==='leanfilt'||job.bmode==='leanboth')});

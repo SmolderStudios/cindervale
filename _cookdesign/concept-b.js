@@ -100,7 +100,11 @@
   '.ck-b4 .ck-card .ck-row:has(.ck-buff) .ck-kind{display:none}',
   '.ck-b4 .ck-buff s{display:none}',
   '.ck-b4 .ck-card .ck-rate{font-size:calc(9.5px*var(--tscale))}',
-  '.ck-b4 .ck-kind{font-size:calc(9px*var(--tscale));padding:1px 4px}',
+  /* Measured, not guessed: at four-up the pill row ran 1-9px over its 130px. The
+     INSTANT chip's .1em tracking was most of it — that letter-spacing is there to
+     make a lone chip read as a label, and at this size it only costs width. */
+  '.ck-b4 .ck-card .ck-row{gap:4px}',
+  '.ck-b4 .ck-kind{font-size:calc(9px*var(--tscale));padding:1px 3px;letter-spacing:.02em}',
   '.ck-b4 .ck-buff{font-size:calc(9px*var(--tscale));padding:1px 4px}',
   '.ck-b4 .ck-card .needs{gap:3px 4px}',
   '.ck-b4 .ck-card .needs .mat{font-size:calc(10.5px*var(--tscale));padding:1px 5px}',
@@ -120,7 +124,55 @@
   '.ck-b .ck-all{margin-top:11px;background:transparent;border:1px dashed var(--trim-d);',
   '  border-radius:6px;color:#94805f;font-family:var(--num);',
   '  font-size:calc(11.5px*var(--tscale));padding:6px 12px;cursor:var(--cur-pointer);width:100%}',
-  '.ck-b .ck-all:hover{border-color:var(--trim);color:var(--gold-hi)}'
+  '.ck-b .ck-all:hover{border-color:var(--trim);color:var(--gold-hi)}',
+
+  /* ── grid5: five across. 214px a card, so the hero loses its seconds line and
+     the name drops again. This is the floor — below it the dish names stop being
+     readable and the card stops being a card. ── */
+  '#activityGrid.ck-b5{grid-template-columns:repeat(5,minmax(0,1fr));gap:7px}',
+  '@media(max-width:1400px){#activityGrid.ck-b5{grid-template-columns:repeat(4,minmax(0,1fr))}}',
+  '@media(max-width:1100px){#activityGrid.ck-b5{grid-template-columns:repeat(3,minmax(0,1fr))}}',
+  '.ck-b5 .ck-card{padding:6px 7px 6px 11px;gap:7px}',
+  '.ck-b5 .ck-card .name{font-size:calc(13.5px*var(--tscale))}',
+  '.ck-b5 .ck-card .act-icon{width:30px;height:30px}',
+  '.ck-b5 .ck-card .act-icon svg{width:23px;height:23px}',
+  '.ck-b5 .ck-hp{min-width:38px;padding-left:4px}',
+  '.ck-b5 .ck-hp .v{font-size:calc(20px*var(--tscale))}',
+  '.ck-b5 .ck-hp .k{margin-top:2px}',
+  '.ck-b5 .ck-hp .t{font-size:calc(9.5px*var(--tscale));margin-top:3px}',
+  '.ck-b5 .ck-card .ck-row{flex-wrap:nowrap;overflow:hidden}',
+  '.ck-b5 .ck-card .ck-rate{font-size:calc(9.5px*var(--tscale))}',
+  '.ck-b5 .ck-card .ck-row{gap:3px}',
+  '.ck-b5 .ck-kind{font-size:calc(8.5px*var(--tscale));padding:1px 3px;letter-spacing:.02em}',
+  '.ck-b5 .ck-buff{font-size:calc(8.5px*var(--tscale));padding:1px 4px}',
+  '.ck-b5 .ck-buff s{display:none}',
+  '.ck-b5 .ck-card .ck-row:has(.ck-buff) .ck-kind{display:none}',
+  '.ck-b5 .ck-card .needs{gap:3px}',
+  '.ck-b5 .ck-card .needs .mat{font-size:calc(10px*var(--tscale));padding:1px 4px}',
+  '.ck-b5 .ck-card .needs .mat svg{width:14px;height:14px}',
+  '.ck-b5 .ck-card .needs .runs{font-size:calc(10px*var(--tscale))}',
+  '.ck-b5 .ck-card .act-tier{font-size:calc(10px*var(--tscale))}',
+
+  /* ── slim: the runs count moved into the head row, so style it like a count
+     rather than like the level badge that normally sits there. ── */
+  '.ck-hp .t.runs.fuelcap{color:var(--ember);font-weight:600}',
+  '.ck-hp .t.runs.none{color:#e0917c;font-weight:600}',
+  '.ck-hp .t.runs .ev-icon{width:11px;height:11px;vertical-align:-1px}',
+  /* Both of these are sized to their own longest string rather than to a guess:
+     "61 runs" in the hero, "34.6k xp/hr" on the row. */
+  '.ck-b4 .ck-hp .t.runs{font-size:calc(9.5px*var(--tscale))}',
+  '.ck-b5 .ck-hp .t.runs{font-size:calc(9px*var(--tscale))}',
+
+  /* ── scroll: a fixed well. Height stops tracking the recipe count. ── */
+  '.ck-b .ck-well{grid-column:1/-1;max-height:470px;overflow-y:auto;padding-right:4px;',
+  '  -webkit-mask-image:linear-gradient(180deg,#000 0,#000 calc(100% - 26px),transparent 100%);',
+  '  mask-image:linear-gradient(180deg,#000 0,#000 calc(100% - 26px),transparent 100%)}',
+  '.ck-b .ck-wellgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;align-items:start}',
+  '.ck-b4 .ck-wellgrid{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}',
+  '.ck-b .ck-well::-webkit-scrollbar{width:8px}',
+  '.ck-b .ck-well::-webkit-scrollbar-track{background:#0a0604;border-radius:4px}',
+  '.ck-b .ck-well::-webkit-scrollbar-thumb{background:#4a3820;border-radius:4px}',
+  '.ck-b .ck-well::-webkit-scrollbar-thumb:hover{background:var(--trim-d)}'
   ].join('\n');
   document.head.appendChild(s);
 
@@ -203,11 +255,31 @@
                     which is a plan; a dimmed card is not. "Show all" restores them.
     */
     var mode = window._ckB || 'grid3';
-    if(mode.indexOf('grid4')===0) grid.classList.add('ck-b4');
-    if(mode==='grid4filtered') mode='filtered';
+    /* Column count and card weight are separate levers, so they compose:
+         grid3  grid4  grid5   — how many across
+         slim   — drop the ingredient chips while you can afford the dish
+         scroll — cap the list at a fixed height and scroll inside it
+       Anything not 'filtered' just draws every recipe. */
+    if(/4$|4[a-z]/.test(mode))    grid.classList.add('ck-b4');
+    if(/5$|5[a-z]/.test(mode))    grid.classList.add('ck-b5');
+    if(/scroll/.test(mode))       grid.classList.add('ck-bscroll');
+    var slim = /slim/.test(mode);
+    if(/filtered/.test(mode)) mode='filtered';
 
     if(mode!=='filtered'){
-      R.list.forEach(function(r){ grid.appendChild(CK.card(r)); });
+      /* The scroller keeps the hearth pinned and puts the cards in a well of their
+         own. It is the only option here whose height does not grow with the recipe
+         count — worth knowing, because cooking is due more recipes, not fewer. */
+      var host=grid;
+      if(/scroll/.test(window._ckB||'')){
+        var well=document.createElement('div');
+        well.className='ck-well';
+        grid.appendChild(well);
+        host=document.createElement('div');
+        host.className='ck-wellgrid';
+        well.appendChild(host);
+      }
+      R.list.forEach(function(r){ host.appendChild(CK.card(r,{slim:slim})); });
       return;
     }
 

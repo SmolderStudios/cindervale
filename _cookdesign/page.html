@@ -106,6 +106,7 @@ section{padding:56px 0; border-bottom:1px solid var(--rule)}
 .tbl .up{color:var(--good); font-family:'JetBrains Mono',monospace; font-size:12.5px}
 .tbl .dn{color:var(--bad); font-family:'JetBrains Mono',monospace; font-size:12.5px}
 .tbl tr.flag td{background:color-mix(in srgb, var(--bad) 7%, var(--surface))}
+.tbl tr.pick td{background:color-mix(in srgb, var(--good) 9%, var(--surface))}
 
 .opt{margin-bottom:46px; padding-bottom:44px; border-bottom:1px solid var(--rule)}
 .opt:last-child{border-bottom:0; margin-bottom:0; padding-bottom:0}
@@ -359,37 +360,52 @@ figcaption b{color:var(--ink); font-weight:600}
   <div class="shead">
     <span class="num">02b</span>
     <h2>B&rsquo;s list, shortened</h2>
-    <span class="sub">Nineteen chunky cards is a lot of panel however you cut it.
-    Two levers, measured on the same save.</span>
+    <span class="sub">Two independent levers &mdash; how many across, and how heavy a
+    card &mdash; taken to the point where they break, on the same save.</span>
   </div>
   <div class="ctx">
     <div class="ctxbar" id="bbar"><!--BBTNS--></div>
     <!--BPANES-->
   </div>
+
   <div class="tbl" style="margin-top:22px"><div class="scroll"><table>
-    <thead><tr><th>Variant</th><th>Panel</th><th>Cards</th><th>What it does</th></tr></thead>
+    <thead><tr><th>Variant</th><th>Panel</th><th>vs shipped</th><th>Cards</th><th>Verdict</th></tr></thead>
     <tbody>
-      <tr><td class="m">shipped</td><td class="m">1182px</td><td class="m">19</td><td class="d">the panel as it is today</td></tr>
-      <tr><td class="m">B · three up</td><td class="m">1165px</td><td class="m">19</td><td class="d">B as first drawn — 7 rows of cards</td></tr>
-      <tr><td class="m">B · four up</td><td class="up">983px</td><td class="m">19</td><td class="d">5 rows instead of 7. Nothing hidden.</td></tr>
-      <tr><td class="m">B · filtered</td><td class="dn">1225px</td><td class="m">16</td><td class="d">on a stocked character the strip costs more than the 3 cards it saves</td></tr>
-      <tr><td class="m">B · filtered <span class="d">(lean save)</span></td><td class="up">1052px</td><td class="m">8</td><td class="d">on a character short on drops it saves 208px <i>and</i> becomes a shopping list</td></tr>
-      <tr><td class="m">B · both</td><td class="m">1048px</td><td class="m">16</td><td class="d">worse than four-up alone when you are stocked</td></tr>
+      <tr><td class="m">shipped</td><td class="m">1182px</td><td class="d">&mdash;</td><td class="m">19</td><td class="d">overflows a 1080p window</td></tr>
+      <tr><td class="m">three up</td><td class="m">1165px</td><td class="d">&minus;17</td><td class="m">19</td><td class="d">B as first drawn &mdash; 7 rows</td></tr>
+      <tr><td class="m">three up + slim</td><td class="m">1122px</td><td class="d">&minus;60</td><td class="m">19</td><td class="d">wide cards, but still 7 rows</td></tr>
+      <tr><td class="m">four up</td><td class="m">983px</td><td class="up">&minus;199</td><td class="m">19</td><td class="d">5 rows, ingredient chips always on</td></tr>
+      <tr class="pick"><td class="m"><b>four up + slim</b></td><td class="up"><b>926px</b></td><td class="up"><b>&minus;256</b></td><td class="m">19</td><td class="d"><b>every name legible, nothing hidden</b></td></tr>
+      <tr class="flag"><td class="m">five up</td><td class="m">918px</td><td class="d">&minus;264</td><td class="m">19</td><td class="dn">names clip &mdash; five dishes read "Cooked&hellip;"</td></tr>
+      <tr class="flag"><td class="m">five up + slim</td><td class="m">779px</td><td class="d">&minus;403</td><td class="m">19</td><td class="dn">names and rates both break</td></tr>
+      <tr><td class="m">scrolling well</td><td class="m">964px</td><td class="d">&minus;218</td><td class="m">19</td><td class="d">height stops tracking recipe count, but nests a scrollbar inside a scrolling page</td></tr>
+      <tr><td class="m">filtered <span class="d">(lean save)</span></td><td class="m">1052px</td><td class="d">&minus;130</td><td class="m">8</td><td class="d">turns dead cards into a shopping list; on a stocked save it is <i>taller</i></td></tr>
     </tbody>
   </table></div></div>
+
   <div class="ask" style="margin-top:22px">
-    <div><b>Four-up is the fix.</b>
-      <span>1165px &rarr; <b>983px</b>, every recipe still a full card, works on every save.
-      It costs 108px of card width, paid for by dropping the dish name 19.5px &rarr; 16.7px,
-      the icon well 40px &rarr; 34px and the hero 25px &rarr; 22px. Two names clip by a
-      character or two — "Bone Marrow St&hellip;", "Infernal R&hellip;". On the three buffed
-      dishes the <i>instant</i> chip and the buff's duration drop out so "+2 STR" and the
-      xp/hr both fit; the buff is why you cook Ogre Roast, the 60s is a detail.</span></div>
-    <div><b>Filtering is a different feature wearing a height costume.</b>
-      <span>It does not reliably shorten anything — on a stocked character it is
-      <i>taller</i>. What it actually does is turn ten dead cards into ten lines that
-      each name an errand: "Ogre Roast 240 HP needs Ogre Hide + Ogre Tusk". Worth having
-      for that, not for the pixels. Ships with a "Show all 19 recipes" toggle either way.</span></div>
+    <div><b>Four up + slim. 1182px &rarr; 926px.</b>
+      <span>Two levers stacked. <b>Four columns</b> turns 7 rows into 5 &mdash; paid for by
+      the dish name dropping 19.5px&rarr;16.7px, the icon well 40&rarr;34px and the hero
+      25&rarr;22px. <b>Slim</b> drops the ingredient chips <i>while you can afford the dish</i>
+      and grows them straight back the moment you are short, which takes most cards from
+      three rows to two. Every recipe is still a full clickable card and every name is
+      legible.</span></div>
+    <div><b>What slim actually removes.</b>
+      <span>"210/1 raw minnow" tells you nothing the runs count does not &mdash; the runs
+      count <i>is</i> the answer to "can I make this". The chips only earn their row when
+      an ingredient is missing, which is when they stop being a cost and start being a
+      shopping list. The cook time goes too: xp/hr already encodes speed, and the running
+      card shows a real timer.</span></div>
+    <div><b>Five up is the measured floor, not a matter of taste.</b>
+      <span>At 214px a card the name has ~95px, and Minnow / Sardine / Trout / Tuna /
+      Salmon all render as "Cooked&hellip;". The xp/hr loses its unit. It is 8px shorter
+      than four-up-slim and unreadable &mdash; that is the trade going the wrong way.</span></div>
+    <div><b>The two I would not ship.</b>
+      <span>The <b>scrolling well</b> fixes height at any recipe count, which will matter
+      one day, but it puts a scrollbar inside a page that already scrolls. <b>Filtering</b>
+      is worth having for the shopping list, not for the pixels &mdash; on a stocked
+      character it makes the panel taller.</span></div>
   </div>
 </section>
 

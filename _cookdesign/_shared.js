@@ -127,18 +127,34 @@ window.CK = (function(){
     else if(r.fuel<r.mat) { runs=iconHTML('ui_flame')+' '+r.fuel+' runs'; runsCls=' fuelcap'; }
     else                  { runs=(r.mat===Infinity?'&infin;':fmtK(r.mat))+' runs'; }
 
+    /* SLIM (opt.slim): the ingredient chips are the bulkiest thing on the card and
+       the least useful at a glance. While you can afford a dish, "210/1 raw minnow"
+       tells you nothing the runs count does not — the runs count IS the answer to
+       "can I make this". The chips only earn their row when you are SHORT, which is
+       when they stop being a cost and start being a shopping list. So slim cards
+       drop the chips while every ingredient is covered, and grow them back the
+       moment one is not. Two rows instead of three on most of the list. */
+    var short=false;
+    for(var k in (a.inp||{})) if((state.items[k]||0) < a.inp[k]) short=true;
+    var hideMats = opt.slim && !short && !r.locked;
+
     var mats='';
-    for(var id in (a.inp||{})){
-      var need=a.inp[id], have=state.items[id]||0;
-      mats+='<span class="mat'+(have<need?' miss':'')+'" data-tip="'
-        +((ITEMS[id]&&ITEMS[id].name)||id)+' — '+need+' per cook, '+have+' held">'
-        +iconHTML(id)+'<b>'+fmtK(have)+'</b><span class="sl">/'+need+'</span></span>';
+    if(!hideMats){
+      for(var id in (a.inp||{})){
+        var need=a.inp[id], have=state.items[id]||0;
+        mats+='<span class="mat'+(have<need?' miss':'')+'" data-tip="'
+          +((ITEMS[id]&&ITEMS[id].name)||id)+' — '+need+' per cook, '+have+' held">'
+          +iconHTML(id)+'<b>'+fmtK(have)+'</b><span class="sl">/'+need+'</span></span>';
+      }
     }
 
     /* "Lv 25" on a recipe you unlocked forty levels ago is a column of noise
-       that costs every card ~50px of name width. Show it only while it gates. */
+       that costs every card ~50px of name width. Show it only while it gates.
+       On a slim card that slot is free, so the runs count takes it and the whole
+       third row goes away. */
     var right = opt.rightLabel!==undefined ? opt.rightLabel
-              : (r.locked ? 'Lv '+r.need : '');
+              : r.locked ? 'Lv '+r.need
+              : '';
 
     b.innerHTML=
       '<div class="act-stripe" style="background:'+tierStripeColor(pipIdx)+'"></div>'
@@ -147,19 +163,24 @@ window.CK = (function(){
      +'<div class="act-body">'
        +'<div class="act-head"><span class="name">'
          +(ITEMS[out]?ITEMS[out].name:a.name)+'</span>'
-         +'<span class="act-tier">'+right+'</span></div>'
+         +(right?'<span class="act-tier">'+right+'</span>':'')+'</div>'
        +(r.locked
           ? '<span class="meta">Unlocks at Lv '+r.need+'</span>'
           : '<div class="ck-row">'+kindPill(f)+buffPill(f)
             +'<span class="ck-rate"><b>'+fmtK(r.xph)+'</b> xp/hr</span></div>')
-       +'<div class="needs'+(r.locked?' needs-locked':'')+'">'+mats
-         +(runs?'<span class="runs'+runsCls+'">'+runs+'</span>':'')+'</div>'
+       /* With the chips gone the runs count is alone on its row, so on a slim card
+          it moves up beside the pills and the row disappears entirely. */
+       +(hideMats
+          ? ''
+          : '<div class="needs'+(r.locked?' needs-locked':'')+'">'+mats
+            +(runs?'<span class="runs'+runsCls+'">'+runs+'</span>':'')+'</div>')
        +(r.active?'<div class="prog"><i></i></div>':'')
      +'</div>'
      +(r.locked
         ? '<div class="ck-hp"><span class="v dim">'+f.hp+'</span><span class="k">HP</span></div>'
         : '<div class="ck-hp"><span class="v">'+f.hp+'</span><span class="k">HP</span>'
-          +'<span class="t">'+(r.ms/1000).toFixed(1)+'s</span></div>');
+          +'<span class="t'+(hideMats?' runs'+runsCls:'')+'">'
+          +(hideMats ? runs : (r.ms/1000).toFixed(1)+'s')+'</span></div>');
 
     if(!r.locked && !dead){
       b.addEventListener('click',function(e){

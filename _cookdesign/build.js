@@ -26,10 +26,13 @@ const FIRE = [
   { id: 'b-out',    title: 'Cold',     sub: 'nothing cooks' },
 ];
 const BLIST = [
-  { id: 'b',           title: 'B · three up',  sub: 'panel 1165px · 19 cards' },
-  { id: 'b-grid4',     title: 'B · four up',   sub: 'panel 983px · 19 cards' },
-  { id: 'b-filtered',  title: 'B · filtered',  sub: 'panel 1225px · 16 cards' },
-  { id: 'b-leanfilt',  title: 'filtered, lean save', sub: 'panel 1052px · 8 cards' },
+  { id: 'b',           title: 'three up',        sub: '1165px · as first drawn' },
+  { id: 'b-grid4',     title: 'four up',         sub: '983px · chips always on' },
+  { id: 'b-slim4',     title: 'four up + slim',  sub: '926px · the pick' },
+  { id: 'b-grid5',     title: 'five up',         sub: '918px · names break' },
+  { id: 'b-slim5',     title: 'five up + slim',  sub: '779px · too far' },
+  { id: 'b-scroll4',   title: 'scrolling well',  sub: '964px · fixed height' },
+  { id: 'b-leanfilt',  title: 'filtered',        sub: '1052px · lean save' },
 ];
 const PLATES = [
   { file: 'fire/burn-2.png', title: 'Burning',  sub: '15KB shipped' },
@@ -75,9 +78,9 @@ const PLATES = [
     `<div class="ctxpane" data-pane="${c.id}"${i ? ' hidden' : ''}><div class="ctxshot">`
     + `<img alt="${c.title} in the live game page at 1920x1080" src="${shots[c.id]}"></div></div>`).join('');
   const bBtns = BLIST.map((c, i) =>
-    `<button class="${i === 1 ? 'on' : ''}" data-b="${c.id}"><b>${c.title}</b><i>${c.sub}</i></button>`).join('');
+    `<button class="${i === 2 ? 'on' : ''}" data-b="${c.id}"><b>${c.title}</b><i>${c.sub}</i></button>`).join('');
   const bPanes = BLIST.map((c, i) =>
-    `<div class="bpane" data-bpane="${c.id}"${i === 1 ? '' : ' hidden'}><div class="ctxshot">`
+    `<div class="bpane" data-bpane="${c.id}"${i === 2 ? '' : ' hidden'}><div class="ctxshot">`
     + `<img alt="${c.title}" src="${shots[c.id]}"></div></div>`).join('');
   const firePanes = FIRE.map(f =>
     `<figure><img alt="${f.title} hearth state" src="${shots[f.id]}"><figcaption><b>${f.title}</b> ${f.sub}</figcaption></figure>`).join('');
