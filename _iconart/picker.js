@@ -15,6 +15,10 @@ const fs = require('fs'), path = require('path');
 const CUT = path.join(__dirname, 'cut');
 const OUT = path.join(__dirname, 'pick.html');
 const { FAMILIES } = require('./subjects');
+/* The icon each of these is replacing. Shown but not selectable — you cannot judge
+   a replacement without seeing what it replaces. */
+const SVG = fs.existsSync(path.join(__dirname, 'svg.json'))
+  ? JSON.parse(fs.readFileSync(path.join(__dirname, 'svg.json'), 'utf8')) : {};
 
 const uri = f => 'data:image/png;base64,' + fs.readFileSync(path.join(CUT, f)).toString('base64');
 const hasF = f => fs.existsSync(path.join(CUT, f));
@@ -25,6 +29,17 @@ for (const fam of Object.keys(FAMILIES)) {
   if (items.length) rows.push({ fam, items });
 }
 const n = rows.reduce((a, r) => a + r.items.length, 0);
+
+/* Not a button: the current SVG is context, not an option. */
+const now = id => {
+  const g = SVG[id];
+  if (!g) return '<div class="opt now missing">no svg</div>';
+  return `<div class="opt now">
+      <span class="big svgwrap">${g}</span>
+      <span class="real"><span class="tile svgwrap sm">${g}</span><em>15px</em></span>
+      <span class="tag">now</span>
+    </div>`;
+};
 
 const card = (id, st) => {
   const f = id + '__' + st + '.png';
@@ -55,6 +70,12 @@ h2{font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:#8a7350;
 .opt:hover{color:#f0c772;box-shadow:inset 0 1px 0 rgba(240,199,114,.3), 0 0 0 1px rgba(199,155,78,.4)}
 .opt.sel{color:#f0c772;box-shadow:inset 0 1px 0 rgba(240,199,114,.4), 0 0 0 2px #c79b4e}
 .opt.missing{opacity:.35;cursor:default}
+/* the outgoing SVG: present for comparison, never selectable */
+.opt.now{cursor:default;opacity:.72;box-shadow:inset 0 1px 0 rgba(214,170,96,.08)}
+.opt.now:hover{color:#9a8462;box-shadow:inset 0 1px 0 rgba(214,170,96,.08)}
+.svgwrap{line-height:0}
+.svgwrap svg{width:66px;height:66px;display:block}
+.svgwrap.sm svg{width:15px;height:15px;display:block}
 .big{display:grid;place-items:center;width:74px;height:74px;border-radius:7px;
   background:linear-gradient(180deg,#241809,#150c05);box-shadow:inset 0 -1px 0 rgba(0,0,0,.5)}
 .big img{width:66px;height:66px;object-fit:contain}
@@ -79,12 +100,12 @@ button.act:hover{color:#f0c772;box-shadow:inset 0 1px 0 rgba(240,199,114,.3), 0 
   padding:12px;font-family:inherit;font-size:12px;resize:none}
 </style></head><body>
 <h1>Item icons — pick one of each</h1>
-<div class="sub">${n} items, two directions each. The small tile is the real size in the satchel (15px), the big one is just so you can see what it is.<br>
+<div class="sub">${n} items. Left is the SVG you have <b>now</b>; the two after it are the options. The small tile in each is the real size in the satchel (15px), the big one is just so you can see what it is.<br>
 Choices save as you click. When you are done, hit <b>Copy picks JSON</b> and paste it back to me — or just say "all painted" / "all emblem" if one direction wins outright.</div>
 
 ${rows.map(r => `<h2>${r.fam.replace('_', ' ')} &nbsp;<span style="color:#5f4d33">${r.items.length}</span></h2>
 ${r.items.map(s => `<div class="item"><div class="name">${s.id}</div>
-  <div class="opts">${card(s.id, 'painted')}${card(s.id, 'emblem')}</div></div>`).join('')}`).join('')}
+  <div class="opts">${now(s.id)}${card(s.id, 'painted')}${card(s.id, 'emblem')}</div></div>`).join('')}`).join('')}
 
 <div class="bar">
   <button class="act" id="allP">All painted</button>
