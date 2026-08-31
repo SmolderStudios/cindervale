@@ -4081,6 +4081,145 @@ body:not(.is-demo) .demo-only{display:none !important}
 .sl-laidup p{margin:0;font-size:calc(12.8px*var(--tscale));line-height:1.5;color:#c8b2a4}
 .sl-laidup p b{color:#e8d7b0}
 .sl-laidup .sl-lab{margin-top:9px}
+/* ════════ [CSS-43] ALCHEMY (0.9.122.6) ══════════════════════════
+   34 recipes made 20 potions, ten of them by more than one route, so 24 of the 34
+   cards were duplicates — Wisdom III had four, under four different names. And no
+   card said what the potion it made actually did; Swiftness I is +5% speed for two
+   minutes and neither number was anywhere on screen.
+
+   The card is the potion now. Effect first, tier ladder as pips instead of a
+   <select>, and the alternate recipes live inside the card rather than beside it.
+
+   al- namespaced: .card, .mini, .pips, .mat and .rec are all bare enough to
+   collide with another panel, the way .act and .chip already do in this file. */
+.al-hint{display:flex;align-items:center;gap:8px;font-size:calc(12.5px*var(--tscale));
+  color:var(--muted);line-height:1.35;padding:3px 10px 5px;margin-bottom:7px;
+  border-bottom:1px solid var(--trim-d)}
+.al-hint .ev-icon{width:17px;height:17px;flex:none}
+.al-lab{display:flex;align-items:center;gap:9px;font-family:var(--num);
+  font-size:calc(11px*var(--tscale));letter-spacing:.14em;text-transform:uppercase;
+  color:var(--dim,#7a6748);margin:9px 0 6px}
+.al-lab::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--trim-d),transparent);order:1}
+.al-lab .rt{order:2;flex:none;color:var(--muted);letter-spacing:.04em;text-transform:none;
+  font-size:calc(10.5px*var(--tscale))}
+.al-none{font-family:var(--num);font-size:calc(12.5px*var(--tscale));color:var(--muted);
+  text-align:center;padding:26px 12px;font-style:italic}
+
+/* ── the two tabs, as a segmented control rather than two banner buttons ── */
+.al-seg{display:flex;gap:5px;background:#0d0905;border:1px solid var(--trim-d);
+  border-radius:8px;padding:4px;margin-bottom:4px}
+.al-seg button{flex:1;background:transparent;border:1px solid transparent;border-radius:6px;
+  padding:5px 10px;cursor:var(--cur-pointer);color:var(--muted);text-align:center;
+  font-family:inherit;transition:background .14s,color .14s}
+.al-seg button:hover{color:var(--text)}
+.al-seg button.on{background:var(--raised-s);border-color:var(--trim);color:var(--gold-hi,#f0c772)}
+.al-seg button b{display:block;font-family:'Cinzel',serif;font-size:calc(14px*var(--tscale));font-weight:600}
+.al-seg button i{display:block;font-style:normal;font-family:var(--num);
+  font-size:calc(10px*var(--tscale));letter-spacing:.09em;text-transform:uppercase;
+  color:var(--dim,#7a6748);margin-top:2px}
+.al-seg button.on i{color:var(--trim)}
+.al-seg button:focus-visible{outline:2px solid var(--trim);outline-offset:1px}
+
+/* ── the potion card ── */
+.al-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;align-items:start}
+@media(max-width:1100px){.al-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.al-card{background:linear-gradient(178deg,var(--lit-top,#33240f),var(--lit-bot,#1b1208) 78%);
+  border:1px solid var(--trim-d);border-radius:9px;padding:9px;
+  display:flex;flex-direction:column;gap:6px;min-width:0}
+.al-card.lock{opacity:.5;border-style:dashed}
+.al-h{display:flex;align-items:center;gap:9px;min-width:0}
+.al-well{width:36px;height:36px;flex:none;border-radius:9px;background:#150e06;
+  box-shadow:inset 0 2px 6px rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center}
+.al-well .ev-icon{width:24px;height:24px}
+.al-nm{min-width:0;flex:1}
+.al-nm b{display:block;font-family:'Cinzel',serif;font-size:calc(14px*var(--tscale));
+  color:var(--gold-hi,#f0c772);line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.al-nm i{display:block;font-style:normal;font-family:var(--num);font-size:calc(9.5px*var(--tscale));
+  letter-spacing:.08em;text-transform:uppercase;color:var(--dim,#7a6748);margin-top:2px}
+.al-stock{font-family:var(--num);font-size:calc(11.5px*var(--tscale));color:var(--trim);
+  flex:none;border:1px solid var(--trim-d);border-radius:4px;padding:2px 7px}
+.al-stock.zero{color:var(--dim,#7a6748)}
+/* The line the panel never had. Violet so it reads as the potion talking, not as
+   another gold heading competing with the name above it. */
+.al-eff{font-family:'Cinzel',serif;font-size:calc(15px*var(--tscale));color:#c9a6ea;
+  line-height:1.15;overflow:hidden;text-overflow:ellipsis}
+.al-eff small{font-family:var(--num);font-size:calc(10.5px*var(--tscale));
+  color:var(--dim,#7a6748);margin-left:6px}
+.al-pips{display:flex;gap:4px}
+.al-pips button{flex:1;min-width:0;background:#0d1a24;background:var(--raised-s);
+  border:1px solid var(--trim-d);border-radius:5px;padding:4px 2px;font-family:var(--num);
+  font-size:calc(11px*var(--tscale));color:var(--muted);cursor:var(--cur-pointer);line-height:1.3;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.al-pips button:hover:not(:disabled){border-color:var(--trim);color:var(--text)}
+.al-pips button.on{border-color:var(--trim);background:#2d200e;color:var(--gold-hi,#f0c772)}
+.al-pips button:disabled{opacity:.38;cursor:var(--cur-na)}
+.al-pips button:focus-visible{outline:2px solid var(--trim);outline-offset:1px}
+/* No cap. A three-ingredient recipe makes its card taller than its neighbours,
+   which is worth it — the first attempt clipped at two rows and sliced Silk
+   Poultice's third chip in half, and an ingredient you cannot see is one you
+   cannot go and get. */
+.al-mats{display:flex;flex-wrap:wrap;gap:5px}
+.al-mat{display:inline-flex;align-items:center;gap:4px;font-family:var(--num);
+  font-size:calc(11px*var(--tscale));padding:3px 7px;border-radius:4px;
+  background:#0d0905;border:1px solid var(--trim-d);color:var(--muted);cursor:var(--cur-help)}
+.al-mat .ev-icon{width:13px;height:13px}
+.al-mat b{color:var(--text);font-weight:400}
+.al-mat.no{border-color:#5c2c20;background:#22110d;color:#e0917c}
+.al-mat.no b{color:#e0917c}
+/* The collapse, made visible. Violet again: it belongs to the potion, not to the
+   gold chrome. */
+.al-ways{font-family:var(--num);font-size:calc(10.5px*var(--tscale));color:#c19adb;
+  background:#170f1e;border:1px solid #4a3058;border-radius:5px;padding:4px 8px;
+  cursor:var(--cur-pointer);text-align:left;width:100%}
+.al-ways:hover{border-color:#6a4a80;color:#d8bcee}
+.al-ways:focus-visible{outline:2px solid var(--trim);outline-offset:1px}
+.al-recs{display:flex;flex-direction:column;gap:4px}
+.al-rec{display:flex;align-items:center;gap:8px;background:#0d0905;border:1px solid var(--trim-d);
+  border-radius:6px;padding:6px 8px;cursor:var(--cur-pointer);min-width:0;width:100%;
+  text-align:left;font-family:inherit}
+.al-rec:hover:not(.lock){border-color:var(--trim)}
+.al-rec.on{border-color:var(--trim);background:#2d200e}
+.al-rec.lock{opacity:.5;cursor:var(--cur-na)}
+.al-rec .rn{font-family:var(--num);font-size:calc(10.5px*var(--tscale));color:var(--muted);
+  flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.al-rec.on .rn{color:var(--gold-hi,#f0c772)}
+.al-rec .rq{font-family:var(--num);font-size:calc(10.5px*var(--tscale));flex:none}
+.al-rec .rq.ok{color:var(--green)} .al-rec .rq.no{color:#e0917c}
+.al-rec .rq.lock{color:var(--dim,#7a6748)}
+.al-btn i{font-style:normal;font-family:var(--num);font-size:calc(10.5px*var(--tscale));
+  opacity:.72;margin-left:7px;font-weight:400}
+.al-btn{width:100%;display:block;font-family:'Cinzel',serif;border-radius:6px;
+  cursor:var(--cur-pointer);border:1px solid var(--trim-d);
+  background:linear-gradient(180deg,#3a2a15,#241906);color:var(--text);
+  padding:7px 12px;font-size:calc(14px*var(--tscale));transition:filter .12s,border-color .12s}
+.al-btn:hover:not(:disabled){border-color:var(--trim);color:var(--gold-hi,#f0c772)}
+.al-btn.pri{background:linear-gradient(180deg,#e88a3c,#c25e18);border-color:#7a3a0e;
+  color:#1a0f06;font-weight:700;box-shadow:0 2px 0 #6a3209}
+.al-btn.pri:hover:not(:disabled){filter:brightness(1.07);color:#1a0f06}
+.al-btn:disabled{opacity:.42;cursor:var(--cur-na)}
+.al-btn:focus-visible{outline:2px solid var(--trim);outline-offset:1px}
+
+/* ── transmutes ── reagents with no effect to print, so no potion-sized card ── */
+.al-mins{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+@media(max-width:1100px){.al-mins{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.al-mini{display:flex;align-items:center;gap:9px;background:var(--raised-s);
+  border:1px solid var(--trim-d);border-radius:8px;padding:8px 10px;min-width:0;
+  cursor:var(--cur-pointer);text-align:left;font-family:inherit;width:100%}
+.al-mini:hover:not(.lock){border-color:var(--trim)}
+.al-mini.on{border-color:var(--ember);background:#231a12}
+.al-mini.lock{opacity:.45;cursor:var(--cur-na)}
+.al-mini .ev-icon{width:24px;height:24px;flex:none}
+.al-mini .mt{flex:1;min-width:0}
+.al-mini .mt b{display:block;font-family:'Cinzel',serif;font-size:calc(13px*var(--tscale));
+  color:var(--gold-hi,#f0c772);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.al-mini .mt i{display:block;font-style:normal;font-family:var(--num);
+  font-size:calc(10px*var(--tscale));color:var(--muted);margin-top:2px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.al-mini .mt i em{font-style:normal}
+.al-mini .mt i em.no{color:#e0917c}
+.al-mini .mv{font-family:var(--num);font-size:calc(11px*var(--tscale));color:var(--trim);flex:none}
+/* ════════ [CSS-43 END] ALCHEMY ══════════════════════════════════ */
+
 /* ════════ [CSS-42] FARMING (0.9.122.4) ══════════════════════════
    The panel was 1018px of mostly chrome: five per-patch seed <select>s all set to
    the same crop and each narrow enough to render "Wildberry" as "Wildberr", three
@@ -6368,7 +6507,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.122.5">v0.9.122</div>
+  <div class="mm-ver" data-build="0.9.122.6">v0.9.122</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -14402,42 +14541,93 @@ var _farmCropsOpen=false;
 // heal + atk/str/def brews. Persists across re-renders.
 var _alchTab='skilling';
 
-/* ════ ALCHEMY FAMILY GROUPING (1.0.89) ═══════════════════════════════════════
-   Tiered brews (Swiftness I/II/III, Healing Lesser/Standard/Greater/Master,
-   Honed Edge I/II, etc.) collapse into a single family card with a tier-select
-   dropdown in the card head. Standalone brews (Vitality, Void, Mastery,
-   Bountiful Brew, Philosopher's Drop, Warrior's Triple) render as normal cards.
-     ALCH_FAMILY:        act.id → family key
-     ALCH_FAMILY_LABEL:  family key → card title (drops the tier suffix)
-     ALCH_TIER_LABEL:    act.id → short label shown in the dropdown (I/II/III
-                         for numerics, Lesser/Standard/Greater/Master for heals) */
-const ALCH_FAMILY={
-  // Skilling brews
-  al1:'swift', al4:'swift', al7:'swift',
-  al2:'bounty', al5:'bounty', al8:'bounty', al11:'bounty',
-  al3:'wisdom', al6:'wisdom', al9:'wisdom',
-  // Combat brews
-  al_h1:'heal', al_h2:'heal', al_h3:'heal', al_h4:'heal',
-  al_c1:'honed', al_c4:'honed',
-  al_c2:'ironhide', al_c5:'ironhide',
-  al_c3:'berserk', al_c6:'berserk',
-};
-const ALCH_FAMILY_LABEL={
-  swift:'Brew Swiftness', bounty:'Brew Bountiful', wisdom:'Brew Wisdom',
-  heal:'Brew Healing Draught', honed:'Brew Honed Edge', ironhide:'Brew Ironhide', berserk:"Brew Berserker's",
-};
-const ALCH_TIER_LABEL={
-  al1:'I', al4:'II', al7:'III',
-  al2:'I', al5:'II', al8:'III', al11:'III+',
-  al3:'I', al6:'II', al9:'III',
-  al_h1:'Lesser', al_h2:'Standard', al_h3:'Greater', al_h4:'Master',
-  al_c1:'I', al_c4:'II',
-  al_c2:'I', al_c5:'II',
-  al_c3:'I', al_c6:'II',
-};
-// User's explicit tier pick per family (family key → act.id). Persists across
-// renders within the session; cleared on a fresh page load.
-let _alchFamilyPick={};
+/* ════ ALCHEMY: POTIONS, NOT RECIPES (0.9.122.6) ══════════════════════════════
+   The panel used to render one card per RECIPE. 34 recipes make 20 potions, and
+   ten of those potions have more than one recipe, so 24 of the 34 cards were
+   duplicates of something another card already made — Wisdom III had four of
+   them, under four different names. You shop for the potion; the recipe is how
+   you get it. So the card is the potion now and its recipes live inside it.
+
+   ALCH_LADDER groups the potions that are tiers of one another. Anything not in
+   here is a one-tier potion and renders on its own. `tiers` is potion ITEM ids in
+   order — the game genuinely has no tier II of Swiftness, Bountiful or Wisdom
+   (the old ALCH_FAMILY mapped al4/al5/al6 to one, but those recipes do not
+   exist), so those ladders are two rungs and the pips say so. */
+const ALCH_LADDER=[
+  {key:'swiftness', name:'Swiftness',       tiers:['swiftness_i','swiftness_iii'],   labels:['I','III']},
+  {key:'wisdom',    name:'Wisdom',          tiers:['wisdom_i','wisdom_iii'],         labels:['I','III']},
+  {key:'bountiful', name:'Bountiful',       tiers:['bountiful_i','bountiful_iii'],   labels:['I','III']},
+  {key:'heal',      name:'Healing Draught', tiers:['heal_draught_1','heal_draught_2','heal_draught_3','heal_draught_4'],
+                                            labels:['Lesser','Standard','Greater','Master']},
+  {key:'honed',     name:'Honed Edge',      tiers:['honed_edge_1','honed_edge_2'],   labels:['I','II']},
+  {key:'ironhide',  name:'Ironhide',        tiers:['ironhide_1','ironhide_2'],       labels:['I','II']},
+  {key:'berserk',   name:"Berserker's Brew", tiers:['berserker_1','berserker_2'],     labels:['I','II']},
+];
+/* potion item id → {ladder, tier index} */
+const ALCH_LADDER_OF={};
+ALCH_LADDER.forEach(function(L){
+  L.tiers.forEach(function(id,i){ if(id) ALCH_LADDER_OF[id]={L:L,i:i}; });
+});
+/* Which tier of each ladder the player has open. Session-only: it is a view
+   choice, and the default (best you can brew) is right nearly every time. */
+let _alchTier={};
+/* Which card has its recipe list open. One at a time, session-only. */
+let _alchWaysOpen=null;
+
+/* Every alchemy recipe that produces `potionId`, cheapest level first. This is
+   the collapse: four cards become one card with four ways to fill it. */
+function alchRecipesFor(potionId){
+  const sk=SKILLS.alchemy;
+  if(!sk) return [];
+  return sk.acts.filter(function(a){ return Object.keys(a.out||{})[0]===potionId; })
+                .sort(function(a,b){ return a.lvl-b.lvl; });
+}
+/* Distinct potions this skill makes, in the order their cheapest recipe unlocks.
+   One entry per OUTPUT, which is the whole point. */
+function alchPotions(){
+  const sk=SKILLS.alchemy, seen={}, out=[];
+  if(!sk) return out;
+  sk.acts.forEach(function(a){
+    const id=Object.keys(a.out||{})[0];
+    if(!id||seen[id]) return;
+    seen[id]=1;
+    out.push({id:id, recipes:alchRecipesFor(id)});
+  });
+  out.forEach(function(p){ p.lvl=p.recipes.length?p.recipes[0].lvl:1; });
+  out.sort(function(a,b){ return a.lvl-b.lvl; });
+  return out;
+}
+/* Is this potion a combat one? Same test the old tab split used, so the two tabs
+   keep dividing the list exactly where they always did. */
+function alchIsCombat(potionId){
+  const p=ITEMS[potionId]&&ITEMS[potionId].potion;
+  return !!(p&&(p.heal||p.atk||p.str||p.def||p.regen));
+}
+/* What the potion DOES, which the panel has never printed. Reads the same
+   `potion` block combat and skilling actually consume, so it cannot drift. */
+function alchEffectText(potionId){
+  const it=ITEMS[potionId];
+  const p=it&&it.potion;
+  if(!p) return {main:'Enchanting reagent', dur:'', kind:'reagent'};
+  const bits=[];
+  if(p.speed) bits.push('+'+Math.round(p.speed*100)+'% speed');
+  if(p.xp) bits.push('+'+Math.round(p.xp*100)+'% XP');
+  if(p.gp) bits.push('+'+Math.round(p.gp*100)+'% sell');
+  if(p.doubleChance) bits.push('+'+Math.round(p.doubleChance*100)+'% double');
+  if(p.atk) bits.push('+'+p.atk+' Attack');
+  if(p.str) bits.push('+'+p.str+' Strength');
+  if(p.def) bits.push('+'+p.def+' Defence');
+  if(p.heal) bits.push('heals '+p.heal);
+  if(p.regen) bits.push(p.regen+' HP over '+(p.regenDur||0)+'s');
+  /* "+8% speed & XP" rather than "+8% speed · +8% XP" — the Vitality Elixir is one
+     effect on two stats, and reading it as two lines made it look like two potions. */
+  let main=bits.join(' \u00b7 ');
+  if(p.speed&&p.xp&&Math.round(p.speed*100)===Math.round(p.xp*100))
+    main='+'+Math.round(p.speed*100)+'% speed & XP';
+  /* fmtTime hands back a trailing space ("2m "), which ends up in the markup. */
+  return {main:main||'\u2014', dur:p.dur?String(fmtTime(p.dur*1000)).trim():'', kind:'potion'};
+}
+
 // Attach interaction-tracking events to any farming select so we know when
 // the user is actively picking from it, regardless of activeElement state.
 function _wireFarmSelInteraction(sel){
@@ -20668,7 +20858,10 @@ function buildActBtn(act,reqLvl,lvl,m,bestXph,bestRph){
   // for them — they're parallel paths, not a tiered progression.
   const tierIdx=tierIndexForAct(SKILLS[selectedSkill],act);
   const stripeColor=tierStripeColor(tierIdx);
-  const isAlchSingleton=selectedSkill==='alchemy'&&typeof ALCH_FAMILY!=='undefined'&&!ALCH_FAMILY[act.id];
+  /* Alchemy no longer renders through this builder at all (0.9.122.6) — it has
+     its own panel. Kept false so the shared card keeps its tier pips for every
+     other skill. */
+  const isAlchSingleton=false;
   const tierBadge=isAlchSingleton?`Lv ${reqLvl}`:`T${tierIdx} · Lv ${reqLvl}`;
 
   // Primary output icon — first key of act.out, falls back to skill icon
@@ -20789,83 +20982,6 @@ function buildActBtn(act,reqLvl,lvl,m,bestXph,bestRph){
   return btn;
 }
 
-/* Resolve which tier of an alchemy family the card should display.
-   Order of precedence:
-     1. User's explicit pick (_alchFamilyPick) — if still unlocked
-     2. Currently brewing tier from this family
-     3. Highest unlocked tier in the family
-     4. Lowest tier (fallback so the card still renders when nothing is unlocked) */
-function alchFamilyDefaultTier(family,familyActs,lvl){
-  const picked=_alchFamilyPick[family];
-  if(picked){
-    const a=familyActs.find(x=>x.id===picked);
-    if(a&&lvl>=a.lvl) return picked;
-  }
-  if(state.action&&state.action.skill==='alchemy'){
-    const aid=state.action.actId;
-    if(familyActs.find(x=>x.id===aid)) return aid;
-  }
-  for(let i=familyActs.length-1;i>=0;i--){
-    if(lvl>=familyActs[i].lvl) return familyActs[i].id;
-  }
-  return familyActs[0].id;
-}
-
-/* Build a single alchemy family card (1.0.89) — Swiftness I/II/III etc. collapse
-   to one card with a tier-select dropdown. Uses buildActBtn under the hood so the
-   iconic layout is identical, then:
-   - replaces the activity name with the family label,
-   - rewrites the tier badge to show the within-family position (T1/T2/T3) and
-     the selected tier's level requirement,
-   - rewrites the stripe color to the within-family tier color,
-   - injects a <select> after the head so the player can switch tiers inline. */
-function buildAlchemyFamilyBtn(family,familyActs,lvl,m,bestXph,bestRph){
-  const selId=alchFamilyDefaultTier(family,familyActs,lvl);
-  const selAct=familyActs.find(a=>a.id===selId)||familyActs[0];
-  const reqLvl=selAct.lvl;
-  const btn=buildActBtn(selAct,reqLvl,lvl,m,bestXph,bestRph);
-
-  // Replace the activity name with the family label so the card title reads
-  // "Brew Swiftness" instead of the tier-specific "Brew Swiftness II".
-  const nameEl=btn.querySelector('.name');
-  if(nameEl) nameEl.textContent=ALCH_FAMILY_LABEL[family]||nameEl.textContent;
-
-  // Rewrite the tier badge and stripe to use within-family position
-  const tIdx=familyActs.findIndex(a=>a.id===selId)+1;
-  const tierEl=btn.querySelector('.act-tier');
-  if(tierEl) tierEl.textContent='T'+tIdx+' · Lv '+selAct.lvl;
-  const stripeEl=btn.querySelector('.act-stripe');
-  if(stripeEl) stripeEl.style.background=tierStripeColor(tIdx);
-
-  // Insert the tier <select> between the head and the meta line
-  const body=btn.querySelector('.act-body');
-  const head=btn.querySelector('.act-head');
-  if(body&&head){
-    const sel=document.createElement('select');
-    sel.className='alch-tier-select';
-    for(const a of familyActs){
-      const tierLbl=ALCH_TIER_LABEL[a.id]||a.id;
-      const opt=document.createElement('option');
-      opt.value=a.id;
-      const locked=lvl<a.lvl;
-      opt.textContent=(locked?'🔒 ':'')+tierLbl+' — Lv '+a.lvl;
-      opt.disabled=locked;
-      if(a.id===selId) opt.selected=true;
-      sel.appendChild(opt);
-    }
-    // Don't let the select's own clicks bubble up to the parent .act button
-    // (which would otherwise call setAction on the currently-selected tier).
-    sel.addEventListener('click',function(e){ e.stopPropagation(); });
-    sel.addEventListener('mousedown',function(e){ e.stopPropagation(); });
-    sel.addEventListener('change',function(e){
-      e.stopPropagation();
-      _alchFamilyPick[family]=sel.value;
-      renderActivities();
-    });
-    head.insertAdjacentElement('afterend',sel);
-  }
-  return btn;
-}
 
 /* Jeweler — category-tab layout. Gems are refined first, then crafted into
    rings / amulets / pendants. One tab is shown at a time. */
@@ -21177,9 +21293,296 @@ function renderCrafting(){
 }
 
 /* ════ [JS-22b] activities grid ══════════════════════════════════════════════════ */
+/* ════ [JS-22j] ALCHEMY PANEL (0.9.122.6) ════════════════════════════════════
+   One card per potion. The effect is the line you read first, the tier ladder is
+   pips rather than a <select>, and every recipe that makes the potion lives
+   inside its card instead of being its own card somewhere else in the grid. */
+function renderAlchemy(){
+  const box=$('activityGrid');
+  if(!box) return;
+  box.style.display='block';
+  box.innerHTML='';
+  const lvl=levelFromXp(state.xp.alchemy||0);
+  const m=mods('alchemy');
+
+  /* Onboarding, not chrome — same call as the farming panel. Worth 28px, and by
+     Alchemy 20 you have brewed a few hundred of these. */
+  if(lvl<20){
+    const hint=document.createElement('div');
+    hint.className='al-hint';
+    hint.innerHTML=iconHTML('alchemy')
+      +'<span>Brew potions, then drink them from the hotbar or set one as your auto-buff. '
+      +'A potion with more than one recipe can be made from whichever ingredients you have.</span>';
+    box.appendChild(hint);
+  }
+
+  const seg=document.createElement('div');
+  seg.className='al-seg';
+  [{id:'skilling',n:'Skilling potions',s:'speed \u00b7 xp \u00b7 yield'},
+   {id:'combat',  n:'Combat potions',  s:'healing \u00b7 attack \u00b7 defence'}].forEach(function(t){
+    const b=document.createElement('button');
+    b.className=(_alchTab===t.id?'on':'');
+    b.innerHTML='<b>'+t.n+'</b><i>'+t.s+'</i>';
+    b.addEventListener('click',function(){ _alchTab=t.id; renderAlchemy(); });
+    seg.appendChild(b);
+  });
+  box.appendChild(seg);
+
+  const wantCombat=_alchTab==='combat';
+  const all=alchPotions();
+  /* A ladder shows once, as whichever rung is open — otherwise Healing Draught
+     would still be four cards, just prettier ones. */
+  const laddersDone={};
+  const potions=[], soon=[], reagents=[];
+  all.forEach(function(p){
+    if(alchIsCombat(p.id)!==wantCombat) return;
+    const L=ALCH_LADDER_OF[p.id];
+    if(L){
+      if(laddersDone[L.L.key]) return;
+      laddersDone[L.L.key]=1;
+    }
+    if(!(ITEMS[p.id]&&ITEMS[p.id].potion)){ reagents.push(p); return; }
+    /* A ladder counts as open if ANY rung is: Healing Draught should sit with the
+       potions you can brew even when the Master tier is still years away. */
+    const ids=L?L.L.tiers.filter(Boolean):[p.id];
+    const open=ids.some(function(id){
+      const rs=alchRecipesFor(id);
+      return rs.length&&lvl>=rs[0].lvl;
+    });
+    (open?potions:soon).push(p);
+  });
+
+  const lab=function(t,rt){
+    const d=document.createElement('div');
+    d.className='al-lab';
+    d.innerHTML=t+(rt?'<span class="rt">'+rt+'</span>':'');
+    return d;
+  };
+
+  if(potions.length){
+    box.appendChild(lab(wantCombat?'Combat potions':'Skilling potions',
+      potions.length+' potion'+(potions.length===1?'':'s')+' \u00b7 '+
+      alchRecipeCountFor(potions)+' recipes'));
+    const grid=document.createElement('div');
+    grid.className='al-grid';
+    potions.forEach(function(p){ grid.appendChild(alchCard(p,lvl,m)); });
+    box.appendChild(grid);
+  }
+
+  if(soon.length){
+    box.appendChild(lab('Not yet','locked by level'));
+    const row=document.createElement('div');
+    row.className='al-mins';
+    soon.forEach(function(p){ row.appendChild(alchMini(p,lvl)); });
+    box.appendChild(row);
+  }
+
+  if(reagents.length){
+    box.appendChild(lab('Transmutation','reagents for Enchanting, not potions'));
+    const row=document.createElement('div');
+    row.className='al-mins';
+    reagents.forEach(function(p){ row.appendChild(alchMini(p,lvl)); });
+    box.appendChild(row);
+  }
+
+  if(!potions.length&&!soon.length&&!reagents.length){
+    const e=document.createElement('div');
+    e.className='al-none';
+    e.textContent='Nothing here yet \u2014 keep levelling Alchemy.';
+    box.appendChild(e);
+  }
+}
+
+/* How many recipes the cards on screen have absorbed. Says out loud what the
+   collapse bought, which is otherwise invisible. */
+function alchRecipeCountFor(list){
+  let n=0;
+  list.forEach(function(p){
+    const L=ALCH_LADDER_OF[p.id];
+    if(L) L.L.tiers.forEach(function(id){ if(id) n+=alchRecipesFor(id).length; });
+    else n+=p.recipes.length;
+  });
+  return n;
+}
+
+/* Which rung of a ladder to show: the player's pick if they made one and can
+   still brew it, else the highest their level allows. */
+function alchShownTier(L,lvl){
+  const picked=_alchTier[L.key];
+  if(picked&&L.tiers.indexOf(picked)>=0){
+    const rs=alchRecipesFor(picked);
+    if(rs.length&&lvl>=rs[0].lvl) return picked;
+  }
+  let best=null;
+  L.tiers.forEach(function(id){
+    if(!id) return;
+    const rs=alchRecipesFor(id);
+    if(rs.length&&lvl>=rs[0].lvl) best=id;
+  });
+  return best||L.tiers.find(Boolean);
+}
+/* The recipe a card will actually use: the player's pick if it is affordable,
+   else the first one they can currently make, else the cheapest to unlock. */
+function alchBestRecipe(recipes,lvl){
+  const ok=recipes.filter(function(a){ return lvl>=a.lvl; });
+  const afford=ok.find(function(a){
+    return Object.keys(a.inp||{}).every(function(id){ return (state.items[id]||0)>=a.inp[id]; });
+  });
+  return afford||ok[0]||recipes[0]||null;
+}
+
+function alchCard(p,lvl,m){
+  const L=ALCH_LADDER_OF[p.id];
+  const shownId=L?alchShownTier(L.L,lvl):p.id;
+  const recipes=alchRecipesFor(shownId);
+  const it=ITEMS[shownId]||{};
+  const eff=alchEffectText(shownId);
+  const rec=alchBestRecipe(recipes,lvl);
+  const locked=!rec||lvl<rec.lvl;
+  const stock=(state.items[shownId]||0);
+
+  const card=document.createElement('div');
+  card.className='al-card'+(locked?' lock':'');
+
+  const nameTxt=L?L.L.name:(it.name||shownId);
+  const tierTxt=L?('Lv '+(rec?rec.lvl:'?')+' \u00b7 '+L.L.labels[L.L.tiers.indexOf(shownId)])
+                 :('Lv '+(rec?rec.lvl:'?'));
+  card.innerHTML='<div class="al-h"><span class="al-well">'+iconHTML(shownId)+'</span>'
+    +'<span class="al-nm"><b>'+nameTxt+'</b><i>'+tierTxt+'</i></span>'
+    +'<span class="al-stock'+(stock?'':' zero')+'">\u00d7'+stock.toLocaleString()+'</span></div>'
+    +'<div class="al-eff">'+eff.main+(eff.dur?'<small>'+eff.dur+'</small>':'')+'</div>';
+
+  /* Tier pips. Only the rungs that exist — Swiftness, Bountiful and Wisdom
+     genuinely have no tier II, and a greyed pip for a recipe that was never
+     written reads as a bug rather than as a gap. */
+  if(L){
+    const pips=document.createElement('div');
+    pips.className='al-pips';
+    L.L.tiers.forEach(function(id,i){
+      if(!id) return;
+      const rs=alchRecipesFor(id);
+      const need=rs.length?rs[0].lvl:999;
+      const b=document.createElement('button');
+      b.className=(id===shownId?'on':'');
+      b.textContent=L.L.labels[i];
+      b.disabled=lvl<need;
+      b.title=(ITEMS[id]?ITEMS[id].name:id)+(lvl<need?' \u2014 Alchemy '+need:'');
+      if(lvl>=need) b.addEventListener('click',function(){
+        _alchTier[L.L.key]=id; renderAlchemy();
+      });
+      pips.appendChild(b);
+    });
+    card.appendChild(pips);
+  }
+
+  /* Ingredients for the recipe this card would use, with have/need on each. */
+  const mats=document.createElement('div');
+  mats.className='al-mats';
+  let short=null;
+  if(rec){
+    Object.keys(rec.inp||{}).forEach(function(id){
+      const have=state.items[id]||0, need=rec.inp[id], ok=have>=need;
+      if(!ok&&!short) short={id:id,n:need-have};
+      const c=document.createElement('span');
+      c.className='al-mat'+(ok?'':' no');
+      c.innerHTML=iconHTML(id)+(ITEMS[id]?ITEMS[id].name:id)
+        +' <b>'+have.toLocaleString()+'</b>/'+need.toLocaleString();
+      try{ attachTooltip(c,id); }catch(e){}
+      mats.appendChild(c);
+    });
+  }
+  card.appendChild(mats);
+
+  /* The collapse, made visible: every other way to make this potion. */
+  if(recipes.length>1){
+    const w=document.createElement('button');
+    w.className='al-ways';
+    const openKey=shownId;
+    w.textContent=(_alchWaysOpen===openKey?'\u25be ':'\u25b8 ')
+      +recipes.length+' ways to make this';
+    w.addEventListener('click',function(){
+      _alchWaysOpen=(_alchWaysOpen===openKey)?null:openKey; renderAlchemy();
+    });
+    card.appendChild(w);
+    if(_alchWaysOpen===openKey){
+      const list=document.createElement('div');
+      list.className='al-recs';
+      recipes.forEach(function(a){
+        const canLvl=lvl>=a.lvl;
+        const have=Object.keys(a.inp||{}).every(function(id){ return (state.items[id]||0)>=a.inp[id]; });
+        const r=document.createElement('button');
+        r.className='al-rec'+(a===rec?' on':'')+(canLvl?'':' lock');
+        r.innerHTML='<span class="rn">'+Object.keys(a.inp||{}).map(function(id){
+            return (ITEMS[id]?ITEMS[id].name:id)+' \u00d7'+a.inp[id]; }).join(' \u00b7 ')+'</span>'
+          +'<span class="rq '+(canLvl?(have?'ok':'no'):'lock')+'">'
+          +(canLvl?(have?'ready':'short'):'Lv '+a.lvl)+'</span>';
+        if(canLvl&&have) r.addEventListener('click',function(){ setAction('alchemy',a.id); });
+        list.appendChild(r);
+      });
+      card.appendChild(list);
+    }
+  }
+
+  /* Rate, then the button. xp/hr stays on the card because levelling the skill is
+     half of why anyone opens it — it just stops being the headline. */
+  const running=state.action&&state.action.skill==='alchemy'&&rec&&state.action.actId===rec.id;
+  /* The rate rides on the button rather than taking a row of its own. Levelling
+     the skill is half of why anyone opens this panel, so it stays on the card —
+     it just stops being a line above the thing you press. */
+  let rateTxt='';
+  if(rec&&!locked){
+    const ms=Math.max(rec.minMs||1000, Math.round(rec.ms*(rec.spdMult||1)*(1-Math.min(0.7,m.speed))));
+    rateTxt=' \u00b7 '+fmtK(Math.round(rec.xp*m.xpMult*3600000/ms))+' xp/hr';
+  }
+
+  const btn=document.createElement('button');
+  btn.className='al-btn'+(running?'':' pri');
+  if(locked) { btn.textContent='Alchemy '+(rec?rec.lvl:'?'); btn.disabled=true; }
+  else if(short){ btn.textContent='Need '+short.n+' '+(ITEMS[short.id]?ITEMS[short.id].name:short.id); btn.disabled=true; }
+  else if(running){ btn.textContent='Brewing\u2026 click to stop'; }
+  else { btn.innerHTML='Brew<i>'+rateTxt.replace(' \u00b7 ','')+'</i>'; }
+  if(rec&&!locked&&(!short||running)) btn.addEventListener('click',function(){ setAction('alchemy',rec.id); });
+  card.appendChild(btn);
+  return card;
+}
+
+/* Transmutes are reagents with no effect to show, so they do not need a
+   potion-sized card. One compact row instead of four. */
+/* A ladder's mini uses the ladder name ("Healing Draught"), not the rung's item
+   name ("Lesser Healing Draught") — the card above it does the same. */
+function L2Name(p){
+  const L=ALCH_LADDER_OF[p.id];
+  return L?L.L.name:(ITEMS[p.id]?ITEMS[p.id].name:p.id);
+}
+function alchMini(p,lvl){
+  const rec=alchBestRecipe(p.recipes,lvl);
+  const locked=!rec||lvl<rec.lvl;
+  const running=state.action&&state.action.skill==='alchemy'&&rec&&state.action.actId===rec.id;
+  const d=document.createElement('button');
+  d.className='al-mini'+(locked?' lock':'')+(running?' on':'');
+  const ing=rec?Object.keys(rec.inp||{}).map(function(id){
+    const ok=(state.items[id]||0)>=rec.inp[id];
+    return '<em class="'+(ok?'':'no')+'">'+(ITEMS[id]?ITEMS[id].name:id)+'</em>'; }).join(' \u00b7 '):'';
+  /* A locked POTION says what it will do and what it costs in levels; a reagent has
+     no effect to print, so it shows its ingredients instead. */
+  const eff=alchEffectText(p.id);
+  const sub=locked
+    ? (eff.kind==='potion'
+        ? eff.main+(eff.dur?' \u00b7 '+eff.dur:'')+' \u00b7 Alchemy '+(rec?rec.lvl:'?')
+        : 'Alchemy '+(rec?rec.lvl:'?'))
+    : ing;
+  d.innerHTML=iconHTML(p.id)
+    +'<span class="mt"><b>'+(L2Name(p)||'')+'</b><i>'+sub+'</i></span>'
+    +'<span class="mv">\u00d7'+(state.items[p.id]||0).toLocaleString()+'</span>';
+  if(!locked) d.addEventListener('click',function(){ setAction('alchemy',rec.id); });
+  return d;
+}
+
 function renderActivities(){
   // Farming uses the patch system — render it directly into the activity grid
   if(selectedSkill==='farming'){ renderFarming(); return; }
+  // Alchemy is potion-first and shares nothing with the activity grid (0.9.122.6)
+  if(selectedSkill==='alchemy'){ renderAlchemy(); return; }
   // Jeweler uses a category-menu layout (Refine / Rings / Amulets / Pendants)
   if(selectedSkill==='jeweler'){ renderJeweler(); return; }
   // Crafting uses a category-menu layout (Helms / Chests / Legs / Gloves / Boots / Swords / Shields)
@@ -21287,7 +21690,6 @@ function renderActivities(){
   }
 
   // Track which alchemy families have already rendered (one card per family).
-  const _alchFamiliesRendered=new Set();
   for(const act of sk.acts){
     let reqLvl=act.lvl;
     if(act.id==='fo7') reqLvl=moonpetalUnlockLevel();
@@ -21300,35 +21702,6 @@ function renderActivities(){
     // under separate tabs. Skilling = bonuses on speed/xp/gp/doubleChance;
     // Combat = heal/atk/str/def. The first matching key wins; recipes
     // without a known output potion fall under skilling by default.
-    if(selectedSkill==='alchemy'){
-      const outId=Object.keys(act.out||{})[0];
-      const outIt=outId?ITEMS[outId]:null;
-      const p=outIt&&outIt.potion;
-      const isCombat=!!(p&&(p.heal||p.atk||p.str||p.def));
-      const wantCombat=_alchTab==='combat';
-      if(isCombat!==wantCombat) continue;
-      // ── Alchemy family grouping (1.0.89) ────────────────────────────
-      // Tiered brews collapse into one card with a tier-select dropdown.
-      // Singletons (Vitality, Void, Mastery, Bountiful Brew, Philosopher's
-      // Drop, Warrior's Triple) skip this branch and render as normal cards.
-      const fam=ALCH_FAMILY[act.id];
-      if(fam){
-        if(_alchFamiliesRendered.has(fam)) continue;
-        const famActs=sk.acts.filter(function(a){
-          if(ALCH_FAMILY[a.id]!==fam) return false;
-          const oid=Object.keys(a.out||{})[0];
-          const oit=oid?ITEMS[oid]:null;
-          const pp=oit&&oit.potion;
-          const isC=!!(pp&&(pp.heal||pp.atk||pp.str||pp.def));
-          return isC===wantCombat;
-        });
-        if(famActs.length>=2){
-          _alchFamiliesRendered.add(fam);
-          grid.appendChild(buildAlchemyFamilyBtn(fam,famActs,lvl,m,bestXph,bestRph));
-          continue;
-        }
-      }
-    }
     grid.appendChild(buildActBtn(act,reqLvl,lvl,m,bestXph,bestRph));
   }
 
