@@ -2646,6 +2646,124 @@ setTimeout(() => {
     ok('all twelve skill panels still render', !bad, bad);
   }
 
+  section('Alchemy: one card per potion (0.9.122.6)');
+  {
+    /* The panel rendered one card per RECIPE. 40 recipes make 24 distinct outputs
+       and eleven of those have more than one recipe, so most of the grid was
+       duplicates of something another card already made — Wisdom III had four
+       cards under four different names. And no card said what the potion it made
+       actually did: Swiftness I is +5% speed for two minutes and neither number
+       appeared anywhere. */
+    const render = (setup) => ev(`(function(){
+      state=defaultState(); normalizeState();
+      state.xp.alchemy=XP_CUM[62];
+      _alchTab='skilling'; _alchWaysOpen=null; _alchTier={};
+      selectedSkill='alchemy';
+      ${setup || ''}
+      renderAlchemy();
+      return document.getElementById('activityGrid').innerHTML; })()`);
+
+    const base = render('');
+    ok('the alchemy panel renders its own cards', base.indexOf('class="al-card') > 0);
+    ok('and no card carries a <select> any more',
+       ev("document.querySelectorAll('#activityGrid select').length") === 0);
+
+    /* The collapse itself. Every output is reachable from exactly one card. */
+    ok('every recipe belongs to a potion',
+       ev('SKILLS.alchemy.acts.every(function(a){ return alchRecipesFor(Object.keys(a.out)[0]).indexOf(a)>=0; })') === true);
+    ok('and a potion made four ways is one card, not four',
+       ev("alchRecipesFor('wisdom_iii').length") === 4);
+    ok('the ladders cover every tiered potion',
+       ev(`(function(){
+         var seen={}; ALCH_LADDER.forEach(function(L){ L.tiers.forEach(function(i){ if(i) seen[i]=1; }); });
+         return alchPotions().map(function(p){return p.id;}).filter(function(id){
+           if(seen[id]) return false;
+           var base=id.replace(/_(i{1,3}|[0-9]+)$/,'');
+           return base!==id && alchPotions().some(function(q){ return q.id!==id && q.id.indexOf(base)===0; });
+         }).length; })()`) === 0);
+    /* Berserker's was the one I missed on the first pass — it rendered as two
+       cards while every other ladder had already collapsed. */
+    ok("Berserker's is a ladder, not two cards",
+       ev("!!ALCH_LADDER_OF['berserker_1'] && !!ALCH_LADDER_OF['berserker_2']"));
+    ok('a ladder draws once per tab',
+       ev(`(function(){ _alchTab='combat'; renderAlchemy();
+         var n=0; document.querySelectorAll('.al-card .al-nm b').forEach(function(b){
+           if(b.textContent.indexOf('Berserker')>=0) n++; });
+         _alchTab='skilling'; return n; })()`) === 1);
+
+    /* The line the panel never had. Read off the same `potion` block combat and
+       skilling consume, so it cannot drift from what the potion really does. */
+    ok('the effect line comes from the real potion data',
+       ev("alchEffectText('swiftness_i').main") === '+5% speed' &&
+       ev("alchEffectText('swiftness_i').dur") === '2m' &&
+       ev("alchEffectText('heal_draught_3').main") === 'heals 450' &&
+       ev("alchEffectText('honed_edge_2').main") === '+4 Attack',
+       ev("alchEffectText('swiftness_i').main"));
+    /* Vitality is one effect on two stats. Printing it as two made it read as two
+       potions. */
+    ok('a two-stat potion reads as one effect',
+       ev("alchEffectText('vitality').main") === '+8% speed & XP',
+       ev("alchEffectText('vitality').main"));
+    ok('a reagent says it is a reagent rather than showing a blank',
+       ev("alchEffectText('arcane_dust').main") === 'Enchanting reagent' &&
+       ev("alchEffectText('arcane_dust').kind") === 'reagent');
+    ok('and the effect is actually on the card',
+       base.indexOf('+16% speed') > 0 || base.indexOf('+5% speed') > 0);
+
+    /* Pips only for rungs that exist. Swiftness, Bountiful and Wisdom genuinely
+       have no tier II — the old ALCH_FAMILY mapped al4/al5/al6 to one and those
+       recipes were never written. A greyed pip for a recipe that does not exist
+       reads as a bug rather than as a gap. */
+    ok('no pip is drawn for a tier that has no recipe',
+       ev(`(function(){
+         var bad=0;
+         ALCH_LADDER.forEach(function(L){ L.tiers.forEach(function(id){
+           if(id && !alchRecipesFor(id).length) bad++; }); });
+         return bad; })()`) === 0);
+    ok('and the two-rung ladders are two rungs',
+       ev("ALCH_LADDER.find(function(L){return L.key==='swiftness';}).tiers.length") === 2);
+
+    /* The tab split has to divide the list exactly where it always did. */
+    ok('combat and skilling still split the same way',
+       ev("alchIsCombat('heal_draught_1')") === true &&
+       ev("alchIsCombat('swiftness_i')") === false &&
+       ev("alchIsCombat('honed_edge_1')") === true);
+
+    /* A potion you cannot brew does not need pips, chips, a rate and a button. */
+    ok('locked potions render compact, not as full cards',
+       render("state.xp.alchemy=0;").indexOf('class="al-mini') > 0);
+    ok('and a locked potion still says what it will do',
+       /Alchemy \d+/.test(render("state.xp.alchemy=0;")));
+
+    /* Recipe picking: the card uses one you can afford if there is one. */
+    ok('the card picks a recipe you can actually make',
+       ev(`(function(){
+         state=defaultState(); normalizeState(); state.xp.alchemy=XP_CUM[62];
+         state.items={}; state.items['fogweed']=9;
+         var r=alchBestRecipe(alchRecipesFor('wisdom_iii'), 62);
+         return r && r.id; })()`) === 'al_fog');
+    ok('and falls back to one you can reach when you can afford none',
+       ev(`(function(){ state.items={};
+         var r=alchBestRecipe(alchRecipesFor('wisdom_iii'), 62); return !!r; })()`) === true);
+
+    /* The recipe-per-card path and its lookup tables are gone. */
+    ok('the old family tables and builder are gone',
+       html.indexOf('const ALCH_FAMILY=') < 0 && html.indexOf('ALCH_TIER_LABEL') < 0 &&
+       html.indexOf('function buildAlchemyFamilyBtn') < 0 &&
+       html.indexOf('function alchFamilyDefaultTier') < 0 &&
+       html.indexOf('_alchFamilyPick') < 0);
+    ok('renderActivities hands alchemy off the way it does farming',
+       html.indexOf("if(selectedSkill==='alchemy'){ renderAlchemy(); return; }") > 0);
+
+    /* Namespacing — .card, .mini, .pips, .mat and .rec would all collide. */
+    ok('every alchemy class is al- namespaced',
+       html.indexOf('.al-card{') > 0 && html.indexOf('.al-mini{') > 0 &&
+       html.indexOf('.al-pips button{') > 0 &&
+       html.indexOf('\n.mini{') < 0 && html.indexOf('\n.pips{') < 0);
+
+    ev("_alchTab='skilling';");
+  }
+
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));
   process.exit(fail ? 1 : 0);
 }, 2500);
