@@ -7016,7 +7016,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.121.8">v0.9.121</div>
+  <div class="mm-ver" data-build="0.9.121.9">v0.9.121</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -21544,7 +21544,13 @@ function buildActBtn(act,reqLvl,lvl,m,bestXph,bestRph){
     </div>`;
   /* [UI-PREVIEW] Per-action XP and the exact rate left the card face when the hero
      line was capped to one row — keep them a hover away rather than losing them. */
-  btn.title=act.name+' · '+act.xp+' XP per action · '+(ms/1000).toFixed(1)+'s'
+  /* The EFFECTIVE per-action XP, not act.xp. This used to print the raw base value,
+     which happened to be right for a character with no bonuses and understated for
+     everyone else. XP_SCALE broke that: base 90 now pays 72, so the raw number
+     overstated for every player, and a new one would read "90 XP per action", get
+     72, and reasonably call it a bug. xpPerAction is the same function the xp/hr
+     beside it comes from, so the two can no longer disagree. */
+  btn.title=act.name+' · '+Math.round(xpPerAction(act,selectedSkill))+' XP per action · '+(ms/1000).toFixed(1)+'s'
     +(locked?' · unlocks at Lv '+reqLvl:' · '+fmtK(xph)+' xp/hr')
     +(dupeJewel?'\n\nYou already own one. A second ring can be worn in your other hand, but the'
        +' an enchant and any sockets go on the item itself — all your copies share them, so a spare'
