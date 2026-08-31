@@ -131,10 +131,24 @@ const GEMS_CUT = [
   S('void_shard',     'A single jagged shard of void glass, near black with violet light along its broken edges', { dark: true }),
 ];
 
-const FAMILIES = {
+/* Batch 2 lives in its own file purely for length; merging here means every tool
+   — gen, key, verify, sheet, picker, pack — sees one list and needs no change. */
+const BATCH2 = require('./subjects2').FAMILIES;
+
+const FAMILIES = Object.assign({
   logs: LOGS, ores: ORES, bars: BARS, fish: FISH,
   herbs: HERBS, fire: FIRE, gems_rough: GEMS_ROUGH, gems_cut: GEMS_CUT,
-};
+}, BATCH2);
+
+/* An id drawn twice would silently overwrite one of the two in every downstream
+   map, and nothing else would complain. */
+(function(){
+  const seen = new Set();
+  for (const fam of Object.values(FAMILIES)) for (const s of fam) {
+    if (seen.has(s.id)) throw new Error('duplicate subject id: ' + s.id);
+    seen.add(s.id);
+  }
+})();
 
 const ALL = Object.values(FAMILIES).flat();
 

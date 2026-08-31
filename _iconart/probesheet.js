@@ -6,7 +6,7 @@ const fs = require('fs'), path = require('path');
 const KIT = 'C:/Users/Jordan/Desktop/cindervale-trailer-kit';
 const puppeteer = require(KIT + '/node_modules/puppeteer-core');
 const CHROME = KIT + '/browsers/chrome/win64-151.0.7922.71/chrome-win64/chrome.exe';
-const RAW = path.join(__dirname, 'raw');
+const RAW = path.join(__dirname, process.env.CVRAW || 'raw');
 const OUT = path.join(__dirname, process.argv[2] || '_probe.png');
 
 const files = fs.readdirSync(RAW).filter(f => f.endsWith('.png'));

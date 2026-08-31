@@ -20,7 +20,7 @@ const path = require('path');
 const crypto = require('crypto');
 const { session, gen, dupeCheck } = require('./swarm');
 const { ALL, FAMILIES } = require('./subjects');
-const { STYLES, NEG, GEN, buildPrompt } = require('./recipe');
+const { STYLES, GEN, buildPrompt, negFor } = require('./recipe');
 
 const OUT = path.join(__dirname, 'raw');
 const arg = k => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : null; };
@@ -62,7 +62,7 @@ function pick() {
     process.stdout.write(String(i + 1).padStart(3) + '/' + todo.length + ' ' + name.padEnd(30));
     try {
       const buf = await gen(session_id, Object.assign({}, GEN, {
-        prompt: buildPrompt(s, st), negativeprompt: NEG, seed: -1,
+        prompt: buildPrompt(s, st), negativeprompt: negFor(s), seed: -1,
       }));
       fs.writeFileSync(path.join(OUT, name + '.png'), buf);
       const secs = (Date.now() - t0) / 1000;

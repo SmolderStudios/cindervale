@@ -99,6 +99,19 @@ const NEG = [
   'busy, cluttered, intricate fine detail, thin lines, low contrast, washed out, blurry, noisy',
 ].join(' ');
 
+/* A subject can drop terms from NEG. Batch 1 negated bowl/container/bottle-ish
+   words to stop ore turning up in a basket; batch 2 has stews that ARE a bowl and
+   potions that ARE a bottle, and leaving those negated fights the prompt. Declaring
+   it per subject beats keeping two negative lists in sync.
+     S('bone_stew', '...', { allow: ['bowl', 'container'] }) */
+function negFor(subject) {
+  const allow = subject.allow || [];
+  if (!allow.length) return NEG;
+  let out = NEG;
+  for (const t of allow) out = out.replace(new RegExp(String.raw`\b${t}\b,?\s*`, 'g'), '');
+  return out;
+}
+
 /* The backdrop is a keying aid, not art. Chosen per item by expected value. */
 const BACKDROP = {
   light: ' , isolated on a plain flat pure white background',
@@ -124,4 +137,4 @@ function buildPrompt(subject, styleKey) {
   return subject.p + clause + back;
 }
 
-module.exports = { STYLES, NEG, BACKDROP, OUTLINE, MODEL, GEN, buildPrompt };
+module.exports = { STYLES, NEG, BACKDROP, OUTLINE, MODEL, GEN, buildPrompt, negFor };
