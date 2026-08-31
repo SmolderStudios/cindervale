@@ -6507,7 +6507,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.122.7">v0.9.122</div>
+  <div class="mm-ver" data-build="0.9.122.8">v0.9.122</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -13529,7 +13529,7 @@ const TREES = {
       r=>`${r*2}% chance per chop: log burns on impact — lost from satchel, grants +50% WC XP`,
       ()=>'+2% burn chance per rank · cap 10% · log is consumed, gain +50% WC XP per burn'),
     N('wc_master_hwd','Heartwood',WC_TREE_ICONS.wc_master_hwd,1,30,
-      r=>r?'Every 10th chop yields +1 bonus log (tracked per session)':'Every 10th chop: +1 bonus log',
+      r=>r?'Every 10th chop gives +1 bonus log (tracked per session)':'Every 10th chop: +1 bonus log',
       ()=>'Every 10th chop: +1 bonus log'),
     N('wc_master2','Ancient Grove',WC_TREE_ICONS.wc_master2,1,50,
       r=>r?'15% chance for +1 log per chop':'15% chance for +1 log per chop',
@@ -13605,10 +13605,10 @@ const TREES = {
       r=>`Sell value of all fish +${r*5}%`,
       r=>`+5% fish sell value → ${r*5}%`),
     N('fi_master1','Lucky Lure','🍀',1,20,
-      r=>r?'Every 10th cast yields +1 bonus fish (tracked per session)':'Every 10th cast: +1 bonus fish',
+      r=>r?'Every 10th cast gives +1 bonus fish (tracked per session)':'Every 10th cast: +1 bonus fish',
       ()=>'Every 10th cast: +1 bonus fish'),
     N('fi_master_school','Schooling','🐟',1,30,
-      r=>r?'Every 10th cast yields +1 bonus fish (tracked per session)':'Every 10th cast: +1 bonus fish',
+      r=>r?'Every 10th cast gives +1 bonus fish (tracked per session)':'Every 10th cast: +1 bonus fish',
       ()=>'Every 10th cast: +1 bonus fish'),
     N('fi_master2','Steady Hands','🪢',1,50,
       r=>r?'30% chance for +1 fish per cast':'30% chance for +1 fish',
@@ -13638,7 +13638,7 @@ const TREES = {
     N('fo_xp','Naturalist','📖',10,0,
       r=>`+${r*3}% Foraging XP`,       r=>`+3% XP → ${r*3}%`),
     N('fo_cook','Herb Pouch','🎒',15,15,
-      r=>`${r*4}% chance each forage also yields 1 Wild Herb (used in Cooking/Alchemy)`,
+      r=>`${r*4}% chance each forage also gives 1 Wild Herb (used in Cooking/Alchemy)`,
       r=>`+4% Wild Herb bonus → ${r*4}%`),
     N('fo_sell','Market Sense','💰',9,25,
       r=>`Sell value of all foraged goods +${r*5}%`,
@@ -13763,9 +13763,9 @@ const TREES = {
     {id:'al_gm_2x_xp',name:"Philosopher's Mind",icon:AL_TREE_ICONS.al_gm_2x_xp,max:1,req:90,reqPts:90,
       desc:r=>r?'1.5× Alchemy XP from all brews (grandmaster pinnacle)':'+50% Alchemy XP permanently',next:()=>'1.5× Alchemy XP permanently'},
     {id:'al_gm_twin', name:'Twin Cauldron', icon:AL_TREE_ICONS.al_gm_twin,max:1,req:90,reqPts:95,
-      desc:r=>r?'Every brew yields a second potion (grandmaster pinnacle)':'Double potion output from every brew',next:()=>'+1 guaranteed potion per brew'},
+      desc:r=>r?'Every brew makes a second potion (grandmaster pinnacle)':'Double potion output from every brew',next:()=>'+1 guaranteed potion per brew'},
     {id:'al_gm_cape', name:'Grand Elixir',  icon:AL_TREE_ICONS.al_gm_cape,max:1,req:99,reqPts:97,reqCape:true,
-      desc:r=>r?'Mastery of the craft — every brew produces three potions instead of one':'Every brew yields ×3 potions',
+      desc:r=>r?'Mastery of the craft — every brew produces three potions instead of one':'Every brew makes 3 potions',
       next:()=>'×3 potions from every brew · requires the Alchemy Cape'},
   ]
 ,
@@ -13847,7 +13847,7 @@ const TREES = {
     {id:'fa_xp',    name:'Herbalist',         icon:FA_TREE_ICONS.fa_xp,max:10,req:0,  desc:r=>`+${r*3}% Farming XP`,                    next:r=>`+3% XP → ${r*3}%`},
     {id:'fa_seed',  name:'Seed Saver',        icon:FA_TREE_ICONS.fa_seed,max:15,req:15, desc:r=>`${r*5}% chance to recover seed on harvest`,next:r=>`+5% seed return → ${r*5}%`},
     {id:'fa_sell',  name:'Harvest Market',    icon:FA_TREE_ICONS.fa_sell,max:10, req:25, desc:r=>`Sell value of farm produce +${r*5}%`,     next:r=>`+5% sell → ${r*5}%`},
-    {id:'fa_master1',name:'Plentiful Harvest',icon:FA_TREE_ICONS.fa_master1,max:1, req:20, desc:r=>r?'Every harvest yields +1 of each crop type (guaranteed)':'Guaranteed +1 crop per type on every harvest',next:()=>'+1 guaranteed crop per type on harvest'},
+    {id:'fa_master1',name:'Plentiful Harvest',icon:FA_TREE_ICONS.fa_master1,max:1, req:20, desc:r=>r?'Every harvest gives +1 of each crop type (guaranteed)':'Guaranteed +1 crop per type on every harvest',next:()=>'+1 guaranteed crop per type on harvest'},
     {id:'fa_master2',name:'Abundance',        icon:FA_TREE_ICONS.fa_master2,max:1, req:40, desc:r=>r?'2× crop yield from all patches':'Double all farm outputs',next:()=>'2× all farm outputs'},
     {id:'fa_master3',name:'Eternal Garden',   icon:FA_TREE_ICONS.fa_master3,max:1, req:60, desc:r=>r?'Seeds always returned after harvest — farm one seed indefinitely. Also unlocks Ancient Bloom at Lv 70.':'Seeds always returned on harvest; Ancient Bloom unlocks 10 levels early',next:()=>'100% seed return — never permanently lose a planted seed'},
     {id:'fa_gm_speed',name:'Verdant Keeper',  icon:FA_TREE_ICONS.fa_gm_speed,max:9,req:75, desc:r=>`Reduces tend cooldown by ${(r*1.8).toFixed(1)}% (grandmaster)`,   next:r=>`+1.8% faster → ${(r*1.8).toFixed(1)}%`},
@@ -13856,7 +13856,7 @@ const TREES = {
     {id:'fa_gm_2x_xp',name:'Master Cultivator',icon:FA_TREE_ICONS.fa_gm_2x_xp,max:1,req:90, desc:r=>r?'2× Farming XP from all harvests (pinnacle)':'Double all Farming XP permanently',next:()=>'2× Farming XP permanently'},
     {id:'fa_gm_tend', name:'Perfect Tender',  icon:FA_TREE_ICONS.fa_gm_tend,max:1, req:90, desc:r=>r?'Each tend removes 2× the normal growth time (pinnacle)':'Tend actions are twice as effective — 50% boost instead of 25%',next:()=>'Tending is 2× as effective'},
     {id:'fa_gm_cape', name:'Bountiful Soil',  icon:FA_TREE_ICONS.fa_gm_cape,max:1, req:99,reqPts:97,reqCape:true,
-      desc:r=>r?'The earth overflows — 50% chance each harvest yields a Bumper Crop, doubling that harvest’s entire output':'50% chance per harvest: double the entire harvest',
+      desc:r=>r?'The earth overflows — 50% chance each harvest gives a Bumper Crop, doubling that harvest’s entire output':'50% chance per harvest: double the entire harvest',
       next:()=>'50% chance to double a harvest · requires the Farming Cape'},
   ],
   crafting:[
@@ -13956,7 +13956,7 @@ const PASSIVE_TIPS={
   wc_bark:      'Each chop has a chance to produce a bonus log on top of the normal drop.\nEach rank: +0.8%, up to 6.4% at max 8 ranks.\nStacks additively with Timber! and Splinter Edge (grandmaster).\nRequires 15 points spent first.',
   wc_kin:       'Each chop has a chance to also find a random forage item.\nWeighted pool: Wildberries most common, Voidmoss very rare.\nAt max (6 ranks): 30% forage chance.',
   wc_master1:   'Each chop has an X% chance to ignite the log on impact.\nThe log is consumed (not added to satchel) but grants +50% of the normal WC XP as a bonus.\n+2% chance per rank, capped at 10% at max rank (5 ranks).\nBonus XP passes through your full XP multiplier.',
-  wc_master_hwd:'Every 10th chop yields +1 bonus log (tracked per session).\nGives a rhythmic burst every 10 actions — pairs well with high-tier logs.\nCounter resets when you stop chopping or switch activities.',
+  wc_master_hwd:'Every 10th chop gives +1 bonus log (tracked per session).\nGives a rhythmic burst every 10 actions — pairs well with high-tier logs.\nCounter resets when you stop chopping or switch activities.',
   wc_master2:   '15% chance for +1 log per chop.\nStacks with Keen Edge and other bonus rolls.\nRequires 50 points spent.',
   wc_gm_speed:  'Grandmaster bonus (Lv 75 + all base nodes maxed).\n+1.2% chop speed per rank, up to +14.4% extra at max 12 ranks.',
   wc_gm_bark:   'Grandmaster bonus (Lv 75). Adds bonus log chance per chop on top of Timber! and Keen Edge.\n+0.8% per rank, up to +9.6% at max 12 ranks. Same roll pool as Keen Edge.',
@@ -13970,7 +13970,7 @@ const PASSIVE_TIPS={
   mi_xp:        'Multiplies all Mining XP earned.\nAt max (10 ranks): +30% XP from every ore mined.\n2× XP unlock moved to Titan\'s Insight in the Grandmaster tier.',
   mi_coal:      'When mining any ore, there\'s a chance to also produce Coal.\nAt max (10 ranks): 40% coal chance.\nSynergises with Magma Core (grandmaster) for double-coal procs.',
   mi_smelt:     'Passively boosts Smithing speed based on your Mining investment.\nEach rank: +1.3% Smithing speed, up to +13% at max 10 ranks. Cross-skill bonus.',
-  mi_master_vein:'Every 10th mining strike yields +2 bonus ore (tracked per session).\nCombines with Rich Vein and Motherlode for bursts of extra ore.\nCounter resets when you stop mining or switch activities.',
+  mi_master_vein:'Every 10th mining strike gives +2 bonus ore (tracked per session).\nCombines with Rich Vein and Motherlode for bursts of extra ore.\nCounter resets when you stop mining or switch activities.',
   mi_master1:   'Whenever you mine any ore (not just Coal), you automatically receive +1 Coal.\nHelps keep Smithing supplied when chain-mining higher ores.\nNote: reduced from +2 to keep Coal Seeker + Hardened Grip balanced.',
   mi_master2:   '30% chance for +1 ore per mine.\nCombines with Rich Vein — the doubled base can also proc the bonus roll.\nRequires 55 points spent — unlock after Hardened Grip.',
   mi_gm_speed:  'Grandmaster bonus (Lv 75 + all base nodes maxed).\n+1.2% mining speed per rank, up to +12% extra at max 10 ranks.',
@@ -13985,8 +13985,8 @@ const PASSIVE_TIPS={
   fi_xp:        'Multiplies all Fishing XP.\nAt max (10 ranks): +30% XP per fish caught.\n2× XP unlock moved to Master of Tides in the Grandmaster tier.',
   fi_cook:      'Each fish caught has a chance to arrive already cooked in your satchel.\nSaves time — no need to run it through Cooking separately.\nAt max (10 ranks): 40% pre-cooked chance.',
   fi_sell:      'Raises sell value of all raw and cooked fish.\nAt max (8 ranks): +40% on all fish types.',
-  fi_master1:   'Every 10th cast yields +1 bonus fish (tracked per session).\nResets when you stop fishing or change activity.\nStacks with Schooling on the same proc.',
-  fi_master_school:'Every 10th cast yields +1 bonus fish (tracked per session).\nShares the cast counter with Lucky Lure — both fire on the same 10th cast.\nCounter resets when you stop fishing or switch activities.',
+  fi_master1:   'Every 10th cast gives +1 bonus fish (tracked per session).\nResets when you stop fishing or change activity.\nStacks with Schooling on the same proc.',
+  fi_master_school:'Every 10th cast gives +1 bonus fish (tracked per session).\nShares the cast counter with Lucky Lure — both fire on the same 10th cast.\nCounter resets when you stop fishing or switch activities.',
   fi_master2:   '30% chance for +1 fish per cast.\nStacks with Haul Net bonus rolls.\nRequires 50 points spent — a deeper investment than Lucky Lure.',
   fi_gm_speed:  'Grandmaster bonus (Lv 75 + all base nodes maxed).\n+1.2% cast speed per rank, up to +12% extra at max 10 ranks.',
   fi_gm_double: 'Grandmaster bonus (Lv 75). Adds bonus fish chance on top of Haul Net.\n+2% per rank, up to +20% at max 10 ranks. Same roll pool as Haul Net.',
@@ -14000,7 +14000,7 @@ const PASSIVE_TIPS={
   fo_xp:        'Multiplies all Foraging XP. At max (10): +30% XP.',
   fo_cook:      'Each forage action has a chance to also find 1 Wild Herb.\nWild Herb is used in Cooking and Alchemy recipes.\nAt max (15 ranks): 60% bonus herb chance.',
   fo_sell:      'Raises sell value of all foraged plants. At max (9): +45%.',
-  fo_master1:   'Every forage action always yields 1 bonus Wildberry on top of the normal drop.\nGuaranteed, not a chance. Wildberries are used in Alchemy.',
+  fo_master1:   'Every forage action always gives 1 bonus Wildberry on top of the normal drop.\nGuaranteed, not a chance. Wildberries are used in Alchemy.',
   fo_master2:   'Doubles sell value on all foraged items AND adds +25% Foraging XP.\nReplaces the old unlock mechanic — useful at any level.',
   fo_master3:   '50% chance for +1 resource per forage.\nAlso multiplies ALL Foraging XP by 1.5x.\nCombines with Keen Eye double rolls.',
   fo_gm_speed:  'Grandmaster bonus (Lv 75). +1.2% forage speed per rank, up to +10.8% at max 9 ranks.',
@@ -14055,7 +14055,7 @@ const PASSIVE_TIPS={
   fm_thrift:    'Each burn has a chance to not consume the log — a free burn with full rewards.\n+1.5% per rank, up to 18% at max 12.',
   fm_yield:     'Each burn has a chance to produce +1 of every output it normally makes (Ash, Charcoal, Ember Dust, etc.).\n+1.5% per rank, up to 18% at max 12.',
   fm_xp:        'Adds to your Firemaking XP multiplier. +1.5% per rank, up to +15% at max 10.',
-  fm_charcoal:  'Cinder Sage: each burn that yields Ember Dust has a chance for +1 extra.\nEmber Dust — a stubborn residue. Nobody has found a use for it yet. +2% per rank, up to 20% at max 10.',
+  fm_charcoal:  'Cinder Sage: each burn that drops Ember Dust has a chance for +1 extra.\nEmber Dust — a stubborn residue. Nobody has found a use for it yet. +2% per rank, up to 20% at max 10.',
   fm_sell:      'Raises sell value of all firemaking outputs (Ash, Charcoal, Ember Dust). +4% per rank, up to +40% at max 10.',
   fm_master1:   'Pine and Oak logs now have a 25% chance to also produce Charcoal in addition to Ash (Ash is still guaranteed).\nNormally only Ironbark+ produces Charcoal.',
   fm_master_bellows:'Milestone: a permanent +6% burn speed on top of Quick Kindle and all other speed bonuses.\nRequires 45 points spent.',
@@ -14089,7 +14089,7 @@ const PASSIVE_TIPS={
   jw_gm_speed:  'Grandmaster bonus (Lv 75). +1.8% cut speed per rank, up to +16.2% at max 9 ranks.',
   jw_gm_xp:     'Grandmaster bonus (Lv 80). +3% Jeweler XP per rank, up to +30% at max 10 ranks.',
   jw_gm_sell:   'Grandmaster bonus (Lv 85). +6% jewelry sell value per rank.',
-  jw_gm_cape:   'Level 99 pinnacle — Flawless Cut. 15% chance on each jewelry cut for a flawless result that yields +2 bonus pieces (jewelry crafts only, not gem refining).\nRequires 97 points spent AND the Jeweler Cape (buy from the Shop at Lv 99).',
+  jw_gm_cape:   'Level 99 pinnacle — Flawless Cut. 15% chance on each jewelry cut for a flawless result that gives +2 bonus pieces (jewelry crafts only, not gem refining).\nRequires 97 points spent AND the Jeweler Cape (buy from the Shop at Lv 99).',
   ag_gm_cape:   'Level 99 pinnacle — Runner\'s High. 20% chance per lap to instantly bank a second lap\'s full coins and XP.\nRequires 97 points spent AND the Agility Cape (buy from the Shop at Lv 99).',
   // Farming
   fa_speed:     'Reduces tending time per patch. +1.3% per rank, up to +19.5% at max 15 ranks.',
@@ -14118,7 +14118,7 @@ const PASSIVE_TIPS={
   cr_gm_speed:  'Grandmaster bonus (Lv 75). +1.8% craft speed per rank.',
   cr_gm_xp:     'Grandmaster bonus (Lv 80). +3% Crafting XP per rank.',
   cr_gm_sell:   'Grandmaster bonus (Lv 85). +6% crafted-gear sell value per rank.',
-  cr_gm_cape:   'Level 99 pinnacle — Flawless Forge. 15% chance per craft for a flawless result that yields +2 bonus pieces of the crafted item.\nRequires 97 points spent AND the Crafting Cape.',
+  cr_gm_cape:   'Level 99 pinnacle — Flawless Forge. 15% chance per craft for a flawless result that gives +2 bonus pieces of the crafted item.\nRequires 97 points spent AND the Crafting Cape.',
 };
 
 
@@ -20976,7 +20976,7 @@ function buildActBtn(act,reqLvl,lvl,m,bestXph,bestRph){
   btn.title=act.name+' · '+act.xp+' XP per action · '+(ms/1000).toFixed(1)+'s'
     +(locked?' · unlocks at Lv '+reqLvl:' · '+fmtK(xph)+' xp/hr')
     +(dupeJewel?'\n\nYou already own one. A second ring can be worn in your other hand, but the'
-       +' enchant and sockets bind to the piece — every copy carries the same ones, so a spare'
+       +' an enchant and any sockets go on the item itself — all your copies share them, so a spare'
        +' cannot hold a second, different enchant.':'');
   if(!locked&&!depleted&&!toolOwned) btn.addEventListener('click',()=>setAction(selectedSkill,act.id));
   return btn;
@@ -20987,7 +20987,7 @@ function buildActBtn(act,reqLvl,lvl,m,bestXph,bestRph){
    rings / amulets / pendants. One tab is shown at a time. */
 let _jwTab='refine';
 const JW_CATS=[
-  {key:'refine', label:'Refine', icon:'💠', desc:'Cut raw gems into refined gems. Refined gems are required to craft any jewelry — and cutting also yields Gem Dust.'},
+  {key:'refine', label:'Refine', icon:'💠', desc:'Cut raw gems into refined gems. Refined gems are required to craft any jewelry — and cutting also gives you Gem Dust.'},
   {key:'ring',   label:'Rings',   icon:'💍', desc:'Cut gem + metal bar → ring. Fits either ring hand.'},
   // NOTE: pendants moved from the hand slots to the NECK in 1.0.91 — see ITEM_BODY_SLOTS.
   {key:'amulet', label:'Amulets', icon:'📿', desc:'Cut gem + metal bar → amulet. Fits the neck slot.'},
@@ -28593,7 +28593,7 @@ function _ewSetTipHtml(def,gem,kind,live){
       +(live?'Active — both worn and enchanted':'Needs all of')+'</div>'
     +rows
     +(live?'':'<div style="margin-top:7px;color:#7a6a4a;font-size:.9em;font-style:italic">'
-      +'Any enchant counts — the set only checks that the piece carries one.</div>');
+      +'Any enchant counts — the piece just has to have one.</div>');
 }
 
 /* ── set-bonus card: names the legs you have, not just on/off ────────────────── */
@@ -28682,7 +28682,7 @@ function _ewHero(itemId){
     +'<div class="sub">'+wornTxt
     +(copies>1?' · '+copies+' owned':'')+'</div>'
     +'<div class="cur">'+(ed?'✦ '+ed.name+' — '+ed.desc
-        :'<span class="no">no enchant bound</span>')+'</div>'
+        :'<span class="no">no enchant</span>')+'</div>'
     +'</div></div>';
   /* Spare copies (0.9.122, corrected 0.9.122.2). This used to read "only one can be
      worn at a time", which was true of the old equip rule and is not any more — a
@@ -28692,10 +28692,10 @@ function _ewHero(itemId){
   if(copies>1){
     var isRing=(_jwType(itemId)==='ring');
     h.appendChild(_ewEl('ew-dupe','You own <b>'+copies+'</b> of these. '
-      +(isRing?'A matched pair goes on <b class="k">both ring hands</b> and pays out twice. '
-             :'There is only one neck slot, so only one can be worn. ')
-      +'The enchant binds to the piece itself, so every copy carries the same one — a spare '
-      +'cannot hold a second, different enchant. For two different enchants at once, wear a '
+      +(isRing?'You can wear two at once, one on <b class="k">each ring hand</b>, and the bonus counts twice. '
+             :'You only have one neck slot, so you can only wear one. ')
+      +'The enchant is on the item, so all your copies have the same one — a spare cannot '
+      +'hold a different enchant. To run two different enchants at once, wear a '
       +'<b class="k">different gem</b> in your other ring slot.'));
   }
   var f=_ewCostFor(itemId);
@@ -28747,7 +28747,7 @@ function renderEnchanting(){
      out: the Set Bonuses row directly below already prints the Ring/Amulet and
      Ring/Pendant chips for every set, which states the same rule as data. */
   intro.innerHTML='<b>Enchanting</b> — one enchant per piece, active while it\'s worn. '
-    +'The enchant binds to the item, so every copy you own has it. '
+    +'Enchant one and every copy you own has it too. '
     +'Ring + <span class="k">amulet</span> = skilling set bonus. '
     +'Ring + <span class="k">pendant</span> = combat set bonus.';
   box.appendChild(intro);
@@ -28969,8 +28969,8 @@ function renderSockets(){
      gear…"), the per-piece socket counts are on every card as "Drill socket 1 of 2",
      and the Gem Exchange is a labelled block at the bottom of this same panel. */
   intro.innerHTML='<b>Socketing</b> — drill a piece, then set gems in it. '
-    +'A gem only pays out while its piece is <span class="k">worn</span>. '
-    +'Drilling binds to the item, so every copy you own is drilled.';
+    +'Gems only work while you are wearing the item. '
+    +'Drill one and every copy you own is drilled too.';
   box.appendChild(intro);
 
   /* Rail order is the panel's opinion about what you came here to do. Sorting by
@@ -29131,7 +29131,7 @@ function _soTotals(){
   wrap.appendChild(grid);
   wrap.appendChild(_soEl('so-totnote','<b>Attack · Max HP · Defence</b> come from gems in your '
     +'worn <b>combat</b> gear. <b>Sell Value · Speed · Skill XP</b> come from gems in your worn '
-    +'<b>skilling</b> gear. A gem in a piece you are not wearing pays nothing.'));
+    +'<b>skilling</b> gear. Gems in gear you are not wearing do nothing.'));
   return wrap;
 }
 
@@ -29146,8 +29146,8 @@ function _soPieceCard(id,redraw){
      hole reports the gem. */
   const anyDead=sd.gems.some(function(g){ return g&&!_soGemLive(id,g); });
   const tag=(w.combat||w.skilling)
-    ? '<span class="so-tag'+(anyDead?' idle':'')+'">'+(anyDead?'part idle':'worn')+'</span>'
-    : (filled?'<span class="so-tag idle">idle</span>':'');
+    ? '<span class="so-tag'+(anyDead?' idle':'')+'">'+(anyDead?'some off':'worn')+'</span>'
+    : (filled?'<span class="so-tag idle">not worn</span>':'');
   /* One card per item id, because one socket record covers every copy. Owning a
      stack and seeing a single card read as "the panel won't let me socket the
      other one" — the count says outright that the card IS all of them. */
@@ -29170,7 +29170,7 @@ function _soBench(itemId,redraw){
   const wornTxt = (w.combat&&w.skilling) ? '<span class="live">● worn — combat &amp; skilling</span>'
     : w.combat ? '<span class="live">● worn — combat loadout</span>'
     : w.skilling ? '<span class="live">● worn — skilling loadout</span>'
-    : '<span class="dead">not worn — its gems pay nothing</span>';
+    : '<span class="dead">not worn — these gems do nothing</span>';
   const nCopies=ownedCopies(itemId);
   /* Sockets are stored per ITEM ID, so drilling one Sapphire Ring drills every
      Sapphire Ring you own. Say it here — the panel showing a single card for a
@@ -29259,7 +29259,7 @@ function _soBench(itemId,redraw){
     const openN=sd.gems.slice(0,sd.slots).filter(function(g){ return !g; }).length;
     dw.innerHTML='<div class="dl quiet">'+(openN
       ? 'Every socket is drilled — '+(openN>1?'two are':'one is')+' still empty.'
-      : 'Fully socketed. Nothing more to do to this piece.')+'</div>';
+      : 'Every socket is drilled and filled.')+'</div>';
     drill.appendChild(dw);
   }
   card.appendChild(drill);
