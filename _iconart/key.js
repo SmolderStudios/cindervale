@@ -43,6 +43,10 @@ const WORK = `async (uri, SIZE, MARGIN) => {
   const corners = [0, W-1, (H-1)*W, N-1].map(i => lum[i]);
   const cornerMean = corners.reduce((a,b)=>a+b,0) / 4;
   const onWhite = cornerMean > 127;
+  /* A backdrop that is neither white nor black keys to nothing: isBack() below
+     matches no pixel, the fill removes zero, and the whole square survives as an
+     opaque tile. Report it so the caller can flag rather than silently pass. */
+  const backdropOk = cornerMean > 214 || cornerMean < 46;
   // tolerance around the corner value, generous enough for gradient banding
   const isBack = onWhite ? (v => v > 214) : (v => v < 46);
 
@@ -88,7 +92,7 @@ const WORK = `async (uri, SIZE, MARGIN) => {
   return {
     out: o.toDataURL('image/png'),
     cutPct: Math.round(cut / N * 100),
-    onWhite,
+    onWhite, backdropOk, cornerMean: Math.round(cornerMean),
     fill: Math.round(bw * bh / N * 100),      // how much of the frame the subject used
     aspect: +(bw / bh).toFixed(2),
   };
@@ -110,14 +114,16 @@ const WORK = `async (uri, SIZE, MARGIN) => {
     const r = await p.evaluate((fn, uri, SIZE, MARGIN) => fn(uri, SIZE, MARGIN), fn, uri, SIZE, MARGIN);
     if (r.err) { console.log(f.padEnd(32) + 'FAILED — ' + r.err); report.push({ f, err: r.err }); continue; }
     fs.writeFileSync(path.join(CUT, f), Buffer.from(r.out.split(',')[1], 'base64'));
-    report.push({ f, cutPct: r.cutPct, onWhite: r.onWhite, fill: r.fill, aspect: r.aspect });
+    report.push({ f, cutPct: r.cutPct, onWhite: r.onWhite, fill: r.fill, aspect: r.aspect,
+                  backdropOk: r.backdropOk, cornerMean: r.cornerMean });
     // a backdrop that barely came away means the key missed; flag it loudly
-    const warn = r.cutPct < 25 ? '   <-- only ' + r.cutPct + '% removed, check it' : '';
+    const warn = !r.backdropOk ? '   <-- backdrop is neither white nor black (corners ' + r.cornerMean + '), re-roll'
+               : r.cutPct < 25   ? '   <-- only ' + r.cutPct + '% removed, check it' : '';
     console.log(f.padEnd(32) + (r.onWhite ? 'white' : 'black') + '  cut ' + String(r.cutPct).padStart(2) +
       '%  subject ' + String(r.fill).padStart(2) + '%  ar ' + r.aspect + warn);
   }
   fs.writeFileSync(path.join(CUT, '_key.json'), JSON.stringify(report, null, 1));
-  const bad = report.filter(r => r.err || r.cutPct < 25);
+  const bad = report.filter(r => r.err || r.cutPct < 25 || r.backdropOk === false);
   console.log('\n' + (report.length - bad.length) + '/' + report.length + ' keyed cleanly at ' + SIZE + 'px -> ' + CUT);
   if (bad.length) console.log('needs a look: ' + bad.map(r => r.f).join(', '));
   await b.close();

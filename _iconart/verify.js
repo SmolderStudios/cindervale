@@ -144,6 +144,15 @@ const WORK = `async (uri) => {
     if (r.meanL < 46 && r.p90L < 65) why.push('nothing bright enough to read on the tile (mean ' + r.meanL + ', top decile ' + r.p90L + ')');
     if (r.contrast < 22 && r.p90L < 120) why.push('flat, no silhouette (sd ' + r.contrast + ')');
     if (r.coverage < 14) why.push('subject too small (' + r.coverage + '% of frame)');
+    /* The other end of the same measure catches a failure the flood fill cannot.
+       The emblem style sometimes draws the subject on a white "sticker" card with
+       its own dark border, and the border STOPS the fill — so the card survives and
+       the icon becomes a filled rectangle. A grey backdrop does the same thing by a
+       different route: key.js decides white-vs-black from the corners and a mid-grey
+       matches neither threshold, so nothing is removed at all. Both land here,
+       because a single keyed object covers 30-60% of its square and a surviving
+       background covers nearly all of it. */
+    if (r.coverage > 82) why.push('background survived the key (' + r.coverage + '% opaque — sticker card or an unrecognised backdrop)');
     /* Skip hue on anything wearing an ember rim: the rim is the most saturated
        thing in the picture by design, so it owns the top-saturation sample and
        every one of them measures orange however correct the body is. */
