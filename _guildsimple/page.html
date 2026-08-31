@@ -1,0 +1,114 @@
+<title>Simple Guilds</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Public+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+
+<style>
+:root{
+  --ground:#f3f0ec; --surface:#ffffff; --sunk:#e9e4dd;
+  --rule:#d5cdc2; --rule-hi:#bbb0a1;
+  --ink:#1c1712; --body:#463e35; --dim:#736a5e;
+  --brass:#7d5f18; --ember:#a84e0c; --good:#456020; --bad:#9c3418;
+  --frame-sh:0 2px 4px rgba(28,23,18,.10), 0 18px 40px rgba(28,23,18,.14);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --ground:#141009; --surface:#1d1811; --sunk:#17120c;
+  --rule:#312a1f; --rule-hi:#453c2d;
+  --ink:#ece3d2; --body:#bdb2a0; --dim:#8a8071;
+  --brass:#c79b4e; --ember:#e0762f; --good:#8fb84f; --bad:#d0674c;
+  --frame-sh:0 2px 4px rgba(0,0,0,.6), 0 18px 40px rgba(0,0,0,.5);
+}}
+:root[data-theme="dark"]{
+  --ground:#141009; --surface:#1d1811; --sunk:#17120c;
+  --rule:#312a1f; --rule-hi:#453c2d;
+  --ink:#ece3d2; --body:#bdb2a0; --dim:#8a8071;
+  --brass:#c79b4e; --ember:#e0762f; --good:#8fb84f; --bad:#d0674c;
+  --frame-sh:0 2px 4px rgba(0,0,0,.6), 0 18px 40px rgba(0,0,0,.5);
+}
+*{box-sizing:border-box}
+body{background:var(--ground);color:var(--body);margin:0;
+  font-family:'Public Sans',-apple-system,'Segoe UI',sans-serif;
+  font-size:15px;line-height:1.62;font-variant-numeric:tabular-nums lining-nums;
+  -webkit-font-smoothing:antialiased}
+.w{max-width:1240px;margin:0 auto;padding:0 30px}
+h1,h2{font-family:'Fraunces','Iowan Old Style',Georgia,serif;color:var(--ink);
+  margin:0;text-wrap:balance;font-weight:600;letter-spacing:-.01em}
+p{margin:0}
+.mast{padding:56px 0 34px;border-bottom:1px solid var(--rule)}
+.eyebrow{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--brass);margin-bottom:16px}
+.mast h1{font-size:clamp(32px,4.6vw,46px);line-height:1.05;max-width:18ch}
+.mast .lede{margin-top:18px;max-width:66ch;font-size:16.5px}
+.mast .lede b{color:var(--ink);font-weight:600}
+.cut{margin-top:20px;padding:14px 18px;background:var(--surface);border:1px solid var(--rule);
+  border-left:3px solid var(--bad);border-radius:3px;font-size:14px;max-width:74ch}
+.cut b{color:var(--ink)}
+section{padding:44px 0;border-bottom:1px solid var(--rule)}
+.shead{display:flex;align-items:baseline;gap:14px;margin-bottom:16px}
+.shead .num{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--dim);flex:0 0 auto}
+.shead h2{font-size:25px;line-height:1.2}
+.shead .sub{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--dim)}
+.why{font-size:15px;max-width:70ch}
+.adds{margin-top:12px;font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--dim)}
+.adds b{display:inline-block;color:var(--ink);background:var(--sunk);border:1px solid var(--rule);
+  border-radius:3px;padding:1px 8px;margin:0 3px;font-weight:500}
+.shot{margin-top:20px;border:1px solid var(--rule-hi);border-radius:8px;overflow:hidden;
+  box-shadow:var(--frame-sh);background:#000;line-height:0}
+.shot img{width:100%;height:auto;display:block}
+.note{margin-top:14px;font-size:14px;color:var(--dim);max-width:72ch}
+.ask{display:grid;gap:1px;background:var(--rule);border:1px solid var(--rule);
+  border-radius:3px;overflow:hidden;margin-top:22px}
+.ask>div{background:var(--surface);padding:16px 20px}
+.ask b{color:var(--ink);display:block;margin-bottom:3px;font-weight:600}
+.ask span{font-size:13.8px;color:var(--dim)}
+.foot{padding:34px 0 64px;font-size:13px;color:var(--dim)}
+.foot code{font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--body)}
+</style>
+
+<div class="w mast">
+  <div class="eyebrow">Cindervale Idle · design review · build 0.9.122.9</div>
+  <h1>Guilds, but small</h1>
+  <p class="lede">Three nouns instead of thirty. A <b>helper</b> is someone who works one
+  gathering skill for you at <b>a quarter of your own rate</b> while you do something else;
+  a <b>slot</b> is somewhere to put one; <b>gold</b> is what they cost. Everything below is
+  built out of those three, and the numbers on screen are real — a helper's output is
+  computed from your own best unlocked action in that skill, so it scales with your level,
+  your tools and your tree without a second balance table.</p>
+  <p class="cut"><b>What came out of the earlier passes:</b> seven guilds, a contract board,
+  rank-up events, guild shops, a Patron slot, your own Lodge, standing and rivalries, guild
+  expeditions, masterwork projects, reputation as a spendable currency, and item quality.
+  None of it is here.</p>
+</div>
+
+<div class="w">
+<!--SECTIONS-->
+
+<section style="border-bottom:0">
+  <div class="shead"><span class="num">04</span><h2>What I need from you</h2></div>
+  <div class="ask">
+    <div><b>A, B or C — and they stack.</b>
+      <span>B and C are both just A plus one idea. A is shippable on its own, B adds a rank
+      bar that fills itself, C adds a weekly job. Doing A first and adding one later is a
+      real option, not a fallback.</span></div>
+    <div><b>Gathering only, or crafting too?</b>
+      <span>Helpers are limited to Woodcutting, Mining, Fishing, Foraging and Farming on
+      purpose — a helper who can run Smithing needs an ingredient supply, and that is a
+      second system with its own screen. Gatherers just produce.</span></div>
+    <div><b>Does a helper work while the game is closed?</b>
+      <span>Offline already exists as its own skill. Helpers running offline would either
+      compete with it or stack on it, and that is a balance question, not a layout one.</span></div>
+    <div><b>Where does it live?</b>
+      <span>Its own top-nav button beside Shop and Mastery is the obvious home — it is not a
+      skill, so it does not belong in the left rail. The shots show it in the centre panel
+      with the rail and satchel either side, which is where it would sit.</span></div>
+  </div>
+</section>
+
+<div class="foot">
+  Not shipped code. Concepts live in <code>_guildsimple/concept-{a,b,c}.js</code>, injected
+  into the live <code>cindervale.html</code> by <code>_guildsimple/shoot.js</code> and shot at
+  1920&times;1080 with an Electron user-agent so the frame is the full build, not the demo.
+  Helper output comes from the real <code>ratesFor()</code>, so every per-hour number is a
+  number the game would actually produce.
+</div>
+</div>
