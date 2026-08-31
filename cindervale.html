@@ -153,39 +153,100 @@ button{font-family:inherit;cursor:var(--cur-pointer)}
 button:focus-visible{outline:2px solid var(--ember);outline-offset:2px}
 
 /* ════════ [CSS-02] HEADER & NAVIGATION ══════════════════════════════════════════ */
-/* header */
-header{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:10px 18px;
-  border-bottom:2px solid var(--trim-d);background:linear-gradient(#2b1d0f,#211608);}
-header h1{font-size:calc(24px*var(--tscale));letter-spacing:3px;font-variant:small-caps;font-weight:600;
-  color:var(--trim);text-shadow:0 2px 4px var(--shadow);}
+/* The header was the last flat-outline surface left in the game: nine identical
+   1px boxes in a row, in two different button styles, with Reset sitting a stray
+   click from a wiped save. Guilds landing in 0.9.123 pushed it past legible.
+   It now uses the same lit-surface vocabulary as everything else (0.9.123.3) —
+   recessed track, raised segment, gold-hi on the active one. `.trk` is that
+   recessed track and is shared with the tab rails in [CSS-39]; keep them
+   together or the four rows across the top stop matching. */
+header{position:relative;display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:8px 18px;
+  background:linear-gradient(180deg,#31220f,#1c1308);
+  box-shadow:inset 0 1px 0 rgba(214,170,96,.09), 0 4px 14px rgba(0,0,0,.5);}
+/* Hairline rule instead of the old 2px border: the ember warms toward the middle,
+   which is where the brand and the nav sit. */
+header::after{content:'';position:absolute;left:0;right:0;bottom:0;height:1px;pointer-events:none;
+  background:linear-gradient(90deg,rgba(110,85,44,.55) 0%,rgba(224,118,47,.55) 35%,
+                                   rgba(224,118,47,.55) 65%,rgba(110,85,44,.55) 100%);}
+header h1{font-size:calc(21px*var(--tscale));letter-spacing:2.4px;font-variant:small-caps;font-weight:600;
+  color:var(--trim);text-shadow:0 2px 4px var(--shadow);white-space:nowrap;}
 header h1 .flame{color:var(--ember)}
-.stat-pill{margin-left:auto;display:flex;gap:6px;align-items:center;
-  font-family:var(--num);font-size:calc(13px*var(--tscale));}
-.stat-pill span b{color:var(--trim)}
-.hdr-btn{background:var(--raised-s);color:var(--text);border:1px solid var(--trim-d);
-  border-radius:4px;padding:4px 10px;font-size:calc(14px*var(--tscale));}
-.hdr-btn:hover{border-color:var(--trim)}
-/* Header navigation — Shop / Mastery / Compendium */
-.hdr-nav{display:flex;gap:6px;align-items:center}
-.hdr-menu-btn{background:transparent;border:1px solid var(--trim-d);color:var(--muted);
-  border-radius:4px;padding:4px 7px;font-size:calc(13px*var(--tscale));font-family:inherit;cursor:var(--cur-pointer);
-  letter-spacing:0;text-transform:uppercase;}
-.hdr-menu-btn:hover{border-color:var(--trim);color:var(--trim)}
-.hdr-menu-btn.on{border-color:var(--trim);color:var(--trim);background:var(--raised-s)}
+.hdr-sep{width:1px;height:26px;flex-shrink:0;
+  background:linear-gradient(180deg,transparent,rgba(214,170,96,.26),transparent)}
+/* Recessed track. Holds the nav rail, the gold/level readout, and every tab
+   strip in [CSS-39]. */
+.trk{background:linear-gradient(180deg,#140d06,#1e1409);border-radius:9px;
+  box-shadow:inset 0 2px 3px rgba(0,0,0,.6), inset 0 -1px 0 rgba(214,170,96,.07),
+             0 1px 0 rgba(214,170,96,.05);}
+.stat-pill{margin-left:auto;display:flex;gap:8px;align-items:center;}
+/* gold / total level readout */
+.hdr-hud{display:flex;align-items:stretch}
+.hud-cell{display:flex;flex-direction:column;justify-content:center;gap:2px;padding:5px 14px;line-height:1}
+.hud-cell+.hud-cell{box-shadow:inset 1px 0 0 rgba(214,170,96,.12)}
+.hud-k{font-family:inherit;font-weight:600;font-size:calc(9px*var(--tscale));
+  letter-spacing:.15em;text-transform:uppercase;color:#7a6446}
+.hud-v{font-family:var(--num);font-size:calc(14px*var(--tscale));color:var(--gold-hi);white-space:nowrap}
+/* fmtCoins emits its own coins into #coins, and `.ev-icon.coin-ic` further down
+   the sheet sizes them at 1.5em for the old 13px header text. On the readout's
+   14px value line that lands at 24px and swamps the number, so pull it back —
+   and note this MUST out-specify `.ev-icon.coin-ic` (0,2,0), which comes later in
+   the file and would otherwise win. Same trap the comment beside that rule
+   describes, from the other direction. */
+.hud-v .ev-icon.coin-ic{width:1.15em;height:1.15em;vertical-align:-0.2em}
+.hdr-btn{position:relative;display:inline-flex;align-items:center;gap:6px;border:0;border-radius:7px;
+  padding:7px 12px;color:var(--text);white-space:nowrap;
+  font-family:inherit;font-weight:600;font-size:calc(11.5px*var(--tscale));
+  letter-spacing:.08em;text-transform:uppercase;line-height:1;
+  background:linear-gradient(180deg,#31230f,#1e1409);
+  box-shadow:inset 0 1px 0 var(--rim), inset 0 -1px 0 var(--under), 0 2px 5px rgba(0,0,0,.45);
+  transition:color .13s, box-shadow .13s, transform .1s;}
+.hdr-btn:hover{color:var(--gold-hi);
+  box-shadow:inset 0 1px 0 rgba(240,199,114,.3), inset 0 -1px 0 var(--under),
+             0 2px 6px rgba(0,0,0,.5), 0 0 0 1px rgba(199,155,78,.38);}
+.hdr-btn:active{transform:translateY(1px)}
+/* Header navigation — Shop / Mastery / Collection Log / Achievements / Guilds */
+.hdr-nav{display:flex;gap:2px;align-items:center;padding:3px}
+.hdr-menu-btn{display:inline-flex;align-items:center;gap:6px;background:transparent;border:0;
+  color:#9a8462;border-radius:6px;padding:6px 11px;white-space:nowrap;
+  font-family:inherit;font-weight:600;font-size:calc(11.5px*var(--tscale));cursor:var(--cur-pointer);
+  letter-spacing:.09em;text-transform:uppercase;line-height:1;
+  transition:color .13s, background .13s, box-shadow .13s;}
+.hdr-menu-btn:hover{color:var(--trim);background:rgba(199,155,78,.08)}
+.hdr-menu-btn.on{color:var(--gold-hi);
+  background:linear-gradient(180deg,#4c3517,#2c1d0c);
+  box-shadow:inset 0 1px 0 rgba(240,199,114,.32), inset 0 -1px 0 rgba(0,0,0,.5),
+             0 1px 3px rgba(0,0,0,.5), 0 0 0 1px rgba(199,155,78,.4);}
+.hdr-menu-btn.on .nav-ic{opacity:1}
 .hdr-menu-btn.has-new:not(.on){animation:new-pulse 1.6s ease-in-out infinite;color:var(--ember)}
 /* Base size for stroke icons used OUTSIDE the header (mm-del trash, empty-slot plus,
    modal headers, dev toggle). Without this, .nav-ic collapses to 0×0 and its button
    becomes unclickable (v1.0.98 delete-character bug). Header rules below are more
    specific and still win there. (1.0.102) */
 .nav-ic{width:1em;height:1em;display:inline-block;vertical-align:-0.12em}
-.hdr-menu-btn .nav-ic{width:13px;height:13px;vertical-align:-2px;margin-right:5px}
+.hdr-menu-btn .nav-ic{width:14px;height:14px;opacity:.85;flex-shrink:0}
+.hdr-btn .nav-ic{width:14px;height:14px;flex-shrink:0}
 /* brand lockup — Vale mark + wordmark */
-.brand{display:flex;align-items:center;gap:11px}
-.brand-mark{width:34px;height:34px;flex-shrink:0;display:block;object-fit:contain;filter:drop-shadow(0 0 8px rgba(224,118,47,.35))}
+.brand{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.brand-mark{width:32px;height:32px;flex-shrink:0;display:block;object-fit:contain;filter:drop-shadow(0 0 9px rgba(224,118,47,.4))}
 .brand h1{margin:0}
-/* compact save buttons */
-.stat-pill .hdr-btn{display:inline-flex;align-items:center;gap:5px;padding:4px 7px;font-size:calc(13px*var(--tscale));line-height:1}
-.stat-pill .hdr-btn .nav-ic{width:13px;height:13px}
+/* MEASURED, don't guess: applyRootZoom pins html{zoom} to window/UI_DESIGN_W,
+   so the header keeps ~1800 CSS px of layout width at EVERY window width down to
+   the 0.55 zoom floor (~990px). Media queries, though, resolve against the raw
+   window width — they do not see the zoom. A `max-width:1280px` rule therefore
+   fires while the header still has 1800px of room and 355px to spare, which is
+   how the first cut of this ended up hiding the Export label on a perfectly
+   roomy 1280px window.
+
+   Full labels need 1445 CSS px, so the only width that can actually crowd is
+   below the floor — and 900px down is already handled by the responsive block,
+   which stacks .stat-pill onto its own row. So there is exactly one breakpoint
+   here, and it matches that one. Above it, header{flex-wrap:wrap} is the
+   backstop for a player running a large interface scale. */
+@media(max-width:900px){
+  .hdr-menu-btn span{display:none}
+  .hdr-menu-btn{padding:6px 9px;gap:0}
+  .hdr-menu-btn .nav-ic{width:16px;height:16px}
+}
 
 /* ════════ [CSS-03] LAYOUT & PANELS ══════════════════════════════════════════════ */
 /* layout */
@@ -6845,6 +6906,76 @@ body:not(.is-demo) .demo-only{display:none !important}
   .ft-dock-in{grid-template-columns:1fr;gap:10px}
   .ft-legend{display:none}
 }
+
+/* ════════ [CSS-39] TOP CHROME — SEGMENTED RAILS (0.9.123.3) ═══════════════════════
+   Four tab rows sit across the top of the game: the header nav, the left rail's
+   Skills/Stats/Combat/Sailing + All/Gather/Craft/Support, the centre panel's
+   Activities/Skill Tree/Enchant/Socket, and the satchel strip. They were four
+   different-looking things. They are now one: a recessed `.trk` track holding
+   flush segments, with only the active one raised and gold.
+
+   Scoped to `.tabs .tab`, NOT bare `.tab`. The alchemy panel builds `.tab`
+   buttons outside any `.tabs` container and styles them entirely inline
+   (see ALCH_TABS in renderActivities) — widening this selector would put
+   uppercase over its small-caps labels.
+
+   These override the [CSS-06] and 0.9.105 `.tab` rules earlier in the file by
+   coming last, which is also why they must stay at the end of the last style
+   block. The header's matching rules live in [CSS-02] with `.trk` itself. */
+.tabs{gap:2px;padding:3px;margin-bottom:10px;flex-wrap:wrap}
+.tabs .tab{
+  flex:1;display:inline-flex;align-items:center;justify-content:center;gap:5px;
+  border:0;border-radius:6px;background:transparent;color:#9a8462;
+  padding:6px 6px;white-space:nowrap;text-align:center;
+  font-family:inherit;font-weight:600;font-size:calc(11.5px*var(--tscale));
+  letter-spacing:.07em;text-transform:uppercase;line-height:1;
+  box-shadow:none;
+  transition:color .13s, background .13s, box-shadow .13s;
+}
+.tabs .tab:hover{color:var(--trim);background:rgba(199,155,78,.08)}
+.tabs .tab.on{
+  color:var(--gold-hi);
+  background:linear-gradient(180deg,#4c3517,#2c1d0c);
+  box-shadow:inset 0 1px 0 rgba(240,199,114,.32), inset 0 -1px 0 rgba(0,0,0,.5),
+             0 1px 3px rgba(0,0,0,.5), 0 0 0 1px rgba(199,155,78,.4);
+}
+/* Combat and Sailing keep their own accent, in the same raised shape. */
+.tabs .tab.tab-combat.on{
+  color:#ffb4a0;background:linear-gradient(180deg,#5a2119,#31120d);
+  box-shadow:inset 0 1px 0 rgba(255,180,160,.26), inset 0 -1px 0 rgba(0,0,0,.5),
+             0 1px 3px rgba(0,0,0,.5), 0 0 0 1px rgba(160,64,44,.55);
+}
+.tabs .tab.tab-sail.on{
+  color:#bfe4ef;background:linear-gradient(180deg,#14414f,#0c2530);
+  box-shadow:inset 0 1px 0 rgba(191,228,239,.24), inset 0 -1px 0 rgba(0,0,0,.5),
+             0 1px 3px rgba(0,0,0,.5), 0 0 0 1px rgba(77,155,176,.5);
+}
+/* The rail's category filter is subordinate to the rail's own tabs directly
+   above it — same shape, one step quieter, so the two rows read as a hierarchy
+   rather than as twins. */
+.rail-groups{gap:2px;padding:3px;margin-bottom:8px}
+.rail-groups .rg{
+  flex:1;border:0;border-radius:6px;background:transparent;color:#8a7657;
+  padding:5px 4px;
+  font-family:inherit;font-weight:600;font-size:calc(10.5px*var(--tscale));
+  letter-spacing:.08em;text-transform:uppercase;line-height:1;
+  box-shadow:none;
+}
+.rail-groups .rg:hover{color:var(--trim);background:rgba(199,155,78,.08)}
+.rail-groups .rg.on{
+  color:var(--gold-hi);
+  background:linear-gradient(180deg,#42300f,#281a09);
+  box-shadow:inset 0 1px 0 rgba(240,199,114,.28), inset 0 -1px 0 rgba(0,0,0,.45),
+             0 0 0 1px rgba(199,155,78,.35);
+}
+/* Third row of the left rail. It is not a tab strip, but it sits directly under
+   two of them, so the outlined box it used to be was the one thing left in that
+   corner still drawn in the old language. Same track, borderless control — the
+   base `select` rule keeps the arrow glyph and the click target. */
+.rail-sort{padding:2px 4px 2px 9px;margin:0 0 8px}
+.rail-sort select{background-color:transparent;border:0;border-radius:6px;
+  padding:5px 24px 5px 6px;color:var(--trim)}
+.rail-sort select:hover{background-color:rgba(199,155,78,.08)}
 </style>
 </head>
 <body>
@@ -6885,7 +7016,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.123.2">v0.9.123</div>
+  <div class="mm-ver" data-build="0.9.123.3">v0.9.123</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -7012,7 +7143,11 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="gm-row" id="gmMail" hidden>Mail<span id="gmMailSub">Replies from the dev</span></button>
       <button class="gm-row" id="gmTutorial">Replay the tutorial<span>Run the intro tour again</span></button>
       <button class="gm-row" id="gmExport">Export save<span>Copy a backup code</span></button>
+      <button class="gm-row" id="gmImport">Import save<span>Restore from a backup code</span></button>
       <button class="gm-row gm-danger" id="gmQuit">Return to title<span>Back to the main menu</span></button>
+      <!-- Reset moved off the header bar in 0.9.123.3. It sat one stray click from a
+           wiped save, styled exactly like Export next to it. -->
+      <button class="gm-row gm-danger" id="gmReset">Reset this character<span>Wipe progress and start over</span></button>
     </div>
     <div class="mm-row" style="margin-top:14px">
       <button class="mm-mini mm-primary" id="gmClose">Close</button>
@@ -7225,20 +7360,23 @@ body:not(.is-demo) .demo-only{display:none !important}
     <h1>Cinder<span class="flame">vale</span> Idle</h1>
     <span class="hdr-demo demo-only">Demo</span>
   </div>
-  <div class="hdr-nav">
-    <button class="hdr-menu-btn" id="tabShop"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M3 7v1a3 3 0 0 0 6 0a3 3 0 0 0 6 0a3 3 0 0 0 6 0v-1l-2-4H5z"/><path d="M5 21v-10"/><path d="M19 21v-10"/><path d="M9 21v-4a2 2 0 0 1 4 0v4"/></svg>Shop</button>
-    <button class="hdr-menu-btn" id="tabMastery"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6"/><path d="M10 3v6l-4 8a1 1 0 0 0 1 1.4h10a1 1 0 0 0 1-1.4l-4-8V3"/><path d="M6.5 14h11"/></svg>Mastery</button>
-    <button class="hdr-menu-btn" id="tabComp"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 19a9 9 0 0 1 9 0a9 9 0 0 1 9 0"/><path d="M3 6a9 9 0 0 1 9 0a9 9 0 0 1 9 0"/><path d="M3 6v13"/><path d="M12 6v13"/><path d="M21 6v13"/></svg>Collection Log</button>
-    <button class="hdr-menu-btn" id="tabAch"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H5a2 2 0 0 0 0 4h2"/><path d="M17 6h2a2 2 0 0 1 0 4h-2"/></svg>Achievements</button>
-    <button class="hdr-menu-btn" id="tabGuild"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 5-3.5 8.2-8 9-4.5-.8-8-4-8-9V6z"/><path d="M12 8v5"/><path d="M9.5 10.5h5"/></svg>Guilds</button>
+  <div class="hdr-sep"></div>
+  <div class="hdr-nav trk">
+    <button class="hdr-menu-btn" id="tabShop"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M3 7v1a3 3 0 0 0 6 0a3 3 0 0 0 6 0a3 3 0 0 0 6 0v-1l-2-4H5z"/><path d="M5 21v-10"/><path d="M19 21v-10"/><path d="M9 21v-4a2 2 0 0 1 4 0v4"/></svg><span>Shop</span></button>
+    <button class="hdr-menu-btn" id="tabMastery"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6"/><path d="M10 3v6l-4 8a1 1 0 0 0 1 1.4h10a1 1 0 0 0 1-1.4l-4-8V3"/><path d="M6.5 14h11"/></svg><span>Mastery</span></button>
+    <button class="hdr-menu-btn" id="tabComp"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 19a9 9 0 0 1 9 0a9 9 0 0 1 9 0"/><path d="M3 6a9 9 0 0 1 9 0a9 9 0 0 1 9 0"/><path d="M3 6v13"/><path d="M12 6v13"/><path d="M21 6v13"/></svg><span>Collection Log</span></button>
+    <button class="hdr-menu-btn" id="tabAch"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H5a2 2 0 0 0 0 4h2"/><path d="M17 6h2a2 2 0 0 1 0 4h-2"/></svg><span>Achievements</span></button>
+    <button class="hdr-menu-btn" id="tabGuild"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 5-3.5 8.2-8 9-4.5-.8-8-4-8-9V6z"/><path d="M12 8v5"/><path d="M9.5 10.5h5"/></svg><span>Guilds</span></button>
   </div>
   <div class="stat-pill">
-    <span class="coins-wrap"><!-- Static header coin removed in v0.9.55: fmtCoins now emits its own gold
-         AND silver coin, so this rendered a second gold coin right beside it. --><b id="coins">0</b></span>
-    <span>Total Lv <b id="totalLevel">6</b></span>
-    <button class="hdr-btn" id="btnExport" title="Export save"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/><path d="M7 11l5 5l5-5"/><path d="M12 4v12"/></svg>Export</button>
-    <button class="hdr-btn" id="btnImport" title="Import save"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/><path d="M7 9l5-5l5 5"/><path d="M12 4v12"/></svg>Import</button>
-    <button class="hdr-btn" id="btnReset" title="Reset save" style="border-color:var(--red);color:var(--red)"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12"/><path d="M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/></svg>Reset</button>
+    <!-- Static header coin removed in v0.9.55: fmtCoins now emits its own gold
+         AND silver coin, so this rendered a second gold coin right beside it. -->
+    <div class="hdr-hud trk">
+      <div class="hud-cell"><span class="hud-k">Gold</span><span class="hud-v" id="coins">0</span></div>
+      <div class="hud-cell"><span class="hud-k">Total Level</span><span class="hud-v" id="totalLevel">6</span></div>
+    </div>
+    <button class="hdr-btn hdr-save" id="btnExport" title="Export save"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/><path d="M7 11l5 5l5-5"/><path d="M12 4v12"/></svg><span>Export</span></button>
+    <button class="hdr-btn hdr-save" id="btnImport" title="Import save"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/><path d="M7 9l5-5l5 5"/><path d="M12 4v12"/></svg><span>Import</span></button>
     <button class="hdr-btn" id="btnMenu"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h16"/></svg>Menu<span class="hdr-dot" id="mailDot" hidden></span></button>
   </div>
 </header>
@@ -7248,20 +7386,20 @@ body:not(.is-demo) .demo-only{display:none !important}
 <!-- ══════ [HTML-03] GAME LAYOUT — left / center / right panels ══════ -->
 <div class="layout" id="mainLayout">
   <div class="panel" id="leftPanel">
-    <div class="tabs" style="margin-bottom:8px">
+    <div class="tabs trk" style="margin-bottom:8px">
       <button class="tab on" id="tabSkills">Skills</button>
       <button class="tab" id="tabStatsLeft">Stats</button>
       <button class="tab tab-combat" id="tabCombat" title="Combat">⚔ Combat</button>
       <button class="tab tab-sail" id="tabSail" title="Sailing &amp; Treasure Hunting">Sailing</button>
     </div>
     <div id="skillListWrap">
-      <div class="rail-groups" id="railGroups">
+      <div class="rail-groups trk" id="railGroups">
         <button class="rg on" data-rg="all">All</button>
         <button class="rg" data-rg="gather">Gather</button>
         <button class="rg" data-rg="produce">Craft</button>
         <button class="rg" data-rg="support">Support</button>
       </div>
-      <div class="rail-sort">
+      <div class="rail-sort trk">
         <label for="skillSort">Sort</label>
         <select id="skillSort">
           <option value="active">Active first</option>
@@ -7280,7 +7418,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <div id="effectsBar"></div>
     </div>
     <div id="xpDetail" class="xp-detail"></div>
-    <div class="tabs" id="skillTabs">
+    <div class="tabs trk" id="skillTabs">
       <button class="tab" id="tabActs">Activities</button>
       <button class="tab" id="tabTree">Skill Tree <span id="tabPts" style="color:var(--ember);font-family:var(--num)"></span></button>
       <button class="tab" id="tabEnchant">Enchant</button>
@@ -7303,7 +7441,7 @@ body:not(.is-demo) .demo-only{display:none !important}
   <div class="panel sail-panel" id="sailPanel" style="display:none"></div>
 
   <div class="panel" id="rightPanel">
-    <div class="tabs rp-tab-strip" style="margin-bottom:8px;flex-wrap:wrap">
+    <div class="tabs rp-tab-strip trk" style="margin-bottom:8px;flex-wrap:wrap">
       <button class="tab on" id="tabSatchel">Satchel</button>
       <button class="tab" id="tabGear">Gear</button>
       <button class="tab" id="tabNotifs">Alerts</button>
@@ -36931,7 +37069,8 @@ if(window.visualViewport && window.visualViewport.addEventListener){
    ================================================================= */
 $('btnExport').addEventListener('click',()=>showSaveModal('export'));
 $('btnImport').addEventListener('click',()=>showSaveModal('import'));
-$('btnReset').addEventListener('click',async()=>{
+/* Reset lives in the Menu panel since 0.9.123.3 — see gmReset, which calls this. */
+async function resetCharacter(){
   const ok=await showConfirm('Reset Save','This will permanently wipe this character\'s progress.','Cannot be undone.');
   if(!ok) return;
   const keepName=state.charName||'Adventurer';
@@ -36942,7 +37081,7 @@ $('btnReset').addEventListener('click',async()=>{
   selectedSkill='woodcutting'; viewTab='acts'; rightTab='satchel';
   renderAll(); saveGame();
   toast('Save reset. Starting fresh!');
-});
+}
 /* Left-rail category filter (All / Gather / Craft / Support) */
 /* The rail rebuilds #skillList only, so this select survives every render and
    is bound once. */
@@ -38955,6 +39094,8 @@ $('gmSettings').addEventListener('click',()=>{ gmClose(); mmOpenSettings(); });
 $('gmCredits').addEventListener('click',()=>{ gmClose(); $('mmCreditsModal').classList.remove('mm-hidden'); });
 $('gmTutorial').addEventListener('click',()=>{ gmClose(); replayTutorial(); });
 $('gmExport').addEventListener('click',()=>{ gmClose(); showSaveModal('export'); });
+$('gmImport').addEventListener('click',()=>{ gmClose(); showSaveModal('import'); });
+$('gmReset').addEventListener('click',()=>{ gmClose(); resetCharacter(); });
 $('gmQuit').addEventListener('click',async()=>{
   gmClose();
   const ok=await showConfirm('Return to Menu','Head back to the title screen?','Your progress is saved automatically.');
