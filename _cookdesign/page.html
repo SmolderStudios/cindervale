@@ -1,0 +1,423 @@
+<title>Cindervale Cooking Rework</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Public+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap">
+
+<style>
+:root{
+  /* Fourth document in the series. Charts were blue, soil was green, glassware
+     was violet; a hearth is warm smoke and ash. */
+  --ground:#f3f0ec; --surface:#ffffff; --sunk:#e9e4dd;
+  --rule:#d5cdc2; --rule-hi:#bbb0a1;
+  --ink:#1c1712; --body:#463e35; --dim:#736a5e;
+  --brass:#7d5f18; --ember:#a84e0c;
+  --bad:#9c3418; --good:#456020; --warn:#7f6410;
+  --frame-sh:0 2px 4px rgba(28,23,18,.10), 0 22px 48px rgba(28,23,18,.16);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#141009; --surface:#1d1811; --sunk:#17120c;
+    --rule:#312a1f; --rule-hi:#453c2d;
+    --ink:#ece3d2; --body:#bdb2a0; --dim:#8a8071;
+    --brass:#c79b4e; --ember:#e0762f;
+    --bad:#d0674c; --good:#8fb84f; --warn:#e0c060;
+    --frame-sh:0 2px 4px rgba(0,0,0,.6), 0 22px 48px rgba(0,0,0,.5);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#141009; --surface:#1d1811; --sunk:#17120c;
+  --rule:#312a1f; --rule-hi:#453c2d;
+  --ink:#ece3d2; --body:#bdb2a0; --dim:#8a8071;
+  --brass:#c79b4e; --ember:#e0762f;
+  --bad:#d0674c; --good:#8fb84f; --warn:#e0c060;
+  --frame-sh:0 2px 4px rgba(0,0,0,.6), 0 22px 48px rgba(0,0,0,.5);
+}
+
+*{box-sizing:border-box}
+body{background:var(--ground); color:var(--body); margin:0;
+  font-family:'Public Sans',-apple-system,'Segoe UI',sans-serif;
+  font-size:15px; line-height:1.62; font-variant-numeric:tabular-nums lining-nums;
+  -webkit-font-smoothing:antialiased}
+.w{max-width:1180px; margin:0 auto; padding:0 32px}
+.wide{max-width:1290px; margin:0 auto; padding:0 32px}
+h1,h2,h3,h4{font-family:'Fraunces','Iowan Old Style',Georgia,serif; color:var(--ink);
+  margin:0; text-wrap:balance; font-weight:600; letter-spacing:-.01em}
+p{margin:0}
+
+.mast{padding:64px 0 40px; border-bottom:1px solid var(--rule)}
+.eyebrow{font-family:'JetBrains Mono',ui-monospace,monospace; font-size:11px;
+  letter-spacing:.16em; text-transform:uppercase; color:var(--brass); margin-bottom:18px}
+.mast h1{font-size:clamp(34px,5vw,52px); line-height:1.04; max-width:20ch}
+.mast .lede{margin-top:20px; max-width:64ch; font-size:17px}
+.mast .lede b{color:var(--ink); font-weight:600}
+
+section{padding:56px 0; border-bottom:1px solid var(--rule)}
+.shead{display:flex; align-items:baseline; gap:16px; margin-bottom:28px}
+.shead .num{font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--dim);
+  letter-spacing:.1em; padding-top:6px; flex:0 0 auto}
+.shead h2{font-size:27px; line-height:1.2}
+.shead .sub{margin-left:auto; font-size:13px; color:var(--dim); text-align:right; max-width:38ch}
+
+.ctx{margin-top:6px}
+.ctxbar{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px}
+.ctxbar button{flex:1 1 auto; min-width:150px; text-align:left; cursor:pointer;
+  background:var(--surface); border:1px solid var(--rule); border-radius:5px;
+  padding:10px 13px; color:var(--body); font-family:inherit; font-size:13.5px;
+  transition:border-color .12s, background .12s}
+.ctxbar button:hover{border-color:var(--rule-hi)}
+.ctxbar button.on{border-color:var(--ember); background:var(--sunk); color:var(--ink)}
+.ctxbar button b{display:block; font-weight:600; color:var(--ink); font-size:14px}
+.ctxbar button.on b{color:var(--ember)}
+.ctxbar button i{display:block; font-style:normal; font-family:'JetBrains Mono',monospace;
+  font-size:11px; color:var(--dim); margin-top:3px}
+.ctxshot{border:1px solid var(--rule-hi); border-radius:8px; overflow:hidden;
+  box-shadow:var(--frame-sh); background:#000; line-height:0}
+.ctxshot img{width:100%; height:auto; display:block}
+
+.metrics{display:grid; grid-template-columns:repeat(auto-fit,minmax(196px,1fr)); gap:1px;
+  background:var(--rule); border:1px solid var(--rule); border-radius:3px; overflow:hidden}
+.metric{background:var(--surface); padding:20px 22px}
+.metric .k{font-family:'JetBrains Mono',monospace; font-size:10.5px; letter-spacing:.11em;
+  text-transform:uppercase; color:var(--dim); margin-bottom:10px}
+.metric .v{font-family:'Fraunces',Georgia,serif; font-size:33px; line-height:1; color:var(--ink); font-weight:600}
+.metric .v.alarm{color:var(--bad)}
+.metric .n{font-size:12.5px; color:var(--dim); margin-top:8px; line-height:1.45}
+
+.faults{margin-top:26px; display:grid; gap:1px; background:var(--rule);
+  border:1px solid var(--rule); border-radius:3px; overflow:hidden}
+.fault{background:var(--surface); padding:15px 20px; display:grid;
+  grid-template-columns:26px 1fr; gap:14px; align-items:start}
+.fault .ix{font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--dim); padding-top:3px}
+.fault b{color:var(--ink); font-weight:600}
+.fault span{display:block; font-size:13.5px; color:var(--dim); margin-top:2px}
+.fault code{font-family:'JetBrains Mono',monospace; font-size:12.5px; color:var(--ember)}
+
+.tbl{margin-top:26px; border:1px solid var(--rule); border-radius:3px; overflow:hidden;
+  background:var(--surface)}
+.tbl .scroll{overflow-x:auto}
+.tbl table{width:100%; border-collapse:collapse; font-size:13.5px; min-width:620px}
+.tbl th{font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.12em;
+  text-transform:uppercase; color:var(--dim); text-align:left; padding:11px 18px;
+  border-bottom:1px solid var(--rule); font-weight:500; background:var(--sunk)}
+.tbl td{padding:9px 18px; border-bottom:1px solid var(--rule)}
+.tbl tr:last-child td{border-bottom:0}
+.tbl .m{font-family:'JetBrains Mono',monospace; font-size:12.5px; color:var(--ink)}
+.tbl .d{color:var(--dim); font-size:13px}
+.tbl .up{color:var(--good); font-family:'JetBrains Mono',monospace; font-size:12.5px}
+.tbl .dn{color:var(--bad); font-family:'JetBrains Mono',monospace; font-size:12.5px}
+.tbl tr.flag td{background:color-mix(in srgb, var(--bad) 7%, var(--surface))}
+
+.opt{margin-bottom:46px; padding-bottom:44px; border-bottom:1px solid var(--rule)}
+.opt:last-child{border-bottom:0; margin-bottom:0; padding-bottom:0}
+.opt > header{display:grid; grid-template-columns:minmax(0,1fr) minmax(300px,.6fr);
+  gap:36px; align-items:start}
+.opt .tag{font-family:'JetBrains Mono',monospace; font-size:10.5px; letter-spacing:.13em;
+  text-transform:uppercase; color:var(--brass); display:block; margin-bottom:7px}
+.opt h3{font-size:24px; margin-bottom:8px}
+.opt .why{font-size:14.5px; color:var(--body); max-width:58ch}
+.opt .why + .why{margin-top:11px}
+.verdict{display:flex; flex-direction:column; gap:6px; padding-top:4px}
+.vrow{display:grid; grid-template-columns:14px 1fr; gap:9px; font-size:13.2px; align-items:start}
+.vrow .m{font-family:'JetBrains Mono',monospace; font-size:12px; line-height:1.55}
+.vrow.up .m{color:var(--good)} .vrow.dn .m{color:var(--bad)}
+
+.figs{display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:18px; margin-top:26px}
+figure{margin:0}
+figure img{width:100%; height:auto; display:block; border-radius:7px;
+  border:1px solid var(--rule-hi); box-shadow:var(--frame-sh); background:#000}
+figure.plate img{border-radius:7px}
+figcaption{margin-top:9px; font-size:13px; color:var(--dim)}
+figcaption b{color:var(--ink); font-weight:600}
+
+.ask{display:grid; gap:1px; background:var(--rule); border:1px solid var(--rule);
+  border-radius:3px; overflow:hidden; margin-top:24px}
+.ask > div{background:var(--surface); padding:17px 22px}
+.ask b{color:var(--ink); display:block; margin-bottom:3px; font-weight:600}
+.ask span{font-size:13.8px; color:var(--dim)}
+.foot{padding:40px 0 70px; font-size:13px; color:var(--dim)}
+.foot code{font-family:'JetBrains Mono',monospace; font-size:12.5px; color:var(--body)}
+</style>
+
+<div class="w mast">
+  <div class="eyebrow">Cindervale Idle · design review · build 0.9.122.6</div>
+  <h1>Cooking never says what the food heals</h1>
+  <p class="lede">Every one of the <b>19</b> cooking recipes makes a healing item, and
+  the panel prints <b>zero</b> heal numbers. Cooked Salmon restores 270 HP; the card shows
+  xp/hr, gp/hr, a tier badge and "Mastery 0". Three dishes heal over time instead of
+  instantly and three carry a stat buff — none of that is on screen either. It is the
+  same defect alchemy had before its rework, on the skill whose entire output is
+  <i>the thing it will not tell you about</i>.</p>
+  <p class="lede">The fire has the mirror problem. It reports <b>4m 2s</b> of fuel while
+  <b>5h 46m</b> more sits in the satchel, and the only way to see that is to open a modal.</p>
+</div>
+
+<section class="wide">
+  <div class="shead">
+    <span class="num">00</span>
+    <h2>In the game, at real size</h2>
+    <span class="sub">Each direction injected into the live panel at 1920&times;1080 with
+    the real rail and satchel either side. Panel heights are measured, not guessed.</span>
+  </div>
+  <div class="ctx">
+    <div class="ctxbar" id="ctxbar"><!--CTXBTNS--></div>
+    <!--CTXPANES-->
+  </div>
+</section>
+
+<section class="w">
+  <div class="shead">
+    <span class="num">01</span>
+    <h2>What&rsquo;s measured</h2>
+    <span class="sub">Counted from the recipe table and <code>ITEMS[].potion</code>,
+    not eyeballed off the screenshot.</span>
+  </div>
+
+  <div class="metrics">
+    <div class="metric"><div class="k">Heal numbers on screen</div>
+      <div class="v alarm">0 / 19</div>
+      <div class="n">Every recipe makes a healing item. None of the cards say so.</div></div>
+    <div class="metric"><div class="k">Fuel visible vs held</div>
+      <div class="v alarm">84&times;</div>
+      <div class="n">4m 2s in the fire, 5h 46m in the satchel &mdash; behind a modal.</div></div>
+    <div class="metric"><div class="k">Panel height</div>
+      <div class="v">1182px</div>
+      <div class="n">Overflows a 1080p window; the last row is below the fold.</div></div>
+    <div class="metric"><div class="k">Supply chains interleaved</div>
+      <div class="v">8 + 10 + 1</div>
+      <div class="n">Fishing, combat drops and sea rations in one flat ladder.</div></div>
+  </div>
+
+  <div class="faults">
+    <div class="fault"><span class="ix">01</span><div><b>No card states the heal.</b>
+      <span>16 dishes heal instantly, 3 heal over time (Marrow Broth 40 over 6s, Bone Marrow
+      Stew 150 over 8s, Troll Stew 430 over 8s), and 3 carry a stat buff (Ratmeat Skewer
+      +1&nbsp;Str, Ogre Roast +2&nbsp;Str, Infernal Roast +3&nbsp;Str&nbsp;+3&nbsp;Def for 90s).
+      All of it lives in the satchel tooltip, none of it on the panel where you choose.</span></div></div>
+    <div class="fault"><span class="ix">02</span><div><b>The heal ladder is not monotonic, and nothing shows it.</b>
+      <span>Troll Stew at Lv&nbsp;60 heals <b>430</b>; Cooked Swordfish at Lv&nbsp;62 heals
+      <b>380</b>. Drake Roast at Lv&nbsp;72 heals <b>560</b>; Cooked Shark at Lv&nbsp;75 heals
+      <b>520</b>. Twice, the higher recipe makes the weaker meal — and on a ladder sorted by
+      array order you will never see it.</span></div></div>
+    <div class="fault"><span class="ix">03</span><div><b>The satchel's fuel is invisible until you open a modal.</b>
+      <span>640 pine + 410 oak + 180 ironbark + 92 ember + 40 frost + 11 shadow + 3 ancient
+      = <b>20,751 burn-seconds</b>. The bar says 4m 2s.</span></div></div>
+    <div class="fault"><span class="ix">04</span><div><b><code>fmtDuration()</code> stops at minutes.</b>
+      <span>Load the satchel into the fire and the shipped bar reads <code>345m 51s</code>.
+      Live defect, one function, affects every caller with a duration over an hour.</span></div></div>
+    <div class="fault"><span class="ix">05</span><div><b>"3 runs" does not say which thing runs out.</b>
+      <span>Ingredients and fuel are two completely different errands — go fish, or go chop —
+      and the card gives one number for both. The <code>(fuel)</code> hint only appears
+      <i>while the recipe is already running</i>.</span></div></div>
+    <div class="fault"><span class="ix">06</span><div><b>Two rows per card say nothing.</b>
+      <span>"Mastery 0" is printed 19 times, and the output-per-hour line is ellipsised on
+      4 of 19 cards &mdash; "Cooked&nbsp;Minnow&hellip;/hr", "Bone&nbsp;Marrow&nbsp;Stew&hellip;/hr".
+      That pair is what makes the card five rows tall.</span></div></div>
+    <div class="fault"><span class="ix">07</span><div><b>Cook void eel renders out of order.</b>
+      <span>Its data says Lv&nbsp;90 but <code>highFishUnlockLevel()</code> returns 62, so the card
+      shows "Lv 62" while sitting last in the array &mdash; after Cook shark (Lv&nbsp;75), with the
+      T19-of-19 tier pip. Data bug, not a layout one.</span></div></div>
+  </div>
+
+  <div class="tbl"><div class="scroll"><table>
+    <thead><tr><th>Lv</th><th>Dish</th><th>Heals</th><th>Kind</th><th>Buff</th><th>Fed by</th></tr></thead>
+    <tbody>
+    <tr><td class="m">1</td><td>Cooked Minnow</td><td class="m">25</td><td class="d">instant</td><td class="d">&mdash;</td><td class="d">Fishing</td></tr>
+    <tr><td class="m">4</td><td>Marrow Broth</td><td class="m">40</td><td class="d">over 6s</td><td class="d">&mdash;</td><td class="d">Combat</td></tr>
+    <tr><td class="m">8</td><td>Ratmeat Skewer</td><td class="m">45</td><td class="d">instant</td><td class="up">+1 Str · 30s</td><td class="d">Combat</td></tr>
+    <tr><td class="m">14</td><td>Goblin Jerky</td><td class="m">70</td><td class="d">instant</td><td class="d">&mdash;</td><td class="d">Combat</td></tr>
+    <tr><td class="m">15</td><td>Cooked Sardine</td><td class="m">60</td><td class="d">instant</td><td class="d">&mdash;</td><td class="d">Fishing</td></tr>
+    <tr><td class="m">20</td><td>Ship's Biscuit</td><td class="m">90</td><td class="d">instant</td><td class="d">&mdash;</td><td class="d">Sailing</td></tr>
+    <tr><td class="m">25</td><td>Cooked Trout</td><td class="m">110</td><td class="d">instant</td><td class="d">&mdash;</td><td class="d">Fishing</td></tr>
+    <tr><td class="m">28</td><td>Bone Marrow Stew</td><td class="m">150</td><td class="d">over 8s</td><td class="d">&mdash;</td><td class="d">Combat</td></tr>
+    <tr><td class="m">38</td><td>Cooked Tuna</td><td class="m">180</td><td class="d">instant</td><td class="d">&mdash;</td><td class="d">Fishing</td></tr>
+    <tr><td class="m">38</td><td>Wolf Jerky</td><td class="m">200</td><td class="d">instant</td><td class="d">&mdash;</td><td class="d">Combat</td></tr>
+    <tr><td class="m">40</td><td>Salt Cod</td><td class="m">200</td><td class="d">instant</td><td class="d">&mdash;</td><td class="d">Sailing + Fishing</td></tr>
+    <tr><td class="m">48</td><td>Ogre Roast</td><td class="m">240</td><td class="d">instant</td><td class="up">+2 Str · 60s</td><td class="d">Combat</td></tr>
+    <tr><td class="m">50</td><td>Cooked Salmon</td><td class="m">270</td><td class="d">instant</td><td class="d">&mdash;</td><td class="d">Fishing</td></tr>
+    <tr class="flag"><td class="m">60</td><td>Troll Stew</td><td class="m">430</td><td class="d">over 8s</td><td class="d">&mdash;</td><td class="d">Combat</td></tr>
+    <tr class="flag"><td class="m">62</td><td>Cooked Swordfish</td><td class="dn">380</td><td class="d">instant</td><td class="d">&mdash;</td><td class="d">Fishing</td></tr>
+    <tr class="flag"><td class="m">72</td><td>Drake Roast</td><td class="m">560</td><td class="d">instant</td><td class="d">&mdash;</td><td class="d">Combat</td></tr>
+    <tr class="flag"><td class="m">75</td><td>Cooked Shark</td><td class="dn">520</td><td class="d">instant</td><td class="d">&mdash;</td><td class="d">Fishing</td></tr>
+    <tr><td class="m">86</td><td>Infernal Roast</td><td class="m">620</td><td class="d">instant</td><td class="up">+3 Str +3 Def · 90s</td><td class="d">Combat</td></tr>
+    <tr><td class="m">62<span class="d">*</span></td><td>Cooked Void Eel</td><td class="m">700</td><td class="d">instant</td><td class="d">&mdash;</td><td class="d">Fishing</td></tr>
+    </tbody>
+  </table></div></div>
+  <p style="margin-top:12px;font-size:13px;color:var(--dim)">Shaded rows are the two heal
+  inversions. <span class="m" style="font-family:'JetBrains Mono',monospace">*</span> Void Eel's
+  data says Lv 90; <code style="font-family:'JetBrains Mono',monospace;color:var(--ember)">highFishUnlockLevel()</code>
+  overrides it to 62, but its array position still puts it last.</p>
+</section>
+
+<section class="w">
+  <div class="shead">
+    <span class="num">02</span>
+    <h2>Four directions</h2>
+    <span class="sub">All four draw the same rebuilt card, so the comparison is about the
+    frame around it rather than about which mockup got the nicer card.</span>
+  </div>
+
+  <div class="opt">
+    <header>
+      <div>
+        <span class="tag">A · smallest change</span>
+        <h3>Heal first</h3>
+        <p class="why">Nothing moves. The fire bar stays where it is, the grid stays a grid,
+        and only the card is rebuilt: the heal takes the hero slot that xp/hr held, an
+        <i>instant</i> / <i>over 8s</i> pill sits under the name, and the buff gets a chip of
+        its own. The two rows that said nothing come off, which is what drops the card from
+        five rows to three.</p>
+        <p class="why">Four cards per row becomes three, because the shipped 262px column is
+        narrower than "Bake Ship's Biscuit" and every long name was wrapping. The fire bar
+        gains one number: <i>5h 46m in bag</i>.</p>
+      </div>
+      <div class="verdict">
+        <div class="vrow up"><span class="m">+</span><span class="m">1182px &rarr; 1055px, fits 1080p</span></div>
+        <div class="vrow up"><span class="m">+</span><span class="m">cheapest to ship — one render fn</span></div>
+        <div class="vrow up"><span class="m">+</span><span class="m">no new concepts to learn</span></div>
+        <div class="vrow dn"><span class="m">&minus;</span><span class="m">fuel still lives in a modal</span></div>
+        <div class="vrow dn"><span class="m">&minus;</span><span class="m">19 cards still one flat run</span></div>
+      </div>
+    </header>
+  </div>
+
+  <div class="opt">
+    <header>
+      <div>
+        <span class="tag">B · the fire is the skill</span>
+        <h3>The hearth</h3>
+        <p class="why">The fire stops being a notification bar and becomes the object the
+        panel is built around: a wide plate across the top with a drawn hearth on it, the
+        burn clock at 28px, and <b>the log shelf inline</b> — every fuel you hold as a chip
+        with a one-click load. The modal goes away entirely, and so does the trap: <i>4m 2s
+        in the fire</i> and <i>satchel holds 5h 46m more</i> sit side by side.</p>
+        <p class="why">The plate takes one of three drawn states — burning, banked, cold —
+        so the panel's mood tracks the fire instead of only its border colour. Below two
+        minutes it drops to the ember plate before it goes out.</p>
+      </div>
+      <div class="verdict">
+        <div class="vrow up"><span class="m">+</span><span class="m">kills the fuel modal</span></div>
+        <div class="vrow up"><span class="m">+</span><span class="m">the fire finally looks like the gate it is</span></div>
+        <div class="vrow up"><span class="m">+</span><span class="m">1182px &rarr; 1165px even with the plate</span></div>
+        <div class="vrow dn"><span class="m">&minus;</span><span class="m">+41KB of art in the file</span></div>
+        <div class="vrow dn"><span class="m">&minus;</span><span class="m">most new code of the four</span></div>
+      </div>
+    </header>
+  </div>
+
+  <div class="opt">
+    <header>
+      <div>
+        <span class="tag">C · one ladder becomes three</span>
+        <h3>Two larders</h3>
+        <p class="why">Eight recipes are fed by Fishing, ten by combat drops, one by the sea,
+        and they are shuffled into a single run of nineteen. Sitting on 340 sardines and no
+        ogre tusks, you read a wall of half-dead cards and cannot tell which errand fixes
+        which half. Grouped, each heading answers it: <i>From the water &mdash; refilled by
+        Fishing &mdash; 7 of 8 cookable now</i>.</p>
+        <p class="why">Inside each group the sort is by heal, not by array order. That is
+        what makes Troll Stew out-healing Cooked Swordfish visible at a glance instead of
+        being something you would have to go and read item descriptions to learn.</p>
+      </div>
+      <div class="verdict">
+        <div class="vrow up"><span class="m">+</span><span class="m">names the errand, not just the shortage</span></div>
+        <div class="vrow up"><span class="m">+</span><span class="m">heal order exposes the two inversions</span></div>
+        <div class="vrow up"><span class="m">+</span><span class="m">1182px &rarr; 1167px</span></div>
+        <div class="vrow dn"><span class="m">&minus;</span><span class="m">three headings cost ~90px of chrome</span></div>
+        <div class="vrow dn"><span class="m">&minus;</span><span class="m">fuel still lives in a modal</span></div>
+      </div>
+    </header>
+  </div>
+
+  <div class="opt">
+    <header>
+      <div>
+        <span class="tag">D · stock first</span>
+        <h3>The larder</h3>
+        <p class="why">Nobody cooks for its own sake; you cook so there is food in the bag
+        when the fight starts. So the panel opens with what is <i>in</i> the larder and what
+        it is worth — <b>17.3k HP across 116 meals</b> — and the recipes below are framed as
+        topping it up. Same move the alchemy cabinet made: the thing you own leads, and
+        crafting is the refill underneath.</p>
+        <p class="why">Only the dishes you can actually cook get cards, best heal first.
+        The rest collapse to a strip that names what each is waiting on — a level, or an
+        ingredient. The fire moves into the larder header, because the fire is the thing
+        stopping the larder from refilling, not a separate announcement above it.</p>
+      </div>
+      <div class="verdict">
+        <div class="vrow up"><span class="m">+</span><span class="m">answers "have I got enough food"</span></div>
+        <div class="vrow up"><span class="m">+</span><span class="m">dead recipes stop eating the panel</span></div>
+        <div class="vrow up"><span class="m">+</span><span class="m">1182px &rarr; 1158px, 16 cards not 19</span></div>
+        <div class="vrow dn"><span class="m">&minus;</span><span class="m">the ladder is no longer browsable in order</span></div>
+        <div class="vrow dn"><span class="m">&minus;</span><span class="m">biggest departure from every other skill</span></div>
+      </div>
+    </header>
+  </div>
+</section>
+
+<section class="wide">
+  <div class="shead">
+    <span class="num">03</span>
+    <h2>The hearth, generated</h2>
+    <span class="sub">Z-Image-Turbo locally, 640&times;544, fire as the only light source,
+    edges feathered to transparent so the plate has no seam against the panel.</span>
+  </div>
+  <p style="max-width:70ch;margin-bottom:4px">The fire already has three states in code —
+  <code style="font-family:'JetBrains Mono',monospace;color:var(--ember)">burning</code>,
+  <code style="font-family:'JetBrains Mono',monospace;color:var(--ember)">stored</code>,
+  <code style="font-family:'JetBrains Mono',monospace;color:var(--ember)">out</code> — and today
+  they are distinguished by a border colour and an emoji. Three plates, one per state, cost
+  <b>41KB</b> packed as WebP: about 1.2% on a 3.4MB file, which is inside the wrapper's
+  6-second fetch budget with room to spare.</p>
+  <div class="figs"><!--PLATES--></div>
+  <div class="figs" style="margin-top:30px"><!--FIREPANES--></div>
+</section>
+
+<section class="w">
+  <div class="shead">
+    <span class="num">04</span>
+    <h2>What I need from you</h2>
+    <span class="sub">The card is settled; the frame is the open question.</span>
+  </div>
+  <div class="ask">
+    <div><b>Which frame — A, B, C or D?</b>
+      <span>They are not exclusive. The rebuilt card is in all four, B's hearth bolts onto C
+      or D unchanged, and C's grouping works inside D's "cook to refill" block. A likely
+      answer is "B's hearth + C's grouping" or "B + D".</span></div>
+    <div><b>Does the drawn hearth ship, or stay a mockup?</b>
+      <span>41KB is affordable but it is the first raster art in the panel set. If yes, the
+      same three-state treatment is the obvious next thing for the smithing forge and the
+      firemaking bonfire.</span></div>
+    <div><b>Is HP/hr worth a row?</b>
+      <span>Cooking's real throughput number — Cooked Shark is 134k HP/hr, Cooked Minnow is
+      22.8k. It did not fit on the card at three-up without wrapping a row, so it is off.
+      It could go in a group header, or the card could go back to four-up and drop the
+      ingredient chips.</span></div>
+    <div><b>Fix the two heal inversions, or leave them?</b>
+      <span>Troll Stew (Lv 60, 430) beats Cooked Swordfish (Lv 62, 380), and Drake Roast
+      (Lv 72, 560) beats Cooked Shark (Lv 75, 520). Arguably fine — the fish are cheaper and
+      the stews are heal-over-time — but sorting by heal is about to make it obvious.</span></div>
+    <div><b>Ship the two loose bugs regardless?</b>
+      <span><code style="font-family:'JetBrains Mono',monospace;color:var(--ember)">fmtDuration()</code>
+      never rolls to hours, and Cook void eel renders at the bottom of the ladder with a
+      Lv 62 badge and a T19 tier pip. Both are one-line fixes independent of which frame wins.</span></div>
+  </div>
+</section>
+
+<div class="w foot">
+  Not shipped code. Concepts live in <code>_cookdesign/concept-{a,b,c,d}.js</code>, injected
+  into the live <code>cindervale.html</code> by <code>_cookdesign/shoot.js</code> and shot at
+  1920&times;1080 with an Electron user-agent so the panel is the full build, not the demo.
+  Counts come from <code>_cookdesign/audit.js</code>. Hearth plates from
+  <code>_cookdesign/genfire.js</code> + <code>packfire.js</code>.
+</div>
+
+<script>
+document.getElementById('ctxbar').addEventListener('click', function(e){
+  var b = e.target.closest('button[data-ctx]'); if(!b) return;
+  var id = b.getAttribute('data-ctx');
+  this.querySelectorAll('button').forEach(function(x){ x.classList.toggle('on', x===b); });
+  document.querySelectorAll('.ctxpane').forEach(function(p){
+    p.hidden = p.getAttribute('data-pane') !== id;
+  });
+});
+</script>
