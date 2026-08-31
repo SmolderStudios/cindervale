@@ -1,0 +1,119 @@
+/* The prompt contract for item icons.
+ *
+ * MEASURED FIRST (node _iconart/measure.js): an item icon renders at
+ *
+ *     12px  in an activity card's output chip   (.chip)
+ *     15px  in the satchel grid                 (.inv-ic)
+ *     19px  in drop rows and tooltips           (.icon)
+ *     31px  at its very largest                 (.act-icon)
+ *
+ * That is the whole brief. At 15px there is no such thing as detail — there is a
+ * silhouette, two or three values, and a colour. Everything in SHARED below exists
+ * to buy silhouette clarity, and every prompt should name ONE object filling the
+ * frame, never a pile, a scene, or a container of things.
+ *
+ * Carried over from the monster pass (see the monster-art-generation memory), all
+ * of it paid for in wasted batches:
+ *   - Z-Image-Turbo, not SDXL. SDXL will not isolate a subject; it invents a
+ *     plinth, a forest, a sunset behind everything. No negative battery stops it.
+ *   - cfg 2.4. Turbo's default 1.5 barely reads the style clause at all, so style
+ *     words become decoration on a prompt being ignored. cfg 4 is the far cliff:
+ *     black voids and coin-sized subjects.
+ *   - Negative the medium AND the render engines. Realism answers to many names,
+ *     and the first monster pass came back photographic because the negative
+ *     prompt never once said "photorealistic".
+ *   - VALUE-INVERSE BACKDROP. Key-out walks in from the border, so a pale subject
+ *     on white loses its edges and the fill eats holes through it. Dark subjects
+ *     get a white backdrop, pale ones get near-black. Per item, via subjects.js.
+ *   - Never a magenta chroma key: it tints the subject pink.
+ */
+'use strict';
+
+/* Two directions to choose between, per Jordan's "generate 2 of each". They are
+   deliberately far apart rather than two shades of the same idea — the monster
+   pass found Turbo has essentially one house style and the widest real spread you
+   can get out of it is painted vs graphic. */
+const STYLES = {
+  /* Reads as a sibling of the painted monster and pet art already in the game. */
+  painted: {
+    label: 'Painted',
+    clause: ', stylised painted fantasy game item icon, chunky exaggerated proportions,'
+      + ' bold simplified forms, thick confident brush strokes, strong rim light tracing'
+      + ' the silhouette, deep shadow opposite, rich saturated colour, high value contrast,'
+      + ' single object centred and filling the frame',
+  },
+  /* Maximum legibility at 15px: fewer shapes, flatter fill, a drawn edge holding
+     the silhouette together the way the outgoing SVGs did. */
+  emblem: {
+    label: 'Emblem',
+    clause: ', bold graphic fantasy game item icon, flat poster colour, very few large shapes,'
+      + ' the silhouette held by OUTLINE, minimal interior detail, crisp edges,'
+      + ' strong clean shape reading instantly at small size, single object centred and'
+      + ' filling the frame, vector poster look',
+  },
+};
+
+/* The satchel tile is a dark gradient sitting around L 30/255. A black object with
+   a black outline on it is a hole, not an icon — verify.js flagged coal, shadowwood
+   and the void gems for exactly this. The monster pass hit the same wall on the
+   arena band and found it is a LIGHTING fix, not a keying one: keep the palette
+   dark, put the VALUE in a rim that traces the silhouette.
+   So the outline word is chosen per subject, not fixed by the style.
+
+   The rim is EMBER ORANGE, not white, for two reasons. Keying: these subjects sit
+   on a white backdrop (a dark body keys cleanly against white), and a pale rim
+   would merge straight into it and be eaten by the flood fill. Palette: ember is
+   the game's own accent, so a lit edge reads as belonging rather than as a sticker
+   glow. */
+const OUTLINE = {
+  normal: 'a thick dark outline',
+  dark:   'a warm ember orange rim light tracing the whole silhouette',
+};
+
+/* Realism has many names; so does "put my object in a scene". */
+const NEG = [
+  // medium / realism
+  'photograph, photorealistic, photoreal, realistic, hyperrealistic, macro photo, dslr,',
+  'octane render, unreal engine, blender, 3d render, cgi, raytraced, studio product shot,',
+  // scene contamination — the failure mode SDXL could never be argued out of
+  'background scenery, landscape, sky, horizon, ground, floor, table, plinth, pedestal,',
+  'shelf, basket, crate, bowl, container, person, figure, creature, character,',
+  // hands specifically: a size simile in the prompt ("fist sized") got DRAWN — copper
+  // ore came back as a clenched fist. Fixed in subjects.js, negated here as well.
+  'hand, hands, fist, fingers, knuckles, arm, holding, grip,',
+  // and the face pareidolia it left behind on iron ore
+  'face, eyes, skull, mask, symmetrical features,',
+  // multiplicity — a "pile of ore" is mud at 15px
+  'multiple objects, collection, set, group, pile, heap, scattered, tiled, grid, collage,',
+  // chrome
+  'text, letters, numbers, watermark, signature, logo, label, border, frame, vignette,',
+  'drop shadow, reflection, mirror, glare,',
+  // small-size killers
+  'busy, cluttered, intricate fine detail, thin lines, low contrast, washed out, blurry, noisy',
+].join(' ');
+
+/* The backdrop is a keying aid, not art. Chosen per item by expected value. */
+const BACKDROP = {
+  light: ' , isolated on a plain flat pure white background',
+  dark:  ' , isolated on a plain flat near black background',
+};
+
+const MODEL = 'ZImage/SwarmUI_Z-Image-Turbo-FP8Mix';
+
+/* Square, generous enough to downscale from. 31px is the largest render and the
+   art is shown at 2x on a retina panel, so 512 -> 128 keeps plenty in hand. */
+const GEN = { width: 1024, height: 1024, steps: 12, cfgscale: 2.4, model: MODEL };
+
+function buildPrompt(subject, styleKey) {
+  const st = STYLES[styleKey];
+  if (!st) throw new Error('unknown style ' + styleKey);
+  const back = BACKDROP[subject.pale ? 'dark' : 'light'];
+  let clause = st.clause.replace('OUTLINE', OUTLINE[subject.dark ? 'dark' : 'normal']);
+  // painted already asks for a rim; for a dark body, say how much it matters
+  if (subject.dark && styleKey === 'painted') {
+    clause += ', very bright rim light so the silhouette stays readable against a dark background';
+  }
+  return subject.p + clause + back;
+}
+
+module.exports = { STYLES, NEG, BACKDROP, OUTLINE, MODEL, GEN, buildPrompt };

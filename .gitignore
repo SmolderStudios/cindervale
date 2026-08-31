@@ -61,3 +61,11 @@ _guildsimple/scenes/
 # header rework scratch — the builder and its source stay, the renders do not
 _hdrpreview/*.png
 _hdrpreview/preview.html
+
+# item icon art — the pipeline is committed, its output is not
+_iconart/raw/
+_iconart/cut/
+_iconart/pack.json
+_iconart/pick.html
+_iconart/items.json
+_iconart/*.png
