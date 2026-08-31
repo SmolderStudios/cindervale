@@ -45,16 +45,41 @@ const CRESTNAME = {
   const p = await b.newPage();
   await p.goto('data:text/html,<body>');
 
-  /* Emblems are drawn no larger than 104px, so 256 square is 2x for a sharp
-     downscale. The halls are drawn at most 1100 wide, so 1024 is already right. */
+  /* Pack a scene, trimming any black bar the model framed it with first.
+     Four of the ten came back matted: Deepwater was letterboxed on all four sides,
+     the Furrow had 30% of solid black down its right edge. Cropping is the honest
+     fix — the picture is fine, it is the frame around it that is not — and it is
+     deterministic, so a re-roll cannot quietly reintroduce one.
+
+     A bar is a FLAT near-black row or column, not merely a dark one. Six scenes
+     legitimately fade to darkness at an edge and are left untouched. */
   async function pack(file, W, q) {
     const raw = fs.readFileSync(path.join(ART, file)).toString('base64');
     return p.evaluate(async (raw, W, q) => {
       const i = new Image(); i.src = 'data:image/png;base64,' + raw; await i.decode();
-      const sc = Math.min(1, W / i.width);
-      const c = document.createElement('canvas');
-      c.width = Math.round(i.width * sc); c.height = Math.round(i.height * sc);
-      c.getContext('2d').drawImage(i, 0, 0, c.width, c.height);
+
+      const m = document.createElement('canvas');
+      m.width = i.width; m.height = i.height;
+      const mx = m.getContext('2d'); mx.drawImage(i, 0, 0);
+      const d = mx.getImageData(0, 0, i.width, i.height).data;
+      const L = (px, py) => { const k = (py * i.width + px) * 4;
+        return 0.2126 * d[k] + 0.7152 * d[k + 1] + 0.0722 * d[k + 2]; };
+      const rowMean = y => { let s = 0; for (let px = 0; px < i.width; px++) s += L(px, y); return s / i.width; };
+      const colMean = x => { let s = 0; for (let py = 0; py < i.height; py++) s += L(x, py); return s / i.height; };
+      const T = 14, LIM = 0.34;
+      let t = 0; while (t < i.height * LIM && rowMean(t) < T) t++;
+      let bm = 0; while (bm < i.height * LIM && rowMean(i.height - 1 - bm) < T) bm++;
+      let lf = 0; while (lf < i.width * LIM && colMean(lf) < T) lf++;
+      let rt = 0; while (rt < i.width * LIM && colMean(i.width - 1 - rt) < T) rt++;
+      const sx = lf, sy = t, sw = i.width - lf - rt, sh = i.height - t - bm;
+
+      /* cover-fit what is left into the target 3:1 banner */
+      const H = Math.round(W / 3);
+      const c = document.createElement('canvas'); c.width = W; c.height = H;
+      const g = c.getContext('2d');
+      const sc = Math.max(W / sw, H / sh);
+      const dw = sw * sc, dh = sh * sc;
+      g.drawImage(i, sx, sy, sw, sh, (W - dw) / 2, (H - dh) / 2, dw, dh);
       return c.toDataURL('image/webp', q);
     }, raw, W, q);
   }
@@ -66,7 +91,7 @@ const CRESTNAME = {
     crestBytes += img[g.id].length * 0.75;
   }
   for (const h of ['hall-1', 'hall-2']) {
-    img[h] = await pack('../art/' + h + '.png', 1024, 0.7);
+    img[h] = await pack('../art/' + h + '.png', 1152, 0.7);
     hallBytes += img[h].length * 0.75;
   }
   await b.close();
