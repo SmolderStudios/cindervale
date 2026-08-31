@@ -4398,8 +4398,8 @@ body:not(.is-demo) .demo-only{display:none !important}
 #guildView{padding-bottom:6px}
 .gd-wrap{display:block}
 
-.gd-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:13px;
-  padding-bottom:10px;border-bottom:1px solid var(--trim-d)}
+.gd-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px;
+  padding-bottom:8px;border-bottom:1px solid var(--trim-d)}
 .gd-h1{font-family:'Cinzel',serif;font-size:calc(19px*var(--tscale));color:var(--trim);
   letter-spacing:.12em;text-transform:uppercase;font-weight:600}
 .gd-sub{font-family:var(--num);font-size:calc(12px*var(--tscale));color:var(--muted);
@@ -4409,14 +4409,15 @@ body:not(.is-demo) .demo-only{display:none !important}
   background:#0c0704;border-radius:5px;padding:4px 10px;
   box-shadow:inset 0 1px 2px rgba(0,0,0,.75)}
 .gd-tok .ev-icon{width:15px;height:15px}
-.gd-back{background:transparent;border:1px solid var(--trim-d);border-radius:6px;
-  color:var(--muted);font-family:var(--num);font-size:calc(12px*var(--tscale));
-  padding:5px 11px;cursor:var(--cur-pointer);flex:none}
-.gd-back:hover{border-color:var(--trim);color:var(--gold-hi)}
+.gd-back{background:rgba(12,7,4,.86);border:1px solid var(--trim);border-radius:6px;
+  color:var(--gold-hi);font-family:var(--num);font-size:calc(12.5px*var(--tscale));
+  padding:6px 13px;cursor:var(--cur-pointer);flex:none;font-weight:600;
+  box-shadow:0 2px 8px rgba(0,0,0,.6)}
+.gd-back:hover{background:#2d200e;border-color:var(--gold-hi);color:#fff2d0}
 .gd-back:focus-visible{outline:2px solid var(--trim);outline-offset:1px}
 
 /* ── screen one: picture cards ── */
-.gd-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px;align-items:start}
+.gd-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;align-items:start}
 @media(max-width:1000px){.gd-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:640px){.gd-grid{grid-template-columns:1fr}}
 .gd-card{background:linear-gradient(178deg,var(--lit-top),var(--lit-bot) 78%);
@@ -4424,7 +4425,7 @@ body:not(.is-demo) .demo-only{display:none !important}
   display:flex;flex-direction:column;box-shadow:var(--sh-1),inset 0 1px 0 var(--rim)}
 .gd-card.joined{border-color:var(--trim)}
 .gd-card.shut{opacity:.5}
-.gd-art{height:116px;position:relative;background-size:cover;background-position:center;
+.gd-art{height:94px;position:relative;background-size:cover;background-position:center;
   background-repeat:no-repeat;background-color:#150e06}
 .gd-art::after{content:"";position:absolute;inset:0;
   background:linear-gradient(180deg,transparent 42%,var(--lit-bot) 100%)}
@@ -4432,8 +4433,8 @@ body:not(.is-demo) .demo-only{display:none !important}
   font-size:calc(10.5px*var(--tscale));color:var(--gold-hi);background:rgba(12,7,4,.86);
   border-radius:4px;padding:3px 8px;max-width:calc(100% - 18px);white-space:nowrap;
   overflow:hidden;text-overflow:ellipsis}
-.gd-b{padding:11px 13px 13px;display:flex;flex-direction:column;gap:8px;flex:1;min-width:0}
-.gd-b h4{font-family:'Cinzel',serif;font-size:calc(15.5px*var(--tscale));color:var(--gold-hi);
+.gd-b{padding:9px 11px 10px;display:flex;flex-direction:column;gap:6px;flex:1;min-width:0}
+.gd-b h4{font-family:'Cinzel',serif;font-size:calc(14.5px*var(--tscale));color:var(--gold-hi);
   line-height:1.15;font-weight:600;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .gd-sk{font-family:var(--num);font-size:calc(10.5px*var(--tscale));color:var(--dim,#8a7657);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -4442,7 +4443,7 @@ body:not(.is-demo) .demo-only{display:none !important}
 .gd-f em{font-style:normal;color:var(--muted);white-space:nowrap;overflow:hidden;
   text-overflow:ellipsis}
 .gd-f em.go{color:#7ec8a0} .gd-f em.no{color:#c07a62}
-.gd-b .gd-btn{margin-top:auto}
+.gd-b .gd-btn{margin-top:auto;padding:6px 12px;font-size:calc(12.5px*var(--tscale))}
 
 .gd-bar{height:5px;border-radius:3px;background:#0a0604;overflow:hidden;
   box-shadow:inset 0 1px 3px rgba(0,0,0,.85)}
@@ -6884,7 +6885,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.123.1">v0.9.123</div>
+  <div class="mm-ver" data-build="0.9.123.2">v0.9.123</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
