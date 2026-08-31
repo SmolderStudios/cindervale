@@ -1,0 +1,529 @@
+<title>Guild Page Layouts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Cinzel:wght@500;600;700&display=swap">
+
+<style>
+:root{
+  --ground:#eceff3; --surface:#ffffff; --sunk:#e2e6ec;
+  --rule:#c7ced9; --rule-hi:#a9b3c2;
+  --ink:#13171e; --body:#3b4350; --dim:#69737f;
+  --brass:#7a5c1c; --ember:#a34a12; --good:#3f6320; --bad:#93331a;
+  --sh:0 2px 4px rgba(19,23,30,.10), 0 18px 40px rgba(19,23,30,.14);
+  --navbg:rgba(236,239,243,.92);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --ground:#0e1116; --surface:#171b22; --sunk:#12161c;
+  --rule:#282e38; --rule-hi:#3a424f;
+  --ink:#e6eaf1; --body:#b0b8c5; --dim:#7d8697;
+  --brass:#c79b4e; --ember:#e0762f; --good:#8fb84f; --bad:#d0674c;
+  --sh:0 2px 4px rgba(0,0,0,.6), 0 18px 40px rgba(0,0,0,.5);
+  --navbg:rgba(14,17,22,.92);
+}}
+:root[data-theme="dark"]{
+  --ground:#0e1116; --surface:#171b22; --sunk:#12161c;
+  --rule:#282e38; --rule-hi:#3a424f;
+  --ink:#e6eaf1; --body:#b0b8c5; --dim:#7d8697;
+  --brass:#c79b4e; --ember:#e0762f; --good:#8fb84f; --bad:#d0674c;
+  --sh:0 2px 4px rgba(0,0,0,.6), 0 18px 40px rgba(0,0,0,.5);
+  --navbg:rgba(14,17,22,.92);
+}
+/* Game colours. Fixed — the game has one look. */
+.cv{
+  --g-sunk:#0c0704; --g-trim:#c79b4e; --g-trimd:#6e552c; --g-text:#ead9b5;
+  --g-dim:#8a7657; --g-ember:#e0762f; --g-green:#9ddc7a; --g-gold:#f0c772;
+  --g-top:#33240f; --g-bot:#1b1208;
+  --g-num:ui-monospace,'Cascadia Mono','SF Mono','Segoe UI Mono',Menlo,Consolas,monospace;
+}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:74px}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{background:var(--ground);color:var(--body);margin:0;
+  font-family:'Public Sans',-apple-system,'Segoe UI',sans-serif;
+  font-size:16px;line-height:1.62;font-variant-numeric:tabular-nums lining-nums;
+  -webkit-font-smoothing:antialiased}
+.w{max-width:1160px;margin:0 auto;padding:0 26px}
+h1,h2,h3,h4{font-family:'Fraunces','Iowan Old Style',Georgia,serif;color:var(--ink);
+  margin:0;text-wrap:balance;font-weight:600;letter-spacing:-.012em}
+p{margin:0}
+:focus-visible{outline:2px solid var(--ember);outline-offset:2px;border-radius:3px}
+
+.nav{position:sticky;top:0;z-index:20;background:var(--navbg);
+  backdrop-filter:blur(10px);border-bottom:1px solid var(--rule)}
+.nav .in{max-width:1160px;margin:0 auto;padding:0 26px;display:flex;align-items:center;
+  gap:6px;height:56px;overflow-x:auto}
+.nav .brand{font-family:'Cinzel',serif;font-size:14px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--brass);font-weight:600;margin-right:12px;
+  white-space:nowrap;flex:none}
+.nav a{color:var(--body);text-decoration:none;font-size:14px;padding:7px 12px;
+  border-radius:5px;white-space:nowrap;flex:none}
+.nav a:hover{background:var(--sunk);color:var(--ink)}
+
+.mast{padding:52px 0 40px}
+.eyebrow{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.17em;
+  text-transform:uppercase;color:var(--brass);margin-bottom:16px}
+.mast h1{font-size:clamp(34px,5.4vw,54px);line-height:1.03;max-width:17ch}
+.mast .lede{margin-top:20px;max-width:62ch;font-size:18px;line-height:1.56}
+.mast .lede b{color:var(--ink);font-weight:600}
+
+section{padding:50px 0;border-top:1px solid var(--rule)}
+.shead .kicker{font-family:'JetBrains Mono',monospace;font-size:11px;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--brass);margin-bottom:12px}
+.shead h2{font-size:30px;line-height:1.14}
+.lead{font-size:16.5px;max-width:66ch;margin-top:12px}
+.lead b{color:var(--ink);font-weight:600}
+.small{margin-top:14px;font-size:14.5px;color:var(--dim);max-width:70ch}
+.small b{color:var(--ink);font-weight:600}
+
+/* an option block: heading, one line of why, the mockup, plus/minus */
+.opt{margin-top:42px}
+.opt:first-of-type{margin-top:26px}
+.ohead{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:8px}
+.oletter{font-family:'Fraunces',Georgia,serif;font-size:26px;color:var(--ember);
+  font-weight:700;line-height:1;flex:none}
+.ohead h3{font-size:23px;line-height:1.15}
+.ohead .tag{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11.5px;
+  color:var(--dim);white-space:nowrap}
+.owhy{font-size:15.5px;max-width:68ch}
+.verdict{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.vp,.vm{font-size:13.5px;padding:5px 11px;border-radius:5px;border:1px solid var(--rule);
+  background:var(--surface)}
+.vp{color:var(--good)} .vm{color:var(--bad)}
+.vp::before{content:"+ ";font-family:'JetBrains Mono',monospace}
+.vm::before{content:"\2212 ";font-family:'JetBrains Mono',monospace}
+
+.screen{margin-top:16px;border-radius:10px;border:1px solid var(--rule-hi);
+  box-shadow:var(--sh);background:#181109;padding:14px;overflow:hidden}
+.scr-t{display:flex;align-items:center;gap:9px;padding:0 2px 10px;
+  border-bottom:1px solid var(--g-trimd);margin-bottom:13px}
+.scr-t svg{width:19px;height:19px;flex:none;display:block}
+.scr-t b{font-family:'Cinzel',serif;font-size:15px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--g-trim);font-weight:600}
+.scr-t .tok{margin-left:auto;font-family:var(--g-num);font-size:12px;color:var(--g-gold);
+  display:flex;align-items:center;gap:6px}
+.scr-t .tok svg{width:15px;height:15px}
+
+/* ── art gallery ─────────────────────────────────────────────────────────── */
+.crests{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;
+  margin-top:24px}
+.crest{background:#181109;border:1px solid var(--rule-hi);border-radius:9px;
+  padding:12px;text-align:center;box-shadow:var(--sh)}
+.crest img{width:100%;height:auto;display:block;border-radius:6px}
+.crest b{display:block;font-family:'Cinzel',serif;font-size:13px;color:#f0c772;
+  margin-top:10px}
+.crest i{display:block;font-style:normal;font-family:'JetBrains Mono',monospace;
+  font-size:10.5px;color:#8a7657;margin-top:3px}
+.halls{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:12px;
+  margin-top:16px}
+.hall{border:1px solid var(--rule-hi);border-radius:9px;overflow:hidden;
+  box-shadow:var(--sh);background:#0d0a07;line-height:0}
+.hall img{width:100%;height:auto;display:block}
+
+/* ── shared game bits ────────────────────────────────────────────────────── */
+.g-bar{height:5px;border-radius:3px;background:#0a0604;overflow:hidden;
+  box-shadow:inset 0 1px 3px rgba(0,0,0,.85)}
+.g-bar i{display:block;height:100%;border-radius:3px;
+  background:linear-gradient(90deg,var(--g-ember),#f0a050)}
+.g-btn{display:block;text-align:center;font-family:'Cinzel',serif;border-radius:6px;
+  border:1px solid var(--g-trimd);background:linear-gradient(180deg,#3a2a15,#241906);
+  color:var(--g-text);padding:7px 12px;font-size:13px}
+.g-btn.pri{background:linear-gradient(180deg,#e88a3c,#c25e18);border-color:#7a3a0e;
+  color:#1a0f06;font-weight:700;box-shadow:0 2px 0 #6a3209}
+.g-btn.off{opacity:.5}
+.g-lab{display:flex;align-items:center;gap:10px;font-family:var(--g-num);font-size:11px;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--g-dim);margin:16px 0 10px}
+.g-lab::after{content:"";flex:1;height:1px;
+  background:linear-gradient(90deg,var(--g-trimd),transparent);order:1}
+.g-lab .rt{order:2;flex:none;color:#a08a64;letter-spacing:.03em;text-transform:none;font-size:11px}
+
+/* ── list A · tiles ──────────────────────────────────────────────────────── */
+.la{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+@media(max-width:900px){.la{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){.la{grid-template-columns:1fr}}
+.la .t{background:linear-gradient(178deg,var(--g-top),var(--g-bot) 78%);
+  border:1px solid var(--g-trimd);border-radius:9px;padding:10px 11px 11px;
+  display:flex;flex-direction:column;gap:8px;min-width:0}
+.la .t.shut{opacity:.48;border-style:dashed;background:none}
+.la .h{display:flex;align-items:center;gap:9px;min-width:0}
+.la .ic{width:30px;height:30px;flex:none;border-radius:7px;overflow:hidden;
+  background:#150e06;box-shadow:inset 0 2px 6px rgba(0,0,0,.85)}
+.la .ic img{width:100%;height:100%;display:block;object-fit:cover}
+.la .n{flex:1;min-width:0}
+.la .n b{display:block;font-family:'Cinzel',serif;font-size:13.5px;color:var(--g-gold);
+  line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.la .n i{display:block;font-style:normal;font-family:var(--g-num);font-size:9.5px;
+  color:var(--g-dim);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.la .r{font-family:var(--g-num);font-size:10px;color:var(--g-trim);flex:none}
+.la .f{font-family:var(--g-num);font-size:10px;color:var(--g-dim);
+  display:flex;justify-content:space-between;gap:6px}
+.la .f em{font-style:normal;color:#7ec8a0}
+
+/* ── list B · crest cards ────────────────────────────────────────────────── */
+.lb{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px}
+@media(max-width:900px){.lb{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.lb{grid-template-columns:1fr}}
+.lb .c{background:linear-gradient(178deg,var(--g-top),var(--g-bot) 78%);
+  border:1px solid var(--g-trimd);border-radius:10px;overflow:hidden;min-width:0;
+  display:flex;flex-direction:column}
+.lb .c.joined{border-color:var(--g-trim)}
+.lb .art{height:112px;position:relative;overflow:hidden;
+  background:radial-gradient(90% 110% at 50% 40%,#2a1d0c,#120b05)}
+.lb .art img{width:100%;height:100%;object-fit:contain;display:block;opacity:.95}
+.lb .art::after{content:"";position:absolute;inset:0;
+  background:linear-gradient(180deg,transparent 40%,#1b1208 100%)}
+.lb .art .rk{position:absolute;top:8px;right:9px;z-index:2;font-family:var(--g-num);
+  font-size:10.5px;color:var(--g-gold);background:rgba(12,7,4,.8);border-radius:4px;
+  padding:2px 7px}
+.lb .b{padding:11px 13px 13px;display:flex;flex-direction:column;gap:8px;flex:1}
+.lb .b h4{font-family:'Cinzel',serif;font-size:15.5px;color:var(--g-gold);
+  line-height:1.15;font-weight:600}
+.lb .b .sk{font-family:var(--g-num);font-size:10px;color:var(--g-dim);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lb .b .f{font-family:var(--g-num);font-size:10.5px;color:var(--g-dim);
+  display:flex;justify-content:space-between;gap:8px}
+.lb .b .f em{font-style:normal;color:#7ec8a0}
+.lb .b .g-btn{margin-top:auto}
+
+/* ── list C · rows ───────────────────────────────────────────────────────── */
+.lc{display:grid;gap:8px}
+.lc .r{display:flex;align-items:center;gap:13px;padding:10px 13px;border-radius:9px;
+  border:1px solid var(--g-trimd);position:relative;overflow:hidden;
+  background:linear-gradient(178deg,var(--g-top),var(--g-bot) 78%);flex-wrap:wrap}
+.lc .r.joined{border-color:var(--g-trim)}
+.lc .ic{width:44px;height:44px;flex:none;border-radius:9px;overflow:hidden;
+  background:#150e06;box-shadow:inset 0 2px 6px rgba(0,0,0,.85);position:relative;z-index:2}
+.lc .ic img{width:100%;height:100%;object-fit:cover;display:block}
+.lc .n{flex:1;min-width:160px;position:relative;z-index:2}
+.lc .n b{display:block;font-family:'Cinzel',serif;font-size:16px;color:var(--g-gold);line-height:1.15}
+.lc .n i{display:block;font-style:normal;font-family:var(--g-num);font-size:10.5px;
+  color:var(--g-dim);margin-top:3px}
+.lc .p{flex:0 1 210px;min-width:160px;position:relative;z-index:2}
+.lc .p .l{display:flex;justify-content:space-between;font-family:var(--g-num);
+  font-size:10.5px;color:#94805f;margin-bottom:5px}
+.lc .p .l b{color:var(--g-text);font-weight:600}
+.lc .q{flex:none;font-family:var(--g-num);font-size:11px;color:#7ec8a0;
+  position:relative;z-index:2;white-space:nowrap}
+.lc .a{flex:none;position:relative;z-index:2}
+.lc .a .g-btn{width:auto;padding:7px 18px}
+
+/* ── list D · hall header ────────────────────────────────────────────────── */
+.ld-hero{position:relative;border-radius:10px;overflow:hidden;margin-bottom:13px;
+  border:1px solid var(--g-trimd);line-height:0}
+.ld-hero img{width:100%;height:170px;object-fit:cover;display:block}
+.ld-hero .ov{position:absolute;inset:0;display:flex;flex-direction:column;
+  justify-content:flex-end;padding:14px 16px;line-height:1.4;
+  background:linear-gradient(180deg,rgba(12,7,4,.15) 30%,rgba(12,7,4,.94) 100%)}
+.ld-hero .ov b{font-family:'Cinzel',serif;font-size:22px;color:var(--g-gold)}
+.ld-hero .ov i{font-style:normal;font-family:var(--g-num);font-size:11.5px;
+  color:#c8b48c;margin-top:5px}
+
+/* ── detail: shared pieces ───────────────────────────────────────────────── */
+.d-hero{display:flex;align-items:center;gap:15px;padding:13px 15px;border-radius:9px;
+  background:linear-gradient(178deg,var(--g-top),var(--g-bot) 78%);
+  border:1px solid var(--g-trimd);margin-bottom:13px;flex-wrap:wrap}
+.d-hero .ic{width:52px;height:52px;flex:none;border-radius:10px;overflow:hidden;
+  background:#150e06;box-shadow:inset 0 2px 6px rgba(0,0,0,.85)}
+.d-hero .ic img{width:100%;height:100%;object-fit:cover;display:block}
+.d-hero .t{flex:1;min-width:180px}
+.d-hero .t b{display:block;font-family:'Cinzel',serif;font-size:20px;color:var(--g-gold);line-height:1.1}
+.d-hero .t i{display:block;font-style:normal;font-family:var(--g-num);font-size:11px;
+  color:var(--g-dim);margin-top:5px}
+.d-hero .p{flex:1;min-width:200px}
+.d-hero .p .l{display:flex;justify-content:space-between;align-items:baseline;
+  font-family:var(--g-num);font-size:11.5px;color:#94805f;margin-bottom:6px}
+.d-hero .p .l b{color:var(--g-text);font-weight:600}
+
+.q-row{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:8px;
+  background:linear-gradient(178deg,var(--g-top),var(--g-bot) 78%);
+  border:1px solid var(--g-trimd);flex-wrap:wrap;margin-bottom:8px}
+.q-row.done{border-color:#4a6a2a;background:linear-gradient(178deg,#1e2a10,#141a0a 78%)}
+.q-t{flex:1;min-width:150px}
+.q-t b{display:block;font-family:'Cinzel',serif;font-size:14.5px;color:var(--g-text);line-height:1.2}
+.q-t i{display:block;font-style:normal;font-family:var(--g-num);font-size:10.5px;
+  color:var(--g-dim);margin-top:4px}
+.q-p{flex:0 1 170px;min-width:130px}
+.q-p .l{display:flex;justify-content:space-between;font-family:var(--g-num);
+  font-size:10.5px;color:#94805f;margin-bottom:5px}
+.q-p .l b{color:var(--g-text);font-weight:600}
+.q-rw{flex:none;display:flex;gap:5px;flex-wrap:wrap}
+.rwc{display:inline-flex;align-items:center;gap:4px;font-family:var(--g-num);
+  font-size:10.5px;padding:3px 7px;border-radius:5px;background:var(--g-sunk);
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.75);white-space:nowrap}
+.rwc svg{width:12px;height:12px;display:block}
+.rwc.rep{color:#c9a6ea} .rwc.xp{color:#7ec8a0} .rwc.tok{color:var(--g-gold)}
+.q-row .g-btn{width:auto;padding:6px 15px;flex:none}
+
+.r-row{display:flex;align-items:center;gap:12px;padding:9px 12px;border-radius:7px;
+  background:var(--g-sunk);box-shadow:inset 0 1px 3px rgba(0,0,0,.75);opacity:.52;
+  margin-bottom:5px}
+.r-row.have{opacity:1;background:linear-gradient(178deg,#241a0c,#170f07 78%);
+  box-shadow:inset 0 1px 0 rgba(214,170,96,.13)}
+.r-row.now{opacity:1;background:linear-gradient(178deg,#33240f,#1b1208 78%);
+  box-shadow:inset 0 0 0 1px #7a5a1a}
+.r-k{flex:0 0 116px;min-width:0}
+.r-k b{display:block;font-family:'Cinzel',serif;font-size:13px;color:var(--g-trim)}
+.r-k s{display:block;text-decoration:none;font-family:var(--g-num);font-size:9.5px;
+  color:var(--g-dim);margin-top:2px}
+.r-d{flex:1;min-width:0;font-family:var(--g-num);font-size:12px;color:var(--g-text)}
+.r-row.have .r-d{color:var(--g-gold)}
+.r-v{flex:none;font-family:var(--g-num);font-size:11px;color:var(--g-dim)}
+.r-row.have .r-v{color:#7ec8a0}
+.r-row.now .r-v{color:var(--g-ember);font-weight:600}
+
+.s-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:9px}
+.s-item{background:linear-gradient(178deg,var(--g-top),var(--g-bot) 78%);
+  border:1px solid var(--g-trimd);border-radius:8px;padding:10px 11px;
+  display:flex;flex-direction:column;gap:7px;min-width:0}
+.s-item .st{display:flex;align-items:center;gap:8px;min-width:0}
+.s-item .st svg{width:20px;height:20px;flex:none;display:block}
+.s-item .st b{font-family:'Cinzel',serif;font-size:13px;color:var(--g-gold);line-height:1.2;min-width:0}
+.s-item .sd{font-family:var(--g-num);font-size:10.5px;color:var(--g-dim);line-height:1.5}
+.s-item .sp{margin-top:auto;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.s-item .sp .pr{font-family:var(--g-num);font-size:11.5px;color:var(--g-gold);
+  display:flex;align-items:center;gap:5px}
+.s-item .sp .pr svg{width:13px;height:13px}
+.s-item .sp .g-btn{padding:5px 11px;font-size:12px;width:auto}
+
+/* detail B · two columns */
+.d2{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:14px;align-items:start}
+@media(max-width:900px){.d2{grid-template-columns:1fr}}
+
+/* detail C · sub-tabs */
+.d-tabs{display:flex;gap:5px;background:#0d0905;border:1px solid var(--g-trimd);
+  border-radius:8px;padding:4px;margin-bottom:13px}
+.d-tabs span{flex:1;text-align:center;padding:6px 10px;border-radius:6px;
+  font-family:'Cinzel',serif;font-size:13.5px;color:var(--g-dim);border:1px solid transparent}
+.d-tabs span.on{background:#322415;border-color:var(--g-trimd);color:var(--g-gold)}
+
+.ask{display:grid;gap:1px;background:var(--rule);border:1px solid var(--rule);
+  border-radius:6px;overflow:hidden;margin-top:24px}
+.ask>div{background:var(--surface);padding:18px 22px}
+.ask b{color:var(--ink);display:block;margin-bottom:4px;font-weight:600;font-size:15.5px}
+.ask span{font-size:14.5px;color:var(--dim)}
+.ask span b{display:inline;color:var(--ink)}
+.foot{padding:34px 0 66px;font-size:13.5px;color:var(--dim);border-top:1px solid var(--rule)}
+.foot code{font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--body)}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <symbol id="s-book" viewBox="0 0 32 32"><path d="M5 6h9a3 3 0 0 1 3 3v17a3 3 0 0 0-3-3H5z" fill="#6b4a28" stroke="#3d2a16" stroke-width="1.2"/><path d="M27 6h-9a3 3 0 0 0-3 3v17a3 3 0 0 1 3-3h9z" fill="#8a6338" stroke="#3d2a16" stroke-width="1.2"/></symbol>
+  <symbol id="s-token" viewBox="0 0 32 32"><circle cx="16" cy="16" r="11" fill="#3a2a15" stroke="#c79b4e" stroke-width="1.8"/><path d="M16 9l2.2 4.6 5 .7-3.6 3.5.9 5-4.5-2.4-4.5 2.4.9-5L8.8 14.3l5-.7z" fill="#f0c772"/></symbol>
+  <symbol id="s-star" viewBox="0 0 32 32"><path d="M16 4l3.4 7.2 7.9 1-5.7 5.5 1.4 7.9L16 21.9l-7 3.7 1.4-7.9L4.7 12.2l7.9-1z" fill="#c9a6ea"/></symbol>
+  <symbol id="s-wheat" viewBox="0 0 32 32"><path d="M16 29V10" stroke="#8a6a2e" stroke-width="2.2" stroke-linecap="round" fill="none"/><path d="M16 10c-4 1-6 4-6 7 4 0 6-3 6-7z" fill="#d4a84a"/><path d="M16 10c4 1 6 4 6 7-4 0-6-3-6-7z" fill="#c2963c"/><path d="M16 17c-3.4 1-5 3.6-5 6.4 3.4 0 5-2.8 5-6.4z" fill="#c2963c"/><path d="M16 17c3.4 1 5 3.6 5 6.4-3.4 0-5-2.8-5-6.4z" fill="#b0862f"/></symbol>
+</defs></svg>
+
+<nav class="nav"><div class="in">
+  <span class="brand">Guild Layouts</span>
+  <a href="#art">The art</a>
+  <a href="#list">Guild list &mdash; 4 ways</a>
+  <a href="#detail">One guild &mdash; 3 ways</a>
+  <a href="#ask">Decisions</a>
+</div></nav>
+
+<div class="w">
+  <div class="mast">
+    <div class="eyebrow">Cindervale Idle &middot; layout options &middot; build 0.9.122.9</div>
+    <h1>Guild page layouts</h1>
+    <p class="lede">Seven ways to draw the same two screens, with <b>ten guild emblems
+    and two hall paintings</b> generated for them. Every panel below is real markup at
+    the width the centre panel actually has, so what you see is what it would measure.</p>
+  </div>
+
+  <section id="art">
+    <div class="shead"><div class="kicker">Made for this</div><h2>The art</h2></div>
+    <p class="lead">Ten emblems, one per guild, drawn as carved wood and tarnished
+    brass on black so they sit in the panel without a box around them. Two wide hall
+    paintings for a page header.</p>
+    <div class="crests">{{CRESTS}}</div>
+    <p class="small"><b>Sizes.</b> Each emblem is <b>{{CRESTKB}}KB</b> at the size the
+    cards use them; the two hall paintings are <b>{{HALLKB}}KB</b> together. All twelve
+    come to <b>{{TOTALKB}}KB</b>, which is about {{PCT}}% on top of the 5.96&nbsp;MB game
+    file. That matters because the desktop updater gives up on a download after six
+    seconds.</p>
+    <div class="halls">{{HALLS}}</div>
+  </section>
+
+  <section id="list">
+    <div class="shead"><div class="kicker">Screen one</div><h2>The guild list &mdash; four ways</h2></div>
+    <p class="lead">This screen has one job: show all ten guilds, say where you stand
+    in each, and let you join the ones you have not. The four below trade <b>how many
+    fit on screen</b> against <b>how much each one says</b>.</p>
+
+    <div class="opt">
+      <div class="ohead"><span class="oletter">A</span><h3>Small tiles</h3>
+        <span class="tag">all 10 &middot; panel 485px</span></div>
+      <p class="owhy">Four across. The emblem is a 30px thumbnail, the name and skills
+      are one line each, and a bar shows how far you are through your current rank.
+      Everything fits with room to spare.</p>
+      <div class="screen cv">
+        <div class="scr-t"><svg><use href="#s-book"/></svg><b>Guilds</b>
+          <span class="tok"><svg><use href="#s-token"/></svg>184 tokens</span></div>
+        <div class="la">{{LIST_A}}</div>
+      </div>
+      <div class="verdict"><span class="vp">everything on one screen, no scrolling</span>
+        <span class="vp">quickest to see which guild has a quest ready</span>
+        <span class="vm">the art is too small to enjoy</span>
+        <span class="vm">ten near-identical tiles is a plain-looking screen</span></div>
+    </div>
+
+    <div class="opt">
+      <div class="ohead"><span class="oletter">B</span><h3>Emblem cards</h3>
+        <span class="tag">all 10 &middot; panel 1,111px</span></div>
+      <p class="owhy">Three across, each with the emblem as a 104px banner across the
+      top. This is the version that makes the art worth generating &mdash; a guild is
+      recognisable before you read its name. It is also easily the tallest: four rows
+      of cards is <b>1,111px</b>, so you scroll no matter what.</p>
+      <div class="screen cv">
+        <div class="scr-t"><svg><use href="#s-book"/></svg><b>Guilds</b>
+          <span class="tok"><svg><use href="#s-token"/></svg>184 tokens</span></div>
+        <div class="lb">{{LIST_B}}</div>
+      </div>
+      <div class="verdict"><span class="vp">the guilds look like places, not rows</span>
+        <span class="vp">the Join button is a real button</span>
+        <span class="vm">1,111px &mdash; more than twice the tiles</span>
+        <span class="vm">most of each card is picture, not information</span></div>
+    </div>
+
+    <div class="opt">
+      <div class="ohead"><span class="oletter">C</span><h3>Full-width rows</h3>
+        <span class="tag">all 10 &middot; panel 810px</span></div>
+      <p class="owhy">One guild per row, emblem at 44px on the left, rank bar in the
+      middle, button on the right. The most readable of the four, and the only one
+      where every guild has room for a sentence.</p>
+      <div class="screen cv">
+        <div class="scr-t"><svg><use href="#s-book"/></svg><b>Guilds</b>
+          <span class="tok"><svg><use href="#s-token"/></svg>184 tokens</span></div>
+        <div class="lc">{{LIST_C}}</div>
+      </div>
+      <div class="verdict"><span class="vp">easiest to read and to scan down</span>
+        <span class="vp">room for rank, progress and a status line at once</span>
+        <span class="vm">325px taller than the tiles</span>
+        <span class="vm">wastes the right half on a wide monitor</span></div>
+    </div>
+
+    <div class="opt">
+      <div class="ohead"><span class="oletter">D</span><h3>Hall header, then rows</h3>
+        <span class="tag">all 10 + header &middot; panel 995px</span></div>
+      <p class="owhy">C, with a painting of the hall across the top. Costs 170px of
+      screen and buys the one thing the other three do not have: the guild page feels
+      like somewhere you walked into.</p>
+      <div class="screen cv">
+        <div class="scr-t"><svg><use href="#s-book"/></svg><b>Guilds</b>
+          <span class="tok"><svg><use href="#s-token"/></svg>184 tokens</span></div>
+        {{HALL_HERO}}
+        <div class="lc">{{LIST_D}}</div>
+      </div>
+      <div class="verdict"><span class="vp">the only one with any atmosphere</span>
+        <span class="vp">the header is a good place for "3 quests ready"</span>
+        <span class="vm">170px that shows no information</span>
+        <span class="vm">one painting for all ten guilds is a bit generic</span></div>
+    </div>
+  </section>
+
+  <section id="detail">
+    <div class="shead"><div class="kicker">Screen two</div><h2>One guild &mdash; three ways</h2></div>
+    <p class="lead">This screen has four things on it: where you stand, the three
+    quests, the six ranks, and the shop. The question is whether they stack, sit side
+    by side, or hide behind tabs.</p>
+
+    <div class="opt">
+      <div class="ohead"><span class="oletter">A</span><h3>Everything stacked</h3>
+        <span class="tag">panel 969px &middot; scrolls</span></div>
+      <p class="owhy">Rank, quests, ranks, shop, in that order. Nothing is hidden and
+      the order matches how often you look at each part.</p>
+      <div class="screen cv">
+        <div class="scr-t">{{FURROW_ICON}}<b>The Furrow</b>
+          <span class="tok"><svg><use href="#s-token"/></svg>184 tokens</span></div>
+        {{D_HERO}}
+        <div class="g-lab"><span>Quests</span><span class="rt">New ones tomorrow &middot; one skip left</span></div>
+        {{QUESTS}}
+        <div class="g-lab"><span>Ranks</span><span class="rt">Reputation only</span></div>
+        {{RANKS}}
+        <div class="g-lab"><span>Shop</span><span class="rt">You have 184 tokens</span></div>
+        <div class="s-grid">{{SHOP}}</div>
+      </div>
+      <div class="verdict"><span class="vp">nothing hidden, nothing to click first</span>
+        <span class="vp">reads top to bottom in the order you care</span>
+        <span class="vm">the shop is below the fold every time</span></div>
+    </div>
+
+    <div class="opt">
+      <div class="ohead"><span class="oletter">B</span><h3>Two columns</h3>
+        <span class="tag">panel 735px</span></div>
+      <p class="owhy">Quests on the left because that is what you came for; ranks and
+      shop stacked on the right. Uses the width the panel already has instead of
+      running down the page.</p>
+      <div class="screen cv">
+        <div class="scr-t">{{FURROW_ICON}}<b>The Furrow</b>
+          <span class="tok"><svg><use href="#s-token"/></svg>184 tokens</span></div>
+        {{D_HERO}}
+        <div class="d2">
+          <div>
+            <div class="g-lab" style="margin-top:0"><span>Quests</span><span class="rt">One skip left</span></div>
+            {{QUESTS}}
+            <div class="g-lab"><span>Shop</span><span class="rt">184 tokens</span></div>
+            <div class="s-grid" style="grid-template-columns:repeat(2,minmax(0,1fr))">{{SHOP2}}</div>
+          </div>
+          <div>
+            <div class="g-lab" style="margin-top:0"><span>Ranks</span><span class="rt">Reputation only</span></div>
+            {{RANKS}}
+          </div>
+        </div>
+      </div>
+      <div class="verdict"><span class="vp">the whole guild fits on one screen</span>
+        <span class="vp">still nothing hidden</span>
+        <span class="vm">breaks to one column under 900px</span>
+        <span class="vm">the rank list is a lot of text to park on the right</span></div>
+    </div>
+
+    <div class="opt">
+      <div class="ohead"><span class="oletter">C</span><h3>Sub-tabs</h3>
+        <span class="tag">panel 435px &middot; two parts hidden</span></div>
+      <p class="owhy">Quests, Ranks and Shop as three tabs. The shortest by a long way,
+      and the only one where you have to click to find out what your next rank gives
+      you.</p>
+      <div class="screen cv">
+        <div class="scr-t">{{FURROW_ICON}}<b>The Furrow</b>
+          <span class="tok"><svg><use href="#s-token"/></svg>184 tokens</span></div>
+        {{D_HERO}}
+        <div class="d-tabs"><span class="on">Quests</span><span>Ranks</span><span>Shop</span></div>
+        {{QUESTS}}
+      </div>
+      <div class="verdict"><span class="vp">534px shorter than stacking everything</span>
+        <span class="vp">the guild page never scrolls</span>
+        <span class="vm">your next rank is behind a click, so you forget it exists</span>
+        <span class="vm">a third level of tabs inside a tab inside the game</span></div>
+    </div>
+  </section>
+
+  <section id="ask">
+    <div class="shead"><div class="kicker">Pick two</div><h2>Decisions</h2></div>
+    <div class="ask">
+      <div><b>My pick: C for the list, B for the guild page.</b>
+        <span>Rows read best and show all ten without scrolling, and two columns fit a
+        whole guild on one screen. If you want the atmosphere, D is C with a painting
+        on top &mdash; you can add it later without redrawing anything.</span></div>
+      <div><b>Is one hall painting enough, or does each guild want its own?</b>
+        <span>One painting for all ten reads a bit generic. Ten paintings is about
+        <b>250KB</b> more and a much better screen. The emblems already give each guild
+        an identity, so this is a nice-to-have rather than a must.</span></div>
+      <div><b>Are the emblems good enough to ship?</b>
+        <span>They are generated, so they are close but not perfect &mdash; a couple
+        read better than others at 30px. If A or C wins, the small size hides most of
+        it. If B wins, the art is on screen at 104px and the weaker ones want
+        redrawing.</span></div>
+      <div><b>File size.</b>
+        <span>The game file is already 5.96&nbsp;MB and the desktop updater aborts a
+        download at six seconds, which needs about 8.4&nbsp;Mbps. {{TOTALKB}}KB of guild
+        art is not what breaks that, but it is worth knowing the budget is already
+        thin.</span></div>
+    </div>
+  </section>
+
+  <div class="foot">
+    Nothing here is built yet. Every panel is drawn in this page with the game's own
+    colours and fonts at the real panel width. The art was generated locally on
+    Z-Image-Turbo &mdash; see <code>_guildsimple/genart.js</code>.
+  </div>
+</div>

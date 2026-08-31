@@ -1,0 +1,229 @@
+<title>Guilds, But Small</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Public+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+
+<style>
+/* Fifth document in this review series. The others took their cast from their
+   subject — sea charts blue, soil green, glassware violet, the hearth warm. Guilds
+   are a book of names on a payroll, so this one is ledger ink: a cool blue-grey
+   paper that keeps the game's warm screenshots reading as objects on a desk rather
+   than as part of the page. */
+:root{
+  --ground:#eceff3; --surface:#ffffff; --sunk:#e0e5ec;
+  --rule:#c7ced9; --rule-hi:#a9b3c2;
+  --ink:#13171e; --body:#3b4350; --dim:#6a7484;
+  --brass:#7a5c1c; --ember:#a34a12;
+  --good:#3f6320; --bad:#93331a;
+  --frame-sh:0 2px 4px rgba(19,23,30,.10), 0 20px 44px rgba(19,23,30,.15);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#0e1116; --surface:#171b22; --sunk:#12161c;
+    --rule:#282e38; --rule-hi:#3a424f;
+    --ink:#e6eaf1; --body:#b0b8c5; --dim:#7d8697;
+    --brass:#c79b4e; --ember:#e0762f;
+    --good:#8fb84f; --bad:#d0674c;
+    --frame-sh:0 2px 4px rgba(0,0,0,.6), 0 20px 44px rgba(0,0,0,.5);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0e1116; --surface:#171b22; --sunk:#12161c;
+  --rule:#282e38; --rule-hi:#3a424f;
+  --ink:#e6eaf1; --body:#b0b8c5; --dim:#7d8697;
+  --brass:#c79b4e; --ember:#e0762f;
+  --good:#8fb84f; --bad:#d0674c;
+  --frame-sh:0 2px 4px rgba(0,0,0,.6), 0 20px 44px rgba(0,0,0,.5);
+}
+
+*{box-sizing:border-box}
+body{background:var(--ground);color:var(--body);margin:0;
+  font-family:'Public Sans',-apple-system,'Segoe UI',sans-serif;
+  font-size:15.5px;line-height:1.62;
+  font-variant-numeric:tabular-nums lining-nums;-webkit-font-smoothing:antialiased}
+.w{max-width:1180px;margin:0 auto;padding:0 26px}
+h1,h2,h3{font-family:'Fraunces','Iowan Old Style',Georgia,serif;color:var(--ink);
+  margin:0;text-wrap:balance;font-weight:600;letter-spacing:-.012em}
+p{margin:0}
+a{color:var(--ember)}
+:focus-visible{outline:2px solid var(--ember);outline-offset:2px;border-radius:2px}
+
+/* ── masthead ───────────────────────────────────────────────────────────── */
+.mast{padding:54px 0 34px}
+.eyebrow{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;
+  letter-spacing:.17em;text-transform:uppercase;color:var(--brass);margin-bottom:16px}
+.mast h1{font-size:clamp(33px,5.2vw,52px);line-height:1.03;max-width:16ch}
+.mast .lede{margin-top:20px;max-width:64ch;font-size:17px}
+.mast .lede b{color:var(--ink);font-weight:600}
+
+/* The glossary is the pitch. Three terms is the entire claim, so they get set as
+   a defined vocabulary rather than described in a sentence. */
+.gloss{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:1px;
+  background:var(--rule);border:1px solid var(--rule);border-radius:4px;
+  overflow:hidden;margin-top:30px}
+.gloss div{background:var(--surface);padding:17px 19px}
+.gloss dt{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.15em;
+  text-transform:uppercase;color:var(--ember);margin-bottom:8px}
+.gloss dd{margin:0;font-size:14px;color:var(--body);line-height:1.55}
+.gloss dd b{color:var(--ink);font-weight:600}
+
+.cut{margin-top:24px;padding:15px 19px;background:var(--surface);
+  border:1px solid var(--rule);border-left:3px solid var(--bad);border-radius:3px;
+  font-size:14px;max-width:78ch;color:var(--dim)}
+.cut b{color:var(--ink)}
+
+hr.rule{border:0;border-top:1px solid var(--rule);margin:0}
+
+/* ── a direction ────────────────────────────────────────────────────────── */
+section{padding:46px 0;border-top:1px solid var(--rule)}
+.shead{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:6px}
+.letter{font-family:'Fraunces',Georgia,serif;font-size:30px;line-height:1;
+  color:var(--ember);font-weight:700;flex:0 0 auto}
+.shead h2{font-size:27px;line-height:1.15}
+.shead .size{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:12px;
+  color:var(--dim);white-space:nowrap}
+.tag{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--brass);margin-bottom:16px}
+.why{font-size:15.5px;max-width:70ch}
+
+/* The chip row IS the comparison. Complexity is the axis these three differ on,
+   so the count of new words a player must learn is stated, not implied. */
+.adds{margin-top:18px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--dim)}
+.adds .lbl{letter-spacing:.09em;text-transform:uppercase;font-size:10.5px}
+.adds b{color:var(--ink);background:var(--sunk);border:1px solid var(--rule);
+  border-radius:3px;padding:2px 9px;font-weight:500}
+.adds b.new{color:var(--ember);border-color:var(--ember);background:transparent}
+
+.shot{margin-top:20px;border:1px solid var(--rule-hi);border-radius:8px;
+  overflow:hidden;box-shadow:var(--frame-sh);background:#0d0a07;line-height:0}
+.shot img{width:100%;height:auto;display:block}
+.note{margin-top:15px;font-size:14px;color:var(--dim);max-width:74ch}
+.note b{color:var(--ink);font-weight:600}
+
+/* ── decisions ──────────────────────────────────────────────────────────── */
+.ask{display:grid;gap:1px;background:var(--rule);border:1px solid var(--rule);
+  border-radius:4px;overflow:hidden;margin-top:22px}
+.ask>div{background:var(--surface);padding:17px 21px}
+.ask b{color:var(--ink);display:block;margin-bottom:4px;font-weight:600;font-size:15px}
+.ask span{font-size:14px;color:var(--dim)}
+.foot{padding:32px 0 60px;font-size:13px;color:var(--dim);border-top:1px solid var(--rule)}
+.foot code{font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--body)}
+
+@media (max-width:640px){
+  .mast{padding:36px 0 26px}
+  .shead .size{margin-left:0;flex-basis:100%}
+}
+</style>
+
+<div class="w">
+  <div class="mast">
+    <div class="eyebrow">Cindervale Idle &middot; design review &middot; build 0.9.122.9</div>
+    <h1>Guilds, but small</h1>
+    <p class="lede">Three nouns instead of thirty. Everything below is built out of
+    the same three terms, and every per-hour number on screen is real &mdash; a
+    helper&rsquo;s output is computed from <b>your own best unlocked action</b> in that
+    skill, so it scales with your level, your tools and your tree without a second
+    balance table to keep in sync.</p>
+
+    <dl class="gloss">
+      <div><dt>Helper</dt><dd>Someone who works <b>one gathering skill</b> for you at
+        a quarter of your own rate, while you do something else.</dd></div>
+      <div><dt>Slot</dt><dd>Somewhere to put a helper. You get more as your
+        <b>total level</b> climbs &mdash; nothing to shop for.</dd></div>
+      <div><dt>Gold</dt><dd>What a helper costs to hire. <b>No second currency</b>,
+        no reputation to bank and spend.</dd></div>
+    </dl>
+
+    <p class="cut"><b>What came out of the earlier passes:</b> seven guilds, a contract
+    board, rank-up events, guild shops, a Patron slot, your own Lodge, standing and
+    rivalries, guild expeditions, masterwork projects, reputation as a spendable
+    currency, and item quality. None of it is here.</p>
+  </div>
+
+  <section>
+    <div class="tag">The smallest thing that still works</div>
+    <div class="shead"><span class="letter">A</span><h2>The Hiring Hall</h2>
+      <span class="size">panel 580px</span></div>
+    <p class="why">One screen. A row of slots, one helper each, each working one
+    gathering skill while you do something else. Hire with gold, change their skill
+    with a dropdown, dismiss them. That is the entire feature &mdash; there is no
+    second screen and nothing to come back and manage.</p>
+    <div class="adds"><span class="lbl">New words to learn</span>
+      <b>helper</b> <b>slot</b></div>
+    <div class="shot"><img alt="The Hiring Hall: three helper cards showing Bram Hollow on Woodcutting at 84 Shadowwood Log an hour, Sera Vance on Mining at 80 Cobalt Ore an hour, and Odd Tomlin on Fishing at 67 Raw Shark an hour, plus two empty slots with Hire buttons." src="{{IMG_A}}"></div>
+    <p class="note">If guilds never get past this, it is still a <b>complete thing</b>
+    rather than half of something. The two below are each this plus one idea.</p>
+  </section>
+
+  <section>
+    <div class="tag">A, plus a reason to come back</div>
+    <div class="shead"><span class="letter">C</span><h2>Helpers and One Job</h2>
+      <span class="size">panel 690px</span></div>
+    <p class="why">A single standing request &mdash; not a board. One job at a time,
+    chosen for you, refreshing weekly. Your helpers&rsquo; output counts toward it on its
+    own, so it is something to <i>check</i> rather than something to manage. A board
+    would be a list of things to compare, and comparing is a decision, which is the
+    complexity this is trying not to have.</p>
+    <div class="adds"><span class="lbl">New words to learn</span>
+      <b>helper</b> <b>slot</b> <b class="new">job</b></div>
+    <div class="shot"><img alt="Helpers and One Job: a banner reading This week, 500 Oak Logs, paying 45,000 gold and a level for one helper, with 410 of 500 delivered at 82 percent, above the same three helper cards." src="{{IMG_C}}"></div>
+    <p class="note">The reward is gold and the occasional helper level, so it feeds
+    the system already here instead of introducing something new to track. Only
+    <b>110px taller</b> than A.</p>
+  </section>
+
+  <section>
+    <div class="tag">A, plus what makes them guilds</div>
+    <div class="shead"><span class="letter">B</span><h2>Three Guilds</h2>
+      <span class="size">panel 1046px</span></div>
+    <p class="why">The one thing that makes these guilds rather than a staffing
+    agency: which guild a helper belongs to. Three guilds, each owning a group of
+    skills, each with a rank that rises on its own as its helpers work. Every rank
+    gives that guild&rsquo;s skills a small bonus &mdash; <b>yours as well as
+    theirs</b>, which is what stops it being a number that only helps the helpers.</p>
+    <div class="adds"><span class="lbl">New words to learn</span>
+      <b>helper</b> <b>slot</b> <b class="new">guild</b> <b class="new">rank</b></div>
+    <div class="shot"><img alt="Three Guilds: the Gatherers Guild at rank 3 with two helpers and an empty slot, the Fieldhands Guild at rank 1 with one helper, and the locked Hearthwardens needing Cooking level 40." src="{{IMG_B}}"></div>
+    <p class="note">Rank is a bar that fills itself &mdash; nothing to spend, nothing
+    to choose. The cost is height: <b>1046px against A&rsquo;s 580px</b>, and three
+    headings the other two do not pay for.</p>
+  </section>
+
+  <section>
+    <h2 style="font-size:25px;margin-bottom:6px">What I need from you</h2>
+    <p style="font-size:14.5px;color:var(--dim);max-width:70ch">Four questions. The
+    first is the only one that blocks building.</p>
+    <div class="ask">
+      <div><b>A, C or B &mdash; and they stack.</b>
+        <span>C and B are each A plus one idea, so shipping A first and adding one
+        later is a real path rather than a fallback. My pick is <b style="display:inline;color:var(--ink)">A now,
+        C soon</b>: the weekly job gives the system a heartbeat for very little
+        surface area, where B&rsquo;s three headings cost 460px for a bonus you never
+        interact with.</span></div>
+      <div><b>Gathering only, or crafting too?</b>
+        <span>Helpers are limited to Woodcutting, Mining, Fishing, Foraging and
+        Farming on purpose &mdash; a helper who can run Smithing needs an ingredient
+        supply, and that is a second system with its own screen. Gatherers just
+        produce.</span></div>
+      <div><b>Do helpers work while the game is closed?</b>
+        <span>Offline already exists as its own skill. Helpers running offline would
+        either compete with it or stack on top of it, and that is a balance question
+        rather than a layout one.</span></div>
+      <div><b>Where does it live?</b>
+        <span>Its own button in the top bar beside Shop and Mastery. It is not a
+        skill, so it does not belong in the left rail. The shots show it in the centre
+        panel with the real rail and satchel either side, which is where it would
+        sit.</span></div>
+    </div>
+  </section>
+
+  <div class="foot">
+    Not shipped code. Concepts live in <code>_guildsimple/concept-{a,b,c}.js</code>,
+    injected into the live <code>cindervale.html</code> and shot at 1920&times;1080 with
+    an Electron user-agent so the frame is the full build rather than the demo. Helper
+    output comes from the game&rsquo;s own <code>ratesFor()</code> against the demo
+    character&rsquo;s real levels, so every number in the screenshots is one the game
+    would actually produce.
+  </div>
+</div>
