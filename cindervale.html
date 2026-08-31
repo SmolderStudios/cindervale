@@ -7016,7 +7016,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.121.7">v0.9.121</div>
+  <div class="mm-ver" data-build="0.9.121.8">v0.9.121</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -7749,6 +7749,31 @@ const OFFLINE_RATE     = 0.30;              // 1.0.11 nerf: 40% -> 30% base offl
    more per hour. Tuned separately for that reason. */
 const OFFLINE_COMBAT_RATE = 0.20;
 const OFFLINE_XP_RATE  = 90;                // 1.0.11 nerf: 120 -> 90 offline-skill xp/min (base)
+/* Global XP faucet (0.9.121.8). Every XP source in the game is scaled by this, so
+   the whole economy moves from one number. Guilds landed on top of trees, potions,
+   gear, sets, gems and enchantments — all of which add into one pool — and the
+   late-game stack had run away.
+
+   Applied at the FIVE faucets, which is every place XP enters a save:
+     mods().xpMult      all 12 skilling skills, plus guild quest + guild shop XP,
+                        which derive their payout from the player's own xp/hr
+     grantCombatXp()    attack/strength/defence/hitpoints, live and offline, raids
+     grantSlayerXp()    slayer task and bounty XP
+     sailGrantXp()      voyages and commissions
+     offlineMods()      the Offline passive skill
+   Plus two spots that quote an XP number without going through a faucet: the
+   farming branch of gdQuestXp (raw crop.xp, no xpMult) and the sailing commission
+   preview (reads sailCommReward directly, before sailGrantXp cuts it).
+
+   It scales the FAUCET, never the curve. Touching xpToNext/XP_CUM instead would
+   silently demote characters parked under a level boundary — see the warning on
+   XP_CUM; there is no migration path for a second curve change.
+
+   Deliberately NOT applied to: CHAR_TYPES[*].xpMult (that dial is rendered as a
+   signed percentage on the destiny screen, so scaling it would advertise "XP -20%"
+   on the balanced path), the offline all-skill bonus (a percentage of banked XP, so
+   it already follows), or any "+N% XP" source string. */
+const XP_SCALE = 0.80;
 /* Renamed for the Cindervale reset (0.9.14). This is a hard save wipe by design:
    nothing reads the old 'embervale_save_v2' keys any more, so every character from
    the Embervale era is abandoned in localStorage rather than migrated. Authorised
@@ -17619,7 +17644,7 @@ function offlineMods(){
   let capHours = 24 + r('of_cap')*2;
   if(r('of_master2')>0) capHours = Math.max(capHours, 48);
   if(r('of_gm_cap')>0)  capHours = Math.max(capHours, 60);
-  const xpRate    = OFFLINE_XP_RATE * (1 + r('of_xp')*0.08 + r('of_gm_xp')*0.12);
+  const xpRate    = OFFLINE_XP_RATE * (1 + r('of_xp')*0.08 + r('of_gm_xp')*0.12) * XP_SCALE;
   const allSkillXp= r('of_multi')*0.02;
   const lootBonus = r('of_loot')*0.08;
   const dualSkill = r('of_master3')>0;
@@ -18769,7 +18794,7 @@ function mods(skill){
                   + classYieldBonus()                    // Artisan class — bonus gather yield
                   + gearBonus(skill,'doubleYield')       // T6 tools — first gear source of yield
                   + activeEffectBonus('doubleChance')):0,
-    xpMult:  (1 + xpAdditive + gb.xp) * xp2x * charTypeXpMult() * (1 + classSkillXpBonus()),
+    xpMult:  (1 + xpAdditive + gb.xp) * xp2x * charTypeXpMult() * (1 + classSkillXpBonus()) * XP_SCALE,
     /* Gear term added for the T6 tools — until then no tool could affect anything
        but speed, which is why the tier had nothing left to give. Gathering skills
        consume nothing, so preserve stays 0 for them. */
@@ -22182,7 +22207,9 @@ function gdQuestXp(g,q){
      roughly S.mins of real time once a patch is growing. */
   if(skill==='farming'){
     let bx=0; for(const c of acts) if((c.xp||0)>bx) bx=c.xp;
-    return Math.max(1,Math.round(bx*S.mins));
+    /* XP_SCALE by hand: this branch never touches mods().xpMult, so without it the
+       Furrow's quests would keep their old value while every other guild's fell. */
+    return Math.max(1,Math.round(bx*S.mins*XP_SCALE));
   }
   let best=0;
   for(const a of acts){ const r=ratesFor(a,skill); if(r.xph>best) best=r.xph; }
@@ -23732,7 +23759,11 @@ function renderStats(){
   const treeXpPct=+((skill==='woodcutting'?r(p+'_xp')*5:skill==='firemaking'?r(p+'_xp')*1.5:r(p+'_xp')*3)+(r(p+'_gm_xp')*(skill==='firemaking'?2:4))).toFixed(1);
   const master3Xp=skill==='firemaking'?(r(p+'_master3')?50:0):(r(p+'_master3')?100:0);
   const jewXp=+(jewelryBonus('xpBoost')*100).toFixed(1);
-  const totalXpMult=m.xpMult;
+  /* Divide XP_SCALE back out. This row reads "1.00x" for a fresh character and its
+     tooltip itemises "Base 1.00x" plus the player's bonuses; leaving the global
+     faucet in would show "0.80x" over a breakdown that cannot account for it. Every
+     other consumer of m.xpMult produces an XP amount, where the cut belongs. */
+  const totalXpMult=m.xpMult/XP_SCALE;
 
   const doubleChance=IS_G?+(m.double*100).toFixed(0):0;
   const preserveChance=!IS_G?+(m.preserve*100).toFixed(0):0;
@@ -27004,6 +27035,7 @@ function buySlayerPerk(id){
 function grantSlayerXp(amt){
   if(!amt||amt<=0) return;
   amt*=(1+slayerPerkLevel('scholar')*0.08);
+  amt*=XP_SCALE;                          // global XP faucet (0.9.121.8)
   amt=Math.max(1, Math.round(amt*((typeof charTypeXpMult==='function')?charTypeXpMult():1)));
   const before=slayerLevel();
   state.slayer.xp=(state.slayer.xp||0)+amt;
@@ -31522,6 +31554,7 @@ function grantCombatXp(stat,amount){
   amount=amount*charTypeXpMult();
   // Combat Mastery XP nodes (Iron Discipline/Veteran/War Banner) — always-on multiplier. (1.0.101)
   if(typeof cmastBonuses==='function'){ const _xm=cmastBonuses().combatXpMult||0; if(_xm>0) amount*=(1+_xm); }
+  amount*=XP_SCALE;                       // global XP faucet (0.9.121.8)
   amount=Math.max(1, Math.round(amount));
   if(!state.combatXp) state.combatXp={attack:0,strength:0,defence:0,hitpoints:0};
   const beforeStat=cmbLvl(stat);
@@ -34222,7 +34255,7 @@ function sailSetDamaged(slot,val){ if((slot|0)===1) state.sail.damaged2=!!val; e
 
    Returns what was actually granted, which is what the return card reports. */
 function sailGrantXp(xp){
-  xp=Math.max(0, Math.round(xp||0));
+  xp=Math.max(0, Math.round((xp||0)*XP_SCALE));   // global XP faucet (0.9.121.8)
   const _demo = (typeof IS_DEMO!=='undefined' && IS_DEMO);
   const _sailCap = _demo ? Math.min(XP_CAP, demoXpCap()) : XP_CAP;
   const _sailBefore = state.sail.xp||0;
@@ -36836,7 +36869,7 @@ function renderSail(){
         +'<div class="sl-cbar"><i style="width:'+pc+'%"></i></div>'
         +'<div class="st"><span>'+Math.min(c.prog,c.need).toLocaleString()+' of '+c.need.toLocaleString()+'</span>'
         +'<span class="pay">pays '+rw.gold.toLocaleString()+'g</span>'
-        +'<span class="pay">'+rw.xp.toLocaleString()+' Sailing xp</span></div></div>'
+        +'<span class="pay">'+Math.round(rw.xp*XP_SCALE).toLocaleString()+' Sailing xp</span></div></div>'
         +(done?'<button class="sl-btn sm" data-slclaim="'+ci+'">Claim</button>'
               :'<span class="sl-chip mut">in progress</span>')
         +'</div>';
