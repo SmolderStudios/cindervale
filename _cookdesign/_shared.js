@@ -92,7 +92,9 @@ window.CK = (function(){
     return '';
   }
   function buffPill(f){
-    return f.buff ? '<span class="ck-buff">'+f.buff+' &middot; '+f.buffDur+'s</span>' : '';
+    /* Duration in its own <s> so a dense layout can drop it without dropping the
+       buff itself — the buff is why you cook the dish, the 30s is a detail. */
+    return f.buff ? '<span class="ck-buff">'+f.buff+'<s> &middot; '+f.buffDur+'s</s></span>' : '';
   }
 
   /* ── THE CARD ──────────────────────────────────────────────────────────────
@@ -181,6 +183,7 @@ window.CK = (function(){
   '  text-transform:uppercase;color:#8a7657;border-radius:3px;padding:1px 5px;background:#0c0704;',
   '  box-shadow:inset 0 1px 2px rgba(0,0,0,.7),0 1px 0 rgba(214,170,96,.08);white-space:nowrap}',
   '.ck-kind.regen{color:#7ec8a0}',
+  '.ck-buff s{text-decoration:none}',
   '.ck-buff{font-family:var(--num);font-size:calc(10px*var(--tscale));letter-spacing:.06em;',
   '  color:#e8b45c;border-radius:3px;padding:1px 5px;background:#221604;white-space:nowrap;',
   '  box-shadow:inset 0 1px 2px rgba(0,0,0,.7),0 0 0 1px rgba(224,150,60,.28)}',

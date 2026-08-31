@@ -42,8 +42,20 @@ window.__cook=function(opt){
     demonhide:0, brimstone:0,
     pine_log:640, oak_log:410, ironbark_log:180, ember_log:92, frost_log:40,
     shadow_log:11, ancient_log:3,
-    cooked_trout:64, cooked_tuna:22, cooked_salmon:9, wolf_jerky:15, bone_stew:6
+    cooked_trout:64, cooked_tuna:22, cooked_salmon:9, wolf_jerky:15, bone_stew:6,
+    gem_dust:2400, cut_sapphire:6, cut_ruby:4, cut_emerald:3, cut_diamond:2,
+    gem_sanguine:5, gem_verdant:4, gem_azure:3, gem_topaz:6, gem_onyx:2
   };
+  ['sapphire_ring','ruby_ring','emerald_amulet','ruby_amulet','diamond_pendant',
+   'gold_ring','silver_ring','pearl_band','sapphire_amulet'].forEach(function(id){
+    if(ITEMS[id]) state.items[id]=(state.items[id]||0)+1;
+  });
+  if(opt.lean){
+    ['gnawed_bone','rat_tail','ratskin','tanned_hide','bone_charm','ancient_bone',
+     'rib_plate','wolf_pelt','frostfur','ogre_hide','ogre_tusk','troll_hide',
+     'troll_blood','gull_egg'].forEach(function(k){ delete state.items[k]; });
+    state.items.rock_salt=4;
+  }
   for(var id in ITEMS) state.discovered[id]=1;
   // A lit fire with a real mixed load
   var fs_=opt.fire||'burning';
@@ -60,6 +72,8 @@ window.__cook=function(opt){
    'mmNameModal','mmImportModal','mmExportModal','fuelModal'].forEach(function(i){
     var e=document.getElementById(i); if(e){e.classList.add('mm-hidden');e.classList.add('hidden');}
   });
+  // Enchant and Socket only surface while Jeweler is the selected skill.
+  if(opt.view){ if(opt.view==='enchant'||opt.view==='socket') selectedSkill='jeweler'; viewTab=opt.view; }
   renderAll();
   if(opt.run){ try{ setAction('cooking','co5'); }catch(e){} renderAll(); }
   return true;
@@ -74,9 +88,12 @@ window.__cook=function(opt){
   const jobs=[{id:'now',inject:''}].concat(concepts.map(c=>{
     const st=c.indexOf(':')>0?c.split(':'):[c,'burning'];
     c=st[0];
+    if(c==='view'){ return {id:'view-'+st[1],view:st[1],inject:''}; }
+    const BMODE={grid3:1,grid4:1,filtered:1,lean:1,leanfilt:1,both:1,leanboth:1};
+    const bmode=BMODE[st[1]]?st[1]:null;
     const f=path.join(__dirname,'concept-'+c+'.js');
     const sh=fs.readFileSync(path.join(__dirname,'fire-plates.js'),'utf8')+String.fromCharCode(10)+fs.readFileSync(path.join(__dirname,'_shared.js'),'utf8');
-    return {id:st[1]==='burning'?c:c+'-'+st[1],fire:st[1],inject:'<'+'script>'+sh+'</'+'script>'+'<'+'script>\n'+fs.readFileSync(f,'utf8')+'\n</script>\n'};
+    return {id:st[1]==='burning'?c:c+'-'+st[1],fire:bmode?'burning':st[1],bmode:bmode,inject:'<'+'script>'+sh+'</'+'script>'+'<'+'script>\n'+fs.readFileSync(f,'utf8')+'\n</script>\n'};
   }));
 
   const b=await puppeteer.launch({executablePath:CHROME,headless:true,
@@ -98,7 +115,11 @@ window.__cook=function(opt){
     fs.writeFileSync(tmp,html);
     await p.goto('file:///'+tmp.split(String.fromCharCode(92)).join('/')+'?cvdev=1',{waitUntil:'load'});
     await new Promise(r=>setTimeout(r,2600));
-    await p.evaluate(fire=>window.__cook({fire:fire}),job.fire||'burning');
+    if(job.bmode) await p.evaluate(m=>{
+      window._ckB = (m==='lean')?'grid3':(m==='leanfilt')?'filtered':(m==='both'||m==='leanboth')?'grid4filtered':m;
+    },job.bmode);
+    await p.evaluate(o=>window.__cook(o),{fire:job.fire||'burning',view:job.view||null,
+      lean:(job.bmode==='lean'||job.bmode==='leanfilt'||job.bmode==='leanboth')});
     await new Promise(r=>setTimeout(r,900));
     const m=await p.evaluate(()=>{
       const g=document.getElementById('activityGrid');

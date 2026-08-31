@@ -79,7 +79,48 @@
   '  color:var(--trim);font-family:var(--num);font-size:calc(10.5px*var(--tscale));padding:2px 6px;',
   '  cursor:var(--cur-pointer);flex:none}',
   '.ck-b .log .add:hover{border-color:var(--trim);color:var(--gold-hi)}',
-  '.ck-b .log .add:disabled{opacity:.3;cursor:var(--cur-na)}'
+  '.ck-b .log .add:disabled{opacity:.3;cursor:var(--cur-na)}',
+
+  /* ── grid4: same card, 108px less of it ── */
+  '#activityGrid.ck-b4{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}',
+  '@media(max-width:1240px){#activityGrid.ck-b4{grid-template-columns:repeat(3,minmax(0,1fr))}}',
+  '@media(max-width:1000px){#activityGrid.ck-b4{grid-template-columns:repeat(2,minmax(0,1fr))}}',
+  '.ck-b4 .ck-card{padding:7px 8px 7px 12px}',
+  '.ck-b4 .ck-card .name{font-size:calc(14.5px*var(--tscale))}',
+  '.ck-b4 .ck-card .act-icon{width:34px;height:34px}',
+  '.ck-b4 .ck-card .act-icon svg{width:26px;height:26px}',
+  '.ck-b4 .ck-hp{min-width:44px;padding-left:5px}',
+  '.ck-b4 .ck-hp .v{font-size:calc(22px*var(--tscale))}',
+  '.ck-b4 .ck-hp .t{font-size:calc(10px*var(--tscale))}',
+  '.ck-b4 .ck-card .ck-row{flex-wrap:nowrap;overflow:hidden}',
+  /* Three dishes carry a buff, and at four-up chip + chip + rate is ~15px wider
+     than the card. Letting those rows wrap cost 80px of panel; clipping them lost
+     the buff. Cheapest cut instead: INSTANT (the default, 16 of 19) and the buff
+     DURATION go, the buff itself stays. '+2 STR' is why you cook Ogre Roast. */
+  '.ck-b4 .ck-card .ck-row:has(.ck-buff) .ck-kind{display:none}',
+  '.ck-b4 .ck-buff s{display:none}',
+  '.ck-b4 .ck-card .ck-rate{font-size:calc(9.5px*var(--tscale))}',
+  '.ck-b4 .ck-kind{font-size:calc(9px*var(--tscale));padding:1px 4px}',
+  '.ck-b4 .ck-buff{font-size:calc(9px*var(--tscale));padding:1px 4px}',
+  '.ck-b4 .ck-card .needs{gap:3px 4px}',
+  '.ck-b4 .ck-card .needs .mat{font-size:calc(10.5px*var(--tscale));padding:1px 5px}',
+  '.ck-b4 .ck-card .needs .mat svg{width:15px;height:15px}',
+  '.ck-b4 .ck-card .needs .runs{font-size:calc(10.5px*var(--tscale))}',
+
+  /* ── filtered: the strip ── */
+  '.ck-b .ck-foot{grid-column:1/-1}',
+  '.ck-b .ck-chips{display:flex;flex-wrap:wrap;gap:6px}',
+  '.ck-b .ck-chip{display:inline-flex;align-items:center;gap:7px;padding:5px 9px;border-radius:6px;',
+  '  background:#160d07;box-shadow:inset 0 1px 2px rgba(0,0,0,.7);min-width:0}',
+  '.ck-b .ck-chip>.ev-icon{width:18px;height:18px;flex:none}',
+  '.ck-b .ck-chip .cn{font-family:var(--num);font-size:calc(11.5px*var(--tscale));color:#a08a64;white-space:nowrap}',
+  '.ck-b .ck-chip .cn em{font-style:normal;color:#7f9e63}',
+  '.ck-b .ck-chip .cw{font-family:var(--num);font-size:calc(10.5px*var(--tscale));color:#c07a62;white-space:nowrap}',
+  '.ck-b .ck-chip.lock .cw{color:#7a6446}',
+  '.ck-b .ck-all{margin-top:11px;background:transparent;border:1px dashed var(--trim-d);',
+  '  border-radius:6px;color:#94805f;font-family:var(--num);',
+  '  font-size:calc(11.5px*var(--tscale));padding:6px 12px;cursor:var(--cur-pointer);width:100%}',
+  '.ck-b .ck-all:hover{border-color:var(--trim);color:var(--gold-hi)}'
   ].join('\n');
   document.head.appendChild(s);
 
@@ -148,6 +189,66 @@
       });
     });
 
-    R.list.forEach(function(r){ grid.appendChild(CK.card(r)); });
+    /* ── the list ───────────────────────────────────────────────────────────
+       Nineteen chunky cards is a lot of panel however you slice it. Two levers,
+       set by window._ckB:
+
+         'grid3'    the original — three up, all nineteen. 7 rows.
+         'grid4'    density — four up, all nineteen, nothing hidden. 5 rows.
+                    Paid for with card width: the name drops 19.5px -> 17.3px and
+                    the hero column narrows. Measured against "Bone Marrow Stew".
+         'filtered' filtering — a full card is a thing you can CLICK, and a recipe
+                    you have no ingredients for is not clickable. Those become one
+                    line each naming the errand ("needs Wyrmscale + Cinder Gland"),
+                    which is a plan; a dimmed card is not. "Show all" restores them.
+    */
+    var mode = window._ckB || 'grid3';
+    if(mode.indexOf('grid4')===0) grid.classList.add('ck-b4');
+    if(mode==='grid4filtered') mode='filtered';
+
+    if(mode!=='filtered'){
+      R.list.forEach(function(r){ grid.appendChild(CK.card(r)); });
+      return;
+    }
+
+    var showAll=!!window._ckShowAll;
+    var can  = R.list.filter(function(r){ return showAll || (!r.locked && r.mat>0); });
+    var cant = showAll ? [] : R.list.filter(function(r){ return r.locked || r.mat<=0; });
+    can.sort(function(a,b){ return b.food.hp-a.food.hp; });
+
+    var lab=document.createElement('div');
+    lab.className='ck-lab';
+    lab.innerHTML='<span>'+(showAll?'Every dish':'Ready to cook')+'</span>'
+      +'<span class="rt">'+can.length+' of '+R.list.length
+      +(showAll?' recipes':' &middot; best heal first')+'</span>';
+    grid.appendChild(lab);
+    can.forEach(function(r){ grid.appendChild(CK.card(r)); });
+
+    var foot=document.createElement('div');
+    foot.className='ck-foot';
+    var html='';
+    if(cant.length){
+      var chips='';
+      cant.sort(function(a,b){ return a.need-b.need; }).forEach(function(r){
+        var out=Object.keys(r.act.out)[0];
+        var miss=Object.keys(r.act.inp||{}).filter(function(id){
+          return (state.items[id]||0) < r.act.inp[id];
+        }).map(function(id){ return (ITEMS[id]&&ITEMS[id].name)||id; });
+        chips+='<span class="ck-chip'+(r.locked?' lock':'')+'">'+iconHTML(out)
+          +'<span class="cn">'+(ITEMS[out]?ITEMS[out].name:r.act.name)
+          +' <em>'+r.food.hp+' HP</em></span>'
+          +'<span class="cw">'+(r.locked?('Lv '+r.need):('needs '+miss.join(' + ')))+'</span></span>';
+      });
+      html+='<div class="ck-lab"><span>Not yet</span><span class="rt">'
+        +cant.length+' waiting on a level or an ingredient</span></div>'
+        +'<div class="ck-chips">'+chips+'</div>';
+    }
+    html+='<button class="ck-all" type="button">'
+      +(showAll?'Hide what I cannot cook':'Show all '+R.list.length+' recipes')+'</button>';
+    foot.innerHTML=html;
+    foot.querySelector('.ck-all').addEventListener('click',function(){
+      window._ckShowAll=!showAll; renderActivities();
+    });
+    grid.appendChild(foot);
   };
 })();
