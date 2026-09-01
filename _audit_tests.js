@@ -1657,10 +1657,20 @@ setTimeout(() => {
          art.notimg.slice(0, 8).join(' '));
       ok('no art entry names a node that no longer exists', art.stale.length === 0,
          art.stale.slice(0, 8).join(' '));
-      /* Size is the live ship constraint — the wrapper aborts the whole fetch at 6s.
-         Fail loudly well before the file becomes undownloadable on a slow line. */
+      /* Size WAS the hard ship constraint: the wrapper armed a flat 6s abort at
+         request start and fired it regardless of progress, so the whole file had to
+         land inside six seconds or the player silently fell back to cache and
+         stopped updating. That is fixed — main.js now uses a 15s IDLE timeout that
+         resets on every chunk, with a 120s absolute deadline, so a slow but
+         progressing download completes.
+
+         The ceiling stays, raised to 12 MB, because it is still worth failing on.
+         A wrapper this size is a real download for anyone on a poor line, and an
+         accidental doubling (an un-shrunk art pass, a stray base64 blob) should
+         stop a commit rather than ship. Raise it again only alongside a wrapper
+         change, never to get a build out. */
       const mb = fs.statSync(path.join(ROOT, process.env.CV_FILE || 'cindervale.html')).size / 1048576;
-      ok('file stays under the 7 MB wrapper-fetch ceiling', mb < 7, mb.toFixed(2) + ' MB');
+      ok('file stays under the 12 MB wrapper-fetch ceiling', mb < 12, mb.toFixed(2) + ' MB');
     }
 
     /* Hit splats (v0.9.137). `inset-inline` is the logical shorthand for left/right, so

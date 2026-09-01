@@ -91,7 +91,7 @@ const ENC = `async (uri, SIZE, Q) => {
   console.log(`${rows.length} icons at ${SIZE}px webp q${Q}`);
   console.log('  heaviest: ' + rows.slice(0, 5).map(r => r.id + ' ' + (r.bytes / 1024).toFixed(1) + 'K').join(', '));
   console.log('  mean ' + (total / rows.length / 1024).toFixed(1) + 'K, total ' + mb(total));
-  console.log('\nfile size impact (the wrapper aborts the whole fetch at 6s):');
+  console.log('\nfile size (Mbps = what it takes to pull the whole file in 6s):');
   console.log('  cindervale.html now   ' + mb(before) + '   needs ' + mbps(before) + ' Mbps');
   console.log('  with this pack        ' + mb(after) + '   needs ' + mbps(after) + ' Mbps');
   console.log('  added                 ' + mb(after - before) + '   (+' + (mbps(after) - mbps(before)).toFixed(1) + ' Mbps)' +
