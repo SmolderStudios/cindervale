@@ -3566,6 +3566,9 @@ body:not(.is-demo) .demo-only{display:none !important}
   border:1px solid #3f3124;border-radius:7px;padding:7px 10px;margin-bottom:6px}
 .sly-prow .sly-pn{font-size:calc(12px*var(--tscale));color:#e7dcc4}
 .sly-pips{display:inline-flex;gap:3px;flex:none}
+.sly-auto{display:inline-flex;align-items:center;gap:6px;margin-left:2px;
+  font-size:calc(12px*var(--tscale));color:var(--muted);cursor:var(--cur-pointer)}
+.sly-auto input{cursor:var(--cur-pointer)}
 .sly-pip{width:9px;height:9px;border-radius:2px;background:#2a1e1a}
 .sly-pip.on{background:var(--sly);box-shadow:0 0 5px #c0514966}
 .sly-blocked{font-size:calc(10.5px*var(--tscale));color:#7d6f60;line-height:1.4;margin-top:9px}
@@ -7019,7 +7022,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.121.10">v0.9.121</div>
+  <div class="mm-ver" data-build="0.9.121.11">v0.9.121</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -17186,6 +17189,7 @@ function normalizeState(){
   if(!state.cmast||typeof state.cmast!=='object'||Array.isArray(state.cmast)) state.cmast={};
   if(typeof state.cmastGranted!=='number'||state.cmastGranted<0) state.cmastGranted=0;
   if(typeof state.cmastShards!=='number'||state.cmastShards<0) state.cmastShards=0;
+  if(state.slayer && typeof state.slayer.auto!=='boolean') state.slayer.auto=false;
   if(!state.cmastMilestones||typeof state.cmastMilestones!=='object'||Array.isArray(state.cmastMilestones)) state.cmastMilestones={};
   if(!state.cmastBossKills||typeof state.cmastBossKills!=='object'||Array.isArray(state.cmastBossKills)) state.cmastBossKills={};
   /* Guilds (0.9.123). Also carries the one-time farmhand migration — see gdNormalize. */
@@ -27022,18 +27026,60 @@ function handleRaidFail(){
    Tasks target the EXISTING monster roster (45 foes across 9 zones), so bounties
    rotate you around the world instead of grinding one spot. */
 const SLAYER_MASTERS=[
-  {key:'novice', name:'Novice Slayer Master', minLvl:1,  size:[15,28], pts:4,  band:[1,42],  ic:'ui_scroll', blurb:'Rats, spiders, goblins, skeletons — starter bounties.'},
+  {key:'novice', name:'Novice Slayer Master', minLvl:1,  size:[15,28], pts:3,  band:[1,42],  ic:'ui_scroll', blurb:'Rats, spiders, goblins, skeletons — starter bounties.'},
   {key:'expert', name:'Expert Slayer Master', minLvl:35, size:[24,40], pts:9,  band:[18,75], ic:'ui_swords', blurb:'Wolves, ogres, undead. Bigger lists, better pay.'},
   {key:'master', name:'Slayer General',       minLvl:75, size:[34,52], pts:17, band:[50,99], ic:'ui_skull',  blurb:'Trolls, wyverns, demons — the deadliest bounties.'},
 ];
+/* Costs raised roughly 5x in 0.9.121.11. The old tree totalled 558 points and a
+   player earns ~8,576 on the way to slayer Lv 75 and ~11,592 to 99, so every perk
+   was maxed by around bounty 70 — slayer Lv 18, a quarter of the way to the Expert
+   master — and every point after that had nowhere to go.
+
+   The curve is deliberately steep rather than flat: rank 1 of everything is 90
+   points together, about eleven Novice bounties, so a new slayer feels the tree
+   immediately. Maxing it is now ~2,960, about a third of lifetime income to 75,
+   with the last rank of each perk as the real chase. By the Expert unlock at 35 a
+   player has earned 2,184, which buys most of the tree but not the top ranks.
+
+   Nothing is clawed back: already-bought ranks stay bought, and only the ranks
+   still ahead of a player cost more. */
 const SLAYER_PERKS=[
-  {id:'scholar',       name:'Bloodscholar', max:5, cost:[6,10,16,24,36], desc:'+8% Slayer XP per kill, per level.'},
-  {id:'warpath',       name:'Warpath',      max:5, cost:[6,10,16,24,36], desc:'+6% combat XP from on-task kills, per level.'},
-  {id:'skinner',       name:'Skinner',      max:5, cost:[8,14,22,32,46], desc:'+12% chance per level for a bonus drop from on-task kills.'},
-  {id:'bloodfrenzy',   name:'Bloodfrenzy',  max:5, cost:[8,14,22,32,46], desc:'+10% chance per level for an on-task kill to count double toward your bounty.'},
-  {id:'quartermaster', name:'Quartermaster',max:3, cost:[20,40,70],      desc:'+1 Slayer Point per completed bounty, per level.'},
+  {id:'scholar',       name:'Bloodscholar', max:5, cost:[10,25,60,140,320], desc:'+8% Slayer XP per kill, per level.'},
+  {id:'warpath',       name:'Warpath',      max:5, cost:[10,25,60,140,320], desc:'+6% combat XP from on-task kills, per level.'},
+  {id:'skinner',       name:'Skinner',      max:5, cost:[15,35,80,180,400], desc:'+12% chance per level for a bonus drop from on-task kills.'},
+  {id:'bloodfrenzy',   name:'Bloodfrenzy',  max:5, cost:[15,35,80,180,400], desc:'+10% chance per level for an on-task kill to count double toward your bounty.'},
+  {id:'quartermaster', name:'Quartermaster',max:3, cost:[40,110,280],       desc:'+1 Slayer Point per completed bounty, per level.'},
 ];
 const SLAYER_SKIP_COST=5, SLAYER_BLOCK_COST=12;
+
+/* ── Shard Cache (0.9.121.11) ───────────────────────────────────────────────────
+   The reward shop had 558 points of content in it, total, and nothing repeatable.
+   A player reported sitting on 1586 points at slayer Lv 32 with every perk maxed,
+   which the numbers confirm: the perks are a one-off purchase and bounties keep
+   paying forever. Points needed a sink with no ceiling.
+
+   These are the three drops that gate the T3/T4/T5 tool recipes, so they are
+   always wanted and are the scarcest thing a combat player farms. Prices are set
+   against the kills a drop actually costs at mid-table rates — beast sinew lands
+   around 1 in 20 kills, shade ember 1 in 75, voidheart 1 in 500 — times the
+   ~0.6 points a kill pays, plus a premium so farming is still the cheaper route
+   and this is the pity timer rather than the strategy. */
+const SLAYER_CACHE=[
+  {id:'beast_sinew', cost:20,  desc:'Gates the T3 tool recipes.'},
+  {id:'shade_ember', cost:60,  desc:'Gates the T4 tool recipes.'},
+  {id:'voidheart',   cost:250, desc:'Gates the T5 tool recipes.'},
+];
+function buySlayerCache(id){
+  const row=SLAYER_CACHE.find(r=>r.id===id); if(!row) return;
+  if((state.slayer.points||0)<row.cost){ toast(`Not enough Slayer Points (need ${row.cost}).`); return; }
+  /* Charge only if the item actually lands — grantItem returns 0 when the satchel
+     is full, and taking the points anyway is the satchel-full material loss the
+     audit suite already guards elsewhere. */
+  if(grantItem(id,1)<=0){ toast('No room in your satchel.'); return; }
+  state.slayer.points-=row.cost;
+  toast(`Bought ${ITEMS[id]?ITEMS[id].name:id} for ${row.cost} pts.`);
+  saveGame(); if(typeof renderCombat==='function') renderCombat();
+}
 // Slayer panel UI-only state (0.9.24). Deliberately NOT in `state` — these are
 // view toggles, not progress, so they must never touch the save format.
 let slyShopOpen=false, slyShopTab='perks';
@@ -27162,7 +27208,15 @@ function onSlayerKill(baseMon){
   }
   if(t.done>=t.need){
     const master=slayerMasterFor(t.master);
-    const pts=master.pts + slayerPerkLevel('quartermaster') + Math.min(6, Math.floor((state.slayer.streak||0)/2));
+    /* The streak bonus is a FRACTION of the master's base, not a flat +6 (0.9.121.11).
+       Flat adders inverted the reward: +3 quartermaster and +6 streak was +225% on
+       Novice's base of 4 and only +53% on the General's 17, so the easiest master
+       paid the most points per kill. XP already scales with monster difficulty —
+       points now do too. Measured before the change: Novice paid 101 slayer XP per
+       point, the General 2,896, which is why a Lv32 player could bank 2,350 points
+       against a 558 point shop. */
+    const streakMul=Math.min(0.5, (state.slayer.streak||0)*0.05);
+    const pts=master.pts + slayerPerkLevel('quartermaster') + Math.round(master.pts*streakMul);
     state.slayer.points+=pts;
     state.slayer.tasksDone=(state.slayer.tasksDone||0)+1;
     state.slayer.streak=(state.slayer.streak||0)+1;
@@ -27170,6 +27224,22 @@ function onSlayerKill(baseMon){
     cmbLog(`🗡 Slayer bounty complete! +${pts} Slayer Points (${state.slayer.streak} streak).`,'rare-win');
     if(typeof toast==='function') toast(`🗡 Bounty done — +${pts} Slayer Points!`);
     if(typeof logNotification==='function') logNotification('rare','🗡',`Completed a ${master.name} bounty.`);
+    /* Auto-continue (0.9.121.11). The arena already auto-fights one monster, so
+       without this every finished bounty needs a manual trip to the Slayer tab and
+       back — reported as the thing that makes the loop feel like admin. Deferred a
+       tick because we are inside the kill handler: assignSlayerTask clears and
+       rewrites state.slayer.task, and slayerGoToTask refuses while combat.active,
+       which is still true here. */
+    if(state.slayer.auto){
+      const mk=t.master;
+      setTimeout(()=>{
+        try{
+          if(state.slayer.task) return;              // player took one themselves
+          assignSlayerTask(mk);
+          if(state.slayer.task && !combat.active) slayerGoToTask();
+        }catch(e){}
+      },0);
+    }
   }
 }
 
@@ -32393,6 +32463,7 @@ function buildSlayerHTML(){
         : `<button class="sly-go" data-sl-goto="1">${iconHTML('ui_swords')} Go to task</button>`}
       <button class="slay-btn" data-sl-skip="1" ${active&&pts>=SLAYER_SKIP_COST?'':'disabled'}>Skip · ${SLAYER_SKIP_COST} pts</button>
       <button class="slay-btn" data-sl-block="1" ${active&&pts>=SLAYER_BLOCK_COST?'':'disabled'}>Block · ${SLAYER_BLOCK_COST} pts</button>
+      <label class="fm-toggle sly-auto"><input type="checkbox" data-sl-auto="1"${state.slayer.auto?' checked':''}><span>Auto-continue</span></label>
     </div>`;
   } else {
     hero=`<div class="sly-hero none"><div>
@@ -32463,6 +32534,15 @@ function buildSlayerHTML(){
           <button class="sly-cb ${can?'buy':''}" data-sl-perk="${p.id}" ${maxed||!can?'disabled':''}>${maxed?'Maxed':(pts>=cost?`Buy · ${cost} pts`:`Need ${cost} pts`)}</button>
         </div>`;
       }).join('');
+    } else if(slyShopTab==='cache'){
+      body=SLAYER_CACHE.map(r=>{
+        const it=ITEMS[r.id]||{}, can=pts>=r.cost, have=state.items[r.id]||0;
+        return `<div class="sly-card">
+          <div class="sly-ch"><span class="sly-cn">${iconHTML(r.id)} ${it.name||r.id}</span><span class="sly-pips">${have?'have '+have:''}</span></div>
+          <div class="sly-cd">${r.desc}</div>
+          <button class="sly-cb ${can?'buy':''}" data-sl-cache="${r.id}" ${can?'':'disabled'}>${can?`Buy · ${r.cost} pts`:`Need ${r.cost} pts`}</button>
+        </div>`;
+      }).join('');
     } else {
       const canSkip=active&&pts>=SLAYER_SKIP_COST, canBlock=active&&pts>=SLAYER_BLOCK_COST;
       const card=(title,desc,btn)=>`<div class="sly-card"><div class="sly-ch"><span class="sly-cn">${title}</span></div><div class="sly-cd">${desc}</div>${btn}</div>`;
@@ -32480,6 +32560,7 @@ function buildSlayerHTML(){
         <h3>Rewards Shop</h3><span class="sly-rule"></span>
         <div class="sly-seg">
           <button class="${slyShopTab==='perks'?'on':''}" data-sl-shoptab="perks">Perks</button>
+          <button class="${slyShopTab==='cache'?'on':''}" data-sl-shoptab="cache">Shard Cache</button>
           <button class="${slyShopTab==='actions'?'on':''}" data-sl-shoptab="actions">Task actions</button>
         </div>
       </div>
@@ -33203,6 +33284,14 @@ ${combat.raid?buildRaidProgressHTML():''}
   panel.querySelectorAll('[data-sl-skip]').forEach(b=>{ if(b.disabled) return; b.addEventListener('click',slayerSkipTask); });
   panel.querySelectorAll('[data-sl-block]').forEach(b=>b.addEventListener('click',slayerBlockCurrent));
   panel.querySelectorAll('[data-sl-perk]').forEach(b=>{ if(b.disabled) return; b.addEventListener('click',()=>buySlayerPerk(b.getAttribute('data-sl-perk'))); });
+  panel.querySelectorAll('[data-sl-cache]').forEach(b=>{ if(b.disabled) return; b.addEventListener('click',()=>buySlayerCache(b.getAttribute('data-sl-cache'))); });
+  panel.querySelectorAll('[data-sl-auto]').forEach(b=>{
+    b.addEventListener('change',()=>{
+      state.slayer.auto=!!b.checked;
+      toast(b.checked?'Auto-continue on — new bounties are taken for you.':'Auto-continue off.');
+      saveGame();
+    });
+  });
   panel.querySelectorAll('[data-sl-unblockall]').forEach(b=>b.addEventListener('click',()=>{ state.slayer.blocked={}; saveGame(); renderCombat(); }));
   // Rewards Shop chrome (0.9.24) — view-only toggles, so no save, just a re-render.
   panel.querySelectorAll('[data-sl-shop]').forEach(b=>b.addEventListener('click',()=>{ slyShopOpen=!slyShopOpen; renderCombat(); }));
