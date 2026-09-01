@@ -200,7 +200,11 @@ const DROPS = [
   S('tyrant_heart',    'A single huge dark red heart, still and glistening', { dark: true }),
   S('granite_core',    'A single rounded core of grey granite with a faint inner light'),
   S('granite_sigil',   'A single flat grey stone disc carved with a mountain sigil'),
-  S('mountain_heart',  'A single fist of pale veined stone with a warm golden light in its cracks'),
+  /* "A single FIST of pale veined stone" — and it drew a fist, exactly as copper
+     ore did. The warning in the ores comment covers scale similes; this one used a
+     body part as a QUANTITY word, which is the same trap wearing a different hat.
+     No body part in a prompt, in any grammatical role. */
+  S('mountain_heart',  'A single rounded core of pale veined stone, warm golden light glowing in its cracks'),
   // drakes and demons
   S('wyrmscale',       'A single large bronze red drake scale, ridged and hard'),
   S('drake_hide',      'A single folded slab of scaled bronze red drake hide'),

@@ -75,7 +75,15 @@ const ENC = `async (uri, SIZE, Q) => {
   fs.writeFileSync(OUTJSON, JSON.stringify(pack, null, 0));
   const total = rows.reduce((a, r) => a + r.bytes, 0);
   const before = fs.statSync(GAME).size;
-  const after = before + total;
+  /* inject.js REPLACES any existing pack rather than appending, so the file does
+     not grow by the whole pack — it grows by the difference. Measuring the block
+     already in the game keeps this honest; the naive "before + total" over-reported
+     by the size of the previous pass. */
+  const OPEN = '/* ==ITEM-ART-START== */', CLOSE = '/* ==ITEM-ART-END== */';
+  const html = fs.readFileSync(GAME, 'utf8');
+  const a0 = html.indexOf(OPEN), b0 = html.indexOf(CLOSE);
+  const existing = (a0 >= 0 && b0 > a0) ? (b0 + CLOSE.length - a0) : 0;
+  const after = before - existing + total;
   const mb = n => (n / 1048576).toFixed(2) + ' MB';
   const mbps = n => ((n * 8) / (ABORT_MS / 1000) / 1e6).toFixed(1);
 
@@ -86,6 +94,7 @@ const ENC = `async (uri, SIZE, Q) => {
   console.log('\nfile size impact (the wrapper aborts the whole fetch at 6s):');
   console.log('  cindervale.html now   ' + mb(before) + '   needs ' + mbps(before) + ' Mbps');
   console.log('  with this pack        ' + mb(after) + '   needs ' + mbps(after) + ' Mbps');
-  console.log('  added                 ' + mb(total) + '   (+' + (mbps(after) - mbps(before)).toFixed(1) + ' Mbps)');
+  console.log('  added                 ' + mb(after - before) + '   (+' + (mbps(after) - mbps(before)).toFixed(1) + ' Mbps)' +
+    (existing ? '   [replaces a ' + mb(existing) + ' block already in the file]' : ''));
   console.log('\nwrote ' + path.basename(OUTJSON));
 })().catch(e => { console.error(e); process.exit(1); });

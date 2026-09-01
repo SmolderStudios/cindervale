@@ -65,6 +65,51 @@ const WORK = `async (uri, SIZE, MARGIN) => {
     if (Y > 0)     st.push(i - W);
     if (Y < H - 1) st.push(i + W);
   }
+  /* ENCLOSED HOLES. A fill that starts at the border can never reach backdrop that
+     the subject wraps around — the hole inside a ring band is the obvious case, and
+     every ring in the jewellery family came out with a solid white disc in it.
+
+     So: sweep for connected regions of backdrop-valued pixels the border fill did
+     not reach, and cut the ones that are really backdrop rather than paint.
+
+     Two guards, because the danger here is eating a highlight. The threshold is
+     TIGHTER than the border fill's (240 vs 214, 15 vs 46) since the backdrop was
+     asked for as flat pure white or black while a painted highlight rarely gets
+     there; and the region has to be flat, under 12 luma range end to end. A
+     specular glint on a gold bar is neither pure nor flat, so it survives. Regions
+     under 0.05% of the frame are left alone as noise either way. */
+  /* 22 not 15 on the black side: the black-backdrop rings (diamond_ring,
+     pearl_band, silkweave_band) sat just above a 15 cut and kept a solid disc.
+     Still far tighter than the border fill's 46, and the flatness guard below is
+     what actually protects a dark part of the subject from being eaten. */
+  const holeBack = onWhite ? (v => v > 240) : (v => v < 22);
+  const MIN_HOLE = Math.max(16, Math.floor(N * 0.0005));
+  const seen = new Uint8Array(N);
+  let holes = 0, holePx = 0;
+  for (let start = 0; start < N; start++) {
+    if (bg[start] || seen[start] || !holeBack(lum[start])) continue;
+    const comp = [];
+    const q = [start];
+    seen[start] = 1;
+    let lo = 255, hi = 0;
+    while (q.length) {
+      const i = q.pop();
+      comp.push(i);
+      if (lum[i] < lo) lo = lum[i];
+      if (lum[i] > hi) hi = lum[i];
+      const X = i % W, Y = (i / W) | 0;
+      const push = j => { if (!seen[j] && !bg[j] && holeBack(lum[j])) { seen[j] = 1; q.push(j); } };
+      if (X > 0)     push(i - 1);
+      if (X < W - 1) push(i + 1);
+      if (Y > 0)     push(i - W);
+      if (Y < H - 1) push(i + W);
+    }
+    if (comp.length >= MIN_HOLE && (hi - lo) < 12) {
+      for (const i of comp) bg[i] = 1;
+      holes++; holePx += comp.length;
+    }
+  }
+
   let cut = 0;
   for (let i = 0; i < N; i++) if (bg[i]) { px[i*4+3] = 0; cut++; }
   x.putImageData(d, 0, 0);
@@ -93,6 +138,7 @@ const WORK = `async (uri, SIZE, MARGIN) => {
     out: o.toDataURL('image/png'),
     cutPct: Math.round(cut / N * 100),
     onWhite, backdropOk, cornerMean: Math.round(cornerMean),
+    holes, holePct: +(holePx / N * 100).toFixed(1),
     fill: Math.round(bw * bh / N * 100),      // how much of the frame the subject used
     aspect: +(bw / bh).toFixed(2),
   };
@@ -115,12 +161,14 @@ const WORK = `async (uri, SIZE, MARGIN) => {
     if (r.err) { console.log(f.padEnd(32) + 'FAILED — ' + r.err); report.push({ f, err: r.err }); continue; }
     fs.writeFileSync(path.join(CUT, f), Buffer.from(r.out.split(',')[1], 'base64'));
     report.push({ f, cutPct: r.cutPct, onWhite: r.onWhite, fill: r.fill, aspect: r.aspect,
-                  backdropOk: r.backdropOk, cornerMean: r.cornerMean });
+                  backdropOk: r.backdropOk, cornerMean: r.cornerMean,
+                  holes: r.holes, holePct: r.holePct });
     // a backdrop that barely came away means the key missed; flag it loudly
     const warn = !r.backdropOk ? '   <-- backdrop is neither white nor black (corners ' + r.cornerMean + '), re-roll'
                : r.cutPct < 25   ? '   <-- only ' + r.cutPct + '% removed, check it' : '';
     console.log(f.padEnd(32) + (r.onWhite ? 'white' : 'black') + '  cut ' + String(r.cutPct).padStart(2) +
-      '%  subject ' + String(r.fill).padStart(2) + '%  ar ' + r.aspect + warn);
+      '%  subject ' + String(r.fill).padStart(2) + '%  ar ' + String(r.aspect).padEnd(5) +
+      (r.holes ? '  holes ' + r.holes + ' (' + r.holePct + '%)' : '') + warn);
   }
   fs.writeFileSync(path.join(CUT, '_key.json'), JSON.stringify(report, null, 1));
   const bad = report.filter(r => r.err || r.cutPct < 25 || r.backdropOk === false);
