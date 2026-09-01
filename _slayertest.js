@@ -40,6 +40,47 @@ const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/
     buySlayerCache('voidheart');
     out.refused = { got: (state.items.voidheart||0) - b2, ptsLeft: state.slayer.points };
 
+    // ── 2b. the new tiered perks are gated AND wired ──────────────────────────
+    out.tiers = SLAYER_PERKS.map(p => ({ id: p.id, lvl: p.lvl || 1, max: p.max }));
+    // the buy path must refuse below the gate, not just grey the button
+    state.slayer.xp = 0; state.slayer.points = 99999; state.slayer.perks = {};
+    buySlayerPerk('tithe');
+    out.gatedRefused = slayerPerkLevel('tithe') === 0;
+    state.slayer.xp = XP_CUM[40];
+    buySlayerPerk('tithe');
+    out.gatedAllowed = slayerPerkLevel('tithe') === 1;
+
+    // every perk id must appear somewhere OUTSIDE the SLAYER_PERKS table, or it is
+    // a number that does nothing — the exact debt the mastery tree already carries
+    out.unwired = [];
+    {
+      const src = document.querySelector('script').textContent;
+      for (const pk of SLAYER_PERKS) {
+        const hits = src.split("slayerPerkLevel('" + pk.id + "')").length - 1;
+        if (hits < 1) out.unwired.push(pk.id);
+      }
+    }
+
+    // Shortlist must actually shrink a bounty
+    state.slayer.xp = XP_CUM[60];
+    state.combatXp = { attack: XP_CUM[60], strength: XP_CUM[60], defence: XP_CUM[60], hitpoints: XP_CUM[60] };
+    state.slayer.perks = {};
+    const sizes = [];
+    for (let i = 0; i < 40; i++) { state.slayer.task = null; assignSlayerTask('novice'); if (state.slayer.task) sizes.push(state.slayer.task.need); }
+    state.slayer.perks = { shortlist: 3 };
+    const small = [];
+    for (let i = 0; i < 40; i++) { state.slayer.task = null; assignSlayerTask('novice'); if (state.slayer.task) small.push(state.slayer.task.need); }
+    const avg = a => a.reduce((x,y)=>x+y,0)/a.length;
+    out.shortlist = { base: +avg(sizes).toFixed(1), withPerk: +avg(small).toFixed(1) };
+
+    // Bloodhound must raise the rare chance, but only on the bounty target
+    state.slayer.perks = { bloodhound: 3 };
+    const mon = MONSTERS.find(m => !m.boss && m.lvl > 20);
+    state.slayer.task = { monId: mon.id, need: 10, done: 0, master: 'novice' };
+    out.onTask = slayerOnTask(mon.id);
+    out.offTask = slayerOnTask(MONSTERS.find(m => m.id !== mon.id && !m.boss).id);
+    state.slayer.perks = {};
+
     // ── 3. auto-continue takes a new bounty ───────────────────────────────────
     state.combatXp = { attack: XP_CUM[60], strength: XP_CUM[60], defence: XP_CUM[60], hitpoints: XP_CUM[60] };
     state.slayer.xp = XP_CUM[40];
@@ -70,6 +111,17 @@ const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/
     '(got ' + r.refused.got + ', ' + r.refused.ptsLeft + ' pts left)');
   t('a bounty can be assigned', r.tookOne);
   t('auto flag survives normalizeState', r.autoFlagPersists);
+
+  const tierLvls = [...new Set(r.tiers.map(x => x.lvl))].sort((a,b)=>a-b);
+  t('perks arrive in tiers, not all at Lv 1', tierLvls.length > 1, '(gates: ' + tierLvls.join(', ') + ')');
+  t('something unlocks at slayer 35', r.tiers.some(x => x.lvl === 35));
+  t('something unlocks at slayer 75', r.tiers.some(x => x.lvl === 75));
+  t('buying below the gate is refused', r.gatedRefused);
+  t('buying at the gate works', r.gatedAllowed);
+  t('every perk is wired, none decorative', r.unwired.length === 0, r.unwired.join(', '));
+  t('Shortlist shrinks bounties', r.shortlist.withPerk < r.shortlist.base * 0.85,
+    '(' + r.shortlist.base + ' -> ' + r.shortlist.withPerk + ' kills)');
+  t('on-task detection is target-specific', r.onTask === true && r.offTask === false);
 
   ok.forEach(x => console.log('  ok   ' + x));
   bad.forEach(x => console.log('  FAIL ' + x));
