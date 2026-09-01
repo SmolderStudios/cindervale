@@ -3592,21 +3592,23 @@ body:not(.is-demo) .demo-only{display:none !important}
 /* rewards shop */
 .sly-shop{background:linear-gradient(180deg,#1c150f,#140e09);border:1px solid var(--trim);border-radius:9px;padding:13px}
 .sly-seg{display:inline-flex;background:#120c08;border:1px solid #3a2c20;border-radius:7px;padding:3px;gap:3px}
-.sly-seg button{font-family:'Cinzel',serif;font-size:calc(12px*var(--tscale));padding:5px 14px;border-radius:5px;border:1px solid transparent;
+.sly-seg button{font-family:'Cinzel',serif;font-size:calc(13.5px*var(--tscale));padding:6px 15px;border-radius:5px;border:1px solid transparent;
   background:transparent;color:var(--muted);cursor:var(--cur-pointer)}
 .sly-seg button:hover{color:var(--text)}
 .sly-seg button.on{background:linear-gradient(180deg,#3a1e1a,#241010);color:#f0d0c8;border-color:var(--sly)}
 .sly-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:11px}
-.sly-card{background:#1a130e;border:1px solid #3f3124;border-radius:8px;padding:11px;display:flex;flex-direction:column}
+.sly-card{background:#1a130e;border:1px solid #3f3124;border-radius:8px;padding:13px;display:flex;flex-direction:column}
 .sly-card .sly-ch{display:flex;justify-content:space-between;align-items:center;gap:6px}
-.sly-card .sly-cn{font-family:'Cinzel',serif;font-size:calc(13.5px*var(--tscale));color:#e7dcc4}
-.sly-card .sly-cd{font-size:calc(11px*var(--tscale));color:var(--muted);line-height:1.4;margin:6px 0 9px;flex:1}
-.sly-card .sly-cb{width:100%;font-family:'Cinzel',serif;font-size:calc(11.5px*var(--tscale));padding:6px;border-radius:6px;
+.sly-card .sly-cn{font-family:'Cinzel',serif;font-size:calc(15.5px*var(--tscale));color:#e7dcc4}
+.sly-card .sly-cd{font-size:calc(13.5px*var(--tscale));color:#b9a888;line-height:1.5;margin:7px 0 11px;flex:1}
+.sly-card .sly-cb{width:100%;font-family:'Cinzel',serif;font-size:calc(13.5px*var(--tscale));padding:8px;border-radius:6px;
   border:1px solid var(--trim-d);background:var(--raised-s);color:var(--muted);cursor:var(--cur-pointer)}
 .sly-card .sly-cb.buy{border-color:var(--sly);background:linear-gradient(180deg,#3a1e1a,#241010);color:#f0d0c8}
 .sly-card .sly-cb:hover:not(:disabled){filter:brightness(1.2)}
 .sly-card .sly-cb:disabled{opacity:.45;cursor:default}
-.sly-hint{font-size:calc(10.5px*var(--tscale));color:var(--muted);line-height:1.45;border-left:3px solid var(--sly);padding-left:9px}
+.sly-cnt{font-family:var(--num);font-size:calc(11.5px*var(--tscale));color:var(--muted);margin-left:auto}
+.sly-none{font-size:calc(12.5px*var(--tscale));color:#7a6a4a;font-style:italic;padding:2px 0 4px}
+.sly-hint{font-size:calc(12.5px*var(--tscale));color:var(--muted);line-height:1.45;border-left:3px solid var(--sly);padding-left:9px}
 @media(max-width:1180px){
   .sly-cols{flex-direction:column}
   .sly-side{width:100%}
@@ -7039,7 +7041,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.121.15">v0.9.121</div>
+  <div class="mm-ver" data-build="0.9.121.16">v0.9.121</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -32878,6 +32880,13 @@ function buildSlayerHTML(){
     const pips=Array.from({length:p.max},(_,i)=>`<i class="sly-pip${i<plvl?' on':''}"></i>`).join('');
     return `<div class="sly-prow"><span class="sly-pn">${p.name}</span><span class="sly-pips">${pips}</span></div>`;
   };
+  /* Only perks you actually own. This listed all ten with empty pips, which is
+     both 450px of column for no information and a straight duplicate of the shop's
+     own cards — the shop is where you read what a perk does and buy it, the ledger
+     is where you check what you have. */
+  const owned=SLAYER_PERKS.filter(p=>slayerPerkLevel(p.id)>0);
+  const ownedRanks=SLAYER_PERKS.reduce((a,p)=>a+slayerPerkLevel(p.id),0);
+  const totalRanks=SLAYER_PERKS.reduce((a,p)=>a+p.max,0);
   const side=`<aside class="sly-side">
     <div class="sly-sd-top">
       <div class="sly-sd-ic">${iconHTML('ui_swords')}</div>
@@ -32889,8 +32898,11 @@ function buildSlayerHTML(){
     <div class="sly-sd-row"><span>Points</span><b class="gold">${pts}</b></div>
     <div class="sly-sd-row"><span>Bounties done</span><b>${S.tasksDone||0}</b></div>
     <div class="sly-sd-row"><span>Blocked</span><b>${nBlocked}</b></div>
-    <div class="sly-sec" style="margin:10px 0 8px"><h3>Perks</h3><span class="sly-rule"></span></div>
-    ${SLAYER_PERKS.map(pipRow).join('')}
+    ${markTier()>0?`<div class="sly-sd-row"><span>Mark</span><b class="gold">${familyName(markFamily())}</b></div>`:''}
+    <div class="sly-sec" style="margin:10px 0 8px"><h3>Perks</h3><span class="sly-rule"></span>
+      <span class="sly-cnt">${ownedRanks}/${totalRanks}</span></div>
+    ${owned.length?owned.map(pipRow).join('')
+      :'<div class="sly-none">None yet — open the Rewards Shop.</div>'}
     ${nBlocked?`<div class="sly-blocked">Blocked: ${blockedIds.map(id=>{const m=getMonster(id);return m?m.name:id;}).join(', ')}</div>`:''}
     <button class="sly-sd-cta" data-sl-shop="1">${slyShopOpen?'Close':'Open'} Rewards Shop · ${pts} pts</button>
   </aside>`;
@@ -32985,16 +32997,17 @@ function buildSlayerHTML(){
     </div>`;
   }
 
+  const mainBody = slyShopOpen
+    ? shop
+    : `<div class="sly-sec"><h3>Slayer Masters</h3><span class="sly-rule"></span>${tasksDropdown}</div>${masters}`;
   return `<div class="sly-wrap">
     <div class="sly-cols">
       <div class="sly-main">
         ${hero}${acts}
-        <div class="sly-sec"><h3>Slayer Masters</h3><span class="sly-rule"></span>${tasksDropdown}</div>
-        ${masters}
+        ${mainBody}
       </div>
       ${side}
     </div>
-    ${shop}
     <div class="sly-hint">Take a bounty, kill that monster anywhere in the Arena for <b style="color:#e7dcc4">Slayer XP</b> + progress; finishing pays <b style="color:#ffd24a">Slayer Points</b>.</div>
   </div>`;
 }
