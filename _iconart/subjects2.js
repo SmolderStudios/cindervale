@@ -41,7 +41,7 @@ const FOOD = [
   S('silk_poultice',  'A single folded pad of pale silk dressing tied with a cord, faint green salve showing', { pale: true }),
   S('goblin_jerky',   'A single curled strip of dark dried jerky, salt crusted'),
   S('bone_stew',      'A single wooden bowl of thick brown stew with one bone standing in it', { allow: ['bowl', 'container'] }),
-  S('wolf_jerky',     'A single thick strip of dark red dried wolf meat, coarse grain'),
+  S('wolf_jerky',     'A single thick strip of dark red dried wolf meat, coarse grain', { dark: true }),
   S('ogre_roast',     'A single huge roasted joint of meat on the bone, glazed dark brown'),
   S('troll_stew',     'A single wooden bowl of murky green troll stew, lumps breaking the surface', { allow: ['bowl', 'container'] }),
   S('drake_roast',    'A single roasted joint of drake meat on the bone, blackened glaze, faint ember glow in the char'),
@@ -124,9 +124,9 @@ const LEATHER = [
   S('chitin_leather', HIDE + ' hard glossy dark amber chitin plates worked into it'),
   S('wolf_leather',   HIDE + ' grey wolf hide with coarse fur along one edge'),
   S('ogre_leather',   HIDE + ' thick mottled green grey hide'),
-  S('troll_leather',  HIDE + ' warty olive green hide'),
+  S('troll_leather',  HIDE + ' warty olive green hide', { dark: true }),
   S('drake_leather',  HIDE + ' scaled bronze red drake hide'),
-  S('demon_leather',  HIDE + ' deep red black hide with faint ember cracks'),
+  S('demon_leather',  HIDE + ' deep red black hide with faint ember cracks', { dark: true }),
   S('wraith_leather', HIDE + ' pale grey translucent hide with a faint cold glow', { pale: true }),
   S('ember_leather',  HIDE + ' charred black hide veined with glowing orange', { dark: true }),
   S('void_leather',   HIDE + ' near black hide shot with violet light', { dark: true }),
@@ -160,7 +160,7 @@ const DROPS = [
   // spider hollow
   S('spider_silk',     'A single loose skein of pale spider silk, fine threads', { pale: true }),
   S('chitin',          'A single curved plate of hard dark amber chitin armour'),
-  S('chitin_shard',    'A single jagged splinter of glossy dark chitin'),
+  S('chitin_shard',    'A single jagged splinter of glossy dark chitin', { dark: true }),
   S('venom_sac',       'A single translucent green venom sac, taut and glistening'),
   S('spinneret',       'A single dark segmented spider spinneret organ, fine bristles at the tip'),
   S('silken_sigil',    'A single pale sigil disc woven from spider silk, spiral pattern', { pale: true }),
@@ -169,7 +169,7 @@ const DROPS = [
   S('goblin_tooth',    'A single crooked yellow goblin tooth', { pale: true }),
   S('tribal_fetish',   'A single crude tribal fetish of bound sticks, feathers and a bead'),
   S('shaman_tooth',    'A single long tooth carved with crude runes, threaded on a cord', { pale: true }),
-  S('warchief_banner', 'A single tattered goblin war banner on a short broken pole, crude red sigil'),
+  S('warchief_banner', 'A single tattered goblin war banner on a short broken pole, crude red sigil', { dark: true }),
   // skeleton crypt
   S('cursed_dust',     'A small conical heap of grey green cursed dust, faint wisps rising'),
   S('soul_shard',      'A single jagged shard of pale blue soul glass, glowing softly', { pale: true }),
@@ -181,7 +181,7 @@ const DROPS = [
   // wolves
   S('wolf_fang',       'A single long curved white wolf fang', { pale: true }),
   S('wolf_pelt',       'A single folded grey wolf pelt, thick fur'),
-  S('alpha_claw',      'A single large black curved claw, hooked and worn'),
+  S('alpha_claw',      'A single large black curved claw, hooked and worn', { dark: true }),
   S('howling_horn',    'A single curved animal horn banded with leather at the mouthpiece'),
   S('pack_eye',        'A single amber wolf eye, slit pupil, faintly glowing'),
   S('ironfang_pelt',   'A single folded pelt of dark iron grey fur with a metallic sheen'),
@@ -192,9 +192,12 @@ const DROPS = [
   S('ogre_hide',       'A single folded slab of thick mottled green grey hide'),
   S('troll_hide',      'A single folded slab of warty olive green hide'),
   S('seer_idol',       'A single squat carved stone idol with a single closed eye'),
-  S('gorestone',       'A single dark red stone, wet looking, veined with deeper red'),
+  /* "dark red veined with deeper red" gave it no value range at all — both styles
+     came back as a flat maroon blob that even the ember rim could not lift. The
+     wet highlight is what supplies the contrast. */
+  S('gorestone',       'A single blood red stone with a bright wet highlight across its top face and deep crimson veins below', { dark: true }),
   S('warlord_totem',   'A single tall carved totem of bone and dark wood topped with a skull'),
-  S('tyrant_heart',    'A single huge dark red heart, still and glistening'),
+  S('tyrant_heart',    'A single huge dark red heart, still and glistening', { dark: true }),
   S('granite_core',    'A single rounded core of grey granite with a faint inner light'),
   S('granite_sigil',   'A single flat grey stone disc carved with a mountain sigil'),
   S('mountain_heart',  'A single fist of pale veined stone with a warm golden light in its cracks'),
@@ -204,7 +207,7 @@ const DROPS = [
   S('dragon_fang',     'A single huge curved ivory dragon fang', { pale: true }),
   S('ember_crest',     'A single bony crest plate glowing with ember orange along its ridges'),
   S('dragonheart',     'A single large dark red heart wreathed in faint orange fire'),
-  S('demonhide',       'A single folded slab of deep red black hide with faint ember cracks'),
+  S('demonhide',       'A single folded slab of deep red black hide with faint ember cracks', { dark: true }),
   S('infernal_crest',  'A single horned black crest plate cracked with molten orange light', { dark: true }),
   S('hellheart',       'A single blackened heart burning from within with orange fire', { dark: true }),
   // wraiths, barrows and void

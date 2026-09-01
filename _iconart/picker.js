@@ -23,9 +23,19 @@ const SVG = fs.existsSync(path.join(__dirname, 'svg.json'))
 const uri = f => 'data:image/png;base64,' + fs.readFileSync(path.join(CUT, f)).toString('base64');
 const hasF = f => fs.existsSync(path.join(CUT, f));
 
+/* Only offer what is still undecided. dumpsvg.js records the CURRENT icon and
+   skips anything already returning an <img>, so an id missing from svg.json is one
+   whose art already shipped — showing it again would ask for a choice that has
+   been made, against a "now" column that is the new art rather than the old SVG. */
+const shipped = id => !SVG[id];
 const rows = [];
+let already = 0;
 for (const fam of Object.keys(FAMILIES)) {
-  const items = FAMILIES[fam].filter(s => hasF(s.id + '__painted.png') || hasF(s.id + '__emblem.png'));
+  const items = FAMILIES[fam].filter(s => {
+    if (!hasF(s.id + '__painted.png') && !hasF(s.id + '__emblem.png')) return false;
+    if (shipped(s.id)) { already++; return false; }
+    return true;
+  });
   if (items.length) rows.push({ fam, items });
 }
 const n = rows.reduce((a, r) => a + r.items.length, 0);
@@ -155,4 +165,5 @@ paint();
 </script></body></html>`;
 
 fs.writeFileSync(OUT, html);
-console.log('wrote pick.html  (' + n + ' items, ' + (html.length / 1048576).toFixed(1) + ' MB)');
+console.log('wrote pick.html  (' + n + ' items to choose, ' + already + ' already shipped and skipped, ' +
+  (html.length / 1048576).toFixed(1) + ' MB)');

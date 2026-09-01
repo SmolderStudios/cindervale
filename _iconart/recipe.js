@@ -115,7 +115,11 @@ function negFor(subject) {
 /* The backdrop is a keying aid, not art. Chosen per item by expected value. */
 const BACKDROP = {
   light: ' , isolated on a plain flat pure white background',
-  dark:  ' , isolated on a plain flat near black background',
+  /* Said three ways because once was not enough: pearl_band, silkweave_band and
+     diamond_amulet all came back on WHITE despite being pale, and a pale subject on
+     white loses its edges to the flood fill. cooked_minnow went further and
+     invented a mid GREY, which matches neither key threshold and removes nothing. */
+  dark:  ' , isolated on a plain flat pure black background, solid black backdrop, no grey, no white',
 };
 
 const MODEL = 'ZImage/SwarmUI_Z-Image-Turbo-FP8Mix';
