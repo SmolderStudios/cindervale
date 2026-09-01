@@ -7067,7 +7067,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.121.17">v0.9.121</div>
+  <div class="mm-ver" data-build="0.9.121.18">v0.9.121</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -27315,9 +27315,9 @@ function familyName(id){ const f=SLAYER_FAMILIES.find(x=>x.id===id); return f?f.
    Tasks target the EXISTING monster roster (45 foes across 9 zones), so bounties
    rotate you around the world instead of grinding one spot. */
 const SLAYER_MASTERS=[
-  {key:'novice', name:'Novice Slayer Master', minLvl:1,  size:[15,28], pts:3,  band:[1,42],  ic:'ui_scroll', blurb:'Rats, spiders, goblins, skeletons — starter bounties.'},
-  {key:'expert', name:'Expert Slayer Master', minLvl:35, size:[24,40], pts:9,  band:[18,75], ic:'ui_swords', blurb:'Wolves, ogres, undead. Bigger lists, better pay.'},
-  {key:'master', name:'Slayer General',       minLvl:75, size:[34,52], pts:17, band:[50,99], ic:'ui_skull',  blurb:'Trolls, wyverns, demons — the deadliest bounties.'},
+  {key:'novice', name:'Novice Slayer Master', minLvl:1,  size:[15,28], pts:3,  band:[1,42],  ic:'ui_scroll', blurb:'Rats, spiders, goblins and skeletons.'},
+  {key:'expert', name:'Expert Slayer Master', minLvl:35, size:[24,40], pts:9,  band:[18,75], ic:'ui_swords', blurb:'Wolves, ogres and undead. More kills per bounty, more points.'},
+  {key:'master', name:'Slayer General',       minLvl:75, size:[34,52], pts:17, band:[50,99], ic:'ui_skull',  blurb:'Trolls, wyverns and demons. The most kills, the most points.'},
 ];
 /* Costs raised roughly 5x in 0.9.121.11. The old tree totalled 558 points and a
    player earns ~8,576 on the way to slayer Lv 75 and ~11,592 to 99, so every perk
@@ -27344,38 +27344,38 @@ const SLAYER_MASTERS=[
 const SLAYER_PERKS=[
   // ── available from the start ──
   {id:'scholar',       ic:'slp_scholar',    lvl:1,  max:5, cost:[10,25,60,140,320], name:'Bloodscholar',
-   eff:n=>'+'+(n*8)+'%', lab:'Slayer XP',            desc:'More Slayer XP from every on-task kill.'},
+   eff:n=>'+'+(n*8)+'%', lab:'Slayer XP',            desc:'More Slayer XP each time you kill your bounty target.'},
   {id:'warpath',       ic:'slp_warpath',    lvl:1,  max:5, cost:[10,25,60,140,320], name:'Warpath',
-   eff:n=>'+'+(n*6)+'%', lab:'combat XP',            desc:'On-task kills also train your combat stats harder.'},
+   eff:n=>'+'+(n*6)+'%', lab:'combat XP',            desc:'More combat XP each time you kill your bounty target.'},
   {id:'skinner',       ic:'slp_skinner',    lvl:1,  max:5, cost:[15,35,80,180,400], name:'Skinner',
-   eff:n=>'+'+(n*12)+'%', lab:'bonus-drop chance',  desc:'A chance at a second roll on the drop table.'},
+   eff:n=>'+'+(n*12)+'%', lab:'bonus-drop chance',  desc:'Chance for an extra drop when you kill your bounty target.'},
   {id:'bloodfrenzy',   ic:'slp_frenzy',     lvl:1,  max:5, cost:[15,35,80,180,400], name:'Bloodfrenzy',
-   eff:n=>'+'+(n*10)+'%', lab:'double-count chance',desc:'A kill sometimes counts twice toward the bounty.'},
+   eff:n=>'+'+(n*10)+'%', lab:'double-count chance',desc:'Chance a kill counts as 2 toward your bounty.'},
   {id:'quartermaster', ic:'slp_quarter',    lvl:1,  max:3, cost:[40,110,280],       name:'Quartermaster',
-   eff:n=>'+'+n, lab:'point per bounty',            desc:'Every finished bounty pays more.'},
+   eff:n=>'+'+n, lab:'Slayer Points per bounty',desc:'Extra Slayer Points each time you finish a bounty.'},
   // ── Lv 35, with the Expert Slayer Master ──
   {id:'tithe',         ic:'slp_tithe',      lvl:35, max:5, cost:[30,70,150,300,600], name:'Bloody Tithe',
-   eff:n=>'+'+(n*15)+'%', lab:'gold on task',       desc:'Your bounty target drops heavier purses.'},
+   eff:n=>'+'+(n*15)+'%', lab:'gold from your target',desc:'More gold when you kill your bounty target.'},
   {id:'bloodhound',    ic:'slp_hound',      lvl:35, max:3, cost:[60,160,400],        name:'Bloodhound',
-   eff:n=>'+'+(n*30)+'%', lab:'rare-variant chance',desc:'Rare variants of your quarry show up far more often.'},
+   eff:n=>'+'+(n*30)+'%', lab:'rare-variant chance',desc:'Your bounty target is more likely to be a rare version.'},
   // ── Lv 50 ──
   {id:'shortlist',     ic:'slp_shortlist',  lvl:50, max:3, cost:[80,200,480],        name:'Shortlist',
-   eff:n=>'-'+(n*8)+'%', lab:'kills per bounty',    desc:'Masters ask for shorter lists.'},
+   eff:n=>'-'+(n*8)+'%', lab:'kills per bounty',    desc:'Bounties need fewer kills to finish.'},
   // ── Lv 75, with the Slayer General ──
   {id:'fortune',       ic:'slp_fortune',    lvl:75, max:3, cost:[150,380,900],       name:"Slayer's Fortune",
-   eff:n=>'+'+(n*12)+'%', lab:'double-points chance',desc:'A finished bounty sometimes pays twice.'},
+   eff:n=>'+'+(n*12)+'%', lab:'double-points chance',desc:'Chance to get double Slayer Points when you finish a bounty.'},
   {id:'relentless',    ic:'slp_relentless', lvl:75, max:3, cost:[150,380,900],       name:'Relentless',
-   eff:n=>'+'+(n*3)+'%', lab:'max HP per kill',     desc:'On-task kills close your wounds as you go.'},
+   eff:n=>'+'+(n*3)+'%', lab:'max HP per kill',     desc:'Heals you each time you kill your bounty target.'},
 ];
 
 /* Tier bands for the shop. Grouping by unlock level is what turns a flat list into
    a ladder you can see yourself climbing — the old shop showed all ten at once with
    no indication that half of them were not available yet. */
 const SLAYER_TIERS=[
-  {lvl:1,  name:'Initiate',  sub:'From the start'},
-  {lvl:35, name:'Expert',    sub:'With the Expert Master'},
-  {lvl:50, name:'Veteran',   sub:'Seasoned hunters only'},
-  {lvl:75, name:'General',   sub:'With the Slayer General'},
+  {lvl:1,  name:'Initiate',  sub:'Available from the start'},
+  {lvl:35, name:'Expert',    sub:'Needs Slayer level 35'},
+  {lvl:50, name:'Veteran',   sub:'Needs Slayer level 50'},
+  {lvl:75, name:'General',   sub:'Needs Slayer level 75'},
 ];
 const SLAYER_SKIP_COST=5, SLAYER_BLOCK_COST=12;
 
@@ -27408,13 +27408,13 @@ function markDamageMult(mon){
 }
 function buyMarkTier(){
   const t=markTier();
-  if(t>=MARK_TIERS.length){ toast('The Mark is already at its highest tier.'); return; }
+  if(t>=MARK_TIERS.length){ toast('The Mark is already fully upgraded.'); return; }
   const cost=MARK_TIERS[t].cost;
   if((state.slayer.points||0)<cost){ toast(`Not enough Slayer Points (need ${cost}).`); return; }
   state.slayer.points-=cost;
   state.slayer.markTier=t+1;
   if(!state.slayer.markFamily) state.slayer.markFamily=SLAYER_FAMILIES[0].id;   // first buy needs a target
-  toast(`✦ ${MARK_TIERS[t].name} — +${Math.round(MARK_TIERS[t].dmg*100)}% damage vs ${familyName(state.slayer.markFamily)}.`);
+  toast(`✦ ${MARK_TIERS[t].name}: +${Math.round(MARK_TIERS[t].dmg*100)}% damage to ${familyName(state.slayer.markFamily)} monsters.`);
   saveGame(); if(typeof renderCombat==='function') renderCombat();
 }
 function bindMark(fam){
@@ -27424,11 +27424,11 @@ function bindMark(fam){
   /* Free the first time — you have just bought it and have to pick something. */
   const first=!markFamily();
   if(!first){
-    if((state.slayer.points||0)<MARK_REBIND_COST){ toast(`Re-attuning costs ${MARK_REBIND_COST} Slayer Points.`); return; }
+    if((state.slayer.points||0)<MARK_REBIND_COST){ toast(`You need ${MARK_REBIND_COST} Slayer Points to change family.`); return; }
     state.slayer.points-=MARK_REBIND_COST;
   }
   state.slayer.markFamily=fam;
-  toast(`✦ Mark attuned to ${familyName(fam)}.`);
+  toast(`✦ Mark set to ${familyName(fam)}.`);
   saveGame(); if(typeof renderCombat==='function') renderCombat();
 }
 
@@ -27445,20 +27445,20 @@ function bindMark(fam){
    ~0.6 points a kill pays, plus a premium so farming is still the cheaper route
    and this is the pity timer rather than the strategy. */
 const SLAYER_CACHE=[
-  {id:'beast_sinew', cost:20,  desc:'Gates the T3 tool recipes.'},
-  {id:'shade_ember', cost:60,  desc:'Gates the T4 tool recipes.'},
-  {id:'voidheart',   cost:250, desc:'Gates the T5 tool recipes.'},
-  {id:'gem_dust',    cost:15,  qty:250, desc:'250 gem dust for the jeweller.'},
-  {id:'rock_salt',   cost:10,  qty:40,  desc:'40 rock salt for the kitchen.'},
+  {id:'beast_sinew', cost:20,  desc:'Needed to craft tier 3 tools.'},
+  {id:'shade_ember', cost:60,  desc:'Needed to craft tier 4 tools.'},
+  {id:'voidheart',   cost:250, desc:'Needed to craft tier 5 tools.'},
+  {id:'gem_dust',    cost:15,  qty:250, desc:'Used for Jeweler crafting.'},
+  {id:'rock_salt',   cost:10,  qty:40,  desc:'Used for Cooking.'},
 ];
 
 /* One-off unlocks — the other half of "points should buy into OTHER progressions".
    Each is permanent, bought once, and does something outside the slayer loop. */
 const SLAYER_UNLOCKS=[
   {id:'ledger',  cost:60,  name:'Bounty Ledger',
-   desc:"Shows every monster's family and weakness in the Monster Log, for good."},
+   desc:"Shows every monster's family and weakness in the Monster Log."},
   {id:'pockets', cost:100, name:'Deeper Pockets',
-   desc:'+8 satchel slots, permanently. Stacks with what you have bought with gold.'},
+   desc:'+8 satchel slots. These are on top of the slots you buy with gold.'},
 ];
 function slayerUnlockOwned(id){
   if(id==='ledger')  return !!(state.slayer&&state.slayer.ledger);
@@ -27537,9 +27537,9 @@ function assignSlayerTask(masterKey){
   const master=slayerMasterFor(masterKey);
   if(slayerLevel()<master.minLvl){ toast(`🔒 Requires Slayer Lv ${master.minLvl}.`); return; }
   const cur=state.slayer.task;
-  if(cur && cur.done<cur.need){ toast('You already have an active bounty — finish or skip it.'); return; }
+  if(cur && cur.done<cur.need){ toast('You already have a bounty. Finish it or skip it first.'); return; }
   const pool=slayerEligible(master);
-  if(!pool.length){ toast('No eligible targets right now — raise your Combat level or unblock a monster.'); return; }
+  if(!pool.length){ toast('No monsters available. Raise your Combat level, or unblock one.'); return; }
   const mon=slayerPickWeighted(pool, combatLevel());
   let need=master.size[0]+Math.floor(Math.random()*(master.size[1]-master.size[0]+1));
   // Shortlist (slayer, Lv 50) — floor of 1 so it can never ask for zero kills.
@@ -27547,12 +27547,12 @@ function assignSlayerTask(masterKey){
   if(sl>0) need=Math.max(1, Math.round(need*(1-sl*0.08)));
   state.slayer.task={monId:mon.id, need:need, done:0, master:masterKey};
   state.slayer.masterSel=masterKey;
-  if(typeof toast==='function') toast(`🗡 New bounty: slay ${need} ${mon.name}.`);
+  if(typeof toast==='function') toast(`🗡 New bounty: kill ${need} ${mon.name}.`);
   saveGame(); if(combatMode&&typeof renderCombat==='function') renderCombat();
 }
 function slayerSkipTask(){
   if(!state.slayer.task) return;
-  if(state.slayer.points<SLAYER_SKIP_COST){ toast(`Skipping a bounty costs ${SLAYER_SKIP_COST} Slayer Points.`); return; }
+  if(state.slayer.points<SLAYER_SKIP_COST){ toast(`You need ${SLAYER_SKIP_COST} Slayer Points to skip a bounty.`); return; }
   state.slayer.points-=SLAYER_SKIP_COST; state.slayer.streak=0; state.slayer.task=null;
   toast('Bounty skipped.'); saveGame(); if(combatMode&&typeof renderCombat==='function') renderCombat();
 }
@@ -27589,7 +27589,7 @@ function buySlayerPerk(id){
   state.slayer.points-=cost;
   if(!state.slayer.perks) state.slayer.perks={};
   state.slayer.perks[id]=lvl+1;
-  toast(`✦ ${perk.name} → Lv ${lvl+1}.`);
+  toast(`✦ ${perk.name} is now rank ${lvl+1}.`);
   saveGame(); if(combatMode&&typeof renderCombat==='function') renderCombat();
 }
 function grantSlayerXp(amt){
@@ -27614,7 +27614,7 @@ function onSlayerKill(baseMon){
   // Bloodfrenzy (1.0.77) — chance the kill counts double toward the bounty. Only
   // advances progress (no extra XP/drops); speeds tasks so you cash more bounties.
   const bf=slayerPerkLevel('bloodfrenzy');
-  if(bf>0 && t.done<t.need && Math.random()<bf*0.10){ t.done++; if(typeof cmbLog==='function') cmbLog('   🗡 Bloodfrenzy — that kill counted double!',''); }
+  if(bf>0 && t.done<t.need && Math.random()<bf*0.10){ t.done++; if(typeof cmbLog==='function') cmbLog('   🗡 Bloodfrenzy: that kill counted as 2.',''); }
   const wp=slayerPerkLevel('warpath');
   if(wp>0 && typeof grantCombatXp==='function'){
     const style=(state.combatStyle==='strength'||state.combatStyle==='defence')?state.combatStyle:'attack';
@@ -27624,7 +27624,7 @@ function onSlayerKill(baseMon){
   if(rl>0 && combat.youMaxHp>0 && combat.youHp>0 && combat.youHp<combat.youMaxHp){
     const heal=Math.max(1, Math.round(combat.youMaxHp*rl*0.03));
     combat.youHp=Math.min(combat.youMaxHp, combat.youHp+heal);
-    if(typeof cmbLog==='function') cmbLog('   🗡 Relentless — recovered '+heal+' hp.','');
+    if(typeof cmbLog==='function') cmbLog('   🗡 Relentless: healed '+heal+' hp.','');
   }
   const sk=slayerPerkLevel('skinner');
   if(sk>0 && Math.random()<sk*0.12 && typeof rollDrops==='function'){
@@ -27645,13 +27645,13 @@ function onSlayerKill(baseMon){
     // Slayer's Fortune (slayer, Lv 75)
     const fo=slayerPerkLevel('fortune');
     const doubled=fo>0 && Math.random()<fo*0.12;
-    if(doubled){ pts*=2; if(typeof cmbLog==='function') cmbLog("   🗡 Slayer's Fortune — double points!",'rare-win'); }
+    if(doubled){ pts*=2; if(typeof cmbLog==='function') cmbLog("   🗡 Slayer's Fortune: double points.",'rare-win'); }
     state.slayer.points+=pts;
     state.slayer.tasksDone=(state.slayer.tasksDone||0)+1;
     state.slayer.streak=(state.slayer.streak||0)+1;
     grantSlayerXp(Math.round(t.need*(baseMon.xp||10)*0.09));   // completion bonus
-    cmbLog(`🗡 Slayer bounty complete! +${pts} Slayer Points (${state.slayer.streak} streak).`,'rare-win');
-    if(typeof toast==='function') toast(`🗡 Bounty done — +${pts} Slayer Points!`);
+    cmbLog(`🗡 Bounty finished. +${pts} Slayer Points. Streak: ${state.slayer.streak}.`,'rare-win');
+    if(typeof toast==='function') toast(`🗡 Bounty finished — +${pts} Slayer Points.`);
     if(typeof logNotification==='function') logNotification('rare','🗡',`Completed a ${master.name} bounty.`);
     /* Auto-continue (0.9.121.11). The arena already auto-fights one monster, so
        without this every finished bounty needs a manual trip to the Slayer tab and
@@ -33032,8 +33032,8 @@ function buildSlayerHTML(){
         <div class="sly-ch"><span class="sly-cn">${cur?cur.name:"Slayer's Mark"}</span>
           <span class="sly-pips">${Array.from({length:MARK_TIERS.length},(_,i)=>`<i class="sly-pip${i<t?' on':''}"></i>`).join('')}</span></div>
         <div class="sly-cd">${t>0
-          ? `+${Math.round(cur.dmg*100)}% damage against <b style="color:#f0c772">${fam?familyName(fam):'—'}</b>. Re-attune any time for ${MARK_REBIND_COST} pts.`
-          : 'Attune to one monster family for bonus damage against it. Re-attune as your bounties move.'}</div>
+          ? `+${Math.round(cur.dmg*100)}% damage to <b style="color:#f0c772">${fam?familyName(fam):'—'}</b> monsters. Pick a different family below for ${MARK_REBIND_COST} points.`
+          : 'Pick one monster family. You deal more damage to every monster in it. You can change your pick later for '+MARK_REBIND_COST+' points.'}</div>
         <button class="sly-cb ${canBuy?'buy':''}" data-sl-mark="1" ${canBuy?'':'disabled'}>${
           maxed?'Fully honed':(pts>=nextCost?`${t>0?'Upgrade':'Buy'} · ${nextCost} pts`:`Need ${nextCost} pts`)}</button>
         <div class="sly-fams">${fams}</div>
@@ -33061,11 +33061,11 @@ function buildSlayerHTML(){
       const canSkip=active&&pts>=SLAYER_SKIP_COST, canBlock=active&&pts>=SLAYER_BLOCK_COST;
       const card=(title,desc,btn)=>`<div class="sly-card"><div class="sly-ch"><span class="sly-cn">${title}</span></div><div class="sly-cd">${desc}</div>${btn}</div>`;
       body=[
-        card('Skip Bounty','Abandon the current bounty and reset your streak, then take a fresh one from any master.',
+        card('Skip Bounty','Give up this bounty and take a new one. Your streak resets to 0.',
           `<button class="sly-cb ${canSkip?'buy':''}" data-sl-skip="1" ${canSkip?'':'disabled'}>${active?`Skip · ${SLAYER_SKIP_COST} pts`:'No active bounty'}</button>`),
-        card('Block Monster',`Never assign ${active?getMonster(t.monId).name:'this monster'} again — removed from every future bounty pool.`,
+        card('Block Monster',`You will never be given ${active?getMonster(t.monId).name:'this monster'} as a bounty again.`,
           `<button class="sly-cb ${canBlock?'buy':''}" data-sl-block="1" ${canBlock?'':'disabled'}>${active?`Block · ${SLAYER_BLOCK_COST} pts`:'No active bounty'}</button>`),
-        card('Unblock All',`Return ${nBlocked?`${nBlocked} blocked monster${nBlocked===1?'':'s'}`:'blocked monsters'} to the assignable pool. Free.`,
+        card('Unblock All',`Let ${nBlocked?`your ${nBlocked} blocked monster${nBlocked===1?'':'s'}`:'blocked monsters'} be given as bounties again. Free.`,
           `<button class="sly-cb" data-sl-unblockall="1" ${nBlocked?'':'disabled'}>${nBlocked?`Clear ${nBlocked} block${nBlocked===1?'':'s'}`:'None blocked'}</button>`),
       ].join('');
     }
@@ -33095,7 +33095,7 @@ function buildSlayerHTML(){
       </div>
       ${side}
     </div>
-    <div class="sly-hint">Take a bounty, kill that monster anywhere in the Arena for <b style="color:#e7dcc4">Slayer XP</b> + progress; finishing pays <b style="color:#ffd24a">Slayer Points</b>.</div>
+    <div class="sly-hint">Take a bounty, then kill that monster anywhere in the Arena. Every kill gives <b style="color:#e7dcc4">Slayer XP</b>. Finishing the bounty gives <b style="color:#ffd24a">Slayer Points</b>.</div>
   </div>`;
 }
 function buildRaidsPanelHTML(){
@@ -33808,7 +33808,7 @@ ${combat.raid?buildRaidProgressHTML():''}
   panel.querySelectorAll('[data-sl-auto]').forEach(b=>{
     b.addEventListener('change',()=>{
       state.slayer.auto=!!b.checked;
-      toast(b.checked?'Auto-continue on — new bounties are taken for you.':'Auto-continue off.');
+      toast(b.checked?'Auto-continue on. A new bounty is taken as soon as you finish one.':'Auto-continue off.');
       saveGame();
     });
   });
