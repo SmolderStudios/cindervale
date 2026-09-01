@@ -3606,6 +3606,32 @@ body:not(.is-demo) .demo-only{display:none !important}
 .sly-card .sly-cb.buy{border-color:var(--sly);background:linear-gradient(180deg,#3a1e1a,#241010);color:#f0d0c8}
 .sly-card .sly-cb:hover:not(:disabled){filter:brightness(1.2)}
 .sly-card .sly-cb:disabled{opacity:.45;cursor:default}
+/* ── shop cards: an icon, a rank track, and what you get ─────────────────────── */
+.sly-tier{display:flex;align-items:baseline;gap:10px;margin:16px 0 9px}
+.sly-tier:first-child{margin-top:4px}
+.sly-tname{font-family:'Cinzel',serif;font-size:calc(15px*var(--tscale));color:#e7dcc4;letter-spacing:.06em}
+.sly-tsub{font-size:calc(12px*var(--tscale));color:#8a7350;white-space:nowrap}
+.sly-tier.lk .sly-tname{color:#8a7350}
+.sly-tier.lk .sly-tsub{color:var(--sly)}
+.sly-perk .sly-ptop{display:flex;align-items:center;gap:11px;margin-bottom:8px}
+/* 30px: measured against the card, and the icons are drawn for roughly that. */
+.sly-pic{font-size:30px;line-height:0;flex:none;filter:drop-shadow(0 2px 4px rgba(0,0,0,.6))}
+.sly-pmeta{display:flex;flex-direction:column;gap:5px;min-width:0}
+.sly-rank{display:flex;gap:3px}
+.sly-rk{width:18px;height:5px;border-radius:3px;background:#2e241a;
+  box-shadow:inset 0 1px 0 rgba(0,0,0,.5)}
+.sly-rk.on{background:linear-gradient(180deg,#f0a050,var(--sly));
+  box-shadow:0 0 5px rgba(224,118,47,.5)}
+/* the next rank you could buy, so the track shows a target and not just a total */
+.sly-rk.next{background:#4a3a24;box-shadow:inset 0 0 0 1px rgba(224,118,47,.55)}
+.sly-eff{font-size:calc(13.5px*var(--tscale));color:#b9a888;margin-bottom:5px;line-height:1.45}
+.sly-eff b{color:var(--gold-hi);font-weight:600}
+.sly-eff b.sly-nxt{color:#8fd06a}
+.sly-arrow{color:#7a6a4a;margin:0 2px}
+.sly-dim{color:#7a6a4a;font-style:italic}
+.sly-lab{color:#8a7350}
+.sly-card.sly-maxed{border-color:#5a4a28}
+.sly-card.sly-maxed .sly-cb{opacity:.6}
 .sly-cnt{font-family:var(--num);font-size:calc(11.5px*var(--tscale));color:var(--muted);margin-left:auto}
 .sly-none{font-size:calc(12.5px*var(--tscale));color:#7a6a4a;font-style:italic;padding:2px 0 4px}
 .sly-hint{font-size:calc(12.5px*var(--tscale));color:var(--muted);line-height:1.45;border-left:3px solid var(--sly);padding-left:9px}
@@ -7041,7 +7067,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.121.16">v0.9.121</div>
+  <div class="mm-ver" data-build="0.9.121.17">v0.9.121</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -11327,6 +11353,19 @@ function _seaScaleSVG(p){
 }
 
 const ICONS = {
+  /* ==SLAYER-PERK-ICONS-START== */
+  slp_scholar: "<svg class=\"ev-icon\" viewBox=\"0 0 64 64\"><defs><linearGradient id=\"slp_a\" x1=\"0\" y1=\"0\" x2=\"0.4\" y2=\"1\"><stop offset=\"0\" stop-color=\"#f4ecd8\"/><stop offset=\"0.55\" stop-color=\"#cbbc99\"/><stop offset=\"1\" stop-color=\"#8a7a58\"/></linearGradient><linearGradient id=\"slp_a2\" x1=\"0\" y1=\"0\" x2=\"0.4\" y2=\"1\"><stop offset=\"0\" stop-color=\"#e8624a\"/><stop offset=\"0.55\" stop-color=\"#a82a1e\"/><stop offset=\"1\" stop-color=\"#5a1410\"/></linearGradient></defs><g stroke=\"#241608\" stroke-width=\"1.1\" stroke-linejoin=\"round\"><path d=\"M32 18 Q20 12 8 16 L8 48 Q20 44 32 50 Z\" fill=\"url(#slp_a)\"/><path d=\"M32 18 Q44 12 56 16 L56 48 Q44 44 32 50 Z\" fill=\"url(#slp_a)\"/><path d=\"M32 18 L32 50\" stroke=\"#8a7a58\"/><path d=\"M38 26 q5 7 5 10 a5 5 0 0 1-10 0 q0-3 5-10 Z\" fill=\"url(#slp_a2)\"/></g></svg>",
+  slp_warpath: "<svg class=\"ev-icon\" viewBox=\"0 0 64 64\"><defs><linearGradient id=\"slp_b\" x1=\"0\" y1=\"0\" x2=\"0.4\" y2=\"1\"><stop offset=\"0\" stop-color=\"#e8624a\"/><stop offset=\"0.55\" stop-color=\"#a82a1e\"/><stop offset=\"1\" stop-color=\"#5a1410\"/></linearGradient><linearGradient id=\"slp_b2\" x1=\"0\" y1=\"0\" x2=\"0.4\" y2=\"1\"><stop offset=\"0\" stop-color=\"#f2d79a\"/><stop offset=\"0.55\" stop-color=\"#c79b4e\"/><stop offset=\"1\" stop-color=\"#7a5a22\"/></linearGradient></defs><g stroke=\"#241608\" stroke-width=\"1.1\" stroke-linejoin=\"round\"><path d=\"M20 8 L24 8 L24 58 L20 58 Z\" fill=\"url(#slp_b2)\"/><path d=\"M24 12 L52 18 L44 28 L52 38 L24 32 Z\" fill=\"url(#slp_b)\"/></g></svg>",
+  slp_skinner: "<svg class=\"ev-icon\" viewBox=\"0 0 64 64\"><defs><linearGradient id=\"slp_c\" x1=\"0\" y1=\"0\" x2=\"0.4\" y2=\"1\"><stop offset=\"0\" stop-color=\"#eef1f6\"/><stop offset=\"0.55\" stop-color=\"#9aa0ac\"/><stop offset=\"1\" stop-color=\"#4a4e58\"/></linearGradient><linearGradient id=\"slp_c2\" x1=\"0\" y1=\"0\" x2=\"0.4\" y2=\"1\"><stop offset=\"0\" stop-color=\"#f2d79a\"/><stop offset=\"0.55\" stop-color=\"#c79b4e\"/><stop offset=\"1\" stop-color=\"#7a5a22\"/></linearGradient></defs><g stroke=\"#241608\" stroke-width=\"1.1\" stroke-linejoin=\"round\"><path d=\"M10 40 Q26 8 54 12 Q44 34 18 46 Z\" fill=\"url(#slp_c)\"/><path d=\"M10 40 L20 50 L12 56 L4 46 Z\" fill=\"url(#slp_c2)\"/></g></svg>",
+  slp_frenzy: "<svg class=\"ev-icon\" viewBox=\"0 0 64 64\"><defs><linearGradient id=\"slp_d\" x1=\"0\" y1=\"0\" x2=\"0.4\" y2=\"1\"><stop offset=\"0\" stop-color=\"#e8624a\"/><stop offset=\"0.55\" stop-color=\"#a82a1e\"/><stop offset=\"1\" stop-color=\"#5a1410\"/></linearGradient><linearGradient id=\"slp_d2\" x1=\"0\" y1=\"0\" x2=\"0.4\" y2=\"1\"><stop offset=\"0\" stop-color=\"#f4ecd8\"/><stop offset=\"0.55\" stop-color=\"#cbbc99\"/><stop offset=\"1\" stop-color=\"#8a7a58\"/></linearGradient></defs><g stroke=\"#241608\" stroke-width=\"1.1\" stroke-linejoin=\"round\"><path d=\"M8 20 Q32 6 56 20 Q32 58 8 20 Z\" fill=\"url(#slp_d)\"/><path d=\"M16 22 L22 34 L27 22 Z M29 23 L34 37 L39 23 Z M41 22 L46 33 L50 21 Z\" fill=\"url(#slp_d2)\"/></g></svg>",
+  slp_quarter: "<svg class=\"ev-icon\" viewBox=\"0 0 64 64\"><defs><linearGradient id=\"slp_e\" x1=\"0\" y1=\"0\" x2=\"0.4\" y2=\"1\"><stop offset=\"0\" stop-color=\"#f2d79a\"/><stop offset=\"0.55\" stop-color=\"#c79b4e\"/><stop offset=\"1\" stop-color=\"#7a5a22\"/></linearGradient><linearGradient id=\"slp_e2\" x1=\"0\" y1=\"0\" x2=\"0.4\" y2=\"1\"><stop offset=\"0\" stop-color=\"#e8624a\"/><stop offset=\"0.55\" stop-color=\"#a82a1e\"/><stop offset=\"1\" stop-color=\"#5a1410\"/></linearGradient></defs><g stroke=\"#241608\" stroke-width=\"1.1\" stroke-linejoin=\"round\"><circle cx=\"32\" cy=\"34\" r=\"22\" fill=\"url(#slp_e)\"/><circle cx=\"32\" cy=\"34\" r=\"13\" fill=\"url(#slp_e2)\"/><path d=\"M32 24 L35 32 L43 32 L37 37 L39 45 L32 40 L25 45 L27 37 L21 32 L29 32 Z\" fill=\"#f2d79a\" stroke=\"none\"/></g></svg>",
+  slp_tithe: "<svg class=\"ev-icon\" viewBox=\"0 0 64 64\"><defs><linearGradient id=\"slp_f\" x1=\"0\" y1=\"0\" x2=\"0.4\" y2=\"1\"><stop offset=\"0\" stop-color=\"#f2d79a\"/><stop offset=\"0.55\" stop-color=\"#c79b4e\"/><stop offset=\"1\" stop-color=\"#7a5a22\"/></linearGradient><linearGradient id=\"slp_f2\" x1=\"0\" y1=\"0\" x2=\"0.4\" y2=\"1\"><stop offset=\"0\" stop-color=\"#e8624a\"/><stop offset=\"0.55\" stop-color=\"#a82a1e\"/><stop offset=\"1\" stop-color=\"#5a1410\"/></linearGradient></defs><g stroke=\"#241608\" stroke-width=\"1.1\" stroke-linejoin=\"round\"><ellipse cx=\"30\" cy=\"48\" rx=\"20\" ry=\"7\" fill=\"url(#slp_f)\"/><ellipse cx=\"30\" cy=\"40\" rx=\"20\" ry=\"7\" fill=\"url(#slp_f)\"/><ellipse cx=\"30\" cy=\"32\" rx=\"20\" ry=\"7\" fill=\"url(#slp_f)\"/><path d=\"M46 8 q7 10 7 14 a7 7 0 0 1-14 0 q0-4 7-14 Z\" fill=\"url(#slp_f2)\"/></g></svg>",
+  slp_hound: "<svg class=\"ev-icon\" viewBox=\"0 0 64 64\"><defs><linearGradient id=\"slp_g\" x1=\"0\" y1=\"0\" x2=\"0.4\" y2=\"1\"><stop offset=\"0\" stop-color=\"#ffc46a\"/><stop offset=\"0.55\" stop-color=\"#e0762f\"/><stop offset=\"1\" stop-color=\"#8a3a10\"/></linearGradient><linearGradient id=\"slp_g2\" x1=\"0\" y1=\"0\" x2=\"0.4\" y2=\"1\"><stop offset=\"0\" stop-color=\"#f4ecd8\"/><stop offset=\"0.55\" stop-color=\"#cbbc99\"/><stop offset=\"1\" stop-color=\"#8a7a58\"/></linearGradient></defs><g stroke=\"#241608\" stroke-width=\"1.1\" stroke-linejoin=\"round\"><path d=\"M14 22 Q10 8 20 12 L26 20 Q40 16 52 28 Q58 34 52 44 L26 50 Q12 46 14 34 Z\" fill=\"url(#slp_g)\"/><path d=\"M52 28 Q60 32 58 40 L48 42 Z\" fill=\"url(#slp_g2)\"/><circle cx=\"30\" cy=\"30\" r=\"3\" fill=\"#241608\" stroke=\"none\"/></g></svg>",
+  slp_shortlist: "<svg class=\"ev-icon\" viewBox=\"0 0 64 64\"><defs><linearGradient id=\"slp_h\" x1=\"0\" y1=\"0\" x2=\"0.4\" y2=\"1\"><stop offset=\"0\" stop-color=\"#f4ecd8\"/><stop offset=\"0.55\" stop-color=\"#cbbc99\"/><stop offset=\"1\" stop-color=\"#8a7a58\"/></linearGradient><linearGradient id=\"slp_h2\" x1=\"0\" y1=\"0\" x2=\"0.4\" y2=\"1\"><stop offset=\"0\" stop-color=\"#e8624a\"/><stop offset=\"0.55\" stop-color=\"#a82a1e\"/><stop offset=\"1\" stop-color=\"#5a1410\"/></linearGradient></defs><g stroke=\"#241608\" stroke-width=\"1.1\" stroke-linejoin=\"round\"><rect x=\"14\" y=\"10\" width=\"36\" height=\"44\" rx=\"3\" fill=\"url(#slp_h)\"/><path d=\"M22 22 H42 M22 32 H42 M22 42 H34\" stroke=\"#8a7a58\" stroke-width=\"2.6\" stroke-linecap=\"round\"/><path d=\"M16 46 L48 16\" stroke=\"url(#slp_h2)\" stroke-width=\"5\" stroke-linecap=\"round\"/></g></svg>",
+  slp_fortune: "<svg class=\"ev-icon\" viewBox=\"0 0 64 64\"><defs><linearGradient id=\"slp_i\" x1=\"0\" y1=\"0\" x2=\"0.4\" y2=\"1\"><stop offset=\"0\" stop-color=\"#f2d79a\"/><stop offset=\"0.55\" stop-color=\"#c79b4e\"/><stop offset=\"1\" stop-color=\"#7a5a22\"/></linearGradient></defs><g stroke=\"#241608\" stroke-width=\"1.1\" stroke-linejoin=\"round\"><path d=\"M32 6 L56 19 L56 45 L32 58 L8 45 L8 19 Z\" fill=\"url(#slp_i)\"/><path d=\"M32 6 L56 19 L32 32 L8 19 Z\" fill=\"#f2d79a\" opacity=\"0.55\" stroke=\"none\"/><circle cx=\"32\" cy=\"19\" r=\"3.4\" fill=\"#5a1410\" stroke=\"none\"/><circle cx=\"20\" cy=\"40\" r=\"3\" fill=\"#5a1410\" stroke=\"none\"/><circle cx=\"44\" cy=\"40\" r=\"3\" fill=\"#5a1410\" stroke=\"none\"/></g></svg>",
+  slp_relentless: "<svg class=\"ev-icon\" viewBox=\"0 0 64 64\"><defs><linearGradient id=\"slp_j\" x1=\"0\" y1=\"0\" x2=\"0.4\" y2=\"1\"><stop offset=\"0\" stop-color=\"#e8624a\"/><stop offset=\"0.55\" stop-color=\"#a82a1e\"/><stop offset=\"1\" stop-color=\"#5a1410\"/></linearGradient></defs><g stroke=\"#241608\" stroke-width=\"1.1\" stroke-linejoin=\"round\"><path d=\"M32 54 Q6 36 6 22 A13 13 0 0 1 32 18 A13 13 0 0 1 58 22 Q58 36 32 54 Z\" fill=\"url(#slp_j)\"/><path d=\"M10 30 H22 L27 20 L34 40 L39 30 H54\" stroke=\"#ffd9a0\" stroke-width=\"3.2\" fill=\"none\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></g></svg>",
+  /* ==SLAYER-PERK-ICONS-END== */
+
   /* ─── Skill icons (19) ─── v0.9.110
      These 19 (12 skills + 5 combat stats + sailing) are the only RASTER entries in
      the map: a 128px PNG wrapped in an <svg class="ev-icon"> carrying one <image>.
@@ -27304,19 +27343,39 @@ const SLAYER_MASTERS=[
    worth adding to. Hook per perk is named in the comment beside it. */
 const SLAYER_PERKS=[
   // ── available from the start ──
-  {id:'scholar',       name:'Bloodscholar', lvl:1,  max:5, cost:[10,25,60,140,320], desc:'+8% Slayer XP per kill, per level.'},
-  {id:'warpath',       name:'Warpath',      lvl:1,  max:5, cost:[10,25,60,140,320], desc:'+6% combat XP from on-task kills, per level.'},
-  {id:'skinner',       name:'Skinner',      lvl:1,  max:5, cost:[15,35,80,180,400], desc:'+12% chance per level for a bonus drop from on-task kills.'},
-  {id:'bloodfrenzy',   name:'Bloodfrenzy',  lvl:1,  max:5, cost:[15,35,80,180,400], desc:'+10% chance per level for an on-task kill to count double toward your bounty.'},
-  {id:'quartermaster', name:'Quartermaster',lvl:1,  max:3, cost:[40,110,280],       desc:'+1 Slayer Point per completed bounty, per level.'},
+  {id:'scholar',       ic:'slp_scholar',    lvl:1,  max:5, cost:[10,25,60,140,320], name:'Bloodscholar',
+   eff:n=>'+'+(n*8)+'%', lab:'Slayer XP',            desc:'More Slayer XP from every on-task kill.'},
+  {id:'warpath',       ic:'slp_warpath',    lvl:1,  max:5, cost:[10,25,60,140,320], name:'Warpath',
+   eff:n=>'+'+(n*6)+'%', lab:'combat XP',            desc:'On-task kills also train your combat stats harder.'},
+  {id:'skinner',       ic:'slp_skinner',    lvl:1,  max:5, cost:[15,35,80,180,400], name:'Skinner',
+   eff:n=>'+'+(n*12)+'%', lab:'bonus-drop chance',  desc:'A chance at a second roll on the drop table.'},
+  {id:'bloodfrenzy',   ic:'slp_frenzy',     lvl:1,  max:5, cost:[15,35,80,180,400], name:'Bloodfrenzy',
+   eff:n=>'+'+(n*10)+'%', lab:'double-count chance',desc:'A kill sometimes counts twice toward the bounty.'},
+  {id:'quartermaster', ic:'slp_quarter',    lvl:1,  max:3, cost:[40,110,280],       name:'Quartermaster',
+   eff:n=>'+'+n, lab:'point per bounty',            desc:'Every finished bounty pays more.'},
   // ── Lv 35, with the Expert Slayer Master ──
-  {id:'tithe',         name:'Bloody Tithe', lvl:35, max:5, cost:[30,70,150,300,600], desc:'+15% gold from on-task kills, per level.'},          // hooks the coin grant on kill
-  {id:'bloodhound',    name:'Bloodhound',   lvl:35, max:3, cost:[60,160,400],        desc:'+30% chance per level that an on-task foe is a rare variant.'}, // hooks rollRare
+  {id:'tithe',         ic:'slp_tithe',      lvl:35, max:5, cost:[30,70,150,300,600], name:'Bloody Tithe',
+   eff:n=>'+'+(n*15)+'%', lab:'gold on task',       desc:'Your bounty target drops heavier purses.'},
+  {id:'bloodhound',    ic:'slp_hound',      lvl:35, max:3, cost:[60,160,400],        name:'Bloodhound',
+   eff:n=>'+'+(n*30)+'%', lab:'rare-variant chance',desc:'Rare variants of your quarry show up far more often.'},
   // ── Lv 50 ──
-  {id:'shortlist',     name:'Shortlist',    lvl:50, max:3, cost:[80,200,480],        desc:'Bounties ask for 8% fewer kills, per level.'},        // hooks assignSlayerTask
+  {id:'shortlist',     ic:'slp_shortlist',  lvl:50, max:3, cost:[80,200,480],        name:'Shortlist',
+   eff:n=>'-'+(n*8)+'%', lab:'kills per bounty',    desc:'Masters ask for shorter lists.'},
   // ── Lv 75, with the Slayer General ──
-  {id:'fortune',       name:"Slayer's Fortune", lvl:75, max:3, cost:[150,380,900],   desc:'+12% chance per level that a completed bounty pays double points.'}, // hooks completion
-  {id:'relentless',    name:'Relentless',   lvl:75, max:3, cost:[150,380,900],       desc:'On-task kills restore 3% of your max HP, per level.'}, // hooks the kill path
+  {id:'fortune',       ic:'slp_fortune',    lvl:75, max:3, cost:[150,380,900],       name:"Slayer's Fortune",
+   eff:n=>'+'+(n*12)+'%', lab:'double-points chance',desc:'A finished bounty sometimes pays twice.'},
+  {id:'relentless',    ic:'slp_relentless', lvl:75, max:3, cost:[150,380,900],       name:'Relentless',
+   eff:n=>'+'+(n*3)+'%', lab:'max HP per kill',     desc:'On-task kills close your wounds as you go.'},
+];
+
+/* Tier bands for the shop. Grouping by unlock level is what turns a flat list into
+   a ladder you can see yourself climbing — the old shop showed all ten at once with
+   no indication that half of them were not available yet. */
+const SLAYER_TIERS=[
+  {lvl:1,  name:'Initiate',  sub:'From the start'},
+  {lvl:35, name:'Expert',    sub:'With the Expert Master'},
+  {lvl:50, name:'Veteran',   sub:'Seasoned hunters only'},
+  {lvl:75, name:'General',   sub:'With the Slayer General'},
 ];
 const SLAYER_SKIP_COST=5, SLAYER_BLOCK_COST=12;
 
@@ -32912,24 +32971,52 @@ function buildSlayerHTML(){
   if(slyShopOpen){
     let body;
     if(slyShopTab==='perks'){
-      /* Locked perks are SHOWN, greyed, with the level they need. The whole point
-         of tiering them was that levelling should reveal something — hiding the
-         locked ones would leave the shop looking just as finished at Lv 1 as it did
-         before, which is the complaint this is answering. */
+      /* A card, not a paragraph. The old one was a name, one sentence and a
+         button — ten identical grey blocks with no icon, no sense of where you
+         are on a perk, and no way to tell an available perk from a locked one
+         except by reading. Now: the icon carries recognition, the rank track
+         carries progress, and the line that mattered — what you have now versus
+         what the next rank gives — replaces the sentence restating the rate.
+
+         Grouped into tier bands so the shop reads as a ladder. Locked bands stay
+         VISIBLE, dimmed, with the level on them; hiding them would leave the shop
+         looking as finished at Lv 1 as it did before. */
       const slv=slayerLevel();
-      body=SLAYER_PERKS.map(p=>{
+      const cardFor=p=>{
         const need=p.lvl||1, locked=slv<need;
-        const plvl=slayerPerkLevel(p.id), maxed=plvl>=p.max, cost=maxed?0:p.cost[plvl];
+        const n=slayerPerkLevel(p.id), maxed=n>=p.max;
+        const cost=maxed?0:p.cost[n];
         const can=!maxed&&!locked&&pts>=cost;
-        const pips=Array.from({length:p.max},(_,i)=>`<i class="sly-pip${i<plvl?' on':''}"></i>`).join('');
-        const label=locked?`🔒 Slayer Lv ${need}`
-                  :maxed?'Maxed'
-                  :(pts>=cost?`Buy · ${cost} pts`:`Need ${cost} pts`);
-        return `<div class="sly-card${locked?' sly-locked':''}">
-          <div class="sly-ch"><span class="sly-cn">${p.name}</span><span class="sly-pips">${pips}</span></div>
+        const track=Array.from({length:p.max},(_,i)=>
+          `<i class="sly-rk${i<n?' on':''}${i===n&&!locked&&!maxed?' next':''}"></i>`).join('');
+        const now=n>0?p.eff(n):null;
+        const nxt=maxed?null:p.eff(n+1);
+        return `<div class="sly-card sly-perk${locked?' sly-locked':''}${maxed?' sly-maxed':''}">
+          <div class="sly-ptop">
+            <span class="sly-pic">${iconHTML(p.ic)}</span>
+            <span class="sly-pmeta">
+              <span class="sly-cn">${p.name}</span>
+              <span class="sly-rank">${track}</span>
+            </span>
+          </div>
+          <div class="sly-eff">${
+            now?`<b>${now}</b>`:'<span class="sly-dim">—</span>'
+          }${nxt?` <span class="sly-arrow">&rarr;</span> <b class="sly-nxt">${nxt}</b>`:''} <span class="sly-lab">${p.lab}</span></div>
           <div class="sly-cd">${p.desc}</div>
-          <button class="sly-cb ${can?'buy':''}" data-sl-perk="${p.id}" ${can?'':'disabled'}>${label}</button>
+          <button class="sly-cb ${can?'buy':''}" data-sl-perk="${p.id}" ${can?'':'disabled'}>${
+            locked?`Slayer Lv ${need}`:maxed?'Maxed':(pts>=cost?`Buy · ${cost} pts`:`Need ${cost} pts`)}</button>
         </div>`;
+      };
+      body=SLAYER_TIERS.map(t=>{
+        const ps=SLAYER_PERKS.filter(p=>(p.lvl||1)===t.lvl);
+        if(!ps.length) return '';
+        const locked=slv<t.lvl;
+        return `<div class="sly-tier${locked?' lk':''}">
+            <span class="sly-tname">${t.name}</span>
+            <span class="sly-tsub">${locked?`Unlocks at Slayer Lv ${t.lvl}`:t.sub}</span>
+            <span class="sly-rule"></span>
+          </div>
+          <div class="sly-grid">${ps.map(cardFor).join('')}</div>`;
       }).join('');
     } else if(slyShopTab==='mark'){
       const t=markTier(), fam=markFamily(), maxed=t>=MARK_TIERS.length;
@@ -32993,7 +33080,7 @@ function buildSlayerHTML(){
           <button class="${slyShopTab==='actions'?'on':''}" data-sl-shoptab="actions">Task actions</button>
         </div>
       </div>
-      <div class="sly-grid">${body}</div>
+      ${slyShopTab==='perks'?body:`<div class="sly-grid">${body}</div>`}
     </div>`;
   }
 
