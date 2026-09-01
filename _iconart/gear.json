@@ -1,0 +1,1866 @@
+[
+ {
+  "id": "bronze_helm",
+  "n": "Bronze Helm",
+  "t": 1,
+  "s": "helmet",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "bronze_chest",
+  "n": "Bronze Chest",
+  "t": 1,
+  "s": "chest",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "bronze_legs",
+  "n": "Bronze Legs",
+  "t": 1,
+  "s": "legs",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "bronze_gloves",
+  "n": "Bronze Gloves",
+  "t": 1,
+  "s": "gloves",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "bronze_boots",
+  "n": "Bronze Boots",
+  "t": 1,
+  "s": "boots",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "bronze_sword",
+  "n": "Bronze Sword",
+  "t": 1,
+  "s": "weapon",
+  "d": "slash",
+  "two": false
+ },
+ {
+  "id": "bronze_shield",
+  "n": "Bronze Shield",
+  "t": 1,
+  "s": "shield",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "iron_helm",
+  "n": "Iron Helm",
+  "t": 2,
+  "s": "helmet",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "iron_chest",
+  "n": "Iron Chest",
+  "t": 2,
+  "s": "chest",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "iron_legs",
+  "n": "Iron Legs",
+  "t": 2,
+  "s": "legs",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "iron_gloves",
+  "n": "Iron Gloves",
+  "t": 2,
+  "s": "gloves",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "iron_boots",
+  "n": "Iron Boots",
+  "t": 2,
+  "s": "boots",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "iron_sword",
+  "n": "Iron Sword",
+  "t": 2,
+  "s": "weapon",
+  "d": "slash",
+  "two": false
+ },
+ {
+  "id": "iron_shield",
+  "n": "Iron Shield",
+  "t": 2,
+  "s": "shield",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "steel_helm",
+  "n": "Steel Helm",
+  "t": 3,
+  "s": "helmet",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "steel_chest",
+  "n": "Steel Chest",
+  "t": 3,
+  "s": "chest",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "steel_legs",
+  "n": "Steel Legs",
+  "t": 3,
+  "s": "legs",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "steel_gloves",
+  "n": "Steel Gloves",
+  "t": 3,
+  "s": "gloves",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "steel_boots",
+  "n": "Steel Boots",
+  "t": 3,
+  "s": "boots",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "steel_sword",
+  "n": "Steel Sword",
+  "t": 3,
+  "s": "weapon",
+  "d": "slash",
+  "two": false
+ },
+ {
+  "id": "steel_shield",
+  "n": "Steel Shield",
+  "t": 3,
+  "s": "shield",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "mithril_helm",
+  "n": "Mithril Helm",
+  "t": 4,
+  "s": "helmet",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "mithril_chest",
+  "n": "Mithril Chest",
+  "t": 4,
+  "s": "chest",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "mithril_legs",
+  "n": "Mithril Legs",
+  "t": 4,
+  "s": "legs",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "mithril_gloves",
+  "n": "Mithril Gloves",
+  "t": 4,
+  "s": "gloves",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "mithril_boots",
+  "n": "Mithril Boots",
+  "t": 4,
+  "s": "boots",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "mithril_sword",
+  "n": "Mithril Sword",
+  "t": 4,
+  "s": "weapon",
+  "d": "slash",
+  "two": false
+ },
+ {
+  "id": "mithril_shield",
+  "n": "Mithril Shield",
+  "t": 4,
+  "s": "shield",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "cobalt_helm",
+  "n": "Cobalt Helm",
+  "t": 5,
+  "s": "helmet",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "cobalt_chest",
+  "n": "Cobalt Chest",
+  "t": 5,
+  "s": "chest",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "cobalt_legs",
+  "n": "Cobalt Legs",
+  "t": 5,
+  "s": "legs",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "cobalt_gloves",
+  "n": "Cobalt Gloves",
+  "t": 5,
+  "s": "gloves",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "cobalt_boots",
+  "n": "Cobalt Boots",
+  "t": 5,
+  "s": "boots",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "cobalt_sword",
+  "n": "Cobalt Sword",
+  "t": 5,
+  "s": "weapon",
+  "d": "slash",
+  "two": false
+ },
+ {
+  "id": "cobalt_shield",
+  "n": "Cobalt Shield",
+  "t": 5,
+  "s": "shield",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "runite_helm",
+  "n": "Runite Helm",
+  "t": 6,
+  "s": "helmet",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "runite_chest",
+  "n": "Runite Chest",
+  "t": 6,
+  "s": "chest",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "runite_legs",
+  "n": "Runite Legs",
+  "t": 6,
+  "s": "legs",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "runite_gloves",
+  "n": "Runite Gloves",
+  "t": 6,
+  "s": "gloves",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "runite_boots",
+  "n": "Runite Boots",
+  "t": 6,
+  "s": "boots",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "runite_sword",
+  "n": "Runite Sword",
+  "t": 6,
+  "s": "weapon",
+  "d": "slash",
+  "two": false
+ },
+ {
+  "id": "runite_shield",
+  "n": "Runite Shield",
+  "t": 6,
+  "s": "shield",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "starsteel_helm",
+  "n": "Starsteel Helm",
+  "t": 7,
+  "s": "helmet",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "starsteel_chest",
+  "n": "Starsteel Chest",
+  "t": 7,
+  "s": "chest",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "starsteel_legs",
+  "n": "Starsteel Legs",
+  "t": 7,
+  "s": "legs",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "starsteel_gloves",
+  "n": "Starsteel Gloves",
+  "t": 7,
+  "s": "gloves",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "starsteel_boots",
+  "n": "Starsteel Boots",
+  "t": 7,
+  "s": "boots",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "starsteel_sword",
+  "n": "Starsteel Sword",
+  "t": 7,
+  "s": "weapon",
+  "d": "slash",
+  "two": false
+ },
+ {
+  "id": "starsteel_shield",
+  "n": "Starsteel Shield",
+  "t": 7,
+  "s": "shield",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "warlord_bulwark",
+  "n": "Warlord's Bulwark",
+  "t": 6,
+  "s": "shield",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "bronze_dagger",
+  "n": "Bronze Dagger",
+  "t": 1,
+  "s": "weapon",
+  "d": "stab",
+  "two": false
+ },
+ {
+  "id": "iron_dagger",
+  "n": "Iron Dagger",
+  "t": 2,
+  "s": "weapon",
+  "d": "stab",
+  "two": false
+ },
+ {
+  "id": "steel_dagger",
+  "n": "Steel Dagger",
+  "t": 3,
+  "s": "weapon",
+  "d": "stab",
+  "two": false
+ },
+ {
+  "id": "mithril_dagger",
+  "n": "Mithril Dagger",
+  "t": 4,
+  "s": "weapon",
+  "d": "stab",
+  "two": false
+ },
+ {
+  "id": "cobalt_dagger",
+  "n": "Cobalt Dagger",
+  "t": 5,
+  "s": "weapon",
+  "d": "stab",
+  "two": false
+ },
+ {
+  "id": "runite_dagger",
+  "n": "Runite Dagger",
+  "t": 6,
+  "s": "weapon",
+  "d": "stab",
+  "two": false
+ },
+ {
+  "id": "starsteel_dagger",
+  "n": "Starsteel Dagger",
+  "t": 7,
+  "s": "weapon",
+  "d": "stab",
+  "two": false
+ },
+ {
+  "id": "bronze_hammer",
+  "n": "Bronze Hammer",
+  "t": 1,
+  "s": "weapon",
+  "d": "crush",
+  "two": false
+ },
+ {
+  "id": "iron_hammer",
+  "n": "Iron Hammer",
+  "t": 2,
+  "s": "weapon",
+  "d": "crush",
+  "two": false
+ },
+ {
+  "id": "steel_hammer",
+  "n": "Steel Hammer",
+  "t": 3,
+  "s": "weapon",
+  "d": "crush",
+  "two": false
+ },
+ {
+  "id": "mithril_hammer",
+  "n": "Mithril Hammer",
+  "t": 4,
+  "s": "weapon",
+  "d": "crush",
+  "two": false
+ },
+ {
+  "id": "cobalt_hammer",
+  "n": "Cobalt Hammer",
+  "t": 5,
+  "s": "weapon",
+  "d": "crush",
+  "two": false
+ },
+ {
+  "id": "runite_hammer",
+  "n": "Runite Hammer",
+  "t": 6,
+  "s": "weapon",
+  "d": "crush",
+  "two": false
+ },
+ {
+  "id": "starsteel_hammer",
+  "n": "Starsteel Hammer",
+  "t": 7,
+  "s": "weapon",
+  "d": "crush",
+  "two": false
+ },
+ {
+  "id": "bronze_cape",
+  "n": "Bronze Cape",
+  "t": 1,
+  "s": "cape",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "iron_cape",
+  "n": "Iron Cape",
+  "t": 2,
+  "s": "cape",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "steel_cape",
+  "n": "Steel Cape",
+  "t": 3,
+  "s": "cape",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "mithril_cape",
+  "n": "Mithril Cape",
+  "t": 4,
+  "s": "cape",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "cobalt_cape",
+  "n": "Cobalt Cape",
+  "t": 5,
+  "s": "cape",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "runite_cape",
+  "n": "Runite Cape",
+  "t": 6,
+  "s": "cape",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "starsteel_cape",
+  "n": "Starsteel Cape",
+  "t": 7,
+  "s": "cape",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "plague_fang_dagger",
+  "n": "Plague Fang Dagger",
+  "t": 1,
+  "s": "weapon",
+  "d": "stab",
+  "two": false
+ },
+ {
+  "id": "chitin_maul",
+  "n": "Chitin Maul",
+  "t": 2,
+  "s": "weapon",
+  "d": "crush",
+  "two": false
+ },
+ {
+  "id": "warcleaver",
+  "n": "Warcleaver",
+  "t": 3,
+  "s": "weapon",
+  "d": "slash",
+  "two": false
+ },
+ {
+  "id": "bone_reaper",
+  "n": "Bone Reaper",
+  "t": 4,
+  "s": "weapon",
+  "d": "slash",
+  "two": false
+ },
+ {
+  "id": "soulbinder_hammer",
+  "n": "Soulbinder Hammer",
+  "t": 4,
+  "s": "weapon",
+  "d": "crush",
+  "two": false
+ },
+ {
+  "id": "ironfang_claws",
+  "n": "Ironfang Claws",
+  "t": 5,
+  "s": "weapon",
+  "d": "stab",
+  "two": false
+ },
+ {
+  "id": "ratskin_cape",
+  "n": "Roughhide Cape",
+  "t": 1,
+  "s": "cape",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "silkwoven_cape",
+  "n": "Silkwoven Cape",
+  "t": 2,
+  "s": "cape",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "warband_cape",
+  "n": "Warband Cape",
+  "t": 3,
+  "s": "cape",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "wraithweave_cape",
+  "n": "Wraithweave Cape",
+  "t": 4,
+  "s": "cape",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "pack_alpha_cape",
+  "n": "Pack Alpha Cape",
+  "t": 5,
+  "s": "cape",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "ratskin_tunic",
+  "n": "Roughhide Tunic",
+  "t": 1,
+  "s": "chest",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "chitin_plate",
+  "n": "Chitin Plate",
+  "t": 2,
+  "s": "chest",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "warband_armor",
+  "n": "Warband Hide Armour",
+  "t": 3,
+  "s": "chest",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "bone_plate_cuirass",
+  "n": "Bone Plate Cuirass",
+  "t": 4,
+  "s": "chest",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "pack_leader_vest",
+  "n": "Pack Leader Vest",
+  "t": 5,
+  "s": "chest",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "rat_queen_crown",
+  "n": "Rat Queen's Crown",
+  "t": 2,
+  "s": "helmet",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "widow_crown",
+  "n": "Widow's Crown",
+  "t": 3,
+  "s": "helmet",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "warchief_crown",
+  "n": "Warchief's Crown",
+  "t": 3,
+  "s": "helmet",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "lich_crown",
+  "n": "Lich's Crown",
+  "t": 4,
+  "s": "helmet",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "ironfang_skull",
+  "n": "Ironfang's Skull",
+  "t": 5,
+  "s": "helmet",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "warlord_skull",
+  "n": "Warlord's Skull",
+  "t": 6,
+  "s": "helmet",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "troll_maul",
+  "n": "Troll Maul",
+  "t": 7,
+  "s": "weapon",
+  "d": "crush",
+  "two": false
+ },
+ {
+  "id": "troll_king_skull",
+  "n": "Troll King's Skull",
+  "t": 7,
+  "s": "helmet",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "wyrmfang_blade",
+  "n": "Wyrmfang Blade",
+  "t": 7,
+  "s": "weapon",
+  "d": "slash",
+  "two": false
+ },
+ {
+  "id": "emberwyrm_skull",
+  "n": "Emberwyrm Skull",
+  "t": 8,
+  "s": "helmet",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "doomblade",
+  "n": "Doomblade",
+  "t": 8,
+  "s": "weapon",
+  "d": "slash",
+  "two": false
+ },
+ {
+  "id": "demonlord_skull",
+  "n": "Demon Lord's Skull",
+  "t": 9,
+  "s": "helmet",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "barrow_blade",
+  "n": "Barrow Blade",
+  "t": 7,
+  "s": "weapon",
+  "d": "slash",
+  "two": false
+ },
+ {
+  "id": "barrow_shield",
+  "n": "Barrow Shield",
+  "t": 7,
+  "s": "shield",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "barrow_dagger",
+  "n": "Barrow Dagger",
+  "t": 7,
+  "s": "weapon",
+  "d": "stab",
+  "two": false
+ },
+ {
+  "id": "grave_cleaver",
+  "n": "Grave Cleaver",
+  "t": 7,
+  "s": "weapon",
+  "d": "crush",
+  "two": true
+ },
+ {
+  "id": "barrow_maul",
+  "n": "Barrow Maul",
+  "t": 7,
+  "s": "weapon",
+  "d": "crush",
+  "two": false
+ },
+ {
+  "id": "emberforged_blade",
+  "n": "Emberforged Blade",
+  "t": 8,
+  "s": "weapon",
+  "d": "slash",
+  "two": false
+ },
+ {
+  "id": "cinderguard",
+  "n": "Cinderguard",
+  "t": 8,
+  "s": "shield",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "forgebreaker",
+  "n": "Forgebreaker",
+  "t": 8,
+  "s": "weapon",
+  "d": "crush",
+  "two": true
+ },
+ {
+  "id": "cinderfang",
+  "n": "Cinderfang",
+  "t": 8,
+  "s": "weapon",
+  "d": "stab",
+  "two": false
+ },
+ {
+  "id": "slagbreaker",
+  "n": "Slagbreaker",
+  "t": 8,
+  "s": "weapon",
+  "d": "crush",
+  "two": false
+ },
+ {
+  "id": "voidrend",
+  "n": "Voidrend",
+  "t": 9,
+  "s": "weapon",
+  "d": "stab",
+  "two": false
+ },
+ {
+  "id": "nullward",
+  "n": "Nullward",
+  "t": 9,
+  "s": "shield",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "voidcleaver",
+  "n": "Voidcleaver",
+  "t": 9,
+  "s": "weapon",
+  "d": "slash",
+  "two": true
+ },
+ {
+  "id": "voidedge",
+  "n": "Voidedge",
+  "t": 9,
+  "s": "weapon",
+  "d": "slash",
+  "two": false
+ },
+ {
+  "id": "riftcrusher",
+  "n": "Riftcrusher",
+  "t": 9,
+  "s": "weapon",
+  "d": "crush",
+  "two": false
+ },
+ {
+  "id": "rough_helm",
+  "n": "Roughhide Cowl",
+  "t": 1,
+  "s": "helmet",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "rough_chest",
+  "n": "Roughhide Jerkin",
+  "t": 1,
+  "s": "chest",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "rough_legs",
+  "n": "Roughhide Chaps",
+  "t": 1,
+  "s": "legs",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "rough_gloves",
+  "n": "Roughhide Bracers",
+  "t": 1,
+  "s": "gloves",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "rough_boots",
+  "n": "Roughhide Boots",
+  "t": 1,
+  "s": "boots",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "chitin_helm",
+  "n": "Chitinweave Cowl",
+  "t": 2,
+  "s": "helmet",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "chitin_chest",
+  "n": "Chitinweave Jerkin",
+  "t": 2,
+  "s": "chest",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "chitin_legs",
+  "n": "Chitinweave Chaps",
+  "t": 2,
+  "s": "legs",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "chitin_gloves",
+  "n": "Chitinweave Bracers",
+  "t": 2,
+  "s": "gloves",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "chitin_boots",
+  "n": "Chitinweave Boots",
+  "t": 2,
+  "s": "boots",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "wolf_helm",
+  "n": "Wolfhide Cowl",
+  "t": 3,
+  "s": "helmet",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "wolf_chest",
+  "n": "Wolfhide Jerkin",
+  "t": 3,
+  "s": "chest",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "wolf_legs",
+  "n": "Wolfhide Chaps",
+  "t": 3,
+  "s": "legs",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "wolf_gloves",
+  "n": "Wolfhide Bracers",
+  "t": 3,
+  "s": "gloves",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "wolf_boots",
+  "n": "Wolfhide Boots",
+  "t": 3,
+  "s": "boots",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "ogre_helm",
+  "n": "Ogrehide Cowl",
+  "t": 4,
+  "s": "helmet",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "ogre_chest",
+  "n": "Ogrehide Jerkin",
+  "t": 4,
+  "s": "chest",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "ogre_legs",
+  "n": "Ogrehide Chaps",
+  "t": 4,
+  "s": "legs",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "ogre_gloves",
+  "n": "Ogrehide Bracers",
+  "t": 4,
+  "s": "gloves",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "ogre_boots",
+  "n": "Ogrehide Boots",
+  "t": 4,
+  "s": "boots",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "troll_helm",
+  "n": "Trollhide Cowl",
+  "t": 5,
+  "s": "helmet",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "troll_chest",
+  "n": "Trollhide Jerkin",
+  "t": 5,
+  "s": "chest",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "troll_legs",
+  "n": "Trollhide Chaps",
+  "t": 5,
+  "s": "legs",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "troll_gloves",
+  "n": "Trollhide Bracers",
+  "t": 5,
+  "s": "gloves",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "troll_boots",
+  "n": "Trollhide Boots",
+  "t": 5,
+  "s": "boots",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "drake_helm",
+  "n": "Drakehide Cowl",
+  "t": 6,
+  "s": "helmet",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "drake_chest",
+  "n": "Drakehide Jerkin",
+  "t": 6,
+  "s": "chest",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "drake_legs",
+  "n": "Drakehide Chaps",
+  "t": 6,
+  "s": "legs",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "drake_gloves",
+  "n": "Drakehide Bracers",
+  "t": 6,
+  "s": "gloves",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "drake_boots",
+  "n": "Drakehide Boots",
+  "t": 6,
+  "s": "boots",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "demon_helm",
+  "n": "Demonhide Cowl",
+  "t": 7,
+  "s": "helmet",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "demon_chest",
+  "n": "Demonhide Jerkin",
+  "t": 7,
+  "s": "chest",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "demon_legs",
+  "n": "Demonhide Chaps",
+  "t": 7,
+  "s": "legs",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "demon_gloves",
+  "n": "Demonhide Bracers",
+  "t": 7,
+  "s": "gloves",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "demon_boots",
+  "n": "Demonhide Boots",
+  "t": 7,
+  "s": "boots",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "wraith_helm",
+  "n": "Wraithhide Cowl",
+  "t": 7,
+  "s": "helmet",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "wraith_chest",
+  "n": "Wraithhide Jerkin",
+  "t": 7,
+  "s": "chest",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "wraith_legs",
+  "n": "Wraithhide Chaps",
+  "t": 7,
+  "s": "legs",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "wraith_gloves",
+  "n": "Wraithhide Bracers",
+  "t": 7,
+  "s": "gloves",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "wraith_boots",
+  "n": "Wraithhide Boots",
+  "t": 7,
+  "s": "boots",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "ember_helm",
+  "n": "Emberhide Cowl",
+  "t": 8,
+  "s": "helmet",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "ember_chest",
+  "n": "Emberhide Jerkin",
+  "t": 8,
+  "s": "chest",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "ember_legs",
+  "n": "Emberhide Chaps",
+  "t": 8,
+  "s": "legs",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "ember_gloves",
+  "n": "Emberhide Bracers",
+  "t": 8,
+  "s": "gloves",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "ember_boots",
+  "n": "Emberhide Boots",
+  "t": 8,
+  "s": "boots",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "void_helm",
+  "n": "Voidhide Cowl",
+  "t": 9,
+  "s": "helmet",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "void_chest",
+  "n": "Voidhide Jerkin",
+  "t": 9,
+  "s": "chest",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "void_legs",
+  "n": "Voidhide Chaps",
+  "t": 9,
+  "s": "legs",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "void_gloves",
+  "n": "Voidhide Bracers",
+  "t": 9,
+  "s": "gloves",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "void_boots",
+  "n": "Voidhide Boots",
+  "t": 9,
+  "s": "boots",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "barrow_chest",
+  "n": "Warden's Aegis",
+  "t": 7,
+  "s": "chest",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "barrow_legs",
+  "n": "Warden's Greaves",
+  "t": 7,
+  "s": "legs",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "barrow_helm",
+  "n": "Barrow Warden's Helm",
+  "t": 7,
+  "s": "helmet",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "barrow_gloves",
+  "n": "Barrow Warden's Gauntlets",
+  "t": 7,
+  "s": "gloves",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "barrow_boots",
+  "n": "Barrow Warden's Sabatons",
+  "t": 7,
+  "s": "boots",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "wraithbound_cowl",
+  "n": "Wraithbound Cowl",
+  "t": 7,
+  "s": "helmet",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "graveshroud_vest",
+  "n": "Grave-Shroud Vest",
+  "t": 7,
+  "s": "chest",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "emberforged_aegis",
+  "n": "Emberforged Aegis",
+  "t": 8,
+  "s": "chest",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "emberforged_greaves",
+  "n": "Emberforged Greaves",
+  "t": 8,
+  "s": "legs",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "cinderweave_cowl",
+  "n": "Cinderweave Cowl",
+  "t": 8,
+  "s": "helmet",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "emberhide_vest",
+  "n": "Emberhide Vest",
+  "t": 8,
+  "s": "chest",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "abyssal_aegis",
+  "n": "Abyssal Aegis",
+  "t": 9,
+  "s": "chest",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "voidforged_greaves",
+  "n": "Voidforged Greaves",
+  "t": 9,
+  "s": "legs",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "riftshadow_cowl",
+  "n": "Riftshadow Cowl",
+  "t": 9,
+  "s": "helmet",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "voidheart_shroud",
+  "n": "Voidheart Shroud",
+  "t": 9,
+  "s": "chest",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "dawnbreaker",
+  "n": "Dawnbreaker",
+  "t": 10,
+  "s": "weapon",
+  "d": "slash",
+  "two": false
+ },
+ {
+  "id": "starfang",
+  "n": "Starfang",
+  "t": 10,
+  "s": "weapon",
+  "d": "stab",
+  "two": false
+ },
+ {
+  "id": "worldsunder_maul",
+  "n": "Worldsunder Maul",
+  "t": 10,
+  "s": "weapon",
+  "d": "crush",
+  "two": false
+ },
+ {
+  "id": "aegis_of_dawn",
+  "n": "Aegis of Dawn",
+  "t": 10,
+  "s": "shield",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "sunpiercer",
+  "n": "Sunpiercer",
+  "t": 10,
+  "s": "weapon",
+  "d": "stab",
+  "two": false
+ },
+ {
+  "id": "dawnreaper",
+  "n": "Dawnreaper",
+  "t": 10,
+  "s": "weapon",
+  "d": "slash",
+  "two": true
+ },
+ {
+  "id": "dawnward_helm",
+  "n": "Dawnward Helm",
+  "t": 10,
+  "s": "helmet",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "dawnward_chest",
+  "n": "Dawnward Cuirass",
+  "t": 10,
+  "s": "chest",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "dawnward_legs",
+  "n": "Dawnward Greaves",
+  "t": 10,
+  "s": "legs",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "dawnward_boots",
+  "n": "Dawnward Sabatons",
+  "t": 10,
+  "s": "boots",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "sunweave_helm",
+  "n": "Sunweave Hood",
+  "t": 10,
+  "s": "helmet",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "sunweave_chest",
+  "n": "Sunweave Vest",
+  "t": 10,
+  "s": "chest",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "sunweave_legs",
+  "n": "Sunweave Leggings",
+  "t": 10,
+  "s": "legs",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "sunweave_boots",
+  "n": "Sunweave Treads",
+  "t": 10,
+  "s": "boots",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "gravesteel_helm",
+  "n": "Gravesteel Helm",
+  "t": 7,
+  "s": "helmet",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "gravesteel_chest",
+  "n": "Gravesteel Chest",
+  "t": 7,
+  "s": "chest",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "gravesteel_legs",
+  "n": "Gravesteel Legs",
+  "t": 7,
+  "s": "legs",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "gravesteel_gloves",
+  "n": "Gravesteel Gloves",
+  "t": 7,
+  "s": "gloves",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "gravesteel_boots",
+  "n": "Gravesteel Boots",
+  "t": 7,
+  "s": "boots",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "gravesteel_sword",
+  "n": "Gravesteel Sword",
+  "t": 7,
+  "s": "weapon",
+  "d": "slash",
+  "two": false
+ },
+ {
+  "id": "gravesteel_shield",
+  "n": "Gravesteel Shield",
+  "t": 7,
+  "s": "shield",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "gravesteel_dagger",
+  "n": "Gravesteel Dagger",
+  "t": 7,
+  "s": "weapon",
+  "d": "stab",
+  "two": false
+ },
+ {
+  "id": "gravesteel_hammer",
+  "n": "Gravesteel Hammer",
+  "t": 7,
+  "s": "weapon",
+  "d": "crush",
+  "two": false
+ },
+ {
+  "id": "moltensteel_helm",
+  "n": "Moltensteel Helm",
+  "t": 8,
+  "s": "helmet",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "moltensteel_chest",
+  "n": "Moltensteel Chest",
+  "t": 8,
+  "s": "chest",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "moltensteel_legs",
+  "n": "Moltensteel Legs",
+  "t": 8,
+  "s": "legs",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "moltensteel_gloves",
+  "n": "Moltensteel Gloves",
+  "t": 8,
+  "s": "gloves",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "moltensteel_boots",
+  "n": "Moltensteel Boots",
+  "t": 8,
+  "s": "boots",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "moltensteel_sword",
+  "n": "Moltensteel Sword",
+  "t": 8,
+  "s": "weapon",
+  "d": "slash",
+  "two": false
+ },
+ {
+  "id": "moltensteel_shield",
+  "n": "Moltensteel Shield",
+  "t": 8,
+  "s": "shield",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "moltensteel_dagger",
+  "n": "Moltensteel Dagger",
+  "t": 8,
+  "s": "weapon",
+  "d": "stab",
+  "two": false
+ },
+ {
+  "id": "moltensteel_hammer",
+  "n": "Moltensteel Hammer",
+  "t": 8,
+  "s": "weapon",
+  "d": "crush",
+  "two": false
+ },
+ {
+  "id": "voidsteel_helm",
+  "n": "Voidsteel Helm",
+  "t": 9,
+  "s": "helmet",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "voidsteel_chest",
+  "n": "Voidsteel Chest",
+  "t": 9,
+  "s": "chest",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "voidsteel_legs",
+  "n": "Voidsteel Legs",
+  "t": 9,
+  "s": "legs",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "voidsteel_gloves",
+  "n": "Voidsteel Gloves",
+  "t": 9,
+  "s": "gloves",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "voidsteel_boots",
+  "n": "Voidsteel Boots",
+  "t": 9,
+  "s": "boots",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "voidsteel_sword",
+  "n": "Voidsteel Sword",
+  "t": 9,
+  "s": "weapon",
+  "d": "slash",
+  "two": false
+ },
+ {
+  "id": "voidsteel_shield",
+  "n": "Voidsteel Shield",
+  "t": 9,
+  "s": "shield",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "voidsteel_dagger",
+  "n": "Voidsteel Dagger",
+  "t": 9,
+  "s": "weapon",
+  "d": "stab",
+  "two": false
+ },
+ {
+  "id": "voidsteel_hammer",
+  "n": "Voidsteel Hammer",
+  "t": 9,
+  "s": "weapon",
+  "d": "crush",
+  "two": false
+ },
+ {
+  "id": "bronze_buckler",
+  "n": "Bronze Buckler",
+  "t": 1,
+  "s": "shield",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "iron_buckler",
+  "n": "Iron Buckler",
+  "t": 2,
+  "s": "shield",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "steel_buckler",
+  "n": "Steel Buckler",
+  "t": 3,
+  "s": "shield",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "mithril_buckler",
+  "n": "Mithril Buckler",
+  "t": 4,
+  "s": "shield",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "cobalt_buckler",
+  "n": "Cobalt Buckler",
+  "t": 5,
+  "s": "shield",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "runite_buckler",
+  "n": "Runite Buckler",
+  "t": 6,
+  "s": "shield",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "starsteel_buckler",
+  "n": "Starsteel Buckler",
+  "t": 7,
+  "s": "shield",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "moltensteel_buckler",
+  "n": "Moltensteel Buckler",
+  "t": 8,
+  "s": "shield",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "voidsteel_buckler",
+  "n": "Voidsteel Buckler",
+  "t": 9,
+  "s": "shield",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "dawnsteel_buckler",
+  "n": "Dawnsteel Buckler",
+  "t": 10,
+  "s": "shield",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "cindermantle",
+  "n": "Cindermantle",
+  "t": 8,
+  "s": "cape",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "voidshroud",
+  "n": "Voidshroud Cape",
+  "t": 9,
+  "s": "cape",
+  "d": "",
+  "two": false
+ },
+ {
+  "id": "dawnmantle",
+  "n": "Dawnmantle",
+  "t": 10,
+  "s": "cape",
+  "d": "",
+  "two": false
+ }
+]

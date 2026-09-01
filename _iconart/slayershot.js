@@ -47,7 +47,8 @@ const TAB = process.argv[2] || 'perks';
     b.click();
   });
   await new Promise(r => setTimeout(r, 900));
-  await page.evaluate(tab => { slyShopOpen = true; slyShopTab = tab; renderCombat(); }, TAB);
+  /* tab 'none' leaves the shop CLOSED, which is the only way to see the master rows — they are what the shop replaces. */
+  await page.evaluate(tab => { slyShopOpen = (tab !== 'none'); slyShopTab = (tab === 'none' ? 'perks' : tab); renderCombat(); }, TAB);
   await new Promise(r => setTimeout(r, 900));
 
   const m = await page.evaluate(() => {
@@ -71,7 +72,14 @@ const TAB = process.argv[2] || 'perks';
   console.log('  scroll needed  ' + (m.panelH > m.viewportCss ? (m.panelH - m.viewportCss) + ' px past the fold' : 'none'));
   console.log('  font sizes     ' + Object.entries(m.font).map(([k, v]) => k + ' ' + v).join(', '));
 
-  await page.screenshot({ path: path.join(__dirname, '_slayer_' + TAB + '.png'), fullPage: true });
+  if (process.env.CVCROP) {
+    const box = await page.evaluate(() => { const e = document.querySelector('.sly-wrap');
+      const r = e.getBoundingClientRect(); return { x: r.x, y: r.y, w: r.width, h: r.height }; });
+    await page.screenshot({ path: path.join(__dirname, '_slayer_' + TAB + '.png'),
+      clip: { x: Math.max(0, box.x - 6), y: Math.max(0, box.y - 6), width: box.w + 12, height: Math.min(box.h + 12, 1500) } });
+  } else {
+    await page.screenshot({ path: path.join(__dirname, '_slayer_' + TAB + '.png'), fullPage: true });
+  }
   console.log('  shot _slayer_' + TAB + '.png');
   await browser.close();
 })().catch(e => { console.error(e); process.exit(1); });

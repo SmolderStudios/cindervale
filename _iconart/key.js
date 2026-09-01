@@ -22,8 +22,8 @@ const KIT = 'C:/Users/Jordan/Desktop/cindervale-trailer-kit';
 const puppeteer = require(KIT + '/node_modules/puppeteer-core');
 const CHROME = KIT + '/browsers/chrome/win64-151.0.7922.71/chrome-win64/chrome.exe';
 
-const RAW = path.join(__dirname, 'raw');
-const CUT = path.join(__dirname, 'cut');
+const RAW = path.join(__dirname, process.env.CVRAW || 'raw');
+const CUT = path.join(__dirname, process.env.CVCUT || 'cut');
 const arg = k => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : null; };
 const SIZE = +(arg('--size') || 128);
 const MARGIN = 0.05;          // fraction of the square left empty around the subject

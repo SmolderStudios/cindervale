@@ -2774,6 +2774,83 @@ setTimeout(() => {
     ev("_alchTab='skilling';");
   }
 
+  section('In-game menu — grouping + Back (0.9.123.x)');
+  {
+    /* The menu was eleven identical rows in one column. Grouping it is cosmetic, but
+       the Back button is not: every gm* row closes the menu BEFORE opening its panel,
+       so if the flag or the delegated handler breaks you land in the game with the
+       menu gone and nothing says so. None of this throws when it regresses. */
+    const $$ = id => w.document.getElementById(id);
+    const shown = id => { const e = $$(id); return !!e && !e.classList.contains('mm-hidden') && !e.classList.contains('hidden'); };
+
+    ok('the menu card beats the shared 360px cap',
+       html.indexOf('#gameMenuModal .mm-card{max-width:520px}') > 0 &&
+       html.indexOf('#gameMenuModal .mm-card{max-width:520px}') > html.indexOf('max-width:360px;width:100%'));
+    ok('rows sit on a two-column grid, not a single stack',
+       html.indexOf('.gm-grid{display:grid;grid-template-columns:1fr 1fr') > 0);
+    ok('every section heading has rows under it',
+       (html.match(/class="gm-sec/g) || []).length === 4);
+    ok('the destructive pair is fenced off under its own label',
+       html.indexOf('gm-sec gm-sec-danger') > 0 &&
+       html.indexOf('id="gmQuit"') > html.indexOf('gm-sec gm-sec-danger') &&
+       html.indexOf('id="gmReset"') > html.indexOf('gm-sec gm-sec-danger'));
+
+    /* The dev rows are hidden individually when there is no mail worker. Without the
+       wrapper the heading would sit above an empty grid. */
+    ok('the dev heading hides with the rows it labels',
+       html.indexOf('id="gmDevSec" hidden') > 0 &&
+       html.split("['gmDevSec','gm").length - 1 === 2);
+
+    /* A Steam or desktop player seeing Get the full game is the worst kind of
+       silent regression — nothing throws, it just sells them what they own. The
+       class sits on the grid wrapper AND the button so losing one still hides it. */
+    ok('the buy row is demo-only, on both the wrapper and the button',
+       html.indexOf('gm-grid gm-buyrow demo-only') > 0 &&
+       html.indexOf('gm-row gm-buy gm-wide demo-only') > 0 &&
+       html.indexOf('body:not(.is-demo) .demo-only{display:none !important}') > 0);
+    ok('and only a non-electron user agent counts as the demo',
+       html.indexOf('const IS_DEMO = !/electron/i.test(navigator.userAgent);') > 0 &&
+       html.indexOf("if(IS_DEMO) document.body.classList.add('is-demo');") > 0);
+
+    /* Back is present in every panel a menu row can open — miss one and that panel
+       is the dead end the button was added to remove. */
+    ['mmSettingsModal','mmCreditsModal','mmReportModal','mmIdeaModal','mmMailModal','saveModal']
+      .forEach(id => ok('Back exists in #' + id,
+        !!($$(id) && $$(id).querySelector('.gm-back'))));
+
+    ok('Back is hidden until something opens it', ev('gmFrom(0); true') &&
+       [...w.document.querySelectorAll('.gm-back')].every(b => b.hidden));
+
+    /* Opened FROM the menu: Back shows, and returns to the menu. */
+    ev("gmFrom(0); $('gameMenuModal').classList.remove('mm-hidden');");
+    $$('gmSettings').click();
+    ok('a menu row opens its panel and closes the menu',
+       shown('mmSettingsModal') && !shown('gameMenuModal'));
+    ok('and Back appears there', !$$('mmSettingsModal').querySelector('.gm-back').hidden);
+    $$('mmSettingsModal').querySelector('.gm-back').click();
+    ok('Back closes the panel and reopens the menu',
+       shown('gameMenuModal') && !shown('mmSettingsModal'));
+    ok('and Back hides itself again',
+       [...w.document.querySelectorAll('.gm-back')].every(b => b.hidden));
+
+    /* Opened from the header instead: returning to the menu would be wrong, because
+       the menu was never open. */
+    ev("$('gameMenuModal').classList.add('mm-hidden');");
+    $$('btnExport').click();
+    ok('the header route leaves Back hidden',
+       shown('saveModal') && $$('saveModal').querySelector('.gm-back').hidden);
+    ev("$('saveModal').classList.add('hidden');");
+
+    /* Settings -> Report keeps the flag on purpose: that chain started at the menu. */
+    ev("gmFrom(0); $('gameMenuModal').classList.remove('mm-hidden');");
+    $$('gmSettings').click();
+    $$('mmSetReport').click();
+    ok('Back survives the Settings to Report hop',
+       shown('mmReportModal') && !$$('mmReportModal').querySelector('.gm-back').hidden);
+    $$('mmReportModal').querySelector('.gm-back').click();
+    ok('and lands back on the menu', shown('gameMenuModal'));
+    ev("gmFrom(0); $('gameMenuModal').classList.add('mm-hidden');");
+  }
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));
   process.exit(fail ? 1 : 0);
 }, 2500);

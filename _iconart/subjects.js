@@ -138,7 +138,7 @@ const BATCH2 = require('./subjects2').FAMILIES;
 const FAMILIES = Object.assign({
   logs: LOGS, ores: ORES, bars: BARS, fish: FISH,
   herbs: HERBS, fire: FIRE, gems_rough: GEMS_ROUGH, gems_cut: GEMS_CUT,
-}, BATCH2);
+}, BATCH2, { gear: require('./subjects3').GEAR });
 
 /* An id drawn twice would silently overwrite one of the two in every downstream
    map, and nothing else would complain. */
