@@ -3566,6 +3566,17 @@ body:not(.is-demo) .demo-only{display:none !important}
   border:1px solid #3f3124;border-radius:7px;padding:7px 10px;margin-bottom:6px}
 .sly-prow .sly-pn{font-size:calc(12px*var(--tscale));color:#e7dcc4}
 .sly-pips{display:inline-flex;gap:3px;flex:none}
+.sly-markcard{grid-column:1/-1}
+.sly-fams{display:flex;flex-wrap:wrap;gap:4px;margin-top:9px}
+.sly-fam{border:0;border-radius:6px;padding:5px 10px;cursor:var(--cur-pointer);
+  font-family:inherit;font-weight:600;font-size:calc(11px*var(--tscale));
+  letter-spacing:.06em;text-transform:uppercase;color:#9a8462;
+  background:linear-gradient(180deg,#2a1d10,#1a1108);
+  box-shadow:inset 0 1px 0 rgba(214,170,96,.14), inset 0 -1px 0 rgba(0,0,0,.5)}
+.sly-fam:hover:not(:disabled){color:var(--gold-hi)}
+.sly-fam:disabled{opacity:.4;cursor:var(--cur-na)}
+.sly-fam.on{color:var(--gold-hi);background:linear-gradient(180deg,#4c3517,#2c1d0c);
+  box-shadow:inset 0 1px 0 rgba(240,199,114,.32), 0 0 0 1px rgba(199,155,78,.4)}
 .sly-card.sly-locked{opacity:.55}
 .sly-card.sly-locked .sly-cn{color:var(--muted)}
 .sly-auto{display:inline-flex;align-items:center;gap:6px;margin-left:2px;
@@ -7028,7 +7039,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.121.14">v0.9.121</div>
+  <div class="mm-ver" data-build="0.9.121.15">v0.9.121</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -17365,6 +17376,16 @@ function normalizeState(){
   if(typeof state.cmastGranted!=='number'||state.cmastGranted<0) state.cmastGranted=0;
   if(typeof state.cmastShards!=='number'||state.cmastShards<0) state.cmastShards=0;
   if(state.slayer && typeof state.slayer.auto!=='boolean') state.slayer.auto=false;
+  if(state.slayer){
+    if(typeof state.slayer.markTier!=='number'||state.slayer.markTier<0) state.slayer.markTier=0;
+    if(typeof MARK_TIERS!=='undefined') state.slayer.markTier=Math.min(state.slayer.markTier, MARK_TIERS.length);
+    /* A family that no longer exists would silently give the Mark no effect at all,
+       so drop it back to unattuned rather than leave a dead reference. */
+    if(state.slayer.markFamily && typeof SLAYER_FAMILIES!=='undefined'
+       && !SLAYER_FAMILIES.some(f=>f.id===state.slayer.markFamily)) state.slayer.markFamily=null;
+    if(typeof state.slayer.pockets!=='number'||state.slayer.pockets<0) state.slayer.pockets=0;
+    if(typeof state.slayer.ledger!=='boolean') state.slayer.ledger=false;
+  }
   if(!state.cmastMilestones||typeof state.cmastMilestones!=='object'||Array.isArray(state.cmastMilestones)) state.cmastMilestones={};
   if(!state.cmastBossKills||typeof state.cmastBossKills!=='object'||Array.isArray(state.cmastBossKills)) state.cmastBossKills={};
   /* Guilds (0.9.123). Also carries the one-time farmhand migration — see gdNormalize. */
@@ -17508,7 +17529,12 @@ function satchelTierCost(n){           // n = 0-indexed expansion number → gol
 }
 function satchelCap(){
   const bought=Math.min(state.satchelUpgrades||0, SATCHEL_MAX_EXPANSIONS);
-  return SATCHEL_BASE + bought*SATCHEL_SLOT_STEP;
+  /* Deeper Pockets (slayer unlock) sits OUTSIDE the gold-bought expansions and
+     outside their cap on purpose — it is a separate reward for a separate
+     currency, so buying it does not consume one of the gold upgrades you were
+     saving for, and the cap on those still means what it says. */
+  const slayerSlots=(state.slayer&&state.slayer.pockets)||0;
+  return SATCHEL_BASE + bought*SATCHEL_SLOT_STEP + slayerSlots;
 }
 
 function satchelUsed(){
@@ -27204,6 +27230,42 @@ function handleRaidFail(){
   if(typeof logNotification==='function') logNotification('combat','💀',`Fell in ${raid.name} (stage ${stage+1}/${raid.stages.length}).`);
 }
 
+/* ── Monster families (0.9.121.15) ────────────────────────────────────────────────
+   The one missing data field that blocked everything "vs monster type". A monster
+   record carried zone, boss, lvl, dmgType, weakTo and resistTo — nothing to key a
+   family bonus on.
+
+   Derived from the ZONE rather than stored on all 57 records: the roster is already
+   grouped by theme, so a per-monster field would be 57 chances to disagree with the
+   zone it lives in. A monster added to an existing zone inherits the right family
+   for free. ZONE_FAMILY is the single place to correct one.
+
+   Deliberately uneven. Beast covers four zones and demon covers one, so attuning to
+   beast is the safe generalist pick and demon is the endgame specialist — that
+   spread is the choice, not a flaw in it. */
+const SLAYER_FAMILIES=[
+  {id:'vermin',    name:'Vermin'},
+  {id:'arachnid',  name:'Arachnid'},
+  {id:'goblinoid', name:'Goblinoid'},
+  {id:'undead',    name:'Undead'},
+  {id:'beast',     name:'Beast'},
+  {id:'giant',     name:'Giant'},
+  {id:'draconic',  name:'Draconic'},
+  {id:'demon',     name:'Demon'},
+];
+const ZONE_FAMILY={
+  rat_warrens:'vermin',    spider_hollow:'arachnid', goblin_cave:'goblinoid',
+  skeleton_crypt:'undead', wolf_den:'beast',         ogre_stronghold:'giant',
+  troll_caverns:'giant',   wyvern_roost:'draconic',  demon_sanctum:'demon',
+  thornwood:'beast',       frostfang:'beast',        ashen_steppe:'beast',
+};
+function monsterFamily(mon){
+  if(!mon) return null;
+  if(mon.family) return mon.family;              // a per-monster override still wins
+  return ZONE_FAMILY[mon.zone]||null;
+}
+function familyName(id){ const f=SLAYER_FAMILIES.find(x=>x.id===id); return f?f.name:id; }
+
 /* ════ SLAYER (1.0.73) — the 13th skill, combat-driven ═══════════════════════════
    A Slayer Master assigns a bounty ("slay N of a monster"). On-task kills pay
    Slayer XP + progress; completing a bounty pays Slayer Points to spend on perks.
@@ -27256,6 +27318,59 @@ const SLAYER_PERKS=[
 ];
 const SLAYER_SKIP_COST=5, SLAYER_BLOCK_COST=12;
 
+/* ── The Slayer's Mark (0.9.121.15) ───────────────────────────────────────────────
+   A different SHAPE of perk, not another entry in the rank ladder.
+
+   The five original perks are a closed loop: every one buys more Slayer XP or more
+   Slayer Points, which is why maxing them felt like nothing happened. The Mark
+   spends points on COMBAT instead, and it is a standing choice rather than a
+   purchase — you attune it to one monster family, and re-attune as your bounties
+   rotate. Upgrading raises the bonus; re-attuning costs a little every time, so it
+   stays a repeating sink instead of a one-off.
+
+   Not an equipment item on purpose. A neck slot would put it in competition with
+   the amulets, turn it into an inventory chore, and make "which do I wear" the
+   decision instead of "which family am I hunting". */
+const MARK_TIERS=[
+  {cost:120, dmg:0.08, name:"Slayer's Mark"},
+  {cost:300, dmg:0.14, name:'Honed Mark'},
+  {cost:700, dmg:0.22, name:"Reaper's Mark"},
+];
+const MARK_REBIND_COST=8;
+function markTier(){ return (state.slayer&&state.slayer.markTier)||0; }
+function markFamily(){ return (state.slayer&&state.slayer.markFamily)||null; }
+/* Damage multiplier the Mark contributes against this monster. 1 = no effect. */
+function markDamageMult(mon){
+  const t=markTier(); if(t<=0) return 1;
+  const fam=markFamily(); if(!fam) return 1;
+  return monsterFamily(mon)===fam ? (1+MARK_TIERS[t-1].dmg) : 1;
+}
+function buyMarkTier(){
+  const t=markTier();
+  if(t>=MARK_TIERS.length){ toast('The Mark is already at its highest tier.'); return; }
+  const cost=MARK_TIERS[t].cost;
+  if((state.slayer.points||0)<cost){ toast(`Not enough Slayer Points (need ${cost}).`); return; }
+  state.slayer.points-=cost;
+  state.slayer.markTier=t+1;
+  if(!state.slayer.markFamily) state.slayer.markFamily=SLAYER_FAMILIES[0].id;   // first buy needs a target
+  toast(`✦ ${MARK_TIERS[t].name} — +${Math.round(MARK_TIERS[t].dmg*100)}% damage vs ${familyName(state.slayer.markFamily)}.`);
+  saveGame(); if(typeof renderCombat==='function') renderCombat();
+}
+function bindMark(fam){
+  if(markTier()<=0){ toast('Buy the Mark first.'); return; }
+  if(!SLAYER_FAMILIES.some(f=>f.id===fam)) return;
+  if(markFamily()===fam) return;
+  /* Free the first time — you have just bought it and have to pick something. */
+  const first=!markFamily();
+  if(!first){
+    if((state.slayer.points||0)<MARK_REBIND_COST){ toast(`Re-attuning costs ${MARK_REBIND_COST} Slayer Points.`); return; }
+    state.slayer.points-=MARK_REBIND_COST;
+  }
+  state.slayer.markFamily=fam;
+  toast(`✦ Mark attuned to ${familyName(fam)}.`);
+  saveGame(); if(typeof renderCombat==='function') renderCombat();
+}
+
 /* ── Shard Cache (0.9.121.11) ───────────────────────────────────────────────────
    The reward shop had 558 points of content in it, total, and nothing repeatable.
    A player reported sitting on 1586 points at slayer Lv 32 with every perk maxed,
@@ -27272,16 +27387,43 @@ const SLAYER_CACHE=[
   {id:'beast_sinew', cost:20,  desc:'Gates the T3 tool recipes.'},
   {id:'shade_ember', cost:60,  desc:'Gates the T4 tool recipes.'},
   {id:'voidheart',   cost:250, desc:'Gates the T5 tool recipes.'},
+  {id:'gem_dust',    cost:15,  qty:250, desc:'250 gem dust for the jeweller.'},
+  {id:'rock_salt',   cost:10,  qty:40,  desc:'40 rock salt for the kitchen.'},
 ];
+
+/* One-off unlocks — the other half of "points should buy into OTHER progressions".
+   Each is permanent, bought once, and does something outside the slayer loop. */
+const SLAYER_UNLOCKS=[
+  {id:'ledger',  cost:60,  name:'Bounty Ledger',
+   desc:"Shows every monster's family and weakness in the Monster Log, for good."},
+  {id:'pockets', cost:100, name:'Deeper Pockets',
+   desc:'+8 satchel slots, permanently. Stacks with what you have bought with gold.'},
+];
+function slayerUnlockOwned(id){
+  if(id==='ledger')  return !!(state.slayer&&state.slayer.ledger);
+  if(id==='pockets') return ((state.slayer&&state.slayer.pockets)||0)>0;
+  return false;
+}
+function buySlayerUnlock(id){
+  const u=SLAYER_UNLOCKS.find(x=>x.id===id); if(!u) return;
+  if(slayerUnlockOwned(id)){ toast('Already unlocked.'); return; }
+  if((state.slayer.points||0)<u.cost){ toast(`Not enough Slayer Points (need ${u.cost}).`); return; }
+  state.slayer.points-=u.cost;
+  if(id==='ledger')  state.slayer.ledger=true;
+  if(id==='pockets') state.slayer.pockets=8;
+  toast(`✦ ${u.name} unlocked.`);
+  saveGame(); renderAll(); if(typeof renderCombat==='function') renderCombat();
+}
 function buySlayerCache(id){
   const row=SLAYER_CACHE.find(r=>r.id===id); if(!row) return;
   if((state.slayer.points||0)<row.cost){ toast(`Not enough Slayer Points (need ${row.cost}).`); return; }
   /* Charge only if the item actually lands — grantItem returns 0 when the satchel
      is full, and taking the points anyway is the satchel-full material loss the
      audit suite already guards elsewhere. */
-  if(grantItem(id,1)<=0){ toast('No room in your satchel.'); return; }
+  const qty=row.qty||1;
+  if(grantItem(id,qty)<=0){ toast('No room in your satchel.'); return; }
   state.slayer.points-=row.cost;
-  toast(`Bought ${ITEMS[id]?ITEMS[id].name:id} for ${row.cost} pts.`);
+  toast(`Bought ${qty>1?qty+' ':''}${ITEMS[id]?ITEMS[id].name:id} for ${row.cost} pts.`);
   saveGame(); if(typeof renderCombat==='function') renderCombat();
 }
 // Slayer panel UI-only state (0.9.24). Deliberately NOT in `state` — these are
@@ -31592,6 +31734,11 @@ function combatTick(){
         const _dm=cmastDamageMult(mon,_foeFrac,_youFrac);
         if(_dm!==1) youDmg=Math.max(1,Math.round(youDmg*_dm));
       }
+      // Slayer's Mark — family damage. After the mastery procs so they compound.
+      if(youDmg>0 && typeof markDamageMult==='function'){
+        const _mm=markDamageMult(mon);
+        if(_mm!==1) youDmg=Math.max(1,Math.round(youDmg*_mm));
+      }
     }
     // ── Cleave (1.0.66) — the Grave Cleaver's Reaping Arc: a landed hit has a
     // chance to strike a second time in the same swing (mirrors the first blow,
@@ -32772,6 +32919,36 @@ function buildSlayerHTML(){
           <button class="sly-cb ${can?'buy':''}" data-sl-perk="${p.id}" ${can?'':'disabled'}>${label}</button>
         </div>`;
       }).join('');
+    } else if(slyShopTab==='mark'){
+      const t=markTier(), fam=markFamily(), maxed=t>=MARK_TIERS.length;
+      const nextCost=maxed?0:MARK_TIERS[t].cost;
+      const cur=t>0?MARK_TIERS[t-1]:null;
+      const canBuy=!maxed&&pts>=nextCost;
+      const fams=SLAYER_FAMILIES.map(f=>{
+        const on=fam===f.id;
+        const afford=on||!fam||pts>=MARK_REBIND_COST;
+        return `<button class="sly-fam${on?' on':''}" data-sl-bind="${f.id}" ${t>0&&afford?'':'disabled'}>${f.name}</button>`;
+      }).join('');
+      body=`<div class="sly-card sly-markcard">
+        <div class="sly-ch"><span class="sly-cn">${cur?cur.name:"Slayer's Mark"}</span>
+          <span class="sly-pips">${Array.from({length:MARK_TIERS.length},(_,i)=>`<i class="sly-pip${i<t?' on':''}"></i>`).join('')}</span></div>
+        <div class="sly-cd">${t>0
+          ? `+${Math.round(cur.dmg*100)}% damage against <b style="color:#f0c772">${fam?familyName(fam):'—'}</b>. Re-attune any time for ${MARK_REBIND_COST} pts.`
+          : 'Attune to one monster family for bonus damage against it. Re-attune as your bounties move.'}</div>
+        <button class="sly-cb ${canBuy?'buy':''}" data-sl-mark="1" ${canBuy?'':'disabled'}>${
+          maxed?'Fully honed':(pts>=nextCost?`${t>0?'Upgrade':'Buy'} · ${nextCost} pts`:`Need ${nextCost} pts`)}</button>
+        <div class="sly-fams">${fams}</div>
+      </div>`;
+    } else if(slyShopTab==='unlocks'){
+      body=SLAYER_UNLOCKS.map(u=>{
+        const owned=slayerUnlockOwned(u.id), can=!owned&&pts>=u.cost;
+        return `<div class="sly-card">
+          <div class="sly-ch"><span class="sly-cn">${u.name}</span></div>
+          <div class="sly-cd">${u.desc}</div>
+          <button class="sly-cb ${can?'buy':''}" data-sl-unlock="${u.id}" ${can?'':'disabled'}>${
+            owned?'Owned':(pts>=u.cost?`Buy · ${u.cost} pts`:`Need ${u.cost} pts`)}</button>
+        </div>`;
+      }).join('');
     } else if(slyShopTab==='cache'){
       body=SLAYER_CACHE.map(r=>{
         const it=ITEMS[r.id]||{}, can=pts>=r.cost, have=state.items[r.id]||0;
@@ -32798,7 +32975,9 @@ function buildSlayerHTML(){
         <h3>Rewards Shop</h3><span class="sly-rule"></span>
         <div class="sly-seg">
           <button class="${slyShopTab==='perks'?'on':''}" data-sl-shoptab="perks">Perks</button>
+          <button class="${slyShopTab==='mark'?'on':''}" data-sl-shoptab="mark">The Mark</button>
           <button class="${slyShopTab==='cache'?'on':''}" data-sl-shoptab="cache">Shard Cache</button>
+          <button class="${slyShopTab==='unlocks'?'on':''}" data-sl-shoptab="unlocks">Unlocks</button>
           <button class="${slyShopTab==='actions'?'on':''}" data-sl-shoptab="actions">Task actions</button>
         </div>
       </div>
@@ -33523,6 +33702,9 @@ ${combat.raid?buildRaidProgressHTML():''}
   panel.querySelectorAll('[data-sl-block]').forEach(b=>b.addEventListener('click',slayerBlockCurrent));
   panel.querySelectorAll('[data-sl-perk]').forEach(b=>{ if(b.disabled) return; b.addEventListener('click',()=>buySlayerPerk(b.getAttribute('data-sl-perk'))); });
   panel.querySelectorAll('[data-sl-cache]').forEach(b=>{ if(b.disabled) return; b.addEventListener('click',()=>buySlayerCache(b.getAttribute('data-sl-cache'))); });
+  panel.querySelectorAll('[data-sl-mark]').forEach(b=>{ if(b.disabled) return; b.addEventListener('click',buyMarkTier); });
+  panel.querySelectorAll('[data-sl-bind]').forEach(b=>{ if(b.disabled) return; b.addEventListener('click',()=>bindMark(b.getAttribute('data-sl-bind'))); });
+  panel.querySelectorAll('[data-sl-unlock]').forEach(b=>{ if(b.disabled) return; b.addEventListener('click',()=>buySlayerUnlock(b.getAttribute('data-sl-unlock'))); });
   panel.querySelectorAll('[data-sl-auto]').forEach(b=>{
     b.addEventListener('change',()=>{
       state.slayer.auto=!!b.checked;
