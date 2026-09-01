@@ -81,6 +81,51 @@ const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/
     out.offTask = slayerOnTask(MONSTERS.find(m => m.id !== mon.id && !m.boss).id);
     state.slayer.perks = {};
 
+    // ── 2c. families and the Mark ─────────────────────────────────────────────
+    // every monster must resolve to a family, or a Mark bound there is dead weight
+    out.noFamily = MONSTERS.filter(m => !monsterFamily(m)).map(m => m.id);
+    out.famCounts = {};
+    for (const m of MONSTERS) { const f = monsterFamily(m); out.famCounts[f] = (out.famCounts[f]||0)+1; }
+
+    state.slayer.points = 5000; state.slayer.markTier = 0; state.slayer.markFamily = null;
+    // no Mark = no effect
+    const wolf = MONSTERS.find(m => m.zone === 'wolf_den');
+    const demon = MONSTERS.find(m => m.zone === 'demon_sanctum');
+    out.markOff = markDamageMult(wolf);
+    buyMarkTier();
+    out.tier1 = markTier();
+    bindMark('beast');
+    out.boundBeast = markFamily();
+    out.vsBeast = +markDamageMult(wolf).toFixed(3);
+    out.vsDemon = +markDamageMult(demon).toFixed(3);
+    // upgrading raises it
+    buyMarkTier(); buyMarkTier();
+    out.tier3 = markTier();
+    out.vsBeastMax = +markDamageMult(wolf).toFixed(3);
+    // a fourth buy must be refused
+    const ptsBefore = state.slayer.points;
+    buyMarkTier();
+    out.overBuy = markTier() === MARK_TIERS.length && state.slayer.points === ptsBefore;
+    // re-attuning charges
+    const p2 = state.slayer.points;
+    bindMark('demon');
+    out.rebind = { fam: markFamily(), charged: p2 - state.slayer.points };
+    // a family that no longer exists must not survive normalizeState
+    state.slayer.markFamily = 'nonsense_family';
+    normalizeState();
+    out.staleFamilyCleared = markFamily() === null;
+
+    // ── 2d. unlocks reach outside the slayer loop ─────────────────────────────
+    state.slayer.points = 5000; state.slayer.pockets = 0; state.slayer.ledger = false;
+    const capBefore = satchelCap();
+    buySlayerUnlock('pockets');
+    out.pockets = { before: capBefore, after: satchelCap() };
+    buySlayerUnlock('ledger');
+    out.ledger = !!state.slayer.ledger;
+    const p3 = state.slayer.points;
+    buySlayerUnlock('pockets');          // already owned
+    out.noDoubleBuy = state.slayer.points === p3 && satchelCap() === capBefore + 8;
+
     // ── 3. auto-continue takes a new bounty ───────────────────────────────────
     state.combatXp = { attack: XP_CUM[60], strength: XP_CUM[60], defence: XP_CUM[60], hitpoints: XP_CUM[60] };
     state.slayer.xp = XP_CUM[40];
@@ -122,6 +167,24 @@ const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/
   t('Shortlist shrinks bounties', r.shortlist.withPerk < r.shortlist.base * 0.85,
     '(' + r.shortlist.base + ' -> ' + r.shortlist.withPerk + ' kills)');
   t('on-task detection is target-specific', r.onTask === true && r.offTask === false);
+
+  t('every monster resolves to a family', r.noFamily.length === 0, r.noFamily.join(', '));
+  t('families are spread, not one bucket', Object.keys(r.famCounts).length >= 6,
+    Object.entries(r.famCounts).map(([k,v])=>k+' '+v).join(', '));
+  t('no Mark = no damage change', r.markOff === 1);
+  t('the Mark buys and binds', r.tier1 === 1 && r.boundBeast === 'beast');
+  t('it only helps against its family', r.vsBeast > 1 && r.vsDemon === 1,
+    '(beast x' + r.vsBeast + ', demon x' + r.vsDemon + ')');
+  t('upgrading raises the bonus', r.tier3 === 3 && r.vsBeastMax > r.vsBeast,
+    '(x' + r.vsBeast + ' -> x' + r.vsBeastMax + ')');
+  t('a fourth tier is refused, nothing charged', r.overBuy);
+  t('re-attuning charges points', r.rebind.fam === 'demon' && r.rebind.charged > 0,
+    '(' + r.rebind.charged + ' pts)');
+  t('a stale family is cleared on load', r.staleFamilyCleared);
+  t('Deeper Pockets raises the satchel cap', r.pockets.after === r.pockets.before + 8,
+    '(' + r.pockets.before + ' -> ' + r.pockets.after + ')');
+  t('Bounty Ledger unlocks', r.ledger);
+  t('an owned unlock cannot be bought twice', r.noDoubleBuy);
 
   ok.forEach(x => console.log('  ok   ' + x));
   bad.forEach(x => console.log('  FAIL ' + x));
