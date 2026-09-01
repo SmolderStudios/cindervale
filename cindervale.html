@@ -7022,7 +7022,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.121.10">v0.9.121</div>
+  <div class="mm-ver" data-build="0.9.121.11">v0.9.121</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -27030,12 +27030,25 @@ const SLAYER_MASTERS=[
   {key:'expert', name:'Expert Slayer Master', minLvl:35, size:[24,40], pts:9,  band:[18,75], ic:'ui_swords', blurb:'Wolves, ogres, undead. Bigger lists, better pay.'},
   {key:'master', name:'Slayer General',       minLvl:75, size:[34,52], pts:17, band:[50,99], ic:'ui_skull',  blurb:'Trolls, wyverns, demons — the deadliest bounties.'},
 ];
+/* Costs raised roughly 5x in 0.9.121.11. The old tree totalled 558 points and a
+   player earns ~8,576 on the way to slayer Lv 75 and ~11,592 to 99, so every perk
+   was maxed by around bounty 70 — slayer Lv 18, a quarter of the way to the Expert
+   master — and every point after that had nowhere to go.
+
+   The curve is deliberately steep rather than flat: rank 1 of everything is 90
+   points together, about eleven Novice bounties, so a new slayer feels the tree
+   immediately. Maxing it is now ~2,960, about a third of lifetime income to 75,
+   with the last rank of each perk as the real chase. By the Expert unlock at 35 a
+   player has earned 2,184, which buys most of the tree but not the top ranks.
+
+   Nothing is clawed back: already-bought ranks stay bought, and only the ranks
+   still ahead of a player cost more. */
 const SLAYER_PERKS=[
-  {id:'scholar',       name:'Bloodscholar', max:5, cost:[6,10,16,24,36], desc:'+8% Slayer XP per kill, per level.'},
-  {id:'warpath',       name:'Warpath',      max:5, cost:[6,10,16,24,36], desc:'+6% combat XP from on-task kills, per level.'},
-  {id:'skinner',       name:'Skinner',      max:5, cost:[8,14,22,32,46], desc:'+12% chance per level for a bonus drop from on-task kills.'},
-  {id:'bloodfrenzy',   name:'Bloodfrenzy',  max:5, cost:[8,14,22,32,46], desc:'+10% chance per level for an on-task kill to count double toward your bounty.'},
-  {id:'quartermaster', name:'Quartermaster',max:3, cost:[20,40,70],      desc:'+1 Slayer Point per completed bounty, per level.'},
+  {id:'scholar',       name:'Bloodscholar', max:5, cost:[10,25,60,140,320], desc:'+8% Slayer XP per kill, per level.'},
+  {id:'warpath',       name:'Warpath',      max:5, cost:[10,25,60,140,320], desc:'+6% combat XP from on-task kills, per level.'},
+  {id:'skinner',       name:'Skinner',      max:5, cost:[15,35,80,180,400], desc:'+12% chance per level for a bonus drop from on-task kills.'},
+  {id:'bloodfrenzy',   name:'Bloodfrenzy',  max:5, cost:[15,35,80,180,400], desc:'+10% chance per level for an on-task kill to count double toward your bounty.'},
+  {id:'quartermaster', name:'Quartermaster',max:3, cost:[40,110,280],       desc:'+1 Slayer Point per completed bounty, per level.'},
 ];
 const SLAYER_SKIP_COST=5, SLAYER_BLOCK_COST=12;
 

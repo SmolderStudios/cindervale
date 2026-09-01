@@ -5,7 +5,7 @@
 'use strict';
 const fs = require('fs'), path = require('path');
 const { JSDOM } = require('jsdom');
-const raw = fs.readFileSync(path.join(__dirname, '..', 'cindervale.html'), 'utf8');
+const raw = fs.readFileSync(path.join(__dirname, 'cindervale.html'), 'utf8');
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131.0 Electron/33.0 Safari/537.36';
 
 (async () => {
