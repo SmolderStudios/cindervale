@@ -2893,6 +2893,320 @@ setTimeout(() => {
     ok('and lands back on the menu', shown('gameMenuModal'));
     ev("gmFrom(0); $('gameMenuModal').classList.add('mm-hidden');");
   }
+  /* ══ Guild boards + enchant loadouts (v0.9.121.23) ═════════════════════════════
+     The player batch of 2026-09-01/02: #42 (a guild that could never hand out a
+     quest), #50 (the same three lines every day, and a reset that drifted later
+     every time you opened the game late), #49 and OneFlame's report (an enchant
+     screen reading the wrong loadout), and the emerald combat gap. None of these
+     throw — every one of them renders a perfectly clean panel saying the wrong
+     thing — so _validate.js cannot see them. */
+  section('Guild boards + enchant loadouts (v0.9.121.23)');
+  {
+    ev(`state=defaultState(); normalizeState();
+        for(const k in SKILLS) state.xp[k]=XP_CUM[99];
+        state.combatXp={attack:XP_CUM[99],strength:XP_CUM[99],defence:XP_CUM[99],hitpoints:XP_CUM[99]};
+        state.monKills={}; MONSTERS.forEach(m=>{ state.monKills[m.id]=5; });
+        state.gd={}; state.gdTokens=0; GUILDS.forEach(g=>gdJoin(g.id));`);
+
+    // ── #42 · every guild, The Nightmarket included, fills a board ────────────
+    ok('every guild joins at 99', ev('Object.keys(state.gd).length')===ev('GUILDS.length'));
+    const empty = ev(`JSON.stringify(GUILDS.filter(g=>state.gd[g.id].q.length<3).map(g=>g.name))`);
+    ok('every guild rolls a full board of three', JSON.parse(empty).length===0, empty);
+    ok('The Nightmarket hands out quests (ticket #42)', ev('state.gd.night.q.length')===3,
+       ev('JSON.stringify(state.gd.night.q.map(q=>q.name))'));
+    ok('agility acts survive the act filter', ev("gdBestActs('agility').length")===8);
+
+    // ── every quest is in-skill, in-level, repeatable and real ───────────────
+    const bad = ev(`(function(){
+      const out=[];
+      for(let d=0;d<120;d++){ GUILDS.forEach(g=>{
+        gdRollQuests(g.id,true);
+        state.gd[g.id].q.forEach(q=>{
+          if(q.kind==='kill'){ if(!state.monKills[q.target]) out.push(g.id+': unkilled '+q.target); return; }
+          if(!q.skill){ out.push(g.id+': no skill'); return; }
+          if(g.skills.indexOf(q.skill)<0) out.push(g.id+': off-skill '+q.skill);
+          const lvl=levelFromXp(state.xp[q.skill]||0);
+          let ids=q.kind==='supply'?Object.keys(q.items||{}):(q.target?[q.target]:[]);
+          if(q.act){
+            const a=(SKILLS[q.skill].acts||[]).find(x=>x.id===q.act);
+            if(!a){ out.push(g.id+': missing act '+q.act); }
+            else {
+              if(lvl<((a.id==='co8')?highFishUnlockLevel():(a.lvl||1))) out.push(g.id+': act above level');
+              ids=ids.concat(Object.keys(a.out||{}));
+            }
+          }
+          ids.forEach(i=>{
+            if(!ITEMS[i]) out.push(g.id+': unknown item '+i);
+            else if(ITEMS[i].tool||ITEMS[i].skillGear) out.push(g.id+': one-time unlock '+i);
+          });
+          if(q.kind==='supply'&&Object.keys(q.items||{}).length<2) out.push(g.id+': one-line supply');
+          if(!(q.need>0)) out.push(g.id+': need '+q.need);
+          if(!q.name) out.push(g.id+': unnamed');
+        });
+      }); }
+      return JSON.stringify([...new Set(out)]);
+    })()`);
+    ok('1200 rolled boards stay in-skill, in-level, repeatable and real',
+       JSON.parse(bad).length===0, bad);
+
+    // ── #50a · the board is not the same board tomorrow ─────────────────────
+    const variety = ev(`(function(){ const seen={};
+      for(let d=0;d<200;d++){ gdRollQuests('delvers',true); state.gd.delvers.q.forEach(q=>seen[q.name]=1); }
+      return Object.keys(seen).length; })()`);
+    ok('The Delvers roll many different lines (was 3 fixed)', variety>=15, variety+' lines');
+    const fmVariety = ev(`(function(){ const seen={};
+      for(let d=0;d<200;d++){ gdRollQuests('timber',true); state.gd.timber.q.forEach(q=>seen[q.name]=1); }
+      return Object.keys(seen).length; })()`);
+    /* Firemaking pours plain Ash out of nine different acts, so an output-named
+       board gave the Timberhall three lines that all read "Burn N Ash". */
+    ok('and so does the Timberhall, whose acts all make Ash', fmVariety>=15, fmVariety+' lines');
+    const nightVariety = ev(`(function(){ const seen={};
+      for(let d=0;d<200;d++){ gdRollQuests('night',true); state.gd.night.q.forEach(q=>seen[q.name]=1); }
+      return Object.keys(seen).length; })()`);
+    ok('and The Nightmarket, which had none at all', nightVariety>=8, nightVariety+' lines');
+
+    // ── #50b · a fixed daily boundary, not a rolling 24h ────────────────────
+    const day = JSON.parse(ev(`(function(){
+      const t=new Date(); t.setHours(9,0,0,0);  const a=gdDayIndex(t.getTime());
+      t.setHours(20,0,0,0); const b=gdDayIndex(t.getTime());
+      const m=new Date(); m.setHours(23,59,0,0); const c=gdDayIndex(m.getTime());
+      m.setHours(24,1,0,0); const e=gdDayIndex(m.getTime());
+      return JSON.stringify({same:a===b, flips:e===c+1, left:gdResetMsLeft(state.gd.delvers)});
+    })()`));
+    ok('morning and evening of one day share a board (no drift)', day.same===true);
+    ok('the board turns over at local midnight, once', day.flips===true);
+    ok('the countdown sits inside one day', day.left>0 && day.left<=86400000, Math.round(day.left/60000)+' min');
+    ok('a board stamped yesterday refreshes on the next tick',
+       ev(`(function(){ state.gd.delvers.day=gdDayIndex()-1; return gdRefreshDue(); })()`)===true);
+    ok('and does not roll twice in one day', ev('gdRefreshDue()')===false);
+    ok('a FINISHED board still resets the next day (ticket #50)',
+       ev(`(function(){ state.gd.delvers.q.forEach(q=>q.done=true);
+           state.gd.delvers.day=gdDayIndex()-1; gdRefreshDue();
+           return state.gd.delvers.q.filter(q=>q.done).length; })()`)===0);
+
+    // ── an old save migrates without wiping or freezing a board ─────────────
+    const mig = JSON.parse(ev(`(function(){
+      const today=gdDayIndex();
+      state.gd.delvers={rep:0,q:[{kind:'do',size:'small',skill:'mining',name:'Gather 25 mining items',need:25,have:9,done:false}],
+        rolled:Date.now(),skipped:0,bought:{}};
+      gdNormalize();
+      const keptToday = state.gd.delvers.day===today && !gdRefreshDue() && state.gd.delvers.q[0].have===9;
+      state.gd.timber={rep:0,q:[],rolled:Date.now()-3*86400000,skipped:0,bought:{}};
+      gdNormalize();
+      return JSON.stringify({keptToday:keptToday, staleDue:state.gd.timber.day<today});
+    })()`));
+    ok('a save that rolled today keeps its board across the migration', mig.keptToday===true);
+    ok('a save that rolled three days ago is due a fresh one', mig.staleDue===true);
+
+    // ── a Supply order holds, hands in, and takes exactly what it asked ─────
+    const sup = JSON.parse(ev(`(function(){
+      let q=null;
+      for(let i=0;i<600 && !q;i++){ const c=gdRollOne(GD_BY.delvers,'long'); if(c&&c.kind==='supply') q=c; }
+      if(!q) return JSON.stringify({found:false});
+      state.gd.delvers.q=[q]; state.gd.delvers.rep=0;
+      state.items={}; for(const i in q.items) state.items[i]=q.items[i]+7;
+      const full=gdHeld(q)===q.need && gdReady(q);
+      /* Short ONE line only. Every line is over-stocked by 7, so decrementing is
+         not enough — gdHeld caps each line at what it asked for. */
+      const first=Object.keys(q.items)[0], keep=state.items[first];
+      state.items[first]=q.items[first]-1; const shortReady=gdReady(q); state.items[first]=keep;
+      const tok=state.gdTokens;
+      gdClaim('delvers',0);
+      let leftoverOk=true; for(const i in q.items) if((state.items[i]||0)!==7) leftoverOk=false;
+      return JSON.stringify({found:true,lines:Object.keys(q.items).length,full:full,
+        shortReady:shortReady,leftoverOk:leftoverOk,tok:state.gdTokens-tok,
+        rep:state.gd.delvers.rep,done:state.gd.delvers.q[0].done});
+    })()`));
+    ok('a Supply order rolls at all', sup.found===true);
+    ok('it asks for two or three things', sup.lines>=2 && sup.lines<=3, sup.lines+' lines');
+    ok('a full satchel reads as complete', sup.full===true);
+    ok('one line short does not', sup.shortReady===false);
+    ok('hand-in takes exactly what it asked for', sup.leftoverOk===true);
+    ok('and pays the Long rate', sup.tok===25 && sup.rep===1200, JSON.stringify([sup.tok,sup.rep]));
+    ok('the quest reads as claimed', sup.done===true);
+
+    // ── an act-named quest counts only that act ────────────────────────────
+    const scoped = JSON.parse(ev(`(function(){
+      const acts=gdBestActs('mining'), a=acts[0], b=acts[acts.length-1];
+      state.gd.delvers.q=[{kind:'do',size:'small',skill:'mining',act:b.id,name:'x',need:10,have:0,done:false}];
+      gdOnAction('mining',3,a.id); const wrong=state.gd.delvers.q[0].have;
+      gdOnAction('mining',3,b.id); const right=state.gd.delvers.q[0].have;
+      state.gd.delvers.q=[{kind:'do',size:'small',skill:'mining',name:'x',need:10,have:0,done:false}];
+      gdOnAction('mining',4,a.id);
+      return JSON.stringify({wrong:wrong,right:right,legacy:state.gd.delvers.q[0].have});
+    })()`));
+    ok('the wrong act does not fill an act-named quest', scoped.wrong===0);
+    ok('the right one does', scoped.right===3);
+    ok('a pre-0.9.121.23 quest with no act still counts the whole skill', scoped.legacy===4);
+
+    // ── the panel renders every quest shape ────────────────────────────────
+    const panel = JSON.parse(ev(`(function(){
+      try{
+        state.gd.delvers.q=[
+          {kind:'do',size:'small',skill:'mining',act:'mi1',name:'Mine 40 Copper Ore',need:40,have:12,done:false},
+          {kind:'deliver',size:'standard',skill:'mining',target:'iron_ore',name:'Deliver 90 Iron Ore',need:90,have:0,done:false},
+          {kind:'supply',size:'long',skill:'mining',items:{iron_ore:60,coal:80},name:'Supply 60 Iron Ore and 80 Coal',need:140,have:0,done:false}];
+        _gdOpen='delvers'; viewTab='guild'; renderGuilds();
+        return JSON.stringify({rows:document.querySelectorAll('#guildView .gd-q').length,
+                               chips:document.querySelectorAll('#guildView .gd-qi span').length});
+      }catch(e){ return JSON.stringify({err:String(e&&e.message||e)}); }
+    })()`));
+    ok('the guild panel renders all three quest shapes', !panel.err, panel.err||'');
+    ok('three quest rows on screen', panel.rows===3);
+    ok('and a chip per line of the supply order', panel.chips===2);
+
+    // ── #49 · the enchant screen reads the loadout it is paid from ─────────
+    const ench = JSON.parse(ev(`(function(){
+      try{
+        state.items.sapphire_ring=1; state.items.sapphire_pendant=1; state.items.sapphire_amulet=1;
+        state.combatEquipped.ring_l='sapphire_ring';
+        state.combatEquipped.amulet='sapphire_pendant';
+        state.skillingEquipped.amulet='sapphire_amulet';
+        state.enchantments.sapphire_ring='squire_i';
+        state.enchantments.sapphire_pendant='squire_i';
+        const paid=combatEnchantBonuses().atkBoost;
+        const nowLive=_enchantSetActive(PENDANT_SETS.sapphire,_ewSetMap('pendant'),'pendant');
+        const oldTest=_enchantSetActive(PENDANT_SETS.sapphire,state.equipped,'pendant');
+        viewTab='enchant'; renderEnchanting();
+        const named=[...document.querySelectorAll('#enchantView .ew-slot .nm')].map(e=>e.textContent);
+        return JSON.stringify({paid:paid,nowLive:nowLive,oldTest:oldTest,
+          tiles:document.querySelectorAll('#enchantView .ew-slot').length,
+          worn:named.filter(n=>n!=='empty').length,
+          badge:_ewWornBadge('sapphire_ring')});
+      }catch(e){ return JSON.stringify({err:String(e&&e.message||e)}); }
+    })()`));
+    ok('the enchanting panel renders', !ench.err, ench.err||'');
+    ok('a combat-doll pair really does pay out', ench.paid>0, '+'+Math.round(ench.paid*100)+'% atk');
+    ok('and the old skilling-only test called it dead \u2014 the bug', ench.oldTest===false);
+    ok('the Sapphire Fang card now agrees with the bonus (ticket #49)', ench.nowLive===true);
+    ok('both loadouts are on screen', ench.tiles===6, ench.tiles+' tiles');
+    ok('and the worn pieces are named, not blank', ench.worn===3);
+    ok('the rail badge names the doll a piece is worn on', /Combat/.test(ench.badge||''), ench.badge);
+
+    // ── every guild shop row is named, priced and actually does something ──
+    /* This harness boots with no user agent, so IS_DEMO is true and addSkillXp
+       clamps every skill to the level-10 demo cap — which would make an XP grant
+       look like a dead button. Lift the cap for this block only. */
+    const _realDemoCap = w.demoXpCap;
+    ev('demoXpCap=function(){ return XP_CAP; };');
+    ev(`state=defaultState(); normalizeState();
+        for(const k in SKILLS) state.xp[k]=XP_CUM[99];
+        state.combatXp={attack:XP_CUM[99],strength:XP_CUM[99],defence:XP_CUM[99],hitpoints:XP_CUM[99]};
+        state.monKills={}; MONSTERS.forEach(m=>{ state.monKills[m.id]=5; });
+        state.gd={}; GUILDS.forEach(g=>gdJoin(g.id));
+        state.satchelUpgrades=SATCHEL_MAX_EXPANSIONS;`);
+
+    const generic = ev(`JSON.stringify(GUILDS.filter(g=>gdShopFor(g.id)
+      .some(s=>GD_SHOP.some(d=>d.id===s.id&&d.title===s.title))).map(g=>g.name))`);
+    ok('no guild is still selling the generic placeholder names',
+       JSON.parse(generic).length===0, generic);
+
+    const dupes = ev(`(function(){
+      const seen={}, bad=[];
+      GUILDS.forEach(g=>gdShopFor(g.id).forEach(s=>{
+        if(seen[s.title]) bad.push(s.title+' ('+g.name+' and '+seen[s.title]+')');
+        seen[s.title]=g.name;
+      }));
+      return JSON.stringify(bad);
+    })()`);
+    ok('and no two guilds share a shop name', JSON.parse(dupes).length===0, dupes);
+
+    /* The crate handed over acts[length-1] — whatever was LAST in the array, which
+       for the category-ordered skills is not the best of anything. */
+    const crate = JSON.parse(ev(`JSON.stringify({
+      night:gdCrateItem('night'), legion:gdCrateItem('legion'),
+      delvers:gdCrateItem('delvers'), craft:gdCrateItem('emberforge'),
+      farm:gdCrateItem('furrow'),
+      stocked:GUILDS.filter(g=>gdShopFor(g.id).some(s=>s.id==='crate')).map(g=>g.id)
+    })`));
+    ok('a guild that makes nothing does not stock a crate',
+       crate.night===null && crate.legion===null,
+       JSON.stringify([crate.night, crate.legion]));
+    ok('and the seven that do, do', crate.stocked.length===7, crate.stocked.join(','));
+    ok('the crate names a real item everywhere it is stocked',
+       ev(`GUILDS.filter(g=>gdShopFor(g.id).some(s=>s.id==='crate'))
+            .every(g=>!!ITEMS[gdCrateItem(g.id)])`)===true);
+    ok('and it is the top of the ladder, not the end of the array',
+       crate.delvers==='starsteel_ore' || /ore$/.test(crate.delvers||''), crate.delvers);
+
+    /* Every buy path, on every guild: the tokens must move if and only if
+       something was granted. Three of these used to be dead buttons. */
+    const buys = ev(`(function(){
+      const bad=[];
+      GUILDS.forEach(g=>{
+        gdShopFor(g.id).forEach(s=>{
+          state.gd[g.id].rep=GD_REP[5]; state.gdTokens=9999;
+          const before={
+            tok:state.gdTokens, coins:state.coins||0,
+            xp:Object.assign({},state.xp), cxp:Object.assign({},state.combatXp),
+            items:Object.assign({},state.items)
+          };
+          gdBuy(g.id, s.id);
+          const spent=before.tok-state.gdTokens;
+          let moved=false;
+          if((state.coins||0)!==before.coins) moved=true;
+          for(const k in state.xp) if(state.xp[k]!==before.xp[k]) moved=true;
+          for(const k in state.combatXp) if(state.combatXp[k]!==before.cxp[k]) moved=true;
+          for(const k in state.items) if(state.items[k]!==before.items[k]) moved=true;
+          if(spent!==s.cost) bad.push(g.id+'/'+s.id+': charged '+spent+' not '+s.cost);
+          if(!moved) bad.push(g.id+'/'+s.id+': took the tokens and gave nothing');
+        });
+      });
+      return JSON.stringify(bad);
+    })()`);
+    ok('every shop row on every guild grants something and charges once',
+       JSON.parse(buys).length===0, JSON.parse(buys).join('\n       '));
+
+    /* g.skills[0] meant the Timberhall always paid Woodcutting and never
+       Firemaking, and the Deepwater always Fishing and never Cooking. */
+    const twoSkill = JSON.parse(ev(`(function(){
+      // make the SECOND skill of each pair the faster one and check the buy follows
+      state.xp.woodcutting=XP_CUM[2]; state.xp.firemaking=XP_CUM[99];
+      state.xp.fishing=XP_CUM[2];     state.xp.cooking=XP_CUM[99];
+      const a={wc:state.xp.woodcutting,fm:state.xp.firemaking};
+      gdBuyXp(GD_BY.timber);
+      const b={wc:state.xp.woodcutting,fm:state.xp.firemaking};
+      return JSON.stringify({paidFm:b.fm>a.fm, paidWc:b.wc>a.wc});
+    })()`));
+    ok('a two-skill guild pays into whichever of ITS skills you earn fastest in',
+       twoSkill.paidFm===true && twoSkill.paidWc===false, JSON.stringify(twoSkill));
+
+    // ── the Furrow finally gets supply orders ──────────────────────────────
+    const furrow = ev(`(function(){
+      state=defaultState(); normalizeState();
+      for(const k in SKILLS) state.xp[k]=XP_CUM[99];
+      state.gd={}; gdJoin('furrow');
+      const seen={}; let sup=0;
+      for(let i=0;i<4000;i++){
+        ['small','standard','long'].forEach(sz=>{
+          const q=gdRollOne(GD_BY.furrow,sz);
+          if(!q) return; seen[q.name]=1; if(q.kind==='supply') sup++;
+        });
+      }
+      return JSON.stringify({lines:Object.keys(seen).length, sup:sup});
+    })()`);
+    const F = JSON.parse(furrow);
+    ok('The Furrow rolls supply orders now', F.sup>0);
+    ok('which widens its board well past the old 54 lines', F.lines>200, F.lines+' lines');
+    w.demoXpCap = _realDemoCap;   // the demo-cap regressions below rely on the real one
+
+    // ── emerald finally offers something on the combat side ────────────────
+    const em = JSON.parse(ev(`JSON.stringify({
+      gaps:Object.keys(ENCHANTS_BY_GEM).filter(g=>!ENCHANTS_BY_GEM[g].some(id=>ENCHANTS[id]&&ENCHANTS[id].cat==='combat')),
+      name:ENCHANTS.manatarms_ii&&ENCHANTS.manatarms_ii.name,
+      atk:ENCHANTS.manatarms_ii&&ENCHANTS.manatarms_ii.bonus.atkBoost,
+      def:ENCHANTS.manatarms_ii&&ENCHANTS.manatarms_ii.bonus.defBoost,
+      listed:ENCHANTS_BY_GEM.emerald.indexOf('manatarms_ii')>=0,
+      tier:ENCHANTS.manatarms_ii&&ENCHANTS.manatarms_ii.tier,
+      priced:!!_ewCostFor('emerald_ring').cost
+    })`));
+    ok('every gem tier offers a combat enchant', em.gaps.length===0, 'bare: '+em.gaps.join(', '));
+    ok('Man-at-Arms is listed on emerald', em.name==='Man-at-Arms' && em.listed===true && em.tier===2);
+    ok('and sits between Squire (4/4) and Soldier (8 atk)',
+       em.atk>0.04 && em.atk<0.08 && em.def>0.04 && em.def<0.08);
+    ok('an emerald piece still prices its enchants', em.priced===true);
+  }
+
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));
   process.exit(fail ? 1 : 0);
 }, 2500);

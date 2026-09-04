@@ -4682,6 +4682,14 @@ body:not(.is-demo) .demo-only{display:none !important}
   color:var(--text);line-height:1.2}
 .gd-qt i{display:block;font-style:normal;font-family:var(--num);
   font-size:calc(10.5px*var(--tscale));color:var(--dim,#8a7657);margin-top:4px}
+/* One chip per line of a supply order, under the quest name. */
+.gd-qi{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
+.gd-qi span{font-family:var(--num);font-size:calc(10.5px*var(--tscale));padding:2px 6px;
+  border-radius:5px;background:#1a1510;border:1px solid var(--trim-d);color:var(--muted);
+  cursor:var(--cur-help)}
+.gd-qi span b{color:#e0917c;font-weight:600}
+.gd-qi span.ok{border-color:#4a6a2a}
+.gd-qi span.ok b{color:#a8cf60}
 .gd-qp{flex:0 1 168px;min-width:130px}
 .gd-qp .l{display:flex;justify-content:space-between;font-family:var(--num);
   font-size:calc(10.5px*var(--tscale));color:#94805f;margin-bottom:5px}
@@ -5954,6 +5962,11 @@ body:not(.is-demo) .demo-only{display:none !important}
    Laid out on their side (0.9.126). Stacked — label over a 60px well over two lines
    of text — each card ran ~145px and the three of them ate the top of the panel
    before you reached anything you could act on. Same information, half the height. */
+/* One thin header per loadout, above its own row of three tiles. */
+.ew-sublab{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;margin-bottom:-6px}
+.ew-sublab b{font-family:var(--num);font-size:calc(10px*var(--tscale));letter-spacing:1.5px;
+  text-transform:uppercase;color:var(--trim);font-weight:600}
+.ew-sublab span{font-family:var(--num);font-size:calc(10px*var(--tscale));color:#7a6a4a}
 .ew-slots{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--ew-gap)}
 .ew-slot{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;
   background:var(--ew-card);box-shadow:var(--ew-sh);text-align:left;
@@ -5996,6 +6009,12 @@ body:not(.is-demo) .demo-only{display:none !important}
 .ew-set .sn{font-family:'Cinzel',serif;font-size:calc(13px*var(--tscale));color:#e8d7b0;
   display:flex;align-items:center;gap:7px;position:relative;z-index:1}
 .ew-set.live .sn{color:#a8cf60}
+/* Which doll the card is read off. Two Sapphire cards side by side — one wanting a
+   pendant on the combat doll, one an amulet on the skilling doll — are unreadable
+   without it. */
+.ew-set .sn .scope{font-family:var(--num);font-size:calc(9px*var(--tscale));letter-spacing:1.3px;
+  text-transform:uppercase;color:#8a7657;border:1px solid var(--trim-d);border-radius:3px;
+  padding:1px 5px;margin-left:7px;vertical-align:middle;font-weight:400}
 .ew-set .sd{font-size:calc(11.5px*var(--tscale));color:#8a7657;line-height:1.4;margin-top:3px;
   position:relative;z-index:1}
 .ew-set .legs{display:flex;gap:5px;margin-top:6px;position:relative;z-index:1;flex-wrap:wrap}
@@ -7122,7 +7141,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.121.22">v0.9.121</div>
+  <div class="mm-ver" data-build="0.9.121.23">v0.9.121</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -9194,6 +9213,14 @@ const ENCHANTS={
   fortune_ii:  {name:'Fortune II',    tier:2, gem:'emerald',  cat:'global', bonus:{gpBoost:0.08},         desc:'+8% sell value, all items'},
   scholar_ii:  {name:'Scholar II',    tier:2, gem:'emerald',  cat:'global', bonus:{xpBoost:0.08},         desc:'+8% XP, all skills'},
   gatherer_ii: {name:'Gatherer II',   tier:2, gem:'emerald',  cat:'global', bonus:{doubleYield:0.05},     desc:'+5% chance to double resources'},
+  /* (0.9.121.23) Emerald was the one gem with NOTHING on the combat side. Every
+     other tier carries at least one — Squire, Soldier, Knight, Duelist, Dragonfury,
+     Warlord, Void Hunger — so a player who bound Squire to a sapphire ring and went
+     looking for its next rung found the ladder simply stopped, and an Emerald Fang
+     could only ever be lit with a skilling enchant on both halves. Sits between
+     Squire (4/4) and Soldier (8 atk / 5 HP), and stays out of Soldier's atk+HP and
+     Knight's def+HP lanes so each rank still means something. */
+  manatarms_ii:{name:'Man-at-Arms',   tier:2, gem:'emerald',  cat:'combat', bonus:{atkBoost:0.06,defBoost:0.06}, desc:'Combat: +6% Attack · +6% Defence'},
   // ── Tier 3 · Ruby ──
   swift_iii:   {name:'Swift III',     tier:3, gem:'ruby',     cat:'global', bonus:{speed:0.10},           desc:'+10% action speed, all skills'},
   fortune_iii: {name:'Fortune III',   tier:3, gem:'ruby',     cat:'global', bonus:{gpBoost:0.14},         desc:'+14% sell value, all items'},
@@ -9345,7 +9372,7 @@ function _enchantSetActive(setDef, loadout, neckType){
 /* Which enchants are valid for each gem tier */
 const ENCHANTS_BY_GEM={
   sapphire:['swift_i','fortune_i','scholar_i','squire_i'],
-  emerald: ['swift_ii','fortune_ii','scholar_ii','gatherer_ii'],
+  emerald: ['swift_ii','fortune_ii','scholar_ii','gatherer_ii','manatarms_ii'],
   ruby:    ['swift_iii','fortune_iii','scholar_iii','gatherer_iii','soldier_iii'],
   diamond: ['swift_iv','fortune_iv','scholar_iv','hoarder_iv','knight_iv'],
   amethyst:['swift_am','fortune_am','scholar_am','gatherer_am','duelist_am','uq_wc','uq_mi','uq_fi','uq_fo','uq_sm','uq_co','uq_al','uq_fm','uq_ag','uq_jw','uq_fa','uq_cr'],
@@ -9416,12 +9443,39 @@ function combatEnchantBonuses(){
   return total;
 }
 
-/* What set bonuses are currently active (reads the SKILLING loadout for the Enchant UI).
-   Returns both amulet (skilling) and pendant (combat) sets, gated by the neck item type. */
+/* Which loadout a set is judged against. A pendant set pays Attack, lifesteal and
+   crit, so it can only ever be live on the COMBAT doll; an amulet set pays speed, XP
+   and sell value, so it reads the skilling one.
+
+   (0.9.121.23) Everything on the enchanting screen used to read state.equipped —
+   which is a live alias of state.skillingEquipped — while combatEnchantBonuses()
+   reads state.combatEquipped. A player wearing a sapphire ring and pendant on their
+   COMBAT doll had the Sapphire Fang running and a card telling them they owned no
+   neck piece (ticket #49), and the "What You Are Wearing" strip showed three empty
+   tiles for jewellery they had on (OneFlame, same week). The socket panel took this
+   exact fix a release ago; enchanting was the one left behind. */
+function _ewSetMap(kind){
+  return (kind==='pendant'?state.combatEquipped:state.skillingEquipped)||{};
+}
+/* Does this set carry keys the OTHER doll pays? Only the Bloodstone amulet set does
+   — it mixes speed with Attack/Defence/Max HP — and the tooltip has to say so
+   rather than quietly reporting half a set. */
+function _ewSetSpansBoth(def){
+  var CK={atkBoost:1,hpBoost:1,defBoost:1,critChance:1,lifesteal:1};
+  var SK={speed:1,xpBoost:1,gpBoost:1,doubleYield:1};
+  var c=false,k=false;
+  for(var b in def.bonus){ if(CK[b])c=true; if(SK[b])k=true; }
+  return c&&k;
+}
+
+/* What set bonuses are currently active, each judged against the loadout it is
+   actually paid from. */
 function activeSetBonuses(){
   var active=[];
-  for(var setKey in ENCHANT_SETS){ if(_enchantSetActive(ENCHANT_SETS[setKey], state.equipped, 'amulet')) active.push(ENCHANT_SETS[setKey]); }
-  for(var pk in PENDANT_SETS){ if(_enchantSetActive(PENDANT_SETS[pk], state.equipped, 'pendant')) active.push(PENDANT_SETS[pk]); }
+  var se=state.skillingEquipped||{}, ce=state.combatEquipped||{};
+  for(var setKey in ENCHANT_SETS){ var sd=ENCHANT_SETS[setKey];
+    if(_enchantSetActive(sd, se, 'amulet') || (_ewSetSpansBoth(sd)&&_enchantSetActive(sd, ce, 'amulet'))) active.push(sd); }
+  for(var pk in PENDANT_SETS){ if(_enchantSetActive(PENDANT_SETS[pk], ce, 'pendant')) active.push(PENDANT_SETS[pk]); }
   return active;
 }
 
@@ -20271,7 +20325,7 @@ function completeAction(act,skillKey,times){
   const m=mods(skillKey);
   /* Guild quests count what you were going to do anyway. Bails immediately when no
      joined guild wants this skill, because this runs on every completed action. */
-  if(typeof gdOnAction==='function') gdOnAction(skillKey,times);
+  if(typeof gdOnAction==='function') gdOnAction(skillKey,times,act&&act.id);
   const IS_G=IS_GATHER[skillKey];
 
   // Cooking: fire must be lit. Continuous burn in tick() handles fuel deduction
@@ -22121,6 +22175,23 @@ function renderCrafting(){
 const GD_REP=[0,1500,6000,20000,55000,150000];   // reputation for titles 1..6
 const GD_DAY=86400000;
 
+/* ── when the board turns over (0.9.121.23, ticket #50) ────────────────────────
+   Every guild's board rolls at LOCAL MIDNIGHT, the same moment every day, whether
+   the quests on it were finished or not.
+
+   It used to roll 24h after whatever moment tick() happened to notice the last
+   roll. Nothing runs while the game is closed, so the stamp landed at launch time
+   rather than at the due time, and a player who opened the game two hours later
+   than yesterday pushed their own reset two hours later — permanently, further
+   every day. Finishing a board did nothing to bring the next one forward either,
+   which is the pair of symptoms the ticket describes. A day INDEX cannot drift:
+   it changes once per calendar day no matter when anyone looks at it. */
+function gdDayIndex(t){
+  const d=new Date(t==null?Date.now():t);
+  return Math.floor((d.getTime()-d.getTimezoneOffset()*60000)/GD_DAY);
+}
+function gdNextResetAt(){ const d=new Date(); d.setHours(24,0,0,0); return d.getTime(); }
+
 /* Quest sizes. XP is minutes-of-your-own-best-rate in that skill, so it scales with
    level, tools and tree without a second balance table — and it is deliberately
    small. An earlier draft paid 15/45/120 minutes, which made questing a faster way
@@ -22212,8 +22283,27 @@ function gdNormalize(){
       if(typeof q.need!=='number'||!isFinite(q.need)||q.need<1) q.need=1;
       if(!GD_SIZE[q.size]) q.size='small';
       if(typeof q.done!=='boolean') q.done=false;
+      /* A supply order carries a map of item→count instead of one target. A broken
+         one would divide by a zero total in the progress bar, so it is repaired
+         into an ordinary single-item deliver rather than left on the board. */
+      if(q.kind==='supply'){
+        if(!q.items||typeof q.items!=='object'||Array.isArray(q.items)) q.items={};
+        let tot=0;
+        for(const iid in q.items){
+          const v=Math.round(q.items[iid]);
+          if(!ITEMS[iid]||!isFinite(v)||v<1) delete q.items[iid]; else { q.items[iid]=v; tot+=v; }
+        }
+        const keys=Object.keys(q.items);
+        if(!keys.length) q.kind='do';
+        else { q.need=tot; if(keys.length===1){ q.kind='deliver'; q.target=keys[0]; } }
+      }
     }
     if(typeof r.rolled!=='number'||!isFinite(r.rolled)) r.rolled=0;
+    /* Boards used to be stamped with a rolled-at timestamp; they carry a day index
+       now. An existing save converts its old stamp to the day it last rolled, so a
+       board rolled before today refreshes on the next tick instead of losing a day
+       — and one rolled today is left alone instead of being wiped on load. */
+    if(typeof r.day!=='number'||!isFinite(r.day)) r.day=r.rolled?gdDayIndex(r.rolled):-1;
     if(typeof r.skipped!=='number'||!isFinite(r.skipped)) r.skipped=0;
     if(!r.bought||typeof r.bought!=='object'||Array.isArray(r.bought)) r.bought={};
   }
@@ -22223,7 +22313,7 @@ function gdNormalize(){
   if(!state.gdFarmMigrated && state.farmer && (state.farmer.maxTier||0)>0){
     const owed=[0,GD_REP[1],GD_REP[3],GD_REP[5]][Math.min(3,state.farmer.maxTier)]||0;
     if(owed>0){
-      if(!state.gd.furrow) state.gd.furrow={rep:0,q:[],rolled:0,skipped:0,bought:{}};
+      if(!state.gd.furrow) state.gd.furrow={rep:0,q:[],rolled:0,day:-1,skipped:0,bought:{}};
       state.gd.furrow.rep=Math.max(state.gd.furrow.rep,owed);
     }
     state.gdFarmMigrated=1;
@@ -22261,7 +22351,7 @@ function gdReqText(g){
 function gdJoin(id){
   const g=GD_BY[id]; if(!g||gdJoined(id)) return;
   if(!gdReqMet(g)){ toast('You do not meet the requirement for '+g.name+'.'); return; }
-  state.gd[id]={rep:0,q:[],rolled:0,skipped:0,bought:{}};
+  state.gd[id]={rep:0,q:[],rolled:0,day:-1,skipped:0,bought:{}};
   gdRollQuests(id,true);
   toast('🛡 Joined '+g.name+'.');
   saveGame();
@@ -22313,24 +22403,169 @@ function gdCrops(){
   const lvl=levelFromXp(state.xp.farming||0);
   return CROPS.filter(c=>c&&(c.lvl||1)<=lvl&&c.out&&Object.keys(c.out).length);
 }
+/* Every act in this skill the player has the LEVEL for. Nothing a guild offers is
+   ever above your level, because the whole board is built from this list.
+
+   The `a.out` test that used to live here is gone (0.9.121.23, ticket #42). An
+   agility lap is declared `out:{}` — it pays coins and XP, not items — so an
+   empty-output test disqualified all eight courses, gdBestActs('agility') was
+   ALWAYS empty, gdRollOne always returned null, and The Nightmarket could not hand
+   out a single quest to anyone at any level. It read as "thieving isn't in yet".
+   The output test now lives in gdOutActs, which is the only caller that needs it. */
 function gdBestActs(skill){
   if(skill==='farming') return gdCrops();
   const sk=SKILLS[skill]; if(!sk||!sk.acts) return [];
   const lvl=levelFromXp(state.xp[skill]||0);
   return sk.acts.filter(a=>{
     const need=(a.id==='co8')?highFishUnlockLevel():(a.lvl||1);
-    return lvl>=need && a.out && Object.keys(a.out).length;
+    return lvl>=need && !gdOneTimeAct(a);
   });
 }
+/* A skilling tool is a ONE-TIME unlock: grantItem drops it into state.gear and
+   returns 0 for every copy after the first, so it never enters the satchel and the
+   craft silently no-ops once you own it. 66 of Crafting's acts make one. "Supply 13
+   Steel Anvil" and "Craft 70 Iron Mortar" are both unfinishable quests, and the old
+   roller could hand them out too — nothing about them looked wrong from the act
+   table, which is why they survived this long. */
+function gdOneTimeAct(a){
+  for(const o in (a.out||{})){ const it=ITEMS[o]; if(it&&(it.tool||it.skillGear)) return true; }
+  return false;
+}
+/* ...and of those, the ones that put a real item in the satchel — the only acts a
+   Deliver or Supply order can name. */
+function gdOutActs(skill){
+  return gdBestActs(skill).filter(a=>a.out&&Object.keys(a.out).some(id=>ITEMS[id]));
+}
+function gdActOut(act){ return act&&act.out?Object.keys(act.out).find(id=>ITEMS[id]):null; }
 function gdKillableMonsters(){
   if(typeof MONSTERS==='undefined') return [];
   return MONSTERS.filter(m=>m&&!m.boss&&(state.monKills&&state.monKills[m.id]>0));
 }
 
+/* ── what a guild calls its own work (0.9.121.23) ──────────────────────────────
+   A `do` quest used to roll an act and then throw it away: the name was built from
+   the SKILL, so every mining one collapsed to "Gather 25 mining items" and the
+   Delvers handed out the identical three lines every single day (ticket #50). The
+   act is kept now, both in the name and in the progress hook, so a quest is a job
+   and not a step counter. */
+const GD_VERB={woodcutting:'Chop',mining:'Mine',fishing:'Catch',foraging:'Forage',
+  smithing:'Smelt',cooking:'Cook',alchemy:'Brew',firemaking:'Burn',agility:'Run',
+  jeweler:'Make',crafting:'Craft'};
+
+/* How many of ONE act is `mins` minutes of the player's own pace, read off the same
+   actMs() the game itself runs on. A flat count cannot work across a skill: 200
+   copper swings and 200 Void Gauntlet laps are a quarter-hour and an hour and a
+   half of the same "Long" quest. Rounded to a number a person would write down. */
+function gdActCount(skill,act,mins){
+  let ms=0;
+  try{ ms=actMs(act,skill); }catch(e){ ms=0; }
+  if(!(ms>0)) ms=act.ms||10000;
+  let n=Math.round(mins*60000/ms);
+  n=Math.max(4,Math.min(600,n));
+  const step=n>=200?25:n>=80?10:n>=30?5:1;
+  return Math.max(step,Math.round(n/step)*step);
+}
+/* Deliver and Supply ask for the OUTPUT, so the count follows how much one action
+   makes — a smelt that pours two bars asks for twice the bars, not twice the work. */
+function gdOutCount(skill,act,mins,outId){
+  const per=Math.max(1,(act.out&&act.out[outId])||1);
+  const n=gdActCount(skill,act,mins)*per;
+  const step=n>=200?25:n>=80?10:n>=30?5:1;
+  return Math.max(step,Math.round(n/step)*step);
+}
+/* Pick from the upper part of what the player has unlocked. The time budget is
+   identical either way — gdActCount sees to that — but a level 99 miner sent to
+   swing at copper, or a 99 runner sent round the Riverside lap, reads as a broken
+   quest board. The bottom of the ladder drops out once there is enough above it,
+   and the list is sorted first because a few skills declare their acts by category
+   rather than by level. */
+function gdPickAct(acts){
+  if(!acts||!acts.length) return null;
+  const sorted=acts.slice().sort((a,b)=>(a.lvl||1)-(b.lvl||1));
+  const bag=sorted.slice(-Math.max(3,Math.ceil(sorted.length*0.6)));
+  return bag[Math.floor(Math.random()*bag.length)];
+}
+
+/* "40 Iron Ore and 60 Coal" — the list a supply order reads as. */
+function gdAndList(parts){
+  if(parts.length<2) return parts[0]||'';
+  const last=parts[parts.length-1];
+  return parts.slice(0,-1).join(', ')+' and '+last;
+}
+
+/* A supply order: two or three different things at once. It is the one shape that
+   sends you round the whole skill instead of parking on a single act, and the
+   minutes budget is SPLIT between the items — a two-item order is one quest's work,
+   not two. Drawn from the upper part of what the player has unlocked so it does not
+   send a level 90 miner back to copper. */
+function gdRollSupply(skill,size,outActs){
+  const S=GD_SIZE[size];
+  const pool=[];
+  outActs.slice().sort((a,b)=>(a.lvl||1)-(b.lvl||1))
+    .forEach(a=>{ const id=gdActOut(a); if(id&&!pool.some(p=>p.id===id)) pool.push({id:id,act:a}); });
+  if(pool.length<2) return null;
+  const want=Math.min(pool.length, size==='long'?3:2);
+  const bag=pool.slice(-Math.max(want+2,Math.ceil(pool.length*0.6)));
+  const pick=[];
+  while(pick.length<want && bag.length) pick.push(bag.splice(Math.floor(Math.random()*bag.length),1)[0]);
+  if(pick.length<2) return null;
+  const items={}, parts=[]; let total=0;
+  pick.forEach(p=>{
+    const n=gdOutCount(skill,p.act,S.mins/pick.length,p.id);
+    items[p.id]=n; total+=n; parts.push(n+' '+ITEMS[p.id].name);
+  });
+  return {kind:'supply',size,skill,items:items,
+    name:'Supply '+gdAndList(parts),need:total,have:0,done:false};
+}
+
+/* Farming's own shapes. The tend/harvest split matters: the progress hook lives in
+   tendPatch(), not harvestPatch, because tending is the repeated farming action and
+   a Long quest of 32 grow cycles would take days. The line said "Harvest" and
+   counted tends, which is exactly the mismatch that reads as a broken counter. */
+function gdRollFarm(size){
+  const mul=size==='small'?1:size==='standard'?3:8;
+  const crops=gdCrops();
+  if(!crops.length) return null;
+  const roll=Math.random();
+  /* The Furrow was the one skilling guild that never saw a supply order, because
+     farming rolls on this branch and the branch had only two shapes — 54 possible
+     quest lines at 99 against the Delvers' 336 and the Emberforge's 5,955. */
+  if(crops.length>=2 && roll<0.30){
+    const sorted=crops.slice().sort((a,b)=>(a.lvl||1)-(b.lvl||1));
+    const bag=sorted.slice(-Math.max(3,Math.ceil(sorted.length*0.6)));
+    const want=Math.min(bag.length, size==='long'?3:2);
+    const pick=[];
+    while(pick.length<want && bag.length) pick.push(bag.splice(Math.floor(Math.random()*bag.length),1)[0]);
+    if(pick.length>=2){
+      const items={}, parts=[]; let total=0, dup=false;
+      pick.forEach(function(c){
+        const cId=Object.keys(c.out)[0];
+        if(!ITEMS[cId]||items[cId]){ dup=true; return; }
+        const n=Math.max(4,Math.round(12*mul/pick.length));
+        items[cId]=n; total+=n; parts.push(n+' '+ITEMS[cId].name);
+      });
+      if(!dup && parts.length>=2){
+        return {kind:'supply',size,skill:'farming',items:items,
+          name:'Supply '+gdAndList(parts),need:total,have:0,done:false};
+      }
+    }
+  }
+  if(roll<0.62){
+    const c=crops[Math.floor(Math.random()*crops.length)];
+    const cId=Object.keys(c.out)[0];
+    const cNm=(ITEMS[cId]&&ITEMS[cId].name)||cId;
+    const n=12*mul;
+    return {kind:'deliver',size,skill:'farming',target:cId,
+      name:'Deliver '+n+' '+cNm,need:n,have:0,done:false};
+  }
+  const tn=4*mul;
+  return {kind:'do',size,skill:'farming',name:'Tend '+tn+' patches',need:tn,have:0,done:false};
+}
+
 function gdRollOne(g,size){
   const S=GD_SIZE[size];
-  const mul=size==='small'?1:size==='standard'?3:8;
   if(g.combat){
+    const mul=size==='small'?1:size==='standard'?3:8;
     const mons=gdKillableMonsters();
     if(!mons.length) return null;
     const m=mons[Math.floor(Math.random()*mons.length)];
@@ -22338,53 +22573,83 @@ function gdRollOne(g,size){
       name:'Kill '+(10*mul)+' '+m.name,need:10*mul,have:0,done:false};
   }
   const skill=g.skills[Math.floor(Math.random()*g.skills.length)];
+  if(skill==='farming') return gdRollFarm(size);
   const acts=gdBestActs(skill);
   if(!acts.length) return null;
-  const act=acts[Math.floor(Math.random()*acts.length)];
-  if(skill==='farming'){
-    const cId=Object.keys(act.out)[0];
-    const cNm=(ITEMS[cId]&&ITEMS[cId].name)||cId;
-    if(Math.random()<0.45){
-      const n=12*mul;
-      return {kind:'deliver',size,skill,target:cId,
-        name:'Deliver '+n+' '+cNm,need:n,have:0,done:false};
-    }
-    const n=4*mul;
-    return {kind:'do',size,skill,name:'Harvest '+n+' patches',need:n,have:0,done:false};
+  const outActs=gdOutActs(skill);
+
+  /* Three shapes, and which are on offer depends on what the skill can produce —
+     a lap makes nothing, so The Nightmarket only ever asks you to run. */
+  const roll=Math.random();
+  if(outActs.length>=2 && roll<0.30){
+    const q=gdRollSupply(skill,size,outActs);
+    if(q) return q;
   }
-  const outId=Object.keys(act.out)[0];
-  const outNm=(ITEMS[outId]&&ITEMS[outId].name)||outId;
-  /* Deliver asks for something you can make; Gather counts actions in the skill. */
-  if(Math.random()<0.45){
-    const n=20*mul;
+  if(outActs.length && roll<0.62){
+    const act=gdPickAct(outActs);
+    const outId=gdActOut(act);
+    const n=gdOutCount(skill,act,S.mins,outId);
     return {kind:'deliver',size,skill,target:outId,
-      name:'Deliver '+n+' '+outNm,need:n,have:0,done:false};
+      name:'Deliver '+n+' '+ITEMS[outId].name,need:n,have:0,done:false};
   }
-  const n=25*mul;
-  const verb=IS_GATHER[skill]?'Gather':'Make';
-  return {kind:'do',size,skill,
-    name:verb+' '+n+' '+(SKILLS[skill].name.toLowerCase())+' items',need:n,have:0,done:false};
+  const act=gdPickAct(acts);
+  const n=gdActCount(skill,act,S.mins);
+  const outId=gdActOut(act);
+  const verb=GD_VERB[skill]||(IS_GATHER[skill]?'Gather':'Make');
+  /* Three namings, and the act table decides which.
+
+     Normally the OUTPUT names the quest — "Mine 40 Iron Ore" beats "Mine iron 40
+     times". But nine of Firemaking's ten acts pour out plain Ash, three of
+     Smithing's make Steel Bar and four of Alchemy's make Wisdom III, so an
+     output-named board handed the Timberhall "Burn 13 Ash / Burn 27 Ash / Deliver
+     110 Ash" — three lines, one job, which is the repetition the ticket is about
+     wearing a different hat. Where the output is shared, the ACT names the quest
+     instead, and every act name in that position already reads as an order
+     ("Burn oak logs", "Reclaim rusted blades", "Refine sapphire").
+
+     An act with no output at all is agility, and only agility: its names are places
+     rather than orders, so the verb goes in front. */
+  const shared=outId && acts.filter(a=>gdActOut(a)===outId).length>1;
+  const name = !outId ? verb+' the '+act.name+' '+n+' times'
+             : shared ? act.name+' '+n+' times'
+             :          verb+' '+n+' '+ITEMS[outId].name;
+  return {kind:'do',size,skill,act:act.id,name:name,need:n,have:0,done:false};
 }
 
+/* Two quests on one board should not be the same job wearing different numbers, so
+   they are deduped by what they ASK FOR, not by their printed name — "Mine 40 Iron
+   Ore" and "Deliver 40 Iron Ore" are one errand. A guild with a thin act pool would
+   end up with an empty board under that rule, so the key test gets most of the
+   tries and a plain name test takes the rest. */
+function gdQuestKey(q){
+  if(!q) return '';
+  if(q.kind==='supply') return 'sup:'+Object.keys(q.items||{}).sort().join(',');
+  return q.kind+':'+(q.act||q.target||q.skill||'');
+}
 function gdRollQuests(id,force){
   const g=GD_BY[id], r=gdRec(id); if(!g||!r) return;
-  const now=Date.now();
-  if(!force && r.rolled && (now-r.rolled)<GD_DAY) return;
+  const today=gdDayIndex();
+  if(!force && r.day===today) return;
   const want=['small','standard','long'];
   const out=[];
   for(const size of want){
-    for(let tries=0;tries<8 && out.length<want.indexOf(size)+1;tries++){
+    const target=want.indexOf(size)+1;
+    for(let tries=0;tries<14 && out.length<target;tries++){
       const q=gdRollOne(g,size);
-      if(q && !out.some(o=>o.name===q.name)) out.push(q);
+      if(!q) continue;
+      const strict=tries<10;
+      const clash=strict ? out.some(o=>gdQuestKey(o)===gdQuestKey(q))
+                         : out.some(o=>o.name===q.name);
+      if(!clash) out.push(q);
     }
   }
-  r.q=out; r.rolled=now; r.skipped=0;
+  r.q=out; r.day=today; r.rolled=Date.now(); r.skipped=0;
 }
-/* How long until this guild's board rolls again. A record that has never rolled is
-   due immediately — see the note in gdRefreshDue about the farmhand migration. */
+/* Time to the next local midnight. Every guild shares it — the board is a calendar
+   day, not a personal 24h timer, so two guilds can never disagree about when the
+   day ends. */
 function gdResetMsLeft(r){
-  if(!r||!r.rolled) return 0;
-  return Math.max(0, GD_DAY-(Date.now()-r.rolled));
+  return Math.max(0, gdNextResetAt()-Date.now());
 }
 function gdResetInText(r){
   const ms=gdResetMsLeft(r);
@@ -22403,31 +22668,46 @@ function gdCountdownTick(){
 /* Called from tick() — a day passing swaps every guild's board. */
 function gdRefreshDue(){
   if(!state||!state.gd) return false;
-  const now=Date.now(); let any=false;
+  const today=gdDayIndex(); let any=false;
   for(const id in state.gd){
     const r=state.gd[id];
-    /* `!r.rolled` matters: the farmhand migration creates a Furrow record without
-       rolling, and a `rolled && ...` test left that player staring at an empty
-       board forever. A record with no roll time is due one now. */
-    if(!r.rolled || (now-r.rolled)>=GD_DAY){ gdRollQuests(id,true); any=true; }
+    /* A record that has never rolled carries day -1, so it is due immediately: the
+       farmhand migration creates a Furrow record without rolling one, and an
+       is-it-a-day-old test left that player staring at an empty board forever. */
+    if(r.day!==today){ gdRollQuests(id,true); any=true; }
   }
   return any;
 }
 
 /* Deliver quests read the satchel live, so the number can go DOWN if you spend the
    items elsewhere. Nothing is taken until Hand in is pressed. */
-function gdHeld(q){ return q.kind==='deliver' ? ((state.items&&state.items[q.target])||0) : q.have; }
+function gdHeld(q){
+  if(q.kind==='deliver') return (state.items&&state.items[q.target])||0;
+  /* A supply order counts each line only up to what it asked for, so 500 spare coal
+     cannot fill the bar while the iron half sits at zero. */
+  if(q.kind==='supply'){
+    let n=0;
+    for(const iid in (q.items||{})) n+=Math.min(q.items[iid],(state.items&&state.items[iid])||0);
+    return n;
+  }
+  return q.have;
+}
 function gdReady(q){ return gdHeld(q)>=q.need; }
 
 /* Progress hooks. Both are cheap and both bail immediately when no guild wants
    what just happened, because they run on every action and every kill. */
-function gdOnAction(skillKey,times){
+function gdOnAction(skillKey,times,actId){
   if(!state||!state.gd) return;
   for(const id in state.gd){
     const g=GD_BY[id]; if(!g||!g.skills.length) continue;
     if(g.skills.indexOf(skillKey)<0) continue;
     for(const q of state.gd[id].q){
       if(q.done||q.kind!=='do'||q.skill!==skillKey) continue;
+      /* A quest that names an act only counts THAT act — "Mine 40 Iron Ore" must
+         not fill up while you swing at copper. Farming's tend quest names none, so
+         it counts every tend, and any quest left over from a save written before
+         quests named acts keeps its old skill-wide behaviour rather than freezing. */
+      if(q.act && q.act!==actId) continue;
       q.have=Math.min(q.need,q.have+times);
     }
   }
@@ -22472,6 +22752,16 @@ function gdClaim(id,idx){
     if(have<q.need){ toast('You are not holding enough.'); return; }
     state.items[q.target]=have-q.need;
     if(state.items[q.target]<=0) delete state.items[q.target];
+  } else if(q.kind==='supply'){
+    /* Every line is checked before ANY line is taken — a half-paid order that
+       swallowed the iron and then refused for want of coal would be theft. */
+    for(const iid in (q.items||{})){
+      if(((state.items&&state.items[iid])||0)<q.items[iid]){ toast('You are not holding enough.'); return; }
+    }
+    for(const iid in q.items){
+      state.items[iid]-=q.items[iid];
+      if(state.items[iid]<=0) delete state.items[iid];
+    }
   }
   const S=GD_SIZE[q.size];
   r.rep+=S.rep;
@@ -22517,35 +22807,154 @@ const GD_SHOP=[
   {id:'crate', title:'Crate of goods',cost:45, need:2, once:false,
    desc:'A stack of the best material this guild&rsquo;s skill makes.'},
 ];
+/* Ten guilds sharing three names read as placeholder text, because they were:
+   "Study notes" is not what a warband hands you and "Crate of goods" is not what
+   leaves a jeweller's bench. Each guild names its own three.
+
+   The NAME is the only place flavour belongs. The line under it is written by
+   gdShopFor from the actual grant — the real skill, the real amount, the real item
+   and count — because a name like "Assay payout" is a nice sign over the door and
+   tells you nothing about what you are buying. A guild with no entry here falls
+   back to the generic row, so a new guild can never open with an empty shop. */
+const GD_SHOP_NAMES={
+  furrow:    {xp:'The almanac',            coin:'Market takings',     crate:'Harvest barrow'},
+  timber:    {xp:"The feller's ledger",    coin:'Timber sale',        crate:'Cord of wood'},
+  delvers:   {xp:'Survey charts',          coin:'Assay payout',       crate:'Ore cart'},
+  deepwater: {xp:"The pilot's log",        coin:'Share of the catch', crate:'Packed barrel'},
+  emberforge:{xp:'Pattern book',           coin:'Forge commission',   crate:'Pallet of stock'},
+  ashen:     {xp:"The Circle's grimoire",  coin:'Sale of remedies',   crate:'Reagent chest'},
+  facet:     {xp:"Lapidary's notes",       coin:'Commission fee',     crate:'Velvet case'},
+  night:     {xp:"The runner's map",       coin:'Fenced goods'},
+  legion:    {xp:'The drill field',        coin:'Campaign pay'},
+  quiethand: {xp:'The dark room',          coin:'Contract fee'},
+};
+const GD_CRATE_QTY=50;
+/* What the shop pays. Both were set high enough that a few days of tokens beat
+   playing the skill: an hour of XP at your own best rate, and 25,000 gold — which
+   at 40 is most of an hour's earnings and at 99 is five minutes of it. The shop is
+   a bonus on top of quests you were doing anyway, not a shortcut past them. */
+const GD_COIN_GOLD=5000;
+const GD_SHOP_MINS=15;      // the XP row, in minutes of your own best rate
+const GD_SHOP_KILLS=15;     // the combat guilds' row, in kills at your best tier
+
+/* What the crate hands over: 50 of the best thing this guild's skill makes.
+
+   It used to take acts[acts.length-1] — whatever happened to be LAST in the array,
+   which for the category-ordered skills (Crafting, Jeweler) is not the best of
+   anything. It reads the highest-level act with a real output now, across every
+   skill the guild covers.
+
+   Returns null for a guild that makes nothing you can hold: the two combat guilds
+   have no skill at all, and every Nightmarket lap pays coin rather than goods. Both
+   stocked the row anyway and the button was dead — the Nightmarket's toasted "No
+   room in the satchel" at a satchel with plenty of room. */
+function gdCrateItem(id){
+  const g=GD_BY[id]; if(!g||!g.skills.length) return null;
+  let best=null, bestLv=-1;
+  g.skills.forEach(function(sk){
+    gdOutActs(sk).forEach(function(a){
+      const lv=(a.lvl||1);
+      if(lv>bestLv){ bestLv=lv; best=gdActOut(a); }
+    });
+  });
+  return best;
+}
+/* GD_SHOP_MINS of XP in one skill at the player's own best rate. Farming has no
+   xp/hr — a crop pays on harvest, not per second — so it is paid in harvests, the
+   same way gdQuestXp pays it. */
+function gdHourXp(skill){
+  const acts=gdBestActs(skill);
+  if(!acts.length) return 0;
+  if(skill==='farming'){
+    let bx=0; for(const c of acts) if((c.xp||0)>bx) bx=c.xp;
+    return Math.round(bx*GD_SHOP_MINS*XP_SCALE);
+  }
+  let best=0;
+  for(const a of acts){ const rr=ratesFor(a,skill); if(rr.xph>best) best=rr.xph; }
+  return Math.round(best*GD_SHOP_MINS/60);
+}
+/* Which skill the XP row pays into and how much — one resolver, so the description
+   on the card and the XP the button actually grants can never disagree. */
+function gdShopXp(g){
+  if(g.combat){
+    let best=null;
+    gdKillableMonsters().forEach(function(m){ if(!best||(m.xp||0)>(best.xp||0)) best=m; });
+    return {skill:null, mon:best, amount: best?Math.round((best.xp||0)*GD_SHOP_KILLS):0};
+  }
+  let skill=null, amount=0;
+  g.skills.forEach(function(sk){ const x=gdHourXp(sk); if(x>amount){ amount=x; skill=sk; } });
+  return {skill:skill, amount:amount};
+}
 function gdShopFor(id){
   const n=gdTitleNum(id), g=GD_BY[id];
-  return GD_SHOP.filter(s=>!(g.combat&&s.id==='crate')).map(s=>({
-    ...s, locked:n<s.need,
-    lockTxt:'Needs '+g.titles[s.need-1],
-  }));
+  const nm=GD_SHOP_NAMES[id]||{};
+  const crateId=gdCrateItem(id);
+  const xp=gdShopXp(g);
+  return GD_SHOP.filter(s=>s.id!=='crate'||!!crateId).map(function(s){
+    let desc=s.desc;
+    if(s.id==='xp'){
+      const much=xp.amount?' \u2014 about '+fmtK(xp.amount):'';
+      desc = g.combat
+        ? GD_SHOP_KILLS+' kills at the toughest thing you have fought'+much
+          +' combat XP, split into your attack style and Hitpoints the same way a kill does.'
+        : GD_SHOP_MINS+' minutes of '+(xp.skill?SKILLS[xp.skill].name:'this guild&rsquo;s')
+          +' XP at your best rate'+much+', added straight away.';
+    } else if(s.id==='coin'){
+      desc=GD_COIN_GOLD.toLocaleString()+' gold, straight into your purse.';
+    } else if(s.id==='crate'){
+      desc=GD_CRATE_QTY+' '+((ITEMS[crateId]&&ITEMS[crateId].name)||crateId)
+        +', straight to your satchel \u2014 always the best this guild is making right now.';
+    }
+    return {...s,
+      title:nm[s.id]||s.title,
+      desc:desc,
+      locked:n<s.need,
+      lockTxt:'Needs '+g.titles[s.need-1]};
+  });
+}
+/* An hour of the guild's own work.
+
+   Skilling guilds pay into whichever of THEIR skills you earn fastest in. It used to
+   read g.skills[0], so the Timberhall covers Woodcutting and Firemaking and always
+   paid Woodcutting, and the Deepwater covers Fishing and Cooking and always paid
+   Fishing.
+
+   Combat guilds have no skill at all, so g.skills[0] was undefined and the row was a
+   button that toasted "Nothing to study here" and did nothing else. They pay an hour
+   in the yard now — roughly sixty kills at the best tier you have fought, split
+   75/25 into your style and Hitpoints exactly the way a real kill splits it.
+
+   Returns false when nothing was granted, so the caller does not take the tokens. */
+function gdBuyXp(g){
+  const x=gdShopXp(g);
+  if(g.combat){
+    if(!x.amount){ toast('Kill something first — there is nothing to drill against.'); return false; }
+    const style=(state.combatStyle==='strength'||state.combatStyle==='defence')?state.combatStyle:'attack';
+    grantCombatXp(style, Math.round(x.amount*0.75));
+    grantCombatXp('hitpoints', Math.round(x.amount*0.25));
+    if(typeof refreshCombatStats==='function') refreshCombatStats();
+    toast('⚔ +'+fmtK(x.amount)+' combat XP.');
+    return true;
+  }
+  if(!x.skill||x.amount<=0){ toast('Nothing to study here.'); return false; }
+  const banked=addSkillXp(x.skill,x.amount);
+  recordXpGain(x.skill,banked); showXpPop(x.skill,banked);
+  toast('📖 +'+fmtK(x.amount)+' '+SKILLS[x.skill].name+' XP.');
+  return true;
 }
 function gdBuy(id,sid){
   const g=GD_BY[id], r=gdRec(id); if(!g||!r) return;
   const item=gdShopFor(id).find(s=>s.id===sid); if(!item||item.locked) return;
   if(state.gdTokens<item.cost){ toast('Not enough guild tokens.'); return; }
-  const skill=g.skills[0];
   if(sid==='xp'){
-    if(!skill){ toast('Nothing to study here.'); return; }
-    const acts=gdBestActs(skill);
-    let best=0; for(const a of acts){ const rr=ratesFor(a,skill); if(rr.xph>best) best=rr.xph; }
-    if(best<=0){ toast('Nothing to study here.'); return; }
-    const banked=addSkillXp(skill,Math.round(best));
-    recordXpGain(skill,banked); showXpPop(skill,banked);
-    toast('📖 +'+fmtK(Math.round(best))+' '+SKILLS[skill].name+' XP.');
+    if(!gdBuyXp(g)) return;
   } else if(sid==='coin'){
-    state.coins=(state.coins||0)+2500000;
-    toast('💰 +25,000 gold.');
+    state.coins=(state.coins||0)+GD_COIN_GOLD*SILVER_PER_GOLD;
+    toast('💰 +'+GD_COIN_GOLD.toLocaleString()+' gold.');
   } else if(sid==='crate'){
-    const acts=gdBestActs(skill);
-    if(!acts.length){ toast('Nothing to crate here.'); return; }
-    const act=acts[acts.length-1];
-    const outId=Object.keys(act.out)[0];
-    const got=grantItem(outId,50);
+    const outId=gdCrateItem(id);
+    if(!outId){ toast('This guild has nothing to crate up.'); return; }
+    const got=grantItem(outId,GD_CRATE_QTY);
     if(!got){ toast('No room in the satchel.'); return; }
     toast('📦 +'+got+' '+((ITEMS[outId]&&ITEMS[outId].name)||outId)+'.');
   }
@@ -22656,21 +23065,33 @@ function _gdGuildPage(id){
   }
   r.q.forEach((q,i)=>{
     const held=gdHeld(q), ready=gdReady(q);
-    const pctq=Math.min(100,Math.round(held/q.need*100));
+    const pctq=Math.min(100,Math.round(held/Math.max(1,q.need)*100));
     const S=GD_SIZE[q.size];
     const xp=gdQuestXp(g,q);
+    /* Deliver and Supply both take the goods out of the satchel on hand-in; Do and
+       Kill count something you already did. One flag rather than four branches. */
+    const takes=(q.kind==='deliver'||q.kind==='supply');
     const row=_gdEl('gd-q'+(q.done?' done':'')+(ready&&!q.done?' ready':''));
     let btn,cls;
     if(q.done){ btn='Claimed'; cls=' off'; }
-    else if(q.kind==='deliver'&&ready){ btn='Hand in '+q.need; cls=' pri'; }
-    else if(q.kind==='deliver'){ btn='Need '+(q.need-held)+' more'; cls=' off'; }
+    else if(takes&&ready){ btn='Hand in'; cls=' pri'; }
+    else if(takes){ btn='Need '+fmtK(q.need-held)+' more'; cls=' off'; }
     else if(ready){ btn='Claim'; cls=' pri'; }
     else { btn='Skip'; cls=r.skipped>=1?' off':''; }
+    /* A supply order's single progress bar cannot say WHICH half you are short of,
+       so each line gets its own chip. data-item picks up the shared satchel card. */
+    const chips=(q.kind==='supply')
+      ? '<div class="gd-qi">'+Object.keys(q.items||{}).map(function(iid){
+          const hv=(state.items[iid]||0), nd=q.items[iid];
+          return '<span class="'+(hv>=nd?'ok':'')+'" data-item="'+iid+'">'
+            +((ITEMS[iid]&&ITEMS[iid].name)||iid)+' <b>'+fmtK(Math.min(hv,nd))+'/'+fmtK(nd)+'</b></span>';
+        }).join('')+'</div>'
+      : '';
     row.innerHTML=
       '<div class="gd-qt"><b>'+q.name+'</b><i>'+S.label
-      +(q.kind==='deliver'?' · taken from your satchel when you hand in':'')+'</i></div>'
+      +(takes?' · taken from your satchel when you hand in':'')+'</i>'+chips+'</div>'
       +'<div class="gd-qp"><div class="l"><span>'
-      +(q.kind==='deliver'?'you hold <b>'+fmtK(held)+'</b> of '+q.need:'<b>'+fmtK(held)+'</b> of '+q.need)
+      +(takes?'you hold <b>'+fmtK(held)+'</b> of '+fmtK(q.need):'<b>'+fmtK(held)+'</b> of '+fmtK(q.need))
       +'</span><span>'+pctq+'%</span></div>'
       +'<div class="gd-bar"><i style="width:'+pctq+'%"></i></div></div>'
       +'<div class="gd-qr"><span class="rw rep">'+S.rep+' rep</span>'
@@ -30557,16 +30978,25 @@ function _ewOwned(){
   });
   return out;
 }
-function _ewWornSlot(id){
-  for(var s in state.equipped) if(state.equipped[s]===id) return s;
-  return null;
+/* Where a piece is worn, across BOTH dolls. Walking state.equipped alone meant a
+   ring worn only on the combat side showed no badge at all in the collection rail,
+   which is the same blind spot the set cards had. */
+function _ewWornIn(id){
+  var out={combat:[],skilling:[]};
+  var C=state.combatEquipped||{}, S=state.skillingEquipped||{};
+  for(var a in C) if(C[a]===id) out.combat.push(a);
+  for(var b in S) if(S[b]===id) out.skilling.push(b);
+  return out;
 }
-/* How many slots of the skilling loadout are wearing this piece — a matched pair of
-   rings is two, and the collection card has to say so or the second one looks lost. */
-function _ewWornCount(id){
-  var n=0;
-  for(var s in state.equipped) if(state.equipped[s]===id) n++;
-  return n;
+/* The rail badge. A matched pair of rings has to read as two or the second one looks
+   lost, and the doll has to be named or a combat-side ring looks unworn. */
+function _ewWornBadge(id){
+  var w=_ewWornIn(id);
+  var f=function(list){ return list.length>1?'L+R':(EW_SLOT_LABEL[list[0]]||'worn').replace('Ring \u00b7 ',''); };
+  if(w.combat.length&&w.skilling.length) return 'Both';
+  if(w.combat.length)   return 'Combat \u00b7 '+f(w.combat);
+  if(w.skilling.length) return 'Skilling \u00b7 '+f(w.skilling);
+  return '';
 }
 /* Reagent cost for a piece — driven by its gem's tier, same table the old panel used. */
 function _ewCostFor(itemId){
@@ -30594,7 +31024,7 @@ function _ewMatChip(mid,need){
 /* ── collection card ─────────────────────────────────────────────────────────── */
 function _ewPieceCard(id,redraw){
   var gem=JEWELRY_GEM_TIER[id], ench=state.enchantments[id], ed=ench?ENCHANTS[ench]:null;
-  var worn=_ewWornSlot(id), copies=Math.max(state.items[id]||0, worn?1:0);
+  var badge=_ewWornBadge(id), copies=Math.max(state.items[id]||0, badge?1:0);
   var b=document.createElement('button');
   b.className='ew-piece'+(_enchantSel===id?' sel':'');
   b.style.setProperty('--gc',EW_GEMC[gem]||'#6a5533');
@@ -30602,8 +31032,7 @@ function _ewPieceCard(id,redraw){
     +'<span class="pi"><span class="pn">'+(ITEMS[id]?ITEMS[id].name:id)
     +(copies>1?' <small>x'+copies+'</small>':'')+'</span>'
     +'<span class="ps'+(ed?' on':'')+'">'+(ed?'✦ '+ed.name:'unenchanted')+'</span></span>'
-    +(worn?'<span class="ew-worn">'+(_ewWornCount(id)>1?'L+R'
-        :(EW_SLOT_LABEL[worn]||'worn').replace('Ring · ',''))+'</span>':'')
+    +(badge?'<span class="ew-worn">'+badge+'</span>':'')
     +'<span class="ew-dot'+(ed?' on':'')+'"></span>';
   b.addEventListener('click',function(){ _enchantSel=id; hideTooltip(); redraw(); });
   return b;
@@ -30664,10 +31093,11 @@ function _ewFocusCard(eid,itemId,cost,canAfford,redraw){
    wrong with it. A leg needs an item of the right gem AND the right type, WORN, and
    carrying ANY enchant — three separate ways to fall short, and the card's ✓/✗ chip
    cannot say which. This drives the hover. */
-function _ewLegState(gem,want){
+function _ewLegState(gem,want,map){
   var worn=null, ownedUnworn=null;
-  for(var s in state.equipped){
-    var eq=state.equipped[s];
+  map=map||state.skillingEquipped||{};
+  for(var s in map){
+    var eq=map[s];
     if(eq&&JEWELRY_GEM_TIER[eq]===gem&&_jwType(eq)===want){ worn=eq; break; }
   }
   if(!worn){
@@ -30689,9 +31119,10 @@ function _ewLegState(gem,want){
    "Ring / Amulet" chips to be decoded. */
 function _ewSetTipHtml(def,gem,kind,live){
   var gemName=gem.charAt(0).toUpperCase()+gem.slice(1);
+  var map=_ewSetMap(kind), gear=(kind==='pendant'?'combat':'skilling')+' gear';
   var rows=def.slots.map(function(sl){
     var want=(sl==='ring_l'||sl==='ring_r')?'ring':kind;
-    var st=_ewLegState(gem,want);
+    var st=_ewLegState(gem,want,map);
     var typeName=want==='ring'?'Ring':want==='pendant'?'Pendant':'Amulet';
     var label=st.piece?(ITEMS[st.piece]?ITEMS[st.piece].name:st.piece):(gemName+' '+typeName);
     var detail, colour;
@@ -30702,7 +31133,7 @@ function _ewSetTipHtml(def,gem,kind,live){
       detail='you do not own one — craft it in the Jeweler';
       colour='#c8564a';
     } else if(st.need==='wear'){
-      detail=(st.ench?'enchanted, but ':'')+'not worn — equip it'
+      detail=(st.ench?'enchanted, but ':'')+'not on your '+gear+' — equip it'
         +(want==='ring'?' in either ring slot':' in the neck slot');
       colour='#d8a24a';
     } else {
@@ -30721,27 +31152,44 @@ function _ewSetTipHtml(def,gem,kind,live){
       +'font-size:calc(10px*var(--tscale));letter-spacing:1.4px;text-transform:uppercase;color:var(--ember)">'
       +(live?'Active — both worn and enchanted':'Needs all of')+'</div>'
     +rows
-    +(live?'':'<div style="margin-top:7px;color:#7a6a4a;font-size:.9em;font-style:italic">'
-      +'Any enchant counts — the piece just has to have one.</div>');
+    +'<div style="margin-top:7px;color:#7a6a4a;font-size:.9em;font-style:italic">'
+      +(live?'':'Any enchant counts — the piece just has to have one. ')
+      /* The one line that answers ticket #49. A pendant and an amulet look
+         interchangeable — same neck slot, same gem, near-identical names — and
+         nothing on this screen said they drive different sets. */
+      +(kind==='pendant'
+        ? 'A pendant and an amulet share the neck slot, but only a <b>pendant</b> lights this one. '
+          +'An amulet of the same gem drives the skilling set instead.'
+        : 'Read off your <b>skilling</b> loadout.')
+      +(_ewSetSpansBoth(def)
+        ? ' Its Attack, Defence and Max HP lines pay from the <b>combat</b> loadout — '
+          +'wear the pair there too for those.'
+        : '')
+    +'</div>';
 }
 
 /* ── set-bonus card: names the legs you have, not just on/off ────────────────── */
 function _ewSetCard(def,gem,kind){
+  var map=_ewSetMap(kind);
   var live=false;
-  try{ live=_enchantSetActive(def,state.equipped,kind); }catch(e){}
+  try{ live=_enchantSetActive(def,map,kind); }catch(e){}
   var c=_ewEl('ew-set'+(live?' live':''));
   var legs=def.slots.map(function(sl){
     var want=(sl==='ring_l'||sl==='ring_r')?'ring':kind;
     var got=false;
-    for(var s in state.equipped){
-      var eq=state.equipped[s];
+    for(var s in map){
+      var eq=map[s];
       if(!eq||JEWELRY_GEM_TIER[eq]!==gem||!state.enchantments[eq]) continue;
       if(_jwType(eq)===want){ got=true; break; }
     }
     var nm=want==='ring'?'Ring':want==='pendant'?'Pendant':'Amulet';
     return '<span class="leg'+(got?' ok':'')+'">'+(got?'✓ ':'')+nm+'</span>';
   }).join('');
-  c.innerHTML='<div class="sn">'+(live?'✦ ':'')+def.name+'</div>'
+  /* The doll is on the card, not just in the tooltip — two Sapphire cards sitting
+     side by side, one wanting a pendant on the combat doll and one an amulet on the
+     skilling doll, are unreadable without it. */
+  c.innerHTML='<div class="sn">'+(live?'✦ ':'')+def.name
+      +'<span class="scope">'+(kind==='pendant'?'combat':'skilling')+'</span></div>'
     +'<div class="sd">'+def.desc.replace(/^[^:]*: */,'')+'</div>'
     +'<div class="legs">'+legs+'</div>';
   /* The ✓/✗ chips say a leg is unmet but not why — missing piece, unworn, or worn but
@@ -30766,7 +31214,7 @@ function _ewSetsRow(){
     if(!owned.some(function(id){return JEWELRY_GEM_TIER[id]===g;})) return;
     [[ENCHANT_SETS[g],'amulet'],[PENDANT_SETS[g],'pendant']].forEach(function(p){
       if(!p[0]) return;
-      var live=false; try{ live=_enchantSetActive(p[0],state.equipped,p[1]); }catch(e){}
+      var live=false; try{ live=_enchantSetActive(p[0],_ewSetMap(p[1]),p[1]); }catch(e){}
       cands.push({def:p[0],gem:g,kind:p[1],live:live,sel:g===selGem});
     });
   });
@@ -30800,11 +31248,17 @@ function _ewTotals(){
 /* ── the piece on the bench ──────────────────────────────────────────────────── */
 function _ewHero(itemId){
   var gem=JEWELRY_GEM_TIER[itemId], ench=state.enchantments[itemId], ed=ench?ENCHANTS[ench]:null;
-  var worn=_ewWornSlot(itemId), copies=Math.max(state.items[itemId]||0, worn?1:0);
-  var wornN=_ewWornCount(itemId);
-  var wornTxt=!worn ? 'in the satchel, not worn'
-    : wornN>1 ? 'worn — both ring hands'
-    : 'worn — '+(EW_SLOT_LABEL[worn]||worn);
+  /* Both dolls, and it says which. A ring worn only on the combat side used to read
+     "in the satchel, not worn" here, which is how a player ends up convinced an
+     enchant is doing nothing (ticket #49). */
+  var w=_ewWornIn(itemId), anyWorn=w.combat.length||w.skilling.length;
+  var copies=Math.max(state.items[itemId]||0, anyWorn?1:0);
+  var where=function(list,lab){
+    if(!list.length) return '';
+    return lab+' '+(list.length>1?'both ring hands':(EW_SLOT_LABEL[list[0]]||list[0]).toLowerCase());
+  };
+  var wornTxt=!anyWorn ? 'in the satchel, not worn'
+    : 'worn \u00b7 '+[where(w.combat,'combat'),where(w.skilling,'skilling')].filter(Boolean).join(' \u00b7 ');
   var h=_ewEl('ew-hero'); h.style.setProperty('--gc',EW_GEMC[gem]||'#6a5533');
   h.innerHTML='<div class="hr"><div class="well">'+iconHTML(itemId)+'</div>'
     +'<div style="flex:1;min-width:0"><h4>'+(ITEMS[itemId]?ITEMS[itemId].name:itemId)+'</h4>'
@@ -30897,23 +31351,38 @@ function renderEnchanting(){
 
   const stack=_ewEl('ew-stack');
 
-  // ── what you are wearing ──
+  /* ── what you are wearing ──
+     Both dolls, each complete. This strip used to draw state.equipped alone — the
+     skilling loadout — so a player who keeps their rings and pendant on the combat
+     side saw three tiles reading "empty" for jewellery they had on, and the set
+     cards below agreed with the wrong half (ticket #49 / OneFlame). The two
+     loadouts pay different bonus keys, so both have to be on screen. */
   stack.appendChild(_ewLab('What You Are Wearing'));
-  const slots=_ewEl('ew-slots');
-  ['ring_l','ring_r','amulet'].forEach(function(sl){
-    const id=state.equipped[sl];
-    const ench=id?state.enchantments[id]:null, ed=ench?ENCHANTS[ench]:null;
-    const c=_ewEl('ew-slot'+(id?'':' empty')+(id&&id===_enchantSel?' sel':''));
-    c.style.setProperty('--gc', id?(EW_GEMC[JEWELRY_GEM_TIER[id]]||'rgba(214,138,52,.5)')
-                                 :'rgba(214,138,52,.3)');
-    c.innerHTML='<div class="well">'+(id?iconHTML(id):iconHTML('ui_gem'))+'</div>'
-      +'<div class="si"><div class="sl">'+EW_SLOT_LABEL[sl]+'</div>'
-      +'<div class="nm">'+(id?(ITEMS[id]?ITEMS[id].name:id):'empty')+'</div>'
-      +'<div class="ec '+(ed?'on':'off')+'">'+(ed?'✦ '+ed.name:(id?'unenchanted':'—'))+'</div></div>';
-    if(id) c.addEventListener('click',function(){ _enchantSel=id; hideTooltip(); redraw(); });
-    slots.appendChild(c);
+  [['combat','Combat loadout','Attack \u00b7 Defence \u00b7 Max HP \u00b7 Crit \u00b7 Lifesteal'],
+   ['skilling','Skilling loadout','Speed \u00b7 XP \u00b7 Sell value \u00b7 Double']].forEach(function(sc){
+    const map=(sc[0]==='combat'?state.combatEquipped:state.skillingEquipped)||{};
+    stack.appendChild(_ewEl('ew-sublab','<b>'+sc[1]+'</b><span>'+sc[2]+'</span>'));
+    const slots=_ewEl('ew-slots');
+    ['ring_l','ring_r','amulet'].forEach(function(sl){
+      const id=map[sl];
+      const ench=id?state.enchantments[id]:null, ed=ench?ENCHANTS[ench]:null;
+      const c=_ewEl('ew-slot'+(id?'':' empty')+(id&&id===_enchantSel?' sel':''));
+      c.style.setProperty('--gc', id?(EW_GEMC[JEWELRY_GEM_TIER[id]]||'rgba(214,138,52,.5)')
+                                   :'rgba(214,138,52,.3)');
+      /* The neck tile says which KIND is on, not just the item name — a pendant and
+         an amulet share the slot and drive different sets, and that difference is
+         the whole of ticket #49. */
+      const ty=id?_jwType(id):null;
+      const lab=EW_SLOT_LABEL[sl]+(sl==='amulet'&&ty?' \u00b7 '+ty:'');
+      c.innerHTML='<div class="well">'+(id?iconHTML(id):iconHTML('ui_gem'))+'</div>'
+        +'<div class="si"><div class="sl">'+lab+'</div>'
+        +'<div class="nm">'+(id?(ITEMS[id]?ITEMS[id].name:id):'empty')+'</div>'
+        +'<div class="ec '+(ed?'on':'off')+'">'+(ed?'✦ '+ed.name:(id?'unenchanted':'—'))+'</div></div>';
+      if(id) c.addEventListener('click',function(){ _enchantSel=id; hideTooltip(); redraw(); });
+      slots.appendChild(c);
+    });
+    stack.appendChild(slots);
   });
-  stack.appendChild(slots);
 
   // ── what it totals ── (nothing in the game showed this before)
   stack.appendChild(_ewLab('What It All Adds Up To',1));
