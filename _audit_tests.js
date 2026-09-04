@@ -3171,6 +3171,104 @@ setTimeout(() => {
     ok('a two-skill guild pays into whichever of ITS skills you earn fastest in',
        twoSkill.paidFm===true && twoSkill.paidWc===false, JSON.stringify(twoSkill));
 
+    // ── the Nightmarket is a fence, not a running track ───────────────────
+    const fence = JSON.parse(ev(`(function(){
+      const seen={}, kinds={}, bad=[];
+      for(let i=0;i<2500;i++){
+        ['small','standard','long'].forEach(function(sz){
+          const q=gdRollOne(GD_BY.night,sz);
+          if(!q) return;
+          seen[q.name]=1; kinds[q.kind]=(kinds[q.kind]||0)+1;
+          if(q.skill!=='agility') bad.push('off-skill '+q.skill);
+          if(q.kind==='coin' && !(q.need>0)) bad.push('coin with no amount');
+          const ids=q.kind==='supply'?Object.keys(q.items||{}):(q.target?[q.target]:[]);
+          ids.forEach(function(i){
+            if(!ITEMS[i]) bad.push('unknown '+i);
+            else if(!(ITEMS[i].sell>0)) bad.push('worthless '+i);
+            else if(ITEMS[i].tool||ITEMS[i].skillGear) bad.push('one-time '+i);
+          });
+        });
+      }
+      return JSON.stringify({lines:Object.keys(seen).length, kinds:kinds, bad:[...new Set(bad)]});
+    })()`));
+    ok('The Nightmarket rolls all four shapes', ['do','deliver','supply','coin']
+       .every(k => (fence.kinds[k]||0) > 0), JSON.stringify(fence.kinds));
+    ok('and has thousands of lines, not fifteen', fence.lines > 1000, fence.lines+' lines');
+    ok('a fence only ever asks for things worth money, and never a one-time tool',
+       fence.bad.length===0, fence.bad.join(', '));
+
+    /* Sized off agility's own gold rate this asked for 500 gold on a Long quest,
+       beside one asking for 22 Voidsteel Chests. It reads the best rate in the
+       GAME now, which is what a fence would actually price against. */
+    const coinSize = JSON.parse(ev(`(function(){
+      let q=null;
+      for(let i=0;i<3000 && !q;i++){ const c=gdRollOne(GD_BY.night,'long'); if(c&&c.kind==='coin') q=c; }
+      if(!q) return JSON.stringify({found:false});
+      let gph=0;
+      for(const sk in SKILLS) gdBestActs(sk).forEach(function(a){
+        let r=null; try{ r=ratesFor(a,sk); }catch(e){ return; }
+        if(r&&(r.gph||0)>gph) gph=r.gph;
+      });
+      const want=gph*GD_SIZE.long.mins/60;
+      return JSON.stringify({found:true, need:q.need, want:want, ratio:q.need/want});
+    })()`));
+    ok('a Long coin order is about twenty minutes of your best gold rate',
+       coinSize.found && coinSize.ratio>0.55 && coinSize.ratio<1.8,
+       JSON.stringify(coinSize));
+
+    const coinFlow = JSON.parse(ev(`(function(){
+      let q=null;
+      for(let i=0;i<3000 && !q;i++){ const c=gdRollOne(GD_BY.night,'standard'); if(c&&c.kind==='coin') q=c; }
+      if(!q) return JSON.stringify({found:false});
+      state.gd.night.q=[q]; state.gd.night.rep=0;
+      state.coins=q.need-1;
+      const shortReady=gdReady(q);
+      state.coins=q.need+777;
+      const fullReady=gdReady(q), tok=state.gdTokens;
+      gdClaim('night',0);
+      return JSON.stringify({found:true, shortReady:shortReady, fullReady:fullReady,
+        leftover:state.coins, tok:state.gdTokens-tok, done:state.gd.night.q[0].done});
+    })()`));
+    ok('a coin order rolls, and one coin short is not enough',
+       coinFlow.found===true && coinFlow.shortReady===false);
+    ok('paying it takes exactly the gold it asked for and no more',
+       coinFlow.fullReady===true && coinFlow.leftover===777, JSON.stringify(coinFlow));
+    ok('and it pays the Standard rate', coinFlow.tok===8 && coinFlow.done===true);
+
+    // ── one token buys roughly the same value at every shop ────────────────
+    const band = JSON.parse(ev(`(function(){
+      const out={};
+      [[99,99,99],[70,65,36],[40,35,18]].forEach(function(c){
+        for(const k in SKILLS) state.xp[k]=XP_CUM[c[0]];
+        state.combatXp={attack:XP_CUM[c[1]],strength:XP_CUM[c[1]],defence:XP_CUM[c[1]],hitpoints:XP_CUM[c[1]]};
+        state.monKills={}; MONSTERS.slice(0,c[2]).forEach(m=>state.monKills[m.id]=5);
+        state.gd={}; GUILDS.forEach(g=>gdJoin(g.id));
+        const vals=GUILDS.map(g=>gdShopXp(g).amount).filter(v=>v>0);
+        out['lv'+c[0]]={min:Math.min.apply(null,vals), max:Math.max.apply(null,vals),
+                        combat:gdShopXp(GD_BY.legion).amount};
+      });
+      return JSON.stringify(out);
+    })()`));
+    Object.keys(band).forEach(function(k){
+      const b=band[k];
+      ok('at '+k+' no shop is worth more than 2.5x another',
+         b.max/b.min < 2.5, Math.round(b.max/b.min*100)/100+'x  ('+
+         b.min.toLocaleString()+' to '+b.max.toLocaleString()+')');
+      ok('and the combat row sits inside that band',
+         b.combat>=b.min && b.combat<=b.max, b.combat.toLocaleString());
+    });
+    /* The two ends that made this necessary: crafting's xp/hr is ~5x mining's, and
+       monster XP scales ~65x from 40 to 99 while skilling xp/hr scales ~2.4x. */
+    ok('the combat row is no longer a joke at 40 or a jackpot at 99',
+       band.lv40.combat > 5000 && band.lv99.combat < 80000,
+       band.lv40.combat.toLocaleString()+' -> '+band.lv99.combat.toLocaleString());
+
+    // restore a level-99 save for the blocks below
+    ev(`for(const k in SKILLS) state.xp[k]=XP_CUM[99];
+        state.combatXp={attack:XP_CUM[99],strength:XP_CUM[99],defence:XP_CUM[99],hitpoints:XP_CUM[99]};
+        state.monKills={}; MONSTERS.forEach(m=>{ state.monKills[m.id]=5; });
+        state.gd={}; GUILDS.forEach(g=>gdJoin(g.id));`);
+
     // ── the Furrow finally gets supply orders ──────────────────────────────
     const furrow = ev(`(function(){
       state=defaultState(); normalizeState();
