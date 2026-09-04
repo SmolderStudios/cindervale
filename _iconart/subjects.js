@@ -138,10 +138,33 @@ const BATCH2 = require('./subjects2').FAMILIES;
 const FAMILIES = Object.assign({
   logs: LOGS, ores: ORES, bars: BARS, fish: FISH,
   herbs: HERBS, fire: FIRE, gems_rough: GEMS_ROUGH, gems_cut: GEMS_CUT,
-}, BATCH2, { gear: require('./subjects3').GEAR });
+}, BATCH2, { gear: require('./subjects3').GEAR }, require('./subjects4').FAMILIES3B,
+   require('./subjects5').FAMILIES3C, require('./subjects6').FAMILIES3D);
 
-/* An id drawn twice would silently overwrite one of the two in every downstream
-   map, and nothing else would complain. */
+/* Batch 3 (subjects5) deliberately RE-PROMPTS ids batch 2 got wrong — every hide
+   came back as a picture of the animal instead of its skin. An id it names wins and
+   the older entry is dropped, because two prompts for one id would otherwise pick a
+   winner by object-key order, which is not a decision anybody made.
+
+   This is the only sanctioned overlap. Any OTHER duplicate is still an accident and
+   still throws: it would silently overwrite one of the two in every downstream map
+   with nothing to show for it. */
+const LATER = ['hunt_hides', 'hunt_pending', 'audit_fixes'];
+const SUPERSEDED = new Set([
+  ...Object.values(require('./subjects5').FAMILIES3C).flat().map(s => s.id),
+  ...Object.values(require('./subjects6').FAMILIES3D).flat().map(s => s.id),
+]);
+for (const [name, fam] of Object.entries(FAMILIES)) {
+  if (LATER.includes(name)) continue;
+  FAMILIES[name] = fam.filter(s => !SUPERSEDED.has(s.id));
+}
+/* subjects6 corrects ids that subjects5 also touches (rhino_hide is not one, but keep
+   the ordering explicit): a later batch always wins over an earlier one. */
+for (const name of ['hunt_hides', 'hunt_pending']) {
+  if (!FAMILIES[name]) continue;
+  const later = new Set(Object.values(require('./subjects6').FAMILIES3D).flat().map(s => s.id));
+  FAMILIES[name] = FAMILIES[name].filter(s => !later.has(s.id));
+}
 (function(){
   const seen = new Set();
   for (const fam of Object.values(FAMILIES)) for (const s of fam) {

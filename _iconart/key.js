@@ -82,8 +82,10 @@ const WORK = `async (uri, SIZE, MARGIN) => {
      pearl_band, silkweave_band) sat just above a 15 cut and kept a solid disc.
      Still far tighter than the border fill's 46, and the flatness guard below is
      what actually protects a dark part of the subject from being eaten. */
-  const holeBack = onWhite ? (v => v > 240) : (v => v < 22);
-  const MIN_HOLE = Math.max(16, Math.floor(N * 0.0005));
+  const holeBack = onWhite ? (v => v > 226) : (v => v < 15);
+  /* a boot gap is small; an enclosed dark region on black has to be big to be real */
+  const MIN_HOLE = onWhite ? Math.max(10, Math.floor(N * 0.0002))
+                           : Math.max(16, Math.floor(N * 0.0015));
   const seen = new Uint8Array(N);
   let holes = 0, holePx = 0;
   for (let start = 0; start < N; start++) {
@@ -91,10 +93,10 @@ const WORK = `async (uri, SIZE, MARGIN) => {
     const comp = [];
     const q = [start];
     seen[start] = 1;
-    let lo = 255, hi = 0;
+    let lo = 255, hi = 0, sum = 0;
     while (q.length) {
       const i = q.pop();
-      comp.push(i);
+      comp.push(i); sum += lum[i];
       if (lum[i] < lo) lo = lum[i];
       if (lum[i] > hi) hi = lum[i];
       const X = i % W, Y = (i / W) | 0;
@@ -104,7 +106,10 @@ const WORK = `async (uri, SIZE, MARGIN) => {
       if (Y > 0)     push(i - W);
       if (Y < H - 1) push(i + W);
     }
-    if (comp.length >= MIN_HOLE && (hi - lo) < 12) {
+    const mean = sum / comp.length;
+    const flat = (hi - lo) < 12;
+    const clearlyBackdrop = onWhite && hi >= 248 && mean >= 235;
+    if (comp.length >= MIN_HOLE && (flat || clearlyBackdrop)) {
       for (const i of comp) bg[i] = 1;
       holes++; holePx += comp.length;
     }
@@ -112,6 +117,51 @@ const WORK = `async (uri, SIZE, MARGIN) => {
 
   let cut = 0;
   for (let i = 0; i < N; i++) if (bg[i]) { px[i*4+3] = 0; cut++; }
+
+  /* DE-MATTE THE EDGE. The fill above is binary — a pixel is backdrop or it is not —
+     so the antialiased ring where paint meets backdrop keeps FULL opacity along with
+     its share of the backdrop colour. On a white sheet that is a pale rind around
+     every dark object; on the panel brown it reads as a scuffed outline, and it is
+     the one artefact that survives all the way down to a 20px tile.
+
+     Undoing the compositing is exact rather than a guess. A boundary pixel holds
+     C = a*F + (1-a)*B for a known backdrop B, so recover the paint F and give the
+     pixel the coverage a it always had:  F = (C - (1-a)*B) / a.  Coverage comes from
+     how far the pixel has travelled from the backdrop toward the fill's own solid
+     threshold, which is the same line that decided it was not backdrop in the first
+     place.
+
+     Only pixels TOUCHING removed backdrop are considered, and only while they are
+     still backdrop-ish (a >= 1 means solid paint and is skipped), so a genuinely
+     white subject — the chef's hat, a pearl, the pale hides — keeps its own edge:
+     those are drawn with a dark keyline, which reads as a = 1 and is left alone.
+     Two passes, because the rind runs two pixels wide at sheet resolution. */
+  const BACK = onWhite ? 255 : 0;
+  const SOLID = onWhite ? 214 : 46;          // the border fill's own cut
+  let demat = 0;
+  for (let pass = 0; pass < 2; pass++) {
+    const ring = [];
+    for (let i = 0; i < N; i++) {
+      if (bg[i] || px[i*4+3] === 0) continue;
+      const X = i % W, Y = (i / W) | 0;
+      if ((X > 0 && px[(i-1)*4+3] === 0) || (X < W-1 && px[(i+1)*4+3] === 0) ||
+          (Y > 0 && px[(i-W)*4+3] === 0) || (Y < H-1 && px[(i+W)*4+3] === 0)) ring.push(i);
+    }
+    let touched = 0;
+    for (const i of ring) {
+      const a = onWhite ? (255 - lum[i]) / (255 - SOLID) : lum[i] / SOLID;
+      if (a >= 1) continue;                  // solid paint — nothing was mixed in
+      touched++;
+      if (a <= 0.08) { px[i*4+3] = 0; continue; }   // effectively backdrop
+      for (let k = 0; k < 3; k++) {
+        const v = (px[i*4+k] - (1 - a) * BACK) / a;
+        px[i*4+k] = v < 0 ? 0 : v > 255 ? 255 : v;
+      }
+      px[i*4+3] = Math.round(a * 255);
+    }
+    demat += touched;
+    if (!touched) break;
+  }
   x.putImageData(d, 0, 0);
 
   // bounding box of what survived
@@ -136,7 +186,7 @@ const WORK = `async (uri, SIZE, MARGIN) => {
   ox.drawImage(c, x0, y0, bw, bh, (SIZE - dw) / 2, (SIZE - dh) / 2, dw, dh);
   return {
     out: o.toDataURL('image/png'),
-    cutPct: Math.round(cut / N * 100),
+    cutPct: Math.round(cut / N * 100), demat,
     onWhite, backdropOk, cornerMean: Math.round(cornerMean),
     holes, holePct: +(holePx / N * 100).toFixed(1),
     fill: Math.round(bw * bh / N * 100),      // how much of the frame the subject used
@@ -146,7 +196,12 @@ const WORK = `async (uri, SIZE, MARGIN) => {
 
 (async () => {
   fs.mkdirSync(CUT, { recursive: true });
-  const files = fs.readdirSync(RAW).filter(f => f.endsWith('.png'));
+  /* --only re-keys a handful after a re-generation, instead of walking all ~500
+     again to pick up eight changed files. */
+  const only = arg('--only');
+  const want = only ? new Set(only.split(',')) : null;
+  const files = fs.readdirSync(RAW).filter(f => f.endsWith('.png'))
+    .filter(f => !want || want.has(f.split('__')[0]));
   if (!files.length) { console.log('nothing in raw/'); return; }
   const b = await puppeteer.launch({ executablePath: CHROME, headless: true,
     args: ['--allow-file-access-from-files'] });

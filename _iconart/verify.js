@@ -52,7 +52,36 @@ const EXPECT = {
   // herbs with a strong colour claim
   bloodcap: [355, 40], emberbloom: [28, 45], frostcrocus: [200, 55], nightshade: [285, 55],
   sunroot: [45, 40],
+  // cut gems — the whole stone is one colour, so this is the cleanest hue check
+  sanguine_chip: [355, 40], sanguine_polish: [355, 40], sanguine_flaw: [355, 40],
+  verdant_chip: [140, 45], verdant_polish: [140, 45], verdant_flaw: [140, 45],
+  azure_chip: [220, 40], azure_polish: [220, 40], azure_flaw: [220, 40],
+  topaz_chip: [45, 40], topaz_polish: [45, 40], topaz_flaw: [45, 40],
+  // onyx is black — no hue to pin, same reasoning as the ores
 };
+
+/* ── gear, generated from the material each piece resolved to ─────────────────
+   The tier ladder IS the colour: if Runite Chest is not green the ladder is
+   broken however good the picture looks, and 233 hand-typed entries would drift
+   from subjects3.js the first time a palette moved.
+   Only materials whose WHOLE object is one hue are pinned. Greys (iron, steel,
+   barrow, wolfhide, wraithhide, ogrehide), anything described as two colours at
+   once (gravesteel grey-green, trollhide brown-and-green, cinder ash-and-orange)
+   and every unique are left unpinned — for exactly the reason the ores are: the
+   top-saturation sample flips between the two colours and the measure becomes
+   noise. */
+const MAT_HUE = {
+  bronze: [25, 40], mithril: [200, 45], cobalt: [225, 45], runite: [140, 50],
+  starsteel: [285, 60], moltensteel: [25, 45], voidsteel: [285, 60], dawn: [45, 45],
+  emberforged: [25, 45], roughhide: [30, 40], chitinweave: [25, 40], chitin: [25, 40],
+  drakehide: [15, 40], demonhide: [355, 40], emberhide: [25, 45], emberweave: [25, 45],
+  voidhide: [285, 60], sunweave: [45, 45], warband: [25, 40],
+};
+{
+  const { GEAR_MAT } = require('./subjects3');
+  for (const [id, mat] of Object.entries(GEAR_MAT))
+    if (mat && MAT_HUE[mat] && !(id in EXPECT)) EXPECT[id] = MAT_HUE[mat];
+}
 
 const hueDist = (a, b) => { const d = Math.abs(a - b) % 360; return d > 180 ? 360 - d : d; };
 const DARK = new Set(require('./subjects').ALL.filter(s => s.dark).map(s => s.id));

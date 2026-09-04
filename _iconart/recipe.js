@@ -37,10 +37,21 @@ const STYLES = {
   /* Reads as a sibling of the painted monster and pet art already in the game. */
   painted: {
     label: 'Painted',
+    /* The last three lines are batch 3 (0.9.121.20). The clause above them had always
+       said "stylised" and "painted", and the output was still coming back as rendered
+       texture — smooth photographic gradients and individually drawn hairs. Saying
+       "not photorealistic" does nothing on its own; what moved it was telling the model
+       how much detail to SPEND. Flat value steps and broad strokes are instructions it
+       can act on, where "stylised" is a label it can apply to a photograph.
+       Proven on the hunter's kit and the three dishes before going library-wide. */
     clause: ', stylised painted fantasy game item icon, chunky exaggerated proportions,'
       + ' bold simplified forms, thick confident brush strokes, strong rim light tracing'
       + ' the silhouette, deep shadow opposite, rich saturated colour, high value contrast,'
-      + ' single object centred and filling the frame',
+      + ' single object centred and filling the frame,'
+      + ' three or four flat value steps rather than smooth gradients,'
+      + ' texture suggested with a few broad strokes and never drawn strand by strand,'
+      + ' painterly illustration, not photorealistic, not a photograph, not a 3D render,'
+      + ' not a scanned texture',
   },
   /* Maximum legibility at 15px: fewer shapes, flatter fill, a drawn edge holding
      the silhouette together the way the outgoing SVGs did. */
@@ -70,8 +81,8 @@ const OUTLINE = {
   /* A rim alone draws the edge but leaves the body black, and at 15px a black body
      with a thin edge still reads as a hole. These also need a LIT top surface so
      there is some actual value in the shape. */
-  dark:   'a warm ember orange rim light tracing the whole silhouette, and a bright '
-        + 'lit upper surface catching a strong light from above',
+  dark:   'a thin warm ember orange rim tracing the outline, and a mid tone body colour '
+        + 'a few steps lighter than black so the object reads as an object',
 };
 
 /* Realism has many names; so does "put my object in a scene". */
@@ -91,7 +102,8 @@ const NEG = [
   // instead of ingots — negate the solids it kept reaching for
   'cube, brick, block, box, dice, bucket, tub, barrel, pot, wedge, pyramid,',
   // multiplicity — a "pile of ore" is mud at 15px
-  'multiple objects, collection, set, group, pile, heap, scattered, tiled, grid, collage,',
+  'multiple objects, collection, set, group, pile, heap, scattered, tiled, grid, collage,'
+  + ' two of the same object, a pair of identical items, crossed pair, duplicate, mirrored copy,',
   // chrome
   'text, letters, numbers, watermark, signature, logo, label, border, frame, vignette,',
   'drop shadow, reflection, mirror, glare,',
@@ -106,9 +118,14 @@ const NEG = [
      S('bone_stew', '...', { allow: ['bowl', 'container'] }) */
 function negFor(subject) {
   const allow = subject.allow || [];
-  if (!allow.length) return NEG;
   let out = NEG;
   for (const t of allow) out = out.replace(new RegExp(String.raw`\b${t}\b,?\s*`, 'g'), '');
+  /* Per-subject additions. The gear probe needed these: "domed skull, heavy brow
+     ridge" in a helmet prompt drew an actual skull inside the helmet, and "leg
+     greaves standing side by side" drew a whole suit of armour. Same literal
+     reading that turned "fist sized" into a clenched fist — the fix is to say it
+     in the negative as well as to stop saying it in the positive. */
+  if (subject.neg) out = out + ', ' + subject.neg;
   return out;
 }
 
@@ -135,8 +152,8 @@ function buildPrompt(subject, styleKey) {
   let clause = st.clause.replace('OUTLINE', OUTLINE[subject.dark ? 'dark' : 'normal']);
   // painted already asks for a rim; for a dark body, say how much it matters
   if (subject.dark && styleKey === 'painted') {
-    clause += ', very bright rim light and a strongly lit upper surface so the shape stays'
-            + ' readable against a dark background, not a black silhouette';
+    clause += ', no glowing hotspot and no light source inside the object, just a thin'
+            + ' edge and a readable mid tone body, not a black silhouette';
   }
   return subject.p + clause + back;
 }

@@ -69,3 +69,25 @@ _iconart/pack.json
 _iconart/pick.html
 _iconart/items.json
 _iconart/*.png
+
+# item art contact sheets — the SOURCE PNGs Jordan generates in ChatGPT, ~59 MB.
+# The id lists (sheets/*.txt) ARE committed: they are the reading-order contract
+# cutall.js slices against. The images are not, because this repo is what GitHub
+# Pages deploys and 59 MB would slow every deploy for the life of the project.
+# Master copies live in Desktop/cindervale icons — back that folder up, it is the
+# only place they exist.
+_iconart/sheets/*.png
+_iconart/sheets/_*.txt
+
+# item art working dirs — all derived from sheets/ by cutall.js + key.js, ~270 MB
+_iconart/cut_prev/
+_iconart/cut_prev2/
+_iconart/cut_before/
+_iconart/raw_old/
+_iconart/emblem_retired/
+_iconart/recol_cut/
+_iconart/legvar_cut/
+_iconart/legvar_raw/
+_iconart/_ingame/
+_iconart/_review/
+_iconart/pack.*.json

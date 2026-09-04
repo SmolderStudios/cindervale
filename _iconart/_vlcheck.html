@@ -1,0 +1,37 @@
+<style>
+body{background:#17151b;color:#ccc;font:12px sans-serif;margin:0;padding:12px}
+.row{display:flex;gap:18px;align-items:flex-end;margin-bottom:18px}
+.cell{text-align:center}
+img{image-rendering:pixelated;display:block;background:#1c1a20;border:1px solid #333}
+.sat{background:#221f27;border:1px solid #3a3540;padding:6px;display:inline-block}
+</style>
+<div class=row>
+<div class=cell><img src="file:///C:/code/embervale/_iconart/cut/void_legs__emblem.png" width=200><br>emblem 200</div>
+<div class=cell><img src="file:///C:/code/embervale/_iconart/cut/void_legs__painted.png" width=200><br>painted 200</div>
+</div>
+<div class=row>
+<div class=cell><img src="file:///C:/code/embervale/_iconart/cut/void_legs__emblem.png" width=15 style="width:15px"><br>15</div>
+<div class=cell><img src="file:///C:/code/embervale/_iconart/cut/void_legs__emblem.png" width=20><br>20</div>
+<div class=cell><img src="file:///C:/code/embervale/_iconart/cut/void_legs__emblem.png" width=31><br>31</div>
+<div class=cell><img src="file:///C:/code/embervale/_iconart/cut/void_legs__emblem.png" width=15 style="width:150px;height:150px"><br>15px look (nearest x10)</div>
+</div>
+<div class=row>
+<div class=cell><img src="file:///C:/code/embervale/_iconart/cut/void_legs__painted.png" width=15><br>p15</div>
+<div class=cell><img src="file:///C:/code/embervale/_iconart/cut/void_legs__painted.png" width=20><br>p20</div>
+<div class=cell><img src="file:///C:/code/embervale/_iconart/cut/void_legs__painted.png" width=31><br>p31</div>
+</div>
+<canvas id=c width=800 height=200></canvas>
+<script>
+const c=document.getElementById('c'),x=c.getContext('2d');
+x.fillStyle='#1c1a20';x.fillRect(0,0,800,200);
+const paths=['void_legs__emblem','void_legs__painted'];
+let done=0;
+paths.forEach((p,pi)=>{const im=new Image();im.onload=()=>{
+ [15,20,31].forEach((s,i)=>{
+   const t=document.createElement('canvas');t.width=s;t.height=s;
+   const tx=t.getContext('2d');tx.drawImage(im,0,0,s,s);
+   x.imageSmoothingEnabled=false;
+   x.drawImage(t,20+i*180,10+pi*95,s*5,s*5);
+ });
+};im.src='file:///C:/code/embervale/_iconart/cut/'+p+'.png';});
+</script>

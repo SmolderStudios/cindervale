@@ -19,22 +19,53 @@ const GEAR = require('./gear.json');
    the only thing a player can actually read, so the slots have to sit further
    apart from each other than the tiers do. */
 const SHAPE = {
-  helmet: 'A single closed battle helmet seen from a front three quarter angle, domed skull, heavy brow ridge, narrow dark eye slit, standing alone',
-  chest:  'A single empty breastplate seen from the front, broad chest, squared shoulders, waist tapering in, standing alone on nothing',
-  legs:   'A single pair of armoured leg greaves standing upright side by side, knee plates facing the viewer',
-  boots:  'A single pair of armoured boots standing side by side seen from a front three quarter angle, thick soles, shin cuffs',
-  gloves: 'A single armoured gauntlet seen from a three quarter angle, wide flared cuff toward the viewer, fingers curled inward',
-  cape:   'A single cloak hanging from a shoulder clasp at the top, heavy fabric falling in deep vertical folds, hem swinging wide',
-  shield: 'A single shield seen face on and filling the frame, raised central boss, banded rim',
+  helmet: 'A single medieval knight helm, one solid piece with a narrow dark eye slit',
+  chest:  'A single breastplate, curved chest armour with shoulder guards, hollow and empty',
+  legs:   'A single pair of matching armour plates standing upright side by side, each with a rounded knee guard at the top and a riveted rim, tapering to a straight cut edge at the bottom',
+  boots:  'A single pair of armoured boots side by side seen from the front',
+  gloves: 'A single armoured gauntlet, wide flared cuff, fingers curled',
+  cape:   'A single hanging cloak, heavy folds, clasp at the top',
+  shield: 'A single shield seen face on, raised boss at its centre',
+};
+
+/* Said in the negative as well, because the positive alone did not hold. */
+const SLOT_NEG = {
+  helmet: 'motorcycle helmet, crash helmet, modern, hoodie, skull, face, head, person',
+  chest:  'person, body, torso, legs, full suit of armour, standing figure, t shirt, mannequin',
+  legs:   'boots, shoes, footwear, feet, toes, boot toe, ankle boot, trousers, jeans, denim, leggings, full suit of armour, whole body, torso, chest plate, helmet, person, standing figure',
+  boots:  'person, legs, standing figure',
+  gloves: 'hand, arm, person, mitten, cup, tumbler, drinking glass, tube, vase',
+  cape:   'person, figure, mannequin',
+  shield: 'person',
+  weapon: 'two weapons, a pair of weapons, crossed weapons, duplicate, helmet, head, person',
+};
+
+/* The hide ladder gets its own silhouettes. A Cowl is a hood, a Jerkin is not a
+   cuirass, and Bracers are forearm guards rather than gauntlets — the game's own
+   names say so, and drawing them as plate in brown made leather look like painted
+   metal. Chosen by the MATERIAL's kind, so it cannot disagree with the palette. */
+const SOFT = {
+  helmet: 'A single soft leather hood, the open cowl facing the viewer',
+  chest:  'A single sleeveless leather jerkin, laced front, hollow and empty',
+  legs:   'A single pair of leather shin guards, two padded wraps side by side, knee down to ankle, each ending in a flat straight cut edge at the bottom',
+  gloves: 'A single soft leather glove, fingers curled, wide cuff at the wrist',
+  boots:  'A single pair of soft leather boots side by side seen from the front',
+};
+const SOFT_NEG = {
+  helmet: 'metal helmet, visor, motorcycle helmet, skull, face, head, person',
+  chest:  'metal plate, cuirass, t shirt, person, torso, head, arms',
+  legs:   'trousers, jeans, denim, leggings, metal greaves, boots, person, standing figure',
+  gloves: 'metal gauntlet, plate, cup, tumbler, drinking glass, tube, hand of a person, arm',
+  boots:  'metal plate, person, legs, standing figure',
 };
 
 /* Weapons split by damage type — a sword and a hammer share nothing useful. */
 const WEAPON = {
-  slash:  'A single straight sword seen edge on from the side, blade pointing up, plain crossguard, wrapped grip, round pommel',
-  stab:   'A single dagger seen edge on from the side, short broad tapering blade pointing up, small crossguard, wrapped grip',
-  crush:  'A single war hammer seen from the side, heavy squared head at the top, long haft running down',
-  slash2: 'A single two handed greatsword seen edge on from the side, long broad blade pointing up, long grip, heavy crossguard',
-  crush2: 'A single two handed maul seen from the side, huge blunt head at the top, long thick haft running down',
+  slash:  'A single longsword, exactly one blade, only one weapon in the picture, held point up, narrow straight blade running the full height of the frame, small crossguard',
+  stab:   'A single dagger, exactly one blade, only one weapon in the picture, held point up, one short tapered blade, small round pommel, no crossguard',
+  crush:  'A single blacksmith sledgehammer, one huge square head at the top, short thick handle',
+  slash2: 'A single enormous two handed greatsword, exactly one blade, only one weapon in the picture, held point up, very long broad blade running the full height of the frame, long grip',
+  crush2: 'A single enormous two handed sledgehammer, one massive square head at the top, thick handle',
 };
 
 /* ── the two ladders. Metal and hide are deliberately different constructions,
@@ -44,38 +75,38 @@ const M = (words, opt) => Object.assign({ w: words, kind: 'metal' }, opt || {});
 const H = (words, opt) => Object.assign({ w: words, kind: 'hide' }, opt || {});
 
 const MATERIAL = {
-  bronze:      M('hammered bronze, warm brown gold metal, dark patina in the recesses'),
-  iron:        M('plain forged iron, dull grey metal, dark pitting and soot'),
-  steel:       M('polished steel, cool bright silver grey metal, clean hard highlights', { pale: true }),
-  mithril:     M('mithril, luminous sky blue metal with a pale silver sheen'),
-  cobalt:      M('cobalt, deep vivid blue metal with bright cold highlights'),
-  runite:      M('runite, rich emerald green metal with a dark oiled sheen'),
-  starsteel:   M('starsteel, pale violet white metal scattered with tiny star glints', { pale: true }),
-  gravesteel:  M('gravesteel, cold grey green metal streaked with grave rust and verdigris'),
-  moltensteel: M('moltensteel, dark iron split by glowing molten orange seams', { dark: true }),
-  voidsteel:   M('voidsteel, near black metal with a violet sheen and thin purple rift light in the seams', { dark: true }),
-  dawn:        M('dawnsteel, radiant pale gold metal haloed in warm white light', { pale: true }),
-  barrow:      M('barrow, tarnished grave silver hung with faded burial cloth'),
-  emberforged: M('emberforged, blackened iron veined with hot orange forge light', { dark: true }),
+  bronze:      M('warm brown gold bronze'),
+  iron:        M('dull grey iron'),
+  steel:       M('bright silver steel', { pale: true }),
+  mithril:     M('luminous sky blue mithril'),
+  cobalt:      M('deep vivid blue cobalt'),
+  runite:      M('rich emerald green runite'),
+  starsteel:   M('pale violet white starsteel', { pale: true }),
+  gravesteel:  M('tarnished grey green steel'),
+  moltensteel: M('black iron cracked with glowing orange', { dark: true }),
+  voidsteel:   M('black metal edged in violet light', { dark: true }),
+  dawn:        M('radiant pale gold', { pale: true }),
+  barrow:      M('tarnished grave silver'),
+  emberforged: M('blackened iron veined with orange forge light', { dark: true }),
 
-  roughhide:   H('rough undyed leather, coarse tan hide, crude stitching and iron rivets'),
-  chitinweave: H('layered insect chitin plates lashed over dark leather, glossy chestnut brown shell'),
-  chitin:      H('layered insect chitin plates lashed over dark leather, glossy chestnut brown shell'),
-  wolfhide:    H('grey wolf pelt over stitched leather, coarse fur trim at the edges'),
-  warband:     H('scarred brown warband leather hung with bone tokens and red war cord'),
-  ogrehide:    H('thick pale ogre hide, heavy crude stitching, bone studs', { pale: true }),
-  trollhide:   H('mottled green troll hide over dark leather, warty thickened plates'),
-  drakehide:   H('overlapping bronze red drake scales stitched to dark leather'),
-  demonhide:   H('cracked crimson demon hide, black horn studs, faint heat in the cracks'),
-  wraithhide:  H('ghostly translucent grey wraith hide, tattered edges fading out'),
-  emberhide:   H('charred black hide cracked open with glowing ember orange light beneath', { dark: true }),
-  emberweave:  H('charred black hide cracked open with glowing ember orange light beneath', { dark: true }),
-  cinder:      H('ash grey cinderweave cloth shot with drifting orange sparks'),
-  voidhide:    H('near black void hide drinking the light, thin violet rift seams', { dark: true }),
-  sunweave:    H('woven sunweave cloth, warm white and pale gold, softly glowing', { pale: true }),
-  bone:        H('lashed bone plates, pale ivory, bound with dark cord', { pale: true }),
-  grave:       H('grey rotted burial linen over dark leather'),
-  silkwoven:   H('fine pale silk weave, iridescent sheen, light as air', { pale: true }),
+  roughhide:   H('coarse tan leather'),
+  chitinweave: H('glossy chestnut brown chitin', { dark: true }),
+  chitin:      H('glossy chestnut brown chitin', { dark: true }),
+  wolfhide:    H('brown leather with grey wolf fur trim'),
+  warband:     H('scarred brown leather with red war cord', { dark: true }),
+  ogrehide:    H('thick pale grey hide', { pale: true }),
+  trollhide:   H('brown leather mottled with sickly green'),
+  drakehide:   H('bronze red scaled hide'),
+  demonhide:   H('cracked crimson hide with black studs', { dark: true }),
+  wraithhide:  H('translucent ghost grey hide', { pale: true }),
+  emberhide:   H('charred black hide cracked with ember orange', { dark: true }),
+  emberweave:  H('charred black hide cracked with ember orange', { dark: true }),
+  cinder:      H('ash grey cloth with orange sparks'),
+  voidhide:    H('black hide seamed with violet light', { dark: true }),
+  sunweave:    H('warm white and pale gold cloth', { pale: true }),
+  bone:        H('pale ivory bone plates', { pale: true }),
+  grave:       H('grey rotted burial linen'),
+  silkwoven:   H('pale iridescent silk', { pale: true }),
 };
 
 /* Longest key first, so "gravesteel" is never eaten by "grave" and "chitinweave"
@@ -96,62 +127,66 @@ const NAMEMAP = {
    description rather than the ladder's. Anything that matches no material and is
    not listed here stops the build. */
 const UNIQUE = {
-  plague_fang_dagger: ['A single dagger seen edge on from the side, an enormous yellowed rat fang lashed to a rough iron tang, the edge weeping a sour green', { pale: true }],
-  rat_queen_crown: ['A single small crooked crown of dark iron and gnawed bone, set with one dull red stone'],
-  chitin_maul: ['A single war hammer seen from the side, the head a solid block of glossy chestnut insect chitin, dark lashed haft'],
-  widow_crown: ['A single spiked black crown, thin barbed spider legs curling up from the band', { dark: true }],
-  warchief_crown: ['A single heavy chieftain crown of scarred iron hung with red war cord and small bones'],
-  warcleaver: ['A single heavy cleaver seen from the side, broad rectangular chipped steel blade, bound leather grip'],
-  lich_crown: ['A single tall thin crown of blackened bone spires, cold blue witchlight in the gaps', { dark: true }],
-  bone_reaper: ['A single curved scythe blade of pale bone on a short dark haft', { pale: true }],
-  soulbinder_hammer: ['A single war hammer seen from the side, blue soul light bleeding from the runes cut into its dark head', { dark: true }],
-  bone_plate_cuirass: ['A single empty breastplate of lashed pale rib bone, standing alone on nothing', { pale: true }],
-  ironfang_skull: ['A single wolf skull worn as a helm, pale bone, iron fangs set in the jaw', { pale: true }],
-  ironfang_claws: ['A single set of four curved iron claws mounted on a leather hand strap'],
-  pack_leader_vest: ['A single sleeveless vest of grey wolf pelt and dark leather, standing alone on nothing'],
-  pack_alpha_cape: ['A single wolf pelt cloak hanging from a bone clasp, the wolf head forming the hood at the top'],
-  warlord_skull: ['A single horned war helm made from a huge bleached skull, heavy curved horns', { pale: true }],
-  warlord_bulwark: ['A single enormous tower shield seen face on and filling the frame, scarred black iron, brass rivets', { dark: true }],
-  troll_king_skull: ['A single crude helm made from a huge green tinged troll skull, jaw hanging open'],
-  troll_maul: ['A single two handed maul seen from the side, the head a raw boulder lashed to a thick tree haft'],
-  wyrmfang_blade: ['A single sword seen edge on from the side, the blade one long curved dragon fang, bronze red'],
-  emberwyrm_skull: ['A single dragon skull worn as a helm, blackened bone with hot orange light in the eye sockets', { dark: true }],
-  doomblade: ['A single sword seen edge on from the side, black blade edged in creeping orange fire', { dark: true }],
-  forgebreaker: ['A single two handed maul seen from the side, an anvil shaped glowing forge head, dark haft', { dark: true }],
-  cinderfang: ['A single dagger seen edge on from the side, ash grey blade trailing live sparks'],
-  slagbreaker: ['A single war hammer seen from the side, the head a lump of cooling slag glowing at its core', { dark: true }],
-  demonlord_skull: ['A single horned demon skull worn as a helm, black bone, long back swept horns, violet light in the sockets', { dark: true }],
-  voidrend: ['A single dagger seen edge on from the side, the blade a tear of pure black with violet light along its edge', { dark: true }],
-  voidcleaver: ['A single two handed greatsword seen edge on from the side, near black blade splitting into violet rift light', { dark: true }],
-  voidedge: ['A single sword seen edge on from the side, near black blade with a thin violet cutting edge', { dark: true }],
-  riftcrusher: ['A single war hammer seen from the side, the head a collapsing knot of violet void light caged in dark iron', { dark: true }],
-  voidheart_shroud: ['A single hooded robe hanging empty, near black cloth with a violet glow at the breast', { dark: true }],
-  voidforged_greaves: ['A single pair of armoured leg greaves standing upright side by side, near black metal with violet seams', { dark: true }],
-  voidshroud: ['A single cloak hanging from a shoulder clasp, near black cloth dissolving into violet mist at the hem', { dark: true }],
-  abyssal_aegis: ['A single shield seen face on and filling the frame, black iron ringed with violet rift light', { dark: true }],
-  nullward: ['A single shield seen face on and filling the frame, a flat disc of absolute black with a thin white rim', { dark: true }],
-  riftshadow_cowl: ['A single deep hood hanging empty, near black cloth, violet light where the face should be', { dark: true }],
-  wraithbound_cowl: ['A single deep hood hanging empty, translucent grey cloth fading to nothing at the hem', { pale: true }],
-  grave_cleaver: ['A single two handed cleaver seen from the side, an enormous rectangular pitted grave iron blade, bound haft'],
-  barrow_blade: ['A single sword seen edge on from the side, tarnished grave silver blade, burial cloth wound round the grip'],
-  barrow_dagger: ['A single dagger seen edge on from the side, tarnished grave silver blade, burial cloth wound round the grip'],
-  barrow_maul: ['A single war hammer seen from the side, tarnished grave silver head, burial cloth wound round the haft'],
-  barrow_shield: ['A single shield seen face on and filling the frame, tarnished grave silver, a faded burial sigil across it'],
-  barrow_chest: ['A single empty breastplate seen from the front, tarnished grave silver plate hung with faded burial cloth, standing alone on nothing'],
-  barrow_legs: ['A single pair of armoured leg greaves standing upright side by side, tarnished grave silver'],
-  graveshroud_vest: ['A single sleeveless vest of grey rotted burial linen over dark leather, standing alone on nothing'],
-  emberforged_aegis: ['A single empty breastplate seen from the front, blackened iron veined with hot orange forge light, standing alone on nothing', { dark: true }],
-  emberforged_blade: ['A single sword seen edge on from the side, blackened blade veined with hot orange forge light', { dark: true }],
-  emberforged_greaves: ['A single pair of armoured leg greaves standing upright side by side, blackened iron veined with hot orange forge light', { dark: true }],
-  dawnbreaker: ['A single sword seen edge on from the side, radiant pale gold blade haloed in warm white light', { pale: true }],
-  starfang: ['A single dagger seen edge on from the side, pale violet white blade scattered with star glints', { pale: true }],
-  worldsunder_maul: ['A single two handed maul seen from the side, a colossal pale gold head trailing warm light', { pale: true }],
-  sunpiercer: ['A single long thin rapier seen edge on from the side, radiant pale gold needle blade, swept guard', { pale: true }],
-  dawnreaper: ['A single two handed greatsword seen edge on from the side, one long radiant pale gold blade', { pale: true }],
-  aegis_of_dawn: ['A single shield seen face on and filling the frame, radiant pale gold, a sunburst across it', { pale: true }],
-  dawnmantle: ['A single cloak hanging from a shoulder clasp, warm white and pale gold cloth glowing softly', { pale: true }],
-  cindermantle: ['A single cloak hanging from a shoulder clasp, ash grey cloth shot with drifting orange sparks'],
-  cinderguard: ['A single shield seen face on and filling the frame, ash grey iron with live embers along the rim'],
+  bronze_dagger: ['A single dagger standing straight upright and vertical, one blade only pointing up, short tapered blade, round pommel, warm brown gold bronze', {neg:'heraldry, coat of arms, emblem, crest, insignia, crossed daggers, two daggers, X shape, diagonal'}],
+  bronze_sword: ['A single longsword, exactly one blade, only one weapon in the picture, held point up, narrow straight blade running the full height of the frame, small crossguard, the blade itself is warm brown gold bronze, not steel', {neg:'silver blade, steel blade, two weapons, crossed pair, person'}],
+  bronze_chest: ['A single breastplate, curved chest armour with two matching shoulder guards, symmetrical, hollow and empty, warm brown gold bronze', {neg:'lopsided, asymmetrical, one shoulder, person, torso'}],
+  steel_legs: ['A single pair of leg greaves side by side, two curved shin plates only, no torso, bright silver steel', {pale:true,neg:'full suit of armour, whole body, torso, chest plate, helmet, person, standing figure'}],
+  plague_fang_dagger: ['A single dagger, the blade one huge yellowed rat fang, sour green edge', {pale:true}],
+  rat_queen_crown: ['A single small crooked iron crown set with one dull red stone'],
+  chitin_maul: ['A single war hammer, one glossy chestnut chitin block on a long haft'],
+  widow_crown: ['A single black crown, thin barbed spider legs curling up from the band', {dark:true}],
+  warchief_crown: ['A single heavy iron chieftain crown hung with red cord and small bones'],
+  warcleaver: ['A single heavy cleaver, one broad chipped steel blade, bound grip'],
+  lich_crown: ['A single tall crown of blackened bone spires, cold blue light between them', {dark:true}],
+  bone_reaper: ['A single scythe, one long curved pale bone blade on a dark haft', {pale:true,neg:'person, figure, death, reaper'}],
+  soulbinder_hammer: ['A single war hammer, exactly one weapon in the picture, one blunt block at the top of a long haft, dark iron block cut with blue glowing runes', {dark:true,neg:'person, figure, standing figure, head, hood, robe, holding, two weapons, crossed pair, stand, rack, tripod, orb, sphere'}],
+  bone_plate_cuirass: ['A single curved chest breastplate made of pale ivory plates, hollow and empty', {pale:true,neg:'skull, head, face, bone pile, ribcage of a creature'}],
+  ironfang_skull: ['A single wolf skull helm, pale bone with iron fangs', {pale:true}],
+  ironfang_claws: ['A single set of four curved iron claws mounted on a narrow leather strap', {neg:'glove, gauntlet, hand, mitten, person'}],
+  pack_leader_vest: ['A single sleeveless vest of grey wolf pelt, hollow and empty'],
+  pack_alpha_cape: ['A single wolf pelt cloak, the wolf head forming the hood at the top'],
+  warlord_skull: ['A single horned war helm made from a bleached skull, heavy curved horns', {pale:true}],
+  warlord_bulwark: ['A single huge tower shield seen face on, scarred black iron, brass rivets', {dark:true}],
+  troll_king_skull: ['A single crude helm made from a green tinged troll skull'],
+  troll_maul: ['A single huge two handed axe, exactly one weapon in the picture, one broad blade at the top of a long haft, one rough grey boulder lashed on instead of a blade', {neg:'person, figure, standing figure, head, hood, robe, holding, two weapons, crossed pair, stand, rack, tripod, axe blade'}],
+  wyrmfang_blade: ['A single sword, the blade one long curved bronze red dragon fang'],
+  emberwyrm_skull: ['A single dragon skull helm, blackened bone with orange light in the sockets', {dark:true}],
+  doomblade: ['A single sword, exactly one blade, only one weapon in the picture, blade pointing up, crossguard and wrapped grip, black blade edged in orange fire', {dark:true,neg:'person, figure, standing figure, head, hood, robe, holding, two weapons, crossed pair, stand, rack, tripod, circle, disc'}],
+  forgebreaker: ['A single huge two handed axe, exactly one weapon in the picture, one broad blade at the top of a long haft, molten orange axe blade', {dark:true,neg:'person, figure, standing figure, head, hood, robe, holding, two weapons, crossed pair, stand, rack, tripod'}],
+  cinderfang: ['A single dagger, ash grey blade trailing sparks'],
+  slagbreaker: ['A single war hammer, exactly one weapon in the picture, one blunt block at the top of a long haft, glowing orange slag block', {dark:true,neg:'person, figure, standing figure, head, hood, robe, holding, two weapons, crossed pair, stand, rack, tripod'}],
+  demonlord_skull: ['A single horned demon skull helm, black bone, violet light in the sockets', {dark:true}],
+  voidrend: ['A single dagger, the blade a tear of pure black edged in violet', {dark:true}],
+  voidcleaver: ['A single huge two handed greatsword, exactly one blade, only one weapon in the picture, one long blade pointing up, black blade split by violet light', {dark:true,neg:'person, figure, standing figure, head, hood, robe, holding, two weapons, crossed pair, stand, rack, tripod'}],
+  voidedge: ['A single sword, exactly one blade, only one weapon in the picture, blade pointing up, crossguard and wrapped grip, black blade with a thin violet cutting edge', {dark:true,neg:'person, figure, standing figure, head, hood, robe, holding, two weapons, crossed pair, stand, rack, tripod, rune, glyph, symbol'}],
+  riftcrusher: ['A single war hammer, exactly one weapon in the picture, one blunt block at the top of a long haft, dark iron block caging violet light', {dark:true,neg:'person, figure, standing figure, head, hood, robe, holding, two weapons, crossed pair, stand, rack, tripod, lollipop, orb, staff, wand'}],
+  voidheart_shroud: ['A single sleeveless black robe hanging empty on nothing, a violet glow at the chest', {dark:true,neg:'person, figure, body, head, hood, standing figure'}],
+  voidforged_greaves: ['A single pair of leg greaves side by side, black metal with violet seams', {dark:true,neg:'full suit of armour, person, torso, head, standing figure'}],
+  voidshroud: ['A single hanging cloak, black cloth dissolving into violet mist at the hem', {dark:true}],
+  abyssal_aegis: ['A single curved chest breastplate, black iron ringed with violet light, hollow and empty', {dark:true,neg:'shield, buckler, person, body'}],
+  nullward: ['A single shield seen face on, black disc inside a thick bright white rim', {dark:true}],
+  riftshadow_cowl: ['A single soft hood, black cloth, violet light where the face would be', {dark:true}],
+  wraithbound_cowl: ['A single soft hood, translucent grey cloth fading out at the hem', {pale:true}],
+  grave_cleaver: ['A single huge two handed axe, exactly one weapon in the picture, one broad blade at the top of a long haft, one broad pitted grey iron cleaver blade', {neg:'person, figure, standing figure, head, hood, robe, holding, two weapons, crossed pair, stand, rack, tripod, kitchen knife, butcher'}],
+  barrow_blade: ['A single sword, tarnished grave silver blade, cloth wound round the grip'],
+  barrow_dagger: ['A single dagger, tarnished grave silver blade, cloth wound round the grip'],
+  barrow_maul: ['A single war hammer, exactly one weapon in the picture, one blunt block at the top of a long haft, tarnished grave silver block', {neg:'person, figure, standing figure, head, hood, robe, holding, two weapons, crossed pair, stand, rack, tripod'}],
+  barrow_shield: ['A single shield seen face on, tarnished grave silver, a faded sigil across it'],
+  barrow_chest: ['A single breastplate, tarnished grave silver hung with faded cloth, hollow and empty'],
+  barrow_legs: ['A single pair of armoured leg greaves side by side, tarnished grave silver'],
+  graveshroud_vest: ['A single sleeveless vest of grey rotted burial linen, hollow and empty'],
+  emberforged_aegis: ['A single breastplate, blackened iron veined with orange forge light, hollow and empty', {dark:true}],
+  emberforged_blade: ['A single sword, blackened blade veined with orange forge light', {dark:true}],
+  emberforged_greaves: ['A single pair of armoured leg greaves side by side, blackened iron veined with orange', {dark:true}],
+  dawnbreaker: ['A single sword, radiant pale gold blade haloed in warm light', {pale:true}],
+  starfang: ['A single dagger, exactly one blade, only one weapon in the picture, short blade pointing up, small crossguard, pale violet white with star glints', {pale:true,neg:'person, figure, standing figure, head, hood, robe, holding, two weapons, crossed pair, stand, rack, tripod'}],
+  worldsunder_maul: ['A single huge two handed maul, one colossal pale gold block on a long haft', {pale:true}],
+  sunpiercer: ['A single recurve bow, radiant pale gold limbs, a drawn thread of white light', {pale:true}],
+  dawnreaper: ['A single two handed scythe, one long curved pale gold blade on a haft', {pale:true}],
+  aegis_of_dawn: ['A single shield seen face on, radiant pale gold with a sunburst across it', {pale:true}],
+  dawnmantle: ['A single hanging cloak, warm white and pale gold cloth, softly glowing', {pale:true}],
+  cindermantle: ['A single hanging cloak, ash grey cloth shot with orange sparks'],
+  cinderguard: ['A single shield seen face on, ash grey iron with embers along the rim'],
 };
 
 const NAMEKEYS = Object.keys(NAMEMAP).sort((a, b) => b.length - a.length);
@@ -162,23 +197,41 @@ function matFor(item) {
   return null;
 }
 
-function shapeFor(item) {
-  if (item.s !== 'weapon') return SHAPE[item.s] || null;
+function shapeFor(item, mat) {
+  if (item.s !== 'weapon') {
+    const soft = mat && mat.kind === 'hide' && SOFT[item.s];
+    return soft || SHAPE[item.s] || null;
+  }
   return (item.two && WEAPON[item.d + '2']) || WEAPON[item.d] || null;
 }
 
 const GEAR_SUBJECTS = GEAR.map(it => {
   const u = UNIQUE[it.id];
-  if (u) return Object.assign({ id: it.id, p: u[0] }, u[1] || {});
-  const mat = matFor(it), shape = shapeFor(it);
+  if (u) {
+    /* A unique still belongs to its slot: five unique war hammers came back as
+       helmets because they set their own opts and so inherited no negative. */
+    const uo = Object.assign({}, u[1] || {});
+    if (!uo.neg && SLOT_NEG[it.s]) uo.neg = SLOT_NEG[it.s];
+    return Object.assign({ id: it.id, p: u[0] }, uo);
+  }
+  const mat = matFor(it), shape = shapeFor(it, mat);
   if (!mat) throw new Error('no material for ' + it.id + ' (' + it.n + ') — add it to NAMEMAP or UNIQUE');
   if (!shape) throw new Error('no shape for ' + it.id + ' (slot ' + it.s + ', damage ' + it.d + ')');
   const opt = {};
   if (mat.pale) opt.pale = true;
   if (mat.dark) opt.dark = true;
+  const negTable = (mat.kind === 'hide' && SOFT[it.s]) ? SOFT_NEG : SLOT_NEG;
+  if (negTable[it.s]) opt.neg = negTable[it.s];
   /* Say buckler out loud or it comes back the size of a tower shield. */
-  const small = /buckler/i.test(it.n) ? ', a small round buckler rather than a full shield' : '';
-  return Object.assign({ id: it.id, p: shape + small + ', made of ' + mat.w }, opt);
+  const small = /buckler/i.test(it.n) ? ', a small round buckler' : '';
+  return Object.assign({ id: it.id, p: shape + small + ', ' + mat.w }, opt);
 });
 
-module.exports = { GEAR: GEAR_SUBJECTS, SHAPE, WEAPON, MATERIAL };
+/* id -> material key, for verify.js. A unique gets null: its colour is its own. */
+const GEAR_MAT = {};
+for (const it of GEAR) {
+  const nm = it.n.toLowerCase().replace(/[^a-z]/g, '');
+  GEAR_MAT[it.id] = (NAMEKEYS.find(k => nm.includes(k)) || null) && NAMEMAP[NAMEKEYS.find(k => nm.includes(k))];
+}
+
+module.exports = { GEAR: GEAR_SUBJECTS, SHAPE, WEAPON, MATERIAL, GEAR_MAT };

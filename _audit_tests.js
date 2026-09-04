@@ -495,7 +495,7 @@ setTimeout(() => {
       renderNotifications();
       return {stored:stored, bytes:JSON.stringify(state.notifications).length,
               pwn:!!window.__PWN, pwn2:!!window.__PWN2, injectedEl:!!document.getElementById('PWNT'),
-              resolvesIcon:notifIconHTML('bronze_axe').indexOf('<svg')===0};})()`);
+              resolvesIcon:(function(h){return h.indexOf('<svg')===0||h.indexOf('<img')===0;})(notifIconHTML('bronze_axe'))};})()`);
     ok('logNotification stores an id, not SVG', notif.stored==='bronze_axe', JSON.stringify({stored:notif.stored,bytes:notif.bytes}));
     // The call sites passing ids is one guarantee; logNotification REFUSING markup is
     // a separate one, and mutation-testing showed nothing covered it — deleting the
@@ -507,6 +507,8 @@ setTimeout(() => {
         return {icon:icon, hasMarkup:icon.indexOf('<')>=0, len:icon.length};})()`);
     ok('logNotification refuses markup even if a call site passes it',
        notifGuard.hasMarkup===false, JSON.stringify(notifGuard));
+    // svg OR img: the art batches replace ICONS entries wholesale, and which one a
+    // given id is today is not what this guards.
     ok('ids still resolve to an icon at paint time', notif.resolvesIcon===true);
     ok('hostile notification cannot inject HTML', !notif.pwn && !notif.pwn2 && !notif.injectedEl, JSON.stringify(notif));
 
@@ -2774,6 +2776,50 @@ setTimeout(() => {
     ev("_alchTab='skilling';");
   }
 
+  section('Item art block ordering (batch 3)');
+  {
+    /* The art block assigns over ICONS in a loop. The gear icons are BUILT by
+       loops of their own further down the file, so while the art block sat where
+       it was first injected, 135 of the 666 icons were silently reverted to SVG
+       the moment those generators ran — the file parsed, the game booted, every
+       render surface was clean, and a third of the art simply was not there.
+       Whichever assignment runs last wins, so the block has to be last. */
+    const first = html.indexOf('==ITEM-ART-START==');
+    ok('the art block marker appears exactly once',
+       first > 0 && first === html.lastIndexOf('==ITEM-ART-START=='));
+    const after = [...html.matchAll(/ICONS[.[][A-Za-z_0-9'+]]* *=/g)]
+      .map(m => m.index).filter(i => i > first);
+    /* One is expected: the block's own ICONS[k]=ART_ITEM[k] loop. */
+    ok('nothing writes ICONS after the art block', after.length <= 1,
+       JSON.stringify({writesAfter: after.length}));
+
+    /* And the end-to-end statement of the same thing, through the live table. */
+    const cov = ev(`(function(){var svg=[],art=0,none=[];
+      for(var id in ITEMS){var h='';try{h=iconHTML(id)||'';}catch(e){}
+      if(h.indexOf('<img')===0) art++; else if(h.indexOf('<svg')>=0) svg.push(id); else none.push(id);}
+      return {art:art,svg:svg,none:none};})()`);
+    /* An explicit list, not a count. `cane_rod` and `master_bellows` are deliberate —
+       see KEEP_SVG in _iconart/picks.js; both options for each were a picture of the
+       wrong object, and an icon in the old style beats an icon of the wrong thing.
+       The rest are the 0.9.121.20 hunting quarry: twenty-one items shipped on
+       generated SVG because the art run had not happened yet. DELETE ids from this
+       list as _iconart covers them — an id that stops needing the exemption and stays
+       here is dead weight, and an id that appears WITHOUT being added is the thing
+       this guards: a re-injection silently reverting a batch takes it to 135. */
+    /* Every item was redrawn from ChatGPT contact sheets (see _iconart/cutall.js), which
+       cleared the whole previous exempt list: the cured leathers, the rods, the bellows
+       and wraithcloth all came back as the right object this time. What is left are the
+       two SETS that never got a sheet — nobody generated Barrow or Emberforged — so they
+       keep their hand-drawn SVG until one arrives. Shrink this list, never grow it. */
+    const SVG_OK = new Set([
+      'barrow_helm','barrow_chest','barrow_legs','barrow_gloves','barrow_boots','barrow_shield',
+      'emberforged_aegis','emberforged_greaves',
+    ]);
+    const unexpected = cov.svg.filter(id => !SVG_OK.has(id));
+    ok('only known-exempt items are still on SVG, and none is iconless',
+       unexpected.length === 0 && cov.none.length === 0,
+       JSON.stringify({art: cov.art, svgTotal: cov.svg.length, unexpected, iconless: cov.none}));
+  }
   section('In-game menu — grouping + Back (0.9.123.x)');
   {
     /* The menu was eleven identical rows in one column. Grouping it is cosmetic, but

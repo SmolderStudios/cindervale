@@ -1,0 +1,39 @@
+# Gems + replacement ores — grid 6x6 (35 real + 1 empty tail cell)
+# Cells 32-35 are REDRAWS of coal/iron_ore/silver_ore/tin_ore. Slice this sheet AFTER
+# bars-ores-logs-fire so these overwrite the versions on that sheet.
+amethyst
+azure_chip
+azure_flaw
+azure_polish
+bloodstone
+cut_amethyst
+cut_diamond
+cut_dragon
+cut_emerald
+cut_ruby
+cut_sapphire
+cut_void
+diamond
+dragon_gem
+emerald
+onyx_chip
+onyx_flaw
+onyx_polish
+pearl
+ruby
+sanguine_chip
+sanguine_flaw
+sanguine_polish
+sapphire
+topaz_chip
+topaz_flaw
+topaz_polish
+verdant_chip
+verdant_flaw
+verdant_polish
+void_crystal
+coal
+iron_ore
+silver_ore
+tin_ore
+_spare0

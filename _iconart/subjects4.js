@@ -13,6 +13,8 @@
  */
 'use strict';
 const S = (id, p, opt) => Object.assign({ id, p }, opt || {});
+const ROD_NEG = 'person, figure, human, fisherman, man, standing figure, silhouette of a person';
+const OUTFIT_NEG = 'person, figure, human, man, woman, wizard, body, head, model, mannequin, animal, creature';
 
 /* ── seeds: one pouch, palette per crop ──────────────────────────────────────
    Drawing the actual seed fails at 15px — a seed is a dot. The pouch gives every
@@ -62,26 +64,27 @@ const TRADE = {
   mi: ['mi', 'soot stained grey canvas and dark leather, a miner cut, ore dust ground into it'],
   fi: ['fi', 'oiled sea green canvas and pale rope, an angler cut, water beading on the surface'],
   fo: ['fo', 'moss green linen and soft brown leather, a herbalist cut, dried sprigs tucked into it'],
-  sm: ['sm', 'heavy blackened leather scorched brown at the edges, a blacksmith cut, spark burns across it'],
+  sm: ['sm', 'heavy blackened leather scorched brown at the edges, a blacksmith cut, spark burns across it', { dark: true }],
   co: ['co', 'crisp cream white cotton, a kitchen cut, one clean flour smudge'],
-  al: ['al', 'deep plum purple robe cloth, an alchemist cut, faint potion stains at the hem'],
-  fm: ['fm', 'charred crimson and orange robe cloth, a pyromancer cut, embers glowing in the singed edges'],
+  al: ['al', 'deep plum purple cloth, an alchemist cut, faint potion stains at the hem', { dark: true }],
+  fm: ['fm', 'charred crimson and orange cloth, a pyromancer cut, embers glowing in the singed edges'],
   ag: ['ag', 'light dove grey cloth and thin pale leather, a runner cut, cut close and light', { pale: true }],
-  jw: ['jw', 'deep teal velvet and polished brass fittings, a jeweller cut, tiny gem chips glinting on it'],
+  jw: ['jw', 'deep teal velvet and polished brass fittings, a jeweller cut, tiny gem chips glinting on it', { dark: true }],
   fa: ['fa', 'faded straw yellow linen and earth brown leather, a farmhand cut, soil worn into it'],
-  cr: ['cr', 'thick oxblood leather and dull brass rivets, a craftsman cut, tool scars across it'],
+  cr: ['cr', 'thick oxblood leather and dull brass rivets, a craftsman cut, tool scars across it', { dark: true }],
 };
 /* Two pieces are not clothing at all and have to say so, or the generator dresses
    a mannequin in a magnifying glass. */
 const OUTFIT_OVERRIDE = {
-  jw_hat: S('jw_hat', 'A single jeweller\'s loupe, a small brass magnifying eyepiece on a folding arm, standing alone'),
+  jw_hat: S('jw_hat', 'A single jeweller loupe, a small brass magnifying eyepiece on a short folding arm, lying by itself', { neg: 'animal, creature, bear, person, face' }),
   cr_hat: S('cr_hat', 'A single pair of leather and brass workshop goggles with round smoked glass lenses, standing alone'),
 };
 const OUTFITS = [];
 for (const [pre, [, words, o]] of Object.entries(TRADE))
   for (const slot of ['hat', 'chest', 'legs', 'boots']) {
     const id = pre + '_' + slot;
-    OUTFITS.push(OUTFIT_OVERRIDE[id] || S(id, OUTFIT_SHAPE[slot] + words, o));
+    const base = OUTFIT_OVERRIDE[id] || S(id, OUTFIT_SHAPE[slot] + words + ', empty and laid out by itself, nobody wearing it', o);
+    OUTFITS.push(Object.assign({}, base, { neg: OUTFIT_NEG }));
   }
 
 /* ── cut gems: grade decides the shape, gem decides the colour ────────────────
@@ -134,13 +137,13 @@ const TIER_MAT = {
   everflame: ['blackened metal wrapped in living orange flame', { dark: true }],
 };
 const TOOL_SHAPE = {
-  axe:  'A single felling axe seen from the side, broad curved bit at the top, long wooden haft running down, ',
-  pick: 'A single mining pick seen from the side, long double pointed head across the top, wooden haft running down, ',
+  axe:  'A single felling axe, one broad curved bit at the top of a long wooden haft, ',
+  pick: 'A single mining pick, one pointed head at the top of a long wooden haft, ',
 };
 const TOOLS = [];
 for (const [t, shape] of Object.entries(TOOL_SHAPE))
   for (const [mat, [words, o]] of Object.entries(TIER_MAT))
-    TOOLS.push(S(mat + '_' + t, shape + 'the head made of ' + words, o));
+    TOOLS.push(S(mat + '_' + t, shape + words, o));
 /* the axe and pick ids are <mat>_axe / <mat>_pick, except everflame which reads
    the other way round in the game's own table */
 for (const t of ['axe', 'pick']) {
@@ -150,24 +153,24 @@ for (const t of ['axe', 'pick']) {
 
 const TOOLS_REST = [
   /* fishing rods — one bent rod, tip toward the top right */
-  S('cane_rod',   'A single fishing rod seen from the side, a slender bamboo pole bending toward the top, line hanging from the tip, cork grip'),
-  S('iron_rod',   'A single fishing rod seen from the side, a dark iron pole bending toward the top, line hanging from the tip, leather grip'),
-  S('crystal_rod','A single fishing rod seen from the side, a clear pale crystal pole bending toward the top, line hanging from the tip', { pale: true }),
-  S('moonrod',    'A single fishing rod seen from the side, a silver white pole bending toward the top, glowing softly, line hanging from the tip', { pale: true }),
-  S('voidrod',    'A single fishing rod seen from the side, a near black pole bending toward the top, violet rift light along it', { dark: true }),
-  S('everflame_rod', 'A single fishing rod seen from the side, a blackened pole wrapped in orange flame, bending toward the top', { dark: true }),
+  S('cane_rod',   'A single fishing rod lying diagonally, tapering bamboo pole, small reel, line and hook', { neg: ROD_NEG }),
+  S('iron_rod',   'A single fishing rod lying diagonally across the frame, a long tapering dark iron pole with a small reel just above the grip and a thin line running from the tip down to one curved hook', { neg: ROD_NEG }),
+  S('crystal_rod','A single fishing rod lying diagonally across the frame, a long tapering clear pale crystal pole with a small reel just above the grip and a thin line running from the tip down to one curved hook', { pale: true, neg: ROD_NEG }),
+  S('moonrod',    'A single fishing rod lying diagonally across the frame, a long tapering silver white softly glowing pole with a small reel just above the grip and a thin line running from the tip down to one curved hook', { pale: true, neg: ROD_NEG }),
+  S('voidrod',    'A single fishing rod lying diagonally across the frame, a long tapering near black pole burning with bright violet rift light with a small reel just above the grip and a thin line running from the tip down to one curved hook', { dark: true, neg: ROD_NEG }),
+  S('everflame_rod', 'A single fishing rod lying diagonally across the frame, a long tapering blackened pole wrapped in living orange flame with a small reel just above the grip and a thin line running from the tip down to one curved hook', { dark: true, neg: ROD_NEG }),
   /* foraging bags — one satchel, flap toward the viewer */
   S('foraging_pouch',  'A single small leather belt pouch, flap buckled down, plain tan hide'),
   S('herbalist_kit',   'A single leather satchel with the flap open, small bundled herbs and glass phials showing inside'),
   S('druid_satchel',   'A single moss green satchel bound in living vine, small leaves growing along the strap'),
   S('void_pouch',      'A single near black satchel, the mouth opening onto violet rift light instead of an interior', { dark: true }),
-  S('eclipse_satchel', 'A single deep charcoal satchel ringed with a thin cold white corona', { dark: true }),
+  S('eclipse_satchel', 'A single leather shoulder bag with a buckled flap, charcoal ringed with cold white light', { dark: true }),
   S('everflame_satchel','A single blackened satchel wrapped in living orange flame', { dark: true }),
   /* smithing — the line genuinely changes object per tier */
-  S('iron_tongs',    'A single pair of blacksmith tongs seen from the side, long dark iron arms, jaws closed at the top'),
+  S('iron_tongs',    'A single pair of blacksmith tongs seen from the side, long dark iron arms, jaws closed at the top', { dark: true }),
   S('steel_anvil',   'A single blacksmith anvil seen from the side, heavy silver grey steel, horn pointing left'),
   S('master_forge',  'A single small stone forge seen from the front, arched mouth full of glowing orange coals', { dark: true }),
-  S('master_bellows','A single blacksmith bellows seen from the side, pleated leather body, wooden handles and a brass nozzle'),
+  S('master_bellows','A single blacksmith air bellows seen from the side, a wide flat triangular pleated leather bag, two long wooden handles at the wide end and a narrow brass air nozzle at the point', { neg: 'bell, church bell, ship bell, chime, dome' }),
   S('eclipse_forge', 'A single small stone forge seen from the front, arched mouth full of cold white eclipse light', { dark: true }),
   S('everflame_forge','A single small stone forge seen from the front, arched mouth pouring living orange flame', { dark: true }),
   /* cooking */
@@ -206,12 +209,12 @@ const TOOLS_REST = [
   S('eclipse_lens', 'A single round magnifying lens on a short handle, dark rim ringed with a cold white corona', { dark: true }),
   S('everflame_lens','A single round magnifying lens on a short handle, blackened rim wrapped in living orange flame', { dark: true }),
   /* farming — one trowel, palette per tier */
-  S('wooden_trowel',  'A single garden trowel seen from the side, broad carved wooden scoop, wooden handle'),
-  S('iron_trowel',    'A single garden trowel seen from the side, dull grey iron scoop, wooden handle'),
-  S('mithril_trowel', 'A single garden trowel seen from the side, luminous sky blue mithril scoop, pale handle'),
-  S('ancient_trowel', 'A single garden trowel seen from the side, weathered gold scoop cut with faded runes'),
-  S('eclipse_trowel', 'A single garden trowel seen from the side, near black scoop ringed with a cold white corona', { dark: true }),
-  S('everflame_trowel','A single garden trowel seen from the side, blackened scoop wrapped in living orange flame', { dark: true }),
+  S('wooden_trowel',  'A single garden trowel, broad carved wooden scoop, wooden handle', { neg: 'two trowels, crossed pair, shovel, spade' }),
+  S('iron_trowel',    'A single garden trowel, dull grey iron scoop, wooden handle', { neg: 'two trowels, crossed pair, shovel, spade' }),
+  S('mithril_trowel', 'A single garden trowel, luminous sky blue mithril scoop, pale handle', { neg: 'two trowels, crossed pair, shovel, spade' }),
+  S('ancient_trowel', 'A single garden trowel, weathered gold scoop cut with faded runes', { neg: 'two trowels, crossed pair, shovel, spade' }),
+  S('eclipse_trowel', 'A single garden trowel, near black scoop ringed with a cold white corona', { dark: true, neg: 'two trowels, crossed pair, shovel, spade' }),
+  S('everflame_trowel','A single garden trowel, blackened scoop wrapped in living orange flame', { dark: true, neg: 'two trowels, crossed pair, shovel, spade' }),
 ];
 
 /* ── monster drops and crafting materials that were never given art ── */
@@ -252,8 +255,8 @@ const SAILING = [
   S('krakenbone',      'A single curved length of pale sea bone, porous and ridged, tapering to a point', { pale: true }),
   S('tidewrought',     'A single fist of blue green sea glass and coral fused together, faint light pulsing at its centre'),
   S('cannon_barrel',   'A single short cannon barrel lying flat, dark pitted bronze, reinforcing rings along it, muzzle to the right'),
-  S('spet_sailing',    'A single storm petrel in flight seen from the side, dark wings spread, white rump'),
-  S('cape_sailing',    'A single heavy oilskin sea cloak hanging from a shoulder clasp, dark blue green, water beading on it'),
+  S('spet_sailing',    'A single storm petrel in flight seen from the side, dark wings spread, white rump', { dark: true }),
+  S('cape_sailing',    'A single heavy oilskin sea cloak hanging from a shoulder clasp, dark blue green, water beading on it', { dark: true }),
   S('barnacle_iron',   'A single rough lump of dark iron crusted over with white barnacles'),
   S('tide_glass',      'A single smooth tumbled piece of pale sea green glass, edges worn round and frosted', { pale: true }),
   S('kelp_frond',      'A single long ribbon of dark green kelp, one wide frond curling back on itself'),
@@ -264,7 +267,7 @@ const SAILING = [
   S('drowned_ledger',  'A single waterlogged ledger lying closed, swollen grey pages, ink running down the edges'),
   S('mistglass',       'A single smooth pale grey glass sphere with slow white mist turning inside it', { pale: true }),
   S('fogweed',         'A single sprig of pale grey green weed, soft blurred leaves trailing thin mist', { pale: true }),
-  S('spire_stone',     'A single tall narrow shard of dark basalt standing on end, sharp fluted sides'),
+  S('spire_stone',     'A single tall narrow shard of dark basalt standing on end, sharp fluted sides', { dark: true }),
   S('siren_scale',     'A single large iridescent scale, shifting green blue violet, one pointed edge'),
   S('drowned_coin',    'A single old gold coin seen face on, worn blank in the centre, green verdigris and salt around the rim'),
   S('voidwood',        'A single short cut billet of near black driftwood, violet rift light in the grain', { dark: true }),
@@ -272,9 +275,11 @@ const SAILING = [
   S('starfall_cinder', 'A single rough lump of meteoric cinder, charred black crust cracked open on white star light', { dark: true }),
 ];
 
+/* LEATHERS is defined above but deliberately NOT exported — see the note in
+   FAMILIES3B. It stays as documentation of what batch 2 already covers. */
 const FAMILIES3B = {
   seeds: SEEDS, produce: PRODUCE, outfits: OUTFITS, gemcuts: GEMCUTS,
-  leathers: LEATHERS, tools: TOOLS.concat(TOOLS_REST), drops3: DROPS, sailing: SAILING,
+  tools: TOOLS.concat(TOOLS_REST), drops3: DROPS, sailing: SAILING,
 };
 
 module.exports = { FAMILIES3B, ALL3B: Object.values(FAMILIES3B).flat() };

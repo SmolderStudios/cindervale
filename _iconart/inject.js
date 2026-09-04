@@ -27,7 +27,10 @@ const OPEN = '/* ==ITEM-ART-START== */', CLOSE = '/* ==ITEM-ART-END== */';
 /* Land it right after the monster pack, which is already positioned after ICONS
    exists. Anchoring to the monster pack's own end marker means this cannot drift
    above the ICONS definition however the file moves around it. */
-const ANCHOR = '/* ==ART-PACK-END== */';
+/* NOT ==ART-PACK-END==: that sits above the gear icon generators, which build
+   ICONS[id] in loops and would overwrite 135 of the icons injected here. The
+   block has to come after every ICONS writer. */
+const ANCHOR = '/* ==ICONS-DONE== */';
 const CSS_MARK = '.ev-icon.art-item{';
 
 let s = fs.readFileSync(IN, 'utf8');

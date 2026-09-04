@@ -1,0 +1,24 @@
+<style>body{background:#1d1b21;margin:0;padding:16px;font:13px sans-serif;color:#ccc}
+canvas{image-rendering:pixelated;background:#2a2830;display:block}
+.r{display:flex;gap:26px;align-items:flex-start}
+</style>
+<div class="r">
+<div><div>full painted</div><img id="src" src="cut/moonstone_eye__painted.png" style="width:400px;height:400px"></div>
+<div><div>16px</div><canvas id="c16" width="160" height="160"></canvas>
+<div style="margin-top:14px">20px</div><canvas id="c20" width="200" height="200"></canvas>
+<div style="margin-top:14px">31px</div><canvas id="c31" width="248" height="248"></canvas></div>
+<div><div>emblem</div><img src="cut/moonstone_eye__emblem.png" style="width:220px;height:220px"></div>
+</div>
+<script>
+const img=document.getElementById('src');
+function go(){
+ [[16,'c16',10],[20,'c20',10],[31,'c31',8]].forEach(([s,id,m])=>{
+  const t=document.createElement('canvas');t.width=s;t.height=s;
+  const tx=t.getContext('2d');tx.fillStyle='#2a2830';tx.fillRect(0,0,s,s);
+  tx.drawImage(img,0,0,s,s);
+  const c=document.getElementById(id),x=c.getContext('2d');
+  x.imageSmoothingEnabled=false;x.drawImage(t,0,0,s*m,s*m);
+ });
+}
+if(img.complete)go();else img.onload=go;
+</script>

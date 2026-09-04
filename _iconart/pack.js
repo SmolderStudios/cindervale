@@ -47,8 +47,14 @@ const ENC = `async (uri, SIZE, Q) => {
 
 (async () => {
   const files = fs.readdirSync(CUT).filter(f => f.endsWith('.png'));
-  const ids = [...new Set(files.map(f => f.replace(/__(painted|emblem)\.png$/, '')))].sort();
   const picks = PICKS && fs.existsSync(PICKS) ? JSON.parse(fs.readFileSync(PICKS, 'utf8')) : {};
+  /* With --picks the file is the WHOLE decision, not just the style: an id it
+     leaves out is one picks.js deliberately kept on its hand-drawn SVG, and the
+     art block only overrides ids it names. Packing every cut on disk regardless
+     silently overrode those exclusions. */
+  const all = [...new Set(files.map(f => f.replace(/__(painted|emblem)\.png$/, '')))].sort();
+  const ids = PICKS ? all.filter(id => picks[id]) : all;
+  if (PICKS) console.log('  ' + (all.length - ids.length) + ' ids excluded by picks.json (they keep their SVG)');
 
   const b = await puppeteer.launch({ executablePath: CHROME, headless: true,
     args: ['--allow-file-access-from-files'] });

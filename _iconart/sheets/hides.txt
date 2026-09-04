@@ -1,0 +1,28 @@
+# Reading order for sheets/hides.png — 5 across, 4 down.
+# slice.js does not read the captions; THIS ORDER is the contract.
+ratskin
+wolf_pelt
+ogre_hide
+troll_hide
+drake_hide
+
+demonhide
+ironfang_pelt
+boar_hide
+timber_pelt
+stag_hide
+
+lynx_pelt
+bear_pelt
+leopard_pelt
+elk_hide
+mammoth_hide
+
+jackal_pelt
+cinder_hide
+stalker_pelt
+rhino_hide
+# 20th cell is the unlabelled plated one bottom-right — an extra rhino take.
+# Sliced so the grid lines up, then deleted; rename it over rhino_hide if you
+# prefer that version.
+_spare
