@@ -57,11 +57,12 @@ const PLAN = [
 
   /* ---- unique sets --------------------------------------------------------- */
   { name: 'gravesteel',  sheet: 'set_gravesteel.png',  ids: 'unique-set-gravesteel.txt',  rowcols: [3,3] },
-  /* Not generated yet — the two sets nobody made a sheet for. Both keep their
-     hand-drawn SVG until set_barrow.png / set_emberforged.png land here, and both
-     are pinned in SVG_OK in _audit_tests.js until then. Prompts are in PROMPTS.md. */
+  /* The last two sets to be drawn — prompts are in PROMPTS.md. */
   { name: 'barrow',      sheet: 'set_barrow.png',      ids: 'unique-set-barrow.txt',      rowcols: [3,3] },
-  { name: 'emberforged', sheet: 'set_emberforged.png', ids: 'unique-set-emberforged.txt', rowcols: [2] },
+  /* Drawn as a ruled table, so crop inside the frame — the corner pixels sit ON the
+     black rule and the backdrop detector would read the sheet as a dark one. */
+  { name: 'emberforged', sheet: 'set_emberforged.png', ids: 'unique-set-emberforged.txt',
+    grid: '2x1', inset: 8, crop: '4,4,1770,882' },
   { name: 'voidsteel',   sheet: 'set_voidsteel.png',   ids: 'unique-set-voidsteel.txt',   rowcols: [4,3] },
   { name: 'moltensteel', sheet: 'set_moltensteel.png', ids: 'unique-set-moltensteel.txt', rowcols: [4,3] },
   { name: 'dawnward',    sheet: 'set_dawnward.png',    ids: 'unique-set-dawnward.txt',    rowcols: [4] },

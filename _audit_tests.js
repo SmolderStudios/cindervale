@@ -2806,15 +2806,11 @@ setTimeout(() => {
        list as _iconart covers them — an id that stops needing the exemption and stays
        here is dead weight, and an id that appears WITHOUT being added is the thing
        this guards: a re-injection silently reverting a batch takes it to 135. */
-    /* Every item was redrawn from ChatGPT contact sheets (see _iconart/cutall.js), which
-       cleared the whole previous exempt list: the cured leathers, the rods, the bellows
-       and wraithcloth all came back as the right object this time. What is left are the
-       two SETS that never got a sheet — nobody generated Barrow or Emberforged — so they
-       keep their hand-drawn SVG until one arrives. Shrink this list, never grow it. */
-    const SVG_OK = new Set([
-      'barrow_helm','barrow_chest','barrow_legs','barrow_gloves','barrow_boots','barrow_shield',
-      'emberforged_aegis','emberforged_greaves',
-    ]);
+    /* EVERY item is painted art now — Barrow and Emberforged were the last two sets
+       without a sheet and both landed in 0.9.121.22, so this list is empty and the
+       assertion below is simply "nothing is on SVG, and nothing is iconless".
+       An id only belongs here if someone looked at its new art and rejected it; if
+       that happens, add it here AND to KEEP_SVG in _iconart/picks.js. */
     const unexpected = cov.svg.filter(id => !SVG_OK.has(id));
     ok('only known-exempt items are still on SVG, and none is iconless',
        unexpected.length === 0 && cov.none.length === 0,
