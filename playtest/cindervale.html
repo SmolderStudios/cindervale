@@ -7141,7 +7141,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.121.23">v0.9.121</div>
+  <div class="mm-ver" data-build="0.9.121.24">v0.9.121</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -22245,7 +22245,11 @@ const GUILDS=[
    perkTxt:['You can take Gilded Facet quests','+3% jeweler speed','+4% Jeweler XP',
             '+6% jeweler speed','+4% chance of a second piece','+8% chance of a second piece']},
 
-  {id:'night', name:'The Nightmarket', sub:'Thieves', skills:['agility'], req:{agility:15},
+  /* fence:true — this guild deals in whatever you bring it rather than in what its
+     own skill makes. Agility produces nothing you can hold, so laps were the only
+     shape it could roll: 15 possible quest lines against the Delvers' 336, and the
+     same board back every fifth day. See gdFencePool. */
+  {id:'night', name:'The Nightmarket', sub:'Thieves', skills:['agility'], fence:true, req:{agility:15},
    titles:['Runner','Lookout','Fence','Broker','Shadowbroker','Master of the Nightmarket'],
    perks:[null,{sell:0.04},{speed:0.04},{sell:0.08},{xp:0.06},{sell:0.14}],
    perkTxt:['You can take Nightmarket quests','+4% gold from every sale','+4% agility speed',
@@ -22498,24 +22502,85 @@ function gdAndList(parts){
    minutes budget is SPLIT between the items — a two-item order is one quest's work,
    not two. Drawn from the upper part of what the player has unlocked so it does not
    send a level 90 miner back to copper. */
-function gdRollSupply(skill,size,outActs){
+/* A pool entry is {act, skill, id}: the act to size the order off, the SKILL that
+   act belongs to (actMs needs its own skill, and a fence draws from all of them),
+   and the item it makes. One entry per distinct item, in level order. */
+function gdPoolFor(skill){
+  const out=[];
+  gdOutActs(skill).slice().sort((a,b)=>(a.lvl||1)-(b.lvl||1)).forEach(function(a){
+    const id=gdActOut(a);
+    if(id&&!out.some(p=>p.id===id)) out.push({act:a, skill:skill, id:id});
+  });
+  return out;
+}
+/* The fence's pool: the most valuable thing every OTHER skill makes. A thieves'
+   guild asking you to run laps and nothing else was never the whole of what a fence
+   does, and it was the only shape agility could produce. Sorted by sell value and
+   cut to the top third, so it asks for gold bars and cut gems rather than copper
+   ore, and it grows as the player unlocks more of the game. */
+function gdFencePool(){
+  const all=[];
+  for(const sk in SKILLS){
+    if(sk==='farming') continue;
+    gdOutActs(sk).forEach(function(a){
+      const id=gdActOut(a);
+      if(!id||!ITEMS[id]||!(ITEMS[id].sell>0)) return;
+      if(all.some(p=>p.id===id)) return;
+      all.push({act:a, skill:sk, id:id, sell:ITEMS[id].sell});
+    });
+  }
+  all.sort((x,y)=>x.sell-y.sell);
+  return all.slice(-Math.max(6,Math.ceil(all.length*0.34)));
+}
+
+function gdRollSupply(pool,size,verb,questSkill){
   const S=GD_SIZE[size];
-  const pool=[];
-  outActs.slice().sort((a,b)=>(a.lvl||1)-(b.lvl||1))
-    .forEach(a=>{ const id=gdActOut(a); if(id&&!pool.some(p=>p.id===id)) pool.push({id:id,act:a}); });
-  if(pool.length<2) return null;
+  if(!pool||pool.length<2) return null;
   const want=Math.min(pool.length, size==='long'?3:2);
   const bag=pool.slice(-Math.max(want+2,Math.ceil(pool.length*0.6)));
   const pick=[];
   while(pick.length<want && bag.length) pick.push(bag.splice(Math.floor(Math.random()*bag.length),1)[0]);
   if(pick.length<2) return null;
   const items={}, parts=[]; let total=0;
-  pick.forEach(p=>{
-    const n=gdOutCount(skill,p.act,S.mins/pick.length,p.id);
+  pick.forEach(function(p){
+    const n=gdOutCount(p.skill,p.act,S.mins/pick.length,p.id);
     items[p.id]=n; total+=n; parts.push(n+' '+ITEMS[p.id].name);
   });
-  return {kind:'supply',size,skill,items:items,
-    name:'Supply '+gdAndList(parts),need:total,have:0,done:false};
+  return {kind:'supply',size,skill:questSkill,items:items,
+    name:(verb||'Supply')+' '+gdAndList(parts),need:total,have:0,done:false};
+}
+function gdRollDeliver(pool,size,verb,questSkill){
+  const S=GD_SIZE[size];
+  if(!pool||!pool.length) return null;
+  const bag=pool.slice(-Math.max(3,Math.ceil(pool.length*0.6)));
+  const p=bag[Math.floor(Math.random()*bag.length)];
+  const n=gdOutCount(p.skill,p.act,S.mins,p.id);
+  return {kind:'deliver',size,skill:questSkill,target:p.id,
+    name:(verb||'Deliver')+' '+n+' '+ITEMS[p.id].name,need:n,have:0,done:false};
+}
+/* A coin order. Sized off the player's own best gold rate in the guild's skill, so
+   it stays a real ask at 40 and at 99, and rounded to a number worth printing.
+   `need` is in SILVER, the unit state.coins is kept in; the printed name is gold. */
+function gdRollCoin(g,size){
+  const S=GD_SIZE[size];
+  /* Sized off the best gold rate in the GAME, not in the guild's own skill. A fence
+     asks for what you can actually earn; agility pays coins directly but nowhere
+     near what selling a jeweller’s output does, and pricing the order off laps
+     produced a Long quest worth 500 gold beside one asking for 22 Voidsteel Chests. */
+  let gph=0;
+  for(const sk in SKILLS){
+    gdBestActs(sk).forEach(function(a){
+      let r=null; try{ r=ratesFor(a,sk); }catch(e){ return; }
+      if(r&&(r.gph||0)>gph) gph=r.gph;
+    });
+  }
+  if(!(gph>0)) return null;
+  const rawGold=(gph*S.mins/60)/SILVER_PER_GOLD;
+  const step=rawGold>=20000?5000:rawGold>=4000?1000:rawGold>=800?250:50;
+  const gold=Math.max(step,Math.round(rawGold/step)*step);
+  return {kind:'coin',size,skill:g.skills[0]||null,
+    name:'Bring '+gold.toLocaleString()+' gold',
+    need:gold*SILVER_PER_GOLD,have:0,done:false};
 }
 
 /* Farming's own shapes. The tend/harvest split matters: the progress hook lives in
@@ -22546,7 +22611,7 @@ function gdRollFarm(size){
       });
       if(!dup && parts.length>=2){
         return {kind:'supply',size,skill:'farming',items:items,
-          name:'Supply '+gdAndList(parts),need:total,have:0,done:false};
+          name:'Supply '+gdAndList(parts),need:total,have:0,done:false};   // farming sizes by mul, not actMs
       }
     }
   }
@@ -22576,21 +22641,20 @@ function gdRollOne(g,size){
   if(skill==='farming') return gdRollFarm(size);
   const acts=gdBestActs(skill);
   if(!acts.length) return null;
-  const outActs=gdOutActs(skill);
 
-  /* Three shapes, and which are on offer depends on what the skill can produce —
-     a lap makes nothing, so The Nightmarket only ever asks you to run. */
   const roll=Math.random();
-  if(outActs.length>=2 && roll<0.30){
-    const q=gdRollSupply(skill,size,outActs);
-    if(q) return q;
-  }
-  if(outActs.length && roll<0.62){
-    const act=gdPickAct(outActs);
-    const outId=gdActOut(act);
-    const n=gdOutCount(skill,act,S.mins,outId);
-    return {kind:'deliver',size,skill,target:outId,
-      name:'Deliver '+n+' '+ITEMS[outId].name,need:n,have:0,done:false};
+  if(g.fence){
+    /* A fence takes coin and takes goods, and the goods come from anywhere. Laps
+       stay on the board — they are still what the guild trains — but they are no
+       longer the only thing it can ask for. */
+    const pool=gdFencePool();
+    if(roll<0.22){ const q=gdRollCoin(g,size); if(q) return q; }
+    if(roll<0.48){ const q=gdRollSupply(pool,size,'Fence',skill); if(q) return q; }
+    if(roll<0.72){ const q=gdRollDeliver(pool,size,'Fence',skill); if(q) return q; }
+  } else {
+    const pool=gdPoolFor(skill);
+    if(roll<0.30){ const q=gdRollSupply(pool,size,'Supply',skill); if(q) return q; }
+    if(roll<0.62){ const q=gdRollDeliver(pool,size,'Deliver',skill); if(q) return q; }
   }
   const act=gdPickAct(acts);
   const n=gdActCount(skill,act,S.mins);
@@ -22682,6 +22746,9 @@ function gdRefreshDue(){
 /* Deliver quests read the satchel live, so the number can go DOWN if you spend the
    items elsewhere. Nothing is taken until Hand in is pressed. */
 function gdHeld(q){
+  /* A coin order reads the purse, in silver — the unit state.coins is kept in and
+     the unit q.need was written in. Only the printed name is gold. */
+  if(q.kind==='coin') return (state&&state.coins)||0;
   if(q.kind==='deliver') return (state.items&&state.items[q.target])||0;
   /* A supply order counts each line only up to what it asked for, so 500 spare coal
      cannot fill the bar while the iron half sits at zero. */
@@ -22752,6 +22819,9 @@ function gdClaim(id,idx){
     if(have<q.need){ toast('You are not holding enough.'); return; }
     state.items[q.target]=have-q.need;
     if(state.items[q.target]<=0) delete state.items[q.target];
+  } else if(q.kind==='coin'){
+    if(((state&&state.coins)||0)<q.need){ toast('You are not carrying enough.'); return; }
+    state.coins-=q.need;
   } else if(q.kind==='supply'){
     /* Every line is checked before ANY line is taken — a half-paid order that
        swallowed the iron and then refused for want of coal would be theft. */
@@ -22873,17 +22943,51 @@ function gdHourXp(skill){
   for(const a of acts){ const rr=ratesFor(a,skill); if(rr.xph>best) best=rr.xph; }
   return Math.round(best*GD_SHOP_MINS/60);
 }
+/* ONE token currency across ten shops, so the same 120 tokens must be worth roughly
+   the same wherever you spend them. Paid at each guild's raw rate they were not:
+   crafting's xp/hr is about five times mining's, so the Emberforge's row paid 182k
+   against the Delvers' 35k. The combat guilds were worse in the other direction —
+   priced off monster XP, which scales ~65x between level 40 and 99 while skilling
+   xp/hr scales ~2.4x, their row was 1,500 at 40 and 97,500 at 99.
+
+   Both are clamped into a band around the median of what the twelve skills would
+   pay this player. The guild you spend at is still a choice — which SKILL the XP
+   lands in — but it is no longer a 5x value difference, and the combat row is
+   never a joke or a jackpot.
+
+   Quest XP is deliberately NOT clamped: a quest asks for twenty minutes of that
+   skill's work and pays twenty minutes of its XP, which is proportional and right.
+   Flattening it would make the Emberforge's own quests worse than just crafting. */
+const GD_SHOP_BAND=[0.7,1.5];
+function gdShopMedian(){
+  const vals=[], seen={};
+  GUILDS.forEach(function(g){
+    g.skills.forEach(function(sk){
+      if(seen[sk]) return; seen[sk]=1;
+      const x=gdHourXp(sk); if(x>0) vals.push(x);
+    });
+  });
+  if(!vals.length) return 0;
+  vals.sort(function(a,b){ return a-b; });
+  return vals[Math.floor(vals.length/2)];
+}
+function gdShopBand(v){
+  const m=gdShopMedian();
+  if(!(m>0)||!(v>0)) return v;
+  return Math.round(Math.max(m*GD_SHOP_BAND[0], Math.min(m*GD_SHOP_BAND[1], v)));
+}
 /* Which skill the XP row pays into and how much — one resolver, so the description
    on the card and the XP the button actually grants can never disagree. */
 function gdShopXp(g){
   if(g.combat){
     let best=null;
     gdKillableMonsters().forEach(function(m){ if(!best||(m.xp||0)>(best.xp||0)) best=m; });
-    return {skill:null, mon:best, amount: best?Math.round((best.xp||0)*GD_SHOP_KILLS):0};
+    return {skill:null, mon:best,
+      amount: best?gdShopBand(Math.round((best.xp||0)*GD_SHOP_KILLS)):0};
   }
   let skill=null, amount=0;
   g.skills.forEach(function(sk){ const x=gdHourXp(sk); if(x>amount){ amount=x; skill=sk; } });
-  return {skill:skill, amount:amount};
+  return {skill:skill, amount:gdShopBand(amount)};
 }
 function gdShopFor(id){
   const n=gdTitleNum(id), g=GD_BY[id];
@@ -22895,8 +22999,8 @@ function gdShopFor(id){
     if(s.id==='xp'){
       const much=xp.amount?' \u2014 about '+fmtK(xp.amount):'';
       desc = g.combat
-        ? GD_SHOP_KILLS+' kills at the toughest thing you have fought'+much
-          +' combat XP, split into your attack style and Hitpoints the same way a kill does.'
+        ? 'About '+GD_SHOP_MINS+' minutes of combat XP'+much
+          +', split into your attack style and Hitpoints the same way a kill does.'
         : GD_SHOP_MINS+' minutes of '+(xp.skill?SKILLS[xp.skill].name:'this guild&rsquo;s')
           +' XP at your best rate'+much+', added straight away.';
     } else if(s.id==='coin'){
@@ -23068,14 +23172,17 @@ function _gdGuildPage(id){
     const pctq=Math.min(100,Math.round(held/Math.max(1,q.need)*100));
     const S=GD_SIZE[q.size];
     const xp=gdQuestXp(g,q);
-    /* Deliver and Supply both take the goods out of the satchel on hand-in; Do and
-       Kill count something you already did. One flag rather than four branches. */
-    const takes=(q.kind==='deliver'||q.kind==='supply');
+    /* Deliver, Supply and Coin all take something off you on hand-in; Do and Kill
+       count something you already did. One flag rather than five branches. A coin
+       order counts in silver, so it needs the gold formatter rather than fmtK. */
+    const isCoin=(q.kind==='coin');
+    const takes=(q.kind==='deliver'||q.kind==='supply'||isCoin);
+    const amt=isCoin?function(v){ return fmtCoins(v,false,false); }:fmtK;
     const row=_gdEl('gd-q'+(q.done?' done':'')+(ready&&!q.done?' ready':''));
     let btn,cls;
     if(q.done){ btn='Claimed'; cls=' off'; }
     else if(takes&&ready){ btn='Hand in'; cls=' pri'; }
-    else if(takes){ btn='Need '+fmtK(q.need-held)+' more'; cls=' off'; }
+    else if(takes){ btn='Need '+amt(q.need-held)+' more'; cls=' off'; }
     else if(ready){ btn='Claim'; cls=' pri'; }
     else { btn='Skip'; cls=r.skipped>=1?' off':''; }
     /* A supply order's single progress bar cannot say WHICH half you are short of,
@@ -23089,9 +23196,10 @@ function _gdGuildPage(id){
       : '';
     row.innerHTML=
       '<div class="gd-qt"><b>'+q.name+'</b><i>'+S.label
-      +(takes?' · taken from your satchel when you hand in':'')+'</i>'+chips+'</div>'
+      +(isCoin?' · taken from your purse when you hand in'
+        :takes?' · taken from your satchel when you hand in':'')+'</i>'+chips+'</div>'
       +'<div class="gd-qp"><div class="l"><span>'
-      +(takes?'you hold <b>'+fmtK(held)+'</b> of '+fmtK(q.need):'<b>'+fmtK(held)+'</b> of '+fmtK(q.need))
+      +(takes?'you hold <b>'+amt(held)+'</b> of '+amt(q.need):'<b>'+amt(held)+'</b> of '+amt(q.need))
       +'</span><span>'+pctq+'%</span></div>'
       +'<div class="gd-bar"><i style="width:'+pctq+'%"></i></div></div>'
       +'<div class="gd-qr"><span class="rw rep">'+S.rep+' rep</span>'
