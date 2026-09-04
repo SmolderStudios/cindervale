@@ -57,6 +57,11 @@ const PLAN = [
 
   /* ---- unique sets --------------------------------------------------------- */
   { name: 'gravesteel',  sheet: 'set_gravesteel.png',  ids: 'unique-set-gravesteel.txt',  rowcols: [3,3] },
+  /* Not generated yet — the two sets nobody made a sheet for. Both keep their
+     hand-drawn SVG until set_barrow.png / set_emberforged.png land here, and both
+     are pinned in SVG_OK in _audit_tests.js until then. Prompts are in PROMPTS.md. */
+  { name: 'barrow',      sheet: 'set_barrow.png',      ids: 'unique-set-barrow.txt',      rowcols: [3,3] },
+  { name: 'emberforged', sheet: 'set_emberforged.png', ids: 'unique-set-emberforged.txt', rowcols: [2] },
   { name: 'voidsteel',   sheet: 'set_voidsteel.png',   ids: 'unique-set-voidsteel.txt',   rowcols: [4,3] },
   { name: 'moltensteel', sheet: 'set_moltensteel.png', ids: 'unique-set-moltensteel.txt', rowcols: [4,3] },
   { name: 'dawnward',    sheet: 'set_dawnward.png',    ids: 'unique-set-dawnward.txt',    rowcols: [4] },
@@ -156,6 +161,13 @@ function slice(sheet, idsFile, opts) {
 let total = 0;
 for (const p of PLAN) {
   if (only.length && !only.includes(p.name)) continue;
+  /* A plan entry can name a sheet that has not been generated yet — barrow and
+     emberforged are in the list so the geometry is decided in advance, not so a
+     full re-cut dies on a missing file. Say so and carry on. */
+  if (!LIST && !fs.existsSync(path.join(__dirname, S, p.sheet))) {
+    console.log(p.name + '  (' + p.sheet + ')  -- no sheet yet, skipped');
+    continue;
+  }
   let n = 0;
   console.log(p.name + '  (' + p.sheet + ')');
   if (p.rows) {

@@ -77,7 +77,7 @@ named after.
 | 25 | Unique set — barrow | 6 | 3x2 |
 | 26 | Unique set — dawnward | 4 | 4x1 |
 | 27 | Unique set — sunweave | 4 | 4x1 |
-| 28 | Unique set — emberforged | 2 | 4x1 |
+| 28 | Unique set — emberforged | 2 | 2x1 |
 | 29 | Leather ladder — helm (10 hides) | 10 | 5x2 |
 | 30 | Leather ladder — chest (10 hides) | 10 | 5x2 |
 | 31 | Leather ladder — legs (10 hides) | 10 | 5x2 |
@@ -1768,11 +1768,11 @@ sunweave_legs
 
 ### Sheet 28 — Unique set — emberforged
 
-`2 items · grid 4x1`
+`2 items · grid 2x1`
 
 ````
 SHEET: Unique set — emberforged
-Grid 4x1, labelled, flat white background, house style as given.
+Grid 2x1, labelled, flat white background, house style as given.
 
 FORGE-BORN. Blackened hammered iron with a rough scale-like surface texture, heavy square proportions, orange forge light glowing in the deep seams and under the plate edges.
 
