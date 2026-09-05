@@ -7236,6 +7236,30 @@ body:not(.is-demo) .demo-only{display:none !important}
 
 /* Item art sits where an SVG used to: contained, and centred on the text baseline. */
 .ev-icon.art-item{object-fit:contain;image-rendering:auto;vertical-align:middle}
+/* A prized catch wears its own fish, gilded. Warmed and lifted rather than tinted
+   flat yellow, so a Void Eel still reads as a Void Eel; the ring and the glint are
+   what say "this one is special" at 20px, where a colour shift alone would not. */
+.gilded{position:relative;display:inline-flex;align-items:center;justify-content:center;
+  line-height:0;width:1em;height:1em;vertical-align:middle}
+.gilded .ev-icon{width:100%;height:100%;
+  filter:saturate(1.35) brightness(1.14) contrast(1.06)
+         drop-shadow(0 0 1.5px rgba(255,206,110,.85)) drop-shadow(0 0 4px rgba(224,170,60,.4))}
+/* The halo is tuned for 20px, which is where these are actually read. Its opacity
+   is fixed while its size is a percentage, so at 64px in the compendium the same
+   value blooms into a solid disc behind the fish — hence the low alpha and the
+   early falloff. */
+.gilded::before{content:'';position:absolute;inset:-6%;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle at 50% 45%,rgba(255,214,120,.20),rgba(255,190,70,.06) 48%,transparent 66%)}
+.gilded::after{content:'';position:absolute;top:-4%;right:-4%;width:38%;height:38%;
+  pointer-events:none;
+  background:
+    linear-gradient(90deg,transparent 44%,#fff6d0 48%,#fff6d0 52%,transparent 56%),
+    linear-gradient(0deg,transparent 44%,#fff6d0 48%,#fff6d0 52%,transparent 56%);
+  filter:drop-shadow(0 0 2px rgba(255,224,150,.95))}
+@media(prefers-reduced-motion:no-preference){
+  .gilded::after{animation:gild-glint 3.4s ease-in-out infinite}
+}
+@keyframes gild-glint{0%,72%,100%{opacity:.55;transform:scale(.82)}84%{opacity:1;transform:scale(1.1)}}
 
 .ev-icon.art-perk{object-fit:contain;image-rendering:auto;vertical-align:middle}
 </style>
@@ -7278,7 +7302,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.122.23">v0.9.122</div>
+  <div class="mm-ver" data-build="0.9.122.24">v0.9.122</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -8559,6 +8583,34 @@ const ITEMS={
   raw_swordfish: {name:'Raw Swordfish',    icon:'🐠',sell:495},
   raw_shark:     {name:'Raw Shark',        icon:'🦈',sell:792},
   raw_voideel:   {name:'Raw Void Eel',     icon:'🐍',sell:1265},
+
+  /* ── PRIZED CATCHES (0.9.122.24) ───────────────────────────────────────────
+     Fishing was the only gathering skill with no variance in what came up: eight
+     acts, one deterministic fish each, for ninety-nine levels. A prized catch is
+     not a new species — it is the SAME fish, a rare exceptional one, so it needs
+     no new supply chain and no new act. It rolls off the existing DROPS table for
+     the cast you were already making, which means offline catch-up and every drop
+     multiplier already handle it.
+
+     Rarer than a pearl on purpose (0.30%-0.90% against the pearl's 0.27%-1.24%):
+     the pearl is a material you accumulate, this is a moment. */
+  prized_raw_minnow:      {name:'Prized Raw Minnow',      sell:66, rare:true, prizedOf:'raw_minnow'},
+  prized_raw_sardine:     {name:'Prized Raw Sardine',     sell:165, rare:true, prizedOf:'raw_sardine'},
+  prized_raw_trout:       {name:'Prized Raw Trout',       sell:330, rare:true, prizedOf:'raw_trout'},
+  prized_raw_tuna:        {name:'Prized Raw Tuna',        sell:561, rare:true, prizedOf:'raw_tuna'},
+  prized_raw_salmon:      {name:'Prized Raw Salmon',      sell:924, rare:true, prizedOf:'raw_salmon'},
+  prized_raw_swordfish:   {name:'Prized Raw Swordfish',   sell:1485, rare:true, prizedOf:'raw_swordfish'},
+  prized_raw_shark:       {name:'Prized Raw Shark',       sell:2376, rare:true, prizedOf:'raw_shark'},
+  prized_raw_voideel:     {name:'Prized Raw Void Eel',    sell:3795, rare:true, prizedOf:'raw_voideel'},
+
+  prized_minnow:          {name:'Prized Minnow',          sell:77, rare:true, prizedOf:'cooked_minnow', potion:{heal:40}, desc:'An exceptional catch, cooked with care. Restores 40 HP \u2014 15 more than the ordinary dish.'},
+  prized_sardine:         {name:'Prized Sardine',         sell:192, rare:true, prizedOf:'cooked_sardine', potion:{heal:96}, desc:'An exceptional catch, cooked with care. Restores 96 HP \u2014 36 more than the ordinary dish.'},
+  prized_trout:           {name:'Prized Trout',           sell:385, rare:true, prizedOf:'cooked_trout', potion:{heal:176}, desc:'An exceptional catch, cooked with care. Restores 176 HP \u2014 66 more than the ordinary dish.'},
+  prized_tuna:            {name:'Prized Tuna',            sell:654, rare:true, prizedOf:'cooked_tuna', potion:{heal:288}, desc:'An exceptional catch, cooked with care. Restores 288 HP \u2014 108 more than the ordinary dish.'},
+  prized_salmon:          {name:'Prized Salmon',          sell:1078, rare:true, prizedOf:'cooked_salmon', potion:{heal:432}, desc:'An exceptional catch, cooked with care. Restores 432 HP \u2014 162 more than the ordinary dish.'},
+  prized_swordfish:       {name:'Prized Swordfish',       sell:1732, rare:true, prizedOf:'cooked_swordfish', potion:{heal:608}, desc:'An exceptional catch, cooked with care. Restores 608 HP \u2014 228 more than the ordinary dish.'},
+  prized_shark:           {name:'Prized Shark',           sell:2772, rare:true, prizedOf:'cooked_shark', potion:{heal:832}, desc:'An exceptional catch, cooked with care. Restores 832 HP \u2014 312 more than the ordinary dish.'},
+  prized_voideel:         {name:'Prized Void Eel',        sell:4428, rare:true, prizedOf:'cooked_voideel', potion:{heal:1120}, desc:'An exceptional catch, cooked with care. Restores 1120 HP \u2014 420 more than the ordinary dish.'},
   // Fishing (cooked)
   // Cooked fish double as combat food — instant heal scaled by cook level (1.0.21).
   // Cheap, spammable sustain; the dedicated Healing Draughts out-heal them tier-for-tier.
@@ -10185,6 +10237,25 @@ const SKILLS={
     {id:'co_dr',name:'Sear Drake Flank',    lvl:72,ms:15300,xp:466, spdMult:0.765, minMs:1920, inp:{wyrmscale:2,cinder_gland:1}, out:{drake_roast:1}},
     {id:'co7',  name:'Cook shark',          lvl:75,ms:15300,xp:466, spdMult:0.765, minMs:1920, inp:{raw_shark:1},                out:{cooked_shark:1}},
     {id:'co_ir',name:'Roast Demon Flesh',   lvl:86,ms:18800,xp:655, spdMult:0.790, minMs:2220, inp:{demonhide:2,brimstone:1},    out:{infernal_roast:1}},
+
+    /* ── PRIZED CATCHES (0.9.122.24) ────────────────────────────────────────
+       One per fish, cooking the exceptional version into the exceptional dish.
+       `onlyIf` keeps them off the panel until you are holding one: nineteen cards
+       is already the measured limit for the four-up grid, and a permanent row of
+       eight recipes you cannot make would bury the ones you can. They appear the
+       moment a prized fish lands and go again when you cook it, which is the whole
+       point — the card IS the notification.
+
+       XP is 1.6x the ordinary cook, matching the heal, so a prized catch is worth
+       cooking rather than selling at every level. */
+    {id:'co_pz_minnow',name:'Cook prized minnow',lvl:1,ms:4200, xp:61, spdMult:0.5, minMs:720, inp:{prized_raw_minnow:1}, out:{prized_minnow:1}, onlyIf:'prized_raw_minnow'},
+    {id:'co_pz_sardine',name:'Cook prized sardine',lvl:12,ms:4800, xp:99, spdMult:0.56, minMs:800, inp:{prized_raw_sardine:1}, out:{prized_sardine:1}, onlyIf:'prized_raw_sardine'},
+    {id:'co_pz_trout',name:'Cook prized trout',lvl:24,ms:5600, xp:152, spdMult:0.594, minMs:900, inp:{prized_raw_trout:1}, out:{prized_trout:1}, onlyIf:'prized_raw_trout'},
+    {id:'co_pz_tuna',name:'Cook prized tuna',lvl:36,ms:6600, xp:224, spdMult:0.64, minMs:1000, inp:{prized_raw_tuna:1}, out:{prized_tuna:1}, onlyIf:'prized_raw_tuna'},
+    {id:'co_pz_salmon',name:'Cook prized salmon',lvl:48,ms:7800, xp:320, spdMult:0.667, minMs:1120, inp:{prized_raw_salmon:1}, out:{prized_salmon:1}, onlyIf:'prized_raw_salmon'},
+    {id:'co_pz_swordfish',name:'Cook prized swordfish',lvl:62,ms:9200, xp:448, spdMult:0.7, minMs:1250, inp:{prized_raw_swordfish:1}, out:{prized_swordfish:1}, onlyIf:'prized_raw_swordfish'},
+    {id:'co_pz_shark',name:'Cook prized shark',lvl:75,ms:11000, xp:608, spdMult:0.735, minMs:1400, inp:{prized_raw_shark:1}, out:{prized_shark:1}, onlyIf:'prized_raw_shark'},
+    {id:'co_pz_voideel',name:'Cook prized void eel',lvl:90,ms:13000, xp:800, spdMult:0.765, minMs:1550, inp:{prized_raw_voideel:1}, out:{prized_voideel:1}, onlyIf:'prized_raw_voideel'},
   ]},
   crafting:{name:'Crafting',icon:'🛠️',acts:[
     /* Tier 1 — Bronze (Lv 1) — bar+log baseline. Helm/gloves/boots use 1 bar; legs uses 2; chest/sword/shield use the heavier counts. */
@@ -12771,6 +12842,21 @@ function _icoUniq(svg){
 }
 function iconHTML(id){
   if(ICONS[id]) return _icoUniq(ICONS[id]);
+  /* A prized catch is the SAME fish, so it wears the same art gilded rather than a
+     second picture — no sheet, no bytes, and it can never drift out of sync with
+     the base the way a hand-copied second icon would.
+
+     Resolved HERE and not by a loop at load: the item-art block assigns over ICONS
+     last, on purpose, so anything that snapshots ICONS earlier captures whatever
+     generated SVG the id had before the painted art landed. That is precisely the
+     failure the "Item art block ordering" audit was written for, and the first cut
+     of this walked into it — sixteen prized fish wearing the old SVGs while every
+     ordinary fish wore the painting.
+
+     Painted art still wins if it ever lands: ICONS.prized_* is checked above. */
+  if(ITEMS[id] && ITEMS[id].prizedOf){
+    return '<span class="gilded">'+iconHTML(ITEMS[id].prizedOf)+'</span>';
+  }
   if(ITEMS[id])  return _icoUniq(ITEMS[id].icon);
   if(SKILLS[id]) return _icoUniq(SKILLS[id].icon);
   // SHOP fallback — covers tool/jewelry/cape ids that haven't been migrated
@@ -12991,14 +13077,18 @@ const DROPS={
   mi8:[{id:'ruby',chance:0.006},{id:'diamond',chance:0.0015},{id:'amethyst',chance:0.0008},{id:'dragon_gem',chance:0.0004},{id:'bloodstone',chance:0.0002},{id:'rune_fragment',chance:0.018}],
   mi9:[{id:'ruby',chance:0.005},{id:'diamond',chance:0.003},{id:'amethyst',chance:0.0018},{id:'dragon_gem',chance:0.001},{id:'bloodstone',chance:0.0005},{id:'void_crystal',chance:0.00025},{id:'void_shard',chance:0.0006},{id:'rune_fragment',chance:0.022}],
   // Fishing — pearl: 5/hr at minnow scaling to 10/hr at void eel
-  fi1:[{id:'pearl',chance:0.0027}],
-  fi2:[{id:'pearl',chance:0.0034}],
-  fi3:[{id:'pearl',chance:0.0041}],
-  fi4:[{id:'pearl',chance:0.0050}],
-  fi5:[{id:'pearl',chance:0.0060}],
-  fi6:[{id:'pearl',chance:0.0075}],
-  fi7:[{id:'pearl',chance:0.0099},{id:'abyssal_scale',chance:0.0016}],
-  fi8:[{id:'pearl',chance:0.0124},{id:'abyssal_scale',chance:0.0031}],
+  /* Prized catches sit at ~65% of the same tier's pearl chance, so the rarest
+     thing the water gives up is always the prized fish and never the pearl —
+     one is a material you accumulate, the other is a moment. Lucky Lure
+     doubles it. */
+  fi1:[{id:'pearl',chance:0.0027},{id:'prized_raw_minnow',chance:0.0018}],
+  fi2:[{id:'pearl',chance:0.0034},{id:'prized_raw_sardine',chance:0.0022}],
+  fi3:[{id:'pearl',chance:0.0041},{id:'prized_raw_trout',chance:0.0026}],
+  fi4:[{id:'pearl',chance:0.0050},{id:'prized_raw_tuna',chance:0.0032}],
+  fi5:[{id:'pearl',chance:0.0060},{id:'prized_raw_salmon',chance:0.0039}],
+  fi6:[{id:'pearl',chance:0.0075},{id:'prized_raw_swordfish',chance:0.0049}],
+  fi7:[{id:'pearl',chance:0.0099},{id:'abyssal_scale',chance:0.0016},{id:'prized_raw_shark',chance:0.0064}],
+  fi8:[{id:'pearl',chance:0.0124},{id:'abyssal_scale',chance:0.0031},{id:'prized_raw_voideel',chance:0.008}],
   // Foraging — rare drops + seed drops (seeds obtainable while foraging)
   fo1:[{id:'wildberry_seed',chance:0.08}],
   fo9:[{id:'bloodcap_seed',chance:0.05},{id:'wildberry_seed',chance:0.05}],
@@ -14802,8 +14892,8 @@ const TREES = {
       r=>`Sell value of all fish +${r*5}%`,
       r=>`+5% fish sell value → ${r*5}%`),
     N('fi_master1','Lucky Lure','🍀',1,20,
-      r=>r?'Every 10th cast gives +1 bonus fish (tracked per session)':'Every 10th cast: +1 bonus fish',
-      ()=>'Every 10th cast: +1 bonus fish'),
+      r=>'Doubles the chance of a prized catch',
+      ()=>'Doubles the chance of a prized catch'),
     N('fi_master_school','Schooling','🐟',1,30,
       r=>r?'Every 10th cast gives +1 bonus fish (tracked per session)':'Every 10th cast: +1 bonus fish',
       ()=>'Every 10th cast: +1 bonus fish'),
@@ -15182,8 +15272,8 @@ const PASSIVE_TIPS={
   fi_xp:        'Multiplies all Fishing XP.\nAt max (10 ranks): +30% XP per fish caught.\n2× XP unlock moved to Master of Tides in the Grandmaster tier.',
   fi_cook:      'Each fish caught has a chance to arrive already cooked in your satchel.\nSaves time — no need to run it through Cooking separately.\nAt max (10 ranks): 40% pre-cooked chance.',
   fi_sell:      'Raises sell value of all raw and cooked fish.\nAt max (8 ranks): +40% on all fish types.',
-  fi_master1:   'Every 10th cast gives +1 bonus fish (tracked per session).\nResets when you stop fishing or change activity.\nStacks with Schooling on the same proc.',
-  fi_master_school:'Every 10th cast gives +1 bonus fish (tracked per session).\nShares the cast counter with Lucky Lure — both fire on the same 10th cast.\nCounter resets when you stop fishing or switch activities.',
+  fi_master1:   'A prized catch is an exceptional example of the fish you are already after \u2014 it cooks into a far stronger meal.\nLucky Lure doubles the chance of one.\nRolls on every cast, on both bars, and while you are away.',
+  fi_master_school:'Every 10th cast gives +1 bonus fish (tracked per session).\nCounts casts on both fishing bars.\nResets when you stop fishing or change activity.',
   fi_master2:   '30% chance for +1 fish per cast.\nStacks with Haul Net bonus rolls.\nRequires 50 points spent — a deeper investment than Lucky Lure.',
   fi_gm_speed:  'Grandmaster bonus (Lv 75 + all base nodes maxed).\n+1.2% cast speed per rank, up to +12% extra at max 10 ranks.',
   fi_gm_double: 'Grandmaster bonus (Lv 75). Adds bonus fish chance on top of Haul Net.\n+2% per rank, up to +20% at max 10 ranks. Same roll pool as Haul Net.',
@@ -19606,6 +19696,20 @@ function effDropChance(c,combat){
   if(c>=0.99) return c;
   return Math.min(RARE_DROP_CAP, c*charDropMult()*(combat?1:luckyStrideMult()));
 }
+/* A prized catch's chance, after Lucky Lure. There are FOUR places that roll a
+   skilling drop table — the main completeAction path and one per double-action bar
+   (woodcutting, fishing, mining) — and the second fishing bar is a real fishing
+   cast, so a node that only applied on the first would pay differently depending on
+   which bar landed it. One function, called from all four. */
+const LUCKY_LURE_MULT=2;
+function skillDropChance(skillKey, drop, m){
+  let c=effDropChance(drop.chance);
+  const dropId=drop.id;
+  if(skillKey==='fishing' && ITEMS[dropId] && ITEMS[dropId].prizedOf && m && m.master1){
+    c*=LUCKY_LURE_MULT;
+  }
+  return c;
+}
 function charClass(){ return (state&&CHAR_CLASSES[state.charClass])?state.charClass:null; }
 /* Weapon weight-class from dmgType: stab/ranged→light, crush→heavy, slash→standard.
    An explicit ITEMS[id].wclass override always wins (future bows etc). */
@@ -19952,7 +20056,6 @@ function gpPerAction(act,skill){
       }
       if(skill==='foraging'&&m.master3) avgQty+=0.50;       // Verdant Gift 50%
       if(skill==='fishing'&&m.master2) avgQty+=0.30;        // Steady Hands 30%
-      if(skill==='fishing'&&m.master1) avgQty+=0.1;         // Lucky Lure avg
       if(skill==='fishing'&&m.fi_school) avgQty+=0.1;       // Schooling avg
       if(skill==='mining'){
         if(m.master2) avgQty+=0.30;       // Motherlode 30%
@@ -21174,15 +21277,16 @@ function completeAction(act,skillKey,times){
       }
       // Fishing: Steady Hands (master2) — 30% chance of +1 fish (was +1 always)
       if(skillKey==='fishing'&&m.master2) qty+=binom(times,0.30);
-      // Fishing: Lucky Lure (master1) + Schooling (school) share the cast counter.
-      // Every 10th cast: Lucky Lure gives +1, Schooling gives +1.
-      if(skillKey==='fishing'&&(m.master1||m.fi_school)){
+      /* Schooling — +1 fish every 10th cast. Lucky Lure USED to sit here doing the
+         identical thing on the same counter: two nodes, 50 points apart, one
+         effect, described identically in both tooltips. It now raises the prized
+         catch chance instead, which is what its name has always said. */
+      if(skillKey==='fishing'&&m.fi_school){
         state.fishCasts=(state.fishCasts||0)+times;
         const procs=Math.floor(state.fishCasts/10);
         if(procs>0){
           state.fishCasts=state.fishCasts%10;
-          if(m.master1) qty+=procs*1;   // Lucky Lure: +1 fish per proc
-          if(m.fi_school) qty+=procs*1; // Schooling: +1 fish per proc
+          qty+=procs*1;
         }
       }
       // woodcutting kin: bonus wildberries
@@ -21382,7 +21486,7 @@ function completeAction(act,skillKey,times){
   if(IS_G){
     const dropTable=DROPS[act.id]||[];
     for(const drop of dropTable){
-      const hits=binom(times,effDropChance(drop.chance));
+      const hits=binom(times,skillDropChance(skillKey,drop,m));
       if(hits>0) grantItem(drop.id, hits);
     }
   }
@@ -21490,9 +21594,9 @@ function completeWcDoubleAction(act,cycles){
   const xpBanked=addSkillXp('woodcutting', xpGained);
   recordXpGain('woodcutting',xpBanked);
   showXpPop('woodcutting',xpBanked);
-  // Rare drops
+  // Rare drops — same chance as the primary bar, Lucky Lure included
   const dropTable=DROPS[act.id]||[];
-  for(const drop of dropTable){ const hits=binom(cycles,effDropChance(drop.chance)); if(hits>0) grantItem(drop.id,hits); }
+  for(const drop of dropTable){ const hits=binom(cycles,skillDropChance('woodcutting',drop,m)); if(hits>0) grantItem(drop.id,hits); }
 }
 
 function setFishDoubleAct(actId){
@@ -21514,14 +21618,15 @@ function completeFishDoubleAction(act,cycles){
     // (chance-based, matching the primary bar — the secondary copies were
     // missed when master2 went from '+1 always' to a roll, leaving this bar
     // out-yielding its own intended output by 54-74%.)
-    // Lucky Lure + Schooling share state.fishCasts with primary bar
-    if(m.master1||m.fi_school){
+    /* Schooling shares state.fishCasts with the primary bar. This path paid
+       procs*2 while the primary paid procs*1 for the same node and the same
+       tooltip — the second bar was worth double, silently. */
+    if(m.fi_school){
       state.fishCasts=(state.fishCasts||0)+cycles;
       const procs=Math.floor(state.fishCasts/10);
       if(procs>0){
         state.fishCasts=state.fishCasts%10;
-        if(m.master1) qty+=procs*1;
-        if(m.fi_school) qty+=procs*2;
+        qty+=procs*1;
       }
     }
     // Seasoned Catch — chance for fish to arrive already cooked (deduct from raw count, add cooked)
@@ -21547,9 +21652,9 @@ function completeFishDoubleAction(act,cycles){
   const xpBanked=addSkillXp('fishing', xpGained);
   recordXpGain('fishing',xpBanked);
   showXpPop('fishing',xpBanked);
-  // Rare drops
+  // Rare drops — same chance as the primary bar, Lucky Lure included
   const dropTable=DROPS[act.id]||[];
-  for(const drop of dropTable){ const hits=binom(cycles,effDropChance(drop.chance)); if(hits>0) grantItem(drop.id,hits); }
+  for(const drop of dropTable){ const hits=binom(cycles,skillDropChance('fishing',drop,m)); if(hits>0) grantItem(drop.id,hits); }
 }
 
 function setMineDoubleAct(actId){
@@ -21591,9 +21696,9 @@ function completeDoubleAction(act,cycles){
   const xpBanked=addSkillXp('mining', xpGained);
   recordXpGain('mining',xpBanked);
   showXpPop('mining',xpBanked);
-  // Rare drops
+  // Rare drops — same chance as the primary bar, Lucky Lure included
   const dropTable=DROPS[act.id]||[];
-  for(const drop of dropTable){ const hits=binom(cycles,effDropChance(drop.chance)); if(hits>0) grantItem(drop.id,hits); }
+  for(const drop of dropTable){ const hits=binom(cycles,skillDropChance('mining',drop,m)); if(hits>0) grantItem(drop.id,hits); }
 }
 
 /* ════ [JS-21e] main tick ════════════════════════════════════════════════════════ */
@@ -24292,6 +24397,10 @@ function renderCooking(){
 
   /* ── the recipes ─────────────────────────────────────────────────────────── */
   for(const act of SKILLS.cooking.acts){
+    /* `onlyIf` — a prized catch's recipe exists only while you hold the catch. It
+       is not a lock, so it never renders as one: there is nothing to work toward
+       and no level to reach, just a card that is there when the fish is. */
+    if(act.onlyIf && !(state.items[act.onlyIf]>0)) continue;
     const reqLvl=act.id==='co8'?highFishUnlockLevel():act.lvl;
     grid.appendChild(ckCard(act,reqLvl,lvl,m));
   }
