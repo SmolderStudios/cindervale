@@ -3305,15 +3305,21 @@ setTimeout(() => {
         state.monKills={}; MONSTERS.slice(0,c[2]).forEach(function(m){ state.monKills[m.id]=5; });
         state.gd={}; GUILDS.forEach(function(g){ gdJoin(g.id); });
 
-        // everything the player can obtain right now: any unlocked act, crop or drop
+        /* Reachability comes from the GAME'S OWN source map, which is the same index
+           the item tooltip uses to answer "where do I get this" — acts, rare drops
+           off those acts, crops, monster and boss drops, raid loot. A hand-rolled
+           map built from act outputs alone reported 78 false positives, because it
+           did not know about gem drops, sailing haul or shop stock. */
+        var SM=buildSourceMap();
         var have={};
-        for(var sk in SKILLS) gdOutActs(sk).forEach(function(a){
-          Object.keys(a.out||{}).forEach(function(id){ if(ITEMS[id]) have[id]=1; }); });
-        gdCrops().forEach(function(cr){
-          Object.keys(cr.out||{}).forEach(function(id){ if(ITEMS[id]) have[id]=1; }); });
-        MONSTERS.forEach(function(m){
-          if(!state.monKills[m.id]) return;
-          (MONSTER_DROPS[m.id]||[]).forEach(function(d){ if(ITEMS[d.id]) have[d.id]=1; }); });
+        Object.keys(SM).forEach(function(id){
+          var reachable=(SM[id]||[]).some(function(src){
+            if(!src) return false;
+            if(src.skKey && SKILLS[src.skKey]) return levelFromXp(state.xp[src.skKey]||0) >= (src.reqLvl||1);
+            return true;                    // a drop / boss / raid source has no skill gate
+          });
+          if(reachable) have[id]=1;
+        });
 
         for(var pass=0; pass<120; pass++){
           GUILDS.forEach(function(g){
@@ -3343,7 +3349,7 @@ setTimeout(() => {
               lines.forEach(function(id){
                 if(!ITEMS[id]) note(q.kind, g.id+': '+id+' is not an item');
                 else if(ITEMS[id].tool||ITEMS[id].skillGear) note(q.kind, g.id+': '+id+' is a one-time unlock');
-                else if(!have[id]) note(q.kind, g.id+': no way to obtain '+id);
+                else if(!have[id]) note(q.kind, g.id+': no source at this level for '+id);
               });
             });
           });
