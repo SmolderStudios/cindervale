@@ -3308,18 +3308,19 @@ setTimeout(() => {
         var want=ty==='ring'?'Ring':ty==='amulet'?'Amulet':ty==='pendant'?'Pendant':null;
         if(want && txt.indexOf('\\u00b7 '+want)<0) bad.push(id+': header does not say '+want);
         // and the body must say which set it completes
-        if(ty==='amulet'  && txt.indexOf('skilling set')<0) bad.push(id+': no skilling-set line');
-        if(ty==='pendant' && txt.indexOf('combat set')<0)   bad.push(id+': no combat-set line');
-        if(ty==='ring'    && txt.indexOf('either hand')<0)  bad.push(id+': no ring line');
+        if(ty==='amulet'  && txt.indexOf('boosts combat instead')<0) bad.push(id+': no amulet-vs-pendant line');
+        if(ty==='pendant' && txt.indexOf('boosts skilling instead')<0) bad.push(id+': no pendant-vs-amulet line');
+        if(ty==='ring'    && txt.indexOf('counts twice')<0) bad.push(id+': no ring line');
       });
       return JSON.stringify({seen:seen, bad:bad});
     })()`));
     ok('every ring, amulet and pendant explains what its shape is for',
        jw.bad.length===0, JSON.stringify(jw.seen)+'; '+jw.bad.slice(0,6).join(' | '));
-    ok('and the set it names comes from the live set tables',
+    ok('and the numbers it quotes come from the live set tables',
        ev(`(function(){
          var t=String(jewelryEnchantBlock('sapphire_pendant')).replace(/<[^>]*>/g,' ');
-         return t.indexOf(PENDANT_SETS.sapphire.name)>=0;
+         var want=PENDANT_SETS.sapphire.desc.replace(/^[^:]*: */,'');
+         return t.indexOf(want)>=0;
        })()`)===true);
 
     /* ── every weapon says what weight class it is (ticket #53) ──────────────
