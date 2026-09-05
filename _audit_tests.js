@@ -3722,6 +3722,97 @@ setTimeout(() => {
       tier:ENCHANTS.manatarms_ii&&ENCHANTS.manatarms_ii.tier,
       priced:!!_ewCostFor('emerald_ring').cost
     })`));
+    section('The left rail reads as three controls (0.9.122.22)');
+    {
+    /* Player report: "its super confusing ... they all look the same". The rail
+       stacked Skills/Stats/Combat/Sailing over All/Gather/Craft/Support, and the
+       two selected items computed to byte-identical treatment — same gold, same
+       raised gradient, same 1px gold ring — eight pixels apart, one navigating and
+       one filtering.
+
+       It survived because `.tab` and `.rail-groups .rg` are each styled in FOUR
+       places and the winners are at the end of the last style block; an edit to
+       the [CSS-01] rules changes nothing on screen. So this test reads the CSS
+       text and takes the LAST declaration for each selector, the way the browser
+       does — asserting on the first one would pass while the game looked wrong. */
+    const styles = [...html.matchAll(/<style\b[^>]*>([\s\S]*?)<\/style>/gi)].map(m => m[1]);
+    const cssAll = styles.join('\n').replace(/\/\*[\s\S]*?\*\//g, ' ');
+    function lastRule(sel){
+      const esc = sel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const re = new RegExp('(?:^|[},])\\s*' + esc + '\\s*\\{([^}]*)\\}', 'g');
+      let m, body = null;
+      while ((m = re.exec(cssAll)) !== null) body = m[1];
+      return body;
+    }
+    const tabOn = lastRule('.tabs .tab.on');
+    const rgOn  = lastRule('.rail-groups .rg.on');
+    ok('both selections still have a live rule', !!tabOn && !!rgOn,
+       'tab='+(tabOn?'yes':'MISSING')+' rg='+(rgOn?'yes':'MISSING'));
+
+    const colorOf = b => (b && /(?:^|;)\s*color\s*:\s*([^;]+)/.exec(b) || [,''])[1].trim();
+    ok('the panel tab and the filter chip do not share a colour',
+       !!tabOn && !!rgOn && colorOf(tabOn) !== colorOf(rgOn),
+       'tab '+colorOf(tabOn)+'  vs  chip '+colorOf(rgOn));
+    /* Gold is the tabs' colour in that corner. A filter borrowing it is the exact
+       thing that made the two rows twins. */
+    ok('only the panel tab is gold',
+       /gold-hi/.test(tabOn||'') && !/gold-hi/.test(rgOn||''),
+       'chip: '+(rgOn||'').slice(0,90));
+    /* Raised versus recessed is the distinction doing the work — a tab sticks out
+       because you are on it, a filter is pushed in because you set it. */
+    ok('the tab is raised and the chip is recessed',
+       /inset 0 1px 0/.test(tabOn||'') && /inset 0 2px/.test(rgOn||''),
+       'tab '+/inset 0 1px 0/.test(tabOn||'')+' chip '+/inset 0 2px/.test(rgOn||''));
+    ok('and only the tab carries a ring',
+       /0 0 0 1px/.test(tabOn||'') && !/0 0 0 1px/.test(rgOn||''));
+
+    /* The row states its job rather than leaving it to be inferred, and pairs with
+       the Sort row directly beneath. */
+    ok('the filter row is labelled, and pairs with Sort',
+       ev(`(function(){
+         var l=document.querySelector('#railGroups .rgl');
+         var s2=document.querySelector('.rail-sort label');
+         return (l?l.textContent.trim():'')+'/'+(s2?s2.textContent.trim():'');
+       })()`)==='Show/Sort');
+    ok('and the filter row no longer sits in the tab track',
+       ev(`(function(){ var g=document.getElementById('railGroups');
+            return !!g && !g.classList.contains('trk'); })()`)===true);
+
+    /* Every animation the code asks for must have a rule. gotoShopSlot() has always
+       added .shop-cat-flash; the rule lived in the category-tile CSS that the
+       0.9.122.20 shop rebuild replaced, so the Gear panel's deep-link silently
+       stopped highlighting anything — and still scrolled, which is why it looked
+       fine. Sweep every class the script animates. */
+    const scriptSrc = (/<script\b[^>]*>([\s\S]*)<\/script>/i.exec(html) || [,''])[1];
+    const asked = [...scriptSrc.matchAll(/classList\.add\('([a-z][a-z0-9-]*-flash)'\)/g)]
+      .map(m => m[1]);
+    const orphan = [...new Set(asked)].filter(c => cssAll.indexOf('.' + c) < 0);
+    ok(asked.length+' flash classes the script adds all have a CSS rule',
+       orphan.length===0, 'no rule for: '+orphan.join(', '));
+
+    /* The satchel expansion moved into the shop, so the right panel must not still
+       carry a second gold-spend button for the same upgrade. */
+    const sat = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      state.coins=99999999; state.satchelUpgrades=2;
+      viewTab='acts'; renderRightPanel();
+      var bar=document.querySelector('.sat-cap');
+      var out={bar:!!bar,
+               spendBtn:!!document.querySelector('.sat-expand'),
+               link:!!document.querySelector('.sat-goshop'),
+               linkText:(document.querySelector('.sat-goshop')||{}).textContent||''};
+      // and the link lands on the vendor that sells it
+      if(typeof gotoShopCat==='function'){ gotoShopCat('storage'); out.cat=shopSelectedCat; }
+      return JSON.stringify(out);
+    })()`));
+    ok('the satchel panel keeps the capacity bar', sat.bar===true);
+    ok('and no longer spends gold itself', sat.spendBtn===false);
+    ok('it points at the shop instead, naming the price',
+       sat.link===true && /slots for/.test(sat.linkText) && /Shop/.test(sat.linkText),
+       JSON.stringify(sat.linkText));
+    ok('and the link opens the vendor that sells it', sat.cat==='storage', sat.cat);
+    }
+
     section('The shop (0.9.122.20)');
     {
     /* The shop sold fourteen things: two rings and twelve identical capes, with
