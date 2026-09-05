@@ -7141,7 +7141,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.122.15">v0.9.122</div>
+  <div class="mm-ver" data-build="0.9.122.16">v0.9.122</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -13153,19 +13153,23 @@ function jewelryEnchantBlock(itemId){
   var _amu=(typeof ENCHANT_SETS!=='undefined')?ENCHANT_SETS[gem]:null;
   var _pen=(typeof PENDANT_SETS!=='undefined')?PENDANT_SETS[gem]:null;
   var _clean=function(d){ return String(d||'').replace(/^[^:]*: */,''); };
+  /* Say the mechanic out loud. "Completes the set" is the code's word for it and it
+     hides the two things that actually decide whether you get anything: you need
+     BOTH pieces worn, and BOTH enchanted. Someone reading only this line should be
+     able to act on it without opening another panel. */
   var _role='';
   if(slotLabel==='Amulet' && _amu){
-    _role='Worn on the neck. With a matching <b>ring</b> it completes the <b>'+_amu.name
-      +'</b> \u2014 a <b>skilling</b> set: '+_clean(_amu.desc)
-      +(_pen?'. A <b>pendant</b> of the same gem takes the same slot for a combat set instead.':'.');
+    _role='Goes on your neck. Enchant this and a <b>'+gemName+' Ring</b>, wear both, and you also get <b>'
+      +_clean(_amu.desc)+'</b> on top.'
+      +(_pen?' A '+gemName+' Pendant uses the same slot but boosts combat instead.':'');
   } else if(slotLabel==='Pendant' && _pen){
-    _role='Worn on the neck. With a matching <b>ring</b> it completes the <b>'+_pen.name
-      +'</b> \u2014 a <b>combat</b> set: '+_clean(_pen.desc)
-      +(_amu?'. An <b>amulet</b> of the same gem takes the same slot for a skilling set instead.':'.');
+    _role='Goes on your neck. Enchant this and a <b>'+gemName+' Ring</b>, wear both, and you also get <b>'
+      +_clean(_pen.desc)+'</b> on top.'
+      +(_amu?' A '+gemName+' Amulet uses the same slot but boosts skilling instead.':'');
   } else if(slotLabel==='Ring'){
-    _role='Fits either hand, and a matched pair counts twice. Pair it with an <b>amulet</b> for '
-      +(_amu?'the '+_amu.name+' (skilling)':'a skilling set')
-      +' or a <b>pendant</b> for '+(_pen?'the '+_pen.name+' (combat)':'a combat set')+'.';
+    _role='Goes on either hand, and wearing two counts twice. Enchant it and wear an enchanted '
+      +(_amu?'<b>'+gemName+' Amulet</b> for <b>'+_clean(_amu.desc)+'</b>':'matching amulet')
+      +', or a '+(_pen?'<b>'+gemName+' Pendant</b> for <b>'+_clean(_pen.desc)+'</b>':'matching pendant')+'.';
   }
   if(_role) html+='<div style="color:var(--muted);font-size:calc(11.5px*var(--tscale));'
     +'line-height:1.45;margin:-2px 0 6px">'+_role+'</div>';
