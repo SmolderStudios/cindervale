@@ -4476,9 +4476,10 @@ body:not(.is-demo) .demo-only{display:none !important}
      row 1  Cooked Salmon
      row 2  [instant] [+2 STR] .................... 84.7k xp/hr
      hero   270 HP / 25 runs
-   The ingredient chips grow back as a third row the moment one is short — see
-   ckCard(). "64/1 raw salmon" says nothing the runs count does not while you can
-   afford the dish; it only earns a row once it becomes a shopping list. */
+   The ingredient row is unconditional as of 0.9.122.19. It was conditional on
+   being short of something, which made every dish you could actually cook collapse
+   to a lone INSTANT pill and no recipe at all — the chips are the recipe, not just
+   a shopping list. See ckCard(). */
 .act.ck-card{padding:7px 8px 7px 10px;gap:7px}
 .act.ck-card .act-body{gap:3px}
 .act.ck-card .name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;
@@ -4527,11 +4528,8 @@ body:not(.is-demo) .demo-only{display:none !important}
 .ck-hp .v.dim{color:#5f7a4a;text-shadow:none}
 .ck-hp .k{font-size:calc(9.5px*var(--tscale));letter-spacing:2px;text-transform:uppercase;
   color:#8a7657;margin-top:4px}
-.ck-hp .t{font-size:calc(9px*var(--tscale));color:#8a7657;margin-top:5px;
-  font-variant-numeric:tabular-nums;white-space:nowrap}
-.ck-hp .t.fuelcap{color:var(--ember);font-weight:600}
-.ck-hp .t.none{color:#e0917c;font-weight:600}
-.ck-hp .t .ev-icon{width:11px;height:11px;vertical-align:-1px}
+/* .ck-hp .t is gone with 0.9.122.19 — the hero column carried the runs label only
+   while the ingredient chips were conditional, and they are always on now. */
 /* ════════ [CSS-44 END] COOKING ══════════════════════════════════ */
 /* ════════ [CSS-45] GUILDS (0.9.123) ═════════════════════════════
    Two screens. The list is picture cards, three across, with a painting of the
@@ -7152,7 +7150,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.122.18">v0.9.122</div>
+  <div class="mm-ver" data-build="0.9.122.19">v0.9.122</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -20376,7 +20374,15 @@ function cookingFuelCyclesLeft(act,skill){
   const ms=actMs(act,skill);
   const perCycle=ms/1000;
   if(perCycle<=0) return Infinity;
-  return Math.floor(fireBurnSec()/perCycle);
+  /* (0.9.122.19, ticket #59) The fire does NOT burn a second of fuel per second —
+     applyContinuousBurn charges deltaSec*fuelBurnMult(), so Slow Embers and Open
+     Hearth stretch the same logs further. Dividing raw fuel seconds by cook time
+     ignored that, telling a fully-ranked cook the fire held a third fewer cooks
+     than it does, and reporting ZERO for Eternal Flame, whose whole effect is
+     that the fuel never runs out. */
+  const mult=(typeof fuelBurnMult==='function')?fuelBurnMult():1;
+  if(mult<=0) return Infinity;
+  return Math.floor(fireBurnSec()/mult/perCycle);
 }
 
 function openFuelModal(){
@@ -23583,25 +23589,35 @@ function ckCard(act, reqLvl, lvl, m){
   const dead=(!locked&&matRuns<=0&&!isActive)||(fireOut&&!isActive);
 
   /* "3 runs" was ambiguous between out-of-ingredients and out-of-fuel — two
-     completely different errands (go fish, or go chop). Name the binding one. */
+     completely different errands (go fish, or go chop) — and it was distinguished
+     only by an 11px flame glyph in front of the number. Ticket #59 read a
+     fuel-capped "2 runs" as a broken ingredient count while holding 24 minnows,
+     which is exactly the right thing to conclude from that label. Name the cause
+     in words: the number is only useful next to the reason it is small. */
   let runs='', runsCls='';
-  if(locked)              { runs=''; }
-  else if(matRuns<=0)     { runs='no ingredients'; runsCls=' none'; }
-  else if(fuelRuns<matRuns){ runs=iconHTML('ui_flame')+' '+fuelRuns+' runs'; runsCls=' fuelcap'; }
-  else                    { runs=(matRuns===Infinity?'&infin;':fmtK(matRuns))+' runs'; }
+  if(locked)               { runs=''; }
+  else if(matRuns<=0)      { runs='no ingredients'; runsCls=' none'; }
+  else if(fireOut)         { runs=iconHTML('ui_flame')+' fire is out'; runsCls=' fuelcap'; }
+  else if(fuelRuns<matRuns){ runs=iconHTML('ui_flame')+' fire: '+fmtK(fuelRuns)+' run'+(fuelRuns===1?'':'s');
+                             runsCls=' fuelcap'; }
+  else                     { runs=(matRuns===Infinity?'&infin;':fmtK(matRuns))+' runs'; }
 
-  let short=false;
-  for(const k in (act.inp||{})) if((state.items[k]||0)<act.inp[k]) short=true;
-  const showMats=short||locked;
-
+  /* The chips used to appear only once an ingredient ran short, on the reasoning
+     that "64/1 raw salmon" says nothing the runs count does not. It says the
+     RECIPE, which is the one thing a cooking card exists to tell you — and hiding
+     it meant every dish you could actually cook collapsed to a bare "INSTANT"
+     pill (ticket #59 again). They are always on now. */
   let mats='';
-  if(showMats){
-    for(const id in (act.inp||{})){
-      const need=act.inp[id], have=state.items[id]||0;
-      mats+=`<span class="mat${have<need?' miss':''}" data-tip="${(ITEMS[id]&&ITEMS[id].name)||id} — ${need} per cook, ${have} held">`
-        +iconHTML(id)+'<b>'+fmtK(have)+'</b><span class="sl">/'+need+'</span></span>';
-    }
+  for(const id in (act.inp||{})){
+    const need=act.inp[id], have=state.items[id]||0;
+    /* data-item, not data-tip: same regression buildActBtn fixed in 0.9.121.20 —
+       the CSS tooltip only said how many you had, while the real satchel card says
+       what the thing is and where to go get more. */
+    mats+=`<span class="mat${have<need?' miss':''}" data-item="${id}"`
+      +` data-itemnote="have ${have}, need ${need} per cook">`
+      +iconHTML(id)+'<b>'+fmtK(have)+'</b><span class="sl">/'+need+'</span></span>';
   }
+  const showMats=!!mats;
 
   const tierIdx=tierIndexForAct(SKILLS.cooking,act);
   const pipTot=tierCountForSkill('cooking');
@@ -23622,9 +23638,17 @@ function ckCard(act, reqLvl, lvl, m){
      straight off the dish name; and on a locked card "Lv 86" was the same fact as the
      "Unlocks at Lv 86" line directly beneath it, for another 32px of the name. */
 
+  /* The dish icon is the biggest thing on the card and carried no tooltip at all,
+     so hovering the food you are about to cook told you less than hovering the fish
+     it costs — the same hole buildActBtn closed for every other skill. */
+  const outTip=ITEMS[out]
+    ? ` data-item="${out}" data-itemnote="${Math.round(xpPerAction(act,'cooking'))} XP per cook`
+      +` · ${(actMs(act,'cooking')/1000).toFixed(1)}s"`
+    : '';
+
   btn.innerHTML=
     `<div class="act-stripe" style="background:${tierStripeColor(tierIdx)}"></div>`
-   +`<div class="act-icon">${iconHTML(out)}${pips}`
+   +`<div class="act-icon"${outTip}>${iconHTML(out)}${pips}`
      +(locked?'<span class="lock-pip">'+iconHTML('ui_lock')+'</span>':'')+'</div>'
    +'<div class="act-body">'
      +`<div class="act-head"><span class="name">${ITEMS[out]?ITEMS[out].name:act.name}</span></div>`
@@ -23632,16 +23656,15 @@ function ckCard(act, reqLvl, lvl, m){
         ? `<span class="meta">Unlocks at Lv ${reqLvl}</span>`
         : '<div class="ck-row">'+ckKindPill(f)+ckBuffPill(f)
           +`<span class="ck-rate"><b>${fmtK(ratesFor(act,'cooking').xph)}</b> xp/hr</span></div>`)
-     +(showMats
+     +((showMats||runs)
         ? `<div class="needs${locked?' needs-locked':''}">${mats}`
           +(runs?`<span class="runs${runsCls}">${runs}</span>`:'')+'</div>'
         : '')
      +(isActive?'<div class="prog"><i></i></div>':'')
    +'</div>'
-   +(locked
-      ? `<div class="ck-hp"><span class="v dim">${f.hp}</span><span class="k">HP</span></div>`
-      : `<div class="ck-hp"><span class="v">${f.hp}</span><span class="k">HP</span>`
-        +(showMats?'':`<span class="t${runsCls}">${runs}</span>`)+'</div>');
+   /* .ck-hp used to carry the runs label whenever the chips were hidden. The chips
+      are never hidden now, so the hero column is the heal and nothing else. */
+   +`<div class="ck-hp"><span class="v${locked?' dim':''}">${f.hp}</span><span class="k">HP</span></div>`;
 
   if(!nonInteractive){
     btn.addEventListener('click',()=>setAction('cooking',act.id));
