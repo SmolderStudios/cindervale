@@ -2795,8 +2795,12 @@ setTimeout(() => {
        JSON.stringify({writesAfter: after.length}));
 
     /* And the end-to-end statement of the same thing, through the live table. */
+    /* A prized catch's icon is its base fish's art inside a <span class="gilded">
+       wrapper, so unwrap before judging what it is made of — otherwise sixteen
+       painted fish read as "no icon at all". */
     const cov = ev(`(function(){var svg=[],art=0,none=[];
       for(var id in ITEMS){var h='';try{h=iconHTML(id)||'';}catch(e){}
+      h=h.replace(/^<span class="gilded">/,'').replace(/<\\/span>$/,'');
       if(h.indexOf('<img')===0) art++; else if(h.indexOf('<svg')>=0) svg.push(id); else none.push(id);}
       return {art:art,svg:svg,none:none};})()`);
     /* An explicit list, not a count. `cane_rod` and `master_bellows` are deliberate —
@@ -2812,6 +2816,12 @@ setTimeout(() => {
        assertion below is simply "nothing is on SVG, and nothing is iconless".
        An id only belongs here if someone looked at its new art and rejected it; if
        that happens, add it here AND to KEEP_SVG in _iconart/picks.js. */
+    /* SVG_OK was REFERENCED here and never declared. It survived only because the
+       list it filters had gone empty — Array.filter never calls the callback on an
+       empty array, so the ReferenceError could not fire. The first id to fall back
+       to SVG crashed the whole suite instead of failing one assertion, which is
+       how it surfaced. Declared now, empty, as the comment above intends. */
+    const SVG_OK = new Set([]);
     const unexpected = cov.svg.filter(id => !SVG_OK.has(id));
     ok('only known-exempt items are still on SVG, and none is iconless',
        unexpected.length === 0 && cov.none.length === 0,
@@ -3722,6 +3732,135 @@ setTimeout(() => {
       tier:ENCHANTS.manatarms_ii&&ENCHANTS.manatarms_ii.tier,
       priced:!!_ewCostFor('emerald_ring').cost
     })`));
+    section('Prized catches (0.9.122.24)');
+    {
+    /* Fishing was the only gathering skill with no variance in what came up. A
+       prized catch is the same fish, rarer — so most of what can go wrong is
+       silent: a dish weaker than the ordinary one, a recipe that never appears, a
+       drop that pays on one fishing bar but not the other, or a gilded icon that
+       snapshotted ICONS before the art block and shows the old SVG. */
+    const pz = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      var out={pairs:[],bad:[]};
+      for(var id in ITEMS){
+        var base=ITEMS[id].prizedOf; if(!base) continue;
+        out.pairs.push(id);
+        if(!ITEMS[base]) out.bad.push(id+': base '+base+' does not exist');
+        // a prized dish must beat the ordinary one it upgrades, and cost more
+        var a=ITEMS[id], b=ITEMS[base];
+        if(a.potion&&b.potion&&!(a.potion.heal>b.potion.heal))
+          out.bad.push(id+' heals '+a.potion.heal+' vs '+b.potion.heal);
+        if(!(a.sell>b.sell)) out.bad.push(id+' sells '+a.sell+' vs '+b.sell);
+        if(!a.rare) out.bad.push(id+' is not flagged rare');
+      }
+      // every fishing act drops exactly one prized fish, and it is that act's own
+      out.drops=[];
+      (SKILLS.fishing.acts||[]).forEach(function(a){
+        var caught=Object.keys(a.out||{})[0];
+        var tbl=DROPS[a.id]||[];
+        var pz=tbl.filter(function(d){ return ITEMS[d.id]&&ITEMS[d.id].prizedOf; });
+        if(pz.length!==1){ out.bad.push(a.id+' has '+pz.length+' prized drops'); return; }
+        if(ITEMS[pz[0].id].prizedOf!==caught)
+          out.bad.push(a.id+' drops the prized form of '+ITEMS[pz[0].id].prizedOf+', not '+caught);
+        var pearl=(tbl.find(function(d){return d.id==='pearl';})||{}).chance||0;
+        if(!(pz[0].chance<pearl)) out.bad.push(a.id+' prized '+pz[0].chance+' is not rarer than pearl '+pearl);
+        out.drops.push(a.id+':'+pz[0].chance);
+      });
+      // one cooking recipe per prized fish, consuming it and making the dish
+      out.recipes=(SKILLS.cooking.acts||[]).filter(function(a){ return a.onlyIf; }).length;
+      (SKILLS.cooking.acts||[]).forEach(function(a){
+        if(!a.onlyIf) return;
+        var inp=Object.keys(a.inp||{})[0], o=Object.keys(a.out||{})[0];
+        if(inp!==a.onlyIf) out.bad.push(a.id+' gates on '+a.onlyIf+' but eats '+inp);
+        if(!ITEMS[o]||!ITEMS[o].prizedOf) out.bad.push(a.id+' does not make a prized dish');
+      });
+      return JSON.stringify(out);
+    })()`));
+    ok('sixteen prized items, each upgrading a real fish',
+       pz.pairs.length === 16, pz.pairs.length + ' found');
+    ok('every prized item beats the one it upgrades and is flagged rare',
+       pz.bad.length === 0, pz.bad.slice(0, 4).join(' | '));
+    ok('every fishing act drops its own prized fish, rarer than its pearl',
+       pz.drops.length === 8, pz.drops.join(' '));
+    ok('and each has exactly one cooking recipe', pz.recipes === 8, String(pz.recipes));
+
+    /* The recipe is the notification: it appears when you hold the catch and goes
+       when you cook it. Nineteen cards is the measured limit for the four-up grid,
+       so a permanent row of eight you cannot make would bury the ones you can. */
+    const cards = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      state.xp.cooking=XP_CUM[99]; state.xp.fishing=XP_CUM[99];
+      state.items={oak_log:50};
+      state.cookingFire={loaded:{oak_log:40},partialSec:0,lit:true,lastBurnAt:Date.now()};
+      selectedSkill='cooking'; viewTab='acts'; renderCenter();
+      var without=document.querySelectorAll('#activityGrid .ck-card').length;
+      state.items.prized_raw_salmon=1;
+      renderCooking();
+      var withOne=document.querySelectorAll('#activityGrid .ck-card').length;
+      var named=/Prized Salmon/.test(document.getElementById('activityGrid').textContent);
+      delete state.items.prized_raw_salmon;
+      renderCooking();
+      var after=document.querySelectorAll('#activityGrid .ck-card').length;
+      return JSON.stringify({without:without, withOne:withOne, after:after, named:named});
+    })()`));
+    ok('a prized recipe appears only while you hold the catch',
+       cards.withOne === cards.without + 1 && cards.after === cards.without && cards.named === true,
+       JSON.stringify(cards));
+
+    /* The gild is resolved in iconHTML, not by a loop at load, because the item-art
+       block assigns over ICONS last — anything snapshotting earlier captures the
+       pre-art SVG. The first cut of this did exactly that. */
+    const icons = JSON.parse(ev(`(function(){
+      var out={};
+      out.gilded=iconHTML('prized_raw_salmon');
+      out.base=iconHTML('raw_salmon');
+      return JSON.stringify(out);
+    })()`));
+    ok('a prized icon is its own fish, gilded',
+       /^<span class="gilded">/.test(icons.gilded) && icons.gilded.indexOf('<img') > 0,
+       icons.gilded.slice(0, 60));
+    ok('and it is the PAINTED fish, not the pre-art SVG',
+       icons.gilded.indexOf('<svg') < 0 && icons.base.indexOf('<img') === 0,
+       'base starts: ' + icons.base.slice(0, 24));
+
+    /* Lucky Lure and Schooling were two nodes, 50 points apart, giving the identical
+       "+1 fish every 10th cast" on a shared counter, with identical tooltips. */
+    const lure = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      state.xp.fishing=XP_CUM[99];
+      var act=getAct('fishing','fi5');
+      state.tree=state.tree||{}; state.tree.fishing={};
+      var off=skillDropChance('fishing',{id:'prized_raw_salmon',chance:0.005},mods('fishing'));
+      state.tree.fishing.fi_master1=1;
+      var on=skillDropChance('fishing',{id:'prized_raw_salmon',chance:0.005},mods('fishing'));
+      var pearlOn=skillDropChance('fishing',{id:'pearl',chance:0.006},mods('fishing'));
+      var pearlOff=skillDropChance('woodcutting',{id:'pearl',chance:0.006},mods('woodcutting'));
+      return JSON.stringify({off:off, on:on, pearlOn:pearlOn, pearlOff:pearlOff});
+    })()`));
+    ok('Lucky Lure doubles a prized catch', Math.abs(lure.on - lure.off * 2) < 1e-9,
+       JSON.stringify(lure));
+    ok('and does nothing to an ordinary drop',
+       Math.abs(lure.pearlOn - lure.pearlOff) < 1e-9, JSON.stringify(lure));
+    ok('its description no longer claims bonus fish',
+       ev(`(function(){
+         var n=(TREES.fishing||[]).find(function(x){ return x.id==='fi_master1'; });
+         var t=(n&&n.desc?String(n.desc(1)):'')+' '+((typeof NODE_TIP!=='undefined'&&NODE_TIP.fi_master1)||'');
+         return /prized/i.test(t) && !/bonus fish/i.test(t);
+       })()`)===true);
+
+    /* Both fishing bars are real casts. Schooling paid procs*1 on the primary and
+       procs*2 on the second bar for the same node and the same tooltip. */
+    const bars = JSON.parse(ev(`(function(){
+      var src=(document.querySelector('script')||{}).textContent||'';
+      var hits=(src.match(/if\\(m\\.fi_school\\)[\\s\\S]{0,140}?qty\\+=procs\\*(\\d)/g)||[]);
+      var mults=(src.match(/qty\\+=procs\\*(\\d)/g)||[]);
+      return JSON.stringify({mults:mults});
+    })()`));
+    ok('Schooling pays the same on both fishing bars',
+       bars.mults.every(function(x){ return x === 'qty+=procs*1'; }),
+       JSON.stringify(bars.mults));
+    }
+
     section('One coin, everywhere money is (0.9.122.23)');
     {
     /* 0.9.122.17 replaced the currency coins with painted art and pointed only
