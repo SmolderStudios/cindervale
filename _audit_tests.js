@@ -3434,6 +3434,59 @@ setTimeout(() => {
     ok('it lists one chip per seed held, and offers the sell path',
        panel.chips===2 && panel.sellToggle===true, JSON.stringify(panel));
 
+    /* Hovering a seed has to give the same card a satchel row gives — it is the
+       only place seeds are visible now, so losing the hover would lose "where do
+       I get this" for eighteen items. Dispatches a REAL mouseover so the
+       delegated [data-item] handler runs; calling showItemTooltip directly would
+       prove nothing, since the wiring is the whole question. */
+    const seedHover = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      state.xp.farming=XP_CUM[62]; state.patches={}; _farmInteractAt=0;
+      state.seeds={wildberry_seed:120, herb_seed:44};
+
+      function hoverFirst(){
+        var chips=[].slice.call(document.querySelectorAll('.fm-seed'));
+        if(!chips.length) return {chips:0};
+        if(typeof hideTooltip==='function') hideTooltip();
+        chips[0].dispatchEvent(new MouseEvent('mouseover',{bubbles:true,clientX:120,clientY:120}));
+        var tip=document.getElementById('itemTooltip');
+        /* DOUBLE the backslash: this whole block is a template literal, so a
+           lone \s collapses to 's' and the regex becomes /s+/g, which quietly
+           deletes every letter s in the card and fails the sell-line check. */
+        var txt=tip?tip.textContent.replace(/\\s+/g,' ').trim():'';
+        var id=chips[0].getAttribute('data-item');
+        return {
+          chips:chips.length,
+          tagged:chips.filter(function(c){return c.hasAttribute('data-item');}).length,
+          shown:!!(tip && tip.style.display!=='none'),
+          named:txt.indexOf(ITEMS[id].name)>=0,
+          sources:txt.toLowerCase().indexOf('source')>=0,
+          sells:txt.toLowerCase().indexOf('sells for')>=0
+        };
+      }
+
+      _fmSellSeeds=false;
+      selectedSkill='farming'; viewTab='acts'; renderCenter(); renderFarming();
+      var plant=hoverFirst();
+
+      // and it must survive the sell toggle, which restyles the same buttons
+      _fmSellSeeds=true; _farmInteractAt=0; renderFarming();
+      var sell=hoverFirst();
+      _fmSellSeeds=false;
+
+      return JSON.stringify({plant:plant, sell:sell});
+    })()`));
+    ok('every seed in the vault carries its item id for the hover card',
+       seedHover.plant.chips===2 && seedHover.plant.tagged===2,
+       JSON.stringify(seedHover.plant));
+    ok('hovering one opens the same card the satchel opens',
+       seedHover.plant.shown===true && seedHover.plant.named===true &&
+       seedHover.plant.sources===true && seedHover.plant.sells===true,
+       JSON.stringify(seedHover.plant));
+    ok('and the card still works while the vault is in sell mode',
+       seedHover.sell.shown===true && seedHover.sell.named===true,
+       JSON.stringify(seedHover.sell));
+
     /* Five more slots from minute one, and a higher ceiling. */
     ok('a fresh satchel starts at 33 slots',
        ev(`(function(){ state=defaultState(); normalizeState(); return satchelCap(); })()`)===33);
