@@ -1699,6 +1699,14 @@ select option:checked{background-color:#2a1d10;color:#f0c772}
 
 /* Supplies restock, so their card leads with what arrives, not with a slot. */
 .sh-card.stock .sh-ic{background:radial-gradient(90% 90% at 50% 20%,#1a2410,#080c05)}
+/* The crate's contents. One chip per tier, best first, so the mix reads at a
+   glance and each tier is a hover away from its satchel card. */
+.sh-mix{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;padding-top:8px;
+  border-top:1px solid var(--trim-d)}
+.sh-lot{display:inline-flex;align-items:center;gap:3px;padding:1px 5px 1px 3px;
+  border-radius:4px;background:#0c0704;box-shadow:inset 0 1px 2px rgba(0,0,0,.7)}
+.sh-lot .ev-icon{width:14px;height:14px;flex:none}
+.sh-lot b{font-family:var(--num);font-size:calc(10.5px*var(--tscale));color:#9ddc7a;font-weight:600}
 .sh-qty{font-family:var(--num);font-size:calc(10.5px*var(--tscale));color:#9ddc7a;
   display:flex;align-items:center;gap:5px;margin-top:7px;padding-top:7px;
   border-top:1px solid var(--trim-d)}
@@ -7211,7 +7219,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.122.20">v0.9.122</div>
+  <div class="mm-ver" data-build="0.9.122.21">v0.9.122</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -17057,66 +17065,127 @@ function hasCharm(id){ return !!(state&&Array.isArray(state.charms)&&state.charm
    `mult` is the markup over base sell. `req` is {skill, lvl} the player must meet. */
 const SUPPLIES=[
   {id:'sup_logs',   name:'Bundle of Logs',    grants:'log',   qty:100, mult:2.5, req:{skill:'woodcutting',lvl:1},
-   desc:'100 logs of the best tier your Woodcutting level allows.'},
+   desc:'A merchant\u2019s crate \u2014 mostly common wood, with a share of every tier you have unlocked.'},
   {id:'sup_ore',    name:'Crate of Ore',      grants:'ore',   qty:100, mult:2.5, req:{skill:'mining',lvl:1},
-   desc:'100 ore of the best tier your Mining level allows.'},
+   desc:'Mixed ore straight off the cart. The deeper you mine, the richer the crate runs.'},
   {id:'sup_coal',   name:'Sack of Coal',      grants:'coal',  qty:100, mult:2.0, req:{skill:'smithing',lvl:15},
    desc:'100 Coal. The smelting bottleneck, bought rather than mined.'},
   {id:'sup_fish',   name:'Barrel of Raw Fish',grants:'fish',  qty:100, mult:2.5, req:{skill:'fishing',lvl:1},
-   desc:'100 raw fish of the best tier your Fishing level allows.'},
+   desc:'A morning\u2019s catch, sorted and iced. Mostly small fry, and better the further you have fished.'},
   {id:'sup_herbs',  name:'Bundle of Herbs',   grants:'herb',  qty:50,  mult:2.5, req:{skill:'foraging',lvl:1},
-   desc:'50 herbs of the best tier your Foraging level allows.'},
+   desc:'Cuttings tied in bunches \u2014 common growth first, rarer stems as your eye sharpens.'},
   {id:'sup_bars',   name:'Crate of Bars',     grants:'bar',   qty:50,  mult:3.0, req:{skill:'smithing',lvl:1},
-   desc:'50 bars of the best tier your Smithing level allows.'},
+   desc:'Mixed billets from the guild furnace. Mostly plain metal, some of it far from it.'},
 ];
 
 /* Which item a supply hands over depends on the player's level in its skill, so one
    shop row serves the whole game rather than seven rows per material. Reads the
    skill's own act list, so a new tier added to a skill is stocked automatically. */
-function supplyItemFor(sup){
-  if(sup.grants==='coal') return 'coal';
-  const sk=sup.req.skill==='smithing'&&sup.grants==='bar'?'smithing':sup.req.skill;
+/* Every tier of this supply's material the player has unlocked, cheapest first.
+   Reads the skill's own act list, so a tier added to a skill is stocked
+   automatically and a tier removed disappears. */
+function supplyTiersFor(sup){
+  if(sup.grants==='coal') return ITEMS.coal?[{id:'coal', lvl:1}]:[];
+  const sk=sup.req.skill;
   const lvl=levelFromXp((state.xp&&state.xp[sk])||0);
   const acts=(SKILLS[sk]&&SKILLS[sk].acts)||[];
-  let best=null;
+  const seen={}, out=[];
   for(const a of acts){
-    if((a.lvl||1)>lvl) continue;
+    const need=(a.id==='co8'&&typeof highFishUnlockLevel==='function')?highFishUnlockLevel():(a.lvl||1);
+    if(need>lvl) continue;
     for(const id in (a.out||{})){
-      const it=ITEMS[id]; if(!it||!it.sell) continue;
+      const it=ITEMS[id]; if(!it||!it.sell||seen[id]) continue;
       if(sup.grants==='log'  && !(id.endsWith('_log')||id==='driftwood')) continue;
       if(sup.grants==='ore'  && !id.endsWith('_ore')) continue;
       if(sup.grants==='fish' && !id.startsWith('raw_')) continue;
       if(sup.grants==='bar'  && !id.endsWith('_bar')) continue;
-      if(sup.grants==='herb' && (id.endsWith('_log')||id.endsWith('_ore')||id.endsWith('_bar')||id.startsWith('raw_')||isSeedId(id))) continue;
-      if(!best||(ITEMS[id].sell>ITEMS[best].sell)) best=id;
+      if(sup.grants==='herb' && (id.endsWith('_log')||id.endsWith('_ore')||id.endsWith('_bar')
+                                 ||id.startsWith('raw_')||id==='coal'||isSeedId(id))) continue;
+      seen[id]=1; out.push({id:id, lvl:need});
     }
   }
+  out.sort(function(a,b){ return (ITEMS[a.id].sell||0)-(ITEMS[b.id].sell||0); });
+  return out;
+}
+
+/* How a bundle is made up. A crate of a hundred logs that is a hundred Ancient
+   Logs is both boring and wrong — a merchant's crate is mostly the cheap stuff.
+
+   Each unlocked tier is weighted by how far PAST its unlock you are:
+     w = (yourLevel - tierLevel + 1) ^ 0.6
+   so the tier you unlocked first is always the biggest share, a tier you unlocked
+   this week is a trickle, and every tier's share grows as you level. The exponent
+   is what stops it being all pine: raw distance gives Ancient 4% of a Lv 99 crate,
+   ^0.6 gives it 5% while lifting the whole top half. A Lv 45 crate is 38% pine and
+   4% emberwood; a Lv 99 crate runs 21% pine down to 5% ancient.
+
+   Largest-remainder apportionment, so the counts total exactly sup.qty rather than
+   drifting a few either way on rounding. */
+const SUPPLY_MIX_EXP=0.6;
+function supplyMixFor(sup){
+  const tiers=supplyTiersFor(sup);
+  if(!tiers.length) return [];
+  if(tiers.length===1) return [{id:tiers[0].id, n:sup.qty}];
+  const lvl=levelFromXp((state.xp&&state.xp[sup.req.skill])||0);
+  const w=tiers.map(function(t){ return Math.pow(Math.max(1,lvl-t.lvl+1), SUPPLY_MIX_EXP); });
+  const total=w.reduce(function(a,b){ return a+b; },0);
+  const raw=w.map(function(x){ return x/total*sup.qty; });
+  const mix=tiers.map(function(t,i){ return {id:t.id, n:Math.floor(raw[i]), rem:raw[i]-Math.floor(raw[i])}; });
+  let left=sup.qty-mix.reduce(function(a,m){ return a+m.n; },0);
+  mix.slice().sort(function(a,b){ return b.rem-a.rem; }).forEach(function(m){ if(left-->0) m.n++; });
+  return mix.filter(function(m){ return m.n>0; }).map(function(m){ return {id:m.id, n:m.n}; });
+}
+
+/* Price follows the mix, never a hand-written number, and it is quoted off
+   effectiveItemSell rather than base sell — so it stays above what the player can
+   sell the crate back for even at +100% Bountiful Earth with a Signet, a Fortune
+   enchant and a Coin Purse all stacked. A supply that could be flipped for profit
+   is an unbounded gold printer, the same shape as the craft-a-tool-and-sell-it
+   exploit closed in 1.0.47. */
+function supplyCost(sup){
+  const mix=supplyMixFor(sup);
+  if(!mix.length) return 0;
+  let total=0;
+  for(const m of mix) total+=Math.max(1,effectiveItemSell(m.id))*m.n;
+  return Math.max(1, Math.round(total*sup.mult));
+}
+/* The card's icon and the crate's headline are the BEST thing in it, because that
+   is the part that changes as you level and reads as progress. */
+function supplyTopItem(sup){
+  const mix=supplyMixFor(sup);
+  if(!mix.length) return null;
+  let best=mix[0].id;
+  for(const m of mix) if((ITEMS[m.id].sell||0)>(ITEMS[best].sell||0)) best=m.id;
   return best;
 }
-/* Price follows the item, never a hand-written number — so a supply can never be
-   cheaper than what it grants sells for, at any tier, however the tiers move. */
-function supplyCost(sup){
-  const id=supplyItemFor(sup);
-  if(!id) return 0;
-  return Math.max(1, Math.round((ITEMS[id].sell||1)*sup.qty*sup.mult));
-}
+
 function buySupply(supId){
-  const sup=SUPPLIES.find(x=>x.id===supId); if(!sup) return;
+  const sup=SUPPLIES.find(function(x){ return x.id===supId; }); if(!sup) return;
   const lvl=levelFromXp((state.xp&&state.xp[sup.req.skill])||0);
   if(lvl<sup.req.lvl){ toast('Requires '+SKILLS[sup.req.skill].name+' level '+sup.req.lvl+'.'); return; }
-  const id=supplyItemFor(sup);
-  if(!id){ toast('Nothing in stock for your level yet.'); return; }
+  const mix=supplyMixFor(sup);
+  if(!mix.length){ toast('Nothing in stock for your level yet.'); return; }
   const cost=supplyCost(sup);
   if(state.coins<cost*SILVER_PER_GOLD){ toast('Not enough coins.'); return; }
+
   /* Pay only for what actually arrives. grantItem refuses a NEW item type when the
-     satchel is full and returns 0 — taking the gold first would charge for nothing,
-     which is the same silent loss the satchel-full material bug was. */
-  const got=grantItem(id, sup.qty);
+     satchel is full and returns 0, and a mixed crate can be refused one tier at a
+     time — taking the gold up front would charge for a crate that half-arrived,
+     which is the same silent loss the satchel-full material bug was. Each line is
+     priced at its own rate, so a refused Ancient Log is not paid for at pine rates. */
+  let paid=0, got=0, lines=0;
+  for(const m of mix){
+    const n=grantItem(m.id, m.n);
+    if(n<=0) continue;
+    paid+=Math.max(1,effectiveItemSell(m.id))*n*sup.mult;
+    got+=n; lines++;
+  }
   if(got<=0){ toast('\ud83c\udf92 Satchel full \u2014 make room first.'); return; }
-  const paid=Math.round(cost*(got/sup.qty));
-  state.coins-=paid*SILVER_PER_GOLD;
+  state.coins-=Math.round(paid)*SILVER_PER_GOLD;
   renderAll(); saveGame();
-  toast('Bought '+got+'\u00d7 '+ITEMS[id].name+'.');
+  toast(got<sup.qty
+    ? '\ud83c\udf92 Satchel full \u2014 bought '+got+' of '+sup.qty+'.'
+    : 'Bought '+got+' across '+lines+' tier'+(lines===1?'':'s')+'.');
 }
 function buyCharm(id){
   const c=CHARM_BY_ID[id]; if(!c) return;
@@ -25174,18 +25243,33 @@ function renderShopSupplies(grid){
   for(const sup of SUPPLIES){
     const lvl=levelFromXp((state.xp&&state.xp[sup.req.skill])||0);
     const lvlMet=lvl>=sup.req.lvl;
-    const id=supplyItemFor(sup);
+    const mix=supplyMixFor(sup);
+    const top=supplyTopItem(sup);
     const cost=supplyCost(sup);
-    const poor=!id||state.coins<cost*SILVER_PER_GOLD;
-    const stocked=!!id;
+    const poor=!mix.length||state.coins<cost*SILVER_PER_GOLD;
+
+    /* The whole crate, best tier first — the mix IS the product, so hiding it
+       behind "100 assorted logs" would put the player back to guessing. Each chip
+       carries data-item, so the satchel card is one hover away on every tier. */
+    let bill='';
+    if(mix.length){
+      const byWorth=mix.slice().sort(function(a,b){
+        return (ITEMS[b.id].sell||0)-(ITEMS[a.id].sell||0); });
+      bill='<div class="sh-mix">'+byWorth.map(function(m){
+        return '<span class="sh-lot" data-item="'+m.id+'" data-itemnote="'+m.n
+          +' in this crate">'+iconHTML(m.id)+'<b>'+m.n+'</b></span>';
+      }).join('')+'</div>';
+    } else {
+      bill='<div class="sh-qty" style="color:#8a7657;border-top-color:#3a2a18">'
+        +'Out of stock at your level.</div>';
+    }
+
     grid.appendChild(shCard({
-      cls:'stock', icon:iconHTML(id||'ui_satchel'), name:sup.name,
+      cls:'stock', icon:iconHTML(top||'foraging_pouch'), name:sup.name,
       gate:SKILLS[sup.req.skill].name+(sup.req.lvl>1?' '+sup.req.lvl:''),
-      desc:sup.desc+(stocked
-        ? '<div class="sh-qty">'+iconHTML(id)+'<b>'+sup.qty+'\u00d7 '+ITEMS[id].name+'</b></div>'
-        : '<div class="sh-qty" style="color:#8a7657;border-top-color:#3a2a18">Out of stock at your level.</div>'),
-      itemId:id||null, cost:cost, poor:poor, repeat:true,
-      locked:!lvlMet||!stocked,
+      desc:sup.desc+bill,
+      itemId:top||null, cost:cost, poor:poor, repeat:true,
+      locked:!lvlMet||!mix.length,
       lockLabel:!lvlMet?(SKILLS[sup.req.skill].name+' '+sup.req.lvl):'No stock',
       buyLabel:'Buy '+sup.qty,
       onBuy:function(){ buySupply(sup.id); }
