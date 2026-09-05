@@ -71,7 +71,7 @@ setTimeout(() => {
         state=defaultState(); normalizeState(); state.xp.farming=XP_CUM[99]; state.skillPets={};
         var patch=PATCHES[0], crop=CROPS[0];
         if(!patch||!crop) return 'no patch/crop def';
-        state.items[crop.id]=5;
+        state.seeds[crop.id]=5;
         if(!plantPatch(patch.id, crop.id, true)) return 'plant refused';
         state.patches[patch.id].plantedAt = Date.now() - (crop.growMs+60000);  // force ready
         if(!patchReady(state.patches[patch.id])) return 'not ready after backdate';
@@ -2482,7 +2482,8 @@ setTimeout(() => {
       renderFarming();
       return document.getElementById('activityGrid').innerHTML; })()`);
 
-    const seeds = "CROPS.forEach(function(c){ state.items[c.id]=40; });";
+    /* Seeds live in the vault since 0.9.122.17, not the satchel. */
+    const seeds = "CROPS.forEach(function(c){ state.seeds[c.id]=40; });";
 
     const base = render(seeds);
     ok('the panel renders a seed shelf', base.indexOf('class="fm-seeds"') > 0);
@@ -2501,18 +2502,18 @@ setTimeout(() => {
          .indexOf('farmerSeedSel') > 0);
 
     /* One chip per seed you actually hold, and none for seeds you do not. */
-    ok('the shelf lists exactly the seeds you own',
+    ok('the vault lists exactly the seeds you own',
        ev(`(function(){ state=defaultState(); normalizeState();
          state.xp.farming=XP_CUM[62]; state.patches={}; _farmInteractAt=0;
-         state.items[CROPS[0].id]=5; state.items[CROPS[1].id]=2;
+         state.seeds[CROPS[0].id]=5; state.seeds[CROPS[1].id]=2;
          selectedSkill='farming'; renderFarming();
          return document.querySelectorAll('.fm-seed').length; })()`) === 2);
-    ok('an empty satchel says so instead of drawing an empty shelf',
+    ok('an empty vault says so instead of drawing an empty shelf',
        ev(`(function(){ state=defaultState(); normalizeState();
          state.xp.farming=XP_CUM[62]; state.patches={}; _farmInteractAt=0;
          selectedSkill='farming'; renderFarming();
          return document.getElementById('activityGrid').innerHTML; })()`)
-         .indexOf('No seeds in your satchel') > 0);
+         .indexOf('The vault is empty') > 0);
 
     /* Selection drives every Plant control on the panel, so it has to survive a
        save round-trip — the old _farmSeedSel.plantAll was session-only. */
@@ -2528,11 +2529,11 @@ setTimeout(() => {
     ok('an exhausted choice falls back to the best crop you can grow',
        ev(`(function(){ state=defaultState(); normalizeState();
          state.xp.farming=XP_CUM[62]; state.items={};
-         state.items['wildberry_seed']=3; state.items['herb_seed']=3;
+         state.seeds['wildberry_seed']=3; state.seeds['herb_seed']=3;
          state.farmSeed='voidbloom_seed';
          var s=fmSelectedSeed(); return s&&s.id; })()`) === 'herb_seed');
     ok('and no seeds at all returns nothing rather than throwing',
-       ev(`(function(){ state.items={}; return fmSelectedSeed(); })()`) === null);
+       ev(`(function(){ state.items={}; state.seeds={}; return fmSelectedSeed(); })()`) === null);
 
     /* Plant All names what it will sow. It used to read "Plant All" beside a
        separate dropdown, which is how you end up planting the wrong crop. */
@@ -2560,7 +2561,7 @@ setTimeout(() => {
     ok('clicking a patch plants the selected seed',
        ev(`(function(){ state=defaultState(); normalizeState();
          state.xp.farming=XP_CUM[62]; state.patches={}; state.items={};
-         state.items['wildberry_seed']=5; state.farmSeed='wildberry_seed';
+         state.seeds['wildberry_seed']=5; state.farmSeed='wildberry_seed';
          plantPatch('p1','wildberry_seed',true);
          return state.patches.p1 && state.patches.p1.seedId; })()`) === 'wildberry_seed');
 
@@ -3308,9 +3309,9 @@ setTimeout(() => {
         var want=ty==='ring'?'Ring':ty==='amulet'?'Amulet':ty==='pendant'?'Pendant':null;
         if(want && txt.indexOf('\\u00b7 '+want)<0) bad.push(id+': header does not say '+want);
         // and the body must say which set it completes
-        if(ty==='amulet'  && txt.indexOf('boosts combat instead')<0) bad.push(id+': no amulet-vs-pendant line');
-        if(ty==='pendant' && txt.indexOf('boosts skilling instead')<0) bad.push(id+': no pendant-vs-amulet line');
-        if(ty==='ring'    && txt.indexOf('counts twice')<0) bad.push(id+': no ring line');
+        if(ty==='amulet'  && txt.indexOf('Amulet (skilling)')<0) bad.push(id+': header not tagged skilling');
+        if(ty==='pendant' && txt.indexOf('Pendant (combat)')<0) bad.push(id+': header not tagged combat');
+        if(txt.indexOf('Set ')<0) bad.push(id+': no set progress line');
       });
       return JSON.stringify({seen:seen, bad:bad});
     })()`));
@@ -3322,6 +3323,124 @@ setTimeout(() => {
          var want=PENDANT_SETS.sapphire.desc.replace(/^[^:]*: */,'');
          return t.indexOf(want)>=0;
        })()`)===true);
+
+    /* ── the seed vault (0.9.122.17) ─────────────────────────────────────────
+       Eighteen crop ids used to sit in satchel slots the player buys with gold,
+       and a full satchel refused a foraged seed outright — the same silent-loss
+       shape the material bug at the top of this file guards. The migration is the
+       risky half: it runs on every load and moves seeds out of state.items, so a
+       save round-trip has to keep every seed and lose none. */
+    section('Seed vault (0.9.122.17)');
+    {
+    const vault = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      state.xp.farming=XP_CUM[62];
+
+      // a save written before the vault: seeds sitting in the satchel
+      state.items={wildberry_seed:7, herb_seed:3, ancient_seed:4, oak_log:20};
+      state.seeds={};
+      normalizeState();
+      const migrated={seedsMoved:(state.seeds.wildberry_seed||0)+(state.seeds.herb_seed||0),
+                      stillInBag:(state.items.wildberry_seed||0)+(state.items.herb_seed||0),
+                      ancientKept:state.items.ancient_seed||0,
+                      logsKept:state.items.oak_log||0};
+
+      // a foraged seed with a COMPLETELY full satchel must still arrive
+      const cap=satchelCap();
+      const pad=Object.keys(ITEMS).filter(function(i){
+        return !isSeedId(i) && !ITEMS[i].tool && !ITEMS[i].skillGear; });
+      state.items={};
+      for(let i=0;i<cap+5 && i<pad.length;i++) state.items[pad[i]]=1;
+      const wasFull=satchelUsed()>=satchelCap();
+      const before=seedQty('wildberry_seed');
+      grantItem('wildberry_seed',3);
+      const gotWhileFull=seedQty('wildberry_seed')-before;
+
+      // planting spends the vault, not the satchel
+      state.seeds={wildberry_seed:2}; state.patches={};
+      const planted=plantPatch('p1','wildberry_seed',true);
+      const afterPlant=seedQty('wildberry_seed');
+      const leakedToBag=(state.items.wildberry_seed||0);
+
+      // and the vault is not slot-limited
+      state.items={}; state.seeds={};
+      CROPS.forEach(function(c){ addSeed(c.id, 999); });
+      const allHeld=CROPS.every(function(c){ return seedQty(c.id)===999; });
+      const satchelUntouched=satchelUsed();
+
+      // a seed can still be sold, from wherever it now lives
+      const sellable=sellableQty('wildberry_seed');
+      bagTake('wildberry_seed',9);
+      const afterSell=seedQty('wildberry_seed');
+
+      return JSON.stringify({migrated:migrated, wasFull:wasFull, gotWhileFull:gotWhileFull,
+        planted:planted, afterPlant:afterPlant, leakedToBag:leakedToBag,
+        allHeld:allHeld, satchelUntouched:satchelUntouched,
+        sellable:sellable, afterSell:afterSell});
+    })()`));
+
+    ok('an old save moves its seeds into the vault and loses none',
+       vault.migrated.seedsMoved===10 && vault.migrated.stillInBag===0,
+       JSON.stringify(vault.migrated));
+    /* ancient_seed turned out to be BOTH: a Lv80 crop and the input to two
+       alchemy recipes. So it does belong in the vault — and matHave plus the
+       recipe spend had to learn to read it there, or both recipes became
+       permanently uncraftable while the player was holding a stack. Ordinary
+       items stay in the satchel. */
+    ok('an ordinary item is left in the satchel', vault.migrated.logsKept===20);
+    ok('a seed that is ALSO a recipe input can still be brewed with',
+       ev(`(function(){
+         state=defaultState(); normalizeState();
+         state.xp.alchemy=XP_CUM[99];
+         state.seeds={ancient_seed:5};
+         state.items={tearmoss:99};
+         var act=getAct('alchemy','al_h4');
+         if(!act) return 'no recipe';
+         var afford=canAfford(act,1,mods('alchemy'));
+         completeAction(act,'alchemy',1);
+         return afford+'/'+seedQty('ancient_seed')+'/'+((state.items.heal_draught_4||0)>0);
+       })()`)==='1/4/true');
+    ok('a foraged seed arrives even with a completely full satchel',
+       vault.wasFull===true && vault.gotWhileFull===3,
+       'full='+vault.wasFull+' got='+vault.gotWhileFull);
+    ok('planting spends the vault and never touches the satchel',
+       vault.planted===true && vault.afterPlant===1 && vault.leakedToBag===0,
+       JSON.stringify([vault.planted, vault.afterPlant, vault.leakedToBag]));
+    ok('the vault is uncapped and costs no satchel slots',
+       vault.allHeld===true && vault.satchelUntouched===0,
+       'satchel used '+vault.satchelUntouched);
+    ok('a seed is still sellable now it lives elsewhere',
+       vault.sellable===999 && vault.afterSell===990,
+       'sellable '+vault.sellable+', left '+vault.afterSell);
+
+    /* The panel is the only place seeds are visible now, so it has to name the
+       vault and offer the sell path the satchel used to carry. */
+    const panel = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      state.xp.farming=XP_CUM[62]; state.patches={}; _farmInteractAt=0; _fmSellSeeds=false;
+      state.seeds={wildberry_seed:5, herb_seed:2};
+      selectedSkill='farming'; renderFarming();
+      const html=document.getElementById('activityGrid').innerHTML;
+      return JSON.stringify({
+        titled: html.indexOf('Seed Vault')>=0,
+        saysWhere: html.indexOf('not in your satchel')>=0,
+        chips: document.querySelectorAll('.fm-seed').length,
+        sellToggle: !!document.querySelector('.fm-vsell'),
+        count: (html.match(/7 seeds/)||[])[0]||''
+      });
+    })()`));
+    ok('the farming panel names the vault and says seeds live there',
+       panel.titled===true && panel.saysWhere===true);
+    ok('it lists one chip per seed held, and offers the sell path',
+       panel.chips===2 && panel.sellToggle===true, JSON.stringify(panel));
+
+    /* Five more slots from minute one, and a higher ceiling. */
+    ok('a fresh satchel starts at 33 slots',
+       ev(`(function(){ state=defaultState(); normalizeState(); return satchelCap(); })()`)===33);
+    ok('and the ceiling is 333',
+       ev(`(function(){ state=defaultState(); normalizeState();
+         state.satchelUpgrades=SATCHEL_MAX_EXPANSIONS; return satchelCap(); })()`)===333);
+    }
 
     /* ── every weapon says what weight class it is (ticket #53) ──────────────
        "The Shields and the Bucklers mention light weapons in their tooltips, but
