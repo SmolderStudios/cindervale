@@ -3722,6 +3722,127 @@ setTimeout(() => {
       tier:ENCHANTS.manatarms_ii&&ENCHANTS.manatarms_ii.tier,
       priced:!!_ewCostFor('emerald_ring').cost
     })`));
+    section('Cooking cards (ticket #59, 0.9.122.19)');
+    {
+    /* Three silent defects in one panel, none of which throw.
+
+       1. The fire does not burn a second of fuel per real second - Slow Embers and
+          Open Hearth stretch it - but cookingFuelCyclesLeft divided raw fuel seconds
+          by cook time, so a fully-ranked cook was told the fire held a third fewer
+          cooks than it did, and Eternal Flame (fuel never burns) reported ZERO.
+       2. "2 runs" was ambiguous between out-of-fish and out-of-fuel, separated only
+          by an 11px flame glyph. The reporter read a fuel-capped "2 runs" while
+          holding 24 raw minnows and reasonably concluded the count was broken.
+       3. The chips were hidden while you could afford everything, so a dish you
+          could actually cook printed no recipe at all - and they carried a thin
+          data-tip rather than the data-item satchel card every other panel got in
+          0.9.121.20. The dish icon carried nothing at all. */
+    const fuel = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      state.xp.cooking=XP_CUM[60];
+      state.items={};
+      state.cookingFire={loaded:{ancient_log:4},partialSec:0,lit:true,lastBurnAt:Date.now()};
+      var act=getAct('cooking','co1');
+      var real=fuelBurnMult;
+      var out={burn:fireBurnSec(), sec:actMs(act,'cooking')/1000};
+      fuelBurnMult=function(){ return 1; };   out.plain  =cookingFuelCyclesLeft(act,'cooking');
+      fuelBurnMult=function(){ return 0.5; }; out.slowed =cookingFuelCyclesLeft(act,'cooking');
+      fuelBurnMult=function(){ return 0; };   out.eternal=cookingFuelCyclesLeft(act,'cooking')===Infinity;
+      fuelBurnMult=real;
+      return JSON.stringify(out);
+    })()`));
+    ok('fuel that burns half as fast is worth twice the cooks',
+       fuel.slowed===fuel.plain*2 && fuel.plain===Math.floor(fuel.burn/fuel.sec),
+       JSON.stringify(fuel));
+    ok('and a fire that never burns down is not "0 runs"', fuel.eternal===true);
+
+    /* The panel itself. One save, four readings of the same grid. */
+    const ck = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      state.xp.cooking=XP_CUM[60]; state.xp.fishing=XP_CUM[60];
+      state.items={raw_minnow:24, oak_log:9};
+      state.cookingFire={loaded:{oak_log:1},partialSec:0,lit:true,lastBurnAt:Date.now()};
+      selectedSkill='cooking'; viewTab='acts'; renderCenter(); renderCooking();
+
+      function cardFor(actId){
+        var i=SKILLS.cooking.acts.findIndex(function(a){ return a.id===actId; });
+        return document.querySelectorAll('#activityGrid .ck-card')[i];
+      }
+      var c=cardFor('co1');
+      var mat=c.querySelector('.needs .mat');
+      var runs=c.querySelector('.needs .runs');
+      var icon=c.querySelector('.act-icon');
+      var out={
+        affordable:  canAfford(getAct('cooking','co1'),Infinity,mods('cooking')),
+        chips:       c.querySelectorAll('.needs .mat').length,
+        chipText:    mat?mat.textContent:'',
+        runsText:    runs?runs.textContent.trim():'',
+        fuelCapped:  !!(runs&&runs.className.indexOf('fuelcap')>=0),
+        matItem:     mat?mat.getAttribute('data-item'):null,
+        matNote:     mat?mat.getAttribute('data-itemnote'):null,
+        matLegacy:   mat?mat.getAttribute('data-tip'):null,
+        dishItem:    icon?icon.getAttribute('data-item'):null,
+        heroText:    c.querySelector('.ck-hp').textContent.trim()
+      };
+      var cards=[].slice.call(document.querySelectorAll('#activityGrid .ck-card'));
+      out.recipeless=cards.filter(function(x){
+        return !/Unlocks at/.test(x.textContent) && !x.querySelector('.needs .mat'); }).length;
+      out.untagged=cards.filter(function(x){
+        var m=x.querySelector('.needs .mat'); return m && !m.getAttribute('data-item'); }).length;
+      out.dishUntagged=cards.filter(function(x){
+        var i=x.querySelector('.act-icon'); return i && !i.getAttribute('data-item'); }).length;
+
+      // let the fire die and the cards say so in words
+      state.cookingFire={loaded:{},partialSec:0,lit:false,lastBurnAt:Date.now()};
+      renderCooking();
+      var r2=cardFor('co1').querySelector('.needs .runs');
+      out.outText=r2?r2.textContent.trim():'';
+
+      // plenty of fuel, no fish: the OTHER errand
+      state.items={};
+      state.cookingFire={loaded:{ancient_log:6},partialSec:0,lit:true,lastBurnAt:Date.now()};
+      renderCooking();
+      var r3=cardFor('co1').querySelector('.needs .runs');
+      out.starvedText=r3?r3.textContent.trim():'';
+
+      // and with both, the plain ingredient count is what shows
+      state.items={raw_minnow:24};
+      renderCooking();
+      var r4=cardFor('co1').querySelector('.needs .runs');
+      out.plentyText=r4?r4.textContent.trim():'';
+      return JSON.stringify(out);
+    })()`));
+
+    ok('a dish you can afford still prints its recipe',
+       ck.affordable===24 && ck.chips===1 && /24/.test(ck.chipText),
+       JSON.stringify([ck.affordable, ck.chips, ck.chipText]));
+    ok('and so does every other unlocked dish', ck.recipeless===0,
+       ck.recipeless+' cards printed no ingredients');
+    /* The whole ticket: 24 fish in the bag, "2 runs" on the card. The number was
+       right - it was the fire - and nothing on the card said so. */
+    ok('a fuel-capped count says the FIRE is what is short',
+       ck.fuelCapped===true && /fire/i.test(ck.runsText) && /2\s*runs/.test(ck.runsText),
+       JSON.stringify(ck.runsText));
+    ok('a dead fire says so in words, not "0 runs"',
+       /fire is out/i.test(ck.outText) && !/\b0\s*runs/.test(ck.outText),
+       JSON.stringify(ck.outText));
+    ok('no ingredients still reads as no ingredients',
+       /no ingredients/i.test(ck.starvedText), JSON.stringify(ck.starvedText));
+    ok('and with fuel and fish both, the plain count shows unqualified',
+       ck.plentyText==='24 runs', JSON.stringify(ck.plentyText));
+    ok('an ingredient chip opens the satchel card, not the thin CSS tip',
+       ck.matItem==='raw_minnow' && /have 24, need 1/.test(ck.matNote||'') && !ck.matLegacy,
+       JSON.stringify([ck.matItem, ck.matNote, ck.matLegacy]));
+    ok('so does the dish icon', ck.dishItem==='cooked_minnow', JSON.stringify(ck.dishItem));
+    ok('every card on the panel is tagged the same way',
+       ck.untagged===0 && ck.dishUntagged===0,
+       'chips '+ck.untagged+', dishes '+ck.dishUntagged);
+    /* The heal column carried the runs label whenever the chips were hidden. The
+       chips are never hidden now, so it is the heal and nothing else. */
+    ok('the heal column is the heal and nothing else',
+       ck.heroText.replace(/\s+/g,'')==='25HP', JSON.stringify(ck.heroText));
+    }
+
     ok('every gem tier offers a combat enchant', em.gaps.length===0, 'bare: '+em.gaps.join(', '));
     ok('Man-at-Arms is listed on emerald', em.name==='Man-at-Arms' && em.listed===true && em.tier===2);
     ok('and sits between Squire (4/4) and Soldier (8 atk)',
