@@ -4799,6 +4799,17 @@ body:not(.is-demo) .demo-only{display:none !important}
 .fm-seed i{font-style:normal;font-family:var(--num);font-size:calc(10.5px*var(--tscale));
   color:var(--dim,#7a6748)}
 .fm-seed.on i{color:var(--trim)}
+/* Vault header: the note sits quiet beside the count, the toggle sits right. */
+.fm-vnote{font-family:var(--num);font-size:calc(10.5px*var(--tscale));color:#7a6a4a;
+  margin-left:8px;font-weight:400}
+.fm-vsell{margin-left:auto;font-family:var(--num);font-size:calc(11px*var(--tscale));
+  letter-spacing:.06em;color:var(--muted);background:#1a1510;border:1px solid var(--trim-d);
+  border-radius:5px;padding:3px 10px;cursor:var(--cur-pointer)}
+.fm-vsell:hover{border-color:var(--trim);color:var(--text)}
+.fm-vsell.on{border-color:#8a4a2a;color:#e0917c;background:#241410}
+/* While selling, the shelf stops looking like a picker. */
+.fm-seed.sell{border-color:#6a3a22}
+.fm-seed.sell:hover{border-color:#c8724a}
 .fm-noseed{font-size:calc(13.5px*var(--tscale));color:var(--muted);font-style:italic;padding:3px 2px}
 
 /* ── the field ── */
@@ -7141,7 +7152,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.122.16">v0.9.122</div>
+  <div class="mm-ver" data-build="0.9.122.17">v0.9.122</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -9694,7 +9705,10 @@ function trimLoadoutCopies(id){
 /* Satchel quantity the player is actually allowed to sell — the worn copy is
    held back. Every sell path must clamp to this, not to the raw stack. */
 function sellableQty(id){
-  return Math.max(0,(state.items&&state.items[id]||0)-reservedForEquip(id));
+  /* bagQty, not state.items: seeds live in the vault since 0.9.122.17 and reading
+     the satchel here would price every one of them at zero and make them
+     unsellable. */
+  return Math.max(0,(typeof bagQty==='function'?bagQty(id):(state.items&&state.items[id]||0))-reservedForEquip(id));
 }
 
 /* An item left the player's possession (sold / fully consumed): pop every gem
@@ -12348,8 +12362,8 @@ const ICONS = {
      turns into a ring or a smudge at the ~14px these render at, which is what
      four earlier attempts kept proving. Colour alone carries the meaning; the
      g/s suffix beside it carries the rest. */
-  ui_coin_sm:     '<svg class="ev-icon coin-ic" viewBox="0 0 64 64"><circle cx="32" cy="32" r="28" fill="#e9b53d"/></svg>',
-  ui_coin_silver: '<svg class="ev-icon coin-ic" viewBox="0 0 64 64"><circle cx="32" cy="32" r="28" fill="#b0bac2"/></svg>',
+  ui_coin_sm:     "<img class=\"ev-icon coin-ic\" alt=\"\" src=\"data:image/webp;base64,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\">",
+  ui_coin_silver: "<img class=\"ev-icon coin-ic\" alt=\"\" src=\"data:image/webp;base64,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\">",
   ui_swords: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="uisw_b" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f0f2f8"/><stop offset="0.5" stop-color="#9aa0ac"/><stop offset="1" stop-color="#4a4e58"/></linearGradient></defs><g stroke="#2a2c34" stroke-width="0.7"><path d="M11 9 L19 9 L45 43 L41 49 L35 47 Z" fill="url(#uisw_b)"/><path d="M53 9 L45 9 L19 43 L23 49 L29 47 Z" fill="url(#uisw_b)"/></g><path d="M39 45 L51 57 M25 45 L13 57" stroke="#6a4a20" stroke-width="4" stroke-linecap="round"/><path d="M43 41 L53 51 M21 41 L11 51" stroke="#c79b4e" stroke-width="3" stroke-linecap="round"/></svg>',
   ui_sword: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="uis_b" x1="0.2" y1="0" x2="0.8" y2="1"><stop offset="0" stop-color="#f0f2f8"/><stop offset="0.5" stop-color="#9aa0ac"/><stop offset="1" stop-color="#4a4e58"/></linearGradient></defs><path d="M30 6 L38 6 L36 40 L32 40 Z" fill="url(#uis_b)" stroke="#2a2c34" stroke-width="0.7"/><path d="M31 8 L34 8 L33 38 Z" fill="#fff" opacity="0.35"/><rect x="24" y="40" width="20" height="4" rx="1.5" fill="#c79b4e" stroke="#6e552c" stroke-width="0.6"/><rect x="31" y="44" width="6" height="12" rx="1.5" fill="#6a4a20"/><circle cx="34" cy="58" r="2.6" fill="#c79b4e" stroke="#6e552c" stroke-width="0.6"/></svg>',
   ui_shield: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="uish_g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7a90c0"/><stop offset="0.5" stop-color="#3f5488"/><stop offset="1" stop-color="#1a2848"/></linearGradient></defs><path d="M32 6 L54 14 Q54 40 32 58 Q10 40 10 14 Z" fill="url(#uish_g)" stroke="#0e1730" stroke-width="1.4"/><path d="M32 6 L54 14 Q54 40 32 58 Z" fill="#000" opacity="0.18"/><path d="M32 14 L44 18 Q44 36 32 48 Q20 36 20 18 Z" fill="none" stroke="#a8bce8" stroke-width="1.2" opacity="0.6"/><path d="M32 6 L32 58" stroke="#a8bce8" stroke-width="0.7" opacity="0.4"/></svg>',
@@ -13135,6 +13149,11 @@ function jewelryEnchantBlock(itemId){
      tooltip, so it was the one neck piece that never explained itself. */
   var _ty=(typeof _jwType==='function')?_jwType(itemId):null;
   var slotLabel = _ty==='ring' ? 'Ring' : _ty==='amulet' ? 'Amulet' : _ty==='pendant' ? 'Pendant' : 'Jewelry';
+  /* An amulet and a pendant share the neck slot and differ only in which set they
+     feed, so the header carries the tag. Two words beat the paragraph this used to
+     be. */
+  if(_ty==='amulet')  slotLabel+=' (skilling)';
+  if(_ty==='pendant') slotLabel+=' (combat)';
   var html='<div style="color:var(--ember);font-size:calc(12px*var(--tscale));letter-spacing:.5px;margin-bottom:6px">✦ '+gemName+' · Tier '+gemTier+' · '+slotLabel+'</div>';
 
   /* ── WHAT THE SHAPE IS FOR (0.9.122.15, ticket #55) ─────────────────────────
@@ -13153,26 +13172,41 @@ function jewelryEnchantBlock(itemId){
   var _amu=(typeof ENCHANT_SETS!=='undefined')?ENCHANT_SETS[gem]:null;
   var _pen=(typeof PENDANT_SETS!=='undefined')?PENDANT_SETS[gem]:null;
   var _clean=function(d){ return String(d||'').replace(/^[^:]*: */,''); };
-  /* Say the mechanic out loud. "Completes the set" is the code's word for it and it
-     hides the two things that actually decide whether you get anything: you need
-     BOTH pieces worn, and BOTH enchanted. Someone reading only this line should be
-     able to act on it without opening another panel. */
-  var _role='';
-  if(slotLabel==='Amulet' && _amu){
-    _role='Goes on your neck. Enchant this and a <b>'+gemName+' Ring</b>, wear both, and you also get <b>'
-      +_clean(_amu.desc)+'</b> on top.'
-      +(_pen?' A '+gemName+' Pendant uses the same slot but boosts combat instead.':'');
-  } else if(slotLabel==='Pendant' && _pen){
-    _role='Goes on your neck. Enchant this and a <b>'+gemName+' Ring</b>, wear both, and you also get <b>'
-      +_clean(_pen.desc)+'</b> on top.'
-      +(_amu?' A '+gemName+' Amulet uses the same slot but boosts skilling instead.':'');
-  } else if(slotLabel==='Ring'){
-    _role='Goes on either hand, and wearing two counts twice. Enchant it and wear an enchanted '
-      +(_amu?'<b>'+gemName+' Amulet</b> for <b>'+_clean(_amu.desc)+'</b>':'matching amulet')
-      +', or a '+(_pen?'<b>'+gemName+' Pendant</b> for <b>'+_clean(_pen.desc)+'</b>':'matching pendant')+'.';
+  /* ONE line, not a paragraph. Jordan: "thats way too much text for a basic
+     jewelry... just put a 1/2 for like sets, and show the bonus from completing
+     set, maybe add like (skilling) or (combat)". The tag is in the header above;
+     this is the progress and the prize.
+
+     x/2 counts legs the way _enchantSetActive does — worn AND enchanted, ring
+     either hand, on the loadout that set is actually paid from — so the number
+     moves as the player equips, and 2/2 means it is live right now. */
+  var _legs=function(kind){
+    var map=(kind==='pendant'?state.combatEquipped:state.skillingEquipped)||{};
+    var n=0;
+    if(['ring_l','ring_r'].some(function(sl){
+      var eq=map[sl];
+      return eq && JEWELRY_GEM_TIER[eq]===gem && _jwType(eq)==='ring' && state.enchantments[eq];
+    })) n++;
+    var neck=map.amulet;
+    if(neck && JEWELRY_GEM_TIER[neck]===gem && _jwType(neck)===kind && state.enchantments[neck]) n++;
+    return n;
+  };
+  var _bar=function(n,txt){
+    return '<div style="font-size:calc(11.5px*var(--tscale));line-height:1.4;margin:-2px 0 6px;color:'
+      +(n>=2?'#a8cf60':'var(--muted)')+'">Set <b>'+n+'/2</b> \u2014 '+txt+'</div>';
+  };
+  if(_ty==='amulet' && _amu)  html+=_bar(_legs('amulet'),  _clean(_amu.desc));
+  else if(_ty==='pendant' && _pen) html+=_bar(_legs('pendant'), _clean(_pen.desc));
+  else if(_ty==='ring'){
+    /* A ring feeds whichever set the neck is wearing. Show that one; with an empty
+       neck, name both in the fewest words that still say which is which. */
+    var _neckSk=(state.skillingEquipped||{}).amulet, _neckCb=(state.combatEquipped||{}).amulet;
+    if(_amu && _neckSk && JEWELRY_GEM_TIER[_neckSk]===gem && _jwType(_neckSk)==='amulet')
+      html+=_bar(_legs('amulet'), _clean(_amu.desc)+' (skilling)');
+    else if(_pen && _neckCb && JEWELRY_GEM_TIER[_neckCb]===gem && _jwType(_neckCb)==='pendant')
+      html+=_bar(_legs('pendant'), _clean(_pen.desc)+' (combat)');
+    else html+=_bar(0, 'add an amulet (skilling) or pendant (combat)');
   }
-  if(_role) html+='<div style="color:var(--muted);font-size:calc(11.5px*var(--tscale));'
-    +'line-height:1.45;margin:-2px 0 6px">'+_role+'</div>';
 
   var enchId=(state&&state.enchantments)?state.enchantments[itemId]:null;
   if(enchId && ENCHANTS[enchId]){
@@ -15103,11 +15137,11 @@ function plantPatch(patchId, seedId, silent){
   var crop=getCrop(seedId);
   if(!crop){if(!silent)toast('Unknown seed.');return false;}
   if(farmingLvl()<crop.lvl){if(!silent)toast('Need Farming level '+crop.lvl+' to plant this.');return false;}
-  var qty=state.items[seedId]||0;
-  if(qty<1){if(!silent)toast('No '+crop.name+' seeds in satchel.');return false;}
+  var qty=seedQty(seedId);
+  if(qty<1){if(!silent)toast('No '+crop.name+' seeds in the vault.');return false;}
   if(!state.patches) state.patches={};
   // Always consume the seed when planting — master3 (Eternal Garden) returns it at harvest
-  state.items[seedId]=Math.max(0,qty-1);
+  takeSeed(seedId,1);
   state.patches[patchId]={seedId:seedId, plantedAt:Date.now(), growMs:crop.growMs, tendedMs:0, lastTended:0};
   if(!silent){
     renderFarming(); saveGame();
@@ -15198,7 +15232,7 @@ function harvestPatch(patchId, silent){
   var alwaysReturn=m.master3; // only master3 grants guaranteed seed return
   var returnChance=alwaysReturn?1:(crop.seedReturn+(treeRank('farming','fa_seed')||0)*0.05);
   if(Math.random()<returnChance){
-    state.items[ps.seedId]=(state.items[ps.seedId]||0)+1;
+    addSeed(ps.seedId,1);
     markDiscovered(ps.seedId);
     if(!silent) showItemPop(ps.seedId, 1);
   }
@@ -15298,7 +15332,7 @@ function tickFarmer(){
     var best=null,bestLvl=-1;
     for(var ci=0;ci<CROPS.length;ci++){
       var c=CROPS[ci];
-      if(lvl>=c.lvl&&(state.items[c.id]||0)>0&&c.lvl>bestLvl){ best=c.id; bestLvl=c.lvl; }
+      if(lvl>=c.lvl&&seedQty(c.id)>0&&c.lvl>bestLvl){ best=c.id; bestLvl=c.lvl; }
     }
     return best;
   }
@@ -15591,7 +15625,7 @@ function buildFarmerPanel(){
       if(lvl<c.lvl) continue;
       var o=document.createElement('option');
       o.value=c.id;
-      o.textContent=c.name+' (\u00d7'+(state.items[c.id]||0)+')';
+      o.textContent=c.name+' (\u00d7'+seedQty(c.id)+')';
       if(f.seedId===c.id) o.selected=true;
       sel.appendChild(o);
     }
@@ -15692,7 +15726,7 @@ function buildFarmerPanel(){
    button on the panel uses, not just Plant All. */
 function fmSelectedSeed(){
   var lvl=farmingLvl();
-  var owned=CROPS.filter(function(c){ return lvl>=c.lvl&&(state.items[c.id]||0)>0; });
+  var owned=CROPS.filter(function(c){ return lvl>=c.lvl&&seedQty(c.id)>0; });
   if(!owned.length) return null;
   var want=state.farmSeed;
   for(var i=0;i<owned.length;i++){ if(owned[i].id===want) return owned[i]; }
@@ -15732,33 +15766,66 @@ function renderFarming(){
     box.appendChild(hint);
   }
 
-  /* ── the seed shelf ───────────────────────────────────────────────────────
+  /* ── the SEED VAULT ───────────────────────────────────────────────────────
      Every seed you hold, sorted best crop first because that is what you almost
      always want to plant. This replaced five per-patch <select>s that were all
-     set to the same thing and each too narrow to print a crop name. */
-  var owned=CROPS.filter(function(c){ return lvl>=c.lvl&&(state.items[c.id]||0)>0; })
+     set to the same thing and each too narrow to print a crop name.
+
+     (0.9.122.17) The shelf is now the whole home for seeds, not a view onto the
+     satchel: eighteen crop ids used to sit in satchel slots the player pays gold
+     for, and a full satchel refused a foraged seed outright. state.seeds is
+     uncapped — the set of eighteen cannot grow with play, so a vault you could
+     overflow would be the satchel again with extra steps.
+
+     Seeds left the satchel, so they left the satchel's Sell column with it. The
+     Sell toggle here is that path coming back: while it is on, clicking a seed
+     opens the ordinary sell dialog instead of choosing it to plant, so nothing
+     about selling behaves differently, it just lives where the seeds do. */
+  var owned=CROPS.filter(function(c){ return lvl>=c.lvl&&seedQty(c.id)>0; })
                  .sort(function(a,b){ return b.lvl-a.lvl; });
   var sel=fmSelectedSeed();
+  var seedTotal=0;
+  CROPS.forEach(function(c){ seedTotal+=seedQty(c.id); });
   var seedLab=document.createElement('div');
   seedLab.className='fm-lab';
-  seedLab.innerHTML='Seeds'+(owned.length?' <b>'+owned.length+' kind'+(owned.length===1?'':'s')
-    +' in your satchel</b>':'');
+  seedLab.innerHTML='Seed Vault'
+    +(owned.length?' <b>'+owned.length+' kind'+(owned.length===1?'':'s')+' \u00b7 '
+      +seedTotal.toLocaleString()+' seed'+(seedTotal===1?'':'s')+'</b>':'')
+    +'<span class="fm-vnote">kept here, not in your satchel</span>';
+  if(owned.length){
+    var sellTog=document.createElement('button');
+    sellTog.className='fm-vsell'+(_fmSellSeeds?' on':'');
+    sellTog.textContent=_fmSellSeeds?'Done selling':'Sell seeds';
+    sellTog.addEventListener('click',function(){
+      _fmSellSeeds=!_fmSellSeeds; _farmInteractAt=0; renderFarming();
+    });
+    seedLab.appendChild(sellTog);
+  }
   box.appendChild(seedLab);
 
   if(!owned.length){
     var none=document.createElement('div');
     none.className='fm-noseed';
-    none.textContent='No seeds in your satchel \u2014 forage or buy some to get started.';
+    none.textContent='The vault is empty \u2014 forage or buy some seeds to get started.';
     box.appendChild(none);
   } else {
     var shelf=document.createElement('div');
     shelf.className='fm-seeds';
     owned.forEach(function(c){
       var b=document.createElement('button');
-      b.className='fm-seed'+(sel&&sel.id===c.id?' on':'');
+      b.className='fm-seed'+(sel&&sel.id===c.id&&!_fmSellSeeds?' on':'')+(_fmSellSeeds?' sell':'');
+      b.setAttribute('data-item',c.id);
       b.innerHTML=iconHTML(cropDisplayIconId(c)||c.id)+'<span>'+c.name+'</span>'
-        +'<i>\u00d7'+(state.items[c.id]||0).toLocaleString()+'</i>';
+        +'<i>\u00d7'+seedQty(c.id).toLocaleString()+'</i>';
       b.addEventListener('click',function(){
+        if(_fmSellSeeds){
+          /* Same dialog the satchel opens, same clamp, same confirm — only the
+             place you click it from is new. */
+          var cap=sellableQty(c.id);
+          if(cap<=0){ toast('None to sell.'); return; }
+          openSellModal(c.id, itemSellVal(c.id), cap);
+          return;
+        }
         state.farmSeed=c.id; saveGame(); renderFarming();
       });
       shelf.appendChild(b);
@@ -17365,6 +17432,20 @@ function normalizeState(){
   if(typeof state.cookingFire.lastBurnAt!=='number') state.cookingFire.lastBurnAt=Date.now();
   if(!state.potionCooldowns||typeof state.potionCooldowns!=='object'||Array.isArray(state.potionCooldowns)) state.potionCooldowns={};
   if(typeof state.satchelUpgrades!=='number'||state.satchelUpgrades<0) state.satchelUpgrades=0;
+  /* Seed vault. The migration runs on EVERY load, not once behind a flag: it is
+     idempotent, and leaving it live also catches a seed that reaches state.items
+     by some path added later rather than stranding it there invisibly. */
+  if(!state.seeds||typeof state.seeds!=='object'||Array.isArray(state.seeds)) state.seeds={};
+  for(const _sid in state.seeds){
+    const _v=Math.floor(state.seeds[_sid]);
+    if(!isSeedId(_sid)||!isFinite(_v)||_v<=0) delete state.seeds[_sid]; else state.seeds[_sid]=_v;
+  }
+  if(typeof CROPS!=='undefined' && state.items){
+    for(const _c of CROPS){
+      const _bag=state.items[_c.id]||0;
+      if(_bag>0){ state.seeds[_c.id]=(state.seeds[_c.id]||0)+_bag; delete state.items[_c.id]; }
+    }
+  }
   if(!Array.isArray(state.notifications)) state.notifications=[];
   // Same class of bug as state.effects above: a null row here bricked the character.
   // A non-numeric time renders as "undefinedNaNd ago", so coerce it too.
@@ -17568,9 +17649,14 @@ let viewTab='acts';
    worth the 150g. The cost curve is deliberately untouched — 30 expansions at
    150g × 1.5^n is a ~57M gold sink and one of the few big ones in the game; this
    only changes what each purchase buys, not what it costs. Ceiling 165 → 268. */
-const SATCHEL_BASE=28;
-const SATCHEL_SLOT_STEP=8;
-const SATCHEL_MAX_EXPANSIONS=30;       // 28 + 30×8 = 268 slots
+/* (0.9.122.17) Base 28 -> 33 and the step 8 -> 10, on Jordan's call: five more
+   slots from the very first minute, and a ceiling of 33 + 30x10 = 333 rather than
+   268. The COST curve is still untouched — 30 expansions at 150g x 1.5^n — so this
+   changes what a purchase buys, never what it costs. Landing alongside the seed
+   vault, which takes another 18 ids out of the satchel entirely. */
+const SATCHEL_BASE=33;
+const SATCHEL_SLOT_STEP=10;
+const SATCHEL_MAX_EXPANSIONS=30;       // 33 + 30x10 = 333 slots
 function satchelTierCost(n){           // n = 0-indexed expansion number → gold cost
   const raw=150*Math.pow(1.5,n);
   const mag=Math.pow(10,Math.max(1,Math.floor(Math.log10(raw))-1));
@@ -17588,6 +17674,52 @@ function satchelCap(){
 
 function satchelUsed(){
   return Object.keys(state.items).filter(id=>ITEMS[id]&&(state.items[id]||0)>0).length;
+}
+
+/* ════ SEED VAULT (0.9.122.17) ═══════════════════════════════════════════════
+   Seeds used to live in the satchel, where the eighteen plantable crops ate
+   eighteen of the slots the player buys with gold — and a full satchel silently
+   refused a foraged seed, which is the same shape as the material-loss bug the
+   audit suite already guards.
+
+   They have their own store now. It is UNCAPPED on purpose: the set is fixed at
+   eighteen ids and can never grow with play, so a vault you can overflow would
+   just be the satchel again with extra steps.
+
+   Only PLANTABLE seeds move, meaning the ids in CROPS. `ancient_seed` is a
+   woodcutting rare and an alchemy input that is never planted, so it stays an
+   ordinary item — "ends in _seed" would have swallowed it. */
+function isSeedId(id){ return !!(id && typeof getCrop==='function' && getCrop(id)); }
+function seedQty(id){ return (state && state.seeds && state.seeds[id]) || 0; }
+function addSeed(id, n){
+  if(!isSeedId(id) || !(n > 0)) return 0;
+  if(!state.seeds) state.seeds = {};
+  state.seeds[id] = (state.seeds[id] || 0) + n;
+  if(typeof markDiscovered === 'function') markDiscovered(id);
+  return n;
+}
+function takeSeed(id, n){
+  const have = seedQty(id);
+  const took = Math.min(have, Math.max(0, n));
+  if(took > 0){
+    state.seeds[id] = have - took;
+    if(state.seeds[id] <= 0) delete state.seeds[id];
+  }
+  return took;
+}
+/* How many of an id the player is holding, wherever it lives. Sell paths and any
+   future counter should ask this rather than reaching into state.items, or seeds
+   become unsellable the moment they leave the satchel. */
+function bagQty(id){ return isSeedId(id) ? seedQty(id) : ((state.items && state.items[id]) || 0); }
+function bagTake(id, n){
+  if(isSeedId(id)) return takeSeed(id, n);
+  const have = (state.items && state.items[id]) || 0;
+  const took = Math.min(have, Math.max(0, n));
+  if(took > 0){
+    state.items[id] = have - took;
+    if(state.items[id] <= 0) delete state.items[id];
+  }
+  return took;
 }
 
 function canAddToSatchel(id){
@@ -20033,6 +20165,13 @@ function getAct(skillKey,actId){ const sk=SKILLS[skillKey]; return sk?sk.acts.fi
    whole tier becomes uncraftable while the player is holding the input. Every
    have-count for a recipe input goes through here. */
 function matHave(id){
+  /* A recipe input can be a SEED, and seeds moved out of state.items into the
+     vault in 0.9.122.17. ancient_seed is the one that matters: it is a Lv80 crop
+     AND the input to Philosopher's Drop and Master Healing Elixir, so reading
+     only state.items would have reported 0 and made both permanently uncraftable
+     while the player was holding a stack of them. Exactly the failure the tool
+     note above describes, one storage location later. */
+  if(typeof isSeedId==='function' && isSeedId(id)) return seedQty(id);
   const n=state.items[id]||0;
   if(n>0) return n;
   const it=ITEMS[id];
@@ -20466,6 +20605,10 @@ function completeAction(act,skillKey,times){
         consumeToolFromGear(id);   // T6 Everflame: the previous-tier tool is the input
         continue;
       }
+      /* Spend from whichever store actually holds it — see matHave. Without this
+         the count check passes off the vault and the deduction runs against an
+         empty satchel slot, which is free ancient_seed forever. */
+      if(typeof isSeedId==='function' && isSeedId(id)){ takeSeed(id, cost*paid); continue; }
       state.items[id]=(state.items[id]||0)-cost*paid;
       if(state.items[id]<0) state.items[id]=0;
     }
@@ -25316,6 +25459,10 @@ function sellShopItem(id){
 }
 
 /* Inventory state */
+/* Seed Vault sell mode. While on, a click in the vault opens the sell dialog
+   instead of picking that seed to plant. Runtime only — it should never survive a
+   reload and leave someone one click from selling a stack they meant to sow. */
+let _fmSellSeeds=false;
 let invSearch='', invSort='category', invCat='all', invSellMode='x'; // sellMode: 'x'|1|5|10|'all'
 /* Amount typed into the box beside the sell chips while Custom is active.
    0/null = not set, which keeps the original behaviour of asking per item via
@@ -28600,7 +28747,7 @@ function openSellModal(id, sv, maxQty){
     // very item from the gear panel.
     const qty=Math.min(readQty(),sellableQty(id));
     if(qty<=0){ $('sellModal').classList.add('hidden'); return; }
-    state.items[id]=Math.max(0,(state.items[id]||0)-qty);
+    bagTake(id,qty);
     // Sold the last one — take it off the paper doll, then pop any socketed gems
     // back to the satchel so they aren't lost and it leaves the Socket panel.
     releaseIfGone(id);
@@ -29829,6 +29976,14 @@ function grantItem(id, qty){
   }
   if(!id||!qty||qty<=0) return 0;
   if(!ITEMS[id]) return 0;
+  /* A plantable seed goes to the vault, never the satchel. Placed above every
+     satchel path on purpose: a foraged seed used to be refused outright when the
+     satchel was full, which is exactly the silent loss this feature removes. */
+  if(typeof isSeedId==='function' && isSeedId(id)){
+    addSeed(id, qty);
+    if(typeof showItemPop==='function') showItemPop(id, qty);
+    return qty;
+  }
   const it=ITEMS[id];
   // Skilling gear goes into its own collection — never touches the satchel
   if(it.skillGear){
