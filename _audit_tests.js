@@ -3722,6 +3722,170 @@ setTimeout(() => {
       tier:ENCHANTS.manatarms_ii&&ENCHANTS.manatarms_ii.tier,
       priced:!!_ewCostFor('emerald_ring').cost
     })`));
+    section('The shop (0.9.122.20)');
+    {
+    /* The shop sold fourteen things: two rings and twelve identical capes, with
+       nothing at all between Lv 50 and Lv 99. None of what follows throws when it
+       breaks — a charm whose key nothing reads is a card that lies, and a supply
+       priced under what it grants is a gold printer. */
+    const shop = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      var out={};
+      var buyable=SHOP.filter(function(i){ return !i.tool; });
+      out.buyable=buyable.length;
+      // every buyable row draws as a real SVG, never the emoji fallback
+      out.emojiFallback=buyable.filter(function(i){ return !ICONS[i.id]; }).map(function(i){ return i.id; });
+      // and no card is left printing a raw \\U escape (the shop's own near-miss)
+      out.badEscape=buyable.filter(function(i){
+        return /U000[0-9a-f]{5}/.test(i.name+' '+i.desc+' '+(i.icon||'')); }).map(function(i){ return i.id; });
+      out.charmIcons=CHARMS.filter(function(c){ return !ICONS[c.id]; }).map(function(c){ return c.id; });
+      // every vendor's rail icon exists, and no two vendors share one
+      out.railMissing=SHOP_CATS.filter(function(c){ return !ICONS[c.icon]; }).map(function(c){ return c.key; });
+      var seen={}; out.railDupes=[];
+      SHOP_CATS.forEach(function(c){ if(seen[c.icon]) out.railDupes.push(c.key); seen[c.icon]=1; });
+      return JSON.stringify(out);
+    })()`));
+    ok('the shop stocks more than the fourteen it had', shop.buyable>=32, shop.buyable+' buyable rows');
+    ok('every shop row draws a real icon, not the emoji fallback',
+       shop.emojiFallback.length===0, shop.emojiFallback.join(', '));
+    ok('and no card prints a raw unicode escape',
+       shop.badEscape.length===0, shop.badEscape.join(', '));
+    ok('every charm has its own icon', shop.charmIcons.length===0, shop.charmIcons.join(', '));
+    ok('every vendor has a distinct rail icon',
+       shop.railMissing.length===0 && shop.railDupes.length===0,
+       'missing '+shop.railMissing.join(',')+' dupes '+shop.railDupes.join(','));
+
+    /* A charm is unslotted, so nothing walks a loadout to find it — if its key is
+       not one mods()/globalSellBonus already consume, the card promises an effect
+       that never fires and nothing anywhere throws. */
+    const charm = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      for(var k in state.xp) state.xp[k]=XP_CUM[99];
+      var out={};
+      CHARMS.forEach(function(c){
+        state.charms=[];
+        var before={xp:mods('mining').xpMult, spd:mods('mining').speed,
+                    dbl:mods('mining').double, pre:mods('smithing').preserve,
+                    sell:globalSellBonus()};
+        state.charms=[c.id];
+        var after={xp:mods('mining').xpMult, spd:mods('mining').speed,
+                   dbl:mods('mining').double, pre:mods('smithing').preserve,
+                   sell:globalSellBonus()};
+        var moved=Object.keys(before).some(function(k2){ return Math.abs(after[k2]-before[k2])>1e-9; });
+        out[c.id]=moved;
+      });
+      state.charms=[];
+      return JSON.stringify(out);
+    })()`));
+    const inert = Object.keys(charm).filter(k => !charm[k]);
+    ok('every charm actually moves a number', inert.length===0,
+       'inert: '+inert.join(', '));
+
+    /* `skills` rings sit in a ring slot and so carry skill:null, which is exactly
+       the shape jewelryBonus treats as universal. Getting this wrong hands a
+       two-skill ring's bonus to all twelve. */
+    const ring = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      for(var k in state.xp) state.xp[k]=XP_CUM[99];
+      state.gear=['delver_ring']; state.equipped={ring_r:'delver_ring'};
+      return JSON.stringify({
+        mining:   gearSkillXp('mining'),
+        smithing: gearSkillXp('smithing'),
+        fishing:  gearSkillXp('fishing'),
+        leakGlobal: jewelryBonus('skillXp')+jewelryBonus('xpBoost')
+      });
+    })()`));
+    ok('a supply-chain ring pays both of its skills',
+       ring.mining>0.079 && ring.smithing>0.079, JSON.stringify(ring));
+    ok('and pays nothing to a skill it does not name',
+       ring.fishing===0 && ring.leakGlobal===0, JSON.stringify(ring));
+
+    /* A supply must never be cheaper than what it grants sells for, at any level —
+       the shop would otherwise be an unbounded gold printer, the same shape as the
+       craft-a-tool-and-sell-it exploit that had to be closed in 1.0.47. */
+    const sup = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      var bad=[], checked=0;
+      [1,20,40,60,75,90,99].forEach(function(L){
+        for(var k in state.xp) state.xp[k]=XP_CUM[L];
+        SUPPLIES.forEach(function(s2){
+          var id=supplyItemFor(s2);
+          if(!id) return;
+          checked++;
+          var cost=supplyCost(s2);
+          var worth=effectiveItemSell(id)*s2.qty;
+          if(cost<=worth) bad.push('Lv'+L+' '+s2.id+' costs '+cost+' worth '+Math.round(worth));
+        });
+      });
+      return JSON.stringify({checked:checked, bad:bad});
+    })()`));
+    ok(sup.checked+' supply/level pairs all cost more than they are worth',
+       sup.bad.length===0, sup.bad.slice(0,4).join(' | '));
+
+    /* grantItem refuses a NEW item type into a full satchel and returns 0. Taking
+       the gold before checking is the same silent loss the satchel-full material
+       bug was, only paid for. */
+    ok('a supply bought into a full satchel takes no gold',
+       ev(`(function(){
+         state=defaultState(); normalizeState();
+         state.xp.woodcutting=XP_CUM[99];
+         var pad=Object.keys(ITEMS).filter(function(i){
+           return !isSeedId(i) && !ITEMS[i].tool && !ITEMS[i].skillGear && i!=='ancient_log'; });
+         state.items={};
+         var cap=satchelCap();
+         for(var i=0;i<cap+5 && i<pad.length;i++) state.items[pad[i]]=1;
+         state.coins=99999999;
+         var before=state.coins;
+         buySupply('sup_logs');
+         return (state.coins===before)+'/'+((state.items.ancient_log||0)===0);
+       })()`)==='true/true');
+
+    ok('and a normal purchase pays exactly once', ev(`(function(){
+         state=defaultState(); normalizeState();
+         state.xp.woodcutting=XP_CUM[99]; state.items={}; state.coins=99999999;
+         var sup=SUPPLIES.find(function(x){return x.id==='sup_logs';});
+         var cost=supplyCost(sup), before=state.coins;
+         buySupply('sup_logs');
+         return ((before-state.coins)===cost*SILVER_PER_GOLD)+'/'+(state.items.ancient_log||0);
+       })()`)==='true/100');
+
+    /* state.charms is read on every mods() call, so it has to exist on every save
+       ever written — and an id no longer in CHARMS must stop paying out. */
+    ok('an old save gets an empty charm list, and a stale id is dropped',
+       ev(`(function(){
+         state=defaultState(); delete state.charms; normalizeState();
+         var fresh=Array.isArray(state.charms)&&state.charms.length===0;
+         state.charms=['coin_purse','a_charm_that_was_deleted'];
+         normalizeState();
+         return fresh+'/'+state.charms.join(',');
+       })()`)==='true/coin_purse');
+
+    /* Every vendor renders. The panel is one function with five branches and four
+       of them are new, so a throw in any of them is a blank shop. */
+    ok('every vendor renders cards without throwing', ev(`(function(){
+         state=defaultState(); normalizeState();
+         for(var k in state.xp) state.xp[k]=XP_CUM[99];
+         state.coins=900000*SILVER_PER_GOLD;
+         var counts=[];
+         SHOP_CATS.forEach(function(c){
+           shopSelectedCat=c.key; viewTab='shop';
+           renderShop();
+           counts.push(c.key+':'+document.querySelectorAll('#shopView .sh-card').length);
+         });
+         return counts.join(' ');
+       })()`).split(' ').every(x => +x.split(':')[1] > 0),
+       ev(`(function(){ return SHOP_CATS.map(function(c){ shopSelectedCat=c.key; renderShop();
+            return c.key+':'+document.querySelectorAll('#shopView .sh-card').length; }).join(' '); })()`));
+
+    /* The cape line only claims a capstone for the seven skills that have one. */
+    ok('only the skills with a reqCape node claim the capstone', ev(`(function(){
+         var claimed=Object.keys(SKILLS).filter(function(k){ return _shopCapeCapstone(k); });
+         var real=Object.keys(TREES).filter(function(k){
+           return Array.isArray(TREES[k]) && TREES[k].some(function(n){ return n&&n.reqCape; }); });
+         return claimed.length===real.length && claimed.every(function(k){ return real.indexOf(k)>=0; });
+       })()`)===true);
+    }
+
     section('Cooking cards (ticket #59, 0.9.122.19)');
     {
     /* Three silent defects in one panel, none of which throw.

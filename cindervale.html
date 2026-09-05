@@ -1586,76 +1586,137 @@ select option:checked{background-color:#2a1d10;color:#f0c772}
   border-radius:4px;padding:6px 14px;font-size:calc(14px*var(--tscale));width:100%;}
 .respec-btn:hover{border-color:var(--red);color:var(--red)}
 
-/* ════════ [CSS-07] SHOP ═════════════════════════════════════════════════════════ */
-/* shop */
-.shop-item{display:flex;align-items:flex-start;gap:10px;background:var(--raised);
-  border:1px solid var(--trim-d);border-radius:6px;padding:10px;margin-bottom:8px;}
-.shop-header{font-family:inherit}
-.shop-header:hover{background:#251407 !important;border-color:var(--ember) !important}
+/* ════════ [CSS-07] SHOP (0.9.122.20) ════════════════════════════════════════════
+   The shop sold fourteen things: two rings and twelve identical capes. Everything
+   else in SHOP is the tool ladder, hidden since tools moved to Crafting. Two
+   category tiles, twelve rows that differed only in the word, and on a maxed
+   account 60% of the panel was empty.
 
-/* Brief highlight pulse when navigated to via "Shop" button from Gear panel */
+   Rebuilt as a counter, not a list. Left: a vendor rail — every counter in one
+   column, each with its own icon and an owned/total. Right: goods as CARDS, three
+   up, because a shop item is a thing you look at before you buy it and a 46px row
+   is not something you look at.
+
+   sh- namespaced. The old `.shop-item` / `.shop-cat` rules are gone with the markup
+   that used them; `.shop-section-flash` survives because the Gear panel's "Shop →"
+   deep-link still asks for it by name. */
+
+/* ── the counter ─────────────────────────────────────────────────────────────── */
+.sh-wrap{display:grid;grid-template-columns:186px minmax(0,1fr);gap:10px;align-items:start}
+@media(max-width:1100px){.sh-wrap{grid-template-columns:1fr}}
+
+/* ── purse ───────────────────────────────────────────────────────────────────── */
+.sh-purse{display:flex;align-items:center;gap:9px;padding:9px 12px;margin-bottom:9px;
+  border:1px solid var(--trim-d);border-radius:8px;
+  background:linear-gradient(178deg,var(--lit-top),var(--lit-bot) 78%);
+  box-shadow:var(--sh-2),inset 0 1px 0 var(--rim)}
+.sh-purse .ev-icon{width:22px;height:22px;flex:none}
+.sh-purse b{font-family:var(--num);font-size:calc(19px*var(--tscale));color:var(--gold-hi);
+  font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-.3px}
+.sh-purse i{font-style:normal;font-family:var(--num);font-size:calc(10px*var(--tscale));
+  letter-spacing:.16em;text-transform:uppercase;color:#8a7657}
+.sh-purse .sp-r{margin-left:auto;font-family:var(--num);font-size:calc(11px*var(--tscale));
+  color:#8a7657;text-align:right;line-height:1.5}
+.sh-purse .sp-r b{font-size:calc(12px*var(--tscale));color:var(--trim);font-weight:600}
+
+/* ── vendor rail ─────────────────────────────────────────────────────────────── */
+.sh-rail{display:flex;flex-direction:column;gap:4px}
+@media(max-width:1100px){.sh-rail{flex-direction:row;flex-wrap:wrap}}
+.sh-vend{display:grid;grid-template-columns:26px minmax(0,1fr);gap:9px;align-items:center;
+  padding:8px 10px;border-radius:7px;cursor:var(--cur-pointer);text-align:left;
+  background:#140d06;border:1px solid var(--trim-d);color:var(--text);
+  font-family:inherit;transition:border-color .13s,background .13s}
+.sh-vend:hover{background:#1c1208;border-color:#6a4a1e}
+.sh-vend:focus-visible{outline:2px solid var(--trim);outline-offset:1px}
+.sh-vend .ev-icon{width:24px;height:24px}
+.sh-vend .vn{font-size:calc(12.5px*var(--tscale));line-height:1.15;min-width:0}
+.sh-vend .vc{font-family:var(--num);font-size:calc(10px*var(--tscale));color:#8a7657;
+  margin-top:2px;display:block;font-variant-numeric:tabular-nums}
+.sh-vend.on{background:linear-gradient(178deg,#2a1a08,#170f06);border-color:var(--ember);
+  box-shadow:inset 0 0 12px rgba(224,118,47,.14)}
+.sh-vend.on .vn{color:var(--gold-hi)}
+.sh-vend.done .vc{color:#7ec8a0}
+.sh-vend .vp{width:3px;align-self:stretch;border-radius:2px;background:transparent}
+
+/* ── goods ───────────────────────────────────────────────────────────────────── */
+.sh-head{display:flex;align-items:baseline;gap:10px;margin:0 0 8px;flex-wrap:wrap}
+.sh-head h3{margin:0;font-size:calc(14px*var(--tscale));letter-spacing:.14em;
+  text-transform:uppercase;color:var(--ember);font-weight:600;font-family:inherit}
+.sh-head .sub{font-size:calc(11.5px*var(--tscale));color:#8a7657;flex:1;min-width:120px}
+.sh-head .cnt{font-family:var(--num);font-size:calc(11px*var(--tscale));color:#8a7657}
+
+.sh-goods{display:grid;grid-template-columns:repeat(auto-fill,minmax(232px,1fr));gap:8px}
+
+.sh-card{display:flex;flex-direction:column;gap:0;position:relative;overflow:hidden;
+  border:1px solid var(--trim-d);border-radius:9px;padding:11px 12px 10px;text-align:left;
+  background:linear-gradient(178deg,var(--lit-top),var(--lit-bot) 78%);
+  box-shadow:var(--sh-1),inset 0 1px 0 var(--rim);
+  transition:border-color .13s,transform .13s,box-shadow .13s}
+.sh-card:not(.dis):hover{border-color:#7a5522;transform:translateY(-1px);
+  box-shadow:var(--sh-2),inset 0 1px 0 var(--rim)}
+.sh-card.owned{border-color:#2f6b4e}
+.sh-card.worn{border-color:var(--ember);box-shadow:var(--sh-1),inset 0 0 14px rgba(224,118,47,.12)}
+.sh-card.dis{opacity:.5}
+
+.sh-top{display:flex;align-items:flex-start;gap:9px;min-width:0}
+.sh-ic{width:40px;height:40px;flex:none;display:flex;align-items:center;justify-content:center;
+  border-radius:8px;background:#0d0804;box-shadow:inset 0 1px 3px rgba(0,0,0,.8),0 1px 0 var(--rim)}
+.sh-ic .ev-icon{width:30px;height:30px}
+.sh-nm{flex:1;min-width:0}
+.sh-nm .n{display:block;font-size:calc(13.5px*var(--tscale));color:var(--text);
+  line-height:1.2;font-weight:600}
+.sh-nm .g{display:block;font-family:var(--num);font-size:calc(10px*var(--tscale));
+  letter-spacing:.1em;text-transform:uppercase;color:#8a7657;margin-top:4px}
+.sh-ds{font-size:calc(11.8px*var(--tscale));color:#a89272;line-height:1.42;margin-top:8px;flex:1}
+.sh-ds b{color:#9ddc7a;font-weight:600}
+
+.sh-foot{display:flex;align-items:center;gap:7px;margin-top:10px}
+.sh-price{font-family:var(--num);font-size:calc(13px*var(--tscale));color:var(--gold-hi);
+  font-variant-numeric:tabular-nums;display:inline-flex;align-items:center;gap:4px;font-weight:600}
+.sh-price .ev-icon{width:14px;height:14px}
+.sh-price.poor{color:#e0917c}
+.sh-buy{margin-left:auto;background:#241906;border:1px solid var(--trim-d);border-radius:5px;
+  color:var(--trim);font-family:inherit;font-size:calc(12px*var(--tscale));
+  padding:5px 12px;cursor:var(--cur-pointer);white-space:nowrap;flex:none}
+.sh-buy:hover:not(:disabled){border-color:var(--ember);color:var(--gold-hi);background:#301f07}
+.sh-buy:disabled{opacity:.35;cursor:var(--cur-na)}
+.sh-buy:focus-visible{outline:2px solid var(--trim);outline-offset:1px}
+.sh-buy.primary{background:linear-gradient(178deg,#3a2409,#241505);border-color:#7a5522;color:var(--gold-hi)}
+
+/* Status ribbon — the one place a card says what it IS rather than what it costs. */
+.sh-tag{font-family:var(--num);font-size:calc(9px*var(--tscale));letter-spacing:.12em;
+  text-transform:uppercase;padding:2px 6px;border-radius:3px;white-space:nowrap;
+  border:1px solid;flex:none}
+.sh-tag.eq{color:var(--ember);border-color:#7a4418;background:#1c1006}
+.sh-tag.ow{color:#7ec8a0;border-color:#2f6b4e;background:#0b1610}
+.sh-tag.lk{color:#9a7a4e;border-color:#5a3a1a;background:#160d05}
+.sh-note{font-size:calc(11px*var(--tscale));color:#8a7657;font-style:italic;margin-left:auto}
+
+/* Charms are unslotted, so they get a mark rather than an equip state. */
+.sh-card.charm .sh-ic{background:radial-gradient(90% 90% at 50% 20%,#241a34,#0d0810)}
+.sh-card.charm.owned{border-color:#6a5aa8}
+.sh-card.charm.owned .sh-tag.ow{color:#b3a4ea;border-color:#4a3f7a;background:#120e1c}
+
+/* Supplies restock, so their card leads with what arrives, not with a slot. */
+.sh-card.stock .sh-ic{background:radial-gradient(90% 90% at 50% 20%,#1a2410,#080c05)}
+.sh-qty{font-family:var(--num);font-size:calc(10.5px*var(--tscale));color:#9ddc7a;
+  display:flex;align-items:center;gap:5px;margin-top:7px;padding-top:7px;
+  border-top:1px solid var(--trim-d)}
+.sh-qty .ev-icon{width:13px;height:13px}
+
+.sh-empty{font-size:calc(12.5px*var(--tscale));color:#8a7657;font-style:italic;padding:14px 2px}
+
+/* The Gear panel's "Shop →" deep-link still flashes the vendor it jumped to. */
 @keyframes shop-section-flash{
   0%  {background:#e0762f33;box-shadow:0 0 0 1px var(--ember)}
   100%{background:transparent;box-shadow:none}
 }
 .shop-section-flash{animation:shop-section-flash 1.8s ease-out}
-.shop-item .si-info{flex:1;min-width:0}
-.shop-item .si-name{color:var(--trim);font-size:calc(15px*var(--tscale))}
-.shop-item .si-desc{font-size:calc(14px*var(--tscale));color:var(--muted)}
-.shop-item .si-owned{font-size:calc(13px*var(--tscale));color:var(--green);margin-top:2px}
-.shop-item .si-buy{background:var(--raised-s);border:1px solid var(--trim-d);color:var(--trim);
-  border-radius:4px;padding:5px 12px;font-size:calc(14px*var(--tscale));white-space:nowrap;}
-.shop-item .si-buy:hover:not(:disabled){border-color:var(--trim)}
-.shop-item .si-buy:disabled{opacity:.35;cursor:var(--cur-na)}
-.shop-item.owned{border-color:var(--green);opacity:.75}
-.shop-item.equipped-active{border-color:var(--ember);box-shadow:inset 0 0 6px #e0762f22}
-
-/* New category-grid layout — replaces the old vertical accordion of 12 sections.
-   Top: 4-col grid of skill/jewelry/cape icon tiles. Bottom: items for selected category. */
-.shop-catgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:10px}
-.shop-cat{background:var(--raised);border:1px solid var(--trim-d);border-radius:5px;
-  padding:5px 3px;text-align:center;cursor:var(--cur-pointer);transition:border-color .15s,background .15s;
-  display:flex;flex-direction:column;align-items:center;gap:1px}
-.shop-cat:hover{background:var(--raised-s)}
-.shop-cat.sel{background:var(--raised-s);border-color:var(--ember);border-width:2px;padding:4px 2px;
-  box-shadow:inset 0 0 8px rgba(0,0,0,.4)}
-.shop-cat .ico{font-size:calc(18px*var(--tscale));line-height:1}
-.shop-cat .lbl{font-size:calc(11px*var(--tscale));color:var(--muted);line-height:1.2;font-variant:small-caps;letter-spacing:.3px;word-break:break-word}
-.shop-cat.sel .lbl{color:var(--trim)}
-.shop-cat .own{font-size:calc(11px*var(--tscale));color:var(--ember);line-height:1;font-family:var(--num)}
-.shop-cat.allowned .own{color:var(--green)}
-
-/* Compact item rows for category view — single line each, ~46px tall */
-.shop-item-c{display:flex;align-items:center;gap:8px;background:var(--raised);
-  border:1px solid var(--trim-d);border-radius:5px;padding:7px 9px;margin-bottom:5px}
-.shop-item-c.owned{border-color:var(--green);opacity:.78}
-.shop-item-c.equipped-active{border-color:var(--ember);box-shadow:inset 0 0 6px #e0762f22}
-.shop-item-c.locked{opacity:.55}
-.shop-item-c .ico{font-size:calc(20px*var(--tscale));line-height:1;width:24px;text-align:center;flex-shrink:0}
-.shop-item-c .info{flex:1;min-width:0}
-.shop-item-c .nm{color:var(--trim);font-size:calc(14px*var(--tscale));line-height:1.2;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.shop-item-c .ds{font-size:calc(12px*var(--tscale));color:var(--muted);line-height:1.3;margin-top:1px}
-.shop-item-c .badge{font-size:calc(11px*var(--tscale));color:var(--muted);font-family:var(--num);padding:1px 5px;border-radius:3px;border:1px solid var(--trim-d);text-transform:uppercase;letter-spacing:.5px}
-.shop-item-c .badge.eq{color:var(--green);border-color:var(--green)}
-.shop-item-c .badge.ow{color:var(--muted);border-color:var(--trim-d)}
-.shop-item-c .badge.lk{color:#9a7a4e;border-color:#5a3a1a;background:#1a0e07}
-.shop-item-c .buy{background:var(--raised-s);border:1px solid var(--trim-d);color:var(--trim);
-  border-radius:4px;padding:5px 10px;font-size:calc(14px*var(--tscale));white-space:nowrap;flex-shrink:0;font-family:inherit}
-.shop-item-c .buy:hover:not(:disabled){border-color:var(--ember);color:var(--ember)}
-.shop-item-c .buy:disabled{opacity:.35;cursor:var(--cur-na)}
-.shop-item-c .hint{font-size:calc(12px*var(--tscale));color:var(--muted);font-style:italic;flex-shrink:0;white-space:nowrap}
-@keyframes shop-cat-flash{
-  0%  {background:#e0762f55;box-shadow:0 0 0 2px var(--ember)}
-  100%{background:var(--raised-s);box-shadow:inset 0 0 8px rgba(0,0,0,.4)}
+@media(prefers-reduced-motion:reduce){
+  .shop-section-flash{animation:none}
+  .sh-card:not(.dis):hover{transform:none}
 }
-.shop-cat-flash{animation:shop-cat-flash 1.4s ease-out}
-
-/* When a category has many items (e.g. Skillcapes — 11 entries), render them in a
-   2-column grid so the entire shop still fits without scrolling. The compact item
-   row above already uses flex internally; the wrapper just lays them out in 2 tracks. */
-.shop-items-2c{display:grid;grid-template-columns:1fr 1fr;gap:5px}
-.shop-items-2c .shop-item-c{margin-bottom:0}
-.shop-items-2c .shop-item-c .ds{display:none}  /* hide desc in 2-col to keep rows single-line */
+/* ════════ [CSS-07 END] SHOP ═════════════════════════════════════════════════════ */
 
 /* ════════ [CSS-08] INVENTORY / SATCHEL ══════════════════════════════════════════ */
 /* inventory */
@@ -7150,7 +7211,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.122.19">v0.9.122</div>
+  <div class="mm-ver" data-build="0.9.122.20">v0.9.122</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -10844,6 +10905,113 @@ function _skSh(rx){ return `<ellipse cx="32" cy="58" rx="${rx}" ry="2.6" fill="#
 /* ─── Skillcape factory ─── A draped cape with gold trim, ornate collar,
    jewel clasp, and a skill-specific emblem in the center. Tier-5 capstone
    gear: read as ornate / legendary. Palette per skill. */
+/* Palettes for the twelve capes, lifted out of the ICONS block so the hoods can
+   share them rather than repeat twelve colour triples. */
+const CAPE_PAL={
+  woodcutting:{pre:'wc', dark:'#2a1810', mid:'#6a4020', light:'#a8763a', clasp:'#c79b4e'},
+  mining:     {pre:'mi', dark:'#181820', mid:'#3a3a48', light:'#7a7a88', clasp:'#c8c8d4'},
+  fishing:    {pre:'fi', dark:'#08203a', mid:'#1a4878', light:'#4a8db8', clasp:'#a8d4f0'},
+  foraging:   {pre:'fo', dark:'#142810', mid:'#3a5a20', light:'#6a9028', clasp:'#9bd44e'},
+  smithing:   {pre:'sm', dark:'#0e0a08', mid:'#3a1a10', light:'#7a3018', clasp:'#fbd24e'},
+  cooking:    {pre:'co', dark:'#1a0a06', mid:'#783820', light:'#c87838', clasp:'#fbd24e'},
+  alchemy:    {pre:'al', dark:'#0a1808', mid:'#2a4818', light:'#5a8028', clasp:'#a8e060'},
+  firemaking: {pre:'fm', dark:'#1a0608', mid:'#7a1820', light:'#e0762f', clasp:'#fbd24e'},
+  agility:    {pre:'ag', dark:'#2a1c10', mid:'#7a5828', light:'#c8a058', clasp:'#fff8dc'},
+  jeweler:    {pre:'jw', dark:'#15082a', mid:'#3a1858', light:'#6a3098', clasp:'#d8a8e8'},
+  farming:    {pre:'fa', dark:'#1a1006', mid:'#7a5520', light:'#c8a040', clasp:'#fbd24e'},
+  crafting:   {pre:'cr', dark:'#15131c', mid:'#3a3848', light:'#6a6878', clasp:'#c8c8d4'},
+};
+
+/* A charm is a rune-disc talisman hung on a cord: one silhouette, a palette and a
+   glyph per charm, the same way every tiered item family in the game is drawn. All
+   five sharing a generic spark would repeat exactly the fault the twelve identical
+   skillcapes had. */
+function _charmSVG(p){
+  const pre='ch_'+p.pre;
+  return `<svg class="ev-icon" viewBox="0 0 64 64"><defs>`
+    +`<linearGradient id="${pre}_d" x1="0" y1="0" x2="0.3" y2="1"><stop offset="0" stop-color="${p.light}"/><stop offset="0.5" stop-color="${p.mid}"/><stop offset="1" stop-color="${p.dark}"/></linearGradient>`
+    +`<linearGradient id="${pre}_r" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f5d278"/><stop offset="0.55" stop-color="#c79b4e"/><stop offset="1" stop-color="#6e552c"/></linearGradient>`
+    +`<radialGradient id="${pre}_g" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="${p.glow}" stop-opacity="0.5"/><stop offset="1" stop-color="${p.glow}" stop-opacity="0"/></radialGradient>`
+    +`</defs>`
+    +`<circle cx="32" cy="38" r="26" fill="url(#${pre}_g)"/>`
+    /* cord + loop */
+    +`<path d="M22 10 Q32 2 42 10" stroke="#3a2a18" stroke-width="2.4" fill="none" stroke-linecap="round"/>`
+    +`<path d="M22 10 Q32 3.5 42 10" stroke="#6a5030" stroke-width="0.9" fill="none" stroke-linecap="round"/>`
+    +`<circle cx="32" cy="15" r="3.4" fill="none" stroke="url(#${pre}_r)" stroke-width="1.8"/>`
+    /* the disc */
+    +`<circle cx="32" cy="38" r="18" fill="url(#${pre}_d)" stroke="${p.edge}" stroke-width="1"/>`
+    +`<circle cx="32" cy="38" r="18" fill="none" stroke="url(#${pre}_r)" stroke-width="1.8"/>`
+    +`<circle cx="32" cy="38" r="14" fill="none" stroke="${p.edge}" stroke-width="0.7" opacity="0.55"/>`
+    +`<path d="M18 32 A18 18 0 0 1 40 21" stroke="#fff" stroke-width="1.4" fill="none" opacity="0.22" stroke-linecap="round"/>`
+    /* four cardinal studs, so the disc reads as struck metal rather than a plain dot */
+    +`<circle cx="32" cy="21.5" r="1.3" fill="${p.stud}"/><circle cx="32" cy="54.5" r="1.3" fill="${p.stud}"/>`
+    +`<circle cx="15.5" cy="38" r="1.3" fill="${p.stud}"/><circle cx="48.5" cy="38" r="1.3" fill="${p.stud}"/>`
+    +p.glyph
+    +`</svg>`;
+}
+
+const CHARM_ICONS={
+  /* Coin Purse — three struck coins. */
+  coin_purse:_charmSVG({pre:'cp', light:'#ffe9a0', mid:'#d8a338', dark:'#6a4410', edge:'#2a1a04',
+    glow:'#e0b455', stud:'#fff2c0',
+    glyph:`<circle cx="27" cy="41" r="6.5" fill="#8a5c10" stroke="#fff2c0" stroke-width="1"/>`
+      +`<circle cx="37" cy="41" r="6.5" fill="#8a5c10" stroke="#fff2c0" stroke-width="1"/>`
+      +`<circle cx="32" cy="33" r="7" fill="#b07c18" stroke="#fff8dc" stroke-width="1.2"/>`
+      +`<circle cx="32" cy="33" r="3" fill="none" stroke="#fff8dc" stroke-width="0.9" opacity="0.8"/>`}),
+  /* Harvester's Charm — a wheat ear. */
+  harvest_charm:_charmSVG({pre:'hv', light:'#c8e88a', mid:'#5f9028', dark:'#1e3a0c', edge:'#0a1604',
+    glow:'#7db03a', stud:'#e4ffbc',
+    glyph:`<path d="M32 48 L32 29" stroke="#e0c060" stroke-width="1.8" stroke-linecap="round"/>`
+      +`<path d="M32 30 Q25 30 24 36 Q31 37 32 31 Z M32 30 Q39 30 40 36 Q33 37 32 31 Z" fill="#f0d878"/>`
+      +`<path d="M32 36 Q25 36 24 42 Q31 43 32 37 Z M32 36 Q39 36 40 42 Q33 43 32 37 Z" fill="#e0c460"/>`
+      +`<path d="M32 26 Q29 28 30 32 Q34 32 34 28 Z" fill="#fff0a8"/>`}),
+  /* Scholar's Charm — an open book. */
+  scholar_charm:_charmSVG({pre:'sc', light:'#a8c8f0', mid:'#3a68a8', dark:'#132a4e', edge:'#050e1c',
+    glow:'#5a90d0', stud:'#dcecff',
+    glyph:`<path d="M32 32 Q25 28 19 30 L19 45 Q25 43 32 47 Z" fill="#e8eef8" stroke="#243a58" stroke-width="0.9" stroke-linejoin="round"/>`
+      +`<path d="M32 32 Q39 28 45 30 L45 45 Q39 43 32 47 Z" fill="#cdd9ec" stroke="#243a58" stroke-width="0.9" stroke-linejoin="round"/>`
+      +`<path d="M32 32 L32 47" stroke="#243a58" stroke-width="1.1"/>`
+      +`<path d="M23 34 L28 35 M23 38 L28 39 M36 35 L41 34 M36 39 L41 38" stroke="#7c90ac" stroke-width="0.7"/>`}),
+  /* Thrifty Charm — a knotted cord that keeps hold of things. */
+  thrift_charm:_charmSVG({pre:'tf', light:'#e0b088', mid:'#a06838', dark:'#4a2810', edge:'#1a0d04',
+    glow:'#c08048', stud:'#ffdcb8',
+    glyph:`<path d="M24 32 Q32 26 40 32 Q46 38 40 44 Q32 50 24 44 Q18 38 24 32 Z" fill="none" stroke="#ffdcb8" stroke-width="2.6" stroke-linejoin="round"/>`
+      +`<path d="M24 44 Q32 38 40 32" stroke="#ffdcb8" stroke-width="2.6" stroke-linecap="round"/>`
+      +`<path d="M24 32 Q32 38 40 44" stroke="#c08048" stroke-width="2.6" stroke-linecap="round"/>`}),
+  /* Swiftwork Charm — three speed-lines cutting the disc. */
+  swift_charm:_charmSVG({pre:'sw', light:'#c8f4ff', mid:'#3fa8c8', dark:'#123a4a', edge:'#04141c',
+    glow:'#5fc8e0', stud:'#e8fdff',
+    glyph:`<path d="M20 31 L42 31 M17 38 L45 38 M20 45 L42 45" stroke="#eafcff" stroke-width="2.4" stroke-linecap="round" opacity="0.9"/>`
+      +`<path d="M38 25 L47 38 L38 51" fill="none" stroke="#eafcff" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>`}),
+};
+
+/* A hood is the cape one rung down: same shoulders, no full drape, thread trim
+   instead of the gold band, and no emblem. Deliberately NOT a new silhouette —
+   at 20px the only thing separating a hood from its cape should be the length. */
+function _hoodSVG(p){
+  const pre='hd_'+p.pre;
+  return `<svg class="ev-icon" viewBox="0 0 64 64"><defs>`
+    +`<linearGradient id="${pre}_b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${p.mid}"/><stop offset="0.6" stop-color="${p.mid}"/><stop offset="1" stop-color="${p.dark}"/></linearGradient>`
+    +`<linearGradient id="${pre}_t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${p.light}"/><stop offset="1" stop-color="${p.dark}"/></linearGradient>`
+    +`</defs>`
+    +`<ellipse cx="32" cy="57" rx="16" ry="2" fill="#000" opacity="0.4"/>`
+    /* the cowl */
+    +`<path d="M32 8 Q16 12 14 30 Q13 38 18 42 L46 42 Q51 38 50 30 Q48 12 32 8 Z" fill="url(#${pre}_b)" stroke="${p.dark}" stroke-width="0.7" stroke-linejoin="round"/>`
+    +`<path d="M32 8 Q16 12 14 30 Q13 38 18 42 L28 42 Q22 30 26 16 Q28 11 32 8 Z" fill="${p.dark}" opacity="0.4"/>`
+    /* the opening — the shadowed face of the hood, and what makes it read as a hood */
+    +`<path d="M32 15 Q23 18 22 30 Q21 37 25 41 L39 41 Q43 37 42 30 Q41 18 32 15 Z" fill="#08060a" opacity="0.85"/>`
+    +`<path d="M32 17 Q25 20 24 30 Q23 36 26 39" stroke="${p.light}" stroke-width="0.8" fill="none" opacity="0.35"/>`
+    /* short mantle over the shoulders */
+    +`<path d="M18 42 L46 42 L52 55 L12 55 Z" fill="url(#${pre}_b)" stroke="${p.dark}" stroke-width="0.7" stroke-linejoin="round"/>`
+    +`<path d="M18 42 L26 42 L22 55 L12 55 Z" fill="${p.dark}" opacity="0.35"/>`
+    +`<path d="M26 43 L24 55 M32 43 L32 55 M38 43 L40 55" stroke="${p.dark}" stroke-width="0.6" opacity="0.5" fill="none"/>`
+    /* thread trim, not the cape's gold band */
+    +`<path d="M18 42 L46 42" stroke="url(#${pre}_t)" stroke-width="1.2" opacity="0.9"/>`
+    +`<path d="M12 55 L52 55" stroke="url(#${pre}_t)" stroke-width="1" opacity="0.75"/>`
+    +`<circle cx="32" cy="45" r="2" fill="${p.dark}" stroke="${p.clasp}" stroke-width="0.7"/>`
+    +`</svg>`;
+}
+
 function _capeSVG(p){
   const pre='cp_'+p.pre;
   const glowDef=p.glow?`<radialGradient id="${pre}_glow" cx="0.5" cy="0.55" r="0.55"><stop offset="0" stop-color="${p.glow}" stop-opacity="0.45"/><stop offset="1" stop-color="${p.glow}" stop-opacity="0"/></radialGradient>`:'';
@@ -11761,6 +11929,20 @@ const ICONS = {
   ember_ring:  _ringSVG(_jwPal({light:'#ffb060',mid:'#e0762f',dark:'#5a1818',edge:'#1a0804',accent:'#fff8dc',glow:'#e0762f'},JB_GOLD)),
   moon_amulet: _amuletSVG(_jwPal({light:'#ffffff',mid:'#b8c8e0',dark:'#3a4868',edge:'#0e1828',accent:'#fff8f0',glow:'#a0b8d8'},{bandLight:'#e8eef6',band:'#9fa8b8',bandDark:'#3a4050'})),
 
+  /* ─── Shop jewelry ladder (0.9.122.20) ───────────────────────────────────────
+     Six pieces filling the Lv 50-99 gap where the shop sold nothing at all. Same
+     three generators as every other ring and amulet in the game, so they inherit
+     the band, the facets and the glow — only the gem palette is new, and each is
+     tied to what the piece does: ore-grey for the Delver, deep water for the Tide,
+     leaf for the Grove, coin-gold for the Signet, focus-violet for the Pendant,
+     harvest-amber for Plenty. */
+  delver_ring:   _ringSVG(_jwPal({light:'#d8dce4',mid:'#8a94a4',dark:'#3a4250',edge:'#12161c',accent:'#ffffff',glow:'#8a94a4'},{bandLight:'#e0d0a8',band:'#a08048',bandDark:'#4a3618'})),
+  tide_ring:     _ringSVG(_jwPal({light:'#9fe4f8',mid:'#2f8fc0',dark:'#123a5a',edge:'#06131f',accent:'#e8fbff',glow:'#3f9fd0'},JB_GOLD)),
+  grove_ring:    _ringSVG(_jwPal({light:'#c4e88a',mid:'#6a9a30',dark:'#254014',edge:'#0c1607',accent:'#f2ffdc',glow:'#7db03a'},{bandLight:'#d8c088',band:'#8a6a34',bandDark:'#3e2c10'})),
+  plenty_ring:   _ringSVG(_jwPal({light:'#ffdc90',mid:'#e0a032',dark:'#6a4210',edge:'#1e1004',accent:'#fff6dc',glow:'#e0a032'},JB_GOLD)),
+  coin_signet:   _amuletSVG(_jwPal({light:'#ffe9a0',mid:'#e0b040',dark:'#6e4c10',edge:'#201404',accent:'#fffbe8',glow:'#f0c860'},JB_GOLD)),
+  focus_pendant: _pendantSVG(_jwPal({light:'#e0c0ff',mid:'#9060d0',dark:'#3a1a68',edge:'#120724',accent:'#fbf2ff',glow:'#a060d0'},{bandLight:'#e8eef6',band:'#9fa8b8',bandDark:'#3a4050'})),
+
   /* ─── Jewelry pendants (8) — V-chain + teardrop gem; void_jewel = void tier ─── */
   sapphire_pendant:   _pendantSVG(_jwPal(GP_SAPPHIRE,JB_GOLD)),
   emerald_pendant:    _pendantSVG(_jwPal(GP_EMERALD,JB_GOLD)),
@@ -12043,6 +12225,24 @@ const ICONS = {
 
   cape_crafting:    _capeSVG({pre:'cr', dark:'#15131c', mid:'#3a3848', light:'#6a6878', clasp:'#c8c8d4', glow:null,
     emblem:`<g transform="translate(32,38)"><g transform="rotate(-32 0 0)"><rect x="-1.1" y="-1" width="2.2" height="13" rx="0.4" fill="#7a4a25" stroke="#2a1810" stroke-width="0.4"/><rect x="-0.6" y="0" width="0.6" height="11" fill="#fff" opacity="0.25"/><path d="M-6 -5 L6 -5 L7 -2 L7 0 L-7 0 L-7 -2 Z" fill="#5a5a68" stroke="#1a1a24" stroke-width="0.4" stroke-linejoin="round"/><path d="M-6 -5 L6 -5 L7 -2 L-7 -2 Z" fill="#9090a0"/></g><g transform="rotate(32 0 0)"><rect x="-1" y="-4" width="2" height="13" rx="0.4" fill="#5a3818" stroke="#1a0e08" stroke-width="0.3"/><path d="M-1.5 -8 L1.5 -8 L1 -4 L-1 -4 Z" fill="#c8c8d4" stroke="#3a3a45" stroke-width="0.4" stroke-linejoin="round"/><path d="M-1.5 -8 L1.5 -8 L1.2 -7 L-1.2 -7 Z" fill="#e0e0ea"/></g><circle cx="0" cy="0" r="1.6" fill="#fbd24e" opacity="0.85"/><circle cx="0" cy="0" r="0.8" fill="#fff" opacity="0.95"/></g>`}),
+
+  /* ─── Hoods (0.9.122.20) ─────────────────────────────────────────────────────
+     The cape's own tier below it, at Lv 92. Same generator and the same per-skill
+     palette so the pair reads as one family, but the garment is short, the trim is
+     thread rather than gold, and it carries no emblem — a hood should be legible
+     as "not yet the cape" at 20px, which is the only size that matters. */
+  hood_woodcutting: _hoodSVG(CAPE_PAL.woodcutting),
+  hood_mining: _hoodSVG(CAPE_PAL.mining),
+  hood_fishing: _hoodSVG(CAPE_PAL.fishing),
+  hood_foraging: _hoodSVG(CAPE_PAL.foraging),
+  hood_smithing: _hoodSVG(CAPE_PAL.smithing),
+  hood_cooking: _hoodSVG(CAPE_PAL.cooking),
+  hood_alchemy: _hoodSVG(CAPE_PAL.alchemy),
+  hood_firemaking: _hoodSVG(CAPE_PAL.firemaking),
+  hood_agility: _hoodSVG(CAPE_PAL.agility),
+  hood_jeweler: _hoodSVG(CAPE_PAL.jeweler),
+  hood_farming: _hoodSVG(CAPE_PAL.farming),
+  hood_crafting: _hoodSVG(CAPE_PAL.crafting),
 
   /* ─── Combat: Player portrait — hooded adventurer with ember eyes and gold-trim cloak.
      Used in the arena card on the left side, opposite the foe portrait. ─── */
@@ -12446,6 +12646,11 @@ const ICONS = {
   chart_voidmaw: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="cg4_p" x1="0" y1="0" x2="0.3" y2="1"><stop offset="0" stop-color="#b9a4cc"/><stop offset="0.5" stop-color="#6d5586"/><stop offset="1" stop-color="#33224a"/></linearGradient><radialGradient id="cg4_g" cx="0.5" cy="0.62" r="0.55"><stop offset="0" stop-color="#0a0410"/><stop offset="0.6" stop-color="#3a1858" stop-opacity="0.7"/><stop offset="1" stop-color="#8848c8" stop-opacity="0"/></radialGradient></defs><circle cx="32" cy="36" r="26" fill="url(#cg4_g)"/><ellipse cx="32" cy="57" rx="19" ry="2.6" fill="#000" opacity="0.45"/><path d="M8 12l16 4 16-4 16 4v40l-16-4-16 4-16-4z" fill="url(#cg4_p)" stroke="#1e1030" stroke-width="0.9"/><path d="M24 16v40M40 12v40" stroke="#1e1030" stroke-width="0.8" opacity="0.5"/><path d="M13 22q7-4 13 1t12-3" stroke="#2a1840" stroke-width="1.1" fill="none" opacity="0.7"/><ellipse cx="32" cy="38" rx="11" ry="9" fill="#0a0410"/><ellipse cx="32" cy="36" rx="8" ry="6" fill="none" stroke="#a86fd8" stroke-width="1" opacity="0.6"/><ellipse cx="32" cy="34" rx="5" ry="3.6" fill="none" stroke="#a86fd8" stroke-width="0.9" opacity="0.45"/><ellipse cx="32" cy="32" rx="2.6" ry="1.8" fill="none" stroke="#c79fe0" stroke-width="0.8" opacity="0.35"/><circle cx="20" cy="26" r="1.1" fill="#c79fe0" opacity="0.7"/><circle cx="45" cy="46" r="0.9" fill="#c79fe0" opacity="0.6"/></svg>',
   trove_odd: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="tv5_m" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c9a55e"/><stop offset="0.5" stop-color="#8a6a2e"/><stop offset="1" stop-color="#41300f"/></linearGradient><radialGradient id="tv5_f" cx="0.5" cy="0.6" r="0.55"><stop offset="0" stop-color="#fffdf0"/><stop offset="0.35" stop-color="#ffe08a"/><stop offset="0.75" stop-color="#e0762f"/><stop offset="1" stop-color="#8a3a10" stop-opacity="0.35"/></radialGradient><radialGradient id="tv5_h" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#ffd98a" stop-opacity="0.7"/><stop offset="1" stop-color="#ffd98a" stop-opacity="0"/></radialGradient></defs><circle cx="32" cy="34" r="27" fill="url(#tv5_h)"/><ellipse cx="32" cy="59" rx="12" ry="2.6" fill="#000" opacity="0.42"/><path d="M28 4 Q32 1 36 4" stroke="url(#tv5_m)" stroke-width="2.4" fill="none" stroke-linecap="round"/><path d="M32 4 L32 10" stroke="url(#tv5_m)" stroke-width="2.4" stroke-linecap="round"/><path d="M20 12 L44 12 L42 17 L22 17 Z" fill="url(#tv5_m)"/><path d="M22 17 L42 17 L45 46 L19 46 Z" fill="#2a2116" opacity="0.55"/><path d="M24 19 L40 19 L42.5 44 L21.5 44 Z" fill="url(#tv5_f)"/><path d="M32 24 Q27 31 27 37 Q27 42 32 42 Q37 42 37 37 Q37 31 32 24 Z" fill="#fffdf0" opacity="0.95"/><path d="M22 17 L21.5 44 M42 17 L42.5 44 M24 19 L40 19" stroke="url(#tv5_m)" stroke-width="2" fill="none"/><path d="M19 46 L45 46 L46 52 L18 52 Z" fill="url(#tv5_m)"/><path d="M19 46 L45 46 L45.2 47.6 L18.8 47.6 Z" fill="#f0d894" opacity="0.6"/><path d="M24 52 L40 52 L38 58 L26 58 Z" fill="#6d5734"/><circle cx="26" cy="14" r="1" fill="#fff" opacity="0.6"/></svg>',
 };
+/* CHARM_ICONS is built above, beside _charmSVG and the cape palettes it sits with,
+   but ICONS is a `const` declared here — merging into it any earlier is a temporal
+   dead zone that takes the whole boot down. Merge after the literal closes. */
+for(const k in CHARM_ICONS) ICONS[k]=CHARM_ICONS[k];
+
 
 /* Returns SVG markup for ids in the ICONS registry, falling back to
    the legacy emoji string from ITEMS/SKILLS. Use this everywhere a span
@@ -16768,8 +16973,163 @@ const SHOP=[
   {id:'cape_agility',    name:'Agility Cape',    icon:'🏃',slot:'cape',skill:'agility',    tier:5,cost:100000,bonus:{speed:0.05,skillXp:0.05},desc:'+5% run speed · +5% Agility XP',     reqLvl:99},
   {id:'cape_jeweler',    name:'Jeweler Cape',    icon:'💎',slot:'cape',skill:'jeweler',    tier:5,cost:100000,bonus:{speed:0.05,skillXp:0.05},desc:'+5% cut speed · +5% Jeweler XP',    reqLvl:99},
   {id:'cape_farming',    name:'Farming Cape',    icon:'🌾',slot:'cape',skill:'farming',    tier:5,cost:100000,bonus:{speed:0.05,skillXp:0.05},desc:'+5% tend speed · +5% Farming XP',   reqLvl:99},
-  {id:'cape_crafting',   name:'Crafting Cape',   icon:'🛠️',slot:'cape',skill:'crafting',   tier:5,cost:100000,bonus:{speed:0.05,skillXp:0.05},desc:'+5% craft speed · +5% Crafting XP', reqLvl:99},
+  {id:'cape_crafting',   name:'Crafting Cape',   icon:'🛠️',slot:'cape',skill:'crafting',   tier:5,cost:100000,bonus:{speed:0.05,skillXp:0.05},desc:'+5% craft speed \u00b7 +5% Crafting XP', reqLvl:99},
+
+  /* ── HOODS (0.9.122.20) ───────────────────────────────────────────────────────
+     The shop sold nothing at all between the Moon Amulet at Lv 50 and the capes at
+     Lv 99. A hood is the cape's own ladder: same slot, same keys, half the bonus,
+     a twentieth of the price, and it stops the last fifty levels of every skill
+     being a dead shop. Buying the cape supersedes it on tier. */
+  {id:'hood_woodcutting',name:'Woodcutting Hood',icon:'🪓',slot:'cape',skill:'woodcutting',tier:4,cost:25000,bonus:{speed:0.02,skillXp:0.02},desc:'+2% chop speed \u00b7 +2% Woodcutting XP', reqLvl:92},
+  {id:'hood_mining',     name:'Mining Hood',     icon:'⛏️',slot:'cape',skill:'mining',     tier:4,cost:25000,bonus:{speed:0.02,skillXp:0.02},desc:'+2% mine speed \u00b7 +2% Mining XP',      reqLvl:92},
+  {id:'hood_fishing',    name:'Fishing Hood',    icon:'🎣',slot:'cape',skill:'fishing',     tier:4,cost:25000,bonus:{speed:0.02,skillXp:0.02},desc:'+2% fish speed \u00b7 +2% Fishing XP',     reqLvl:92},
+  {id:'hood_foraging',   name:'Foraging Hood',   icon:'🌿',slot:'cape',skill:'foraging',    tier:4,cost:25000,bonus:{speed:0.02,skillXp:0.02},desc:'+2% forage speed \u00b7 +2% Foraging XP',  reqLvl:92},
+  {id:'hood_smithing',   name:'Smithing Hood',   icon:'🔨',slot:'cape',skill:'smithing',    tier:4,cost:25000,bonus:{speed:0.02,skillXp:0.02},desc:'+2% smelt speed \u00b7 +2% Smithing XP',   reqLvl:92},
+  {id:'hood_cooking',    name:'Cooking Hood',    icon:'🍳',slot:'cape',skill:'cooking',     tier:4,cost:25000,bonus:{speed:0.02,skillXp:0.02},desc:'+2% cook speed \u00b7 +2% Cooking XP',     reqLvl:92},
+  {id:'hood_alchemy',    name:'Alchemy Hood',    icon:'⚗️',slot:'cape',skill:'alchemy',    tier:4,cost:25000,bonus:{speed:0.02,skillXp:0.02},desc:'+2% brew speed \u00b7 +2% Alchemy XP',     reqLvl:92},
+  {id:'hood_firemaking', name:'Firemaking Hood', icon:'🔥',slot:'cape',skill:'firemaking',  tier:4,cost:25000,bonus:{speed:0.02,skillXp:0.02},desc:'+2% burn speed \u00b7 +2% Firemaking XP',  reqLvl:92},
+  {id:'hood_agility',    name:'Agility Hood',    icon:'🏃',slot:'cape',skill:'agility',     tier:4,cost:25000,bonus:{speed:0.02,skillXp:0.02},desc:'+2% run speed \u00b7 +2% Agility XP',      reqLvl:92},
+  {id:'hood_jeweler',    name:'Jeweler Hood',    icon:'💎',slot:'cape',skill:'jeweler',     tier:4,cost:25000,bonus:{speed:0.02,skillXp:0.02},desc:'+2% cut speed \u00b7 +2% Jeweler XP',      reqLvl:92},
+  {id:'hood_farming',    name:'Farming Hood',    icon:'🌾',slot:'cape',skill:'farming',     tier:4,cost:25000,bonus:{speed:0.02,skillXp:0.02},desc:'+2% tend speed \u00b7 +2% Farming XP',     reqLvl:92},
+  {id:'hood_crafting',   name:'Crafting Hood',   icon:'🛠️',slot:'cape',skill:'crafting',   tier:4,cost:25000,bonus:{speed:0.02,skillXp:0.02},desc:'+2% craft speed \u00b7 +2% Crafting XP',   reqLvl:92},
+
+  /* ── JEWELRY LADDER (0.9.122.20) ──────────────────────────────────────────────
+     Was two items thirty levels apart. `skills:[...]` is the multi-skill form of
+     `skill` — gearBonus/gearSkillXp read both — so a ring can serve a supply chain
+     (mine AND smelt) rather than one skill or all twelve. */
+  {id:'delver_ring', name:'Ring of the Delver', icon:'💍',slot:'ring_r',skill:null,skills:['mining','smithing'],
+   tier:2,cost:25000, bonus:{skillXp:0.08}, desc:'+8% Mining and Smithing XP', reqLvl:40},
+  {id:'tide_ring',   name:'Ring of the Tide',  icon:'💍',slot:'ring_r',skill:null,skills:['fishing','cooking'],
+   tier:2,cost:25000, bonus:{skillXp:0.08}, desc:'+8% Fishing and Cooking XP', reqLvl:40},
+  {id:'grove_ring',  name:'Ring of the Grove', icon:'💍',slot:'ring_r',skill:null,skills:['woodcutting','foraging','farming'],
+   tier:2,cost:30000, bonus:{skillXp:0.08}, desc:'+8% Woodcutting, Foraging and Farming XP', reqLvl:40},
+  {id:'coin_signet', name:'Signet of Coin',    icon:'💰',slot:'amulet',skill:null,
+   tier:2,cost:120000,bonus:{gpBoost:0.15}, desc:'+15% sell value all items', reqLvl:75, req:'moon_amulet'},
+  {id:'focus_pendant',name:'Pendant of Focus', icon:'📿',slot:'amulet',skill:null,
+   tier:3,cost:180000,bonus:{xpBoost:0.10}, desc:'+10% XP all skills', reqLvl:80},
+  {id:'plenty_ring', name:'Ring of Plenty',    icon:'💍',slot:'ring_r',skill:null,
+   tier:3,cost:250000,bonus:{doubleYield:0.05}, desc:'+5% double yield, gathering and crafting', reqLvl:85},
 ];
+
+/* ════ CHARMS (0.9.122.20) ═══════════════════════════════════════════════════════
+   A charm is bought once and applies forever. It occupies no slot, so it never
+   competes with a ring for a hand — which is the whole reason the category exists:
+   the shop had nothing a maxed player could buy that was not already contested by
+   something better. Ownership lives in `state.charms`; every bonus below is read
+   through charmBonus() by the same paths that already read jewelry.
+
+   Keys here MUST be keys mods()/globalSellBonus already consume, or the charm is a
+   lie on a card. When a charm needs a mechanic that does not exist yet, it does not
+   go in this list — it stays in the shop ledger until the mechanic lands. */
+const CHARMS=[
+  {id:'coin_purse',  name:'Coin Purse',        cost:50000,  reqLvl:40,
+   bonus:{gpBoost:0.05},     desc:'+5% gold from every source, permanently.'},
+  {id:'harvest_charm',name:"Harvester's Charm",cost:120000, reqLvl:60,
+   bonus:{doubleYield:0.03}, desc:'+3% chance to double any gathered or crafted output.'},
+  {id:'scholar_charm',name:"Scholar's Charm",  cost:150000, reqLvl:60,
+   bonus:{xpBoost:0.04},     desc:'+4% XP in every skill.'},
+  {id:'thrift_charm', name:'Thrifty Charm',    cost:130000, reqLvl:55,
+   bonus:{preserve:0.04},    desc:'4% chance a processing recipe keeps its materials.'},
+  {id:'swift_charm',  name:'Swiftwork Charm',  cost:200000, reqLvl:70,
+   bonus:{speed:0.03},       desc:'+3% action speed in every skill.'},
+];
+const CHARM_BY_ID={}; for(const c of CHARMS) CHARM_BY_ID[c.id]=c;
+
+/* Sum one bonus key across every charm the player owns. Charms are unslotted, so
+   there is no loadout to walk — ownership alone is the condition. */
+function charmBonus(key){
+  const owned=(state&&Array.isArray(state.charms))?state.charms:null;
+  if(!owned||!owned.length) return 0;
+  let total=0;
+  for(const id of owned){ const c=CHARM_BY_ID[id]; if(c&&c.bonus[key]) total+=c.bonus[key]; }
+  return total;
+}
+function hasCharm(id){ return !!(state&&Array.isArray(state.charms)&&state.charms.indexOf(id)>=0); }
+
+/* ════ SUPPLIES (0.9.122.20) ═════════════════════════════════════════════════════
+   The missing verb. You could sell every item in Cindervale and buy none of them
+   back, so a player who wanted to cook had to fish, and a player who wanted to
+   smith had to mine. A supply is a repeatable purchase that grants items rather
+   than gear: priced off the item's own sell value so it can never be arbitraged
+   (buy at 2.5x, sell at 1x), and gated on having reached the tier legitimately —
+   the shop shortcuts the grind, it does not skip the unlock.
+
+   `mult` is the markup over base sell. `req` is {skill, lvl} the player must meet. */
+const SUPPLIES=[
+  {id:'sup_logs',   name:'Bundle of Logs',    grants:'log',   qty:100, mult:2.5, req:{skill:'woodcutting',lvl:1},
+   desc:'100 logs of the best tier your Woodcutting level allows.'},
+  {id:'sup_ore',    name:'Crate of Ore',      grants:'ore',   qty:100, mult:2.5, req:{skill:'mining',lvl:1},
+   desc:'100 ore of the best tier your Mining level allows.'},
+  {id:'sup_coal',   name:'Sack of Coal',      grants:'coal',  qty:100, mult:2.0, req:{skill:'smithing',lvl:15},
+   desc:'100 Coal. The smelting bottleneck, bought rather than mined.'},
+  {id:'sup_fish',   name:'Barrel of Raw Fish',grants:'fish',  qty:100, mult:2.5, req:{skill:'fishing',lvl:1},
+   desc:'100 raw fish of the best tier your Fishing level allows.'},
+  {id:'sup_herbs',  name:'Bundle of Herbs',   grants:'herb',  qty:50,  mult:2.5, req:{skill:'foraging',lvl:1},
+   desc:'50 herbs of the best tier your Foraging level allows.'},
+  {id:'sup_bars',   name:'Crate of Bars',     grants:'bar',   qty:50,  mult:3.0, req:{skill:'smithing',lvl:1},
+   desc:'50 bars of the best tier your Smithing level allows.'},
+];
+
+/* Which item a supply hands over depends on the player's level in its skill, so one
+   shop row serves the whole game rather than seven rows per material. Reads the
+   skill's own act list, so a new tier added to a skill is stocked automatically. */
+function supplyItemFor(sup){
+  if(sup.grants==='coal') return 'coal';
+  const sk=sup.req.skill==='smithing'&&sup.grants==='bar'?'smithing':sup.req.skill;
+  const lvl=levelFromXp((state.xp&&state.xp[sk])||0);
+  const acts=(SKILLS[sk]&&SKILLS[sk].acts)||[];
+  let best=null;
+  for(const a of acts){
+    if((a.lvl||1)>lvl) continue;
+    for(const id in (a.out||{})){
+      const it=ITEMS[id]; if(!it||!it.sell) continue;
+      if(sup.grants==='log'  && !(id.endsWith('_log')||id==='driftwood')) continue;
+      if(sup.grants==='ore'  && !id.endsWith('_ore')) continue;
+      if(sup.grants==='fish' && !id.startsWith('raw_')) continue;
+      if(sup.grants==='bar'  && !id.endsWith('_bar')) continue;
+      if(sup.grants==='herb' && (id.endsWith('_log')||id.endsWith('_ore')||id.endsWith('_bar')||id.startsWith('raw_')||isSeedId(id))) continue;
+      if(!best||(ITEMS[id].sell>ITEMS[best].sell)) best=id;
+    }
+  }
+  return best;
+}
+/* Price follows the item, never a hand-written number — so a supply can never be
+   cheaper than what it grants sells for, at any tier, however the tiers move. */
+function supplyCost(sup){
+  const id=supplyItemFor(sup);
+  if(!id) return 0;
+  return Math.max(1, Math.round((ITEMS[id].sell||1)*sup.qty*sup.mult));
+}
+function buySupply(supId){
+  const sup=SUPPLIES.find(x=>x.id===supId); if(!sup) return;
+  const lvl=levelFromXp((state.xp&&state.xp[sup.req.skill])||0);
+  if(lvl<sup.req.lvl){ toast('Requires '+SKILLS[sup.req.skill].name+' level '+sup.req.lvl+'.'); return; }
+  const id=supplyItemFor(sup);
+  if(!id){ toast('Nothing in stock for your level yet.'); return; }
+  const cost=supplyCost(sup);
+  if(state.coins<cost*SILVER_PER_GOLD){ toast('Not enough coins.'); return; }
+  /* Pay only for what actually arrives. grantItem refuses a NEW item type when the
+     satchel is full and returns 0 — taking the gold first would charge for nothing,
+     which is the same silent loss the satchel-full material bug was. */
+  const got=grantItem(id, sup.qty);
+  if(got<=0){ toast('\ud83c\udf92 Satchel full \u2014 make room first.'); return; }
+  const paid=Math.round(cost*(got/sup.qty));
+  state.coins-=paid*SILVER_PER_GOLD;
+  renderAll(); saveGame();
+  toast('Bought '+got+'\u00d7 '+ITEMS[id].name+'.');
+}
+function buyCharm(id){
+  const c=CHARM_BY_ID[id]; if(!c) return;
+  if(hasCharm(id)){ toast('You already own this.'); return; }
+  const best=Math.max.apply(null,Object.values(state.xp).map(x=>levelFromXp(x)));
+  if(c.reqLvl&&best<c.reqLvl){ toast('Requires level '+c.reqLvl+' in any skill.'); return; }
+  if(state.coins<c.cost*SILVER_PER_GOLD){ toast('Not enough coins.'); return; }
+  state.coins-=c.cost*SILVER_PER_GOLD;
+  if(!Array.isArray(state.charms)) state.charms=[];
+  state.charms.push(id);
+  renderAll(); saveGame();
+  toast('\u2728 '+c.name+' \u2014 its effect is permanent.');
+}
 
 /* ─── Skilling tools registration (v1.0.47) ────────────────────────────────────
    Tools moved from the Shop into the Crafting skill. SHOP entries stay for
@@ -17430,6 +17790,12 @@ function normalizeState(){
   if(typeof state.cookingFire.lastBurnAt!=='number') state.cookingFire.lastBurnAt=Date.now();
   if(!state.potionCooldowns||typeof state.potionCooldowns!=='object'||Array.isArray(state.potionCooldowns)) state.potionCooldowns={};
   if(typeof state.satchelUpgrades!=='number'||state.satchelUpgrades<0) state.satchelUpgrades=0;
+  /* Charms (0.9.122.20) — unslotted permanent shop unlocks. Every save made before
+     this build has none, and charmBonus() reads the array on every mods() call, so
+     it has to exist rather than be created lazily on first purchase. Unknown ids are
+     dropped: a charm removed from CHARMS must not keep paying out. */
+  if(!Array.isArray(state.charms)) state.charms=[];
+  else state.charms=state.charms.filter(function(id){ return !!CHARM_BY_ID[id]; });
   /* Seed vault. The migration runs on EVERY load, not once behind a flag: it is
      idempotent, and leaving it live also catches a seed that reaches state.items
      by some path added later rather than stranding it there invisibly. */
@@ -18296,8 +18662,11 @@ function gearBonus(skill,type){
   for(const [slot,itemId] of Object.entries(state.equipped)){
     const item=SHOP.find(i=>i.id===itemId);
     if(!item||!item.bonus[type]) continue;
-    // skill-specific tools only apply to their skill; jewelry (skill=null) applies globally
-    if(item.skill&&item.skill!==skill) continue;
+    // skill-specific tools only apply to their skill; jewelry (skill=null) applies globally.
+    // `skills` is the multi-skill form — a ring that serves a supply chain rather than
+    // one skill or all twelve. An item with `skills` is scoped to exactly that list.
+    if(item.skills){ if(item.skills.indexOf(skill)<0) continue; }
+    else if(item.skill&&item.skill!==skill) continue;
     total+=item.bonus[type];
   }
   return total;
@@ -18307,7 +18676,9 @@ function jewelryBonus(type){
   let total=0;
   for(const [,itemId] of Object.entries(state.equipped)){
     const item=SHOP.find(i=>i.id===itemId);
-    if(item&&item.skill===null&&item.bonus[type]) total+=item.bonus[type];
+    // `skills` rings carry skill:null so they sit in a ring slot, but they are NOT
+    // universal — excluding them here is what keeps their bonus scoped.
+    if(item&&item.skill===null&&!item.skills&&item.bonus[type]) total+=item.bonus[type];
   }
   // Trophy jewelry carries its bonus on the ITEM (jbonus), not in SHOP. Skilling
   // keys (gpBoost/xpBoost) are read from the SKILLING loadout, same as gem jewelry.
@@ -18335,7 +18706,9 @@ function gearSkillXp(skill){
   let total=0;
   for(const [,itemId] of Object.entries(state.equipped)){
     const item=SHOP.find(i=>i.id===itemId);
-    if(!item||item.skill!==skill||!item.bonus||!item.bonus.skillXp) continue;
+    if(!item||!item.bonus||!item.bonus.skillXp) continue;
+    const serves=item.skills?(item.skills.indexOf(skill)>=0):(item.skill===skill);
+    if(!serves) continue;
     total+=item.bonus.skillXp;
   }
   return total;
@@ -18348,7 +18721,7 @@ function gearSkillXp(skill){
      • Gold potions     — Void Elixir / Philosopher's Drop gp bonus while active
    Skill-specific tree perks (e.g. Ore Fortune) are added ON TOP for items that skill makes. */
 function globalSellBonus(){
-  let total=jewelryBonus('gpBoost')+(activeEffectBonus('gp')||0);
+  let total=jewelryBonus('gpBoost')+(activeEffectBonus('gp')||0)+charmBonus('gpBoost');
   try{ const eb=enchantBonuses(); if(eb&&eb.gpBoost) total+=eb.gpBoost; }catch(e){}
   try{ const sb=socketBonuses(); if(sb&&sb.gpBoost) total+=sb.gpBoost; }catch(e){}
   return total;
@@ -19225,7 +19598,8 @@ function mods(skill){
   const xpAdditive = xpTree
                    + activeEffectBonus('xp')        // potion
                    + jewelryBonus('xpBoost')         // ember ring / moon amulet
-                   + gearSkillXp(skill)              // skillcapes (per-skill xp bonus)
+                   + charmBonus('xpBoost')           // charms (unslotted, permanent)
+                   + gearSkillXp(skill)              // skillcapes, hoods, supply-chain rings
                    + eb.xpBoost                       // enchantments (Scholar / unique / sets)
                    + sb.xpBoost                       // socket gems (onyx)
                    + skillingSetBonus(skill)          // skilling gear set pieces
@@ -19255,6 +19629,7 @@ function mods(skill){
            + (skill==='agility'&&r(p+'_master2')>0?0.15:0)
            + (skill==='firemaking'&&r('fm_master_bellows')>0?0.06:0)
            + gearBonus(skill,'speed')
+           + charmBonus('speed')                        // charms (unslotted, permanent)
            + eb.speed                                   // enchantments (Swift / unique / sets)
            + sb.speed                                   // socket gems (onyx)
            + gb.speed,                                  // guild titles
@@ -19270,19 +19645,24 @@ function mods(skill){
                   + sb.doubleYield                       // socket gems
                   + classYieldBonus()                    // Artisan class — bonus gather yield
                   + gearBonus(skill,'doubleYield')       // T6 tools — first gear source of yield
+                  + jewelryBonus('doubleYield')          // Ring of Plenty
+                  + charmBonus('doubleYield')            // Harvester's Charm
                   + activeEffectBonus('doubleChance')):0,
     xpMult:  (1 + xpAdditive + gb.xp) * xp2x * charTypeXpMult() * (1 + classSkillXpBonus()) * XP_SCALE,
     /* Gear term added for the T6 tools — until then no tool could affect anything
        but speed, which is why the tier had nothing left to give. Gathering skills
        consume nothing, so preserve stays 0 for them. */
     preserve:!IS_G?((r(p+'_thrift')||r(p+'_seed'))*(skill==='alchemy'?0.015:skill==='cooking'?0.005:skill==='firemaking'?0.015:0.02)
-                 + gearBonus(skill,'preserve')):0,
+                 + gearBonus(skill,'preserve')
+                 + charmBonus('preserve')):0,
     extraBar: !IS_G?((r(p+'_double')||r(p+'_yield'))*(skill==='alchemy'?0.015:skill==='cooking'?0.006:skill==='firemaking'?0.015:0.04)
                  + (skill==='cooking'&&r('co_gm_feast')>0?0.25:0)  // Feasting Table: 25% chance for a 2nd meal (no longer guaranteed double)
                  + eb.doubleYield                       // enchantments (Gatherer / Hoarder / sets)
                  + sb.doubleYield                       // socket gems
                  + classYieldBonus()                    // Artisan class — bonus craft yield
                  + gearBonus(skill,'doubleYield')       // T6 tools — first gear source of yield
+                 + jewelryBonus('doubleYield')          // Ring of Plenty
+                 + charmBonus('doubleYield')            // Harvester's Charm
                  + activeEffectBonus('doubleChance')):0,
     extraSell: (skill==='mining'?(r('mi_gm_fortune')*0.07)
                :skill==='woodcutting'?(r('wc_gm_sell')*0.07)
@@ -24574,135 +24954,271 @@ function spendPoint(skill,nodeId){
      - skill !== null              → category = skill (woodcutting, mining, …)
      - skill === null, slot=cape   → category = 'capes'
      - skill === null, anything else → category = 'jewelry'   */
+/* Vendors, in the order they appear on the rail. `kind` picks the card renderer:
+   'gear' buys into state.gear, 'charm' into state.charms, 'stock' grants items. */
 const SHOP_CATS=[
-  // Tools moved to Crafting in v1.0.47 — only jewelry and skillcapes remain
-  // in the shop. The per-skill categories (woodcutting / mining / etc.) used
-  // to hold the tier'd tool ladder for each skill; those are now crafted.
-  {key:'jewelry',    label:'Jewelry',    icon:'💍'},
-  {key:'capes',      label:'Skillcapes', icon:'🧣'},
+  {key:'jewelry',  label:'Jeweller',    icon:'sapphire_ring',  kind:'gear',
+   sub:'Rings and amulets. One per hand, one at the neck.'},
+  {key:'capes',    label:'Cape Wright', icon:'cape_woodcutting',kind:'gear',
+   sub:'Hoods at 92, capes at 99. A cape also unlocks its skill\u2019s Lv 99 tree capstone.'},
+  {key:'charms',   label:'Charms',      icon:'coin_purse',     kind:'charm',
+   sub:'Bought once, always active. No slot, nothing to equip, nothing to swap out.'},
+  {key:'supplies', label:'Supplies',    icon:'oak_log',    kind:'stock',
+   sub:'Materials by the bundle, at a markup. Priced off what they sell for, so there is no arbitrage.'},
+  {key:'storage',  label:'Satchel',     icon:'foraging_pouch',kind:'satchel',
+   sub:'Room to carry it all. The expansion that used to hide inside the satchel panel.'},
 ];
 function shopCatFor(item){
   if(item.slot==='cape') return 'capes';
   if(item.skill) return item.skill;
   return 'jewelry';
 }
-/* Selected category — persists for the session. */
+/* Selected vendor — persists for the session. */
 var shopSelectedCat=null;
+
+/* One goods card. Everything a shop card can be — ownable gear, a worn piece, a
+   locked tier, a permanent charm, a restockable bundle — comes out of here, so the
+   grid can never go ragged between vendors. */
+function shCard(o){
+  const btn=document.createElement(o.onBuy?'button':'div');
+  btn.className='sh-card'+(o.cls?' '+o.cls:'')
+    +(o.worn?' worn':'')+(o.owned?' owned':'')+(o.locked?' dis':'');
+  if(o.onBuy) btn.type='button';
+  let tag='';
+  if(o.worn)        tag='<span class="sh-tag eq">Equipped</span>';
+  else if(o.owned)  tag='<span class="sh-tag ow">'+(o.ownedLabel||'Owned')+'</span>';
+  else if(o.locked) tag='<span class="sh-tag lk">'+o.lockLabel+'</span>';
+
+  const tipAttrs=o.itemId&&(typeof ITEMS!=='undefined')&&ITEMS[o.itemId]
+    ? ' data-item="'+o.itemId+'"'+(o.itemNote?' data-itemnote="'+o.itemNote+'"':'')
+    : '';
+
+  btn.innerHTML=
+     '<div class="sh-top">'
+    +'<span class="sh-ic"'+tipAttrs+'>'+o.icon+'</span>'
+    +'<span class="sh-nm"><span class="n">'+o.name+'</span>'
+      +(o.gate?'<span class="g">'+o.gate+'</span>':'')+'</span>'
+    +(tag?tag:'')
+    +'</div>'
+    +'<div class="sh-ds">'+o.desc+'</div>'
+    +'<div class="sh-foot">'
+      +(o.owned&&!o.repeat
+         ? '<span class="sh-note">'+(o.ownedNote||'')+'</span>'
+         : '<span class="sh-price'+(o.poor?' poor':'')+'">'+iconHTML('ui_coin')+' '
+            +o.cost.toLocaleString()+'g</span>')
+    +'</div>';
+
+  if(o.onBuy && !(o.owned&&!o.repeat) && !o.locked){
+    const b=document.createElement('button');
+    b.className='sh-buy'+(o.poor?'':' primary');
+    b.type='button';
+    b.textContent=o.buyLabel||'Buy';
+    b.disabled=!!o.poor;
+    if(o.poor) b.title='Not enough coins';
+    b.addEventListener('click',function(e){ e.stopPropagation(); o.onBuy(); });
+    btn.querySelector('.sh-foot').appendChild(b);
+  }
+  return btn;
+}
 
 function renderShop(){
   const box=$('shopView'); box.innerHTML='';
   const ownedSet=new Set(state.gear);
 
-  // Bucket every SHOP item by category — skip tools (crafted in Crafting now).
+  /* Bucket the buyable SHOP rows. Tools are crafted, not sold — they keep their
+     SHOP entries only so gearBonus can read them. */
   const cats={};
   for(const item of SHOP){
     if(item.tool) continue;
     const k=shopCatFor(item);
-    if(!cats[k]) cats[k]=[];
-    cats[k].push(item);
+    (cats[k]||(cats[k]=[])).push(item);
+  }
+  const bestLvl=Math.max.apply(null,Object.values(state.xp).map(function(x){return levelFromXp(x);}));
+
+  function ownedCount(key){
+    if(key==='charms')   return (state.charms||[]).length;
+    if(key==='supplies') return 0;
+    if(key==='storage')  return Math.min(state.satchelUpgrades||0,SATCHEL_MAX_EXPANSIONS);
+    return (cats[key]||[]).filter(function(i){ return ownedSet.has(i.id); }).length;
+  }
+  function totalCount(key){
+    if(key==='charms')   return CHARMS.length;
+    if(key==='supplies') return SUPPLIES.length;
+    if(key==='storage')  return SATCHEL_MAX_EXPANSIONS;
+    return (cats[key]||[]).length;
+  }
+  if(!shopSelectedCat||!SHOP_CATS.some(function(c){return c.key===shopSelectedCat;})){
+    shopSelectedCat='jewelry';
   }
 
-  // Pick default selection on first render — jewelry first (since most early
-  // players visit the shop hunting for the ember ring before chasing capes).
-  if(!shopSelectedCat||!cats[shopSelectedCat]){
-    shopSelectedCat = cats['jewelry'] ? 'jewelry' : 'capes';
-  }
+  /* ── purse ───────────────────────────────────────────────────────────────── */
+  const purse=document.createElement('div');
+  purse.className='sh-purse';
+  const owned=SHOP_CATS.reduce(function(a,c){ return a+ownedCount(c.key); },0);
+  const totes=SHOP_CATS.reduce(function(a,c){ return a+totalCount(c.key); },0);
+  purse.innerHTML=iconHTML('ui_coin')
+    +'<span><b>'+Math.floor(state.coins/SILVER_PER_GOLD).toLocaleString()+'g</b><br><i>Purse</i></span>'
+    +'<span class="sp-r"><b>'+owned+' / '+totes+'</b><br>bought</span>';
+  box.appendChild(purse);
 
-  // ---- Category grid (top) ----
-  const grid=document.createElement('div');
-  grid.className='shop-catgrid';
+  const wrap=document.createElement('div');
+  wrap.className='sh-wrap';
+  box.appendChild(wrap);
+
+  /* ── vendor rail ─────────────────────────────────────────────────────────── */
+  const rail=document.createElement('div');
+  rail.className='sh-rail';
   for(const cat of SHOP_CATS){
-    const items=cats[cat.key]||[];
-    const ownedCt=items.filter(it=>ownedSet.has(it.id)).length;
-    const total=items.length;
-    const allOwned=total>0&&ownedCt===total;
-    const cell=document.createElement('div');
-    cell.className='shop-cat'+(cat.key===shopSelectedCat?' sel':'')+(allOwned?' allowned':'');
-    cell.id='shopCat_'+cat.key;
-    cell.innerHTML='<span class="ico">'+cat.icon+'</span>'
-      +'<span class="lbl">'+cat.label+'</span>'
-      +(total>0?'<span class="own">'+ownedCt+'/'+total+'</span>':'');
-    cell.addEventListener('click',()=>{ shopSelectedCat=cat.key; renderShop(); });
-    grid.appendChild(cell);
+    const oc=ownedCount(cat.key), tc=totalCount(cat.key);
+    const b=document.createElement('button');
+    b.type='button';
+    b.className='sh-vend'+(cat.key===shopSelectedCat?' on':'')+(tc>0&&oc===tc?' done':'');
+    b.id='shopCat_'+cat.key;
+    b.innerHTML=iconHTML(cat.icon)
+      +'<span class="vn">'+cat.label
+      +'<span class="vc">'+(cat.key==='supplies'?SUPPLIES.length+' in stock':oc+' / '+tc)+'</span></span>';
+    b.addEventListener('click',function(){ shopSelectedCat=cat.key; renderShop(); });
+    rail.appendChild(b);
   }
-  box.appendChild(grid);
+  wrap.appendChild(rail);
 
-  // ---- Selected category items (bottom) ----
-  const selCat=SHOP_CATS.find(c=>c.key===shopSelectedCat);
-  const items=cats[shopSelectedCat]||[];
+  /* ── goods ───────────────────────────────────────────────────────────────── */
+  const side=document.createElement('div');
+  side.style.minWidth='0';
+  wrap.appendChild(side);
+  const cat=SHOP_CATS.find(function(c){ return c.key===shopSelectedCat; });
+  const head=document.createElement('div');
+  head.className='sh-head';
+  head.innerHTML='<h3>'+cat.label+'</h3><span class="sub">'+cat.sub+'</span>'
+    +'<span class="cnt">'+(cat.key==='supplies'?'':ownedCount(cat.key)+' of '+totalCount(cat.key)+' owned')+'</span>';
+  side.appendChild(head);
 
-  // Section title for the selected category
-  const title=document.createElement('div');
-  title.style.cssText='font-size:calc(13px*var(--tscale));color:var(--ember);text-transform:uppercase;letter-spacing:2px;'
-    +'margin:4px 0 8px;display:flex;align-items:center;justify-content:space-between;gap:8px;'
-    +'border-top:1px solid var(--trim-d);padding-top:8px';
-  title.innerHTML='<span>'+(selCat?selCat.icon+' '+selCat.label:shopSelectedCat)+'</span>'
-    +'<span style="color:var(--muted);font-size:calc(12px*var(--tscale));font-family:var(--num);letter-spacing:0">'
-    +items.filter(it=>ownedSet.has(it.id)).length+'/'+items.length+' owned</span>';
-  box.appendChild(title);
+  const grid=document.createElement('div');
+  grid.className='sh-goods';
+  side.appendChild(grid);
 
-  if(items.length===0){
-    const empty=document.createElement('div');
-    empty.style.cssText='font-size:calc(14px*var(--tscale));color:var(--muted);font-style:italic;padding:8px 0';
-    empty.textContent='Nothing here yet.';
-    box.appendChild(empty);
-    return;
+  if(cat.key==='charms')        renderShopCharms(grid);
+  else if(cat.key==='supplies') renderShopSupplies(grid);
+  else if(cat.key==='storage')  renderShopSatchel(grid);
+  else                          renderShopGear(grid, cats[cat.key]||[], ownedSet, bestLvl);
+
+  if(!grid.children.length){
+    const e=document.createElement('div');
+    e.className='sh-empty'; e.textContent='Nothing here yet.';
+    side.appendChild(e);
   }
+}
 
-  // Categories with many items (e.g. Skillcapes' 11 tiers) use a 2-col grid so the
-  // whole shop fits on screen without scrolling. Threshold: > 6 items.
-  const useTwoCol=items.length>6;
-  const itemsWrap=document.createElement('div');
-  if(useTwoCol) itemsWrap.className='shop-items-2c';
-  box.appendChild(itemsWrap);
-
-  // Compact item rows
-  for(const item of items){
+/* Ordinary shop gear — jewelry, hoods, capes. */
+function renderShopGear(grid, items, ownedSet, bestLvl){
+  /* Cheapest first inside a vendor, so the next thing you can afford is the next
+     thing you read — the old list was in declaration order, which put twelve
+     100,000g capes above the 25,000g hoods that lead to them. */
+  const sorted=items.slice().sort(function(a,b){ return (a.cost||0)-(b.cost||0); });
+  for(const item of sorted){
     const owned=ownedSet.has(item.id);
-    // An item is equipped if it sits in ANY equipped slot (rings can be in either hand)
-    let isEquipped=false;
-    for(const oSlot in state.equipped){ if(state.equipped[oSlot]===item.id){ isEquipped=true; break; } }
+    let worn=false;
+    for(const sl in state.equipped){ if(state.equipped[sl]===item.id){ worn=true; break; } }
+    const lvl=item.skill?levelFromXp(state.xp[item.skill]):bestLvl;
+    const lvlMet=!item.reqLvl||lvl>=item.reqLvl;
     const reqMet=!item.req||ownedSet.has(item.req);
-    const skillLvl=item.skill?levelFromXp(state.xp[item.skill]):99;
-    const lvlMet=!item.reqLvl||skillLvl>=item.reqLvl;
-    const canAfford=state.coins>=item.cost*SILVER_PER_GOLD;
-    const canBuy=!owned&&reqMet&&lvlMet&&canAfford;
+    const poor=state.coins<item.cost*SILVER_PER_GOLD;
 
-    const row=document.createElement('div');
-    row.className='shop-item-c'+(isEquipped?' equipped-active':owned?' owned':(!lvlMet||!reqMet)?' locked':'');
+    let gate='';
+    if(item.skill)        gate=SKILLS[item.skill].name+' '+item.reqLvl;
+    else if(item.skills)  gate=item.skills.map(function(k){return SKILLS[k].name;}).join(' \u00b7 ');
+    else if(item.reqLvl)  gate='Any skill '+item.reqLvl;
 
-    // Status badge — shown inline next to the name
-    let badge='';
-    if(isEquipped) badge='<span class="badge eq">● Equipped</span>';
-    else if(owned) badge='<span class="badge ow">✓ Owned</span>';
-    else if(!lvlMet) badge='<span class="badge lk">🔒 Lv '+item.reqLvl+'</span>';
-    else if(!reqMet) badge='<span class="badge lk">🔒 Prev tier</span>';
-
-    const skName=item.skill?SKILLS[item.skill].name:'';
-    row.innerHTML='<span class="ico">'+iconHTML(item.id)+'</span>'
-      +'<div class="info">'
-        +'<div class="nm">'+item.name+' '+badge+'</div>'
-        +'<div class="ds">'+item.desc+'</div>'
-      +'</div>';
-
-    if(owned){
-      const hint=document.createElement('span');
-      hint.className='hint';
-      hint.textContent=isEquipped?'In use':'Gear →';
-      row.appendChild(hint);
-    } else {
-      const btn=document.createElement('button');
-      btn.className='buy';
-      btn.innerHTML=iconHTML('ui_coin')+' '+item.cost.toLocaleString()+'g';
-      btn.disabled=!canBuy;
-      if(!reqMet) btn.title='Buy previous tier first';
-      else if(!lvlMet) btn.title='Requires Level '+item.reqLvl+(skName?' '+skName:'');
-      else if(!canAfford) btn.title='Not enough coins';
-      btn.addEventListener('click',()=>buyShop(item.id));
-      row.appendChild(btn);
+    /* A cape is the only shop item that unlocks a tree node, and the shop has never
+       said so anywhere — you had to already own one to find out. */
+    let desc=item.desc;
+    if(item.slot==='cape'&&item.tier>=5&&item.skill&&_shopCapeCapstone(item.skill)){
+      desc+=' <b>\u00b7 unlocks the Lv 99 capstone</b>';
     }
-    itemsWrap.appendChild(row);
+
+    grid.appendChild(shCard({
+      icon:iconHTML(item.id), name:item.name, gate:gate, desc:desc,
+      itemId:item.id, cost:item.cost, owned:owned, worn:worn, poor:poor,
+      locked:!owned&&(!lvlMet||!reqMet),
+      lockLabel:!lvlMet?('Lv '+item.reqLvl):'Earlier tier',
+      ownedNote:worn?'In use':'Equip from Gear',
+      onBuy:function(){ buyShop(item.id); }
+    }));
   }
+}
+/* True when this skill has a tree node that requires the cape. Seven do; the rest
+   are listed in the shop ledger as a gap to fill, not claimed here. */
+function _shopCapeCapstone(skill){
+  const t=(typeof TREES!=='undefined')&&TREES[skill];
+  return Array.isArray(t) && t.some(function(n){ return n&&n.reqCape; });
+}
+
+function renderShopCharms(grid){
+  const bestLvl=Math.max.apply(null,Object.values(state.xp).map(function(x){return levelFromXp(x);}));
+  for(const c of CHARMS){
+    const owned=hasCharm(c.id);
+    const lvlMet=!c.reqLvl||bestLvl>=c.reqLvl;
+    const poor=state.coins<c.cost*SILVER_PER_GOLD;
+    grid.appendChild(shCard({
+      cls:'charm', icon:iconHTML(c.id), name:c.name,
+      gate:c.reqLvl?('Any skill '+c.reqLvl):'', desc:c.desc,
+      cost:c.cost, owned:owned, poor:poor,
+      locked:!owned&&!lvlMet, lockLabel:'Lv '+c.reqLvl,
+      ownedLabel:'Active', ownedNote:'Always on',
+      onBuy:function(){ buyCharm(c.id); }
+    }));
+  }
+}
+
+function renderShopSupplies(grid){
+  for(const sup of SUPPLIES){
+    const lvl=levelFromXp((state.xp&&state.xp[sup.req.skill])||0);
+    const lvlMet=lvl>=sup.req.lvl;
+    const id=supplyItemFor(sup);
+    const cost=supplyCost(sup);
+    const poor=!id||state.coins<cost*SILVER_PER_GOLD;
+    const stocked=!!id;
+    grid.appendChild(shCard({
+      cls:'stock', icon:iconHTML(id||'ui_satchel'), name:sup.name,
+      gate:SKILLS[sup.req.skill].name+(sup.req.lvl>1?' '+sup.req.lvl:''),
+      desc:sup.desc+(stocked
+        ? '<div class="sh-qty">'+iconHTML(id)+'<b>'+sup.qty+'\u00d7 '+ITEMS[id].name+'</b></div>'
+        : '<div class="sh-qty" style="color:#8a7657;border-top-color:#3a2a18">Out of stock at your level.</div>'),
+      itemId:id||null, cost:cost, poor:poor, repeat:true,
+      locked:!lvlMet||!stocked,
+      lockLabel:!lvlMet?(SKILLS[sup.req.skill].name+' '+sup.req.lvl):'No stock',
+      buyLabel:'Buy '+sup.qty,
+      onBuy:function(){ buySupply(sup.id); }
+    }));
+  }
+}
+
+/* The satchel expansion was only ever reachable from inside the satchel panel, so
+   the one thing every player wants to spend early gold on was not in the shop. */
+function renderShopSatchel(grid){
+  const bought=Math.min(state.satchelUpgrades||0,SATCHEL_MAX_EXPANSIONS);
+  const atMax=bought>=SATCHEL_MAX_EXPANSIONS;
+  const cost=atMax?0:satchelTierCost(bought);
+  const poor=state.coins<cost*SILVER_PER_GOLD;
+  grid.appendChild(shCard({
+    icon:iconHTML('foraging_pouch'), name:'Satchel Expansion',
+    gate:bought+' of '+SATCHEL_MAX_EXPANSIONS+' bought',
+    desc:atMax
+      ? 'Fully expanded at <b>'+satchelCap()+' slots</b>. There is no more room to buy.'
+      : '+'+SATCHEL_SLOT_STEP+' slots, taking you to <b>'+(satchelCap()+SATCHEL_SLOT_STEP)
+        +' slots</b>. Each expansion costs more than the last.',
+    cost:cost, owned:atMax, poor:poor, repeat:!atMax,
+    ownedLabel:'Maxed', ownedNote:satchelCap()+' slots',
+    buyLabel:'Expand',
+    onBuy:function(){
+      const c=satchelTierCost(state.satchelUpgrades||0);
+      if(state.coins<c*SILVER_PER_GOLD){ toast('Not enough coins.'); return; }
+      state.coins-=c*SILVER_PER_GOLD;
+      state.satchelUpgrades=(state.satchelUpgrades||0)+1;
+      toast('\ud83c\udf92 Satchel expanded! Now '+satchelCap()+' slots.');
+      renderAll(); saveGame();
+    }
+  }));
 }
 
 /* Map a body slot (used by the Gear panel "Go to Shop" deep-link) to the shop

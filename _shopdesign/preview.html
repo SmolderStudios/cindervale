@@ -1,0 +1,467 @@
+<title>Cindervale Shop Ledger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Public+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap">
+
+<style>
+:root{
+  /* Sixth in the series. Charts blue, soil green, glassware violet, hearth ember,
+     the bow verdigris. A shop is a ledger: aged paper, ruled columns, brass. */
+  --ground:#f4f1e9; --surface:#fffdf8; --sunk:#eae5d7;
+  --rule:#d7d0bd; --rule-hi:#b8ae94;
+  --ink:#1e1a12; --body:#4a4335; --dim:#756c58;
+  --brass:#8a6512;          /* the coin */
+  --patina:#2f6b58;         /* "already in the game" */
+  --bad:#94341a; --good:#4b6b23; --warn:#7b6210;
+  --keep:#3d6b1f; --cut:#9a3a1c; --maybe:#8a6512;
+  --frame-sh:0 2px 4px rgba(30,26,18,.09), 0 20px 44px rgba(30,26,18,.14);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#12100a; --surface:#1b1810; --sunk:#16130d;
+    --rule:#2f2a1d; --rule-hi:#453d2a;
+    --ink:#ede6d4; --body:#b9af98; --dim:#877d66;
+    --brass:#e0b455; --patina:#6fc0a2;
+    --bad:#d2694a; --good:#93bf52; --warn:#dcbf5e;
+    --keep:#93bf52; --cut:#d2694a; --maybe:#e0b455;
+    --frame-sh:0 2px 4px rgba(0,0,0,.6), 0 20px 44px rgba(0,0,0,.5);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#12100a; --surface:#1b1810; --sunk:#16130d;
+  --rule:#2f2a1d; --rule-hi:#453d2a;
+  --ink:#ede6d4; --body:#b9af98; --dim:#877d66;
+  --brass:#e0b455; --patina:#6fc0a2;
+  --bad:#d2694a; --good:#93bf52; --warn:#dcbf5e;
+  --keep:#93bf52; --cut:#d2694a; --maybe:#e0b455;
+  --frame-sh:0 2px 4px rgba(0,0,0,.6), 0 20px 44px rgba(0,0,0,.5);
+}
+
+*{box-sizing:border-box}
+body{background:var(--ground); color:var(--body); margin:0;
+  font-family:'Public Sans',-apple-system,'Segoe UI',sans-serif;
+  font-size:15px; line-height:1.6; font-variant-numeric:tabular-nums lining-nums;
+  -webkit-font-smoothing:antialiased}
+.w{max-width:1240px; margin:0 auto; padding:0 30px}
+h1,h2,h3{font-family:'Fraunces','Iowan Old Style',Georgia,serif; color:var(--ink);
+  margin:0; text-wrap:balance; font-weight:600; letter-spacing:-.01em}
+p{margin:0}
+b{font-weight:600; color:var(--ink)}
+code{font-family:'JetBrains Mono',ui-monospace,monospace; font-size:.87em; color:var(--brass)}
+
+/* ── masthead ─────────────────────────────────────────────────────────────── */
+.mast{padding:52px 0 30px; border-bottom:1px solid var(--rule)}
+.eyebrow{font-family:'JetBrains Mono',ui-monospace,monospace; font-size:11px;
+  letter-spacing:.16em; text-transform:uppercase; color:var(--brass); margin-bottom:16px}
+.mast h1{font-size:clamp(31px,4.6vw,46px); line-height:1.05; max-width:20ch}
+.mast .lede{margin-top:17px; max-width:68ch; font-size:16px}
+.today{display:flex; gap:1px; background:var(--rule); border:1px solid var(--rule);
+  border-radius:3px; overflow:hidden; margin-top:26px; flex-wrap:wrap}
+.today > div{background:var(--surface); padding:15px 20px; flex:1 1 165px}
+.today .k{font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.11em;
+  text-transform:uppercase; color:var(--dim); margin-bottom:8px}
+.today .v{font-family:'Fraunces',Georgia,serif; font-size:26px; line-height:1; color:var(--ink); font-weight:600}
+.today .v.alarm{color:var(--bad)}
+.today .n{font-size:12.4px; color:var(--dim); margin-top:7px; line-height:1.4}
+
+/* ── the marking bar ──────────────────────────────────────────────────────── */
+.bar{position:sticky; top:0; z-index:20; background:var(--ground);
+  border-bottom:1px solid var(--rule); padding:11px 0 10px;
+  box-shadow:0 6px 14px -12px rgba(0,0,0,.5)}
+.barin{display:flex; align-items:center; gap:14px; flex-wrap:wrap}
+.tally{display:flex; gap:14px; font-family:'JetBrains Mono',monospace; font-size:12px;
+  align-items:center; flex:0 0 auto}
+.tally i{font-style:normal}
+.tally .tk{color:var(--keep)} .tally .tc{color:var(--cut)} .tally .tm{color:var(--maybe)}
+.tally .tu{color:var(--dim)}
+.jump{display:flex; gap:5px; flex-wrap:wrap; margin-left:auto}
+.jump a{font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.05em;
+  text-decoration:none; color:var(--dim); border:1px solid var(--rule);
+  border-radius:3px; padding:3px 8px; background:var(--surface)}
+.jump a:hover{border-color:var(--brass); color:var(--brass)}
+.jump a:focus-visible{outline:2px solid var(--brass); outline-offset:1px}
+.saveline{font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--dim);
+  flex:0 0 auto; min-width:96px}
+.saveline.on{color:var(--patina)}
+
+/* ── vendor block ─────────────────────────────────────────────────────────── */
+.vendor{padding:42px 0 6px; border-bottom:1px solid var(--rule)}
+.vhead{display:flex; align-items:baseline; gap:14px; margin-bottom:6px; flex-wrap:wrap}
+.vhead .code{font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--brass);
+  letter-spacing:.1em; flex:0 0 auto}
+.vhead h2{font-size:24px; line-height:1.2}
+.vhead .ct{margin-left:auto; font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--dim)}
+.vsub{font-size:13.6px; color:var(--dim); max-width:80ch; margin-bottom:16px}
+
+.rows{border:1px solid var(--rule); border-radius:3px; overflow:hidden; background:var(--surface)}
+.row{display:grid; grid-template-columns:46px minmax(160px,1.05fr) minmax(0,2.1fr) 118px 106px 96px;
+  gap:14px; align-items:start; padding:11px 16px; border-bottom:1px solid var(--rule)}
+.row:last-child{border-bottom:0}
+.row.hdr{background:var(--sunk); padding:9px 16px; border-bottom:1px solid var(--rule)}
+.row.hdr span{font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.12em;
+  text-transform:uppercase; color:var(--dim)}
+.row .id{font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--dim); padding-top:2px}
+.row .nm{color:var(--ink); font-weight:600; font-size:14px}
+.row .nm .ex{display:inline-block; font-family:'JetBrains Mono',monospace; font-size:9px;
+  letter-spacing:.09em; text-transform:uppercase; color:var(--patina);
+  border:1px solid var(--patina); border-radius:2px; padding:0 4px; margin-left:6px;
+  vertical-align:1px; font-weight:500}
+.row .ds{font-size:13.3px; color:var(--body)}
+.row .gate{font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--dim)}
+.row .px{font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--brass); text-align:right}
+.row .px.free{color:var(--dim)}
+
+/* mark buttons */
+.marks{display:flex; gap:3px; justify-content:flex-end}
+.marks button{font-family:'JetBrains Mono',monospace; font-size:12px; line-height:1;
+  width:26px; height:24px; border-radius:3px; cursor:pointer; padding:0;
+  background:var(--surface); border:1px solid var(--rule); color:var(--dim);
+  transition:border-color .12s, color .12s, background .12s}
+.marks button:hover{border-color:var(--rule-hi); color:var(--ink)}
+.marks button:focus-visible{outline:2px solid var(--brass); outline-offset:1px}
+.row[data-mark="keep"]  .marks button[data-m="keep"] {border-color:var(--keep);  color:var(--keep);  background:color-mix(in srgb,var(--keep) 12%,var(--surface))}
+.row[data-mark="cut"]   .marks button[data-m="cut"]  {border-color:var(--cut);   color:var(--cut);   background:color-mix(in srgb,var(--cut) 12%,var(--surface))}
+.row[data-mark="maybe"] .marks button[data-m="maybe"]{border-color:var(--maybe); color:var(--maybe); background:color-mix(in srgb,var(--maybe) 14%,var(--surface))}
+.row[data-mark="keep"]  {background:color-mix(in srgb,var(--keep) 6%,var(--surface))}
+.row[data-mark="cut"]   {background:color-mix(in srgb,var(--cut) 5%,var(--surface)); opacity:.62}
+.row[data-mark="maybe"] {background:color-mix(in srgb,var(--maybe) 6%,var(--surface))}
+
+@media(max-width:1000px){
+  .row{grid-template-columns:42px minmax(130px,1fr) 96px; gap:10px}
+  .row .ds{grid-column:2/4}
+  .row .px{grid-column:2; text-align:left}
+  .row .marks{grid-column:3; grid-row:1}
+  .row.hdr{display:none}
+}
+
+.note{margin:16px 0 0; font-size:13px; color:var(--dim); max-width:82ch}
+.foot{padding:36px 0 70px; font-size:13px; color:var(--dim)}
+.foot p{max-width:80ch} .foot p + p{margin-top:8px}
+</style>
+
+<div class="w mast">
+  <div class="eyebrow">Cindervale Idle &middot; shop overhaul &middot; candidate list &middot; build 0.9.122.19</div>
+  <h1>The shop sells fourteen things</h1>
+  <p class="lede"><code>SHOP</code> holds 80 entries and 66 of them are the tool ladder, hidden
+  since tools moved to Crafting. What is left to buy is <b>two rings</b> and <b>twelve identical
+  skillcapes</b>. Between Lv&nbsp;50 and Lv&nbsp;99 the shop sells nothing at all.</p>
+  <p class="lede" style="margin-top:11px">Everything below is a candidate, nothing is decided.
+  Mark each row <b>&check;</b> keep, <b>&times;</b> cut or <b>?</b> maybe &mdash; the marks save
+  as you click and I can read them straight back, so you don't have to type out item codes.</p>
+
+  <div class="today">
+    <div><div class="k">Buyable today</div><div class="v alarm">14</div>
+      <div class="n">2 jewelry, 12 capes. 66 hidden tool rows.</div></div>
+    <div><div class="k">Capes</div><div class="v alarm">12&times; same</div>
+      <div class="n">All 100,000g, all <code>+5% speed / +5% XP</code>.</div></div>
+    <div><div class="k">Cape icons</div><div class="v alarm">tools</div>
+      <div class="n">The Woodcutting Cape wears an axe; Mining wears a pick.</div></div>
+    <div><div class="k">Nothing to buy</div><div class="v alarm">Lv 50&ndash;99</div>
+      <div class="n">Moon Amulet at 50, then a wall until 99.</div></div>
+    <div><div class="k">Candidates below</div><div class="v" id="totalCt">&mdash;</div>
+      <div class="n">Across 13 vendors. <span class="ex-legend"></span></div></div>
+  </div>
+</div>
+
+<div class="bar"><div class="w barin">
+  <div class="tally">
+    <i class="tk">&check; <b id="ctKeep">0</b></i>
+    <i class="tc">&times; <b id="ctCut">0</b></i>
+    <i class="tm">? <b id="ctMaybe">0</b></i>
+    <i class="tu">&mdash; <b id="ctNone">0</b></i>
+  </div>
+  <div class="saveline" id="saveline">local only</div>
+  <nav class="jump" id="jump"></nav>
+</div></div>
+
+<main id="main"></main>
+
+<div class="w foot">
+  <p><b>IN GAME</b> marks something that already exists in <code>cindervale.html</code> and only
+  needs surfacing, retuning or finishing &mdash; not building from nothing.</p>
+  <p>Prices are anchors, not decisions. For scale: <code>SILVER_PER_GOLD = 100</code>, a skillcape
+  is 100,000g, the 30th satchel expansion is roughly 3,800,000g, and a maxed account with every
+  skill at 99 currently has nothing to spend gold on.</p>
+</div>
+
+<script>
+/* ── the catalogue ──────────────────────────────────────────────────────────
+   [id, name, what it does, gate, price, existsFlag] */
+const VENDORS = [
+{code:'A', key:'cape', name:'The Cape Wright', sub:'Twelve capes that are the same cape. This is the biggest single win in the whole overhaul: it fixes the icons, turns one purchase into a ladder, and surfaces a mechanic that already exists and is invisible.', items:[
+ ['A01','Generated cape SVGs','One cape silhouette, per-skill palette and emblem — same pattern as the tiered weapon generators. Replaces the tool emoji each cape currently wears.','art','—',0],
+ ['A02','A distinct perk per cape','Twelve copies of "+5% speed / +5% XP" become twelve reasons to chase a specific cape.','Lv 99','100,000g',0],
+ ['A03','Say that the cape unlocks the capstone','7 of 12 capes already gate a <code>reqCape</code> tree node — Cooking’s is Eternal Flame, the fire that never burns fuel. Nothing in the shop mentions it.','—','—',1],
+ ['A04','The five missing capstones','Woodcutting, Mining, Fishing, Foraging and Smithing have no <code>reqCape</code> node, so their capes are the only ones with no capstone behind them.','Lv 99','—',0],
+ ['A05','Trimmed cape','Recolour plus a second bonus. Unlocked by spending all 98 points in that skill’s tree.','98/98 tree','250,000g',0],
+ ['A06','Gilded cape','Third tier. Unlocked at 200M XP in the skill — the number the XP bar already counts toward.','200M xp','1,000,000g',0],
+ ['A07','Cape of Cinders','Max cape. Owns all twelve; wears the bonus of whichever skill you are currently running.','all 12','5,000,000g',0],
+ ['A08','Hood toggle','Cosmetic hood on any owned cape. Free with the cape.','owns cape','—',0],
+ ['A09','Cape wardrobe','A rack in the shop that displays what you own and swaps without re-buying.','1 cape','25,000g',0],
+ ['A10','Skill hood (pre-cape)','A cheap Lv 92 teaser at +2%/+2% so the cape tier is not the first shop item in 50 levels.','Lv 92','25,000g',0],
+ ['A11','Combat capes','One per combat stat at 99 — Attack, Strength, Defence, Hitpoints, and Ranged/Magic when they land.','Cmb 99','100,000g',0],
+ ['A12','Guild cape','All ten guilds at max reputation. The only cape gold cannot buy.','10 guilds','—',0],
+]},
+
+{code:'B', key:'store', name:'General Store — supplies', sub:'The missing verb. You can sell everything in Cindervale and buy nothing. Every one of these is a gold sink that turns idle gold back into progress, which is exactly what a shop is for.', items:[
+ ['B01','Log bundles','100 logs of any tier you have unlocked, at 2.5&times; sell price. Buys past a woodcutting bottleneck when you would rather be cooking.','tier unlocked','2.5&times; sell',0],
+ ['B02','Ore &amp; bar bundles','Same deal for mining and smithing inputs.','tier unlocked','2.5&times; sell',0],
+ ['B03','Raw fish bundles','For cooking without fishing.','tier unlocked','2.5&times; sell',0],
+ ['B04','Herb bundles','For alchemy without foraging.','tier unlocked','2.5&times; sell',0],
+ ['B05','Coal by the sack','The single most annoying smithing bottleneck in the game.','Smithing 15','2&times; sell',0],
+ ['B06','Empty vials','Alchemy throughput consumable.','Alchemy 1','40g each',0],
+ ['B07','Seed packets','A random handful of seeds at your farming tier. Feeds the vault.','Farming 1','800g',0],
+ ['B08','Bait','One use — +15% rare fish chance for 30 minutes.','Fishing 20','1,500g',0],
+ ['B09','Whetstone','One use — +10% combat accuracy for 20 minutes.','Attack 20','2,000g',0],
+ ['B10','Tinder bundle','Instantly relights a dead cooking fire with 10 minutes of fuel.','Cooking 1','600g',0],
+ ['B11','Bulk buy 1 / 10 / 100 / max','The satchel already has this control for selling. The shop has no quantity concept at all.','UI','—',0],
+ ['B12','Buyback tab','Recover the last 10 things you sold, at what you sold them for. Undoes the accident.','UI','sell price',0],
+]},
+
+{code:'C', key:'charm', name:'Charms &amp; trinkets — permanent unlocks', sub:'One-time purchases that change how the game plays rather than how fast a bar fills. Deep gold sinks that never expire, which is what a maxed account needs.', items:[
+ ['C01','Coin Purse','+5% gold from every source, forever.','Lv 40 any','50,000g',0],
+ ['C02','Lucky Coin','+2% rare drop chance across all twelve skills.','total Lv 500','150,000g',0],
+ ['C03','Prospector’s Charm','+3% chance a mined rock also gives a gem.','Mining 60','80,000g',0],
+ ['C04','Fisher’s Float','Every tenth cast lands a second fish.','Fishing 60','80,000g',0],
+ ['C05','Forager’s Nose','Foraging never rolls a failure.','Foraging 60','80,000g',0],
+ ['C06','Emberheart','All fuel burns 15% slower — the fire, the forge, everywhere.','Firemaking 70','120,000g',0],
+ ['C07','Quartermaster’s Ledger','Shows every item’s full supply chain in the compendium, not just its direct source.','Lv 30 any','40,000g',0],
+ ['C08','Cartographer’s Map','Fast travel between combat zones without walking the ladder.','Cmb 40','100,000g',0],
+ ['C09','Bottomless Flask','Potion effects last 25% longer.','Alchemy 70','130,000g',0],
+ ['C10','Ratcatcher’s Whistle','+50% pet drop rate. Twelve skilling pets and nine familiars already exist to chase.','has 1 pet','200,000g',0],
+ ['C11','Second Wind Charm','One free auto-eat per fight regardless of your threshold.','Cmb 50','90,000g',0],
+ ['C12','Master’s Token','One free skill-tree respec per week. Respec already costs gold on a curve.','Lv 70 any','75,000g',0],
+]},
+
+{code:'D', key:'store2', name:'Storage &amp; vault', sub:'Satchel pressure is a real and constant tax, and the only relief for it is buried in the satchel panel rather than sold in the shop.', items:[
+ ['D01','Satchel expansions','Already exists: 150 &times; 1.5&#8319;, 30 steps, 33 &rarr; 333 slots. It lives inside the satchel panel where the shop cannot see it.','—','150g &rarr; ~3.8M',1],
+ ['D02','Bank tabs','Named containers so the satchel is not one flat 333-slot list.','Lv 50 any','60,000g each',0],
+ ['D03','Material bank','Gathered materials auto-deposit and never occupy a satchel slot. Ends "satchel full" for good.','Lv 60 any','400,000g',0],
+ ['D04','Gear preset slots','<code>gearPresets</code> exists at one per skill. Sell extra named loadouts.','Lv 40 any','30,000g each',1],
+ ['D05','Log rack','Logs stop taking satchel slots — the same trick the seed vault already does for seeds.','Woodcut 50','150,000g',0],
+ ['D06','Trophy case','Mount boss trophies. A small permanent stat per mounted trophy, and a reason to keep them.','1 boss kill','80,000g',0],
+ ['D07','Quiver','Holds one ammunition type outside the satchel. Ships with Ranged.','Ranged 1','20,000g',0],
+ ['D08','Seed vault sorting','The vault is already uncapped, so sell organisation rather than capacity.','Farming 30','20,000g',0],
+]},
+
+{code:'E', key:'jewel', name:'Jewelry', sub:'The entire category is two items, thirty levels apart, and then nothing for fifty levels. Every entry here is a straightforward SHOP row with a bonus object — the cheapest content in the whole list to add.', items:[
+ ['E01','Ember Ring','+5% XP all skills. Already in the shop.','Lv 30','3,000g',1],
+ ['E02','Moon Amulet','+8% sell value all items. Already in the shop.','Lv 50','5,000g',1],
+ ['E03','Ring of the Delver','+8% Mining and Smithing XP.','Mining 40','25,000g',0],
+ ['E04','Ring of the Tide','+8% Fishing and Cooking XP.','Fishing 40','25,000g',0],
+ ['E05','Ring of the Grove','+8% Woodcutting, Foraging and Farming XP.','Foraging 40','25,000g',0],
+ ['E06','Signet of Coin','+15% sell value. The Moon Amulet’s replacement, so the 50&ndash;99 gap has a rung in it.','Lv 75','120,000g',0],
+ ['E07','Amulet of Hours','+2h offline cap per tier, three tiers. Offline is capped at 24h today.','Lv 45','40k / 120k / 300k',0],
+ ['E08','Pendant of Focus','+10% XP in whichever skill is currently running. Rewards attention over breadth.','Lv 60','180,000g',0],
+ ['E09','Ring of Plenty','+5% double-yield on every gathering skill.','Lv 70','250,000g',0],
+ ['E10','Band of Embers','Combat: +4% max hit. The jewelry category has nothing for combat at all.','Cmb 50','60,000g',0],
+]},
+
+{code:'F', key:'idle', name:'Offline &amp; idle', sub:'Cindervale is an idle game whose idle systems are not for sale. These are the upgrades an idle player most wants to buy and cannot.', items:[
+ ['F01','Offline cap +6h','<code>OFFLINE_CAP_MS</code> is 24h. Sell it up to 48h in four steps.','Lv 40 any','50k &rarr; 400k',0],
+ ['F02','Offline level ceiling','<code>OFFLINE_MAX_LEVEL</code> is 50 — offline progress stops paying at Lv 50. Buy that ceiling up to 99.','Lv 50 any','100k &rarr; 800k',1],
+ ['F03','Second activity slot','Run one gathering and one processing skill at the same time. The largest single thing gold could buy.','total Lv 800','2,000,000g',0],
+ ['F04','Night watchman','Combat continues offline at a reduced rate.','Cmb 60','600,000g',0],
+ ['F05','Auto-sell rules','Junk sells itself as it drops. Priced per rule slot.','Lv 40 any','20,000g each',0],
+ ['F06','Offline report upgrade','The offline overlay currently reports totals; sell a per-skill breakdown and a rare-drop list.','—','15,000g',0],
+]},
+
+{code:'G', key:'farm', name:'The Homestead', sub:'Farming has eight patches, all gated on level alone, and a farmer with a hire cost and a wage that is invisible outside the farming panel.', items:[
+ ['G01','Patches 9&ndash;12','Eight exist, gated at Farming 1/10/25/40/55/70/85/99. Four more gated on gold instead.','Farming 60','200k &rarr; 900k',0],
+ ['G02','Greenhouse','One patch that never fails and never withers.','Farming 50','350,000g',0],
+ ['G03','Compost bin','Turns junk herbs into a yield bonus on the next harvest.','Farming 30','60,000g',0],
+ ['G04','Scarecrow','Crops do not wither while you are offline.','Farming 40','180,000g',0],
+ ['G05','Farmer tiers','Already exists with a hire cost and a recurring wage. Not visible anywhere but the farm panel.','Farming tiers','hire + wage',1],
+ ['G06','Beehive','Passive honey for cooking. A second passive alongside the farmer.','Farming 55','220,000g',0],
+ ['G07','Well','Cuts the tend interval on every patch by 20%.','Farming 45','160,000g',0],
+]},
+
+{code:'H', key:'port', name:'The Port', sub:'Sailing already hires crew and pays wages in gold. None of it is in the shop, and there is no way to spend gold on the ship itself.', items:[
+ ['H01','Crew hire','Already exists — <code>sailHireCost</code> plus per-voyage wages.','Sailing lv','hire + wage',1],
+ ['H02','Hull upgrades','More cargo per voyage, three tiers.','Sailing 30','150k &rarr; 900k',0],
+ ['H03','Rigging upgrades','Voyages complete faster.','Sailing 40','200k &rarr; 1.1M',0],
+ ['H04','Charts','Unlock a sea region without grinding to it.','Sailing 50','500,000g',0],
+ ['H05','Harpoon rack','Raises the rare drop rate on sea haul.','Sailing 60','300,000g',0],
+ ['H06','Figurehead','Cosmetic on the drawn chart, plus a token luck bonus.','Sailing 20','80,000g',0],
+]},
+
+{code:'I', key:'combat', name:'Combat supplies', sub:'Combat consumes food, potions and — once Ranged lands — ammunition. None of it is purchasable, so a combat-only player has to level three skilling skills to fight.', items:[
+ ['I01','Cooked food bundles','Buy the food instead of cooking it, at a real markup. Unblocks combat-first players.','Cooking tier','3&times; sell',0],
+ ['I02','Potion bundles','Same for alchemy outputs.','Alchemy tier','3&times; sell',0],
+ ['I03','Bandages','Instant out-of-combat heal with a cooldown. Cheap, always useful, never best.','Cmb 1','200g',0],
+ ['I04','Slayer task reroll','Gold-priced reroll beside the points-priced one.','Slayer 1','5,000g',0],
+ ['I05','Zone key','Skip one boss-key grind. Expensive on purpose.','zone unlocked','250,000g',0],
+ ['I06','Raid ticket','A second raid attempt in a day.','raid unlocked','400,000g',0],
+ ['I07','Ammunition','Arrows, bolts and knives by the hundred. Ships with Ranged.','Ranged 1','per tier',0],
+ ['I08','Gem packs','A sealed pack of combat gems for sockets, weighted by tier.','Jeweler 40','75,000g',0],
+]},
+
+{code:'J', key:'night', name:'The Nightmarket', sub:'The guild already carries a <code>fence:true</code> flag that nothing reads. Rotating stock is the daily check-in hook the game does not have — and guild boards already roll on a daily seed the audit suite guards.', items:[
+ ['J01','Four rotating slots','Reseeded daily on the same clock the guild boards already use.','Nightmarket','—',0],
+ ['J02','One unique-tier weapon','A drop-only weapon, at three times what it is worth. Bad luck insurance.','Cmb 50','3&times; value',0],
+ ['J03','One rare material stack','Whatever you are short of, occasionally, at a price that stings.','—','4&times; sell',0],
+ ['J04','One cosmetic','A skin or trim that appears nowhere else.','—','varies',0],
+ ['J05','Mystery crate','Sealed. Weighted by your combat level. The one gamble in the game.','Cmb 30','50,000g',0],
+ ['J06','Buy limit 1 per slot per day','What makes it a reason to come back rather than a vending machine.','—','—',0],
+ ['J07','It fences, too','Pays double for whichever items it wants that day. The <code>fence</code> flag finally doing something.','Nightmarket','2&times; sell',0],
+ ['J08','Reputation discount','Nightmarket reputation cuts its prices, which is the only place rep buys anything.','rep tiers','−5% per tier',0],
+]},
+
+{code:'K', key:'guild', name:'Guild quartermasters', sub:'Ten guilds, each with reputation that today buys a title and nothing else. A stock list per guild makes reputation a currency and gives every guild a reason to be joined.', items:[
+ ['K01','The Furrow','Seeds, scarecrow, compost — the farming supply chain.','Furrow rep','reputation',0],
+ ['K02','The Timberhall','Log bundles and the Emberheart charm.','Timber rep','reputation',0],
+ ['K03','The Delvers','Ore bundles and the Prospector’s Charm.','Delver rep','reputation',0],
+ ['K04','The Deepwater Company','Bait, charts, raw fish, cooked food.','Deepwater rep','reputation',0],
+ ['K05','The Emberforge','Bar bundles, coal sacks, a smith’s hammer.','Emberforge rep','reputation',0],
+ ['K06','The Ashen Circle','Vials, reagents, potion bundles.','Ashen rep','reputation',0],
+ ['K07','The Gilded Facet','Uncut gems, gem dust, socket tools.','Facet rep','reputation',0],
+ ['K08','The Iron Legion','Melee gear, whetstones, bandages.','Legion rep','reputation',0],
+ ['K09','The Quiet Hand','Ranged gear and ammunition once Ranged lands. Today it is a second melee guild.','Quiet rep','reputation',0],
+ ['K10','Shared guild token','One currency across all ten already exists. Decide whether quartermasters spend it or per-guild rep.','—','—',1],
+]},
+
+{code:'L', key:'slayer', name:'Slayer quartermaster', sub:'Slayer points already exist and buy perks. The reward shop was designed and never built — memory says the Shard Cache is the missing sink.', items:[
+ ['L01','Shard Cache','Designed, not built. Turns surplus points into materials.','Slayer pts','points',1],
+ ['L02','Ammunition cache','Tier-matched arrows by the thousand. The cleanest sink the shop will ever get.','Ranged','points',0],
+ ['L03','Task reroll','Already exists in points. Mirror it in gold at I04.','Slayer pts','points',1],
+ ['L04','Deeper Pockets','Already exists — satchel slots outside the gold-bought cap.','Slayer pts','points',1],
+ ['L05','Boss key bundle','Skips the key grind for a zone you have already cleared.','Slayer 40','points',0],
+]},
+
+{code:'M', key:'cos', name:'Cosmetics &amp; the trophy hall', sub:'Pure gold sink, no power, unlimited depth. This is where 900,000g on a maxed account is supposed to go, and it is the cheapest content to produce because the generators already exist.', items:[
+ ['M01','Cape trims &amp; dyes','Palette swaps on the cape generator. One generator, dozens of products.','owns cape','50,000g each',0],
+ ['M02','Weapon skins','The weapon SVGs are already palette-driven per tier. A skin is one more palette.','owns weapon','75,000g each',0],
+ ['M03','Titles','Displayed beside your name. Earned or bought.','varies','25,000g',0],
+ ['M04','Crest designer','Pick a shape, a charge and two colours. Shows on your banner and the guild board.','Lv 50 any','100,000g',0],
+ ['M05','Trophy mounts','Mount a boss trophy in the hall. Pairs with D06.','1 boss kill','40,000g each',0],
+ ['M06','Pet skins','Twelve skilling pets and nine zone familiars already exist and have exactly one look each.','owns pet','60,000g each',0],
+ ['M07','Hearth decorations','The cooking fire already has three drawn plates. Sell a fourth and a fifth.','Cooking 50','80,000g',0],
+ ['M08','Nameplate frames','A border on the header nameplate. The cheapest possible flex.','varies','30,000g',0],
+]},
+];
+
+/* ── render ───────────────────────────────────────────────────────────────── */
+const MARKS = Object.create(null);
+let total = 0;
+
+function esc(s){ return String(s); }
+
+function build(){
+  const main = document.getElementById('main');
+  const jump = document.getElementById('jump');
+  let html = '';
+  for(const v of VENDORS){
+    total += v.items.length;
+    jump.insertAdjacentHTML('beforeend',
+      '<a href="#v-'+v.key+'">'+v.code+'</a>');
+    html += '<section class="vendor w" id="v-'+v.key+'">'
+      + '<div class="vhead"><span class="code">'+v.code+'</span><h2>'+v.name+'</h2>'
+      + '<span class="ct">'+v.items.length+' candidates</span></div>'
+      + '<p class="vsub">'+v.sub+'</p>'
+      + '<div class="rows">'
+      + '<div class="row hdr"><span>ID</span><span>Item</span><span>What it does</span>'
+      + '<span>Gate</span><span style="text-align:right">Rough price</span>'
+      + '<span style="text-align:right">Verdict</span></div>';
+    for(const it of v.items){
+      const [id,nm,ds,gate,px,ex] = it;
+      html += '<div class="row" id="r-'+id+'" data-id="'+id+'">'
+        + '<span class="id">'+id+'</span>'
+        + '<span class="nm">'+nm+(ex?'<span class="ex">in game</span>':'')+'</span>'
+        + '<span class="ds">'+ds+'</span>'
+        + '<span class="gate">'+gate+'</span>'
+        + '<span class="px'+(px==='—'?' free':'')+'">'+px+'</span>'
+        + '<span class="marks">'
+          + '<button type="button" data-m="keep"  title="Keep '+id+'" aria-label="Keep '+id+'">&check;</button>'
+          + '<button type="button" data-m="maybe" title="Maybe '+id+'" aria-label="Maybe '+id+'">?</button>'
+          + '<button type="button" data-m="cut"   title="Cut '+id+'" aria-label="Cut '+id+'">&times;</button>'
+        + '</span></div>';
+    }
+    html += '</div></section>';
+  }
+  main.innerHTML = html;
+  document.getElementById('totalCt').textContent = total;
+  tally();
+}
+
+function tally(){
+  let k=0,c=0,m=0;
+  for(const id in MARKS){
+    if(MARKS[id]==='keep') k++; else if(MARKS[id]==='cut') c++; else if(MARKS[id]==='maybe') m++;
+  }
+  document.getElementById('ctKeep').textContent = k;
+  document.getElementById('ctCut').textContent = c;
+  document.getElementById('ctMaybe').textContent = m;
+  document.getElementById('ctNone').textContent = total - k - c - m;
+}
+
+function paint(id){
+  const row = document.getElementById('r-'+id);
+  if(!row) return;
+  const m = MARKS[id];
+  if(m) row.setAttribute('data-mark', m); else row.removeAttribute('data-mark');
+}
+
+build();
+
+/* clicking a mark sets it; clicking the same mark again clears it */
+document.getElementById('main').addEventListener('click', function(e){
+  const btn = e.target.closest('button[data-m]');
+  if(!btn) return;
+  const row = btn.closest('.row');
+  const id = row.getAttribute('data-id');
+  const want = btn.getAttribute('data-m');
+  if(MARKS[id] === want) delete MARKS[id]; else MARKS[id] = want;
+  paint(id); tally(); queueSave();
+});
+
+/* ── persistence ───────────────────────────────────────────────────────────
+   The marks are the point of the page: Jordan reads the list once and marks it,
+   and the picks get read back from the store rather than retyped. localStorage
+   is the fallback when the store is not available on this view. */
+const LS_KEY = 'cv_shop_marks_v1';
+let DB = null, saveTimer = 0;
+
+try{
+  const raw = localStorage.getItem(LS_KEY);
+  if(raw){ Object.assign(MARKS, JSON.parse(raw)); for(const id in MARKS) paint(id); tally(); }
+}catch(e){}
+
+function queueSave(){
+  try{ localStorage.setItem(LS_KEY, JSON.stringify(MARKS)); }catch(e){}
+  if(!DB) return;
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(function(){
+    DB.doc('picks/shop').set({ marks: Object.assign({}, MARKS), updatedAt: new Date().toISOString() })
+      .then(function(){ setSaveLine('saved', true); })
+      .catch(function(){ setSaveLine('local only', false); });
+  }, 500);
+}
+
+function setSaveLine(txt, on){
+  const el = document.getElementById('saveline');
+  el.textContent = txt;
+  el.classList.toggle('on', !!on);
+}
+
+(async function(){
+  if(!window.claude || !window.claude.use) return;
+  const db = await window.claude.use('db');
+  if(!db) return;
+  DB = db;
+  setSaveLine('syncing…', false);
+  db.doc('picks/shop').onSnapshot(function(snap){
+    if(!snap.exists){ setSaveLine('saved', true); return; }
+    const data = snap.data() || {};
+    const marks = data.marks || {};
+    /* Adopt the stored set wholesale — one reader, so the store is the truth
+       once it answers, and a stale local copy should not win. */
+    for(const id in MARKS) delete MARKS[id];
+    Object.assign(MARKS, marks);
+    document.querySelectorAll('.row[data-mark]').forEach(function(r){ r.removeAttribute('data-mark'); });
+    for(const id in MARKS) paint(id);
+    tally();
+    try{ localStorage.setItem(LS_KEY, JSON.stringify(MARKS)); }catch(e){}
+    setSaveLine('saved', true);
+  }, function(){ setSaveLine('local only', false); });
+})();
+</script>
