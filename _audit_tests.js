@@ -3805,48 +3805,90 @@ setTimeout(() => {
        craft-a-tool-and-sell-it exploit that had to be closed in 1.0.47. */
     const sup = JSON.parse(ev(`(function(){
       state=defaultState(); normalizeState();
-      var bad=[], checked=0;
+      var bad=[], short=[], checked=0, shapes=[];
+      /* Worst case for arbitrage is a player wearing everything that raises sell
+         value at once, since the crate is quoted off effectiveItemSell. */
+      function loadRich(){
+        state.gear=['coin_signet','moon_amulet']; state.equipped={amulet:'coin_signet'};
+        state.charms=['coin_purse'];
+        for(var k in TREES){ state.tree=state.tree||{}; }
+      }
       [1,20,40,60,75,90,99].forEach(function(L){
         for(var k in state.xp) state.xp[k]=XP_CUM[L];
-        SUPPLIES.forEach(function(s2){
-          var id=supplyItemFor(s2);
-          if(!id) return;
-          checked++;
-          var cost=supplyCost(s2);
-          var worth=effectiveItemSell(id)*s2.qty;
-          if(cost<=worth) bad.push('Lv'+L+' '+s2.id+' costs '+cost+' worth '+Math.round(worth));
+        [false,true].forEach(function(rich){
+          state.gear=[]; state.equipped={}; state.charms=[];
+          if(rich) loadRich();
+          SUPPLIES.forEach(function(s2){
+            var mix=supplyMixFor(s2);
+            if(!mix.length) return;
+            checked++;
+            var cost=supplyCost(s2);
+            var worth=0, n=0;
+            mix.forEach(function(m){ worth+=effectiveItemSell(m.id)*m.n; n+=m.n; });
+            if(cost<=worth) bad.push('Lv'+L+(rich?'+gear':'')+' '+s2.id+' costs '+cost+' worth '+Math.round(worth));
+            if(n!==s2.qty) short.push('Lv'+L+' '+s2.id+' gave '+n+' of '+s2.qty);
+          });
         });
       });
-      return JSON.stringify({checked:checked, bad:bad});
+      state.gear=[]; state.equipped={}; state.charms=[];
+      /* The shape of the mix itself: cheapest tier biggest, and more than one tier
+         once you are past the first unlock. */
+      for(var k2 in state.xp) state.xp[k2]=XP_CUM[99];
+      SUPPLIES.forEach(function(s2){
+        var mix=supplyMixFor(s2);
+        if(mix.length<2) return;
+        var cheapest=mix.slice().sort(function(a,b){return (ITEMS[a.id].sell||0)-(ITEMS[b.id].sell||0);})[0];
+        var dearest =mix.slice().sort(function(a,b){return (ITEMS[b.id].sell||0)-(ITEMS[a.id].sell||0);})[0];
+        shapes.push({id:s2.id, tiers:mix.length, lowN:cheapest.n, highN:dearest.n,
+                     ok:cheapest.n>dearest.n && dearest.n>0});
+      });
+      return JSON.stringify({checked:checked, bad:bad, short:short, shapes:shapes});
     })()`));
-    ok(sup.checked+' supply/level pairs all cost more than they are worth',
+    ok(sup.checked+' supply/level/gear pairs all cost more than they are worth',
        sup.bad.length===0, sup.bad.slice(0,4).join(' | '));
+    /* Largest-remainder apportionment — the counts must total exactly qty, not
+       drift a few either way on rounding. */
+    ok('and every crate holds exactly the quantity it advertises',
+       sup.short.length===0, sup.short.slice(0,4).join(' | '));
+    ok('a crate is mostly the cheap tier and still carries the dearest',
+       sup.shapes.length>0 && sup.shapes.every(function(x){ return x.ok; }),
+       JSON.stringify(sup.shapes));
 
     /* grantItem refuses a NEW item type into a full satchel and returns 0. Taking
        the gold before checking is the same silent loss the satchel-full material
        bug was, only paid for. */
+    /* A mixed crate can be refused one tier at a time, so the guard has to hold for
+       EVERY line: the satchel is padded with everything except the crate's own
+       contents, which makes all seven log types new item types with nowhere to go. */
     ok('a supply bought into a full satchel takes no gold',
        ev(`(function(){
          state=defaultState(); normalizeState();
-         state.xp.woodcutting=XP_CUM[99];
+         state.xp.woodcutting=XP_CUM[99]; state.items={}; state.charms=[];
+         var sup=SUPPLIES.find(function(x){return x.id==='sup_logs';});
+         var inCrate={}; supplyMixFor(sup).forEach(function(m){ inCrate[m.id]=1; });
          var pad=Object.keys(ITEMS).filter(function(i){
-           return !isSeedId(i) && !ITEMS[i].tool && !ITEMS[i].skillGear && i!=='ancient_log'; });
-         state.items={};
+           return !isSeedId(i) && !ITEMS[i].tool && !ITEMS[i].skillGear && !inCrate[i]; });
          var cap=satchelCap();
          for(var i=0;i<cap+5 && i<pad.length;i++) state.items[pad[i]]=1;
+         if(satchelUsed()<satchelCap()) return 'satchel not full';
          state.coins=99999999;
          var before=state.coins;
          buySupply('sup_logs');
-         return (state.coins===before)+'/'+((state.items.ancient_log||0)===0);
+         var leaked=Object.keys(inCrate).some(function(id){ return (state.items[id]||0)>0; });
+         return (state.coins===before)+'/'+(!leaked);
        })()`)==='true/true');
 
-    ok('and a normal purchase pays exactly once', ev(`(function(){
+    ok('and a normal purchase pays once and delivers the whole crate', ev(`(function(){
          state=defaultState(); normalizeState();
-         state.xp.woodcutting=XP_CUM[99]; state.items={}; state.coins=99999999;
+         state.xp.woodcutting=XP_CUM[99]; state.items={}; state.coins=999999999;
+         state.satchelUpgrades=SATCHEL_MAX_EXPANSIONS;
          var sup=SUPPLIES.find(function(x){return x.id==='sup_logs';});
          var cost=supplyCost(sup), before=state.coins;
          buySupply('sup_logs');
-         return ((before-state.coins)===cost*SILVER_PER_GOLD)+'/'+(state.items.ancient_log||0);
+         var got=0; for(var k in state.items) got+=state.items[k];
+         var spent=(before-state.coins)/SILVER_PER_GOLD;
+         // per-line rounding can differ from the quoted total by at most one gold per line
+         return (Math.abs(spent-cost)<=sup.qty)+'/'+got;
        })()`)==='true/100');
 
     /* state.charms is read on every mods() call, so it has to exist on every save
