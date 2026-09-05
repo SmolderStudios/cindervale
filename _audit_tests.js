@@ -3288,6 +3288,40 @@ setTimeout(() => {
     ok('which widens its board well past the old 54 lines', F.lines>200, F.lines+' lines');
     w.demoXpCap = _realDemoCap;   // the demo-cap regressions below rely on the real one
 
+    /* ── an amulet and a pendant say how they differ (ticket #55) ────────────
+       "Based on tooltips I cannot figure out what the difference is between Amulets
+       and Pendants except that one sells for more." They are the same neck slot,
+       the same gem and the same enchant list; the only difference is which SET they
+       complete, and that lived only in the Enchanting panel's set cards.
+
+       The label is derived from _jwType(), the same function the set logic uses.
+       Reading it off the id suffix instead meant the Void Jewel — a pendant to
+       every set check — printed "Jewel" and explained nothing. */
+    const jw = JSON.parse(ev(`(function(){
+      var bad=[], seen={};
+      Object.keys(JEWELRY_GEM_TIER).forEach(function(id){
+        if(!ITEMS[id]) return;
+        var ty=_jwType(id);
+        var txt=String(jewelryEnchantBlock(id)).replace(/<[^>]*>/g,' ').replace(/\\s+/g,' ');
+        seen[ty]=(seen[ty]||0)+1;
+        // the header must name the shape the set logic believes in
+        var want=ty==='ring'?'Ring':ty==='amulet'?'Amulet':ty==='pendant'?'Pendant':null;
+        if(want && txt.indexOf('\\u00b7 '+want)<0) bad.push(id+': header does not say '+want);
+        // and the body must say which set it completes
+        if(ty==='amulet'  && txt.indexOf('skilling set')<0) bad.push(id+': no skilling-set line');
+        if(ty==='pendant' && txt.indexOf('combat set')<0)   bad.push(id+': no combat-set line');
+        if(ty==='ring'    && txt.indexOf('either hand')<0)  bad.push(id+': no ring line');
+      });
+      return JSON.stringify({seen:seen, bad:bad});
+    })()`));
+    ok('every ring, amulet and pendant explains what its shape is for',
+       jw.bad.length===0, JSON.stringify(jw.seen)+'; '+jw.bad.slice(0,6).join(' | '));
+    ok('and the set it names comes from the live set tables',
+       ev(`(function(){
+         var t=String(jewelryEnchantBlock('sapphire_pendant')).replace(/<[^>]*>/g,' ');
+         return t.indexOf(PENDANT_SETS.sapphire.name)>=0;
+       })()`)===true);
+
     /* ── every weapon says what weight class it is (ticket #53) ──────────────
        "The Shields and the Bucklers mention light weapons in their tooltips, but
        the weapons don't tell us if they are light or I am guessing Heavy."
