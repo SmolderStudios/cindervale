@@ -2739,6 +2739,25 @@ body:not(.is-demo) .demo-only{display:none !important}
    is exactly what happened through v0.9.56–0.9.59 and it made four different
    icon designs all look like the same smudge. */
 .ev-icon.coin-ic{width:1.5em;height:1.5em;vertical-align:-0.32em}
+/* Money that is not fmtCoins (0.9.122.23). These are buttons, tooltips and loot
+   lines where the coin sits beside a number in the surrounding font, so it takes
+   its size from the text rather than the 22px .ev-icon default — at 22px it
+   overpowers a 12px hire button and pushes the row taller. */
+.fm-btn .ev-icon,
+.respec-btn .ev-icon,
+.mtip-rw-coin .ev-icon,
+.rr-gold .ev-icon,
+.sl-btn .ev-icon{width:1.15em;height:1.15em;vertical-align:-0.2em;flex:none}
+/* The same coin in prose, costs and voyage chips — it takes the surrounding text's
+   size in each, so a wage line stays a line of text with a coin in it rather than
+   a 22px icon with some words after it. */
+.fm-body em .ev-icon,
+.fm-body p .ev-icon,
+.hx .ev-icon,
+.sl-chip .ev-icon,
+.sl-wage .ev-icon{width:1.1em;height:1.1em;vertical-align:-0.18em;flex:none}
+.pay .ev-icon,
+.fm-tier .ev-icon{width:1.1em;height:1.1em;vertical-align:-0.18em;flex:none}
 .comp-search{flex:1;min-width:0;background:var(--raised-s);color:var(--text);border:1px solid var(--trim-d);
   border-radius:6px;padding:6px 10px;font-size:calc(14px*var(--tscale));font-family:inherit}
 .comp-search::placeholder{color:var(--muted)}
@@ -7259,7 +7278,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.122.22">v0.9.122</div>
+  <div class="mm-ver" data-build="0.9.122.23">v0.9.122</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -11719,6 +11738,22 @@ function _seaScaleSVG(p){
   return `<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="${p.pre}_s" x1="0.25" y1="0" x2="0.8" y2="1"><stop offset="0" stop-color="${p.hi}"/><stop offset="0.35" stop-color="${p.mid}"/><stop offset="0.8" stop-color="${p.lo}"/><stop offset="1" stop-color="${p.edge}"/></linearGradient><radialGradient id="${p.pre}_h" cx="0.5" cy="0.4" r="0.6"><stop offset="0" stop-color="${p.hi}" stop-opacity="0.3"/><stop offset="1" stop-color="${p.hi}" stop-opacity="0"/></radialGradient></defs><circle cx="32" cy="32" r="26" fill="url(#${p.pre}_h)"/><ellipse cx="32" cy="57" rx="14" ry="2.6" fill="#000" opacity="0.38"/><path d="M32 6q17 8 17 26T32 60Q15 50 15 32T32 6z" fill="url(#${p.pre}_s)" stroke="${p.edge}" stroke-width="0.9"/><path d="M32 6q12 8 14 26 1 16-14 28 4-14 4-28 0-14-4-26z" fill="${p.edge}" opacity="0.26"/><path d="M22 15q-5 10-5 18t5 17" stroke="${p.hi}" stroke-width="1.6" fill="none" opacity="0.45" stroke-linecap="round"/><path d="M32 14v38" stroke="${p.edge}" stroke-width="0.9" opacity="0.4"/><path d="M32 20q-7 5-9 13M32 20q7 5 9 13M32 34q-6 4-8 11M32 34q6 4 8 11" stroke="${p.edge}" stroke-width="0.7" fill="none" opacity="0.35"/><ellipse cx="26" cy="19" rx="4.4" ry="6" fill="#fff" opacity="0.2"/><circle cx="42" cy="22" r="1.2" fill="${p.hi}" opacity="0.6"/></svg>`;
 }
 
+/* ── the coin (0.9.122.23) ────────────────────────────────────────────────────
+   0.9.122.17 replaced the currency coins with painted art and pointed ONLY
+   fmtCoins at it. Every other money site in the game — 23 iconHTML('ui_coin')
+   calls, on shop cards, hire buttons, loot lines and achievements — kept the old
+   flat SVG, which is a dull blob below 16px and whose star face only resolves at
+   20px and up. Side by side at 12/14/16/20/26px the painted coin wins at every
+   size, so it is now simply THE coin.
+
+   The two names stay because the SIZING differs, not the art: .ev-icon.coin-ic
+   is 1.5em, built for running text where 1em sits too small beside the glyph.
+   ui_coin carries no coin-ic, so all 23 existing call sites keep the pixel sizes
+   their own CSS already gives them. One source string, referenced twice — an
+   inlined second copy would be 3.4KB against the file-size ceiling for nothing. */
+const _COIN_GOLD_SRC="data:image/webp;base64,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";
+const _COIN_SILVER_SRC="data:image/webp;base64,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";
+
 const ICONS = {
   /* ==SLAYER-PERK-ICONS-START== */
   /* Generated art, replacing the hand-drawn SVGs that were here.
@@ -12587,7 +12622,7 @@ const ICONS = {
   spet_crafting:    _critterSVG({body:'#9a7860', belly:'#d8c0a8', dark:'#332218', eye:'#e8b060', glow:'#c0a080', ear:'wing'}),
   // ── [JS-ICONS-UI] chrome icons (1.0.96) — small inline SVGs replacing decorative
   // UI emoji (tabs, stat rows, currency, headers). Reused via iconHTML('ui_*'). ──
-  ui_coin: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><radialGradient id="uic_g" cx="0.4" cy="0.34" r="0.72"><stop offset="0" stop-color="#ffe9a0"/><stop offset="0.5" stop-color="#e6b23e"/><stop offset="1" stop-color="#8a5e18"/></radialGradient></defs><ellipse cx="32" cy="55" rx="17" ry="2.8" fill="#000" opacity="0.32"/><circle cx="32" cy="32" r="22" fill="url(#uic_g)" stroke="#5a3c10" stroke-width="1.6"/><circle cx="32" cy="32" r="16" fill="none" stroke="#7a5418" stroke-width="1.1" opacity="0.7"/><path d="M32 21 L35 29.5 L44 29.5 L37 35 L39.5 44 L32 38.5 L24.5 44 L27 35 L20 29.5 L29 29.5 Z" fill="#fff6d0" opacity="0.85"/><ellipse cx="25" cy="24" rx="4" ry="2.2" fill="#fff" opacity="0.55" transform="rotate(-35 25 24)"/></svg>',
+  ui_coin:        '<img class="ev-icon" alt="" src="'+_COIN_GOLD_SRC+'">',
   /* ── INLINE currency coins, used ONLY by fmtCoins ────────────────────────────
      These sit in running text at 13–15px, which is a different problem to ui_coin's
      usual home on a button or a tile. ui_coin carries a near-white star across 55%
@@ -12609,8 +12644,8 @@ const ICONS = {
      turns into a ring or a smudge at the ~14px these render at, which is what
      four earlier attempts kept proving. Colour alone carries the meaning; the
      g/s suffix beside it carries the rest. */
-  ui_coin_sm:     "<img class=\"ev-icon coin-ic\" alt=\"\" src=\"data:image/webp;base64,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\">",
-  ui_coin_silver: "<img class=\"ev-icon coin-ic\" alt=\"\" src=\"data:image/webp;base64,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\">",
+  ui_coin_sm:     '<img class="ev-icon coin-ic" alt="" src="'+_COIN_GOLD_SRC+'">',
+  ui_coin_silver: '<img class="ev-icon coin-ic" alt="" src="'+_COIN_SILVER_SRC+'">',
   ui_swords: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="uisw_b" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f0f2f8"/><stop offset="0.5" stop-color="#9aa0ac"/><stop offset="1" stop-color="#4a4e58"/></linearGradient></defs><g stroke="#2a2c34" stroke-width="0.7"><path d="M11 9 L19 9 L45 43 L41 49 L35 47 Z" fill="url(#uisw_b)"/><path d="M53 9 L45 9 L19 43 L23 49 L29 47 Z" fill="url(#uisw_b)"/></g><path d="M39 45 L51 57 M25 45 L13 57" stroke="#6a4a20" stroke-width="4" stroke-linecap="round"/><path d="M43 41 L53 51 M21 41 L11 51" stroke="#c79b4e" stroke-width="3" stroke-linecap="round"/></svg>',
   ui_sword: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="uis_b" x1="0.2" y1="0" x2="0.8" y2="1"><stop offset="0" stop-color="#f0f2f8"/><stop offset="0.5" stop-color="#9aa0ac"/><stop offset="1" stop-color="#4a4e58"/></linearGradient></defs><path d="M30 6 L38 6 L36 40 L32 40 Z" fill="url(#uis_b)" stroke="#2a2c34" stroke-width="0.7"/><path d="M31 8 L34 8 L33 38 Z" fill="#fff" opacity="0.35"/><rect x="24" y="40" width="20" height="4" rx="1.5" fill="#c79b4e" stroke="#6e552c" stroke-width="0.6"/><rect x="31" y="44" width="6" height="12" rx="1.5" fill="#6a4a20"/><circle cx="34" cy="58" r="2.6" fill="#c79b4e" stroke="#6e552c" stroke-width="0.6"/></svg>',
   ui_shield: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="uish_g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7a90c0"/><stop offset="0.5" stop-color="#3f5488"/><stop offset="1" stop-color="#1a2848"/></linearGradient></defs><path d="M32 6 L54 14 Q54 40 32 58 Q10 40 10 14 Z" fill="url(#uish_g)" stroke="#0e1730" stroke-width="1.4"/><path d="M32 6 L54 14 Q54 40 32 58 Z" fill="#000" opacity="0.18"/><path d="M32 14 L44 18 Q44 36 32 48 Q20 36 20 18 Z" fill="none" stroke="#a8bce8" stroke-width="1.2" opacity="0.6"/><path d="M32 6 L32 58" stroke="#a8bce8" stroke-width="0.7" opacity="0.4"/></svg>',
@@ -15850,12 +15885,12 @@ function buildFarmerPanel(){
   if(activeDef){
     txt.innerHTML='<div class="fm-l1"><b>'+activeDef.name+'</b>'
       +'<span class="fm-wk'+(f.enabled?'':' off')+'">'+(f.enabled?'working':'paused')+'</span></div>'
-      +'<p>'+_fmCapsLine(activeDef)+' \u00b7 <em>'+activeDef.wage.toLocaleString()+'g a harvest</em></p>';
+      +'<p>'+_fmCapsLine(activeDef)+' \u00b7 <em>'+iconHTML('ui_coin')+' '+activeDef.wage.toLocaleString()+'g a harvest</em></p>';
   } else {
     var first=FARMER_TIERS[0];
     txt.innerHTML='<div class="fm-l1"><b>No farmhand</b></div>'
       +'<p>An <em>'+first.name+'</em> harvests your ready patches while you are away. '
-      +first.wage.toLocaleString()+'g a harvest.</p>';
+      +iconHTML('ui_coin')+' '+first.wage.toLocaleString()+'g a harvest.</p>';
   }
   row.appendChild(txt);
 
@@ -15918,8 +15953,10 @@ function buildFarmerPanel(){
     hire.className='fm-btn pri';
     var f1=FARMER_TIERS[0];
     var canHire=lvl>=f1.reqLvl&&(state.coins||0)>=f1.hireCost*SILVER_PER_GOLD;
-    hire.textContent=lvl<f1.reqLvl?('Farming '+f1.reqLvl+' to hire')
-      :('Hire \u00b7 '+f1.hireCost.toLocaleString()+'g');
+    /* textContent, so the SVG would have rendered as literal markup — the whole
+       reason this button and the three below it had no coin on them. */
+    if(lvl<f1.reqLvl) hire.textContent='Farming '+f1.reqLvl+' to hire';
+    else hire.innerHTML='Hire \u00b7 '+iconHTML('ui_coin')+' '+f1.hireCost.toLocaleString()+'g';
     hire.disabled=!canHire;
     hire.addEventListener('click',function(){ hireFarmer(1); });
     row.appendChild(hire);
@@ -15943,7 +15980,7 @@ function buildFarmerPanel(){
         var card=document.createElement('div');
         card.className='fm-tier'+(active?' on':'')+((!owned&&(!lvlOk||!prevOk))?' lock':'');
         card.innerHTML='<b>'+t.name+'</b><i>'+_fmCapsOnly(t)+'</i>'
-          +'<em>'+t.wage.toLocaleString()+'g a harvest</em>';
+          +'<em>'+iconHTML('ui_coin')+' '+t.wage.toLocaleString()+'g a harvest</em>';
         if(active){
           card.innerHTML+='<span class="fm-inuse">\u2713 in use</span>';
         } else if(owned){
@@ -15956,11 +15993,11 @@ function buildFarmerPanel(){
             +FARMER_TIERS[t.tier-2].name.split(' ')[0]+' first</span>';
         } else if(!lvlOk){
           card.innerHTML+='<span class="fm-need">Farming '+t.reqLvl+' \u00b7 '
-            +t.hireCost.toLocaleString()+'g</span>';
+            +iconHTML('ui_coin')+' '+t.hireCost.toLocaleString()+'g</span>';
         } else {
           var buy=document.createElement('button');
           buy.className='fm-btn pri';
-          buy.textContent='Hire \u00b7 '+t.hireCost.toLocaleString()+'g';
+          buy.innerHTML='Hire \u00b7 '+iconHTML('ui_coin')+' '+t.hireCost.toLocaleString()+'g';
           buy.disabled=(state.coins||0)<t.hireCost*SILVER_PER_GOLD;
           buy.addEventListener('click',function(){ hireFarmer(t.tier); });
           card.appendChild(buy);
@@ -24994,8 +25031,11 @@ function renderPassives(){
     const cost=respecCost(skill);
     const rb=document.createElement('button');
     rb.className='respec-btn';
-    rb.textContent=cost>0?`Refund skill points · Cost 🪙 ${cost.toLocaleString()}g`
-                         :'Refund skill points · Free';
+    /* Was the coin EMOJI in textContent — the one money site still drawn in the
+       language the chrome-icon pass replaced. */
+    if(cost>0) rb.innerHTML='Refund skill points · Cost '+iconHTML('ui_coin')
+                             +' '+cost.toLocaleString()+'g';
+    else rb.textContent='Refund skill points · Free';
     rb.addEventListener('click',()=>doRespec(skill));
     box.appendChild(rb);
   }
@@ -32883,7 +32923,7 @@ function _soBench(itemId,redraw){
         hole.className='so-hole undrilled'; hole.disabled=true;
         hole.innerHTML='<div class="gw">'+iconHTML('ui_gem')+'</div><div class="hw">'
           +'<span class="hn">not drilled</span>'
-          +'<span class="hx">'+cost.coins.toLocaleString()+'g + '+cost.gem_dust+' dust</span></div>'
+          +'<span class="hx">'+iconHTML('ui_coin')+' '+cost.coins.toLocaleString()+'g + '+cost.gem_dust+' dust</span></div>'
           +'<span class="ix">'+(idx+1)+'</span>';
       } else if(sd.gems[idx]){
         const gid=sd.gems[idx], gem=SOCKET_GEMS[gid], c=SO_LINE[gem.color];
@@ -34081,7 +34121,7 @@ function monsterTipHTML(m, lvlLocked, bossLock){
       <div class="mtip-stat wide"><span>Swing</span><b>${(m.swingMs/1000).toFixed(2)}s</b></div>
     </div>
     <div class="mtip-reward">
-      <span class="mtip-rw-coin">+${m.coins}g</span>
+      <span class="mtip-rw-coin">${iconHTML('ui_coin')} +${m.coins}g</span>
       <span class="mtip-rw-sep">·</span>
       <span class="mtip-rw-xp">+${m.xp} xp</span>
     </div>
@@ -34859,7 +34899,7 @@ function buildRaidsPanelHTML(){
         <span class="rr-rank">${R.rating}</span>
         <div class="rr-body">
           <div class="rr-line"><span class="rr-h">${raid.name} cleared</span><span class="rr-time">${_fmtRaidTime(R.timeMs)}</span></div>
-          <div class="rr-loot"><span class="rr-gold">+${R.gold}g</span>${mats}${gear}</div>
+          <div class="rr-loot"><span class="rr-gold">${iconHTML('ui_coin')} +${R.gold}g</span>${mats}${gear}</div>
         </div>
       </div>`;
     }
@@ -36709,7 +36749,7 @@ function sailLaunch(i, slot, ordId){
   const wages=slot===1?0:sailWageTotal();
   if(wages>0){
     const owed=wages*SILVER_PER_GOLD;
-    if((state.coins||0)<owed){ toast('Not enough gold for crew wages ('+wages.toLocaleString()+'g).'); return; }
+    if((state.coins||0)<owed){ toast('🪙 Not enough gold for crew wages ('+wages.toLocaleString()+'g).'); return; }
     state.coins-=owed;
     renderHeader();   // #coins has exactly one painter; without this the header keeps the pre-wage total
   }
@@ -36988,7 +37028,7 @@ function sailHire(id){
   }
   if(sailLvl()<role.lv){ toast('Sailing '+role.lv+' needed to sign on a '+role.n+'.'); return; }
   const cost=sailHireCost(role)*SILVER_PER_GOLD;
-  if((state.coins||0)<cost){ toast('Not enough gold — '+sailHireCost(role).toLocaleString()+'g to sign on a '+role.n+'.'); return; }
+  if((state.coins||0)<cost){ toast('🪙 Not enough gold — '+sailHireCost(role).toLocaleString()+'g to sign on a '+role.n+'.'); return; }
   state.coins-=cost;
   if(!state.sail.crew) state.sail.crew={};
   state.sail.crew[id]=(state.sail.crew[id]|0)+1;
@@ -39545,7 +39585,7 @@ function renderSail(){
                   : why==='crew'?('Needs '+sailCrewNeed(isle)+' crew')
                   : why==='unknown'?'Send your flagship here first'
                   : ('Needs Range '+isle.st))
-        : (wages>0&&(state.coins||0)<wages*SILVER_PER_GOLD)?('Need '+wages.toLocaleString()+'g for wages')
+        : (wages>0&&(state.coins||0)<wages*SILVER_PER_GOLD)?('Need '+iconHTML('ui_coin')+' '+wages.toLocaleString()+'g for wages')
         : null;
 
       /* Orders sit directly under the bar they move: picking one visibly slides the
@@ -39575,7 +39615,7 @@ function renderSail(){
         html+='<div class="sl-deckmsg">'+sailWhyText(sailSel)+'</div>';
       else if(wages>0)
         html+='<p class="sl-note" style="margin:0">Crew wages <b style="color:var(--ember)">'
-          +wages.toLocaleString()+'g</b>, paid at the dock.</p>';
+          +iconHTML('ui_coin')+' '+wages.toLocaleString()+'g</b>, paid at the dock.</p>';
     }
     html+='</div>';   /* /sl-deck */
 
@@ -39736,7 +39776,7 @@ function renderSail(){
           if(k===1) html+='<p class="sl-note" style="margin-top:8px">The consort sails with no hired '
             +'hands \u2014 no crew bonuses, and no wages. She is always kept a tier below the flagship.</p>';
           else if(sailWageTotal()>0) html+='<p class="sl-note" style="margin-top:8px">Crew wages '
-            +'<b style="color:var(--ember)">'+sailWageTotal().toLocaleString()+'g</b> a voyage, paid at the dock.'
+            +'<b style="color:var(--ember)">'+iconHTML('ui_coin')+' '+sailWageTotal().toLocaleString()+'g</b> a voyage, paid at the dock.'
             +(sailRig()>0?' Rigging cuts every crossing by '+Math.round(sailRig()*100)+'%.':'')+'</p>';
         }
         html+='</div>';
@@ -39954,7 +39994,7 @@ function renderSail(){
     html+='<div class="sl-card"><div class="sl-cardhd"><div><h4>Ship\'s Company</h4>'
       +'<div class="sl-metarow"><span class="sl-chip'+(have>=berths&&berths>0?' gold':' mut')+'">'
       +have+' of '+berths+' berths</span>'
-      +(wages>0?'<span class="sl-chip bad">'+wages.toLocaleString()+'g per voyage</span>':'')
+      +(wages>0?'<span class="sl-chip bad">'+iconHTML('ui_coin')+' '+wages.toLocaleString()+'g per voyage</span>':'')
       +'</div></div></div>';
     if(berths===0){
       html+='<p class="sl-note" style="margin:0">The '+h.n+' has no berths, so you sail alone. '
@@ -39972,7 +40012,7 @@ function renderSail(){
         +'<span class="cst" style="color:#7fa4b4">'+r.d+'</span></div>'
         +'<div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">'
         +'<button class="sl-btn sm" data-slhire="'+r.id+'"'+((canLvl&&!full&&afford&&berths>0)?'':' disabled')+'>'
-        +(canLvl?(full?'Full':cost.toLocaleString()+'g'):'Lv '+r.lv)+'</button>'
+        +(canLvl?(full?'Full':iconHTML('ui_coin')+' '+cost.toLocaleString()+'g'):'Lv '+r.lv)+'</button>'
         +(n>0?'<button class="sl-btn sm" data-sldismiss="'+r.id+'">Pay off</button>':'')
         +'</div></div>';
     });
@@ -40062,7 +40102,7 @@ function renderSail(){
         +'<span class="cst">'+kind.hint(c)+'</span>'
         +'<div class="sl-cbar"><i style="width:'+pc+'%"></i></div>'
         +'<div class="st"><span>'+Math.min(c.prog,c.need).toLocaleString()+' of '+c.need.toLocaleString()+'</span>'
-        +'<span class="pay">pays '+rw.gold.toLocaleString()+'g</span>'
+        +'<span class="pay">pays '+iconHTML('ui_coin')+' '+rw.gold.toLocaleString()+'g</span>'
         +'<span class="pay">'+Math.round(rw.xp*XP_SCALE).toLocaleString()+' Sailing xp</span></div></div>'
         +(done?'<button class="sl-btn sm" data-slclaim="'+ci+'">Claim</button>'
               :'<span class="sl-chip mut">in progress</span>')

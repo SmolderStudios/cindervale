@@ -3722,6 +3722,89 @@ setTimeout(() => {
       tier:ENCHANTS.manatarms_ii&&ENCHANTS.manatarms_ii.tier,
       priced:!!_ewCostFor('emerald_ring').cost
     })`));
+    section('One coin, everywhere money is (0.9.122.23)');
+    {
+    /* 0.9.122.17 replaced the currency coins with painted art and pointed only
+       fmtCoins at it. Every other money site kept the old flat SVG, and a dozen
+       more printed a gold number with no coin on it at all — a hire button, a
+       respec cost, a monster's reward, a raid's loot line, farm and crew wages.
+       None of it throws; it just quietly stops looking like money. */
+    const coins = JSON.parse(ev(`JSON.stringify({
+      gold:   ICONS.ui_coin,
+      sm:     ICONS.ui_coin_sm,
+      silver: ICONS.ui_coin_silver
+    })`));
+    const srcOf = h => (/src="([^"]+)"/.exec(h||'') || [,''])[1];
+    ok('the coin is the painted art, not the old flat SVG',
+       /^<img/.test(coins.gold) && srcOf(coins.gold).startsWith('data:image/webp'),
+       (coins.gold||'').slice(0,40));
+    ok('and it is the SAME art fmtCoins uses',
+       srcOf(coins.gold) === srcOf(coins.sm) && srcOf(coins.gold).length > 100,
+       'gold '+srcOf(coins.gold).length+' vs sm '+srcOf(coins.sm).length);
+    /* .ev-icon.coin-ic is 1.5em, for running text. The 23 call sites that ask for
+       ui_coin size it themselves in px, so it must NOT carry that class or every
+       one of them grows. */
+    ok('only the running-text pair carries the coin-ic sizing class',
+       coins.gold.indexOf('coin-ic') < 0 &&
+       coins.sm.indexOf('coin-ic') >= 0 && coins.silver.indexOf('coin-ic') >= 0);
+    ok('silver is its own art', srcOf(coins.silver) !== srcOf(coins.gold));
+
+    /* The sweep: any gold amount built in the script must have a coin near it.
+       Toasts are the documented exception — they are textContent, so an SVG would
+       render as literal markup there, and they carry the emoji instead. */
+    const scriptSrc = (/<script\b[^>]*>([\s\S]*)<\/script>/i.exec(html) || [,''])[1];
+    const money = /(?:toLocaleString\(\)|fmtK\([^)]*\))\s*\+?\s*['`]g\b|\}g<|\}g['`]/g;
+    const bare = [];
+    let m;
+    while ((m = money.exec(scriptSrc)) !== null) {
+      const ctx = scriptSrc.slice(Math.max(0, m.index - 230), m.index + 30);
+      if (/ui_coin|fmtCoins/.test(ctx)) continue;
+      /* Toasts are textContent, so an SVG would render as literal markup — they
+         carry the emoji instead. The message is often assembled over several lines
+         and handed to toast() at the END, so look both ways for the call. */
+      const around = scriptSrc.slice(Math.max(0, m.index - 400), m.index + 400);
+      if (/toast\(/.test(around)) continue;
+      if (/pill\('Gold'/.test(ctx)) continue;            // documented: an icon ellipsised the value
+      bare.push(ctx.split('\n').pop().trim().slice(0, 80));
+    }
+    ok('no money is printed without a coin beside it', bare.length === 0,
+       bare.slice(0, 5).join('  |  '));
+
+    /* And the specific surfaces that had none. Rendered, not grepped — the point
+       is that a coin reaches the screen. */
+    const shown = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      for(var k in state.xp) state.xp[k]=XP_CUM[99];
+      state.coins=9000000*SILVER_PER_GOLD;
+      function coinsIn(sel){
+        var el=document.querySelector(sel);
+        if(!el) return null;
+        return el.querySelectorAll('img.ev-icon, svg.ev-icon').length;
+      }
+      var out={};
+      // the respec button only exists once a point is spent, so spend one
+      selectedSkill='fishing'; viewTab='tree';
+      state.tree=state.tree||{}; state.tree.fishing=state.tree.fishing||{};
+      var first=(TREES.fishing||[])[0];
+      if(first) state.tree.fishing[first.id]=1;
+      renderCenter();
+      out.respec=coinsIn('.respec-btn');
+      out.respecFound=!!document.querySelector('.respec-btn');
+      out.respecEmoji=/\\ud83e\\udd99|\\ud83d\\udcb0/.test((document.querySelector('.respec-btn')||{}).innerHTML||'');
+      // a monster's kill reward
+      try{
+        var mon=MONSTERS.find(function(x){ return x.coins>0; });
+        var tip=monsterTipHTML(mon);
+        out.monster=/mtip-rw-coin[^<]*<img|mtip-rw-coin"[^>]*>\\s*<img/.test(tip)||/mtip-rw-coin/.test(tip)&&/<img[^>]*ev-icon/.test(tip);
+      }catch(e){ out.monster='err:'+e.message; }
+      return JSON.stringify(out);
+    })()`));
+    ok('the respec cost shows a drawn coin, not the emoji',
+       shown.respec >= 1 && shown.respecEmoji === false,
+       JSON.stringify(shown));
+    ok('a monster reward shows a coin', shown.monster === true, JSON.stringify(shown.monster));
+    }
+
     section('The left rail reads as three controls (0.9.122.22)');
     {
     /* Player report: "its super confusing ... they all look the same". The rail
