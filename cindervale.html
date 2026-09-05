@@ -7141,7 +7141,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.122.12">v0.9.122</div>
+  <div class="mm-ver" data-build="0.9.122.13">v0.9.122</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -17623,6 +17623,10 @@ function skillHasNewDiscovery(skillKey){
    it stops a suspended machine from cashing hours of online-rate progress that
    should have gone through the capped offline path. */
 const TICK_CATCHUP_MAX_MS = 120000;   // 2 minutes
+/* Wall-clock of the previous tick. Runtime only, never saved: a stale one out of
+   a save file would read as a suspend the moment the game opened, and the boot
+   path already settles that case. */
+let _lastTickWall = 0;
 const XPH_WINDOW = 120000; // 2 minute rolling window — smooth cross-activity average
 const XPH_WARMUP =  10000; // show theoretical for first 10s until real data builds up
 const xphBuf={};
@@ -20856,6 +20860,46 @@ function tick(){
   // Land any repaint that was held back while a tooltip was open (see renderTick).
   flushOwedRepaint();
   const now=Date.now();
+
+  /* ── A SUSPEND DURING A LIVE SESSION (0.9.122.13, ticket #52) ────────────────
+     Reported as "OS Lock doesn't continue current activity nor triggers offline
+     mode", and both halves were true. Lock the screen and the window is occluded,
+     so the engine throttles every timer this game runs on: tick stops at 250ms,
+     the 100ms combat timer stops, and the 5s autosave stops with them. Nothing
+     throws, which is why the report carried no errors.
+
+     Neither of the two states the game understood applied. It was not CLOSED, so
+     the boot path never ran grantOffline(). It was not RUNNING either:
+       - skilling is wall-clock based and would have caught up on its own, but the
+         catch-up is deliberately clamped to TICK_CATCHUP_MAX_MS and the rest of
+         the gap is thrown away — the clamp's own comment says a longer gap "should
+         have gone through the capped offline path", and nothing sent it there;
+       - combat takes at most ONE swing per tick (`now-youSwingStart>=youSwingMs`),
+         so a twenty-minute lock resolves a single swing.
+     The locked time simply vanished. Closing the game was strictly better than
+     locking it, which is the wrong way round.
+
+     A gap past the clamp is settled the same way a relaunch settles it, because
+     that path is already built and tested for exactly this: offline skilling XP,
+     the offline combat resolve with its food limit and death safety, farming, and
+     the summary so the player can SEE what the away time paid. lastSeen is stale
+     by the gap for free — the autosave that stamps it was throttled too. */
+  if(_lastTickWall){
+    const _gap = now - _lastTickWall;
+    if(_gap > TICK_CATCHUP_MAX_MS && !mmAtMenu && mmSlot){
+      try{
+        grantOffline();
+        try{ resumeCombatSession(); }catch(e){}
+        /* The action's own clock is settled now. Without this the clamp below
+           would pay a further two minutes at the online rate for time grantOffline
+           has already covered. */
+        if(state.action) state.actionStart = now;
+        renderAll();
+      }catch(e){}
+    }
+  }
+  _lastTickWall = now;
+
   // Accumulate playtime — tick fires every 250ms while the tab is open
   state.playtimeMs=(state.playtimeMs||0)+250;
 

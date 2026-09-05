@@ -3288,6 +3288,51 @@ setTimeout(() => {
     ok('which widens its board well past the old 54 lines', F.lines>200, F.lines+' lines');
     w.demoXpCap = _realDemoCap;   // the demo-cap regressions below rely on the real one
 
+    /* ── a suspend mid-session settles instead of vanishing ──────────────────
+       Ticket #52: "OS Lock doesn't continue current activity nor triggers offline
+       mode." Locking the screen occludes the window, the engine throttles tick,
+       the 100ms combat timer and the 5s autosave together, and the time fell
+       between the game's two states — not closed, so the boot path never settled
+       it; not running, because skilling's catch-up is clamped to
+       TICK_CATCHUP_MAX_MS and combat takes one swing per tick however long the gap.
+
+       Simulated by moving lastSeen and the tick's own wall-clock back, which is
+       exactly the state a resume lands in: the autosave that stamps lastSeen was
+       throttled too, so it is stale by the length of the lock. */
+    const suspend = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      mmAtMenu=false; mmSlot=1;
+      state.xp.woodcutting=XP_CUM[40];
+      state.action={skill:'woodcutting',actId:(gdBestActs('woodcutting')[0]||{}).id};
+      state.actionStart=Date.now();
+
+      const before={xp:state.xp.woodcutting, off:state.offlineXp||0};
+
+      // 30 seconds of lag: under the clamp, so the ordinary catch-up handles it
+      // and NO offline settlement should fire.
+      _lastTickWall=Date.now()-30000;
+      state.lastSeen=Date.now()-30000;
+      tick();
+      const short={off:(state.offlineXp||0)-before.off};
+
+      // 25 minutes locked: past the clamp, so it settles as away time.
+      const off0=state.offlineXp||0;
+      _lastTickWall=Date.now()-25*60000;
+      state.lastSeen=Date.now()-25*60000;
+      tick();
+      const long={off:(state.offlineXp||0)-off0, actionStart:state.actionStart, now:Date.now()};
+
+      return JSON.stringify({short:short, long:long, stillGoing:!!state.action});
+    })()`));
+    ok('a brief stall does NOT trigger an offline settlement',
+       suspend.short.off===0, 'offline xp moved by '+suspend.short.off);
+    ok('a 25 minute lock pays the away time instead of dropping it',
+       suspend.long.off>0, 'offline xp gained '+suspend.long.off);
+    ok('and the action clock is reset so the catch-up cannot pay it twice',
+       Math.abs(suspend.long.now-suspend.long.actionStart)<2000,
+       'actionStart is '+(suspend.long.now-suspend.long.actionStart)+'ms behind now');
+    ok('the activity is still running afterwards', suspend.stillGoing===true);
+
     /* ── EVERY quest a guild can roll is completable ─────────────────────────
        The broadest guard in the file: it rolls the whole quest space at four level
        bands and asks, of each one, "could the player actually finish this today?"
