@@ -7141,7 +7141,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.122.13">v0.9.122</div>
+  <div class="mm-ver" data-build="0.9.122.14">v0.9.122</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -13007,6 +13007,44 @@ function combatGearStatBlock(itemId){
      it is the answer to "does this cleaver slash or crush", which was previously
      unanswerable in-game despite being worth ±15% against half the bestiary. The
      wording deliberately mirrors the Monster Log's Weak to / Resists tags. */
+  /* ── WEIGHT CLASS (0.9.122.14, ticket #53) ──────────────────────────────────
+     "The Shields and the Bucklers mention light weapons in their tooltips, but the
+     weapons don't tell us if they are light or I am guessing Heavy."
+
+     Exactly right, and exactly the bug 0.9.120 fixed for damage type six builds
+     ago — the shield says its block is "halved with light weapons" and the buckler
+     says it "pairs with light weapons", and no weapon anywhere said whether it WAS
+     one. weaponClass() derives it from dmgType (stab/ranged light, crush heavy,
+     slash standard) and it drives real numbers: a tiered crit bonus, both class
+     synergies, and whether a shield can be braced at all.
+
+     Reads off weaponClass(), so it can never disagree with what combat does.
+
+     The same player guessed two-handers were coming. They are already here — Grave
+     Cleaver, Forgebreaker, Voidcleaver and the Dawnbringer — and nothing said that
+     either, so a two-hander names itself on the same line. */
+  var wcLine='';
+  if(it.cslot==='weapon' && typeof weaponClass==='function'){
+    var _wc=weaponClass(itemId);
+    var WC={
+      light:   {n:'Light',    col:'#7fd8c8', ico:'ui_wind',
+                d:'Faster, precise weapons. They carry their own crit bonus, and a Rogue hits harder still with one. '
+                 +'A bracing shield halves its block and slows your swing 20% \u2014 pair one with a Buckler instead.'},
+      heavy:   {n:'Heavy',    col:'#e0762f', ico:'ui_muscle',
+                d:'Slow and punishing. A Berserker hits far harder with one. No shield penalty.'},
+      standard:{n:'Standard', col:'#d6aa60', ico:'ui_sword',
+                d:'No class synergy and no shield penalty \u2014 it braces a shield as well as anything.'}
+    }[_wc];
+    if(WC){
+      wcLine='<div style="margin-top:6px;font-size:calc(12.5px*var(--tscale));color:'+WC.col+'">'
+        +'<span style="display:inline-block;font-size:calc(14px*var(--tscale));line-height:1;vertical-align:-2px;margin-right:3px">'+iconHTML(WC.ico)+'</span>'
+        +'<b>'+WC.n+'</b> weapon'
+        +(it.twoHanded?' \u00b7 <b>two-handed</b>':'')
+        +'<div style="color:var(--muted);font-size:calc(11.5px*var(--tscale));line-height:1.45;margin-top:1px">'
+        +WC.d+(it.twoHanded?' Takes both hands, so it uses no shield.':'')+'</div></div>';
+    }
+  }
+
   var dmgLine='';
   if(it.cslot==='weapon' && it.dmgType && DMG_TYPES[it.dmgType]){
     var dt=DMG_TYPES[it.dmgType];
@@ -13019,7 +13057,7 @@ function combatGearStatBlock(itemId){
   }
 
   return '<div style="color:var(--ember);font-size:calc(12px*var(--tscale));letter-spacing:.5px;margin-bottom:6px">'+iconHTML('ui_swords')+' '+tierName+' · Tier '+it.ctier+' · '+slotLabel+'</div>'
-    +'<div style="font-size:calc(14px*var(--tscale));line-height:1.7">'+statLine+'</div>'+dmgLine+fxLine+setLine+reqLine;
+    +'<div style="font-size:calc(14px*var(--tscale));line-height:1.7">'+statLine+'</div>'+dmgLine+wcLine+fxLine+setLine+reqLine;
 }
 
 /* Human-readable on-hit effect block for an item's `wfx` (poison / burn / stun
