@@ -7141,7 +7141,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.122.14">v0.9.122</div>
+  <div class="mm-ver" data-build="0.9.122.15">v0.9.122</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -13129,13 +13129,47 @@ function jewelryEnchantBlock(itemId){
   var GEM_TIER={sapphire:1,emerald:2,ruby:3,diamond:4,amethyst:5,dragon:6,bloodstone:7,void:8};
   var gemName=GEM_NAMES[gem]||gem;
   var gemTier=GEM_TIER[gem]||'?';
-  // Slot label from item id suffix
-  var slotLabel='Jewelry';
-  if(itemId.indexOf('_ring')>=0)         slotLabel='Ring';
-  else if(itemId.indexOf('_amulet')>=0)  slotLabel='Amulet';
-  else if(itemId.indexOf('_pendant')>=0) slotLabel='Pendant';
-  else if(itemId.indexOf('_jewel')>=0)   slotLabel='Jewel';
+  /* Slot label from _jwType(), the SAME function the set logic uses. Deriving it
+     from the id suffix here meant two places decided the same thing differently:
+     the Void Jewel is a pendant to every set check and read "Jewel" in its own
+     tooltip, so it was the one neck piece that never explained itself. */
+  var _ty=(typeof _jwType==='function')?_jwType(itemId):null;
+  var slotLabel = _ty==='ring' ? 'Ring' : _ty==='amulet' ? 'Amulet' : _ty==='pendant' ? 'Pendant' : 'Jewelry';
   var html='<div style="color:var(--ember);font-size:calc(12px*var(--tscale));letter-spacing:.5px;margin-bottom:6px">✦ '+gemName+' · Tier '+gemTier+' · '+slotLabel+'</div>';
+
+  /* ── WHAT THE SHAPE IS FOR (0.9.122.15, ticket #55) ─────────────────────────
+     "Based on tooltips I cannot figure out what the difference is between Amulets
+     and Pendants except that one sells for more."
+
+     Correct. The header above prints the word Amulet or Pendant and stopped there,
+     and the two are otherwise identical: same neck slot, same gem, same enchant
+     list. What separates them is which SET they complete, and that lived only in
+     the Enchanting panel's set cards — so a player looking at the item itself, in
+     the satchel or a drop, had nothing to go on.
+
+     Named off ENCHANT_SETS / PENDANT_SETS, so a set retuned later cannot leave this
+     describing the old numbers. A ring names both, because a ring can complete
+     either one depending on what shares the neck. */
+  var _amu=(typeof ENCHANT_SETS!=='undefined')?ENCHANT_SETS[gem]:null;
+  var _pen=(typeof PENDANT_SETS!=='undefined')?PENDANT_SETS[gem]:null;
+  var _clean=function(d){ return String(d||'').replace(/^[^:]*: */,''); };
+  var _role='';
+  if(slotLabel==='Amulet' && _amu){
+    _role='Worn on the neck. With a matching <b>ring</b> it completes the <b>'+_amu.name
+      +'</b> \u2014 a <b>skilling</b> set: '+_clean(_amu.desc)
+      +(_pen?'. A <b>pendant</b> of the same gem takes the same slot for a combat set instead.':'.');
+  } else if(slotLabel==='Pendant' && _pen){
+    _role='Worn on the neck. With a matching <b>ring</b> it completes the <b>'+_pen.name
+      +'</b> \u2014 a <b>combat</b> set: '+_clean(_pen.desc)
+      +(_amu?'. An <b>amulet</b> of the same gem takes the same slot for a skilling set instead.':'.');
+  } else if(slotLabel==='Ring'){
+    _role='Fits either hand, and a matched pair counts twice. Pair it with an <b>amulet</b> for '
+      +(_amu?'the '+_amu.name+' (skilling)':'a skilling set')
+      +' or a <b>pendant</b> for '+(_pen?'the '+_pen.name+' (combat)':'a combat set')+'.';
+  }
+  if(_role) html+='<div style="color:var(--muted);font-size:calc(11.5px*var(--tscale));'
+    +'line-height:1.45;margin:-2px 0 6px">'+_role+'</div>';
+
   var enchId=(state&&state.enchantments)?state.enchantments[itemId]:null;
   if(enchId && ENCHANTS[enchId]){
     var ench=ENCHANTS[enchId];
