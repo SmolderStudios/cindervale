@@ -3288,6 +3288,44 @@ setTimeout(() => {
     ok('which widens its board well past the old 54 lines', F.lines>200, F.lines+' lines');
     w.demoXpCap = _realDemoCap;   // the demo-cap regressions below rely on the real one
 
+    /* ── every weapon says what weight class it is (ticket #53) ──────────────
+       "The Shields and the Bucklers mention light weapons in their tooltips, but
+       the weapons don't tell us if they are light or I am guessing Heavy."
+
+       The same gap 0.9.120 closed for damage type. weaponClass() drives a tiered
+       crit bonus, both class synergies, and whether a shield can be braced at all,
+       and no weapon stated it. The class line reads off weaponClass() so it cannot
+       drift from what combat does. */
+    const wclass = JSON.parse(ev(`(function(){
+      var counts={}, missing=[], no2h=[], n=0;
+      Object.keys(ITEMS).forEach(function(id){
+        var it=ITEMS[id];
+        if(!it.cgear || it.cslot!=='weapon') return;
+        n++;
+        var wc=weaponClass(id);
+        counts[wc||'null']=(counts[wc||'null']||0)+1;
+        var txt=String(combatGearStatBlock(id)).replace(/<[^>]*>/g,' ').replace(/\\s+/g,' ');
+        if(!/(Light|Heavy|Standard) weapon/.test(txt)) missing.push(id+' ('+wc+')');
+        if(it.twoHanded && txt.indexOf('two-handed')<0) no2h.push(id);
+      });
+      return JSON.stringify({n:n, counts:counts, missing:missing, no2h:no2h});
+    })()`));
+    ok('every weapon states its weight class', wclass.missing.length===0,
+       wclass.n+' weapons '+JSON.stringify(wclass.counts)+
+       (wclass.missing.length?'; missing: '+wclass.missing.slice(0,6).join(', '):''));
+    ok('and every two-hander says it takes both hands', wclass.no2h.length===0,
+       wclass.no2h.join(', '));
+    /* Non-weapons must NOT grow the line — a shield has no weight class of its own,
+       and weaponClass() returns one for anything carrying a dmgType. */
+    ok('a shield does not claim a weight class',
+       ev(`(function(){
+         var sid=Object.keys(ITEMS).find(function(id){
+           return ITEMS[id].cgear && ITEMS[id].cslot==='shield'; });
+         if(!sid) return true;
+         return !/(Light|Heavy|Standard) weapon/.test(
+           String(combatGearStatBlock(sid)).replace(/<[^>]*>/g,' ').replace(/\\s+/g,' '));
+       })()`)===true);
+
     /* ── a suspend mid-session settles instead of vanishing ──────────────────
        Ticket #52: "OS Lock doesn't continue current activity nor triggers offline
        mode." Locking the screen occludes the window, the engine throttles tick,
