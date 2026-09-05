@@ -1378,14 +1378,16 @@ header h1 .flame{color:var(--ember)}
 /* ════════ [CSS-05] ACTIVITY CARDS ═══════════════════════════════════════════════ */
 /* activities — 1.0.88 redesign: flex-row with output-icon box on the left,
    3px tier-color stripe on the far left edge, content body on the right. */
+/* NOTE: bare `.tab` and `.rail-groups` are both restyled at the very end of the
+   last style block, at higher specificity AND later in the file. Editing them here
+   changes nothing on screen — see the rail block down there. */
 .tabs{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
 .tab{background:var(--raised-s);border:1px solid var(--trim-d);color:var(--muted);
   border-radius:4px;padding:5px 12px;font-size:calc(14px*var(--tscale));letter-spacing:1px;text-transform:uppercase;}
 .tab.on{color:var(--trim);border-color:var(--trim)}
 .tab.has-new:not(.on){animation:new-pulse 1.6s ease-in-out infinite;color:var(--ember)}
-/* Left rail category filter — Gathering / Production / Support. Sits above the
-   skill list, one row of four, styled off .inv-cat so it reads as a filter strip
-   rather than a second row of panel tabs. */
+/* Left rail category filter — see the note above: the live rules are at the end
+   of the last style block, not here. */
 .rail-groups{display:flex;gap:4px;margin-bottom:7px}
 .rail-groups .rg{flex:1;background:#0d0905;border:1px solid var(--trim-d);color:var(--muted);
   border-radius:10px;padding:3px 4px;font-size:calc(12px*var(--tscale));letter-spacing:.5px;
@@ -1720,6 +1722,24 @@ select option:checked{background-color:#2a1d10;color:#f0c772}
   100%{background:transparent;box-shadow:none}
 }
 .shop-section-flash{animation:shop-section-flash 1.8s ease-out}
+/* gotoShopSlot() has always marked its destination with .shop-cat-flash. The rule
+   lived in the category-tile CSS the 0.9.122.20 rebuild replaced, so the deep-link
+   from the Gear panel silently stopped highlighting anything — it still scrolled,
+   which is exactly why nothing looked broken. */
+@keyframes shop-cat-flash{
+  0%  {box-shadow:0 0 0 2px var(--ember), inset 0 0 16px rgba(224,118,47,.3)}
+  100%{box-shadow:inset 0 0 12px rgba(224,118,47,.14)}
+}
+.sh-vend.shop-cat-flash{animation:shop-cat-flash 1.4s ease-out}
+
+/* Satchel expansion moved into the shop (0.9.122.20), so the right panel keeps the
+   capacity read-out and hands the spending off rather than carrying a second
+   gold-spend button 30px tall. */
+.sat-goshop{display:block;width:100%;margin-top:5px;background:transparent;border:0;
+  color:#9a7a4e;font-family:inherit;font-size:calc(11.5px*var(--tscale));
+  padding:2px 0;text-align:center;cursor:var(--cur-pointer);transition:color .12s}
+.sat-goshop:hover{color:var(--gold-hi)}
+.sat-goshop:focus-visible{outline:2px solid var(--trim);outline-offset:1px;border-radius:4px}
 @media(prefers-reduced-motion:reduce){
   .shop-section-flash{animation:none}
   .sh-card:not(.dis):hover{transform:none}
@@ -7144,31 +7164,51 @@ body:not(.is-demo) .demo-only{display:none !important}
   box-shadow:inset 0 1px 0 rgba(191,228,239,.24), inset 0 -1px 0 rgba(0,0,0,.5),
              0 1px 3px rgba(0,0,0,.5), 0 0 0 1px rgba(77,155,176,.5);
 }
-/* The rail's category filter is subordinate to the rail's own tabs directly
-   above it — same shape, one step quieter, so the two rows read as a hierarchy
-   rather than as twins. */
-.rail-groups{gap:2px;padding:3px;margin-bottom:8px}
+/* ── the rail's filter row (0.9.122.22) ──────────────────────────────────────
+   This block used to make the filter "the same shape as the tabs, one step
+   quieter, so the two rows read as a hierarchy rather than as twins." They read
+   as twins. Both landed on `color:var(--gold-hi)` over a raised gradient with a
+   gold ring — computed styles came back byte-identical apart from a 1px font-size
+   difference — so the rail showed two gold selections eight pixels apart, one of
+   which navigates and one of which filters, with nothing to say which was which.
+   A player reported it as "they all look the same" and that was exactly right.
+
+   Same shape one step quieter is not a hierarchy, it is a smaller copy. The three
+   rows are now three different KINDS of control:
+
+     tabs   raised out of the track, gold, ringed  — the panel you are standing on
+     show   pressed INTO the track, cream, no ring — a filter on the list below
+     sort   no chrome at all                       — the order of that list
+
+   Raised versus recessed is the distinction doing the work: a tab sticks out
+   because you are on it, a filter is pushed in because you set it. The row also
+   carries a "Show" label now, which pairs it with "Sort" directly beneath and
+   states its job in one word rather than leaving it to be inferred. */
+.rail-groups{gap:3px;padding:0;margin-bottom:6px;align-items:center}
+.rail-groups > .rgl,
+.rail-sort label{
+  font-family:var(--num);font-size:calc(9.5px*var(--tscale));letter-spacing:.12em;
+  color:#7a6b52;text-transform:uppercase;flex:none;width:34px;text-align:left;
+}
 .rail-groups .rg{
-  flex:1;border:0;border-radius:6px;background:transparent;color:#8a7657;
-  padding:5px 4px;
-  font-family:inherit;font-weight:600;font-size:calc(10.5px*var(--tscale));
-  letter-spacing:.08em;text-transform:uppercase;line-height:1;
+  flex:1;border:0;border-radius:5px;background:transparent;color:#8a7657;
+  padding:4px 3px;
+  font-family:inherit;font-weight:500;font-size:calc(10.5px*var(--tscale));
+  letter-spacing:.05em;text-transform:uppercase;line-height:1;
   box-shadow:none;
 }
-.rail-groups .rg:hover{color:var(--trim);background:rgba(199,155,78,.08)}
+.rail-groups .rg:hover:not(.on){color:var(--text);background:rgba(199,155,78,.07)}
+/* Recessed, and deliberately NOT gold — gold is the tabs' colour in this corner. */
 .rail-groups .rg.on{
-  color:var(--gold-hi);
-  background:linear-gradient(180deg,#42300f,#281a09);
-  box-shadow:inset 0 1px 0 rgba(240,199,114,.28), inset 0 -1px 0 rgba(0,0,0,.45),
-             0 0 0 1px rgba(199,155,78,.35);
+  color:#e6d6b4;
+  background:#100a05;
+  box-shadow:inset 0 2px 3px rgba(0,0,0,.75), inset 0 -1px 0 rgba(214,170,96,.09);
 }
-/* Third row of the left rail. It is not a tab strip, but it sits directly under
-   two of them, so the outlined box it used to be was the one thing left in that
-   corner still drawn in the old language. Same track, borderless control — the
-   base `select` rule keeps the arrow glyph and the click target. */
-.rail-sort{padding:2px 4px 2px 9px;margin:0 0 8px}
-.rail-sort select{background-color:transparent;border:0;border-radius:6px;
-  padding:5px 24px 5px 6px;color:var(--trim)}
+/* Third row. It is not a tab strip and no longer needs to argue that it isn't —
+   with the filter row labelled and recessed, Sort can just be a control. */
+.rail-sort{padding:0;margin:0 0 8px;gap:3px}
+.rail-sort select{background-color:transparent;border:0;border-radius:5px;
+  padding:4px 24px 4px 5px;color:var(--trim)}
 .rail-sort select:hover{background-color:rgba(199,155,78,.08)}
 
 /* Item art sits where an SVG used to: contained, and centred on the text baseline. */
@@ -7219,7 +7259,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.122.21">v0.9.122</div>
+  <div class="mm-ver" data-build="0.9.122.22">v0.9.122</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -7617,20 +7657,21 @@ body:not(.is-demo) .demo-only{display:none !important}
 <!-- ══════ [HTML-03] GAME LAYOUT — left / center / right panels ══════ -->
 <div class="layout" id="mainLayout">
   <div class="panel" id="leftPanel">
-    <div class="tabs trk" style="margin-bottom:8px">
-      <button class="tab on" id="tabSkills">Skills</button>
-      <button class="tab" id="tabStatsLeft">Stats</button>
-      <button class="tab tab-combat" id="tabCombat" title="Combat">Combat</button>
-      <button class="tab tab-sail" id="tabSail" title="Sailing &amp; Treasure Hunting">Sailing</button>
+    <div class="tabs trk" role="tablist" style="margin-bottom:8px">
+      <button class="tab on" id="tabSkills" role="tab" aria-selected="true">Skills</button>
+      <button class="tab" id="tabStatsLeft" role="tab" aria-selected="false">Stats</button>
+      <button class="tab tab-combat" id="tabCombat" role="tab" aria-selected="false" title="Combat">Combat</button>
+      <button class="tab tab-sail" id="tabSail" role="tab" aria-selected="false" title="Sailing &amp; Treasure Hunting">Sailing</button>
     </div>
     <div id="skillListWrap">
-      <div class="rail-groups trk" id="railGroups">
+      <div class="rail-groups" id="railGroups">
+        <span class="rgl">Show</span>
         <button class="rg on" data-rg="all">All</button>
         <button class="rg" data-rg="gather">Gather</button>
         <button class="rg" data-rg="produce">Craft</button>
         <button class="rg" data-rg="support">Support</button>
       </div>
-      <div class="rail-sort trk">
+      <div class="rail-sort">
         <label for="skillSort">Sort</label>
         <select id="skillSort">
           <option value="active">Active first</option>
@@ -25346,6 +25387,20 @@ function gotoCraftToolsSlot(slot){
 
 /* Jump to a specific shop category. Used by the "Go to Shop" button in the Gear
    panel modal so the user lands on the category they were trying to fill. */
+function gotoShopCat(cat){
+  viewTab='shop';
+  if(cat) shopSelectedCat=cat;
+  renderCenter();
+  requestAnimationFrame(function(){
+    if(!cat) return;
+    const target=document.getElementById('shopCat_'+cat);
+    if(!target) return;
+    target.scrollIntoView({behavior:'smooth',block:'nearest'});
+    target.classList.remove('shop-cat-flash');
+    void target.offsetWidth;
+    target.classList.add('shop-cat-flash');
+  });
+}
 function gotoShopSlot(slot){
   viewTab='shop';
   const cat=shopCatForSlot(slot);
@@ -26376,22 +26431,17 @@ function renderInventory(){
   </div>
   <div class="sat-cap-bar"><div style="width:${pct}%;background:${barColor}"></div></div>`;
   if(!atMax){
-    const upBtn=document.createElement('button');
-    upBtn.className='sat-expand';
-    const canAfford=state.coins>=nextCost*SILVER_PER_GOLD;
-    if(!canAfford) upBtn.classList.add('poor');
-    upBtn.innerHTML=`<span class="se-ic">＋</span>Expand +${SATCHEL_SLOT_STEP} slots · ${iconHTML('ui_coin')} ${nextCost.toLocaleString()}g`;
-    upBtn.disabled=!canAfford;
-    upBtn.addEventListener('click',()=>{
-      const cost=satchelTierCost(state.satchelUpgrades||0);
-      if(state.coins<cost*SILVER_PER_GOLD){ toast('Not enough coins.'); return; }
-      state.coins-=cost*SILVER_PER_GOLD;
-      state.satchelUpgrades=(state.satchelUpgrades||0)+1;
-      renderHeader(); renderRightPanel();
-      toast(`🎒 Satchel expanded! Now ${satchelCap()} slots.`);
-      saveGame();
-    });
-    capBar.appendChild(upBtn);
+    /* The expansion itself moved to the shop's Satchel vendor in 0.9.122.20 — this
+       was the second place in the game that spent gold on the same upgrade, and it
+       was the one nobody could find because it lived inside the satchel. The panel
+       keeps the capacity bar, which is the information, and hands off the purchase,
+       which is the shop's job. */
+    const go=document.createElement('button');
+    go.className='sat-goshop';
+    go.type='button';
+    go.innerHTML=`+${SATCHEL_SLOT_STEP} slots for ${iconHTML('ui_coin')} ${nextCost.toLocaleString()}g in the Shop →`;
+    go.addEventListener('click',function(){ gotoShopCat('storage'); });
+    capBar.appendChild(go);
   } else {
     const mx=document.createElement('div'); mx.className='sat-cap-maxed'; mx.textContent='✦ Satchel fully expanded';
     capBar.appendChild(mx);
