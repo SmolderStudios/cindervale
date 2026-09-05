@@ -3288,6 +3288,134 @@ setTimeout(() => {
     ok('which widens its board well past the old 54 lines', F.lines>200, F.lines+' lines');
     w.demoXpCap = _realDemoCap;   // the demo-cap regressions below rely on the real one
 
+    /* ── EVERY quest a guild can roll is completable ─────────────────────────
+       The broadest guard in the file: it rolls the whole quest space at four level
+       bands and asks, of each one, "could the player actually finish this today?"
+
+       An act declares only cat/coins/id/inp/lvl/minMs/ms/name/out/spdMult/subcat/xp
+       — level is the ONLY gate on doing one, which is what makes this checkable at
+       all. If a gating field is ever added, this test keeps passing while the game
+       breaks, so add it to gdBestActs at the same time. */
+    const doable = JSON.parse(ev(`(function(){
+      var bad={}, counts={};
+      var note=function(k,m){ if(!bad[k]) bad[k]=[]; if(bad[k].indexOf(m)<0) bad[k].push(m); };
+      [[99,99,57],[70,65,36],[40,35,18],[15,15,4]].forEach(function(c){
+        for(var k in SKILLS) state.xp[k]=XP_CUM[c[0]];
+        state.combatXp={attack:XP_CUM[c[1]],strength:XP_CUM[c[1]],defence:XP_CUM[c[1]],hitpoints:XP_CUM[c[1]]};
+        state.monKills={}; MONSTERS.slice(0,c[2]).forEach(function(m){ state.monKills[m.id]=5; });
+        state.gd={}; GUILDS.forEach(function(g){ gdJoin(g.id); });
+
+        // everything the player can obtain right now: any unlocked act, crop or drop
+        var have={};
+        for(var sk in SKILLS) gdOutActs(sk).forEach(function(a){
+          Object.keys(a.out||{}).forEach(function(id){ if(ITEMS[id]) have[id]=1; }); });
+        gdCrops().forEach(function(cr){
+          Object.keys(cr.out||{}).forEach(function(id){ if(ITEMS[id]) have[id]=1; }); });
+        MONSTERS.forEach(function(m){
+          if(!state.monKills[m.id]) return;
+          (MONSTER_DROPS[m.id]||[]).forEach(function(d){ if(ITEMS[d.id]) have[d.id]=1; }); });
+
+        for(var pass=0; pass<120; pass++){
+          GUILDS.forEach(function(g){
+            ['small','standard','long'].forEach(function(sz){
+              var q=gdRollOne(g,sz);
+              if(!q){ note('null', g.id+'/'+sz+' rolled nothing'); return; }
+              counts[q.kind]=(counts[q.kind]||0)+1;
+              if(!(q.need>0)) note(q.kind, g.id+': need is '+q.need);
+
+              if(q.kind==='kill'){
+                if(!state.monKills[q.target]) note('kill', g.id+': '+q.target+' never fought');
+                return;
+              }
+              if(q.kind==='coin') return;               // gold is always obtainable
+              if(q.kind==='do'){
+                if(!q.act) return;                      // farming's tend quest names none
+                var a=(SKILLS[q.skill].acts||[]).find(function(x){ return x.id===q.act; });
+                if(!a){ note('do', g.id+': act '+q.act+' does not exist'); return; }
+                var lv=(a.id==='co8')?highFishUnlockLevel():(a.lvl||1);
+                if(levelFromXp(state.xp[q.skill]||0)<lv) note('do', g.id+': '+q.act+' is above level');
+                Object.keys(a.out||{}).forEach(function(id){
+                  if(ITEMS[id]&&(ITEMS[id].tool||ITEMS[id].skillGear))
+                    note('do', g.id+': '+q.act+' makes the one-time '+id); });
+                return;
+              }
+              var lines=(q.kind==='supply')?Object.keys(q.items||{}):[q.target];
+              lines.forEach(function(id){
+                if(!ITEMS[id]) note(q.kind, g.id+': '+id+' is not an item');
+                else if(ITEMS[id].tool||ITEMS[id].skillGear) note(q.kind, g.id+': '+id+' is a one-time unlock');
+                else if(!have[id]) note(q.kind, g.id+': no way to obtain '+id);
+              });
+            });
+          });
+        }
+      });
+      var n=0; for(var k in counts) n+=counts[k];
+      return JSON.stringify({n:n, counts:counts, bad:bad});
+    })()`));
+    const undoable = Object.keys(doable.bad);
+    ok(doable.n.toLocaleString()+' rolled quests are every one of them completable',
+       undoable.length===0,
+       undoable.map(k => k+': '+doable.bad[k].slice(0,4).join('; ')).join('\n       '));
+    ok('and all five quest shapes turned up in that sweep',
+       ['do','deliver','supply','coin','kill'].every(k => (doable.counts[k]||0) > 0),
+       JSON.stringify(doable.counts));
+
+    /* ── the potion a quest names can be found in the Alchemy panel ──────────
+       Steam report (nanook, 2026-09-02): "I had a quest for a potion that doesn't
+       seem to exist". It existed. 0.9.122.6 collapsed 40 brewing recipes into 24
+       cards TITLED FOR THE LADDER, so a card read "Ironhide" while every other
+       surface in the game — the satchel, a drop, a guild quest — called the thing
+       "Ironhide Potion II". 34 of the 40 could not be found by the name the player
+       was handed. */
+    const potions = JSON.parse(ev(`(function(){
+      for(var k in SKILLS) state.xp[k]=XP_CUM[99];
+      var text='', pips=[];
+      ['skilling','combat'].forEach(function(side){
+        _alchTab=side; selectedSkill='alchemy'; viewTab='acts';
+        renderCenter(); renderAlchemy();
+        var g=document.getElementById('activityGrid');
+        text+=' ~~ '+g.textContent;
+        [].slice.call(g.querySelectorAll('.al-pips button[data-item]'))
+          .forEach(function(b){ pips.push(b.getAttribute('data-item')); });
+      });
+      var missing=[], total=0;
+      (SKILLS.alchemy.acts||[]).forEach(function(a){
+        var id=Object.keys(a.out||{})[0];
+        if(!id||!ITEMS[id]) return;
+        total++;
+        var nm=ITEMS[id].name;
+        // findable = printed on a card, or reachable from a tier pip that names it
+        if(text.indexOf(nm)>=0) return;
+        if(pips.indexOf(id)>=0) return;
+        if(missing.indexOf(nm)<0) missing.push(nm);
+      });
+      return JSON.stringify({total:total, missing:missing});
+    })()`));
+    ok('every alchemy output is findable by the name a quest prints for it',
+       potions.missing.length===0,
+       potions.missing.length+' of '+potions.total+' missing: '+potions.missing.join(', '));
+
+    ok('a ladder card names the rung it is set to, not just the ladder',
+       ev(`(function(){
+         _alchTab='combat'; selectedSkill='alchemy'; viewTab='acts';
+         renderCenter(); renderAlchemy();
+         var subs=[].slice.call(document.querySelectorAll('#activityGrid .al-nm i'))
+           .map(function(e){ return e.textContent; }).join(' | ');
+         return /Potion|Elixir|Draught|Brew/.test(subs);
+       })()`)===true);
+
+    /* The other half of the same report: a deliver quest's title now carries the
+       item, so the shared satchel card answers "where do I get this" on hover. */
+    ok('a deliver quest title carries its item for the hover card',
+       ev(`(function(){
+         if(!state.gd.delvers){ state.xp.mining=XP_CUM[99]; gdJoin('delvers'); }
+         state.gd.delvers.q=[{kind:'deliver',size:'small',skill:'mining',target:'iron_ore',
+           name:'Deliver 40 Iron Ore',need:40,have:0,done:false}];
+         _gdOpen='delvers'; viewTab='guild'; renderGuilds();
+         var b=document.querySelector('#guildView .gd-qt b[data-item]');
+         return !!b && b.getAttribute('data-item')==='iron_ore';
+       })()`)===true);
+
     // ── emerald finally offers something on the combat side ────────────────
     const em = JSON.parse(ev(`JSON.stringify({
       gaps:Object.keys(ENCHANTS_BY_GEM).filter(g=>!ENCHANTS_BY_GEM[g].some(id=>ENCHANTS[id]&&ENCHANTS[id].cat==='combat')),

@@ -7141,7 +7141,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.122.10">v0.9.122</div>
+  <div class="mm-ver" data-build="0.9.122.11">v0.9.122</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -23194,8 +23194,12 @@ function _gdGuildPage(id){
             +((ITEMS[iid]&&ITEMS[iid].name)||iid)+' <b>'+fmtK(Math.min(hv,nd))+'/'+fmtK(nd)+'</b></span>';
         }).join('')+'</div>'
       : '';
+    /* The quest title carries the item, so the shared satchel card answers "where
+       do I get this" on hover — the other half of the Steam report above. A supply
+       order already says it per line on its chips. */
+    const titleAttr=(q.kind==='deliver'&&ITEMS[q.target])?' data-item="'+q.target+'"':'';
     row.innerHTML=
-      '<div class="gd-qt"><b>'+q.name+'</b><i>'+S.label
+      '<div class="gd-qt"><b'+titleAttr+'>'+q.name+'</b><i>'+S.label
       +(isCoin?' · taken from your purse when you hand in'
         :takes?' · taken from your satchel when you hand in':'')+'</i>'+chips+'</div>'
       +'<div class="gd-qp"><div class="l"><span>'
@@ -23628,8 +23632,18 @@ function alchCard(p,lvl,m){
   card.className='al-card'+(locked?' lock':'');
 
   const nameTxt=L?L.L.name:(it.name||shownId);
-  const tierTxt=L?('Lv '+(rec?rec.lvl:'?')+' \u00b7 '+L.L.labels[L.L.tiers.indexOf(shownId)])
-                 :('Lv '+(rec?rec.lvl:'?'));
+  /* A ladder card is titled for the LADDER ("Ironhide"), but what it makes is a rung
+     with its own item name ("Ironhide Potion II"), and that name is what everything
+     else in the game calls it — the satchel, a drop, a guild quest.
+
+     Reported from Steam: "I had a quest for a potion that doesn't seem to exist".
+     It existed. The quest named the rung and the panel showed only the ladder, so
+     34 of the 40 potions could not be found by the name the player was given. The
+     subtitle carries the rung's real name now, which is also the string a search
+     has to match. The roman-numeral tier label came out with it — the item name
+     already ends in the numeral, and printing it twice reads as a stutter. */
+  const rungTxt=L?((it.name||shownId)+' \u00b7 '):'';
+  const tierTxt=rungTxt+'Lv '+(rec?rec.lvl:'?');
   card.innerHTML='<div class="al-h"><span class="al-well">'+iconHTML(shownId)+'</span>'
     +'<span class="al-nm"><b>'+nameTxt+'</b><i>'+tierTxt+'</i></span>'
     +'<span class="al-stock'+(stock?'':' zero')+'">\u00d7'+stock.toLocaleString()+'</span></div>'
@@ -23649,6 +23663,11 @@ function alchCard(p,lvl,m){
       b.className=(id===shownId?'on':'');
       b.textContent=L.L.labels[i];
       b.disabled=lvl<need;
+      /* data-item gives the shared satchel card \u2014 instant, and it says where the
+         thing comes from. The native title stays as a fallback. Between this and the
+         subtitle above, every one of the 40 potions can now be found by the name a
+         guild quest prints for it. */
+      if(ITEMS[id]) b.setAttribute('data-item',id);
       b.title=(ITEMS[id]?ITEMS[id].name:id)+(lvl<need?' \u2014 Alchemy '+need:'');
       if(lvl>=need) b.addEventListener('click',function(){
         _alchTier[L.L.key]=id; renderAlchemy();
