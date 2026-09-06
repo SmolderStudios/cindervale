@@ -3739,6 +3739,107 @@ setTimeout(() => {
       tier:ENCHANTS.manatarms_ii&&ENCHANTS.manatarms_ii.tier,
       priced:!!_ewCostFor('emerald_ring').cost
     })`));
+    section('Mastery, and five names starting with Chitin (tickets #67, #68)');
+    {
+    /* #67 -- "Alchemy, Cooking, and Farming have no mastery levels or are not showing
+       their mastery levels." Both, for two different reasons, and neither throws.
+
+       Five skills draw their own cards instead of using buildActBtn, and buildActBtn
+       was the only thing that ever drew the mastery row. Jeweler and crafting nest a
+       real act card inside their category menus and got it for free; alchemy and
+       cooking build theirs from scratch and did not. Farming is worse: it harvests
+       through harvestPatch(), and recordMastery has only ever been called from
+       completeAction, so farming mastery was a flat zero since mastery shipped. */
+    const mast = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      for(var k in state.xp) state.xp[k]=XP_CUM[99];
+      var shown={}, missing=[];
+      for(var k in SKILLS){
+        state.mastery={}; selectedSkill=k; viewTab='skills';
+        try{ _farmCropsOpen=true; }catch(e){}
+        if(k==='cooking') state.cookingFire={loaded:{pine_log:500},lit:true,partialSec:0};
+        try{ renderActivities(); }catch(e){ missing.push(k+' render threw: '+e.message); continue; }
+        var grid=document.getElementById('activityGrid');
+        var rows=grid?grid.querySelectorAll('.mastery-row').length:0;
+        shown[k]=rows;
+        if(!rows) missing.push(k);
+      }
+      return JSON.stringify({shown:shown, missing:missing});
+    })()`));
+    ok('every skill panel shows mastery on its cards',
+       mast.missing.length === 0, mast.missing.join(', ') + '  ' + JSON.stringify(mast.shown));
+
+    /* Farming's half. It is not enough that the row renders -- it has to move. */
+    const farm = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      state.xp.farming=XP_CUM[99];
+      var crop=CROPS[0];
+      state.seeds[crop.id]=80; state.mastery={};
+      var plots=(typeof farmPatches==='function')?farmPatches():null;
+      var id=plots&&plots[0]?plots[0].id:'p1';
+      var n=0;
+      for(var i=0;i<40;i++){
+        plantPatch(id, crop.id, true);
+        if(state.patches&&state.patches[id]){
+          state.patches[id].plantedAt=Date.now()-crop.growMs*3;
+          state.patches[id].lastTend=Date.now();
+          if(harvestPatch(id,true)) n++;
+        }
+      }
+      return JSON.stringify({harvests:n, key:'crop_'+crop.id,
+        value:state.mastery['crop_'+crop.id]||0,
+        level:masteryLevel('crop_'+crop.id),
+        keys:Object.keys(state.mastery).length});
+    })()`));
+    ok('a farming harvest records mastery, keyed by crop',
+       farm.harvests > 30 && farm.value === farm.harvests && farm.level > 0,
+       JSON.stringify(farm));
+
+    /* One definition of the row, so a sixth bespoke panel cannot be written without
+       one -- which is exactly how three of them ended up without one. */
+    ok('the mastery row has a single definition',
+       (html.match(/class="mastery-row"/g) || []).length === 1,
+       String((html.match(/class="mastery-row"/g) || []).length) + ' places build it');
+
+    /* #68 -- "I am fairly certain that I got a couple Chitinweave pieces while killing
+       spiders." The tables were right and the log was complete; the names were not.
+       Spider Hollow dropped Chitin Shard, Chitin Plating, Chitin Plate, Chitin Maul
+       and fed a Chitinweave armour set, with an armour piece and a crafting material
+       three letters apart. */
+    const chit = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      /* Everything the zone drops must still be IN the log -- that is the half of the
+         report that was already true and has to stay true. */
+      var missing=[];
+      monstersInZone('spider_hollow').forEach(function(m){
+        (MONSTER_DROPS[m.id]||[]).forEach(function(d){
+          if(!ITEMS[d.id]) missing.push(m.id+' drops unknown '+d.id);
+        });
+      });
+      /* And no two items a single zone drops may have names that differ only by a
+         suffix -- that is the confusion itself, stated as a rule. */
+      var names={}, clash=[];
+      monstersInZone('spider_hollow').forEach(function(m){
+        (MONSTER_DROPS[m.id]||[]).forEach(function(d){
+          if(ITEMS[d.id]) names[ITEMS[d.id].name]=d.id;
+        });
+      });
+      var list=Object.keys(names);
+      list.forEach(function(a){ list.forEach(function(b){
+        if(a!==b && b.indexOf(a)===0) clash.push(a+' / '+b);
+      }); });
+      return JSON.stringify({missing:missing, clash:clash, dropNames:list,
+        hide:ITEMS.chitin.name, armour:ITEMS.chitin_plate.name});
+    })()`));
+    ok('every Spider Hollow drop is a real item the log can list',
+       chit.missing.length === 0, chit.missing.join(', '));
+    ok('and no two of them are one suffix apart',
+       chit.clash.length === 0, chit.clash.join(' | ') + '  ' + JSON.stringify(chit.dropNames));
+    ok('the spider hide and the spider chestpiece are named apart',
+       chit.hide === 'Spider Carapace' && chit.armour === 'Broodplate Cuirass',
+       JSON.stringify({hide: chit.hide, armour: chit.armour}));
+    }
+
     section('A perk that does nothing, and a row that clipped (tickets #65, #66)');
     {
     /* #65 -- "I bought the Bounty Ledger and it didn't appear to do anything." It did
