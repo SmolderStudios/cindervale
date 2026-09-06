@@ -3739,6 +3739,66 @@ setTimeout(() => {
       tier:ENCHANTS.manatarms_ii&&ENCHANTS.manatarms_ii.tier,
       priced:!!_ewCostFor('emerald_ring').cost
     })`));
+    section('Items that are only worth selling (ticket #70)');
+    {
+    /* "If something is just for selling, it would be nice to have an indicator in the
+       tooltip." The absence of a "Used in" section used to mean either nothing wants
+       this OR the tooltip does not know, and there was no way to tell which.
+
+       The dangerous half is the reverse mistake. Nine items open a BOSS LAIR and are
+       consumed by no recipe at all; a Warlord's Totem sells for 11,000 gold, and a
+       tooltip calling it vendor trash costs someone the Ogre Warlord. */
+    const use = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      var by={};
+      Object.keys(ITEMS).forEach(function(i){ var k=itemUseKind(i); (by[k]=by[k]||[]).push(i); });
+      var keys=MONSTERS.filter(function(m){ return m.bossReq; }).map(function(m){ return m.bossReq; });
+      var miskeyed=keys.filter(function(i){ return itemUseKind(i)!=='bosskey'; });
+      /* The enchanting reagents are the ones this nearly got wrong: buildUsageMap
+         guarded on a const that never existed, so they read as used by nothing. */
+      var ench=['arcane_dust','rune_fragment','mana_essence','gem_dust','void_cinder'];
+      var enchMissing=ench.filter(function(i){ return itemUseKind(i)!=='recipe'; });
+      return JSON.stringify({counts:Object.keys(by).reduce(function(a,k){a[k]=by[k].length;return a;},{}),
+        none:(by.none||[]).sort(), keyCount:keys.length, miskeyed:miskeyed, enchMissing:enchMissing});
+    })()`));
+    ok('every boss key is known to be a boss key, not vendor trash',
+       use.keyCount === 9 && use.miskeyed.length === 0, use.miskeyed.join(', '));
+    /* Named one by one rather than counted. An item that GAINS a use should drop off
+       this list and fail here, and a new item that should have had one and does not
+       should appear here and fail — that is the whole point of writing them out. */
+    const SELL_ONLY = ['abyssal_scale','barrow_dust','birds_nest','charcoal','cut_purse',
+      'drakeforged_rune','ember_resin','energy_crystal','goblin_ear','golden_spore',
+      'jewelled_dagger','pocket_watch','riftshard','runed_bone','sealed_letter',
+      'signet_ring','silver_plate','splintered_club','stamina_shard','void_essence'];
+    const added = use.none.filter(i => SELL_ONLY.indexOf(i) < 0);
+    const gone  = SELL_ONLY.filter(i => use.none.indexOf(i) < 0);
+    ok('and the sell-only list is exactly what it was reviewed as',
+       added.length === 0 && gone.length === 0,
+       (added.length ? 'newly unused: ' + added.join(', ') + '  ' : '')
+       + (gone.length ? 'gained a use: ' + gone.join(', ') : ''));
+    /* The bug this fix found on its way past. */
+    ok('enchanting reagents count as used',
+       use.enchMissing.length === 0, use.enchMissing.join(', '));
+
+    /* And the lines actually reach the tooltip. */
+    const tip = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      var tt=ttEl();
+      function tipFor(id){ showItemTooltip(id,10,10,''); return tt.textContent; }
+      return JSON.stringify({
+        ear:tipFor('goblin_ear'),
+        key:tipFor('warlord_totem'),
+        ore:tipFor('iron_ore')
+      });
+    })()`));
+    ok('a Goblin Ear says it is only worth selling',
+       /Nothing uses this/.test(tip.ear), tip.ear.slice(0, 120));
+    ok('a boss key says what it opens and does NOT say sell it',
+       /Ogre Warlord/.test(tip.key) && !/Nothing uses this/.test(tip.key), tip.key.slice(0, 140));
+    ok('and an ordinary material says neither',
+       !/Nothing uses this/.test(tip.ore) && !/lair/.test(tip.ore), tip.ore.slice(0, 100));
+    }
+
     section('Mastery, and five names starting with Chitin (tickets #67, #68)');
     {
     /* #67 -- "Alchemy, Cooking, and Farming have no mastery levels or are not showing
