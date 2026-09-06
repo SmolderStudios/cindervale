@@ -7348,7 +7348,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.122.34">v0.9.122</div>
+  <div class="mm-ver" data-build="0.9.122.35">v0.9.122</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -30984,8 +30984,77 @@ let _usageMap=null;
 function usageMap(){ if(!_usageMap) _usageMap=buildUsageMap(); return _usageMap; }
 
 /* ════ [JS-23b] item tooltip show / hide ═════════════════════════════════════════ */
+/* ── where an item comes from (ticket #63) ────────────────────────────────────
+   The old list was the first five sources and a "+N more" that led nowhere. Two
+   things were wrong with it and only one of them was the missing rest:
+
+   1. For most items the five were the SAME source repeated. A skilling-gear piece
+      rolls off every action in its skill, so the Forgemaster's Apron listed five
+      arbitrary crafting recipes out of 246 -- five facts that were all one fact,
+      and a "+241 more" that implied the rest were different.
+   2. The rest really was unreachable. The compendium tile shows one source and no
+      panel in the game shows the full list.
+
+   So the list groups by skill (skilling) or by zone (combat -- `skName` carries the
+   zone for a monster drop), and a group of more than one prints as the group: how
+   many actions, and the range of rates across them. Holding Shift expands it to
+   the individual sources, best rate first, which is what you want on something like
+   Shade Ember where eleven zones drop it at rates two orders of magnitude apart. */
+const _TT_GROUP_CAP=6, _TT_FLAT_CAP=24;
+function _ttChanceOf(s){ return s.rare?effDropChance(s.chance,s.combat):s.chance; }
+function _ttChanceHTML(ch){
+  const txt=ch>=1?'100%':_fmtMonChance(ch);
+  const color=ch>=1?'#7da33f':ch>=0.01?'#c79b4e':'#e0762f';
+  return `<span class="tt-chance" style="color:${color}">${txt}</span>`;
+}
+function _ttRangeHTML(lo,hi){
+  if(!(hi>lo*1.001)) return _ttChanceHTML(hi);
+  const color=hi>=0.01?'#c79b4e':'#e0762f';
+  return `<span class="tt-chance" style="color:${color}">${_fmtMonChance(hi)}–${_fmtMonChance(lo)}</span>`;
+}
+function sourceListHTML(sources, expanded){
+  let html='';
+  if(expanded){
+    for(const s of sources.slice(0,_TT_FLAT_CAP))
+      html+=`<div class="tt-source">${_icoUniq(s.skIcon)} ${s.actName}${_ttChanceHTML(_ttChanceOf(s))}</div>`;
+    if(sources.length>_TT_FLAT_CAP)
+      html+=`<div style="font-size:calc(12px*var(--tscale));color:#6e552c">+${sources.length-_TT_FLAT_CAP} more of the same</div>`;
+    return html;
+  }
+  /* Group order follows the incoming sort, which is best-rate-first, so the group
+     you would actually farm stays at the top. */
+  const order=[], by={};
+  for(const s of sources){
+    const k=s.skName||'?';
+    if(!by[k]){ by[k]=[]; order.push(k); }
+    by[k].push(s);
+  }
+  let hidden=0;
+  order.slice(0,_TT_GROUP_CAP).forEach(function(k){
+    const g=by[k], chances=g.map(_ttChanceOf);
+    const hi=Math.max.apply(null,chances), lo=Math.min.apply(null,chances);
+    if(g.length===1){
+      html+=`<div class="tt-source">${_icoUniq(g[0].skIcon)} ${g[0].actName}${_ttChanceHTML(hi)}</div>`;
+    }else{
+      /* Name and count in ONE span. .tt-source is space-between, so leaving them as
+         two children spread them to opposite ends of the row and the count floated
+         in the middle of nothing. */
+      html+=`<div class="tt-source"><span>${_icoUniq(g[0].skIcon)} ${k}`
+           +`<span style="color:#6e552c"> · ${g.length} actions</span></span>${_ttRangeHTML(lo,hi)}</div>`;
+    }
+  });
+  for(const k of order.slice(_TT_GROUP_CAP)) hidden+=by[k].length;
+  if(hidden) html+=`<div style="font-size:calc(12px*var(--tscale));color:#6e552c">+${hidden} more, in ${order.length-_TT_GROUP_CAP} other places</div>`;
+  /* Only offer the key when holding it would actually change what is on screen. */
+  if(sources.length>order.length || hidden)
+    html+=`<div style="font-size:calc(11.5px*var(--tscale));color:#6e552c;margin-top:2px">Hold <b style="color:#a08a64">Shift</b> for all ${sources.length}</div>`;
+  return html;
+}
+
+let _ttExpanded=false, _ttLast=null;
 function showItemTooltip(itemId, x, y, note){
   const it=ITEMS[itemId]; if(!it) return;
+  _ttLast={id:itemId, x:x, y:y, note:note};
   const tt=ttEl(); if(!tt) return;
   const sources=sourceMap()[itemId]||[];
   const usages=usageMap()[itemId]||[];
@@ -31062,16 +31131,7 @@ function showItemTooltip(itemId, x, y, note){
   }
   if(sources.length){
     html+=`<div style="margin-bottom:3px;font-size:calc(12px*var(--tscale));color:#a08a64;text-transform:uppercase;letter-spacing:1px">Sources</div>`;
-    for(const s of sources.slice(0,5)){
-      // Rare sources reflect the character-type drop dial so the shown rate
-      // equals the real one; guaranteed outputs / seed returns are left as-is.
-      // Same "1/N" fraction formatter as the Monster Log for consistency.
-      const ch=s.rare?effDropChance(s.chance,s.combat):s.chance;
-      const pctStr=ch>=1?'100%':_fmtMonChance(ch);
-      const color=ch>=1?'#7da33f':ch>=0.01?'#c79b4e':'#e0762f';
-      html+=`<div class="tt-source">${_icoUniq(s.skIcon)} ${s.actName}<span class="tt-chance" style="color:${color}">${pctStr}</span></div>`;
-    }
-    if(sources.length>5) html+=`<div style="font-size:calc(12px*var(--tscale));color:#6e552c">+${sources.length-5} more sources</div>`;
+    html+=sourceListHTML(sources, _ttExpanded);
   } else {
     html+=`<div class="tt-sub">Source unknown</div>`;
   }
@@ -31150,7 +31210,22 @@ function _ttFlipY(ty, cy, th, H){
   return Math.max(10, H-th-10);      // taller than the viewport — clamp
 }
 
-function hideTooltip(){ const tt=ttEl(); if(tt) tt.style.display='none'; }
+function hideTooltip(){ const tt=ttEl(); if(tt) tt.style.display='none'; _ttLast=null; }
+/* Shift redraws whatever is already on screen. Bound once, at the document, so it
+   works over every [data-item] in the game rather than per panel -- and guarded on
+   `repeat`, because holding the key fires keydown continuously and rebuilding the
+   card sixty times a second makes it flicker. */
+(function(){
+  function setExpanded(on){
+    if(_ttExpanded===on) return;
+    _ttExpanded=on;
+    if(_ttLast) showItemTooltip(_ttLast.id,_ttLast.x,_ttLast.y,_ttLast.note);
+  }
+  document.addEventListener('keydown',function(e){ if(e.key==='Shift'&&!e.repeat) setExpanded(true); },true);
+  document.addEventListener('keyup',  function(e){ if(e.key==='Shift') setExpanded(false); },true);
+  /* Alt-tabbing away with Shift down never delivers the keyup. */
+  window.addEventListener('blur',function(){ setExpanded(false); });
+})();
 
 /* Grant items to the player, respecting satchel cap.
    Returns actual qty added (may be less if satchel full for new item types). */
