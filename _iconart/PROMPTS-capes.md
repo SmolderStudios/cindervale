@@ -1,4 +1,7 @@
-# Skillcapes — twelve
+# Skillcapes — twelve  ·  DONE (0.9.122.26)
+
+Sliced from `skillcapes.png` and injected. `_capeSVG` and the twelve generated capes
+are gone with them. Kept for the record.
 
 The twelve Lv-99 skillcapes are the last shop items still on generated SVG
 (`_capeSVG`, one silhouette with a per-skill palette and a small emblem). They are

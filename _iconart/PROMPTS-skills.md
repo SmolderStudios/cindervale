@@ -1,4 +1,7 @@
-# Skill icons — all nineteen
+# Skill icons — all nineteen  ·  DONE (0.9.122.26)
+
+Sliced from `skills.png` and injected; the nineteen old base64 PNGs were stripped
+out of the ICONS literal. Kept for the record.
 
 **They are already painted art, not SVG.** Every one is a base64 PNG inside an
 `<svg><image href="data:image/png">` shell, ~15 KB each, ~285 KB in total. So this is
