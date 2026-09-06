@@ -1740,6 +1740,10 @@ select option:checked{background-color:#2a1d10;color:#f0c772}
   padding:2px 0;text-align:center;cursor:var(--cur-pointer);transition:color .12s}
 .sat-goshop:hover{color:var(--gold-hi)}
 .sat-goshop:focus-visible{outline:2px solid var(--trim);outline-offset:1px;border-radius:4px}
+/* Charms in the Stats panel — the only place outside the shop that says you own one. */
+.charm-row .sr-label{display:inline-flex;align-items:center;gap:7px}
+.charm-row .ch-ic{width:18px;height:18px;display:inline-flex;flex:none}
+.charm-row .ch-ic .ev-icon{width:18px;height:18px}
 @media(prefers-reduced-motion:reduce){
   .shop-section-flash{animation:none}
   .sh-card:not(.dis):hover{transform:none}
@@ -7336,7 +7340,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.122.29">v0.9.122</div>
+  <div class="mm-ver" data-build="0.9.122.30">v0.9.122</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -8123,7 +8127,17 @@ const OFFLINE_XP_RATE  = 90;                // 1.0.11 nerf: 120 -> 90 offline-sk
    signed percentage on the destiny screen, so scaling it would advertise "XP -20%"
    on the balanced path), the offline all-skill bonus (a percentage of banked XP, so
    it already follows), or any "+N% XP" source string. */
-const XP_SCALE = 0.80;
+/* Global XP faucet. Every source runs through it — skilling via mods().xpMult,
+   combat and sailing at their grant sites, offline, and guild quest payouts — so
+   this one number is the whole knob. 0.80 -> 0.72 is a further 10% cut
+   (0.9.122.30), not a move to 90%.
+
+   Nothing displayed needs touching: every xp/hr, per-action XP and time-to-level on
+   screen is computed from mods() or xpPerAction(), so the numbers move with it. The
+   ONE deliberate exception is the Stats panel's "XP multiplier" row, which divides
+   this back out — it itemises the player's own bonuses and would otherwise show
+   0.72x over a breakdown that cannot account for it. */
+const XP_SCALE = 0.72;
 /* Renamed for the Cindervale reset (0.9.14). This is a hard save wipe by design:
    nothing reads the old 'embervale_save_v2' keys any more, so every character from
    the Embervale era is abandoned in localStorage rather than migrated. Authorised
@@ -17062,6 +17076,18 @@ function charmBonus(key){
   for(const id of owned){ const c=CHARM_BY_ID[id]; if(c&&c.bonus[key]) total+=c.bonus[key]; }
   return total;
 }
+/* What a charm is doing, said as a number rather than a sentence. Read from the
+   bonus object itself so a retuned charm can never disagree with its own card. */
+function _charmEff(c){
+  const B=c.bonus||{}, out=[];
+  const pct=v=>'+'+Math.round(v*1000)/10+'%';
+  if(B.xpBoost)     out.push(pct(B.xpBoost)+' XP');
+  if(B.speed)       out.push(pct(B.speed)+' speed');
+  if(B.gpBoost)     out.push(pct(B.gpBoost)+' gold');
+  if(B.doubleYield) out.push(pct(B.doubleYield)+' double');
+  if(B.preserve)    out.push(pct(B.preserve)+' keep');
+  return out.join(' \u00b7 ')||'active';
+}
 function hasCharm(id){ return !!(state&&Array.isArray(state.charms)&&state.charms.indexOf(id)>=0); }
 
 /* ════ SUPPLIES (0.9.122.20) ═════════════════════════════════════════════════════
@@ -25556,6 +25582,24 @@ function renderStats(){
   // Plain-text tooltip helper — strips HTML tags + non-breaking spaces from
   // an HTML source string so it's safe inside a data-tip attribute. 1.0.91.
   const _tt=s=>s.replace(/<[^>]+>/g,'').replace(/&nbsp;/g,' ').replace(/\s+/g,' ').replace(/"/g,'&quot;').trim();
+
+  /* Charms are the only thing you can buy that goes nowhere. They occupy no slot,
+     so the Gear panel cannot show them, and the shop card was the single place in
+     the game that acknowledged owning one — you spent 200,000g and the evidence was
+     a word on the card you bought it from. They are listed here, with what each is
+     actually doing, because "permanent passive effect" is only reassuring if you can
+     see the effect. */
+  const ownedCharms=(state.charms||[]).map(function(id){ return CHARM_BY_ID[id]; })
+                                      .filter(Boolean);
+  const charmHtml=ownedCharms.length?`
+    <div class="stat-section-label">Charms</div>
+    ${ownedCharms.map(function(c){
+      return `<div class="stat-row charm-row" data-tip="${_tt(c.desc+' Bought once — it has no slot and cannot be unequipped.')}">
+      <span class="sr-label"><span class="ch-ic">${iconHTML(c.id)}</span>${c.name}</span>
+      <span class="sr-value bonus-misc">${_charmEff(c)}</span>
+    </div>`; }).join('')}
+    `:'';
+
   if(hasActs){
     const lastUnlocked=[...sk.acts].reverse().find(a=>lvl>=a.lvl)||sk.acts[0];
     if(lastUnlocked){
@@ -25668,6 +25712,8 @@ function renderStats(){
     ${mastUnlocked.map(t=>`<div class="stat-row" style="align-items:flex-start"><span style="font-size:calc(13px*var(--tscale));color:var(--text);line-height:1.5">${t}</span></div>`).join('')}`:''}
 
     ${actHtml}
+
+    ${charmHtml}
 
     <div class="stat-section-label">Account</div>
     <div class="stat-row" data-tip="${_tt(`Total active time this character has been played. First played ${state.firstPlayed?new Date(state.firstPlayed).toLocaleDateString():'today'}.`)}">
