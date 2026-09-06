@@ -91,3 +91,8 @@ _iconart/legvar_raw/
 _iconart/_ingame/
 _iconart/_review/
 _iconart/pack.*.json
+
+# node-art pack (0.9.122.32) — same reason as pack.json: 70 KB of base64 that
+# injectnodes.js regenerates from cut/ in seconds. picks_nodes.json IS committed,
+# because that one is the id list, not the payload.
+_iconart/pack_nodes.json

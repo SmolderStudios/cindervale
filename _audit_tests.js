@@ -3734,6 +3734,153 @@ setTimeout(() => {
       tier:ENCHANTS.manatarms_ii&&ENCHANTS.manatarms_ii.tier,
       priced:!!_ewCostFor('emerald_ring').cost
     })`));
+    section('Guild perks that were never paid (0.9.122.32)');
+    {
+    /* gdBonus() returns five bonuses and mods() consumed two of them, so the `dbl`
+       perks on five guilds, the Furrow's `yield` and all three of the Nightmarket's
+       `sell` ranks paid out NOTHING from the day guilds shipped. The tooltip promised
+       a number and the number never moved -- no error, no log, nothing to notice.
+       This walks every perk key every guild actually declares and proves each one
+       changes what mods() returns. */
+    const perks = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      for(var k in state.xp) state.xp[k]=XP_CUM[99];
+      state.gd={}; var dead=[], checked=0;
+      GUILDS.forEach(function(g){
+        if(!g.skills.length) return;                       // combat guilds pay globally
+        var sk=g.skills[0];
+        var keys={}; g.perks.forEach(function(pk){ for(var k in (pk||{})) keys[k]=1; });
+        state.gd={}; var base=mods(sk);
+        state.gd[g.id]={rep:99999999,q:[],day:-1,skipped:0};
+        var full=mods(sk);
+        Object.keys(keys).forEach(function(k){
+          checked++;
+          var moved = (k==='speed') ? full.speed>base.speed
+                    : (k==='xp')    ? full.xpMult>base.xpMult
+                    : (k==='sell')  ? full.extraSell>base.extraSell
+                    : (k==='dbl'||k==='yield') ? (full.double>base.double||full.extraBar>base.extraBar)
+                    : null;
+          if(moved===false) dead.push(g.id+'.'+k);
+        });
+        state.gd={};
+      });
+      return JSON.stringify({dead:dead, checked:checked});
+    })()`));
+    ok('every guild perk key actually reaches mods()',
+       perks.dead.length === 0 && perks.checked >= 18,
+       perks.dead.length ? 'dead: ' + perks.dead.join(', ') : perks.checked + ' keys');
+    }
+
+    section('The Nightmarket, now that it is a thieves guild (0.9.122.32)');
+    {
+    /* The guild moved from Agility to Thieving in 0.9.122.31. Everything below is a
+       thing that still LOOKED fine after that move and was not. */
+    const night = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      for(var k in state.xp) state.xp[k]=XP_CUM[95];
+      state.gd={night:{rep:0,q:[],day:-1,skipped:0}};
+      var names=[], hot=0, quests=0, kinds={};
+      for(var d=0;d<120;d++){
+        gdRollQuests('night',true);
+        state.gd.night.q.forEach(function(q){
+          quests++; kinds[q.kind]=(kinds[q.kind]||0)+1; names.push(q.name);
+          var ids = q.kind==='deliver' ? [q.target] : Object.keys(q.items||{});
+          if(ids.some(function(i){ return ITEMS[i] && ITEMS[i].hot; })) hot++;
+        });
+      }
+      /* A do-quest on Thieving names an act whose name is already an order, so the
+         verb must NOT be prefixed -- "Steal the Pickpocket a noble 100 times". */
+      var doubled=names.filter(function(n){ return /^Steal the /.test(n); });
+      // and an order for a stolen good has to be fillable in a sane number of steals
+      gdRollQuests('night',true);
+      var sizes=gdHotPool().map(function(r){
+        return {id:r.id, small:gdOutCount(r.skill,r.act,GD_SIZE.small.mins,r.id),
+                          long:gdOutCount(r.skill,r.act,GD_SIZE.long.mins,r.id)};
+      });
+      return JSON.stringify({doubled:doubled.slice(0,3), hotPct:+(hot/quests*100).toFixed(1),
+                             kinds:kinds, sizes:sizes, quests:quests});
+    })()`));
+    ok('a Thieving quest does not print its verb twice',
+       night.doubled.length === 0, night.doubled.join(' | '));
+    /* The whole point of a fence. Before this it asked for jewellery and potions and
+       never once for the goods the skill actually steals. */
+    ok('the fence asks for stolen goods, sometimes and not always',
+       night.hotPct > 2 && night.hotPct < 30, night.hotPct + '% of ' + night.quests + ' quests');
+    ok('all six stolen goods can be ordered, in fillable amounts',
+       night.sizes.length === 6 && night.sizes.every(s => s.small >= 4 && s.long <= 400),
+       JSON.stringify(night.sizes.map(s => s.id + ' ' + s.small + '/' + s.long)));
+    ok('the board still rolls all four quest kinds',
+       ['do','supply','deliver','coin'].every(k => (night.kinds[k] || 0) > 0),
+       JSON.stringify(night.kinds));
+    }
+
+    section('Thieving art and pace (0.9.122.32)');
+    {
+    /* Thieving shipped on borrowed paintings. These prove the real ones landed --
+       and, more usefully, that nothing is still SILENTLY borrowing: an alias that
+       resolves to another skill's art renders perfectly and looks like a bug nobody
+       filed. */
+    const art = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      var ids=['cut_purse','silver_plate','signet_ring','sealed_letter','pocket_watch',
+               'jewelled_dagger','bronze_lockpicks','iron_lockpicks','steel_lockpicks',
+               'cobalt_lockpicks','eclipse_lockpicks','everflame_lockpicks',
+               'th_hat','th_chest','th_legs','th_boots','cape_thieving','thieving'];
+      var unpainted=ids.filter(function(i){ return (iconHTML(i)||'').indexOf('<img')!==0; });
+      var nodes=TREES.thieving.map(function(n){ return n.id; });
+      var noArt=nodes.filter(function(n){ return !NODE_ART[n]; });
+      /* Borrowed art is art from ANOTHER skill's tree, which is exactly what the
+         placeholder pass did. Compare the actual image data. */
+      var borrowed=[];
+      nodes.forEach(function(n){
+        for(var k in NODE_ART) if(k.indexOf('th_')!==0 && NODE_ART[k]===NODE_ART[n]) borrowed.push(n+'~'+k);
+      });
+      return JSON.stringify({unpainted:unpainted, noArt:noArt, borrowed:borrowed,
+                             banner:!!SKILL_ART.thieving,
+                             alias:Object.keys(ICON_ALIAS)});
+    })()`));
+    ok('every Thieving item and the skill icon are painted, not generated',
+       art.unpainted.length === 0, art.unpainted.join(', '));
+    ok('every tree node has art', art.noArt.length === 0, art.noArt.join(', '));
+    /* One node's art was not on the sheet. It is named here rather than counted, so
+       drawing it and forgetting to inject it fails LOUDLY instead of passing. */
+    ok('and only the one node still known to be borrowing is borrowing',
+       art.borrowed.length === 1 && art.borrowed[0].indexOf('th_gm_2x_xp~') === 0,
+       art.borrowed.join(', '));
+    ok('the skill has a painted banner', art.banner === true);
+    ok('and the placeholder alias map is down to the pet',
+       art.alias.length === 1 && art.alias[0] === 'spet_thieving', art.alias.join(', '));
+
+    /* Pace. Jordan asked for "pretty fast, not that slow, but keep it in line", which
+       is a RANK, not a number -- so this asserts the rank. A future edit that makes
+       Thieving the best or the worst XP in the game fails here rather than shipping. */
+    const pace = JSON.parse(ev(`(function(){
+      var out={};
+      [1,20,40,60,80,99].forEach(function(L){
+        var best={};
+        for(var k in SKILLS){
+          if(k==='farming') continue;
+          for(var kk in state.xp) state.xp[kk]=XP_CUM[L];
+          state.tree={}; state.gear=[]; state.equipped={}; state.charms=[];
+          var b=0;
+          SKILLS[k].acts.forEach(function(a){
+            if((a.lvl||1)>L) return;
+            var r=null; try{ r=ratesFor(a,k); }catch(e){ return; }
+            if(r&&(r.xph||0)>b) b=r.xph;
+          });
+          best[k]=b;
+        }
+        var order=Object.keys(best).sort(function(x,y){ return best[y]-best[x]; });
+        out['L'+L]=order.indexOf('thieving')+1;
+      });
+      out.n=Object.keys(SKILLS).length-1;
+      return JSON.stringify(out);
+    })()`));
+    ok('Thieving trains fast, and never the fastest or the slowest',
+       [1,20,40,60,80,99].every(L => pace['L'+L] >= 3 && pace['L'+L] <= 8),
+       JSON.stringify(pace));
+    }
+
     section('Thieving (0.9.122.31)');
     {
     /* The thirteenth skill, and the only one whose action can fail. Everything worth
@@ -3780,7 +3927,7 @@ setTimeout(() => {
     ok('fourteen acts and a 98-point tree', th.acts === 14 && th.pts === 98,
        JSON.stringify({acts: th.acts, pts: th.pts}));
     ok('success climbs with level and tree, and is capped',
-       th.lo === 0.8 && th.capped <= 0.95 && th.capped > th.lo, JSON.stringify(th));
+       th.lo === 0.85 && th.capped <= 0.95 && th.capped > th.lo, JSON.stringify(th));
     /* If the last act reached the cap the skill would end with nothing left to want. */
     ok('the hardest steal stays hard even fully specced',
        th.hardMax > 0.4 && th.hardMax < 0.85, String(th.hardMax));

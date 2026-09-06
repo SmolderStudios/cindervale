@@ -151,3 +151,84 @@ the item art uses, which is where the ~200 KB saving comes from.
 
 `iconHTML('slayer')` is never called anywhere, so Slayer needs nothing — it uses its
 own `slp_*` perk icons.
+
+---
+
+## Outstanding — the twentieth skill
+
+Thieving shipped in 0.9.122.31 as the thirteenth skilling skill, after this sheet was
+drawn. It is currently borrowing the mining pick's painting through `ICON_ALIAS`, so
+the rail shows a pickaxe next to "Thieving".
+
+The spare cell on the original sheet is what this replaces — but it needs its own pass,
+because the one thing a generator will get wrong here is the silhouette collision.
+**A plain domino mask is a wide double-lobe with two holes in it, which at 20px is the
+same shape as cell 16, the heart.** So the subject is the masked HEAD, not the mask
+lying flat: the peaked hood gives it a tall pointed top that nothing else on the sheet
+has.
+
+````
+SHEET: One skill emblem for a dark-fantasy RPG. A single cell, one object.
+
+It is displayed to players at about TWENTY PIXELS, so everything below follows from that:
+
+FILL THE FRAME. One single object, drawn LARGE, filling roughly 95% of the frame edge
+to edge. No empty margin.
+
+ONE SHAPE. Two or three big forms and nothing else. No background scenery, no ground,
+no sparkles, no motion lines, no small decorative details — every one of those turns to
+mud at 20px and steals the silhouette.
+
+READ THE SILHOUETTE. It must be identifiable in black-on-white outline alone, with no
+colour.
+
+DARK AND MOODY. Deep, slightly desaturated colour with strong contrast inside the
+object — a bright rim light on one edge and deep shadow opposite. This sits on a
+near-black UI, so it should feel lit from within a dark room, NOT bright and flat.
+Avoid pure saturated hues.
+
+Hand-painted with a dark ink outline holding the silhouette, cel-like shading in three
+or four value steps. NOT flat vector, NOT a photograph, NOT a 3D render.
+
+Flat pure white background behind the whole frame, edge to edge.
+
+THE SUBJECT:
+  Thieving — a HOODED HEAD seen straight on, wearing a bandit's mask. Three forms and
+             no more:
+
+             1. The hood. A deep cowl coming to a soft POINT at the top and falling
+                wide at the shoulders. Near-black, cold blue-grey, the face inside it
+                lost in shadow. This pointed top is the silhouette — it is what stops
+                the icon reading as a heart or a shield at small size.
+             2. The mask. A single broad band of dark grey-blue leather running
+                straight across the eyes, corner to corner, with two angled cutouts
+                in it. Worn leather, one bright rim of light along its top edge.
+             3. The eyes. Two small warm amber lights burning in the cutouts — the
+                only warm colour anywhere in the frame, and the thing the eye lands
+                on first.
+
+             No shoulders below the hood, no hands, no weapon, no lockpicks, no coins.
+             Cold steel-blue and near-black throughout, amber ONLY in the eyes.
+````
+
+<details><summary>id order for <code>sheets/thieving_skill.txt</code></summary>
+
+```
+thieving
+```
+</details>
+
+### Before you accept it
+
+Shrink it to a thumbnail and put it beside **Hitpoints** (the heart) and **Defence**
+(the shield). If the hood has lost its point and gone rounded, it will read as one of
+those two in the rail — send it back and say "the hood must come to a point at the top".
+
+Also check the eyes actually survive the shrink. They are two small marks carrying the
+whole read; if they are drawn dim or small they vanish and the icon becomes a dark blob.
+
+### After it lands
+
+Same as the other nineteen: this one does NOT go through the ART_ITEM block. It is
+written into `ICONS.thieving`, and the placeholder line `thieving:'bronze_lockpicks'`
+comes out of `ICON_ALIAS` at the same time.
