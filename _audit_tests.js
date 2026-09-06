@@ -3732,6 +3732,75 @@ setTimeout(() => {
       tier:ENCHANTS.manatarms_ii&&ENCHANTS.manatarms_ii.tier,
       priced:!!_ewCostFor('emerald_ring').cost
     })`));
+    section('The XP faucet and the charm shelf (0.9.122.30)');
+    {
+    /* XP_SCALE is one number that every XP source is supposed to run through. The
+       risk is not that it stops working — it is that a NEW source quietly does not
+       use it, and the faucet silently stops being global. */
+    const faucet = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      for(var k in state.xp) state.xp[k]=XP_CUM[70];
+      var out={scale:XP_SCALE};
+      // a fresh character's whole XP multiplier IS the faucet — no other term applies
+      out.freshMult=mods('woodcutting').xpMult;
+      // and every skill's advertised rate is built from it
+      out.rates={};
+      ['woodcutting','fishing','cooking','smithing','crafting'].forEach(function(sk){
+        var acts=SKILLS[sk].acts.filter(function(a){ return a.lvl<=70; });
+        var act=acts[acts.length-1];
+        if(!act) return;
+        out.rates[sk]=Math.round(ratesFor(act,sk).xph);
+        out.per=out.per||Math.round(xpPerAction(act,sk));
+      });
+      return JSON.stringify(out);
+    })()`));
+    ok('a fresh character\u2019s XP multiplier is exactly the faucet',
+       Math.abs(faucet.freshMult - faucet.scale) < 1e-9,
+       'mult ' + faucet.freshMult + ' vs scale ' + faucet.scale);
+
+    /* Source-level, because the faucet is applied at each grant site rather than in
+       one funnel: combat, sailing, offline and guild payouts each multiply by it. If
+       one of those lines is ever refactored away, the skill it feeds silently pays
+       full rate and nothing on screen says so. */
+    const scriptSrc = (/<script\b[^>]*>([\s\S]*)<\/script>/i.exec(html) || [,''])[1];
+    const uses = (scriptSrc.match(/XP_SCALE/g) || []).length;
+    ok('the faucet is still wired into every source it was',
+       uses >= 8, uses + ' XP_SCALE references');
+    ok('and the Stats panel still divides it back out',
+       /const totalXpMult\s*=\s*m\.xpMult\s*\/\s*XP_SCALE/.test(scriptSrc));
+
+    /* Charms had nowhere to be seen: no slot, so the Gear panel cannot show them,
+       and the shop card you bought it from was the only acknowledgement in the game
+       that you owned one. */
+    const charms = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      for(var k in state.xp) state.xp[k]=XP_CUM[70];
+      selectedSkill='woodcutting'; viewTab='acts';
+      state.charms=[];
+      renderStats();
+      var empty=document.querySelectorAll('#statsViewLeft .charm-row').length;
+      state.charms=CHARMS.map(function(c){ return c.id; });
+      renderStats();
+      var rows=[].slice.call(document.querySelectorAll('#statsViewLeft .charm-row'));
+      var out={empty:empty, n:rows.length,
+               text:rows.map(function(r){ return (r.textContent||'').replace(/\s+/g,' ').trim(); }),
+               icons:rows.filter(function(r){ return !!r.querySelector('.ch-ic img,.ch-ic svg'); }).length,
+               tips:rows.filter(function(r){ return (r.getAttribute('data-tip')||'').length>10; }).length};
+      state.charms=[];
+      return JSON.stringify(out);
+    })()`));
+    ok('no Charms section until you own one', charms.empty === 0);
+    ok('every charm you own is listed, with its icon and a tip',
+       charms.n === charms.text.length && charms.n > 0
+       && charms.icons === charms.n && charms.tips === charms.n,
+       JSON.stringify({n: charms.n, icons: charms.icons, tips: charms.tips}));
+    /* The readout is derived from the bonus object, so a retuned charm cannot end up
+       disagreeing with the number it actually applies. */
+    ok('and each row states the effect, not just the name',
+       charms.text.every(function (t) { return /[+]\d/.test(t); }),
+       charms.text.join(' | '));
+    }
+
     section('Prized catches (0.9.122.24)');
     {
     /* Fishing was the only gathering skill with no variance in what came up. A
