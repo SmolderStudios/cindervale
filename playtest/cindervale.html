@@ -7356,7 +7356,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.122.37">v0.9.122</div>
+  <div class="mm-ver" data-build="0.9.122.38">v0.9.122</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -30991,6 +30991,42 @@ function sourceMap(){ if(!_sourceMap) _sourceMap=buildSourceMap(); return _sourc
 
 /* Map: itemId -> [{skKey, actName}] for items USED AS INPUTS in actions.
    Tells the user "this is used in: X" alongside where it comes from. */
+/* Which boss, if any, this item unlocks. Nine of them, and every one is consumed
+   by no recipe at all -- so without this they would read as pure vendor trash. */
+function bossKeyFor(id){
+  if(typeof MONSTERS==='undefined') return null;
+  const m=MONSTERS.find(function(x){ return x.bossReq===id; });
+  return m?m.name:null;
+}
+/* Does ANYTHING in the game want this item? Asked of every registry rather than
+   inferred from one flag, because the answer decides whether the tooltip tells a
+   player to sell it. A false "nothing uses this" on a Dragon Amulet or a boss key is
+   worse than the silence this replaces. */
+function itemUseKind(id){
+  const it=(typeof ITEMS!=='undefined')&&ITEMS[id];
+  if(!it) return 'none';
+  if(bossKeyFor(id)) return 'bosskey';
+  try{ if((usageMap()[id]||[]).length) return 'recipe'; }catch(e){}
+  if(it.cgear||it.tool||it.skillGear) return 'equip';
+  if(it.potion) return 'consume';
+  if(it.socketGem) return 'socket';
+  if(it.sea) return 'sea';                                  // charts and sea gear
+  if(typeof ITEM_BODY_SLOTS!=='undefined'&&ITEM_BODY_SLOTS[id]) return 'equip';
+  if(typeof isSeedId==='function'&&isSeedId(id)) return 'plant';
+  /* Capes and skilling familiars are bought or earned rather than crafted, so no
+     recipe names them and neither carries a gear flag. */
+  if(typeof SKILL_CAPE!=='undefined'){
+    for(const k in SKILL_CAPE) if(SKILL_CAPE[k]===id) return 'equip';
+  }
+  if(typeof SHOP!=='undefined'&&SHOP.some&&SHOP.some(function(x){ return x.id===id; })) return 'equip';
+  if(typeof SKILL_PETS!=='undefined'){
+    for(const k in SKILL_PETS) if(SKILL_PETS[k]&&SKILL_PETS[k].id===id) return 'pet';
+  }
+  if(typeof PETS!=='undefined'){
+    for(const z in PETS) if(PETS[z]&&PETS[z].id===id) return 'pet';
+  }
+  return 'none';
+}
 function buildUsageMap(){
   const map={};
   for(const [skKey,sk] of Object.entries(SKILLS)){
@@ -31014,10 +31050,14 @@ function buildUsageMap(){
       }
     }
   }
-  // Enchanting costs — materials used in enchanting
-  if(typeof ENCHANT_COSTS!=='undefined'){
+  /* Enchanting costs. This block guarded on ENCHANT_COSTS, which has never existed
+     -- the table is ENCHANT_COST_BY_TIER -- so the whole thing has been dead since
+     it was written, and Rune Fragments and Mana Essence showed no use at all. Found
+     while building itemUseKind() for ticket #70, which would otherwise have told
+     players to sell them. */
+  if(typeof ENCHANT_COST_BY_TIER!=='undefined'){
     const enchLabel={skKey:'enchanting',skIcon:'✦',skName:'Enchanting'};
-    for(const tier of Object.values(ENCHANT_COSTS)){
+    for(const tier of Object.values(ENCHANT_COST_BY_TIER)){
       for(const id of Object.keys(tier)){
         if(!map[id]) map[id]=[];
         if(!map[id].some(u=>u.skKey==='enchanting')){
@@ -31204,6 +31244,16 @@ function showItemTooltip(itemId, x, y, note){
     html+=`<div class="tt-sub">Source unknown</div>`;
   }
   // Usage icons — skills that consume this item
+  /* Ticket #70: an item nothing wants used to say nothing at all, which reads the
+     same as a tooltip that has not been told. Say it. */
+  const _useKind=(typeof itemUseKind==='function')?itemUseKind(itemId):'recipe';
+  if(_useKind==='bosskey'){
+    html+=`<div style="margin-top:5px;padding-top:5px;border-top:1px solid #3a2a17;font-size:calc(13px*var(--tscale));color:#e0b05c">`
+       +`${iconHTML('ui_lock')} Opens the ${escapeHTML(bossKeyFor(itemId))}'s lair — keep one.</div>`;
+  } else if(!usages.length && _useKind==='none'){
+    html+=`<div style="margin-top:5px;padding-top:5px;border-top:1px solid #3a2a17;font-size:calc(13px*var(--tscale));color:#7da33f">`
+       +`Nothing uses this — sell it.</div>`;
+  }
   if(usages.length){
     html+=`<div style="margin-top:5px;padding-top:5px;border-top:1px solid #3a2a17;font-size:calc(12px*var(--tscale));color:#a08a64;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">Used in</div>`;
     html+=`<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:2px">`;
