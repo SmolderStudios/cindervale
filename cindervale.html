@@ -7348,7 +7348,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.122.33">v0.9.122</div>
+  <div class="mm-ver" data-build="0.9.122.34">v0.9.122</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -28053,7 +28053,7 @@ MEATS.forEach(function(m){
 const LEATHER_TIERS=[
  {key:'rough', set:'Roughhide',  hide:'ratskin',    ctier:1, lv:1,  def:[1,3,2,1,1],    atk:[1,2,1,3,1],  band:'lo'},
  {key:'chitin',set:'Chitinweave',hide:'chitin',     ctier:2, lv:12, def:[2,6,4,1,2],    atk:[1,2,1,4,1],  band:'lo'},
- {key:'wolf',  set:'Wolfhide',   hide:'wolf_pelt',  ctier:3, lv:27, def:[4,10,6,2,3],   atk:[2,3,2,5,2],  band:'lo'},
+ {key:'wolf',  set:'Wolfhide',   hide:'wolf_pelt',  ctier:3, lv:27, alt:{hide:'timber_pelt', qty:3, label:'timber'}, def:[4,10,6,2,3],   atk:[2,3,2,5,2],  band:'lo'},
  {key:'ogre',  set:'Ogrehide',   hide:'ogre_hide',  ctier:4, lv:40, def:[6,14,9,3,5],   atk:[2,3,2,6,2],  band:'hi'},
  {key:'troll', set:'Trollhide',  hide:'troll_hide', ctier:5, lv:55, def:[8,19,12,5,6],  atk:[3,4,3,8,3],  band:'hi'},
  {key:'drake', set:'Drakehide',  hide:'drake_hide', ctier:6, lv:68, def:[11,25,15,7,9], atk:[3,5,4,10,4], band:'hi'},
@@ -28076,6 +28076,20 @@ LEATHER_TIERS.forEach(function(t,ti){
   SKILLS.crafting.acts.push({id:'cr_tan_'+t.key, name:'Tan '+t.set+' Leather', cat:'tannery', lvl:t.lv,
     ms:Math.round(craft[0]*0.5), xp:Math.round((22+(ti+1)*10)), spdMult:Math.min(0.85,craft[1]+0.1),
     minMs:Math.round(craft[2]*0.55), inp:tanInp, out:(function(){const o={};o[curedId]=1;return o;})()});
+  /* A second way into the same leather, for a tier that has a cheaper hide feeding
+     it. The Timber Pelt is described in its own tooltip as a smaller dire-wolf pelt
+     that is far easier to come by, and it had no recipe at all -- so it is exactly
+     that: the same leather, three pelts instead of one. Same LEVEL as the tier, not
+     an earlier one: three-for-one is the trade, and letting the cheap pelt open the
+     leather seven levels early would be a second, unintended one. `alt` is a
+     per-tier field, not a rule, because most tiers have nothing that fits. */
+  if(t.alt){
+    const altInp={}; altInp[t.alt.hide]=t.alt.qty;
+    SKILLS.crafting.acts.push({id:'cr_tan_'+t.key+'_alt', name:'Tan '+t.set+' Leather ('+t.alt.label+')',
+      cat:'tannery', lvl:t.alt.lvl||t.lv,
+      ms:Math.round(craft[0]*0.5), xp:Math.round((22+(ti+1)*10)), spdMult:Math.min(0.85,craft[1]+0.1),
+      minMs:Math.round(craft[2]*0.55), inp:altInp, out:(function(){const o={};o[curedId]=1;return o;})()});
+  }
   _LSLOTS.forEach(function(slot,si){
     const id=t.key+'_'+slot;
     const def=t.def[si], atk=t.atk[si];
@@ -28270,6 +28284,7 @@ const HUNT_SECONDARY={
   // ── Alchemy: alternate sources for potions that already exist ──
   SKILLS.alchemy.acts.push(
     {id:'al_hb1',name:'Render Ironhide I (boarhide)',   lvl:16,ms:11400,xp:100, spdMult:0.640,minMs:1804, inp:{boar_hide:3,stag_hide:1},        out:{ironhide_1:1}},
+    {id:'al_hb4',name:'Render Swiftness III (leopard)',lvl:48,ms:16400,xp:280, spdMult:0.700,minMs:2560, inp:{leopard_pelt:3},                    out:{swiftness_iii:1}},
     {id:'al_hb2',name:'Render Ironhide II (mammoth)',   lvl:50,ms:17000,xp:300, spdMult:0.700,minMs:2560, inp:{mammoth_hide:2,elk_hide:2},      out:{ironhide_2:1}},
     {id:'al_hb3',name:"Render Berserker's Brew II (stalker)",lvl:78,ms:28500,xp:920,spdMult:0.770,minMs:4485, inp:{stalker_pelt:3,jackal_pelt:2}, out:{berserker_2:1}}
   );

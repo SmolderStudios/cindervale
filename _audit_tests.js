@@ -3796,11 +3796,11 @@ setTimeout(() => {
       return JSON.stringify({n:Object.keys(dropped).length, orphan:orphan});
     })()`));
     /* The survivors are boss KEYS and trophies, which are supposed to have no recipe,
-       plus two hunting pelts that never had one. Named, not counted: a mat that loses
+       all of which are supposed to have none. Named, not counted: a mat that loses
        its last recipe has to show up here rather than slide into the allowance. */
     const SINK_OK = new Set(['royal_rat_sigil','silken_sigil','goblin_ear','warchief_banner',
       'lich_phylactery','ironfang_pelt','splintered_club','warlord_totem','granite_sigil',
-      'ember_crest','infernal_crest','timber_pelt','leopard_pelt']);
+      'ember_crest','infernal_crest']);
     const lost = sinks.orphan.filter(i => !SINK_OK.has(i));
     ok('no dropped material lost its last recipe', lost.length === 0,
        lost.length ? lost.join(', ') : sinks.n + ' materials checked');
