@@ -2821,7 +2821,12 @@ setTimeout(() => {
        empty array, so the ReferenceError could not fire. The first id to fall back
        to SVG crashed the whole suite instead of failing one assertion, which is
        how it surfaced. Declared now, empty, as the comment above intends. */
+    /* Empty, and it should stay that way. Every id that has ever sat here got its
+       sheet within the day. Name an id one by one if art is ever pending again -- an
+       id that gets painted and stays listed is dead weight, and one that appears
+       WITHOUT being added is the thing this guards. */
     const SVG_OK = new Set([]);
+
     const unexpected = cov.svg.filter(id => !SVG_OK.has(id));
     ok('only known-exempt items are still on SVG, and none is iconless',
        unexpected.length === 0 && cov.none.length === 0,
@@ -3734,6 +3739,90 @@ setTimeout(() => {
       tier:ENCHANTS.manatarms_ii&&ENCHANTS.manatarms_ii.tier,
       priced:!!_ewCostFor('emerald_ring').cost
     })`));
+    section('Meat, and the tickets that found it (0.9.122.33)');
+    {
+    /* Ticket #62: "food made out of tusks (bones) and skins don't sound like they
+       would be good". Ten of the twelve monster-food recipes were hide, pelt, scale
+       or tusk -- jerky out of leather, stew out of hide, Demon Flesh out of demonhide.
+       Nothing about that throws; it just reads wrong forever. */
+    const food = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      var WRONG=/hide|pelt|scale|tusk|_skin|cloth|weave|leather/;
+      var bad=[], dishes=0;
+      SKILLS.cooking.acts.forEach(function(a){
+        dishes++;
+        for(var id in (a.inp||{})) if(WRONG.test(id)) bad.push(a.name+' <- '+id);
+      });
+      /* And every meat has to be reachable by the time the dish unlocks, or the
+         recipe is decoration. */
+      var SM=buildSourceMap(), unreachable=[];
+      SKILLS.cooking.acts.forEach(function(a){
+        for(var id in (a.inp||{})){
+          if(!/_meat$/.test(id)) continue;
+          if(!(SM[id]||[]).length) unreachable.push(a.name+' needs '+id+' and nothing drops it');
+        }
+      });
+      var meats=Object.keys(ITEMS).filter(function(i){ return /_meat$/.test(i); });
+      return JSON.stringify({bad:bad, dishes:dishes, unreachable:unreachable,
+                             meats:meats.length,
+                             noSource:meats.filter(function(i){ return !(SM[i]||[]).length; })});
+    })()`));
+    ok('no dish is made of hide, pelt, scale or tusk',
+       food.bad.length === 0, food.bad.join(' | '));
+    ok('nine meats, and every one of them drops',
+       food.meats === 9 && food.noSource.length === 0,
+       JSON.stringify({meats: food.meats, noSource: food.noSource}));
+    ok('every meat a recipe names has a source', food.unreachable.length === 0,
+       food.unreachable.join(' | '));
+
+    /* Moving the hides out of cooking could have left a material with no recipe at
+       all. This sweeps EVERY dropped material rather than the ones that changed,
+       because the next person to re-point a recipe will not think to check. */
+    const sinks = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      var wanted={};
+      for(var k in SKILLS) (SKILLS[k].acts||[]).forEach(function(a){
+        for(var id in (a.inp||{})) wanted[id]=1;
+      });
+      if(typeof CRAFTED_GEAR!=='undefined') for(var g in CRAFTED_GEAR)
+        for(var id in ((CRAFTED_GEAR[g]||{}).inp||{})) wanted[id]=1;
+      var dropped={};
+      for(var m in MONSTER_DROPS) (MONSTER_DROPS[m]||[]).forEach(function(d){ dropped[d.id]=1; });
+      var orphan=Object.keys(dropped).filter(function(i){
+        if(!ITEMS[i]) return false;
+        if(ITEMS[i].cgear||ITEMS[i].tool||ITEMS[i].skillGear||ITEMS[i].potion) return false;
+        return !wanted[i];
+      });
+      return JSON.stringify({n:Object.keys(dropped).length, orphan:orphan});
+    })()`));
+    /* The survivors are boss KEYS and trophies, which are supposed to have no recipe,
+       plus two hunting pelts that never had one. Named, not counted: a mat that loses
+       its last recipe has to show up here rather than slide into the allowance. */
+    const SINK_OK = new Set(['royal_rat_sigil','silken_sigil','goblin_ear','warchief_banner',
+      'lich_phylactery','ironfang_pelt','splintered_club','warlord_totem','granite_sigil',
+      'ember_crest','infernal_crest','timber_pelt','leopard_pelt']);
+    const lost = sinks.orphan.filter(i => !SINK_OK.has(i));
+    ok('no dropped material lost its last recipe', lost.length === 0,
+       lost.length ? lost.join(', ') : sinks.n + ' materials checked');
+
+    /* Ticket #60: the Warchief dropped a shaman's tooth and not one goblin part of
+       its own. Every other boss carries its zone's signature commons at boss rates. */
+    const wc = JSON.parse(ev(`(function(){
+      var t=MONSTER_DROPS.goblin_warchief.map(function(d){ return d.id; });
+      return JSON.stringify({has:t, ear:t.indexOf('goblin_ear')>=0, tooth:t.indexOf('goblin_tooth')>=0,
+                             meat:t.indexOf('goblin_meat')>=0});
+    })()`));
+    ok('the Goblin Warchief drops goblin parts',
+       wc.ear && wc.tooth && wc.meat, wc.has.join(', '));
+
+    /* Ticket #61: "I did figure out what instant and over 8s where referring to. It
+       was the heals lol." The chip named a timing and never said what it timed. */
+    ok('a food card says what is instant', ev(`(function(){
+      var a=ckKindPill({kind:'instant'}), b=ckKindPill({kind:'regen',dur:8});
+      return (/heal/.test(a) && /heal/.test(b)) ? 'ok' : a+' / '+b;
+    })()`) === 'ok', ev(`ckKindPill({kind:'instant'})+' / '+ckKindPill({kind:'regen',dur:8})`));
+    }
+
     section('Guild perks that were never paid (0.9.122.32)');
     {
     /* gdBonus() returns five bonuses and mods() consumed two of them, so the `dbl`
