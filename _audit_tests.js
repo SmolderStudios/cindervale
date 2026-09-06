@@ -3739,6 +3739,68 @@ setTimeout(() => {
       tier:ENCHANTS.manatarms_ii&&ENCHANTS.manatarms_ii.tier,
       priced:!!_ewCostFor('emerald_ring').cost
     })`));
+    section('Where an item comes from (ticket #63, 0.9.122.35)');
+    {
+    /* "Some say stuff comes from ....+x amount of other sources, but we have no way
+       to see the rest." The list showed five and then a dead "+N more". Two things
+       are guarded here: that the grouped view never loses a source, and that the
+       expanded view can actually be reached. Neither throws when it breaks -- the
+       tooltip just quietly under-reports, which is the state it was already in. */
+    const src = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      var SM=buildSourceMap();
+      /* Every source must be accounted for: the group counts plus whatever the
+         overflow line claims must equal the real total, for every item in the game. */
+      var lost=[], sample={};
+      Object.keys(SM).forEach(function(id){
+        var html=sourceListHTML(SM[id], false);
+        var counted=0;
+        html.replace(/\\u00b7 (\\d+) actions/g, function(_,n){ counted+=+n; return ''; });
+        // single-entry groups render as one plain row each
+        counted += (html.match(/class="tt-source"/g)||[]).length
+                 - (html.match(/\\u00b7 \\d+ actions/g)||[]).length;
+        html.replace(/\\+(\\d+) more, in/, function(_,n){ counted+=+n; return ''; });
+        if(counted!==SM[id].length) lost.push(id+': shows '+counted+' of '+SM[id].length);
+      });
+      // the case the ticket is really about: 246 sources that are all one fact
+      var gear=sourceListHTML(SM.sm_chest||[], false);
+      sample.gearRows=(gear.match(/class="tt-source"/g)||[]).length;
+      sample.gearSays=/14 actions/.test(gear);
+      sample.gearOffersShift=/Hold <b[^>]*>Shift/.test(gear);
+      // and an item with one source per group offers nothing to expand
+      var plain=sourceListHTML([{actName:'Mine iron',skName:'Mining',skIcon:'',chance:1}], false);
+      sample.plainOffersShift=/Hold <b[^>]*>Shift/.test(plain);
+      // expanded names the individual acts
+      var wide=sourceListHTML(SM.sm_chest||[], true);
+      sample.expandedNamesActs=/Smelt/.test(wide);
+      sample.expandedRows=(wide.match(/class="tt-source"/g)||[]).length;
+      return JSON.stringify({lost:lost.slice(0,6), lostN:lost.length, sample:sample});
+    })()`));
+    ok('the grouped source list never loses a source',
+       src.lostN === 0, src.lost.join(' | '));
+    /* 246 sources on a skilling-gear piece were 246 ways of saying "any action in
+       this skill". Five of them named at random was worse than one line saying so. */
+    ok('a drop that comes off a whole skill says so in one line',
+       src.sample.gearRows === 1 && src.sample.gearSays === true,
+       JSON.stringify(src.sample));
+    ok('and offers the key that shows the rest', src.sample.gearOffersShift === true);
+    /* The offer only appears when holding it would change what is on screen. */
+    ok('a single-source item does not offer it', src.sample.plainOffersShift === false);
+    ok('holding it names the individual actions',
+       src.sample.expandedNamesActs === true && src.sample.expandedRows > 1,
+       JSON.stringify({rows: src.sample.expandedRows}));
+
+    /* The key has to be wired to the document, not to a panel -- data-item is on
+       every surface in the game and the tooltip is one shared element. */
+    /* Matched as plain substrings, not a regex across the call: the handler bodies
+       contain their own parentheses, so a [^)]* pattern stops inside function(e). */
+    ok('Shift is bound once, at the document, and released on blur',
+       html.indexOf("document.addEventListener('keydown'")>0
+       && html.indexOf("document.addEventListener('keyup'")>0
+       && html.indexOf("window.addEventListener('blur'")>0
+       && (html.match(/e\.key==='Shift'/g)||[]).length===2);
+    }
+
     section('Meat, and the tickets that found it (0.9.122.33)');
     {
     /* Ticket #62: "food made out of tusks (bones) and skins don't sound like they
