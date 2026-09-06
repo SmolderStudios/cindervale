@@ -83,3 +83,34 @@ and `CHARM_ICONS` come out together rather than being left to fight the art bloc
 If a future sheet comes back with a black grid frame like this one did, measure the
 lines before slicing — `slice.js` samples its backdrop from the four CORNERS, so a
 border makes it read the page as dark and every crop collapses to a 1px sliver.
+
+---
+
+## Still outstanding — two cells
+
+`ember_ring` and `moon_amulet` are the only jewellery in the game still on generated
+SVG; every other ring, amulet and pendant is painted. They predate the shop work and
+were never on a sheet. `_audit_tests.js` names them in `ART_EXEMPT` — delete them
+from that list when the art lands.
+
+````
+SHEET: Two shop jewels. 2 cells, side by side.
+
+Draw them the way the earlier jewellery sheet was drawn — the band or chain laid flat
+and facing the viewer, the stone catching a single strong highlight. One piece per
+cell, nothing beneath it.
+
+CELLS:
+  1. Ember Ring   — a warm bronze band, a glowing orange-red ember set in it, lit
+                    from within as though the stone still holds a coal
+  2. Moon Amulet  — a silver neck-chain, a pale blue-white moonstone as the pendant,
+                    cold and softly luminous
+````
+
+<details><summary>id order for <code>sheets/shop_jewels2.txt</code></summary>
+
+```
+ember_ring
+moon_amulet
+```
+</details>

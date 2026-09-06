@@ -4095,6 +4095,40 @@ setTimeout(() => {
        shop.buyable+' shop rows + '+shop.charms+' charms + '+shop.supplies+' supplies');
     ok('every shop row draws a real icon, not the emoji fallback',
        shop.emojiFallback.length===0, shop.emojiFallback.join(', '));
+
+    /* Painted, not merely present. The eleven shop trinkets were cut, keyed and
+       reported as shipped while every one of them still rendered its generated SVG:
+       they were never added to _iconart/picks.json, so `pack.js --picks` dropped all
+       eleven and still printed "wrote pack.json". Nothing throws, the icons look
+       fine, and the only tell is that they are the wrong picture.
+
+       ART_EXEMPT is an explicit list, not a count — an id that stops needing the
+       exemption and stays here is dead weight, and an id that appears WITHOUT being
+       added is the thing this guards. */
+    const ART_EXEMPT = new Set(['ember_ring', 'moon_amulet']);
+    const painted = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      for(var k in state.xp) state.xp[k]=XP_CUM[99];
+      state.coins=9000000*SILVER_PER_GOLD;
+      viewTab='shop';
+      var bad=[], seen=0;
+      SHOP_CATS.forEach(function(cat){
+        shopSelectedCat=cat.key; renderShop();
+        [].slice.call(document.querySelectorAll('#shopView .sh-card')).forEach(function(c){
+          var ic=c.querySelector('.sh-ic'); if(!ic) return;
+          seen++;
+          if(ic.innerHTML.indexOf('<img')!==0){
+            var nm=(c.querySelector('.sh-nm .n')||{}).textContent||'?';
+            bad.push(nm);
+          }
+        });
+      });
+      return JSON.stringify({seen:seen, bad:bad});
+    })()`));
+    const NAME_TO_ID = {'Ember Ring': 'ember_ring', 'Moon Amulet': 'moon_amulet'};
+    const unpainted = painted.bad.filter(n => !ART_EXEMPT.has(NAME_TO_ID[n] || n));
+    ok(painted.seen + ' shop cards, and only the known two are still on generated art',
+       unpainted.length === 0, 'unpainted: ' + unpainted.join(', '));
     ok('and no card prints a raw unicode escape',
        shop.badEscape.length===0, shop.badEscape.join(', '));
     ok('every charm has its own icon', shop.charmIcons.length===0, shop.charmIcons.join(', '));
