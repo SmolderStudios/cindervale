@@ -3739,6 +3739,87 @@ setTimeout(() => {
       tier:ENCHANTS.manatarms_ii&&ENCHANTS.manatarms_ii.tier,
       priced:!!_ewCostFor('emerald_ring').cost
     })`));
+    section('A perk that does nothing, and a row that clipped (tickets #65, #66)');
+    {
+    /* #65 -- "I bought the Bounty Ledger and it didn't appear to do anything." It did
+       not: state.slayer.ledger was written on purchase and read by exactly one thing,
+       the buy button, to grey itself out. A perk that changes NOTHING is silent by
+       construction, so the assertion is the crude one that catches it -- flip the
+       flag and prove the panel it claims to affect actually comes out different. */
+    const led = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      state.slayer=state.slayer||{points:0,ledger:false};
+      state.monLogZone='rat_warrens'; state.monLogSel='rat';
+      var box=document.createElement('div'); document.body.appendChild(box);
+      state.slayer.ledger=false; box.innerHTML=buildMonLogHTML();
+      var offHTML=box.innerHTML;
+      var off=box.querySelectorAll('.mlog-zone-tab[disabled]').length;
+      state.slayer.ledger=true; box.innerHTML=buildMonLogHTML();
+      var on=box.querySelectorAll('.mlog-zone-tab[disabled]').length;
+      var changed=(box.innerHTML!==offHTML);
+      /* Reading a zone is not entering it. */
+      var arena=zoneUnlocked(ZONES.find(function(z){return z.id==='demon_sanctum';}));
+      /* And the detail panel really renders for a zone far above the player. */
+      state.monLogZone='demon_sanctum'; state.monLogSel='demon';
+      box.innerHTML=buildMonLogHTML();
+      var det=box.querySelector('.mlog-details');
+      var dmg=box.querySelector('.mlog-dmgtype');
+      var out={off:off, on:on, changed:changed, arenaOpen:arena,
+               readsIt:!!det && det.textContent.indexOf('Sanctum Demon')>=0,
+               family:dmg?/Family/.test(dmg.textContent):false,
+               familyVal:dmg&&/Demon/.test(dmg.textContent)};
+      box.remove();
+      return JSON.stringify(out);
+    })()`));
+    ok('without the Bounty Ledger most of the log is shut', led.off > 10, String(led.off));
+    ok('buying it opens every zone for reading', led.on === 0 && led.changed === true,
+       JSON.stringify({disabledAfter: led.on, panelChanged: led.changed}));
+    /* The failure mode to guard against is the perk turning into a level bypass. */
+    ok('and it does NOT open the arena', led.arenaOpen === false);
+    ok('a zone sixty levels away actually renders', led.readsIt === true);
+    /* The other half of the old description -- family -- was derivable and shown
+       nowhere at all. It is free for everyone now. */
+    ok('the log names a monster family', led.family === true && led.familyVal === true,
+       JSON.stringify({row: led.family, value: led.familyVal}));
+
+    /* #66 -- "Ingredients are cut off in the drop downs in Alchemy and there are no
+       tooltips when hovering over the ingredients in the drop down." Both halves were
+       one cause: the alternate-recipe row joined every ingredient into one nowrap
+       span with an ellipsis, built from raw text with no data-item. */
+    const alc = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      for(var k in state.xp) state.xp[k]=XP_CUM[99];
+      selectedSkill='alchemy'; viewTab='skills';
+      renderAlchemy();
+      var ways=[].slice.call(document.querySelectorAll('.al-ways'));
+      var best=null,bestN=0;
+      ways.forEach(function(w){ var n=parseInt(w.textContent.replace(/[^0-9]/g,''),10)||0;
+        if(n>bestN){ bestN=n; best=w; } });
+      if(best) best.click();
+      var rows=[].slice.call(document.querySelectorAll('.al-rec'));
+      var bad=[];
+      rows.forEach(function(r,i){
+        var chips=r.querySelectorAll('.rn .al-mat');
+        var tipped=r.querySelectorAll('.rn .al-mat[data-item]');
+        if(!chips.length) bad.push('row '+i+' has no ingredient chips');
+        if(chips.length!==tipped.length) bad.push('row '+i+': '+(chips.length-tipped.length)+' chips with no tooltip');
+      });
+      return JSON.stringify({widest:bestN, rows:rows.length, bad:bad,
+        clips:/white-space:nowrap[^}]*text-overflow:ellipsis/.test(
+          (document.querySelector('style')||{textContent:''}).textContent) });
+    })()`));
+    ok('the alternate-recipe rows exist to test', alc.rows > 1 && alc.widest > 1,
+       JSON.stringify({rows: alc.rows, widest: alc.widest}));
+    ok('every ingredient in them is its own hoverable chip',
+       alc.bad.length === 0, alc.bad.join(' | '));
+    /* The CSS half. A chip row that is still nowrap-with-ellipsis clips exactly the
+       way the report describes, and no DOM assertion would see it. */
+    ok('and the row wraps rather than clipping',
+       html.indexOf('.al-rec .rn{') > 0
+       && /\.al-rec \.rn\{[^}]*flex-wrap:wrap/.test(html)
+       && !/\.al-rec \.rn\{[^}]*text-overflow:ellipsis/.test(html));
+    }
+
     section('Where an item comes from (ticket #63, 0.9.122.35)');
     {
     /* "Some say stuff comes from ....+x amount of other sources, but we have no way

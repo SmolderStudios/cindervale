@@ -4440,8 +4440,16 @@ body:not(.is-demo) .demo-only{display:none !important}
 .al-rec:hover:not(.lock){border-color:var(--trim)}
 .al-rec.on{border-color:var(--trim);background:#2d200e}
 .al-rec.lock{opacity:.5;cursor:var(--cur-na)}
+/* Ticket #66: this was one nowrap span with an ellipsis, so a three-ingredient
+   recipe simply lost its last ingredient. It holds chips now, and they wrap. */
 .al-rec .rn{font-family:var(--num);font-size:calc(10.5px*var(--tscale));color:var(--muted);
-  flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  flex:1;min-width:0;display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.al-rec{align-items:flex-start}
+.al-rec .rq{margin-top:2px}
+/* The chips sit inside a button, which eats pointer events on its children in
+   some browsers unless they are told to keep them -- and the tooltip is bound to
+   the chip, not the row. */
+.al-rec .al-mat{pointer-events:auto}
 .al-rec.on .rn{color:var(--gold-hi,#f0c772)}
 .al-rec .rq{font-family:var(--num);font-size:calc(10.5px*var(--tscale));flex:none}
 .al-rec .rq.ok{color:var(--green)} .al-rec .rq.no{color:#e0917c}
@@ -7348,7 +7356,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.122.35">v0.9.122</div>
+  <div class="mm-ver" data-build="0.9.122.36">v0.9.122</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -24867,8 +24875,17 @@ function alchCard(p,lvl,m){
         const have=Object.keys(a.inp||{}).every(function(id){ return (state.items[id]||0)>=a.inp[id]; });
         const r=document.createElement('button');
         r.className='al-rec'+(a===rec?' on':'')+(canLvl?'':' lock');
+        /* One chip per ingredient, exactly like the card's own .al-mats row, so
+           they wrap instead of clipping and each one carries data-item for the
+           satchel tooltip. Its own have/need too -- the row says "short" and used
+           to make you guess which of the three it meant. */
         r.innerHTML='<span class="rn">'+Object.keys(a.inp||{}).map(function(id){
-            return (ITEMS[id]?ITEMS[id].name:id)+' \u00d7'+a.inp[id]; }).join(' \u00b7 ')+'</span>'
+            const hv=state.items[id]||0, nd=a.inp[id];
+            return '<span class="al-mat'+(hv>=nd?'':' no')+'" data-item="'+id+'"'
+              +' data-itemnote="have '+hv.toLocaleString()+', need '+nd.toLocaleString()+' per brew">'
+              +iconHTML(id)+(ITEMS[id]?ITEMS[id].name:id)
+              +' <b>'+hv.toLocaleString()+'</b>/'+nd.toLocaleString()+'</span>';
+          }).join('')+'</span>'
           +'<span class="rq '+(canLvl?(have?'ok':'no'):'lock')+'">'
           +(canLvl?(have?'ready':'short'):'Lv '+a.lvl)+'</span>';
         if(canLvl&&have) r.addEventListener('click',function(){ setAction('alchemy',a.id); });
@@ -26219,9 +26236,14 @@ function buildMonLogHTML(){
      lock level instead of a percentage. */
   const zoneTabs = ZONES.map(z=>{
     const unlocked = zoneUnlocked(z);
+    /* The Bounty Ledger (Slayer unlock) opens a zone for READING at any level. It
+       stays visibly locked -- the level requirement keeps its place on the tile
+       instead of a completion bar -- because being able to read the roster is not
+       being able to go there. */
+    const browse = unlocked || mlogCanBrowse();
     const onZ = z.id===zid;
     const st = unlocked?_mlZoneStat(z.id):null;
-    return `<button class="mlog-zone-tab${onZ?' on':''}${unlocked?'':' locked'}${st&&st.pct===100?' done':''}" data-mlog-zone="${z.id}" ${unlocked?'':'disabled'} style="--zone-accent:${z.accent}">
+    return `<button class="mlog-zone-tab${onZ?' on':''}${unlocked?'':' locked'}${st&&st.pct===100?' done':''}" data-mlog-zone="${z.id}" ${browse?'':'disabled'} style="--zone-accent:${z.accent}">
       <span class="mlz-ic">${iconHTML(z.id)}</span>
       <span class="mlz-info"><span class="mlz-nm">${z.name}</span>
         <span class="mlz-track"><i style="width:${st?st.pct:0}%"></i></span></span>
@@ -26229,8 +26251,11 @@ function buildMonLogHTML(){
     </button>`;
   }).join('') + ((typeof RAIDS!=='undefined')?RAIDS.map(r=>{
     const unlocked = raidUnlocked(r);
+    /* Raids ride the same rail and the Ledger opens them the same way -- reading a
+       raid's clear-loot table before you can enter is exactly the planning it sells. */
+    const browse = unlocked || mlogCanBrowse();
     const onZ = r.id===zid;
-    return `<button class="mlog-zone-tab mlog-raid-tab${onZ?' on':''}${unlocked?'':' locked'}" data-mlog-zone="${r.id}" ${unlocked?'':'disabled'} style="--zone-accent:${r.accent}">
+    return `<button class="mlog-zone-tab mlog-raid-tab${onZ?' on':''}${unlocked?'':' locked'}" data-mlog-zone="${r.id}" ${browse?'':'disabled'} style="--zone-accent:${r.accent}">
       <span class="mlz-ic">${iconHTML(r.icon)}</span>
       <span class="mlz-info"><span class="mlz-nm">${r.name}</span>
         <span class="mlz-track raid"><i style="width:100%"></i></span></span>
@@ -26354,6 +26379,12 @@ function buildMonLogHTML(){
             <span class="mldt-n">${sel.resistTo?'−15%':''}</span></span>
           <span class="mldt-tag swings"><span class="mldt-t"><span class="mldt-k">Swings</span>
             <span class="mldt-v">${sel.dmgType||'—'}</span></span></span>
+          <!-- Family was derivable from the zone since 0.9.121.15 and displayed
+               nowhere, which is half of what the Bounty Ledger claimed to show. It
+               is free for everyone: it is one word, and the Slayer panel already
+               sells bonuses keyed to it. -->
+          <span class="mldt-tag swings"><span class="mldt-t"><span class="mldt-k">Family</span>
+            <span class="mldt-v">${(typeof monsterFamily==='function'&&monsterFamily(sel))?familyName(monsterFamily(sel)):'—'}</span></span></span>
         </div>
         ${bossLockHint}
         <div class="mlog-seclab">Drops${(function(){
@@ -29408,6 +29439,12 @@ function handleRaidFail(){
   if(typeof logNotification==='function') logNotification('combat','💀',`Fell in ${raid.name} (stage ${stage+1}/${raid.stages.length}).`);
 }
 
+/* Does the player own the Bounty Ledger? Its one job is opening the Monster Log's
+   locked zones for reading, so it lives beside the log rather than inside the Slayer
+   panel that sells it. Defined defensively: the log renders before the slayer state
+   exists on a brand-new character. */
+function mlogCanBrowse(){ return !!(state && state.slayer && state.slayer.ledger); }
+
 /* ── Monster families (0.9.121.15) ────────────────────────────────────────────────
    The one missing data field that blocked everything "vs monster type". A monster
    record carried zone, boss, lvl, dmgType, weakTo and resistTo — nothing to key a
@@ -29604,7 +29641,8 @@ const SLAYER_CACHE=[
    Each is permanent, bought once, and does something outside the slayer loop. */
 const SLAYER_UNLOCKS=[
   {id:'ledger',  cost:60,  name:'Bounty Ledger',
-   desc:"Shows every monster's family and weakness in the Monster Log."},
+   desc:'Read every zone in the Monster Log at any level — stats, weaknesses and '
+       +'full drop tables for monsters you cannot fight yet. It does not let you fight them.'},
   {id:'pockets', cost:100, name:'Deeper Pockets',
    desc:'+8 satchel slots. These are on top of the slots you buy with gold.'},
 ];
