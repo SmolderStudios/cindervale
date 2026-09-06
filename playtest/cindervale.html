@@ -7356,7 +7356,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.122.36">v0.9.122</div>
+  <div class="mm-ver" data-build="0.9.122.37">v0.9.122</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -9114,7 +9114,9 @@ const ITEMS={
   pack_alpha_cape:   {name:'Pack Alpha Cape',    icon:'🧣', sell:5400, cgear:true, ctier:5, cslot:'cape', desc:"A heavy mantle of dire-wolf pelt lined with frostfur. Worn by those who lead the pack — or by those bold enough to claim the right."},
   // ─── Themed combat-drop chestplates (1.0.96) — body slot, set-piece feel ──
   ratskin_tunic:     {name:'Roughhide Tunic',    icon:'🦺', sell:380,  cgear:true, ctier:1, cslot:'chest', desc:"Layered hide patches sewn over a leather core. Cheap, stinking, and surprisingly tough."},
-  chitin_plate:      {name:'Chitin Plate',       icon:'🦺', sell:1100, cgear:true, ctier:2, cslot:'chest', desc:"Overlapping spider-plate scales stitched with silk. The chitin still has its faint violet sheen, and the joints are sharp enough to cut a careless grappler."},
+  /* Renamed 0.9.122.37 (ticket #68) -- see the note on `chitin` above. Named for
+     the Brood Matron that drops it, the way every other unique gear drop is. */
+  chitin_plate:      {name:'Broodplate Cuirass',       icon:'🦺', sell:1100, cgear:true, ctier:2, cslot:'chest', desc:"Overlapping spider-plate scales stitched with silk. The chitin still has its faint violet sheen, and the joints are sharp enough to cut a careless grappler."},
   warband_armor:     {name:'Warband Hide Armour', icon:'🦺', sell:2200, cgear:true, ctier:3, cslot:'chest', desc:"Goblin warrior plate — boiled hide reinforced with crude iron studs and bone charms. The tribal markings still glisten with old paint."},
   bone_plate_cuirass:{name:'Bone Plate Cuirass', icon:'🦺', sell:4400, cgear:true, ctier:4, cslot:'chest', desc:"A breastplate of riveted rib-plates and ancient bone, lashed to a mithril frame. Heavy as guilt; turns blades that would gut a knight."},
   pack_leader_vest:  {name:'Pack Leader Vest',   icon:'🦺', sell:8200, cgear:true, ctier:5, cslot:'chest', desc:"A scarred vest of pack-leader pelts bound with cobalt rivets. The howling horn at the throat makes a low, mournful sound when you breathe."},
@@ -9146,7 +9148,9 @@ const ITEMS={
      only - the item id stays `ratskin`, so no save, recipe or drop table
      moves. */
   ratskin:          {name:'Raw Hide',          icon:'🟫',sell:22,   desc:'Coarse pelt — stitched into Roughhide leather armour at the Crafting bench.'},
-  chitin:           {name:'Chitin Plating',    icon:'🟪',sell:65,   desc:'Overlapping plates prised from a cave spider. Light, glossy, and stubbornly hard — the makings of Chitinweave leather armour.'},
+  /* Renamed 0.9.122.37 (ticket #68). Was "Chitin Plating", three letters from the
+     "Chitin Plate" ARMOUR the Brood Matron drops in the same zone. */
+  chitin:           {name:'Spider Carapace',    icon:'🟪',sell:65,   desc:'Overlapping plates prised from a cave spider. Light, glossy, and stubbornly hard — the makings of Chitinweave leather armour.'},
   drake_hide:       {name:'Drake Hide',        icon:'🟧',sell:760,  desc:'Supple wyrm-leather beneath the scales, still warm. The finest hide a crafter can work into Drakehide armour.'},
   rat_fang:         {name:'Rat Fang',          icon:'🦷',sell:48,   desc:'A wickedly sharp incisor. Alchemists grind them into reagents.'},
   royal_rat_sigil:  {name:'Royal Rat Sigil',   icon:'🔱',sell:4500, rare:true, desc:"A grim emblem of the Warren court. Hold this and the Queen's Lair will open to you."},
@@ -15642,8 +15646,16 @@ function harvestPatch(patchId, silent){
     if(!silent) showItemPop(ps.seedId, 1);
   }
 
+  /* Mastery (ticket #67). Farming harvests here rather than through completeAction,
+     which is the only place recordMastery has ever been called -- so farming mastery
+     sat at zero forever and the XP it pays was never paid. Keyed by crop id: a patch
+     is planted and harvested per crop, and the fa# act ids are vestigial. */
+  var _mKey='crop_'+crop.id;
+  var _mBonus=(typeof masteryXpBonus==='function')?masteryXpBonus(_mKey):0;
+  if(typeof recordMastery==='function') recordMastery(_mKey, 1);
+
   // XP
-  var xpGain=addSkillXp('farming', Math.round(crop.xp*m.xpMult));
+  var xpGain=addSkillXp('farming', Math.round(crop.xp*m.xpMult*(1+_mBonus)));
   // Routed through addSkillXp: it is the single funnel that enforces XP_CAP
   // and the free-demo level ceiling. Writing state.xp directly here let demo
   // players train past the Lv10 wall with no buy prompt.
@@ -16415,7 +16427,12 @@ function renderFarming(){
     d.innerHTML=iconHTML(cropDisplayIconId(c)||c.id)
       +'<span class="fm-ct"><b>'+c.name+(locked?' \u00b7 Lv '+c.lvl:'')+'</b>'
       +'<i>'+fmtTime(c.growMs)+' grow \u00b7 tend every '+fmtTime(effInterval)+'</i>'
-      +'<em>'+out+' \u00b7 '+effXp.toLocaleString()+' xp</em></span>';
+      +'<em>'+out+' \u00b7 '+effXp.toLocaleString()+' xp</em>'
+      /* Ticket #67 \u2014 farming mastery existed nowhere: never recorded, never shown.
+         Keyed by crop, matching harvestPatch, and drawn on the crop reference card
+         because that is the list of crops. A patch card is a patch, not a crop. */
+      +(locked?'':masteryRowHTML('crop_'+c.id))
+      +'</span>';
     grid.appendChild(d);
   });
   box.appendChild(grid);
@@ -20352,6 +20369,17 @@ function platinumMasteryCount(){
   return (_platCache=n);
 }
 
+/* The row itself, so the panels that draw their own cards stop having to choose
+   whether to have one. buildActBtn kept this inline and four bespoke renderers
+   simply never grew it. */
+function masteryRowHTML(actId){
+  const mb=masteryBadgeHtml(actId);
+  const badge=mb.lvl>0
+    ? `<span class="mastery-badge mb-${mb.tier}">${MASTERY_STAR[mb.tier]} ${mb.label}</span>`
+    : '<span class="mastery-badge mb-none">\u00b7 Mastery 0</span>';
+  return `<div class="mastery-row">${badge}`
+       + `<div class="mastery-bar"><i style="width:${mb.pct}%;background:${mb.barColor}"></i></div></div>`;
+}
 function masteryBadgeHtml(actId){
   const lvl=masteryLevel(actId);
   const tier=masteryTier(lvl);
@@ -22828,15 +22856,7 @@ function buildActBtn(act,reqLvl,lvl,m,bestXph,bestRph){
   const metaText = metaState;
 
   let masteryHtml='';
-  if(!locked){
-    const mb=masteryBadgeHtml(act.id);
-    const badgeTxt=mb.lvl>0
-      ?`<span class="mastery-badge mb-${mb.tier}">${MASTERY_STAR[mb.tier]} ${mb.label}</span>`
-      :`<span class="mastery-badge mb-none">· Mastery 0</span>`;
-    masteryHtml=`<div class="mastery-row">${badgeTxt}
-      <div class="mastery-bar"><i style="width:${mb.pct}%;background:${mb.barColor}"></i></div>
-    </div>`;
-  }
+  if(!locked) masteryHtml=masteryRowHTML(act.id);
 
   const runningHtml=isActive
     ?`<div class="prog"><i></i></div>
@@ -24495,6 +24515,7 @@ function ckCard(act, reqLvl, lvl, m){
         ? `<div class="needs${locked?' needs-locked':''}">${mats}`
           +(runs?`<span class="runs${runsCls}">${runs}</span>`:'')+'</div>'
         : '')
+     +(locked?'':masteryRowHTML(act.id))
      +(isActive?'<div class="prog"><i></i></div>':'')
    +'</div>'
    /* .ck-hp used to carry the runs label whenever the chips were hidden. The chips
@@ -24855,6 +24876,15 @@ function alchCard(p,lvl,m){
     });
   }
   card.appendChild(mats);
+
+  /* Mastery of the recipe this card would run (ticket #67). Alchemy accrued it all
+     along -- it goes through completeAction like everything else -- and simply never
+     drew the row, so the panel looked like the skill had no mastery at all. */
+  if(rec&&!locked){
+    const mr=document.createElement('div');
+    mr.innerHTML=masteryRowHTML(rec.id);
+    if(mr.firstChild) card.appendChild(mr.firstChild);
+  }
 
   /* The collapse, made visible: every other way to make this potion. */
   if(recipes.length>1){
