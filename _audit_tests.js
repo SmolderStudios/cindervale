@@ -3784,28 +3784,53 @@ setTimeout(() => {
        pz.drops.length === 8, pz.drops.join(' '));
     ok('and each has exactly one cooking recipe', pz.recipes === 8, String(pz.recipes));
 
-    /* The recipe is the notification: it appears when you hold the catch and goes
-       when you cook it. Nineteen cards is the measured limit for the four-up grid,
-       so a permanent row of eight you cannot make would bury the ones you can. */
+    /* Prized recipes have their own shelf as of 0.9.122.25. Inline they changed the
+       grid's length under you and landed wherever the ordinary ladder left a gap;
+       on their own tab the whole set is visible whether or not you hold one, and
+       the tab's count is the notification the inline card used to be. */
     const cards = JSON.parse(ev(`(function(){
       state=defaultState(); normalizeState();
       state.xp.cooking=XP_CUM[99]; state.xp.fishing=XP_CUM[99];
       state.items={oak_log:50};
       state.cookingFire={loaded:{oak_log:40},partialSec:0,lit:true,lastBurnAt:Date.now()};
-      selectedSkill='cooking'; viewTab='acts'; renderCenter();
-      var without=document.querySelectorAll('#activityGrid .ck-card').length;
-      state.items.prized_raw_salmon=1;
+      selectedSkill='cooking'; viewTab='acts';
+      function shown(){ return document.querySelectorAll('#activityGrid .ck-card').length; }
+      function txt(){ return document.getElementById('activityGrid').textContent; }
+      var out={};
+      _ckTab='dishes'; renderCenter();
+      out.dishes=shown();
+      /* Scope the leak check to the CARDS — the tab itself is inside #activityGrid
+         and its label is the word "Prized", so testing the panel's text would
+         always find it. */
+      out.dishesLeak=[].slice.call(document.querySelectorAll('#activityGrid .ck-card .name'))
+        .some(function(n){ return /^Prized /.test(n.textContent||''); });
+      out.allDishes=SKILLS.cooking.acts.filter(function(x){ return !x.onlyIf; }).length;
+      out.tabs=document.querySelectorAll('#activityGrid .ck-seg button').length;
+      _ckTab='prized'; renderCooking();
+      out.prized=shown();
+      out.prizedNamed=/Prized Void Eel/.test(txt());
+      out.emptyState=!!document.querySelector('#activityGrid .ck-none');
+      out.badgeEmpty=!!document.querySelector('#activityGrid .ck-have');
+      state.items.prized_raw_salmon=2; state.items.prized_raw_shark=1;
       renderCooking();
-      var withOne=document.querySelectorAll('#activityGrid .ck-card').length;
-      var named=/Prized Salmon/.test(document.getElementById('activityGrid').textContent);
-      delete state.items.prized_raw_salmon;
-      renderCooking();
-      var after=document.querySelectorAll('#activityGrid .ck-card').length;
-      return JSON.stringify({without:without, withOne:withOne, after:after, named:named});
+      out.badge=(document.querySelector('#activityGrid .ck-have')||{}).textContent;
+      out.emptyGone=!document.querySelector('#activityGrid .ck-none');
+      out.prizedStill=shown();
+      _ckTab='dishes';
+      return JSON.stringify(out);
     })()`));
-    ok('a prized recipe appears only while you hold the catch',
-       cards.withOne === cards.without + 1 && cards.after === cards.without && cards.named === true,
+    ok('cooking has two shelves', cards.tabs === 2, String(cards.tabs));
+    ok('no prized recipe leaks onto the Dishes shelf',
+       cards.dishesLeak === false && cards.dishes === cards.allDishes,
+       JSON.stringify({dishes: cards.dishes, of: cards.allDishes, leak: cards.dishesLeak}));
+    ok('the Prized shelf lists all eight whether or not you hold one',
+       cards.prized === 8 && cards.prizedStill === 8 && cards.prizedNamed === true,
        JSON.stringify(cards));
+    ok('an empty Prized shelf explains itself instead of showing a lock',
+       cards.emptyState === true && cards.emptyGone === true, JSON.stringify(cards));
+    ok('and the tab counts the catches you are carrying, never a zero',
+       cards.badgeEmpty === false && cards.badge === '3',
+       JSON.stringify({empty: cards.badgeEmpty, held: cards.badge}));
 
     /* The gild is resolved in iconHTML, not by a loop at load, because the item-art
        block assigns over ICONS last — anything snapshotting earlier captures the
@@ -4046,6 +4071,8 @@ setTimeout(() => {
       var out={};
       var buyable=SHOP.filter(function(i){ return !i.tool; });
       out.buyable=buyable.length;
+      out.charms=CHARMS.length;
+      out.supplies=SUPPLIES.length;
       // every buyable row draws as a real SVG, never the emoji fallback
       out.emojiFallback=buyable.filter(function(i){ return !ICONS[i.id]; }).map(function(i){ return i.id; });
       // and no card is left printing a raw \\U escape (the shop's own near-miss)
@@ -4058,7 +4085,14 @@ setTimeout(() => {
       SHOP_CATS.forEach(function(c){ if(seen[c.icon]) out.railDupes.push(c.key); seen[c.icon]=1; });
       return JSON.stringify(out);
     })()`));
-    ok('the shop stocks more than the fourteen it had', shop.buyable>=32, shop.buyable+' buyable rows');
+    /* It stocked fourteen: two rings and twelve identical capes. Count what a player
+       can actually buy across every vendor, not just SHOP rows — charms, supplies
+       and the satchel are real purchases that do not live in that array. The twelve
+       hoods were cut in 0.9.122.25, so a bare SHOP count would read as a regression
+       when the shop in fact grew. */
+    ok('the shop stocks far more than the fourteen it had',
+       shop.buyable + shop.charms + shop.supplies + 1 >= 30,
+       shop.buyable+' shop rows + '+shop.charms+' charms + '+shop.supplies+' supplies');
     ok('every shop row draws a real icon, not the emoji fallback',
        shop.emojiFallback.length===0, shop.emojiFallback.join(', '));
     ok('and no card prints a raw unicode escape',

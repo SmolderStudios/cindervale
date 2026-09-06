@@ -4512,6 +4512,40 @@ body:not(.is-demo) .demo-only{display:none !important}
 @media(max-width:1000px){#activityGrid.ck-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
 /* ── the hearth ─────────────────────────────────────────────────────────────── */
+/* ── the two shelves (0.9.122.25) ──────────────────────────────────────────────
+   Prized recipes appeared inline, gated on holding the catch, which meant the grid
+   silently changed length under you and a prized card landed wherever the ordinary
+   ladder happened to leave a gap. They get their own shelf now — same segmented
+   control the alchemy panel uses, so it is a shape already learnt — and the tab
+   carries a count, which is the notification the inline card used to be. */
+.ck-seg{grid-column:1/-1;display:flex;gap:5px;background:#0d0905;border:1px solid var(--trim-d);
+  border-radius:8px;padding:4px;margin:2px 0 -2px}
+.ck-seg button{flex:1;background:transparent;border:1px solid transparent;border-radius:6px;
+  padding:5px 10px;cursor:var(--cur-pointer);color:var(--muted);text-align:center;
+  font-family:inherit;transition:background .14s,color .14s;position:relative}
+.ck-seg button:hover{color:var(--text)}
+.ck-seg button.on{background:var(--raised-s);border-color:var(--trim);color:var(--gold-hi)}
+.ck-seg button b{display:block;font-family:'Cinzel',serif;font-size:calc(14px*var(--tscale));font-weight:600}
+.ck-seg button i{display:block;font-style:normal;font-family:var(--num);
+  font-size:calc(10px*var(--tscale));letter-spacing:.09em;text-transform:uppercase;
+  color:#7a6748;margin-top:2px}
+.ck-seg button.on i{color:var(--trim)}
+.ck-seg button:focus-visible{outline:2px solid var(--trim);outline-offset:1px}
+/* The count only exists when there is something to count, so it is never a zero
+   sitting on the tab telling you about nothing. */
+.ck-seg .ck-have{position:absolute;top:2px;right:6px;font-family:var(--num);
+  font-size:calc(10px*var(--tscale));font-weight:600;color:#f6d68a;
+  text-shadow:0 0 6px rgba(240,199,114,.55)}
+
+/* The empty shelf. Not a locked state — there is nothing to work toward and no
+   level to reach, so it explains the mechanic instead of dangling a requirement. */
+.ck-none{grid-column:1/-1;display:flex;align-items:center;gap:12px;padding:16px 18px;
+  border:1px dashed var(--trim-d);border-radius:9px;background:#140d06}
+.ck-none .ev-icon,.ck-none .gilded{width:38px;height:38px;flex:none}
+.ck-none b{display:block;color:var(--text);font-size:calc(13.5px*var(--tscale))}
+.ck-none span{display:block;font-size:calc(12px*var(--tscale));color:#8a7657;
+  margin-top:3px;max-width:74ch;line-height:1.5}
+
 .ck-hearth{grid-column:1/-1;display:flex;align-items:stretch;overflow:hidden;
   background:linear-gradient(178deg,var(--lit-top),var(--lit-bot) 78%);
   border:1px solid var(--trim-d);border-radius:10px;
@@ -7302,7 +7336,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.122.24">v0.9.122</div>
+  <div class="mm-ver" data-build="0.9.122.25">v0.9.122</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -11044,23 +11078,6 @@ function _skSh(rx){ return `<ellipse cx="32" cy="58" rx="${rx}" ry="2.6" fill="#
 /* ─── Skillcape factory ─── A draped cape with gold trim, ornate collar,
    jewel clasp, and a skill-specific emblem in the center. Tier-5 capstone
    gear: read as ornate / legendary. Palette per skill. */
-/* Palettes for the twelve capes, lifted out of the ICONS block so the hoods can
-   share them rather than repeat twelve colour triples. */
-const CAPE_PAL={
-  woodcutting:{pre:'wc', dark:'#2a1810', mid:'#6a4020', light:'#a8763a', clasp:'#c79b4e'},
-  mining:     {pre:'mi', dark:'#181820', mid:'#3a3a48', light:'#7a7a88', clasp:'#c8c8d4'},
-  fishing:    {pre:'fi', dark:'#08203a', mid:'#1a4878', light:'#4a8db8', clasp:'#a8d4f0'},
-  foraging:   {pre:'fo', dark:'#142810', mid:'#3a5a20', light:'#6a9028', clasp:'#9bd44e'},
-  smithing:   {pre:'sm', dark:'#0e0a08', mid:'#3a1a10', light:'#7a3018', clasp:'#fbd24e'},
-  cooking:    {pre:'co', dark:'#1a0a06', mid:'#783820', light:'#c87838', clasp:'#fbd24e'},
-  alchemy:    {pre:'al', dark:'#0a1808', mid:'#2a4818', light:'#5a8028', clasp:'#a8e060'},
-  firemaking: {pre:'fm', dark:'#1a0608', mid:'#7a1820', light:'#e0762f', clasp:'#fbd24e'},
-  agility:    {pre:'ag', dark:'#2a1c10', mid:'#7a5828', light:'#c8a058', clasp:'#fff8dc'},
-  jeweler:    {pre:'jw', dark:'#15082a', mid:'#3a1858', light:'#6a3098', clasp:'#d8a8e8'},
-  farming:    {pre:'fa', dark:'#1a1006', mid:'#7a5520', light:'#c8a040', clasp:'#fbd24e'},
-  crafting:   {pre:'cr', dark:'#15131c', mid:'#3a3848', light:'#6a6878', clasp:'#c8c8d4'},
-};
-
 /* A charm is a rune-disc talisman hung on a cord: one silhouette, a palette and a
    glyph per charm, the same way every tiered item family in the game is drawn. All
    five sharing a generic spark would repeat exactly the fault the twelve identical
@@ -11123,33 +11140,6 @@ const CHARM_ICONS={
     glyph:`<path d="M20 31 L42 31 M17 38 L45 38 M20 45 L42 45" stroke="#eafcff" stroke-width="2.4" stroke-linecap="round" opacity="0.9"/>`
       +`<path d="M38 25 L47 38 L38 51" fill="none" stroke="#eafcff" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>`}),
 };
-
-/* A hood is the cape one rung down: same shoulders, no full drape, thread trim
-   instead of the gold band, and no emblem. Deliberately NOT a new silhouette —
-   at 20px the only thing separating a hood from its cape should be the length. */
-function _hoodSVG(p){
-  const pre='hd_'+p.pre;
-  return `<svg class="ev-icon" viewBox="0 0 64 64"><defs>`
-    +`<linearGradient id="${pre}_b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${p.mid}"/><stop offset="0.6" stop-color="${p.mid}"/><stop offset="1" stop-color="${p.dark}"/></linearGradient>`
-    +`<linearGradient id="${pre}_t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${p.light}"/><stop offset="1" stop-color="${p.dark}"/></linearGradient>`
-    +`</defs>`
-    +`<ellipse cx="32" cy="57" rx="16" ry="2" fill="#000" opacity="0.4"/>`
-    /* the cowl */
-    +`<path d="M32 8 Q16 12 14 30 Q13 38 18 42 L46 42 Q51 38 50 30 Q48 12 32 8 Z" fill="url(#${pre}_b)" stroke="${p.dark}" stroke-width="0.7" stroke-linejoin="round"/>`
-    +`<path d="M32 8 Q16 12 14 30 Q13 38 18 42 L28 42 Q22 30 26 16 Q28 11 32 8 Z" fill="${p.dark}" opacity="0.4"/>`
-    /* the opening — the shadowed face of the hood, and what makes it read as a hood */
-    +`<path d="M32 15 Q23 18 22 30 Q21 37 25 41 L39 41 Q43 37 42 30 Q41 18 32 15 Z" fill="#08060a" opacity="0.85"/>`
-    +`<path d="M32 17 Q25 20 24 30 Q23 36 26 39" stroke="${p.light}" stroke-width="0.8" fill="none" opacity="0.35"/>`
-    /* short mantle over the shoulders */
-    +`<path d="M18 42 L46 42 L52 55 L12 55 Z" fill="url(#${pre}_b)" stroke="${p.dark}" stroke-width="0.7" stroke-linejoin="round"/>`
-    +`<path d="M18 42 L26 42 L22 55 L12 55 Z" fill="${p.dark}" opacity="0.35"/>`
-    +`<path d="M26 43 L24 55 M32 43 L32 55 M38 43 L40 55" stroke="${p.dark}" stroke-width="0.6" opacity="0.5" fill="none"/>`
-    /* thread trim, not the cape's gold band */
-    +`<path d="M18 42 L46 42" stroke="url(#${pre}_t)" stroke-width="1.2" opacity="0.9"/>`
-    +`<path d="M12 55 L52 55" stroke="url(#${pre}_t)" stroke-width="1" opacity="0.75"/>`
-    +`<circle cx="32" cy="45" r="2" fill="${p.dark}" stroke="${p.clasp}" stroke-width="0.7"/>`
-    +`</svg>`;
-}
 
 function _capeSVG(p){
   const pre='cp_'+p.pre;
@@ -12381,23 +12371,7 @@ const ICONS = {
   cape_crafting:    _capeSVG({pre:'cr', dark:'#15131c', mid:'#3a3848', light:'#6a6878', clasp:'#c8c8d4', glow:null,
     emblem:`<g transform="translate(32,38)"><g transform="rotate(-32 0 0)"><rect x="-1.1" y="-1" width="2.2" height="13" rx="0.4" fill="#7a4a25" stroke="#2a1810" stroke-width="0.4"/><rect x="-0.6" y="0" width="0.6" height="11" fill="#fff" opacity="0.25"/><path d="M-6 -5 L6 -5 L7 -2 L7 0 L-7 0 L-7 -2 Z" fill="#5a5a68" stroke="#1a1a24" stroke-width="0.4" stroke-linejoin="round"/><path d="M-6 -5 L6 -5 L7 -2 L-7 -2 Z" fill="#9090a0"/></g><g transform="rotate(32 0 0)"><rect x="-1" y="-4" width="2" height="13" rx="0.4" fill="#5a3818" stroke="#1a0e08" stroke-width="0.3"/><path d="M-1.5 -8 L1.5 -8 L1 -4 L-1 -4 Z" fill="#c8c8d4" stroke="#3a3a45" stroke-width="0.4" stroke-linejoin="round"/><path d="M-1.5 -8 L1.5 -8 L1.2 -7 L-1.2 -7 Z" fill="#e0e0ea"/></g><circle cx="0" cy="0" r="1.6" fill="#fbd24e" opacity="0.85"/><circle cx="0" cy="0" r="0.8" fill="#fff" opacity="0.95"/></g>`}),
 
-  /* ─── Hoods (0.9.122.20) ─────────────────────────────────────────────────────
-     The cape's own tier below it, at Lv 92. Same generator and the same per-skill
-     palette so the pair reads as one family, but the garment is short, the trim is
-     thread rather than gold, and it carries no emblem — a hood should be legible
-     as "not yet the cape" at 20px, which is the only size that matters. */
-  hood_woodcutting: _hoodSVG(CAPE_PAL.woodcutting),
-  hood_mining: _hoodSVG(CAPE_PAL.mining),
-  hood_fishing: _hoodSVG(CAPE_PAL.fishing),
-  hood_foraging: _hoodSVG(CAPE_PAL.foraging),
-  hood_smithing: _hoodSVG(CAPE_PAL.smithing),
-  hood_cooking: _hoodSVG(CAPE_PAL.cooking),
-  hood_alchemy: _hoodSVG(CAPE_PAL.alchemy),
-  hood_firemaking: _hoodSVG(CAPE_PAL.firemaking),
-  hood_agility: _hoodSVG(CAPE_PAL.agility),
-  hood_jeweler: _hoodSVG(CAPE_PAL.jeweler),
-  hood_farming: _hoodSVG(CAPE_PAL.farming),
-  hood_crafting: _hoodSVG(CAPE_PAL.crafting),
+
 
   /* ─── Combat: Player portrait — hooded adventurer with ember eyes and gold-trim cloak.
      Used in the arena card on the left side, opposite the foe portrait. ─── */
@@ -17150,24 +17124,6 @@ const SHOP=[
   {id:'cape_jeweler',    name:'Jeweler Cape',    icon:'💎',slot:'cape',skill:'jeweler',    tier:5,cost:100000,bonus:{speed:0.05,skillXp:0.05},desc:'+5% cut speed · +5% Jeweler XP',    reqLvl:99},
   {id:'cape_farming',    name:'Farming Cape',    icon:'🌾',slot:'cape',skill:'farming',    tier:5,cost:100000,bonus:{speed:0.05,skillXp:0.05},desc:'+5% tend speed · +5% Farming XP',   reqLvl:99},
   {id:'cape_crafting',   name:'Crafting Cape',   icon:'🛠️',slot:'cape',skill:'crafting',   tier:5,cost:100000,bonus:{speed:0.05,skillXp:0.05},desc:'+5% craft speed \u00b7 +5% Crafting XP', reqLvl:99},
-
-  /* ── HOODS (0.9.122.20) ───────────────────────────────────────────────────────
-     The shop sold nothing at all between the Moon Amulet at Lv 50 and the capes at
-     Lv 99. A hood is the cape's own ladder: same slot, same keys, half the bonus,
-     a twentieth of the price, and it stops the last fifty levels of every skill
-     being a dead shop. Buying the cape supersedes it on tier. */
-  {id:'hood_woodcutting',name:'Woodcutting Hood',icon:'🪓',slot:'cape',skill:'woodcutting',tier:4,cost:25000,bonus:{speed:0.02,skillXp:0.02},desc:'+2% chop speed \u00b7 +2% Woodcutting XP', reqLvl:92},
-  {id:'hood_mining',     name:'Mining Hood',     icon:'⛏️',slot:'cape',skill:'mining',     tier:4,cost:25000,bonus:{speed:0.02,skillXp:0.02},desc:'+2% mine speed \u00b7 +2% Mining XP',      reqLvl:92},
-  {id:'hood_fishing',    name:'Fishing Hood',    icon:'🎣',slot:'cape',skill:'fishing',     tier:4,cost:25000,bonus:{speed:0.02,skillXp:0.02},desc:'+2% fish speed \u00b7 +2% Fishing XP',     reqLvl:92},
-  {id:'hood_foraging',   name:'Foraging Hood',   icon:'🌿',slot:'cape',skill:'foraging',    tier:4,cost:25000,bonus:{speed:0.02,skillXp:0.02},desc:'+2% forage speed \u00b7 +2% Foraging XP',  reqLvl:92},
-  {id:'hood_smithing',   name:'Smithing Hood',   icon:'🔨',slot:'cape',skill:'smithing',    tier:4,cost:25000,bonus:{speed:0.02,skillXp:0.02},desc:'+2% smelt speed \u00b7 +2% Smithing XP',   reqLvl:92},
-  {id:'hood_cooking',    name:'Cooking Hood',    icon:'🍳',slot:'cape',skill:'cooking',     tier:4,cost:25000,bonus:{speed:0.02,skillXp:0.02},desc:'+2% cook speed \u00b7 +2% Cooking XP',     reqLvl:92},
-  {id:'hood_alchemy',    name:'Alchemy Hood',    icon:'⚗️',slot:'cape',skill:'alchemy',    tier:4,cost:25000,bonus:{speed:0.02,skillXp:0.02},desc:'+2% brew speed \u00b7 +2% Alchemy XP',     reqLvl:92},
-  {id:'hood_firemaking', name:'Firemaking Hood', icon:'🔥',slot:'cape',skill:'firemaking',  tier:4,cost:25000,bonus:{speed:0.02,skillXp:0.02},desc:'+2% burn speed \u00b7 +2% Firemaking XP',  reqLvl:92},
-  {id:'hood_agility',    name:'Agility Hood',    icon:'🏃',slot:'cape',skill:'agility',     tier:4,cost:25000,bonus:{speed:0.02,skillXp:0.02},desc:'+2% run speed \u00b7 +2% Agility XP',      reqLvl:92},
-  {id:'hood_jeweler',    name:'Jeweler Hood',    icon:'💎',slot:'cape',skill:'jeweler',     tier:4,cost:25000,bonus:{speed:0.02,skillXp:0.02},desc:'+2% cut speed \u00b7 +2% Jeweler XP',      reqLvl:92},
-  {id:'hood_farming',    name:'Farming Hood',    icon:'🌾',slot:'cape',skill:'farming',     tier:4,cost:25000,bonus:{speed:0.02,skillXp:0.02},desc:'+2% tend speed \u00b7 +2% Farming XP',     reqLvl:92},
-  {id:'hood_crafting',   name:'Crafting Hood',   icon:'🛠️',slot:'cape',skill:'crafting',   tier:4,cost:25000,bonus:{speed:0.02,skillXp:0.02},desc:'+2% craft speed \u00b7 +2% Crafting XP',   reqLvl:92},
 
   /* ── JEWELRY LADDER (0.9.122.20) ──────────────────────────────────────────────
      Was two items thirty levels apart. `skills:[...]` is the multi-skill form of
@@ -24168,7 +24124,9 @@ function _gdGuildPage(id){
 
 /* Three drawn hearth states, ~41KB of WebP total. The fire already HAD three states
    in code and they were distinguished by a border colour and an emoji. */
-const CK_PLATE=CK_PLATE_ART; /* defined in [JS-01b]; kept apart so this stays readable */
+const CK_PLATE=CK_PLATE_ART;
+/* Which shelf the cooking panel is on. Session-scoped, like _alchTab. */
+var _ckTab='dishes'; /* defined in [JS-01b]; kept apart so this stays readable */
 
 /* Everything the card needs to say about a dish, in one place, from the real item
    data — so the panel can never claim a heal the food does not do. */
@@ -24228,6 +24186,10 @@ function ckCard(act, reqLvl, lvl, m){
      in words: the number is only useful next to the reason it is small. */
   let runs='', runsCls='';
   if(locked)               { runs=''; }
+  /* "no ingredients" is right for a dish you assemble and wrong for one you have to
+     be lucky to make — nothing is missing from the recipe, you just have not caught
+     one yet. */
+  else if(matRuns<=0&&act.onlyIf){ runs='none caught'; runsCls=' none'; }
   else if(matRuns<=0)      { runs='no ingredients'; runsCls=' none'; }
   else if(fireOut)         { runs=iconHTML('ui_flame')+' fire is out'; runsCls=' fuelcap'; }
   else if(fuelRuns<matRuns){ runs=iconHTML('ui_flame')+' fire: '+fmtK(fuelRuns)+' run'+(fuelRuns===1?'':'s');
@@ -24395,14 +24357,46 @@ function renderCooking(){
     });
   });
 
-  /* ── the recipes ─────────────────────────────────────────────────────────── */
-  for(const act of SKILLS.cooking.acts){
-    /* `onlyIf` — a prized catch's recipe exists only while you hold the catch. It
-       is not a lock, so it never renders as one: there is nothing to work toward
-       and no level to reach, just a card that is there when the fish is. */
-    if(act.onlyIf && !(state.items[act.onlyIf]>0)) continue;
+  /* ── the two shelves ─────────────────────────────────────────────────────── */
+  const dishes=SKILLS.cooking.acts.filter(function(a){ return !a.onlyIf; });
+  const prized=SKILLS.cooking.acts.filter(function(a){ return !!a.onlyIf; });
+  /* How many prized catches are actually in the satchel — the tab's count, and the
+     thing that used to make a card appear out of nowhere in the middle of the
+     ordinary ladder. */
+  let prizedHeld=0;
+  for(const a of prized) prizedHeld+=(state.items[a.onlyIf]||0);
+
+  const seg=document.createElement('div');
+  seg.className='ck-seg';
+  [{id:'dishes', n:'Dishes',  s:dishes.length+' recipes'},
+   {id:'prized', n:'Prized',  s:'exceptional catches'}].forEach(function(t){
+    const b=document.createElement('button');
+    b.type='button';
+    b.className=(_ckTab===t.id?'on':'');
+    b.innerHTML='<b>'+t.n+'</b><i>'+t.s+'</i>'
+      +(t.id==='prized'&&prizedHeld>0?'<span class="ck-have">'+prizedHeld+'</span>':'');
+    b.addEventListener('click',function(){ _ckTab=t.id; renderCooking(); });
+    seg.appendChild(b);
+  });
+  grid.appendChild(seg);
+
+  const showing=_ckTab==='prized'?prized:dishes;
+  for(const act of showing){
     const reqLvl=act.id==='co8'?highFishUnlockLevel():act.lvl;
     grid.appendChild(ckCard(act,reqLvl,lvl,m));
+  }
+  /* Every prized recipe is listed whether or not you hold the catch — on its own
+     shelf there is room to show the whole set, and knowing a Prized Void Eel exists
+     is most of why you would want one. */
+  if(_ckTab==='prized'&&prizedHeld===0){
+    const none=document.createElement('div');
+    none.className='ck-none';
+    none.innerHTML=iconHTML('prized_raw_salmon')
+      +'<span><b>No prized catches in the satchel.</b>'
+      +'<span>A prized catch is the same fish, rarer \u2014 it turns up on its own while you '
+      +'fish, and cooks into a far stronger meal. Lucky Lure, in the Fishing tree, doubles '
+      +'the chance.</span></span>';
+    grid.appendChild(none);
   }
 }
 
@@ -38306,6 +38300,9 @@ for(let _hi=0; _hi<SAIL_HULLS.length; _hi++){
   for(var k in ART_ITEM){ if(typeof ICONS!=='undefined') ICONS[k]=ART_ITEM[k]; }
 })();
 /* ==ITEM-ART-END== */
+
+
+
 
 
 

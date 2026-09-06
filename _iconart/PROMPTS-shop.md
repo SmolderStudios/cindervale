@@ -1,72 +1,23 @@
 # Shop items — 0.9.122.20 → .22
 
-Twenty-three new items went into the shop and every one of them is currently a
-hand-drawn SVG. Two sheets.
+Eleven new shop items. **Sheet B is DONE** — `shop.png`, sliced and injected in
+0.9.122.25. The twelve skill hoods this file used to list were cut from the game;
+capes have their own sheet in `PROMPTS-capes.md`.
 
 Paste the **style block** from `PROMPTS.md` once at the start of the conversation
 first — everything below assumes it. Then feed one sheet at a time.
 
 ```bash
-node _iconart/slice.js sheets/shop_hoods.png    sheets/shop_hoods.txt    --grid 4x3
-node _iconart/slice.js sheets/shop_trinkets.png sheets/shop_trinkets.txt --grid 4x3
+# how shop.png was actually cut — the sheet's rows are 345/351/388px, NOT equal
+# thirds, and its black grid lines read as ink, so an even --grid 4x3 drifts ~27px
+# and eats the charms' cords. One pass per row, with the measured column edges:
+CX="--colx 1,362,724,1086,1447 --inset 7"
+node _iconart/slice.js sheets/shop_trinkets.png sheets/_r1.txt --grid 4x1 $CX --crop 4,4,1444,343
+node _iconart/slice.js sheets/shop_trinkets.png sheets/_r2.txt --grid 4x1 $CX --crop 4,350,1444,694
+node _iconart/slice.js sheets/shop_trinkets.png sheets/_r3.txt --grid 4x1 $CX --crop 4,701,1444,1082
 ```
 
 The ORDER in each CELLS list is the contract — `slice.js` does not read captions.
-
----
-
-## Sheet A — Skill hoods (12, grid 4x3)
-
-These are twelve versions of the SAME garment. That is the hard part and the whole
-job: one hood, drawn twelve times, told apart by cloth and colour and nothing else.
-
-````
-SHEET: Skill hoods. 12 cells, 4 across and 3 down.
-
-Every cell is the SAME OBJECT: a short hooded cowl with a small shoulder mantle,
-empty, hanging as if on a peg — no head inside it, no face, no body, nobody wearing
-it. The hood opening is a dark void. Draw it from the front, slightly three-quarter,
-so the cowl reads as a hood and not as a bag.
-
-Keep the silhouette IDENTICAL in all twelve cells. Same shape, same size, same angle,
-same lighting. Only the cloth changes: its colour, its material, and one small trim
-detail. Do not add emblems, badges, crests, buckles, weapons, tools or props.
-
-These are the humble tier below a hero's cape, so they should look worn and practical
-— homespun, patched, working clothes — not regal.
-
-CELLS:
-  1.  Woodcutting Hood — rough russet-brown wool, bark-coloured leather trim
-  2.  Mining Hood      — slate-grey canvas, dull iron rivets along the mantle edge
-  3.  Fishing Hood     — deep sea-blue oilskin with a wet sheen, rope drawstring
-  4.  Foraging Hood    — moss-green cloth, a few small leaves caught in the weave
-  5.  Smithing Hood    — dark scorched brown leather, singed and blackened at the hem
-  6.  Cooking Hood     — warm copper-orange linen, dusted pale with flour
-  7.  Alchemy Hood     — acid-green cloth, hem stained darker where it has dripped
-  8.  Firemaking Hood  — ember-red wool, edges gone ash-grey
-  9.  Agility Hood     — pale sand-coloured cloth, light and loose, hem torn ragged
-  10. Jeweler Hood     — deep violet velvet, fine gold thread stitched at the edge
-  11. Farming Hood     — wheat-gold burlap, coarse straw-like weave
-  12. Crafting Hood    — cool grey canvas with leather patches and visible stitching
-````
-
-<details><summary>id order for <code>sheets/shop_hoods.txt</code></summary>
-
-```
-hood_woodcutting
-hood_mining
-hood_fishing
-hood_foraging
-hood_smithing
-hood_cooking
-hood_alchemy
-hood_firemaking
-hood_agility
-hood_jeweler
-hood_farming
-hood_crafting
-```
-</details>
 
 ---
 
@@ -129,6 +80,6 @@ are currently merged into `ICONS` by an explicit loop *after* the `const ICONS` 
 (temporal dead zone — see the comment there), so if painted art replaces them, that loop
 and `CHARM_ICONS` come out together rather than being left to fight the art block.
 
-Sheet A is the one likely to need a second pass. Twelve of the same garment is exactly
-where a generator drifts — check that Woodcutting, Agility, Farming and Crafting are
-still four different hoods at 20px, because those four collided on the CAPES sheet.
+If a future sheet comes back with a black grid frame like this one did, measure the
+lines before slicing — `slice.js` samples its backdrop from the four CORNERS, so a
+border makes it read the page as dark and every crop collapses to a 1px sliver.
