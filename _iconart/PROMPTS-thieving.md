@@ -6,6 +6,7 @@ other twelve actually have.
 | Family | Count | Where it lives | Pipeline |
 |---|---|---|---|
 | Skill icon | 1 | `ICONS.thieving` | item pack |
+| **Banner scene** | **1** | `SKILL_ART.thieving` | **1536&times;177 WebP, ~8 KB** |
 | **Tree node icons** | **13** | `NODE_ART` | **no tool — see the note at the bottom** |
 | Lockpick tool ladder | 6 | item pack | item pack |
 | Thief's gear set | 4 | item pack | item pack |
@@ -14,7 +15,22 @@ other twelve actually have.
 | Skilling pet | **0** | `_critterSVG` | generated — a palette and an ear shape |
 | Stall / act icons | **0** | — | acts reuse the icon of what they output |
 
-**31 images.** Four sheets below.
+**32 images.** Five sheets below.
+
+### Not art, but the same checklist
+
+Enumerated from an existing skill rather than remembered — these are the registration
+points a design doc forgets:
+
+| | |
+|---|---|
+| `PASSIVE_TIPS` | 13 long-form node tooltips, one per tree node |
+| `SK_PAL` &middot; `SKILL_ACCENT` | the skill's palette and its accent colour |
+| `GD_VERB` | the verb guild quests use for it &mdash; `'Steal'` |
+| `TOOL_SLOTS` &middot; `SKILL_ORDER` | the lockpick slot in the Gear panel and the Crafting tools sub-tab |
+| `ITEM_BODY_SLOTS` | the four gear pieces &rarr; helmet / chest / legs / boots |
+| `ENCHANTS` | every skill has a tier-5 unique enchant (`uq_jw`, `uq_wc`&hellip;) |
+| `SK` | four fallback gear SVGs &mdash; only needed if the painted set is ever incomplete |
 
 Paste the **style block** from `PROMPTS.md` once at the start — every sheet assumes it.
 
@@ -199,6 +215,43 @@ axe, the pickaxe or the sword already in that list.
 thieving
 ```
 </details>
+
+---
+
+## Sheet E — The banner scene (1)
+
+Every skill panel has a wide painted landscape behind its header. All twelve have one;
+they are **1536&times;177 WebP, about 8 KB each, 106 KB for the set**. It is the largest
+single piece of art the skill needs and the one most likely to be forgotten, because it
+is not an icon.
+
+````
+A wide banner illustration for a dark-fantasy RPG skill panel. Very wide and short —
+roughly 1536 by 177 pixels, about 8.5:1. It sits BEHIND panel text, so it must read as
+a backdrop, not as a picture competing for attention.
+
+Composition: keep the interest in the LEFT third and let the right two thirds fall away
+into darkness and haze, because the skill's name, level and progress bar sit over that
+side. No large bright shapes on the right.
+
+Subject: a narrow city street at night. Shuttered market stalls, their awnings down. One
+lantern burning. A doorway with a figure just out of it — implied, not detailed, no face.
+Wet cobbles catching the lamplight.
+
+Dark, low-key, deep blues and near-blacks with a single warm lantern glow. Painterly, the
+same hand as the other skill banners: atmospheric, slightly soft, not a sharp
+illustration and not a photograph. No text, no logo, no UI, no border.
+````
+
+<details><summary>id for <code>sheets/thief_banner.txt</code></summary>
+
+```
+thieving
+```
+</details>
+
+The banner is not an icon and does not go through `slice.js` or the item pack — it is
+resized to 1536&times;177, encoded to WebP, and written into `SKILL_ART` as a data URI.
 
 ---
 
