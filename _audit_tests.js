@@ -3190,7 +3190,9 @@ setTimeout(() => {
           const q=gdRollOne(GD_BY.night,sz);
           if(!q) return;
           seen[q.name]=1; kinds[q.kind]=(kinds[q.kind]||0)+1;
-          if(q.skill!=='agility') bad.push('off-skill '+q.skill);
+          /* The Nightmarket gates on Thieving as of 0.9.122.31 — it is the thieves'
+             guild and Agility was only ever the closest skill the game had. */
+          if(q.skill!=='thieving') bad.push('off-skill '+q.skill);
           if(q.kind==='coin' && !(q.need>0)) bad.push('coin with no amount');
           const ids=q.kind==='supply'?Object.keys(q.items||{}):(q.target?[q.target]:[]);
           ids.forEach(function(i){
@@ -3732,6 +3734,140 @@ setTimeout(() => {
       tier:ENCHANTS.manatarms_ii&&ENCHANTS.manatarms_ii.tier,
       priced:!!_ewCostFor('emerald_ring').cost
     })`));
+    section('Thieving (0.9.122.31)');
+    {
+    /* The thirteenth skill, and the only one whose action can fail. Everything worth
+       guarding here is silent when it breaks: a stall that hands out a tier the
+       player has not earned, a failed steal that still pays, or XP gated on success
+       — which would make an unlucky thief idle for an hour and gain nothing. */
+    const th = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      var out={acts:SKILLS.thieving.acts.length,
+               pts:TREES.thieving.reduce(function(a,n){return a+n.max;},0)};
+
+      // success climbs with level and with the tree, and is capped at both ends
+      state.xp.thieving=XP_CUM[1];
+      var a1=getAct('thieving','th1');
+      out.lo=+thiefSuccess(a1).toFixed(3);
+      state.xp.thieving=XP_CUM[99];
+      state.tree=state.tree||{}; state.tree.thieving={th_success:12,th_gm_success:8};
+      out.capped=+thiefSuccess(a1).toFixed(3);
+      state.tree.thieving={};
+      // the hardest act must stay genuinely hard even fully specced
+      var hard=getAct('thieving','th14');
+      state.tree.thieving={th_success:12,th_gm_success:8};
+      out.hardMax=+thiefSuccess(hard).toFixed(3);
+      state.tree.thieving={};
+
+      /* Volume, never access: a stall can never hand over a tier the player could
+         not have gathered themselves. */
+      for(var k in state.xp) state.xp[k]=XP_CUM[1];
+      state.xp.thieving=XP_CUM[99];
+      out.lowSeed=thiefPoolOpen('seed').length;
+      out.lowGem=thiefPoolOpen('gem').length;
+      state.xp.farming=XP_CUM[99]; state.xp.mining=XP_CUM[99];
+      out.highSeed=thiefPoolOpen('seed').length;
+      out.highGem=thiefPoolOpen('gem').length;
+      // every pool entry is a real item and its gate is honoured
+      out.badPool=[];
+      for(var pk in THIEF_POOLS){
+        var P=THIEF_POOLS[pk];
+        P.tiers.forEach(function(t){ if(!ITEMS[t[1]]) out.badPool.push(pk+'/'+t[1]); });
+        if(P.skill && !SKILLS[P.skill]) out.badPool.push(pk+' names skill '+P.skill);
+      }
+      return JSON.stringify(out);
+    })()`));
+    ok('fourteen acts and a 98-point tree', th.acts === 14 && th.pts === 98,
+       JSON.stringify({acts: th.acts, pts: th.pts}));
+    ok('success climbs with level and tree, and is capped',
+       th.lo === 0.8 && th.capped <= 0.95 && th.capped > th.lo, JSON.stringify(th));
+    /* If the last act reached the cap the skill would end with nothing left to want. */
+    ok('the hardest steal stays hard even fully specced',
+       th.hardMax > 0.4 && th.hardMax < 0.85, String(th.hardMax));
+    ok('a stall never opens a tier the player has not earned',
+       th.lowSeed === 1 && th.lowGem === 1 && th.highSeed > 10 && th.highGem === 5,
+       JSON.stringify({lowSeed: th.lowSeed, highSeed: th.highSeed, lowGem: th.lowGem, highGem: th.highGem}));
+    ok('every pool entry is a real item on a real skill',
+       th.badPool.length === 0, th.badPool.join(', '));
+
+    /* The idle contract. XP pays on the ATTEMPT — an unlucky thief levels slower and
+       loots less, never nothing. Gate XP on success and a 40% act reads as broken
+       while you are away, which is the shape the cooking fire had. */
+    const idle = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      for(var k in state.xp) state.xp[k]=XP_CUM[3];
+      state.items={}; state.seeds={}; state.coins=0;
+      var act=getAct('thieving','th3');
+      var real=thiefSuccess;
+      thiefSuccess=function(){ return 0; };
+      var xp0=state.xp.thieving, c0=state.coins;
+      completeAction(act,'thieving',500);
+      var out={xpOnFail:Math.round(state.xp.thieving-xp0), coinsOnFail:state.coins-c0,
+               goodsOnFail:Object.keys(state.seeds).length};
+      thiefSuccess=function(){ return 1; };
+      state.coins=0; state.seeds={};
+      completeAction(act,'thieving',500);
+      out.coinsOnWin=state.coins; out.goodsOnWin=Object.keys(state.seeds).length;
+      out.satchelUntouched=Object.keys(state.items).length===0;
+      thiefSuccess=real;
+      return JSON.stringify(out);
+    })()`));
+    ok('a thief who never succeeds still gains XP',
+       idle.xpOnFail > 0, 'xp ' + idle.xpOnFail);
+    ok('and gains nothing else — no coins, no goods',
+       idle.coinsOnFail === 0 && idle.goodsOnFail === 0, JSON.stringify(idle));
+    ok('a thief who always succeeds gets both',
+       idle.coinsOnWin > 0 && idle.goodsOnWin > 0, JSON.stringify(idle));
+    /* Stolen seeds go to the vault, so a stall cannot fill the satchel. */
+    ok('stolen seeds reach the seed vault, not the satchel',
+       idle.satchelUntouched === true);
+
+    /* The fence. `hot` items price at what the Nightmarket pays; everyone else
+       discounts them, and that is the fence:true flag finally reading. */
+    const fence = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      var hot=Object.keys(ITEMS).filter(function(i){ return ITEMS[i].hot; });
+      var out={n:hot.length, cheap:[], guild:null};
+      hot.forEach(function(i){
+        if(!(effectiveItemSell(i) < ITEMS[i].sell)) out.cheap.push(i);
+      });
+      var g=GUILDS.find(function(x){ return x.id==='night'; });
+      out.guild={skills:g.skills.join(','), req:Object.keys(g.req).join(','), fence:!!g.fence};
+      return JSON.stringify(out);
+    })()`));
+    ok('six stolen goods, and the store pays less than the fence for every one',
+       fence.n === 6 && fence.cheap.length === 0, JSON.stringify(fence));
+    ok("the thieves' guild finally gates on Thieving",
+       fence.guild.skills === 'thieving' && fence.guild.req === 'thieving' && fence.guild.fence === true,
+       JSON.stringify(fence.guild));
+
+    /* The registration sweep. A skill half-registered renders and plays and then
+       has no cape, no pet or no rail group, and nothing says so. */
+    ok('Thieving is registered everywhere the other twelve are', ev(`(function(){
+      var miss=[];
+      if(SK_PFX.thieving!=='th') miss.push('SK_PFX');
+      if(!SKILL_CAPE.thieving) miss.push('SKILL_CAPE');
+      if(RAIL_GROUP.thieving!=='support') miss.push('RAIL_GROUP');
+      if(GD_VERB.thieving!=='Steal') miss.push('GD_VERB');
+      if(!SKILL_PETS.thieving) miss.push('SKILL_PETS');
+      if(!SKILLING_SETS.thieving) miss.push('SKILLING_SETS');
+      if(!SKILL_ACCENT.thieving) miss.push('SKILL_ACCENT');
+      if(!SK_PAL.thieving) miss.push('SK_PAL');
+      if(!SHOP.some(function(x){return x.id==='cape_thieving';})) miss.push('cape in SHOP');
+      if(!SHOP.some(function(x){return x.slot==='picks';})) miss.push('lockpicks in SHOP');
+      if(!SKILLS.crafting.acts.some(function(a){return a.id==='cr_tl_bronze_picks';})) miss.push('lockpick recipes');
+      return miss.join(', ')||'ok';
+    })()`)==='ok', ev(`(function(){
+      var miss=[];
+      if(SK_PFX.thieving!=='th') miss.push('SK_PFX');
+      if(!SKILL_CAPE.thieving) miss.push('SKILL_CAPE');
+      if(RAIL_GROUP.thieving!=='support') miss.push('RAIL_GROUP');
+      if(GD_VERB.thieving!=='Steal') miss.push('GD_VERB');
+      if(!SKILL_PETS.thieving) miss.push('SKILL_PETS');
+      if(!SKILLING_SETS.thieving) miss.push('SKILLING_SETS');
+      return miss.join(', ')||'ok'; })()`));
+    }
+
     section('The XP faucet and the charm shelf (0.9.122.30)');
     {
     /* XP_SCALE is one number that every XP source is supposed to run through. The
@@ -4143,7 +4279,13 @@ setTimeout(() => {
       out.charms=CHARMS.length;
       out.supplies=SUPPLIES.length;
       // every buyable row draws as a real SVG, never the emoji fallback
-      out.emojiFallback=buyable.filter(function(i){ return !ICONS[i.id]; }).map(function(i){ return i.id; });
+      /* Ask iconHTML, not ICONS. A row can resolve through ICON_ALIAS (placeholder
+         art borrowed until a sheet is drawn) and still be a real drawn icon — what
+         this guards is falling back to the emoji in the SHOP entry. */
+      out.emojiFallback=buyable.filter(function(i){
+        var h=''; try{h=iconHTML(i.id)||'';}catch(e){}
+        return h.indexOf('<img')!==0 && h.indexOf('<svg')<0 && h.indexOf('<span')!==0;
+      }).map(function(i){ return i.id; });
       // and no card is left printing a raw \\U escape (the shop's own near-miss)
       out.badEscape=buyable.filter(function(i){
         return /U000[0-9a-f]{5}/.test(i.name+' '+i.desc+' '+(i.icon||'')); }).map(function(i){ return i.id; });
