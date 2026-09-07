@@ -4864,6 +4864,9 @@ body:not(.is-demo) .demo-only{display:none !important}
   color:var(--gold-hi);line-height:1.2}
 .gd-item .sd{font-family:var(--num);font-size:calc(10.5px*var(--tscale));
   color:var(--dim,#8a7657);line-height:1.5}
+/* The lock line sits under the description now rather than replacing it, so it needs
+   to read as a condition and not as more description. */
+.gd-item .sd.gd-need{color:#c79b4e;margin-top:3px;letter-spacing:.02em}
 .gd-item .sp{margin-top:auto;display:flex;align-items:center;justify-content:space-between;gap:8px}
 .gd-item .sp .pr{font-family:var(--num);font-size:calc(12px*var(--tscale));
   color:var(--gold-hi);display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
@@ -7358,7 +7361,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.122.39">v0.9.122</div>
+  <div class="mm-ver" data-build="0.9.122.40">v0.9.122</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -8794,8 +8797,8 @@ const ITEMS={
 
   /* ── THIEVING (0.9.122.31) ────────────────────────────────────────────────
      Stolen goods. `hot:true` is the whole mechanic: the general store pays a
-     third for these, the Nightmarket pays in full — which is the fence:true flag
-     on that guild finally reading something. Sell values are what the FENCE pays;
+     third for these, the Nightmarket pays in full — which is the buysAnything flag
+     on that guild finally reading something. Sell values are what the Nightmarket pays;
      effectiveItemSell applies the penalty everywhere else. */
   cut_purse:      {name:'Cut Purse',      icon:'\U0001f45b',sell:180,  hot:true, desc:'A purse opened from the side with a very sharp knife. Whoever owned it has not noticed yet.'},
   silver_plate:   {name:'Silver Plate',   icon:'\U0001f37d\ufe0f',sell:640,  hot:true, desc:'Chased silver, tarnished at the rim, someone else\u2019s crest on the underside. Awkward to sell honestly.'},
@@ -9911,7 +9914,7 @@ function setSocketGem(itemId, slotIdx, gemId){
   saveGame();
   /* Topaz and Onyx are read by socketBonuses(), which walks state.equipped —
      the SKILLING loadout. Combat gear can never sit there, so a skilling gem in
-     armour pays out exactly zero forever, with no error and no greyed-out slot.
+     armour rewards exactly zero forever, with no error and no greyed-out slot.
      A Flawless Onyx is ~4 hours of gem-rock mining, so this is worth saying. */
   try{
     var _g=SOCKET_GEMS[gemId], _it=ITEMS[itemId];
@@ -15095,7 +15098,7 @@ const TREES = {
     {id:'th_goods',  name:'Sticky Fingers',icon:'',  max:12,req:15, desc:r=>`+${r}% chance a steal also lifts goods`,           next:r=>`+1% goods → ${r}%`},
     {id:'th_caught', name:'Slippery',      icon:'', max:10,req:25, desc:r=>`+${(r*0.8).toFixed(1)}% success when a steal is above your level`, next:r=>`+0.8% → ${(r*0.8).toFixed(1)}%`},
     {id:'th_master1',name:'Cutpurse',      icon:'',max:1, req:20, desc:r=>r?'Coins from every steal +20%':'Coins from every steal +20%', next:()=>'+20% coins from every steal'},
-    {id:'th_master2',name:'Fence Contact', icon:'',max:1, req:40, desc:r=>r?'Stolen goods sell for +25%':'Stolen goods sell for +25%',   next:()=>'+25% on every stolen good'},
+    {id:'th_master2',name:'Better Prices', icon:'',max:1, req:40, desc:r=>r?'Stolen goods sell for +25%':'Stolen goods sell for +25%',   next:()=>'+25% on every stolen good'},
     {id:'th_master3',name:'Second Pocket', icon:'',max:1, req:60, desc:r=>r?'10% chance a successful steal pays twice':'10% chance a successful steal pays twice', next:()=>'10% chance to steal twice'},
     {id:'th_gm_speed', name:'Master Thief',icon:'', max:9,req:75, desc:r=>`Reduces task time by a further ${(r*1.8).toFixed(1)}%`, next:r=>`+1.8% faster → ${(r*1.8).toFixed(1)}%`},
     {id:'th_gm_success',name:'Ghost',      icon:'',max:8,req:80, desc:r=>`+${r*2}% chance a steal succeeds`,               next:r=>`+2% success → ${r*2}%`},
@@ -18092,7 +18095,7 @@ function normalizeState(){
   /* Charms (0.9.122.20) — unslotted permanent shop unlocks. Every save made before
      this build has none, and charmBonus() reads the array on every mods() call, so
      it has to exist rather than be created lazily on first purchase. Unknown ids are
-     dropped: a charm removed from CHARMS must not keep paying out. */
+     dropped: a charm removed from CHARMS must not keep rewarding you. */
   if(!Array.isArray(state.charms)) state.charms=[];
   else state.charms=state.charms.filter(function(id){ return !!CHARM_BY_ID[id]; });
   /* Seed vault. The migration runs on EVERY load, not once behind a flag: it is
@@ -19047,7 +19050,7 @@ function producingSkillOf(id){
   return null;
 }
 /* What the general store pays for stolen goods. The sell values on `hot` items are
-   what the FENCE pays; everyone else is buying something they can see is not yours.
+   what the NIGHTMARKET pays; everyone else is buying something they can see is not yours.
    Nightmarket rank cuts the penalty — the guild's whole business. */
 const HOT_PENALTY=0.35;
 function hotSellMult(){
@@ -19059,7 +19062,7 @@ function effectiveItemSell(id){
   const it=ITEMS[id]; if(!it||!it.sell) return 0;
   let bonus=globalSellBonus();
   if(it.hot){
-    /* Fence Contact, from the Thieving tree, is a bonus on top rather than part of
+    /* Better Prices, from the Thieving tree, is a bonus on top rather than part of
        the penalty — a thief who has it beats an unjoined seller either way. */
     const th=(typeof treeRank==='function'&&treeRank('thieving','th_master2')>0)?0.25:0;
     return Math.round(effectiveSellValue(it.sell, bonus) * hotSellMult() * (1+th));
@@ -23342,17 +23345,22 @@ const GUILDS=[
    perkTxt:['You can take Gilded Facet quests','+3% jeweler speed','+4% Jeweler XP',
             '+6% jeweler speed','+4% chance of a second piece','+8% chance of a second piece']},
 
-  /* fence:true — this guild deals in whatever you bring it rather than in what its
+  /* buysAnything — this guild deals in whatever you bring it rather than in what its
      own skill makes. Agility produces nothing you can hold, so laps were the only
      shape it could roll: 15 possible quest lines against the Delvers' 336, and the
-     same board back every fifth day. See gdFencePool. */
-  {id:'night', name:'The Nightmarket', sub:'Thieves', skills:['thieving'], fence:true, req:{thieving:15},
-   titles:['Runner','Lookout','Fence','Broker','Shadowbroker','Master of the Nightmarket'],
+     same board back every fifth day. See gdBuyerPool. */
+  {id:'night', name:'The Nightmarket', sub:'Thieves', skills:['thieving'], buysAnything:true, req:{thieving:15},
+   /* Was 'Fence'. The word is gone from the game entirely: the guild buys what you
+      bring it, and half of what its board asks for is crafted rather than stolen, so
+      "Fence 30 Dragon Ring" claimed you had stolen a ring you smithed yourself. */
+   titles:['Runner','Lookout','Dealer','Broker','Shadowbroker','Master of the Nightmarket'],
    perks:[null,{sell:0.04},{speed:0.04},{sell:0.08},{xp:0.06},{sell:0.14}],
-   perkTxt:['You can take Nightmarket quests · the fence buys stolen goods',
-            '+4% gold from every sale · the fence pays more',
-            '+4% Thieving speed','+8% gold from every sale · the fence pays more',
-            '+6% Thieving XP','+14% gold from every sale · the fence pays full price']},
+   perkTxt:['You can take Nightmarket quests. They buy stolen goods.',
+            '+4% gold from every sale. Better prices for stolen goods.',
+            '+4% Thieving speed',
+            '+8% gold from every sale. Better prices for stolen goods.',
+            '+6% Thieving XP',
+            '+14% gold from every sale. Full price for stolen goods.']},
 
   {id:'legion', name:'The Iron Legion', sub:'Warriors', combat:true, skills:[], req:{attack:15},
    titles:['Recruit','Legionary','Vanguard','Centurion','Champion','Legate'],
@@ -23602,7 +23610,7 @@ function gdAndList(parts){
    not two. Drawn from the upper part of what the player has unlocked so it does not
    send a level 90 miner back to copper. */
 /* A pool entry is {act, skill, id}: the act to size the order off, the SKILL that
-   act belongs to (actMs needs its own skill, and a fence draws from all of them),
+   act belongs to (actMs needs its own skill, and this guild draws from all of them),
    and the item it makes. One entry per distinct item, in level order. */
 function gdPoolFor(skill){
   const out=[];
@@ -23612,8 +23620,8 @@ function gdPoolFor(skill){
   });
   return out;
 }
-/* The fence's pool: the most valuable thing every OTHER skill makes. A thieves'
-   guild asking you to run laps and nothing else was never the whole of what a fence
+/* The buyer's pool: the most valuable thing every OTHER skill makes. A thieves'
+   guild asking you to run laps and nothing else was never the whole of what a buyer
    does, and it was the only shape agility could produce. Sorted by sell value and
    cut to the top third, so it asks for gold bars and cut gems rather than copper
    ore, and it grows as the player unlocks more of the game. */
@@ -23639,7 +23647,7 @@ function gdHotPool(){
   }
   return out;
 }
-function gdFencePool(){
+function gdBuyerPool(){
   const all=[];
   for(const sk in SKILLS){
     if(sk==='farming') continue;
@@ -23651,7 +23659,7 @@ function gdFencePool(){
     });
   }
   all.sort((x,y)=>x.sell-y.sell);
-  /* Stolen goods belong on a fence's board and the sweep above cannot find them:
+  /* Stolen goods belong on this board and the sweep above cannot find them:
      they have no `out` table, because a steal rolls them out of THIEF_POOLS. Appended
      rather than sorted in, because both rollers draw from pool.slice(-n) -- put them
      at the front, where their sell value says they belong, and neither one can ever
@@ -23689,7 +23697,7 @@ function gdRollDeliver(pool,size,verb,questSkill){
    `need` is in SILVER, the unit state.coins is kept in; the printed name is gold. */
 function gdRollCoin(g,size){
   const S=GD_SIZE[size];
-  /* Sized off the best gold rate in the GAME, not in the guild's own skill. A fence
+  /* Sized off the best gold rate in the GAME, not in the guild's own skill. This guild
      asks for what you can actually earn; agility pays coins directly but nowhere
      near what selling a jeweller’s output does, and pricing the order off laps
      produced a Long quest worth 500 gold beside one asking for 22 Voidsteel Chests. */
@@ -23769,14 +23777,14 @@ function gdRollOne(g,size){
   if(!acts.length) return null;
 
   const roll=Math.random();
-  if(g.fence){
-    /* A fence takes coin and takes goods, and the goods come from anywhere. Laps
+  if(g.buysAnything){
+    /* It takes coin and it takes goods, and the goods come from anywhere. Laps
        stay on the board — they are still what the guild trains — but they are no
        longer the only thing it can ask for. */
-    const pool=gdFencePool();
+    const pool=gdBuyerPool();
     if(roll<0.22){ const q=gdRollCoin(g,size); if(q) return q; }
-    if(roll<0.48){ const q=gdRollSupply(pool,size,'Fence',skill); if(q) return q; }
-    if(roll<0.72){ const q=gdRollDeliver(pool,size,'Fence',skill); if(q) return q; }
+    if(roll<0.48){ const q=gdRollSupply(pool,size,'Sell',skill); if(q) return q; }
+    if(roll<0.72){ const q=gdRollDeliver(pool,size,'Sell',skill); if(q) return q; }
   } else {
     const pool=gdPoolFor(skill);
     if(roll<0.30){ const q=gdRollSupply(pool,size,'Supply',skill); if(q) return q; }
@@ -24024,7 +24032,7 @@ const GD_SHOP_NAMES={
   emberforge:{xp:'Pattern book',           coin:'Forge commission',   crate:'Pallet of stock'},
   ashen:     {xp:"The Circle's grimoire",  coin:'Sale of remedies',   crate:'Reagent chest'},
   facet:     {xp:"Lapidary's notes",       coin:'Commission fee',     crate:'Velvet case'},
-  night:     {xp:"The runner's map",       coin:'Fenced goods'},
+  night:     {xp:"The runner's map",       coin:"Night's takings"},
   legion:    {xp:'The drill field',        coin:'Campaign pay'},
   quiethand: {xp:'The dark room',          coin:'Contract fee'},
 };
@@ -24127,7 +24135,7 @@ function gdShopFor(id){
   return GD_SHOP.filter(s=>s.id!=='crate'||!!crateId).map(function(s){
     let desc=s.desc;
     if(s.id==='xp'){
-      const much=xp.amount?' \u2014 about '+fmtK(xp.amount):'';
+      const much=xp.amount?' (about '+fmtK(xp.amount)+')':'';
       desc = g.combat
         ? 'About '+GD_SHOP_MINS+' minutes of combat XP'+much
           +', split into your attack style and Hitpoints the same way a kill does.'
@@ -24137,13 +24145,15 @@ function gdShopFor(id){
       desc=GD_COIN_GOLD.toLocaleString()+' gold, straight into your purse.';
     } else if(s.id==='crate'){
       desc=GD_CRATE_QTY+' '+((ITEMS[crateId]&&ITEMS[crateId].name)||crateId)
-        +', straight to your satchel \u2014 always the best this guild is making right now.';
+        +', straight to your satchel. Always the best this guild is making right now.';
     }
     return {...s,
       title:nm[s.id]||s.title,
       desc:desc,
       locked:n<s.need,
-      lockTxt:'Needs '+g.titles[s.need-1]};
+      /* "Needs Fence" gave no sign that the word was a RANK rather than an item or a
+         person. Number it and label it. */
+      lockTxt:'Unlocks at rank '+s.need+', '+g.titles[s.need-1]};
   });
 }
 /* An hour of the guild's own work.
@@ -24355,8 +24365,12 @@ function _gdGuildPage(id){
   for(const s of gdShopFor(id)){
     const afford=(state.gdTokens||0)>=s.cost && !s.locked;
     const it=_gdEl('gd-item');
+    /* A locked row used to print its requirement INSTEAD of its description, so the
+       shop said what you could not buy and never what it was. Both lines now, always:
+       what the thing is, then what opens it. */
     it.innerHTML='<div class="st"><b>'+s.title+'</b></div>'
-      +'<div class="sd">'+(s.locked?s.lockTxt:s.desc)+'</div>'
+      +'<div class="sd">'+s.desc+'</div>'
+      +(s.locked?'<div class="sd gd-need">'+s.lockTxt+'</div>':'')
       +'<div class="sp"><span class="pr">'+iconHTML('ui_gem')+' '+s.cost+'</span>'
       +'<button class="gd-btn'+(afford?' pri':' off')+'"'+(afford?'':' disabled')+'>'
       +(s.locked?'Locked':'Buy')+'</button></div>';
@@ -30799,7 +30813,7 @@ function buildSourceMap(){
      roll time -- so the sweep above finds nothing for any of them, and the compendium
      answered "where does a Signet Ring come from?" with silence. It also meant the
      guild board's completability audit could not see a source for the six stolen
-     goods and failed the moment the fence started asking for them.
+     goods and failed the moment the Nightmarket started asking for them.
 
      The level a source records is whichever gate is HIGHER: the act's own Thieving
      requirement, and the tier's gate inside the pool. A pool keyed to another skill
@@ -33278,7 +33292,7 @@ function _soWornIn(id){
   for(var k2 in se){ if(se[k2]===id){ out.skilling=true; break; } }
   return out;
 }
-/* Is this gem in this piece actually paying out right now? Combat gems
+/* Is this gem in this piece actually rewarding you right now? Combat gems
    (sanguine/verdant/azure) are summed from state.combatEquipped; skilling gems
    (topaz/onyx) from state.equipped. A topaz in a helmet is dead weight forever,
    so the panel says so on the socket instead of hoping you saw the hint once. */
@@ -33952,7 +33966,7 @@ function fleeCombat(){
 }
 
 /* Resume the fight the save was holding (0.9.122). Called after grantOffline,
-   which has already paid out the away time and cleared the session if food ran
+   which has already rewarded the away time and cleared the session if food ran
    out — so reaching here means there is still a fight worth standing in. */
 function resumeCombatSession(){
   const cs=state && state.combatSession;
