@@ -2490,6 +2490,33 @@ setTimeout(() => {
          return afterFirst==='{}' && state.tree._offline.of_rate===4; })()`) === true);
   }
 
+  section('A skill added after load still has an XP/hr buffer (0.9.124)');
+  {
+    /* xphBuf is seeded by `for(const s in SKILLS)` at parse time, and Fletching is
+       added afterwards by the ranged content block. So xphBuf.fletching was
+       undefined and updateSmoothedXph threw on `.filter` of undefined ONCE A
+       SECOND, forever, from inside a setInterval where nothing surfaces it. The
+       visible symptom was not an error: it was every skill's XP/hr readout quietly
+       ceasing to update.
+
+       Asserted for every skill rather than for Fletching by name, so the next
+       late-registered skill is covered without anyone remembering to add it. */
+    const xph = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      var missing=[], threw=null;
+      for(var s in SKILLS) if(!xphBuf[s]) missing.push(s);
+      try{ updateSmoothedXph(); }catch(e){ threw=String(e.message||e); }
+      var lazy=null;
+      try{ delete xphBuf.fletching; liveXph('fletching'); lazy='ok'; }
+      catch(e){ lazy=String(e.message||e); }
+      return JSON.stringify({missing:missing, threw:threw, lazy:lazy});
+    })()`));
+    ok('every skill has a buffer, however late it registered',
+       xph.missing.length === 0, xph.missing.join(', '));
+    ok('and the per-second smoother does not throw', xph.threw === null, xph.threw || '');
+    ok('a buffer deleted at runtime is rebuilt rather than crashing', xph.lazy === 'ok', xph.lazy);
+  }
+
   section("The consort matches the flagship, never passes it (0.9.123.9)");
   {
     /* Player-reported as "the consort's ship can't be upgraded to the Ancient

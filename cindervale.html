@@ -18891,8 +18891,14 @@ const TICK_CATCHUP_MAX_MS = 120000;   // 2 minutes
 let _lastTickWall = 0;
 const XPH_WINDOW = 120000; // 2 minute rolling window — smooth cross-activity average
 const XPH_WARMUP =  10000; // show theoretical for first 10s until real data builds up
+/* Ring buffers, one per skill. Seeded here from SKILLS, but a skill can be added
+   AFTER this line runs (Fletching is, from the ranged content block), so every
+   read below has to tolerate a missing buffer or updateSmoothedXph throws once a
+   second forever. It is a setInterval, so nothing surfaces it: the XP/hr readout
+   simply stops updating for every skill. */
 const xphBuf={};
 for(const s in SKILLS) xphBuf[s]=[];
+function _xphBufOf(skill){ return xphBuf[skill] || (xphBuf[skill]=[]); }
 const xphStartTime={}; // when each skill first started earning this session
 for(const s in SKILLS) xphStartTime[s]=0;
 
@@ -18900,10 +18906,10 @@ function recordXpGain(skill,amount){
   if(amount<=0) return;
   const now=Date.now();
   if(!xphStartTime[skill]) xphStartTime[skill]=now;
-  xphBuf[skill].push({t:now,xp:amount});
+  _xphBufOf(skill).push({t:now,xp:amount});
   // trim entries older than the window
   const cutoff=now-XPH_WINDOW;
-  xphBuf[skill]=xphBuf[skill].filter(e=>e.t>=cutoff);
+  xphBuf[skill]=_xphBufOf(skill).filter(e=>e.t>=cutoff);
 }
 
 /* Smoothed XP/hr for stable display — updated every 5s, not every frame.
@@ -18929,7 +18935,7 @@ function smoothXph(skill){ return _smoothedXph[skill]||0; }
    so the number eases in rather than jumping around.                  */
 function liveXph(skill){
   const now=Date.now();
-  const buf=xphBuf[skill].filter(e=>e.t>=now-XPH_WINDOW);
+  const buf=_xphBufOf(skill).filter(e=>e.t>=now-XPH_WINDOW);
   if(!buf.length) return 0;
 
   const totalXp=buf.reduce((a,e)=>a+e.xp,0);
@@ -20163,8 +20169,14 @@ function playerMaxHit(){
      carried strength would stack with the arrow and put ranged over melee before
      the level coefficient was even considered. */
   if(usingRanged()){
+    /* dmgMult is the weapon driving the shot harder, and it exists because accuracy
+       could not do the job. Hit chance is acc/(acc+def), which saturates: the
+       longbow's +28% accuracy bought it almost nothing while it gave up the
+       shortbow's 15% speed, and _rangedsim.js measured both it and the crossbow at
+       80-90% of melee. Damage does not saturate. */
+    const _wm=(ITEMS[eqCombatWeapon()]||{}).dmgMult||1;
     return Math.max(1, Math.round((cmbLvl('ranged')*RANGED_HIT_LVL + (cs.str+ammoStr())*COMBAT_P.HIT_GEAR)
-      * (1 + (b.atkBoost||0)) * classMaxHitMult()));
+      * _wm * (1 + (b.atkBoost||0)) * classMaxHitMult()));
   }
   return Math.max(1, Math.round((cmbLvl('strength')*COMBAT_P.HIT_LVL + (cs.str+bonusStr)*COMBAT_P.HIT_GEAR) * (1 + (b.atkBoost||0)) * classMaxHitMult()));
 }
@@ -30058,14 +30070,14 @@ function hasPet(petId){ return !!(state && state.pets && state.pets[petId]); }
      has always promised finally applies to something. */
   WOODS.forEach(function(w,i){
     const p=WPAL[w.k], ct=i+1;
-    [['short','Shortbow',1.00,0.85],['long','Longbow',1.28,1.00]].forEach(function(v){
-      const kind=v[0], label=v[1], atkMult=v[2], swing=v[3];
+    [['short','Shortbow',1.00,0.85,1.00],['long','Longbow',1.28,1.00,1.13]].forEach(function(v){
+      const kind=v[0], label=v[1], atkMult=v[2], swing=v[3], dmg=v[4];
       const id=w.k+'_'+kind+'bow', un='unstrung_'+id;
       ITEMS[un]={name:'Unstrung '+w.n+' '+label, icon:'🪵', sell:Math.round(w.sell*0.35),
         desc:'A '+w.n.toLowerCase()+' stave, carved and tillered. It needs a bowstring before it is a weapon.'};
       ITEMS[id]={name:w.n+' '+label, icon:'🏹', sell:w.sell, cgear:true, ctier:ct, cslot:'weapon',
         dmgType:'ranged', twoHanded:true, wclass:'light', ranged:true, ammo:'arrow',
-        swingMult:swing, reqRanged:w.fl,
+        swingMult:swing, dmgMult:dmg, reqRanged:w.fl,
         desc:w.n+' and flax. '+(kind==='short'
           ? 'Short in the limb and quick to draw: '+Math.round((1-swing)*100)+'% faster than a blade, and the arrow does the rest.'
           : 'Long in the limb and slow to bring round, but it puts the shot where you meant it.')
@@ -30089,7 +30101,7 @@ function hasPet(petId){ return !!(state && state.pets && state.pets[petId]); }
       desc:'A stock and a '+a.n.toLowerCase()+' prod, pinned and true. It needs a bowstring before it will hold a draw.'};
     ITEMS[id]={name:a.n+' Crossbow', icon:'🏹', sell:Math.round(a.sell*22), cgear:true, ctier:ct, cslot:'weapon',
       dmgType:'ranged', wclass:'standard', ranged:true, ammo:'bolt',
-      swingMult:1.15, reqRanged:a.fl,
+      swingMult:1.15, dmgMult:1.24, reqRanged:a.fl,
       desc:'Slower to crank than a bow draws, and it aims better for it. One hand only, so a shield or buckler still fits, and every shot spends a bolt.'};
     ICONS[un]=xbowSVG(p,true); ICONS[id]=xbowSVG(p,false);
     COMBAT_GEAR_STATS[id]={atk:atk, str:0, def:0};
