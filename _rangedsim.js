@@ -113,7 +113,8 @@ setTimeout(() => {
       var batchMs=flAct?Math.max(flAct.minMs, flAct.ms*flAct.spdMult):5000;
       function feed(rate){
         var burn=arrowsPerHr*(1-rate);
-        return {burn:Math.round(burn), batches:Math.round(burn/12), mins:+((burn/12*batchMs)/60000).toFixed(1)};
+        var per=(flAct&&flAct.out[metal+'_arrow'])||15;   // batch size, read from the act
+        return {burn:Math.round(burn), batches:Math.round(burn/per), mins:+((burn/per*batchMs)/60000).toFixed(1)};
       }
 
       rows.push({lv:lv, tier:t, foeDef:def,
