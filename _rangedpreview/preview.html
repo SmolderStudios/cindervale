@@ -1,0 +1,1046 @@
+<!doctype html><meta charset="utf-8"><title>Ranged + Fletching</title>
+<style>
+:root{--bg:#181109;--panel:#251a10;--raised:#32241566;--raised-s:#322415;--text:#ead9b5;
+  --muted:#a08a64;--trim:#c79b4e;--trim-d:#6e552c;--ember:#e0762f;--green:#7da33f;--blue:#5a8fcb}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--text);margin:0;padding:26px 30px 60px;
+  font-family:'Crimson Pro',Georgia,serif;font-size:15px}
+h1{font-family:Cinzel,Georgia,serif;color:#fbeed0;font-size:27px;margin:0 0 4px}
+.sub{color:var(--muted);font-size:14px;margin:0 0 26px}
+h2{font-family:Cinzel,Georgia,serif;color:var(--trim);font-size:18px;
+  margin:34px 0 4px;border-bottom:1px solid var(--trim-d);padding-bottom:6px}
+.note{color:var(--muted);font-size:13.5px;line-height:1.6;margin:8px 0 14px;max-width:104ch}
+.rp-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.rp-cell{width:126px;background:linear-gradient(180deg,var(--raised-s),#22180d);
+  border:1px solid var(--trim-d);border-radius:10px;padding:11px 8px;text-align:center}
+.rp-ic{display:flex;align-items:center;justify-content:center;height:56px;font-size:48px;margin-bottom:6px}
+.ev-icon{width:1em;height:1em}
+.rp-cell b{display:block;font-family:Cinzel,Georgia,serif;font-size:13px;color:#fbeed0;line-height:1.25}
+.rp-cell i{display:block;font-style:normal;font-family:ui-monospace,Consolas,monospace;
+  font-size:11px;color:var(--muted);margin-top:3px}
+.rp-cell em{display:inline-block;font-style:normal;font-family:ui-monospace,Consolas,monospace;
+  font-size:10.5px;color:var(--ember);border:1px solid var(--trim-d);border-radius:999px;
+  padding:1px 7px;margin-top:5px}
+.mat{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.mat .rp-cell{width:112px}
+table{border-collapse:collapse;font-size:13.5px;margin:6px 0 12px}
+th,td{border:1px solid var(--trim-d);padding:6px 11px;text-align:left}
+th{background:#2a1e12;color:var(--trim);font-family:Cinzel,Georgia,serif;font-weight:normal;font-size:12.5px}
+td.n{font-family:ui-monospace,Consolas,monospace;text-align:right;color:#fbeed0}
+.tree{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:7px;margin-bottom:14px}
+.tnode{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:9px;align-items:center;
+  background:#150e07;border:1px solid var(--trim-d);border-radius:9px;padding:9px 11px}
+.tnode b{display:block;font-family:Cinzel,Georgia,serif;font-size:13.5px;color:#fbeed0}
+.tnode span{display:block;font-size:12px;color:var(--muted);line-height:1.45;margin-top:3px}
+.tnode em{font-style:normal;font-family:ui-monospace,Consolas,monospace;font-size:12.5px;color:var(--text)}
+.tier{font-family:ui-monospace,Consolas,monospace;font-size:11px;letter-spacing:.15em;
+  text-transform:uppercase;color:var(--muted);margin:14px 0 7px;display:flex;gap:9px;align-items:center}
+.tier::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--trim-d),transparent)}
+.warn{background:#1f1408;border:1px solid #5a3e18;border-radius:8px;padding:11px 14px;
+  color:#e0a36f;font-size:13.5px;line-height:1.55;max-width:104ch;margin:10px 0 6px}
+.warn b{color:#f5c98a}
+.small{font-size:20px}
+</style>
+<h1>Ranged and Fletching</h1>
+<p class="sub">Proposal art and layout. Nothing here is in the game. Sizes shown at 48px and again at 20px, which is what a satchel row actually draws.</p>
+<h2>Bows</h2>
+<p class="note">Two handed, light class so the Rogue bonus applies, faster swing, no shield.
+Seven tiers off the wood ladder that already exists. Shortbows curl at the tips, longbows straighten out and gain reach.</p><div class="rp-row"><div class="rp-cell"><span class="rp-ic"><svg class="ev-icon" viewBox="0 0 64 64"><defs>
+      <linearGradient id="rp2" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#c09a63"/><stop offset="0.45" stop-color="#8a6236"/>
+        <stop offset="1" stop-color="#3f2b14"/></linearGradient></defs>
+    <path d="M50 9 C10 19 10 45 50 55" fill="none" stroke="url(#rp2)" stroke-width="6.5" stroke-linecap="round"/>
+    <path d="M50 9 C10 19 10 45 50 55" fill="none" stroke="#c09a63" stroke-width="1.5" opacity="0.4"
+      stroke-linecap="round" transform="translate(-1.6,0)"/>
+    <path d="M50 9 C57 12 57 17 48 18"
+         fill="none" stroke="url(#rp2)" stroke-width="5" stroke-linecap="round"/>
+       <path d="M50 55 C57 52 57 47 48 46"
+         fill="none" stroke="url(#rp2)" stroke-width="5" stroke-linecap="round"/>
+    <path d="M50 9 L50 55" stroke="#efe4c4" stroke-width="1.8" stroke-linecap="round"/>
+    <path d="M11 24 L11 40" stroke="#3a2513" stroke-width="10" stroke-linecap="round"/>
+    <path d="M11 24 L11 40" stroke="#6d4a26" stroke-width="7" stroke-linecap="round"/>
+    <path d="M7 28 H15 M7 36 H15"
+      stroke="#c9a86a" stroke-width="1.8" opacity="0.7" stroke-linecap="round"/>
+    </svg></span>
+     <b>Pine Shortbow</b><i>Fletching 1</i><em>wood T1</em></div><div class="rp-cell"><span class="rp-ic"><svg class="ev-icon" viewBox="0 0 64 64"><defs>
+      <linearGradient id="rp4" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#b98a4e"/><stop offset="0.45" stop-color="#7d5527"/>
+        <stop offset="1" stop-color="#3a2610"/></linearGradient></defs>
+    <path d="M50 9 C10 19 10 45 50 55" fill="none" stroke="url(#rp4)" stroke-width="6.5" stroke-linecap="round"/>
+    <path d="M50 9 C10 19 10 45 50 55" fill="none" stroke="#b98a4e" stroke-width="1.5" opacity="0.4"
+      stroke-linecap="round" transform="translate(-1.6,0)"/>
+    <path d="M50 9 C57 12 57 17 48 18"
+         fill="none" stroke="url(#rp4)" stroke-width="5" stroke-linecap="round"/>
+       <path d="M50 55 C57 52 57 47 48 46"
+         fill="none" stroke="url(#rp4)" stroke-width="5" stroke-linecap="round"/>
+    <path d="M50 9 L50 55" stroke="#efe4c4" stroke-width="1.8" stroke-linecap="round"/>
+    <path d="M11 24 L11 40" stroke="#3a2513" stroke-width="10" stroke-linecap="round"/>
+    <path d="M11 24 L11 40" stroke="#6d4a26" stroke-width="7" stroke-linecap="round"/>
+    <path d="M7 28 H15 M7 36 H15"
+      stroke="#c9a86a" stroke-width="1.8" opacity="0.7" stroke-linecap="round"/>
+    </svg></span>
+     <b>Oak Shortbow</b><i>Fletching 12</i><em>wood T2</em></div><div class="rp-cell"><span class="rp-ic"><svg class="ev-icon" viewBox="0 0 64 64"><defs>
+      <linearGradient id="rp6" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#9a9484"/><stop offset="0.45" stop-color="#5f5a4c"/>
+        <stop offset="1" stop-color="#2b281f"/></linearGradient></defs>
+    <path d="M50 9 C10 19 10 45 50 55" fill="none" stroke="url(#rp6)" stroke-width="6.5" stroke-linecap="round"/>
+    <path d="M50 9 C10 19 10 45 50 55" fill="none" stroke="#9a9484" stroke-width="1.5" opacity="0.4"
+      stroke-linecap="round" transform="translate(-1.6,0)"/>
+    <path d="M50 9 C57 12 57 17 48 18"
+         fill="none" stroke="url(#rp6)" stroke-width="5" stroke-linecap="round"/>
+       <path d="M50 55 C57 52 57 47 48 46"
+         fill="none" stroke="url(#rp6)" stroke-width="5" stroke-linecap="round"/>
+    <path d="M50 9 L50 55" stroke="#efe4c4" stroke-width="1.8" stroke-linecap="round"/>
+    <path d="M11 24 L11 40" stroke="#3a2513" stroke-width="10" stroke-linecap="round"/>
+    <path d="M11 24 L11 40" stroke="#6d4a26" stroke-width="7" stroke-linecap="round"/>
+    <path d="M7 28 H15 M7 36 H15"
+      stroke="#c9a86a" stroke-width="1.8" opacity="0.7" stroke-linecap="round"/>
+    </svg></span>
+     <b>Ironbark Shortbow</b><i>Fletching 27</i><em>wood T3</em></div><div class="rp-cell"><span class="rp-ic"><svg class="ev-icon" viewBox="0 0 64 64"><defs><radialGradient id="rp7" cx="0.5" cy="0.5" r="0.55">
+         <stop offset="0" stop-color="#e0762f" stop-opacity="0.42"/>
+         <stop offset="1" stop-color="#e0762f" stop-opacity="0"/></radialGradient>
+      <linearGradient id="rp8" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#d4703c"/><stop offset="0.45" stop-color="#96351d"/>
+        <stop offset="1" stop-color="#3d1108"/></linearGradient></defs><circle cx="32" cy="32" r="28" fill="url(#rp7)"/>
+    <path d="M50 9 C10 19 10 45 50 55" fill="none" stroke="url(#rp8)" stroke-width="6.5" stroke-linecap="round"/>
+    <path d="M50 9 C10 19 10 45 50 55" fill="none" stroke="#d4703c" stroke-width="1.5" opacity="0.4"
+      stroke-linecap="round" transform="translate(-1.6,0)"/>
+    <path d="M50 9 C57 12 57 17 48 18"
+         fill="none" stroke="url(#rp8)" stroke-width="5" stroke-linecap="round"/>
+       <path d="M50 55 C57 52 57 47 48 46"
+         fill="none" stroke="url(#rp8)" stroke-width="5" stroke-linecap="round"/>
+    <path d="M50 9 L50 55" stroke="#efe4c4" stroke-width="1.8" stroke-linecap="round"/>
+    <path d="M11 24 L11 40" stroke="#3a2513" stroke-width="10" stroke-linecap="round"/>
+    <path d="M11 24 L11 40" stroke="#6d4a26" stroke-width="7" stroke-linecap="round"/>
+    <path d="M7 28 H15 M7 36 H15"
+      stroke="#c9a86a" stroke-width="1.8" opacity="0.7" stroke-linecap="round"/>
+    </svg></span>
+     <b>Emberwood Shortbow</b><i>Fletching 45</i><em>wood T4</em></div><div class="rp-cell"><span class="rp-ic"><svg class="ev-icon" viewBox="0 0 64 64"><defs><radialGradient id="rp9" cx="0.5" cy="0.5" r="0.55">
+         <stop offset="0" stop-color="#8fd0e6" stop-opacity="0.42"/>
+         <stop offset="1" stop-color="#8fd0e6" stop-opacity="0"/></radialGradient>
+      <linearGradient id="rp10" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#a8cfe0"/><stop offset="0.45" stop-color="#5c8ba4"/>
+        <stop offset="1" stop-color="#1e3242"/></linearGradient></defs><circle cx="32" cy="32" r="28" fill="url(#rp9)"/>
+    <path d="M50 9 C10 19 10 45 50 55" fill="none" stroke="url(#rp10)" stroke-width="6.5" stroke-linecap="round"/>
+    <path d="M50 9 C10 19 10 45 50 55" fill="none" stroke="#a8cfe0" stroke-width="1.5" opacity="0.4"
+      stroke-linecap="round" transform="translate(-1.6,0)"/>
+    <path d="M50 9 C57 12 57 17 48 18"
+         fill="none" stroke="url(#rp10)" stroke-width="5" stroke-linecap="round"/>
+       <path d="M50 55 C57 52 57 47 48 46"
+         fill="none" stroke="url(#rp10)" stroke-width="5" stroke-linecap="round"/>
+    <path d="M50 9 L50 55" stroke="#efe4c4" stroke-width="1.8" stroke-linecap="round"/>
+    <path d="M11 24 L11 40" stroke="#3a2513" stroke-width="10" stroke-linecap="round"/>
+    <path d="M11 24 L11 40" stroke="#6d4a26" stroke-width="7" stroke-linecap="round"/>
+    <path d="M7 28 H15 M7 36 H15"
+      stroke="#c9a86a" stroke-width="1.8" opacity="0.7" stroke-linecap="round"/>
+    </svg></span>
+     <b>Frostwood Shortbow</b><i>Fletching 62</i><em>wood T5</em></div><div class="rp-cell"><span class="rp-ic"><svg class="ev-icon" viewBox="0 0 64 64"><defs><radialGradient id="rp11" cx="0.5" cy="0.5" r="0.55">
+         <stop offset="0" stop-color="#9a5ad0" stop-opacity="0.42"/>
+         <stop offset="1" stop-color="#9a5ad0" stop-opacity="0"/></radialGradient>
+      <linearGradient id="rp12" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#7c6d90"/><stop offset="0.45" stop-color="#463a5c"/>
+        <stop offset="1" stop-color="#1c1528"/></linearGradient></defs><circle cx="32" cy="32" r="28" fill="url(#rp11)"/>
+    <path d="M50 9 C10 19 10 45 50 55" fill="none" stroke="url(#rp12)" stroke-width="6.5" stroke-linecap="round"/>
+    <path d="M50 9 C10 19 10 45 50 55" fill="none" stroke="#7c6d90" stroke-width="1.5" opacity="0.4"
+      stroke-linecap="round" transform="translate(-1.6,0)"/>
+    <path d="M50 9 C57 12 57 17 48 18"
+         fill="none" stroke="url(#rp12)" stroke-width="5" stroke-linecap="round"/>
+       <path d="M50 55 C57 52 57 47 48 46"
+         fill="none" stroke="url(#rp12)" stroke-width="5" stroke-linecap="round"/>
+    <path d="M50 9 L50 55" stroke="#efe4c4" stroke-width="1.8" stroke-linecap="round"/>
+    <path d="M11 24 L11 40" stroke="#3a2513" stroke-width="10" stroke-linecap="round"/>
+    <path d="M11 24 L11 40" stroke="#6d4a26" stroke-width="7" stroke-linecap="round"/>
+    <path d="M7 28 H15 M7 36 H15"
+      stroke="#c9a86a" stroke-width="1.8" opacity="0.7" stroke-linecap="round"/>
+    </svg></span>
+     <b>Shadowwood Shortbow</b><i>Fletching 78</i><em>wood T6</em></div><div class="rp-cell"><span class="rp-ic"><svg class="ev-icon" viewBox="0 0 64 64"><defs><radialGradient id="rp13" cx="0.5" cy="0.5" r="0.55">
+         <stop offset="0" stop-color="#c8e070" stop-opacity="0.42"/>
+         <stop offset="1" stop-color="#c8e070" stop-opacity="0"/></radialGradient>
+      <linearGradient id="rp14" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#9aa870"/><stop offset="0.45" stop-color="#5e6b38"/>
+        <stop offset="1" stop-color="#232a12"/></linearGradient></defs><circle cx="32" cy="32" r="28" fill="url(#rp13)"/>
+    <path d="M50 9 C10 19 10 45 50 55" fill="none" stroke="url(#rp14)" stroke-width="6.5" stroke-linecap="round"/>
+    <path d="M50 9 C10 19 10 45 50 55" fill="none" stroke="#9aa870" stroke-width="1.5" opacity="0.4"
+      stroke-linecap="round" transform="translate(-1.6,0)"/>
+    <path d="M50 9 C57 12 57 17 48 18"
+         fill="none" stroke="url(#rp14)" stroke-width="5" stroke-linecap="round"/>
+       <path d="M50 55 C57 52 57 47 48 46"
+         fill="none" stroke="url(#rp14)" stroke-width="5" stroke-linecap="round"/>
+    <path d="M50 9 L50 55" stroke="#efe4c4" stroke-width="1.8" stroke-linecap="round"/>
+    <path d="M11 24 L11 40" stroke="#3a2513" stroke-width="10" stroke-linecap="round"/>
+    <path d="M11 24 L11 40" stroke="#6d4a26" stroke-width="7" stroke-linecap="round"/>
+    <path d="M7 28 H15 M7 36 H15"
+      stroke="#c9a86a" stroke-width="1.8" opacity="0.7" stroke-linecap="round"/>
+    <circle cx="13" cy="16" r="1.5" fill="#fff" opacity="0.85"/>
+     <circle cx="51" cy="46" r="1.2" fill="#fff" opacity="0.7"/>
+     <circle cx="46" cy="14" r="1" fill="#fff" opacity="0.6"/></svg></span>
+     <b>Ancient Shortbow</b><i>Fletching 90</i><em>wood T7</em></div></div><div class="rp-row"><div class="rp-cell"><span class="rp-ic"><svg class="ev-icon" viewBox="0 0 64 64"><defs>
+      <linearGradient id="rp16" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#9a9484"/><stop offset="0.45" stop-color="#5f5a4c"/>
+        <stop offset="1" stop-color="#2b281f"/></linearGradient></defs>
+    <path d="M50 3 C12 13 12 51 50 61" fill="none" stroke="url(#rp16)" stroke-width="6" stroke-linecap="round"/>
+    <path d="M50 3 C12 13 12 51 50 61" fill="none" stroke="#9a9484" stroke-width="1.5" opacity="0.4"
+      stroke-linecap="round" transform="translate(-1.6,0)"/>
+    
+    <path d="M50 3 L50 61" stroke="#efe4c4" stroke-width="1.8" stroke-linecap="round"/>
+    <path d="M13 24 L13 40" stroke="#3a2513" stroke-width="10" stroke-linecap="round"/>
+    <path d="M13 24 L13 40" stroke="#6d4a26" stroke-width="7" stroke-linecap="round"/>
+    <path d="M9 28 H17 M9 36 H17"
+      stroke="#c9a86a" stroke-width="1.8" opacity="0.7" stroke-linecap="round"/>
+    </svg></span>
+     <b>Ironbark Longbow</b><i>Fletching 31</i><em>reach</em></div><div class="rp-cell"><span class="rp-ic"><svg class="ev-icon" viewBox="0 0 64 64"><defs><radialGradient id="rp17" cx="0.5" cy="0.5" r="0.55">
+         <stop offset="0" stop-color="#e0762f" stop-opacity="0.42"/>
+         <stop offset="1" stop-color="#e0762f" stop-opacity="0"/></radialGradient>
+      <linearGradient id="rp18" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#d4703c"/><stop offset="0.45" stop-color="#96351d"/>
+        <stop offset="1" stop-color="#3d1108"/></linearGradient></defs><circle cx="32" cy="32" r="28" fill="url(#rp17)"/>
+    <path d="M50 3 C12 13 12 51 50 61" fill="none" stroke="url(#rp18)" stroke-width="6" stroke-linecap="round"/>
+    <path d="M50 3 C12 13 12 51 50 61" fill="none" stroke="#d4703c" stroke-width="1.5" opacity="0.4"
+      stroke-linecap="round" transform="translate(-1.6,0)"/>
+    
+    <path d="M50 3 L50 61" stroke="#efe4c4" stroke-width="1.8" stroke-linecap="round"/>
+    <path d="M13 24 L13 40" stroke="#3a2513" stroke-width="10" stroke-linecap="round"/>
+    <path d="M13 24 L13 40" stroke="#6d4a26" stroke-width="7" stroke-linecap="round"/>
+    <path d="M9 28 H17 M9 36 H17"
+      stroke="#c9a86a" stroke-width="1.8" opacity="0.7" stroke-linecap="round"/>
+    </svg></span>
+     <b>Emberwood Longbow</b><i>Fletching 49</i><em>reach</em></div><div class="rp-cell"><span class="rp-ic"><svg class="ev-icon" viewBox="0 0 64 64"><defs><radialGradient id="rp19" cx="0.5" cy="0.5" r="0.55">
+         <stop offset="0" stop-color="#8fd0e6" stop-opacity="0.42"/>
+         <stop offset="1" stop-color="#8fd0e6" stop-opacity="0"/></radialGradient>
+      <linearGradient id="rp20" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#a8cfe0"/><stop offset="0.45" stop-color="#5c8ba4"/>
+        <stop offset="1" stop-color="#1e3242"/></linearGradient></defs><circle cx="32" cy="32" r="28" fill="url(#rp19)"/>
+    <path d="M50 3 C12 13 12 51 50 61" fill="none" stroke="url(#rp20)" stroke-width="6" stroke-linecap="round"/>
+    <path d="M50 3 C12 13 12 51 50 61" fill="none" stroke="#a8cfe0" stroke-width="1.5" opacity="0.4"
+      stroke-linecap="round" transform="translate(-1.6,0)"/>
+    
+    <path d="M50 3 L50 61" stroke="#efe4c4" stroke-width="1.8" stroke-linecap="round"/>
+    <path d="M13 24 L13 40" stroke="#3a2513" stroke-width="10" stroke-linecap="round"/>
+    <path d="M13 24 L13 40" stroke="#6d4a26" stroke-width="7" stroke-linecap="round"/>
+    <path d="M9 28 H17 M9 36 H17"
+      stroke="#c9a86a" stroke-width="1.8" opacity="0.7" stroke-linecap="round"/>
+    </svg></span>
+     <b>Frostwood Longbow</b><i>Fletching 66</i><em>reach</em></div><div class="rp-cell"><span class="rp-ic"><svg class="ev-icon" viewBox="0 0 64 64"><defs><radialGradient id="rp21" cx="0.5" cy="0.5" r="0.55">
+         <stop offset="0" stop-color="#9a5ad0" stop-opacity="0.42"/>
+         <stop offset="1" stop-color="#9a5ad0" stop-opacity="0"/></radialGradient>
+      <linearGradient id="rp22" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#7c6d90"/><stop offset="0.45" stop-color="#463a5c"/>
+        <stop offset="1" stop-color="#1c1528"/></linearGradient></defs><circle cx="32" cy="32" r="28" fill="url(#rp21)"/>
+    <path d="M50 3 C12 13 12 51 50 61" fill="none" stroke="url(#rp22)" stroke-width="6" stroke-linecap="round"/>
+    <path d="M50 3 C12 13 12 51 50 61" fill="none" stroke="#7c6d90" stroke-width="1.5" opacity="0.4"
+      stroke-linecap="round" transform="translate(-1.6,0)"/>
+    
+    <path d="M50 3 L50 61" stroke="#efe4c4" stroke-width="1.8" stroke-linecap="round"/>
+    <path d="M13 24 L13 40" stroke="#3a2513" stroke-width="10" stroke-linecap="round"/>
+    <path d="M13 24 L13 40" stroke="#6d4a26" stroke-width="7" stroke-linecap="round"/>
+    <path d="M9 28 H17 M9 36 H17"
+      stroke="#c9a86a" stroke-width="1.8" opacity="0.7" stroke-linecap="round"/>
+    </svg></span>
+     <b>Shadowwood Longbow</b><i>Fletching 82</i><em>reach</em></div><div class="rp-cell"><span class="rp-ic"><svg class="ev-icon" viewBox="0 0 64 64"><defs><radialGradient id="rp23" cx="0.5" cy="0.5" r="0.55">
+         <stop offset="0" stop-color="#c8e070" stop-opacity="0.42"/>
+         <stop offset="1" stop-color="#c8e070" stop-opacity="0"/></radialGradient>
+      <linearGradient id="rp24" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#9aa870"/><stop offset="0.45" stop-color="#5e6b38"/>
+        <stop offset="1" stop-color="#232a12"/></linearGradient></defs><circle cx="32" cy="32" r="28" fill="url(#rp23)"/>
+    <path d="M50 3 C12 13 12 51 50 61" fill="none" stroke="url(#rp24)" stroke-width="6" stroke-linecap="round"/>
+    <path d="M50 3 C12 13 12 51 50 61" fill="none" stroke="#9aa870" stroke-width="1.5" opacity="0.4"
+      stroke-linecap="round" transform="translate(-1.6,0)"/>
+    
+    <path d="M50 3 L50 61" stroke="#efe4c4" stroke-width="1.8" stroke-linecap="round"/>
+    <path d="M13 24 L13 40" stroke="#3a2513" stroke-width="10" stroke-linecap="round"/>
+    <path d="M13 24 L13 40" stroke="#6d4a26" stroke-width="7" stroke-linecap="round"/>
+    <path d="M9 28 H17 M9 36 H17"
+      stroke="#c9a86a" stroke-width="1.8" opacity="0.7" stroke-linecap="round"/>
+    <circle cx="13" cy="16" r="1.5" fill="#fff" opacity="0.85"/>
+     <circle cx="51" cy="46" r="1.2" fill="#fff" opacity="0.7"/>
+     <circle cx="46" cy="14" r="1" fill="#fff" opacity="0.6"/></svg></span>
+     <b>Ancient Longbow</b><i>Fletching 94</i><em>reach</em></div></div><h2>Crossbows</h2>
+<p class="note">One handed, so the shield or buckler stays. Slower swing, better accuracy, heavier bolts.
+Nine tiers off the metal ladder, one per bar, no new materials.</p><div class="rp-row"><div class="rp-cell"><span class="rp-ic"><svg class="ev-icon" viewBox="0 0 64 64"><defs>
+      <linearGradient id="rp26" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#d79a52"/><stop offset="0.45" stop-color="#a36a26"/>
+        <stop offset="1" stop-color="#4a2c0d"/></linearGradient></defs><defs>
+      <linearGradient id="rp28" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#a07a48"/><stop offset="0.45" stop-color="#6d4a26"/>
+        <stop offset="1" stop-color="#33210f"/></linearGradient></defs>
+    <path d="M27 16 H37 L39 50 Q32 62 25 50 Z" fill="url(#rp28)"
+      stroke="#241708" stroke-width="1.3" stroke-linejoin="round"/>
+    <path d="M29.5 20 L29.5 50" stroke="#a07a48" stroke-width="1.4" opacity="0.4"/>
+    <path d="M24 44 L32 41 L40 44" fill="none" stroke="#4a2c0d" stroke-width="2.6" stroke-linecap="round"/>
+    <path d="M32 46 Q30 52 33 55" fill="none" stroke="#a36a26" stroke-width="2.6" stroke-linecap="round"/>
+    <path d="M5 30 C16 15 48 15 59 30" fill="none" stroke="url(#rp26)"
+      stroke-width="6.5" stroke-linecap="round"/>
+    <path d="M5 30 C16 17 48 17 59 30" fill="none" stroke="#d79a52"
+      stroke-width="1.6" opacity="0.4" stroke-linecap="round"/>
+    <path d="M5 30 L32 38 L59 30" fill="none" stroke="#efe4c4" stroke-width="1.8" stroke-linejoin="round"/>
+    <path d="M30 12 L34 12 L34 34 L30 34 Z" fill="#4a2c0d" stroke="#d79a52" stroke-width="1.1"/>
+    <path d="M32 8 L36 14 L28 14 Z" fill="#d79a52"/>
+    </svg></span>
+     <b>Bronze Crossbow</b><i>Fletching 1</i><em>metal T1</em></div><div class="rp-cell"><span class="rp-ic"><svg class="ev-icon" viewBox="0 0 64 64"><defs>
+      <linearGradient id="rp30" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#a8adb4"/><stop offset="0.45" stop-color="#70767e"/>
+        <stop offset="1" stop-color="#2e3238"/></linearGradient></defs><defs>
+      <linearGradient id="rp32" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#a07a48"/><stop offset="0.45" stop-color="#6d4a26"/>
+        <stop offset="1" stop-color="#33210f"/></linearGradient></defs>
+    <path d="M27 16 H37 L39 50 Q32 62 25 50 Z" fill="url(#rp32)"
+      stroke="#241708" stroke-width="1.3" stroke-linejoin="round"/>
+    <path d="M29.5 20 L29.5 50" stroke="#a07a48" stroke-width="1.4" opacity="0.4"/>
+    <path d="M24 44 L32 41 L40 44" fill="none" stroke="#2e3238" stroke-width="2.6" stroke-linecap="round"/>
+    <path d="M32 46 Q30 52 33 55" fill="none" stroke="#70767e" stroke-width="2.6" stroke-linecap="round"/>
+    <path d="M5 30 C16 15 48 15 59 30" fill="none" stroke="url(#rp30)"
+      stroke-width="6.5" stroke-linecap="round"/>
+    <path d="M5 30 C16 17 48 17 59 30" fill="none" stroke="#a8adb4"
+      stroke-width="1.6" opacity="0.4" stroke-linecap="round"/>
+    <path d="M5 30 L32 38 L59 30" fill="none" stroke="#efe4c4" stroke-width="1.8" stroke-linejoin="round"/>
+    <path d="M30 12 L34 12 L34 34 L30 34 Z" fill="#2e3238" stroke="#a8adb4" stroke-width="1.1"/>
+    <path d="M32 8 L36 14 L28 14 Z" fill="#a8adb4"/>
+    </svg></span>
+     <b>Iron Crossbow</b><i>Fletching 12</i><em>metal T2</em></div><div class="rp-cell"><span class="rp-ic"><svg class="ev-icon" viewBox="0 0 64 64"><defs>
+      <linearGradient id="rp34" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#d3dae2"/><stop offset="0.45" stop-color="#8b939d"/>
+        <stop offset="1" stop-color="#3c4249"/></linearGradient></defs><defs>
+      <linearGradient id="rp36" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#a07a48"/><stop offset="0.45" stop-color="#6d4a26"/>
+        <stop offset="1" stop-color="#33210f"/></linearGradient></defs>
+    <path d="M27 16 H37 L39 50 Q32 62 25 50 Z" fill="url(#rp36)"
+      stroke="#241708" stroke-width="1.3" stroke-linejoin="round"/>
+    <path d="M29.5 20 L29.5 50" stroke="#a07a48" stroke-width="1.4" opacity="0.4"/>
+    <path d="M24 44 L32 41 L40 44" fill="none" stroke="#3c4249" stroke-width="2.6" stroke-linecap="round"/>
+    <path d="M32 46 Q30 52 33 55" fill="none" stroke="#8b939d" stroke-width="2.6" stroke-linecap="round"/>
+    <path d="M5 30 C16 15 48 15 59 30" fill="none" stroke="url(#rp34)"
+      stroke-width="6.5" stroke-linecap="round"/>
+    <path d="M5 30 C16 17 48 17 59 30" fill="none" stroke="#d3dae2"
+      stroke-width="1.6" opacity="0.4" stroke-linecap="round"/>
+    <path d="M5 30 L32 38 L59 30" fill="none" stroke="#efe4c4" stroke-width="1.8" stroke-linejoin="round"/>
+    <path d="M30 12 L34 12 L34 34 L30 34 Z" fill="#3c4249" stroke="#d3dae2" stroke-width="1.1"/>
+    <path d="M32 8 L36 14 L28 14 Z" fill="#d3dae2"/>
+    </svg></span>
+     <b>Steel Crossbow</b><i>Fletching 24</i><em>metal T3</em></div><div class="rp-cell"><span class="rp-ic"><svg class="ev-icon" viewBox="0 0 64 64"><defs><radialGradient id="rp37" cx="0.5" cy="0.5" r="0.55">
+         <stop offset="0" stop-color="#6fa8d8" stop-opacity="0.42"/>
+         <stop offset="1" stop-color="#6fa8d8" stop-opacity="0"/></radialGradient>
+      <linearGradient id="rp38" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#8cc4ec"/><stop offset="0.45" stop-color="#3f74a4"/>
+        <stop offset="1" stop-color="#152f47"/></linearGradient></defs><defs>
+      <linearGradient id="rp40" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#a07a48"/><stop offset="0.45" stop-color="#6d4a26"/>
+        <stop offset="1" stop-color="#33210f"/></linearGradient></defs><circle cx="32" cy="32" r="28" fill="url(#rp37)"/>
+    <path d="M27 16 H37 L39 50 Q32 62 25 50 Z" fill="url(#rp40)"
+      stroke="#241708" stroke-width="1.3" stroke-linejoin="round"/>
+    <path d="M29.5 20 L29.5 50" stroke="#a07a48" stroke-width="1.4" opacity="0.4"/>
+    <path d="M24 44 L32 41 L40 44" fill="none" stroke="#152f47" stroke-width="2.6" stroke-linecap="round"/>
+    <path d="M32 46 Q30 52 33 55" fill="none" stroke="#3f74a4" stroke-width="2.6" stroke-linecap="round"/>
+    <path d="M5 30 C16 15 48 15 59 30" fill="none" stroke="url(#rp38)"
+      stroke-width="6.5" stroke-linecap="round"/>
+    <path d="M5 30 C16 17 48 17 59 30" fill="none" stroke="#8cc4ec"
+      stroke-width="1.6" opacity="0.4" stroke-linecap="round"/>
+    <path d="M5 30 L32 38 L59 30" fill="none" stroke="#efe4c4" stroke-width="1.8" stroke-linejoin="round"/>
+    <path d="M30 12 L34 12 L34 34 L30 34 Z" fill="#152f47" stroke="#8cc4ec" stroke-width="1.1"/>
+    <path d="M32 8 L36 14 L28 14 Z" fill="#8cc4ec"/>
+    </svg></span>
+     <b>Mithril Crossbow</b><i>Fletching 38</i><em>metal T4</em></div><div class="rp-cell"><span class="rp-ic"><svg class="ev-icon" viewBox="0 0 64 64"><defs><radialGradient id="rp41" cx="0.5" cy="0.5" r="0.55">
+         <stop offset="0" stop-color="#4a7fd0" stop-opacity="0.42"/>
+         <stop offset="1" stop-color="#4a7fd0" stop-opacity="0"/></radialGradient>
+      <linearGradient id="rp42" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#6b9ce8"/><stop offset="0.45" stop-color="#2f57a0"/>
+        <stop offset="1" stop-color="#13224a"/></linearGradient></defs><defs>
+      <linearGradient id="rp44" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#a07a48"/><stop offset="0.45" stop-color="#6d4a26"/>
+        <stop offset="1" stop-color="#33210f"/></linearGradient></defs><circle cx="32" cy="32" r="28" fill="url(#rp41)"/>
+    <path d="M27 16 H37 L39 50 Q32 62 25 50 Z" fill="url(#rp44)"
+      stroke="#241708" stroke-width="1.3" stroke-linejoin="round"/>
+    <path d="M29.5 20 L29.5 50" stroke="#a07a48" stroke-width="1.4" opacity="0.4"/>
+    <path d="M24 44 L32 41 L40 44" fill="none" stroke="#13224a" stroke-width="2.6" stroke-linecap="round"/>
+    <path d="M32 46 Q30 52 33 55" fill="none" stroke="#2f57a0" stroke-width="2.6" stroke-linecap="round"/>
+    <path d="M5 30 C16 15 48 15 59 30" fill="none" stroke="url(#rp42)"
+      stroke-width="6.5" stroke-linecap="round"/>
+    <path d="M5 30 C16 17 48 17 59 30" fill="none" stroke="#6b9ce8"
+      stroke-width="1.6" opacity="0.4" stroke-linecap="round"/>
+    <path d="M5 30 L32 38 L59 30" fill="none" stroke="#efe4c4" stroke-width="1.8" stroke-linejoin="round"/>
+    <path d="M30 12 L34 12 L34 34 L30 34 Z" fill="#13224a" stroke="#6b9ce8" stroke-width="1.1"/>
+    <path d="M32 8 L36 14 L28 14 Z" fill="#6b9ce8"/>
+    </svg></span>
+     <b>Cobalt Crossbow</b><i>Fletching 52</i><em>metal T5</em></div><div class="rp-cell"><span class="rp-ic"><svg class="ev-icon" viewBox="0 0 64 64"><defs><radialGradient id="rp45" cx="0.5" cy="0.5" r="0.55">
+         <stop offset="0" stop-color="#3fb08a" stop-opacity="0.42"/>
+         <stop offset="1" stop-color="#3fb08a" stop-opacity="0"/></radialGradient>
+      <linearGradient id="rp46" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#5fd0a8"/><stop offset="0.45" stop-color="#238a68"/>
+        <stop offset="1" stop-color="#0d3a2c"/></linearGradient></defs><defs>
+      <linearGradient id="rp48" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#a07a48"/><stop offset="0.45" stop-color="#6d4a26"/>
+        <stop offset="1" stop-color="#33210f"/></linearGradient></defs><circle cx="32" cy="32" r="28" fill="url(#rp45)"/>
+    <path d="M27 16 H37 L39 50 Q32 62 25 50 Z" fill="url(#rp48)"
+      stroke="#241708" stroke-width="1.3" stroke-linejoin="round"/>
+    <path d="M29.5 20 L29.5 50" stroke="#a07a48" stroke-width="1.4" opacity="0.4"/>
+    <path d="M24 44 L32 41 L40 44" fill="none" stroke="#0d3a2c" stroke-width="2.6" stroke-linecap="round"/>
+    <path d="M32 46 Q30 52 33 55" fill="none" stroke="#238a68" stroke-width="2.6" stroke-linecap="round"/>
+    <path d="M5 30 C16 15 48 15 59 30" fill="none" stroke="url(#rp46)"
+      stroke-width="6.5" stroke-linecap="round"/>
+    <path d="M5 30 C16 17 48 17 59 30" fill="none" stroke="#5fd0a8"
+      stroke-width="1.6" opacity="0.4" stroke-linecap="round"/>
+    <path d="M5 30 L32 38 L59 30" fill="none" stroke="#efe4c4" stroke-width="1.8" stroke-linejoin="round"/>
+    <path d="M30 12 L34 12 L34 34 L30 34 Z" fill="#0d3a2c" stroke="#5fd0a8" stroke-width="1.1"/>
+    <path d="M32 8 L36 14 L28 14 Z" fill="#5fd0a8"/>
+    </svg></span>
+     <b>Runite Crossbow</b><i>Fletching 64</i><em>metal T6</em></div><div class="rp-cell"><span class="rp-ic"><svg class="ev-icon" viewBox="0 0 64 64"><defs><radialGradient id="rp49" cx="0.5" cy="0.5" r="0.55">
+         <stop offset="0" stop-color="#c8bcff" stop-opacity="0.42"/>
+         <stop offset="1" stop-color="#c8bcff" stop-opacity="0"/></radialGradient>
+      <linearGradient id="rp50" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#e8e2ff"/><stop offset="0.45" stop-color="#9089c4"/>
+        <stop offset="1" stop-color="#2e2a4a"/></linearGradient></defs><defs>
+      <linearGradient id="rp52" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#a07a48"/><stop offset="0.45" stop-color="#6d4a26"/>
+        <stop offset="1" stop-color="#33210f"/></linearGradient></defs><circle cx="32" cy="32" r="28" fill="url(#rp49)"/>
+    <path d="M27 16 H37 L39 50 Q32 62 25 50 Z" fill="url(#rp52)"
+      stroke="#241708" stroke-width="1.3" stroke-linejoin="round"/>
+    <path d="M29.5 20 L29.5 50" stroke="#a07a48" stroke-width="1.4" opacity="0.4"/>
+    <path d="M24 44 L32 41 L40 44" fill="none" stroke="#2e2a4a" stroke-width="2.6" stroke-linecap="round"/>
+    <path d="M32 46 Q30 52 33 55" fill="none" stroke="#9089c4" stroke-width="2.6" stroke-linecap="round"/>
+    <path d="M5 30 C16 15 48 15 59 30" fill="none" stroke="url(#rp50)"
+      stroke-width="6.5" stroke-linecap="round"/>
+    <path d="M5 30 C16 17 48 17 59 30" fill="none" stroke="#e8e2ff"
+      stroke-width="1.6" opacity="0.4" stroke-linecap="round"/>
+    <path d="M5 30 L32 38 L59 30" fill="none" stroke="#efe4c4" stroke-width="1.8" stroke-linejoin="round"/>
+    <path d="M30 12 L34 12 L34 34 L30 34 Z" fill="#2e2a4a" stroke="#e8e2ff" stroke-width="1.1"/>
+    <path d="M32 8 L36 14 L28 14 Z" fill="#e8e2ff"/>
+    <circle cx="13" cy="16" r="1.5" fill="#fff" opacity="0.85"/>
+     <circle cx="51" cy="46" r="1.2" fill="#fff" opacity="0.7"/>
+     <circle cx="46" cy="14" r="1" fill="#fff" opacity="0.6"/></svg></span>
+     <b>Starsteel Crossbow</b><i>Fletching 76</i><em>metal T7</em></div><div class="rp-cell"><span class="rp-ic"><svg class="ev-icon" viewBox="0 0 64 64"><defs><radialGradient id="rp53" cx="0.5" cy="0.5" r="0.55">
+         <stop offset="0" stop-color="#ff8420" stop-opacity="0.42"/>
+         <stop offset="1" stop-color="#ff8420" stop-opacity="0"/></radialGradient>
+      <linearGradient id="rp54" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#ffab55"/><stop offset="0.45" stop-color="#c04e18"/>
+        <stop offset="1" stop-color="#48120a"/></linearGradient></defs><defs>
+      <linearGradient id="rp56" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#a07a48"/><stop offset="0.45" stop-color="#6d4a26"/>
+        <stop offset="1" stop-color="#33210f"/></linearGradient></defs><circle cx="32" cy="32" r="28" fill="url(#rp53)"/>
+    <path d="M27 16 H37 L39 50 Q32 62 25 50 Z" fill="url(#rp56)"
+      stroke="#241708" stroke-width="1.3" stroke-linejoin="round"/>
+    <path d="M29.5 20 L29.5 50" stroke="#a07a48" stroke-width="1.4" opacity="0.4"/>
+    <path d="M24 44 L32 41 L40 44" fill="none" stroke="#48120a" stroke-width="2.6" stroke-linecap="round"/>
+    <path d="M32 46 Q30 52 33 55" fill="none" stroke="#c04e18" stroke-width="2.6" stroke-linecap="round"/>
+    <path d="M5 30 C16 15 48 15 59 30" fill="none" stroke="url(#rp54)"
+      stroke-width="6.5" stroke-linecap="round"/>
+    <path d="M5 30 C16 17 48 17 59 30" fill="none" stroke="#ffab55"
+      stroke-width="1.6" opacity="0.4" stroke-linecap="round"/>
+    <path d="M5 30 L32 38 L59 30" fill="none" stroke="#efe4c4" stroke-width="1.8" stroke-linejoin="round"/>
+    <path d="M30 12 L34 12 L34 34 L30 34 Z" fill="#48120a" stroke="#ffab55" stroke-width="1.1"/>
+    <path d="M32 8 L36 14 L28 14 Z" fill="#ffab55"/>
+    <circle cx="13" cy="16" r="1.5" fill="#fff" opacity="0.85"/>
+     <circle cx="51" cy="46" r="1.2" fill="#fff" opacity="0.7"/>
+     <circle cx="46" cy="14" r="1" fill="#fff" opacity="0.6"/></svg></span>
+     <b>Moltensteel Crossbow</b><i>Fletching 86</i><em>metal T8</em></div><div class="rp-cell"><span class="rp-ic"><svg class="ev-icon" viewBox="0 0 64 64"><defs><radialGradient id="rp57" cx="0.5" cy="0.5" r="0.55">
+         <stop offset="0" stop-color="#9a5ad0" stop-opacity="0.42"/>
+         <stop offset="1" stop-color="#9a5ad0" stop-opacity="0"/></radialGradient>
+      <linearGradient id="rp58" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#c489f0"/><stop offset="0.45" stop-color="#7434b0"/>
+        <stop offset="1" stop-color="#2a0f47"/></linearGradient></defs><defs>
+      <linearGradient id="rp60" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#a07a48"/><stop offset="0.45" stop-color="#6d4a26"/>
+        <stop offset="1" stop-color="#33210f"/></linearGradient></defs><circle cx="32" cy="32" r="28" fill="url(#rp57)"/>
+    <path d="M27 16 H37 L39 50 Q32 62 25 50 Z" fill="url(#rp60)"
+      stroke="#241708" stroke-width="1.3" stroke-linejoin="round"/>
+    <path d="M29.5 20 L29.5 50" stroke="#a07a48" stroke-width="1.4" opacity="0.4"/>
+    <path d="M24 44 L32 41 L40 44" fill="none" stroke="#2a0f47" stroke-width="2.6" stroke-linecap="round"/>
+    <path d="M32 46 Q30 52 33 55" fill="none" stroke="#7434b0" stroke-width="2.6" stroke-linecap="round"/>
+    <path d="M5 30 C16 15 48 15 59 30" fill="none" stroke="url(#rp58)"
+      stroke-width="6.5" stroke-linecap="round"/>
+    <path d="M5 30 C16 17 48 17 59 30" fill="none" stroke="#c489f0"
+      stroke-width="1.6" opacity="0.4" stroke-linecap="round"/>
+    <path d="M5 30 L32 38 L59 30" fill="none" stroke="#efe4c4" stroke-width="1.8" stroke-linejoin="round"/>
+    <path d="M30 12 L34 12 L34 34 L30 34 Z" fill="#2a0f47" stroke="#c489f0" stroke-width="1.1"/>
+    <path d="M32 8 L36 14 L28 14 Z" fill="#c489f0"/>
+    <circle cx="13" cy="16" r="1.5" fill="#fff" opacity="0.85"/>
+     <circle cx="51" cy="46" r="1.2" fill="#fff" opacity="0.7"/>
+     <circle cx="46" cy="14" r="1" fill="#fff" opacity="0.6"/></svg></span>
+     <b>Voidsteel Crossbow</b><i>Fletching 94</i><em>metal T9</em></div></div><h2>Arrows</h2>
+<p class="note">The ammunition carries the damage; the bow carries accuracy and speed. One consumed per shot,
+some proportion recovered afterwards depending on the Salvager line.</p><div class="rp-row"><div class="rp-cell"><span class="rp-ic"><svg class="ev-icon" viewBox="0 0 64 64"><defs>
+      <linearGradient id="rp62" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#d79a52"/><stop offset="0.45" stop-color="#a36a26"/>
+        <stop offset="1" stop-color="#4a2c0d"/></linearGradient></defs><defs>
+      <linearGradient id="rp64" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#c09a63"/><stop offset="0.45" stop-color="#8a6236"/>
+        <stop offset="1" stop-color="#3f2b14"/></linearGradient></defs>
+    <path d="M14 50 L48 16" stroke="url(#rp64)" stroke-width="4.4" stroke-linecap="round"/>
+    <path d="M16 48 L46 18" stroke="#c09a63" stroke-width="1.2" opacity="0.45" stroke-linecap="round"/>
+    <path d="M58 6 L44 10 L54 20 Z" fill="url(#rp62)" stroke="#1a1206" stroke-width="1.2" stroke-linejoin="round"/>
+    <path d="M58 6 L48 12.5 L54 20 Z" fill="#d79a52" opacity="0.35"/>
+    <path d="M14 50 L6 46 L10 56 Z" fill="#a36a26" stroke="#1a1206" stroke-width="1"/>
+         <path d="M18 46 L10 42 L14 52 Z" fill="#d79a52" opacity="0.75" stroke="#1a1206" stroke-width="0.9"/>
+         <path d="M22 42 L14 38 L18 48 Z" fill="#a36a26" opacity="0.9" stroke="#1a1206" stroke-width="0.9"/>
+    </svg></span>
+     <b>Bronze Arrow</b><i>+2 str</i><em>x12 a batch</em></div><div class="rp-cell"><span class="rp-ic"><svg class="ev-icon" viewBox="0 0 64 64"><defs>
+      <linearGradient id="rp66" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#a8adb4"/><stop offset="0.45" stop-color="#70767e"/>
+        <stop offset="1" stop-color="#2e3238"/></linearGradient></defs><defs>
+      <linearGradient id="rp68" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#c09a63"/><stop offset="0.45" stop-color="#8a6236"/>
+        <stop offset="1" stop-color="#3f2b14"/></linearGradient></defs>
+    <path d="M14 50 L48 16" stroke="url(#rp68)" stroke-width="4.4" stroke-linecap="round"/>
+    <path d="M16 48 L46 18" stroke="#c09a63" stroke-width="1.2" opacity="0.45" stroke-linecap="round"/>
+    <path d="M58 6 L44 10 L54 20 Z" fill="url(#rp66)" stroke="#1a1206" stroke-width="1.2" stroke-linejoin="round"/>
+    <path d="M58 6 L48 12.5 L54 20 Z" fill="#a8adb4" opacity="0.35"/>
+    <path d="M14 50 L6 46 L10 56 Z" fill="#70767e" stroke="#1a1206" stroke-width="1"/>
+         <path d="M18 46 L10 42 L14 52 Z" fill="#a8adb4" opacity="0.75" stroke="#1a1206" stroke-width="0.9"/>
+         <path d="M22 42 L14 38 L18 48 Z" fill="#70767e" opacity="0.9" stroke="#1a1206" stroke-width="0.9"/>
+    </svg></span>
+     <b>Iron Arrow</b><i>+4 str</i><em>x12 a batch</em></div><div class="rp-cell"><span class="rp-ic"><svg class="ev-icon" viewBox="0 0 64 64"><defs>
+      <linearGradient id="rp70" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#d3dae2"/><stop offset="0.45" stop-color="#8b939d"/>
+        <stop offset="1" stop-color="#3c4249"/></linearGradient></defs><defs>
+      <linearGradient id="rp72" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#c09a63"/><stop offset="0.45" stop-color="#8a6236"/>
+        <stop offset="1" stop-color="#3f2b14"/></linearGradient></defs>
+    <path d="M14 50 L48 16" stroke="url(#rp72)" stroke-width="4.4" stroke-linecap="round"/>
+    <path d="M16 48 L46 18" stroke="#c09a63" stroke-width="1.2" opacity="0.45" stroke-linecap="round"/>
+    <path d="M58 6 L44 10 L54 20 Z" fill="url(#rp70)" stroke="#1a1206" stroke-width="1.2" stroke-linejoin="round"/>
+    <path d="M58 6 L48 12.5 L54 20 Z" fill="#d3dae2" opacity="0.35"/>
+    <path d="M14 50 L6 46 L10 56 Z" fill="#8b939d" stroke="#1a1206" stroke-width="1"/>
+         <path d="M18 46 L10 42 L14 52 Z" fill="#d3dae2" opacity="0.75" stroke="#1a1206" stroke-width="0.9"/>
+         <path d="M22 42 L14 38 L18 48 Z" fill="#8b939d" opacity="0.9" stroke="#1a1206" stroke-width="0.9"/>
+    </svg></span>
+     <b>Steel Arrow</b><i>+7 str</i><em>x12 a batch</em></div><div class="rp-cell"><span class="rp-ic"><svg class="ev-icon" viewBox="0 0 64 64"><defs><radialGradient id="rp73" cx="0.5" cy="0.5" r="0.55">
+         <stop offset="0" stop-color="#6fa8d8" stop-opacity="0.42"/>
+         <stop offset="1" stop-color="#6fa8d8" stop-opacity="0"/></radialGradient>
+      <linearGradient id="rp74" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#8cc4ec"/><stop offset="0.45" stop-color="#3f74a4"/>
+        <stop offset="1" stop-color="#152f47"/></linearGradient></defs><defs>
+      <linearGradient id="rp76" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#c09a63"/><stop offset="0.45" stop-color="#8a6236"/>
+        <stop offset="1" stop-color="#3f2b14"/></linearGradient></defs><circle cx="32" cy="32" r="28" fill="url(#rp73)"/>
+    <path d="M14 50 L48 16" stroke="url(#rp76)" stroke-width="4.4" stroke-linecap="round"/>
+    <path d="M16 48 L46 18" stroke="#c09a63" stroke-width="1.2" opacity="0.45" stroke-linecap="round"/>
+    <path d="M58 6 L44 10 L54 20 Z" fill="url(#rp74)" stroke="#1a1206" stroke-width="1.2" stroke-linejoin="round"/>
+    <path d="M58 6 L48 12.5 L54 20 Z" fill="#8cc4ec" opacity="0.35"/>
+    <path d="M14 50 L6 46 L10 56 Z" fill="#3f74a4" stroke="#1a1206" stroke-width="1"/>
+         <path d="M18 46 L10 42 L14 52 Z" fill="#8cc4ec" opacity="0.75" stroke="#1a1206" stroke-width="0.9"/>
+         <path d="M22 42 L14 38 L18 48 Z" fill="#3f74a4" opacity="0.9" stroke="#1a1206" stroke-width="0.9"/>
+    </svg></span>
+     <b>Mithril Arrow</b><i>+11 str</i><em>x12 a batch</em></div><div class="rp-cell"><span class="rp-ic"><svg class="ev-icon" viewBox="0 0 64 64"><defs><radialGradient id="rp77" cx="0.5" cy="0.5" r="0.55">
+         <stop offset="0" stop-color="#4a7fd0" stop-opacity="0.42"/>
+         <stop offset="1" stop-color="#4a7fd0" stop-opacity="0"/></radialGradient>
+      <linearGradient id="rp78" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#6b9ce8"/><stop offset="0.45" stop-color="#2f57a0"/>
+        <stop offset="1" stop-color="#13224a"/></linearGradient></defs><defs>
+      <linearGradient id="rp80" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#c09a63"/><stop offset="0.45" stop-color="#8a6236"/>
+        <stop offset="1" stop-color="#3f2b14"/></linearGradient></defs><circle cx="32" cy="32" r="28" fill="url(#rp77)"/>
+    <path d="M14 50 L48 16" stroke="url(#rp80)" stroke-width="4.4" stroke-linecap="round"/>
+    <path d="M16 48 L46 18" stroke="#c09a63" stroke-width="1.2" opacity="0.45" stroke-linecap="round"/>
+    <path d="M58 6 L44 10 L54 20 Z" fill="url(#rp78)" stroke="#1a1206" stroke-width="1.2" stroke-linejoin="round"/>
+    <path d="M58 6 L48 12.5 L54 20 Z" fill="#6b9ce8" opacity="0.35"/>
+    <path d="M14 50 L6 46 L10 56 Z" fill="#2f57a0" stroke="#1a1206" stroke-width="1"/>
+         <path d="M18 46 L10 42 L14 52 Z" fill="#6b9ce8" opacity="0.75" stroke="#1a1206" stroke-width="0.9"/>
+         <path d="M22 42 L14 38 L18 48 Z" fill="#2f57a0" opacity="0.9" stroke="#1a1206" stroke-width="0.9"/>
+    </svg></span>
+     <b>Cobalt Arrow</b><i>+16 str</i><em>x12 a batch</em></div><div class="rp-cell"><span class="rp-ic"><svg class="ev-icon" viewBox="0 0 64 64"><defs><radialGradient id="rp81" cx="0.5" cy="0.5" r="0.55">
+         <stop offset="0" stop-color="#3fb08a" stop-opacity="0.42"/>
+         <stop offset="1" stop-color="#3fb08a" stop-opacity="0"/></radialGradient>
+      <linearGradient id="rp82" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#5fd0a8"/><stop offset="0.45" stop-color="#238a68"/>
+        <stop offset="1" stop-color="#0d3a2c"/></linearGradient></defs><defs>
+      <linearGradient id="rp84" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#c09a63"/><stop offset="0.45" stop-color="#8a6236"/>
+        <stop offset="1" stop-color="#3f2b14"/></linearGradient></defs><circle cx="32" cy="32" r="28" fill="url(#rp81)"/>
+    <path d="M14 50 L48 16" stroke="url(#rp84)" stroke-width="4.4" stroke-linecap="round"/>
+    <path d="M16 48 L46 18" stroke="#c09a63" stroke-width="1.2" opacity="0.45" stroke-linecap="round"/>
+    <path d="M58 6 L44 10 L54 20 Z" fill="url(#rp82)" stroke="#1a1206" stroke-width="1.2" stroke-linejoin="round"/>
+    <path d="M58 6 L48 12.5 L54 20 Z" fill="#5fd0a8" opacity="0.35"/>
+    <path d="M14 50 L6 46 L10 56 Z" fill="#238a68" stroke="#1a1206" stroke-width="1"/>
+         <path d="M18 46 L10 42 L14 52 Z" fill="#5fd0a8" opacity="0.75" stroke="#1a1206" stroke-width="0.9"/>
+         <path d="M22 42 L14 38 L18 48 Z" fill="#238a68" opacity="0.9" stroke="#1a1206" stroke-width="0.9"/>
+    </svg></span>
+     <b>Runite Arrow</b><i>+22 str</i><em>x12 a batch</em></div><div class="rp-cell"><span class="rp-ic"><svg class="ev-icon" viewBox="0 0 64 64"><defs><radialGradient id="rp85" cx="0.5" cy="0.5" r="0.55">
+         <stop offset="0" stop-color="#c8bcff" stop-opacity="0.42"/>
+         <stop offset="1" stop-color="#c8bcff" stop-opacity="0"/></radialGradient>
+      <linearGradient id="rp86" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#e8e2ff"/><stop offset="0.45" stop-color="#9089c4"/>
+        <stop offset="1" stop-color="#2e2a4a"/></linearGradient></defs><defs>
+      <linearGradient id="rp88" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#c09a63"/><stop offset="0.45" stop-color="#8a6236"/>
+        <stop offset="1" stop-color="#3f2b14"/></linearGradient></defs><circle cx="32" cy="32" r="28" fill="url(#rp85)"/>
+    <path d="M14 50 L48 16" stroke="url(#rp88)" stroke-width="4.4" stroke-linecap="round"/>
+    <path d="M16 48 L46 18" stroke="#c09a63" stroke-width="1.2" opacity="0.45" stroke-linecap="round"/>
+    <path d="M58 6 L44 10 L54 20 Z" fill="url(#rp86)" stroke="#1a1206" stroke-width="1.2" stroke-linejoin="round"/>
+    <path d="M58 6 L48 12.5 L54 20 Z" fill="#e8e2ff" opacity="0.35"/>
+    <path d="M14 50 L6 46 L10 56 Z" fill="#9089c4" stroke="#1a1206" stroke-width="1"/>
+         <path d="M18 46 L10 42 L14 52 Z" fill="#e8e2ff" opacity="0.75" stroke="#1a1206" stroke-width="0.9"/>
+         <path d="M22 42 L14 38 L18 48 Z" fill="#9089c4" opacity="0.9" stroke="#1a1206" stroke-width="0.9"/>
+    <circle cx="13" cy="16" r="1.5" fill="#fff" opacity="0.85"/>
+     <circle cx="51" cy="46" r="1.2" fill="#fff" opacity="0.7"/>
+     <circle cx="46" cy="14" r="1" fill="#fff" opacity="0.6"/></svg></span>
+     <b>Starsteel Arrow</b><i>+29 str</i><em>x12 a batch</em></div><div class="rp-cell"><span class="rp-ic"><svg class="ev-icon" viewBox="0 0 64 64"><defs><radialGradient id="rp89" cx="0.5" cy="0.5" r="0.55">
+         <stop offset="0" stop-color="#ff8420" stop-opacity="0.42"/>
+         <stop offset="1" stop-color="#ff8420" stop-opacity="0"/></radialGradient>
+      <linearGradient id="rp90" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#ffab55"/><stop offset="0.45" stop-color="#c04e18"/>
+        <stop offset="1" stop-color="#48120a"/></linearGradient></defs><defs>
+      <linearGradient id="rp92" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#c09a63"/><stop offset="0.45" stop-color="#8a6236"/>
+        <stop offset="1" stop-color="#3f2b14"/></linearGradient></defs><circle cx="32" cy="32" r="28" fill="url(#rp89)"/>
+    <path d="M14 50 L48 16" stroke="url(#rp92)" stroke-width="4.4" stroke-linecap="round"/>
+    <path d="M16 48 L46 18" stroke="#c09a63" stroke-width="1.2" opacity="0.45" stroke-linecap="round"/>
+    <path d="M58 6 L44 10 L54 20 Z" fill="url(#rp90)" stroke="#1a1206" stroke-width="1.2" stroke-linejoin="round"/>
+    <path d="M58 6 L48 12.5 L54 20 Z" fill="#ffab55" opacity="0.35"/>
+    <path d="M14 50 L6 46 L10 56 Z" fill="#c04e18" stroke="#1a1206" stroke-width="1"/>
+         <path d="M18 46 L10 42 L14 52 Z" fill="#ffab55" opacity="0.75" stroke="#1a1206" stroke-width="0.9"/>
+         <path d="M22 42 L14 38 L18 48 Z" fill="#c04e18" opacity="0.9" stroke="#1a1206" stroke-width="0.9"/>
+    <circle cx="13" cy="16" r="1.5" fill="#fff" opacity="0.85"/>
+     <circle cx="51" cy="46" r="1.2" fill="#fff" opacity="0.7"/>
+     <circle cx="46" cy="14" r="1" fill="#fff" opacity="0.6"/></svg></span>
+     <b>Moltensteel Arrow</b><i>+37 str</i><em>x12 a batch</em></div><div class="rp-cell"><span class="rp-ic"><svg class="ev-icon" viewBox="0 0 64 64"><defs><radialGradient id="rp93" cx="0.5" cy="0.5" r="0.55">
+         <stop offset="0" stop-color="#9a5ad0" stop-opacity="0.42"/>
+         <stop offset="1" stop-color="#9a5ad0" stop-opacity="0"/></radialGradient>
+      <linearGradient id="rp94" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#c489f0"/><stop offset="0.45" stop-color="#7434b0"/>
+        <stop offset="1" stop-color="#2a0f47"/></linearGradient></defs><defs>
+      <linearGradient id="rp96" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#c09a63"/><stop offset="0.45" stop-color="#8a6236"/>
+        <stop offset="1" stop-color="#3f2b14"/></linearGradient></defs><circle cx="32" cy="32" r="28" fill="url(#rp93)"/>
+    <path d="M14 50 L48 16" stroke="url(#rp96)" stroke-width="4.4" stroke-linecap="round"/>
+    <path d="M16 48 L46 18" stroke="#c09a63" stroke-width="1.2" opacity="0.45" stroke-linecap="round"/>
+    <path d="M58 6 L44 10 L54 20 Z" fill="url(#rp94)" stroke="#1a1206" stroke-width="1.2" stroke-linejoin="round"/>
+    <path d="M58 6 L48 12.5 L54 20 Z" fill="#c489f0" opacity="0.35"/>
+    <path d="M14 50 L6 46 L10 56 Z" fill="#7434b0" stroke="#1a1206" stroke-width="1"/>
+         <path d="M18 46 L10 42 L14 52 Z" fill="#c489f0" opacity="0.75" stroke="#1a1206" stroke-width="0.9"/>
+         <path d="M22 42 L14 38 L18 48 Z" fill="#7434b0" opacity="0.9" stroke="#1a1206" stroke-width="0.9"/>
+    <circle cx="13" cy="16" r="1.5" fill="#fff" opacity="0.85"/>
+     <circle cx="51" cy="46" r="1.2" fill="#fff" opacity="0.7"/>
+     <circle cx="46" cy="14" r="1" fill="#fff" opacity="0.6"/></svg></span>
+     <b>Voidsteel Arrow</b><i>+46 str</i><em>x12 a batch</em></div></div><h2>Bolts</h2>
+<p class="note">Same ladder at +15% strength and a dearer recipe, which is where the crossbow's slower swing is paid back.
+No fletching on a bolt, so no feathers: they cost metal instead.</p><div class="rp-row"><div class="rp-cell"><span class="rp-ic"><svg class="ev-icon" viewBox="0 0 64 64"><defs>
+      <linearGradient id="rp98" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#d79a52"/><stop offset="0.45" stop-color="#a36a26"/>
+        <stop offset="1" stop-color="#4a2c0d"/></linearGradient></defs><defs>
+      <linearGradient id="rp100" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#c09a63"/><stop offset="0.45" stop-color="#8a6236"/>
+        <stop offset="1" stop-color="#3f2b14"/></linearGradient></defs>
+    <path d="M22 42 L48 16" stroke="url(#rp100)" stroke-width="6" stroke-linecap="round"/>
+    <path d="M24 40 L46 18" stroke="#c09a63" stroke-width="1.2" opacity="0.45" stroke-linecap="round"/>
+    <path d="M58 6 L44 10 L54 20 Z" fill="url(#rp98)" stroke="#1a1206" stroke-width="1.2" stroke-linejoin="round"/>
+    <path d="M58 6 L48 12.5 L54 20 Z" fill="#d79a52" opacity="0.35"/>
+    <rect x="17" y="39" width="12" height="7" rx="2" transform="rotate(-45 23 42)" fill="#4a2c0d" stroke="#d79a52" stroke-width="1.1"/>
+    </svg></span>
+     <b>Bronze Bolt</b><i>+2 str</i><em>x12 a batch</em></div><div class="rp-cell"><span class="rp-ic"><svg class="ev-icon" viewBox="0 0 64 64"><defs>
+      <linearGradient id="rp102" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#a8adb4"/><stop offset="0.45" stop-color="#70767e"/>
+        <stop offset="1" stop-color="#2e3238"/></linearGradient></defs><defs>
+      <linearGradient id="rp104" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#c09a63"/><stop offset="0.45" stop-color="#8a6236"/>
+        <stop offset="1" stop-color="#3f2b14"/></linearGradient></defs>
+    <path d="M22 42 L48 16" stroke="url(#rp104)" stroke-width="6" stroke-linecap="round"/>
+    <path d="M24 40 L46 18" stroke="#c09a63" stroke-width="1.2" opacity="0.45" stroke-linecap="round"/>
+    <path d="M58 6 L44 10 L54 20 Z" fill="url(#rp102)" stroke="#1a1206" stroke-width="1.2" stroke-linejoin="round"/>
+    <path d="M58 6 L48 12.5 L54 20 Z" fill="#a8adb4" opacity="0.35"/>
+    <rect x="17" y="39" width="12" height="7" rx="2" transform="rotate(-45 23 42)" fill="#2e3238" stroke="#a8adb4" stroke-width="1.1"/>
+    </svg></span>
+     <b>Iron Bolt</b><i>+5 str</i><em>x12 a batch</em></div><div class="rp-cell"><span class="rp-ic"><svg class="ev-icon" viewBox="0 0 64 64"><defs>
+      <linearGradient id="rp106" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#d3dae2"/><stop offset="0.45" stop-color="#8b939d"/>
+        <stop offset="1" stop-color="#3c4249"/></linearGradient></defs><defs>
+      <linearGradient id="rp108" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#c09a63"/><stop offset="0.45" stop-color="#8a6236"/>
+        <stop offset="1" stop-color="#3f2b14"/></linearGradient></defs>
+    <path d="M22 42 L48 16" stroke="url(#rp108)" stroke-width="6" stroke-linecap="round"/>
+    <path d="M24 40 L46 18" stroke="#c09a63" stroke-width="1.2" opacity="0.45" stroke-linecap="round"/>
+    <path d="M58 6 L44 10 L54 20 Z" fill="url(#rp106)" stroke="#1a1206" stroke-width="1.2" stroke-linejoin="round"/>
+    <path d="M58 6 L48 12.5 L54 20 Z" fill="#d3dae2" opacity="0.35"/>
+    <rect x="17" y="39" width="12" height="7" rx="2" transform="rotate(-45 23 42)" fill="#3c4249" stroke="#d3dae2" stroke-width="1.1"/>
+    </svg></span>
+     <b>Steel Bolt</b><i>+8 str</i><em>x12 a batch</em></div><div class="rp-cell"><span class="rp-ic"><svg class="ev-icon" viewBox="0 0 64 64"><defs><radialGradient id="rp109" cx="0.5" cy="0.5" r="0.55">
+         <stop offset="0" stop-color="#6fa8d8" stop-opacity="0.42"/>
+         <stop offset="1" stop-color="#6fa8d8" stop-opacity="0"/></radialGradient>
+      <linearGradient id="rp110" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#8cc4ec"/><stop offset="0.45" stop-color="#3f74a4"/>
+        <stop offset="1" stop-color="#152f47"/></linearGradient></defs><defs>
+      <linearGradient id="rp112" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#c09a63"/><stop offset="0.45" stop-color="#8a6236"/>
+        <stop offset="1" stop-color="#3f2b14"/></linearGradient></defs><circle cx="32" cy="32" r="28" fill="url(#rp109)"/>
+    <path d="M22 42 L48 16" stroke="url(#rp112)" stroke-width="6" stroke-linecap="round"/>
+    <path d="M24 40 L46 18" stroke="#c09a63" stroke-width="1.2" opacity="0.45" stroke-linecap="round"/>
+    <path d="M58 6 L44 10 L54 20 Z" fill="url(#rp110)" stroke="#1a1206" stroke-width="1.2" stroke-linejoin="round"/>
+    <path d="M58 6 L48 12.5 L54 20 Z" fill="#8cc4ec" opacity="0.35"/>
+    <rect x="17" y="39" width="12" height="7" rx="2" transform="rotate(-45 23 42)" fill="#152f47" stroke="#8cc4ec" stroke-width="1.1"/>
+    </svg></span>
+     <b>Mithril Bolt</b><i>+13 str</i><em>x12 a batch</em></div><div class="rp-cell"><span class="rp-ic"><svg class="ev-icon" viewBox="0 0 64 64"><defs><radialGradient id="rp113" cx="0.5" cy="0.5" r="0.55">
+         <stop offset="0" stop-color="#4a7fd0" stop-opacity="0.42"/>
+         <stop offset="1" stop-color="#4a7fd0" stop-opacity="0"/></radialGradient>
+      <linearGradient id="rp114" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#6b9ce8"/><stop offset="0.45" stop-color="#2f57a0"/>
+        <stop offset="1" stop-color="#13224a"/></linearGradient></defs><defs>
+      <linearGradient id="rp116" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#c09a63"/><stop offset="0.45" stop-color="#8a6236"/>
+        <stop offset="1" stop-color="#3f2b14"/></linearGradient></defs><circle cx="32" cy="32" r="28" fill="url(#rp113)"/>
+    <path d="M22 42 L48 16" stroke="url(#rp116)" stroke-width="6" stroke-linecap="round"/>
+    <path d="M24 40 L46 18" stroke="#c09a63" stroke-width="1.2" opacity="0.45" stroke-linecap="round"/>
+    <path d="M58 6 L44 10 L54 20 Z" fill="url(#rp114)" stroke="#1a1206" stroke-width="1.2" stroke-linejoin="round"/>
+    <path d="M58 6 L48 12.5 L54 20 Z" fill="#6b9ce8" opacity="0.35"/>
+    <rect x="17" y="39" width="12" height="7" rx="2" transform="rotate(-45 23 42)" fill="#13224a" stroke="#6b9ce8" stroke-width="1.1"/>
+    </svg></span>
+     <b>Cobalt Bolt</b><i>+18 str</i><em>x12 a batch</em></div><div class="rp-cell"><span class="rp-ic"><svg class="ev-icon" viewBox="0 0 64 64"><defs><radialGradient id="rp117" cx="0.5" cy="0.5" r="0.55">
+         <stop offset="0" stop-color="#3fb08a" stop-opacity="0.42"/>
+         <stop offset="1" stop-color="#3fb08a" stop-opacity="0"/></radialGradient>
+      <linearGradient id="rp118" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#5fd0a8"/><stop offset="0.45" stop-color="#238a68"/>
+        <stop offset="1" stop-color="#0d3a2c"/></linearGradient></defs><defs>
+      <linearGradient id="rp120" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#c09a63"/><stop offset="0.45" stop-color="#8a6236"/>
+        <stop offset="1" stop-color="#3f2b14"/></linearGradient></defs><circle cx="32" cy="32" r="28" fill="url(#rp117)"/>
+    <path d="M22 42 L48 16" stroke="url(#rp120)" stroke-width="6" stroke-linecap="round"/>
+    <path d="M24 40 L46 18" stroke="#c09a63" stroke-width="1.2" opacity="0.45" stroke-linecap="round"/>
+    <path d="M58 6 L44 10 L54 20 Z" fill="url(#rp118)" stroke="#1a1206" stroke-width="1.2" stroke-linejoin="round"/>
+    <path d="M58 6 L48 12.5 L54 20 Z" fill="#5fd0a8" opacity="0.35"/>
+    <rect x="17" y="39" width="12" height="7" rx="2" transform="rotate(-45 23 42)" fill="#0d3a2c" stroke="#5fd0a8" stroke-width="1.1"/>
+    </svg></span>
+     <b>Runite Bolt</b><i>+25 str</i><em>x12 a batch</em></div><div class="rp-cell"><span class="rp-ic"><svg class="ev-icon" viewBox="0 0 64 64"><defs><radialGradient id="rp121" cx="0.5" cy="0.5" r="0.55">
+         <stop offset="0" stop-color="#c8bcff" stop-opacity="0.42"/>
+         <stop offset="1" stop-color="#c8bcff" stop-opacity="0"/></radialGradient>
+      <linearGradient id="rp122" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#e8e2ff"/><stop offset="0.45" stop-color="#9089c4"/>
+        <stop offset="1" stop-color="#2e2a4a"/></linearGradient></defs><defs>
+      <linearGradient id="rp124" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#c09a63"/><stop offset="0.45" stop-color="#8a6236"/>
+        <stop offset="1" stop-color="#3f2b14"/></linearGradient></defs><circle cx="32" cy="32" r="28" fill="url(#rp121)"/>
+    <path d="M22 42 L48 16" stroke="url(#rp124)" stroke-width="6" stroke-linecap="round"/>
+    <path d="M24 40 L46 18" stroke="#c09a63" stroke-width="1.2" opacity="0.45" stroke-linecap="round"/>
+    <path d="M58 6 L44 10 L54 20 Z" fill="url(#rp122)" stroke="#1a1206" stroke-width="1.2" stroke-linejoin="round"/>
+    <path d="M58 6 L48 12.5 L54 20 Z" fill="#e8e2ff" opacity="0.35"/>
+    <rect x="17" y="39" width="12" height="7" rx="2" transform="rotate(-45 23 42)" fill="#2e2a4a" stroke="#e8e2ff" stroke-width="1.1"/>
+    <circle cx="13" cy="16" r="1.5" fill="#fff" opacity="0.85"/>
+     <circle cx="51" cy="46" r="1.2" fill="#fff" opacity="0.7"/>
+     <circle cx="46" cy="14" r="1" fill="#fff" opacity="0.6"/></svg></span>
+     <b>Starsteel Bolt</b><i>+33 str</i><em>x12 a batch</em></div><div class="rp-cell"><span class="rp-ic"><svg class="ev-icon" viewBox="0 0 64 64"><defs><radialGradient id="rp125" cx="0.5" cy="0.5" r="0.55">
+         <stop offset="0" stop-color="#ff8420" stop-opacity="0.42"/>
+         <stop offset="1" stop-color="#ff8420" stop-opacity="0"/></radialGradient>
+      <linearGradient id="rp126" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#ffab55"/><stop offset="0.45" stop-color="#c04e18"/>
+        <stop offset="1" stop-color="#48120a"/></linearGradient></defs><defs>
+      <linearGradient id="rp128" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#c09a63"/><stop offset="0.45" stop-color="#8a6236"/>
+        <stop offset="1" stop-color="#3f2b14"/></linearGradient></defs><circle cx="32" cy="32" r="28" fill="url(#rp125)"/>
+    <path d="M22 42 L48 16" stroke="url(#rp128)" stroke-width="6" stroke-linecap="round"/>
+    <path d="M24 40 L46 18" stroke="#c09a63" stroke-width="1.2" opacity="0.45" stroke-linecap="round"/>
+    <path d="M58 6 L44 10 L54 20 Z" fill="url(#rp126)" stroke="#1a1206" stroke-width="1.2" stroke-linejoin="round"/>
+    <path d="M58 6 L48 12.5 L54 20 Z" fill="#ffab55" opacity="0.35"/>
+    <rect x="17" y="39" width="12" height="7" rx="2" transform="rotate(-45 23 42)" fill="#48120a" stroke="#ffab55" stroke-width="1.1"/>
+    <circle cx="13" cy="16" r="1.5" fill="#fff" opacity="0.85"/>
+     <circle cx="51" cy="46" r="1.2" fill="#fff" opacity="0.7"/>
+     <circle cx="46" cy="14" r="1" fill="#fff" opacity="0.6"/></svg></span>
+     <b>Moltensteel Bolt</b><i>+43 str</i><em>x12 a batch</em></div><div class="rp-cell"><span class="rp-ic"><svg class="ev-icon" viewBox="0 0 64 64"><defs><radialGradient id="rp129" cx="0.5" cy="0.5" r="0.55">
+         <stop offset="0" stop-color="#9a5ad0" stop-opacity="0.42"/>
+         <stop offset="1" stop-color="#9a5ad0" stop-opacity="0"/></radialGradient>
+      <linearGradient id="rp130" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#c489f0"/><stop offset="0.45" stop-color="#7434b0"/>
+        <stop offset="1" stop-color="#2a0f47"/></linearGradient></defs><defs>
+      <linearGradient id="rp132" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#c09a63"/><stop offset="0.45" stop-color="#8a6236"/>
+        <stop offset="1" stop-color="#3f2b14"/></linearGradient></defs><circle cx="32" cy="32" r="28" fill="url(#rp129)"/>
+    <path d="M22 42 L48 16" stroke="url(#rp132)" stroke-width="6" stroke-linecap="round"/>
+    <path d="M24 40 L46 18" stroke="#c09a63" stroke-width="1.2" opacity="0.45" stroke-linecap="round"/>
+    <path d="M58 6 L44 10 L54 20 Z" fill="url(#rp130)" stroke="#1a1206" stroke-width="1.2" stroke-linejoin="round"/>
+    <path d="M58 6 L48 12.5 L54 20 Z" fill="#c489f0" opacity="0.35"/>
+    <rect x="17" y="39" width="12" height="7" rx="2" transform="rotate(-45 23 42)" fill="#2a0f47" stroke="#c489f0" stroke-width="1.1"/>
+    <circle cx="13" cy="16" r="1.5" fill="#fff" opacity="0.85"/>
+     <circle cx="51" cy="46" r="1.2" fill="#fff" opacity="0.7"/>
+     <circle cx="46" cy="14" r="1" fill="#fff" opacity="0.6"/></svg></span>
+     <b>Voidsteel Bolt</b><i>+53 str</i><em>x12 a batch</em></div></div><h2>The bench</h2>
+<p class="note">Four skills feed Fletching. Feathers are the only genuinely new material, and they get three sources
+so the loop can never hard block: a common drop in Thornwood and Frostfang, eight from a Bird's Nest, which currently does nothing at all, and a poor rate at the shop for three in the morning.</p><div class="mat">
+  <div class="rp-cell"><span class="rp-ic"><svg class="ev-icon" viewBox="0 0 64 64"><defs>
+    <linearGradient id="ftr" x1="0.2" y1="0" x2="0.9" y2="1">
+      <stop offset="0" stop-color="#f2e9d4"/><stop offset="0.5" stop-color="#b9ab8c"/>
+      <stop offset="1" stop-color="#5e5240"/></linearGradient></defs>
+    <path d="M50 8 C30 14 16 32 12 54 C34 50 52 34 56 12 Z" fill="url(#ftr)" stroke="#2e281c" stroke-width="1.3" stroke-linejoin="round"/>
+    <path d="M54 10 L10 56" stroke="#6a5f48" stroke-width="1.9" stroke-linecap="round"/>
+    <path d="M46 14 L28 22 M42 20 L24 30 M38 27 L21 38 M34 34 L18 45"
+      stroke="#7d7159" stroke-width="1" opacity="0.55"/>
+    <path d="M10 56 L6 60" stroke="#4a4130" stroke-width="2.2" stroke-linecap="round"/></svg></span>
+     <b>Feather</b><i>new drop</i></div>
+  <div class="rp-cell"><span class="rp-ic"><svg class="ev-icon" viewBox="0 0 64 64"><defs>
+      <linearGradient id="rp134" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#b98a4e"/><stop offset="0.45" stop-color="#7d5527"/>
+        <stop offset="1" stop-color="#3a2610"/></linearGradient></defs>
+    <path d="M16 54 L44 10 M24 56 L52 12 M8 50 L36 6"
+      stroke="url(#rp134)" stroke-width="5" stroke-linecap="round"/>
+    <path d="M14 42 C24 46 34 40 44 44" stroke="#6d4a26" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+    </svg></span>
+     <b>Oak Shafts</b><i>12 per log</i></div>
+  <div class="rp-cell"><span class="rp-ic"><svg class="ev-icon" viewBox="0 0 64 64"><defs><radialGradient id="rp135" cx="0.5" cy="0.5" r="0.55">
+         <stop offset="0" stop-color="#9a5ad0" stop-opacity="0.42"/>
+         <stop offset="1" stop-color="#9a5ad0" stop-opacity="0"/></radialGradient>
+      <linearGradient id="rp136" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#7c6d90"/><stop offset="0.45" stop-color="#463a5c"/>
+        <stop offset="1" stop-color="#1c1528"/></linearGradient></defs><circle cx="32" cy="32" r="28" fill="url(#rp135)"/>
+    <path d="M16 54 L44 10 M24 56 L52 12 M8 50 L36 6"
+      stroke="url(#rp136)" stroke-width="5" stroke-linecap="round"/>
+    <path d="M14 42 C24 46 34 40 44 44" stroke="#6d4a26" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+    </svg></span>
+     <b>Shadow Shafts</b><i>12 per log</i></div>
+  <div class="rp-cell"><span class="rp-ic"><svg class="ev-icon" viewBox="0 0 64 64">
+    <ellipse cx="32" cy="34" rx="20" ry="21" fill="none" stroke="#d8cfae" stroke-width="4.4"/>
+    <ellipse cx="32" cy="34" rx="20" ry="21" fill="none" stroke="#8d8464" stroke-width="1.6" stroke-dasharray="4 5"/>
+    <ellipse cx="32" cy="13" rx="9" ry="6" fill="none" stroke="#d8cfae" stroke-width="4"/>
+    <path d="M25 50 L32 58 L39 50" fill="none" stroke="#b5aa85" stroke-width="2.6" stroke-linecap="round"/></svg></span>
+     <b>Bowstring</b><i>3 spider silk</i></div>
+  <div class="rp-cell"><span class="rp-ic"><svg class="ev-icon" viewBox="0 0 64 64"><defs>
+    <linearGradient id="qv" x1="0.1" y1="0" x2="1" y2="0.3">
+      <stop offset="0" stop-color="#a87a44"/><stop offset="0.5" stop-color="#6d4a26"/>
+      <stop offset="1" stop-color="#2e1d0c"/></linearGradient></defs>
+    <path d="M28 6 L40 8 L44 12 L36 12 Z" fill="#8a6236"/>
+    <path d="M22 14 L46 18 L40 58 Q32 62 24 56 Z" fill="url(#qv)" stroke="#1e1408" stroke-width="1.4" stroke-linejoin="round"/>
+    <path d="M22 26 L45 30 M23 40 L43 43" stroke="#3f2b14" stroke-width="2.6"/>
+    <path d="M26 14 L20 4 M32 15 L32 3 M39 16 L44 5" stroke="#c09a63" stroke-width="3" stroke-linecap="round"/>
+    <path d="M20 4 L16 0 M32 3 L32 -1 M44 5 L48 1" stroke="#d8cfae" stroke-width="2.4" stroke-linecap="round"/></svg></span>
+     <b>Quiver</b><i>new body slot</i></div>
+</div><h2>At 20px, which is the size that matters</h2>
+<p class="note">Everything above redrawn at satchel-row size. If a silhouette does not survive here it is the wrong silhouette.</p>
+<div class="rp-row" style="gap:6px"><span class="rp-ic small" style="height:auto;width:34px;display:inline-flex;
+  background:#1d1409;border:1px solid var(--trim-d);border-radius:7px;padding:6px;margin:0"><svg class="ev-icon" viewBox="0 0 64 64"><defs>
+      <linearGradient id="rp138" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#c09a63"/><stop offset="0.45" stop-color="#8a6236"/>
+        <stop offset="1" stop-color="#3f2b14"/></linearGradient></defs>
+    <path d="M50 9 C10 19 10 45 50 55" fill="none" stroke="url(#rp138)" stroke-width="6.5" stroke-linecap="round"/>
+    <path d="M50 9 C10 19 10 45 50 55" fill="none" stroke="#c09a63" stroke-width="1.5" opacity="0.4"
+      stroke-linecap="round" transform="translate(-1.6,0)"/>
+    <path d="M50 9 C57 12 57 17 48 18"
+         fill="none" stroke="url(#rp138)" stroke-width="5" stroke-linecap="round"/>
+       <path d="M50 55 C57 52 57 47 48 46"
+         fill="none" stroke="url(#rp138)" stroke-width="5" stroke-linecap="round"/>
+    <path d="M50 9 L50 55" stroke="#efe4c4" stroke-width="1.8" stroke-linecap="round"/>
+    <path d="M11 24 L11 40" stroke="#3a2513" stroke-width="10" stroke-linecap="round"/>
+    <path d="M11 24 L11 40" stroke="#6d4a26" stroke-width="7" stroke-linecap="round"/>
+    <path d="M7 28 H15 M7 36 H15"
+      stroke="#c9a86a" stroke-width="1.8" opacity="0.7" stroke-linecap="round"/>
+    </svg></span><span class="rp-ic small" style="height:auto;width:34px;display:inline-flex;
+  background:#1d1409;border:1px solid var(--trim-d);border-radius:7px;padding:6px;margin:0"><svg class="ev-icon" viewBox="0 0 64 64"><defs><radialGradient id="rp139" cx="0.5" cy="0.5" r="0.55">
+         <stop offset="0" stop-color="#e0762f" stop-opacity="0.42"/>
+         <stop offset="1" stop-color="#e0762f" stop-opacity="0"/></radialGradient>
+      <linearGradient id="rp140" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#d4703c"/><stop offset="0.45" stop-color="#96351d"/>
+        <stop offset="1" stop-color="#3d1108"/></linearGradient></defs><circle cx="32" cy="32" r="28" fill="url(#rp139)"/>
+    <path d="M50 3 C12 13 12 51 50 61" fill="none" stroke="url(#rp140)" stroke-width="6" stroke-linecap="round"/>
+    <path d="M50 3 C12 13 12 51 50 61" fill="none" stroke="#d4703c" stroke-width="1.5" opacity="0.4"
+      stroke-linecap="round" transform="translate(-1.6,0)"/>
+    
+    <path d="M50 3 L50 61" stroke="#efe4c4" stroke-width="1.8" stroke-linecap="round"/>
+    <path d="M13 24 L13 40" stroke="#3a2513" stroke-width="10" stroke-linecap="round"/>
+    <path d="M13 24 L13 40" stroke="#6d4a26" stroke-width="7" stroke-linecap="round"/>
+    <path d="M9 28 H17 M9 36 H17"
+      stroke="#c9a86a" stroke-width="1.8" opacity="0.7" stroke-linecap="round"/>
+    </svg></span><span class="rp-ic small" style="height:auto;width:34px;display:inline-flex;
+  background:#1d1409;border:1px solid var(--trim-d);border-radius:7px;padding:6px;margin:0"><svg class="ev-icon" viewBox="0 0 64 64"><defs><radialGradient id="rp141" cx="0.5" cy="0.5" r="0.55">
+         <stop offset="0" stop-color="#c8e070" stop-opacity="0.42"/>
+         <stop offset="1" stop-color="#c8e070" stop-opacity="0"/></radialGradient>
+      <linearGradient id="rp142" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#9aa870"/><stop offset="0.45" stop-color="#5e6b38"/>
+        <stop offset="1" stop-color="#232a12"/></linearGradient></defs><circle cx="32" cy="32" r="28" fill="url(#rp141)"/>
+    <path d="M50 3 C12 13 12 51 50 61" fill="none" stroke="url(#rp142)" stroke-width="6" stroke-linecap="round"/>
+    <path d="M50 3 C12 13 12 51 50 61" fill="none" stroke="#9aa870" stroke-width="1.5" opacity="0.4"
+      stroke-linecap="round" transform="translate(-1.6,0)"/>
+    
+    <path d="M50 3 L50 61" stroke="#efe4c4" stroke-width="1.8" stroke-linecap="round"/>
+    <path d="M13 24 L13 40" stroke="#3a2513" stroke-width="10" stroke-linecap="round"/>
+    <path d="M13 24 L13 40" stroke="#6d4a26" stroke-width="7" stroke-linecap="round"/>
+    <path d="M9 28 H17 M9 36 H17"
+      stroke="#c9a86a" stroke-width="1.8" opacity="0.7" stroke-linecap="round"/>
+    <circle cx="13" cy="16" r="1.5" fill="#fff" opacity="0.85"/>
+     <circle cx="51" cy="46" r="1.2" fill="#fff" opacity="0.7"/>
+     <circle cx="46" cy="14" r="1" fill="#fff" opacity="0.6"/></svg></span><span class="rp-ic small" style="height:auto;width:34px;display:inline-flex;
+  background:#1d1409;border:1px solid var(--trim-d);border-radius:7px;padding:6px;margin:0"><svg class="ev-icon" viewBox="0 0 64 64"><defs>
+      <linearGradient id="rp144" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#d79a52"/><stop offset="0.45" stop-color="#a36a26"/>
+        <stop offset="1" stop-color="#4a2c0d"/></linearGradient></defs><defs>
+      <linearGradient id="rp146" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#a07a48"/><stop offset="0.45" stop-color="#6d4a26"/>
+        <stop offset="1" stop-color="#33210f"/></linearGradient></defs>
+    <path d="M27 16 H37 L39 50 Q32 62 25 50 Z" fill="url(#rp146)"
+      stroke="#241708" stroke-width="1.3" stroke-linejoin="round"/>
+    <path d="M29.5 20 L29.5 50" stroke="#a07a48" stroke-width="1.4" opacity="0.4"/>
+    <path d="M24 44 L32 41 L40 44" fill="none" stroke="#4a2c0d" stroke-width="2.6" stroke-linecap="round"/>
+    <path d="M32 46 Q30 52 33 55" fill="none" stroke="#a36a26" stroke-width="2.6" stroke-linecap="round"/>
+    <path d="M5 30 C16 15 48 15 59 30" fill="none" stroke="url(#rp144)"
+      stroke-width="6.5" stroke-linecap="round"/>
+    <path d="M5 30 C16 17 48 17 59 30" fill="none" stroke="#d79a52"
+      stroke-width="1.6" opacity="0.4" stroke-linecap="round"/>
+    <path d="M5 30 L32 38 L59 30" fill="none" stroke="#efe4c4" stroke-width="1.8" stroke-linejoin="round"/>
+    <path d="M30 12 L34 12 L34 34 L30 34 Z" fill="#4a2c0d" stroke="#d79a52" stroke-width="1.1"/>
+    <path d="M32 8 L36 14 L28 14 Z" fill="#d79a52"/>
+    </svg></span><span class="rp-ic small" style="height:auto;width:34px;display:inline-flex;
+  background:#1d1409;border:1px solid var(--trim-d);border-radius:7px;padding:6px;margin:0"><svg class="ev-icon" viewBox="0 0 64 64"><defs><radialGradient id="rp147" cx="0.5" cy="0.5" r="0.55">
+         <stop offset="0" stop-color="#4a7fd0" stop-opacity="0.42"/>
+         <stop offset="1" stop-color="#4a7fd0" stop-opacity="0"/></radialGradient>
+      <linearGradient id="rp148" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#6b9ce8"/><stop offset="0.45" stop-color="#2f57a0"/>
+        <stop offset="1" stop-color="#13224a"/></linearGradient></defs><defs>
+      <linearGradient id="rp150" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#a07a48"/><stop offset="0.45" stop-color="#6d4a26"/>
+        <stop offset="1" stop-color="#33210f"/></linearGradient></defs><circle cx="32" cy="32" r="28" fill="url(#rp147)"/>
+    <path d="M27 16 H37 L39 50 Q32 62 25 50 Z" fill="url(#rp150)"
+      stroke="#241708" stroke-width="1.3" stroke-linejoin="round"/>
+    <path d="M29.5 20 L29.5 50" stroke="#a07a48" stroke-width="1.4" opacity="0.4"/>
+    <path d="M24 44 L32 41 L40 44" fill="none" stroke="#13224a" stroke-width="2.6" stroke-linecap="round"/>
+    <path d="M32 46 Q30 52 33 55" fill="none" stroke="#2f57a0" stroke-width="2.6" stroke-linecap="round"/>
+    <path d="M5 30 C16 15 48 15 59 30" fill="none" stroke="url(#rp148)"
+      stroke-width="6.5" stroke-linecap="round"/>
+    <path d="M5 30 C16 17 48 17 59 30" fill="none" stroke="#6b9ce8"
+      stroke-width="1.6" opacity="0.4" stroke-linecap="round"/>
+    <path d="M5 30 L32 38 L59 30" fill="none" stroke="#efe4c4" stroke-width="1.8" stroke-linejoin="round"/>
+    <path d="M30 12 L34 12 L34 34 L30 34 Z" fill="#13224a" stroke="#6b9ce8" stroke-width="1.1"/>
+    <path d="M32 8 L36 14 L28 14 Z" fill="#6b9ce8"/>
+    </svg></span><span class="rp-ic small" style="height:auto;width:34px;display:inline-flex;
+  background:#1d1409;border:1px solid var(--trim-d);border-radius:7px;padding:6px;margin:0"><svg class="ev-icon" viewBox="0 0 64 64"><defs><radialGradient id="rp151" cx="0.5" cy="0.5" r="0.55">
+         <stop offset="0" stop-color="#9a5ad0" stop-opacity="0.42"/>
+         <stop offset="1" stop-color="#9a5ad0" stop-opacity="0"/></radialGradient>
+      <linearGradient id="rp152" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#c489f0"/><stop offset="0.45" stop-color="#7434b0"/>
+        <stop offset="1" stop-color="#2a0f47"/></linearGradient></defs><defs>
+      <linearGradient id="rp154" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#a07a48"/><stop offset="0.45" stop-color="#6d4a26"/>
+        <stop offset="1" stop-color="#33210f"/></linearGradient></defs><circle cx="32" cy="32" r="28" fill="url(#rp151)"/>
+    <path d="M27 16 H37 L39 50 Q32 62 25 50 Z" fill="url(#rp154)"
+      stroke="#241708" stroke-width="1.3" stroke-linejoin="round"/>
+    <path d="M29.5 20 L29.5 50" stroke="#a07a48" stroke-width="1.4" opacity="0.4"/>
+    <path d="M24 44 L32 41 L40 44" fill="none" stroke="#2a0f47" stroke-width="2.6" stroke-linecap="round"/>
+    <path d="M32 46 Q30 52 33 55" fill="none" stroke="#7434b0" stroke-width="2.6" stroke-linecap="round"/>
+    <path d="M5 30 C16 15 48 15 59 30" fill="none" stroke="url(#rp152)"
+      stroke-width="6.5" stroke-linecap="round"/>
+    <path d="M5 30 C16 17 48 17 59 30" fill="none" stroke="#c489f0"
+      stroke-width="1.6" opacity="0.4" stroke-linecap="round"/>
+    <path d="M5 30 L32 38 L59 30" fill="none" stroke="#efe4c4" stroke-width="1.8" stroke-linejoin="round"/>
+    <path d="M30 12 L34 12 L34 34 L30 34 Z" fill="#2a0f47" stroke="#c489f0" stroke-width="1.1"/>
+    <path d="M32 8 L36 14 L28 14 Z" fill="#c489f0"/>
+    <circle cx="13" cy="16" r="1.5" fill="#fff" opacity="0.85"/>
+     <circle cx="51" cy="46" r="1.2" fill="#fff" opacity="0.7"/>
+     <circle cx="46" cy="14" r="1" fill="#fff" opacity="0.6"/></svg></span><span class="rp-ic small" style="height:auto;width:34px;display:inline-flex;
+  background:#1d1409;border:1px solid var(--trim-d);border-radius:7px;padding:6px;margin:0"><svg class="ev-icon" viewBox="0 0 64 64"><defs>
+      <linearGradient id="rp156" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#d79a52"/><stop offset="0.45" stop-color="#a36a26"/>
+        <stop offset="1" stop-color="#4a2c0d"/></linearGradient></defs><defs>
+      <linearGradient id="rp158" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#c09a63"/><stop offset="0.45" stop-color="#8a6236"/>
+        <stop offset="1" stop-color="#3f2b14"/></linearGradient></defs>
+    <path d="M14 50 L48 16" stroke="url(#rp158)" stroke-width="4.4" stroke-linecap="round"/>
+    <path d="M16 48 L46 18" stroke="#c09a63" stroke-width="1.2" opacity="0.45" stroke-linecap="round"/>
+    <path d="M58 6 L44 10 L54 20 Z" fill="url(#rp156)" stroke="#1a1206" stroke-width="1.2" stroke-linejoin="round"/>
+    <path d="M58 6 L48 12.5 L54 20 Z" fill="#d79a52" opacity="0.35"/>
+    <path d="M14 50 L6 46 L10 56 Z" fill="#a36a26" stroke="#1a1206" stroke-width="1"/>
+         <path d="M18 46 L10 42 L14 52 Z" fill="#d79a52" opacity="0.75" stroke="#1a1206" stroke-width="0.9"/>
+         <path d="M22 42 L14 38 L18 48 Z" fill="#a36a26" opacity="0.9" stroke="#1a1206" stroke-width="0.9"/>
+    </svg></span><span class="rp-ic small" style="height:auto;width:34px;display:inline-flex;
+  background:#1d1409;border:1px solid var(--trim-d);border-radius:7px;padding:6px;margin:0"><svg class="ev-icon" viewBox="0 0 64 64"><defs><radialGradient id="rp159" cx="0.5" cy="0.5" r="0.55">
+         <stop offset="0" stop-color="#3fb08a" stop-opacity="0.42"/>
+         <stop offset="1" stop-color="#3fb08a" stop-opacity="0"/></radialGradient>
+      <linearGradient id="rp160" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#5fd0a8"/><stop offset="0.45" stop-color="#238a68"/>
+        <stop offset="1" stop-color="#0d3a2c"/></linearGradient></defs><defs>
+      <linearGradient id="rp162" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#c09a63"/><stop offset="0.45" stop-color="#8a6236"/>
+        <stop offset="1" stop-color="#3f2b14"/></linearGradient></defs><circle cx="32" cy="32" r="28" fill="url(#rp159)"/>
+    <path d="M14 50 L48 16" stroke="url(#rp162)" stroke-width="4.4" stroke-linecap="round"/>
+    <path d="M16 48 L46 18" stroke="#c09a63" stroke-width="1.2" opacity="0.45" stroke-linecap="round"/>
+    <path d="M58 6 L44 10 L54 20 Z" fill="url(#rp160)" stroke="#1a1206" stroke-width="1.2" stroke-linejoin="round"/>
+    <path d="M58 6 L48 12.5 L54 20 Z" fill="#5fd0a8" opacity="0.35"/>
+    <path d="M14 50 L6 46 L10 56 Z" fill="#238a68" stroke="#1a1206" stroke-width="1"/>
+         <path d="M18 46 L10 42 L14 52 Z" fill="#5fd0a8" opacity="0.75" stroke="#1a1206" stroke-width="0.9"/>
+         <path d="M22 42 L14 38 L18 48 Z" fill="#238a68" opacity="0.9" stroke="#1a1206" stroke-width="0.9"/>
+    </svg></span><span class="rp-ic small" style="height:auto;width:34px;display:inline-flex;
+  background:#1d1409;border:1px solid var(--trim-d);border-radius:7px;padding:6px;margin:0"><svg class="ev-icon" viewBox="0 0 64 64"><defs><radialGradient id="rp163" cx="0.5" cy="0.5" r="0.55">
+         <stop offset="0" stop-color="#9a5ad0" stop-opacity="0.42"/>
+         <stop offset="1" stop-color="#9a5ad0" stop-opacity="0"/></radialGradient>
+      <linearGradient id="rp164" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#c489f0"/><stop offset="0.45" stop-color="#7434b0"/>
+        <stop offset="1" stop-color="#2a0f47"/></linearGradient></defs><defs>
+      <linearGradient id="rp166" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#c09a63"/><stop offset="0.45" stop-color="#8a6236"/>
+        <stop offset="1" stop-color="#3f2b14"/></linearGradient></defs><circle cx="32" cy="32" r="28" fill="url(#rp163)"/>
+    <path d="M14 50 L48 16" stroke="url(#rp166)" stroke-width="4.4" stroke-linecap="round"/>
+    <path d="M16 48 L46 18" stroke="#c09a63" stroke-width="1.2" opacity="0.45" stroke-linecap="round"/>
+    <path d="M58 6 L44 10 L54 20 Z" fill="url(#rp164)" stroke="#1a1206" stroke-width="1.2" stroke-linejoin="round"/>
+    <path d="M58 6 L48 12.5 L54 20 Z" fill="#c489f0" opacity="0.35"/>
+    <path d="M14 50 L6 46 L10 56 Z" fill="#7434b0" stroke="#1a1206" stroke-width="1"/>
+         <path d="M18 46 L10 42 L14 52 Z" fill="#c489f0" opacity="0.75" stroke="#1a1206" stroke-width="0.9"/>
+         <path d="M22 42 L14 38 L18 48 Z" fill="#7434b0" opacity="0.9" stroke="#1a1206" stroke-width="0.9"/>
+    <circle cx="13" cy="16" r="1.5" fill="#fff" opacity="0.85"/>
+     <circle cx="51" cy="46" r="1.2" fill="#fff" opacity="0.7"/>
+     <circle cx="46" cy="14" r="1" fill="#fff" opacity="0.6"/></svg></span><span class="rp-ic small" style="height:auto;width:34px;display:inline-flex;
+  background:#1d1409;border:1px solid var(--trim-d);border-radius:7px;padding:6px;margin:0"><svg class="ev-icon" viewBox="0 0 64 64"><defs>
+      <linearGradient id="rp168" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#d3dae2"/><stop offset="0.45" stop-color="#8b939d"/>
+        <stop offset="1" stop-color="#3c4249"/></linearGradient></defs><defs>
+      <linearGradient id="rp170" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#c09a63"/><stop offset="0.45" stop-color="#8a6236"/>
+        <stop offset="1" stop-color="#3f2b14"/></linearGradient></defs>
+    <path d="M22 42 L48 16" stroke="url(#rp170)" stroke-width="6" stroke-linecap="round"/>
+    <path d="M24 40 L46 18" stroke="#c09a63" stroke-width="1.2" opacity="0.45" stroke-linecap="round"/>
+    <path d="M58 6 L44 10 L54 20 Z" fill="url(#rp168)" stroke="#1a1206" stroke-width="1.2" stroke-linejoin="round"/>
+    <path d="M58 6 L48 12.5 L54 20 Z" fill="#d3dae2" opacity="0.35"/>
+    <rect x="17" y="39" width="12" height="7" rx="2" transform="rotate(-45 23 42)" fill="#3c4249" stroke="#d3dae2" stroke-width="1.1"/>
+    </svg></span><span class="rp-ic small" style="height:auto;width:34px;display:inline-flex;
+  background:#1d1409;border:1px solid var(--trim-d);border-radius:7px;padding:6px;margin:0"><svg class="ev-icon" viewBox="0 0 64 64"><defs><radialGradient id="rp171" cx="0.5" cy="0.5" r="0.55">
+         <stop offset="0" stop-color="#ff8420" stop-opacity="0.42"/>
+         <stop offset="1" stop-color="#ff8420" stop-opacity="0"/></radialGradient>
+      <linearGradient id="rp172" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#ffab55"/><stop offset="0.45" stop-color="#c04e18"/>
+        <stop offset="1" stop-color="#48120a"/></linearGradient></defs><defs>
+      <linearGradient id="rp174" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#c09a63"/><stop offset="0.45" stop-color="#8a6236"/>
+        <stop offset="1" stop-color="#3f2b14"/></linearGradient></defs><circle cx="32" cy="32" r="28" fill="url(#rp171)"/>
+    <path d="M22 42 L48 16" stroke="url(#rp174)" stroke-width="6" stroke-linecap="round"/>
+    <path d="M24 40 L46 18" stroke="#c09a63" stroke-width="1.2" opacity="0.45" stroke-linecap="round"/>
+    <path d="M58 6 L44 10 L54 20 Z" fill="url(#rp172)" stroke="#1a1206" stroke-width="1.2" stroke-linejoin="round"/>
+    <path d="M58 6 L48 12.5 L54 20 Z" fill="#ffab55" opacity="0.35"/>
+    <rect x="17" y="39" width="12" height="7" rx="2" transform="rotate(-45 23 42)" fill="#48120a" stroke="#ffab55" stroke-width="1.1"/>
+    <circle cx="13" cy="16" r="1.5" fill="#fff" opacity="0.85"/>
+     <circle cx="51" cy="46" r="1.2" fill="#fff" opacity="0.7"/>
+     <circle cx="46" cy="14" r="1" fill="#fff" opacity="0.6"/></svg></span><span class="rp-ic small" style="height:auto;width:34px;display:inline-flex;
+  background:#1d1409;border:1px solid var(--trim-d);border-radius:7px;padding:6px;margin:0"><svg class="ev-icon" viewBox="0 0 64 64"><defs>
+    <linearGradient id="ftr" x1="0.2" y1="0" x2="0.9" y2="1">
+      <stop offset="0" stop-color="#f2e9d4"/><stop offset="0.5" stop-color="#b9ab8c"/>
+      <stop offset="1" stop-color="#5e5240"/></linearGradient></defs>
+    <path d="M50 8 C30 14 16 32 12 54 C34 50 52 34 56 12 Z" fill="url(#ftr)" stroke="#2e281c" stroke-width="1.3" stroke-linejoin="round"/>
+    <path d="M54 10 L10 56" stroke="#6a5f48" stroke-width="1.9" stroke-linecap="round"/>
+    <path d="M46 14 L28 22 M42 20 L24 30 M38 27 L21 38 M34 34 L18 45"
+      stroke="#7d7159" stroke-width="1" opacity="0.55"/>
+    <path d="M10 56 L6 60" stroke="#4a4130" stroke-width="2.2" stroke-linecap="round"/></svg></span><span class="rp-ic small" style="height:auto;width:34px;display:inline-flex;
+  background:#1d1409;border:1px solid var(--trim-d);border-radius:7px;padding:6px;margin:0"><svg class="ev-icon" viewBox="0 0 64 64"><defs>
+      <linearGradient id="rp176" x1="0.1" y1="0" x2="0.95" y2="0.4">
+        <stop offset="0" stop-color="#9a9484"/><stop offset="0.45" stop-color="#5f5a4c"/>
+        <stop offset="1" stop-color="#2b281f"/></linearGradient></defs>
+    <path d="M16 54 L44 10 M24 56 L52 12 M8 50 L36 6"
+      stroke="url(#rp176)" stroke-width="5" stroke-linecap="round"/>
+    <path d="M14 42 C24 46 34 40 44 44" stroke="#6d4a26" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+    </svg></span><span class="rp-ic small" style="height:auto;width:34px;display:inline-flex;
+  background:#1d1409;border:1px solid var(--trim-d);border-radius:7px;padding:6px;margin:0"><svg class="ev-icon" viewBox="0 0 64 64">
+    <ellipse cx="32" cy="34" rx="20" ry="21" fill="none" stroke="#d8cfae" stroke-width="4.4"/>
+    <ellipse cx="32" cy="34" rx="20" ry="21" fill="none" stroke="#8d8464" stroke-width="1.6" stroke-dasharray="4 5"/>
+    <ellipse cx="32" cy="13" rx="9" ry="6" fill="none" stroke="#d8cfae" stroke-width="4"/>
+    <path d="M25 50 L32 58 L39 50" fill="none" stroke="#b5aa85" stroke-width="2.6" stroke-linecap="round"/></svg></span><span class="rp-ic small" style="height:auto;width:34px;display:inline-flex;
+  background:#1d1409;border:1px solid var(--trim-d);border-radius:7px;padding:6px;margin:0"><svg class="ev-icon" viewBox="0 0 64 64"><defs>
+    <linearGradient id="qv" x1="0.1" y1="0" x2="1" y2="0.3">
+      <stop offset="0" stop-color="#a87a44"/><stop offset="0.5" stop-color="#6d4a26"/>
+      <stop offset="1" stop-color="#2e1d0c"/></linearGradient></defs>
+    <path d="M28 6 L40 8 L44 12 L36 12 Z" fill="#8a6236"/>
+    <path d="M22 14 L46 18 L40 58 Q32 62 24 56 Z" fill="url(#qv)" stroke="#1e1408" stroke-width="1.4" stroke-linejoin="round"/>
+    <path d="M22 26 L45 30 M23 40 L43 43" stroke="#3f2b14" stroke-width="2.6"/>
+    <path d="M26 14 L20 4 M32 15 L32 3 M39 16 L44 5" stroke="#c09a63" stroke-width="3" stroke-linecap="round"/>
+    <path d="M20 4 L16 0 M32 3 L32 -1 M44 5 L48 1" stroke="#d8cfae" stroke-width="2.4" stroke-linecap="round"/></svg></span></div><h2>How it fights</h2>
+<table>
+<tr><th></th><th>Melee today</th><th>Bow</th><th>Crossbow</th></tr>
+<tr><td>Accuracy from</td><td>Attack x1.5 + gear atk x3.5</td><td>Ranged x1.5 + gear rAtk x3.5</td><td>same, +18%</td></tr>
+<tr><td>Damage from</td><td>Strength x1.6 + gear str x5.0</td><td>Ranged x1.35 + (bow + arrow) str x5.0</td><td>same, bolts +15%</td></tr>
+<tr><td>Swing</td><td class="n">x1.00</td><td class="n">x0.85</td><td class="n">x1.15</td></tr>
+<tr><td>Hands</td><td>one, or two</td><td>two</td><td>one</td></tr>
+<tr><td>Costs</td><td>nothing</td><td>one arrow a shot</td><td>one bolt a shot</td></tr>
+<tr><td>Armour</td><td>plate</td><td colspan="2">leather, all ten tiers, with a ranged accuracy penalty on metal</td></tr>
+</table>
+<div class="warn"><b>The 1.35 is the whole balance question.</b> Melee spends two skills to reach a given power,
+attack for accuracy and strength for damage. Ranged spends one. So one ranged level has to be worth less than
+one attack level plus one strength level, or ranged simply wins. 1.35 against melee's 1.6 is a starting guess and
+nothing more: it needs a simulator before any of this ships, targeting ranged landing within 95 to 105% of melee
+at equal investment, with the ammunition cost subtracted.</div><h2>Fletching tree</h2>
+<p class="note">Sixteen nodes, 98 points, which is the hard invariant every other skill holds to.
+Half the tree improves Fletching and half improves the thing Fletching makes. Salvager is the important one:
+it decides whether ammunition reads as a rhythm or as a tax.</p><div class="tier">The Bench</div><div class="tree"><div class="tnode"><span><b>Steady Hands</b><span>+2% Fletching speed per rank</span></span><em>0/12</em></div><div class="tnode"><span><b>Straight Grain</b><span>+3% Fletching XP per rank</span></span><em>0/10</em></div><div class="tnode"><span><b>Bulk Fletcher</b><span>+2% chance of a double batch per rank</span></span><em>0/8</em></div></div><div class="tier">The Quiver · 12 points spent</div><div class="tree"><div class="tnode"><span><b>Salvager</b><span>+6% of spent ammunition recovered after a fight</span></span><em>0/10</em></div><div class="tnode"><span><b>Splitter</b><span>+1 extra shaft per log every 2 ranks</span></span><em>0/6</em></div></div><div class="tier">The Draw · 20 points spent</div><div class="tree"><div class="tnode"><span><b>Keen Heads</b><span>+1% ranged accuracy per rank with ammunition you fletched</span></span><em>0/8</em></div><div class="tnode"><span><b>Quiverfull</b><span>+25 quiver capacity per rank</span></span><em>0/6</em></div><div class="tnode"><span><b>Practised Draw</b><span>+1% ranged damage per rank</span></span><em>0/8</em></div></div><div class="tier">Master · 40 points spent</div><div class="tree"><div class="tnode"><span><b>Fletcher's Eye</b><span>Arrows show their real damage per second in the panel</span></span><em>0/1</em></div><div class="tnode"><span><b>Windcutter</b><span>+2% chance a shot cannot miss</span></span><em>0/5</em></div><div class="tnode"><span><b>Master Fletcher</b><span>Ammunition recovery applies to bolts as well as arrows</span></span><em>0/1</em></div><div class="tnode"><span><b>Barbed</b><span>+1.5% bleed chance per rank on a landed shot</span></span><em>0/6</em></div></div><div class="tier">Grandmaster · 75 points spent</div><div class="tree"><div class="tnode"><span><b>Swift Bench</b><span>+2% Fletching speed per rank, grandmaster</span></span><em>0/5</em></div><div class="tnode"><span><b>Woodsong</b><span>+4% Fletching XP per rank, grandmaster</span></span><em>0/5</em></div><div class="tnode"><span><b>Deep Quiver</b><span>+4% ammunition recovered per rank, grandmaster</span></span><em>0/5</em></div><div class="tnode"><span><b>Endless Quiver</b><span>5% chance a shot consumes no ammunition</span></span><em>0/1</em></div><div class="tnode"><span><b>Fletching Cape</b><span>The capstone</span></span><em>0/1</em></div></div>
