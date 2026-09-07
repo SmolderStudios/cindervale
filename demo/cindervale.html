@@ -7645,7 +7645,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.123.8">v0.9.123</div>
+  <div class="mm-ver" data-build="0.9.123.9">v0.9.123</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -38645,9 +38645,14 @@ function sailBuild(t){
 
 /* ── the consort ───────────────────────────────────────────────────────────────
    A second hull, so the fleet can have two crossings running at once. She is
-   deliberately the lesser boat: her own hull index capped a tier below the
-   flagship, no crew and therefore no crew bonuses, and she only sails water you
-   have already made landfall in. Scouting stays the flagship's job; the consort
+   deliberately the lesser boat: she may MATCH your hull but never pass it, carries
+   no crew and therefore no crew bonuses, and she only sails water you have already
+   made landfall in.
+
+   The cap was `hull - 1` until 0.9.123.9, which meant the top hull was never hers
+   under any circumstance. A player reported that as a bug and was right to: a rule
+   you can never satisfy reads as a fault however honestly it is worded. She costs a
+   second full hull in materials, so matching is a sink and not a gift. Scouting stays the flagship's job; the consort
    is how you farm what the flagship found. */
 const SAIL_CONSORT_LV=70;
 const SAIL_CONSORT_COST={ironbark_log:200, steel_bar:90, wrack_timber:120, tarred_rope:90, salt_iron:25};
@@ -38675,13 +38680,9 @@ function sailBuildConsort(){
    twice, which is the price of the second voyage slot. */
 function sailBuildConsortHull(t){
   if(!sailHasConsort()){ toast('You have no consort yet.'); return; }
-  const cap=(state.sail.hull|0)-1;
-  /* "Never outranks" read as "may match", which is not what the cap does: she is
-     held strictly one tier BELOW, so the top hull is never hers. Say the rule the
-     code actually enforces. */
-  if(t>cap){ toast(t>=SAIL_HULLS.length-1
-    ? 'The consort stays a tier behind your flagship, so the '+SAIL_HULLS[t].n+' is never hers.'
-    : 'The consort stays a tier behind. Build your own ship up first.'); return; }
+  const cap=(state.sail.hull|0);   // may match the flagship, never pass it
+  if(t>cap){ toast('The consort never outranks your own ship. Build yours up to the '
+    +SAIL_HULLS[t].n+' first.'); return; }
   const h=SAIL_HULLS[t];
   if(!h||t<=(state.sail.hull2|0)) return;
   if(sailLvl()<h.lv){ toast('Needs Sailing '+h.lv+'.'); return; }
@@ -41493,7 +41494,7 @@ function renderSail(){
             +'<div class="sl-tile"><div class="k">Cargo</div><div class="v">'+sailCargo(k)+'</div></div>'
             +'</div>';
           if(k===1) html+='<p class="sl-note" style="margin-top:8px">The consort sails with no hired '
-            +'hands \u2014 no crew bonuses, and no wages. She is always kept a tier below the flagship.</p>';
+            +'hands \u2014 no crew bonuses, and no wages. She can be built up to match your flagship, never past her.</p>';
           else if(sailWageTotal()>0) html+='<p class="sl-note" style="margin-top:8px">Crew wages '
             +'<b style="color:var(--ember)">'+iconHTML('ui_coin')+' '+sailWageTotal().toLocaleString()+'g</b> a voyage, paid at the dock.'
             +(sailRig()>0?' Rigging cuts every crossing by '+Math.round(sailRig()*100)+'%.':'')+'</p>';
@@ -41512,7 +41513,7 @@ function renderSail(){
           +'<span class="sl-chip'+(clv>=SAIL_CONSORT_LV?' gold':' mut')+'">Sailing '+SAIL_CONSORT_LV+'</span>'
           +'</div></div></div>'
           +'<p class="sl-note" style="margin:0">A consort sails her own crossings alongside your '
-          +'flagship, one tier below her and with no crew. '
+          +'flagship, never above her own hull and with no crew. '
           +(yardHas
             ?'Her berth is under <b>Consort</b> in the Shipyard.'
             :'The yard will not lay a second keel until <b>Sailing '+SAIL_CONSORT_LV+'</b> — '
@@ -41595,7 +41596,7 @@ function renderSail(){
     const canBuy=(sl)=>{
       if(sl.consort){
         if(!sailHasConsort()) return sailConsortReady();
-        const cap=(s.hull|0)-1;
+        const cap=(s.hull|0);
         return SAIL_HULLS.some((e,t)=>t>sl.idx&&t<=cap&&lvl>=(e.lv||0)
           &&Object.keys(e.cost).every(id=>(state.items[id]||0)>=e.cost[id]));
       }
@@ -41670,9 +41671,9 @@ function renderSail(){
           +'<button class="sl-btn sm" id="slConsort"'+((canLvl&&sailConsortReady())?'':' disabled')+'>'
           +(canLvl?'Build':'Lv '+SAIL_CONSORT_LV)+'</button></div>';
       } else {
-        const cap=(s.hull|0)-1, cur=sailHullIdx(1);
+        const cap=(s.hull|0), cur=sailHullIdx(1);
         html+='<p class="sl-note" style="margin:0 0 10px">The consort is built from the same table as your own ship '
-          +'and is capped one tier below her — build your own hull up first and the consort can follow. '
+          +'and can be brought level with her, never past her. Build your own hull up first. '
           +'Fitted parts and your relics are shared with the flagship; crew are not.</p>';
         SAIL_HULLS.forEach((hh,t)=>{
           if(t>cap+1) return;
@@ -41681,17 +41682,14 @@ function renderSail(){
           html+='<div class="sl-hull'+(isCur?' cur':'')+((!canLvl||overCap)&&!owned?' lock':'')+'">'+iconHTML(sailHullIcon(t))
             +'<div class="i"><b>'+hh.n+'</b><div class="st"><span>Sailing '+hh.lv+'</span>'
             +'<span>Hull '+hh.sound+'</span><span>Range '+hh.stores+'</span><span>Cargo '+hh.hold+'</span></div>';
-          /* The top hull needs its own answer. `t+1` does not exist there, and the
-             Math.min clamp made the row say "your own ship must reach Ancient
-             Leviathan first" while your own ship WAS an Ancient Leviathan — so a
-             maxed captain read it as a broken upgrade rather than as the cap doing
-             what it says. Player-reported. She is a tier behind forever, so the top
-             hull is not gated, it is out of reach, and the row says so. */
-          const _topHull=t>=SAIL_HULLS.length-1;
+          /* Names THIS hull, not the one above it. The old message used
+             SAIL_HULLS[Math.min(len-1, t+1)] because the cap sat a tier below, and on
+             the top hull that clamp folded back onto itself: a captain already sailing
+             an Ancient Leviathan was told to go and reach an Ancient Leviathan. With
+             the cap at parity the requirement is simply "yours must be this one too",
+             which is both true and reachable. */
           if(!owned) html+='<span class="cst">'+(overCap
-            ?(_topHull
-              ?'<span style="color:#a08a64">the consort stays a tier behind your flagship, so the '+hh.n+' is never hers to sail</span>'
-              :'<span style="color:#a08a64">your own ship must reach '+SAIL_HULLS[t+1].n+' first</span>')
+            ?'<span style="color:#a08a64">your own ship must reach the '+hh.n+' first</span>'
             :Object.keys(hh.cost).map(id=>{
               const have=state.items[id]||0, need=hh.cost[id];
               return '<span style="color:'+(have>=need?'#7da33f':'#a08a64')+'">'+need+'× '+(ITEMS[id]?ITEMS[id].name:id)+'</span>';

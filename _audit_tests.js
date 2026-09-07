@@ -2486,39 +2486,58 @@ setTimeout(() => {
          return afterFirst==='{}' && state.tree._offline.of_rate===4; })()`) === true);
   }
 
-  section("The consort's top hull tells the truth (0.9.123.8)");
+  section("The consort matches the flagship, never passes it (0.9.123.9)");
   {
-    /* Player-reported: "the consort's ship can't be upgraded to the Ancient
-       Leviathan". The cap is working as designed — she is held one tier BELOW the
-       flagship, forever — but the lock message was built as
-       SAIL_HULLS[Math.min(len-1, t+1)].n, and on the top hull that clamp folds back
-       onto ITSELF. So a captain already sailing an Ancient Leviathan was told "your
-       own ship must reach Ancient Leviathan first", which reads as a broken upgrade
-       rather than as a cap. Nothing threw; it was a sentence.
+    /* Player-reported as "the consort's ship can't be upgraded to the Ancient
+       Leviathan". Two separate faults sat behind it.
 
-       Asserted on the rendered text, because the bug only existed in the text. */
-    const top = JSON.parse(ev(`(function(){
+       The rule was `cap = hull - 1`, so she was held a tier BELOW forever and the
+       top hull was unreachable under any circumstance. Jordan's call was to let her
+       match: she costs a second full hull in materials, so parity is a sink rather
+       than a gift, and a rule you can never satisfy reads as a bug however honestly
+       it is worded.
+
+       And the lock message was SAIL_HULLS[Math.min(len-1, t+1)], which on the top
+       hull folds back onto itself: a captain already sailing an Ancient Leviathan
+       was told "your own ship must reach Ancient Leviathan first". Nothing threw.
+       It was a sentence, so only reading the rendered text catches it. */
+    const yard = (flagship, consort) => JSON.parse(ev(`(function(){
       state=defaultState(); normalizeState();
       state.sail.xp=XP_CUM[99]; state.sail.consort=1;
-      state.sail.hull=SAIL_HULLS.length-1;      // flagship maxed
-      state.sail.hull2=SAIL_HULLS.length-2;     // consort one behind, as capped
+      state.sail.hull=${flagship}; state.sail.hull2=${consort};
       sailTab='yard'; sailYardTab='consort';
       var msg=''; window.toast=function(m){ msg=String(m); };
       renderSail();
       var rows=[].slice.call(document.querySelectorAll('.sl-hull'))
         .map(function(r){ return r.textContent.replace(/\\s+/g,' '); });
-      var name=SAIL_HULLS[SAIL_HULLS.length-1].n;
-      var row=rows.filter(function(r){ return r.indexOf(name)>=0; })[0]||'';
-      sailBuildConsortHull(SAIL_HULLS.length-1);
-      return JSON.stringify({row:row, toast:msg, name:name});
+      return JSON.stringify({rows:rows, top:SAIL_HULLS[SAIL_HULLS.length-1].n});
     })()`));
-    /* The precise failure: the row naming the top hull as its own prerequisite. */
-    ok('the top hull is never listed as its own requirement',
-       top.row.indexOf('must reach '+top.name) < 0, top.row.slice(0, 160));
-    ok('it says instead that the consort can never have it',
-       /never hers/.test(top.row), top.row.slice(-90));
-    ok('and refusing the build says the same thing',
-       /never hers/.test(top.toast||''), top.toast);
+
+    /* Maxed flagship: the top hull must now be offered, not refused. */
+    const maxed = yard('SAIL_HULLS.length-1', 'SAIL_HULLS.length-2');
+    const topRow = maxed.rows.filter(r => r.indexOf(maxed.top) >= 0)[0] || '';
+    ok('a maxed flagship lets the consort reach the top hull',
+       topRow.length > 0 && topRow.indexOf('must reach') < 0, topRow.slice(0, 150));
+
+    /* The exact old failure: a hull naming itself as its own prerequisite. */
+    const anySelfRef = maxed.rows.some(r => {
+      const m = /must reach the ([A-Za-z' ]+?) first/.exec(r);
+      return m && r.indexOf(m[1]) !== r.lastIndexOf(m[1]) && r.trim().indexOf(m[1]) === 0;
+    });
+    ok('no hull is ever listed as its own requirement', !anySelfRef);
+
+    /* She still cannot pass the flagship, which is the half of the rule that stays. */
+    const mid = yard('3', '3');
+    const over = mid.rows.filter(r => /must reach the/.test(r));
+    ok('and she still cannot outrank it', over.length > 0, over[0] ? over[0].slice(0, 130) : 'no locked row');
+
+    const refuse = ev(`(function(){ state=defaultState(); normalizeState();
+      state.sail.xp=XP_CUM[99]; state.sail.consort=1; state.sail.hull=3; state.sail.hull2=3;
+      var m=''; window.toast=function(x){ m=String(x); };
+      sailBuildConsortHull(5);
+      return m; })()`);
+    ok('refusing a hull above the flagship names the one you need',
+       /never outranks/.test(refuse) && refuse.indexOf(JSON.parse(ev('JSON.stringify(SAIL_HULLS[5].n)'))) >= 0, refuse);
   }
 
   section('Matched jewelry & the auto-eat readout (0.9.122.2)');
