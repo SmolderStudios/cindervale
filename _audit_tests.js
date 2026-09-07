@@ -2486,6 +2486,41 @@ setTimeout(() => {
          return afterFirst==='{}' && state.tree._offline.of_rate===4; })()`) === true);
   }
 
+  section("The consort's top hull tells the truth (0.9.123.8)");
+  {
+    /* Player-reported: "the consort's ship can't be upgraded to the Ancient
+       Leviathan". The cap is working as designed — she is held one tier BELOW the
+       flagship, forever — but the lock message was built as
+       SAIL_HULLS[Math.min(len-1, t+1)].n, and on the top hull that clamp folds back
+       onto ITSELF. So a captain already sailing an Ancient Leviathan was told "your
+       own ship must reach Ancient Leviathan first", which reads as a broken upgrade
+       rather than as a cap. Nothing threw; it was a sentence.
+
+       Asserted on the rendered text, because the bug only existed in the text. */
+    const top = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      state.sail.xp=XP_CUM[99]; state.sail.consort=1;
+      state.sail.hull=SAIL_HULLS.length-1;      // flagship maxed
+      state.sail.hull2=SAIL_HULLS.length-2;     // consort one behind, as capped
+      sailTab='yard'; sailYardTab='consort';
+      var msg=''; window.toast=function(m){ msg=String(m); };
+      renderSail();
+      var rows=[].slice.call(document.querySelectorAll('.sl-hull'))
+        .map(function(r){ return r.textContent.replace(/\\s+/g,' '); });
+      var name=SAIL_HULLS[SAIL_HULLS.length-1].n;
+      var row=rows.filter(function(r){ return r.indexOf(name)>=0; })[0]||'';
+      sailBuildConsortHull(SAIL_HULLS.length-1);
+      return JSON.stringify({row:row, toast:msg, name:name});
+    })()`));
+    /* The precise failure: the row naming the top hull as its own prerequisite. */
+    ok('the top hull is never listed as its own requirement',
+       top.row.indexOf('must reach '+top.name) < 0, top.row.slice(0, 160));
+    ok('it says instead that the consort can never have it',
+       /never hers/.test(top.row), top.row.slice(-90));
+    ok('and refusing the build says the same thing',
+       /never hers/.test(top.toast||''), top.toast);
+  }
+
   section('Matched jewelry & the auto-eat readout (0.9.122.2)');
   {
     /* Player-reported: "I made a second sapphire ring which stacked with the first.

@@ -7645,7 +7645,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.123.7">v0.9.123</div>
+  <div class="mm-ver" data-build="0.9.123.8">v0.9.123</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -16782,6 +16782,13 @@ const SLOT_EMPTY = (function(){
   const G = '#6e552c', F = '#6e552c1a';
   const wrap = b => `<svg class="ev-icon" viewBox="0 0 64 64">${b}</svg>`;
   return {
+    /* Quiver (0.9.124) — an open tube with three nocks over the lip, so an empty
+       quiver slot reads as "arrows go here" and not as one more pouch. */
+    quiver: wrap(
+      `<path d="M22 16 L46 20 L41 56 Q32 60 25 55 Z" fill="${F}" stroke="${G}" stroke-width="1.6" stroke-linejoin="round"/>`
+      +`<path d="M22 28 L45 32 M23 42 L43 45" stroke="${G}" stroke-width="1.1" opacity="0.7"/>`
+      +`<path d="M26 16 L21 5 M32 17 L32 4 M39 18 L44 6" stroke="${G}" stroke-width="1.5" stroke-linecap="round"/>`
+      +`<path d="M19 7 L23 3 M30 6 L34 6 M42 8 L46 4" stroke="${G}" stroke-width="1.2" stroke-linecap="round"/>`),
     helmet: wrap(
       `<path d="M14 36 Q14 14 32 12 Q50 14 50 36 L50 46 Q42 50 32 50 Q22 50 14 46 Z" fill="${F}" stroke="${G}" stroke-width="1.6" stroke-linejoin="round"/>`
       +`<path d="M16 36 L48 36" stroke="${G}" stroke-width="1.2" opacity="0.7"/>`
@@ -16851,6 +16858,10 @@ const BODY_SLOTS=[
   {slot:'legs',   label:'Legs',    empty:SLOT_EMPTY.legs},
   {slot:'boots',  label:'Boots',   empty:SLOT_EMPTY.boots},
   {slot:'weapon', label:'Weapon',  empty:SLOT_EMPTY.weapon},
+  /* Quiver (0.9.124). Its own slot rather than sharing the shield's: bows are two
+     handed so the shield is free anyway, but crossbows are one handed and must be
+     able to hold both. */
+  {slot:'quiver', label:'Quiver',  empty:SLOT_EMPTY.quiver||SLOT_EMPTY.weapon},
   {slot:'shield', label:'Shield',  empty:SLOT_EMPTY.shield},
   {slot:'ring_l', label:'Ring (L)',empty:SLOT_EMPTY.ring_l},
   {slot:'ring_r', label:'Ring (R)',empty:SLOT_EMPTY.ring_r},
@@ -17829,7 +17840,7 @@ function defaultState(){
     playtimeMs:0,      // total active playtime, accumulated while tab is open
     firstPlayed:Date.now(), // wall-clock first session start
     gearPresets:{},    // {skillName: {slot:itemId, ...}} — saved gear loadout per skill
-    combatXp:{attack:0,strength:0,defence:0,hitpoints:(typeof XP_CUM!=='undefined'&&XP_CUM[10])||0}, // hp starts at lvl 10
+    combatXp:{attack:0,strength:0,defence:0,ranged:0,hitpoints:(typeof XP_CUM!=='undefined'&&XP_CUM[10])||0}, // hp starts at lvl 10
     combatStyle:'attack', // 'attack'|'strength'|'defence' — where chosen-style XP routes
     zone:'rat_warrens',   // currently-selected combat zone (Rat Warrens is the starter)
     bossUnlocked:{},      // {monsterId:true} — persistent boss tile unlocks (sticky once earned)
@@ -20022,6 +20033,10 @@ const COMBAT_STATS={
   strength:  {name:'Strength',  icon:'💪', desc:'Raises your maximum damage roll.\nEach Strength level adds +1.6 max hit; gear str adds +5 per point.\nWhen a hit lands, damage = 50–100% of your max hit.'},
   defence:   {name:'Defence',   icon:'🛡️', desc:'Reduces how often foes connect with you.\nEach Defence level adds +1.2; gear def adds +1 per point.\nFoe hit chance = foe attack ÷ (foe attack + your defence).'},
   hitpoints: {name:'Hitpoints', icon:'❤️', desc:'Your health pool. Reach 0 and you retreat.\nMax HP = Hitpoints level × 10 + ½ × gear def (Lv 10 = 100, Lv 99 = 990).\nGains XP from every point of damage you deal, and a share of every kill.\nStarts at level 10.'},
+  /* Ranged does the work of BOTH attack and strength when a bow or crossbow is
+     held, which is why one ranged level is worth less than one attack level plus
+     one strength level. See RANGED_HIT_LVL. */
+  ranged:    {name:'Ranged',    icon:'🏹', desc:'Accuracy AND damage, for bows and crossbows only.\nEach Ranged level adds +1.5 accuracy and +1.35 max hit; the arrow or bolt in your quiver adds +5 max hit per point of its strength.\nOne level here does the job of an Attack level and a Strength level, so it is worth less than either. Every shot spends ammunition.'},
 };
 
 function cmbXp(stat){ return (state&&state.combatXp&&state.combatXp[stat])||0; }
@@ -20037,9 +20052,18 @@ function cmbLvlProgress(stat){
 }
 
 /* Combat level — clean average of the four stats. Range 1-99. */
+/* Combat level, with Ranged folded in (0.9.124).
+
+   `max` and not a sum, for two reasons. A ranged character spends ONE stat where a
+   melee character spends two, so doubling it is what puts the same play time on the
+   same combat level. And because a fresh save has ranged at 1, `ranged x 2` is 2 and
+   attack+strength always wins, so **no existing character's combat level moves**.
+   A summed formula would have handed every melee player a level for a stat they
+   have never used. */
 function combatLevel(){
   const a=cmbLvl('attack'), s=cmbLvl('strength'), d=cmbLvl('defence'), h=cmbLvl('hitpoints');
-  return Math.max(1, Math.floor((a+s+d+h)/4));
+  const r=cmbLvl('ranged');
+  return Math.max(1, Math.floor((Math.max(a+s, r*2)+d+h)/4));
 }
 
 /* ════ COMBAT MATH v2 (1.0.26) — unified number-scale with monsters ════════════
@@ -35451,7 +35475,7 @@ function grantCombatXp(stat,amount){
   if(typeof cmastBonuses==='function'){ const _xm=cmastBonuses().combatXpMult||0; if(_xm>0) amount*=(1+_xm); }
   amount*=XP_SCALE;                       // global XP faucet (0.9.121.8)
   amount=Math.max(1, Math.round(amount));
-  if(!state.combatXp) state.combatXp={attack:0,strength:0,defence:0,hitpoints:0};
+  if(!state.combatXp) state.combatXp={attack:0,strength:0,defence:0,ranged:0,hitpoints:0};
   const beforeStat=cmbLvl(stat);
   const beforeCl=combatLevel();
   state.combatXp[stat]=(state.combatXp[stat]||0)+amount;
@@ -38652,7 +38676,12 @@ function sailBuildConsort(){
 function sailBuildConsortHull(t){
   if(!sailHasConsort()){ toast('You have no consort yet.'); return; }
   const cap=(state.sail.hull|0)-1;
-  if(t>cap){ toast('The consort never outranks your own ship.'); return; }
+  /* "Never outranks" read as "may match", which is not what the cap does: she is
+     held strictly one tier BELOW, so the top hull is never hers. Say the rule the
+     code actually enforces. */
+  if(t>cap){ toast(t>=SAIL_HULLS.length-1
+    ? 'The consort stays a tier behind your flagship, so the '+SAIL_HULLS[t].n+' is never hers.'
+    : 'The consort stays a tier behind. Build your own ship up first.'); return; }
   const h=SAIL_HULLS[t];
   if(!h||t<=(state.sail.hull2|0)) return;
   if(sailLvl()<h.lv){ toast('Needs Sailing '+h.lv+'.'); return; }
@@ -41652,8 +41681,17 @@ function renderSail(){
           html+='<div class="sl-hull'+(isCur?' cur':'')+((!canLvl||overCap)&&!owned?' lock':'')+'">'+iconHTML(sailHullIcon(t))
             +'<div class="i"><b>'+hh.n+'</b><div class="st"><span>Sailing '+hh.lv+'</span>'
             +'<span>Hull '+hh.sound+'</span><span>Range '+hh.stores+'</span><span>Cargo '+hh.hold+'</span></div>';
+          /* The top hull needs its own answer. `t+1` does not exist there, and the
+             Math.min clamp made the row say "your own ship must reach Ancient
+             Leviathan first" while your own ship WAS an Ancient Leviathan — so a
+             maxed captain read it as a broken upgrade rather than as the cap doing
+             what it says. Player-reported. She is a tier behind forever, so the top
+             hull is not gated, it is out of reach, and the row says so. */
+          const _topHull=t>=SAIL_HULLS.length-1;
           if(!owned) html+='<span class="cst">'+(overCap
-            ?'<span style="color:#a08a64">your own ship must reach '+SAIL_HULLS[Math.min(SAIL_HULLS.length-1,t+1)].n+' first</span>'
+            ?(_topHull
+              ?'<span style="color:#a08a64">the consort stays a tier behind your flagship, so the '+hh.n+' is never hers to sail</span>'
+              :'<span style="color:#a08a64">your own ship must reach '+SAIL_HULLS[t+1].n+' first</span>')
             :Object.keys(hh.cost).map(id=>{
               const have=state.items[id]||0, need=hh.cost[id];
               return '<span style="color:'+(have>=need?'#7da33f':'#a08a64')+'">'+need+'× '+(ITEMS[id]?ITEMS[id].name:id)+'</span>';
@@ -42169,7 +42207,7 @@ $('tabSocket').addEventListener('click',()=>{ leaveFullPanels(); viewTab='socket
   $('devSetLevel').addEventListener('click',()=>{
     const key=sel.value, lvl=Math.min(MAX_LEVEL,Math.max(1,parseInt($('devXp').value)||1));
     if(COMBAT_STATS[key]){
-      if(!state.combatXp) state.combatXp={attack:0,strength:0,defence:0,hitpoints:0};
+      if(!state.combatXp) state.combatXp={attack:0,strength:0,defence:0,ranged:0,hitpoints:0};
       state.combatXp[key]=XP_CUM[lvl];
       refreshCombatStats(); renderAll(); saveGame();
       toast(`${COMBAT_STATS[key].name} set to level ${lvl}`);
@@ -42182,7 +42220,7 @@ $('tabSocket').addEventListener('click',()=>{ leaveFullPanels(); viewTab='socket
   // "spawned raid gear won't equip" case: armour gates on Defence, weapons on
   // Attack, so a single-stat "Set Lv" leaves the others below the tier's requirement.
   $('devMaxCombat').addEventListener('click',()=>{
-    if(!state.combatXp) state.combatXp={attack:0,strength:0,defence:0,hitpoints:0};
+    if(!state.combatXp) state.combatXp={attack:0,strength:0,defence:0,ranged:0,hitpoints:0};
     for(const k in COMBAT_STATS) state.combatXp[k]=XP_CUM[MAX_LEVEL];
     refreshCombatStats(); renderAll(); saveGame();
     toast(`All combat stats set to level ${MAX_LEVEL}`);
@@ -42243,7 +42281,7 @@ $('tabSocket').addEventListener('click',()=>{ leaveFullPanels(); viewTab='socket
   const _tsBtn=$('devTrailerSetup');
   if(_tsBtn) _tsBtn.addEventListener('click',()=>{
     for(const k in SKILLS){ state.xp[k]=XP_CUM[_tSkill[k]||50]; }
-    if(!state.combatXp) state.combatXp={attack:0,strength:0,defence:0,hitpoints:0};
+    if(!state.combatXp) state.combatXp={attack:0,strength:0,defence:0,ranged:0,hitpoints:0};
     for(const k in COMBAT_STATS){ state.combatXp[k]=XP_CUM[_tCombat[k]||58]; }
     if(typeof refreshCombatStats==='function') refreshCombatStats();
     const _g=150000; state.coins+=_g*SILVER_PER_GOLD; if(typeof _coinsBaseline!=='undefined'&&_coinsBaseline!=null)_coinsBaseline+=_g*SILVER_PER_GOLD;
