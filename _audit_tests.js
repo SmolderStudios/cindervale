@@ -100,7 +100,7 @@ setTimeout(() => {
   {   // block-scoped so each section can reuse local names freely
   const sums=ev(`(function(){var o={};for(var k in TREES) o[k]=TREES[k].reduce(function(s,n){return s+n.max},0);return o;})()`);
     const badTrees=Object.keys(sums).filter(k=>sums[k]!==98);
-    ok('98-point invariant holds for all 12 trees', badTrees.length===0, badTrees.length?JSON.stringify(sums):'');
+    ok('98-point invariant holds for every tree', badTrees.length===0, badTrees.length?JSON.stringify(sums):'');
 
     const probe=(skill,id)=>ev(`(function(){ state=defaultState(); normalizeState();
         var base=JSON.stringify(mods('${skill}'));
@@ -1645,6 +1645,10 @@ setTimeout(() => {
       var known={};
       for(var s in TREES) for(var n of TREES[s]){
         known[n.id]=1;
+        /* Fletching (0.9.124) is on drawn stroke icons until its nodes get a sheet.
+           PENDING, not rejected: the tree renders correctly, it is just not painted
+           like the other thirteen. Drop this skip when the art lands. */
+        if(s==='fletching') continue;
         if(!NODE_ART[n.id]) miss.push(s+'/'+n.id);
         else if(!/^<img /.test(String(n.icon))) notimg.push(s+'/'+n.id);
       }
@@ -3174,7 +3178,30 @@ setTimeout(() => {
        cannot be produced in the same pass that added the item. Delete this id the
        moment it lands on a sheet; do NOT add it to KEEP_SVG, which would tell the
        next art run to skip it forever. */
-    const SVG_OK = new Set(['radcliff_tally']);
+    /* Ranged and Fletching (0.9.124) ship on generated SVG because item art comes
+       off the ChatGPT contact sheets and a sheet run cannot happen in the same pass
+       that adds eighty-four items. Built from the ladders rather than typed out, so
+       the exemption shrinks on its own as ids are painted and cannot silently cover
+       an id that was never part of this feature.
+
+       PENDING, not rejected. Do not add any of these to KEEP_SVG in picks.js, which
+       would tell every future art run to skip them. Delete this block when the
+       sheets land; see _rangedpreview/DESIGN.md. */
+    const RANGED_PENDING = JSON.parse(ev(`(function(){
+      if(typeof RANGED_AMMO==='undefined') return '[]';
+      var out=['wood_shaft','feather','raw_fowl','roast_fowl','flax','flax_seed','bowstring'];
+      RANGED_AMMO.forEach(function(a){
+        out.push(a.k+'_arrowhead', a.k+'_bolt_tip', a.k+'_arrow', a.k+'_bolt',
+                 a.k+'_crossbow', 'unstrung_'+a.k+'_crossbow');
+      });
+      RANGED_WOODS.forEach(function(w){
+        ['short','long'].forEach(function(k){
+          out.push(w.k+'_'+k+'bow', 'unstrung_'+w.k+'_'+k+'bow');
+        });
+      });
+      return JSON.stringify(out);
+    })()`));
+    const SVG_OK = new Set(['radcliff_tally'].concat(RANGED_PENDING));
 
     const unexpected = cov.svg.filter(id => !SVG_OK.has(id));
     ok('only known-exempt items are still on SVG, and none is iconless',
@@ -4420,7 +4447,9 @@ setTimeout(() => {
     /* Named one by one rather than counted. An item that GAINS a use should drop off
        this list and fail here, and a new item that should have had one and does not
        should appear here and fail — that is the whole point of writing them out. */
-    const SELL_ONLY = ['abyssal_scale','barrow_dust','birds_nest','charcoal','cut_purse',
+    /* birds_nest left this list in 0.9.124: Fletching strips it for eight feathers,
+       so it is no longer an item nothing in the game wants. */
+    const SELL_ONLY = ['abyssal_scale','barrow_dust','charcoal','cut_purse',
       'drakeforged_rune','ember_resin','energy_crystal','goblin_ear','golden_spore',
       'jewelled_dagger','pocket_watch','riftshard','runed_bone','sealed_letter',
       'signet_ring','silver_plate','splintered_club','stamina_shard','void_essence',
@@ -4664,7 +4693,10 @@ setTimeout(() => {
       // the case the ticket is really about: 246 sources that are all one fact
       var gear=sourceListHTML(SM.sm_chest||[], false);
       sample.gearRows=(gear.match(/class="tt-source"/g)||[]).length;
-      sample.gearSays=/14 actions/.test(gear);
+      /* A COUNT, not the number 14. It was literal, so Smithing gaining sixteen
+         arrowhead and bolt-tip recipes in 0.9.124 failed an assertion that was
+         only ever about the line collapsing to one row and saying how many. */
+      sample.gearSays=/[0-9]+ actions/.test(gear);
       sample.gearOffersShift=/Hold <b[^>]*>Shift/.test(gear);
       // and an item with one source per group offers nothing to expand
       var plain=sourceListHTML([{actName:'Mine iron',skName:'Mining',skIcon:'',chance:1}], false);

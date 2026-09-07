@@ -19620,7 +19620,7 @@ function effectiveItemSell(id){
 }
 
 /* Skill key → tree node prefix (matches TREES node ids) */
-const SK_PFX={thieving:'th',woodcutting:'wc',mining:'mi',fishing:'fi',foraging:'fo',smithing:'sm',cooking:'co',alchemy:'al',firemaking:'fm',agility:'ag',jeweler:'jw',farming:'fa',crafting:'cr'};
+const SK_PFX={thieving:'th',woodcutting:'wc',mining:'mi',fishing:'fi',foraging:'fo',smithing:'sm',cooking:'co',alchemy:'al',firemaking:'fm',agility:'ag',jeweler:'jw',farming:'fa',crafting:'cr',fletching:'fl'};
 
 /* Skill capes — the item id the upcoming shop update will sell for each skill.
    A level-99 capstone (reqCape:true) can only be allocated while you OWN the matching cape.
@@ -20032,11 +20032,11 @@ const COMBAT_STATS={
   attack:    {name:'Attack',    icon:'⚔️', desc:'Your accuracy — the chance each swing lands.\nEach Attack level adds +1.5 accuracy; gear atk adds +3.5 per point.\nHit chance = your accuracy ÷ (your accuracy + foe Defence). Lose the roll and you hit 0 (a miss).'},
   strength:  {name:'Strength',  icon:'💪', desc:'Raises your maximum damage roll.\nEach Strength level adds +1.6 max hit; gear str adds +5 per point.\nWhen a hit lands, damage = 50–100% of your max hit.'},
   defence:   {name:'Defence',   icon:'🛡️', desc:'Reduces how often foes connect with you.\nEach Defence level adds +1.2; gear def adds +1 per point.\nFoe hit chance = foe attack ÷ (foe attack + your defence).'},
-  hitpoints: {name:'Hitpoints', icon:'❤️', desc:'Your health pool. Reach 0 and you retreat.\nMax HP = Hitpoints level × 10 + ½ × gear def (Lv 10 = 100, Lv 99 = 990).\nGains XP from every point of damage you deal, and a share of every kill.\nStarts at level 10.'},
   /* Ranged does the work of BOTH attack and strength when a bow or crossbow is
      held, which is why one ranged level is worth less than one attack level plus
      one strength level. See RANGED_HIT_LVL. */
   ranged:    {name:'Ranged',    icon:'🏹', desc:'Accuracy AND damage, for bows and crossbows only.\nEach Ranged level adds +1.5 accuracy and +1.35 max hit; the arrow or bolt in your quiver adds +5 max hit per point of its strength.\nOne level here does the job of an Attack level and a Strength level, so it is worth less than either. Every shot spends ammunition.'},
+  hitpoints: {name:'Hitpoints', icon:'❤️', desc:'Your health pool. Reach 0 and you retreat.\nMax HP = Hitpoints level × 10 + ½ × gear def (Lv 10 = 100, Lv 99 = 990).\nGains XP from every point of damage you deal, and a share of every kill.\nStarts at level 10.'},
 };
 
 function cmbXp(stat){ return (state&&state.combatXp&&state.combatXp[stat])||0; }
@@ -20093,11 +20093,65 @@ const BURN_TICK_MS=2000;
 const BURN_TICK_MULT=0.16;    // hotter than poison; no defence shred
 const REFLECT_CLAMP_MIN=1;    // reflected/DoT damage never lands the kill (min 1 HP)
 
-/* Player accuracy: (attack lvl ×1.5 + gear atk ×3.5) × (1+atkBoost) × class. */
+/* ── RANGED (0.9.124) ─────────────────────────────────────────────────────────
+   Ranged does the work of BOTH attack and strength, so one ranged level has to be
+   worth less than one attack level plus one strength level or ranged simply wins at
+   equal play time. 1.35 against melee's 1.6 on damage, accuracy matched at 1.5.
+   Provisional until _rangedsim.js says otherwise; see _rangedpreview/DESIGN.md. */
+const RANGED_HIT_LVL = 1.35;
+function usingRanged(){
+  return typeof isRangedWeapon==='function' && isRangedWeapon(eqCombatWeapon());
+}
+function eqQuiver(){ return (state&&state.combatEquipped&&state.combatEquipped.quiver)||''; }
+/* Leather is the ranged line and plate is not.
+
+   Rather than adding a third array to LEATHER_TIERS and a penalty column to every
+   metal piece, this reads what you are actually wearing: leather is flagged `light`
+   where it is generated and costs nothing, and anything else with real defence costs
+   ranged accuracy in proportion to how much of it there is. You CAN shoot in plate.
+   You will just miss more, and the number moves as you swap pieces, which is the
+   part a flat rule cannot do. Melee is untouched: the multiplier is 1 unless a bow
+   or crossbow is held. */
+const RANGED_PLATE_PER_DEF = 0.006;   // -0.6% ranged accuracy per point of heavy def
+const RANGED_PLATE_FLOOR   = 0.55;    // a cost, never a wall
+function rangedArmourMult(){
+  if(!usingRanged()) return 1;
+  const ce=state&&state.combatEquipped; if(!ce) return 1;
+  let heavy=0;
+  for(const slot in ce){
+    if(slot==='weapon'||slot==='quiver') continue;
+    const id=ce[slot], it=id&&ITEMS[id]; if(!it||it.light) continue;
+    const cs=COMBAT_GEAR_STATS[id]; if(!cs) continue;
+    heavy += cs.def||0;
+  }
+  return Math.max(RANGED_PLATE_FLOOR, 1 - heavy*RANGED_PLATE_PER_DEF);
+}
+/* The arrow or bolt in the quiver, but only if it is the kind this weapon fires.
+   Loading bolts into a bow is not a small mistake, so it is not a small penalty:
+   nothing loads and the shot does not happen. */
+function readyAmmo(){
+  const w=eqCombatWeapon(), q=eqQuiver();
+  if(!w||!q||!ITEMS[w]||!ITEMS[q]) return null;
+  if(!ITEMS[w].ranged || ITEMS[q].ammo!==ITEMS[w].ammo) return null;
+  if((state.items[q]||0)<1) return null;
+  return q;
+}
+function ammoStr(){ const a=readyAmmo(); return a?(ITEMS[a].ammoStr||0):0; }
+/* Which stat a kill's XP goes to. It was this exact ternary copy-pasted into five
+   places, so a sixth would have missed ranged in silence. */
+function combatXpStat(){
+  if(usingRanged()) return 'ranged';
+  return (state.combatStyle==='strength'||state.combatStyle==='defence')?state.combatStyle:'attack';
+}
+
+/* Player accuracy: (attack lvl ×1.5 + gear atk ×3.5) × (1+atkBoost) × class.
+   With a bow or crossbow the ranged level stands in for attack, and heavy armour
+   costs you. */
 function playerAccuracy(){
   const cs=combatStats();
   const b=combatBonusesAll();
-  return Math.round((cmbLvl('attack')*COMBAT_P.ACC_LVL + cs.atk*COMBAT_P.ACC_GEAR) * (1 + (b.atkBoost||0)) * classAccuracyMult());
+  const lvl=usingRanged()?cmbLvl('ranged'):cmbLvl('attack');
+  return Math.round((lvl*COMBAT_P.ACC_LVL + cs.atk*COMBAT_P.ACC_GEAR) * (1 + (b.atkBoost||0)) * classAccuracyMult() * rangedArmourMult());
 }
 
 /* Player max hit: (strength lvl ×1.6 + gear str ×5.0) × (1+atkBoost) × class. */
@@ -20105,6 +20159,13 @@ function playerMaxHit(){
   const cs=combatStats();
   const b=combatBonusesAll();
   const bonusStr=(typeof shieldHpStrBonus==='function')?shieldHpStrBonus():0;   // Aegis HP-scaled shield-bash
+  /* A bow carries no strength of its own; the AMMUNITION does. A bow that also
+     carried strength would stack with the arrow and put ranged over melee before
+     the level coefficient was even considered. */
+  if(usingRanged()){
+    return Math.max(1, Math.round((cmbLvl('ranged')*RANGED_HIT_LVL + (cs.str+ammoStr())*COMBAT_P.HIT_GEAR)
+      * (1 + (b.atkBoost||0)) * classMaxHitMult()));
+  }
   return Math.max(1, Math.round((cmbLvl('strength')*COMBAT_P.HIT_LVL + (cs.str+bonusStr)*COMBAT_P.HIT_GEAR) * (1 + (b.atkBoost||0)) * classMaxHitMult()));
 }
 
@@ -20139,7 +20200,11 @@ function playerSwingMs(){
   // has a gentler pull on combat pace).
   const base=Math.max(COMBAT_MIN_SWING_MS, COMBAT_BASE_SWING_MS - agi*6);
   // Rogue class — 6% faster swings. Still floored so bars stay readable.
-  return Math.max(COMBAT_MIN_SWING_MS, Math.round(base*classSwingMult()));
+  /* A weapon may carry its own pace: a shortbow draws faster than a blade swings, a
+     crossbow cranks slower. Applied here so every readout of swing time agrees. */
+  const _w=(typeof eqCombatWeapon==='function')?eqCombatWeapon():'';
+  const _wm=(_w&&ITEMS[_w]&&ITEMS[_w].swingMult)||1;
+  return Math.max(COMBAT_MIN_SWING_MS, Math.round(base*classSwingMult()*_wm));
 }
 
 /* Refresh the live combat object's stats from current gear and levels.
@@ -22771,7 +22836,9 @@ function offlineCombatResolve(awayMs, om){
   }
 
   /* Rewards, through the same functions the live kill path uses. */
-  const style=cs.style||'attack';
+  /* A session saved before ranged existed has no style, and one saved WITH a bow
+     stored the melee style it never used. Ask the weapon, fall back to the saved. */
+  const style=(typeof combatXpStat==='function')?combatXpStat():(cs.style||'attack');
   /* Rounded over the BATCH, not per kill. Per-kill rounding is what the live
      path does, and against a low-xp monster Math.round(xp*0.25) is 0 — so
      hitpoints earned nothing at all across thousands of offline kills. */
@@ -23183,7 +23250,7 @@ function resetXphTracker(skill){
    up somewhere instead of vanishing. */
 const RAIL_GROUP={
   woodcutting:'gather', mining:'gather', fishing:'gather', foraging:'gather', farming:'gather',
-  smithing:'produce', cooking:'produce', alchemy:'produce', crafting:'produce',
+  smithing:'produce', cooking:'produce', alchemy:'produce', crafting:'produce', fletching:'produce',
   jeweler:'produce', firemaking:'produce',
   agility:'support', thieving:'support',
 };
@@ -24856,7 +24923,7 @@ function gdBuyXp(g){
   const x=gdShopXp(g);
   if(g.combat){
     if(!x.amount){ toast('Kill something first — there is nothing to drill against.'); return false; }
-    const style=(state.combatStyle==='strength'||state.combatStyle==='defence')?state.combatStyle:'attack';
+    const style=combatXpStat();
     grantCombatXp(style, Math.round(x.amount*0.75));
     grantCombatXp('hitpoints', Math.round(x.amount*0.25));
     if(typeof refreshCombatStats==='function') refreshCombatStats();
@@ -29792,6 +29859,452 @@ function rollSkillPet(skillKey, act, times){
 function getPetForZone(zoneId){ return PETS[zoneId]||null; }
 function hasPet(petId){ return !!(state && state.pets && state.pets[petId]); }
 
+/* ════════ [JS-RANGED] RANGED + FLETCHING ════════════════════════════════════════
+   Data slice. Combat maths live with the rest of the combat maths; this block is
+   the items, the icons, the recipes and the two skills that feed them.
+
+   THE ONE IDEA: ranged spends a resource and melee does not. Every shot eats an
+   arrow or a bolt. That is why Fletching is a skill rather than a decoration, and
+   it is the only thing here that is not negotiable.
+
+   Where the numbers came from, so the next person does not have to guess:
+     bow atk   = the sword line at the same tier, so accuracy is at parity
+     bow str   = 0. The AMMUNITION carries the damage. A bow that also carried
+                 strength would stack with the arrow and put ranged over melee
+                 before the level coefficient was even considered.
+     arrow str = the sword STR line x0.85, because bows swing 15% faster. Damage
+                 x speed is the thing that has to match, not damage.
+     bolt str  = arrow x1.15, paid for by the crossbow's 15% slower swing.
+   All provisional until _rangedsim.js says otherwise. See _rangedpreview/DESIGN.md
+   section 4: nothing here ships to a balance patch on vibes. */
+(function(){
+  if(typeof SKILLS==='undefined'||typeof ITEMS==='undefined') return;
+
+  /* ── ladders ──────────────────────────────────────────────────────────────
+     Ammunition follows the BAR ladder, so it needs no new material and stops
+     where smithable metal stops. Moltensteel and voidsteel have no bar (their
+     weapons are raid drops), so the ammo ladder ends at starfall. */
+  const AMMO=[
+    {k:'bronze',    n:'Bronze',    bar:'bronze_bar',    fl:1,  str:2,  sell:4},
+    {k:'iron',      n:'Iron',      bar:'iron_bar',      fl:12, str:3,  sell:8},
+    {k:'steel',     n:'Steel',     bar:'steel_bar',     fl:24, str:5,  sell:16},
+    {k:'mithril',   n:'Mithril',   bar:'mithril_bar',   fl:38, str:8,  sell:34},
+    {k:'cobalt',    n:'Cobalt',    bar:'cobalt_bar',    fl:52, str:11, sell:60},
+    {k:'runite',    n:'Runite',    bar:'runite_bar',    fl:64, str:15, sell:105},
+    {k:'starsteel', n:'Starsteel', bar:'starsteel_bar', fl:76, str:20, sell:180},
+    {k:'starfall',  n:'Starfall',  bar:'starfall_bar',  fl:88, str:28, sell:320},
+  ];
+  /* Bows follow the WOOD ladder. `yield` is how many shafts one of that log
+     carves into, which is the whole reason to keep chopping the good stuff. */
+  const WOODS=[
+    {k:'pine',    n:'Pine',       log:'pine_log',     fl:1,  atk:3,  yield:8,  sell:60},
+    {k:'oak',     n:'Oak',        log:'oak_log',      fl:12, atk:5,  yield:10, sell:150},
+    {k:'ironbark',n:'Ironbark',   log:'ironbark_log', fl:27, atk:8,  yield:12, sell:400},
+    {k:'ember',   n:'Emberwood',  log:'ember_log',    fl:45, atk:12, yield:15, sell:1100},
+    {k:'frost',   n:'Frostwood',  log:'frost_log',    fl:62, atk:17, yield:18, sell:2600},
+    {k:'shadow',  n:'Shadowwood', log:'shadow_log',   fl:78, atk:23, yield:22, sell:6200},
+    {k:'ancient', n:'Ancient',    log:'ancient_log',  fl:90, atk:30, yield:26, sell:14000},
+  ];
+
+  /* ── palettes, matching the tiers the rest of the game already uses ── */
+  const WPAL={
+    pine:{l:'#c09a63',m:'#8a6236',d:'#3f2b14'}, oak:{l:'#b98a4e',m:'#7d5527',d:'#3a2610'},
+    ironbark:{l:'#9a9484',m:'#5f5a4c',d:'#2b281f'},
+    ember:{l:'#d4703c',m:'#96351d',d:'#3d1108',glow:'#e0762f'},
+    frost:{l:'#a8cfe0',m:'#5c8ba4',d:'#1e3242',glow:'#8fd0e6'},
+    shadow:{l:'#7c6d90',m:'#463a5c',d:'#1c1528',glow:'#9a5ad0'},
+    ancient:{l:'#9aa870',m:'#5e6b38',d:'#232a12',glow:'#c8e070',spark:1},
+  };
+  const MPAL={
+    bronze:{l:'#d79a52',m:'#a36a26',d:'#4a2c0d'}, iron:{l:'#a8adb4',m:'#70767e',d:'#2e3238'},
+    steel:{l:'#d3dae2',m:'#8b939d',d:'#3c4249'},
+    mithril:{l:'#8cc4ec',m:'#3f74a4',d:'#152f47',glow:'#6fa8d8'},
+    cobalt:{l:'#6b9ce8',m:'#2f57a0',d:'#13224a',glow:'#4a7fd0'},
+    runite:{l:'#5fd0a8',m:'#238a68',d:'#0d3a2c',glow:'#3fb08a'},
+    starsteel:{l:'#e8e2ff',m:'#9089c4',d:'#2e2a4a',glow:'#c8bcff',spark:1},
+    starfall:{l:'#ffd98a',m:'#c08a2a',d:'#4a3008',glow:'#ffcf5a',spark:1},
+  };
+
+  /* ── icon generators ──────────────────────────────────────────────────────
+     One silhouette, one palette per tier, exactly as _roastSVG and
+     _curedLeatherSVG do it. A bow is a D: the limb bows out one side and the
+     string is dead straight down the chord. Drawn the other way it reads as a
+     leaf, which is how the first pass of these came out. */
+  let _rid=0; const uid=()=>'rg'+(++_rid);
+  function _d(p){
+    const g=uid(), s=uid();
+    return {g, s, m:'<defs>'
+      +(p.glow?'<radialGradient id="'+g+'" cx="0.5" cy="0.5" r="0.55">'
+        +'<stop offset="0" stop-color="'+p.glow+'" stop-opacity="0.42"/>'
+        +'<stop offset="1" stop-color="'+p.glow+'" stop-opacity="0"/></radialGradient>':'')
+      +'<linearGradient id="'+s+'" x1="0.1" y1="0" x2="0.95" y2="0.4">'
+      +'<stop offset="0" stop-color="'+p.l+'"/><stop offset="0.45" stop-color="'+p.m+'"/>'
+      +'<stop offset="1" stop-color="'+p.d+'"/></linearGradient></defs>'};
+  }
+  const _halo=(p,d)=>p.glow?'<circle cx="32" cy="32" r="28" fill="url(#'+d.g+')"/>':'';
+  const _spk=p=>p.spark?'<circle cx="13" cy="16" r="1.5" fill="#fff" opacity="0.85"/>'
+    +'<circle cx="51" cy="46" r="1.2" fill="#fff" opacity="0.7"/>'
+    +'<circle cx="46" cy="14" r="1" fill="#fff" opacity="0.6"/>':'';
+
+  function bowSVG(p,long,unstrung){
+    const d=_d(p), y0=long?3:9, y1=long?61:55, bulge=long?12:10, ch=50;
+    const limb='M'+ch+' '+y0+' C'+bulge+' '+(y0+10)+' '+bulge+' '+(y1-10)+' '+ch+' '+y1;
+    const tips=long?'':'<path d="M'+ch+' '+y0+' C'+(ch+7)+' '+(y0+3)+' '+(ch+7)+' '+(y0+8)+' '+(ch-2)+' '+(y0+9)+'" fill="none" stroke="url(#'+d.s+')" stroke-width="5" stroke-linecap="round"/>'
+      +'<path d="M'+ch+' '+y1+' C'+(ch+7)+' '+(y1-3)+' '+(ch+7)+' '+(y1-8)+' '+(ch-2)+' '+(y1-9)+'" fill="none" stroke="url(#'+d.s+')" stroke-width="5" stroke-linecap="round"/>';
+    return '<svg class="ev-icon" viewBox="0 0 64 64">'+d.m+_halo(p,d)
+      +'<path d="'+limb+'" fill="none" stroke="url(#'+d.s+')" stroke-width="'+(long?6:6.5)+'" stroke-linecap="round"/>'
+      +'<path d="'+limb+'" fill="none" stroke="'+p.l+'" stroke-width="1.5" opacity="0.4" stroke-linecap="round" transform="translate(-1.6,0)"/>'
+      +tips
+      +(unstrung?'':'<path d="M'+ch+' '+y0+' L'+ch+' '+y1+'" stroke="#efe4c4" stroke-width="1.8" stroke-linecap="round"/>')
+      +'<path d="M'+(bulge+1)+' 24 L'+(bulge+1)+' 40" stroke="#3a2513" stroke-width="10" stroke-linecap="round"/>'
+      +'<path d="M'+(bulge+1)+' 24 L'+(bulge+1)+' 40" stroke="#6d4a26" stroke-width="7" stroke-linecap="round"/>'
+      +'<path d="M'+(bulge-3)+' 28 H'+(bulge+5)+' M'+(bulge-3)+' 36 H'+(bulge+5)+'" stroke="#c9a86a" stroke-width="1.8" opacity="0.7" stroke-linecap="round"/>'
+      +_spk(p)+'</svg>';
+  }
+  function xbowSVG(p,unstrung){
+    const d=_d(p), w=_d({l:'#a07a48',m:'#6d4a26',d:'#33210f'});
+    return '<svg class="ev-icon" viewBox="0 0 64 64">'+d.m+w.m+_halo(p,d)
+      +'<path d="M27 16 H37 L39 50 Q32 62 25 50 Z" fill="url(#'+w.s+')" stroke="#241708" stroke-width="1.3" stroke-linejoin="round"/>'
+      +'<path d="M29.5 20 L29.5 50" stroke="#a07a48" stroke-width="1.4" opacity="0.4"/>'
+      +'<path d="M24 44 L32 41 L40 44" fill="none" stroke="'+p.d+'" stroke-width="2.6" stroke-linecap="round"/>'
+      +'<path d="M5 30 C16 15 48 15 59 30" fill="none" stroke="url(#'+d.s+')" stroke-width="6.5" stroke-linecap="round"/>'
+      +'<path d="M5 30 C16 17 48 17 59 30" fill="none" stroke="'+p.l+'" stroke-width="1.6" opacity="0.4" stroke-linecap="round"/>'
+      +(unstrung?'':'<path d="M5 30 L32 38 L59 30" fill="none" stroke="#efe4c4" stroke-width="1.8" stroke-linejoin="round"/>'
+        +'<path d="M30 12 L34 12 L34 34 L30 34 Z" fill="'+p.d+'" stroke="'+p.l+'" stroke-width="1.1"/>'
+        +'<path d="M32 8 L36 14 L28 14 Z" fill="'+p.l+'"/>')
+      +_spk(p)+'</svg>';
+  }
+  function ammoSVG(p,bolt){
+    const d=_d(p), w=_d({l:'#c09a63',m:'#8a6236',d:'#3f2b14'});
+    const x0=bolt?22:14, y0=bolt?42:50;
+    return '<svg class="ev-icon" viewBox="0 0 64 64">'+d.m+w.m+_halo(p,d)
+      +'<path d="M'+x0+' '+y0+' L48 16" stroke="url(#'+w.s+')" stroke-width="'+(bolt?6:4.4)+'" stroke-linecap="round"/>'
+      +'<path d="M58 6 L44 10 L54 20 Z" fill="url(#'+d.s+')" stroke="#1a1206" stroke-width="1.2" stroke-linejoin="round"/>'
+      +'<path d="M58 6 L48 12.5 L54 20 Z" fill="'+p.l+'" opacity="0.35"/>'
+      +(bolt
+        ?'<rect x="17" y="39" width="12" height="7" rx="2" transform="rotate(-45 23 42)" fill="'+p.d+'" stroke="'+p.l+'" stroke-width="1.1"/>'
+        :'<path d="M14 50 L6 46 L10 56 Z" fill="'+p.m+'" stroke="#1a1206" stroke-width="1"/>'
+         +'<path d="M18 46 L10 42 L14 52 Z" fill="'+p.l+'" opacity="0.75" stroke="#1a1206" stroke-width="0.9"/>'
+         +'<path d="M22 42 L14 38 L18 48 Z" fill="'+p.m+'" opacity="0.9" stroke="#1a1206" stroke-width="0.9"/>')
+      +_spk(p)+'</svg>';
+  }
+  function headSVG(p,bolt){
+    const d=_d(p);
+    return '<svg class="ev-icon" viewBox="0 0 64 64">'+d.m+_halo(p,d)
+      +(bolt
+        ?'<path d="M32 6 L44 26 L38 54 L26 54 L20 26 Z" fill="url(#'+d.s+')" stroke="#1a1206" stroke-width="1.4" stroke-linejoin="round"/>'
+         +'<path d="M32 6 L38 26 L32 54 Z" fill="'+p.l+'" opacity="0.3"/>'
+        :'<path d="M32 4 L48 30 L36 30 L36 58 L28 58 L28 30 L16 30 Z" fill="url(#'+d.s+')" stroke="#1a1206" stroke-width="1.4" stroke-linejoin="round"/>'
+         +'<path d="M32 4 L40 30 L32 30 Z" fill="'+p.l+'" opacity="0.32"/>')
+      +_spk(p)+'</svg>';
+  }
+
+  /* ── shared materials ── */
+  ITEMS.wood_shaft={name:'Arrow Shafts', icon:'🪵', sell:2,
+    desc:'Straight lengths of seasoned wood, cut for fletching. Any log carves into them; a better log simply carves into more.'};
+  ITEMS.feather={name:'Feather', icon:'🪶', sell:3,
+    desc:'A stiff barred flight feather. Three to an arrow, and no arrow flies straight without them. Bolts do without.'};
+  ITEMS.raw_fowl={name:'Raw Fowl', icon:'🍗', sell:14,
+    desc:'A plump moor-hen, plucked and drawn. The feathers were the point; the bird is supper.'};
+  ITEMS.flax={name:'Flax', icon:'🌾', sell:9,
+    desc:'Pale fibrous stems, retted and ready to spin. Grown in a patch or gathered wild along the ditches.'};
+  ITEMS.bowstring={name:'Bowstring', icon:'🧵', sell:38,
+    desc:'Flax spun into a cord that will not stretch. A bow without one is a stick.'};
+  ICONS.wood_shaft='<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="wsh" x1="0.1" y1="0" x2="0.95" y2="0.4">'
+    +'<stop offset="0" stop-color="#c09a63"/><stop offset="0.45" stop-color="#8a6236"/><stop offset="1" stop-color="#3f2b14"/></linearGradient></defs>'
+    +'<path d="M16 54 L44 10 M24 56 L52 12 M8 50 L36 6" stroke="url(#wsh)" stroke-width="5" stroke-linecap="round"/>'
+    +'<path d="M14 42 C24 46 34 40 44 44" stroke="#6d4a26" stroke-width="3.4" fill="none" stroke-linecap="round"/></svg>';
+  ICONS.feather='<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="ftr" x1="0.2" y1="0" x2="0.9" y2="1">'
+    +'<stop offset="0" stop-color="#f2e9d4"/><stop offset="0.5" stop-color="#b9ab8c"/><stop offset="1" stop-color="#5e5240"/></linearGradient></defs>'
+    +'<path d="M50 8 C30 14 16 32 12 54 C34 50 52 34 56 12 Z" fill="url(#ftr)" stroke="#2e281c" stroke-width="1.3" stroke-linejoin="round"/>'
+    +'<path d="M54 10 L10 56" stroke="#6a5f48" stroke-width="1.9" stroke-linecap="round"/>'
+    +'<path d="M46 14 L28 22 M42 20 L24 30 M38 27 L21 38 M34 34 L18 45" stroke="#7d7159" stroke-width="1" opacity="0.55"/>'
+    +'<path d="M10 56 L6 60" stroke="#4a4130" stroke-width="2.2" stroke-linecap="round"/></svg>';
+  ICONS.flax='<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="flx" x1="0" y1="0" x2="0" y2="1">'
+    +'<stop offset="0" stop-color="#e8dfae"/><stop offset="0.55" stop-color="#b9a664"/><stop offset="1" stop-color="#5e5228"/></linearGradient></defs>'
+    +'<path d="M20 58 C22 38 24 20 26 6 M32 58 C32 36 32 18 32 4 M44 58 C42 38 40 20 38 6" stroke="url(#flx)" stroke-width="4" stroke-linecap="round" fill="none"/>'
+    +'<circle cx="26" cy="7" r="3.4" fill="#8fb4e0"/><circle cx="32" cy="5" r="3.8" fill="#a8c8ec"/><circle cx="38" cy="7" r="3.4" fill="#8fb4e0"/>'
+    +'<path d="M16 46 H48" stroke="#6d4a26" stroke-width="3.4" stroke-linecap="round"/></svg>';
+  ICONS.bowstring='<svg class="ev-icon" viewBox="0 0 64 64">'
+    +'<ellipse cx="32" cy="34" rx="20" ry="21" fill="none" stroke="#d8cfae" stroke-width="4.4"/>'
+    +'<ellipse cx="32" cy="34" rx="20" ry="21" fill="none" stroke="#8d8464" stroke-width="1.6" stroke-dasharray="4 5"/>'
+    +'<ellipse cx="32" cy="13" rx="9" ry="6" fill="none" stroke="#d8cfae" stroke-width="4"/>'
+    +'<path d="M25 50 L32 58 L39 50" fill="none" stroke="#b5aa85" stroke-width="2.6" stroke-linecap="round"/></svg>';
+  ICONS.raw_fowl='<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="rfw" x1="0.2" y1="0" x2="0.9" y2="1">'
+    +'<stop offset="0" stop-color="#f0cfae"/><stop offset="0.55" stop-color="#c08f66"/><stop offset="1" stop-color="#5e3b26"/></linearGradient></defs>'
+    +'<path d="M22 20 C12 30 12 46 24 54 C38 60 52 50 50 34 C48 22 34 14 22 20 Z" fill="url(#rfw)" stroke="#3a2214" stroke-width="1.4"/>'
+    +'<path d="M26 22 L18 8 L14 12 L20 24" fill="#e8dcc0" stroke="#3a2214" stroke-width="1.2" stroke-linejoin="round"/>'
+    +'<path d="M30 30 C36 34 40 42 38 50" stroke="#8a5a3a" stroke-width="1.4" fill="none" opacity="0.6"/></svg>';
+
+  /* ── ammunition, arrowheads and bolt tips ── */
+  AMMO.forEach(function(a,i){
+    const p=MPAL[a.k], ct=i+1;
+    const head=a.k+'_arrowhead', tip=a.k+'_bolt_tip', arrow=a.k+'_arrow', bolt=a.k+'_bolt';
+    ITEMS[head]={name:a.n+' Arrowhead', icon:'🔻', sell:Math.round(a.sell*0.5),
+      desc:'A barbed '+a.n.toLowerCase()+' head, hammered flat at the anvil. Twelve to a bar. Useless until it meets a shaft and a feather.'};
+    ITEMS[tip]={name:a.n+' Bolt Tip', icon:'🔻', sell:Math.round(a.sell*0.7),
+      desc:'A squat '+a.n.toLowerCase()+' bodkin, heavier than an arrowhead and made ten to a bar. Bolts trade flight for weight.'};
+    ITEMS[arrow]={name:a.n+' Arrow', icon:'🏹', sell:a.sell, ammo:'arrow', ammoStr:a.str, ammoTier:ct,
+      desc:'Shaft, feather and '+a.n.toLowerCase()+' head. Adds '+a.str+' strength to every shot from a bow. Spent on firing, though a fletcher recovers some.'};
+    ITEMS[bolt]={name:a.n+' Bolt', icon:'🏹', sell:Math.round(a.sell*1.3), ammo:'bolt', ammoStr:Math.round(a.str*1.15), ammoTier:ct,
+      desc:'A short heavy quarrel tipped in '+a.n.toLowerCase()+'. Adds '+Math.round(a.str*1.15)+' strength to every shot from a crossbow, which is slower to loose.'};
+    ICONS[head]=headSVG(p,false); ICONS[tip]=headSVG(p,true);
+    ICONS[arrow]=ammoSVG(p,false); ICONS[bolt]=ammoSVG(p,true);
+  });
+
+  /* ── bows: unstrung, shortbow, longbow ──
+     Shortbows swing faster and hit the same; longbows swing at normal speed and
+     aim better. Both two handed, both `light`, so the Rogue bonus the class blurb
+     has always promised finally applies to something. */
+  WOODS.forEach(function(w,i){
+    const p=WPAL[w.k], ct=i+1;
+    [['short','Shortbow',1.00,0.85],['long','Longbow',1.28,1.00]].forEach(function(v){
+      const kind=v[0], label=v[1], atkMult=v[2], swing=v[3];
+      const id=w.k+'_'+kind+'bow', un='unstrung_'+id;
+      ITEMS[un]={name:'Unstrung '+w.n+' '+label, icon:'🪵', sell:Math.round(w.sell*0.35),
+        desc:'A '+w.n.toLowerCase()+' stave, carved and tillered. It needs a bowstring before it is a weapon.'};
+      ITEMS[id]={name:w.n+' '+label, icon:'🏹', sell:w.sell, cgear:true, ctier:ct, cslot:'weapon',
+        dmgType:'ranged', twoHanded:true, wclass:'light', ranged:true, ammo:'arrow',
+        swingMult:swing, reqRanged:w.fl,
+        desc:w.n+' and flax. '+(kind==='short'
+          ? 'Short in the limb and quick to draw: '+Math.round((1-swing)*100)+'% faster than a blade, and the arrow does the rest.'
+          : 'Long in the limb and slow to bring round, but it puts the shot where you meant it.')
+          +' Takes both hands, so it uses no shield, and every loose spends an arrow.'};
+      ICONS[un]=bowSVG(p,kind==='long',true);
+      ICONS[id]=bowSVG(p,kind==='long',false);
+      COMBAT_GEAR_STATS[id]={atk:Math.round(w.atk*atkMult), str:0, def:0};
+    });
+  });
+
+  /* ── crossbows: one handed, so the shield stays ── */
+  AMMO.forEach(function(a,i){
+    const p=MPAL[a.k], ct=i+1;
+    const wood=WOODS[Math.min(WOODS.length-1, Math.floor(i*WOODS.length/AMMO.length))];
+    const id=a.k+'_crossbow', un='unstrung_'+id;
+    /* Crossbow accuracy is baked into `atk` rather than applied as a separate
+       multiplier at fire time. One number, in the same place every other weapon
+       keeps its accuracy, and it shows up correctly in the item card for free. */
+    const atk=Math.round([3,5,8,12,17,23,30,40][i]*1.18);
+    ITEMS[un]={name:'Unstrung '+a.n+' Crossbow', icon:'🪵', sell:Math.round(a.sell*14),
+      desc:'A stock and a '+a.n.toLowerCase()+' prod, pinned and true. It needs a bowstring before it will hold a draw.'};
+    ITEMS[id]={name:a.n+' Crossbow', icon:'🏹', sell:Math.round(a.sell*22), cgear:true, ctier:ct, cslot:'weapon',
+      dmgType:'ranged', wclass:'standard', ranged:true, ammo:'bolt',
+      swingMult:1.15, reqRanged:a.fl,
+      desc:'Slower to crank than a bow draws, and it aims better for it. One hand only, so a shield or buckler still fits, and every shot spends a bolt.'};
+    ICONS[un]=xbowSVG(p,true); ICONS[id]=xbowSVG(p,false);
+    COMBAT_GEAR_STATS[id]={atk:atk, str:0, def:0};
+    ITEMS[un].xbowWood=wood.k;
+  });
+
+  /* Handy lookups for the combat code and the panels. */
+  /* Flag every leather piece as light. rangedArmourMult() reads that to decide
+     whether you are dressed to shoot in. Done here rather than in the
+     LEATHER_TIERS loop so the whole feature stays in one block. */
+  if(typeof LEATHER_TIERS!=='undefined'){
+    LEATHER_TIERS.forEach(function(t){
+      ['helm','chest','legs','gloves','boots'].forEach(function(slot){
+        const id=t.key+'_'+slot;
+        if(ITEMS[id]) ITEMS[id].light=true;
+      });
+    });
+  }
+
+  window.RANGED_AMMO=AMMO; window.RANGED_WOODS=WOODS;
+  window.isRangedWeapon=function(id){ return !!(id&&ITEMS[id]&&ITEMS[id].ranged); };
+  window.ammoKind=function(id){ return (id&&ITEMS[id]&&ITEMS[id].ammo)||null; };
+})();
+
+/* ════════ [JS-RANGED-2] FLETCHING, FLAX AND FEATHERS ════════════════════════════
+   The chain, and where each link lives:
+
+     Woodcutting  a log
+     Fletching    log        -> shafts        better log, more shafts, nothing else
+     Smithing     bar        -> arrowheads    12 a bar, or 10 bolt tips
+     Farming      a patch    -> flax          also foraged wild
+     Fletching    flax       -> bowstring
+     combat       a moor-hen -> feathers      and supper
+     Fletching    shaft + feather + head  -> arrows
+     Fletching    shaft + tip             -> bolts, no feathers, hence dearer metal
+     Fletching    logs -> unstrung stave -> + bowstring -> a bow
+
+   Four skills feed it on purpose. Fletching is a SINK, and the game has very few.
+
+   One act per log rather than one act with a log picker: that is how every other
+   gathering-fed skill in this game already reads, it needs no control at all, and
+   a <select> would have been dead on Proton exactly like the offline panel's was. */
+(function(){
+  if(typeof SKILLS==='undefined'||!window.RANGED_AMMO) return;
+  const AMMO=window.RANGED_AMMO, WOODS=window.RANGED_WOODS;
+
+  /* ── flax: grown or gathered ── */
+  if(typeof CROPS!=='undefined' && !CROPS.some(c=>c.id==='flax_seed')){
+    ITEMS.flax_seed={name:'Flax Seed', icon:'🌱', sell:12,
+      desc:'Small oily seed. Sown in a patch it comes up as flax, which spins into bowstring.'};
+    ICONS.flax_seed=ICONS.flax;
+    CROPS.push({id:'flax_seed', lvl:20, name:'Flax', icon:'🌾', growMs:7*60000,
+      tendInterval:110000, tendBoost:0.25, xp:480, out:{flax:3}, seedReturn:0.22});
+  }
+  SKILLS.foraging.acts.push({id:'fo_flax', name:'Gather wild flax', lvl:20, ms:6700, xp:88,
+    spdMult:0.600, minMs:4700, out:{flax:1}});
+
+  /* ── feathers ──
+     Three sources so the loop can never hard block. A drop from the two zones
+     where birds belong, a shop stock for three in the morning, and Bird's Nest,
+     which was on the sell-only list doing nothing at all. */
+  if(typeof MONSTER_DROPS!=='undefined'){
+    const add=(mon,rows)=>{ if(MONSTER_DROPS[mon]) MONSTER_DROPS[mon]=MONSTER_DROPS[mon].concat(rows); };
+    add('thornback_stag',[{id:'feather', chance:0.22, qty:[3,7]}]);
+    add('briar_lynx',    [{id:'feather', chance:0.30, qty:[4,9]},
+                          {id:'raw_fowl',chance:0.18}]);
+    add('timber_wolf',   [{id:'feather', chance:0.18, qty:[2,6]}]);
+    add('snow_leopard',  [{id:'feather', chance:0.28, qty:[5,11]},
+                          {id:'raw_fowl',chance:0.20}]);
+    add('frost_hare',    [{id:'feather', chance:0.24, qty:[4,8]}]);
+  }
+  /* Bird's Nest finally does something. It was sitting in SELL_ONLY, which is the
+     audit's way of saying "nothing in the game wants this". */
+  /* The fowl the feathers came off needs somewhere to go, or it is a drop with no
+     destination and the audit says so ("no dropped material lost its last recipe"). */
+  ITEMS.roast_fowl={name:'Roast Fowl', icon:'🍗', sell:95, potion:{heal:62},
+    desc:'A moor-hen turned on a spit until the skin goes glassy. Restores 62 HP.'};
+  ICONS.roast_fowl=ICONS.raw_fowl;
+  SKILLS.cooking.acts.push({id:'co_fowl', name:'Roast a fowl', lvl:10, ms:5000, xp:62,
+    spdMult:0.55, minMs:840, inp:{raw_fowl:2}, out:{roast_fowl:1}});
+
+  SKILLS.fletching={name:'Fletching', icon:'🏹', acts:[]};
+  const F=SKILLS.fletching.acts;
+  F.push({id:'fl_nest', name:"Strip a Bird's Nest", cat:'shafts', lvl:1, ms:3000, xp:20,
+    spdMult:0.5, minMs:900, inp:{birds_nest:1}, out:{feather:8}});
+
+  /* ── shafts, one act per log ── */
+  WOODS.forEach(function(w,i){
+    F.push({id:'fl_sh_'+w.k, name:'Carve '+w.n+' shafts', cat:'shafts', lvl:w.fl,
+      ms:3600+i*420, xp:Math.round(18+i*22), spdMult:Math.min(0.80,0.50+i*0.045),
+      minMs:700+i*90, inp:_o(w.log,1), out:{wood_shaft:w.yield}});
+  });
+  F.push({id:'fl_string', name:'Spin a bowstring', cat:'shafts', lvl:20, ms:5200, xp:95,
+    spdMult:0.60, minMs:1100, inp:{flax:3}, out:{bowstring:1}});
+
+  /* ── arrows and bolts ── */
+  AMMO.forEach(function(a,i){
+    const head=a.k+'_arrowhead', tip=a.k+'_bolt_tip';
+    F.push({id:'fl_ar_'+a.k, name:'Fletch '+a.n+' arrows', cat:'arrows', lvl:a.fl,
+      ms:4200+i*520, xp:Math.round(40+i*58), spdMult:Math.min(0.80,0.52+i*0.038),
+      minMs:800+i*110, inp:_o3('wood_shaft',12,'feather',12,head,12), out:_o(a.k+'_arrow',12)});
+    F.push({id:'fl_bo_'+a.k, name:'Fletch '+a.n+' bolts', cat:'bolts', lvl:a.fl+4,
+      ms:4600+i*560, xp:Math.round(46+i*64), spdMult:Math.min(0.80,0.52+i*0.038),
+      minMs:850+i*115, inp:_o2('wood_shaft',12,tip,12), out:_o(a.k+'_bolt',12)});
+  });
+
+  /* ── bows: carve a stave, then string it ── */
+  WOODS.forEach(function(w,i){
+    [['short','Shortbow',6],['long','Longbow',9]].forEach(function(v){
+      const kind=v[0], label=v[1], logs=v[2];
+      const un='unstrung_'+w.k+'_'+kind+'bow', id=w.k+'_'+kind+'bow';
+      const lv=w.fl+(kind==='long'?4:0);
+      F.push({id:'fl_cv_'+w.k+'_'+kind, name:'Carve a '+w.n+' '+label, cat:'bows', lvl:lv,
+        ms:7000+i*900, xp:Math.round(120+i*160), spdMult:Math.min(0.80,0.55+i*0.04),
+        minMs:1500+i*180, inp:_o(w.log,logs), out:_o(un,1)});
+      F.push({id:'fl_st_'+w.k+'_'+kind, name:'String a '+w.n+' '+label, cat:'bows', lvl:lv,
+        ms:3400+i*400, xp:Math.round(70+i*95), spdMult:Math.min(0.80,0.55+i*0.04),
+        minMs:900+i*100, inp:_o2(un,1,'bowstring',1), out:_o(id,1)});
+    });
+  });
+
+  /* ── crossbows: a stock, a prod and a string ── */
+  AMMO.forEach(function(a,i){
+    const wk=WOODS[Math.min(WOODS.length-1, Math.floor(i*WOODS.length/AMMO.length))];
+    const un='unstrung_'+a.k+'_crossbow', id=a.k+'_crossbow';
+    F.push({id:'fl_cx_'+a.k, name:'Assemble a '+a.n+' Crossbow', cat:'crossbows', lvl:a.fl+2,
+      ms:8000+i*1000, xp:Math.round(150+i*190), spdMult:Math.min(0.80,0.55+i*0.04),
+      minMs:1700+i*200, inp:_o2(wk.log,5,a.bar,4), out:_o(un,1)});
+    F.push({id:'fl_cs_'+a.k, name:'String a '+a.n+' Crossbow', cat:'crossbows', lvl:a.fl+2,
+      ms:3600+i*430, xp:Math.round(80+i*105), spdMult:Math.min(0.80,0.55+i*0.04),
+      minMs:950+i*110, inp:_o2(un,1,'bowstring',1), out:_o(id,1)});
+  });
+
+  /* ── smithing makes the heads, which is where the metal ladder rejoins ── */
+  AMMO.forEach(function(a,i){
+    SKILLS.smithing.acts.push({id:'sm_ah_'+a.k, name:'Hammer '+a.n+' arrowheads',
+      lvl:a.fl, ms:4000+i*480, xp:Math.round(35+i*52), spdMult:Math.min(0.80,0.52+i*0.038),
+      minMs:800+i*100, inp:_o(a.bar,1), out:_o(a.k+'_arrowhead',12)});
+    SKILLS.smithing.acts.push({id:'sm_bt_'+a.k, name:'Hammer '+a.n+' bolt tips',
+      lvl:a.fl+2, ms:4200+i*500, xp:Math.round(38+i*56), spdMult:Math.min(0.80,0.52+i*0.038),
+      minMs:830+i*104, inp:_o(a.bar,1), out:_o(a.k+'_bolt_tip',10)});
+  });
+
+  function _o(k,v){ const o={}; o[k]=v; return o; }
+  function _o2(a,b,c,d){ const o={}; o[a]=b; o[c]=d; return o; }
+  function _o3(a,b,c,d,e,f){ const o={}; o[a]=b; o[c]=d; o[e]=f; return o; }
+
+  /* ── the tree. 98 points, the hard invariant every skill holds to. ── */
+  if(typeof TREES!=='undefined' && typeof N==='function'){
+    /* Drawn here, not borrowed from ICONS. An item icon carries gradient ids and
+       the passives board renders a node icon without passing it through _icoUniq,
+       so three nodes sharing one item's art put three copies of the same id in the
+       document and every gradient after the first resolved to the wrong one.
+       Stroke only, no ids, nothing to collide. */
+    const ic=(function(){
+      const w=b=>'<svg class="ev-icon" viewBox="0 0 64 64" fill="none" stroke="currentColor" '
+        +'stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">'+b+'</svg>';
+      return {
+        speed:  w('<path d="M40 6 L18 34 H32 L24 58 L46 30 H32 Z"/>'),
+        xp:     w('<path d="M12 44 L24 20 L36 44 M16 36 H32"/><path d="M44 20 L56 44 M56 20 L44 44"/>'),
+        batch:  w('<path d="M14 52 L44 14 M22 56 L52 18 M6 48 L36 10"/>'),
+        salvage:w('<path d="M32 8 A24 24 0 1 1 12 44"/><path d="M12 30 L12 46 L28 46"/>'),
+        split:  w('<path d="M32 58 V30 L16 8 M32 30 L48 8"/>'),
+        aim:    w('<circle cx="32" cy="32" r="20"/><circle cx="32" cy="32" r="8"/><path d="M32 4 V16 M32 48 V60 M4 32 H16 M48 32 H60"/>'),
+        quiver: w('<path d="M22 20 L44 24 L39 56 Q32 60 25 55 Z"/><path d="M27 20 L22 6 M33 21 L33 4 M40 22 L46 8"/>'),
+        draw:   w('<path d="M46 6 C20 20 20 44 46 58"/><path d="M46 6 V58"/><path d="M18 32 H46"/>'),
+        wind:   w('<path d="M6 22 H38 A8 8 0 1 0 30 14"/><path d="M6 38 H46 A8 8 0 1 1 38 46"/>'),
+        bolt:   w('<path d="M16 52 L48 16"/><path d="M56 8 L42 12 L52 22 Z"/><path d="M14 46 L22 54"/>'),
+        barb:   w('<path d="M14 54 L50 14"/><path d="M50 14 L38 16 L48 26 Z"/><path d="M26 42 L18 34 M34 34 L26 26"/>'),
+        cape:   w('<path d="M20 10 H44 L52 22 L46 58 H18 L12 22 Z"/><path d="M26 10 Q32 18 38 10"/>'),
+        free:   w('<circle cx="32" cy="32" r="22"/><path d="M22 32 L29 40 L44 24"/>'),
+      };
+    })();
+    TREES.fletching=[
+      /* 1.3% a rank, which is what SPD_RANK gives a non-gathering skill.
+         _audit_tests.js compares every *_speed desc against measured mods(), and it
+         caught this claiming 24% while delivering 15.6%. State the real number. */
+      N('fl_speed','Steady Hands',ic.speed,12,0,
+        r=>'Reduces task time by '+(r*1.3).toFixed(1)+'%', r=>'+1.3% faster to '+(r*1.3).toFixed(1)+'%'),
+      N('fl_xp','Straight Grain',ic.xp,10,0,
+        r=>'+'+(r*3)+'% Fletching XP', r=>'+3% to '+(r*3)+'%'),
+      N('fl_double','Bulk Fletcher',ic.batch,8,0,
+        r=>(r*2)+'% chance of a double batch', r=>'+2% to '+(r*2)+'%'),
+      N('fl_salvage','Salvager',ic.salvage,10,12,
+        r=>(r*6)+'% of spent ammunition recovered after a fight', r=>'+6% to '+(r*6)+'%'),
+      N('fl_split','Splitter',ic.split,6,12,
+        r=>'+'+r+' extra shaft from every log', r=>'+1 shaft to +'+r),
+      N('fl_acc','Keen Heads',ic.aim,8,20,
+        r=>'+'+r+'% ranged accuracy', r=>'+1% to +'+r+'%'),
+      N('fl_quiver','Quiverfull',ic.quiver,6,20,
+        r=>'+'+(r*25)+' quiver capacity', r=>'+25 to +'+(r*25)),
+      N('fl_dmg','Practised Draw',ic.draw,8,30,
+        r=>'+'+r+'% ranged damage', r=>'+1% to +'+r+'%'),
+      N('fl_wind','Windcutter',ic.wind,5,45,
+        r=>(r*2)+'% chance a shot cannot miss', r=>'+2% to '+(r*2)+'%'),
+      N('fl_bolts','Master Fletcher',ic.bolt,1,55,
+        r=>r?'Ammunition recovery applies to bolts too':'Recovery covers bolts as well as arrows',
+        ()=>'Recovery covers bolts'),
+      N('fl_barb','Barbed',ic.barb,7,60,   // 7: the tree sums to exactly 98
+        r=>(r*1.5)+'% chance a landed shot bleeds', r=>'+1.5% to '+(r*1.5)+'%'),
+      N('fl_gm_speed','Swift Bench',ic.speed,5,75,
+        r=>'Reduces task time by '+(r*1.8).toFixed(1)+'% (grandmaster)', r=>'+1.8% faster to '+(r*1.8).toFixed(1)+'%'),
+      N('fl_gm_xp','Woodsong',ic.xp,5,75,
+        r=>'+'+(r*4)+'% Fletching XP', r=>'+4% to '+(r*4)+'%'),
+      N('fl_gm_salv','Deep Quiver',ic.salvage,5,80,
+        r=>'+'+(r*4)+'% ammunition recovered', r=>'+4% to '+(r*4)+'%'),
+      N('fl_endless','Endless Quiver',ic.free,1,90,
+        r=>r?'5% of shots spend no ammunition':'5% of shots spend nothing',
+        ()=>'5% of shots are free'),
+      N('fl_cape','Fletcher’s Cape',ic.cape,1,99,
+        r=>r?'The capstone':'The capstone', ()=>'Capstone', {reqCape:true}),
+    ];
+  }
+})();
+
 /* ════ RAIDS (1.0.66) ═══════════════════════════════════════════════════════════
    A raid is a no-retreat gauntlet: fight every stage back-to-back on ONE health
    bar (no full heal between fights — food & auto-eat still work). Die at any
@@ -30182,7 +30695,7 @@ function tickBossMechanic(now){
    Grants per-kill combat XP, then either advances the stage or wins the raid. */
 function handleRaidKill(baseMon){
   const raid=getRaid(combat.raid.id);
-  const style=(state.combatStyle==='strength'||state.combatStyle==='defence')?state.combatStyle:'attack';
+  const style=combatXpStat();
   grantCombatXp(style, Math.round((baseMon.xp||0)*0.75));
   grantCombatXp('hitpoints', Math.round((baseMon.xp||0)*0.25));
   if(state.monKills) state.monKills[baseMon.id]=(state.monKills[baseMon.id]||0)+1;
@@ -30604,7 +31117,7 @@ function onSlayerKill(baseMon){
   if(bf>0 && t.done<t.need && Math.random()<bf*0.10){ t.done++; if(typeof cmbLog==='function') cmbLog('   🗡 Bloodfrenzy: that kill counted as 2.',''); }
   const wp=slayerPerkLevel('warpath');
   if(wp>0 && typeof grantCombatXp==='function'){
-    const style=(state.combatStyle==='strength'||state.combatStyle==='defence')?state.combatStyle:'attack';
+    const style=combatXpStat();
     grantCombatXp(style, Math.max(1, Math.round((baseMon.xp||10)*0.75*wp*0.06)));
   }
   const rl=slayerPerkLevel('relentless');
@@ -31796,6 +32309,9 @@ function itemUseKind(id){
   if(typeof PETS!=='undefined'){
     for(const z in PETS) if(PETS[z]&&PETS[z].id===id) return 'pet';
   }
+  /* Ammunition is spent, not sold. No recipe names an arrow, so without this it
+     fell to 'none' and the tooltip told you to sell the thing you shoot. */
+  if(it.ammo) return 'ammo';
   /* A keepsake is not vendor trash. Nothing consumes Radcliff's Tally and no
      recipe names it, so without this it fell to 'none' and the tooltip told you
      to sell an item with sell:0 and nosell:true — advice that is both wrong and
@@ -32031,6 +32547,9 @@ function showItemTooltip(itemId, x, y, note){
   } else if(!usages.length && _useKind==='none'){
     html+=`<div style="margin-top:5px;padding-top:5px;border-top:1px solid #3a2a17;font-size:calc(13px*var(--tscale));color:#7da33f">`
        +`Nothing uses this — sell it.</div>`;
+  } else if(!usages.length && _useKind==='ammo'){
+    html+=`<div style="margin-top:5px;padding-top:5px;border-top:1px solid #3a2a17;font-size:calc(13px*var(--tscale));color:#a8c86a">`
+       +`Ammunition. Sits in your quiver and is spent a shot at a time.</div>`;
   } else if(!usages.length && _useKind==='keepsake'){
     html+=`<div style="margin-top:5px;padding-top:5px;border-top:1px solid #3a2a17;font-size:calc(13px*var(--tscale));color:#a08a64">`
        +`Nothing uses this, and it cannot be sold. It is yours to keep.</div>`;
@@ -35001,7 +35520,7 @@ function combatTick(){
   // separate rare codepath. baseMon is kept around for zone/pet lookups and
   // the next rare reroll on respawn.
   const mon=rareModify(baseMon,combat.rare);
-  const style=(state.combatStyle==='strength'||state.combatStyle==='defence')?state.combatStyle:'attack';
+  const style=combatXpStat();
   const now=Date.now();
 
   // ── Auto-buff (1.0.30) — keep combat buff potions topped up while fighting ──
@@ -35066,6 +35585,40 @@ function combatTick(){
   // ── Player swing — only when their own swing timer has elapsed ───────────
   if(now-combat.youSwingStart>=combat.youSwingMs){
     combat.youSwingStart=now;
+    /* ── the shot costs an arrow ──────────────────────────────────────────────
+       The one thing that makes ranged a different game from melee. Checked here,
+       before any damage is rolled, so a dry quiver never lands a free hit.
+
+       Recovery is paid per shot as a chance NOT to consume, rather than banked and
+       refunded when the fight ends. Same expected number of arrows, no per-fight
+       bookkeeping, and it cannot desync if you retreat, die, close the game
+       mid-swing, or get pulled into the next raid stage. */
+    if(usingRanged()){
+      const _am=readyAmmo();
+      if(!_am){
+        const _q=eqQuiver(), _w=eqCombatWeapon();
+        stopCombatTimer(); combat.active=false;
+        if(typeof refreshCombatTabIndicator==='function') refreshCombatTabIndicator();
+        const _why = !_q ? 'Your quiver is empty.'
+          : (ITEMS[_q]&&ITEMS[_w]&&ITEMS[_q].ammo!==ITEMS[_w].ammo)
+            ? 'A '+ITEMS[_w].name+' does not fire '+ITEMS[_q].name+'.'
+            : 'You are out of '+((ITEMS[_q]&&ITEMS[_q].name)||'ammunition')+'.';
+        cmbLog('\u2716 '+_why+' The fight stops.','miss');
+        if(typeof toast==='function') toast(_why);
+        renderCombat();
+        return;
+      }
+      /* Salvager and Deep Quiver return ammunition; Endless Quiver is a flat free
+         shot on top. Bolts recover nothing until Master Fletcher is bought. */
+      let _rate = treeRank('fletching','fl_salvage')*0.06
+                + treeRank('fletching','fl_gm_salv')*0.04
+                + (treeRank('fletching','fl_endless')>0?0.05:0);
+      if(ITEMS[_am].ammo==='bolt' && treeRank('fletching','fl_bolts')<1) _rate=0;
+      if(Math.random() >= Math.min(0.85,_rate)){
+        state.items[_am]=(state.items[_am]||0)-1;
+        if(state.items[_am]<=0) delete state.items[_am];
+      }
+    }
     // 1.0.26 combat math v2 — hit/miss is back. Hit chance = acc/(acc+foeDef);
     // a lost roll deals 0 (a real miss). On a hit, damage rolls HIT_MIN..1.0 of
     // your max hit. Low accuracy vs a high-defence foe = lots of 0s.
@@ -36503,7 +37056,7 @@ function renderCombat(){
   const mon=rareModify(baseMon,combat.rare);
   const active=combat.active;
   const cs=combatStats();
-  const style=(state.combatStyle==='strength'||state.combatStyle==='defence')?state.combatStyle:'attack';
+  const style=combatXpStat();
 
   // Background skilling status line. Skilling and combat run side by side now, so this
   // reports what is training rather than warning that engaging will stop it.
