@@ -693,6 +693,8 @@ header h1 .flame{color:var(--ember)}
 .sl-pill[data-tip],
 .sl-chip[data-tip],
 .off-tag[data-tip],
+.ofp-sk[data-tip],
+.ofp-node[data-tip],
 .cmb-slot[data-tip]{position:relative}
 .cmb-stat[data-tip]:hover::after,
 .cd-stat[data-tip]:hover::after,
@@ -704,6 +706,8 @@ header h1 .flame{color:var(--ember)}
 .sl-pill[data-tip]:hover::after,
 .sl-chip[data-tip]:hover::after,
 .off-tag[data-tip]:hover::after,
+.ofp-sk[data-tip]:hover::after,
+.ofp-node[data-tip]:hover::after,
 .cveat[data-tip]:hover::after,
 .cmb-slot[data-tip]:hover::after{
   content:attr(data-tip);
@@ -2458,23 +2462,173 @@ body:not(.is-demo) .demo-only{display:none !important}
 .shop-item.equipped-active{border-color:var(--green)}
 .skill-name{flex:1}
 
-/* ════════ [CSS-16] OFFLINE OVERLAY ══════════════════════════════════════════════ */
-/* Offline overlay */
-.offline-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.78);z-index:200;
-  overflow-y:auto;padding:20px;display:flex;align-items:flex-start;justify-content:center;}
-.offline-panel{background:var(--panel);border:1px solid var(--trim-d);border-radius:8px;
-  width:100%;max-width:640px;box-shadow:var(--sh-3);margin-top:16px;margin-bottom:32px;}
-.offline-panel-hdr{padding:14px 16px;border-bottom:1px solid var(--trim-d);
-  display:flex;align-items:center;gap:12px;}
-.offline-section{padding:14px 16px;border-bottom:1px solid var(--trim-d)}
-.offline-section:last-child{border-bottom:none}
-.offline-section-title{font-size:calc(12px*var(--tscale));color:var(--ember);text-transform:uppercase;
-  letter-spacing:2px;margin-bottom:10px}
-.offline-rate-box{font-size:calc(14px*var(--tscale));color:var(--muted);margin-top:8px;padding:8px 10px;
-  background:var(--raised);border-radius:5px;min-height:36px;line-height:1.6}
-/* Offline tree laid out as a compact 2-col grid so it doesn't run off-screen (1.0.12) */
-.offline-tree-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(232px,1fr));gap:6px}
-.offline-tree-grid .node{margin:0}
+/* ════════ [CSS-16] OFFLINE PANEL ════════════════════════════════════════════════
+   Rebuilt 0.9.123.6. Three things were wrong with what was here.
+
+   It used two native <select> elements. Chromium draws those as OS popup windows
+   and Wine/Proton never paints them — so on a Steam Deck the offline config was
+   not awkward, it was inert: you could not choose what to train while away at all.
+   Every control in here is a button.
+
+   It was the last panel in the game in the old style — bare `.node` rows (a global
+   class that bleeds into anything else using it), emoji labels, full-width stacked
+   text buttons.
+
+   And it put the two things you come here to do in one endless scroll. They are
+   two tabs now: what happens tonight, and the tree that pays for it.
+   `ofp-` throughout — see the class-collision note in CLAUDE.md for why. */
+.ofp-back{position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:200;
+  overflow-y:auto;padding:18px;display:flex;align-items:flex-start;justify-content:center}
+.ofp{background:linear-gradient(180deg,#241a10,#191108);border:1px solid var(--trim-d);
+  border-radius:12px;width:100%;max-width:840px;box-shadow:var(--sh-3);
+  margin:10px 0 26px;overflow:hidden}
+
+.ofp-hd{display:flex;align-items:center;gap:14px;padding:13px 18px;
+  border-bottom:1px solid var(--trim-d);background:linear-gradient(180deg,#2b1f12,#1e1409)}
+.ofp-hd .ofp-ic{width:34px;height:34px;flex:none;display:flex;align-items:center;justify-content:center}
+.ofp-hd .ofp-ic .ev-icon{width:100%;height:100%}
+.ofp-ttl{flex:1;min-width:0}
+.ofp-ttl b{display:block;font-family:'Cinzel',serif;font-size:calc(19px*var(--tscale));
+  color:#fbeed0;line-height:1.15}
+.ofp-ttl i{display:block;font-style:normal;font-family:var(--num);
+  font-size:calc(12px*var(--tscale));color:var(--muted);margin-top:2px}
+.ofp-bar{height:5px;background:#0d0905;border-radius:3px;overflow:hidden;margin-top:6px;max-width:340px}
+.ofp-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--blue),#88c8f0)}
+.ofp-pts{flex:none;text-align:center;font-family:var(--num);line-height:1.1;
+  background:#1d1409;border:1px solid var(--trim-d);border-radius:9px;padding:7px 12px}
+.ofp-pts b{display:block;font-size:calc(19px*var(--tscale));color:var(--ember)}
+.ofp-pts.none b{color:var(--muted)}
+.ofp-pts span{display:block;font-size:calc(10px*var(--tscale));color:var(--muted);
+  text-transform:uppercase;letter-spacing:.1em;margin-top:2px}
+.ofp-x{flex:none;background:transparent;border:none;color:var(--muted);
+  font-size:calc(21px*var(--tscale));cursor:var(--cur-pointer);padding:0 2px;line-height:1}
+.ofp-x:hover{color:var(--text)}
+
+.ofp-seg{display:flex;gap:4px;padding:12px 18px 0}
+.ofp-seg button{flex:1;padding:7px 10px;border-radius:7px;border:1px solid var(--trim-d);
+  background:#150e07;color:var(--muted);font-family:'Cinzel',serif;
+  font-size:calc(14px*var(--tscale));cursor:var(--cur-pointer);transition:background .14s,color .14s}
+.ofp-seg button:hover{color:var(--text)}
+.ofp-seg button.on{background:#2c2013;border-color:var(--trim);color:#fbeed0}
+.ofp-body{padding:14px 18px 18px}
+
+.ofp-lab{display:flex;align-items:center;gap:9px;font-family:var(--num);
+  font-size:calc(11px*var(--tscale));letter-spacing:.16em;text-transform:uppercase;
+  color:var(--muted);margin:16px 0 8px}
+.ofp-lab.first{margin-top:2px}
+.ofp-lab::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--trim-d),transparent)}
+
+/* ── stance cards — the choice the skill never had ── */
+.ofp-stances{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:8px}
+.ofp-st{position:relative;text-align:left;background:#1a1209;border:1px solid var(--trim-d);
+  border-radius:10px;padding:10px 12px;cursor:var(--cur-pointer);
+  transition:border-color .14s,background .14s}
+.ofp-st:hover{border-color:#8a6a34}
+.ofp-st.on{border-color:var(--trim);background:linear-gradient(180deg,#33250f,#221708);
+  box-shadow:inset 0 1px 0 rgba(199,155,78,.22)}
+.ofp-st b{display:block;font-family:'Cinzel',serif;font-size:calc(15.5px*var(--tscale));
+  color:#fbeed0;line-height:1.2}
+.ofp-st .rt{display:block;font-family:var(--num);font-size:calc(12.5px*var(--tscale));
+  color:var(--ember);margin-top:3px}
+.ofp-st .bl{display:block;font-size:calc(12.5px*var(--tscale));color:var(--muted);
+  line-height:1.45;margin-top:5px}
+.ofp-st.locked{opacity:.5;cursor:default}
+.ofp-st.locked:hover{border-color:var(--trim-d)}
+.ofp-st .lk{display:block;font-family:var(--num);font-size:calc(11.5px*var(--tscale));
+  color:#c9822e;margin-top:5px}
+.ofp-trade{margin-top:9px;padding:9px 12px;background:#150e07;border:1px solid var(--trim-d);
+  border-left:3px solid var(--trim);border-radius:7px;
+  font-size:calc(13px*var(--tscale));color:#c9b28a;line-height:1.5}
+
+/* ── thread pickers — skill chips, then that skill's actions. No <select>. ── */
+.ofp-thread{background:#150e07;border:1px solid var(--trim-d);border-radius:10px;
+  padding:10px 12px;margin-bottom:8px}
+.ofp-thd{display:flex;align-items:center;gap:9px;margin-bottom:8px}
+.ofp-thd b{font-family:var(--num);font-size:calc(11px*var(--tscale));letter-spacing:.14em;
+  text-transform:uppercase;color:var(--muted)}
+.ofp-thd .now{flex:1;min-width:0;font-size:calc(13.5px*var(--tscale));color:var(--text);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ofp-thd .now.empty{color:var(--muted);font-style:italic}
+.ofp-clear{flex:none;background:transparent;border:1px solid var(--trim-d);border-radius:6px;
+  color:var(--muted);font-size:calc(11.5px*var(--tscale));padding:2px 8px;cursor:var(--cur-pointer)}
+.ofp-clear:hover{color:#e0917c;border-color:#5c2c20}
+.ofp-skills{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px}
+.ofp-sk{width:34px;height:34px;display:flex;align-items:center;justify-content:center;
+  background:#0f0a05;border:1px solid var(--trim-d);border-radius:8px;cursor:var(--cur-pointer);
+  padding:0;transition:border-color .14s,background .14s}
+.ofp-sk .ev-icon{width:21px;height:21px}
+.ofp-sk:hover{border-color:#8a6a34}
+.ofp-sk.on{border-color:var(--trim);background:#2c2013}
+.ofp-sk.dim{opacity:.3;cursor:default}
+.ofp-acts{display:flex;flex-direction:column;gap:3px;max-height:196px;overflow-y:auto;
+  padding-right:3px;scrollbar-width:thin;scrollbar-color:var(--trim-d) transparent}
+.ofp-act{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px;
+  background:#0f0a05;border:1px solid transparent;border-radius:7px;padding:6px 9px;
+  cursor:var(--cur-pointer);text-align:left}
+.ofp-act:hover{border-color:var(--trim-d)}
+.ofp-act.on{border-color:var(--trim);background:#2c2013}
+.ofp-act .nm{font-size:calc(13.5px*var(--tscale));color:var(--text);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ofp-act .lv{font-family:var(--num);font-size:calc(11px*var(--tscale));color:var(--muted)}
+.ofp-act .xph{font-family:var(--num);font-size:calc(12.5px*var(--tscale));
+  color:var(--green);white-space:nowrap}
+.ofp-none{font-size:calc(13px*var(--tscale));color:var(--muted);font-style:italic;padding:6px 2px}
+
+/* ── the return preview — deliberately the shape of the Welcome Back rows ── */
+.ofp-prev{display:flex;flex-direction:column;gap:6px}
+.ofp-prow{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px;
+  background:var(--raised);border:1px solid var(--trim-d);border-radius:9px;padding:8px 10px}
+.ofp-prow .pic{width:30px;height:30px;flex:none;display:flex;align-items:center;justify-content:center;
+  background:#1d1409;border:1px solid var(--trim-d);border-radius:7px}
+.ofp-prow .pic .ev-icon{width:20px;height:20px}
+.ofp-prow .pnm{min-width:0}
+.ofp-prow .pnm b{display:block;font-weight:normal;font-size:calc(14px*var(--tscale));color:var(--text);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ofp-prow .pnm i{display:block;font-style:normal;font-family:var(--num);
+  font-size:calc(11.5px*var(--tscale));color:var(--muted);margin-top:2px}
+.ofp-prow .pxp{font-family:var(--num);font-size:calc(14px*var(--tscale));color:var(--green);
+  font-weight:bold;white-space:nowrap}
+.ofp-pitems{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:5px;margin-top:3px;
+  padding-top:8px;border-top:1px dashed #3a2a17}
+.ofp-pit{display:inline-flex;align-items:center;gap:5px;background:#1d1409;
+  border:1px solid var(--trim-d);border-radius:6px;padding:3px 8px;font-size:calc(12px*var(--tscale))}
+.ofp-pit .ev-icon{width:1.2em;height:1.2em}
+.ofp-pit span{color:var(--muted)}
+.ofp-pit b{font-family:var(--num);color:var(--text)}
+.ofp-warn{margin-top:8px;padding:8px 11px;background:#1f1408;border:1px solid #5a3e18;
+  border-radius:7px;font-size:calc(12.5px*var(--tscale));color:#e0a36f;line-height:1.5}
+.ofp-warn b{color:#f5c98a}
+
+/* ── the tree ── */
+.ofp-treehd{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+.ofp-treehd .sp{flex:1;font-family:var(--num);font-size:calc(12.5px*var(--tscale));color:var(--muted)}
+.ofp-treehd .sp b{color:var(--ember)}
+.ofp-respec{background:transparent;border:1px solid #5c2c20;border-radius:7px;color:#e0917c;
+  font-size:calc(12px*var(--tscale));padding:4px 11px;cursor:var(--cur-pointer)}
+.ofp-respec:hover{background:#1c100c}
+.ofp-nodes{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:7px}
+.ofp-node{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:9px;
+  background:#150e07;border:1px solid var(--trim-d);border-radius:9px;padding:9px 11px}
+.ofp-node.maxed{border-color:#4c6b2c;background:linear-gradient(180deg,#18200f,#12160a)}
+.ofp-node.lock{opacity:.5}
+.ofp-node.gm{border-color:#8a6a34}
+.ofp-node .ni{min-width:0}
+.ofp-node .nn{display:block;font-size:calc(14px*var(--tscale));color:#fbeed0;line-height:1.2}
+.ofp-node .gmt{font-family:var(--num);font-size:calc(9.5px*var(--tscale));color:var(--trim);
+  letter-spacing:.1em;margin-left:6px}
+.ofp-node .nd{display:block;font-size:calc(12px*var(--tscale));color:var(--muted);line-height:1.45;margin-top:3px}
+.ofp-node .nreq{display:block;font-family:var(--num);font-size:calc(11.5px*var(--tscale));color:#c9822e;margin-top:3px}
+.ofp-node .nr{font-family:var(--num);font-size:calc(12.5px*var(--tscale));color:var(--text);
+  white-space:nowrap}
+.ofp-buy{width:28px;height:28px;flex:none;background:#1d1409;border:1px solid var(--trim-d);
+  border-radius:7px;color:var(--trim);font-size:calc(17px*var(--tscale));line-height:1;
+  cursor:var(--cur-pointer);padding:0}
+.ofp-buy:hover:not(:disabled){border-color:var(--trim);background:#2c2013;color:#fbeed0}
+.ofp-buy:disabled{opacity:.3;cursor:default}
+.ofp-stancetag{display:inline-block;font-family:var(--num);font-size:calc(9.5px*var(--tscale));
+  letter-spacing:.1em;color:#8fd0e6;border:1px solid #2c4762;background:#101a26;
+  border-radius:999px;padding:1px 7px;margin-left:6px;vertical-align:1px}
+
 /* Offline skill row in left panel */
 .skill-row.offline-skill{border-top:1px solid var(--trim-d);margin-top:6px}
 .skill-row.offline-skill .xp-bar i{background:var(--blue)}
@@ -7491,7 +7645,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.123.5">v0.9.123</div>
+  <div class="mm-ver" data-build="0.9.123.6">v0.9.123</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -18139,6 +18293,38 @@ function normalizeState(){
   if(!state.hasOwnProperty('offlineConfig')) state.offlineConfig=null;
   // Same validation as state.action — grantOffline() dereferences it identically.
   if(state.offlineConfig && (!SKILLS[state.offlineConfig.skill] || !getAct(state.offlineConfig.skill,state.offlineConfig.actId))) state.offlineConfig=null;
+  /* ── Offline stances (0.9.123.6) ──
+     Slot 0 remains state.offlineConfig; the extra Divided threads live here. Same
+     validation as slot 0, applied per entry, because a slot naming a deleted act
+     would be dereferenced identically by grantOffline. */
+  if(!Array.isArray(state.offlineSlots)) state.offlineSlots=[];
+  state.offlineSlots.length=Math.min(state.offlineSlots.length,2);
+  for(let _i=0;_i<state.offlineSlots.length;_i++){
+    const _s=state.offlineSlots[_i];
+    if(!_s || typeof _s!=='object' || !SKILLS[_s.skill] || !getAct(_s.skill,_s.actId)) state.offlineSlots[_i]=null;
+  }
+  if(typeof state.offlineStance!=='string'||!OFFLINE_STANCES.some(s=>s.id===state.offlineStance))
+    state.offlineStance='steady';
+  /* One-time respec. The tree's node maxes, tiers and gates all moved, and
+     of_master3 stopped meaning what it meant, so a build assembled under the old
+     rules is not a build under these. Refunding is the honest move: the points
+     come back and are re-spent, nothing is lost, and the flag means it happens
+     exactly once rather than on every load. */
+  if(!state.offlineRespec6){
+    state.offlineRespec6=1;
+    if(state.tree && state.tree._offline) state.tree._offline={};
+  }
+  /* Belt and braces for anything the respec does not cover — a rank above a node's
+     max, or an id that no longer exists. Spent points are derived from this object,
+     so trimming it refunds automatically. */
+  if(state.tree && state.tree._offline && typeof state.tree._offline==='object'){
+    const _byId={}; for(const _n of OFFLINE_TREE) _byId[_n.id]=_n;
+    for(const _k in state.tree._offline){
+      const _n=_byId[_k], _v=Math.floor(state.tree._offline[_k]);
+      if(!_n||!isFinite(_v)||_v<=0) delete state.tree._offline[_k];
+      else if(_v>_n.max) state.tree._offline[_k]=_n.max;
+    }
+  }
   if(!state.enchantments||typeof state.enchantments!=='object'||Array.isArray(state.enchantments)) state.enchantments={};
   // Migrate old slot-keyed enchantments {ring_l|ring_r|amulet: enchId} → item-id keyed.
   // Non-destructive: maps each enchanted slot to its equipped item id; preserves any
@@ -18914,53 +19100,143 @@ function offlineLevelFromXp(xp){
   return l;
 }
 
+/* ── STANCES (0.9.123.6) ───────────────────────────────────────────────────────
+   The old skill had one question in it — which action — and twelve nodes that all
+   answered the same one: "what percentage?". Ten of the twelve were a bigger slice
+   of efficiency, cap, or offline-xp, and you could afford 89% of the tree (49
+   points against 55 of capacity), so nothing was ever a choice.
+
+   A stance is the choice. It is picked per night, it is free to change, and every
+   one of them is a real trade rather than a strict upgrade:
+
+     Steady   one skill, all night, your full rate. Always available.
+     Divided  several skills at once. 120% of your rate in TOTAL, split between
+              them — so more gets done and nothing gets done quickly.
+     Dead to  one skill at 135%, but only half your cap is banked. Better than
+     the World Steady for anyone who logs in inside half a day, worse for anyone
+              who does not. The first node in this skill that rewards playing MORE.
+     Night    no xp at all, 2.5x the materials, gathering only. For the nights you
+     Forager  need ore rather than levels.
+
+   `mult` is applied to the offline rate, `capMult` to the banked hours, `yield` to
+   everything the actions produced. `slots` is how many actions the stance runs;
+   Divided's per-slot rate is DIVIDED_TOTAL/slots, so a third thread buys breadth
+   rather than throughput. */
+const OFFLINE_DIVIDED_TOTAL = 1.20;   // Phantom Worker raises this, see offlineMods
+const OFFLINE_STANCES=[
+  {id:'steady',   name:'Steady',            node:null,         slots:1, mult:1,    capMult:1,   xp:true,  yield:1,
+   gather:false, blurb:'One skill, all night, at your full offline rate.',
+   trade:'No trade-off. The baseline everything else is measured against.'},
+  {id:'divided',  name:'Divided',           node:'of_divided', slots:2, mult:null, capMult:1,   xp:true,  yield:1,
+   gather:false, blurb:'Several skills at once, sharing your rate between them.',
+   trade:'More total progress than Steady — but no single skill moves quickly.'},
+  {id:'deep',     name:'Dead to the World', node:'of_deep',    slots:1, mult:1.35, capMult:0.5, xp:true,  yield:1,
+   gather:false, blurb:'One skill, hard, for half as long.',
+   trade:'Better than Steady if you come back inside half your cap. Worse if you do not.'},
+  {id:'scavenge', name:'Night Forager',     node:'of_scav',    slots:1, mult:1,    capMult:1,   xp:false, yield:2.5,
+   gather:true,  blurb:'A gathering skill, worked for materials alone.',
+   trade:'No xp whatsoever. Two and a half times what you would have brought back.'},
+];
+function offlineStanceDef(id){ return OFFLINE_STANCES.find(s=>s.id===id)||OFFLINE_STANCES[0]; }
+/* A stance you have not unlocked is not selectable and never resolves — an old
+   save that somehow holds one falls back to Steady rather than earning nothing. */
+function offlineStanceUnlocked(id){
+  const s=offlineStanceDef(id);
+  return !s.node || offlineTreeRank(s.node)>0;
+}
+function offlineStance(){
+  const id=(state&&state.offlineStance)||'steady';
+  return offlineStanceUnlocked(id)?offlineStanceDef(id):OFFLINE_STANCES[0];
+}
+/* How many action slots the current stance actually runs. Divided is the only one
+   that can grow, and only via Third Thread. */
+function offlineSlotCount(){
+  const st=offlineStance();
+  if(st.id!=='divided') return st.slots;
+  return 2+(offlineTreeRank('of_slot3')>0?1:0);
+}
+/* Slot 0 stays in state.offlineConfig — every existing reader, and three shipped
+   regressions, address it by that name and there is nothing to gain from moving
+   it. The extra threads live beside it. */
+function offlineSlots(){
+  const n=offlineSlotCount();
+  const out=[state.offlineConfig||null];
+  const extra=Array.isArray(state.offlineSlots)?state.offlineSlots:[];
+  for(let i=1;i<n;i++) out.push(extra[i-1]||null);
+  return out.slice(0,n);
+}
+function offlineSetSlot(i,cfg){
+  if(i===0){ state.offlineConfig=cfg; return; }
+  if(!Array.isArray(state.offlineSlots)) state.offlineSlots=[];
+  state.offlineSlots[i-1]=cfg;
+}
+
 /* Offline tree nodes */
 const OFFLINE_TREE=[
-  // ── Base tier ──
-  {id:'of_rate',   name:'Night Owl',      max:10,req:0,
-    desc:r=>`Efficiency +${r*4}% (base 30%)`,     next:r=>`+4% → ${30+r*4}%`,
+  /* ── Tier 1 · the basics (req 0) ── */
+  {id:'of_rate',   name:'Night Owl',      max:12,req:0, tier:'The Basics',
+    desc:r=>`Efficiency +${r*2.5}% (base 30%)`,   next:r=>`+2.5% → ${30+r*2.5}%`,
     tip:'Efficiency is how fast your chosen skill trains while offline, as a % of its normal online speed. Higher efficiency = more actions completed per hour away.'},
-  {id:'of_cap',    name:'Extended Rest',  max:8, req:0,
+  {id:'of_cap',    name:'Extended Rest',  max:8, req:0, tier:'The Basics',
     desc:r=>`Offline cap +${r*2}h (base 24h)`,    next:r=>`+2h → ${24+r*2}h`,
     tip:'The maximum amount of time the game keeps banking offline progress. Time spent away beyond the cap earns nothing, so raise this if you log in less often.'},
-  {id:'of_xp',     name:'Dream Study',   max:8, req:0,
+  {id:'of_xp',     name:'Dream Study',   max:10,req:0, tier:'The Basics',
     desc:r=>`Offline XP rate +${r*8}%`,            next:r=>`+8% → ${r*8}%`,
-    tip:'Increases the XP earned by the Offline skill itself (the 🌙 skill) while you are away. Does not affect your chosen training skill.'},
-  // ── Mid tier ──
-  {id:'of_multi',  name:'Restless Mind', max:8, req:8,
+    tip:'Increases the XP earned by the Offline skill itself while you are away — the skill that pays for this tree. Does not affect your chosen training skill.'},
+  /* ── Tier 2 · how the night is spent (req 6) ──
+     The first two are the point of the rework: a point here buys a new WAY to
+     spend the night rather than a bigger number on the old one. */
+  {id:'of_divided',name:'Divided Attention',max:1,req:6, stance:'divided', tier:'How the night is spent',
+    desc:r=>r?'The Divided stance — two skills at once':'Unlocks the Divided stance',
+    next:()=>'Two skills at once, sharing 120% of your rate',
+    tip:'Unlocks Divided: train two skills in the same night. Together they get 120% of your offline rate, split between them, so more happens overall but nothing happens fast.'},
+  {id:'of_scav',   name:'Night Forager', max:1, req:6, stance:'scavenge', tier:'How the night is spent',
+    desc:r=>r?'The Night Forager stance — materials, no xp':'Unlocks the Night Forager stance',
+    next:()=>'2.5× materials, no xp at all',
+    tip:'Unlocks Night Forager: work one gathering skill for its output alone. Two and a half times the materials, and not one point of xp.'},
+  {id:'of_loot',   name:'Scavenger',     max:8, req:6, tier:'How the night is spent',
+    desc:r=>`Offline gathering output +${r*8}%`, next:r=>`+8% → ${r*8}%`,
+    tip:'More of everything a gathering skill brings back while you are away — logs, ore, fish, herbs. Stacks with Night Forager. Output only, never xp.'},
+  /* ── Tier 3 (req 14) ── */
+  {id:'of_deep',   name:'Dead to the World',max:1,req:14, stance:'deep', tier:'Deeper still',
+    desc:r=>r?'The Dead to the World stance — 135%, half the cap':'Unlocks the Dead to the World stance',
+    next:()=>'One skill at 135%, half your cap banked',
+    tip:'Unlocks Dead to the World: one skill at 135% of your offline rate, but only half your cap is banked. Worth it if you come back inside half a cap, a loss if you do not.'},
+  {id:'of_slot3',  name:'Third Thread',  max:1, req:14, tier:'Deeper still',
+    desc:r=>r?'Divided runs a third skill':'Divided gains a third slot',
+    next:()=>'Divided: 3 skills instead of 2',
+    tip:'Divided runs three skills instead of two. The total rate does not change, so this buys breadth rather than speed — three skills creeping instead of two.'},
+  {id:'of_multi',  name:'Restless Mind', max:10,req:14, tier:'Deeper still',
     desc:r=>`All-skill XP trickle +${r*2}% while away`, next:r=>`+2% → ${r*2}%`,
-    tip:'Every OTHER skill gains a share of what it would have earned had you trained it offline instead — its best unlocked action, at your offline rate. XP only, no items.'},
-  {id:'of_loot',   name:'Scavenger',     max:6, req:12,
-    desc:r=>`Gathering output while offline +${r*8}%`, next:r=>`+8% → ${r*8}%`,
-    tip:'Boosts the quantity of items produced by gathering skills (mining, woodcutting, fishing, foraging) during offline training. Does not affect XP, only item yield.'},
-  // ── Master nodes ──
-  {id:'of_master1',name:'Lucid Dreamer', max:1, req:18,
-    desc:r=>r?'Efficiency always ≥ 48% — bad sleep not wasted':'Floor offline efficiency at 48%',
+    tip:'Every skill you are NOT training gains a share of what it would have earned had you trained it instead — its best unlocked action, at your offline rate. XP only, no items.'},
+  /* ── Tier 4 · masters (req 24) ── */
+  {id:'of_master1',name:'Lucid Dreamer', max:1, req:24, tier:'Masters',
+    desc:r=>r?'Efficiency never below 48%':'Floor offline efficiency at 48%',
     next:()=>'Efficiency floor: 48%',
-    tip:'Guarantees your offline efficiency never drops below 48%, even without other efficiency perks. A safety net for short or infrequent sessions.'},
-  {id:'of_master2',name:'Time Bender',   max:1, req:28,
-    desc:r=>r?'Offline cap raised to 48h':'Extend cap to 48h',
-    next:()=>'Cap: 48h',
-    tip:'Raises the offline banking cap to 48 hours (2 full days). Stacks with Extended Rest to push the ceiling even higher. Great for weekend-long absences.'},
-  {id:'of_master3',name:'Phantom Worker',max:1, req:36,
-    desc:r=>r?'A second skill also trains offline at 50% of normal offline rate':'Second skill trains offline simultaneously',
-    next:()=>'2 skills train offline',
-    tip:'A randomly-chosen second skill trains alongside your main offline skill, at 50% of the normal offline rate. Doubles up your time away across two skills.'},
-  // ── Grandmaster tier (deep investment, still capped below 100%) ──
-  {id:'of_gm_rate',name:'Apex Sleeper',  max:5, req:34, gm:true,
-    desc:r=>`Efficiency +${r*3}% (grandmaster bonus)`, next:r=>`+3% → extra ${r*3}%`,
-    tip:'Grandmaster efficiency boost that stacks on top of Night Owl. Pushes your offline training speed closer to the maximum ceiling.'},
-  {id:'of_gm_xp',  name:'Subconscious',  max:5, req:38, gm:true,
+    tip:'Your offline efficiency can never drop below 48%, whatever else you have or have not bought. A floor, not a bonus — worthless once Night Owl passes it.'},
+  {id:'of_master2',name:'Time Bender',   max:1, req:24, tier:'Masters',
+    desc:r=>r?'Offline cap at least 48h':'Extend cap to 48h',
+    next:()=>'Cap: at least 48h',
+    tip:'Raises the banking cap to 48 hours. Stacks with Extended Rest in the sense that whichever is higher wins — it is a floor on the cap, not an addition to it.'},
+  {id:'of_master3',name:'Phantom Worker',max:1, req:24, tier:'Masters',
+    desc:r=>r?'Divided shares 180% instead of 120%':'Divided shares 180% of your rate',
+    next:()=>'Divided total: 120% → 180%',
+    tip:'The Divided stance shares 180% of your offline rate between its slots instead of 120%. Does nothing at all unless you run Divided.'},
+  /* ── Grandmaster (req 34) — deep investment, and offline never reaches 100% ── */
+  {id:'of_gm_rate',name:'Apex Sleeper',  max:6, req:34, gm:true, tier:'Grandmaster',
+    desc:r=>`Efficiency +${r*2.5}% (grandmaster)`, next:r=>`+2.5% → extra ${r*2.5}%`,
+    tip:'Grandmaster efficiency, stacking on top of Night Owl. Between them they reach the ceiling exactly — and the ceiling is what stops offline ever matching live play.'},
+  {id:'of_gm_xp',  name:'Subconscious',  max:6, req:34, gm:true, tier:'Grandmaster',
     desc:r=>`Offline XP rate +${r*12}% (grandmaster)`, next:r=>`+12% → ${r*12}%`,
-    tip:'Grandmaster boost to the Offline skill XP rate, stacking with Dream Study. Levels the 🌙 skill faster so you earn offline perk points sooner.'},
-  {id:'of_gm_cap', name:'Eternal Rest',  max:1, req:42, gm:true,
-    desc:r=>r?'Offline cap: 60h (2.5 days)':'Cap extended to 60h',
-    next:()=>'Cap: 60h',
-    tip:'The highest possible offline cap: 60 hours (2.5 days). Overrides lower caps. For players who check in only a couple of times a week.'},
-  {id:'of_gm_peak',name:'Deep Slumber',  max:1, req:45, gm:true,
-    desc:r=>r?'Efficiency ceiling raised to 65% — the absolute maximum offline rate':'Raises the efficiency ceiling from 60% to 65%',
-    next:()=>'Ceiling: 65% — max possible (cannot reach 100%)',
-    tip:'Raises the hard ceiling on offline efficiency from 60% to 65%. Offline training can never reach 100% of online speed — this is the closest you can get.'},
+    tip:'Grandmaster boost to the Offline skill XP rate, stacking with Dream Study. Levels this skill faster, which is what pays for the rest of the tree.'},
+  {id:'of_gm_cap', name:'Eternal Rest',  max:1, req:34, gm:true, tier:'Grandmaster',
+    desc:r=>r?'Offline cap at least 72h (3 days)':'Cap extended to 72h',
+    next:()=>'Cap: at least 72h',
+    tip:'The highest cap there is: 72 hours, three full days. For anyone who checks in twice a week.'},
+  {id:'of_gm_peak',name:'Deep Slumber',  max:1, req:34, gm:true, tier:'Grandmaster',
+    desc:r=>r?'Efficiency ceiling raised to 80%':'Raises the efficiency ceiling to 80%',
+    next:()=>'Ceiling: 70% → 80%, the maximum there is',
+    tip:'Raises the hard ceiling on offline efficiency from 70% to 80%. Offline can never reach 100% of live play — this is as close as it gets.'},
 ];
 
 function offlineTreeRank(id){ return (state.tree._offline||{})[id]||0; }
@@ -18971,20 +19247,47 @@ function offlineAvailPoints(){ return Math.max(0,offlineEarnedPoints()-offlineSp
 /* Computed offline bonuses */
 function offlineMods(){
   const r=id=>offlineTreeRank(id);
-  // 1.0.11 rebalance — base 30% + tree, hard cap 60% (65% with gm_peak). Never near 100%.
-  let rawRate = OFFLINE_RATE + r('of_rate')*0.04 + r('of_gm_rate')*0.03;
-  const EFFICIENCY_CEIL = r('of_gm_peak')>0 ? 0.65 : 0.60;
+  /* Base 30%; Night Owl (12 x 2.5%) and Apex Sleeper (6 x 2.5%) reach exactly the
+     70% ceiling between them, and Deep Slumber lifts that to 80%. Offline can
+     never match live play — that is deliberate and it is the only thing keeping
+     the whole skill from being strictly better than playing. */
+  let rawRate = OFFLINE_RATE + r('of_rate')*0.025 + r('of_gm_rate')*0.025;
+  const EFFICIENCY_CEIL = r('of_gm_peak')>0 ? 0.80 : 0.70;
   if(r('of_master1')>0) rawRate = Math.max(0.48, rawRate);
   const flooredRate = Math.min(rawRate, EFFICIENCY_CEIL);
-  // Cap hours — 24 base, tree extends to a hard 60h (was 96h).
+  // Cap hours — 24 base, +2h a rank, then two floors: 48h and 72h.
   let capHours = 24 + r('of_cap')*2;
   if(r('of_master2')>0) capHours = Math.max(capHours, 48);
-  if(r('of_gm_cap')>0)  capHours = Math.max(capHours, 60);
+  if(r('of_gm_cap')>0)  capHours = Math.max(capHours, 72);
   const xpRate    = OFFLINE_XP_RATE * (1 + r('of_xp')*0.08 + r('of_gm_xp')*0.12) * XP_SCALE;
   const allSkillXp= r('of_multi')*0.02;
   const lootBonus = r('of_loot')*0.08;
-  const dualSkill = r('of_master3')>0;
-  return {rate:flooredRate, capHours, xpRate, allSkillXp, lootBonus, dualSkill};
+  /* Divided shares one budget between its slots, so a third thread is breadth and
+     not throughput. Phantom Worker is the only thing that raises the budget. */
+  const dividedTotal = OFFLINE_DIVIDED_TOTAL + (r('of_master3')>0?0.60:0);
+  return {rate:flooredRate, capHours, xpRate, allSkillXp, lootBonus, dividedTotal,
+          ceiling:EFFICIENCY_CEIL};
+}
+/* The rate a given slot actually trains at, stance included. Divided splits its
+   budget; everything else is a flat multiplier on the offline rate. */
+function offlineSlotRate(){
+  const om=offlineMods(), st=offlineStance();
+  if(st.id==='divided') return om.rate*(om.dividedTotal/offlineSlotCount());
+  return om.rate*(st.mult||1);
+}
+/* Banked hours after the stance has had its say. Dead to the World halves it. */
+function offlineCapMs(){
+  return offlineMods().capHours*3600000*(offlineStance().capMult||1);
+}
+/* What multiplies everything an offline action produced. `of_loot` was computed in
+   offlineMods and then used ONLY to colour a preview string — it never reached the
+   award, so six points of Scavenger bought a bigger number on a label and nothing
+   else. It is applied for real now, in grantOffline, through this. */
+function offlineYieldMult(skillKey){
+  const st=offlineStance();
+  let mult=st.yield||1;
+  if(typeof IS_GATHER!=='undefined' && IS_GATHER[skillKey]) mult+=offlineMods().lootBonus;
+  return mult;
 }
 
 /* ════════ [JS-15] PERSISTENCE — localStorage save / load ════════════════════════ */
@@ -22452,7 +22755,10 @@ function offlineCombatResolve(awayMs, om){
 function grantOffline(){
   if(!state.lastSeen) return;
   const om=offlineMods();
-  const capMs=om.capHours*3600000;
+  /* The cap the SLOTS work against, stance included — Dead to the World banks half
+     of it. Reported as the real cap so the Welcome Back panel says the number the
+     player actually has, and so "capped" means what it says. */
+  const capMs=offlineCapMs();
   const awayRaw=Date.now()-state.lastSeen;
   const away=Math.min(awayRaw, capMs);
   if(away<10000) return; // less than 10s — ignore
@@ -22499,81 +22805,91 @@ function grantOffline(){
   }
   const _fought = !!(_offCombat && _offCombat.kills>0);
 
-  // 2. Active skill action (reduced rate)
-  // Use explicit offline config if set, fall back to whatever was last active
-  const offlineAction = _fought ? null
-    : (state.offlineConfig ||(state.action?{skill:state.action.skill,actId:state.action.actId}:null));
-  if(offlineAction){
-    const {skill,actId}=offlineAction;
+  /* ── 2. The night's work ───────────────────────────────────────────────────
+     One block for every stance. Steady is the one-slot, one-times case of it;
+     Divided runs several slots off a shared rate budget; Dead to the World is a
+     bigger multiplier against a halved cap (applied to `away` below, not here);
+     Night Forager keeps the items and throws the xp away.
+
+     Slot 0 falls back to whatever you were last doing, as it always has, so a
+     player who never opens the panel keeps the behaviour they had. */
+  const _stance = _fought ? offlineStanceDef('steady') : offlineStance();
+  const _slotRate = offlineSlotRate();
+  const _slots = _fought ? [] : offlineSlots().map((c,i)=>
+    (i===0 && !c && state.action) ? {skill:state.action.skill, actId:state.action.actId} : c);
+  /* `away` is already clamped to offlineCapMs(), which has the stance's capMult in
+     it — so Dead to the World's halving is applied exactly once, at the top. */
+  const _stanceAway = away;
+
+  for(let _si=0; _si<_slots.length; _si++){
+    const slot=_slots[_si];
+    if(!slot) continue;
+    const {skill,actId}=slot;
     const act=getAct(skill,actId);
-    if(act){
-      const ms=actMs(act,skill);
-      // Shortcutter can't roll per-lap across an offline block, so it lands as its
-      // expected value: chance × 10% off each lap. Same long-run rate as the live tick.
-      const scEV=skill==='agility'?(1-Math.min(1,treeRank('agility','ag_shortcut')*0.04)*0.25):1;
-      const effectiveMs=ms*scEV/om.rate; // slower while offline
-      const cycles=Math.floor(away/effectiveMs);
-      if(cycles>0){
-        const before=levelFromXp(state.xp[skill]);
-        const xpBefore=state.xp[skill];
-        // Snapshot inventory so we can diff exactly what was produced
-        // (captures primary output AND every bonus/rare drop from passives).
-        const itemsBefore={};
-        for(const k in state.items) itemsBefore[k]=state.items[k];
-        const done=completeAction(act,skill,cycles);
-        const after=levelFromXp(state.xp[skill]);
-        const xpEarned=state.xp[skill]-xpBefore;
-        if(done>0){
-          // Build per-item gained list from the diff
-          const gained=[];
-          for(const k in state.items){
-            const delta=(state.items[k]||0)-(itemsBefore[k]||0);
-            if(delta>0){
-              const it=ITEMS[k]||{};
-              gained.push({id:k, name:it.name||k, icon:it.icon||'📦', qty:delta, rare:!!it.rare});
-            }
-          }
-          // Sort: rare first, then by quantity descending
-          gained.sort((a,b)=> (b.rare-a.rare) || (b.qty-a.qty));
-          summary.push({
-            icon:SKILLS[skill].icon,
-            iconId:skill,
-            label:SKILLS[skill].name,
-            sub:act.name,
-            xp:xpEarned,
-            items:gained,
-            lvlUp:after>before?after:0
-          });
-        }
-        if(act.inp&&done<cycles) { /* ran out of ingredients — offline config stays */ }
-      }
+    if(!act) continue;
+    /* Night Forager is gathering-only. A slot holding something else is skipped
+       rather than quietly paid at the wrong rate. */
+    if(_stance.gather && !(typeof IS_GATHER!=='undefined' && IS_GATHER[skill])) continue;
+    const ms=actMs(act,skill);
+    // Shortcutter can't roll per-lap across an offline block, so it lands as its
+    // expected value: chance × 10% off each lap. Same long-run rate as the live tick.
+    const scEV=skill==='agility'?(1-Math.min(1,treeRank('agility','ag_shortcut')*0.04)*0.25):1;
+    const effectiveMs=ms*scEV/Math.max(0.01,_slotRate); // slower while offline
+    const cycles=Math.floor(_stanceAway/effectiveMs);
+    if(cycles<=0) continue;
+    const before=levelFromXp(state.xp[skill]);
+    const xpBefore=state.xp[skill];
+    // Snapshot inventory so we can diff exactly what was produced
+    // (captures primary output AND every bonus/rare drop from passives).
+    const itemsBefore={};
+    for(const k in state.items) itemsBefore[k]=state.items[k];
+    const done=completeAction(act,skill,cycles);
+    const after=levelFromXp(state.xp[skill]);
+    let xpEarned=state.xp[skill]-xpBefore;
+    if(done<=0) continue;
+    /* Night Forager takes the xp back off. Done after the fact rather than by
+       skipping addSkillXp inside completeAction, which would mean threading a
+       flag through the single busiest function in the game for one stance. */
+    if(!_stance.xp && xpEarned>0){
+      state.xp[skill]=xpBefore;
+      xpEarned=0;
     }
+    /* The yield multiplier — Night Forager's 2.5x and Scavenger's ranks. This is
+       where of_loot finally lands: it was computed in offlineMods and then used
+       only to colour a preview string, so six points bought a bigger label and
+       nothing in the satchel. Applied to the DIFF, so bonus and rare drops from
+       passives scale with everything else. */
+    const _ym=offlineYieldMult(skill);
+    const gained=[];
+    for(const k in state.items){
+      let delta=(state.items[k]||0)-(itemsBefore[k]||0);
+      if(delta<=0) continue;
+      if(_ym>1){
+        const extra=Math.round(delta*(_ym-1));
+        if(extra>0){ state.items[k]=(state.items[k]||0)+extra; delta+=extra; }
+      }
+      const it=ITEMS[k]||{};
+      gained.push({id:k, name:it.name||k, icon:it.icon||'📦', qty:delta, rare:!!it.rare});
+    }
+    // Sort: rare first, then by quantity descending
+    gained.sort((a,b)=> (b.rare-a.rare) || (b.qty-a.qty));
+    summary.push({
+      icon:SKILLS[skill].icon,
+      iconId:skill,
+      label:SKILLS[skill].name,
+      sub:act.name+(_slots.length>1?' · thread '+(_si+1)+' of '+_slots.length:'')
+         +(_stance.id!=='steady'?' · '+_stance.name:''),
+      xp:xpEarned,
+      items:gained,
+      lvlUp:after>before?after:0
+    });
+    if(act.inp&&done<cycles) { /* ran out of ingredients — the slot stays set */ }
   }
 
-  // 3. Dual skill bonus (master3 node — random second skill)
-  if(om.dualSkill&&state.action){
-    const activeSkill=state.action.skill;
-    const others=Object.keys(SKILLS).filter(k=>k!==activeSkill);
-    const bonus=others[Math.floor(Math.random()*others.length)];
-    const bonusActs=SKILLS[bonus].acts;
-    const lvl=levelFromXp(state.xp[bonus]);
-    const bestAct=[...bonusActs].reverse().find(a=>a.lvl<=lvl)||bonusActs[0];
-    const ms2=actMs(bestAct,bonus);
-    const cycles2=Math.floor(away/(ms2/om.rate));
-    if(cycles2>0){
-      const before2=levelFromXp(state.xp[bonus]);
-      /* The XP this awards was never recorded, so the row reached the panel with
-         an empty value column next to four rows that had one — it read as missing
-         data rather than as a bonus. Same before/after diff the main action uses;
-         it also means totalXp finally counts these hours. */
-      const xpBefore2=state.xp[bonus];
-      completeAction(bestAct,bonus,cycles2);
-      const after2=levelFromXp(state.xp[bonus]);
-      summary.push({icon:SKILLS[bonus].icon, iconId:bonus, label:SKILLS[bonus].name,
-                    sub:'Dual-skill bonus — '+bestAct.name,
-                    xp:state.xp[bonus]-xpBefore2, lvlUp:after2>before2?after2:0});
-    }
-  }
+  /* 3. was the dual-skill bonus: a RANDOM second skill trained alongside the
+     first, which is the same idea as Divided except you did not get to choose and
+     it only fired when state.action happened to be set. Phantom Worker now raises
+     the Divided budget instead, so the second skill is one you picked. */
 
   /* 4. All-skill XP trickle (of_multi node).
 
@@ -22623,7 +22939,11 @@ function grantOffline(){
   // Totals + meta for the reworked welcome-back summary (1.0.11)
   const meta={
     awayRaw, capped, capMs,
-    efficiency:om.rate,
+    /* The rate a slot ACTUALLY ran at, not the bare skill rate — under Divided the
+       two differ by a lot, and the chip claiming 54% while each thread crawled at
+       32% would be a lie the panel had no way to walk back. */
+    efficiency:_fought?om.rate:offlineSlotRate(),
+    stance:_stance.id, stanceName:_stance.name, slots:_slots.length,
     coinsGained:(state.coins||0)-coinsBefore,
     totalXp:summary.reduce((s,l)=>s+(l.xp||0),0),
     totalItems:summary.reduce((s,l)=>s+((l.items||[]).reduce((a,it)=>a+(it.qty||0),0)),0),
@@ -22660,7 +22980,13 @@ function showOfflineSummary(awayMs, lines, meta){
     +fmtDur(meta.capMs||awayMs)+'. Hours past it earn nothing — raise the cap in the Offline skill tree.">'
     +'only '+fmtDur(meta.capMs||awayMs)+' counted</span>';
   head+='<span class="off-tag rate" data-tip="Offline pays a fraction of what the same time pays while you are playing. Levels in the Offline skill raise it.">'
-    +eff+'% of live rate</span></div>';
+    +eff+'% of live rate</span>';
+  /* Which stance ran. Only shown when it was not Steady — naming the default on
+     every single return would be noise. */
+  if(meta.stanceName && meta.stance && meta.stance!=='steady')
+    head+='<span class="off-tag" data-tip="The stance you left set in the Offline panel. Change it any time; it costs nothing.">'
+      +meta.stanceName+(meta.slots>1?' · '+meta.slots+' threads':'')+'</span>';
+  head+='</div>';
   $('offlineAwayTime').innerHTML=head;
 
   /* ── Totals ── one colour per kind rather than all four green, so the row reads
@@ -22947,8 +23273,14 @@ function renderSkillList(){
     <i style="width:${ofPct}%"></i>
   </div>
   <div class="xph-idle" style="font-size:calc(12px*var(--tscale));color:${ofCfg?'var(--ember)':'var(--muted)'}">${
+    /* Names the stance once it stops being Steady, and counts the threads under
+       Divided — the row used to say one action's name whatever else was running,
+       so a two- or three-skill night looked identical to a one-skill one. */
     ofCfg&&ofAct&&ofSk
-      ? ofSk.icon+' '+ofAct.name
+      ? (()=>{ const st=offlineStance(), n=offlineSlots().filter(Boolean).length;
+               return escapeHTML(ofAct.name)
+                 +(st.id==='steady'?'':' · '+escapeHTML(st.name))
+                 +(n>1?' · '+n+' threads':''); })()
       : 'Click to configure'
   }</div>`;
   offBtn.addEventListener('click', ()=>openOfflineOverlay());
@@ -32907,218 +33239,318 @@ function renderAchievements(){
   });
 }
 
-/* ════ [JS-24d] offline overlay ══════════════════════════════════════════════════ */
+/* ════ [JS-24d] the Offline panel ════════════════════════════════════════════════
+   Rebuilt 0.9.123.6, mechanics and all. What was here asked one question — which
+   action — and then showed twelve nodes that all answered a different one:
+   "how much percent?". Ten of the twelve were a bigger slice of efficiency, cap or
+   offline-xp, and 49 points bought 55 of capacity, so there was never a choice in
+   it. Two of the nodes did not work at all: of_loot was computed and then used
+   only to colour a preview string, and of_multi was paying a share of ACCUMULATED
+   xp per hour, which made it the strongest thing in the game (see 0.9.123.5).
+
+   It also used two native <select> elements, and Wine/Proton does not draw those,
+   so on a Steam Deck none of this was reachable. Everything below is buttons.
+
+   Two tabs: TONIGHT (the stance, the threads, and what you will come back to) and
+   THE TREE. Session-local, because it is a view preference and not character data. */
+let _ofpTab='tonight';
+let _ofpPick=[null,null,null];   // which skill each thread's chip row is showing
+/* Which thread is expanded. Three open at once ran the panel to 1900px on a 1062px
+   screen, so the preview underneath — the whole reason for the tab — was below the
+   fold and nobody would ever have scrolled to it. One at a time; -1 is all shut. */
+let _ofpOpen=0;
+
+function _ofpEl(tag,cls,html){
+  const e=document.createElement(tag);
+  if(cls) e.className=cls;
+  if(html!=null) e.innerHTML=html;
+  return e;
+}
+/* Approximate return for one slot over `ms`. Deliberately approximate and labelled
+   as such: completeAction also rolls bonus yields, mastery procs and rare drops,
+   and reproducing that here would be a second implementation to keep in step. It
+   is the same act.xp x cycles basis the old rate box used, plus the two things
+   that box never told you — what you will actually be holding, and whether the
+   materials run out before the night does. */
+function offlinePreviewSlot(slot, ms, rate){
+  if(!slot) return null;
+  const act=getAct(slot.skill,slot.actId); if(!act) return null;
+  const st=offlineStance();
+  const m=mods(slot.skill);
+  const scEV=slot.skill==='agility'?(1-Math.min(1,treeRank('agility','ag_shortcut')*0.04)*0.25):1;
+  const effMs=actMs(act,slot.skill)*scEV/Math.max(0.01,rate);
+  let cycles=Math.floor(ms/effMs);
+  /* Inputs. canAfford() is the game's own answer, coal savings and Living Forge
+     included, so the "runs dry" line cannot drift from what completeAction does. */
+  let ranDry=0;
+  if(act.inp){
+    const afford=canAfford(act,cycles,m);
+    if(afford<cycles){ ranDry=Math.round(afford*effMs); cycles=afford; }
+  }
+  const ym=offlineYieldMult(slot.skill);
+  const outs=[];
+  for(const id in (act.out||{})){
+    const q=Math.round(act.out[id]*cycles*ym);
+    if(q>0) outs.push({id, qty:q});
+  }
+  return {skill:slot.skill, act, cycles, ranDry,
+          xp: st.xp ? Math.round(act.xp*cycles*m.xpMult) : 0,
+          outs};
+}
+
 function openOfflineOverlay(){
-  // Toggle off if already open
   const existing=document.getElementById('offlineConfigOverlay');
   if(existing){ existing.remove(); return; }
 
-  const overlay=document.createElement('div');
-  overlay.id='offlineConfigOverlay';
-  overlay.className='offline-overlay';
-  overlay.addEventListener('click',e=>{ if(e.target===overlay) overlay.remove(); });
-
-  const panel=document.createElement('div');
-  panel.className='offline-panel';
+  const back=_ofpEl('div','ofp-back');
+  back.id='offlineConfigOverlay';
+  back.addEventListener('click',e=>{ if(e.target===back) back.remove(); });
+  const panel=_ofpEl('div','ofp');
   panel.addEventListener('click',e=>e.stopPropagation());
 
-  // ── Header ──
+  const redraw=()=>{ back.remove(); openOfflineOverlay(); };
+
   const om=offlineMods();
   const lvl=offlineLevelFromXp(state.offlineXp);
   const xp=state.offlineXp;
   const lo=OFFLINE_XP_CUM[lvl]||0;
   const hi=lvl<OFFLINE_MAX_LEVEL?OFFLINE_XP_CUM[lvl+1]:xp;
-  const barPct=lvl>=OFFLINE_MAX_LEVEL?100:Math.floor(100*(xp-lo)/(hi-lo));
+  const barPct=lvl>=OFFLINE_MAX_LEVEL?100:Math.floor(100*(xp-lo)/Math.max(1,hi-lo));
   const avail=offlineAvailPoints();
+  const stance=offlineStance();
 
-  const hdr=document.createElement('div');
-  hdr.className='offline-panel-hdr';
-  hdr.innerHTML=`
-    <div style="flex:1">
-      <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:5px">
-        <span style="font-size:calc(18px*var(--tscale));color:var(--trim);font-variant:small-caps;letter-spacing:1px">Offline — Level ${lvl} / ${OFFLINE_MAX_LEVEL}</span>
-        <span style="font-size:calc(13px*var(--tscale));color:var(--muted);font-family:var(--num)">${xp.toLocaleString()} xp</span>
-      </div>
-      <div style="height:5px;background:#0d0905;border-radius:3px;overflow:hidden">
-        <div style="height:100%;width:${barPct}%;background:linear-gradient(90deg,var(--blue),#88c8f0);border-radius:3px"></div>
-      </div>
-    </div>
-    <div style="text-align:right;font-size:calc(13px*var(--tscale));color:var(--muted);font-family:var(--num);line-height:1.8">
-      <div>${Math.round(om.rate*100)}% efficiency</div>
-      <div>${om.capHours}h cap</div>
-    </div>
-    <button id="offlineOverlayClose" style="background:transparent;border:none;color:var(--muted);font-size:calc(22px*var(--tscale));cursor:var(--cur-pointer);padding:0 4px;line-height:1">✕</button>`;
-  panel.appendChild(hdr);
+  // ── header ──
+  const hd=_ofpEl('div','ofp-hd');
+  hd.innerHTML='<span class="ofp-ic">'+iconHTML('ui_moon')+'</span>'
+    +'<span class="ofp-ttl"><b>Offline</b>'
+    +'<i>Level '+lvl+' of '+OFFLINE_MAX_LEVEL+' · '+xp.toLocaleString()+' xp'
+      +(lvl<OFFLINE_MAX_LEVEL?' · '+(hi-xp).toLocaleString()+' to next':'')+'</i>'
+    +'<span class="ofp-bar"><i style="width:'+barPct+'%"></i></span></span>'
+    +'<span class="ofp-pts'+(avail?'':' none')+'"><b>'+avail+'</b><span>'+(avail===1?'point':'points')+'</span></span>'
+    +'<button class="ofp-x" id="ofpClose" aria-label="Close">✕</button>';
+  panel.appendChild(hd);
 
-  // ── Config section ──
-  const cfgSec=document.createElement('div');
-  cfgSec.className='offline-section';
+  // ── tabs ──
+  const seg=_ofpEl('div','ofp-seg');
+  [['tonight','Tonight'],['tree','The Tree']].forEach(([id,label])=>{
+    const b=_ofpEl('button',_ofpTab===id?'on':'',label
+      +(id==='tree'&&avail?' · '+avail:''));
+    b.addEventListener('click',()=>{ _ofpTab=id; redraw(); });
+    seg.appendChild(b);
+  });
+  panel.appendChild(seg);
 
-  const cfgTitle=document.createElement('div');
-  cfgTitle.className='offline-section-title';
-  cfgTitle.textContent='Configure — What to do while away';
-  cfgSec.appendChild(cfgTitle);
+  const body=_ofpEl('div','ofp-body');
+  panel.appendChild(body);
 
-  const cfg=state.offlineConfig;
-  if(cfg){
-    const curAct=getAct(cfg.skill,cfg.actId);
-    const curSk=SKILLS[cfg.skill];
-    if(curAct&&curSk){
-      const curBadge=document.createElement('div');
-      curBadge.style.cssText='font-size:calc(14px*var(--tscale));color:var(--green);margin-bottom:10px;padding:6px 10px;background:#1a2a1a;border:1px solid #7da33f44;border-radius:5px;display:flex;align-items:center;gap:8px';
-      curBadge.innerHTML=`<span style="color:var(--green)">✓ Active:</span> ${curSk.icon} ${curSk.name} — ${curAct.name}`;
-      cfgSec.appendChild(curBadge);
-    }
-  }
+  if(_ofpTab==='tonight') buildTonight(body,redraw);
+  else buildTree(body,redraw);
 
-  // Skill + action selectors
-  const pickRow=document.createElement('div');
-  pickRow.style.cssText='display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px';
-  const selStyle='flex:1;min-width:140px;background:#0d0905;color:var(--text);border:1px solid var(--trim-d);border-radius:4px;padding:5px 8px;font-size:calc(14px*var(--tscale));font-family:inherit;cursor:var(--cur-pointer)';
+  back.appendChild(panel);
+  document.body.appendChild(back);
+  const cl=document.getElementById('ofpClose');
+  if(cl) cl.addEventListener('click',()=>back.remove());
+}
 
-  const skSel=document.createElement('select'); skSel.style.cssText=selStyle;
-  for(const key of Object.keys(SKILLS).sort((a,b)=>SKILLS[a].name.localeCompare(SKILLS[b].name))){
-    const opt=document.createElement('option');
-    opt.value=key; opt.textContent=SKILLS[key].icon+' '+SKILLS[key].name;
-    if(cfg&&cfg.skill===key) opt.selected=true;
-    skSel.appendChild(opt);
-  }
-  pickRow.appendChild(skSel);
+/* ── TONIGHT ─────────────────────────────────────────────────────────────────── */
+function buildTonight(body, redraw){
+  const om=offlineMods();
+  const stance=offlineStance();
+  const slotCount=offlineSlotCount();
+  const slots=offlineSlots();
+  const rate=offlineSlotRate();
+  const capMs=offlineCapMs();
 
-  const actSel=document.createElement('select'); actSel.style.cssText=selStyle+'flex:2;min-width:180px';
-  pickRow.appendChild(actSel);
-  cfgSec.appendChild(pickRow);
-
-  const rateBox=document.createElement('div'); rateBox.className='offline-rate-box';
-  cfgSec.appendChild(rateBox);
-
-  const setBtn=document.createElement('button');
-  setBtn.className='m-btn primary';
-  setBtn.style.cssText='font-size:calc(14px*var(--tscale));padding:6px 14px;margin-top:8px;width:100%';
-  setBtn.textContent='Set as Offline Action';
-  cfgSec.appendChild(setBtn);
-
-  if(cfg){
-    const clearBtn=document.createElement('button');
-    clearBtn.className='m-btn';
-    clearBtn.style.cssText='font-size:calc(13px*var(--tscale));padding:4px 10px;margin-top:6px;color:var(--red);border-color:var(--red);width:100%';
-    clearBtn.textContent='Clear offline config (use active action instead)';
-    clearBtn.addEventListener('click',()=>{
-      state.offlineConfig=null; saveGame(); overlay.remove(); renderSkillList();
-      toast('Offline config cleared — will follow your active action.');
+  // ── the stances ──
+  body.appendChild(_ofpEl('div','ofp-lab first','How the night is spent'));
+  const grid=_ofpEl('div','ofp-stances');
+  for(const st of OFFLINE_STANCES){
+    const unlocked=offlineStanceUnlocked(st.id);
+    const on=st.id===stance.id;
+    /* The rate line is the whole comparison, so it is stated the same way for all
+       four: what one slot gets, and how many slots there are. */
+    const n=st.id==='divided'?(2+(offlineTreeRank('of_slot3')>0?1:0)):st.slots;
+    const each=st.id==='divided'?(om.dividedTotal/n):(st.mult||1);
+    /* Per-slot share AND the total. "20% each x3" beside Steady's "50%" reads as a
+       downgrade until you add it up, which is exactly the sum a stance card exists
+       to save you doing. */
+    const rt=(st.id==='scavenge'?'no xp · ':'')
+      +Math.round(om.rate*each*100)+'%'+(n>1?' each ×'+n+' · '+Math.round(om.rate*each*n*100)+'% total':'')
+      +(st.capMult!==1?' · half the cap':'');
+    const card=_ofpEl('button','ofp-st'+(on?' on':'')+(unlocked?'':' locked'),
+      '<b>'+st.name+'</b><span class="rt">'+rt+'</span>'
+      +'<span class="bl">'+st.blurb+'</span>'
+      +(unlocked?'':'<span class="lk">Locked — '+_ofpNodeName(st.node)+' in the tree</span>'));
+    if(unlocked) card.addEventListener('click',()=>{
+      state.offlineStance=st.id; saveGame(); renderSkillList(); redraw();
     });
-    cfgSec.appendChild(clearBtn);
+    grid.appendChild(card);
   }
+  body.appendChild(grid);
+  body.appendChild(_ofpEl('div','ofp-trade',stance.trade));
 
-  function refreshActions(){
-    const skKey=skSel.value; const sk=SKILLS[skKey]; if(!sk) return;
-    const lvlSk=levelFromXp(state.xp[skKey]);
-    actSel.innerHTML='';
-    const avActs=[...sk.acts].filter(a=>a.lvl<=lvlSk).reverse();
-    if(!avActs.length){
-      const opt=document.createElement('option'); opt.textContent='No actions unlocked yet'; opt.disabled=true; actSel.appendChild(opt);
-    }
-    for(const act of avActs){
-      const opt=document.createElement('option'); opt.value=act.id;
-      opt.textContent=act.name+' (Lv '+act.lvl+')';
-      if(cfg&&cfg.skill===skKey&&cfg.actId===act.id) opt.selected=true;
-      actSel.appendChild(opt);
-    }
-    refreshRates();
+  // ── the threads ──
+  body.appendChild(_ofpEl('div','ofp-lab',
+    slotCount>1?('What to work · '+slotCount+' threads'):'What to work'));
+  for(let i=0;i<slotCount;i++) body.appendChild(_ofpThread(i,slots[i],stance,redraw));
+
+  // ── what you will come back to ──
+  body.appendChild(_ofpEl('div','ofp-lab','What you would come back to'));
+  const prev=_ofpEl('div','ofp-prev');
+  let any=false, dry=null;
+  for(let i=0;i<slotCount;i++){
+    const pv=offlinePreviewSlot(slots[i], capMs, rate);
+    if(!pv||pv.cycles<=0) continue;
+    any=true;
+    if(pv.ranDry) dry={when:pv.ranDry, name:pv.act.name};
+    const items=pv.outs.map(o=>'<span class="ofp-pit">'+iconHTML(o.id)
+      +'<span>'+((ITEMS[o.id]&&ITEMS[o.id].name)||o.id)+'</span><b>×'
+      +o.qty.toLocaleString()+'</b></span>').join('');
+    prev.appendChild(_ofpEl('div','ofp-prow',
+      '<span class="pic">'+iconHTML(pv.skill)+'</span>'
+      +'<span class="pnm"><b>'+SKILLS[pv.skill].name+'</b><i>'+pv.act.name
+        +' · '+pv.cycles.toLocaleString()+' actions</i></span>'
+      +'<span class="pxp">'+(pv.xp?'+'+pv.xp.toLocaleString()+' xp':'no xp')+'</span>'
+      +(items?'<span class="ofp-pitems">'+items+'</span>':'')));
   }
+  if(!any) prev.appendChild(_ofpEl('div','ofp-none',
+    'Nothing set. Pick a skill and an action above and this fills in.'));
+  body.appendChild(prev);
 
-  function refreshRates(){
-    const skKey=skSel.value; const actId=actSel.value;
-    if(!skKey||!actId){ rateBox.innerHTML=''; return; }
-    const act=getAct(skKey,actId); if(!act){ rateBox.innerHTML=''; return; }
-    const m=mods(skKey);
-    const normalMs=actMs(act,skKey);
-    const actsPerHour=3600000/normalMs;
-    const normalXph=Math.round(act.xp*actsPerHour*m.xpMult);
-    const offlineXph=Math.round(normalXph*om.rate);
-    const pctStr=Math.round(om.rate*100);
-    const outLines=Object.entries(act.out).map(([id,q])=>{
-      const itName=(ITEMS[id]&&ITEMS[id].name)||id;
-      const perHr=Math.round(q*actsPerHour*om.rate*(om.lootBonus?1+om.lootBonus:1));
-      return `~${perHr.toLocaleString()}× ${itName}/hr`;
-    }).join(' · ');
-    rateBox.innerHTML=`<span style="color:var(--ember)">${fmtK(offlineXph)} xp/hr offline</span>`
-      +` <span style="color:var(--muted);font-size:calc(13px*var(--tscale))">(${pctStr}% of ${fmtK(normalXph)} — always slower than active play)</span>`
-      +(outLines?`<br><span style="color:var(--muted);font-size:calc(13px*var(--tscale))">${outLines}</span>`:'');
+  const capTxt=_ofpFmtH(capMs);
+  body.appendChild(_ofpEl('div','ofp-warn',
+    'Estimated over a full <b>'+capTxt+'</b> — your cap under this stance. '
+    +'Approximate: bonus yields, mastery and rare drops are rolled when you return, '
+    +'so the real haul is usually a little larger.'
+    +(dry?' <b>'+dry.name+'</b> runs out of materials after about <b>'+_ofpFmtH(dry.when)+'</b>.':'')));
+}
+
+function _ofpFmtH(ms){
+  const h=ms/3600000;
+  if(h>=24){ const d=Math.floor(h/24), r=Math.round(h%24); return d+'d'+(r?' '+r+'h':''); }
+  if(h>=1) return Math.round(h)+'h';
+  return Math.max(1,Math.round(ms/60000))+'m';
+}
+function _ofpNodeName(id){
+  const n=OFFLINE_TREE.find(x=>x.id===id);
+  return n?n.name:'a node';
+}
+
+/* One thread: which skill (icon chips), then which of that skill's actions.
+   Farming has no acts at all, so its chip is dimmed rather than offered and then
+   found empty. Night Forager dims everything that is not a gathering skill. */
+function _ofpThread(i, cfg, stance, redraw){
+  const wrap=_ofpEl('div','ofp-thread');
+  const cur=cfg?getAct(cfg.skill,cfg.actId):null;
+  const open=_ofpOpen===i;
+  const hd=_ofpEl('div','ofp-thd');
+  hd.innerHTML='<b>'+(offlineSlotCount()>1?'Thread '+(i+1):'Working')+'</b>'
+    +'<span class="now'+(cur?'':' empty')+'">'
+      +(cur?escapeHTML(SKILLS[cfg.skill].name+' — '+cur.name):'nothing set')+'</span>';
+  /* Open one at a time. Three expanded lists ran the panel past 1900px and pushed
+     the return preview off the bottom of the screen entirely. */
+  const tog=_ofpEl('button','ofp-clear',open?'Done':(cur?'Change':'Choose'));
+  tog.addEventListener('click',()=>{ _ofpOpen=open?-1:i; redraw(); });
+  hd.appendChild(tog);
+  if(cur){
+    const cl=_ofpEl('button','ofp-clear','Clear');
+    cl.addEventListener('click',()=>{ offlineSetSlot(i,null); saveGame(); renderSkillList(); redraw(); });
+    hd.appendChild(cl);
   }
+  wrap.appendChild(hd);
+  if(!open) return wrap;
 
-  skSel.addEventListener('change',refreshActions);
-  actSel.addEventListener('change',refreshRates);
-  setBtn.addEventListener('click',()=>{
-    const skKey=skSel.value; const actId=actSel.value;
-    const act=getAct(skKey,actId);
-    if(!skKey||!actId||!act){ toast('Select a skill and action first.'); return; }
-    state.offlineConfig={skill:skKey,actId};
-    saveGame(); overlay.remove(); renderSkillList();
-    toast(`🌙 Offline set: ${SKILLS[skKey].icon} ${SKILLS[skKey].name} — ${act.name}`);
-  });
-  refreshActions();
-  panel.appendChild(cfgSec);
+  if(_ofpPick[i]==null) _ofpPick[i]=cfg?cfg.skill:null;
+  const chips=_ofpEl('div','ofp-skills');
+  for(const key of Object.keys(SKILLS)){
+    const sk=SKILLS[key];
+    const hasActs=sk.acts&&sk.acts.length>0;
+    const gatherOk=!stance.gather||(typeof IS_GATHER!=='undefined'&&IS_GATHER[key]);
+    const usable=hasActs&&gatherOk;
+    const b=_ofpEl('button','ofp-sk'+(_ofpPick[i]===key?' on':'')+(usable?'':' dim'),iconHTML(key));
+    b.setAttribute('data-tip', sk.name
+      +(!hasActs?'\nNo offline actions.':(!gatherOk?'\nNight Forager works gathering skills only.':'')));
+    if(usable) b.addEventListener('click',()=>{ _ofpPick[i]=key; redraw(); });
+    chips.appendChild(b);
+  }
+  wrap.appendChild(chips);
 
-  // ── Skill Tree section ──
-  const treeSec=document.createElement('div');
-  treeSec.className='offline-section';
+  const pick=_ofpPick[i];
+  if(!pick){ wrap.appendChild(_ofpEl('div','ofp-none','Pick a skill.')); return wrap; }
+  const sk=SKILLS[pick];
+  const lvlSk=levelFromXp(state.xp[pick]||0);
+  const acts=(sk.acts||[]).filter(a=>a.lvl<=lvlSk).reverse();
+  if(!acts.length){ wrap.appendChild(_ofpEl('div','ofp-none','Nothing unlocked in '+sk.name+' yet.')); return wrap; }
+  const rate=offlineSlotRate();
+  const m=mods(pick);
+  const list=_ofpEl('div','ofp-acts');
+  for(const act of acts){
+    const on=cfg&&cfg.skill===pick&&cfg.actId===act.id;
+    /* The offline xp/hr for THIS action at THIS stance's rate — the number you are
+       actually choosing between, which the old dropdown could only show one of at
+       a time and only after you had already picked it. */
+    const xph=Math.round(act.xp*(3600000/actMs(act,pick))*m.xpMult*rate);
+    const b=_ofpEl('button','ofp-act'+(on?' on':''),
+      '<span class="nm">'+act.name+' <span class="lv">Lv '+act.lvl+'</span></span>'
+      +'<span class="xph">'+(stance.xp?fmtK(xph)+' xp/hr':'materials only')+'</span>');
+    b.addEventListener('click',()=>{
+      offlineSetSlot(i,{skill:pick,actId:act.id});
+      saveGame(); renderSkillList(); redraw();
+    });
+    list.appendChild(b);
+  }
+  wrap.appendChild(list);
+  return wrap;
+}
 
-  const treeTitle=document.createElement('div');
-  treeTitle.className='offline-section-title';
-  treeTitle.textContent=`Skill Tree — ${avail} point${avail===1?'':'s'} available (1 per level)`;
-  treeSec.appendChild(treeTitle);
-
-  const ptsLine=document.createElement('div');
-  ptsLine.className='pts-line'; ptsLine.style.marginBottom='10px';
-  ptsLine.innerHTML=`<b>${avail}</b> point${avail===1?'':'s'} to spend · <b>${offlineSpentPoints()}</b> spent`;
-  treeSec.appendChild(ptsLine);
-
-  const respecBtn=document.createElement('button');
-  respecBtn.className='respec-btn';
-  respecBtn.textContent='Reset all tree points';
-  respecBtn.addEventListener('click',()=>{
-    state.tree._offline={}; saveGame(); overlay.remove(); openOfflineOverlay();
-  });
-  treeSec.appendChild(respecBtn);
-
+/* ── THE TREE ────────────────────────────────────────────────────────────────── */
+function buildTree(body, redraw){
+  const avail=offlineAvailPoints();
   const spent=offlineSpentPoints();
-  const treeGrid=document.createElement('div'); treeGrid.className='offline-tree-grid';
+  const hd=_ofpEl('div','ofp-treehd');
+  hd.innerHTML='<span class="sp"><b>'+avail+'</b> to spend · <b>'+spent+'</b> spent · '
+    +'one point a level, '+(OFFLINE_MAX_LEVEL-1)+' in all</span>';
+  const rs=_ofpEl('button','ofp-respec','Refund every point');
+  rs.addEventListener('click',()=>{ state.tree._offline={}; saveGame(); renderSkillList(); redraw(); });
+  hd.appendChild(rs);
+  body.appendChild(hd);
+
+  /* Grouped by the points-spent gate, because that is the order you unlock them in
+     and the old flat 2-column grid gave no hint that half of it was unreachable. */
+  let tier=null, grid=null;
   for(const node of OFFLINE_TREE){
+    if(node.tier!==tier){
+      tier=node.tier;
+      body.appendChild(_ofpEl('div','ofp-lab',tier+(node.req?' · '+node.req+' points spent':'')));
+      grid=_ofpEl('div','ofp-nodes');
+      body.appendChild(grid);
+    }
     const rank=offlineTreeRank(node.id);
     const maxed=rank>=node.max;
-    const reqLocked=node.req&&spent<node.req;
-    const row=document.createElement('div');
-    row.className='node'+(maxed?' maxed':'')+(reqLocked?' reqlock':'');
-    if(node.gm) row.style.cssText=(row.style.cssText||'')+'border-color:#c79b4e55;';
-    if(node.tip) row.setAttribute('data-tip', node.tip);
-    row.innerHTML=`<div class="info">
-      <div class="nname">${node.name}${node.gm?'<span style="font-size:calc(11px*var(--tscale));color:var(--trim);margin-left:6px;letter-spacing:1px;opacity:0.8">GRANDMASTER</span>':''}</div>
-      ${reqLocked?`<div class="nreq">Requires ${node.req} points spent first</div>`:''}
-      <div class="ndesc">${maxed?node.desc(rank)+' ✓':rank>0?node.desc(rank)+' · next: '+node.next(rank+1):'Next: '+node.next(rank+1)}</div>
-    </div>
-    <span class="rank">${rank}/${node.max}</span>`;
-    const buy=document.createElement('button');
-    buy.className='nbuy'; buy.textContent='+';
-    buy.disabled=maxed||reqLocked||avail<=0;
+    const locked=node.req&&spent<node.req;
+    const row=_ofpEl('div','ofp-node'+(maxed?' maxed':'')+(locked?' lock':'')+(node.gm?' gm':''));
+    if(node.tip) row.setAttribute('data-tip',node.tip);
+    row.innerHTML='<span class="ni"><span class="nn">'+node.name
+      /* No per-node GRANDMASTER tag: the tier heading above already says it and
+         the card carries the gold border, and inline it pushed 'Apex Sleeper' onto
+         two lines. */
+      +(node.stance?'<span class="ofp-stancetag">STANCE</span>':'')+'</span>'
+      +(locked?'<span class="nreq">Needs '+node.req+' points spent first</span>':'')
+      +'<span class="nd">'+(maxed?node.desc(rank)
+        :(rank>0?node.desc(rank)+' · next: '+node.next(rank+1)
+                :'Next: '+node.next(rank+1)))+'</span></span>'
+      +'<span class="nr">'+rank+'/'+node.max+'</span>';
+    const buy=_ofpEl('button','ofp-buy',maxed?'✓':'+');
+    buy.disabled=maxed||!!locked||avail<=0;
     buy.addEventListener('click',()=>{
-      if(maxed||reqLocked||avail<=0) return;
+      if(maxed||locked||avail<=0) return;
       if(!state.tree._offline) state.tree._offline={};
       state.tree._offline[node.id]=(state.tree._offline[node.id]||0)+1;
-      saveGame(); overlay.remove(); openOfflineOverlay();
+      saveGame(); renderSkillList(); redraw();
     });
     row.appendChild(buy);
-    treeGrid.appendChild(row);
+    grid.appendChild(row);
   }
-  treeSec.appendChild(treeGrid);
-  panel.appendChild(treeSec);
-
-  overlay.appendChild(panel);
-  document.body.appendChild(overlay);
-
-  // Wire close after DOM append
-  const closeBtn=document.getElementById('offlineOverlayClose');
-  if(closeBtn) closeBtn.addEventListener('click',()=>overlay.remove());
 }
 
 /* ════ [JS-24f] enchanting view (rebuilt 0.9.122.2) ════════════════════════════════

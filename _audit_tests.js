@@ -2252,6 +2252,169 @@ setTimeout(() => {
     ev('demoXpCap=' + _realCapFn + ';');
   }
 
+  section('Offline stances (0.9.123.6)');
+  {
+    /* The rework turned a tree of twelve percentages into a choice made per night.
+       None of what follows throws when it breaks — a stance that silently resolves
+       as Steady, a yield multiplier that never reaches the satchel, or a <select>
+       nobody on Linux can open all read as "the panel works" from here. */
+
+    /* Same demo-cap lift as the Restless Mind block: no user agent means IS_DEMO,
+       which clamps every skill to level 10 and would make each award read 0. */
+    const _capFn = ev('String(demoXpCap)');
+    ev('demoXpCap=function(){ return XP_CAP; };');
+
+    /* One night, resolved for real, with the stance and slots set. Returns what
+       each skill gained so the assertions can compare stances against each other
+       rather than against a magic number. */
+    const night = (stance, tree, slots, hours) => JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      for(var k in SKILLS) state.xp[k]=XP_CUM[60];
+      state.items={}; state.satchelUpgrades=SATCHEL_MAX_EXPANSIONS;
+      state.tree._offline=${JSON.stringify(tree)};
+      state.offlineStance=${JSON.stringify(stance)};
+      state.action=null; state.combatSession=null;
+      var sl=${JSON.stringify(slots)};
+      state.offlineConfig=sl[0]||null;
+      state.offlineSlots=sl.slice(1);
+      var xp0={}, it0={};
+      for(var k in SKILLS) xp0[k]=state.xp[k];
+      for(var i in state.items) it0[i]=state.items[i];
+      state.lastSeen=Date.now()-${hours}*3600000;
+      grantOffline();
+      var xp={}, items={};
+      for(var k in SKILLS){ var d=state.xp[k]-xp0[k]; if(d>0) xp[k]=d; }
+      for(var i in state.items){ var d2=state.items[i]-(it0[i]||0); if(d2>0) items[i]=d2; }
+      return JSON.stringify({xp:xp, items:items, stance:state.offlineStance});
+    })()`));
+
+    const wc = () => ({skill:'woodcutting', actId: JSON.parse(ev(
+      `JSON.stringify(SKILLS.woodcutting.acts.filter(function(a){return a.lvl<=60;}).pop().id)`))});
+    const mi = () => ({skill:'mining', actId: JSON.parse(ev(
+      `JSON.stringify(SKILLS.mining.acts.filter(function(a){return a.lvl<=60;}).pop().id)`))});
+    const W = wc(), M = mi();
+
+    // ── Steady is the baseline every other stance is measured against ──
+    const steady = night('steady', {}, [W], 12);
+    ok('Steady trains the one skill it was given',
+       steady.xp.woodcutting > 0 && !steady.xp.mining, JSON.stringify(steady.xp));
+
+    // ── Divided actually runs both slots, and splits the rate ──
+    const divided = night('divided', {of_divided:1}, [W, M], 12);
+    ok('Divided trains BOTH slots in one night',
+       divided.xp.woodcutting > 0 && divided.xp.mining > 0, JSON.stringify(divided.xp));
+    /* The split is the trade. Each slot must come back with LESS than Steady got,
+       or Divided is a free upgrade and the choice is not a choice. */
+    ok('and each slot earns less than Steady would have',
+       divided.xp.woodcutting < steady.xp.woodcutting,
+       JSON.stringify({steady: steady.xp.woodcutting, divided: divided.xp.woodcutting}));
+    /* ...but the two together beat it, which is the reason to pick it. */
+    ok('while the two together beat it',
+       (divided.xp.woodcutting + divided.xp.mining) > steady.xp.woodcutting,
+       JSON.stringify({total: divided.xp.woodcutting + divided.xp.mining, steady: steady.xp.woodcutting}));
+
+    // ── Third Thread is breadth, not throughput ──
+    const three = night('divided', {of_divided:1, of_slot3:1}, [W, M, {skill:'fishing',
+      actId: JSON.parse(ev(`JSON.stringify(SKILLS.fishing.acts.filter(function(a){return a.lvl<=60;}).pop().id)`))}], 12);
+    ok('Third Thread runs a third skill',
+       three.xp.woodcutting > 0 && three.xp.mining > 0 && three.xp.fishing > 0, JSON.stringify(three.xp));
+    ok('and buys breadth rather than speed — each thread is slower than with two',
+       three.xp.woodcutting < divided.xp.woodcutting,
+       JSON.stringify({two: divided.xp.woodcutting, three: three.xp.woodcutting}));
+
+    // ── Dead to the World: faster, over half the hours ──
+    /* Inside half a cap it wins, because nothing is being clipped. */
+    const deepShort   = night('deep',   {of_deep:1}, [W], 6);
+    const steadyShort = night('steady', {of_deep:1}, [W], 6);
+    ok('Dead to the World beats Steady on a short night',
+       deepShort.xp.woodcutting > steadyShort.xp.woodcutting,
+       JSON.stringify({deep: deepShort.xp.woodcutting, steady: steadyShort.xp.woodcutting}));
+    /* Past it the halved cap bites, which is the whole trade. */
+    const deepLong   = night('deep',   {of_deep:1}, [W], 40);
+    const steadyLong = night('steady', {of_deep:1}, [W], 40);
+    ok('and loses to it on a long one',
+       deepLong.xp.woodcutting < steadyLong.xp.woodcutting,
+       JSON.stringify({deep: deepLong.xp.woodcutting, steady: steadyLong.xp.woodcutting}));
+
+    // ── Night Forager: materials instead of xp ──
+    const scav = night('scavenge', {of_scav:1}, [W], 12);
+    ok('Night Forager grants no skill xp at all',
+       !scav.xp.woodcutting, JSON.stringify(scav.xp));
+    ok('but brings back more than Steady did',
+       Object.values(scav.items).reduce((a,b)=>a+b,0)
+         > Object.values(steady.items).reduce((a,b)=>a+b,0),
+       JSON.stringify({scavenge: scav.items, steady: steady.items}));
+    ok('and the Offline skill itself still pays — the night is not wasted',
+       scav.xp.offline === undefined ? true : scav.xp.offline > 0);
+
+    /* of_loot was computed in offlineMods and then used ONLY to colour a preview
+       string; it never reached the award, so six points of Scavenger bought a
+       bigger number on a label and nothing in the satchel. */
+    const plain  = night('steady', {}, [W], 12);
+    const looted = night('steady', {of_loot:8}, [W], 12);
+    const sum = o => Object.values(o).reduce((a,b)=>a+b,0);
+    ok('Scavenger ranks reach the satchel, not just the preview text',
+       sum(looted.items) > sum(plain.items),
+       JSON.stringify({plain: sum(plain.items), looted: sum(looted.items)}));
+    ok('and it is output only — the xp is untouched',
+       looted.xp.woodcutting === plain.xp.woodcutting,
+       JSON.stringify({plain: plain.xp.woodcutting, looted: looted.xp.woodcutting}));
+
+    // ── a stance you have not unlocked cannot be worn ──
+    const sneaky = night('divided', {}, [W, M], 12);
+    ok('a locked stance falls back to Steady rather than paying out',
+       !sneaky.xp.mining, JSON.stringify(sneaky.xp));
+
+    ev('demoXpCap=' + _capFn + ';');
+
+    /* ── static: no native dropdown may return to this panel ──
+       Chromium renders <select> as an OS popup window and Wine/Proton never draws
+       it, so on a Steam Deck the old panel's two selects were not awkward, they
+       were inert — you could not choose what to train while away at all. This is
+       the guard that keeps one from creeping back in. */
+    /* Comments stripped first: the panel's own header explains at length why it has
+       no <select> in it, and scanning the prose failed the assertion on the very
+       sentence promising the thing it checks. */
+    const _rawPanel = (html.split('[JS-24d] the Offline panel')[1]||'').split('[JS-24f]')[0];
+    // The split marker sits INSIDE the section's own header comment, so the segment
+    // opens half way through one: there is a terminator but no opener, and the
+    // block-comment strip below cannot see it. Skip to the end of that first
+    // comment, or the panel's own explanation of why it has no dropdowns fails the
+    // assertion promising it has none.
+    const panelSrc = _rawPanel
+      .slice(_rawPanel.indexOf('*' + '/') + 2)
+      .replace(/\/\*[\s\S]*?\*\//g,'').replace(/^\s*\/\/.*$/gm,'');
+    ok('the Offline panel is <select>-free (Wine/Proton draws no native dropdown)',
+       panelSrc.length > 2000 && panelSrc.indexOf("createElement('select')") < 0
+       && panelSrc.indexOf('<select') < 0, panelSrc.length + ' chars of code scanned');
+
+    /* ── the tree has to stay a choice ──
+       49 points against 55 of capacity is why the old one felt like a checklist:
+       you could buy 89% of it. */
+    const cap = ev(`(function(){ var c=0; OFFLINE_TREE.forEach(function(n){c+=n.max;});
+      return JSON.stringify({capacity:c, points:OFFLINE_MAX_LEVEL-1}); })()`);
+    const capObj = JSON.parse(cap);
+    ok('the tree costs meaningfully more than a maxed account can pay for',
+       capObj.capacity >= capObj.points * 1.35,
+       JSON.stringify(capObj) + ' — ' + Math.round(100*capObj.points/capObj.capacity) + '% affordable');
+
+    /* Every stance past Steady names a node, and that node has to exist or the
+       card renders a lock that can never open. */
+    ok('every locked stance points at a real node',
+       ev(`OFFLINE_STANCES.every(function(s){ return !s.node
+          || OFFLINE_TREE.some(function(n){ return n.id===s.node; }); })`) === true);
+
+    /* Old saves are refunded once rather than left holding a build made under
+       different rules — and the flag means once, not on every load. */
+    ok('an old allocation is refunded exactly once',
+       ev(`(function(){ state=defaultState(); state.offlineXp=OFFLINE_XP_CUM[40];
+         state.tree={_offline:{of_rate:10, of_gone:3}}; delete state.offlineRespec6;
+         normalizeState();
+         var afterFirst=JSON.stringify(state.tree._offline);
+         state.tree._offline={of_rate:4}; normalizeState();
+         return afterFirst==='{}' && state.tree._offline.of_rate===4; })()`) === true);
+  }
+
   section('Matched jewelry & the auto-eat readout (0.9.122.2)');
   {
     /* Player-reported: "I made a second sapphire ring which stacked with the first.
