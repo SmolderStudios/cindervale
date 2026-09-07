@@ -3218,7 +3218,10 @@ setTimeout(() => {
     })()`));
     ok('The Nightmarket rolls all four shapes', ['do','deliver','supply','coin']
        .every(k => (fence.kinds[k]||0) > 0), JSON.stringify(fence.kinds));
-    ok('and has thousands of lines, not fifteen', fence.lines > 1000, fence.lines+' lines');
+    /* Was >1000, when the board drew from every skill in the game. It draws from
+       twelve stolen goods now, on purpose, so the ceiling came down with it. 400 is
+       still far more distinct lines than any player sees. */
+    ok('and does not hand out the same fifteen lines', fence.lines > 400, fence.lines+' lines');
     ok('a fence only ever asks for things worth money, and never a one-time tool',
        fence.bad.length===0, fence.bad.join(', '));
 
@@ -3746,6 +3749,78 @@ setTimeout(() => {
       tier:ENCHANTS.manatarms_ii&&ENCHANTS.manatarms_ii.tier,
       priced:!!_ewCostFor('emerald_ring').cost
     })`));
+    section('The skip button you could never find (0.9.122.41)');
+    {
+    /* "add a skip button for quests i dont see it anywhere even though we technically
+       have it?" It was there and it had never been reachable where it mattered. The
+       row had ONE button slot running through a five-branch if, and Skip was the last
+       branch -- so it only ever appeared on a `do` or `kill` quest you had not
+       finished. Every deliver, supply and coin order showed "Need 24 more" instead,
+       and those are exactly the ones you want to skip. */
+    const skip = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      for(var k in state.xp) state.xp[k]=XP_CUM[99];
+      if(!document.getElementById('guildView')){
+        var h=document.createElement('div'); h.id='guildView'; document.body.appendChild(h); }
+      var out={kinds:{}, missing:[]};
+      /* Every guild, so the answer does not depend on which quest kinds one board
+         happens to roll today. */
+      state.gd={};
+      GUILDS.forEach(function(g){ state.gd[g.id]={rep:9000,q:[],day:-1,skipped:0}; });
+      GUILDS.forEach(function(g){
+        gdRollQuests(g.id,true);
+        _gdOpen=g.id; renderGuilds();
+        var v=document.getElementById('guildView');
+        var rows=v.querySelectorAll('.gd-q').length;
+        var skips=v.querySelectorAll('.gd-skip').length;
+        if(rows!==skips) out.missing.push(g.id+': '+skips+' skips on '+rows+' quests');
+      });
+      /* Kind coverage needs more than one board: a coin order is a 22% roll on one
+         guild, so thirty quests is a coin flip on whether the assertion sees one.
+         Roll the Nightmarket forty times and render each, so the rows-have-skips
+         check above covers every kind rather than whichever three came up. */
+      _gdOpen='night';
+      for(var t=0;t<40;t++){
+        state.gd.night.skipped=0; gdRollQuests('night',true); renderGuilds();
+        var vv=document.getElementById('guildView');
+        var rr=vv.querySelectorAll('.gd-q').length, ss=vv.querySelectorAll('.gd-skip').length;
+        if(rr!==ss) out.missing.push('night roll '+t+': '+ss+' skips on '+rr+' quests');
+        state.gd.night.q.forEach(function(q){ out.kinds[q.kind]=(out.kinds[q.kind]||0)+1; });
+      }
+      /* And it still does what it did: swaps the quest, once a day. */
+      _gdOpen='night'; state.gd.night.skipped=0; gdRollQuests('night',true);
+      out.sameBack=0;
+      for(var n=0;n<20;n++){
+        state.gd.night.skipped=0; gdRollQuests('night',true);
+        var before=state.gd.night.q[0].name;
+        gdSkip('night',0);
+        if(state.gd.night.q[0].name===before) out.sameBack++;
+      }
+      out.count=state.gd.night.skipped;
+      var second=state.gd.night.q[0].name;
+      gdSkip('night',0);
+      out.secondBlocked=state.gd.night.q[0].name===second;
+      renderGuilds();
+      var v2=document.getElementById('guildView');
+      out.liveAfterUse=v2.querySelectorAll('.gd-skip:not(.off)').length;
+      return JSON.stringify(out);
+    })()`));
+    ok('every quest has a skip, in every guild',
+       skip.missing.length === 0, skip.missing.join(' | '));
+    /* The kinds that never had one are the whole point, so name them. */
+    ok('including the deliver, supply and coin orders that never had one',
+       ['deliver','supply','coin'].every(k => (skip.kinds[k] || 0) > 0),
+       JSON.stringify(skip.kinds));
+    /* Run twenty times, because the failure this catches is probabilistic: the reroll
+       used to be allowed to land on the quest it was replacing, so you spent your one
+       skip for the day and the board did not change. */
+    ok('and the quest it gives back is never the one you skipped',
+       skip.sameBack === 0 && skip.count === 1,
+       skip.sameBack + ' of 20 skips returned the same quest');
+    ok('still only once a day', skip.secondBlocked === true && skip.liveAfterUse === 0,
+       'live skips after using one: ' + skip.liveAfterUse);
+    }
+
     section('The guild shop says what it is selling, and no one says fence (0.9.122.40)');
     {
     /* The Nightmarket read "The runner's map / Needs Fence / 120" and nothing on the
@@ -3887,7 +3962,10 @@ setTimeout(() => {
     const SELL_ONLY = ['abyssal_scale','barrow_dust','birds_nest','charcoal','cut_purse',
       'drakeforged_rune','ember_resin','energy_crystal','goblin_ear','golden_spore',
       'jewelled_dagger','pocket_watch','riftshard','runed_bone','sealed_letter',
-      'signet_ring','silver_plate','splintered_club','stamina_shard','void_essence'];
+      'signet_ring','silver_plate','splintered_club','stamina_shard','void_essence',
+      /* Added 0.9.122.41. Stolen goods exist to be sold; that is the point of them. */
+      'silver_censer','smuggler_ledger','heirloom_locket','officers_sabre',
+      'bankers_seal','crown_shard'];
     const added = use.none.filter(i => SELL_ONLY.indexOf(i) < 0);
     const gone  = SELL_ONLY.filter(i => use.none.indexOf(i) < 0);
     ok('and the sell-only list is exactly what it was reviewed as',
@@ -4315,10 +4393,13 @@ setTimeout(() => {
        night.doubled.length === 0, night.doubled.join(' | '));
     /* The whole point of a fence. Before this it asked for jewellery and potions and
        never once for the goods the skill actually steals. */
-    ok('the fence asks for stolen goods, sometimes and not always',
-       night.hotPct > 2 && night.hotPct < 30, night.hotPct + '% of ' + night.quests + ' quests');
-    ok('all six stolen goods can be ordered, in fillable amounts',
-       night.sizes.length === 6 && night.sizes.every(s => s.small >= 4 && s.long <= 400),
+    /* Was 2-30%, when the board also asked for jewellery, potions and crafted gear.
+       It asks for stolen goods, gold and stealing now and nothing else, so every
+       goods order is a stolen one and the share is meant to be about half. */
+    ok('every goods order on the board is for stolen goods',
+       night.hotPct > 35 && night.hotPct < 70, night.hotPct + '% of ' + night.quests + ' quests');
+    ok('all twelve stolen goods can be ordered, in fillable amounts',
+       night.sizes.length === 12 && night.sizes.every(s => s.small >= 4 && s.long <= 400),
        JSON.stringify(night.sizes.map(s => s.id + ' ' + s.small + '/' + s.long)));
     ok('the board still rolls all four quest kinds',
        ['do','supply','deliver','coin'].every(k => (night.kinds[k] || 0) > 0),
@@ -4359,8 +4440,16 @@ setTimeout(() => {
        art.borrowed.length === 1 && art.borrowed[0].indexOf('th_gm_2x_xp~') === 0,
        art.borrowed.join(', '));
     ok('the skill has a painted banner', art.banner === true);
-    ok('and the placeholder alias map is down to the pet',
-       art.alias.length === 1 && art.alias[0] === 'spet_thieving', art.alias.join(', '));
+    /* Named one at a time. Six stolen goods were added in 0.9.122.41 and borrow the
+       nearest painted thing of their kind until their sheet lands; the pet still has
+       no sheet either. Delete an id here as its art arrives. */
+    ok('only what is genuinely waiting on art is borrowing it', (function(){
+      const PENDING = ['spet_thieving','silver_censer','smuggler_ledger','heirloom_locket',
+                       'officers_sabre','bankers_seal','crown_shard'];
+      const extra = art.alias.filter(i => PENDING.indexOf(i) < 0);
+      const gone  = PENDING.filter(i => art.alias.indexOf(i) < 0);
+      return extra.length === 0 && gone.length === 0;
+    })(), art.alias.join(', '));
 
     /* Pace. Jordan asked for "pretty fast, not that slow, but keep it in line", which
        is a RANK, not a number -- so this asserts the rank. A future edit that makes
@@ -4493,8 +4582,8 @@ setTimeout(() => {
       out.guild={skills:g.skills.join(','), req:Object.keys(g.req).join(','), buysAnything:!!g.buysAnything};
       return JSON.stringify(out);
     })()`));
-    ok('six stolen goods, and the store pays less than the fence for every one',
-       fence.n === 6 && fence.cheap.length === 0, JSON.stringify(fence));
+    ok('twelve stolen goods, and the store pays less than the Nightmarket for every one',
+       fence.n === 12 && fence.cheap.length === 0, JSON.stringify(fence));
     ok("the thieves' guild finally gates on Thieving",
        fence.guild.skills === 'thieving' && fence.guild.req === 'thieving' && fence.guild.buysAnything === true,
        JSON.stringify(fence.guild));
