@@ -2223,7 +2223,9 @@ body:not(.is-demo) .demo-only{display:none !important}
 .gm-quiet:hover{border-color:#6a5230;color:#c79b4e}
 /* Back sits in every panel the menu can open, hidden until the menu is what opened it. */
 .gm-back{margin-right:auto}
-.set-row.gm-hide{display:none}
+/* Scoped to .set-row when it was written; #mmSetMore is a wrapper, not a row, so
+   the rule silently did nothing to it. */
+.set-row.gm-hide,#mmSetMore.gm-hide{display:none}
 .pets-secret{margin-top:14px;padding-top:12px;border-top:1px solid #33261680;
   display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 .pets-secret .pet-card.secret{border-color:#8a6a2e;box-shadow:inset 0 0 26px rgba(240,199,114,.07)}
@@ -7356,7 +7358,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.122.38">v0.9.122</div>
+  <div class="mm-ver" data-build="0.9.122.39">v0.9.122</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -7365,6 +7367,8 @@ body:not(.is-demo) .demo-only{display:none !important}
   <div class="mm-card" style="max-width:440px">
     <h3>Settings</h3>
     <p>Interface options. They apply immediately and persist on this device.</p>
+
+    <div class="gm-sec">Display</div>
 
     <div class="set-row">
       <div class="set-lbl">Interface scale
@@ -7396,20 +7400,22 @@ body:not(.is-demo) .demo-only{display:none !important}
     </div>
 
     <div class="set-row">
-      <div class="set-lbl">Custom cursor
-        <small>Use the game's cursor instead of the system one</small>
-      </div>
-      <div class="set-ctl">
-        <button class="mm-mini" id="mmCursor" aria-pressed="true">On</button>
-      </div>
-    </div>
-
-    <div class="set-row">
       <div class="set-lbl">Background embers
         <small>Drifting sparks in the empty ground</small>
       </div>
       <div class="set-ctl">
         <button class="mm-mini" id="mmEmbersBtn" aria-pressed="true">On</button>
+      </div>
+    </div>
+
+    <div class="gm-sec">Cursor</div>
+
+    <div class="set-row">
+      <div class="set-lbl">Custom cursor
+        <small>Use the game's cursor instead of the system one</small>
+      </div>
+      <div class="set-ctl">
+        <button class="mm-mini" id="mmCursor" aria-pressed="true">On</button>
       </div>
     </div>
 
@@ -7424,6 +7430,11 @@ body:not(.is-demo) .demo-only{display:none !important}
         <button class="mm-seg" data-cs="56">XL</button>
       </div>
     </div>
+
+    <!-- Only on the title screen. In game these four are rows on the menu one step
+         back, and repeating them here is most of why this panel was so long. -->
+    <div id="mmSetMore">
+    <div class="gm-sec">More</div>
 
     <div class="set-row" id="mmSetImportRow">
       <div class="set-lbl">Save data
@@ -7460,6 +7471,7 @@ body:not(.is-demo) .demo-only{display:none !important}
         <button class="mm-mini" id="mmSetMail">Open</button>
       </div>
     </div>
+    </div><!-- /#mmSetMore -->
 
     <div class="mm-row" style="margin-top:16px">
       <button class="mm-mini gm-back" hidden>◂ Back</button>
@@ -7591,7 +7603,7 @@ body:not(.is-demo) .demo-only{display:none !important}
       <!-- Playtester names ride the existing `.cr-list dd span` rule, which already
            renders a small monospace sub-line — same treatment as the Discord and
            support rows below, so this needed no new CSS. -->
-      <dt>Thanks</dt><dd>Everyone who played the beta and reported a bug<span>Bzshady &middot; Zackly &middot; Nelly &middot; illidan &middot; Milkie &middot; Security_AI</span></dd>
+      <dt>Thanks</dt><dd>Everyone who played the beta and reported a bug<span>Bzshady &middot; Zackly &middot; Nelly &middot; illidan &middot; Milkie &middot; Security_AI &middot; Radcliff &middot; OneFlame</span></dd>
       <!-- Deliberately NOT an <a>: the Electron wrapper has no setWindowOpenHandler,
            so a click would navigate the game window to Discord with no way back.
            Selectable text lets the player copy it instead. -->
@@ -42317,6 +42329,12 @@ function mmOpenSettings(){
   // already loaded. Hide the row rather than offer a control that misleads.
   const impRow = $('mmSetImportRow');
   if(impRow) impRow.classList.toggle('gm-hide', !!mmSlot && !mmAtMenu);
+  /* In game, Save data / Report / Suggest / Mail are all rows on the menu one step
+     back, so repeating them here made the panel twice as long as it needed to be for
+     no new capability. On the TITLE screen there is no menu, and they are the only
+     way to reach any of them -- so the section stays there. */
+  const moreSec = $('mmSetMore');
+  if(moreSec) moreSec.classList.toggle('gm-hide', !mmAtMenu);
   $('mmSettingsModal').classList.remove('mm-hidden');
 }
 function mmToggleFullscreen(){
