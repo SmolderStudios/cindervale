@@ -7645,7 +7645,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.123.10">v0.9.123</div>
+  <div class="mm-ver" data-build="0.9.123.11">v0.9.123</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -20125,7 +20125,12 @@ function rangedArmourMult(){
   const ce=state&&state.combatEquipped; if(!ce) return 1;
   let heavy=0;
   for(const slot in ce){
-    if(slot==='weapon'||slot==='quiver') continue;
+    /* The SHIELD is exempt. It is heavy, but a crossbow's entire identity is that
+       it leaves a hand free, and _rangedecon.js measured crossbow+shield at 87% of
+       melee purely because the shield's defence was counted as armour to shoot in.
+       A penalty that makes the one thing a weapon is FOR into a trap is the wrong
+       penalty. Body armour is the choice this models. */
+    if(slot==='weapon'||slot==='quiver'||slot==='shield') continue;
     const id=ce[slot], it=id&&ITEMS[id]; if(!it||it.light) continue;
     const cs=COMBAT_GEAR_STATS[id]; if(!cs) continue;
     heavy += cs.def||0;
@@ -29897,14 +29902,18 @@ function hasPet(petId){ return !!(state && state.pets && state.pets[petId]); }
      where smithable metal stops. Moltensteel and voidsteel have no bar (their
      weapons are raid drops), so the ammo ladder ends at starfall. */
   const AMMO=[
-    {k:'bronze',    n:'Bronze',    bar:'bronze_bar',    fl:1,  str:2,  sell:4},
-    {k:'iron',      n:'Iron',      bar:'iron_bar',      fl:12, str:3,  sell:8},
-    {k:'steel',     n:'Steel',     bar:'steel_bar',     fl:24, str:5,  sell:16},
-    {k:'mithril',   n:'Mithril',   bar:'mithril_bar',   fl:38, str:8,  sell:34},
-    {k:'cobalt',    n:'Cobalt',    bar:'cobalt_bar',    fl:52, str:11, sell:60},
-    {k:'runite',    n:'Runite',    bar:'runite_bar',    fl:64, str:15, sell:105},
-    {k:'starsteel', n:'Starsteel', bar:'starsteel_bar', fl:76, str:20, sell:180},
-    {k:'starfall',  n:'Starfall',  bar:'starfall_bar',  fl:88, str:28, sell:320},
+    /* sell is now close to the gold VALUE OF THE INPUTS. A bronze arrow held 12g of
+       bar, log and feather and sold for 4, which reads as a scam and made the whole
+       chain look like a loss in _rangedecon.js. Arrows are meant to be neutral: you
+       shoot them, you do not trade them. */
+    {k:'bronze',    n:'Bronze',    bar:'bronze_bar',    fl:1,  str:2,  sell:9},
+    {k:'iron',      n:'Iron',      bar:'iron_bar',      fl:12, str:3,  sell:19},
+    {k:'steel',     n:'Steel',     bar:'steel_bar',     fl:24, str:5,  sell:33},
+    {k:'mithril',   n:'Mithril',   bar:'mithril_bar',   fl:38, str:8,  sell:80},
+    {k:'cobalt',    n:'Cobalt',    bar:'cobalt_bar',    fl:52, str:11, sell:115},
+    {k:'runite',    n:'Runite',    bar:'runite_bar',    fl:64, str:15, sell:165},
+    {k:'starsteel', n:'Starsteel', bar:'starsteel_bar', fl:76, str:20, sell:235},
+    {k:'starfall',  n:'Starfall',  bar:'starfall_bar',  fl:88, str:28, sell:370},
   ];
   /* Bows follow the WOOD ladder. `yield` is how many shafts one of that log
      carves into, which is the whole reason to keep chopping the good stuff. */
@@ -30014,8 +30023,8 @@ function hasPet(petId){ return !!(state && state.pets && state.pets[petId]); }
   /* ── shared materials ── */
   ITEMS.wood_shaft={name:'Arrow Shafts', icon:'🪵', sell:2,
     desc:'Straight lengths of seasoned wood, cut for fletching. Any log carves into them; a better log simply carves into more.'};
-  ITEMS.feather={name:'Feather', icon:'🪶', sell:3,
-    desc:'A stiff barred flight feather. Three to an arrow, and no arrow flies straight without them. Bolts do without.'};
+  ITEMS.feather={name:'Feather', icon:'🪶', sell:2,
+    desc:'A stiff barred flight feather. One to an arrow, and no arrow flies straight without it. Bolts do without.'};
   ITEMS.raw_fowl={name:'Raw Fowl', icon:'🍗', sell:14,
     desc:'A plump moor-hen, plucked and drawn. The feathers were the point; the bird is supper.'};
   ITEMS.flax={name:'Flax', icon:'🌾', sell:9,
@@ -30053,9 +30062,9 @@ function hasPet(petId){ return !!(state && state.pets && state.pets[petId]); }
     const p=MPAL[a.k], ct=i+1;
     const head=a.k+'_arrowhead', tip=a.k+'_bolt_tip', arrow=a.k+'_arrow', bolt=a.k+'_bolt';
     ITEMS[head]={name:a.n+' Arrowhead', icon:'🔻', sell:Math.round(a.sell*0.5),
-      desc:'A barbed '+a.n.toLowerCase()+' head, hammered flat at the anvil. Twelve to a bar. Useless until it meets a shaft and a feather.'};
+      desc:'A barbed '+a.n.toLowerCase()+' head, hammered flat at the anvil. Fifteen to a bar. Useless until it meets a shaft and a feather.'};
     ITEMS[tip]={name:a.n+' Bolt Tip', icon:'🔻', sell:Math.round(a.sell*0.7),
-      desc:'A squat '+a.n.toLowerCase()+' bodkin, heavier than an arrowhead and made ten to a bar. Bolts trade flight for weight.'};
+      desc:'A squat '+a.n.toLowerCase()+' bodkin, heavier than an arrowhead and made twelve to a bar. Bolts trade flight for weight.'};
     ITEMS[arrow]={name:a.n+' Arrow', icon:'🏹', sell:a.sell, ammo:'arrow', ammoStr:a.str, ammoTier:ct,
       desc:'Shaft, feather and '+a.n.toLowerCase()+' head. Adds '+a.str+' strength to every shot from a bow. Spent on firing, though a fletcher recovers some.'};
     ITEMS[bolt]={name:a.n+' Bolt', icon:'🏹', sell:Math.round(a.sell*1.3), ammo:'bolt', ammoStr:Math.round(a.str*1.15), ammoTier:ct,
@@ -30202,10 +30211,10 @@ function hasPet(petId){ return !!(state && state.pets && state.pets[petId]); }
     const head=a.k+'_arrowhead', tip=a.k+'_bolt_tip';
     F.push({id:'fl_ar_'+a.k, name:'Fletch '+a.n+' arrows', cat:'arrows', lvl:a.fl,
       ms:4200+i*520, xp:Math.round(40+i*58), spdMult:Math.min(0.80,0.52+i*0.038),
-      minMs:800+i*110, inp:_o3('wood_shaft',12,'feather',12,head,12), out:_o(a.k+'_arrow',12)});
+      minMs:800+i*110, inp:_o3('wood_shaft',15,'feather',15,head,15), out:_o(a.k+'_arrow',15)});
     F.push({id:'fl_bo_'+a.k, name:'Fletch '+a.n+' bolts', cat:'bolts', lvl:a.fl+4,
       ms:4600+i*560, xp:Math.round(46+i*64), spdMult:Math.min(0.80,0.52+i*0.038),
-      minMs:850+i*115, inp:_o2('wood_shaft',12,tip,12), out:_o(a.k+'_bolt',12)});
+      minMs:850+i*115, inp:_o2('wood_shaft',12,tip,12), out:_o(a.k+'_bolt',12)});   // bolts stay 12: dearer metal is the trade
   });
 
   /* ── bows: carve a stave, then string it ── */
@@ -30217,8 +30226,11 @@ function hasPet(petId){ return !!(state && state.pets && state.pets[petId]); }
       F.push({id:'fl_cv_'+w.k+'_'+kind, name:'Carve a '+w.n+' '+label, cat:'bows', lvl:lv,
         ms:7000+i*900, xp:Math.round(120+i*160), spdMult:Math.min(0.80,0.55+i*0.04),
         minMs:1500+i*180, inp:_o(w.log,logs), out:_o(un,1)});
+      /* Stringing is the quick last step. It paid 70+i*95, which made 'String a
+         Starfall Crossbow' the best xp/hr act in the whole skill at 99, ahead of the
+         assembly that actually eats the materials. The xp belongs where the cost is. */
       F.push({id:'fl_st_'+w.k+'_'+kind, name:'String a '+w.n+' '+label, cat:'bows', lvl:lv,
-        ms:3400+i*400, xp:Math.round(70+i*95), spdMult:Math.min(0.80,0.55+i*0.04),
+        ms:3400+i*400, xp:Math.round(26+i*30), spdMult:Math.min(0.80,0.55+i*0.04),
         minMs:900+i*100, inp:_o2(un,1,'bowstring',1), out:_o(id,1)});
     });
   });
@@ -30231,18 +30243,21 @@ function hasPet(petId){ return !!(state && state.pets && state.pets[petId]); }
       ms:8000+i*1000, xp:Math.round(150+i*190), spdMult:Math.min(0.80,0.55+i*0.04),
       minMs:1700+i*200, inp:_o2(wk.log,5,a.bar,4), out:_o(un,1)});
     F.push({id:'fl_cs_'+a.k, name:'String a '+a.n+' Crossbow', cat:'crossbows', lvl:a.fl+2,
-      ms:3600+i*430, xp:Math.round(80+i*105), spdMult:Math.min(0.80,0.55+i*0.04),
+      ms:3600+i*430, xp:Math.round(30+i*34), spdMult:Math.min(0.80,0.55+i*0.04),
       minMs:950+i*110, inp:_o2(un,1,'bowstring',1), out:_o(id,1)});
   });
 
   /* ── smithing makes the heads, which is where the metal ladder rejoins ── */
   AMMO.forEach(function(a,i){
     SKILLS.smithing.acts.push({id:'sm_ah_'+a.k, name:'Hammer '+a.n+' arrowheads',
-      lvl:a.fl, ms:4000+i*480, xp:Math.round(35+i*52), spdMult:Math.min(0.80,0.52+i*0.038),
-      minMs:800+i*100, inp:_o(a.bar,1), out:_o(a.k+'_arrowhead',12)});
+      /* 0.55x the old rate. At 35+i*52 hammering heads paid 1.6 to 1.8 TIMES the xp
+         of smelting the bar it consumes, which would have made arrowheads the
+         Smithing meta for reasons that have nothing to do with archery. */
+      lvl:a.fl, ms:4000+i*480, xp:Math.round(19+i*29), spdMult:Math.min(0.80,0.52+i*0.038),
+      minMs:800+i*100, inp:_o(a.bar,1), out:_o(a.k+'_arrowhead',15)});
     SKILLS.smithing.acts.push({id:'sm_bt_'+a.k, name:'Hammer '+a.n+' bolt tips',
-      lvl:a.fl+2, ms:4200+i*500, xp:Math.round(38+i*56), spdMult:Math.min(0.80,0.52+i*0.038),
-      minMs:830+i*104, inp:_o(a.bar,1), out:_o(a.k+'_bolt_tip',10)});
+      lvl:a.fl+2, ms:4200+i*500, xp:Math.round(21+i*31), spdMult:Math.min(0.80,0.52+i*0.038),
+      minMs:830+i*104, inp:_o(a.bar,1), out:_o(a.k+'_bolt_tip',12)});
   });
 
   function _o(k,v){ const o={}; o[k]=v; return o; }
