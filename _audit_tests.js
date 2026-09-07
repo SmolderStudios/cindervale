@@ -2846,8 +2846,15 @@ setTimeout(() => {
        html.indexOf('#gameMenuModal .mm-card{max-width:520px}') > html.indexOf('max-width:360px;width:100%'));
     ok('rows sit on a two-column grid, not a single stack',
        html.indexOf('.gm-grid{display:grid;grid-template-columns:1fr 1fr') > 0);
-    ok('every section heading has rows under it',
-       (html.match(/class="gm-sec/g) || []).length === 4);
+    /* Counted INSIDE the menu, not across the file. It was a global count, and the
+       moment Settings borrowed the same headings in 0.9.122.39 a passing assertion
+       started failing for a reason that had nothing to do with the menu. */
+    ok('every section heading has rows under it', (function(){
+      const a = html.indexOf('id="gameMenuModal"');
+      const b = html.indexOf('<!-- ===== ', a);
+      const menu = html.slice(a, b > a ? b : a + 12000);
+      return (menu.match(/class="gm-sec/g) || []).length === 4;
+    })());
     ok('the destructive pair is fenced off under its own label',
        html.indexOf('gm-sec gm-sec-danger') > 0 &&
        html.indexOf('id="gmQuit"') > html.indexOf('gm-sec gm-sec-danger') &&
@@ -3739,6 +3746,44 @@ setTimeout(() => {
       tier:ENCHANTS.manatarms_ii&&ENCHANTS.manatarms_ii.tier,
       priced:!!_ewCostFor('emerald_ring').cost
     })`));
+    section('The Settings panel, and two more names (0.9.122.39)');
+    {
+    /* The game menu was grouped and given a Back button; the panels it OPENS were
+       not. Settings was ten undifferentiated rows in a 1,033px column, four of them
+       shortcuts to things the menu you just came from already lists. */
+    const set = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      var m=document.getElementById('mmSettingsModal');
+      m.classList.remove('mm-hidden');
+      /* In game: the four shortcuts belong to the menu, not here. */
+      mmAtMenu=false; mmSlot=1; mmOpenSettings();
+      var more=document.getElementById('mmSetMore');
+      var inGame={rows:m.querySelectorAll('.set-row').length,
+                  secs:m.querySelectorAll('.gm-sec').length,
+                  moreHidden:!!more && more.classList.contains('gm-hide')};
+      /* On the title screen there is no menu, so they are the only way in. */
+      mmAtMenu=true; mmSlot=0; mmOpenSettings();
+      var onTitle={moreHidden:!!more && more.classList.contains('gm-hide')};
+      m.classList.add('mm-hidden');
+      return JSON.stringify({inGame:inGame, onTitle:onTitle,
+        secLabels:[].slice.call(m.querySelectorAll('.gm-sec')).map(function(e){return e.textContent;})});
+    })()`));
+    ok('Settings is grouped the way the menu is',
+       set.inGame.secs >= 3 && set.secLabels.indexOf('Display') >= 0 && set.secLabels.indexOf('Cursor') >= 0,
+       JSON.stringify(set.secLabels));
+    /* The gm-hide rule was written as `.set-row.gm-hide`, and #mmSetMore is a
+       wrapper rather than a row -- so the class went on and nothing happened. */
+    ok('and the shortcuts it duplicates are gone in game',
+       set.inGame.moreHidden === true, JSON.stringify(set.inGame));
+    ok('but still there on the title screen, where nothing else reaches them',
+       set.onTitle.moreHidden === false, JSON.stringify(set.onTitle));
+    ok('the hide rule actually covers the wrapper',
+       /#mmSetMore\.gm-hide/.test(html) && /display:none/.test(html));
+
+    ok('Radcliff and OneFlame are in the credits',
+       html.indexOf('Radcliff') > 0 && html.indexOf('OneFlame') > 0);
+    }
+
     section('Items that are only worth selling (ticket #70)');
     {
     /* "If something is just for selling, it would be nice to have an indicator in the
