@@ -3746,6 +3746,79 @@ setTimeout(() => {
       tier:ENCHANTS.manatarms_ii&&ENCHANTS.manatarms_ii.tier,
       priced:!!_ewCostFor('emerald_ring').cost
     })`));
+    section('The guild shop says what it is selling, and no one says fence (0.9.122.40)');
+    {
+    /* The Nightmarket read "The runner's map / Needs Fence / 120" and nothing on the
+       card said what any of that meant. A locked row printed its requirement INSTEAD
+       of its description, so the one state where you most need to know whether a
+       thing is worth ranking up for was the one state that never told you. */
+    const gd = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      state.gd={}; var bad=[], noRank=[];
+      GUILDS.forEach(function(g){
+        state.gd[g.id]={rep:0,q:[],day:-1,skipped:0};
+        gdShopFor(g.id).forEach(function(r){
+          if(!r.desc||!r.desc.length) bad.push(g.id+'/'+r.id+' has no description');
+          if(r.locked && !/^Unlocks at rank [0-9]/.test(r.lockTxt)) noRank.push(g.id+'/'+r.id+': '+r.lockTxt);
+        });
+      });
+      /* And the Nightmarket board, which used to say "Fence 30 Dragon Ring" about a
+         ring you had smithed yourself. */
+      state.gd.night={rep:0,q:[],day:-1,skipped:0};
+      for(var k in state.xp) state.xp[k]=XP_CUM[80];
+      var names=[];
+      for(var d=0;d<60;d++){ gdRollQuests('night',true);
+        state.gd.night.q.forEach(function(q){ names.push(q.name); }); }
+      return JSON.stringify({bad:bad, noRank:noRank,
+        fenceQuests:names.filter(function(n){ return /fence/i.test(n); }).slice(0,3),
+        sellQuests:names.filter(function(n){ return /^Sell /.test(n); }).length,
+        quests:names.length, nightRanks:GD_BY.night.titles});
+    })()`));
+    ok('every shop row says what it is, locked or not',
+       gd.bad.length === 0, gd.bad.join(' | '));
+    ok('and a locked one says which RANK opens it',
+       gd.noRank.length === 0, gd.noRank.slice(0, 3).join(' | '));
+
+    /* Jordan: "is it stuff stolen from thieving? or do u craft it and sell it? like
+       gravesteel sword, you cant steal that right? so why does it say fence." Half
+       the Nightmarket board asks for crafted goods, so the verb was not just obscure,
+       it was wrong. The word is gone from every string a player can read. */
+    ok('no Nightmarket quest says fence', gd.fenceQuests.length === 0,
+       gd.fenceQuests.join(' | '));
+    ok('it says sell instead', gd.sellQuests > 0,
+       gd.sellQuests + ' of ' + gd.quests + ' quests');
+    ok('and no rank is called Fence', gd.nightRanks.indexOf('Fence') < 0,
+       gd.nightRanks.join(', '));
+
+    /* The sweep, over the surfaces the word actually reached: guild perk text, skill
+       tree node names and descriptions, and every guild shop title. Scanning the whole
+       file for the string is not the test -- three comments exist to explain WHY it was
+       removed and have to keep saying it. */
+    const noFence = JSON.parse(ev(`(function(){
+      var strip=function(t){ return String(t||'').replace(/defence|offence/gi,''); };
+      var hits=[];
+      GUILDS.forEach(function(g){
+        (g.perkTxt||[]).forEach(function(t){ if(/fence/i.test(strip(t))) hits.push(g.id+' perk: '+t); });
+        (g.titles||[]).forEach(function(t){ if(/fence/i.test(strip(t))) hits.push(g.id+' rank: '+t); });
+      });
+      for(var sk in TREES) TREES[sk].forEach(function(n){
+        if(/fence/i.test(strip(n.name))) hits.push(sk+' node: '+n.name);
+        var d=''; try{ d=(typeof n.desc==='function')?n.desc(1):n.desc; }catch(e){}
+        if(/fence/i.test(strip(d))) hits.push(sk+' node desc: '+n.name);
+      });
+      state.gd={}; GUILDS.forEach(function(g){
+        state.gd[g.id]={rep:0,q:[],day:-1,skipped:0};
+        gdShopFor(g.id).forEach(function(r){
+          if(/fence/i.test(strip(r.title))) hits.push(g.id+' shop: '+r.title);
+          if(/fence/i.test(strip(r.desc)))  hits.push(g.id+' shop desc: '+r.title);
+        });
+      });
+      return JSON.stringify(hits);
+    })()`));
+    ok('nothing the player can read uses the word', noFence.length === 0,
+       noFence.slice(0, 4).join(' | '));
+    }
+
     section('The Settings panel, and two more names (0.9.122.39)');
     {
     /* The game menu was grouped and given a Back button; the panels it OPENS were
@@ -4417,13 +4490,13 @@ setTimeout(() => {
         if(!(effectiveItemSell(i) < ITEMS[i].sell)) out.cheap.push(i);
       });
       var g=GUILDS.find(function(x){ return x.id==='night'; });
-      out.guild={skills:g.skills.join(','), req:Object.keys(g.req).join(','), fence:!!g.fence};
+      out.guild={skills:g.skills.join(','), req:Object.keys(g.req).join(','), buysAnything:!!g.buysAnything};
       return JSON.stringify(out);
     })()`));
     ok('six stolen goods, and the store pays less than the fence for every one',
        fence.n === 6 && fence.cheap.length === 0, JSON.stringify(fence));
     ok("the thieves' guild finally gates on Thieving",
-       fence.guild.skills === 'thieving' && fence.guild.req === 'thieving' && fence.guild.fence === true,
+       fence.guild.skills === 'thieving' && fence.guild.req === 'thieving' && fence.guild.buysAnything === true,
        JSON.stringify(fence.guild));
 
     /* The registration sweep. A skill half-registered renders and plays and then
