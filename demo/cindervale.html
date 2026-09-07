@@ -692,6 +692,7 @@ header h1 .flame{color:var(--ember)}
 .sl-tile[data-tip],
 .sl-pill[data-tip],
 .sl-chip[data-tip],
+.off-tag[data-tip],
 .cmb-slot[data-tip]{position:relative}
 .cmb-stat[data-tip]:hover::after,
 .cd-stat[data-tip]:hover::after,
@@ -702,6 +703,7 @@ header h1 .flame{color:var(--ember)}
 .sl-tile[data-tip]:hover::after,
 .sl-pill[data-tip]:hover::after,
 .sl-chip[data-tip]:hover::after,
+.off-tag[data-tip]:hover::after,
 .cveat[data-tip]:hover::after,
 .cmb-slot[data-tip]:hover::after{
   content:attr(data-tip);
@@ -2610,28 +2612,99 @@ body:not(.is-demo) .demo-only{display:none !important}
 .stat-row[data-tip].tip-above:hover::after,
 .stats-skill-block > .stat-row[data-tip]:last-child:hover::after{
   top:auto;bottom:calc(100% + 2px)}
-.offline-row:last-child{border-bottom:none}
-.offline-icon{font-size:calc(20px*var(--tscale));width:24px;text-align:center;flex-shrink:0}
-.offline-label{flex:1;font-size:calc(14px*var(--tscale));color:var(--text)}
-.offline-val{font-family:var(--num);font-size:calc(14px*var(--tscale));color:var(--green);white-space:nowrap}
-.offline-lvlup{font-size:calc(14px*var(--tscale));color:var(--ember);font-weight:bold;white-space:nowrap}
-.offline-items{display:flex;flex-wrap:wrap;gap:5px;padding:2px 0 8px 32px;margin-top:-2px}
-.offline-item{display:inline-flex;align-items:center;gap:4px;background:var(--raised-s);border:1px solid var(--trim-d);border-radius:5px;padding:3px 8px;font-size:calc(13px*var(--tscale))}
-.offline-item .oi-icon{font-size:calc(14px*var(--tscale))}
+/* ── Welcome Back (0.9.123.4) ─────────────────────────────────────────────────
+   Rebuilt because the rows never had a container rule. `.offline-row` carried
+   exactly one declaration — `:last-child{border-bottom:none}`, resetting a border
+   nothing ever set — so the `flex:1` on the label and the `white-space:nowrap` on
+   the values had no flex container to apply to, and every row rendered as a run-on
+   inline sentence that wrapped mid-number. The information was always right; the
+   layout it was written for had silently never existed.
+
+   Widened 420 -> 640 to match. The panel has four things to say — how long you
+   were gone, the totals, what earned them, and whether the cap ate any of it —
+   and at 420 the last two were fighting over the same column. */
+
+/* Header. The away time is the subject of the whole panel, so it is the largest
+   thing on it; the cap and the rate are chips beside it rather than a third and
+   fourth clause of a grey sentence. */
+.off-head{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap}
+.off-away{line-height:1.04}
+.off-away .k{display:block;font-family:var(--num);font-size:calc(11px*var(--tscale));
+  letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.off-away .v{font-family:'Cinzel',serif;font-size:calc(31px*var(--tscale));color:var(--text)}
+.off-tags{display:flex;gap:6px;flex-wrap:wrap;padding-bottom:4px}
+.off-tag{font-family:var(--num);font-size:calc(11.5px*var(--tscale));border-radius:999px;
+  padding:3px 11px;border:1px solid var(--trim-d);color:var(--muted);white-space:nowrap;cursor:help}
+.off-tag.warn{border-color:#5a3e18;color:#e0a36f;background:#1f1408}
+.off-tag.rate{border-color:#2c4762;color:var(--blue);background:#101a26}
+
+/* Totals. One colour per kind — four green numbers in a row read as one number. */
+.off-totals{display:grid;grid-template-columns:repeat(auto-fit,minmax(108px,1fr));gap:8px;margin-bottom:16px}
+.off-tot{background:linear-gradient(180deg,var(--raised-s),#221809);border:1px solid var(--trim-d);
+  border-radius:9px;padding:11px 6px;text-align:center}
+/* flex, not block: fmtCoins puts a coin <img> in front of the number, and at this
+   size a block box wrapped it onto a second line and made the gold tile taller
+   than the three beside it. */
+.off-tot .ot-v{display:flex;align-items:center;justify-content:center;gap:5px;
+  font-family:var(--num);font-size:calc(21px*var(--tscale));
+  font-weight:bold;color:var(--green);line-height:1.1;white-space:nowrap}
+.off-tot .ot-v .ev-icon{width:.95em;height:.95em;flex:none}
+.off-tot .ot-l{display:block;font-size:calc(10.5px*var(--tscale));color:var(--muted);
+  text-transform:uppercase;letter-spacing:.12em;margin-top:4px}
+.off-tot.lv .ot-v{color:var(--ember)}
+.off-tot.it .ot-v{color:var(--text)}
+.off-tot.gp .ot-v{color:var(--trim)}
+/* Last, so it beats the per-kind colours above: a zero in a highlight colour
+   points the eye at nothing. */
+.off-tot.zero .ot-v{color:var(--muted)}
+
+.off-lab{display:flex;align-items:center;gap:9px;font-family:var(--num);
+  font-size:calc(11px*var(--tscale));letter-spacing:.16em;text-transform:uppercase;
+  color:var(--muted);margin:0 0 8px}
+.off-lab::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--trim-d),transparent)}
+
+.off-rows{max-height:44vh;overflow-y:auto;display:flex;flex-direction:column;gap:7px;
+  padding-right:3px;scrollbar-width:thin;scrollbar-color:var(--trim-d) transparent}
+/* icon | name+sub | numbers, with any loot spanning a second line inside the SAME
+   card, so a row and the things it produced are visibly one object. */
+.offline-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;
+  gap:11px;background:var(--raised);border:1px solid var(--trim-d);border-radius:9px;padding:9px 11px}
+.offline-icon{display:flex;align-items:center;justify-content:center;width:34px;height:34px;
+  flex:none;font-size:calc(20px*var(--tscale));line-height:1;
+  background:#1d1409;border:1px solid var(--trim-d);border-radius:8px}
+.offline-icon .ev-icon{width:22px;height:22px}
+.offline-name{min-width:0}
+.offline-label{display:block;font-size:calc(15px*var(--tscale));color:var(--text);
+  font-weight:normal;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* Wraps rather than ellipsising. The offline-combat sub carries the kill cap
+   ("capped, 3,090 were possible") and _audit_tests.js exists specifically to
+   guarantee that reaches the player — an ellipsis three words from the end was
+   quietly failing the thing the test protects. */
+.offline-sub{display:block;font-style:normal;font-family:var(--num);
+  font-size:calc(12px*var(--tscale));color:var(--muted);margin-top:2px;line-height:1.4}
+.offline-nums{display:flex;align-items:center;gap:8px;flex:none}
+.offline-val{font-family:var(--num);font-size:calc(15px*var(--tscale));color:var(--green);
+  font-weight:bold;white-space:nowrap}
+/* A level is the best thing that can be on this panel, so it is a badge rather
+   than "→ Lv 57!" buried mid-sentence. */
+.offline-lvlup{font-family:var(--num);font-size:calc(12px*var(--tscale));color:#1b1206;
+  background:linear-gradient(180deg,#f0b357,var(--ember));border-radius:999px;
+  padding:3px 10px;font-weight:bold;white-space:nowrap}
+.offline-items{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:5px;
+  margin-top:3px;padding-top:9px;border-top:1px dashed #3a2a17}
+.offline-item{display:inline-flex;align-items:center;gap:5px;background:#1d1409;
+  border:1px solid var(--trim-d);border-radius:6px;padding:3px 8px;font-size:calc(12.5px*var(--tscale))}
+.offline-item .oi-icon{display:inline-flex;align-items:center;width:1.2em;height:1.2em}
+.offline-item .oi-icon .ev-icon{width:100%;height:100%}
 .offline-item .oi-name{color:var(--muted)}
-.offline-item .oi-qty{font-family:var(--num);color:var(--green);font-weight:bold}
+.offline-item .oi-qty{font-family:var(--num);color:var(--text);font-weight:bold}
 .offline-item.rare{border-color:#ffd70066;background:linear-gradient(180deg,#241e0c,#1a1308)}
 .offline-item.rare .oi-name{color:#ffd700}
 .offline-item.rare .oi-qty{color:#ffd700}
 .offline-item .oi-star{color:#ffd700;font-size:calc(11px*var(--tscale))}
-/* Reworked welcome-back summary (1.0.11) — totals strip + cap note */
-.off-totals{display:grid;grid-template-columns:repeat(auto-fit,minmax(70px,1fr));gap:6px;margin-bottom:12px}
-.off-tot{background:var(--raised-s);border:1px solid var(--trim-d);border-radius:7px;padding:7px 4px;text-align:center}
-.off-tot .ot-v{display:block;font-family:var(--num);font-size:calc(15px*var(--tscale));font-weight:bold;color:var(--green)}
-.off-tot .ot-l{display:block;font-size:calc(10px*var(--tscale));color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-top:2px}
-.off-rows{max-height:46vh;overflow-y:auto;border-top:1px solid var(--trim-d);padding-top:4px}
-.off-capnote{margin-top:12px;padding:8px 10px;background:#1f1408;border:1px solid #5a3e18;border-radius:6px;
-  font-size:calc(12px*var(--tscale));color:#e0a36f;line-height:1.5}
+.off-capnote{margin-top:14px;padding:10px 12px;background:#1f1408;border:1px solid #5a3e18;
+  border-radius:8px;font-size:calc(12.5px*var(--tscale));color:#e0a36f;line-height:1.55}
+.off-capnote b{color:#f5c98a}
 .stat-section-label{font-size:calc(11px*var(--tscale));color:var(--ember);text-transform:uppercase;letter-spacing:2px;padding:3px 8px 1px;}
 
 /* compendium card text — see [CSS-22] for active rules */
@@ -7418,7 +7491,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.123.3">v0.9.123</div>
+  <div class="mm-ver" data-build="0.9.123.4">v0.9.123</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -8096,9 +8169,9 @@ body:not(.is-demo) .demo-only{display:none !important}
 
 <!-- Offline summary modal -->
 <div id="offlineModal" class="modal-back hidden">
-  <div class="modal" style="max-width:420px">
+  <div class="modal" style="max-width:640px">
     <h3><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13a8 8 0 1 1-9-9 6 6 0 0 0 9 9z"/></svg> Welcome Back</h3>
-    <p id="offlineAwayTime" style="font-size:calc(14px*var(--tscale));color:var(--muted);margin-bottom:14px"></p>
+    <div id="offlineAwayTime" class="off-head" style="margin-bottom:16px"></div>
     <div id="offlineSummaryBody" style="margin-bottom:16px"></div>
     <div class="mrow">
       <button class="m-btn primary" onclick="$('offlineModal').classList.add('hidden');renderAll()">Continue</button>
@@ -22394,7 +22467,14 @@ function grantOffline(){
   const offBefore=offlineLevelFromXp(state.offlineXp);
   state.offlineXp+=offXpGained;
   const offAfter=offlineLevelFromXp(state.offlineXp);
-  summary.push({icon:'🌙',label:'Offline Skill',xp:offXpGained,lvlUp:offAfter>offBefore?offAfter:0});
+  /* `sub` and `iconId` are for the Welcome Back panel. It draws a two-line row —
+     what happened, then which thing it happened to — so a label like
+     "Fishing — Catch salmon" no longer has to be split back apart at render time.
+     `iconId` is anything iconHTML() knows, which is the painted art; the emoji in
+     `icon` stays as the fallback for rows that are not a skill. */
+  summary.push({icon:'🌙',iconId:'offline',label:'Offline Skill',
+                sub:'Earned no matter what you were doing',
+                xp:offXpGained,lvlUp:offAfter>offBefore?offAfter:0});
 
   /* 1b. Offline combat (0.9.122) — the fight you left running.
      Resolved BEFORE the skill-action award, because combat and skilling have
@@ -22405,8 +22485,9 @@ function grantOffline(){
   try{ _offCombat=offlineCombatResolve(away, om); }catch(e){ _offCombat=null; }
   if(_offCombat && _offCombat.kills>0){
     const _its=Object.keys(_offCombat.items).map(function(id){ return {id:id, qty:_offCombat.items[id]}; });
-    summary.push({icon:'\u2694', label:'Offline Combat \u2014 '+_offCombat.mon+' \u00d7'+_offCombat.kills
-                    +(_offCombat.capped?' (capped \u2014 '+_offCombat.wanted.toLocaleString()+' possible)':''),
+    summary.push({icon:'\u2694', iconId:'ui_sword', label:'Offline Combat',
+                  sub:_offCombat.mon+' \u00d7'+_offCombat.kills.toLocaleString()
+                    +(_offCombat.capped?' \u00b7 capped, '+_offCombat.wanted.toLocaleString()+' were possible':''),
                   xp:_offCombat.xp, items:_its});
     if(_offCombat.capped && typeof toast==='function')
       toast('\u2694 Offline combat capped at '+OFFLINE_COMBAT_MAX_KILLS.toLocaleString()
@@ -22414,7 +22495,7 @@ function grantOffline(){
     if(_offCombat.ranOut && typeof toast==='function')
       toast('\ud83c\udf56 Ran out of food \u2014 the fight stopped early.');
   } else if(_offCombat && _offCombat.ranOut){
-    summary.push({icon:'\ud83c\udf56', label:'Offline Combat \u2014 out of food', xp:0});
+    summary.push({icon:'\ud83c\udf56', iconId:'hitpoints', label:'Offline Combat', sub:'Stopped early \u2014 you ran out of food', xp:0});
   }
   const _fought = !!(_offCombat && _offCombat.kills>0);
 
@@ -22456,7 +22537,9 @@ function grantOffline(){
           gained.sort((a,b)=> (b.rare-a.rare) || (b.qty-a.qty));
           summary.push({
             icon:SKILLS[skill].icon,
-            label:SKILLS[skill].name+' — '+act.name,
+            iconId:skill,
+            label:SKILLS[skill].name,
+            sub:act.name,
             xp:xpEarned,
             items:gained,
             lvlUp:after>before?after:0
@@ -22479,9 +22562,16 @@ function grantOffline(){
     const cycles2=Math.floor(away/(ms2/om.rate));
     if(cycles2>0){
       const before2=levelFromXp(state.xp[bonus]);
+      /* The XP this awards was never recorded, so the row reached the panel with
+         an empty value column next to four rows that had one — it read as missing
+         data rather than as a bonus. Same before/after diff the main action uses;
+         it also means totalXp finally counts these hours. */
+      const xpBefore2=state.xp[bonus];
       completeAction(bestAct,bonus,cycles2);
       const after2=levelFromXp(state.xp[bonus]);
-      summary.push({icon:SKILLS[bonus].icon, label:SKILLS[bonus].name+' (bonus)', lvlUp:after2>before2?after2:0});
+      summary.push({icon:SKILLS[bonus].icon, iconId:bonus, label:SKILLS[bonus].name,
+                    sub:'Dual-skill bonus — '+bestAct.name,
+                    xp:state.xp[bonus]-xpBefore2, lvlUp:after2>before2?after2:0});
     }
   }
 
@@ -22493,7 +22583,8 @@ function grantOffline(){
       const bonus=Math.round(state.xp[sk]*om.allSkillXp*(away/3600000));
       if(bonus>0) allBonus+=addSkillXp(sk,bonus);
     }
-    if(allBonus>0) summary.push({icon:'✨',label:'All-Skill XP bonus',xp:allBonus});
+    if(allBonus>0) summary.push({icon:'✨',iconId:'ui_spark',label:'All-Skill XP bonus',
+                                 sub:'Spread across every other skill',xp:allBonus});
   }
 
   state.actionStart=Date.now();
@@ -22530,26 +22621,49 @@ function showOfflineSummary(awayMs, lines, meta){
   const box=$('offlineSummaryBody');
   if(!box){ toast(`Welcome back! Away for ${fmtDur(awayMs)}.`); return; }
 
-  // ── Header: actual away time, cap note (if capped), offline efficiency ──
+  /* ── Header ──
+     Was one grey run-on sentence: "Away 1d 7h · capped at 1d 0h · 30% rate",
+     three unrelated facts in one line at the smallest size on the panel, with the
+     cap repeated in different words in a box 400px further down. The time you were
+     gone is the thing the whole panel is about, so it is now the biggest number
+     here and the two qualifiers are chips beside it that say what they cost you. */
   const eff=Math.round((meta.efficiency||OFFLINE_RATE)*100);
-  let head=`Away <b style="color:var(--text)">${fmtDur(meta.awayRaw||awayMs)}</b>`;
-  if(meta.capped) head+=` · <span style="color:var(--ember)">capped at ${fmtDur(meta.capMs||awayMs)}</span>`;
-  head+=` · <span style="color:var(--blue)">${eff}% rate</span>`;
+  let head='<div class="off-away"><span class="k">You were away</span>'
+    +'<span class="v">'+fmtDur(meta.awayRaw||awayMs)+'</span></div><div class="off-tags">';
+  /* data-tip, not data-tooltip: the styled bubble is a shared rule with an explicit
+     selector list (see "Hover tooltips"), and .off-tag is registered on it.
+     data-tooltip is scoped to .inv-cat alone and would have rendered nothing. */
+  if(meta.capped) head+='<span class="off-tag warn" data-tip="Your offline cap is '
+    +fmtDur(meta.capMs||awayMs)+'. Hours past it earn nothing — raise the cap in the Offline skill tree.">'
+    +'only '+fmtDur(meta.capMs||awayMs)+' counted</span>';
+  head+='<span class="off-tag rate" data-tip="Offline pays a fraction of what the same time pays while you are playing. Levels in the Offline skill raise it.">'
+    +eff+'% of live rate</span></div>';
   $('offlineAwayTime').innerHTML=head;
 
-  // ── Totals strip ──
+  /* ── Totals ── one colour per kind rather than all four green, so the row reads
+     as four different things at a glance instead of one block of numbers. */
   const totals=[
-    {v:'+'+(meta.totalXp||0).toLocaleString(), l:'XP'},
-    {v:(meta.totalLevels||0), l:meta.totalLevels===1?'level':'levels'},
-    {v:'+'+(meta.totalItems||0).toLocaleString(), l:'items'}
+    {v:'+'+(meta.totalXp||0).toLocaleString(), l:'XP', c:(meta.totalXp?'':' zero')},
+    {v:(meta.totalLevels||0), l:meta.totalLevels===1?'level':'levels', c:' lv'+(meta.totalLevels?'':' zero')},
+    {v:'+'+(meta.totalItems||0).toLocaleString(), l:'items', c:' it'+(meta.totalItems?'':' zero')}
   ];
-  if(meta.coinsGained>0) totals.push({v:'+'+fmtCoins(meta.coinsGained,true), l:'gold'});
-  const totHtml=`<div class="off-totals">`+totals.map(t=>
-    `<div class="off-tot"><span class="ot-v">${t.v}</span><span class="ot-l">${t.l}</span></div>`).join('')+`</div>`;
+  /* No leading '+' here: fmtCoins already puts a coin in front, and "+🪙82g"
+     leaves the plus orphaned against the icon. */
+  if(meta.coinsGained>0) totals.push({v:fmtCoins(meta.coinsGained,true), l:'gold', c:' gp'});
+  const totHtml='<div class="off-totals">'+totals.map(t=>
+    '<div class="off-tot'+t.c+'"><span class="ot-v">'+t.v+'</span><span class="ot-l">'+t.l+'</span></div>').join('')+'</div>';
 
-  // ── Per-skill rows ──
+  /* ── Rows ──
+     .offline-row is a THREE-COLUMN GRID now. It never had a container rule at all
+     — only a `:last-child{border-bottom:none}` resetting a border nothing set — so
+     the `flex:1` on the label and the `white-space:nowrap` on the values applied to
+     nothing, and every row rendered as one inline sentence that wrapped mid-number.
+     That is what made the panel hard to read, not the amount of information in it.
+
+     Items belong to their row now (grid-column:1/-1) instead of being a sibling
+     block underneath it, so a row with loot is visibly one thing. */
   const rowsHtml=lines.map(l=>{
-    var itemsHtml='';
+    let itemsHtml='';
     if(l.items&&l.items.length){
       itemsHtml='<div class="offline-items">'+l.items.map(function(it){
         return '<span class="offline-item'+(it.rare?' rare':'')+'">'
@@ -22560,18 +22674,28 @@ function showOfflineSummary(awayMs, lines, meta){
           +'</span>';
       }).join('')+'</div>';
     }
-    return `
-    <div class="offline-row">
-      <span class="offline-icon">${l.icon}</span>
-      <span class="offline-label">${l.label}</span>
-      ${l.xp?`<span class="offline-val">+${l.xp.toLocaleString()} xp</span>`:''}
-      ${l.loot?`<span class="offline-val">${l.loot}</span>`:''}
-      ${l.lvlUp?`<span class="offline-lvlup">→ Lv ${l.lvlUp}!</span>`:''}
-    </div>${itemsHtml}`;
+    /* iconId is the painted art; the emoji is the fallback for the rows that are
+       not a skill (the moon, the crossed swords, the all-skill sparkle). */
+    const ico=(l.iconId&&typeof iconHTML==='function'&&iconHTML(l.iconId))||l.icon||'';
+    const nums=(l.xp?'<span class="offline-val">+'+l.xp.toLocaleString()+' xp</span>':'')
+      +(l.loot?'<span class="offline-val">'+l.loot+'</span>':'')
+      +(l.lvlUp?'<span class="offline-lvlup">Lv '+l.lvlUp+'</span>':'');
+    return '<div class="offline-row">'
+      +'<span class="offline-icon">'+ico+'</span>'
+      +'<span class="offline-name"><b class="offline-label">'+l.label+'</b>'
+        +(l.sub?'<i class="offline-sub">'+l.sub+'</i>':'')+'</span>'
+      +'<span class="offline-nums">'+nums+'</span>'
+      +itemsHtml
+      +'</div>';
   }).join('');
 
-  box.innerHTML=totHtml+`<div class="off-rows">${rowsHtml}</div>`
-    +(meta.capped?`<div class="off-capnote">⏳ You were away longer than your offline cap — gains shown cover the first ${fmtDur(meta.capMs||awayMs)}. Extend it in the Offline skill tree.</div>`:'');
+  box.innerHTML=totHtml
+    +'<div class="off-lab">What you earned</div>'
+    +'<div class="off-rows">'+rowsHtml+'</div>'
+    /* The chip above already carries the number, so this says the part the chip
+       cannot: what it cost and what to do about it. The old note repeated the
+       duration a third time. */
+    +(meta.capped?'<div class="off-capnote">You were away longer than your offline cap, so the hours past it earned nothing. Raise the cap in the <b>Offline</b> skill tree.</div>':'');
   $('offlineModal').classList.remove('hidden');
 }
 

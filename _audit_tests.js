@@ -2191,10 +2191,16 @@ setTimeout(() => {
        ev(`(function(){ state=defaultState(); state.combatSession={monId:'not_a_monster'};
          normalizeState(); return state.combatSession===null; })()`) === true);
 
-    /* The cap must announce itself rather than eating the remainder. */
+    /* The cap must announce itself rather than eating the remainder.
+
+       This used to pin three exact spellings of the phrase, so rewording the
+       Welcome Back row in 0.9.123.4 failed it while the cap was still being
+       reported perfectly. What actually matters is that the word "capped" and the
+       number it swallowed (_offCombat.wanted) reach the player together on one
+       line \u2014 pin that instead, and the assertion survives copy edits but still
+       fails the day someone drops the readout. */
     ok('the kill cap is reported, not silent',
-       /capped \u2014 '\+_offCombat\.wanted/.test(html) || html.indexOf("capped ? ' (capped") >= 0 ||
-       html.indexOf("_offCombat.capped?' (capped") >= 0);
+       /capped[^\n]*_offCombat\.wanted/.test(html));
   }
 
   section('Matched jewelry & the auto-eat readout (0.9.122.2)');
