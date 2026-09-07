@@ -4830,6 +4830,15 @@ body:not(.is-demo) .demo-only{display:none !important}
   background:linear-gradient(178deg,var(--lit-top),var(--lit-bot) 78%);
   border:1px solid var(--trim-d);flex-wrap:wrap;margin-bottom:8px}
 .gd-q.ready{border-color:#7a5a1a}
+/* Two controls where there was one. Skip sits above the main button, quieter, and
+   keeps its place when it is spent so the row does not reflow on use. */
+.gd-qbtns{display:flex;flex-direction:column;align-items:stretch;gap:4px;flex:none}
+.gd-skip{font-family:var(--num);font-size:calc(10.5px*var(--tscale));letter-spacing:.04em;
+  background:transparent;border:1px solid var(--trim-d);border-radius:6px;color:var(--dim,#8a7657);
+  padding:3px 10px;cursor:var(--cur-pointer)}
+.gd-skip:hover:not(.off){border-color:var(--trim);color:var(--gold-hi,#f0c772)}
+.gd-skip.off{opacity:.35;cursor:var(--cur-na)}
+.gd-skip:focus-visible{outline:2px solid var(--trim);outline-offset:1px}
 .gd-q.done{border-color:#4a6a2a;background:linear-gradient(178deg,#1e2a10,#141a0a 78%);opacity:.72}
 .gd-qt{flex:1;min-width:150px}
 .gd-qt b{display:block;font-family:'Cinzel',serif;font-size:calc(14.5px*var(--tscale));
@@ -7361,7 +7370,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.122.40">v0.9.122</div>
+  <div class="mm-ver" data-build="0.9.122.41">v0.9.122</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -8806,6 +8815,19 @@ const ITEMS={
   sealed_letter:  {name:'Sealed Letter',  icon:'\U0001f4dc',sell:2600, hot:true, desc:'The wax is broken and the seal is still legible. Somebody will pay to read it and somebody else will pay more not to.'},
   pocket_watch:   {name:'Pocket Watch',   icon:'\u231a',sell:5200, hot:true, desc:'Gold cased, still wound, still keeping time. Its owner is walking around not yet knowing.'},
   jewelled_dagger:{name:'Jewelled Dagger',icon:'\U0001f5e1\ufe0f',sell:11000,hot:true, rare:true, desc:'Gems in the pommel, no nicks in the edge \u2014 a blade worn to be seen rather than used. Worth more than the hand it came off.'},
+
+  /* Six more stolen goods (0.9.122.41). Each is a PLACE rather than a person: a
+     shrine, the docks, a manor, the barracks, the counting house, a palace. They
+     exist because the Nightmarket board asks for stolen goods and nothing else now,
+     and six items could not carry a whole board on their own. Gated high in the
+     hot3/hot4 pools, so the board gets richer as you climb rather than wider on
+     day one. */
+  silver_censer:   {name:'Silver Censer',    icon:'⚱️',sell:3400, hot:true, rare:true, desc:'Lifted from a shrine while the incense was still burning. The chain is worth more than the bowl.'},
+  smuggler_ledger: {name:"Smuggler's Ledger",icon:'\U0001f4d2',sell:4800, hot:true, rare:true, desc:'Dock accounts kept in a private shorthand. Half the harbour would pay to have it, and the other half to have it burned.'},
+  heirloom_locket: {name:'Heirloom Locket',  icon:'\U0001f4ff',sell:7500, hot:true, rare:true, desc:"A manor piece with somebody's grandmother painted inside. It will be missed, which is exactly why it moves quietly."},
+  officers_sabre:  {name:"Officer's Sabre",  icon:'\U0001f5e1️',sell:12000, hot:true, rare:true, desc:'Taken off a barracks wall between watches. Parade steel, gold at the guard, never once drawn in anger.'},
+  bankers_seal:    {name:"Banker's Seal",    icon:'\U0001f4ee',sell:19000, hot:true, rare:true, desc:'The counting house stamps every note with this. Whoever holds it can write one nobody thinks to question.'},
+  crown_shard:     {name:'Shard of a Crown', icon:'\U0001f451',sell:30000, hot:true, rare:true, desc:'A cut corner of something that used to sit on a head. Nobody is going to ask where the rest of it went.'},
 
   /* Lockpicks. Same six-tier shape as every other skilling tool; the SHOP entries
      below carry the bonuses and the Crafting recipes make them. */
@@ -12818,6 +12840,12 @@ const ICON_ALIAS={
      0.9.122.32 and now lives in the item-art block, which is checked first.
      Delete a line here the moment its sheet lands. */
   spet_thieving:'spet_agility',
+  /* The six stolen goods added in 0.9.122.41. Each borrows the nearest painted thing
+     of the same kind, so a Smuggler's Ledger looks like a ledger rather than an emoji.
+     _iconart/PROMPTS-stolen.md has the sheet. */
+  silver_censer:'silver_plate',    smuggler_ledger:'drowned_ledger',
+  heirloom_locket:'drowned_locket', officers_sabre:'steel_sword',
+  bankers_seal:'coin_signet',       crown_shard:'warchief_crown',
 };
 function iconHTML(id){
   if(ICONS[id]) return _icoUniq(ICONS[id]);
@@ -19815,8 +19843,11 @@ const THIEF_POOLS={
      carries. Thieving level alone decides which purse you can reach. */
   hot1:  {skill:null, tiers:[[1,'cut_purse']]},
   hot2:  {skill:null, tiers:[[1,'cut_purse'],[25,'silver_plate']]},
-  hot3:  {skill:null, tiers:[[1,'silver_plate'],[45,'signet_ring'],[55,'sealed_letter']]},
-  hot4:  {skill:null, tiers:[[1,'signet_ring'],[70,'sealed_letter'],[80,'pocket_watch'],[92,'jewelled_dagger']]},
+  hot3:  {skill:null, tiers:[[1,'silver_plate'],[45,'signet_ring'],[55,'sealed_letter'],
+                             [58,'silver_censer'],[66,'smuggler_ledger']]},
+  hot4:  {skill:null, tiers:[[1,'signet_ring'],[70,'sealed_letter'],[74,'heirloom_locket'],
+                             [80,'pocket_watch'],[82,'officers_sabre'],[88,'bankers_seal'],
+                             [92,'jewelled_dagger'],[95,'crown_shard']]},
 };
 
 /* Everything in a pool the player has legitimately unlocked. */
@@ -23778,10 +23809,13 @@ function gdRollOne(g,size){
 
   const roll=Math.random();
   if(g.buysAnything){
-    /* It takes coin and it takes goods, and the goods come from anywhere. Laps
-       stay on the board — they are still what the guild trains — but they are no
-       longer the only thing it can ask for. */
-    const pool=gdBuyerPool();
+    /* Stolen goods, gold, and the stealing itself. Nothing else.
+
+       It used to draw from every skill in the game, so a thieves' guild would ask a
+       thief to bring it a gravesteel sword: something you can only make at a forge,
+       described on the board as though you had stolen it. Jordan: "forcing crafting
+       or combat is kinda lame". Twelve stolen goods and a purse now. */
+    const pool=gdHotPool();
     if(roll<0.22){ const q=gdRollCoin(g,size); if(q) return q; }
     if(roll<0.48){ const q=gdRollSupply(pool,size,'Sell',skill); if(q) return q; }
     if(roll<0.72){ const q=gdRollDeliver(pool,size,'Sell',skill); if(q) return q; }
@@ -23996,9 +24030,14 @@ function gdSkip(id,idx){
   const g=GD_BY[id], r=gdRec(id); if(!g||!r) return;
   if(r.skipped>=1){ toast('One skip a day per guild.'); return; }
   const q=r.q[idx]; if(!q||q.done) return;
-  for(let tries=0;tries<8;tries++){
+  /* The dedupe skipped index `idx` itself, so a reroll was allowed to land on the
+     quest it was replacing — you spent your one skip for the day and the board did
+     not change. Rare when the pool was every item in the game; not rare now the
+     Nightmarket draws from twelve stolen goods. Compare against the whole board,
+     this row included. */
+  for(let tries=0;tries<12;tries++){
     const nq=gdRollOne(g,q.size);
-    if(nq && !r.q.some((o,i)=>i!==idx&&o.name===nq.name)){ r.q[idx]=nq; break; }
+    if(nq && !r.q.some(o=>o.name===nq.name)){ r.q[idx]=nq; break; }
   }
   r.skipped++;
   renderAll(); saveGame();
@@ -24324,7 +24363,10 @@ function _gdGuildPage(id){
     else if(takes&&ready){ btn='Hand in'; cls=' pri'; }
     else if(takes){ btn='Need '+amt(q.need-held)+' more'; cls=' off'; }
     else if(ready){ btn='Claim'; cls=' pri'; }
-    else { btn='Skip'; cls=r.skipped>=1?' off':''; }
+    else { btn='Not yet'; cls=' off'; }
+    /* Skip is its own control now. It used to share the button slot, which meant it
+       only ever showed on the one branch that had nothing else to say. */
+    const canSkip = !q.done && r.skipped<1;
     /* A supply order's single progress bar cannot say WHICH half you are short of,
        so each line gets its own chip. data-item picks up the shared satchel card. */
     const chips=(q.kind==='supply')
@@ -24349,12 +24391,16 @@ function _gdGuildPage(id){
       +'<div class="gd-qr"><span class="rw rep">'+S.rep+' rep</span>'
       +(xp?'<span class="rw xp">'+fmtK(xp)+' xp</span>':'')
       +'<span class="rw tok">'+S.tok+' tok</span></div>'
-      +'<button class="gd-btn'+cls+'"'+((q.done||(cls===' off'&&btn!=='Skip'))?' disabled':'')+'>'+btn+'</button>';
+      +'<div class="gd-qbtns">'
+      +(q.done?'':'<button class="gd-skip'+(canSkip?'':' off')+'"'+(canSkip?'':' disabled')
+        +' data-tip="'+(canSkip?'Swap this one for a different quest.&#10;One a day, per guild.'
+                               :'You have already skipped one today.')+'">Skip</button>')
+      +'<button class="gd-btn'+cls+'"'+((q.done||cls===' off')?' disabled':'')+'>'+btn+'</button>'
+      +'</div>';
     const b=row.querySelector('.gd-btn');
-    if(!q.done){
-      if(btn==='Skip'){ if(r.skipped<1) b.addEventListener('click',()=>gdSkip(id,i)); else b.disabled=true; }
-      else if(ready) b.addEventListener('click',()=>gdClaim(id,i));
-    }
+    if(!q.done && ready) b.addEventListener('click',()=>gdClaim(id,i));
+    const sk=row.querySelector('.gd-skip');
+    if(sk && canSkip) sk.addEventListener('click',()=>gdSkip(id,i));
     left.appendChild(row);
   });
 
