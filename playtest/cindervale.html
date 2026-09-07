@@ -4871,33 +4871,32 @@ body:not(.is-demo) .demo-only{display:none !important}
   display:flex;flex-direction:column;gap:7px;min-width:0}
 .gd-item .st b{font-family:'Cinzel',serif;font-size:calc(13.5px*var(--tscale));
   color:var(--gold-hi);line-height:1.2}
-/* The counter (0.9.122.42). One row per kind of stolen thing you are holding, the
-   price this guild pays for it, and what the general store would have given you. */
-.gd-sell{display:flex;flex-direction:column;gap:6px}
+/* The counter (0.9.122.42, rebuilt 0.9.122.43). Twelve full-width rows under the
+   quests made the whole panel scroll, so it sits in the right column under the
+   titles -- which had nothing below the sixth rank but empty space -- as a grid of
+   small cards two across. */
+.gd-sellgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+@media (max-width:1100px){ .gd-sellgrid{grid-template-columns:1fr} }
 .gd-sell-none{font-family:var(--num);font-size:calc(12px*var(--tscale));color:var(--dim,#8a7657);
   padding:10px 12px;background:var(--raised);border:1px solid var(--trim-d);border-radius:8px;font-style:italic}
-.gd-sellrow{display:flex;align-items:center;gap:11px;padding:8px 12px;border-radius:8px;
-  background:var(--raised);border:1px solid var(--trim-d)}
-/* .gd-btn is width:100% because every other place it appears is the only thing in
-   its column. Here it shares a row with a name and a price, so it has to stop
-   eating both of them. */
-.gd-sellrow .gd-btn{width:auto;flex:none;padding:5px 18px}
-.gd-sellrow .ic{font-size:calc(26px*var(--tscale));line-height:1;flex:none}
-.gd-sellrow .nm{flex:1 1 auto;min-width:9em;font-family:'Cinzel',serif;
-  font-size:calc(13.5px*var(--tscale));color:var(--gold-hi);display:flex;flex-direction:column;
-  line-height:1.15}
-.gd-sellrow .nm i{font-family:var(--num);font-style:normal;font-size:calc(10.5px*var(--tscale));
+.gd-sellcard{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;
+  background:var(--raised);border:1px solid var(--trim-d);min-width:0}
+.gd-sellcard .ic{font-size:calc(22px*var(--tscale));line-height:1;flex:none}
+.gd-sellcard .nm{flex:1;min-width:0;font-family:'Cinzel',serif;font-size:calc(12px*var(--tscale));
+  color:var(--gold-hi);display:flex;flex-direction:column;line-height:1.15;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gd-sellcard .nm i{font-family:var(--num);font-style:normal;font-size:calc(9.5px*var(--tscale));
   color:var(--dim,#8a7657)}
-.gd-sellrow .pr{font-family:var(--num);font-size:calc(12px*var(--tscale));color:var(--text);
-  text-align:right;flex:none;display:flex;flex-direction:column;white-space:nowrap;
-  align-items:flex-end}
-.gd-sellrow .pr .now{white-space:nowrap}
-.gd-sellrow .pr i{font-style:normal;font-size:calc(10px*var(--tscale));color:var(--dim,#8a7657);
-  white-space:nowrap}
+.gd-sellcard .pr{font-family:var(--num);font-size:calc(11px*var(--tscale));color:var(--text);
+  text-align:right;flex:none;display:flex;flex-direction:column;align-items:flex-end;white-space:nowrap}
+.gd-sellcard .pr b{font-weight:400}
+.gd-sellcard .pr i{font-style:normal;font-size:calc(9px*var(--tscale));color:var(--dim,#8a7657)}
+/* .gd-btn is width:100% because everywhere else it is the only thing in its column. */
+.gd-sellcard .gd-btn{width:auto;flex:none;padding:4px 11px;font-size:calc(11.5px*var(--tscale))}
 .gd-sellall{display:flex;align-items:center;justify-content:space-between;gap:10px;
-  padding:8px 12px;font-family:var(--num);font-size:calc(11.5px*var(--tscale));
+  padding:8px 2px 0;font-family:var(--num);font-size:calc(11px*var(--tscale));
   color:var(--dim,#8a7657)}
-.gd-sellall .gd-btn{width:auto;flex:none;padding:6px 16px}
+.gd-sellall .gd-btn{width:auto;flex:none;padding:6px 14px}
 .gd-item .sd{font-family:var(--num);font-size:calc(10.5px*var(--tscale));
   color:var(--dim,#8a7657);line-height:1.5}
 /* The lock line sits under the description now rather than replacing it, so it needs
@@ -7397,7 +7396,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.122.42">v0.9.122</div>
+  <div class="mm-ver" data-build="0.9.122.43">v0.9.122</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -24446,60 +24445,6 @@ function _gdGuildPage(id){
     left.appendChild(row);
   });
 
-  /* ── the counter, for a guild that buys ── */
-  if(g.buysAnything){
-    const hot=Object.keys(ITEMS).filter(function(i){
-      return ITEMS[i].hot && (state.items[i]||0)>0; })
-      .sort(function(a,b){ return effectiveItemSell(b)-effectiveItemSell(a); });
-    const total=hot.reduce(function(t,i){ return t+nightmarketSell(i)*(state.items[i]||0); },0);
-    /* The multiplier is the whole reason to rank up, so say it rather than leaving
-       the player to compare two numbers in two panels. */
-    const mult=Math.round(hotSellMult()*100);
-    left.appendChild(_gdEl('gd-lab','<span>Sell stolen goods</span><span class="rt">'
-      +(mult>=100?'paying full price':'paying '+mult+'% · ranks raise it')+'</span>'));
-    const sellBox=_gdEl('gd-sell');
-    if(!hot.length){
-      sellBox.appendChild(_gdEl('gd-sell-none','Nothing stolen in your satchel right now.'));
-    } else {
-      hot.forEach(function(iid){
-        const have=state.items[iid]||0;
-        const each=nightmarketSell(iid), store=effectiveItemSell(iid);
-        const row=_gdEl('gd-sellrow');
-        /* Each price gets its own span. .pr is a flex column, so the coin icon that
-           fmtCoins returns became a row of its own and the word "each" wrapped
-           underneath it. */
-        row.innerHTML='<span class="ic" data-item="'+iid+'">'+iconHTML(iid)+'</span>'
-          +'<span class="nm">'+ITEMS[iid].name+'<i>'+have.toLocaleString()+' held</i></span>'
-          +'<span class="pr"><span class="now">'+fmtCoins(each,true)+' each</span>'
-          +(each>store?'<i>the store pays '+fmtCoins(store,true)+'</i>':'')+'</span>'
-          +'<button class="gd-btn pri">Sell</button>';
-        row.querySelector('.gd-btn').addEventListener('click',function(){
-          openSellModal(iid, each, have);
-        });
-        sellBox.appendChild(row);
-      });
-      const all=_gdEl('gd-sellall');
-      all.innerHTML='<span>'+hot.length+' kind'+(hot.length===1?'':'s')+' in the satchel</span>'
-        +'<button class="gd-btn pri">Sell the lot for '+fmtCoins(total,true)+'</button>';
-      all.querySelector('.gd-btn').addEventListener('click',function(){
-        let got=0, n=0;
-        hot.forEach(function(iid){
-          const q=state.items[iid]||0; if(q<=0) return;
-          const each=nightmarketSell(iid);
-          bagTake(iid,q); releaseIfGone(iid);
-          got+=each*q; n+=q;
-        });
-        if(got>0){
-          state.coins+=got; showCoinPop(got);
-          toast('Sold '+n+' stolen item'+(n===1?'':'s')+' for '+fmtCoins(got)+'.');
-          saveGame(); renderAll();
-        }
-      });
-      sellBox.appendChild(all);
-    }
-    left.appendChild(sellBox);
-  }
-
   /* ── shop ── */
   left.appendChild(_gdEl('gd-lab','<span>Shop</span><span class="rt">'
     +fmtK(state.gdTokens||0)+' tokens</span>'));
@@ -24532,6 +24477,57 @@ function _gdGuildPage(id){
       +'<div class="v">'+(have?'&#10003;':now?pct+'%':'locked')+'</div>'));
   }
   right.appendChild(list);
+
+  /* ── the counter, for a guild that buys ── */
+  if(g.buysAnything){
+    const hot=Object.keys(ITEMS).filter(function(i){
+      return ITEMS[i].hot && (state.items[i]||0)>0; })
+      .sort(function(a,b){ return nightmarketSell(b)-nightmarketSell(a); });
+    const total=hot.reduce(function(t,i){ return t+nightmarketSell(i)*(state.items[i]||0); },0);
+    /* The multiplier is the whole reason to rank up, so say it rather than leaving
+       the player to compare two numbers in two panels. */
+    const mult=Math.round(hotSellMult()*100);
+    right.appendChild(_gdEl('gd-lab','<span>Sell stolen goods</span><span class="rt">'
+      +(mult>=100?'paying full price':'paying '+mult+'% \u00b7 ranks raise it')+'</span>'));
+    if(!hot.length){
+      right.appendChild(_gdEl('gd-sell-none','Nothing stolen in your satchel right now.'));
+    } else {
+      const grid=_gdEl('gd-sellgrid');
+      hot.forEach(function(iid){
+        const have=state.items[iid]||0;
+        const each=nightmarketSell(iid), store=effectiveItemSell(iid);
+        const card=_gdEl('gd-sellcard');
+        card.innerHTML='<span class="ic" data-item="'+iid+'">'+iconHTML(iid)+'</span>'
+          +'<span class="nm">'+ITEMS[iid].name+'<i>'+have.toLocaleString()+' held</i></span>'
+          +'<span class="pr"><b>'+fmtCoins(each,true)+'</b>'
+          +(each>store?'<i>store '+fmtCoins(store,true)+'</i>':'')+'</span>'
+          +'<button class="gd-btn pri">Sell</button>';
+        card.querySelector('.gd-btn').addEventListener('click',function(){
+          openSellModal(iid, each, have);
+        });
+        grid.appendChild(card);
+      });
+      right.appendChild(grid);
+      const all=_gdEl('gd-sellall');
+      all.innerHTML='<span>'+hot.length+' kind'+(hot.length===1?'':'s')+' held</span>'
+        +'<button class="gd-btn pri">Sell the lot for '+fmtCoins(total,true)+'</button>';
+      all.querySelector('.gd-btn').addEventListener('click',function(){
+        let got=0, n2=0;
+        hot.forEach(function(iid){
+          const q=state.items[iid]||0; if(q<=0) return;
+          const each=nightmarketSell(iid);
+          bagTake(iid,q); releaseIfGone(iid);
+          got+=each*q; n2+=q;
+        });
+        if(got>0){
+          state.coins+=got; showCoinPop(got);
+          toast('Sold '+n2+' stolen item'+(n2===1?'':'s')+' for '+fmtCoins(got)+'.');
+          saveGame(); renderAll();
+        }
+      });
+      right.appendChild(all);
+    }
+  }
 
   two.appendChild(left); two.appendChild(right);
   wrap.appendChild(two);
