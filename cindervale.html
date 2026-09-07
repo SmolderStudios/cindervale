@@ -7645,7 +7645,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.123.6">v0.9.123</div>
+  <div class="mm-ver" data-build="0.9.123.7">v0.9.123</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -18298,7 +18298,7 @@ function normalizeState(){
      validation as slot 0, applied per entry, because a slot naming a deleted act
      would be dereferenced identically by grantOffline. */
   if(!Array.isArray(state.offlineSlots)) state.offlineSlots=[];
-  state.offlineSlots.length=Math.min(state.offlineSlots.length,2);
+  state.offlineSlots.length=Math.min(state.offlineSlots.length,3);
   for(let _i=0;_i<state.offlineSlots.length;_i++){
     const _s=state.offlineSlots[_i];
     if(!_s || typeof _s!=='object' || !SKILLS[_s.skill] || !getAct(_s.skill,_s.actId)) state.offlineSlots[_i]=null;
@@ -19122,7 +19122,20 @@ function offlineLevelFromXp(xp){
    everything the actions produced. `slots` is how many actions the stance runs;
    Divided's per-slot rate is DIVIDED_TOTAL/slots, so a third thread buys breadth
    rather than throughput. */
-const OFFLINE_DIVIDED_TOTAL = 1.20;   // Phantom Worker raises this, see offlineMods
+/* THE INVARIANT. Offline must never beat sitting there and playing, on any axis,
+   under any stance, at any point in the tree. Nothing else in this file is allowed
+   to break it: every rate and every yield goes through the two clamps below.
+
+   It is not enough for each SLOT to be under 1.0. Active play trains one skill for
+   an hour, so the fair comparison is everything offline produced in that hour added
+   together. Divided running three threads at 45% is 135% of a live hour, which is
+   how the first cut of this shipped: xp 1.35x live, materials 2.21x. Night Forager
+   was 2.36x materials, and even Steady was 1.23x because Scavenger's +64% was never
+   measured against the rate it multiplied.
+
+   0.95 rather than 1.0 so it is visibly a ceiling and not a tie. */
+const OFFLINE_ACTIVE_CAP = 0.95;
+const OFFLINE_DIVIDED_TOTAL = 1.20;
 const OFFLINE_STANCES=[
   {id:'steady',   name:'Steady',            node:null,         slots:1, mult:1,    capMult:1,   xp:true,  yield:1,
    gather:false, blurb:'One skill, all night, at your full offline rate.',
@@ -19153,7 +19166,7 @@ function offlineStance(){
 function offlineSlotCount(){
   const st=offlineStance();
   if(st.id!=='divided') return st.slots;
-  return 2+(offlineTreeRank('of_slot3')>0?1:0);
+  return 2+(offlineTreeRank('of_slot3')>0?1:0)+(offlineTreeRank('of_master3')>0?1:0);
 }
 /* Slot 0 stays in state.offlineConfig — every existing reader, and three shipped
    regressions, address it by that name and there is nothing to gain from moving
@@ -19195,8 +19208,8 @@ const OFFLINE_TREE=[
     next:()=>'2.5× materials, no xp at all',
     tip:'Unlocks Night Forager: work one gathering skill for its output alone. Two and a half times the materials, and not one point of xp.'},
   {id:'of_loot',   name:'Scavenger',     max:8, req:6, tier:'How the night is spent',
-    desc:r=>`Offline gathering output +${r*8}%`, next:r=>`+8% → ${r*8}%`,
-    tip:'More of everything a gathering skill brings back while you are away — logs, ore, fish, herbs. Stacks with Night Forager. Output only, never xp.'},
+    desc:r=>`Night Forager brings back +${r*8}% more`, next:r=>`+8% → ${r*8}%`,
+    tip:'More of everything Night Forager brings back: logs, ore, fish, herbs. Does nothing under any other stance, and never affects xp. Offline output is capped below live play, so what this really buys is how much of that ceiling a night of foraging reaches.'},
   /* ── Tier 3 (req 14) ── */
   {id:'of_deep',   name:'Dead to the World',max:1,req:14, stance:'deep', tier:'Deeper still',
     desc:r=>r?'The Dead to the World stance — 135%, half the cap':'Unlocks the Dead to the World stance',
@@ -19205,7 +19218,7 @@ const OFFLINE_TREE=[
   {id:'of_slot3',  name:'Third Thread',  max:1, req:14, tier:'Deeper still',
     desc:r=>r?'Divided runs a third skill':'Divided gains a third slot',
     next:()=>'Divided: 3 skills instead of 2',
-    tip:'Divided runs three skills instead of two. The total rate does not change, so this buys breadth rather than speed — three skills creeping instead of two.'},
+    tip:'Divided runs three skills instead of two. The shared rate does not change, so this buys breadth rather than speed: three skills creeping instead of two.'},
   {id:'of_multi',  name:'Restless Mind', max:10,req:14, tier:'Deeper still',
     desc:r=>`All-skill XP trickle +${r*2}% while away`, next:r=>`+2% → ${r*2}%`,
     tip:'Every skill you are NOT training gains a share of what it would have earned had you trained it instead — its best unlocked action, at your offline rate. XP only, no items.'},
@@ -19219,9 +19232,9 @@ const OFFLINE_TREE=[
     next:()=>'Cap: at least 48h',
     tip:'Raises the banking cap to 48 hours. Stacks with Extended Rest in the sense that whichever is higher wins — it is a floor on the cap, not an addition to it.'},
   {id:'of_master3',name:'Phantom Worker',max:1, req:24, tier:'Masters',
-    desc:r=>r?'Divided shares 180% instead of 120%':'Divided shares 180% of your rate',
-    next:()=>'Divided total: 120% → 180%',
-    tip:'The Divided stance shares 180% of your offline rate between its slots instead of 120%. Does nothing at all unless you run Divided.'},
+    desc:r=>r?'Divided runs a fourth skill':'Divided gains a fourth slot',
+    next:()=>'Divided: 4 skills instead of 3',
+    tip:'A fourth thread for Divided. Breadth again, not speed: offline output is capped below live play whatever you do, so the only thing left to buy up here is how many skills share it.'},
   /* ── Grandmaster (req 34) — deep investment, and offline never reaches 100% ── */
   {id:'of_gm_rate',name:'Apex Sleeper',  max:6, req:34, gm:true, tier:'Grandmaster',
     desc:r=>`Efficiency +${r*2.5}% (grandmaster)`, next:r=>`+2.5% → extra ${r*2.5}%`,
@@ -19262,19 +19275,25 @@ function offlineMods(){
   const xpRate    = OFFLINE_XP_RATE * (1 + r('of_xp')*0.08 + r('of_gm_xp')*0.12) * XP_SCALE;
   const allSkillXp= r('of_multi')*0.02;
   const lootBonus = r('of_loot')*0.08;
-  /* Divided shares one budget between its slots, so a third thread is breadth and
-     not throughput. Phantom Worker is the only thing that raises the budget. */
-  const dividedTotal = OFFLINE_DIVIDED_TOTAL + (r('of_master3')>0?0.60:0);
+  /* One budget, shared. Phantom Worker used to raise it to 180%, which sailed
+     straight past OFFLINE_ACTIVE_CAP and so bought a maxed account nothing at all:
+     the clamp ate the whole boost. It adds a fourth thread instead, which is the
+     one thing the cap leaves room for. */
+  const dividedTotal = OFFLINE_DIVIDED_TOTAL;
   return {rate:flooredRate, capHours, xpRate, allSkillXp, lootBonus, dividedTotal,
           ceiling:EFFICIENCY_CEIL};
 }
-/* The rate a given slot actually trains at, stance included. Divided splits its
-   budget; everything else is a flat multiplier on the offline rate. */
-function offlineSlotRate(){
+/* Everything the stance produces per hour, added up across its slots, as a
+   fraction of a live hour. This is the number the invariant clamps, and every
+   other rate in the skill is derived from it. */
+function offlineTotalRate(){
   const om=offlineMods(), st=offlineStance();
-  if(st.id==='divided') return om.rate*(om.dividedTotal/offlineSlotCount());
-  return om.rate*(st.mult||1);
+  const raw = st.id==='divided' ? om.rate*om.dividedTotal : om.rate*(st.mult||1);
+  return Math.min(raw, OFFLINE_ACTIVE_CAP);
 }
+/* One slot's share. Divided splits the budget, so a fourth thread is breadth and
+   never throughput; every other stance has one slot and takes all of it. */
+function offlineSlotRate(){ return offlineTotalRate()/Math.max(1,offlineSlotCount()); }
 /* Banked hours after the stance has had its say. Dead to the World halves it. */
 function offlineCapMs(){
   return offlineMods().capHours*3600000*(offlineStance().capMult||1);
@@ -19286,8 +19305,19 @@ function offlineCapMs(){
 function offlineYieldMult(skillKey){
   const st=offlineStance();
   let mult=st.yield||1;
-  if(typeof IS_GATHER!=='undefined' && IS_GATHER[skillKey]) mult+=offlineMods().lootBonus;
-  return mult;
+  /* Scavenger is Night Forager's node, not a general one. Applied to every stance
+     it pushed Steady's materials to the same cap Night Forager reaches, and a
+     stance that pays no xp for exactly the materials you were already getting is
+     not a trade, it is a worse Steady. Conditional, like Phantom Worker under
+     Divided, and the tooltip says so. */
+  if(!st.xp && typeof IS_GATHER!=='undefined' && IS_GATHER[skillKey]) mult+=offlineMods().lootBonus;
+  /* The same invariant, on the other axis. Materials per hour are rate x yield, so
+     a 2.5x stance on top of a 75% rate is 1.9x live and Night Forager becomes the
+     best way to gather in the game. Headroom is whatever the rate has not already
+     used, which also means the trade is worth most early, when the rate is low and
+     there is room to trade into. */
+  const total=offlineTotalRate();
+  return total>0 ? Math.min(mult, OFFLINE_ACTIVE_CAP/total) : mult;
 }
 
 /* ════════ [JS-15] PERSISTENCE — localStorage save / load ════════════════════════ */
@@ -33254,7 +33284,7 @@ function renderAchievements(){
    Two tabs: TONIGHT (the stance, the threads, and what you will come back to) and
    THE TREE. Session-local, because it is a view preference and not character data. */
 let _ofpTab='tonight';
-let _ofpPick=[null,null,null];   // which skill each thread's chip row is showing
+let _ofpPick=[null,null,null,null];   // which skill each thread's chip row is showing
 /* Which thread is expanded. Three open at once ran the panel to 1900px on a 1062px
    screen, so the preview underneath — the whole reason for the tab — was below the
    fold and nobody would ever have scrolled to it. One at a time; -1 is all shut. */
@@ -33369,13 +33399,21 @@ function buildTonight(body, redraw){
     const on=st.id===stance.id;
     /* The rate line is the whole comparison, so it is stated the same way for all
        four: what one slot gets, and how many slots there are. */
-    const n=st.id==='divided'?(2+(offlineTreeRank('of_slot3')>0?1:0)):st.slots;
-    const each=st.id==='divided'?(om.dividedTotal/n):(st.mult||1);
+    /* Read through the same clamps the award uses, by asking the live functions
+       with the stance temporarily swapped in. A card that computed its own numbers
+       would print the pre-clamp rate, which is exactly the sort of number that
+       makes a player think a stance was nerfed silently. */
+    const _was=state.offlineStance;
+    state.offlineStance=st.id;
+    const n=offlineSlotCount(), total=offlineTotalRate(), each=total/n;
+    const ym=offlineYieldMult('woodcutting');
+    state.offlineStance=_was;
     /* Per-slot share AND the total. "20% each x3" beside Steady's "50%" reads as a
        downgrade until you add it up, which is exactly the sum a stance card exists
        to save you doing. */
-    const rt=(st.id==='scavenge'?'no xp · ':'')
-      +Math.round(om.rate*each*100)+'%'+(n>1?' each ×'+n+' · '+Math.round(om.rate*each*n*100)+'% total':'')
+    const rt=(st.id==='scavenge'
+        ? 'no xp · '+(ym>1.005?Math.round(ym*10)/10+'× materials':'materials only')
+        : Math.round(each*100)+'%'+(n>1?' each ×'+n+' · '+Math.round(total*100)+'% total':''))
       +(st.capMult!==1?' · half the cap':'');
     const card=_ofpEl('button','ofp-st'+(on?' on':'')+(unlocked?'':' locked'),
       '<b>'+st.name+'</b><span class="rt">'+rt+'</span>'

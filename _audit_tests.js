@@ -2350,15 +2350,22 @@ setTimeout(() => {
     /* of_loot was computed in offlineMods and then used ONLY to colour a preview
        string; it never reached the award, so six points of Scavenger bought a
        bigger number on a label and nothing in the satchel. */
-    const plain  = night('steady', {}, [W], 12);
-    const looted = night('steady', {of_loot:8}, [W], 12);
+    /* Tested under Night Forager, which is the only stance it applies to now: on
+       every stance it pushed Steady to the same material ceiling Forager reaches,
+       and a stance that gives up all its xp for materials you were already getting
+       is not a trade. Ranks are compared at a LOW efficiency, because the ceiling
+       clamp binds at a maxed tree and would flatten both sides to the same number. */
+    const plain  = night('scavenge', {of_scav:1},            [W], 12);
+    const looted = night('scavenge', {of_scav:1, of_loot:8}, [W], 12);
     const sum = o => Object.values(o).reduce((a,b)=>a+b,0);
     ok('Scavenger ranks reach the satchel, not just the preview text',
        sum(looted.items) > sum(plain.items),
        JSON.stringify({plain: sum(plain.items), looted: sum(looted.items)}));
+    const lootedSteady = night('steady', {of_loot:8}, [W], 12);
+    const plainSteady  = night('steady', {},          [W], 12);
     ok('and it is output only — the xp is untouched',
-       looted.xp.woodcutting === plain.xp.woodcutting,
-       JSON.stringify({plain: plain.xp.woodcutting, looted: looted.xp.woodcutting}));
+       lootedSteady.xp.woodcutting === plainSteady.xp.woodcutting,
+       JSON.stringify({plain: plainSteady.xp.woodcutting, looted: lootedSteady.xp.woodcutting}));
 
     // ── a stance you have not unlocked cannot be worn ──
     const sneaky = night('divided', {}, [W, M], 12);
@@ -2366,6 +2373,70 @@ setTimeout(() => {
        !sneaky.xp.mining, JSON.stringify(sneaky.xp));
 
     ev('demoXpCap=' + _capFn + ';');
+
+    /* ── THE INVARIANT: offline never beats sitting there and playing ──
+       Swept rather than spot-checked, because the first cut of the stances passed
+       every spot-check that existed and still shipped Divided at 1.35x live xp and
+       Night Forager at 2.36x live materials. The mistake was comparing a SLOT to a
+       live hour: active play trains one skill for that hour, so the honest
+       comparison is everything offline produced added together.
+
+       720 tree configurations, four stances, both axes. Nothing throws when this
+       breaks; the game just quietly becomes one you win by closing. */
+    const sweep = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      var worstXp=0, worstIt=0, whereXp='', whereIt='', n=0;
+      var rates=[0,1,2,3,4,5,6,8,10,12];
+      for(var a=0;a<rates.length;a++)
+      for(var g=0;g<=6;g+=3)
+      for(var l=0;l<=8;l+=4)
+      for(var pk=0;pk<=1;pk++)
+      for(var s3=0;s3<=1;s3++)
+      for(var m3=0;m3<=1;m3++){
+        var t={of_rate:rates[a], of_gm_rate:g, of_loot:l, of_gm_peak:pk,
+               of_slot3:s3, of_master3:m3, of_divided:1, of_deep:1, of_scav:1,
+               of_master1:1, of_master2:1, of_gm_cap:1};
+        state.tree._offline=t;
+        for(var i=0;i<OFFLINE_STANCES.length;i++){
+          state.offlineStance=OFFLINE_STANCES[i].id;
+          n++;
+          var tot=offlineTotalRate();
+          var items=tot*offlineYieldMult('woodcutting');
+          if(tot>worstXp){ worstXp=tot; whereXp=OFFLINE_STANCES[i].id+' '+JSON.stringify(t); }
+          if(items>worstIt){ worstIt=items; whereIt=OFFLINE_STANCES[i].id+' '+JSON.stringify(t); }
+        }
+      }
+      return JSON.stringify({checked:n, cap:OFFLINE_ACTIVE_CAP,
+        worstXp:Math.round(worstXp*1e4)/1e4, whereXp:whereXp,
+        worstItems:Math.round(worstIt*1e4)/1e4, whereIt:whereIt});
+    })()`));
+    ok('no stance, anywhere in the tree, out-earns live play on xp',
+       sweep.worstXp <= sweep.cap + 1e-9,
+       sweep.worstXp + ' of ' + sweep.cap + ' across ' + sweep.checked + ' builds · worst: ' + sweep.whereXp);
+    ok('nor on materials',
+       sweep.worstItems <= sweep.cap + 1e-9,
+       sweep.worstItems + ' of ' + sweep.cap + ' · worst: ' + sweep.whereIt);
+    /* And the cap itself has to stay under 1.0, or the two assertions above are
+       true and meaningless. */
+    ok('and the cap is a ceiling, not a tie with live play',
+       sweep.cap < 1, 'OFFLINE_ACTIVE_CAP = ' + sweep.cap);
+
+    /* Night Forager has to stay a TRADE. It was briefly dominated: Scavenger
+       applied to every stance, so Steady reached the same material ceiling while
+       still paying full xp, and a stance that forfeits xp for materials you were
+       already getting is just a worse Steady. */
+    const forage = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      var t={}; OFFLINE_TREE.forEach(function(n){ t[n.id]=n.max; });
+      state.tree._offline=t;
+      function axes(id){ state.offlineStance=id;
+        var r=offlineTotalRate();
+        return {xp:r, items:r*offlineYieldMult('woodcutting')}; }
+      return JSON.stringify({steady:axes('steady'), forager:axes('scavenge')});
+    })()`));
+    ok('Night Forager still out-gathers Steady at a maxed tree',
+       forage.forager.items > forage.steady.items * 1.15,
+       JSON.stringify({steady: forage.steady.items, forager: forage.forager.items}));
 
     /* ── static: no native dropdown may return to this panel ──
        Chromium renders <select> as an OS popup window and Wine/Proton never draws
