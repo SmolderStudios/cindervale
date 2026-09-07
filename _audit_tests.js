@@ -2203,6 +2203,55 @@ setTimeout(() => {
        /capped[^\n]*_offCombat\.wanted/.test(html));
   }
 
+  section('Restless Mind is a trickle, not a multiplier (0.9.123.5)');
+  {
+    /* of_multi paid `state.xp[sk] * 0.16 * hoursAway` to every other skill — a
+       percentage of ACCUMULATED xp, so the reward grew with the size of the save
+       rather than with the content. Maxed, one 24h absence was worth 3.84x each
+       skill's entire lifetime total. Measured before the fix: every skill at Lv 60
+       came back at Lv 97, and a Lv 80 account gained 331 million xp in one login.
+       Sixteen points reaches it — about 18 hours of offline — so it was not a
+       late-game trap, it was the whole game.
+
+       Nothing threw and no harness noticed, because a number being far too large is
+       not an error. These assertions are the shape of the thing: a trickle must not
+       move your level in a night, and it must not scale with what you have already
+       banked. */
+    /* Same reason as the guild-shop block below: this harness boots with no user
+       agent, so IS_DEMO is true and addSkillXp clamps every skill to the level-10
+       demo cap — every award here would read as 0 and the assertions would pass
+       for entirely the wrong reason. Lift it for this block, put it back after. */
+    const _realCapFn = ev('String(demoXpCap)');
+    ev('demoXpCap=function(){ return XP_CAP; };');
+
+    const away = (skillLvl, ranks, hours) => JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      for(var k in SKILLS) state.xp[k]=XP_CUM[${skillLvl}];
+      state.tree._offline={of_multi:${ranks}};
+      state.action=null; state.offlineConfig=null; state.combatSession=null;
+      var before=state.xp.woodcutting, l0=levelFromXp(before);
+      state.lastSeen=Date.now()-${hours}*3600000;
+      grantOffline();
+      return JSON.stringify({gain:state.xp.woodcutting-before, from:l0,
+                             to:levelFromXp(state.xp.woodcutting)}); })()`));
+
+    const mid = away(60, 8, 24);
+    ok('a maxed trickle does not move a mid-game skill a whole level overnight',
+       mid.to === mid.from, JSON.stringify(mid));
+    ok('but it does pay something',
+       mid.gain > 0, mid.gain + ' xp per skill over 24h');
+
+    /* The proof it is off accumulated xp: the old formula's award was strictly
+       proportional to state.xp, so a Lv80 account earned ~4x a Lv60 one from the
+       same night. Content-based, the two land within an order of magnitude. */
+    const high = away(80, 8, 24);
+    ok('the payout tracks content, not the size of the save',
+       high.gain < mid.gain * 6, JSON.stringify({lv60: mid.gain, lv80: high.gain}));
+
+    ok('and no rank means no trickle', away(60, 0, 24).gain === 0);
+    ev('demoXpCap=' + _realCapFn + ';');
+  }
+
   section('Matched jewelry & the auto-eat readout (0.9.122.2)');
   {
     /* Player-reported: "I made a second sapphire ring which stacked with the first.

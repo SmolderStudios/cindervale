@@ -7491,7 +7491,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.123.4">v0.9.123</div>
+  <div class="mm-ver" data-build="0.9.123.5">v0.9.123</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -18929,7 +18929,7 @@ const OFFLINE_TREE=[
   // ── Mid tier ──
   {id:'of_multi',  name:'Restless Mind', max:8, req:8,
     desc:r=>`All-skill XP trickle +${r*2}% while away`, next:r=>`+2% → ${r*2}%`,
-    tip:'Every OTHER skill (not the one you are actively training offline) gains a small passive XP trickle based on its current total XP. Rewards a broadly-leveled account.'},
+    tip:'Every OTHER skill gains a share of what it would have earned had you trained it offline instead — its best unlocked action, at your offline rate. XP only, no items.'},
   {id:'of_loot',   name:'Scavenger',     max:6, req:12,
     desc:r=>`Gathering output while offline +${r*8}%`, next:r=>`+8% → ${r*8}%`,
     tip:'Boosts the quantity of items produced by gathering skills (mining, woodcutting, fishing, foraging) during offline training. Does not affect XP, only item yield.'},
@@ -22575,12 +22575,35 @@ function grantOffline(){
     }
   }
 
-  // 4. All-skill XP bonus (of_multi node)
+  /* 4. All-skill XP trickle (of_multi node).
+
+     THIS WAS A PERCENTAGE OF ACCUMULATED XP PER HOUR, which made it by far the
+     strongest thing in the game and got worse the more you played. Maxed
+     (8 ranks = 16%/hr) it paid `state.xp[sk] * 0.16 * hoursAway` to EVERY other
+     skill — 3.84x each skill's entire lifetime total for a single 24h absence.
+     Measured: an account with every skill at Lv 60 came back from one night at
+     Lv 97, and one at Lv 80 gained 331 million xp across thirteen skills in a
+     single login. Sixteen points reaches it, which is about 18 hours of total
+     offline time, so it was not even a late-game trap.
+
+     It pays a share of what that skill WOULD have earned training offline now —
+     the same best-unlocked-action basis the dual-skill bonus uses. That is
+     bounded by content instead of by your own history, so the node is worth the
+     same to a Lv 60 account as to a Lv 99 one, which is what a trickle should be.
+     XP only; the items stay with whatever you actually chose to train. */
   if(om.allSkillXp>0){
     let allBonus=0;
+    const _hours=away/3600000;
     for(const sk in SKILLS){
       if(state.action&&state.action.skill===sk) continue; // already handled above
-      const bonus=Math.round(state.xp[sk]*om.allSkillXp*(away/3600000));
+      const _acts=SKILLS[sk].acts;
+      if(!_acts||!_acts.length) continue;                 // farming has no acts
+      const _lvl=levelFromXp(state.xp[sk]||0);
+      const _best=[..._acts].reverse().find(a=>a.lvl<=_lvl)||_acts[0];
+      const _ms=actMs(_best,sk);
+      if(!(_ms>0)) continue;
+      const _xph=(_best.xp*(3600000/_ms))*mods(sk).xpMult*om.rate;
+      const bonus=Math.round(_xph*_hours*om.allSkillXp);
       if(bonus>0) allBonus+=addSkillXp(sk,bonus);
     }
     if(allBonus>0) summary.push({icon:'✨',iconId:'ui_spark',label:'All-Skill XP bonus',
