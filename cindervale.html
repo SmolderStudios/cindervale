@@ -4009,6 +4009,17 @@ body:not(.is-demo) .demo-only{display:none !important}
 
 /* ── right column ── */
 .sl-side{display:flex;flex-direction:column;gap:8px;min-height:0}
+/* Fallback for a column too short to hold the deck AND the drawer at once. The
+   deck is flex:0 0 auto and the drawer strip is flex:none, so the only thing that
+   could give was .sl-sidebody — it collapsed to 0px and then the Last trip / Haul
+   / Island / Ship strip itself was pushed out under the bottom edge, with no
+   scrollbar anywhere to say so (player ticket #72). sailSqueeze() measures the
+   real heights and hangs this class on when they will not fit: one scrollbar for
+   the whole column, so everything stays reachable. Above that height nothing
+   changes and Set sail still never scrolls away. */
+.sl-side.squeeze{overflow-y:auto;padding-right:2px;
+  scrollbar-width:thin;scrollbar-color:#2c4d5e #0a141d}
+.sl-side.squeeze .sl-sidebody{flex:none;overflow:visible;padding-right:0}
 .sl-seg{display:flex;gap:4px;flex:none;background:#0a141d;border:1px solid #2c4d5e;
   border-radius:8px;padding:4px}
 .sl-seg button{flex:1;padding:6px 8px;border-radius:5px;border:1px solid transparent;
@@ -7407,7 +7418,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.123.2">v0.9.123</div>
+  <div class="mm-ver" data-build="0.9.123.3">v0.9.123</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -9362,6 +9373,14 @@ const ITEMS={
      see the note in the sailing module about why they stay out of SHOP/gear. */
   spet_sailing: {sea:1, name:'Storm Petrel',      icon:'🐦',sell:0, rare:true, nosell:true, desc:"Followed the ship home from water that had no business holding birds. It sleeps in the rigging and screams before weather. +5% treasure find."},
   cape_sailing: {sea:1, name:'Sailing Cape',      icon:'🧭',sell:0, rare:true, nosell:true, desc:"Given at Emberwatch to the handful who have sailed everything there is to sail. Salt-stiff, and the hem has been repaired more than once. +5% Sailing XP · +10% treasure find · +1 berth · −25% crew wages."},
+
+  /* ── Radcliff's Tally (0.9.123.3) ────────────────────────────────────────────
+     Named for the playtester who filed eighty reports before anyone else filed
+     ten — the seed vault that quietly broke Plant All, twenty-two dishes shelved
+     under Potions, a sailing drawer squeezed off the bottom of a short window.
+     Carries no bonus and never sells; see awardRadcliffTally() for how it is
+     earned. It is a thank-you, not a reward, and it should not read as one. */
+  radcliff_tally:   {name:"Radcliff's Tally",  icon:'🪵',sell:0, rare:true, nosell:true, desc:"A peeled hazel stick, notched once for every fault someone bothered to name out loud. Radcliff kept the first one. The notches run most of its length and he has started a second."},
 
   /* ─── Sea materials (0.9.66) — 24 bespoke drops, six per archipelago, pulled up
      on voyages and obtainable nowhere else. These replace the old three-per-island
@@ -12823,6 +12842,11 @@ const ICONS = {
   sl_crew: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="slr_c" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7fa4b4"/><stop offset="1" stop-color="#2c4653"/></linearGradient><linearGradient id="slr_c2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c9a55e"/><stop offset="1" stop-color="#5c4319"/></linearGradient></defs><ellipse cx="32" cy="57" rx="20" ry="2.8" fill="#000" opacity="0.4"/><circle cx="20" cy="20" r="7" fill="#d8c49c"/><path d="M20 28q-9 0-11 9l-1 15h24l-1-15q-2-9-11-9z" fill="url(#slr_c)"/><circle cx="44" cy="22" r="6.4" fill="#c9b494"/><path d="M44 29q-8 0-10 8l-1 15h22l-1-15q-2-8-10-8z" fill="url(#slr_c2)"/><path d="M12 18q3-6 8-6t8 6q-4-2-8-2t-8 2z" fill="#3e2f18"/><path d="M37 19q3-5 7-5t7 5z" fill="#2c4653"/><circle cx="17.5" cy="20" r="1" fill="#2a2018"/><circle cx="22.5" cy="20" r="1" fill="#2a2018"/><circle cx="41.6" cy="22" r="0.9" fill="#2a2018"/><circle cx="46.4" cy="22" r="0.9" fill="#2a2018"/></svg>',
   spet_sailing: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="spt_b" x1="0" y1="0" x2="0.4" y2="1"><stop offset="0" stop-color="#e9eff3"/><stop offset="0.45" stop-color="#8fa4b0"/><stop offset="1" stop-color="#3a4a55"/></linearGradient><radialGradient id="spt_g" cx="0.5" cy="0.5" r="0.6"><stop offset="0" stop-color="#a9d8ea" stop-opacity="0.35"/><stop offset="1" stop-color="#a9d8ea" stop-opacity="0"/></radialGradient></defs><circle cx="32" cy="30" r="26" fill="url(#spt_g)"/><path d="M6 50q10-4 20 0q10 4 20 0q6-2 12 0" stroke="#6d9ab2" stroke-width="1.8" fill="none" opacity="0.5" stroke-linecap="round"/><path d="M30 22q-12-8-22-2 8 2 12 8-10 0-14 6 10 0 16 4 4 2 8 2t8-4q6-6 14-8-8-4-16 0 4-8 0-12-4 2-6 6z" fill="url(#spt_b)" stroke="#2c3a44" stroke-width="0.7"/><ellipse cx="38" cy="26" rx="9" ry="7" fill="url(#spt_b)"/><circle cx="43" cy="24" r="4.6" fill="#f0f5f8"/><circle cx="44.4" cy="23.4" r="1.5" fill="#1c242a"/><circle cx="44.9" cy="22.9" r="0.5" fill="#fff"/><path d="M47.5 25.5l6 1.6-6 1.8z" fill="#e0a558"/><path d="M32 32q2 6 8 7" stroke="#2c3a44" stroke-width="0.8" fill="none" opacity="0.5"/><path d="M40 33l-1 6 3-1z" fill="#e0a558"/></svg>',
   cape_sailing: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="slcp_c" x1="0.15" y1="0" x2="0.85" y2="1"><stop offset="0" stop-color="#4e8ba4"/><stop offset="0.4" stop-color="#26506a"/><stop offset="1" stop-color="#0d1e2c"/></linearGradient><linearGradient id="slcp_t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f0d894"/><stop offset="1" stop-color="#8a6a2e"/></linearGradient><radialGradient id="slcp_g" cx="0.5" cy="0.35" r="0.6"><stop offset="0" stop-color="#8fd0e6" stop-opacity="0.3"/><stop offset="1" stop-color="#8fd0e6" stop-opacity="0"/></radialGradient></defs><circle cx="32" cy="30" r="27" fill="url(#slcp_g)"/><path d="M22 12h20l10 12-4 34H18l-4-34z" fill="url(#slcp_c)" stroke="#0a1620" stroke-width="0.9"/><path d="M24 14l-3 44M32 13v45M40 14l3 44" stroke="#12324a" stroke-width="1" opacity="0.6"/><path d="M22 12h20l10 12H12z" fill="url(#slcp_t)" opacity="0.9"/><path d="M22 12h20l1.6 2H20.4z" fill="#fbeaba" opacity="0.7"/><circle cx="32" cy="36" r="9" fill="none" stroke="url(#slcp_t)" stroke-width="1.6"/><path d="M32 28.5l2.6 6.4L32 43l-2.6-8.1z" fill="url(#slcp_t)"/><path d="M23 36h4M37 36h4" stroke="url(#slcp_t)" stroke-width="1.3"/><circle cx="32" cy="36" r="1.4" fill="#fbeaba"/></svg>',
+  /* Radcliff's Tally (0.9.123.3) - a peeled hazel stick, notched once for every
+     fault someone bothered to name. Diagonal like the bone icons it shares a shelf
+     with, but warmer wood and a leather thong at the butt so the two never read as
+     the same object in a 20px row. */
+  radcliff_tally: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="rt_w" x1="0.05" y1="0" x2="1" y2="0.35"><stop offset="0" stop-color="#d9b877"/><stop offset="0.38" stop-color="#96723d"/><stop offset="0.78" stop-color="#543c1c"/><stop offset="1" stop-color="#2b1d0c"/></linearGradient><linearGradient id="rt_cut" x1="0" y1="0" x2="1" y2="0.4"><stop offset="0" stop-color="#fbeec2"/><stop offset="1" stop-color="#8d6c3a"/></linearGradient><linearGradient id="rt_thong" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9a5b28"/><stop offset="1" stop-color="#38200e"/></linearGradient><radialGradient id="rt_g" cx="0.5" cy="0.5" r="0.55"><stop offset="0" stop-color="#e8bd57" stop-opacity="0.40"/><stop offset="1" stop-color="#e8bd57" stop-opacity="0"/></radialGradient></defs><circle cx="32" cy="32" r="28" fill="url(#rt_g)"/><g transform="translate(32 32) rotate(38)"><path d="M -5.5 -30 Q -9.5 -30 -9.5 -25 L -9.5 25 Q -9.5 30 -5.5 30 L 5.5 30 Q 9.5 30 9.5 25 L 9.5 22.4 L 1.5 19 L 9.5 15.6 L 9.5 12.9 L 1.5 9.5 L 9.5 6.1 L 9.5 3.4 L 1.5 0 L 9.5 -3.4 L 9.5 -6.1 L 1.5 -9.5 L 9.5 -12.9 L 9.5 -15.6 L 1.5 -19 L 9.5 -22.4 L 9.5 -25 Q 9.5 -30 5.5 -30 Z" fill="url(#rt_w)" stroke="#150d05" stroke-width="1.7" stroke-linejoin="round"/><path d="M 9.5 -15.6 L 1.5 -19 L 9.5 -22.4 Z M 9.5 -6.1 L 1.5 -9.5 L 9.5 -12.9 Z M 9.5 3.4 L 1.5 0 L 9.5 -3.4 Z M 9.5 12.9 L 1.5 9.5 L 9.5 6.1 Z M 9.5 22.4 L 1.5 19 L 9.5 15.6 Z " fill="url(#rt_cut)" opacity="0.72"/><path d="M -5 -24 L -5 24" stroke="#f0d7a0" stroke-width="3" opacity="0.34" stroke-linecap="round"/><path d="M -1.5 -21 L -1.5 21" stroke="#1e1408" stroke-width="1.3" opacity="0.34"/><path d="M -11 19 H 11 M -11 24 H 11" stroke="url(#rt_thong)" stroke-width="3.9" stroke-linecap="round"/></g></svg>',
   /* Shipwright materials — sea-only, gating the top four hulls. */
   salt_iron: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="si_m" x1="0" y1="0" x2="0.3" y2="1"><stop offset="0" stop-color="#b9c6cc"/><stop offset="0.45" stop-color="#6e828c"/><stop offset="1" stop-color="#2c3a42"/></linearGradient><linearGradient id="si_t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#dde8ec"/><stop offset="1" stop-color="#8fa3ac"/></linearGradient></defs><ellipse cx="32" cy="55" rx="20" ry="3" fill="#000" opacity="0.4"/><path d="M14 30h36l6 12H8z" fill="url(#si_m)" stroke="#1e2a30" stroke-width="0.9"/><path d="M14 30h36l1.6 3.4H12.4z" fill="url(#si_t)"/><path d="M18 24h28l4 6H14z" fill="url(#si_m)" stroke="#1e2a30" stroke-width="0.8"/><path d="M18 24h28l1.2 2.4H16.8z" fill="url(#si_t)" opacity="0.9"/><path d="M20 36l3 3M28 35l2.6 3M38 36l3 3M46 35l2.4 3" stroke="#1e2a30" stroke-width="0.8" opacity="0.5"/><circle cx="17" cy="41" r="2.6" fill="#e6f0f2" opacity="0.85"/><circle cx="24" cy="44" r="1.7" fill="#e6f0f2" opacity="0.7"/><circle cx="45" cy="43" r="2.2" fill="#e6f0f2" opacity="0.8"/><circle cx="52" cy="40" r="1.5" fill="#e6f0f2" opacity="0.65"/><circle cx="36" cy="45" r="1.3" fill="#e6f0f2" opacity="0.6"/><circle cx="30" cy="28" r="1.6" fill="#dff0f4" opacity="0.75"/><circle cx="42" cy="27" r="1.1" fill="#dff0f4" opacity="0.6"/></svg>',
   krakenbone: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="kb_b" x1="0.2" y1="0" x2="0.8" y2="1"><stop offset="0" stop-color="#f2ece0"/><stop offset="0.4" stop-color="#cfc6b2"/><stop offset="0.8" stop-color="#8e8574"/><stop offset="1" stop-color="#4e483d"/></linearGradient><radialGradient id="kb_g" cx="0.5" cy="0.5" r="0.6"><stop offset="0" stop-color="#8fd0c6" stop-opacity="0.3"/><stop offset="1" stop-color="#8fd0c6" stop-opacity="0"/></radialGradient></defs><circle cx="32" cy="32" r="25" fill="url(#kb_g)"/><ellipse cx="32" cy="57" rx="16" ry="2.6" fill="#000" opacity="0.38"/><path d="M20 8q-8 4-6 12t10 10q8 4 10 12t-6 14q10-2 14-10t-2-18q-6-8-12-10t-8-10z" fill="url(#kb_b)" stroke="#3e392f" stroke-width="0.8"/><path d="M22 12q-4 4-2 8t8 8" stroke="#fffbf2" stroke-width="1.4" fill="none" opacity="0.55" stroke-linecap="round"/><ellipse cx="18" cy="10" rx="6" ry="5" fill="url(#kb_b)" stroke="#3e392f" stroke-width="0.8"/><ellipse cx="16.5" cy="9" rx="2.4" ry="2" fill="#fffbf2" opacity="0.6"/><ellipse cx="34" cy="54" rx="7" ry="5.5" fill="url(#kb_b)" stroke="#3e392f" stroke-width="0.8"/><ellipse cx="32" cy="52.5" rx="2.6" ry="2" fill="#fffbf2" opacity="0.55"/><path d="M28 26q4 2 6 6" stroke="#6e675a" stroke-width="0.8" fill="none" opacity="0.6"/><circle cx="46" cy="22" r="1.2" fill="#a8e0d4" opacity="0.6"/></svg>',
@@ -16460,7 +16484,12 @@ function renderFarming(){
     var planted=0;
     PATCHES.forEach(function(p){
       if(!patchUnlocked(p.id)||getPatchState(p.id)) return;
-      if((state.items[sel.id]||0)<1) return;
+      /* seedQty, NOT state.items. Seeds moved into their own vault (state.seeds)
+         and normalizeState empties them out of the satchel on every load, so this
+         count was permanently 0 and Plant All skipped every patch — with 142 seeds
+         in hand and eight empty beds it just said "Could not plant any patches",
+         while planting them one at a time worked fine (player tickets #73-#75). */
+      if(seedQty(sel.id)<1) return;
       if(plantPatch(p.id, sel.id, true)) planted++;
     });
     renderFarming(); saveGame();
@@ -18446,6 +18475,36 @@ function bagTake(id, n){
   }
   return took;
 }
+
+/* ── what the cooking fire touches ────────────────────────────────────────────
+   Both category maps — the satchel's itemCat() and the Collection Log's
+   itemCompCat() — filed food by the id prefix `cooked_`, which only ever matched
+   the eight cooked fish. Every roast, jerky, stew, biscuit and prized fish
+   carries potion.heal, so 22 of the 30 dishes in the game fell through to the
+   Potions bucket and a player looking for dinner had to search the alchemy shelf
+   (player ticket #76). Reading the cooking table instead means a recipe added
+   later is filed right the day it lands, prefix or no prefix.
+
+   Inputs get the same treatment. Raw meat, bones and the prized raw fish had no
+   bucket at all and sat in the catch-all; they share the raw-fish tab now, which
+   is why it is called Raw Ingredients (player ticket #78). Anything an earlier
+   rule already claims — rock salt and gull eggs are Sea materials — keeps that
+   home, because those rules run first.
+
+   Built once on first use: the hunt-zone dishes are spliced into SKILLS.cooking
+   .acts by an IIFE at load, so this must not be evaluated before boot finishes. */
+let _cookSets=null;
+function _cookSetsInit(){
+  const out=new Set(), inp=new Set();
+  const acts=(typeof SKILLS!=='undefined'&&SKILLS.cooking&&SKILLS.cooking.acts)||[];
+  for(const a of acts){
+    for(const id in (a.out||{})) out.add(id);
+    for(const id in (a.inp||{})) inp.add(id);
+  }
+  _cookSets={out:out, inp:inp};
+}
+function isCookedFood(id){ if(!_cookSets) _cookSetsInit(); return _cookSets.out.has(id); }
+function isCookIngredient(id){ if(!_cookSets) _cookSetsInit(); return _cookSets.inp.has(id); }
 
 function canAddToSatchel(id){
   // Check if there's room OR the item already has a stack (just adding qty, not a new slot)
@@ -26979,7 +27038,7 @@ function renderInventory(){
       +`<path d="M22 38 L42 38" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/>`
       +`<path d="M16 44 Q16 58 32 58 Q48 58 48 44" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/>`),
   };
-  const catTitles={all:'All Items',gear:'Combat Gear',logs:'Logs',ores:'Ores & Coal',fish:'Raw Fish',cooked:'Cooked Food',bars:'Smelted Bars',forage:'Foraged Plants',farm:'Farming Produce',jewelry:'Jewelry',gems:'Gems & Shards',fire:'Firemaking Outputs',potions:'Potions & Elixirs',sea:'Sea Materials',skilling_gear:'Skilling Gear',crafted_gear:'Combat Gear'};
+  const catTitles={all:'All Items',gear:'Combat Gear',logs:'Logs',ores:'Ores & Coal',fish:'Raw Ingredients',cooked:'Cooked Food',bars:'Smelted Bars',forage:'Foraged Plants',farm:'Farming Produce',jewelry:'Jewelry',gems:'Gems & Shards',fire:'Firemaking Outputs',potions:'Potions & Elixirs',sea:'Sea Materials',skilling_gear:'Skilling Gear',crafted_gear:'Combat Gear'};
   const catEl=document.createElement('div'); catEl.className='inv-cats';
   for(const cat of cats){
     const b=document.createElement('button');
@@ -27003,13 +27062,14 @@ function renderInventory(){
        would otherwise be swallowed by the generic suffix rules below, and 24 new
        ids landing in 'misc' makes the satchel unusable. */
     if(ITEMS[id]&&ITEMS[id].sea) return 'sea';
-    // Cooked fish carry potion.heal (1.0.21) but still belong in the Food tab,
-    // so this prefix check must precede the generic potion bucket below.
-    if(id.startsWith('cooked_')) return 'cooked';
+    // Cooked food carries potion.heal (1.0.21) but belongs in the Food tab, so
+    // this must precede the generic potion bucket below. See isCookedFood().
+    if(isCookedFood(id)) return 'cooked';
     if(ITEMS[id]&&ITEMS[id].potion) return 'potions';
     if(id.endsWith('_log')||id==='ancient_log') return 'logs';
     if(id.endsWith('_ore')||id==='coal') return 'ores';
-    if(id.startsWith('raw_')) return 'fish';
+    // Raw Ingredients — raw fish plus everything else a cooking recipe eats.
+    if(id.startsWith('raw_')||isCookIngredient(id)) return 'fish';
     if(id.endsWith('_bar')) return 'bars';
     // gems — includes rare gem drops from mining
     if(['sapphire','emerald','ruby','diamond','amethyst','dragon_gem','bloodstone','void_crystal','void_shard','gem_dust','pearl','abyssal_scale','arcane_dust','mana_essence','rune_fragment','cut_sapphire','cut_emerald','cut_ruby','cut_diamond','cut_amethyst','cut_dragon','cut_bloodstone','cut_void'].includes(id)) return 'gems';
@@ -31203,6 +31263,13 @@ function itemUseKind(id){
   if(typeof PETS!=='undefined'){
     for(const z in PETS) if(PETS[z]&&PETS[z].id===id) return 'pet';
   }
+  /* A keepsake is not vendor trash. Nothing consumes Radcliff's Tally and no
+     recipe names it, so without this it fell to 'none' and the tooltip told you
+     to sell an item with sell:0 and nosell:true — advice that is both wrong and
+     impossible to follow. Deliberately the LAST test, so everything that already
+     classifies keeps its answer: a nosell cape still reads 'equip', a familiar
+     still reads 'pet'. */
+  if(it.nosell) return 'keepsake';
   return 'none';
 }
 function buildUsageMap(){
@@ -31431,6 +31498,9 @@ function showItemTooltip(itemId, x, y, note){
   } else if(!usages.length && _useKind==='none'){
     html+=`<div style="margin-top:5px;padding-top:5px;border-top:1px solid #3a2a17;font-size:calc(13px*var(--tscale));color:#7da33f">`
        +`Nothing uses this — sell it.</div>`;
+  } else if(!usages.length && _useKind==='keepsake'){
+    html+=`<div style="margin-top:5px;padding-top:5px;border-top:1px solid #3a2a17;font-size:calc(13px*var(--tscale));color:#a08a64">`
+       +`Nothing uses this, and it cannot be sold. It is yours to keep.</div>`;
   }
   if(usages.length){
     html+=`<div style="margin-top:5px;padding-top:5px;border-top:1px solid #3a2a17;font-size:calc(12px*var(--tscale));color:#a08a64;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">Used in</div>`;
@@ -31704,7 +31774,7 @@ const COMP_CATEGORIES=[
   {id:'all',   label:'All'},
   {id:'logs',  label:'Logs',        ico:'pine_log'},
   {id:'ores',  label:'Ores',        ico:'copper_ore'},
-  {id:'fish',  label:'Fish',        ico:'raw_trout'},
+  {id:'fish',  label:'Ingredients', ico:'raw_trout'},
   {id:'cooked',label:'Food',        ico:'cooked_trout'},
   {id:'bars',  label:'Bars',        ico:'bronze_bar'},
   {id:'forage',label:'Plants',      ico:'dewleaf'},
@@ -31736,14 +31806,16 @@ function itemCompCat(id){
      nothing (voidwood, driftwood, wrack_timber) gets misfiled as a log. */
   if(it.sea) return 'sea';
   if(it.skillGear) return 'skilling_gear';
-  /* Cooked food is checked BEFORE the generic potion bucket. Every cooked fish
-     carries potion:{heal:N}, so with `it.potion` first all 8 of them filed as
-     potions and the Cooked tab was permanently empty. */
-  if(id.startsWith('cooked_')) return 'cooked';
+  /* Cooked food is checked BEFORE the generic potion bucket. Every dish carries
+     potion:{heal:N}, so with `it.potion` first they file as potions. The test used
+     to be the id prefix `cooked_`, which matched the eight cooked fish and nothing
+     else — see isCookedFood(). */
+  if(isCookedFood(id)) return 'cooked';
   if(it.potion) return 'potions';
   if(id.endsWith('_log')||id==='ancient_log') return 'logs';
   if(id.endsWith('_ore')||id==='coal') return 'ores';
-  if(id.startsWith('raw_')) return 'fish';
+  // Raw Ingredients — raw fish plus everything else a cooking recipe eats.
+  if(id.startsWith('raw_')||isCookIngredient(id)) return 'fish';
   if(id.endsWith('_bar')) return 'bars';
   if(['sapphire','emerald','ruby','diamond','amethyst','dragon_gem','bloodstone','void_crystal','void_shard','gem_dust','pearl','abyssal_scale','arcane_dust','mana_essence','rune_fragment','cut_sapphire','cut_emerald','cut_ruby','cut_diamond','cut_amethyst','cut_dragon','cut_bloodstone','cut_void'].includes(id)) return 'gems';
   if(id.endsWith('_ring')||id.endsWith('_amulet')||id.endsWith('_pendant')||id.endsWith('_jewel')) return 'jewelry';
@@ -39393,6 +39465,35 @@ function sailFit(){
     const h=parseFloat(wrap.style.height)||SAIL_MIN_H;
     wrap.style.height=Math.max(SAIL_MIN_H, Math.round(h-over/z-1))+'px';
   }
+  sailSqueeze();
+}
+
+/* Minimum drawer body worth keeping — below this the section under the tabs shows
+   a line and a half and reads as broken anyway. */
+const SAIL_DRAWER_MIN=104;
+/* The Voyage column is two regions and the deck deliberately does not scroll,
+   which is right whenever the column is tall enough for both. When it is not —
+   a short window, an interface scale turned up, or a fitted height that came out
+   smaller than the deck — the drawer was silently squeezed out of existence
+   rather than growing a scrollbar. Measure it instead of guessing a breakpoint:
+   the class goes off first so the deck is always measured at its natural height,
+   which keeps repeated calls idempotent. Tabs with no deck (Shipyard, Crew,
+   Relics, Admiralty) already work — their body is the only flexible child — so
+   they are left alone. */
+function sailSqueeze(){
+  const p=$('sailPanel'); if(!p) return;
+  const side=p.querySelector('.sl-side'); if(!side) return;
+  side.classList.remove('squeeze');
+  if(!side.querySelector('.sl-deck')) return;
+  const body=side.querySelector('.sl-sidebody'); if(!body) return;
+  /* Sum every fixed child above the scrolling body rather than naming them: the
+     tab strip, the deck and the drawer tabs are all flex:none, and a row added
+     later is then counted for free. offsetHeight, not getBoundingClientRect —
+     clientHeight below is unzoomed and the two must be in the same space. */
+  const GAP=8;
+  let above=0;
+  for(const el of side.children){ if(el===body) break; above+=el.offsetHeight+GAP; }
+  if(above+SAIL_DRAWER_MIN>side.clientHeight) side.classList.add('squeeze');
 }
 
 function sailViewport(){
@@ -40754,10 +40855,23 @@ function renderSail(){
         html+='</div>';
       }
       if(!sailHasConsort()){
+        /* The Consort sub-tab only appears in the yard from ten levels out, so
+           below that this card was telling you to go and do something the yard
+           does not offer — with nothing on screen saying why (player ticket #80).
+           Name the level instead, and only point at the Shipyard once the berth
+           is actually there to be found. */
+        const clv=sailLvl(), yardHas=clv>=SAIL_CONSORT_LV-10;
         html+='<div class="sl-card"><div class="sl-cardhd"><div><h4>A second hull</h4>'
-          +'<div class="sl-metarow"><span class="sl-chip mut">two voyages at once</span></div></div></div>'
+          +'<div class="sl-metarow"><span class="sl-chip mut">two voyages at once</span>'
+          +'<span class="sl-chip'+(clv>=SAIL_CONSORT_LV?' gold':' mut')+'">Sailing '+SAIL_CONSORT_LV+'</span>'
+          +'</div></div></div>'
           +'<p class="sl-note" style="margin:0">A consort sails her own crossings alongside your '
-          +'flagship, one tier below her and with no crew. Build her in the Shipyard.</p></div>';
+          +'flagship, one tier below her and with no crew. '
+          +(yardHas
+            ?'Her berth is under <b>Consort</b> in the Shipyard.'
+            :'The yard will not lay a second keel until <b>Sailing '+SAIL_CONSORT_LV+'</b> — '
+             +'you are '+clv+'. The berth appears in the Shipyard at '+(SAIL_CONSORT_LV-10)+'.')
+          +'</p></div>';
       }
     }
 
@@ -41126,7 +41240,12 @@ function renderSail(){
      Keep the offset across a re-render of the SAME tab; switching tabs still
      starts at the top, which is what you want there. */
   const _sbOld=p.querySelector('.sl-sidebody');
-  const _keepScroll=(_sbOld && _slRenderedTab===sailTab) ? _sbOld.scrollTop : 0;
+  const _sameTab=_slRenderedTab===sailTab;
+  const _keepScroll=(_sbOld && _sameTab) ? _sbOld.scrollTop : 0;
+  /* In squeeze mode the whole column is the scroller, not the body inside it —
+     so read both and put back whichever one the new layout ends up using. */
+  const _sdOld=p.querySelector('.sl-side');
+  const _keepSide=(_sdOld && _sameTab) ? _sdOld.scrollTop : 0;
 
   p.innerHTML=html;
   _slRenderedTab=sailTab;
@@ -41229,6 +41348,10 @@ function renderSail(){
   if(_keepScroll){
     const _sbNew=p.querySelector('.sl-sidebody');
     if(_sbNew) _sbNew.scrollTop=_keepScroll;
+  }
+  if(_keepSide){
+    const _sdNew=p.querySelector('.sl-side');
+    if(_sdNew) _sdNew.scrollTop=_keepSide;
   }
 }
 
@@ -42538,6 +42661,35 @@ function mmToggleFullscreen(){
 $('mmSettings').addEventListener('click', function(){ mmOpenSettings(); gmFrom(0); });
 $('mmSettingsClose').addEventListener('click', function(){ $('mmSettingsModal').classList.add('mm-hidden'); });
 
+/* ── Radcliff's Tally ─────────────────────────────────────────────────────────
+   Granted the first time a report or an idea actually reaches the server, and
+   only with a character loaded — one sent from the title screen has no satchel
+   to put it in, and mmSlot is the same test mmBugContext() uses to decide
+   whether it can name a character at all.
+
+   Deliberately awarded on SEND rather than on a reply landing: the point is the
+   act of saying something is wrong, and a reply is not guaranteed. One per
+   character, no stats, nosell — so there is nothing to farm. state.discovered
+   is the guard rather than the item count, so it stays a one-time grant even if
+   a later build ever makes the thing consumable.
+
+   The add bypasses canAddToSatchel on purpose. It is a single slot, once, and
+   refusing a thank-you because the bag was full is exactly the class of silent
+   failure this item commemorates. */
+function awardRadcliffTally(){
+  try{
+    if(mmAtMenu || !mmSlot || !state || !state.items) return false;
+    if(state.discovered && state.discovered.radcliff_tally) return false;
+    state.items.radcliff_tally=(state.items.radcliff_tally||0)+1;
+    markDiscovered('radcliff_tally');
+    saveGame();
+    if(typeof toast==='function') toast("🪵 Radcliff's Tally — one notch for the thing you just found.");
+    if(typeof logNotification==='function')
+      logNotification('unlock','🪵',"Radcliff's Tally is in your satchel — a notched stick, named for a playtester who kept telling us what was broken.");
+    return true;
+  }catch(e){ return false; }
+}
+
 // ── Bug report dialog (0.9.29) ──────────────────────────────────────────────
 function mmBugContext(){
   const g=(fn,d)=>{try{const v=fn();return (v===undefined||v===null||v==='')?d:v;}catch(e){return d;}};
@@ -42611,6 +42763,7 @@ async function mmSendReport(){
     msg.textContent='Thank you — report #'+_t+' sent. Any reply shows up in Menu → Mail.';
     btn.textContent='Sent';
     mailStart();
+    awardRadcliffTally();
     setTimeout(function(){ $('mmReportModal').classList.add('mm-hidden'); },2200);
     return;
   }
@@ -42651,6 +42804,7 @@ async function mmSendIdea(){
     msg.textContent='Thank you — idea #'+_t+' sent. Any reply shows up in Menu → Mail.';
     btn.textContent='Sent';
     mailStart();
+    awardRadcliffTally();
     setTimeout(function(){ $('mmIdeaModal').classList.add('mm-hidden'); },2200);
     return;
   }

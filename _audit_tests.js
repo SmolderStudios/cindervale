@@ -2825,7 +2825,13 @@ setTimeout(() => {
        sheet within the day. Name an id one by one if art is ever pending again -- an
        id that gets painted and stays listed is dead weight, and one that appears
        WITHOUT being added is the thing this guards. */
-    const SVG_OK = new Set([]);
+    /* radcliff_tally (0.9.123.3) is here for the pending-art reason the paragraph
+       above allows, NOT because painted art was rejected — none exists yet. Item
+       art comes off the ChatGPT contact sheets (see _iconart / cutall.js), so it
+       cannot be produced in the same pass that added the item. Delete this id the
+       moment it lands on a sheet; do NOT add it to KEEP_SVG, which would tell the
+       next art run to skip it forever. */
+    const SVG_OK = new Set(['radcliff_tally']);
 
     const unexpected = cov.svg.filter(id => !SVG_OK.has(id));
     ok('only known-exempt items are still on SVG, and none is iconless',
