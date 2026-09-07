@@ -3842,8 +3842,23 @@ setTimeout(() => {
     ok('every Thieving job names its own icon, and no two share one',
        acts.named === 14 && acts.named === acts.total && acts.clash.length === 0,
        JSON.stringify(acts));
-    ok('and the card falls back safely until that art exists',
+    ok('and the card falls back safely if that art ever goes missing',
        /act\.iconId&&typeof ICONS!=='undefined'&&ICONS\[act\.iconId\]/.test(html));
+    /* The art landed in 0.9.122.44, so every one of the fourteen must resolve to a
+       painting rather than the skill glyph. Fourteen identical masks is the state
+       this whole thing existed to leave. */
+    const actArt = JSON.parse(ev(`(function(){
+      var bad=[], same=0, skill=iconHTML('thieving');
+      SKILLS.thieving.acts.forEach(function(a){
+        var h=a.iconId?iconHTML(a.iconId):'';
+        if(h.indexOf('<img')!==0) bad.push(a.name+' is not painted');
+        if(h===skill) same++;
+      });
+      return JSON.stringify({bad:bad, sameAsSkill:same});
+    })()`));
+    ok('all fourteen job icons are painted, and none is the skill glyph',
+       actArt.bad.length === 0 && actArt.sameAsSkill === 0,
+       actArt.bad.join(', ') + ' same-as-skill: ' + actArt.sameAsSkill);
     }
 
     section('The skip button you could never find (0.9.122.41)');
