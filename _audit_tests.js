@@ -3749,6 +3749,94 @@ setTimeout(() => {
       tier:ENCHANTS.manatarms_ii&&ENCHANTS.manatarms_ii.tier,
       priced:!!_ewCostFor('emerald_ring').cost
     })`));
+    section('Somewhere to sell what you stole (0.9.122.42)');
+    {
+    /* "there is no general shop to buy your stolen goods in nightmarket....."
+       There was not, and building it turned up why it mattered: hotSellMult() was
+       applied inside effectiveItemSell(), which is what the SATCHEL uses. So ranking
+       up the Nightmarket raised what the general store gave you, the store and the
+       guild paid the identical number, and four of the guild's six ranks bought
+       nothing you could not already have had. */
+    const price = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      var read=function(){
+        return {store:effectiveItemSell('crown_shard'), market:nightmarketSell('crown_shard')};
+      };
+      var out={};
+      state.gd={};                                          out.none=read();
+      state.gd={night:{rep:0,q:[],day:-1,skipped:0}};       out.rank1=read();
+      state.gd.night.rep=150000;                            out.rank6=read();
+      state.tree={thieving:{th_master2:1}};                 out.rank6node=read();
+      state.tree={};
+      out.base=ITEMS.crown_shard.sell;
+      return JSON.stringify(out);
+    })()`));
+    /* The store's number must not move. That is the entire defect. */
+    ok('the general store pays the same whatever your rank',
+       price.none.store === price.rank1.store && price.rank1.store === price.rank6.store,
+       JSON.stringify({none: price.none.store, r1: price.rank1.store, r6: price.rank6.store}));
+    ok('and it pays a third of what the thing is worth',
+       price.none.store === Math.round(price.base * 0.35), price.none.store + ' of ' + price.base);
+    ok('an unjoined thief gets the store price at the counter too',
+       price.none.market === price.none.store, JSON.stringify(price.none));
+    ok('every rank raises what the counter pays, and only the counter',
+       price.rank1.market > price.none.market && price.rank6.market > price.rank1.market,
+       JSON.stringify({r1: price.rank1.market, r6: price.rank6.market}));
+    ok('the top rank is full price', price.rank6.market === price.base,
+       price.rank6.market + ' of ' + price.base);
+    ok('and Better Prices rides on top of it',
+       price.rank6node.market > price.rank6.market,
+       price.rank6.market + ' -> ' + price.rank6node.market);
+
+    /* The counter itself. */
+    const counter = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      state.gd={night:{rep:150000,q:[],day:-1,skipped:0}};
+      state.items={cut_purse:5, crown_shard:2, iron_ore:99};
+      if(!document.getElementById('guildView')){
+        var h=document.createElement('div'); h.id='guildView'; document.body.appendChild(h); }
+      _gdOpen='night'; renderGuilds();
+      var v=document.getElementById('guildView');
+      var rows=[].slice.call(v.querySelectorAll('.gd-sellrow'));
+      var out={rows:rows.length, names:rows.map(function(r){
+        return (r.querySelector('.nm')||{textContent:''}).textContent; }),
+        hasAll:!!v.querySelector('.gd-sellall')};
+      /* And it must not appear on a guild that does not buy. */
+      state.gd.timber={rep:150000,q:[],day:-1,skipped:0};
+      _gdOpen='timber'; renderGuilds();
+      out.onTimber=v.querySelectorAll('.gd-sellrow').length;
+      /* Empty satchel says so rather than showing nothing. */
+      state.items={}; _gdOpen='night'; renderGuilds();
+      out.emptySays=!!v.querySelector('.gd-sell-none');
+      return JSON.stringify(out);
+    })()`));
+    ok('the Nightmarket has a counter, listing only what you actually stole',
+       counter.rows === 2 && counter.names.join(' ').indexOf('Iron Ore') < 0,
+       JSON.stringify(counter.names));
+    ok('with a sell-the-lot button', counter.hasAll === true);
+    ok('and no other guild grows one', counter.onTimber === 0, String(counter.onTimber));
+    ok('an empty satchel says so instead of rendering nothing', counter.emptySays === true);
+
+    /* An act may name its own icon (0.9.122.42), because Thieving and Agility make
+       nothing and every card in those two showed the skill glyph. Guarded on the art
+       existing, so the ids can be written before the sheet is drawn. */
+    const acts = JSON.parse(ev(`(function(){
+      var named=SKILLS.thieving.acts.filter(function(a){ return !!a.iconId; }).length;
+      var dupes={}, clash=[];
+      SKILLS.thieving.acts.forEach(function(a){
+        if(!a.iconId) return;
+        if(dupes[a.iconId]) clash.push(a.iconId);
+        dupes[a.iconId]=1;
+      });
+      return JSON.stringify({named:named, total:SKILLS.thieving.acts.length, clash:clash});
+    })()`));
+    ok('every Thieving job names its own icon, and no two share one',
+       acts.named === 14 && acts.named === acts.total && acts.clash.length === 0,
+       JSON.stringify(acts));
+    ok('and the card falls back safely until that art exists',
+       /act\.iconId&&typeof ICONS!=='undefined'&&ICONS\[act\.iconId\]/.test(html));
+    }
+
     section('The skip button you could never find (0.9.122.41)');
     {
     /* "add a skip button for quests i dont see it anywhere even though we technically
@@ -4440,12 +4528,10 @@ setTimeout(() => {
        art.borrowed.length === 1 && art.borrowed[0].indexOf('th_gm_2x_xp~') === 0,
        art.borrowed.join(', '));
     ok('the skill has a painted banner', art.banner === true);
-    /* Named one at a time. Six stolen goods were added in 0.9.122.41 and borrow the
-       nearest painted thing of their kind until their sheet lands; the pet still has
-       no sheet either. Delete an id here as its art arrives. */
+    /* Named one at a time. Down to the skilling familiar, which is the only Thieving
+       thing still without a sheet. Delete an id here as its art arrives. */
     ok('only what is genuinely waiting on art is borrowing it', (function(){
-      const PENDING = ['spet_thieving','silver_censer','smuggler_ledger','heirloom_locket',
-                       'officers_sabre','bankers_seal','crown_shard'];
+      const PENDING = ['spet_thieving'];
       const extra = art.alias.filter(i => PENDING.indexOf(i) < 0);
       const gone  = PENDING.filter(i => art.alias.indexOf(i) < 0);
       return extra.length === 0 && gone.length === 0;
