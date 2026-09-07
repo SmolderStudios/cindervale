@@ -31426,11 +31426,16 @@ function renderGear(){
   dollTitle.textContent='Equipment';
   box.appendChild(dollTitle);
 
+  /* The doll is a fixed 3-wide grid, so a new BODY_SLOTS entry does NOT appear here
+     on its own: adding the quiver to BODY_SLOTS gave it a picker and an equip path
+     but no square, so an equipped quiver was invisible on the doll and only showed
+     in the list underneath. It takes the empty cell under the shield, which is the
+     carried-gear column. */
   const DOLL_LAYOUT=[
     [null,     'helmet', null    ],
     ['cape',   'amulet', null    ],
     ['weapon', 'chest',  'shield'],
-    ['gloves', 'legs',   null    ],
+    ['gloves', 'legs',   'quiver'],
     ['ring_l', 'boots',  'ring_r'],
   ];
 
