@@ -3797,14 +3797,20 @@ setTimeout(() => {
         var h=document.createElement('div'); h.id='guildView'; document.body.appendChild(h); }
       _gdOpen='night'; renderGuilds();
       var v=document.getElementById('guildView');
-      var rows=[].slice.call(v.querySelectorAll('.gd-sellrow'));
+      var rows=[].slice.call(v.querySelectorAll('.gd-sellcard'));
       var out={rows:rows.length, names:rows.map(function(r){
         return (r.querySelector('.nm')||{textContent:''}).textContent; }),
         hasAll:!!v.querySelector('.gd-sellall')};
+      /* It belongs in the RIGHT column, under the titles. In the left column it was
+         twelve full-width rows under the quests and the whole panel scrolled. */
+      var cols=v.querySelectorAll('.gd-col');
+      out.inRightCol=cols.length===2 && cols[1].querySelectorAll('.gd-sellcard').length===rows.length
+                     && cols[0].querySelectorAll('.gd-sellcard').length===0;
+      out.isGrid=!!v.querySelector('.gd-sellgrid');
       /* And it must not appear on a guild that does not buy. */
       state.gd.timber={rep:150000,q:[],day:-1,skipped:0};
       _gdOpen='timber'; renderGuilds();
-      out.onTimber=v.querySelectorAll('.gd-sellrow').length;
+      out.onTimber=v.querySelectorAll('.gd-sellcard').length;
       /* Empty satchel says so rather than showing nothing. */
       state.items={}; _gdOpen='night'; renderGuilds();
       out.emptySays=!!v.querySelector('.gd-sell-none');
@@ -3814,6 +3820,9 @@ setTimeout(() => {
        counter.rows === 2 && counter.names.join(' ').indexOf('Iron Ore') < 0,
        JSON.stringify(counter.names));
     ok('with a sell-the-lot button', counter.hasAll === true);
+    ok('sitting in the right column as a grid, not a stack of long rows',
+       counter.inRightCol === true && counter.isGrid === true,
+       JSON.stringify({right: counter.inRightCol, grid: counter.isGrid}));
     ok('and no other guild grows one', counter.onTimber === 0, String(counter.onTimber));
     ok('an empty satchel says so instead of rendering nothing', counter.emptySays === true);
 
