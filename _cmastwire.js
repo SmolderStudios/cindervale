@@ -20,6 +20,8 @@ setTimeout(()=>{
       return {hit:playerMaxHit(), acc:playerAccuracy(), swing:playerSwingMs(),
               ammoStr:ammoStr(), save:+(b.ammoSave||0).toFixed(3), pen:b.armourPen||0,
               volley:b.volley||0, crit:+(b.critDmg||0).toFixed(2), pin:b.pinning||0,
+              critChance:+(combatBonusesAll().critChance||0).toFixed(3),
+              refund:b.ammoRefundOnMiss||0,
               hp:b.maxHpFlat||0};
     }
     function test(label, node, rank, weapon, ammo, field){
@@ -34,10 +36,10 @@ setTimeout(()=>{
     test('Bodkin Points',              'k_t3_l',1,BOW,'runite_arrow','pen');
     test('Quick Nock (bow)',           'k_t3_r',1,BOW,'runite_arrow','swing');
     test('Heavy Draw x5 (crossbow)',   'k_t4_l',5,XBOW,'runite_bolt','hit');
-    test('Point Blank x5',             'k_t4_r',5,BOW,'runite_arrow','acc');
+    test('Point Blank x5',             'k_t4_r',5,BOW,'runite_arrow','critChance');
     test('Volley',                     'k_t5_l',1,BOW,'runite_arrow','volley');
     test('Pinning Shot',               'k_t5_m',1,BOW,'runite_arrow','pin');
-    test('Quiver Master',              'k_t5_r',1,BOW,'runite_arrow','ammoStr');
+    test('Quiver Master',              'k_t5_r',1,BOW,'runite_arrow','refund');
     test('Deadeye (ranged)',           'k_cap', 1,BOW,'runite_arrow','crit');
     test('Vanguard',                   'kb_t4', 1,BOW,'runite_arrow','hp');
     test('Skirmisher x3 (bow)',        'mr_t3', 3,BOW,'runite_arrow','hit');
@@ -54,7 +56,7 @@ setTimeout(()=>{
     gate('Brutal Strikes does nothing for a bow','m_t2_l',5,BOW,'runite_arrow','hit',false);
     gate('Brutal Strikes still pays a sword',    'm_t2_l',5,SWORD,null,'hit',true);
     gate('Quick Nock does nothing for a crossbow','k_t3_r',1,XBOW,'runite_bolt','swing',false);
-    gate('Heavy Draw does nothing for a bow',    'k_t4_l',5,BOW,'runite_arrow','hit',false);
+    gate('Heavy Draw pays a bow at half rate too','k_t4_l',5,BOW,'runite_arrow','hit',true);
     gate('Deadeye does nothing for a sword',     'k_cap',1,SWORD,null,'crit',false);
     return JSON.stringify({out:out, gates:gates});
   })()`));

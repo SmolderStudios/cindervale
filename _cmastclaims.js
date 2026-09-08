@@ -56,6 +56,7 @@ setTimeout(() => {
         trophyGuarantee:b.trophyGuarantee, accBoost:b.accBoost, ammoSave:b.ammoSave,
         armourPen:b.armourPen, volley:b.volley, ammoTierUp:b.ammoTierUp,
         pinning:b.pinning, defBoost:b.defBoost, hpBoost:b.hpBoost,
+        ammoRefund:b.ammoRefundOnMiss||0,
         maxHit:playerMaxHit(), acc:playerAccuracy(), swing:playerSwingMs(),
         ammoStr:ammoStr()
       };
@@ -76,13 +77,14 @@ setTimeout(() => {
       ['m_t5_r', DAGGER,null, 'critDmg',      0.15, 'dagger crits +15%'],
 
       ['k_t1',   BOW,  null, 'combatXpMult',  0.16, '+4% combat XP x4'],
-      ['k_t2_l', BOW,  null, 'atkBoost',      0.15, '+3% ranged damage x5'],
+      ['k_t2_l', BOW,  null, 'atkBoost',      0.10, '+2% ranged damage x5'],
       ['k_t2_r', BOW,  null, 'ammoSave',      0.20, '4% refunded x5'],
-      ['k_t3_l', BOW,  null, 'armourPen',     0.15, 'ignore 15% armour'],
-      ['k_t3_r', BOW,  null, 'aspd',          0.08, '+8% attack speed, bow'],
+      ['k_t3_l', BOW,  null, 'armourPen',     0.10, 'ignore 10% armour'],
+      ['k_t3_r', BOW,  null, 'aspd',          0.05, '+5% attack speed, bow'],
       ['k_t4_l', XBOW, null, 'atkBoost',      0.10, '+2% crossbow damage x5'],
-      ['k_t4_r', BOW,  null, 'accBoost',      0.10, '+2% ranged accuracy x5'],
-      ['k_t5_l', BOW,  null, 'volley',        0.10, '10% free second arrow'],
+      ['k_t4_l', BOW,  null, 'atkBoost',      0.05, 'and +1% with a bow x5'],
+      ['k_t4_r', BOW,  null, 'critChance',    0.10, '+2% crit chance x5'],
+      ['k_t5_l', BOW,  null, 'volley',        0.08, '8% free second arrow'],
       ['k_t5_m', BOW,  null, 'pinning',       1,    'crits slow the target'],
       ['k_cap',  BOW,  null, 'critDmg',       0.25, '+25% ranged crit damage'],
 
@@ -157,16 +159,6 @@ setTimeout(() => {
                 field:'dmgReduce', want:0.30, got:+(after-before).toFixed(4),
                 ok:Math.abs((after-before)-0.30)<0.0005});
       combat.active=false;
-    })();
-
-    /* Quiver Master: runite arrow is +15, starsteel is +20, so "one tier stronger"
-       has to read 20 rather than adding a flat number. */
-    (function(){
-      reset(BOW,null); var before=ammoStr();
-      state.cmast['k_t5_r']=1; var after=ammoStr();
-      var want=RANGED_AMMO[RANGED_AMMO.findIndex(function(a){return a.k==='runite';})+1].str;
-      out.push({id:'k_t5_r', name:'Quiver Master', label:'ammo counts one tier up',
-                field:'ammoStr', want:want, got:after, ok:after===want});
     })();
 
     /* Which nodes this harness does NOT put a number on. */

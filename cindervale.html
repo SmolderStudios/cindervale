@@ -7795,7 +7795,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.123.17">v0.9.123</div>
+  <div class="mm-ver" data-build="0.9.123.18">v0.9.123</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -19956,7 +19956,7 @@ function cmastBonuses(){
            /* (0.9.123.13) Marksman. accBoost is separate from atkBoost because
               atkBoost is read by playerAccuracy AND playerMaxHit, so anything
               routed through it silently doubles as a damage buff. */
-           accBoost:0,ammoSave:0,armourPen:0,volley:0,ammoTierUp:0,pinning:0};
+           accBoost:0,ammoSave:0,armourPen:0,volley:0,ammoRefundOnMiss:0,pinning:0};
   if(!state||!state.cmast) return b;
   // effect-key → channel (only always-on scalars; conditional/proc keys ignored here)
   for(const id in state.cmast){
@@ -19973,11 +19973,15 @@ function cmastBonuses(){
       if(ef.meleeDmg && !_rng) b.atkBoost += ef.meleeDmg*rank;
       if(ef.rangedDmg && _rng) b.atkBoost += ef.rangedDmg*rank;
       if(ef.anyDmg)            b.atkBoost += ef.anyDmg*rank;
-      if(ef.rangedAcc && _rng) b.accBoost += ef.rangedAcc*rank;
+      if(ef.rangedCrit && _rng) b.critChance += ef.rangedCrit*rank;
       if(ef.ammoSave)          b.ammoSave += ef.ammoSave*rank;
       if(ef.xbowDmg && _rng){
+        /* Doubled on the weapon it is named for, half on the other. A node that
+           paid one of the two weapons nothing meant a bow build threw five points
+           away and finished 12 points behind a crossbow on the same column. */
         const _xw=(typeof eqCombatWeapon==='function')?eqCombatWeapon():'';
-        if(_xw && ITEMS[_xw] && ITEMS[_xw].ammo==='bolt') b.atkBoost += ef.xbowDmg*rank;
+        const _isX=!!(_xw && ITEMS[_xw] && ITEMS[_xw].ammo==='bolt');
+        b.atkBoost += ef.xbowDmg*rank*(_isX?2:1);
       }
       if(ef.critChance) b.critChance   += ef.critChance*rank;
       if(ef.maxHp)      b.maxHpFlat     += ef.maxHp*rank;
@@ -20004,14 +20008,14 @@ function cmastBonuses(){
     }
     /* ── Marksman (0.9.123.13) ── every one of these is conditional on holding the
        right weapon, which is the column's whole identity. */
-    if(id==='k_t3_l'){ b.armourPen+=0.15; }                                          // Bodkin Points
+    if(id==='k_t3_l'){ b.armourPen+=0.10; }                                          // Bodkin Points
     if(id==='k_t3_r'){
       const _bw=(typeof eqCombatWeapon==='function')?eqCombatWeapon():'';
-      if(_bw && ITEMS[_bw] && ITEMS[_bw].ammo==='arrow') b.aspd+=0.08;               // Quick Nock — bows only
+      if(_bw && ITEMS[_bw] && ITEMS[_bw].ammo==='arrow') b.aspd+=0.05;               // Quick Nock — bows only
     }
-    if(id==='k_t5_l'){ b.volley+=0.10; }                                             // Volley
+    if(id==='k_t5_l'){ b.volley+=0.08; }                                             // Volley
     if(id==='k_t5_m'){ b.pinning=1; }                                                // Pinning Shot
-    if(id==='k_t5_r'){ b.ammoTierUp+=1; }                                            // Quiver Master
+    if(id==='k_t5_r'){ b.ammoRefundOnMiss=1; }                                        // Quiver Master
     if(id==='k_cap' && typeof usingRanged==='function' && usingRanged()){ b.critDmg+=0.25; } // Deadeye
     if(id==='kb_t4'){ b.atkBoost+=0.06; b.maxHpFlat+=4; }                             // Vanguard
     if(id==='g_t5_l'){ b.rareDrop+=0.03; }                                           // Headhunter
@@ -20352,18 +20356,8 @@ function readyAmmo(){
   return q;
 }
 function ammoStr(){
-  const a=readyAmmo(); if(!a) return 0;
-  let v=ITEMS[a].ammoStr||0;
-  /* Quiver Master reads the ladder rather than adding a flat number, so "one tier
-     stronger" is worth what the next tier is actually worth: +1 on bronze, +8 at
-     starfall. The top tier has nothing above it and keeps its own value. */
-  const _cm=(typeof cmastBonuses==='function')?cmastBonuses():null;
-  if(_cm && _cm.ammoTierUp>0 && typeof RANGED_AMMO!=='undefined'){
-    const kind=ITEMS[a].ammo, mul=(kind==='bolt')?1.15:1;
-    const i=RANGED_AMMO.findIndex(x=>a===x.k+'_'+kind);
-    if(i>=0 && i<RANGED_AMMO.length-1) v=Math.round(RANGED_AMMO[i+1].str*mul);
-  }
-  return v;
+  const a=readyAmmo();
+  return a?(ITEMS[a].ammoStr||0):0;
 }
 /* Which stat a kill's XP goes to. It was this exact ternary copy-pasted into five
    places, so a sixth would have missed ranged in silence. */
@@ -28536,15 +28530,15 @@ const CMAST_NODES=[
      'mark' is a real discipline key, unlike melee/ranged/magic which are dead
      layout slots — do not read anything into those names. */
   {id:'k_t1', tree:'mark', tier:1, branch:'c', max:4, name:'Steady Hand', desc:'+4% combat XP per rank.', effect:{combatXp:0.04}},
-  {id:'k_t2_l', tree:'mark', tier:2, branch:'l', max:5, name:'Draw Weight', desc:'+3% ranged damage per rank.', prereq:['k_t1:1'], effect:{rangedDmg:0.03}},
+  {id:'k_t2_l', tree:'mark', tier:2, branch:'l', max:5, name:'Draw Weight', desc:'+2% ranged damage per rank.', prereq:['k_t1:1'], effect:{rangedDmg:0.02}},
   {id:'k_t2_r', tree:'mark', tier:2, branch:'r', max:5, name:"Fletcher's Thrift", desc:'4% of arrows are refunded, per rank.', prereq:['k_t1:1'], effect:{ammoSave:0.04}},
-  {id:'k_t3_l', tree:'mark', tier:3, branch:'l', max:1, name:'Bodkin Points', desc:"Ignore 15% of the target's armour.", prereq:['k_t2_l:3'], unique:true},
-  {id:'k_t3_r', tree:'mark', tier:3, branch:'r', max:1, name:'Quick Nock', desc:'+8% attack speed with a bow.', prereq:['k_t2_r:3'], unique:true},
-  {id:'k_t4_l', tree:'mark', tier:4, branch:'l', max:5, name:'Heavy Draw', desc:'+2% crossbow damage per rank.', prereq:['k_t3_l:1','k_t3_r:1'], effect:{xbowDmg:0.02}},
-  {id:'k_t4_r', tree:'mark', tier:4, branch:'r', max:5, name:'Point Blank', desc:'+2% ranged accuracy per rank.', prereq:['k_t3_l:1','k_t3_r:1'], effect:{rangedAcc:0.02}},
-  {id:'k_t5_l', tree:'mark', tier:5, branch:'l', max:1, name:'Volley', desc:'10% chance to fire a free second arrow.', prereq:['k_t4_l:3'], unique:true},
+  {id:'k_t3_l', tree:'mark', tier:3, branch:'l', max:1, name:'Bodkin Points', desc:"Ignore 10% of the target's armour.", prereq:['k_t2_l:3'], unique:true},
+  {id:'k_t3_r', tree:'mark', tier:3, branch:'r', max:1, name:'Quick Nock', desc:'+5% attack speed with a bow.', prereq:['k_t2_r:3'], unique:true},
+  {id:'k_t4_l', tree:'mark', tier:4, branch:'l', max:5, name:'Heavy Draw', desc:'+2% crossbow damage per rank, +1% with a bow.', prereq:['k_t3_l:1','k_t3_r:1'], effect:{xbowDmg:0.01}},
+  {id:'k_t4_r', tree:'mark', tier:4, branch:'r', max:5, name:'Point Blank', desc:'+2% crit chance per rank.', prereq:['k_t3_l:1','k_t3_r:1'], effect:{rangedCrit:0.02}},
+  {id:'k_t5_l', tree:'mark', tier:5, branch:'l', max:1, name:'Volley', desc:'8% chance to fire a free second arrow.', prereq:['k_t4_l:3'], unique:true},
   {id:'k_t5_m', tree:'mark', tier:5, branch:'m', max:1, name:'Pinning Shot', desc:'Crits slow the target 15% for 6s.', prereq:['k_t4_l:3','k_t4_r:3'], unique:true, powerful:true},
-  {id:'k_t5_r', tree:'mark', tier:5, branch:'r', max:1, name:'Quiver Master', desc:'Your ammunition counts as one tier stronger.', prereq:['k_t4_r:3'], unique:true},
+  {id:'k_t5_r', tree:'mark', tier:5, branch:'r', max:1, name:'Quiver Master', desc:'A shot that misses does not spend the arrow.', prereq:['k_t4_r:3'], unique:true},
   {id:'k_cap', tree:'mark', tier:6, branch:'c', max:1, name:'Deadeye', desc:'+25% ranged crit damage.', prereq:['k_t5_m:1'], capstone:true},
 
   // ───────── BRIDGES — cross-discipline (12 pts) ─────────
@@ -30407,7 +30401,7 @@ function hasPet(petId){ return !!(state && state.pets && state.pets[petId]); }
     ITEMS[un]={name:'Unstrung '+a.n+' Crossbow', icon:'🪵', sell:Math.round(a.sell*14),
       desc:'A stock and a '+a.n.toLowerCase()+' prod, pinned and true. It needs a bowstring before it will hold a draw.'};
     ITEMS[id]={name:a.n+' Crossbow', icon:'🏹', sell:Math.round(a.sell*22), cgear:true, ctier:ct, cslot:'weapon',
-      dmgType:'ranged', wclass:'standard', ranged:true, ammo:'bolt',
+      dmgType:'ranged', wclass:'heavy', ranged:true, ammo:'bolt',
       swingMult:1.15, dmgMult:1.24, reqRanged:a.fl,
       desc:'Slower to crank than a bow draws, and it aims better for it. One hand only, so a shield or buckler still fits, and every shot spends a bolt.'};
     ICONS[un]=xbowSVG(p,true); ICONS[id]=xbowSVG(p,false);
@@ -35994,6 +35988,7 @@ function combatTick(){
        refunded when the fight ends. Same expected number of arrows, no per-fight
        bookkeeping, and it cannot desync if you retreat, die, close the game
        mid-swing, or get pulled into the next raid stage. */
+    let _spentAmmo='';
     if(usingRanged()){
       const _am=readyAmmo();
       if(!_am){
@@ -36022,6 +36017,10 @@ function combatTick(){
       if(Math.random() >= Math.min(0.85,_rate)){
         state.items[_am]=(state.items[_am]||0)-1;
         if(state.items[_am]<=0) delete state.items[_am];
+        /* Quiver Master hands it back if the shot misses. The spend has to stay
+           here — readyAmmo() is what proves you had one to fire — so the refund
+           waits for the hit roll below and uses this id. */
+        _spentAmmo=_am;
       }
     }
     // 1.0.26 combat math v2 — hit/miss is back. Hit chance = acc/(acc+foeDef);
@@ -36040,7 +36039,14 @@ function combatTick(){
     let youDmg = (Math.random()<hitChance)
       ? Math.max(1, Math.round(combat.youMaxHit*(COMBAT_P.HIT_MIN+(1-COMBAT_P.HIT_MIN)*Math.random())))
       : 0;
-    if(youDmg===0) cmbSplat('miss','miss');
+    if(youDmg===0){
+      cmbSplat('miss','miss');
+      /* Quiver Master — the arrow that missed goes back in the quiver. */
+      if(_spentAmmo){
+        const _qm=(typeof cmastBonuses==='function')?cmastBonuses():null;
+        if(_qm && _qm.ammoRefundOnMiss) state.items[_spentAmmo]=(state.items[_spentAmmo]||0)+1;
+      }
+    }
     let didCrit=false;
     {
       // ── Damage-type matchup (1.0.93) — equipped weapon's dmgType vs foe's

@@ -1490,10 +1490,10 @@ setTimeout(() => {
       k_t3_l:['SETUP_BOW', PROBE.bonuses],                             // Bodkin Points
       k_t3_r:['SETUP_BOW', 'SWING'],                                   // Quick Nock
       k_t4_l:['SETUP_XBOW', 'MAXHIT'],                                 // Heavy Draw
-      k_t4_r:['SETUP_BOW', 'ACC'],                                     // Point Blank
+      k_t4_r:['SETUP_BOW', PROBE.bonuses],                             // Point Blank -> crit chance
       k_t5_l:['SETUP_BOW', PROBE.bonuses],                             // Volley
       k_t5_m:['SETUP_BOW', PROBE.bonuses],                             // Pinning Shot
-      k_t5_r:['SETUP_BOW', 'AMMOSTR'],                                 // Quiver Master
+      k_t5_r:['SETUP_BOW', PROBE.bonuses],                             // Quiver Master -> refund on miss
       k_cap:['SETUP_BOW', PROBE.bonuses],                              // Deadeye
       kb_t3:['', PROBE.bonuses], kb_t4:['', PROBE.bonuses],            // Outrider, Vanguard
     };
