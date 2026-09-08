@@ -7795,7 +7795,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.123.18">v0.9.123</div>
+  <div class="mm-ver" data-build="0.9.123.19">v0.9.123</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -18192,8 +18192,14 @@ function normalizeState(){
   if(typeof SAIL_HULLS!=='undefined') state.sail.hull2=Math.min(SAIL_HULLS.length-1, Math.floor(state.sail.hull2));
   /* She can never outrank the flagship, including after a hand-edit or a future
      save that hulls her up first. Clamped on load so the invariant holds even if
-     the build path is bypassed entirely. */
-  state.sail.hull2=Math.max(0, Math.min(state.sail.hull2, Math.max(0,(state.sail.hull|0)-1)));
+     the build path is bypassed entirely.
+     MATCHING is allowed, and this line is why that took two goes to ship. 0.9.123.9
+     raised the cap in sailBuildConsortHull from hull-1 to hull, but left this at
+     hull-1 — so a player could pay for the Ancient Leviathan, watch the materials
+     leave, and have the upgrade quietly written back down to the tier below on the
+     next load. Reported as "upgraded it, consort didn't change, lost my materials",
+     which is exactly what it did. */
+  state.sail.hull2=Math.max(0, Math.min(state.sail.hull2, Math.max(0,(state.sail.hull|0))));
   if(typeof state.sail.damaged2!=='boolean') state.sail.damaged2=false;
   if(!state.sail.consort){ state.sail.voy2=null; state.sail.damaged2=false; }
 
@@ -39186,7 +39192,10 @@ function sailSlotCount(){ return sailHasConsort()?2:1; }
    behind so she is a second boat and never a way to skip the ladder. */
 function sailHullIdx(slot){
   const s=state.sail||{};
-  if((slot|0)===1) return Math.max(0, Math.min((s.hull|0)-1, s.hull2|0));
+  /* Matching the flagship is allowed (0.9.123.19). While this said hull-1 the
+     consort could hold a hull she was never displayed or fought as, because every
+     stat in the game reads her tier through here. */
+  if((slot|0)===1) return Math.max(0, Math.min((s.hull|0), s.hull2|0));
   return s.hull|0;
 }
 function sailHullOf(slot){ return SAIL_HULLS[Math.min(SAIL_HULLS.length-1, Math.max(0, sailHullIdx(slot)))]; }

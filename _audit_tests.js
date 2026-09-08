@@ -6115,6 +6115,37 @@ setTimeout(() => {
       state.keepRaw=true;  var off=mods('fishing').fi_cook;
       return JSON.stringify({on:on, off:off});
     })()`));
+    /* The consort, take two. 0.9.123.9 raised the cap in sailBuildConsortHull so
+       she could match the flagship, and left the SAME rule in two other places:
+       sailHullIdx, which every stat reads her tier through, and normalizeState,
+       which rewrote the save on the next load. A player paid for the Ancient
+       Leviathan, watched the materials go, and had the upgrade taken apart again
+       when he reloaded. The reload is the half this asserts. */
+    const cons = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      var TOP=SAIL_HULLS.length-1, h=SAIL_HULLS[TOP];
+      state.sail.xp=XP_CUM[99];
+      state.sail.hull=TOP; state.sail.consort=1; state.sail.hull2=TOP-1;
+      state.items={}; for(var id in h.cost) state.items[id]=h.cost[id]*2;
+      sailBuildConsortHull(TOP);
+      var built=state.sail.hull2, reads=sailHullIdx(1);
+      normalizeState();                      // the load that used to undo it
+      var afterLoad=state.sail.hull2, readsAfter=sailHullIdx(1);
+      // and she must still never PASS the flagship
+      state.sail.hull2=TOP; state.sail.hull=TOP-2; normalizeState();
+      return JSON.stringify({top:TOP, built:built, reads:reads,
+        afterLoad:afterLoad, readsAfter:readsAfter, capped:state.sail.hull2, cap:TOP-2});
+    })()`));
+    ok('the consort can be built to match the flagship',
+       cons.built === cons.top, 'hull2 ' + cons.built + ' of ' + cons.top);
+    ok('and every stat reads her at that hull',
+       cons.reads === cons.top, 'reads ' + cons.reads);
+    ok('the consort keeps the hull she paid for across a reload',
+       cons.afterLoad === cons.top && cons.readsAfter === cons.top,
+       'hull2 ' + cons.afterLoad + ', reads ' + cons.readsAfter);
+    ok('but she still never outranks the flagship',
+       cons.capped === cons.cap, 'clamped to ' + cons.capped + ', flagship ' + cons.cap);
+
     ok('Keep the catch raw suspends Seasoned Catch (#96)',
        raw.on > 0 && raw.off === 0, 'on ' + raw.on + ', off ' + raw.off);
 

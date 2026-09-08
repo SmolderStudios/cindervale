@@ -1,0 +1,113 @@
+
+1. DPS WITH MASTERY SPENT  ·  Lv 85, foe defence 284, top-tier gear
+   BARE = no mastery · OFFENCE = its own 30-point column · FULL = offence + Bulwark + Warfare + bridges
+   the % is against sword + shield in the SAME class and the same spend
+
+   none
+     sword + shield      36.1  100%     61.5  100%     72.1  100%   hit  320  swing  2274ms
+     dagger              37.8  105%       66  107%     77.3  107%   hit  314  swing  2274ms
+     hammer              36.5  101%     62.2  101%     72.8  101%   hit  326  swing  2274ms
+     sword, no shield    36.1  100%     61.5  100%     72.1  100%   hit  320  swing  2274ms
+     shortbow            37.8  105%     60.1   98%     77.6  108%   hit  281  swing  1933ms
+     longbow             38.6  107%     61.1   99%     78.6  109%   hit  318  swing  2274ms
+     crossbow+shield     36.3  101%     58.2   95%     74.5  103%   hit  387  swing  2753ms
+
+   rogue
+     sword + shield      38.5  100%     65.4  100%     76.7  100%   hit  320  swing  2138ms
+     dagger              47.8  124%     83.4  128%     97.5  127%   hit  351  swing  2138ms
+     hammer              38.8  101%     66.2  101%     77.5  101%   hit  326  swing  2138ms
+     sword, no shield    38.5  100%     65.4  100%     76.7  100%   hit  320  swing  2138ms
+     shortbow            47.8  124%     76.2  117%     97.8  128%   hit  315  swing  1817ms
+     longbow             48.6  126%     77.3  118%     98.9  129%   hit  356  swing  2138ms
+     crossbow+shield     38.7  101%     61.9   95%     79.2  103%   hit  387  swing  2588ms
+
+   berserker
+     sword + shield      36.1  100%     61.5  100%     72.1  100%   hit  320  swing  2274ms
+     dagger              38.1  106%     66.6  108%       78  108%   hit  314  swing  2274ms
+     hammer              44.5  123%     75.7  123%     88.5  123%   hit  385  swing  2274ms
+     sword, no shield    36.1  100%     61.5  100%     72.1  100%   hit  320  swing  2274ms
+     shortbow            38.1  106%     60.6   99%     78.3  109%   hit  281  swing  1933ms
+     longbow             38.9  108%     61.7  100%     79.3  110%   hit  318  swing  2274ms
+     crossbow+shield     44.2  122%     70.5  115%     90.2  125%   hit  457  swing  2753ms
+
+   guardian
+     sword + shield      36.1  100%     61.5  100%     72.1  100%   hit  320  swing  2274ms
+     dagger              37.8  105%       66  107%     77.3  107%   hit  314  swing  2274ms
+     hammer              36.5  101%     62.2  101%     72.8  101%   hit  326  swing  2274ms
+     sword, no shield    36.1  100%     61.5  100%     72.1  100%   hit  320  swing  2274ms
+     shortbow            37.8  105%     60.1   98%     77.6  108%   hit  281  swing  1933ms
+     longbow             38.6  107%     61.1   99%     78.6  109%   hit  318  swing  2274ms
+     crossbow+shield     36.3  101%     58.2   95%     74.5  103%   hit  387  swing  2753ms
+
+2. FLETCHING AND SMITHING AGAINST THEIR NEIGHBOURS  ·  Lv 99, tree maxed
+
+   skill        no tree     tree maxed    hours to 99   best act
+   fletching        290k          541k         24.3h   Assemble a Starfall Crossbow
+   smithing         167k          753k         17.5h   Smelt starfall bar
+   crafting         655k         3077k          4.3h   Gravesteel Chest
+   cooking          180k          460k         28.6h   Cook prized void eel
+   jeweler          283k         1332k          9.9h   Drowned King's Jewel
+   alchemy          166k          552k         23.9h   Transmute Rift Essence
+
+3. FEEDING THE BOW  ·  starsteel arrows, an hour of shooting
+
+   investment                 shots/hr   refunded   arrows burned   fletching
+   no tree, no mastery            2345         0%            2345       14.3m
+   Fletching tree maxed           2345        85%             352        2.1m
+   + Fletcher's Thrift x5         2469        85%             370        2.3m
+
+   like for like: bow against dagger, crossbow against hammer
+
+     none       shortbow          vs dagger     77.6 vs   77.3    100%
+     none       longbow           vs dagger     78.6 vs   77.3    102%
+     none       crossbow+shield   vs hammer     74.5 vs   72.8    102%
+     rogue      shortbow          vs dagger     97.8 vs   97.5    100%
+     rogue      longbow           vs dagger     98.9 vs   97.5    101%
+     rogue      crossbow+shield   vs hammer     79.2 vs   77.5    102%
+     berserker  shortbow          vs dagger     78.3 vs     78    100%
+     berserker  longbow           vs dagger     79.3 vs     78    102%
+     berserker  crossbow+shield   vs hammer     90.2 vs   88.5    102%
+     guardian   shortbow          vs dagger     77.6 vs   77.3    100%
+     guardian   longbow           vs dagger     78.6 vs   77.3    102%
+     guardian   crossbow+shield   vs hammer     74.5 vs   72.8    102%
+
+   every ranged build sits inside 90-112% of sword and shield on a full spend
+
+
+===================== NODE WORTH =====================
+
+  ONSLAUGHT on a sword + shield
+  bare 36.1 dps -> 61.5 dps   the column is worth +70.1%
+
+       +23.5%  Brutal Strikes       (5 pts)
+         +12%  Battle Honed         (5 pts)
+          +8%  Cleaving Edge        (1 pt)
+        +6.5%  Executioner          (1 pt)
+        +5.3%  Frenzy               (5 pts)
+        +1.8%  Rending Blows        (1 pt)
+        +1.5%  Savage Edge          (5 pts)
+           0%  Iron Discipline, Bleeder, Dagger Finesse, Ember Wrath
+
+  MARKSMAN on a longbow
+  bare 38.6 dps -> 64.3 dps   the column is worth +66.6%
+
+       +14.2%  Draw Weight          (5 pts)
+       +11.7%  Point Blank          (5 pts)
+          +8%  Volley               (1 pt)
+        +6.7%  Heavy Draw           (5 pts)
+        +5.3%  Quick Nock           (1 pt)
+        +5.1%  Bodkin Points        (1 pt)
+        +3.4%  Deadeye              (1 pt)
+           0%  Steady Hand, Fletcher's Thrift, Pinning Shot, Quiver Master
+
+  MARKSMAN on a crossbow + shield
+  bare 36.3 dps -> 61.1 dps   the column is worth +68.2%
+
+       +13.8%  Draw Weight          (5 pts)
+       +13.8%  Heavy Draw           (5 pts)
+       +12.5%  Point Blank          (5 pts)
+          +8%  Volley               (1 pt)
+        +5.1%  Bodkin Points        (1 pt)
+        +2.3%  Deadeye              (1 pt)
+           0%  Steady Hand, Fletcher's Thrift, Quick Nock, Pinning Shot, Quiver Master
+
