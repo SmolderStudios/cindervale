@@ -4810,7 +4810,9 @@ setTimeout(() => {
       for(var m in MONSTER_DROPS) (MONSTER_DROPS[m]||[]).forEach(function(d){ dropped[d.id]=1; });
       var orphan=Object.keys(dropped).filter(function(i){
         if(!ITEMS[i]) return false;
-        if(ITEMS[i].cgear||ITEMS[i].tool||ITEMS[i].skillGear||ITEMS[i].potion) return false;
+        /* ammo is spent by FIRING it, not by a recipe. Dropped arrows tripped this
+           the moment archers started dropping their quivers (0.9.123.12). */
+        if(ITEMS[i].cgear||ITEMS[i].tool||ITEMS[i].skillGear||ITEMS[i].potion||ITEMS[i].ammo) return false;
         return !wanted[i];
       });
       return JSON.stringify({n:Object.keys(dropped).length, orphan:orphan});
