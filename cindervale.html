@@ -1811,6 +1811,14 @@ select option:checked{background-color:#2a1d10;color:#f0c772}
    cards fit above the fold on standard viewports — paddings/fonts/icon shrunk,
    stats row flattened from a 3-col grid into a single thin inline row. */
 .sk-banner-wrap{margin-bottom:8px}
+/* Ticket #96 — the raw-catch switch. Fishing only, and only once Seasoned Catch is
+   owned, so it never shows up as an option that does nothing. */
+.sk-keepraw{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:6px;
+  padding:7px 10px;background:#0d090566;border:1px solid var(--trim-d);border-radius:5px;
+  cursor:var(--cur-pointer);font-size:calc(13px*var(--tscale))}
+.sk-keepraw:hover{border-color:var(--trim)}
+.sk-keepraw input{accent-color:var(--ember);cursor:var(--cur-pointer)}
+.sk-keepraw i{font-style:normal;color:var(--muted);font-size:calc(11.5px*var(--tscale))}
 .sk-banner{background:linear-gradient(180deg,#2b1d0f,#251a10);border:1px solid var(--trim-d);
   border-radius:7px;padding:7px 11px}
 .sk-banner-top{display:flex;align-items:flex-start;gap:10px}
@@ -2607,6 +2615,16 @@ body:not(.is-demo) .demo-only{display:none !important}
   font-size:calc(12px*var(--tscale));padding:4px 11px;cursor:var(--cur-pointer)}
 .ofp-respec:hover{background:#1c100c}
 .ofp-nodes{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:7px}
+/* Ticket #91 — the Grandmaster tooltips. The shared data-tip rule renders at
+   top:calc(100% + 6px) with a 300px min/max width anchored left, and .ofp is
+   overflow:hidden. Measured: the GM tier is the LAST row, so its tooltip fell
+   past the modal edge (the fourth node, on its own second row, was entirely
+   outside), and the third column's 300px tooltip overhung the panel's right edge
+   by ~54px. Two rules fix both without JS: the tooltip is exactly as wide as the
+   node it belongs to, so it can never overflow sideways whatever the column
+   count, and the GM row flips it upward. */
+.ofp-node[data-tip]:hover::after{left:0;right:0;min-width:0;max-width:none}
+.ofp-node.gm[data-tip]:hover::after{top:auto;bottom:calc(100% + 6px)}
 .ofp-node{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:9px;
   background:#150e07;border:1px solid var(--trim-d);border-radius:9px;padding:9px 11px}
 .ofp-node.maxed{border-color:#4c6b2c;background:linear-gradient(180deg,#18200f,#12160a)}
@@ -6403,6 +6421,18 @@ body:not(.is-demo) .demo-only{display:none !important}
    whether it sat above the biggest blow the foe throws — which is the whole
    question behind "can I leave this running". The chip carries the HP number and
    the line marks it on the track, both coloured by that comparison. */
+/* Reserved food (0.9.123.17, ticket #84). The lock sits in the corner of the food
+   button; the food itself stays fully usable by hand, so a reserved item is dimmed
+   rather than disabled. */
+.fm-icon{position:relative}
+.fm-lock{position:absolute;top:-3px;right:-3px;z-index:2;width:16px;height:16px;
+  display:grid;place-items:center;border-radius:50%;font-size:9px;line-height:1;
+  background:#1a1209;border:1px solid var(--trim-d);color:#7a6a4a;
+  cursor:var(--cur-pointer);opacity:.55;transition:opacity .12s}
+.fm-icon:hover .fm-lock{opacity:1}
+.fm-lock.on{opacity:1;border-color:var(--ember);color:var(--ember);background:#2a1a10}
+.fm-icon.reserved{opacity:.62}
+.fm-icon.reserved .fm-ic{filter:grayscale(.7)}
 .cveat{position:relative;display:inline-flex;align-items:center;gap:3px;align-self:center;
   font-family:var(--num);font-size:calc(11px*var(--tscale));line-height:1;
   padding:2px 5px;border-radius:3px;background:#0d0a06;border:1px solid #3a4a1e;
@@ -7765,7 +7795,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.123.16">v0.9.123</div>
+  <div class="mm-ver" data-build="0.9.123.17">v0.9.123</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -16187,7 +16217,13 @@ function tickFarmer(){
     var chosen=state.farmer.seedId;
     if(chosen){
       var cc=getCrop(chosen);
-      if(cc&&lvl>=cc.lvl&&(state.items[chosen]||0)>0) return chosen;
+      /* seedQty, NOT state.items — tickets #89 and #94. Seeds live in their own
+         vault (state.seeds) and normalizeState empties them out of the satchel on
+         every load, so this count was permanently 0 and a farmhand with a SPECIFIC
+         seed chosen planted nothing, ever. The Auto branch below already used
+         seedQty, which is why "Auto (best owned)" worked and a chosen seed did not.
+         Same defect as the Plant All button in #88. */
+      if(cc&&lvl>=cc.lvl&&seedQty(chosen)>0) return chosen;
       return null; // chosen seed unavailable — plant nothing rather than the wrong crop
     }
     // Auto mode — highest-tier seed currently owned & plantable
@@ -17005,7 +17041,14 @@ const ITEM_BODY_SLOTS={
   diamond_amulet:['amulet'], dragon_amulet:['amulet'], void_amulet:['amulet'],
   amethyst_amulet:['amulet'], bloodstone_amulet:['amulet'],
   // Shop jewelry
-  ember_ring:['ring_l','ring_r'], moon_amulet:['amulet'],
+  /* Ticket #97. Only ember_ring was ever listed here, so the four rings added to
+     the shop after it fell through to getBodyItemDef's SHOP branch, which reads the
+     single `slot` field — 'ring_r'. Four rings you could not put on your left hand,
+     and the left hand had nothing else to hold but trophy jewellery. A ring is a
+     ring; every other ring in this map takes either hand. */
+  ember_ring:['ring_l','ring_r'], delver_ring:['ring_l','ring_r'],
+  tide_ring:['ring_l','ring_r'], grove_ring:['ring_l','ring_r'],
+  plenty_ring:['ring_l','ring_r'], moon_amulet:['amulet'],
   // Trophy jewelry (v0.9.50) — rings fit either hand, the neck pieces the amulet slot.
   warren_signet:['ring_l','ring_r'], silkweave_band:['ring_l','ring_r'], alpha_fang_ring:['ring_l','ring_r'],
   emberwyrm_eye:['ring_l','ring_r'], sanctum_signet:['ring_l','ring_r'],
@@ -17950,6 +17993,7 @@ function defaultState(){
     mineDoubleAct:null, // {actId} — second ore selected for Double Action (mi_gm_double)
     wcStrikes:0,       // running chop counter for Heartwood (resets on 10th = +2 bonus logs)
     wcDoubleAct:null,  // {actId, start} — second tree for Double Action (wc_gm_double)
+    keepRaw:false,     // ticket #96 — suspend Seasoned Catch so the catch stays raw
     fishCasts:0,       // running cast counter for Lucky Lure + Schooling (resets on 10th)
     fishDoubleAct:null, // {actId, start} — second fishing spot for Double Action (fi_gm_double_act)
     cookingFire:{loaded:{},partialSec:0,lit:false,lastBurnAt:Date.now()}, // {loaded:{logId:count}, partialSec, lit}
@@ -17967,7 +18011,7 @@ function defaultState(){
     // Auto-heal — if enabled, the combat tick drinks the lowest-waste heal
     // potion when HP drops to/below `thresholdPct` of max. ON @ 50% by default
     // (1.0.100) so new players survive — the old off/30% default lost fights.
-    autoHeal:{enabled:true, thresholdPct:50, itemId:''},
+    autoHeal:{enabled:true, thresholdPct:50, itemId:'', skip:{}},
     /* The fight you were in when the game closed. `combat` itself is a
        module-level object and has never been save state, which is why
        closing mid-fight used to throw the fight away. */
@@ -18344,7 +18388,14 @@ function normalizeState(){
   if(!state.autoHeal||typeof state.autoHeal!=='object'){
     state.autoHeal={enabled:true, thresholdPct:50, itemId:''};
   } else {
+  if(typeof state.keepRaw!=='boolean') state.keepRaw=false;
     if(typeof state.autoHeal.enabled!=='boolean') state.autoHeal.enabled=true;
+    /* Reserved food (0.9.123.17, ticket #84). A set of item ids auto-eat will not
+       spend. Old saves have no skip at all, so it is created empty here rather
+       than guarded at every read. */
+    if(!state.autoHeal.skip||typeof state.autoHeal.skip!=='object'||Array.isArray(state.autoHeal.skip))
+      state.autoHeal.skip={};
+    for(const _sk in state.autoHeal.skip) if(!state.autoHeal.skip[_sk]) delete state.autoHeal.skip[_sk];
     const t=+state.autoHeal.thresholdPct;
     if(!isFinite(t)||t<5||t>95) state.autoHeal.thresholdPct=50;
     if(typeof state.autoHeal.itemId!=='string') state.autoHeal.itemId=''; // auto-eat pick (1.0.8)
@@ -19344,7 +19395,7 @@ const OFFLINE_TREE=[
     desc:r=>r?'The Night Forager stance — materials, no xp':'Unlocks the Night Forager stance',
     next:()=>'2.5× materials, no xp at all',
     tip:'Unlocks Night Forager: work one gathering skill for its output alone. Two and a half times the materials, and not one point of xp.'},
-  {id:'of_loot',   name:'Scavenger',     max:8, req:6, tier:'How the night is spent',
+  {id:'of_loot',   name:'Scavenger',     max:8, req:6, needs:'of_scav', tier:'How the night is spent',
     desc:r=>`Night Forager brings back +${r*8}% more`, next:r=>`+8% → ${r*8}%`,
     tip:'More of everything Night Forager brings back: logs, ore, fish, herbs. Does nothing under any other stance, and never affects xp. Offline output is capped below live play, so what this really buys is how much of that ceiling a night of foraging reaches.'},
   /* ── Tier 3 (req 14) ── */
@@ -19352,7 +19403,7 @@ const OFFLINE_TREE=[
     desc:r=>r?'The Dead to the World stance — 135%, half the cap':'Unlocks the Dead to the World stance',
     next:()=>'One skill at 135%, half your cap counted',
     tip:'Unlocks Dead to the World: one skill at 135% of your offline rate, but only half your cap counts. Worth it if you come back inside half a cap, a loss if you do not.'},
-  {id:'of_slot3',  name:'Third Thread',  max:1, req:14, tier:'Deeper still',
+  {id:'of_slot3',  name:'Third Thread',  max:1, req:14, needs:'of_divided', tier:'Deeper still',
     desc:r=>r?'Divided runs a third skill':'Divided gains a third slot',
     next:()=>'Divided: 3 skills instead of 2',
     tip:'Divided runs three skills instead of two. The shared rate does not change, so this buys breadth rather than speed: three skills creeping instead of two.'},
@@ -19368,7 +19419,7 @@ const OFFLINE_TREE=[
     desc:r=>r?'Offline cap at least 48h':'Extend cap to 48h',
     next:()=>'Cap: at least 48h',
     tip:'Raises the away-time cap to 48 hours. Stacks with Extended Rest in the sense that whichever is higher wins — it is a floor on the cap, not an addition to it.'},
-  {id:'of_master3',name:'Phantom Worker',max:1, req:24, tier:'Masters',
+  {id:'of_master3',name:'Phantom Worker',max:1, req:24, needs:'of_slot3', tier:'Masters',
     desc:r=>r?'Divided runs a fourth skill':'Divided gains a fourth slot',
     next:()=>'Divided: 4 skills instead of 3',
     tip:'A fourth thread for Divided. Breadth again, not speed: offline output is capped below live play whatever you do, so the only thing left to buy up here is how many skills share it.'},
@@ -20906,7 +20957,10 @@ function mods(skill){
     fi_school: skill==='fishing'&&r('fi_master_school')>0,
     fi_double_act: skill==='fishing'&&rc('fi_gm_double_act')>0,
     fo_berries:skill==='foraging'&&r('fo_master1')>0,
-    fi_cook:   skill==='fishing'?r('fi_cook')*0.04:0,
+    /* keepRaw (ticket #96) suspends Seasoned Catch without a respec, for the
+       stretch where a quest wants raw fish. Gated here rather than at the two call
+       sites, so nothing can read the chance around it. */
+    fi_cook:   (skill==='fishing'&&!(state&&state.keepRaw))?r('fi_cook')*0.04:0,
     fi_sell:   skill==='fishing'?r('fi_sell')*0.05:0,
     mi_coal:   skill==='mining'?r('mi_coal')*0.04:0,
     mi_hard:   skill==='mining'&&r('mi_master1')>0,
@@ -21351,11 +21405,26 @@ function useHealPotion(itemId){
    waste: the largest brew whose heal amount fits within the missing HP gap
    (no overheal). If every available brew would overheal, the smallest one
    is used — better to overheal a little than die. */
+/* Is this food set aside? Reserved items stay in the grid and stay edible by
+   hand; they are simply invisible to every AUTOMATIC path. */
+function healReserved(id){
+  return !!(state.autoHeal && state.autoHeal.skip && state.autoHeal.skip[id]);
+}
+function toggleHealReserved(id){
+  if(!state.autoHeal) return;
+  if(!state.autoHeal.skip) state.autoHeal.skip={};
+  if(state.autoHeal.skip[id]) delete state.autoHeal.skip[id];
+  else state.autoHeal.skip[id]=1;
+  /* A reserved item cannot also be the chosen auto-eat target, or the pick below
+     would hand back the one thing the player asked it to leave alone. */
+  if(state.autoHeal.skip[id] && state.autoHeal.itemId===id) state.autoHeal.itemId='';
+  saveGame();
+}
 function autoUseHealPotion(){
   if(typeof combat==='undefined'||!combat.active) return false;
   const missing=(combat.youMaxHp||0)-(combat.youHp||0);
   if(missing<=0) return false;
-  const avail=combatHealItems();   // draughts + cooked food + poultices (1.0.8)
+  const avail=combatHealItems().filter(a=>!healReserved(a.id));
   // Player-picked auto-eat item wins if they still own it.
   const sel=state.autoHeal&&state.autoHeal.itemId;
   if(sel){ const s=avail.find(a=>a.id===sel); if(s) return useHealPotion(s.id); }
@@ -21373,7 +21442,7 @@ function autoUseHealPotion(){
      Instant heals still win outright above; this runs only when there are none.
      `pending` is the HP still owed by regens already ticking, so bowls stack only
      until the missing gap is covered rather than one per swing indefinitely. */
-  const regens=combatRegenFoods();
+  const regens=combatRegenFoods().filter(r=>!healReserved(r.id));
   if(!regens.length) return false;
   const nowR=Date.now();
   let pending=0;
@@ -21429,7 +21498,8 @@ function autoEatCue(mon,maxHp){
   const blow=foeMaxBlow(mon);
   let st='safe';
   if(!ah.enabled) st='off';
-  else if(!(combatHealItems().length||combatRegenFoods().length)) st='nofood';
+  else if(!(combatHealItems().filter(h=>!healReserved(h.id)).length
+           ||combatRegenFoods().filter(r=>!healReserved(r.id)).length)) st='nofood';
   else if(blow>at) st='risk';
   return {at:at, pct:pct, blow:blow, state:st, maxHp:mx};
 }
@@ -22567,6 +22637,13 @@ function setWcDoubleAct(actId){
 
 function completeWcDoubleAction(act,cycles){
   const skill='woodcutting';
+  /* Ticket #95. This is the second woodcutting bar, and it is the ONLY completion
+     path in the game that does not run through completeAction() — so it was the
+     only one that never told the guilds anything. Chop frostwood on the primary
+     bar and a "cut 40 logs" quest fills; chop ancient logs on this one and it sits
+     at zero, which is exactly what was reported. The bar grants no XP by design,
+     but a quest counts logs cut, and these logs were cut. */
+  if(typeof gdOnAction==='function') gdOnAction(skill,cycles,act&&act.id);
   const m=mods(skill);
   for(const [id,q] of Object.entries(act.out)){
     let qty=q*cycles;
@@ -33806,7 +33883,20 @@ function renderXpDetail(){
         +'<div class="sk-banner-running-bar"><div class="sk-banner-running-fill"></div></div>'
         +'<span class="sk-banner-running-time">\u2014</span>'
         +'</div>')
-    +'</div>';
+    +'</div>'
+    /* Ticket #96 — Fishing only, and only once Seasoned Catch is owned. */
+    +((skill==='fishing'&&treeRank('fishing','fi_cook')>0)
+      ? '<label class="sk-keepraw"><input type="checkbox" id="skKeepRaw"'
+        +(state.keepRaw?' checked':'')+'/>'
+        +'<span>Keep the catch raw</span>'
+        +'<i>Pauses Seasoned Catch, for when a quest wants raw fish</i></label>'
+      : '');
+  const _kr=box.querySelector('#skKeepRaw');
+  if(_kr) _kr.addEventListener('change',function(){
+    state.keepRaw=_kr.checked; saveGame(); renderCenter();
+    toast(state.keepRaw?'\ud83c\udfa3 Seasoned Catch paused \u2014 the catch stays raw.'
+                       :'\ud83e\uddc2 Seasoned Catch back on.');
+  });
 }
 
 
@@ -34412,7 +34502,13 @@ function buildTree(body, redraw){
     }
     const rank=offlineTreeRank(node.id);
     const maxed=rank>=node.max;
-    const locked=node.req&&spent<node.req;
+    /* Ticket #92 — a node whose text names another node now waits for it. Without
+       this you could buy Phantom Worker ("a fourth skill") with no Third Thread and
+       get a third, or Scavenger ("Night Forager brings back more") without the
+       Night Forager stance at all. */
+    const needsId=node.needs, needsNode=needsId&&OFFLINE_TREE.find(n=>n.id===needsId);
+    const needsUnmet=!!(needsId&&offlineTreeRank(needsId)<=0);
+    const locked=(node.req&&spent<node.req)||needsUnmet;
     const row=_ofpEl('div','ofp-node'+(maxed?' maxed':'')+(locked?' lock':'')+(node.gm?' gm':''));
     if(node.tip) row.setAttribute('data-tip',node.tip);
     row.innerHTML='<span class="ni"><span class="nn">'+node.name
@@ -34420,7 +34516,8 @@ function buildTree(body, redraw){
          the card carries the gold border, and inline it pushed 'Apex Sleeper' onto
          two lines. */
       +(node.stance?'<span class="ofp-stancetag">STANCE</span>':'')+'</span>'
-      +(locked?'<span class="nreq">Needs '+node.req+' points spent first</span>':'')
+      +(needsUnmet?'<span class="nreq">Needs '+(needsNode?needsNode.name:needsId)+' first</span>'
+        :(locked?'<span class="nreq">Needs '+node.req+' points spent first</span>':''))
       +'<span class="nd">'+(maxed?node.desc(rank)
         :(rank>0?node.desc(rank)+' · next: '+node.next(rank+1)
                 :'Next: '+node.next(rank+1)))+'</span></span>'
@@ -37701,8 +37798,12 @@ function renderCombat(){
     if(!heals.length&&!regens.length){
       return '<div class="fm-empty">No food or potions yet — cook fish or brew draughts to heal here.</div>';
     }
-    const healIco=h=>`<button class="fm-icon cmb-pot-btn" data-heal="${h.id}" data-tip="${_fmEsc(h.it.name)}&#10;+${h.heal} HP · instant&#10;${h.cnt} in satchel"${active?'':' disabled'}><span class="fm-ic">${iconHTML(h.id)}</span><span class="ct">${h.cnt}</span></button>`;
-    const regenIco=r=>`<button class="fm-icon cmb-pot-btn" data-regen="${r.id}" data-tip="${_fmEsc(r.it.name)}&#10;+${r.total} HP over ${r.dur}s&#10;${r.cnt} in satchel"${active?'':' disabled'}><span class="fm-ic">${iconHTML(r.id)}</span><span class="ct">${r.cnt}</span></button>`;
+    /* The padlock is a button INSIDE the food button, which is invalid HTML, so
+       it is a span with its own handler instead. Clicking the lock sets the food
+       aside from auto-eat; clicking anywhere else still eats it. */
+    const lockIco=id=>`<span class="fm-lock${healReserved(id)?' on':''}" data-lock="${id}" role="button" tabindex="0" data-tip="${healReserved(id)?'Set aside — auto-eat leaves this alone. Click to release.':'Click to set aside, so auto-eat never spends it.'}">${healReserved(id)?'&#128274;':'&#128275;'}</span>`;
+    const healIco=h=>`<button class="fm-icon cmb-pot-btn${healReserved(h.id)?' reserved':''}" data-heal="${h.id}" data-tip="${_fmEsc(h.it.name)}&#10;+${h.heal} HP · instant&#10;${h.cnt} in satchel${healReserved(h.id)?'&#10;Set aside from auto-eat':''}"${active?'':' disabled'}><span class="fm-ic">${iconHTML(h.id)}</span><span class="ct">${h.cnt}</span>${lockIco(h.id)}</button>`;
+    const regenIco=r=>`<button class="fm-icon cmb-pot-btn${healReserved(r.id)?' reserved':''}" data-regen="${r.id}" data-tip="${_fmEsc(r.it.name)}&#10;+${r.total} HP over ${r.dur}s&#10;${r.cnt} in satchel${healReserved(r.id)?'&#10;Set aside from auto-eat':''}"${active?'':' disabled'}><span class="fm-ic">${iconHTML(r.id)}</span><span class="ct">${r.cnt}</span>${lockIco(r.id)}</button>`;
     const icons=heals.map(healIco).join('')+regens.map(regenIco).join('');
     const thr=[10,20,30,40,50,60,75].map(t=>`<option value="${t}"${t===ah.thresholdPct?' selected':''}>≤ ${t}%</option>`).join('');
     return `<div class="fm-sub">Food &amp; Heals — tap to eat</div>
@@ -37941,9 +38042,22 @@ ${combat.raid?buildRaidProgressHTML():''}
   if(gdBtn) gdBtn.addEventListener('click',openGearModal);
 
   // ── Heal potion + auto-heal wiring (1.0.63) ──────────────────────────────
+  /* The padlock (ticket #84) sits inside the food button, so its click has to be
+     stopped from reaching the button underneath or setting an item aside would
+     also eat it. Bound before the eat handlers for the same reason. */
+  panel.querySelectorAll('.fm-lock[data-lock]').forEach(l=>{
+    const fire=function(ev){
+      ev.preventDefault(); ev.stopPropagation();
+      toggleHealReserved(l.getAttribute('data-lock'));
+      renderCombat();
+    };
+    l.addEventListener('click',fire);
+    l.addEventListener('keydown',function(ev){ if(ev.key==='Enter'||ev.key===' ') fire(ev); });
+  });
   panel.querySelectorAll('.cmb-pot-btn[data-heal]').forEach(b=>{
     if(b.disabled) return;
-    b.addEventListener('click',function(){
+    b.addEventListener('click',function(ev){
+      if(ev.target&&ev.target.closest&&ev.target.closest('.fm-lock')) return;
       const id=b.getAttribute('data-heal');
       useHealPotion(id);
       renderCombat();   // refresh the icon count badge
@@ -37952,7 +38066,8 @@ ${combat.raid?buildRaidProgressHTML():''}
   // Regen foods (1.0.21) — heal-over-time, separate use path.
   panel.querySelectorAll('.cmb-pot-btn[data-regen]').forEach(b=>{
     if(b.disabled) return;
-    b.addEventListener('click',function(){
+    b.addEventListener('click',function(ev){
+      if(ev.target&&ev.target.closest&&ev.target.closest('.fm-lock')) return;
       useRegenFood(b.getAttribute('data-regen'));
       renderCombat();   // refresh the icon count badge
     });

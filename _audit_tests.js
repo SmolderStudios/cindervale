@@ -5972,6 +5972,156 @@ setTimeout(() => {
     ok('an emerald piece still prices its enchants', em.priced===true);
   }
 
+
+  /* ── Radcliff ticket batch (#89 #91 #92 #94 #95 #97) ───────────────────────
+     Six defects reported across two days, none of which threw. The seed ones are
+     the same root cause as the Plant All button in #88: seeds moved into their
+     own vault and three call sites kept reading the satchel, where the count is
+     permanently zero. */
+  {
+    section('Radcliff ticket batch — seeds, rings, quests, the offline tree');
+
+    /* #89 / #94 — a farmhand with a SPECIFIC seed chosen planted nothing, ever.
+       Measured through tickFarmer itself rather than by reading the source, so a
+       future refactor that reintroduces the satchel read still fails. */
+    const farm = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      state.xp.farming=XP_CUM[60];
+      state.coins=99999999;
+      // every patch unlocked and empty, a chosen seed sitting in the VAULT
+      state.patches={};
+      var seedId=CROPS[0].id;
+      state.farmer={tier:2,maxTier:3,enabled:true,seedId:seedId};
+      state.seeds={}; state.seeds[seedId]=200; state.items={};
+      var before=Object.keys(state.patches).length;
+      tickFarmer();
+      var planted=0; for(var k in state.patches) if(state.patches[k]) planted++;
+      // and the same farmhand in Auto mode, which always worked
+      state.patches={}; state.farmer.seedId=null;
+      tickFarmer();
+      var autoPlanted=0; for(var k in state.patches) if(state.patches[k]) autoPlanted++;
+      return JSON.stringify({chosen:planted, auto:autoPlanted});
+    })()`));
+    ok('a farmhand with a chosen seed actually plants it (#89/#94)',
+       farm.chosen > 0, 'planted ' + farm.chosen + ' patches');
+    ok('and Auto mode still works too', farm.auto > 0, 'planted ' + farm.auto);
+
+    /* #97 — every shop ring except ember_ring was registered for the right hand
+       only, so four of them could never go on the left. */
+    const rings = JSON.parse(ev(`(function(){
+      var bad=[];
+      SHOP.filter(function(i){ return i.slot==='ring_l'||i.slot==='ring_r'; })
+        .forEach(function(i){
+          var sl=getItemSlots(i.id);
+          if(sl.indexOf('ring_l')<0||sl.indexOf('ring_r')<0) bad.push(i.id+' -> ['+sl+']');
+        });
+      return JSON.stringify(bad);
+    })()`));
+    ok('every shop ring fits either hand (#97)', rings.length === 0, rings.join(', '));
+
+    /* #92 — Phantom Worker promised a FOURTH skill and handed you a third,
+       because offlineSlotCount() is 2 + slot3 + master3 and nothing made you buy
+       the middle one. Assert the prereq exists AND that it is what the count needs. */
+    const off = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      var byId={}; OFFLINE_TREE.forEach(function(n){ byId[n.id]=n; });
+      state.tree._offline={of_divided:1, of_master3:1};   // skipping Third Thread
+      state.offlineStance='divided';
+      var skipped=offlineSlotCount();
+      state.tree._offline={of_divided:1, of_slot3:1, of_master3:1};
+      var full=offlineSlotCount();
+      return JSON.stringify({
+        needsSlot3: byId.of_master3 && byId.of_master3.needs,
+        slot3Needs: byId.of_slot3 && byId.of_slot3.needs,
+        lootNeeds:  byId.of_loot && byId.of_loot.needs,
+        skipped: skipped, full: full});
+    })()`));
+    ok('Phantom Worker requires Third Thread (#92)', off.needsSlot3 === 'of_slot3', String(off.needsSlot3));
+    ok('Third Thread requires the Divided stance', off.slot3Needs === 'of_divided', String(off.slot3Needs));
+    ok('Scavenger requires Night Forager', off.lootNeeds === 'of_scav', String(off.lootNeeds));
+    ok('and the fourth thread really is the fourth', off.full === 4, String(off.full));
+
+    /* #91 — the Grandmaster tooltips. The shared data-tip rule renders downward at
+       a fixed 300px width and .ofp is overflow:hidden, so the last row fell out of
+       the modal. Both rules are asserted because either one alone leaves it broken:
+       without the flip the row is below the clip, without the width it overhangs
+       the right edge. */
+    ok('Grandmaster tooltips flip upward (#91)',
+       html.includes('.ofp-node.gm[data-tip]:hover::after{top:auto;bottom:calc(100% + 6px)}'),
+       'rule missing');
+    ok('and are clamped to the node width so they cannot overhang',
+       html.includes('.ofp-node[data-tip]:hover::after{left:0;right:0;min-width:0;max-width:none}'),
+       'rule missing');
+
+    /* #95 — the woodcutting second bar is the only completion path that does not
+       run through completeAction(), so it was the only one that never told a guild
+       anything. Measured end to end: roll a real quest, chop on the second bar. */
+    const wc = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      state.xp.woodcutting=XP_CUM[99];
+      state.gd={}; gdJoin('delvers');
+      // find any guild that wants woodcutting, and hand it a 'do' quest for one act
+      var gid=null;
+      for(var k in GD_BY) if(GD_BY[k].skills.indexOf('woodcutting')>=0){ gid=k; break; }
+      if(!gid) return JSON.stringify({skip:true});
+      if(!state.gd[gid]) gdJoin(gid);
+      var act=SKILLS.woodcutting.acts[0];
+      state.gd[gid].q=[{kind:'do', skill:'woodcutting', act:act.id, need:50, have:0, size:'small'}];
+      var before=state.gd[gid].q[0].have;
+      completeWcDoubleAction(act, 7);
+      return JSON.stringify({before:before, after:state.gd[gid].q[0].have});
+    })()`));
+    if (!wc.skip) {
+      ok('the woodcutting second bar counts toward a guild quest (#95)',
+         wc.after > wc.before, wc.before + ' -> ' + wc.after);
+    }
+
+    /* #85 / #86 — cooked food that carries potion.heal must land in the Food tab,
+       not Potions. Smoked Elk Haunch was the one that surfaced it. */
+    const cook = JSON.parse(ev(`(function(){
+      var bad=[];
+      (SKILLS.cooking.acts||[]).forEach(function(a){
+        for(var id in (a.out||{})) if(itemCompCat(id)!=='cooked') bad.push(id+' -> '+itemCompCat(id));
+      });
+      return JSON.stringify(bad);
+    })()`));
+    /* #84 — auto-eat ate the food he had just cooked for a guild delivery. A
+       reserved item must vanish from every AUTOMATIC pick and stay in every
+       manual one; getting that backwards would be worse than the original bug. */
+    const res = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      state.items={cooked_trout:40, elk_haunch:12};
+      var all=combatHealItems().map(function(h){return h.id;});
+      toggleHealReserved('elk_haunch');
+      var auto=combatHealItems().filter(function(h){return !healReserved(h.id);}).map(function(h){return h.id;});
+      var stillListed=combatHealItems().map(function(h){return h.id;});
+      // and picking it as the auto-eat target must not survive reserving it
+      state.autoHeal.itemId='cooked_trout'; toggleHealReserved('cooked_trout');
+      return JSON.stringify({all:all, auto:auto, stillListed:stillListed,
+                             clearedTarget:state.autoHeal.itemId});
+    })()`));
+    ok('reserved food is invisible to auto-eat (#84)',
+       res.auto.indexOf('elk_haunch') < 0, res.auto.join(', '));
+    ok('but is still there to eat by hand',
+       res.stillListed.indexOf('elk_haunch') >= 0, res.stillListed.join(', '));
+    ok('and reserving the chosen auto-eat item clears the choice',
+       res.clearedTarget === '', JSON.stringify(res.clearedTarget));
+
+    /* #96 — Seasoned Catch had no off switch short of a Fishing respec. */
+    const raw = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      state.xp.fishing=XP_CUM[99]; state.tree.fishing={fi_cook:10};
+      state.keepRaw=false; var on=mods('fishing').fi_cook;
+      state.keepRaw=true;  var off=mods('fishing').fi_cook;
+      return JSON.stringify({on:on, off:off});
+    })()`));
+    ok('Keep the catch raw suspends Seasoned Catch (#96)',
+       raw.on > 0 && raw.off === 0, 'on ' + raw.on + ', off ' + raw.off);
+
+    ok('every cooked dish files as food, heal or no heal (#85/#86)',
+       cook.length === 0, cook.slice(0, 6).join(', '));
+  }
+
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));
   process.exit(fail ? 1 : 0);
 }, 2500);
