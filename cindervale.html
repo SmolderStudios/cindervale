@@ -7747,7 +7747,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.123.13">v0.9.123</div>
+  <div class="mm-ver" data-build="0.9.123.14">v0.9.123</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -15464,7 +15464,7 @@ const TREES = {
     // Per-rank values nerfed to match the actual numbers applied in mods() — see firemaking branches there.
     {id:'fm_speed', name:'Quick Kindle',   icon:'🔥',max:18,req:0,
       desc:r=>`Burn ${(r*0.9).toFixed(1)}% faster`, next:r=>`+0.9% burn speed → ${(r*0.9).toFixed(1)}% faster`},
-    {id:'fm_thrift',name:'Banked Embers',  icon:'🪵',max:12,req:0,
+    {id:'fm_thrift',name:'Saved Embers',  icon:'🪵',max:12,req:0,
       desc:r=>`${(r*1.5).toFixed(1)}% chance the log isn't consumed`, next:r=>`+1.5% preserve → ${(r*1.5).toFixed(1)}%`},
     {id:'fm_xp',    name:'Fire Lore',      icon:'📖',max:10,req:0,
       desc:r=>`+${(r*1.5).toFixed(1)}% Firemaking XP`, next:r=>`+1.5% XP → ${(r*1.5).toFixed(1)}%`},
@@ -15534,7 +15534,7 @@ const TREES = {
     {id:'ag_gm_2x_xp',name:'Marathon Legend',icon:AG_TREE_ICONS.ag_gm_2x_xp,max:1,req:90,desc:r=>r?'2× Agility XP from all laps (grandmaster pinnacle)':'Double Agility XP permanently',next:()=>'2× Agility XP permanently'},
     {id:'ag_gm_coins2',name:'Gold Sprinter',icon:AG_TREE_ICONS.ag_gm_coins2,max:1,req:90,desc:r=>r?'Coin rewards from all laps +75%':'Permanent +75% lap coin rewards',next:()=>'+75% coin rewards from all laps'},
     {id:'ag_gm_cape', name:"Runner's High", icon:AG_TREE_ICONS.ag_gm_cape,max:1,req:99,reqPts:97,reqCape:true,
-      desc:r=>r?'Hit your stride — 20% chance each lap to instantly bank a second lap’s full coins and XP':'20% chance per lap: free second lap (coins + XP)',
+      desc:r=>r?'Hit your stride — 20% chance each lap to instantly collect a second lap’s full coins and XP':'20% chance per lap: free second lap (coins + XP)',
       next:()=>'20% chance for a free bonus lap · requires the Agility Cape'},
   ],
   jeweler:[
@@ -15836,7 +15836,7 @@ const PASSIVE_TIPS={
   jw_gm_xp:     'Grandmaster bonus (Lv 80). +3% Jeweler XP per rank, up to +30% at max 10 ranks.',
   jw_gm_sell:   'Grandmaster bonus (Lv 85). +6% jewelry sell value per rank.',
   jw_gm_cape:   'Level 99 pinnacle — Flawless Cut. 15% chance on each jewelry cut for a flawless result that gives +2 bonus pieces (jewelry crafts only, not gem refining).\nRequires 97 points spent AND the Jeweler Cape (buy from the Shop at Lv 99).',
-  ag_gm_cape:   'Level 99 pinnacle — Runner\'s High. 20% chance per lap to instantly bank a second lap\'s full coins and XP.\nRequires 97 points spent AND the Agility Cape (buy from the Shop at Lv 99).',
+  ag_gm_cape:   'Level 99 pinnacle — Runner\'s High. 20% chance per lap to instantly collect a second lap\'s full coins and XP.\nRequires 97 points spent AND the Agility Cape (buy from the Shop at Lv 99).',
   // Farming
   fa_speed:     'Reduces tending time per patch. +1.3% per rank, up to +19.5% at max 15 ranks.',
   fa_yield:     'Each harvest has a 4% per rank chance for a bonus harvest roll.\nAt max (15): 60% bonus yield chance.',
@@ -19311,7 +19311,7 @@ const OFFLINE_TREE=[
     tip:'Efficiency is how fast your chosen skill trains while offline, as a % of its normal online speed. Higher efficiency = more actions completed per hour away.'},
   {id:'of_cap',    name:'Extended Rest',  max:8, req:0, tier:'The Basics',
     desc:r=>`Offline cap +${r*2}h (base 24h)`,    next:r=>`+2h → ${24+r*2}h`,
-    tip:'The maximum amount of time the game keeps banking offline progress. Time spent away beyond the cap earns nothing, so raise this if you log in less often.'},
+    tip:'The longest stretch the game keeps counting while you are away. Time past the cap earns nothing, so raise this if you log in less often.'},
   {id:'of_xp',     name:'Dream Study',   max:10,req:0, tier:'The Basics',
     desc:r=>`Offline XP rate +${r*8}%`,            next:r=>`+8% → ${r*8}%`,
     tip:'Increases the XP earned by the Offline skill itself while you are away — the skill that pays for this tree. Does not affect your chosen training skill.'},
@@ -19332,8 +19332,8 @@ const OFFLINE_TREE=[
   /* ── Tier 3 (req 14) ── */
   {id:'of_deep',   name:'Dead to the World',max:1,req:14, stance:'deep', tier:'Deeper still',
     desc:r=>r?'The Dead to the World stance — 135%, half the cap':'Unlocks the Dead to the World stance',
-    next:()=>'One skill at 135%, half your cap banked',
-    tip:'Unlocks Dead to the World: one skill at 135% of your offline rate, but only half your cap is banked. Worth it if you come back inside half a cap, a loss if you do not.'},
+    next:()=>'One skill at 135%, half your cap counted',
+    tip:'Unlocks Dead to the World: one skill at 135% of your offline rate, but only half your cap counts. Worth it if you come back inside half a cap, a loss if you do not.'},
   {id:'of_slot3',  name:'Third Thread',  max:1, req:14, tier:'Deeper still',
     desc:r=>r?'Divided runs a third skill':'Divided gains a third slot',
     next:()=>'Divided: 3 skills instead of 2',
@@ -19349,7 +19349,7 @@ const OFFLINE_TREE=[
   {id:'of_master2',name:'Time Bender',   max:1, req:24, tier:'Masters',
     desc:r=>r?'Offline cap at least 48h':'Extend cap to 48h',
     next:()=>'Cap: at least 48h',
-    tip:'Raises the banking cap to 48 hours. Stacks with Extended Rest in the sense that whichever is higher wins — it is a floor on the cap, not an addition to it.'},
+    tip:'Raises the away-time cap to 48 hours. Stacks with Extended Rest in the sense that whichever is higher wins — it is a floor on the cap, not an addition to it.'},
   {id:'of_master3',name:'Phantom Worker',max:1, req:24, tier:'Masters',
     desc:r=>r?'Divided runs a fourth skill':'Divided gains a fourth slot',
     next:()=>'Divided: 4 skills instead of 3',
@@ -22478,7 +22478,7 @@ function completeAction(act,skillKey,times){
   if(IS_AGILITY_SKILL[skillKey]&&act.coins){
     const p=SK_PFX[skillKey];
     const coinMult=1+(treeRank(skillKey,p+'_coins')*0.03)+(treeRank(skillKey,p+'_master1')>0?0.25:0)+(treeRank(skillKey,p+'_master3')>0?0.25:0)+(treeRank(skillKey,'ag_gm_coins')*0.06)+(treeRank(skillKey,'ag_gm_coins2')>0?0.75:0);
-    // Runner's High (Lv99): 20% chance per lap to instantly bank a second lap's rewards.
+    // Runner's High (Lv99): 20% chance per lap to instantly collect a second lap's rewards.
     if(m.ag_bonusLap) agBonusLaps=binom(times,0.20);
     const coinsGained=Math.round((act.coins||0)*(times+agBonusLaps)*coinMult); // already SILVER
     state.coins+=coinsGained;
@@ -23050,7 +23050,7 @@ function offlineCombatResolve(awayMs, om){
 function grantOffline(){
   if(!state.lastSeen) return;
   const om=offlineMods();
-  /* The cap the SLOTS work against, stance included — Dead to the World banks half
+  /* The cap the SLOTS work against, stance included — Dead to the World counts half
      of it. Reported as the real cap so the Welcome Back panel says the number the
      player actually has, and so "capped" means what it says. */
   const capMs=offlineCapMs();
