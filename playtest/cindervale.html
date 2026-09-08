@@ -7645,7 +7645,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.123.11">v0.9.123</div>
+  <div class="mm-ver" data-build="0.9.123.12">v0.9.123</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -30181,6 +30181,51 @@ function hasPet(petId){ return !!(state && state.pets && state.pets[petId]); }
     add('snow_leopard',  [{id:'feather', chance:0.28, qty:[5,11]},
                           {id:'raw_fowl',chance:0.20}]);
     add('frost_hare',    [{id:'feather', chance:0.24, qty:[4,8]}]);
+  }
+
+  /* ── ammunition, off the things that carry it ──
+     Arrows had exactly one source: making them. Not the shop, not a drop — a
+     grep for _arrow found four mentions and all four were the generator. A
+     player who ran dry mid-zone had to stop and go fletch, which is a wall,
+     not a cost. Two rules, both of which the fiction was already asking for.
+
+       1. Anything that carries a bow drops its quiver.
+       2. gnawed_bone was still rolling on level 30-65 monsters. It is a level 1
+          rat material; finding one on a Tundra Elk was a wasted roll. That slot
+          is arrows now, so the trim pays for itself.
+
+     The tier is read from the monster's own level against RANGED_AMMO, so it
+     tracks the ladder instead of being hardcoded, and it can never hand you
+     ammunition from further up the ladder than that fight sits on. */
+  if(typeof MONSTER_DROPS!=='undefined'){
+    const _byId=id=>MONSTERS.filter(m=>m.id===id)[0];
+    /* highest ammo tier whose Fletching unlock is at or below this fight */
+    const _tierFor=lvl=>{
+      let k=RANGED_AMMO[0].k;
+      for(const a of RANGED_AMMO){ if(a.fl<=lvl) k=a.k; }
+      return k;
+    };
+    const _ammo=(mon,kind,chance,qty)=>{
+      const m=_byId(mon); if(!m||!MONSTER_DROPS[mon]) return;
+      MONSTER_DROPS[mon].push({id:_tierFor(m.lvl)+'_'+kind, chance:chance, qty:qty});
+    };
+    /* the trim: gnawed_bone off the four fights it had outlived */
+    for(const mon of ['wolf','frost_bear','tundra_elk','ash_jackal']){
+      const t=MONSTER_DROPS[mon];
+      if(t) MONSTER_DROPS[mon]=t.filter(d=>d.id!=='gnawed_bone');
+    }
+    _ammo('wolf',       'arrow', 0.14, [4,9]);
+    _ammo('frost_bear', 'arrow', 0.13, [4,10]);
+    _ammo('tundra_elk', 'arrow', 0.16, [5,12]);
+    _ammo('ash_jackal', 'arrow', 0.12, [4,10]);
+    /* the archers, who are carrying a quiver by definition */
+    _ammo('goblin_archer',  'arrow', 0.34, [8,20]);
+    _ammo('skel_archer',    'arrow', 0.36, [10,24]);
+    _ammo('pack_hunter',    'arrow', 0.30, [8,18]);
+    _ammo('goblin_shaman',  'arrow', 0.16, [5,12]);
+    /* armoured knights carry a crossbow, so they carry bolts */
+    _ammo('bone_knight',  'bolt', 0.22, [6,14]);
+    _ammo('dread_knight', 'bolt', 0.24, [8,18]);
   }
   /* Bird's Nest finally does something. It was sitting in SELL_ONLY, which is the
      audit's way of saying "nothing in the game wants this". */
