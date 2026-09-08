@@ -3454,7 +3454,11 @@ body:not(.is-demo) .demo-only{display:none !important}
   0 0 18px rgba(240,199,114,.55), 0 3px 7px rgba(0,0,0,.6)}
 
 /* crests — what each discipline is FOR, and how deep you are into it */
-.cmast-crests{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;margin-bottom:12px}
+/* One track per discipline, read off CMAST_COLS at render time rather than
+   hardcoded, so a fifth column does not silently orphan itself onto row two the
+   way Warfare did when Marksman landed. */
+.cmast-crests{display:grid;grid-template-columns:repeat(var(--cm-crests,4),1fr);gap:11px;margin-bottom:12px}
+@media (max-width:1100px){ .cmast-crests{grid-template-columns:repeat(2,1fr)} }
 @media (max-width:760px){ .cmast-crests{grid-template-columns:1fr} }
 .cmast-crest{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:9px;
   background:linear-gradient(178deg,var(--lit-top),var(--lit-bot) 78%);
@@ -3554,13 +3558,111 @@ body:not(.is-demo) .demo-only{display:none !important}
 .cmast-legend .li{display:inline-flex;align-items:center;gap:5px}
 /* The legend swatches are the real puck material at 11px, not abstract squares —
    whatever a state looks like on the board is exactly what it looks like here. */
-.cmast-legend .sw{display:inline-block;width:11px;height:11px;border-radius:50%;
+.cmast-legend .sw{display:inline-block;width:11px;height:11px;border-radius:3.5px;
   background:radial-gradient(120% 120% at 50% 14%,#2b1d0c,#0d0704 76%)}
 .cmast-legend .sw.ready{box-shadow:inset 0 1px 3px rgba(0,0,0,.9),0 0 0 1.5px var(--trim),0 0 7px rgba(199,155,78,.5)}
 .cmast-legend .sw.alloc{box-shadow:inset 0 1px 3px rgba(0,0,0,.9),0 0 0 1.5px #e0762f,0 0 7px rgba(224,118,47,.5)}
 .cmast-legend .sw.maxed{background:radial-gradient(120% 120% at 50% 16%,#7a3a10,#120b05 74%);
   box-shadow:0 0 0 1.5px #e0762f,0 0 8px rgba(224,118,47,.55)}
 .cmast-legend .sw.locked{box-shadow:inset 0 1px 3px rgba(0,0,0,.9),0 0 0 1.5px #3a2c18;opacity:.55}
+
+/* ── The board (0.9.123.13) ──────────────────────────────────────────────────
+   A grid, not a stage. The old board positioned every node absolutely against a
+   five-slot x-map and drew rails between them in an SVG sized to that map; a
+   fourth discipline could not be added to it without re-deriving both. Here the
+   column IS the discipline and the row IS the tier, so a fifth column is one more
+   grid track and nothing else moves.
+
+   Connectors are gone on purpose. Every tier feeds the tier above it inside its
+   own column, which the grid already says; the rails were drawing a fact the
+   layout states for free, and four of them crossed in an X under every column.
+   The detail strip still lists prerequisites for the node you clicked.
+
+   .cmast-grid::before is an empty paint layer sitting under the nodes. It is
+   where a painted background goes when that art exists — no node moves for it. */
+.cmast-grid{position:relative;border:1px solid var(--trim-d);border-radius:11px;
+  overflow:hidden;margin:0 auto 12px;
+  background:linear-gradient(180deg,#1c150d,#141009)}
+.cmast-grid::before{content:'';position:absolute;inset:0;z-index:0;pointer-events:none}
+.cmast-gh{display:grid;grid-template-columns:var(--cm-cols);position:relative;z-index:1;
+  background:rgba(0,0,0,.20)}
+.cmast-gh > .sp{border-right:1px solid rgba(255,255,255,.05)}
+.cmast-ch{padding:10px 14px 11px;position:relative}
+.cmast-ch::before{content:'';position:absolute;inset:0;background:var(--pc);opacity:.09}
+.cmast-ch::after{content:'';position:absolute;left:14px;right:14px;bottom:0;height:2px;
+  background:var(--pc);border-radius:2px}
+.cmast-ch b{position:relative;display:block;font-size:calc(14px*var(--tscale));
+  color:var(--pc);letter-spacing:1.2px}
+.cmast-ch i{position:relative;display:block;font-style:normal;color:var(--muted);
+  font-size:calc(11px*var(--tscale));margin-top:2px}
+.cmast-ch u{position:absolute;right:14px;top:9px;text-decoration:none;font-family:var(--num);
+  font-size:calc(14px*var(--tscale));color:var(--pc);font-weight:bold}
+.cmast-gb{display:grid;grid-template-columns:var(--cm-cols);position:relative;z-index:1}
+.cmast-gt{display:flex;align-items:center;justify-content:flex-end;padding:0 11px;
+  border-right:1px solid rgba(255,255,255,.05);border-bottom:1px solid rgba(255,255,255,.045);
+  font-family:var(--num);font-size:calc(9.5px*var(--tscale));letter-spacing:1.6px;
+  color:#7a6544;text-transform:uppercase;text-align:right}
+.cmast-gc{min-height:96px;display:flex;align-items:center;justify-content:center;
+  gap:26px;position:relative;padding:11px 6px;
+  border-bottom:1px solid rgba(255,255,255,.045)}
+.cmast-gc::before{content:'';position:absolute;inset:5px 4px;border-radius:10px;
+  background:linear-gradient(180deg,rgba(255,255,255,.03),transparent);pointer-events:none}
+/* A bridge straddles the seam between two columns, so it hangs off the left edge
+   of the RIGHT-hand one. z-index clears the cell highlight above. */
+.cmast-gbr{position:absolute;left:0;top:50%;transform:translate(-50%,-50%);z-index:3}
+
+/* ── the node ─────────────────────────────────────────────────────────────
+   A rounded tile, not a puck. The old node was a thin outline icon inside a thin
+   outline ring in the same colour, so the icon and its frame read as one shape
+   and a one-point capstone looked identical to a five-rank filler. Size and fill
+   now carry the kind: plain tile ranked, tinted unique, tinted+lit powerful,
+   large capstone, dashed bridge. */
+.cmast-grid .node{background:none;border:0;padding:0;cursor:var(--cur-pointer);
+  display:flex;flex-direction:column;align-items:center;gap:5px;width:86px;
+  color:inherit;font-family:inherit}
+.cmast-grid .node .tile{width:48px;height:48px;border-radius:14px;flex:none;
+  display:flex;align-items:center;justify-content:center;position:relative;
+  background:rgba(0,0,0,.27);border:1.6px solid color-mix(in srgb,var(--pc) 55%,transparent);
+  box-shadow:0 2px 8px rgba(0,0,0,.4);transition:transform .12s,box-shadow .12s}
+.cmast-grid .node:hover .tile{transform:translateY(-2px);
+  box-shadow:0 4px 12px rgba(0,0,0,.5),0 0 0 3px color-mix(in srgb,var(--pc) 20%,transparent)}
+.cmast-grid .node .tile svg{width:24px;height:24px;color:var(--pc);opacity:.9}
+.cmast-grid .node .nm{font-size:calc(11px*var(--tscale));line-height:1.2;text-align:center;
+  color:var(--text)}
+.cmast-grid .node .pill{font-family:var(--num);font-size:calc(10px*var(--tscale));
+  color:var(--muted)}
+.cmast-grid .node .pill s{text-decoration:none}
+.cmast-grid .node.uniq .tile{border-width:2px;
+  background:linear-gradient(180deg,color-mix(in srgb,var(--pc) 20%,transparent),rgba(0,0,0,.27))}
+.cmast-grid .node.key .tile{width:56px;height:56px;border-radius:16px;border-width:2.5px;
+  background:linear-gradient(180deg,color-mix(in srgb,var(--pc) 32%,transparent),rgba(0,0,0,.27));
+  box-shadow:0 0 20px -4px var(--pc)}
+.cmast-grid .node.key .tile svg{width:27px;height:27px}
+.cmast-grid .node.cap .tile{width:62px;height:56px;border-radius:18px;border-width:2.5px;
+  border-color:var(--pc);
+  background:linear-gradient(180deg,color-mix(in srgb,var(--pc) 30%,transparent),rgba(0,0,0,.33))}
+.cmast-grid .node.cap .tile svg{width:28px;height:28px}
+.cmast-grid .node.brdg .tile{width:42px;height:42px;border-radius:11px;border-style:dashed}
+.cmast-grid .node.brdg .tile svg{width:20px;height:20px}
+.cmast-grid .node.brdg .nm,.cmast-grid .node.brdg .pill{font-size:calc(10px*var(--tscale))}
+/* States. "ready" is the one that has to shout — it is the only thing on the board
+   telling you where a point can go right now. */
+.cmast-grid .node.ready .tile{border-color:var(--pc);
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--pc) 22%,transparent),0 2px 8px rgba(0,0,0,.4)}
+.cmast-grid .node.ready .tile svg{opacity:1}
+.cmast-grid .node.on .tile{border-color:var(--pc);
+  background:linear-gradient(180deg,color-mix(in srgb,var(--pc) 26%,transparent),rgba(0,0,0,.3))}
+.cmast-grid .node.on .pill{color:var(--pc)}
+.cmast-grid .node.max .tile{border-color:var(--pc);
+  background:linear-gradient(180deg,color-mix(in srgb,var(--pc) 46%,transparent),rgba(0,0,0,.28));
+  box-shadow:0 0 16px -3px var(--pc),0 2px 8px rgba(0,0,0,.4)}
+.cmast-grid .node.max .tile svg{opacity:1;filter:drop-shadow(0 0 5px var(--pc))}
+.cmast-grid .node.locked{cursor:var(--cur-na)}
+.cmast-grid .node.locked .tile{opacity:.42;border-style:solid}
+.cmast-grid .node.locked .nm{color:#584c34}
+.cmast-grid .node.wlock .tile{opacity:.3}
+.cmast-grid .node.sel .tile{outline:2px solid var(--pc);outline-offset:3px}
+@media(prefers-reduced-motion:reduce){ .cmast-grid .node .tile{transition:none} }
 
 /* ════════ [CSS-29 END] COMBAT MASTERY ═══════════════════════════════════════════ */
 
@@ -7645,7 +7747,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.123.12">v0.9.123</div>
+  <div class="mm-ver" data-build="0.9.123.13">v0.9.123</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -19781,7 +19883,11 @@ function cmastBonuses(){
   const b={atkBoost:0,hpBoost:0,defBoost:0,critChance:0,lifesteal:0,aspd:0,
            maxHpFlat:0,dmgReduce:0,combatXpMult:0,gpMult:0,
            /* (0.9.130) channels added when the last unwired nodes landed */
-           rareDrop:0,doubleDrop:0,critDmg:0,consolation:0,trophyGuarantee:0};
+           rareDrop:0,doubleDrop:0,critDmg:0,consolation:0,trophyGuarantee:0,
+           /* (0.9.123.13) Marksman. accBoost is separate from atkBoost because
+              atkBoost is read by playerAccuracy AND playerMaxHit, so anything
+              routed through it silently doubles as a damage buff. */
+           accBoost:0,ammoSave:0,armourPen:0,volley:0,ammoTierUp:0,pinning:0};
   if(!state||!state.cmast) return b;
   // effect-key → channel (only always-on scalars; conditional/proc keys ignored here)
   for(const id in state.cmast){
@@ -19789,7 +19895,21 @@ function cmastBonuses(){
     const node=(typeof CMAST_BY_ID!=='undefined')&&CMAST_BY_ID[id]; if(!node) continue;
     const ef=node.effect;
     if(ef){
-      if(ef.meleeDmg)   b.atkBoost     += ef.meleeDmg*rank;
+      /* THE WEAPON GATE. atkBoost is the one damage channel and both playerMaxHit
+         branches read it, so before Marksman existed "+3% melee damage" was also
+         buffing every bow in the game. A melee node must not pay a bow and a
+         Marksman node must not pay a sword; anyDmg is the bridge channel that
+         deliberately pays both. */
+      const _rng = (typeof usingRanged==='function') && usingRanged();
+      if(ef.meleeDmg && !_rng) b.atkBoost += ef.meleeDmg*rank;
+      if(ef.rangedDmg && _rng) b.atkBoost += ef.rangedDmg*rank;
+      if(ef.anyDmg)            b.atkBoost += ef.anyDmg*rank;
+      if(ef.rangedAcc && _rng) b.accBoost += ef.rangedAcc*rank;
+      if(ef.ammoSave)          b.ammoSave += ef.ammoSave*rank;
+      if(ef.xbowDmg && _rng){
+        const _xw=(typeof eqCombatWeapon==='function')?eqCombatWeapon():'';
+        if(_xw && ITEMS[_xw] && ITEMS[_xw].ammo==='bolt') b.atkBoost += ef.xbowDmg*rank;
+      }
       if(ef.critChance) b.critChance   += ef.critChance*rank;
       if(ef.maxHp)      b.maxHpFlat     += ef.maxHp*rank;
       if(ef.dmgReduce)  b.dmgReduce     += ef.dmgReduce*rank;
@@ -19813,6 +19933,18 @@ function cmastBonuses(){
       const _dg=(typeof eqCombatWeapon==='function')?eqCombatWeapon():((state.combatEquipped&&state.combatEquipped.weapon)||'');
       if(_dg&&/dagger/.test(_dg)) b.critDmg+=0.15;
     }
+    /* ── Marksman (0.9.123.13) ── every one of these is conditional on holding the
+       right weapon, which is the column's whole identity. */
+    if(id==='k_t3_l'){ b.armourPen+=0.15; }                                          // Bodkin Points
+    if(id==='k_t3_r'){
+      const _bw=(typeof eqCombatWeapon==='function')?eqCombatWeapon():'';
+      if(_bw && ITEMS[_bw] && ITEMS[_bw].ammo==='arrow') b.aspd+=0.08;               // Quick Nock — bows only
+    }
+    if(id==='k_t5_l'){ b.volley+=0.10; }                                             // Volley
+    if(id==='k_t5_m'){ b.pinning=1; }                                                // Pinning Shot
+    if(id==='k_t5_r'){ b.ammoTierUp+=1; }                                            // Quiver Master
+    if(id==='k_cap' && typeof usingRanged==='function' && usingRanged()){ b.critDmg+=0.25; } // Deadeye
+    if(id==='kb_t4'){ b.atkBoost+=0.06; b.maxHpFlat+=4; }                             // Vanguard
     if(id==='g_t5_l'){ b.rareDrop+=0.03; }                                           // Headhunter
     if(id==='g_t3_r'){ b.consolation+=0.25; }                                        // Scavenger
     if(id==='g_t3_l'){ b.trophyGuarantee=1; }                                        // Trophy Hunter
@@ -19915,6 +20047,9 @@ function combatBonusesAll(){
     lifesteal: (e.lifesteal||0) + (s.lifesteal||0) + (st.lifesteal||0) + (u.lifesteal||0) + cm.lifesteal + tj.lifesteal,
     dodge:     a.dodge,   // chance to fully avoid a foe's landed hit
     aspd:      a.aspd + cm.aspd,    // fractional swing-time reduction
+    /* Anything cmastBonuses computes has to be RE-LISTED here or it never leaves
+       the function. Point Blank read as a dead node for exactly that reason. */
+    accBoost:  cm.accBoost||0,
   };
 }
 
@@ -20147,7 +20282,20 @@ function readyAmmo(){
   if((state.items[q]||0)<1) return null;
   return q;
 }
-function ammoStr(){ const a=readyAmmo(); return a?(ITEMS[a].ammoStr||0):0; }
+function ammoStr(){
+  const a=readyAmmo(); if(!a) return 0;
+  let v=ITEMS[a].ammoStr||0;
+  /* Quiver Master reads the ladder rather than adding a flat number, so "one tier
+     stronger" is worth what the next tier is actually worth: +1 on bronze, +8 at
+     starfall. The top tier has nothing above it and keeps its own value. */
+  const _cm=(typeof cmastBonuses==='function')?cmastBonuses():null;
+  if(_cm && _cm.ammoTierUp>0 && typeof RANGED_AMMO!=='undefined'){
+    const kind=ITEMS[a].ammo, mul=(kind==='bolt')?1.15:1;
+    const i=RANGED_AMMO.findIndex(x=>a===x.k+'_'+kind);
+    if(i>=0 && i<RANGED_AMMO.length-1) v=Math.round(RANGED_AMMO[i+1].str*mul);
+  }
+  return v;
+}
 /* Which stat a kill's XP goes to. It was this exact ternary copy-pasted into five
    places, so a sixth would have missed ranged in silence. */
 function combatXpStat(){
@@ -20162,7 +20310,11 @@ function playerAccuracy(){
   const cs=combatStats();
   const b=combatBonusesAll();
   const lvl=usingRanged()?cmbLvl('ranged'):cmbLvl('attack');
-  return Math.round((lvl*COMBAT_P.ACC_LVL + cs.atk*COMBAT_P.ACC_GEAR) * (1 + (b.atkBoost||0)) * classAccuracyMult() * rangedArmourMult());
+  /* accBoost is Point Blank and nothing else today. It is deliberately NOT folded
+     into atkBoost: that channel is also read by playerMaxHit, so an accuracy node
+     routed through it would silently be a damage node as well. */
+  return Math.round((lvl*COMBAT_P.ACC_LVL + cs.atk*COMBAT_P.ACC_GEAR)
+    * (1 + (b.atkBoost||0) + (b.accBoost||0)) * classAccuracyMult() * rangedArmourMult());
 }
 
 /* Player max hit: (strength lvl ×1.6 + gear str ×5.0) × (1+atkBoost) × class. */
@@ -20221,7 +20373,13 @@ function playerSwingMs(){
      crossbow cranks slower. Applied here so every readout of swing time agrees. */
   const _w=(typeof eqCombatWeapon==='function')?eqCombatWeapon():'';
   const _wm=(_w&&ITEMS[_w]&&ITEMS[_w].swingMult)||1;
-  return Math.max(COMBAT_MIN_SWING_MS, Math.round(base*classSwingMult()*_wm));
+  /* Attack speed from leather and from the tree (Frenzy, Quick Nock) belongs HERE,
+     not in refreshCombatStats where it used to live. Down there it reached the live
+     fight but not playerSwingMs, so every readout, tooltip and sim was quoting a
+     swing time the game was not using. */
+  const _ab=(typeof combatBonusesAll==='function')?combatBonusesAll():null;
+  const _as=(_ab&&_ab.aspd>0)?(1-_ab.aspd):1;
+  return Math.max(COMBAT_MIN_SWING_MS, Math.round(base*classSwingMult()*_wm*_as));
 }
 
 /* Refresh the live combat object's stats from current gear and levels.
@@ -20247,8 +20405,7 @@ function refreshCombatStats(){
   // ── Leather attack-speed (1.0.69) — worn leather trims swing time. Applied to
   // the freshly computed base and floored so bars stay readable. Dodge/crit are
   // read live in combatTick from combatBonusesAll(); only aspd touches swing time.
-  const _apb=(typeof combatBonusesAll==='function')?combatBonusesAll():null;
-  if(_apb&&_apb.aspd>0){ combat.youSwingMs=Math.max(COMBAT_MIN_SWING_MS, Math.round(combat.youSwingMs*(1-_apb.aspd))); }
+  /* aspd moved into playerSwingMs() so every readout agrees with the fight. */
   // Light weapon + bracing shield (1.0.87) — a dagger can't set a shield: +20% swing
   // time. Steers rogues onto the Buckler offhand (no penalty, no block) instead. Applied
   // after aspd so it genuinely erases the rogue's speed edge.
@@ -28241,44 +28398,70 @@ const CMAST_NODES=[
   {id:'m_t1', tree:'melee', tier:1, branch:'c', max:4, name:'Iron Discipline', desc:'+4% combat XP per rank.', effect:{combatXp:0.04}},
   {id:'m_t2_l', tree:'melee', tier:2, branch:'l', max:5, name:'Brutal Strikes', desc:'+3% melee damage per rank.', prereq:['m_t1:1'], effect:{meleeDmg:0.03}},
   {id:'m_t2_r', tree:'melee', tier:2, branch:'r', max:5, name:'Battle Honed', desc:'+2% crit chance per rank.', prereq:['m_t1:1'], effect:{critChance:0.02}},
-  {id:'m_t3_l', tree:'melee', tier:3, branch:'l', max:1, name:'Bleeder', desc:'Crits cause bleeding for 25% of the damage.', prereq:['m_t2_l:3'], unique:true},
+  {id:'m_t3_l', tree:'melee', tier:3, branch:'l', max:1, name:'Bleeder', desc:'Crits bleed for 25% of the hit.', prereq:['m_t2_l:3'], unique:true},
   {id:'m_t3_r', tree:'melee', tier:3, branch:'r', max:1, name:'Rending Blows', desc:'+20% critical damage.', prereq:['m_t2_r:3'], unique:true},
-  {id:'m_t4_l', tree:'melee', tier:4, branch:'l', max:5, name:'Savage Edge', desc:'+2% damage vs enemies above 80% HP, per rank (opener bonus).', prereq:['m_t3_l:1','m_t3_r:1'], effect:{savageEdge:0.02}},
+  {id:'m_t4_l', tree:'melee', tier:4, branch:'l', max:5, name:'Savage Edge', desc:'+2% damage per rank above 80% enemy HP.', prereq:['m_t3_l:1','m_t3_r:1'], effect:{savageEdge:0.02}},
   {id:'m_t4_r', tree:'melee', tier:4, branch:'r', max:5, name:'Frenzy', desc:'+1% attack speed per rank.', prereq:['m_t3_l:1','m_t3_r:1'], effect:{atkSpeed:0.01}},
-  {id:'m_t5_l', tree:'melee', tier:5, branch:'l', max:1, name:'Executioner', desc:'+25% damage vs enemies under 25% HP.', prereq:['m_t4_l:3'], unique:true},
-  {id:'m_t5_m', tree:'melee', tier:5, branch:'m', max:1, name:'Cleaving Edge', desc:'Melee strikes have an 8% chance to hit twice. Both rolls evaluate crit + on-hit effects independently.', prereq:['m_t4_l:3','m_t4_r:3'], unique:true, powerful:true},
-  {id:'m_t5_r', tree:'melee', tier:5, branch:'r', max:1, name:'Dagger Finesse', desc:'While wielding a dagger: crits deal +15% damage and apply a stacking bleed (up to 3 stacks).', prereq:['m_t4_r:3'], unique:true},
-  {id:'m_cap', tree:'melee', tier:6, branch:'c', max:1, name:'Ember Wrath', desc:'On killing blow, your next attack within 5s is a guaranteed crit.', prereq:['m_t5_m:1'], capstone:true},
+  {id:'m_t5_l', tree:'melee', tier:5, branch:'l', max:1, name:'Executioner', desc:'+25% damage under 25% enemy HP.', prereq:['m_t4_l:3'], unique:true},
+  {id:'m_t5_m', tree:'melee', tier:5, branch:'m', max:1, name:'Cleaving Edge', desc:'8% chance to strike twice.', prereq:['m_t4_l:3','m_t4_r:3'], unique:true, powerful:true},
+  {id:'m_t5_r', tree:'melee', tier:5, branch:'r', max:1, name:'Dagger Finesse', desc:'Dagger crits hit 15% harder and stack a bleed.', prereq:['m_t4_r:3'], unique:true},
+  {id:'m_cap', tree:'melee', tier:6, branch:'c', max:1, name:'Ember Wrath', desc:'A killing blow guarantees your next crit.', prereq:['m_t5_m:1'], capstone:true},
 
   // ───────── BULWARK — survival & defence (30 pts) ─────────
   {id:'r_t1', tree:'ranged', tier:1, branch:'c', max:4, name:'Hardened', desc:'+3 max HP per rank.', effect:{maxHp:3}},
   {id:'r_t2_l', tree:'ranged', tier:2, branch:'l', max:5, name:'Ironhide', desc:'+2% damage reduction per rank.', prereq:['r_t1:1'], effect:{dmgReduce:0.02}},
   {id:'r_t2_r', tree:'ranged', tier:2, branch:'r', max:5, name:'Vigor', desc:'+4 max HP per rank.', prereq:['r_t1:1'], effect:{maxHp:4}},
-  {id:'r_t3_l', tree:'ranged', tier:3, branch:'l', max:1, name:'Second Wind', desc:'Once per fight, dropping below 25% HP instantly heals you for 15% of max HP.', prereq:['r_t2_l:3'], unique:true},
-  {id:'r_t3_r', tree:'ranged', tier:3, branch:'r', max:1, name:'Berserker', desc:'+15% damage while below 30% HP. Takes +5% damage in exchange.', prereq:['r_t2_r:3'], unique:true},
-  {id:'r_t4_l', tree:'ranged', tier:4, branch:'l', max:5, name:'Stonewall', desc:'+2% damage reduction at full HP, per rank. Drops on the next hit; refreshes after 8s without taking damage.', prereq:['r_t3_l:1','r_t3_r:1'], effect:{dmgReduce:0.02}},
-  {id:'r_t4_r', tree:'ranged', tier:4, branch:'r', max:5, name:'Lifeblood', desc:'Heal 1% of damage dealt per rank (capped at max HP).', prereq:['r_t3_l:1','r_t3_r:1'], effect:{lifesteal:0.01}},
-  {id:'r_t5_l', tree:'ranged', tier:5, branch:'l', max:1, name:'Retribution', desc:'Reflect 20% of damage taken back at the attacker.', prereq:['r_t4_l:3'], unique:true},
-  {id:'r_t5_m', tree:'ranged', tier:5, branch:'m', max:1, name:'Last Stand', desc:'Once per fight, a blow that would kill you instead leaves you at 1 HP.', prereq:['r_t4_l:3','r_t4_r:3'], unique:true, powerful:true},
-  {id:'r_t5_r', tree:'ranged', tier:5, branch:'r', max:1, name:'Shield Wall', desc:'+10% damage reduction while a shield is equipped.', prereq:['r_t4_r:3'], unique:true},
-  {id:'r_cap', tree:'ranged', tier:6, branch:'c', max:1, name:'Undying', desc:'While below 20% HP, gain +30% damage reduction.', prereq:['r_t5_m:1'], capstone:true},
+  {id:'r_t3_l', tree:'ranged', tier:3, branch:'l', max:1, name:'Second Wind', desc:'Once a fight, dropping below 25% HP heals you 15%.', prereq:['r_t2_l:3'], unique:true},
+  {id:'r_t3_r', tree:'ranged', tier:3, branch:'r', max:1, name:'Berserker', desc:'+15% damage under 30% HP, +5% damage taken.', prereq:['r_t2_r:3'], unique:true},
+  {id:'r_t4_l', tree:'ranged', tier:4, branch:'l', max:5, name:'Stonewall', desc:'+2% damage reduction per rank at full HP.', prereq:['r_t3_l:1','r_t3_r:1'], effect:{dmgReduce:0.02}},
+  {id:'r_t4_r', tree:'ranged', tier:4, branch:'r', max:5, name:'Lifeblood', desc:'Heal 1% of damage dealt, per rank.', prereq:['r_t3_l:1','r_t3_r:1'], effect:{lifesteal:0.01}},
+  {id:'r_t5_l', tree:'ranged', tier:5, branch:'l', max:1, name:'Retribution', desc:'Reflect 20% of the damage you take.', prereq:['r_t4_l:3'], unique:true},
+  {id:'r_t5_m', tree:'ranged', tier:5, branch:'m', max:1, name:'Last Stand', desc:'Once a fight, a killing blow leaves you at 1 HP.', prereq:['r_t4_l:3','r_t4_r:3'], unique:true, powerful:true},
+  {id:'r_t5_r', tree:'ranged', tier:5, branch:'r', max:1, name:'Shield Wall', desc:'+10% damage reduction with a shield.', prereq:['r_t4_r:3'], unique:true},
+  {id:'r_cap', tree:'ranged', tier:6, branch:'c', max:1, name:'Undying', desc:'+30% damage reduction under 20% HP.', prereq:['r_t5_m:1'], capstone:true},
 
   // ───────── WARFARE — tactics & spoils (30 pts) ─────────
   {id:'g_t1', tree:'magic', tier:1, branch:'c', max:4, name:'Veteran', desc:'+4% combat XP per rank.', effect:{combatXp:0.04}},
   {id:'g_t2_l', tree:'magic', tier:2, branch:'l', max:5, name:'Spoils of War', desc:'+3% combat gold per rank.', prereq:['g_t1:1'], effect:{gp:0.03}},
   {id:'g_t2_r', tree:'magic', tier:2, branch:'r', max:5, name:'Keen Senses', desc:'+1% rare drop chance per rank.', prereq:['g_t1:1'], effect:{rareDrop:0.01}},
-  {id:'g_t3_l', tree:'magic', tier:3, branch:'l', max:1, name:'Trophy Hunter', desc:'Bosses are guaranteed to drop their unique item on first kill.', prereq:['g_t2_l:3'], unique:true},
-  {id:'g_t3_r', tree:'magic', tier:3, branch:'r', max:1, name:'Scavenger', desc:'+25% consolation gold from kills that drop nothing.', prereq:['g_t2_r:3'], unique:true},
-  {id:'g_t4_l', tree:'magic', tier:4, branch:'l', max:5, name:'Warmonger', desc:'+2% damage for 10s after a kill, per rank — stacks as you chain kills.', prereq:['g_t3_l:1','g_t3_r:1'], effect:{warmonger:0.02}},
-  {id:'g_t4_r', tree:'magic', tier:4, branch:'r', max:5, name:'Plunder', desc:'+1% chance to double item drops from kills, per rank.', prereq:['g_t3_l:1','g_t3_r:1'], effect:{doubleDrop:0.01}},
-  {id:'g_t5_l', tree:'magic', tier:5, branch:'l', max:1, name:'Headhunter', desc:'+3% rare drop chance from all monsters.', prereq:['g_t4_l:3'], unique:true},
+  {id:'g_t3_l', tree:'magic', tier:3, branch:'l', max:1, name:'Trophy Hunter', desc:'A boss always drops its unique on the first kill.', prereq:['g_t2_l:3'], unique:true},
+  {id:'g_t3_r', tree:'magic', tier:3, branch:'r', max:1, name:'Scavenger', desc:'+25% gold from kills that drop nothing.', prereq:['g_t2_r:3'], unique:true},
+  {id:'g_t4_l', tree:'magic', tier:4, branch:'l', max:5, name:'Warmonger', desc:'+2% damage per rank for 10s after a kill.', prereq:['g_t3_l:1','g_t3_r:1'], effect:{warmonger:0.02}},
+  {id:'g_t4_r', tree:'magic', tier:4, branch:'r', max:5, name:'Plunder', desc:'+1% chance per rank to double a drop.', prereq:['g_t3_l:1','g_t3_r:1'], effect:{doubleDrop:0.01}},
+  {id:'g_t5_l', tree:'magic', tier:5, branch:'l', max:1, name:'Headhunter', desc:'+3% rare drop chance everywhere.', prereq:['g_t4_l:3'], unique:true},
   {id:'g_t5_m', tree:'magic', tier:5, branch:'m', max:1, name:'War Banner', desc:'+10% combat XP and +10% combat gold.', prereq:['g_t4_l:3','g_t4_r:3'], unique:true, powerful:true},
-  {id:'g_t5_r', tree:'magic', tier:5, branch:'r', max:1, name:'Giant Slayer', desc:'+20% damage vs bosses.', prereq:['g_t4_r:3'], unique:true},
-  {id:'g_cap', tree:'magic', tier:6, branch:'c', max:1, name:'Conqueror', desc:'+5% to all combat stats (Attack, Strength, Defence).', prereq:['g_t5_m:1'], capstone:true},
+  {id:'g_t5_r', tree:'magic', tier:5, branch:'r', max:1, name:'Giant Slayer', desc:'+20% damage against bosses.', prereq:['g_t4_r:3'], unique:true},
+  {id:'g_cap', tree:'magic', tier:6, branch:'c', max:1, name:'Conqueror', desc:'+5% Attack, Strength and Defence.', prereq:['g_t5_m:1'], capstone:true},
 
-  // ───────── BRIDGES — cross-discipline (8 pts) ─────────
-  {id:'mr_t3', tree:'mr', tier:3, branch:'h', max:3, name:'Duelist', desc:'+5% melee damage per rank.', prereq:['m_t3_r:1','r_t3_l:1'], hybrid:true, effect:{meleeDmg:0.05}},
-  {id:'mr_t4', tree:'mr', tier:4, branch:'h', max:1, name:'Warlord', desc:'+8% damage while above 80% HP.', prereq:['m_t4_r:3','r_t4_l:3'], hybrid:true, unique:true},
+  // ───────── MARKSMAN — ranged offence (30 pts) ─────────
+  /* Ranged did not need its own board. Onslaught is the only column that ever
+     assumed a weapon (Brutal Strikes, Dagger Finesse, Cleaving Edge); Bulwark and
+     Warfare are weapon-agnostic and a bow build wants them exactly as much as a
+     sword build does. So this is one column, not a second tree.
+     'mark' is a real discipline key, unlike melee/ranged/magic which are dead
+     layout slots — do not read anything into those names. */
+  {id:'k_t1', tree:'mark', tier:1, branch:'c', max:4, name:'Steady Hand', desc:'+4% combat XP per rank.', effect:{combatXp:0.04}},
+  {id:'k_t2_l', tree:'mark', tier:2, branch:'l', max:5, name:'Draw Weight', desc:'+3% ranged damage per rank.', prereq:['k_t1:1'], effect:{rangedDmg:0.03}},
+  {id:'k_t2_r', tree:'mark', tier:2, branch:'r', max:5, name:"Fletcher's Thrift", desc:'4% of arrows are refunded, per rank.', prereq:['k_t1:1'], effect:{ammoSave:0.04}},
+  {id:'k_t3_l', tree:'mark', tier:3, branch:'l', max:1, name:'Bodkin Points', desc:"Ignore 15% of the target's armour.", prereq:['k_t2_l:3'], unique:true},
+  {id:'k_t3_r', tree:'mark', tier:3, branch:'r', max:1, name:'Quick Nock', desc:'+8% attack speed with a bow.', prereq:['k_t2_r:3'], unique:true},
+  {id:'k_t4_l', tree:'mark', tier:4, branch:'l', max:5, name:'Heavy Draw', desc:'+2% crossbow damage per rank.', prereq:['k_t3_l:1','k_t3_r:1'], effect:{xbowDmg:0.02}},
+  {id:'k_t4_r', tree:'mark', tier:4, branch:'r', max:5, name:'Point Blank', desc:'+2% ranged accuracy per rank.', prereq:['k_t3_l:1','k_t3_r:1'], effect:{rangedAcc:0.02}},
+  {id:'k_t5_l', tree:'mark', tier:5, branch:'l', max:1, name:'Volley', desc:'10% chance to fire a free second arrow.', prereq:['k_t4_l:3'], unique:true},
+  {id:'k_t5_m', tree:'mark', tier:5, branch:'m', max:1, name:'Pinning Shot', desc:'Crits slow the target 15% for 6s.', prereq:['k_t4_l:3','k_t4_r:3'], unique:true, powerful:true},
+  {id:'k_t5_r', tree:'mark', tier:5, branch:'r', max:1, name:'Quiver Master', desc:'Your ammunition counts as one tier stronger.', prereq:['k_t4_r:3'], unique:true},
+  {id:'k_cap', tree:'mark', tier:6, branch:'c', max:1, name:'Deadeye', desc:'+25% ranged crit damage.', prereq:['k_t5_m:1'], capstone:true},
+
+  // ───────── BRIDGES — cross-discipline (12 pts) ─────────
+  /* A bridge sits on the seam between two ADJACENT columns, so the board order
+     decides which pairs exist. Order is Onslaught | Marksman | Bulwark | Warfare,
+     which makes mr_* the Onslaught/Marksman seam (it used to be Onslaught/Bulwark,
+     which is no longer a seam) and adds kb_* for Marksman/Bulwark. Existing points
+     in mr_t3 and mr_t4 are kept; only what unlocks them moved. */
+  {id:'mr_t3', tree:'mr', tier:3, branch:'h', max:3, name:'Skirmisher', desc:'+3% damage per rank, any weapon.', prereq:['m_t3_r:1','k_t3_l:1'], hybrid:true, effect:{anyDmg:0.03}},
+  {id:'mr_t4', tree:'mr', tier:4, branch:'h', max:1, name:'Warlord', desc:'+8% damage above 80% HP.', prereq:['m_t4_r:3','k_t4_l:3'], hybrid:true, unique:true},
+  {id:'kb_t3', tree:'kb', tier:3, branch:'h', max:3, name:'Outrider', desc:'+1% crit chance and +1% damage reduction per rank.', prereq:['k_t3_r:1','r_t3_l:1'], hybrid:true, effect:{critChance:0.01,dmgReduce:0.01}},
+  {id:'kb_t4', tree:'kb', tier:4, branch:'h', max:1, name:'Vanguard', desc:'+6% damage and +4 max HP.', prereq:['k_t4_r:3','r_t4_l:3'], hybrid:true, unique:true},
   {id:'rm_t3', tree:'rm', tier:3, branch:'h', max:3, name:'Tactician', desc:'+1% crit chance per rank.', prereq:['r_t3_r:1','g_t3_l:1'], hybrid:true, effect:{critChance:0.01}},
   {id:'rm_t4', tree:'rm', tier:4, branch:'h', max:1, name:'Champion', desc:'+5% damage and +5% damage reduction.', prereq:['r_t4_r:3','g_t4_l:3'], hybrid:true, unique:true},
 ];
@@ -28291,6 +28474,15 @@ const CMAST_BY_ID=(function(){ const m={}; for(const n of CMAST_NODES) m[n.id]=n
    in every state. Rank progress shows as "n/m" text BELOW the node, so the
    icon is always your visual anchor for what the node does. */
 const CMAST_ICONS={
+  // Marksman — placeholders drawn from the existing CMAST_ICON_SVG set. Every one
+  // of these is meant to be replaced by painted art; swapping a key here is the
+  // whole change when that lands.
+  k_t1:'target', k_t2_l:'bow',   k_t2_r:'wing',
+  k_t3_l:'bolt', k_t3_r:'dash',
+  k_t4_l:'crosshair', k_t4_r:'eye',
+  k_t5_l:'trail', k_t5_m:'spark', k_t5_r:'antler',
+  k_cap:'lens',
+  kb_t3:'cycle', kb_t4:'stone',
   // Onslaught (offense)
   m_t1:'sword',   m_t2_l:'twin_blades', m_t2_r:'bolt',
   m_t3_l:'blood', m_t3_r:'flame',
@@ -33780,7 +33972,13 @@ const ACHIEVEMENTS=[
 
   // ── Endgame ──
   {id:'rich',         cat:'endgame', icon:'ui_coin',   name:'Dragon’s Hoard', desc:'Hold 1,000,000 gold at once.',           check:()=>_achGold()>=1e6},
-  {id:'shard_bearer', cat:'endgame', icon:'ui_bolt',   name:'Shard Bearer',  desc:'Bank a Combat Mastery shard.',                 check:()=>(state.cmastShards||0)>=1},
+  /* Shard Bearer used to ask you to bank a shard, and a shard is what you get for
+     earning more mastery than the board can hold. The board holds 132 as of
+     0.9.123.13 and a finished character earns 123, so nobody can ever bank one
+     again and the achievement was quietly unobtainable. It now asks for 100 points
+     SPENT, which is the same milestone the shard used to stand in for. The old
+     condition is kept as an OR so anyone who already banked one keeps it. */
+  {id:'shard_bearer', cat:'endgame', icon:'ui_bolt',   name:'Shard Bearer',  desc:'Spend 100 Combat Mastery points.',             check:()=>(state.cmastShards||0)>=1||cmastSpent()>=100},
   {id:'xp_100m',      cat:'endgame', icon:'ui_flame',  name:'Hundred Million',desc:'Earn 100,000,000 total skilling XP.',         check:()=>_achTotalXp()>=1e8},
   {id:'all_zones',    cat:'endgame', icon:'ui_shield', name:'Realm Walker',  desc:'Clear every combat zone.',                     check:()=>_achZoneClears()>=ZONES.filter(z=>z.type!=='hunt').length},
 ];
@@ -35690,6 +35888,10 @@ function combatTick(){
       let _rate = treeRank('fletching','fl_salvage')*0.06
                 + treeRank('fletching','fl_gm_salv')*0.04
                 + (treeRank('fletching','fl_endless')>0?0.05:0);
+      /* Fletcher's Thrift is the combat-side half of the same idea, so it adds into
+         the same pool and shares the same 85% ceiling rather than stacking past it. */
+      { const _cmS=(typeof cmastBonuses==='function')?cmastBonuses():null;
+        if(_cmS && _cmS.ammoSave>0) _rate += _cmS.ammoSave; }
       if(ITEMS[_am].ammo==='bolt' && treeRank('fletching','fl_bolts')<1) _rate=0;
       if(Math.random() >= Math.min(0.85,_rate)){
         state.items[_am]=(state.items[_am]||0)-1;
@@ -35702,7 +35904,12 @@ function combatTick(){
     // Poison stacks shred the foe's effective defence (−3% per stack, −30% at 10),
     // raising your hit chance the longer the bleed is kept up.
     const _pStk=(combat.foeStatus&&combat.foeStatus.poison)?combat.foeStatus.poison.stacks:0;
-    const _effDef=Math.max(1, mon.def*(1-POISON_DEF_PER_STK*_pStk));
+    /* Bodkin Points is armour shred from a second source, so it multiplies with
+       poison rather than adding to it — two 15% reductions leave 72%, not 70%. */
+    const _cmPen=(typeof cmastBonuses==='function')?cmastBonuses():null;
+    const _penMul=(_cmPen&&_cmPen.armourPen>0&&typeof usingRanged==='function'&&usingRanged())
+      ? (1-_cmPen.armourPen) : 1;
+    const _effDef=Math.max(1, mon.def*(1-POISON_DEF_PER_STK*_pStk)*_penMul);
     const hitChance=Math.max(0.03, Math.min(0.97, combat.youAcc/(combat.youAcc+_effDef)));
     let youDmg = (Math.random()<hitChance)
       ? Math.max(1, Math.round(combat.youMaxHit*(COMBAT_P.HIT_MIN+(1-COMBAT_P.HIT_MIN)*Math.random())))
@@ -35734,6 +35941,13 @@ function combatTick(){
            rather than the raw hit — which is what "+% critical damage" has to mean. */
         const _cm=(typeof cmastBonuses==='function')?cmastBonuses():null;
         youDmg=Math.max(1,Math.round(youDmg*(2+(_cm?(_cm.critDmg||0):0))));
+        /* Pinning Shot rides the crit, so it needs the crit branch. Base is stored
+           the first time so a refresh cannot compound the slow on itself. */
+        if(_cm && _cm.pinning>0 && typeof usingRanged==='function' && usingRanged()){
+          combat.foeStatus=combat.foeStatus||{};
+          const _pb=(combat.foeStatus.pin&&combat.foeStatus.pin.base)||combat.foeSwingMs;
+          combat.foeStatus.pin={base:_pb, until:now+6000};
+        }
       }
       // ── Combat Mastery conditional damage procs (1.0.104) — Executioner/Giant Slayer/
       // Berserker/Warlord/Savage Edge. Applied after crit so multipliers compound.
@@ -35761,6 +35975,14 @@ function combatTick(){
          Grave Cleaver's Reaping Arc uses, from a different source. Rolled only if the
          weapon proc did not already fire, so carrying both is one extra hit, not two. */
       if(!_cleaveDmg && state.cmast && state.cmast['m_t5_m']>0 && Math.random()<0.08){ _cleaveDmg=youDmg; }
+      /* Volley (0.9.123.13) — the Marksman answer to the same keystone, and it uses
+         the same second-hit path so the two can never both fire on one swing. The
+         arrow is free because the ammunition was already spent at the top of this
+         block; nothing is deducted again here. */
+      if(!_cleaveDmg && typeof usingRanged==='function' && usingRanged()){
+        const _cmV=(typeof cmastBonuses==='function')?cmastBonuses():null;
+        if(_cmV && _cmV.volley>0 && Math.random()<_cmV.volley) _cleaveDmg=youDmg;
+      }
     }
     combat.foeHp=Math.max(0,combat.foeHp-youDmg-_cleaveDmg);
     // Void-bomb DPS check (1.0.85) — accumulate damage dealt to the boss this window.
@@ -35997,6 +36219,18 @@ function combatTick(){
       // and stat-chip refreshes on the foe portrait for the new encounter.
       if(combatMode && typeof renderCombat==='function') renderCombat();
       return;
+    }
+  }
+
+  /* Pinning Shot (0.9.123.13) — a slow, not a stun. It stretches the foe's swing
+     interval instead of forfeiting the swing, so it stacks sensibly with a stun and
+     cannot lock a foe out. combat.foeStatus is wiped at every fight boundary that
+     already wipes poison, so it needs no normalizeState guard. */
+  {
+    const _pin=combat.foeStatus&&combat.foeStatus.pin;
+    if(_pin){
+      if(now>=_pin.until){ delete combat.foeStatus.pin; combat.foeSwingMs=_pin.base; }
+      else combat.foeSwingMs=Math.round(_pin.base*1.15);
     }
   }
 
@@ -36534,6 +36768,8 @@ const _CMAST_DISC={
   ranged: {name:'Bulwark',   pc:'#79a8d8', dim:'rgba(121,168,216,.42)', glow:'rgba(121,168,216,.4)',  far:'rgba(121,168,216,.15)', hot:'#24486a', warm:'#16283a', wash:'rgba(121,168,216,.045)', role:'Staying alive — HP, damage reduction, lifesteal.', sig:'shield'},
   magic:  {name:'Warfare',   pc:'#e0b44a', dim:'rgba(224,180,74,.42)',  glow:'rgba(224,180,74,.4)',   far:'rgba(224,180,74,.15)',  hot:'#6b4c0b', warm:'#382806', wash:'rgba(224,180,74,.045)',  role:'Spoils — combat XP, gold, drop rates.', sig:'crown'},
   mr:     {name:'Duel',      pc:'#c99a6a', dim:'rgba(201,154,106,.42)', glow:'rgba(201,154,106,.34)', far:'rgba(201,154,106,.13)', hot:'#4e3a1e', warm:'#2c2012', wash:'transparent', role:'Onslaught + Bulwark', sig:'twin_blades'},
+  mark:   {name:'Marksman',  pc:'#4fa89b', dim:'rgba(79,168,155,.42)',  glow:'rgba(79,168,155,.4)',   far:'rgba(79,168,155,.15)',  hot:'#1d5049', warm:'#132e2a', wash:'rgba(79,168,155,.045)', role:'Ranged offence — draw weight, ammunition, accuracy.', sig:'bow'},
+  kb:     {name:'Outrider',  pc:'#8fb0a0', dim:'rgba(143,176,160,.42)', glow:'rgba(143,176,160,.34)', far:'rgba(143,176,160,.13)', hot:'#3a4c42', warm:'#212c26', wash:'transparent', role:'Marksman + Bulwark', sig:'cycle'},
   rm:     {name:'Command',   pc:'#b8b06a', dim:'rgba(184,176,106,.42)', glow:'rgba(184,176,106,.34)', far:'rgba(184,176,106,.13)', hot:'#4a4622', warm:'#2a2812', wash:'transparent', role:'Bulwark + Warfare', sig:'target'},
 };
 function _cmastNodeX(node){
@@ -36622,38 +36858,62 @@ function _cmastNodeHTML(n){
      116px name box, so its labels have to be narrower and allowed to wrap. */
   if(n.tier===5&&n.branch!=='h') cls.push('t5');
   if(n.weaponLocked) cls.push('wlock');
-  const hex=n.capstone?' cmast-hex':'';
+  if(n.hybrid) cls.push('brdg');
+  /* One icon key per node, resolved through CMAST_ICON_SVG. Every one of these is a
+     placeholder line drawing; when painted art lands, changing the key here (or the
+     entry in CMAST_ICON_SVG) is the entire swap. */
   const icoKey=CMAST_ICONS[n.id];
   const ico=`<svg viewBox="0 0 16 16" fill="currentColor" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">${(CMAST_ICON_SVG[icoKey]||CMAST_ICON_SVG.star||'')}</svg>`;
   return `<button class="${cls.join(' ')}" data-node="${n.id}" type="button" title="${(n.name||'').replace(/"/g,'&quot;')}"`
-    + ` style="left:${_cmastNodeX(n)}px;top:${_cmastNodeY(n)}px;--d:${_cmastNodeD(n)}px;`
-    + `--pc:${d.pc};--pcglow:${d.glow};--pcdim:${d.dim};--pchot:${d.hot};--pcwarm:${d.warm};--pcfar:${d.far}">`
-    + `<span class="rim${hex}"><span class="puck${hex}">${ico}</span></span>`
-    + `<span class="pill">${r}<s>/${n.max}</s></span>`
-    + `<span class="nm">${n.name}</span></button>`;
+    + ` style="--pc:${d.pc};--pcglow:${d.glow};--pcdim:${d.dim};--pchot:${d.hot};--pcwarm:${d.warm};--pcfar:${d.far}">`
+    + `<span class="tile">${ico}</span>`
+    + `<span class="nm">${n.name}</span>`
+    + `<span class="pill">${r}<s>/${n.max}</s></span></button>`;
 }
 
-/* The whole board: territory washes, tier rules + names, rails, then the pucks. */
+/* Column order left to right. This array is the single source of truth for the
+   board: the header row, the grid tracks and which seam a bridge hangs on are all
+   derived from it, so re-ordering the disciplines is a one-line change and adding
+   a fifth is a one-entry change. */
+const CMAST_COLS=['melee','mark','ranged','magic'];
+/* Which seam each bridge sits on, as [left column, right column]. A bridge renders
+   inside the RIGHT column's cell and hangs off its left edge. */
+const CMAST_SEAM={mr:['melee','mark'], kb:['mark','ranged'], rm:['ranged','magic']};
+
+/* The whole board: header row, then one row per tier. */
 function _cmastStageHTML(){
-  const h=[];
-  h.push(`<div class="cmast-canvas"><div class="cmast-stage">`);
-  [['melee',88,236],['ranged',406,220],['magic',716,220]].forEach(t=>{
-    h.push(`<div class="cmast-terr" style="left:${t[1]}px;width:${t[2]}px;--tw:${_CMAST_DISC[t[0]].wash}"></div>`);
-  });
-  for(let t=1;t<=6;t++){
-    h.push(`<div class="cmast-rule" style="top:${_CMAST_ROW_Y[t]-58}px"></div>`);
-    h.push(`<div class="cmast-tname" style="top:${_CMAST_ROW_Y[t]-48}px">${_CMAST_TIER_NAME[t]}</div>`);
+  const cols=`92px repeat(${CMAST_COLS.length},1fr)`;
+  const h=[`<div class="cmast-canvas"><div class="cmast-grid" style="--cm-cols:${cols}">`];
+  h.push(`<div class="cmast-gh"><div class="sp"></div>`);
+  for(const key of CMAST_COLS){
+    const d=_CMAST_DISC[key];
+    const pts=CMAST_NODES.filter(n=>n.tree===key).reduce((a,n)=>a+n.max,0);
+    h.push(`<div class="cmast-ch" style="--pc:${d.pc}"><b>${d.name}</b>`
+      + `<i>${d.role}</i><u>${pts}</u></div>`);
   }
-  h.push(`<svg class="cmast-rails" viewBox="0 0 ${_CMAST_STAGE_W} ${_CMAST_STAGE_H}" preserveAspectRatio="none">${_cmastRailsSVG()}</svg>`);
-  for(const n of CMAST_NODES) h.push(_cmastNodeHTML(n));
-  h.push(`</div></div>`);
+  h.push(`</div><div class="cmast-gb">`);
+  for(let t=1;t<=6;t++){
+    h.push(`<div class="cmast-gt">${_CMAST_TIER_NAME[t]}</div>`);
+    for(const key of CMAST_COLS){
+      h.push('<div class="cmast-gc">');
+      for(const n of CMAST_NODES) if(n.tree===key && n.tier===t) h.push(_cmastNodeHTML(n));
+      /* Bridges belong to the seam on this column's LEFT edge. */
+      for(const bk in CMAST_SEAM){
+        if(CMAST_SEAM[bk][1]!==key) continue;
+        for(const n of CMAST_NODES) if(n.tree===bk && n.tier===t)
+          h.push(`<div class="cmast-gbr">${_cmastNodeHTML(n)}</div>`);
+      }
+      h.push('</div>');
+    }
+  }
+  h.push(`</div></div></div>`);
   return h.join('');
 }
 
 /* Crests — what each discipline is FOR, plus how deep you are into it. The old
    panel labelled the columns with emoji and nothing else. */
 function _cmastCrestsHTML(){
-  return `<div class="cmast-crests">` + ['melee','ranged','magic'].map(tree=>{
+  return `<div class="cmast-crests" style="--cm-crests:${CMAST_COLS.length}">` + CMAST_COLS.map(tree=>{
     const d=_CMAST_DISC[tree];
     const mine=CMAST_NODES.filter(n=>n.tree===tree);
     const pts=mine.reduce((s,n)=>s+cmastRank(n.id),0), cap=mine.reduce((s,n)=>s+n.max,0);
@@ -36674,6 +36934,8 @@ function _cmastTotalsHTML(){
     ['+'+Math.round((b.critChance||0)*100)+'%','Crit','melee',b.critChance],
     ['+'+Math.round((b.critDmg||0)*100)+'%','Crit Dmg','melee',b.critDmg],
     ['+'+Math.round((b.aspd||0)*100)+'%','Atk Speed','melee',b.aspd],
+    ['+'+Math.round((b.accBoost||0)*100)+'%','Accuracy','mark',b.accBoost],
+    ['+'+Math.round((cmastBonuses().ammoSave||0)*100)+'%','Ammo Saved','mark',cmastBonuses().ammoSave],
     ['+'+Math.round(b.maxHpFlat||0),'Max HP','ranged',b.maxHpFlat],
     ['+'+Math.round((b.dmgReduce||0)*100)+'%','Dmg Reduce','ranged',b.dmgReduce],
     ['+'+Math.round((b.lifesteal||0)*100)+'%','Lifesteal','ranged',b.lifesteal],
@@ -36697,7 +36959,7 @@ function _cmastDetailHTML(){
   const rank=cmastRank(id);
   const max=n.max;
   const tree=n.tree;
-  const treeName=tree==='melee'?'Onslaught':tree==='ranged'?'Bulwark':tree==='magic'?'Warfare':tree==='mr'?'Bridge':'Bridge';
+  const treeName=(_CMAST_DISC[tree]&&_CMAST_DISC[tree].name)||'Bridge';
   // Tag chips
   const tags=[];
   if(n.capstone) tags.push(`<span class="cmast-d-tag cap">CAPSTONE</span>`);

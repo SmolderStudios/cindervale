@@ -1479,8 +1479,23 @@ setTimeout(() => {
       g_t5_l:['', PROBE.bonuses],                                      // Headhunter
       g_t5_m:['', PROBE.bonuses], g_t5_r:['', PROBE.dmgBoss],          // War Banner, Giant Slayer
       g_cap:['', PROBE.bonuses],                                       // Conqueror
-      mr_t3:['', PROBE.bonuses], mr_t4:['', PROBE.dmgHigh],            // Duelist, Warlord
+      mr_t3:['SETUP_BOW', PROBE.bonuses], mr_t4:['', PROBE.dmgHigh],   // Skirmisher, Warlord
       rm_t3:['', PROBE.bonuses], rm_t4:['', PROBE.bonuses],            // Tactician, Champion
+      /* Marksman (0.9.123.13). Every node here is gated on the equipped weapon, so
+         each probe hands it one — a bow for most, a crossbow for Heavy Draw. A
+         probe that forgets the weapon reads as an unwired node. */
+      k_t1:['SETUP_BOW', PROBE.bonuses],                               // Steady Hand
+      k_t2_l:['SETUP_BOW', 'MAXHIT'],                                  // Draw Weight
+      k_t2_r:['SETUP_BOW', PROBE.bonuses],                             // Fletcher's Thrift
+      k_t3_l:['SETUP_BOW', PROBE.bonuses],                             // Bodkin Points
+      k_t3_r:['SETUP_BOW', 'SWING'],                                   // Quick Nock
+      k_t4_l:['SETUP_XBOW', 'MAXHIT'],                                 // Heavy Draw
+      k_t4_r:['SETUP_BOW', 'ACC'],                                     // Point Blank
+      k_t5_l:['SETUP_BOW', PROBE.bonuses],                             // Volley
+      k_t5_m:['SETUP_BOW', PROBE.bonuses],                             // Pinning Shot
+      k_t5_r:['SETUP_BOW', 'AMMOSTR'],                                 // Quiver Master
+      k_cap:['SETUP_BOW', PROBE.bonuses],                              // Deadeye
+      kb_t3:['', PROBE.bonuses], kb_t4:['', PROBE.bonuses],            // Outrider, Vanguard
     };
     /* Setups and the bespoke probes for the nodes that only exist inside a fight. */
     const SETUP = {
@@ -1490,6 +1505,10 @@ setTimeout(() => {
       SETUP_SHIELD: `state.items.mithril_shield=1; state.combatEquipped={shield:'mithril_shield'};`,
       SETUP_LOWHP:  `combat.active=true; combat.youMaxHp=100; combat.youHp=10; cmastResetFight();`,
       SETUP_KILL:   `combat.active=true; cmastResetFight(); combat.wmStacks=5; combat.wmUntil=Date.now()+9000; combat.ewUntil=Date.now()+4000;`,
+      SETUP_BOW:    `state.combatXp.ranged=XP_CUM[80]; state.items.runite_arrow=5000;
+                     state.combatEquipped={weapon:'shadow_longbow',quiver:'runite_arrow'};`,
+      SETUP_XBOW:   `state.combatXp.ranged=XP_CUM[80]; state.items.runite_bolt=5000;
+                     state.combatEquipped={weapon:'runite_crossbow',quiver:'runite_bolt'};`,
     };
     const BESPOKE = {
       // Bleeder: a crit must leave a bleed on the foe. Drives the same foeStatus
@@ -1504,6 +1523,13 @@ setTimeout(() => {
       RETRIB: `(state.cmast['r_t5_l']>0)?1:0`,
       LASTSTAND: `(function(){ combat.youMaxHp=100; combat.youHp=0; cmastResetFight();
         return cmastLastStand()?combat.youHp:0; })()`,
+      /* These four read the player-facing function rather than the bonus object, so
+         a channel that cmastBonuses computes but combatBonusesAll drops on the floor
+         still fails. Point Blank and Quick Nock both shipped broken that way. */
+      MAXHIT:  `playerMaxHit()`,
+      ACC:     `playerAccuracy()`,
+      SWING:   `playerSwingMs()`,
+      AMMOSTR: `ammoStr()`,
     };
 
     const ids = ev('CMAST_NODES.map(n=>n.id)');
@@ -1527,11 +1553,20 @@ setTimeout(() => {
     });
     ok('all ' + ids.length + ' mastery nodes are wired', wired === ids.length, wired + '/' + ids.length);
 
-    /* Point economy is a hard invariant — the tree must total exactly 98, same as
-       every skilling tree. A node whose max changes silently rebalances the game. */
-    ok('mastery tree still totals exactly 98 points',
-       ev('CMAST_NODES.reduce((s,n)=>s+n.max,0)') === 98,
+    /* Point economy is a hard invariant. It is NOT the skilling trees' 98 — Combat
+       Mastery grew to 132 when Marksman landed (0.9.123.13), four columns of 30 plus
+       12 in bridges. A node whose max changes silently rebalances the game, so the
+       number is asserted flat rather than derived. */
+    ok('mastery tree still totals exactly 132 points',
+       ev('CMAST_NODES.reduce((s,n)=>s+n.max,0)') === 132,
        String(ev('CMAST_NODES.reduce((s,n)=>s+n.max,0)')));
+    /* Each discipline carries exactly 30. An unbalanced column is a balance change
+       wearing a layout change's clothes. */
+    {
+      const per = ev(`(function(){var b={};CMAST_NODES.forEach(function(n){b[n.tree]=(b[n.tree]||0)+n.max;});return b;})()`);
+      ['melee','mark','ranged','magic'].forEach(t =>
+        ok('the ' + t + ' column is 30 points', per[t] === 30, String(per[t])));
+    }
 
     /* Splat duplication (0.9.130) — every damage popup was emitted three times, so
        one hit painted three stacked numbers. Guard the call-site count directly. */
