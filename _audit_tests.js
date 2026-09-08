@@ -1553,6 +1553,28 @@ setTimeout(() => {
     });
     ok('all ' + ids.length + ' mastery nodes are wired', wired === ids.length, wired + '/' + ids.length);
 
+    /* Four of the proc probes above are TAUTOLOGICAL — BLEED, CLEAVE, EMBER and
+       RETRIB all read `state.cmast[id] > 0` (or set the state themselves) and
+       report a change no matter what the game does. Delete the real call site and
+       they stay green. These four live inside a 400-line combat tick and cannot be
+       invoked in isolation, so the guard is the call site itself. Found while
+       answering "do all nodes work correctly" (0.9.123.16) — they did, but nothing
+       was checking. */
+    [
+      ["Bleeder applies its bleed on crit",      "state.cmast['m_t3_l']>0) _bleedStacks=3"],
+      ["Cleaving Edge rolls the second hit",     "state.cmast['m_t5_m']>0 && Math.random()<0.08"],
+      ["Ember Wrath is armed by a killing blow", "combat.ewUntil=Date.now()+5000"],
+      ["Ember Wrath is spent by the next hit",   "if(_ewOn){ combat.ewUntil=0; didCrit=true; }"],
+      ["Retribution reflects damage taken",      "state.cmast['r_t5_l']>0) _rflPct+=0.20"],
+      ["Warmonger stacks on a kill",             "combat.wmStacks=Math.min((combat.wmStacks||0)+1"],
+      ["Second Wind is called from the tick",    "cmastSecondWind()"],
+      ["Last Stand is called from the tick",     "cmastLastStand()"],
+      ["Volley rolls the free second arrow",     "_cmV.volley>0 && Math.random()<_cmV.volley"],
+      ["Pinning Shot writes the slow on crit",   "combat.foeStatus.pin={base:_pb, until:now+6000}"],
+      ["Fletcher's Thrift joins the ammo pool",  "_cmS.ammoSave>0) _rate += _cmS.ammoSave"],
+      ["Bodkin Points shreds foe defence",       "_cmPen.armourPen>0"],
+    ].forEach(([label, frag]) => ok(label, html.includes(frag), 'call site missing'));
+
     /* Point economy is a hard invariant. It is NOT the skilling trees' 98 — Combat
        Mastery grew to 132 when Marksman landed (0.9.123.13), four columns of 30 plus
        12 in bridges. A node whose max changes silently rebalances the game, so the
