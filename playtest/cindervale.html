@@ -2286,6 +2286,22 @@ body:not(.is-demo) .demo-only{display:none !important}
 #mmMailModal .mm-card{max-width:540px}
 .mail-list{display:grid;gap:9px;max-height:44vh;overflow-y:auto;margin-bottom:12px;padding-right:2px}
 .mail-empty{font-size:calc(13.5px*var(--tscale));color:#8a7a60;font-style:italic;padding:6px 2px}
+/* Mail attachments (0.9.123.20). */
+.mail-gift{margin-top:9px;padding:9px 11px;border:1px solid var(--trim-d);border-radius:5px;
+  background:linear-gradient(180deg,#241a0c,#170f07)}
+.mail-gift.done{opacity:.62}
+.mail-gift .mg-hd{font-family:var(--num);font-size:calc(10px*var(--tscale));letter-spacing:1.4px;
+  text-transform:uppercase;color:var(--trim);margin-bottom:6px}
+.mail-gift .mg-items{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.mail-gift .mg-it{display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:4px;
+  background:#0d0905;border:1px solid #4a3a1e;font-size:calc(12.5px*var(--tscale));color:var(--text)}
+.mail-gift .mg-it.unk{border-color:#6a3a18;color:#e0a24a}
+.mail-gift .mg-it .ev-icon{width:calc(15px*var(--tscale));height:calc(15px*var(--tscale))}
+.mail-claim{background:#2a1a10;border:1px solid var(--ember);color:var(--ember);
+  border-radius:5px;padding:5px 14px;font-family:inherit;font-size:calc(13px*var(--tscale));
+  cursor:var(--cur-pointer);letter-spacing:.5px}
+.mail-claim:hover{background:#3a2414}
+.mail-claim:disabled{opacity:.5;cursor:default}
 .mail-msg{background:#160f07;border:1px solid #4a3a1e;border-left:3px solid #6e552c;border-radius:5px;padding:9px 11px}
 .mail-msg.new{border-left-color:#e0762f;background:#1c1208}
 .mail-hd{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:5px}
@@ -7795,7 +7811,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.123.19">v0.9.123</div>
+  <div class="mm-ver" data-build="0.9.123.20">v0.9.123</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -44576,8 +44592,9 @@ function mailboxId(){
 function _mailLoad(){
   try{
     const o=JSON.parse(lsGet(MAIL_BOX_KEY)||'{}');
-    return {since:+o.since||0, read:+o.read||0, ok:!!o.ok, msgs:Array.isArray(o.msgs)?o.msgs:[]};
-  }catch(e){ return {since:0,read:0,ok:false,msgs:[]}; }
+    return {since:+o.since||0, read:+o.read||0, ok:!!o.ok, msgs:Array.isArray(o.msgs)?o.msgs:[],
+            claimed:(o.claimed&&typeof o.claimed==='object')?o.claimed:{}};
+  }catch(e){ return {since:0,read:0,ok:false,msgs:[],claimed:{}}; }
 }
 function _mailMarkFiled(){ const b=_mailLoad(); if(!b.ok){ b.ok=true; _mailSave(b); } }
 function _mailSave(b){ try{ lsSet(MAIL_BOX_KEY, JSON.stringify(b)); }catch(e){} }
@@ -44656,6 +44673,87 @@ function _mailWhen(ts){
   if(d<86400000) return Math.floor(d/3600000)+'h ago';
   return Math.floor(d/86400000)+'d ago';
 }
+/* What an attachment is worth, in words, before you take it. Unknown ids are
+   listed as themselves rather than hidden: an attachment that names something
+   this build does not have is a mistake worth SEEING, not swallowing. */
+function _giftLines(g){
+  const out=[];
+  if(g && g.coins>0) out.push({icon:'ui_coin', name:(+g.coins).toLocaleString()+' gold'});
+  const it=(g&&g.items)||{};
+  for(const id in it){
+    const n=+it[id]||0; if(n<=0) continue;
+    const def=ITEMS[id];
+    out.push({icon:def?id:'', name:n.toLocaleString()+' \u00d7 '+(def?def.name:id), unknown:!def});
+  }
+  return out;
+}
+/* Locally-remembered claims. NOT the guard — the server is the guard. This only
+   stops the button offering itself again between the click and the next poll. */
+function _giftClaimed(id){ const b=_mailLoad(); return !!(b.claimed&&b.claimed[id]); }
+function _giftMarkClaimed(id){
+  const b=_mailLoad(); b.claimed=b.claimed||{}; b.claimed[id]=1; _mailSave(b);
+}
+async function mailClaimGift(replyId, btn){
+  const box=mailboxPeek();
+  if(!MAIL_API||!box||!replyId) return;
+  if(btn){ btn.disabled=true; btn.textContent='Claiming\u2026'; }
+  let data=null;
+  try{
+    const res=await fetch(MAIL_API+'/api/claim',{method:'POST',
+      headers:{'content-type':'application/json'},
+      body:JSON.stringify({m:box,id:replyId})});
+    if(res.ok) data=await res.json();
+  }catch(e){}
+  if(!data||!data.ok){
+    if(btn){ btn.disabled=false; btn.textContent='Claim'; }
+    toast('\ud83d\udce6 Could not reach the post. Try again in a moment.');
+    return;
+  }
+  _giftMarkClaimed(replyId);
+  if(!data.gift){
+    mailRender();
+    toast(data.already?'\ud83d\udce6 Already claimed.':'\ud83d\udce6 Nothing attached.');
+    return;
+  }
+  /* Granted through the same paths everything else uses — grantItem for the
+     satchel, addSeed for the seed vault — so an attachment cannot route around
+     satchel limits or land a seed somewhere nothing will find it. */
+  const took=[];
+  const g=data.gift;
+  /* state.coins is held in SILVER, not gold — every purchase in the game
+     multiplies by SILVER_PER_GOLD. A gift written as "50000 gold" therefore has
+     to be converted, or it would pay out a hundredth of what the reply promised
+     and look like the attachment was ignored. */
+  if(g.coins>0){
+    state.coins=(state.coins||0)+g.coins*SILVER_PER_GOLD;
+    took.push((+g.coins).toLocaleString()+' gold');
+  }
+  for(const id in (g.items||{})){
+    const n=+g.items[id]||0; if(n<=0||!ITEMS[id]) continue;
+    if(typeof isSeedId==='function' && isSeedId(id) && typeof addSeed==='function') addSeed(id,n);
+    else grantItem(id,n);
+    markDiscovered(id);
+    took.push(n.toLocaleString()+' \u00d7 '+ITEMS[id].name);
+  }
+  saveGame(); renderAll(); mailRender();
+  toast(took.length?('\ud83d\udce6 Claimed: '+took.join(', ')):'\ud83d\udce6 Nothing in this build matched.');
+}
+
+/* The attachment card. Drawn whether or not it has been claimed, because "you
+   were sent 380 ancient logs" stays true after you take them. */
+function _giftHTML(m){
+  if(!m||!m.gift) return '';
+  const lines=_giftLines(m.gift);
+  if(!lines.length) return '';
+  const done=m.claimed||_giftClaimed(+m.id);
+  return '<div class="mail-gift'+(done?' done':'')+'">'
+    +'<div class="mg-hd">'+(done?'Claimed':'Attached')+'</div>'
+    +'<div class="mg-items">'+lines.map(function(l){
+        return '<span class="mg-it'+(l.unknown?' unk':'')+'">'
+          +(l.icon?iconHTML(l.icon):'')+escapeHTML(l.name)+'</span>'; }).join('')+'</div>'
+    +(done?'':'<button class="mail-claim" data-gift="'+(+m.id)+'">Claim</button>')
+    +'</div>';
+}
 function mailRender(){
   const list=$('mmMailList'); if(!list) return;
   const b=_mailLoad();
@@ -44669,11 +44767,15 @@ function mailRender(){
       +'<div class="mail-hd"><span class="mail-who">'+escapeHTML(m.author||'Smolder Studios')+'</span>'
       +'<span class="mail-meta">Ticket #'+(+m.ticket||0)+' &middot; '+_mailWhen(m.ts)+'</span>'
       +(isNew?'<span class="mail-tag">NEW</span>':'')+'</div>'
-      +'<div class="mail-body">'+escapeHTML(m.body||'')+'</div>'
+      +(m.body?'<div class="mail-body">'+escapeHTML(m.body||'')+'</div>':'')
       +(m.about?'<div class="mail-about">on your '+(m.kind==='idea'?'idea':'report')+': &ldquo;'+escapeHTML(m.about)+'&rdquo;</div>':'')
+      +_giftHTML(m)
       +'<button class="mail-reply-btn" data-ticket="'+(+m.ticket||0)+'">Reply</button>'
       +'</div>';
   }).join('');
+  list.querySelectorAll('.mail-claim').forEach(function(btn){
+    btn.addEventListener('click', function(){ mailClaimGift(+btn.dataset.gift, btn); });
+  });
   list.querySelectorAll('.mail-reply-btn').forEach(function(btn){
     btn.addEventListener('click', function(){ mailReplyTo(+btn.dataset.ticket); });
   });
