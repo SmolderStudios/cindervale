@@ -6146,6 +6146,36 @@ setTimeout(() => {
     ok('but she still never outranks the flagship',
        cons.capped === cons.cap, 'clamped to ' + cons.capped + ', flagship ' + cons.cap);
 
+    /* Mail attachments (0.9.123.20). The grant itself needs the worker, so what
+       is asserted here is everything the CLIENT is responsible for: gold in the
+       right unit, unknown ids skipped rather than granted as phantoms, seeds
+       routed to the vault, and the claim button gone once it is claimed. */
+    const gift = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      var lines=_giftLines({coins:50000, items:{ancient_log:380, not_a_real_item:5}});
+      return JSON.stringify({
+        lines:lines.map(function(l){ return {name:l.name, unknown:!!l.unknown}; }),
+        silverPerGold:SILVER_PER_GOLD
+      });
+    })()`));
+    ok('a mail attachment lists gold and items', gift.lines.length === 3, JSON.stringify(gift.lines));
+    ok('and flags an id this build does not have',
+       gift.lines.filter(l => l.unknown).length === 1, JSON.stringify(gift.lines));
+    /* state.coins is SILVER. A gift written as "50000 gold" that skipped the
+       conversion would pay a hundredth of what the reply promised. */
+    ok('gold in an attachment is converted to silver',
+       html.includes('state.coins=(state.coins||0)+g.coins*SILVER_PER_GOLD'),
+       'conversion missing');
+    ok('a seed in an attachment goes to the vault, not the satchel',
+       html.includes("if(typeof isSeedId==='function' && isSeedId(id) && typeof addSeed==='function') addSeed(id,n);"),
+       'seed route missing');
+    /* The duplication guard is the SERVER's conditional update, not anything the
+       client remembers — mail lives in localStorage outside the save, so a purely
+       local flag could be edited away. Assert the client actually asks. */
+    ok('claiming asks the worker rather than granting locally',
+       html.includes("MAIL_API+'/api/claim'") && html.includes('if(!data.gift){'),
+       'claim round trip missing');
+
     ok('Keep the catch raw suspends Seasoned Catch (#96)',
        raw.on > 0 && raw.off === 0, 'on ' + raw.on + ', off ' + raw.off);
 
