@@ -6341,6 +6341,38 @@ setTimeout(() => {
       var orphan=CROPS.filter(function(c){ return !src[c.id]; }).map(function(c){ return c.id; });
       return JSON.stringify({orphan:orphan, crops:CROPS.length});
     })()`));
+    /* ── #105 · an act lists what it can drop ────────────────────────────────
+       "Could we get things like foraging to list all their drops?" A card showed
+       what it makes and what it costs and said nothing about the seeds and rares
+       that fall out of it, so a drop table could only be learned by grinding one.
+       Asserts EVERY act with a table renders a chip for EVERY entry in it. */
+    const dropRow = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      for(var k in state.xp) state.xp[k]=XP_CUM[99];
+      var miss=[], acts=0, chips=0;
+      Object.keys(SKILLS).forEach(function(sk){
+        selectedSkill=sk;
+        var m=mods(sk), lvl=levelFromXp(state.xp[sk]||0);
+        (SKILLS[sk].acts||[]).forEach(function(a){
+          var tbl=DROPS[a.id]||[]; if(!tbl.length) return;
+          acts++;
+          var btn=buildActBtn(a,a.lvl,lvl,m,1,1);
+          var row=btn.querySelector('.drops');
+          if(!row){ miss.push(sk+':'+a.id+' (no row)'); return; }
+          var n=row.querySelectorAll('.drop').length;
+          chips+=n;
+          var want=tbl.filter(function(d){ return ITEMS[d.id]; }).length;
+          if(n!==want) miss.push(sk+':'+a.id+' ('+n+' of '+want+')');
+        });
+      });
+      return JSON.stringify({miss:miss, acts:acts, chips:chips});
+    })()`));
+    ok('every act with a drop table lists it on the card (#105)',
+       dropRow.miss.length === 0,
+       dropRow.miss.slice(0,4).join(' | ')+' — '+dropRow.acts+' acts, '+dropRow.chips+' chips');
+    ok('and wild flax shows the seed it now drops',
+       dropRow.acts > 0 && dropRow.chips >= dropRow.acts, dropRow.acts+' acts / '+dropRow.chips+' chips');
+
     /* ── the satchel remembers how you left it (Jordan, 0.9.124.3) ───────────
        invSort/invCat were module-level lets, so every load put the panel back on
        Category / All. state.invPrefs is the store now; these assert a written
