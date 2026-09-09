@@ -6370,6 +6370,74 @@ setTimeout(() => {
     ok('and none of them fires on one',
        achSet.early.length === 0, achSet.early.join(', '));
 
+    /* ── every achievement is REACHABLE ──────────────────────────────────────
+       Three have now shipped unobtainable. shard_bearer asked you to bank a
+       mastery shard after the board grew past what a character can earn.
+       ashen_ascend hardcoded twelve skills and fired two short. total_1500 asked
+       for total level 1,500 when fourteen skills at 99 is 1,386.
+
+       The existing tests prove none of them fires on a FRESH save. That is the
+       easy half. This maxes every field the game can express and asserts all of
+       them fire - a check nobody can ever satisfy is invisible otherwise, which
+       is exactly why all three survived a release. */
+    const reach = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      for(var k in SKILLS) state.xp[k]=XP_CUM[99];
+      for(var c in state.combatXp) state.combatXp[c]=XP_CUM[99];   // combatLevel reads THIS pool
+      state.coins=2e9*SILVER_PER_GOLD; state.playtimeMs=500*3600*1000;
+      state.monKills={}; MONSTERS.forEach(function(m){ state.monKills[m.id]=200000; });
+      state.tree={};
+      for(var sk in TREES){ state.tree[sk]={}; var left=98;
+        (TREES[sk]||[]).forEach(function(n){ var t=Math.min(n.max||1,left);
+          if(t>0){ state.tree[sk][n.id]=t; left-=t; } }); }
+      state.cmast={};
+      if(typeof CMAST_NODES!=='undefined'){ var cl=CMAST_CAP;
+        CMAST_NODES.forEach(function(n){ var t=Math.min(n.max||1,cl);
+          if(t>0){ state.cmast[n.id]=t; cl-=t; } }); }
+      state.cmastShards=5; state.cmastZoneClears={};
+      ZONES.forEach(function(z){ state.cmastZoneClears[z.id]=1; });
+      state.pets={}; for(var z in PETS) state.pets[PETS[z].id]=1;
+      /* hearth_cat reads hasSecretPet(), which looks for pet_smokey_bones - a
+         SECRET pet that is deliberately not in PETS, so looping PETS misses it. */
+      state.pets.pet_smokey_bones=1;
+      state.egg={cats:99};
+      state.discovered={}; for(var i in ITEMS) state.discovered[i]=1;
+      state.trophies={}; for(var t2=0;t2<9;t2++) state.trophies['t'+t2]=1;
+      state.gear=Object.keys(SKILL_CAPE).map(function(s){ return SKILL_CAPE[s]; });
+      var sock=Object.keys(ITEMS).filter(function(i){ return typeof canSocket==='function'&&canSocket(i); })[0];
+      var gem=Object.keys(typeof SOCKET_GEMS!=='undefined'?SOCKET_GEMS:{})[0];
+      if(sock&&gem){ state.sockets={}; state.sockets[sock]={slots:2,gems:[gem,null]}; }
+      state.enchantments={}; state.enchantments[sock||'steel_sword']='uq_wc';
+      state.items={}; for(var i2 in ITEMS) state.items[i2]=5;
+      Object.keys(ITEMS).forEach(function(i3){ if(ITEMS[i3].ammo==='arrow') state.items[i3]=2000; });
+      state.sail.voyages=500; state.sail.hull=SAIL_HULLS.length-1;
+      state.sail.consort=1; state.sail.hull2=SAIL_HULLS.length-1; state.sail.commsDone=100;
+      state.sail.found={};
+      SAIL_ISLES.forEach(function(is,ix){ state.sail.found[ix]=1; state.sail.found[is.n]=1; });
+      state.gd={};
+      GUILDS.forEach(function(g){ state.gd[g.id]={rep:GD_REP[GD_REP.length-1]*2,q:[],day:0,skipped:0}; });
+      state.slayer.tasksDone=500; state.slayer.streak=99; state.slayer.points=99999;
+      state.raidClears={}; state.raidBest={};
+      RAIDS.forEach(function(r){ state.raidClears[r.id]=5; state.raidBest[r.id]={rating:'S',timeMs:1000}; });
+      normalizeState();
+      state.achievements={};
+      ACHIEVEMENTS.forEach(function(a){ if(a.id!=='everything') state.achievements[a.id]=1; });
+      var dead=[], threw=[];
+      ACHIEVEMENTS.forEach(function(a){
+        var r=null;
+        try{ r=a.check(); }catch(e){ threw.push(a.id+': '+e.message); return; }
+        if(!r) dead.push(a.id);
+      });
+      return JSON.stringify({dead:dead, threw:threw, n:ACHIEVEMENTS.length,
+        maxTotal:Object.keys(SKILLS).length*99});
+    })()`));
+    ok('no achievement check throws on a maxed save',
+       reach.threw.length === 0, reach.threw.slice(0,3).join(' | '));
+    ok('every achievement is reachable - none is unobtainable',
+       reach.dead.length === 0,
+       (reach.dead.join(', ') || '') + '  (' + reach.n + ' achievements, max total level ' +
+       reach.maxTotal + ')');
+
     /* ── no achievement hardcodes a total the game can outgrow ───────────────
        Ashen Ascendant said "all twelve skills" and checked >=12. True at v0.9.41,
        wrong the moment Thieving shipped: with 14 skills you could max twelve and
