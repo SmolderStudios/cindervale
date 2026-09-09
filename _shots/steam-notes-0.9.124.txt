@@ -1,0 +1,207 @@
+================================================================================
+  CINDERVALE IDLE  ·  v0.9.124  ·  STEAM PATCH NOTES  (BBCode, paste as-is)
+  Cut the DEV NOTES at the bottom before posting.
+================================================================================
+
+
+[h1]Ranged, Fletching, and a new Mastery column[/h1]
+
+[b]Two new skills, plus two fixes from last patch that did not work.[/b]
+
+[hr][/hr]
+
+[h2]FIXES FROM LAST PATCH THAT DID NOT WORK[/h2]
+
+[list]
+[*][b]The farmhand still would not plant.[/b] Plant All was fixed, but the
+farmhand was not. If you picked a specific seed for him he planted nothing.
+Auto mode worked. Fixed, and the Journeyman Farmer replants again too.
+[*][b]The consort upgrade took your materials and did nothing.[/b] The
+purchase went through, the materials were spent, and the upgrade was undone
+next time you loaded the game. Fixed properly.
+[/list]
+
+[b]If you lost materials to the consort bug, file a bug report in game and
+they will be sent back to you.[/b] There is no way to spot an affected save
+automatically, so it has to be done by hand.
+
+[b]The dev can send you items now.[/b] A reply to your bug report can arrive
+with materials attached.
+
+[hr][/hr]
+
+[h2]RANGED COMBAT[/h2]
+
+[list]
+[*][b]Bows and crossbows.[/b] Bows are fast. Crossbows are slow and hit
+harder, and you can hold a shield with one.
+[*][b]Ammunition matters.[/b] Arrows and bolts carry their own strength, so
+part of your damage comes from what you are firing. Eight tiers of each.
+[*][b]Ranged uses one stat[/b] where melee uses two, so it gives more per
+level to keep the two even.
+[*][b]Heavy armour cuts your ranged damage.[/b] Leather does not. A
+crossbow's shield does not count against you.
+[*][b]A quiver slot[/b] on the paper doll and in the combat gear row, above
+the shield.
+[*][b]Three combat styles[/b] when a bow is equipped, replacing Attack,
+Strength and Defence:
+[/list]
+
+[code]
+  Accurate    no bonus, no penalty
+  Rapid       fires faster, misses more, most damage
+  Longrange   slower, and half the XP goes to Defence
+[/code]
+
+Rapid does the most damage, but its lead shrinks against tougher enemies.
+Longrange is the only way to train Defence with a bow.
+
+[h2]FLETCHING[/h2]
+
+The supply chain for ranged. It uses three other skills.
+
+[list]
+[*][b]Shafts[/b] from any log. Better logs give more per log.
+[*][b]Bowstring[/b] from flax, new to Farming and Foraging.
+[*][b]Feathers[/b] drop from stags, lynxes, wolves, leopards and hares, and
+come out of bird's nests.
+[*][b]Arrowheads and bolt tips[/b] are made in Smithing.
+[*][b]Arrows[/b] need a shaft, a feather and a head. [b]Bolts[/b] skip the
+feather but use more metal.
+[*][b]Bows and crossbows[/b] are built first, then strung.
+[*][b]Salvager[/b] gives spent arrows back, up to 85% with the tree maxed.
+[*][b]Category tabs[/b] on the activity list, so you are not scrolling
+through 69 recipes.
+[/list]
+
+[b]Ten monsters drop ammunition.[/b] Anything with a bow drops arrows, and
+armoured knights drop bolts. The tier matches the monster's level.
+
+[h2]MARKSMAN[/h2]
+
+A fourth Mastery column beside Onslaught, Bulwark and Warfare.
+
+[list]
+[*][b]11 nodes, 30 points[/b], same as the other columns. Draw Weight,
+Fletcher's Thrift, Bodkin Points, Quick Nock, Heavy Draw, Point Blank,
+Volley, Pinning Shot, Quiver Master and the Deadeye capstone.
+[*][b]The board is a grid now.[/b] Discipline across the top, tier down the
+side.
+[*][b]All 50 nodes have painted art[/b], with a different frame for each
+kind of node.
+[*][b]132 points across 50 nodes[/b], up from 98 across 37.
+[*][b]Combat level counts Ranged.[/b] Existing characters are unchanged.
+[*][b]Every node description rewritten[/b] to be shorter and clearer.
+[/list]
+
+[hr][/hr]
+
+[h2]OTHER FIXES[/h2]
+
+[list]
+[*][b]Four shop rings could not go on your left hand.[/b] Ring of Plenty,
+Delver, Tide and Grove. Only the Ember Ring worked in both hands.
+[*][b]The second woodcutting bar gave no guild quest credit.[/b] Logs cut on
+it did not count toward a quest.
+[*][b]Phantom Worker gave three skills instead of four.[/b] Nothing made you
+buy Third Thread first. Three Offline nodes now need the node below them.
+[*][b]Grandmaster tooltips in the Offline tree were cut off[/b], and the
+fourth one could not be seen at all.
+[*][b]Resizing the window scaled the whole interface up with it.[/b] It
+still shrinks to fit a small window, but no longer grows past normal size.
+The Interface scale slider still works if you want it bigger.
+[/list]
+
+[h2]QUALITY OF LIFE[/h2]
+
+[list]
+[*][b]Lock food so auto-eat cannot use it.[/b] Every food has a padlock. You
+can still eat it yourself. Asked for by a player whose auto-eat ate the food
+he had cooked for a guild delivery.
+[*][b]Keep the catch raw.[/b] A switch on the Fishing panel that turns off
+Seasoned Catch, for when a quest wants raw fish. No respec needed.
+[*][b]Radcliff's Tally.[/b] A keepsake for filing a bug report or an idea.
+It went in a few builds ago and was never mentioned.
+[/list]
+
+[hr][/hr]
+
+[h2]BALANCE[/h2]
+
+[list]
+[*][b]Marksman was too strong[/b] against melee once you spent your mastery
+points. Six nodes were toned down. The columns are even now.
+[*][b]No class favoured crossbows.[/b] They count as heavy weapons now, so
+Rogue gets the dagger and bow, Berserker gets the hammer and crossbow.
+[*][b]Smithing arrowheads gave more XP than the bar they are made from.[/b]
+Lowered.
+[*][b]Stringing a crossbow gave more XP than building one.[/b] Lowered.
+[*][b]Arrows were worth less than the materials in them.[/b] More arrowheads
+per bar, more arrows per batch, and prices adjusted to match.
+[*][b]Melee damage nodes were also boosting bows.[/b] They now check what
+you are holding.
+[*][b]Attack speed bonuses were missing from the swing time shown to you.[/b]
+Leather and Frenzy were both working, but the number on screen was wrong.
+[/list]
+
+[hr][/hr]
+
+[h2]COMING NEXT[/h2]
+
+[list]
+[*]Enchanted bolts with special effects
+[*]Bow and crossbow drops from monsters
+[*]A raid rework, so raids change what drops instead of only paying more
+[/list]
+
+Thanks to the playtesters, and to Radcliff especially, who has filed enough
+good bug reports to have an item named after him.
+
+
+================================================================================
+  DEV NOTES  ·  not for the Steam post
+================================================================================
+
+CUT LINE:  the Offline post covered builds .1 to .9.
+           THIS post covers 0.9.123.10 through 0.9.123.22.
+
+WHAT THE LAST POST CLAIMED THAT WAS NOT TRUE YET:
+  - Plant All was fixed for the BUTTON only. tickFarmer's chosen-seed branch
+    still read state.items instead of the seed vault. Fixed .17.
+  - The consort fix changed sailBuildConsortHull and left sailHullIdx and
+    normalizeState on the old rule, so the upgrade was reverted on load and the
+    materials were gone. Fixed .19.
+  Both now have tests that run the real path. The consort test covers the
+  RELOAD, because the purchase alone passed the whole time.
+
+TEST COVERAGE:  751 -> 820 audit assertions
+FILE SIZE:      10.4 MB -> 11.2 MB (mostly the mastery art)
+
+NEW HARNESSES:
+  _dpsboard.js      DPS for every weapon and class with mastery spent
+  _nodeworth.js     DPS worth of each offence node
+  _cmastclaims.js   does every node pay the number in its tooltip
+  _cmastwire.js     does every Marksman node move the right channel
+  _rangedstyles.js  are the three ranged styles a real choice
+  _rangedsim.js     ranged vs melee parity, no tree or mastery
+  _rangedecon.js    what an arrow costs in time, from the ore up
+
+STILL OUTSTANDING:
+  - DEMO IS HELD AT 0.9.123.9. No ranged, no fletching, no mastery rework, none
+    of this bug batch:
+        node _playtest.js demo
+  - The consort refund, by hand, as a Discord reply to their ticket:
+        /give 380 ancient_log, 160 starsteel_bar, 140 voidwood, 24 leviathan_scale, 16 krakenbone, 5 tidewrought
+  - Ticket #87 (penalty for a failed steal) is a design call, not a bug.
+    Suggested damage rather than a stun: a stun stops the idle loop, damage
+    uses the auto-eat system that already exists.
+  - Fletcher's Thrift does nothing on top of a maxed Fletching tree, since the
+    tree alone hits the 85% recovery cap. Still worth points before that.
+  - The mastery board holds 132 points and you earn 123, so you can fill 93%.
+    For the tree to be a real choice it needs to be nearer 160 to 180.
+
+TO PUSH TO STEAM:
+  1. Bump the banner to v0.9.124, restart the build counter at .1
+  2. node _validate.js && node _audit_tests.js
+  3. Upload the depot, then set it live as a separate step
+  4. node _playtest.js && node _playtest.js demo

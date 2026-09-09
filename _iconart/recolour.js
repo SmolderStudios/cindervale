@@ -45,29 +45,77 @@ const RAMPS = {
   moltensteel: ['#150e0c', '#7d2f0e', '#ff8f33'],
   voidsteel:   ['#100d1b', '#472d78', '#bd93ff'],
   dawn:        ['#4a3410', '#c79b3e', '#fff3c4'],
+  /* fletching, 0.9.124. Ammunition runs one rung past the armour ladder to
+     starfall, and bows run the WOOD ladder, which nothing else here uses.
+     Both sets are lifted straight from the game's own MPAL and WPAL. */
+  starfall:    ['#4a3008', '#c08a2a', '#ffd98a'],
+  pine:        ['#3f2b14', '#8a6236', '#c09a63'],
+  oak:         ['#3a2610', '#7d5527', '#b98a4e'],
+  ironbark:    ['#2b281f', '#5f5a4c', '#9a9484'],
+  ember:       ['#3d1108', '#96351d', '#d4703c'],
+  frost:       ['#1e3242', '#5c8ba4', '#a8cfe0'],
+  shadow:      ['#1c1528', '#463a5c', '#7c6d90'],
+  ancient:     ['#232a12', '#5e6b38', '#9aa870'],
 };
+
+/* Which rungs a given slot actually HAS. Before fletching every slot was
+   recoloured into every ramp, which was correct while the only ramps in the file
+   were the armour ladder. It stopped being correct the moment woods arrived: an
+   unlisted slot would now emit pine_helm and gravesteel_arrow. */
+const ARMOUR = ['bronze','iron','steel','mithril','cobalt','runite','starsteel',
+                'gravesteel','moltensteel','voidsteel','dawn'];
+const METAL  = ['bronze','iron','steel','mithril','cobalt','runite','starsteel','starfall'];
+const WOOD   = ['pine','oak','ironbark','ember','frost','shadow','ancient'];
 
 /* Which generated piece is the master for each slot, and which tier it already is
    (so that tier is copied straight through rather than recoloured onto itself). */
 const BASES = {
-  helmet: ['steel_helm',   'steel'],
-  chest:  ['steel_chest',  'steel'],
-  legs:   ['steel_legs',   'steel'],
-  gloves: ['steel_gloves', 'steel'],
-  boots:  ['steel_boots',  'steel'],
-  shield: ['steel_shield', 'steel'],
-  cape:   ['steel_cape',   'steel'],
-  buckler:['steel_buckler','steel'],
-  sword:  ['bronze_sword',  'bronze'],
-  dagger: ['bronze_dagger', 'bronze'],
-  hammer: ['bronze_hammer', 'bronze'],
+  helmet: ['steel_helm',   'steel',  ARMOUR],
+  chest:  ['steel_chest',  'steel',  ARMOUR],
+  legs:   ['steel_legs',   'steel',  ARMOUR],
+  gloves: ['steel_gloves', 'steel',  ARMOUR],
+  boots:  ['steel_boots',  'steel',  ARMOUR],
+  shield: ['steel_shield', 'steel',  ARMOUR],
+  cape:   ['steel_cape',   'steel',  ARMOUR],
+  buckler:['steel_buckler','steel',  ARMOUR],
+  sword:  ['bronze_sword',  'bronze', ARMOUR],
+  dagger: ['bronze_dagger', 'bronze', ARMOUR],
+  hammer: ['bronze_hammer', 'bronze', ARMOUR],
+  /* fletching. Ten slots off ten drawn cells -> 76 items. */
+  arrowhead:   ['steel_arrowhead',          'steel', METAL],
+  bolt_tip:    ['steel_bolt_tip',           'steel', METAL],
+  arrow:       ['steel_arrow',              'steel', METAL, 'warm'],
+  bolt:        ['steel_bolt',               'steel', METAL, 'warm'],
+  crossbow:    ['steel_crossbow',           'steel', METAL, 'warm'],
+  un_crossbow: ['unstrung_steel_crossbow',  'steel', METAL, 'warm'],
+  /* Bows recolour whole. The limb IS the tier material, and the only fixed parts
+     are the grip wrap and the string, both of which sit in the same warm band as
+     the limb - a hue mask cannot tell them apart, so it would protect the limb too. */
+  shortbow:    ['pine_shortbow',            'pine',  WOOD],
+  longbow:     ['pine_longbow',             'pine',  WOOD],
+  un_shortbow: ['unstrung_pine_shortbow',   'pine',  WOOD],
+  un_longbow:  ['unstrung_pine_longbow',    'pine',  WOOD],
 };
 
-/* id for a given slot on a given tier, matching the game's own naming */
+/* id for a given slot on a given tier, matching the game's own naming. A plain
+   string is `<tier>_<suffix>`. The unstrung bows and crossbows put their marker
+   in FRONT of the tier (`unstrung_pine_shortbow`), which a suffix cannot express,
+   so those carry {pre, suf} instead. */
 const SUFFIX = { helmet: 'helm', chest: 'chest', legs: 'legs', gloves: 'gloves',
-  boots: 'boots', shield: 'shield', cape: 'cape', buckler: 'buckler', sword: 'sword', dagger: 'dagger', hammer: 'hammer' };
+  boots: 'boots', shield: 'shield', cape: 'cape', buckler: 'buckler', sword: 'sword', dagger: 'dagger', hammer: 'hammer',
+  arrowhead: 'arrowhead', bolt_tip: 'bolt_tip', arrow: 'arrow', bolt: 'bolt',
+  crossbow: 'crossbow', shortbow: 'shortbow', longbow: 'longbow',
+  un_crossbow: { pre: 'unstrung_', suf: 'crossbow' },
+  un_shortbow: { pre: 'unstrung_', suf: 'shortbow' },
+  un_longbow:  { pre: 'unstrung_', suf: 'longbow'  } };
 
-const WORK = `async (uri, ramp, erode) => {
+/* the id this slot produces on this tier */
+function idFor(slot, tier) {
+  const s = SUFFIX[slot];
+  return typeof s === 'string' ? tier + '_' + s : s.pre + tier + '_' + s.suf;
+}
+
+const WORK = `async (uri, ramp, erode, mask) => {
   const img = new Image(); img.src = uri; await img.decode();
   const W = img.width, H = img.height, N = W * H;
   const c = document.createElement('canvas'); c.width = W; c.height = H;
@@ -93,13 +141,41 @@ const WORK = `async (uri, ramp, erode) => {
     for (let i = 0; i < N; i++) if (!a[i]) px[i*4+3] = 0;
   }
 
-  /* luminance range of what survived, so the ramp is sampled across the real span */
+  /* WARM MASK. The game never repaints an item's furniture: ammoSVG hardcodes a pine
+     shaft, xbowSVG hardcodes a wooden stock, and only the head/prod takes the tier
+     palette. A whole-image gradient map ignores that and hands you a mithril arrow
+     with a blue shaft. Saturation alone will not separate them - the crossbow's stock
+     is a muted brown that sits at the same saturation as steel's shadows - but HUE
+     will, because the steel is neutral to blue-grey and every wooden part is orange.
+     Protected pixels are left exactly as drawn. */
+  const warm = new Uint8Array(N);
+  if (mask === 'warm') {
+    for (let i = 0; i < N; i++) {
+      if (px[i*4+3] < 16) continue;
+      const r0 = px[i*4]/255, g0 = px[i*4+1]/255, b0 = px[i*4+2]/255;
+      const mx = Math.max(r0,g0,b0), mn = Math.min(r0,g0,b0);
+      if (mx === mn) continue;
+      const l0 = (mx+mn)/2, dd = mx - mn;
+      const s0 = l0 > 0.5 ? dd/(2-mx-mn) : dd/(mx+mn);
+      let h0;
+      if (mx === r0) h0 = ((g0-b0)/dd + (g0 < b0 ? 6 : 0));
+      else if (mx === g0) h0 = (b0-r0)/dd + 2;
+      else h0 = (r0-g0)/dd + 4;
+      h0 *= 60;
+      if (s0 > 0.12 && h0 >= 12 && h0 <= 60) warm[i] = 1;
+    }
+  }
+
+  /* luminance range of what survived, so the ramp is sampled across the real span.
+     Measured over the pixels that will ACTUALLY be recoloured - letting a protected
+     wooden shaft stretch the span squashes the metal into the middle of the ramp. */
   let lo = 255, hi = 0;
   for (let i = 0; i < N; i++) {
-    if (px[i*4+3] < 16) continue;
+    if (px[i*4+3] < 16 || warm[i]) continue;
     const l = (px[i*4]*299 + px[i*4+1]*587 + px[i*4+2]*114) / 1000;
     if (l < lo) lo = l; if (l > hi) hi = l;
   }
+  if (hi <= lo) { lo = 0; hi = 255; }
   const span = Math.max(1, hi - lo);
 
   const hex = h => [parseInt(h.slice(1,3),16), parseInt(h.slice(3,5),16), parseInt(h.slice(5,7),16)];
@@ -132,7 +208,7 @@ const WORK = `async (uri, ramp, erode) => {
   };
 
   for (let i = 0; i < N; i++) {
-    if (px[i*4+3] < 16) continue;
+    if (px[i*4+3] < 16 || warm[i]) continue;
     const r = px[i*4], g = px[i*4+1], bl = px[i*4+2];
     const lum = (r*299 + g*587 + bl*114) / 1000;
     const t = Math.min(1, Math.max(0, (lum - lo) / span));
@@ -162,20 +238,22 @@ const WORK = `async (uri, ramp, erode) => {
   fs.mkdirSync(out, { recursive: true });
   let n = 0, missing = [];
 
-  for (const [slot, [baseId, baseTier]] of Object.entries(BASES)) {
+  for (const [slot, [baseId, baseTier, tiers, mask]] of Object.entries(BASES)) {
     if (ONLY_SLOT && slot !== ONLY_SLOT) continue;
     const src = path.join(CUT, baseId + '__painted.png');
     if (!fs.existsSync(src)) { missing.push(baseId); continue; }
     const uri = 'data:image/png;base64,' + fs.readFileSync(src).toString('base64');
-    for (const [tier, ramp] of Object.entries(RAMPS)) {
-      const id = tier + '_' + SUFFIX[slot];
-      const dataUrl = await p.evaluate((g, u, r, e) => g(u, r, e), fn, uri, ramp, ERODE);
+    for (const tier of tiers) {
+      const ramp = RAMPS[tier];
+      if (!ramp) { console.log('  no ramp for tier ' + tier + ' (' + slot + ')'); continue; }
+      const id = idFor(slot, tier);
+      const dataUrl = await p.evaluate((g, u, r, e, m) => g(u, r, e, m), fn, uri, ramp, ERODE, mask || null);
       fs.writeFileSync(path.join(out, id + '__painted.png'),
         Buffer.from(dataUrl.split(',')[1], 'base64'));
       n++;
     }
-    process.stdout.write(slot.padEnd(8) + 'from ' + baseId + ' (' + baseTier + ')  -> ' +
-      Object.keys(RAMPS).length + ' tiers\n');
+    process.stdout.write(slot.padEnd(12) + 'from ' + baseId + ' (' + baseTier + ')  -> ' +
+      tiers.length + ' tiers\n');
   }
   await br.close();
   if (missing.length) console.log('\nno base art for: ' + missing.join(', '));

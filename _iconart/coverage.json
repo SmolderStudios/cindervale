@@ -1,16 +1,121 @@
 [
  {
-  "id": "cane_rod",
-  "name": "Bamboo Rod",
-  "kind": "svg",
-  "grp": "tool",
+  "id": "prized_raw_minnow",
+  "name": "Prized Raw Minnow",
+  "kind": "none",
+  "grp": "other",
   "tier": 0
  },
  {
-  "id": "master_bellows",
-  "name": "Master Bellows",
+  "id": "prized_raw_sardine",
+  "name": "Prized Raw Sardine",
+  "kind": "none",
+  "grp": "other",
+  "tier": 0
+ },
+ {
+  "id": "prized_raw_trout",
+  "name": "Prized Raw Trout",
+  "kind": "none",
+  "grp": "other",
+  "tier": 0
+ },
+ {
+  "id": "prized_raw_tuna",
+  "name": "Prized Raw Tuna",
+  "kind": "none",
+  "grp": "other",
+  "tier": 0
+ },
+ {
+  "id": "prized_raw_salmon",
+  "name": "Prized Raw Salmon",
+  "kind": "none",
+  "grp": "other",
+  "tier": 0
+ },
+ {
+  "id": "prized_raw_swordfish",
+  "name": "Prized Raw Swordfish",
+  "kind": "none",
+  "grp": "other",
+  "tier": 0
+ },
+ {
+  "id": "prized_raw_shark",
+  "name": "Prized Raw Shark",
+  "kind": "none",
+  "grp": "other",
+  "tier": 0
+ },
+ {
+  "id": "prized_raw_voideel",
+  "name": "Prized Raw Void Eel",
+  "kind": "none",
+  "grp": "other",
+  "tier": 0
+ },
+ {
+  "id": "prized_minnow",
+  "name": "Prized Minnow",
+  "kind": "none",
+  "grp": "potion",
+  "tier": 0
+ },
+ {
+  "id": "prized_sardine",
+  "name": "Prized Sardine",
+  "kind": "none",
+  "grp": "potion",
+  "tier": 0
+ },
+ {
+  "id": "prized_trout",
+  "name": "Prized Trout",
+  "kind": "none",
+  "grp": "potion",
+  "tier": 0
+ },
+ {
+  "id": "prized_tuna",
+  "name": "Prized Tuna",
+  "kind": "none",
+  "grp": "potion",
+  "tier": 0
+ },
+ {
+  "id": "prized_salmon",
+  "name": "Prized Salmon",
+  "kind": "none",
+  "grp": "potion",
+  "tier": 0
+ },
+ {
+  "id": "prized_swordfish",
+  "name": "Prized Swordfish",
+  "kind": "none",
+  "grp": "potion",
+  "tier": 0
+ },
+ {
+  "id": "prized_shark",
+  "name": "Prized Shark",
+  "kind": "none",
+  "grp": "potion",
+  "tier": 0
+ },
+ {
+  "id": "prized_voideel",
+  "name": "Prized Void Eel",
+  "kind": "none",
+  "grp": "potion",
+  "tier": 0
+ },
+ {
+  "id": "radcliff_tally",
+  "name": "Radcliff's Tally",
   "kind": "svg",
-  "grp": "tool",
+  "grp": "other",
   "tier": 0
  }
 ]

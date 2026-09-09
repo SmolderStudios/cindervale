@@ -21,12 +21,16 @@ const FILE = process.argv[2] ? path.resolve(process.argv[2]) : path.join(__dirna
 const OUT  = process.argv[3] ? path.resolve(process.argv[3]) : path.join(__dirname, '_ingame.png');
 
 /* Whatever exists in the pack; the boot script filters to real ITEMS anyway. */
-const STOCK = ['pine_log','oak_log','ironbark_log','ember_log','frost_log','shadow_log','ancient_log',
-  'copper_ore','tin_ore','iron_ore','coal','gold_ore','mithril_ore','silver_ore','cobalt_ore',
-  'runite_ore','starsteel_ore','gem_dust','bronze_bar','iron_bar','steel_bar','gold_bar',
-  'silver_bar','mithril_bar','cobalt_bar','runite_bar','starsteel_bar','raw_minnow','raw_trout',
-  'raw_salmon','raw_shark','wildberries','bloodcap','thornvine','dewleaf','emberbloom',
-  'charcoal','ember_dust','sapphire','emerald','ruby','diamond','cut_ruby','cut_sapphire'];
+const STOCK = ['wood_shaft','feather','flax','bowstring','flax_seed','raw_fowl','roast_fowl',
+  'bronze_arrow','iron_arrow','steel_arrow','mithril_arrow','cobalt_arrow','runite_arrow','starsteel_arrow','starfall_arrow',
+  'bronze_bolt','iron_bolt','steel_bolt','mithril_bolt','cobalt_bolt','runite_bolt','starsteel_bolt','starfall_bolt',
+  'bronze_arrowhead','steel_arrowhead','runite_arrowhead','starfall_arrowhead',
+  'bronze_bolt_tip','steel_bolt_tip','runite_bolt_tip','starfall_bolt_tip',
+  'pine_shortbow','oak_shortbow','ironbark_shortbow','ember_shortbow','frost_shortbow','shadow_shortbow','ancient_shortbow',
+  'pine_longbow','oak_longbow','ironbark_longbow','ember_longbow','frost_longbow','shadow_longbow','ancient_longbow',
+  'unstrung_pine_longbow','unstrung_ember_longbow','unstrung_ancient_longbow',
+  'bronze_crossbow','iron_crossbow','steel_crossbow','mithril_crossbow','cobalt_crossbow','runite_crossbow','starsteel_crossbow','starfall_crossbow',
+  'unstrung_steel_crossbow','unstrung_starfall_crossbow','cape_fletching'];
 
 (async () => {
   const browser = await puppeteer.launch({ executablePath: CHROME, headless: 'new',
