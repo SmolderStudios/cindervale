@@ -2986,6 +2986,33 @@ body:not(.is-demo) .demo-only{display:none !important}
 #itemTooltip .tt-chance{color:#e0762f;font-family:var(--num);white-space:nowrap}
 #itemTooltip .tt-rare{color:#ffd700;font-size:calc(12px*var(--tscale));letter-spacing:1px}
 #itemTooltip .tt-sell{color:#7da33f;font-size:calc(13px*var(--tscale));margin-top:5px;padding-top:5px;border-top:1px solid #3a2a17}
+/* ── card shell (0.9.124) ────────────────────────────────────────────────────
+   The card used to be one undivided column of paragraphs, so the numbers you
+   hovered for sat at the same weight as a lecture about weapon classes that
+   repeats on every weapon of that class. It is now banded: what it is, what it
+   does, where it comes from, what it costs. Anything discursive moved behind
+   Shift, which the card already used to expand its source list.
+   #itemTooltip's own padding is dropped so a band can span the full width. */
+#itemTooltip.tt-card{padding:0;overflow:hidden}
+#itemTooltip .nt-hd{padding:9px 12px 8px;background:linear-gradient(180deg,#241a0d,#1b1409)}
+#itemTooltip .nt-hd .tt-name{margin-bottom:0;display:flex;align-items:center;gap:6px}
+#itemTooltip .nt-meta{font-size:calc(11.5px*var(--tscale));color:#8a7455;letter-spacing:.6px;margin-top:2px}
+#itemTooltip .nt-rare{color:#ffd700;font-size:calc(11px*var(--tscale));letter-spacing:1px;margin-left:auto}
+#itemTooltip .nt-sec{padding:8px 12px;border-top:1px solid #2e2113}
+#itemTooltip .nt-sec>.tt-sub:last-child{margin-bottom:0}
+#itemTooltip .nt-stats{font-size:calc(15px*var(--tscale));line-height:1.6}
+#itemTooltip .nt-chips{margin-top:6px}
+#itemTooltip .nt-chip{display:inline-flex;align-items:center;gap:3px;border-radius:10px;
+  padding:1px 7px;margin:0 4px 3px 0;font-size:calc(12px*var(--tscale));white-space:nowrap}
+#itemTooltip .nt-lbl{font-size:calc(11px*var(--tscale));color:#8a7455;text-transform:uppercase;
+  letter-spacing:1px;margin-bottom:3px}
+#itemTooltip .nt-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;
+  padding:7px 12px;border-top:1px solid #2e2113;background:#150f07}
+#itemTooltip .nt-foot .tt-sell{margin:0;padding:0;border-top:0}
+#itemTooltip .nt-hint{font-size:calc(11px*var(--tscale));color:#6e552c;white-space:nowrap}
+#itemTooltip .nt-more{font-size:calc(11.5px*var(--tscale));color:#a08a64;line-height:1.5}
+#itemTooltip .nt-more b{color:#c79b4e}
+#itemTooltip .nt-flav{font-size:calc(12px*var(--tscale));color:#8a7455;font-style:italic;line-height:1.45}
 /* .silver-pip removed — replaced by the ui_coin_silver SVG, which fmtCoins now places
    BEFORE the amount like the gold coin. The pip was a pale circle sitting after the
    digits; a playtester read it as a white dot rather than a coin. */
@@ -7813,7 +7840,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.123.23">v0.9.123</div>
+  <div class="mm-ver" data-build="0.9.123.24">v0.9.123</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -13836,8 +13863,8 @@ function combatGearStatBlock(itemId){
   if(s.aspd)  parts.push('<span style="color:#9be89b">'+iconHTML('ui_bolt')+' +'+Math.round(s.aspd*100)+'% Atk Speed</span>');
   // Shield block (1.0.87) — flat damage reduction, computed from this shield's Defence.
   // Bucklers (offhand) don't block; they're the rogue's light offhand instead.
-  if(it.cslot==='shield' && !it.offhand){ var _sdr=Math.min(0.28,(s.def||0)*0.003); if(_sdr>0) parts.push('<span style="color:#8fb8ff">'+iconHTML('ui_shield')+' Blocks '+Math.round(_sdr*100)+'% of each hit</span> <span style="color:var(--muted);font-size:calc(11px*var(--tscale))">(halved with light weapons)</span>'); if(it.hpBlock) parts.push('<span style="color:#9be89b">'+iconHTML('ui_heart')+' +block scaling with max HP (up to +'+Math.round((it.hpBlock.cap||0.08)*100)+'%)</span>'); if(it.hpStr) parts.push('<span style="color:#ffb37a">'+iconHTML('ui_muscle')+' +Strength scaling with max HP (up to +'+(it.hpStr.cap||20)+')</span>'); }
-  if(it.cslot==='shield' && it.offhand) parts.push('<span style="color:#9be89b">'+iconHTML('ui_sword')+' Off-hand — pairs with light weapons (no swing penalty)</span>');
+  if(it.cslot==='shield' && !it.offhand){ var _sdr=Math.min(0.28,(s.def||0)*0.003); if(_sdr>0) parts.push('<span style="color:#8fb8ff">'+iconHTML('ui_shield')+' Blocks '+Math.round(_sdr*100)+'% of each hit</span> <span style="color:var(--muted);font-size:calc(11px*var(--tscale))">(half that if you carry a light weapon)</span>'); if(it.hpBlock) parts.push('<span style="color:#9be89b">'+iconHTML('ui_heart')+' +block, more the higher your max HP (up to +'+Math.round((it.hpBlock.cap||0.08)*100)+'%)</span>'); if(it.hpStr) parts.push('<span style="color:#ffb37a">'+iconHTML('ui_muscle')+' +Strength, more the higher your max HP (up to +'+(it.hpStr.cap||20)+')</span>'); }
+  if(it.cslot==='shield' && it.offhand) parts.push('<span style="color:#9be89b">'+iconHTML('ui_sword')+' Off-hand — no block, but it never slows a light weapon</span>');
   var statLine=parts.length?parts.join(' &nbsp; '):'<span style="color:var(--muted)">No combat stats</span>';
   // Equip requirement (1.0.26) — green if met, red lock if not.
   var reqLine='';
@@ -13883,41 +13910,58 @@ function combatGearStatBlock(itemId){
      The same player guessed two-handers were coming. They are already here — Grave
      Cleaver, Forgebreaker, Voidcleaver and the Dawnbringer — and nothing said that
      either, so a two-hander names itself on the same line. */
-  var wcLine='';
-  if(it.cslot==='weapon' && typeof weaponClass==='function'){
-    var _wc=weaponClass(itemId);
-    var WC={
-      light:   {n:'Light',    col:'#7fd8c8', ico:'ui_wind',
-                d:'Faster, precise weapons. They carry their own crit bonus, and a Rogue hits harder still with one. '
-                 +'A bracing shield halves its block and slows your swing 20% \u2014 pair one with a Buckler instead.'},
-      heavy:   {n:'Heavy',    col:'#e0762f', ico:'ui_muscle',
-                d:'Slow and punishing. A Berserker hits far harder with one. No shield penalty.'},
-      standard:{n:'Standard', col:'#d6aa60', ico:'ui_sword',
-                d:'No class synergy and no shield penalty \u2014 it braces a shield as well as anything.'}
-    }[_wc];
-    if(WC){
-      wcLine='<div style="margin-top:6px;font-size:calc(12.5px*var(--tscale));color:'+WC.col+'">'
-        +'<span style="display:inline-block;font-size:calc(14px*var(--tscale));line-height:1;vertical-align:-2px;margin-right:3px">'+iconHTML(WC.ico)+'</span>'
-        +'<b>'+WC.n+'</b> weapon'
-        +(it.twoHanded?' \u00b7 <b>two-handed</b>':'')
-        +'<div style="color:var(--muted);font-size:calc(11.5px*var(--tscale));line-height:1.45;margin-top:1px">'
-        +WC.d+(it.twoHanded?' Takes both hands, so it uses no shield.':'')+'</div></div>';
-    }
+  /* Chips, not paragraphs (0.9.124). Each carries the NUMBER it is actually worth,
+     which the prose never did: "they carry their own crit bonus" left you to guess,
+     when the bonus is computable per item (lightWeaponCrit: 0.03 + tier*0.004). The
+     explanations moved to gearProseHTML(), shown only while Shift is held. */
+  var chips=[];
+  function _chip(col,ico,label){
+    return '<span class="nt-chip" style="background:'+col+'1e;border:1px solid '+col+'55;color:'+col+'">'
+      +(ico?'<span style="display:inline-block;font-size:calc(13px*var(--tscale));line-height:1;vertical-align:-2px">'+iconHTML(ico)+'</span>':'')
+      +label+'</span>';
   }
-
-  var dmgLine='';
   if(it.cslot==='weapon' && it.dmgType && DMG_TYPES[it.dmgType]){
     var dt=DMG_TYPES[it.dmgType];
-    dmgLine='<div style="margin-top:6px;font-size:calc(12.5px*var(--tscale));color:'+dt.col+'">'
-      +'<span style="display:inline-block;font-size:calc(14px*var(--tscale));line-height:1;vertical-align:-2px;margin-right:3px">'+iconHTML(dt.ico)+'</span>'
-      +'Deals <b>'+dt.n.toLowerCase()+'</b> damage'
-      +'<div style="color:var(--muted);font-size:calc(11.5px*var(--tscale));line-height:1.45;margin-top:1px">'
-      +'+15% against foes weak to '+it.dmgType+', −15% against those that resist it. '
-      +'The Monster Log lists both for every foe.</div></div>';
+    chips.push(_chip(dt.col, dt.ico, dt.n+' ±15%'));
   }
+  if(it.cslot==='weapon' && typeof weaponClass==='function'){
+    var _wc=weaponClass(itemId);
+    if(_wc==='light')         chips.push(_chip('#7fd8c8','ui_wind','Light · +'+(Math.round((0.03+(it.ctier||1)*0.004)*1000)/10)+'% crit'));
+    else if(_wc==='heavy')    chips.push(_chip('#e0762f','ui_muscle','Heavy'));
+    else if(_wc==='standard') chips.push(_chip('#d6aa60','ui_sword','Standard'));
+  }
+  if(it.twoHanded) chips.push(_chip('#c9a86a','ui_swords','Two-handed'));
+  var chipLine=chips.length?'<div class="nt-chips">'+chips.join('')+'</div>':'';
 
-  return '<div style="color:var(--ember);font-size:calc(12px*var(--tscale));letter-spacing:.5px;margin-bottom:6px">'+iconHTML('ui_swords')+' '+tierName+' · Tier '+it.ctier+' · '+slotLabel+'</div>'
-    +'<div style="font-size:calc(14px*var(--tscale));line-height:1.7">'+statLine+'</div>'+dmgLine+wcLine+fxLine+setLine+reqLine;
+  /* The tier/slot line moved up into the card's header band, where it is the first
+     thing read. Emitting it here as well printed it twice on every gear card. */
+  return '<div class="nt-stats">'+statLine+'</div>'+chipLine+fxLine+setLine+reqLine;
+}
+
+/* The mechanics behind those chips, in words, shown only while Shift is held.
+   Every number is read off the function that implements it so the copy cannot
+   drift from the combat maths:
+     classMaxHitMult()         rogue+light 1.12, berserker+heavy 1.18
+     _lightWepShieldPenalty()  shield block x0.5, swing x1.20
+   The old wording said "a Rogue hits harder still with one" and "a bracing shield
+   halves its block", which named no number and used a term the game never defines
+   anywhere a player can see. */
+function gearProseHTML(itemId){
+  var it=ITEMS[itemId]; if(!it||!it.cgear) return '';
+  var out=[];
+  if(it.cslot==='weapon' && it.dmgType && DMG_TYPES[it.dmgType]){
+    var dt=DMG_TYPES[it.dmgType];
+    out.push('<b>'+dt.n+'</b> — hits 15% harder against foes that are weak to it, and 15% softer against foes that resist it.');
+  }
+  if(it.cslot==='weapon' && typeof weaponClass==='function'){
+    var wc=weaponClass(itemId);
+    if(wc==='light') out.push('<b>Light</b> — trades raw damage for crit chance. A Rogue does 12% more damage with one. '
+      +'Carry a shield as well and that shield blocks half as much, and you swing 20% slower. Carry a Buckler instead.');
+    if(wc==='heavy') out.push('<b>Heavy</b> — slow, and hits hard. A Berserker does 18% more damage with one. Carrying a shield costs you nothing.');
+    if(wc==='standard') out.push('<b>Standard</b> — no class bonus either way, and carrying a shield costs you nothing.');
+  }
+  if(it.twoHanded) out.push('<b>Two-handed</b> — needs both hands, so you cannot carry a shield with it.');
+  return out.length?'<div class="nt-sec"><div class="nt-more">'+out.join('<br>')+'</div></div>':'';
 }
 
 /* Human-readable on-hit effect block for an item's `wfx` (poison / burn / stun
@@ -33016,12 +33060,30 @@ function showItemTooltip(itemId, x, y, note){
   const usages=usageMap()[itemId]||[];
   const isRare=!!it.rare;
 
-  let html=`<div class="tt-name">${iconHTML(itemId)} ${it.name}</div>`;
+  /* HEADER BAND (0.9.124) - the name, and one line saying what this is. The tier
+     and slot used to sit inside combatGearStatBlock halfway down the card; a
+     player scanning a row of hovers reads the top two lines and nothing else. */
+  const _meta=[];
+  if(it.cgear){
+    const _tn={1:'Bronze',2:'Iron',3:'Steel',4:'Mithril',5:'Cobalt',6:'Runite',7:'Starsteel',8:'Void'};
+    const _sl={helmet:'Helmet',chest:'Chest',legs:'Legs',gloves:'Gloves',boots:'Boots',weapon:'Weapon',shield:'Shield',cape:'Cape'};
+    _meta.push(it.light?'Leather':(_tn[it.ctier]||('Tier '+it.ctier)));
+    if(it.ctier) _meta.push('Tier '+it.ctier);
+    _meta.push(_sl[it.cslot]||it.cslot);
+  } else if(it.ammo){ _meta.push('Ammunition'); _meta.push(it.ammo==='bolt'?'Crossbows':'Bows'); }
+  /* Food is `potion:{heal:n}` in the data, so the potion test has to come SECOND
+     or every cooked dish introduces itself as a potion. */
+  else if(it.potion && (it.potion.heal||it.potion.regen) && !it.potion.dur) _meta.push('Food');
+  else if(it.potion) _meta.push('Potion');
+
+  let html=`<div class="nt-hd"><div class="tt-name">${iconHTML(itemId)} <span>${it.name}</span>`
+    +(isRare?`<span class="nt-rare">RARE</span>`:``)+`</div>`
+    +(_meta.length?`<div class="nt-meta">${_meta.join(' · ')}</div>`:``)+`</div>`;
   /* Context the hovered surface wants to add - "have 3, need 5 per craft"
      from a recipe chip. Carried by data-itemnote so the surface does not
      need a second tooltip of its own. */
-  if(note) html+=`<div class="tt-note">${escapeHTML(String(note))}</div>`;
-  if(isRare) html+=`<div class="tt-rare">✦ Rare Item</div>`;
+  if(note) html+=`<div class="nt-sec"><div class="tt-note" style="margin:0">${escapeHTML(String(note))}</div></div>`;
+  html+=`<div class="nt-sec">`;
   // Combat gear — slot/tier label + atk/str/def stats (skipped for skilling gear, which has its own block below)
   if(it.cgear){
     html+=combatGearStatBlock(itemId);
@@ -33082,48 +33144,71 @@ function showItemTooltip(itemId, x, y, note){
   // Item flavor / info text — many items (esp. enchanting materials) explain
   // what they are and where they come from here. Previously never shown on
   // hover, which left icon-only UI (like the enchant cost row) unreadable.
-  if(it.desc){
-    html+=`<div class="tt-sub" style="color:var(--muted);font-style:italic;line-height:1.4">${it.desc}</div>`;
+  html+=`</div>`;   /* close the "what it does" band */
+
+  /* The weapon-class and damage-type explanations, and the flavour line. Both are
+     the same on every item of a kind, so they are Shift-only: the card is read
+     dozens of times an hour and neither changes what you do with the item. */
+  if(_ttExpanded){
+    if(typeof gearProseHTML==='function') html+=gearProseHTML(itemId);
+    if(it.desc) html+=`<div class="nt-sec"><div class="nt-flav">${it.desc}</div></div>`;
   }
+
+  /* WHERE. One best source at rest; the whole list on Shift. `sources` arrives
+     best-rate-first, so [0] is the one you would actually farm. */
   if(sources.length){
-    html+=`<div style="margin-bottom:3px;font-size:calc(12px*var(--tscale));color:#a08a64;text-transform:uppercase;letter-spacing:1px">Sources</div>`;
-    html+=sourceListHTML(sources, _ttExpanded);
+    html+=`<div class="nt-sec"><div class="nt-lbl">${_ttExpanded?'Sources':'Best source'}</div>`;
+    if(_ttExpanded) html+=sourceListHTML(sources, true);
+    else {
+      const _s0=sources[0], _rest=sources.length-1;
+      html+=`<div class="tt-source">${_icoUniq(_s0.skIcon)} ${_s0.actName}${_ttChanceHTML(_ttChanceOf(_s0))}</div>`;
+      if(_rest) html+=`<div class="nt-hint">+${_rest} other place${_rest>1?'s':''}</div>`;
+    }
+    html+=`</div>`;
   } else {
-    html+=`<div class="tt-sub">Source unknown</div>`;
+    html+=`<div class="nt-sec"><div class="tt-sub" style="margin:0">Source unknown</div></div>`;
   }
   // Usage icons — skills that consume this item
   /* Ticket #70: an item nothing wants used to say nothing at all, which reads the
      same as a tooltip that has not been told. Say it. */
+  /* These stay at rest: each one changes what you DO with the item. */
   const _useKind=(typeof itemUseKind==='function')?itemUseKind(itemId):'recipe';
-  if(_useKind==='bosskey'){
-    html+=`<div style="margin-top:5px;padding-top:5px;border-top:1px solid #3a2a17;font-size:calc(13px*var(--tscale));color:#e0b05c">`
-       +`${iconHTML('ui_lock')} Opens the ${escapeHTML(bossKeyFor(itemId))}'s lair — keep one.</div>`;
-  } else if(!usages.length && _useKind==='none'){
-    html+=`<div style="margin-top:5px;padding-top:5px;border-top:1px solid #3a2a17;font-size:calc(13px*var(--tscale));color:#7da33f">`
-       +`Nothing uses this — sell it.</div>`;
-  } else if(!usages.length && _useKind==='ammo'){
-    html+=`<div style="margin-top:5px;padding-top:5px;border-top:1px solid #3a2a17;font-size:calc(13px*var(--tscale));color:#a8c86a">`
-       +`Ammunition. Sits in your quiver and is spent a shot at a time.</div>`;
-  } else if(!usages.length && _useKind==='keepsake'){
-    html+=`<div style="margin-top:5px;padding-top:5px;border-top:1px solid #3a2a17;font-size:calc(13px*var(--tscale));color:#a08a64">`
-       +`Nothing uses this, and it cannot be sold. It is yours to keep.</div>`;
-  }
+  const _act={bosskey:['#e0b05c',`${iconHTML('ui_lock')} Opens the ${escapeHTML(String(bossKeyFor(itemId)))}'s lair. Keep one.`],
+              none:['#7da33f','Nothing uses this. Sell it.'],
+              ammo:['#a8c86a','Sits in your quiver, spent a shot at a time.'],
+              keepsake:['#a08a64','Nothing uses this, and it cannot be sold. It is yours to keep.']};
+  if(_useKind==='bosskey' || (!usages.length && _act[_useKind]))
+    html+=`<div class="nt-sec" style="color:${_act[_useKind][0]};font-size:calc(12.5px*var(--tscale))">${_act[_useKind][1]}</div>`;
+
+  /* Used in - three chips at rest, all of them on Shift. A material feeding a
+     dozen recipes used to push the price off the bottom of the card. */
   if(usages.length){
-    html+=`<div style="margin-top:5px;padding-top:5px;border-top:1px solid #3a2a17;font-size:calc(12px*var(--tscale));color:#a08a64;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">Used in</div>`;
-    html+=`<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:2px">`;
-    for(const u of usages){
-      html+=`<span style="background:var(--raised-s);border:1px solid #5a8fcb55;border-radius:6px;padding:2px 6px;font-size:calc(14px*var(--tscale))" title="${u.skName}">${_icoUniq(u.skIcon)} ${u.skName}</span>`;
-    }
-    html+=`</div>`;
-    html+=`<div style="font-size:calc(12px*var(--tscale));color:#6e552c;margin-top:2px">Click item to highlight skills</div>`;
-  }
-  if(it.sell>0){
-    const effSell=effectiveItemSell(itemId);
-    if(effSell>it.sell) html+=`<div class="tt-sell">Sells for ${fmtCoins(effSell,true)} <span style="color:#6e552c">(base ${fmtCoins(it.sell,true)})</span></div>`;
-    else html+=`<div class="tt-sell">Sells for ${fmtCoins(it.sell,true)}</div>`;
+    const _u=_ttExpanded?usages:usages.slice(0,3);
+    html+=`<div class="nt-sec"><div class="nt-lbl">Used in</div><div>`;
+    for(const u of _u)
+      html+=`<span class="nt-chip" style="background:#5a8fcb1e;border:1px solid #5a8fcb55;color:#cfe0f5" title="${u.skName}">${_icoUniq(u.skIcon)} ${u.skName}</span>`;
+    if(!_ttExpanded && usages.length>3) html+=`<span class="nt-hint">+${usages.length-3}</span>`;
+    html+=`</div></div>`;
   }
 
+  /* FOOTER - price, and the key that opens everything held back. */
+  let _sell='';
+  if(it.sell>0){
+    const effSell=effectiveItemSell(itemId);
+    _sell=effSell>it.sell
+      ? `<span class="tt-sell">Sells for ${fmtCoins(effSell,true)} <span style="color:#6e552c">(base ${fmtCoins(it.sell,true)})</span></span>`
+      : `<span class="tt-sell">Sells for ${fmtCoins(it.sell,true)}</span>`;
+  }
+  /* Only offer the key when holding it would actually change what is on screen. */
+  const _hasMore=!!(it.desc || sources.length>1 || usages.length>3
+    || (it.cgear && it.cslot==='weapon' && (it.dmgType || it.twoHanded)));
+  if(_sell || _hasMore)
+    html+=`<div class="nt-foot">${_sell||'<span></span>'}`
+       +(_hasMore?`<span class="nt-hint">${_ttExpanded?'Shift held':'Hold <b style="color:#a08a64">Shift</b> for details'}</span>`:``)
+       +`</div>`;
+
   tt.innerHTML=html;
+  tt.classList.add('tt-card');   /* drops #itemTooltip's padding so a band can span it */
   tt.style.display='block';
   positionTooltip(tt, x, y);
 }
