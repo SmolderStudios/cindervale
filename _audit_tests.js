@@ -6176,6 +6176,121 @@ setTimeout(() => {
        html.includes("MAIL_API+'/api/claim'") && html.includes('if(!data.gift){'),
        'claim round trip missing');
 
+    /* The quiver square shipped on the paper doll with nothing that fits it.
+       Arrows are not cgear and were never in ITEM_BODY_SLOTS, so getItemSlots
+       returned [] and itemFitsSlot said no to every one of them — the whole
+       ranged feature was unequippable. */
+    const quiv = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      var bad=[];
+      /* AMMUNITION, not everything carrying an ammo field — a bow has one too,
+         saying what it fires, and a bow in the quiver would be the opposite bug. */
+      for(var id in ITEMS){
+        var it=ITEMS[id];
+        if(!it.ammo) continue;
+        if(it.ranged){ if(itemFitsSlot(id,'quiver')) bad.push(id+' (a weapon!)'); continue; }
+        if(!itemFitsSlot(id,'quiver')) bad.push(id);
+      }
+      // and it has to go in through the real equip path, not just fit
+      state.combatXp={attack:XP_CUM[80],strength:XP_CUM[80],defence:XP_CUM[80],
+                      hitpoints:XP_CUM[80],ranged:XP_CUM[80]};
+      state.items={runite_arrow:99, shadow_longbow:1};
+      state.combatEquipped={};
+      equipBodyItem('shadow_longbow','weapon','combat');
+      equipBodyItem('runite_arrow','quiver','combat');
+      return JSON.stringify({bad:bad, equipped:state.combatEquipped.quiver||'',
+                             ready:readyAmmo()||''});
+    })()`));
+    ok('every ammunition fits the quiver', quiv.bad.length === 0, quiv.bad.slice(0,5).join(', '));
+    ok('and equipping one actually loads it',
+       quiv.equipped === 'runite_arrow' && quiv.ready === 'runite_arrow',
+       'equipped ' + quiv.equipped + ', ready ' + quiv.ready);
+
+    /* Fletching is 69 acts. Every skill longer than that has its own renderer;
+       fletching fell through to the generic grid and rendered all 69 at once. */
+    const flc = JSON.parse(ev(`(function(){
+      var acts=SKILLS.fletching.acts, cats={}, subs={};
+      acts.forEach(function(a){
+        cats[a.cat||'-']=(cats[a.cat||'-']||0)+1;
+        if(a.cat==='bows') subs[a.subcat||'-']=(subs[a.subcat||'-']||0)+1;
+      });
+      var worst=0; for(var k in cats) if(cats[k]>worst) worst=cats[k];
+      var worstSub=0; for(var k2 in subs) if(subs[k2]>worstSub) worstSub=subs[k2];
+      return JSON.stringify({total:acts.length, cats:cats, subs:subs,
+                             worst:worst, worstSub:worstSub, uncat:cats['-']||0});
+    })()`));
+    ok('every fletching act is filed under a category',
+       flc.uncat === 0, flc.uncat + ' uncategorised of ' + flc.total);
+    ok('and the bows split into short and long',
+       flc.worstSub > 0 && flc.worstSub <= 16 && !flc.subs['-'],
+       JSON.stringify(flc.subs));
+    /* The bar only draws above 24 acts with more than one category, so a skill
+       that grows past that without categories silently goes back to one wall. */
+    ok('no category holds more than a screen of activities',
+       flc.worst <= 30, 'largest category ' + flc.worst + ' of ' + flc.total);
+
+    /* Ranged combat styles (0.9.123.21). With a bow the three slots become
+       Accurate / Rapid / Longrange. Rapid must stay the damage pick, Longrange
+       must actually pay Defence xp, and none of it may touch a melee weapon —
+       the slots are SHARED, so a leak in either direction is the likely bug. */
+    const rst = JSON.parse(ev(`(function(){
+      /* IS_DEMO is true in this harness and demoXpCap clamps combatXp to level 10,
+         which swamped the 1000xp grant with a multi-million negative delta. Lifted
+         for this block and put back, so nothing after it sees a raised cap. */
+      var _origCap=demoXpCap; demoXpCap=function(){ return XP_CAP; };
+      function setup(style, weapon){
+        state=defaultState(); normalizeState();
+        state.combatStyle=style;
+        state.combatXp={attack:XP_CUM[85],strength:XP_CUM[85],defence:XP_CUM[85],
+                        hitpoints:XP_CUM[99],ranged:XP_CUM[85]};
+        state.combatEquipped={weapon:weapon};
+        if(ITEMS[weapon]&&ITEMS[weapon].ammo){
+          state.combatEquipped.quiver='starsteel_arrow';
+          state.items={starsteel_arrow:9999};
+        }
+        combat.active=false;
+      }
+      function dps(def,style,weapon){
+        setup(style,weapon);
+        var acc=playerAccuracy(), hit=playerMaxHit(), swing=playerSwingMs();
+        var p=Math.max(0.03,Math.min(0.97,acc/(acc+def)));
+        return (p*hit*(COMBAT_P.HIT_MIN+1)/2)/(swing/1000);
+      }
+      var BOW='ancient_longbow', SWORD='starsteel_sword';
+      var lo={a:dps(30,'attack',BOW), r:dps(30,'strength',BOW), l:dps(30,'defence',BOW)};
+      var hi={a:dps(450,'attack',BOW), r:dps(450,'strength',BOW), l:dps(450,'defence',BOW)};
+      function split(style){
+        setup(style,BOW);
+        var b={r:state.combatXp.ranged, d:state.combatXp.defence};
+        grantCombatXp('ranged',1000);
+        return {ranged:state.combatXp.ranged-b.r, defence:state.combatXp.defence-b.d};
+      }
+      var xp={acc:split('attack'), rap:split('strength'), lng:split('defence')};
+      var mel={};
+      ['attack','strength','defence'].forEach(function(st){
+        setup(st,SWORD); mel[st]=playerSwingMs()+':'+playerAccuracy();
+      });
+      demoXpCap=_origCap;
+      return JSON.stringify({
+        loLead:+((lo.r/lo.a-1)*100).toFixed(1), hiLead:+((hi.r/hi.a-1)*100).toFixed(1),
+        loLng:+((lo.l/lo.a-1)*100).toFixed(1),
+        xp:xp, melee:mel});
+    })()`));
+    ok('Rapid is the damage pick at low and high defence',
+       rst.loLead > 0 && rst.hiLead > 0, rst.loLead + '% low, ' + rst.hiLead + '% high');
+    ok('but its lead narrows as defence rises, so Accurate has a niche',
+       rst.hiLead < rst.loLead, rst.loLead + '% -> ' + rst.hiLead + '%');
+    ok('and it never runs away with it', rst.loLead <= 15, rst.loLead + '%');
+    ok('Longrange pays damage for its Defence xp', rst.loLng < 0, rst.loLng + '%');
+    ok('Longrange is the only style that trains Defence',
+       rst.xp.lng.defence > 0 && rst.xp.acc.defence === 0 && rst.xp.rap.defence === 0,
+       JSON.stringify(rst.xp));
+    /* The three slots are shared with melee. A ranged multiplier reaching a sword
+       would be silent and would rebalance every melee build. */
+    ok('and none of it reaches a melee weapon',
+       rst.melee.attack === rst.melee.strength && rst.melee.attack === rst.melee.defence,
+       JSON.stringify(rst.melee));
+
     ok('Keep the catch raw suspends Seasoned Catch (#96)',
        raw.on > 0 && raw.off === 0, 'on ' + raw.on + ', off ' + raw.off);
 
