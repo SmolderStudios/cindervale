@@ -3999,8 +3999,13 @@ setTimeout(() => {
         var wc=weaponClass(id);
         counts[wc||'null']=(counts[wc||'null']||0)+1;
         var txt=String(combatGearStatBlock(id)).replace(/<[^>]*>/g,' ').replace(/\\s+/g,' ');
-        if(!/(Light|Heavy|Standard) weapon/.test(txt)) missing.push(id+' ('+wc+')');
-        if(it.twoHanded && txt.indexOf('two-handed')<0) no2h.push(id);
+        /* 0.9.124: the card states these as CHIPS ("Light &middot; +3.4% crit",
+           "Two-handed") rather than the sentences "Light weapon" and "two-handed".
+           The ticket's requirement is unchanged - a weapon must say which class it
+           is and whether it needs both hands - so the matcher moves onto the word
+           itself instead of the old phrasing. */
+        if(!/\\b(Light|Heavy|Standard)\\b/.test(txt)) missing.push(id+' ('+wc+')');
+        if(it.twoHanded && !/two-handed/i.test(txt)) no2h.push(id);
       });
       return JSON.stringify({n:n, counts:counts, missing:missing, no2h:no2h});
     })()`));
@@ -4016,7 +4021,10 @@ setTimeout(() => {
          var sid=Object.keys(ITEMS).find(function(id){
            return ITEMS[id].cgear && ITEMS[id].cslot==='shield'; });
          if(!sid) return true;
-         return !/(Light|Heavy|Standard) weapon/.test(
+         /* Matched against the chip word, same as the positive test above. Case
+            matters: a shield's stat line legitimately says "if you carry a light
+            weapon", and only the capitalised chip is a class claim. */
+         return !/\\b(Light|Heavy|Standard)\\b/.test(
            String(combatGearStatBlock(sid)).replace(/<[^>]*>/g,' ').replace(/\\s+/g,' '));
        })()`)===true);
 
