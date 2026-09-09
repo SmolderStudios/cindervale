@@ -7840,7 +7840,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.123.24">v0.9.123</div>
+  <div class="mm-ver" data-build="0.9.123.25">v0.9.123</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -24929,8 +24929,15 @@ function gdRollOne(g,size){
        or combat is kinda lame". Twelve stolen goods and a purse now. */
     const pool=gdHotPool();
     if(roll<0.22){ const q=gdRollCoin(g,size); if(q) return q; }
-    if(roll<0.48){ const q=gdRollSupply(pool,size,'Sell',skill); if(q) return q; }
-    if(roll<0.72){ const q=gdRollDeliver(pool,size,'Sell',skill); if(q) return q; }
+    /* Ticket #98. These were named with the verb "Sell", and the board button on
+       the very same row says "Hand in" — because a deliver/supply order TAKES the
+       goods off you, it does not sell them. Radcliff read "Sell 12 Cut Purse" as
+       an instruction to go and sell twelve, which is the only thing that wording
+       can mean. Every other guild says Deliver for this exact mechanic, so the
+       thieves' guild says it too. ("Fence" was the flavourful alternative and is
+       still a selling verb, which is the half that caused the confusion.) */
+    if(roll<0.48){ const q=gdRollSupply(pool,size,'Deliver',skill); if(q) return q; }
+    if(roll<0.72){ const q=gdRollDeliver(pool,size,'Deliver',skill); if(q) return q; }
   } else {
     const pool=gdPoolFor(skill);
     if(roll<0.30){ const q=gdRollSupply(pool,size,'Supply',skill); if(q) return q; }

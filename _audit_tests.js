@@ -3448,6 +3448,28 @@ setTimeout(() => {
       return Object.keys(seen).length; })()`);
     ok('and The Nightmarket, which had none at all', nightVariety>=8, nightVariety+' lines');
 
+    /* ── #98 · a hand-in must not be named as a sale ──────────────────────────
+       "The Sell Cut Purse quests are a bit misleading. I took it as you had to
+       sell that many to the guild, but it is a quest where you hand in the
+       purses." Right: deliver and supply orders TAKE the goods off you, and the
+       board button on the same row already says "Hand in", so the name and the
+       button said opposite things. Guards every guild, not just The Nightmarket
+       that had it, and every board size. */
+    const sellNamed = JSON.parse(ev(`(function(){
+      const bad={};
+      GUILDS.forEach(function(g){
+        for(let d=0;d<120;d++){
+          Object.keys(GD_SIZE).forEach(function(sz){
+            const q=gdRollOne(GD_BY[g.id],sz);
+            if(!q||!(q.kind==='deliver'||q.kind==='supply')) return;
+            if(/\\b(sell|sold|fence|flog|vend)\\b/i.test(q.name||'')) bad[g.id+': '+q.name]=1;
+          });
+        }
+      });
+      return JSON.stringify(Object.keys(bad));
+    })()`));
+    ok('no hand-in order is named as a sale', sellNamed.length===0, sellNamed.slice(0,4).join(' | '));
+
     // ── #50b · a fixed daily boundary, not a rolling 24h ────────────────────
     const day = JSON.parse(ev(`(function(){
       const t=new Date(); t.setHours(9,0,0,0);  const a=gdDayIndex(t.getTime());
@@ -4427,6 +4449,7 @@ setTimeout(() => {
       return JSON.stringify({bad:bad, noRank:noRank,
         fenceQuests:names.filter(function(n){ return /fence/i.test(n); }).slice(0,3),
         sellQuests:names.filter(function(n){ return /^Sell /.test(n); }).length,
+        deliverQuests:names.filter(function(n){ return /^Deliver /.test(n); }).length,
         quests:names.length, nightRanks:GD_BY.night.titles});
     })()`));
     ok('every shop row says what it is, locked or not',
@@ -4440,7 +4463,18 @@ setTimeout(() => {
        it was wrong. The word is gone from every string a player can read. */
     ok('no Nightmarket quest says fence', gd.fenceQuests.length === 0,
        gd.fenceQuests.join(' | '));
-    ok('it says sell instead', gd.sellQuests > 0,
+    /* ...and then ticket #98 pulled the other way: "I took it as you had to sell
+       that many to the guild, but it is a quest where you hand in the purses."
+       Both complaints are about the same three words, from opposite sides. "Fence"
+       was obscure AND wrong for a board that then held crafted goods; "Sell" is
+       plain but describes a market sale, and this order TAKES the goods (the button
+       on the row says "Hand in"). The board is all stolen goods now, so the crafted
+       half of the first objection is gone either way. Deliver is what every other
+       guild calls this exact mechanic, and it is the only one of the three that
+       cannot be read as a sale. */
+    ok('it says deliver instead', gd.deliverQuests > 0,
+       gd.deliverQuests + ' of ' + gd.quests + ' quests');
+    ok('and no Nightmarket quest says sell', gd.sellQuests === 0,
        gd.sellQuests + ' of ' + gd.quests + ' quests');
     ok('and no rank is called Fence', gd.nightRanks.indexOf('Fence') < 0,
        gd.nightRanks.join(', '));
