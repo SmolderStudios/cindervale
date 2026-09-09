@@ -7855,7 +7855,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.124.8">v0.9.124</div>
+  <div class="mm-ver" data-build="0.9.124.9">v0.9.124</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -34407,11 +34407,16 @@ function _achTreesFull(){ let n=0; const t=state.tree||{};
   for(const s in t){ let v=0; for(const k in t[s]) v+=t[s][k]; if(v>=98) n++; } return n; }
 function _achCapes(){ let n=0; const g=state.gear||[];
   for(const sk in SKILL_CAPE) if(g.indexOf(SKILL_CAPE[sk])>=0) n++; return n; }
+/* A BOW also carries ammo:'arrow' - that field says what a weapon CONSUMES, not
+   what the item is. Counting it made "hold 1,000 arrows" satisfiable with bows and
+   made "fletch your first arrow" fire on owning one. 14 of the 22 items matching
+   ammo==='arrow' are weapons. cgear is what separates them. */
+function _isAmmo(id,kind){ const i=ITEMS[id]; return !!i && i.ammo===kind && !i.cgear; }
 function _achArrowsHeld(){ let n=0; const it=state.items||{};
-  for(const id in it) if(ITEMS[id]&&ITEMS[id].ammo==='arrow') n+=it[id]||0; return n; }
+  for(const id in it) if(_isAmmo(id,'arrow')) n+=it[id]||0; return n; }
 function _achDisc(id){ return !!(state.discovered||{})[id] || ((state.items||{})[id]||0)>0; }
 function _achAnyAmmoMade(kind){ for(const id in ITEMS)
-  if(ITEMS[id].ammo===kind && _achDisc(id)) return true; return false; }
+  if(_isAmmo(id,kind) && _achDisc(id)) return true; return false; }
 /* A bow of every wood, strung. Either shape counts - a longbow is as much a bow
    as a shortbow - so the ladder is "this wood, in some bow you actually made". */
 function _achBowWoods(){ let n=0;
@@ -34420,13 +34425,31 @@ function _achBowWoods(){ let n=0;
   return n; }
 function _achCrossbowOwned(){ for(const id in ITEMS)
   if(ITEMS[id].ranged && ITEMS[id].ammo==='bolt' && _achDisc(id)) return true; return false; }
-function _achIsles(){ return Object.keys((state.sail&&state.sail.found)||{}).length; }
+/* state.sail.SEEN is the landfall record - one key per island you have actually
+   made port at (40131), and what the Admiralty ledger counts. state.sail.FOUND is a
+   different, much smaller thing: the only writer is the Blackfog misdelivery branch
+   and it is gated on isles flagged hid, of which there are exactly TWO. Reading
+   `found` gave Chartmaker (10) and Cartographer (26) a ceiling of 2, so neither
+   could ever be earned, and both blocked `everything` behind them. */
+function _achIsles(){ return Object.keys((state.sail&&state.sail.seen)||{}).length; }
 function _achGuildsAtRank(r){ let n=0;
   for(const g of GUILDS) if(gdTitleNum(g.id)>=r) n++; return n; }
 function _achRaidClears(){ return Object.keys(state.raidClears||{}).length; }
 function _achRaidS(){ const b=state.raidBest||{};
   for(const k in b) if(b[k]&&b[k].rating==='S') return true; return false; }
 function _achTrophies(){ return Object.keys(state.trophies||{}).length; }
+/* How many Combat Mastery points a finished character can ever be GRANTED, which is
+   not the size of the board. grantCmastPoints has four sources: one per combat level
+   above the starting 1, the four milestones at 25/50/75/99, one per boss first-kill,
+   and one per zone clear - credited only inside the boss branch, so only zones that
+   HAVE a boss pay. Measured: 98 + 4 + 9 + 9 = 120 against a CMAST_CAP of 132.
+   Full Board asked for the cap and was unobtainable by twelve points, which is
+   exactly the defect the shard_bearer comment three lines below documents. */
+function _achCmastEarnable(){
+  const bz={}; MONSTERS.forEach(m=>{ if(m.boss&&m.zone) bz[m.zone]=1; });
+  const lv=(typeof MAX_LEVEL==='number'?MAX_LEVEL:99)-1;
+  return lv + 4 + MONSTERS.filter(m=>m.boss).length + Object.keys(bz).length;
+}
 
 const ACH_CATS=[
   ['early',     'First Steps'],
@@ -34469,7 +34492,7 @@ const ACHIEVEMENTS=[
   {id:'thousand_kills',cat:'combat',icon:'thousand_kills',  name:'Butcher',        desc:'Slay 1,000 monsters.',                         check:()=>_achKills()>=1000},
   {id:'zone_three',   cat:'combat', icon:'zone_three', name:'Trailblazer',    desc:'Clear three combat zones.',                    check:()=>_achZoneClears()>=3},
   {id:'slayer_ten',   cat:'combat', icon:'slayer_ten',  name:'Contract Killer',desc:'Complete 10 Slayer tasks.',                    check:()=>((state.slayer&&state.slayer.tasksDone)||0)>=10},
-  {id:'all_bosses',   cat:'combat', icon:'all_bosses',  name:'Throneless',     desc:'Defeat every boss in Cindervale.',              check:()=>_achBossesKilled()>=_achBossIds().length},
+  {id:'all_bosses',   cat:'combat', icon:'all_bosses',  name:'Throneless',     desc:'Defeat the boss of every zone.',                check:()=>_achBossesKilled()>=_achBossIds().length},
   {id:'demon_lord',   cat:'combat', icon:'demon_lord',  name:'Sanctum Broken', desc:'Defeat the Demon Lord.',                        check:()=>((state.monKills||{}).demon_lord||0)>=1},
 
   // ── Collection ──
@@ -34525,7 +34548,7 @@ const ACHIEVEMENTS=[
   // ── Combat ──
   {id:'hundred_thousand',cat:'combat',icon:'hundred_thousand',name:'Red Ledger', desc:'Slay 100,000 monsters.',               check:()=>_achKills()>=1e5},
   {id:'untouchable',  cat:'combat',   icon:'untouchable',  name:'Untouchable',   desc:'Earn an S rating in any raid.',         check:()=>_achRaidS()},
-  {id:'mastery_full', cat:'combat',   icon:'mastery_full', name:'Full Board',    desc:'Spend every Combat Mastery point.',     check:()=>cmastSpent()>=CMAST_CAP},
+  {id:'mastery_full', cat:'combat',   icon:'mastery_full', name:'Full Board',    desc:'Spend every Combat Mastery point you can earn.', check:()=>cmastSpent()>=Math.min(CMAST_CAP,_achCmastEarnable())},
 
   // ── Ranged and Fletching ──
   {id:'first_arrow',  cat:'ranged',   icon:'first_arrow',  name:'Nocked',        desc:'Fletch your first arrow.',              check:()=>_achAnyAmmoMade('arrow')},
@@ -34544,9 +34567,9 @@ const ACHIEVEMENTS=[
 
   // ── Guilds ── (GD_REP has six rungs; gdTitleNum returns 1..6)
   {id:'first_guild',  cat:'guild',    icon:'first_guild',  name:'Signed On',     desc:'Reach the second rank in any guild.',   check:()=>_achGuildsAtRank(2)>=1},
-  {id:'guild_master', cat:'guild',    icon:'guild_master', name:'Master of the Hall',desc:'Reach the top rank in any guild.',  check:()=>_achGuildsAtRank(6)>=1},
+  {id:'guild_master', cat:'guild',    icon:'guild_master', name:'Master of the Hall',desc:'Reach the top rank in any guild.',  check:()=>_achGuildsAtRank(GD_REP.length)>=1},
   {id:'five_guilds',  cat:'guild',    icon:'five_guilds',  name:'Well Connected',desc:'Reach the third rank in five guilds.',  check:()=>_achGuildsAtRank(3)>=5},
-  {id:'all_guilds',   cat:'guild',    icon:'all_guilds',   name:'Guildbound',    desc:'Reach the top rank in every guild.',    check:()=>_achGuildsAtRank(6)>=GUILDS.length},
+  {id:'all_guilds',   cat:'guild',    icon:'all_guilds',   name:'Guildbound',    desc:'Reach the top rank in every guild.',    check:()=>_achGuildsAtRank(GD_REP.length)>=GUILDS.length},
 
   // ── Slayer and Raids ──
   {id:'slayer_hundred',cat:'combat',  icon:'slayer_hundred',name:'Contracted',   desc:'Complete 100 Slayer tasks.',            check:()=>((state.slayer&&state.slayer.tasksDone)||0)>=100},
