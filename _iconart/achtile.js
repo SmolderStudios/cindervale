@@ -126,21 +126,48 @@ const WORK = `async (uri, size, accent, locked) => {
   const dom = new JSDOM(raw, { url: 'http://localhost/?cvdev=1', runScripts: 'dangerously', pretendToBeVisual: true,
     beforeParse(w) { Object.defineProperty(w.navigator, 'userAgent', { value: UA, configurable: true }); } });
   await new Promise(r => setTimeout(r, 2600));
+  /* Also carry each one's in-game icon markup. Two achievements (the hidden pair)
+     were deliberately never drawn on a sheet - Smokey's face IS the reward on
+     hearth_cat - so without this they keep whatever files were last written and
+     end up the only two on the Steam page in a different style. */
   const ACH = JSON.parse(dom.window.eval(
-    `JSON.stringify(ACHIEVEMENTS.map(function(a){ return {id:a.id, cat:a.cat}; }))`));
+    `JSON.stringify(ACHIEVEMENTS.map(function(a){
+       var h=''; try{ h=iconHTML(a.icon)||''; }catch(e){}
+       /* An icon is EITHER inline svg or an <img> carrying painted art - Smokey is
+          painted, so hearth_cat comes back as an img and a naive svg-only filter
+          drops the one achievement whose art is the reward. Take both. */
+       var svg = h.indexOf('<svg')===0 ? h : '';
+       var img = ''; var m = h.match(/src="(data:[^"]+)"/); if(m) img = m[1];
+       return {id:a.id, cat:a.cat, svg:svg, img:img}; }))`));
 
   const br = await puppeteer.launch({ executablePath: CHROME, headless: true });
   const p = await br.newPage();
   await p.setContent('<body></body>', { waitUntil: 'load' });
   const fn = await p.evaluateHandle('(' + WORK + ')');
 
-  let n = 0; const missing = [], noCat = [];
+  let n = 0; const missing = [], noCat = [], fromSvg = [];
   for (const a of ACH) {
-    const src = path.join(CUT, a.id + '__painted.png');
-    if (!fs.existsSync(src)) { missing.push(a.id); continue; }
     const accent = CAT[a.cat];
     if (!accent) { noCat.push(a.id + ' (' + a.cat + ')'); continue; }
-    const uri = 'data:image/png;base64,' + fs.readFileSync(src).toString('base64');
+    const src = path.join(CUT, a.id + '__painted.png');
+    let uri;
+    if (fs.existsSync(src)) {
+      uri = 'data:image/png;base64,' + fs.readFileSync(src).toString('base64');
+    } else if (a.img) {
+      uri = a.img;                       // already a data: URI of painted art
+      fromSvg.push(a.id + ' (painted)');
+    } else if (a.svg) {
+      /* No drawn emblem: rasterise the game's own icon instead, so it lands on
+         the identical tile. Needs explicit width/height - the game sizes .ev-icon
+         from the parent font-size in CSS, and an <img> has no parent to ask. */
+      /* The game's icons are INLINE svg, so they carry no xmlns - the HTML parser
+         does not need one. A standalone data: URI is parsed as XML and does, or
+         Chrome refuses it with a bare "source image cannot be decoded". */
+      let svg = a.svg.replace(/^<svg/, '<svg width="256" height="256"');
+      if (!/xmlns=/.test(svg)) svg = svg.replace(/^<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
+      uri = 'data:image/svg+xml;base64,' + Buffer.from(svg, 'utf8').toString('base64');
+      fromSvg.push(a.id);
+    } else { missing.push(a.id); continue; }
     for (const locked of [false, true]) {
       const url = await p.evaluate((g, u, s, ac, l) => g(u, s, ac, l), fn, uri, SIZE, accent, locked);
       fs.writeFileSync(path.join(OUT, a.id + (locked ? '_locked' : '') + '.png'),
@@ -150,7 +177,8 @@ const WORK = `async (uri, size, accent, locked) => {
   }
   await br.close();
   console.log('wrote ' + n + ' tiles at ' + SIZE + 'x' + SIZE + ' -> ' + OUT);
-  if (missing.length) console.log('  no emblem cut for: ' + missing.join(', ') + '  (kept whatever was there)');
+  if (fromSvg.length) console.log('  from the game icon (no drawn emblem): ' + fromSvg.join(', '));
+  if (missing.length) console.log('  NO ART AT ALL for: ' + missing.join(', '));
   if (noCat.length) console.log('  NO ACCENT for category: ' + noCat.join(', '));
   process.exit(0);
 })().catch(e => { console.error(e); process.exit(1); });

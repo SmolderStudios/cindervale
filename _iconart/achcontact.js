@@ -13,9 +13,12 @@ const puppeteer = require(KIT + '/node_modules/puppeteer-core');
 const CHROME = KIT + '/browsers/chrome/win64-151.0.7922.71/chrome-win64/chrome.exe';
 const DIR = 'C:/Users/Jordan/Desktop/Cindervale/store/achievement icons';
 
-const IDS = ['ach_a', 'ach_b', 'ach_c', 'ach_d'].flatMap(s =>
-  fs.readFileSync(path.join(__dirname, 'sheets', s + '.txt'), 'utf8')
-    .split(/\r?\n/).map(x => x.trim()).filter(Boolean));
+/* Every tile in the folder, not just the ids that came off a drawn sheet. The two
+   hidden achievements take their tile from the game's own icon, so a sheet-driven
+   list is exactly the list that would never show them. */
+const IDS = fs.readdirSync(DIR)
+  .filter(f => f.endsWith('.png') && !f.endsWith('_locked.png') && !f.startsWith('_'))
+  .map(f => f.slice(0, -4));
 
 const uri = f => fs.existsSync(f) ? 'data:image/png;base64,' + fs.readFileSync(f).toString('base64') : null;
 
