@@ -6391,7 +6391,11 @@ setTimeout(() => {
         (TREES[sk]||[]).forEach(function(n){ var t=Math.min(n.max||1,left);
           if(t>0){ state.tree[sk][n.id]=t; left-=t; } }); }
       state.cmast={};
-      if(typeof CMAST_NODES!=='undefined'){ var cl=CMAST_CAP;
+      /* Only what the game can GRANT (120), never the board size (132). Seeding the
+         cap is exactly why this harness could not see that mastery_full was
+         unobtainable: it put the save in a state play cannot reach. */
+      if(typeof CMAST_NODES!=='undefined'){
+        var cl=Math.min(CMAST_CAP, typeof _achCmastEarnable==='function'?_achCmastEarnable():CMAST_CAP);
         CMAST_NODES.forEach(function(n){ var t=Math.min(n.max||1,cl);
           if(t>0){ state.cmast[n.id]=t; cl-=t; } }); }
       state.cmastShards=5; state.cmastZoneClears={};
@@ -6412,8 +6416,10 @@ setTimeout(() => {
       Object.keys(ITEMS).forEach(function(i3){ if(ITEMS[i3].ammo==='arrow') state.items[i3]=2000; });
       state.sail.voyages=500; state.sail.hull=SAIL_HULLS.length-1;
       state.sail.consort=1; state.sail.hull2=SAIL_HULLS.length-1; state.sail.commsDone=100;
-      state.sail.found={};
-      SAIL_ISLES.forEach(function(is,ix){ state.sail.found[ix]=1; state.sail.found[is.n]=1; });
+      /* seen = landfalls, the record _achIsles counts. found only ever holds the two
+         hidden isles, so seeding it proved nothing about Chartmaker/Cartographer. */
+      state.sail.seen={}; state.sail.found={};
+      SAIL_ISLES.forEach(function(is,ix){ state.sail.seen[ix]=1; });
       state.gd={};
       GUILDS.forEach(function(g){ state.gd[g.id]={rep:GD_REP[GD_REP.length-1]*2,q:[],day:0,skipped:0}; });
       state.slayer.tasksDone=500; state.slayer.streak=99; state.slayer.points=99999;
@@ -6431,6 +6437,42 @@ setTimeout(() => {
       return JSON.stringify({dead:dead, threw:threw, n:ACHIEVEMENTS.length,
         maxTotal:Object.keys(SKILLS).length*99});
     })()`));
+    /* ── the three ways an achievement becomes unobtainable ──────────────────
+       A god-state harness proves a check CAN fire, but only if the state it builds
+       is one the game can actually produce. Seeding the mastery board to CMAST_CAP
+       hid a twelve-point shortfall for a whole release. These assert the ceilings
+       directly, so the harness cannot paper over them again. */
+    const ceil = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      var bz={}; MONSTERS.forEach(function(m){ if(m.boss&&m.zone) bz[m.zone]=1; });
+      var arrows=Object.keys(ITEMS).filter(function(i){ return ITEMS[i].ammo==='arrow'; });
+      var bows=arrows.filter(function(i){ return ITEMS[i].cgear; });
+      /* does a BOW alone satisfy the arrow achievements? */
+      state.items={}; state.discovered={};
+      if(bows[0]){ state.items[bows[0]]=5000; state.discovered[bows[0]]=1; }
+      var bowFiresFirst=ACH_BY_ID.first_arrow.check();
+      var bowFiresQuiver=ACH_BY_ID.quivered.check();
+      return JSON.stringify({
+        cmastCap:CMAST_CAP,
+        cmastEarnable:(typeof _achCmastEarnable==='function')?_achCmastEarnable():-1,
+        arrows:arrows.length, bows:bows.length,
+        bowFiresFirst:bowFiresFirst, bowFiresQuiver:bowFiresQuiver
+      });
+    })()`));
+    ok('Full Board cannot ask for more mastery than the game grants',
+       ceil.cmastEarnable > 0,
+       'earnable ' + ceil.cmastEarnable + ' vs board ' + ceil.cmastCap);
+    ok('and it is targeted at the earnable ceiling, not the board',
+       ev(`String(ACH_BY_ID.mastery_full.check).indexOf('_achCmastEarnable')>=0`) === true);
+    ok('owning a bow does not count as fletching an arrow',
+       ceil.bowFiresFirst === false,
+       ceil.bows + ' of ' + ceil.arrows + " items with ammo:'arrow' are weapons");
+    ok('and bows do not count toward holding 1,000 arrows',
+       ceil.bowFiresQuiver === false);
+    ok('island progress reads the landfall record, not the hidden-isle map',
+       ev(`String(_achIsles).indexOf('sail.seen')>=0 || String(_achIsles).indexOf('seen')>=0`) === true,
+       ev(`String(_achIsles)`));
+
     ok('no achievement check throws on a maxed save',
        reach.threw.length === 0, reach.threw.slice(0,3).join(' | '));
     ok('every achievement is reachable - none is unobtainable',

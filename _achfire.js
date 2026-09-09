@@ -45,9 +45,12 @@ const PROBE = function () {
   }
 
   /* combat mastery: spend the whole board */
+  /* Spend only what the game can actually GRANT (120), not the board size (132).
+     Writing `left = CMAST_CAP` here is precisely why the harness could not see that
+     mastery_full was unobtainable - it put the save in a state play cannot reach. */
   state.cmast = {};
   if (typeof CMAST_NODES !== 'undefined') {
-    let left = CMAST_CAP;
+    let left = Math.min(CMAST_CAP, typeof _achCmastEarnable === 'function' ? _achCmastEarnable() : CMAST_CAP);
     CMAST_NODES.forEach(n => {
       const take = Math.min(n.max || 1, left);
       if (take > 0) { state.cmast[n.id] = take; left -= take; }
@@ -91,8 +94,10 @@ const PROBE = function () {
   state.sail.commsDone = 100;
   /* SAIL_ISLES entries have no id - the fields are n/b/lv/x/y/... - so key the
      found map by INDEX and by name, whichever the game uses. */
-  state.sail.found = {};
-  SAIL_ISLES.forEach((i, ix) => { state.sail.found[ix] = 1; state.sail.found[i.n] = 1; });
+  /* seen = landfalls, which is what _achIsles counts now. found only ever holds
+     the two hidden isles, so seeding it proved nothing. */
+  state.sail.seen = {}; state.sail.found = {};
+  SAIL_ISLES.forEach((i, ix) => { state.sail.seen[ix] = 1; });
 
   /* guilds: top rank everywhere */
   state.gd = {};
