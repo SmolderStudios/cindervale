@@ -6325,6 +6325,98 @@ setTimeout(() => {
     ok('no category holds more than a screen of activities',
        flc.worst <= 30, 'largest category ' + flc.worst + ' of ' + flc.total);
 
+    /* ── every crop's seed has a source ───────────────────────────────────────
+       flax_seed had none. Not a forage drop, not the thieving seed stall, not a
+       shop row - so the Flax crop could never be planted by anybody, while its
+       output gated every bow in the game. A crop you cannot plant is invisible
+       rather than broken, which is why it survived a release. */
+    const seedSrc = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      var src={};
+      Object.keys(SKILLS).forEach(function(sk){ (SKILLS[sk].acts||[]).forEach(function(a){
+        for(var id in (a.out||{})) src[id]=1; }); });
+      for(var k in DROPS) (DROPS[k]||[]).forEach(function(d){ src[d.id]=1; });
+      for(var p in THIEF_POOLS) (THIEF_POOLS[p].tiers||[]).forEach(function(t){ src[t[1]]=1; });
+      if(typeof SUPPLIES!=='undefined') SUPPLIES.forEach(function(s){ if(s.item) src[s.item]=1; });
+      var orphan=CROPS.filter(function(c){ return !src[c.id]; }).map(function(c){ return c.id; });
+      return JSON.stringify({orphan:orphan, crops:CROPS.length});
+    })()`));
+    /* ── the satchel remembers how you left it (Jordan, 0.9.124.3) ───────────
+       invSort/invCat were module-level lets, so every load put the panel back on
+       Category / All. state.invPrefs is the store now; these assert a written
+       preference survives normalizeState and is what the next render reads. */
+    const invPref = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      var d={sort:state.invPrefs.sort, cat:state.invPrefs.cat};
+      state.invPrefs.sort='value'; state.invPrefs.cat='gear';
+      normalizeState();                       // must not stomp a set preference
+      var kept={sort:state.invPrefs.sort, cat:state.invPrefs.cat};
+      renderInventory();                      // the render reads state, not the let
+      return JSON.stringify({def:d, kept:kept, live:{sort:invSort, cat:invCat}});
+    })()`));
+    ok('a fresh satchel defaults to Category / All',
+       invPref.def.sort==='category' && invPref.def.cat==='all', JSON.stringify(invPref.def));
+    ok('and a chosen sort survives a reload (does not revert to Category)',
+       invPref.kept.sort==='value' && invPref.kept.cat==='gear', JSON.stringify(invPref.kept));
+    ok('and the panel renders the remembered one',
+       invPref.live.sort==='value' && invPref.live.cat==='gear', JSON.stringify(invPref.live));
+
+    /* ── #104 · presets read A-Z ──────────────────────────────────────────────
+       "Can we get a sorting list for the presets or get them a-z by default?"
+       They came out in SKILLS declaration order. */
+    const presetOrder = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      rightTab='presets'; renderPresets();
+      var names=[].slice.call(document.querySelectorAll('#presetsView .preset-skill-name'))
+        .map(function(e){ return e.textContent; });
+      var sorted=names.slice().sort(function(a,b){ return a.localeCompare(b); });
+      return JSON.stringify({names:names, ok:JSON.stringify(names)===JSON.stringify(sorted)});
+    })()`));
+    ok('the preset list is A-Z (#104)', presetOrder.ok===true, presetOrder.names.join(', '));
+
+    ok('every crop seed is obtainable somewhere',
+       seedSrc.orphan.length === 0, seedSrc.orphan.join(', ')+' of '+seedSrc.crops+' crops');
+
+    /* ── a fletching act cannot need an input gated above itself ──────────────
+       A Pine Shortbow is Fletching 1, and stringing it needs a bowstring, which
+       was Fletching 20 and made of flax, which was Foraging 20 and Farming 20.
+       So the first bow in the game was unreachable until 20 while claiming 1.
+       Walks every act's inputs against the cheapest way to make each one. */
+    const chain = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      var minLvl={};
+      Object.keys(SKILLS).forEach(function(sk){ (SKILLS[sk].acts||[]).forEach(function(a){
+        for(var id in (a.out||{})) if(minLvl[id]===undefined||a.lvl<minLvl[id]) minLvl[id]=a.lvl; }); });
+      /* anything that drops off a monster or an act is reachable whenever you can
+         reach the thing that drops it, so it never gates a recipe by level */
+      var dropped={}; for(var k in DROPS) (DROPS[k]||[]).forEach(function(d){ dropped[d.id]=1; });
+      var bad=[];
+      (SKILLS.fletching.acts||[]).forEach(function(a){
+        for(var id in (a.inp||{})){
+          if(dropped[id]) continue;
+          var need=minLvl[id];
+          if(need===undefined){ bad.push(a.name+' needs '+id+' (nothing makes it)'); continue; }
+          if(need>a.lvl) bad.push(a.name+' (Lv'+a.lvl+') needs '+id+' (Lv'+need+')');
+        }
+      });
+      return JSON.stringify({bad:bad, acts:SKILLS.fletching.acts.length});
+    })()`));
+    /* The ENTRY of the skill is the strict half, and the half that was broken: an
+       early act whose material sits far above it means the skill cannot be started
+       at the level it advertises. */
+    const entryBad = chain.bad.filter(b => /\(Lv[1-5]\)/.test(b) || /nothing makes it/.test(b));
+    ok('a low-level fletching act can be supplied at its own level',
+       entryBad.length === 0, entryBad.slice(0,4).join(' | '));
+
+    /* The rest are cross-skill ladder offsets, all mid-to-high: the crossbows want
+       a bar Smithing gets 5-18 levels later, and Frostwood shafts want a log
+       Woodcutting cuts 3 later. Deliberate pacing rather than a defect, since a
+       player at Fletching 40 is levelling Smithing too - but PINNED, so an eighth
+       one has to be argued for rather than appearing. Retuning these is a balance
+       call, not a hotfix. */
+    ok('no NEW cross-skill gap opened in the fletching ladder',
+       chain.bad.length <= 7, chain.bad.length + ' gaps: ' + chain.bad.slice(0,3).join(' | '));
+
     /* Ranged combat styles (0.9.123.21). With a bow the three slots become
        Accurate / Rapid / Longrange. Rapid must stay the damage pick, Longrange
        must actually pay Defence xp, and none of it may touch a melee weapon —
