@@ -6341,6 +6341,35 @@ setTimeout(() => {
       var orphan=CROPS.filter(function(c){ return !src[c.id]; }).map(function(c){ return c.id; });
       return JSON.stringify({orphan:orphan, crops:CROPS.length});
     })()`));
+    /* ── every achievement has its own art and a check that behaves ──────────
+       The set ran on 15 shared ui_* glyphs for 33 achievements, so four of them
+       were the same flame. Each now points at its own painted emblem, and
+       iconHTML() returns an unknown id VERBATIM - a missing one ships as the
+       literal text "first_swing" on the card, silently. Also asserts nothing
+       fires on a brand new save, which is how a bad check announces itself. */
+    const achSet = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      var noArt=[], threw=[], early=[], icons={};
+      ACHIEVEMENTS.forEach(function(a){
+        icons[a.icon]=(icons[a.icon]||0)+1;
+        var h=''; try{ h=iconHTML(a.icon)||''; }catch(e){}
+        if(h.indexOf('<img')!==0 && h.indexOf('<svg')<0) noArt.push(a.id+' (icon='+a.icon+')');
+        try{ if(a.check()) early.push(a.id); }catch(e){ threw.push(a.id+': '+e.message); }
+      });
+      var shared=Object.keys(icons).filter(function(k){ return icons[k]>1; });
+      return JSON.stringify({total:ACHIEVEMENTS.length, noArt:noArt, threw:threw,
+        early:early, shared:shared, distinct:Object.keys(icons).length});
+    })()`));
+    ok('every achievement has real art, not a literal id',
+       achSet.noArt.length === 0, achSet.noArt.slice(0,4).join(', '));
+    ok('and no two share an icon',
+       achSet.shared.length === 0, achSet.shared.join(', ')+
+       ' ('+achSet.distinct+' distinct of '+achSet.total+')');
+    ok('no check throws on a fresh save',
+       achSet.threw.length === 0, achSet.threw.slice(0,3).join(' | '));
+    ok('and none of them fires on one',
+       achSet.early.length === 0, achSet.early.join(', '));
+
     /* ── no achievement hardcodes a total the game can outgrow ───────────────
        Ashen Ascendant said "all twelve skills" and checked >=12. True at v0.9.41,
        wrong the moment Thieving shipped: with 14 skills you could max twelve and
