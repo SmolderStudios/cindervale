@@ -7855,7 +7855,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.124.4">v0.9.124</div>
+  <div class="mm-ver" data-build="0.9.124.5">v0.9.124</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -34424,7 +34424,13 @@ const ACHIEVEMENTS=[
   {id:'first_99',     cat:'skilling', icon:'ui_flame', name:'Mastery',       desc:'Reach level 99 in any skill.',                 check:()=>_achMaxSkillLevel()>=99},
   {id:'deep_tree',    cat:'skilling', icon:'ui_bolt',  name:'Deep Roots',    desc:'Spend 50 points in a single skill tree.',      check:()=>_achTreeSpentMax()>=50},
   {id:'full_tree',    cat:'skilling', icon:'ui_bolt',  name:'Grandmaster',   desc:'Fill a 98-point skill tree.',                  check:()=>_achTreeSpentMax()>=98},
-  {id:'ashen_ascend', cat:'skilling', icon:'ui_flame', name:'Ashen Ascendant',desc:'Reach level 99 in all twelve skills.',        check:()=>_achSkillsAtLeast(99)>=12},
+  /* Counted off SKILLS, not a literal. It said "all twelve" and checked >=12, which
+     was true at v0.9.41 and quietly wrong the moment Thieving shipped: max every
+     skill except Thieving and Fletching and the max-everything achievement fired
+     anyway. Its three siblings (all_bosses, beastfriend, all_zones) all read their
+     total off the data, which is why they never drifted. Anyone who already earned
+     it keeps it - unlocks live in state.achievements and are never re-checked. */
+  {id:'ashen_ascend', cat:'skilling', icon:'ui_flame', name:'Ashen Ascendant',desc:'Reach level 99 in every skill.',              check:()=>_achSkillsAtLeast(99)>=Object.keys(SKILLS).length},
 
   // ── Combat ──
   {id:'blooded',      cat:'combat', icon:'ui_swords', name:'Blooded',        desc:'Reach combat level 25.',                       check:()=>combatLevel()>=25},
