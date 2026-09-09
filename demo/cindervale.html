@@ -7855,7 +7855,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.124.7">v0.9.124</div>
+  <div class="mm-ver" data-build="0.9.124.8">v0.9.124</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -34512,7 +34512,15 @@ const ACHIEVEMENTS=[
   {id:'well_rounded', cat:'skilling', icon:'well_rounded', name:'Well Rounded',  desc:'Reach level 25 in every skill.',        check:()=>_achSkillsAtLeast(25)>=Object.keys(SKILLS).length},
   {id:'two_trees',    cat:'skilling', icon:'two_trees',    name:'Twice Rooted',  desc:'Fill two 98-point skill trees.',        check:()=>_achTreesFull()>=2},
   {id:'caped',        cat:'skilling', icon:'caped',        name:'Caped',         desc:'Own three skillcapes.',                 check:()=>_achCapes()>=3},
-  {id:'total_1500',   cat:'skilling', icon:'total_1500',   name:'Fifteen Hundred',desc:'Reach total level 1,500.',             check:()=>_achTotalLevel()>=1500},
+  /* 1,200, not 1,500. Fourteen skills at 99 is a TOTAL LEVEL CEILING OF 1,386, so
+     asking for 1,500 made this unobtainable the day it was written - the same way
+     shard_bearer asked you to bank a shard the board can no longer produce. Caught
+     by _achfire.js, which maxes every field the game can express and asserts all 62
+     fire. 1,200 is a real milestone short of the ceiling, so it stays distinct from
+     ashen_ascend (every skill at 99, i.e. exactly 1,386). The id keeps its original
+     spelling because ids are permanent: renaming one strips the unlock off every
+     player who has it AND off the Steam row. */
+  {id:'total_1500',   cat:'skilling', icon:'total_1500',   name:'Twelve Hundred', desc:'Reach total level 1,200.',             check:()=>_achTotalLevel()>=1200},
 
   // ── Combat ──
   {id:'hundred_thousand',cat:'combat',icon:'hundred_thousand',name:'Red Ledger', desc:'Slay 100,000 monsters.',               check:()=>_achKills()>=1e5},
