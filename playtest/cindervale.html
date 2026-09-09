@@ -961,7 +961,9 @@ header h1 .flame{color:var(--ember)}
    Lets you swap helmet/chest/gloves/legs/boots/weapon/shield without leaving
    the combat panel. Disabled while a fight is active. */
 .cgs-bar{margin-bottom:7px}
-.cgs-strip{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;
+/* Column count comes from the slot list, not a number typed here. It was 7, and
+   the eighth slot (quiver) would have overflowed silently. */
+.cgs-strip{display:grid;grid-template-columns:repeat(var(--cgs-n,7),1fr);gap:4px;
   background:var(--raised);border:1px solid var(--trim-d);border-radius:5px;
   padding:5px;position:relative;z-index:1}
 .cgs-tile{background:var(--raised-s);border:1px solid var(--trim-d);border-radius:4px;
@@ -7811,7 +7813,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.123.21">v0.9.123</div>
+  <div class="mm-ver" data-build="0.9.123.22">v0.9.123</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -17183,6 +17185,15 @@ function getBodyItemDesc(id){
     if(s.str) parts.push('+'+s.str+' Str');
     if(s.def) parts.push('+'+s.def+' Def');
     return parts.length?parts.join(' · '):'No combat stats';
+  }
+  /* Ammunition. Without this it fell through to the jewellery branch below and
+     the quiver picker read "starsteel_arrow — Unenchanted (visit Enchanting tab)",
+     which is three kinds of wrong at once. Says what it adds and what fires it. */
+  if(it&&it.ammo&&!it.ranged){
+    var _fires=(it.ammo==='bolt')?'crossbows':'bows';
+    var _n=(state&&state.items&&state.items[id])||0;
+    return '+'+(it.ammoStr||0)+' strength from '+_fires
+      +(_n?(' · '+_n.toLocaleString()+' in the satchel'):'');
   }
   // Show enchantment if applied — for gem-tier jewelry, include the bonus description
   var ench=getSlotEnchantment(id);
@@ -28436,6 +28447,7 @@ const COMBAT_GEAR_STRIP_SLOTS=[
   {slot:'boots',  label:'Boots'},
   {slot:'weapon', label:'Weapon'},
   {slot:'shield', label:'Shield'},
+  {slot:'quiver', label:'Quiver'},
 ];
 /* Monster table — each carries lvl (req to view), hp, atk (accuracy), str (max hit),
    def (defence stat), coins (gp drop), xp (kill bonus, split style/HP), swingMs
@@ -31918,11 +31930,14 @@ function renderGear(){
      but no square, so an equipped quiver was invisible on the doll and only showed
      in the list underneath. It takes the empty cell under the shield, which is the
      carried-gear column. */
+  /* The quiver sits ABOVE the shield, not below it. Both hang off the off-hand
+     column, and reading down that column as quiver -> shield -> nothing puts the
+     two things competing for that side of the body next to each other. */
   const DOLL_LAYOUT=[
     [null,     'helmet', null    ],
-    ['cape',   'amulet', null    ],
+    ['cape',   'amulet', 'quiver'],
     ['weapon', 'chest',  'shield'],
-    ['gloves', 'legs',   'quiver'],
+    ['gloves', 'legs',   null    ],
     ['ring_l', 'boots',  'ring_r'],
   ];
 
@@ -32402,7 +32417,10 @@ function openGearSlotModal(slotKey,def,currentId){
       return true;
     }
     if(_gearFilter==='skilling'){
-      if(it&&it.cgear) return false;
+      /* Ammunition is combat kit, same as cgear. Without it here the skilling
+         loadout's quiver square would offer arrows, which nothing on that side
+         of the tab can use. */
+      if(it&&(it.cgear||it.ammo)) return false;
       return true;
     }
     return true;
@@ -32428,6 +32446,17 @@ function openGearSlotModal(slotKey,def,currentId){
     if(!cit||!cit.cgear) continue;
     if(cid===currentId||!passesGearFilter(cid)) continue;
     if(itemFitsSlot(cid,slotKey)&&available.indexOf(cid)<0) available.push(cid);
+  }
+  /* Ammunition, for the same reason and by the same route. Arrows and bolts are
+     not in ITEM_BODY_SLOTS and are not cgear, so neither loop above sees them:
+     the quiver square opened a picker with nothing in it, which is why the slot
+     looked broken even after itemFitsSlot started saying yes. */
+  for(var aid in state.items){
+    if((state.items[aid]||0)<=0) continue;
+    var ait=ITEMS[aid];
+    if(!ait||!ait.ammo||ait.ranged) continue;
+    if(aid===currentId||!passesGearFilter(aid)) continue;
+    if(itemFitsSlot(aid,slotKey)&&available.indexOf(aid)<0) available.push(aid);
   }
   // Owned shop items (state.gear) matching this slot — check both their direct slot AND
   // any extra slots declared in ITEM_BODY_SLOTS (e.g. shop rings fit either hand)
@@ -36984,7 +37013,7 @@ function combatGearStripHTML(active){
   }
 
   return `<div class="cgs-bar">
-    <div class="cgs-strip">${tiles}</div>
+    <div class="cgs-strip" style="--cgs-n:${COMBAT_GEAR_STRIP_SLOTS.length}">${tiles}</div>
     ${drawer}
   </div>`;
 }
@@ -44231,9 +44260,20 @@ function setUiScale(v){
 }
 function applyRootZoom(){
   const w = window.innerWidth || UI_DESIGN_W;
-  // Automatic fit first, then the player's preference, then the hard clamps —
-  // so a preference can never push the layout past the edges of the window.
-  const z = Math.max(UI_ZOOM_MIN, Math.min(UI_ZOOM_MAX, (w / UI_DESIGN_W) * uiScale()));
+  /* The fit SHRINKS but never GROWS (0.9.123.22). It used to be w/UI_DESIGN_W
+     with no ceiling, so widening the window magnified the whole interface —
+     drag a window from 1600 to 2560 and every icon, card and font grew 60%,
+     which reads as the game zooming in on you rather than as more room.
+     Reported as "resizing the window increases the interface scaling with it,
+     super annoying", and it is the same on any monitor wider than 1800.
+
+     Capping the fit at 1 keeps the half that earns its keep: a window too
+     narrow for the layout still scales down rather than growing a horizontal
+     scrollbar. Past UI_DESIGN_W the layout simply centres in the extra space,
+     which is what every other application does. Anyone who WANTS it bigger has
+     the Interface scale slider, which still multiplies on top. */
+  const fit = Math.min(1, w / UI_DESIGN_W);
+  const z = Math.max(UI_ZOOM_MIN, Math.min(UI_ZOOM_MAX, fit * uiScale()));
   document.documentElement.style.zoom = String(Math.round(z*1000)/1000);
 }
 function _onZoomResize(){
