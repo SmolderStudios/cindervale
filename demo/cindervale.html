@@ -7840,7 +7840,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.124.2">v0.9.124</div>
+  <div class="mm-ver" data-build="0.9.124.3">v0.9.124</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -17617,7 +17617,14 @@ function renderPresets(){
     +'Click <b>Edit</b> to open the preset builder, then equip it in one tap from any skill panel.';
   box.appendChild(note);
 
-  Object.keys(SKILLS).forEach(function(sk){
+  /* Ticket #104: "Can we get a sorting list for the presets or get them a-z by
+     default?" They came out in SKILLS declaration order, which is the order the
+     skills were WRITTEN and means nothing to a player scanning fourteen rows for
+     one name. Sorted by the name actually printed on the row, so the list reads
+     the way it looks. */
+  Object.keys(SKILLS).slice().sort(function(a,b){
+    return String(SKILLS[a].name||a).localeCompare(String(SKILLS[b].name||b));
+  }).forEach(function(sk){
     var def=SKILLS[sk];
     var hasPre=hasGearPreset(sk);
     var row=document.createElement('div');
@@ -18519,6 +18526,15 @@ function normalizeState(){
       _ah.enabled=true; _ah.thresholdPct=50;
     }
   }
+  /* Satchel view preferences (0.9.124.3). invSort / invCat were module-level
+     `let`s, so the panel came back on Category / All every time the game was
+     loaded no matter what you had set. state is now the store and the module vars
+     are a per-render cache read from it, which also means a save slot carries its
+     own view rather than inheriting whatever the last slot was on. */
+  if(!state.invPrefs || typeof state.invPrefs!=='object') state.invPrefs={};
+  if(typeof state.invPrefs.sort!=='string') state.invPrefs.sort='category';
+  if(typeof state.invPrefs.cat !=='string') state.invPrefs.cat ='all';
+
   // Auto-buff config default (1.0.30).
   if(!state.autoBuff||typeof state.autoBuff!=='object') state.autoBuff={enabled:false,itemId:''};
   else {
@@ -27940,6 +27956,12 @@ const INV_PAGE_SIZE=10; // items per page in the satchel
 
 function renderInventory(){
   const box=$('inventory');
+  /* state.invPrefs is the source of truth; these two are this render's cache of it.
+     Read every time rather than once at load, so switching save slot switches view. */
+  if(state.invPrefs){
+    if(typeof state.invPrefs.sort==='string') invSort=state.invPrefs.sort;
+    if(typeof state.invPrefs.cat ==='string') invCat =state.invPrefs.cat;
+  }
   /* Keep the two text fields in this panel alive across the rebuild. The panel is
      thrown away wholesale, so the field being typed into is destroyed on every
      keystroke (the search's own input handler calls back in here to re-filter) and
@@ -27979,6 +28001,8 @@ function renderInventory(){
   const stepSort=dir=>{
     const i=Math.max(0,sortCycle.indexOf(invSort));
     invSort=sortCycle[(i+dir+sortCycle.length)%sortCycle.length]; invPage=0;
+    if(state.invPrefs) state.invPrefs.sort=invSort;   // survives the reload
+    saveGame();
     renderInventory();
   };
   sortBtn.addEventListener('click',()=>stepSort(1));
@@ -28135,7 +28159,10 @@ function renderInventory(){
     b.className='inv-cat'+(invCat===cat?' on':'');
     b.setAttribute('data-tooltip', catTitles[cat]);
     b.innerHTML=catLabels[cat];
-    b.addEventListener('click',()=>{ invCat=cat; invPage=0; renderInventory(); });
+    b.addEventListener('click',()=>{ invCat=cat; invPage=0;
+      if(state.invPrefs) state.invPrefs.cat=cat;
+      saveGame();
+      renderInventory(); });
     catEl.appendChild(b);
   }
   box.appendChild(catEl);
@@ -30682,11 +30709,23 @@ function hasPet(petId){ return !!(state && state.pets && state.pets[petId]); }
     ITEMS.flax_seed={name:'Flax Seed', icon:'🌱', sell:12,
       desc:'Small oily seed. Sown in a patch it comes up as flax, which spins into bowstring.'};
     ICONS.flax_seed=ICONS.flax;
-    CROPS.push({id:'flax_seed', lvl:20, name:'Flax', icon:'🌾', growMs:7*60000,
-      tendInterval:110000, tendBoost:0.25, xp:480, out:{flax:3}, seedReturn:0.22});
+    /* Lv 5 to sit beside Bloodcap, and 240 xp on a 7m grow so it is strictly worse
+       than Bloodcap's 250 on a 4m: you plant flax for the flax, never for the XP. */
+    CROPS.push({id:'flax_seed', lvl:5, name:'Flax', icon:'🌾', growMs:7*60000,
+      tendInterval:110000, tendBoost:0.25, xp:240, out:{flax:3}, seedReturn:0.22});
   }
-  SKILLS.foraging.acts.push({id:'fo_flax', name:'Gather wild flax', lvl:20, ms:6700, xp:88,
+  /* Lv 1, not 20. A Pine Shortbow is Fletching 1 and it cannot be strung without a
+     bowstring, so the entire flax chain sitting at 20 meant no bow at all until 20.
+     XP comes back to the level-1 bracket with the gate: at 88 this paid 47k xp/hr
+     against wildberries' 29k, which would have made flax the low-level foraging
+     shortcut rather than the material it is meant to be. */
+  SKILLS.foraging.acts.push({id:'fo_flax', name:'Gather wild flax', lvl:1, ms:6700, xp:50,
     spdMult:0.600, minMs:4700, out:{flax:1}});
+  /* Every other foraged plant drops its own seed (see the note by fo1). Flax arrived
+     with Fletching and was missed, and nothing else in the game drops flax_seed - not
+     the thieving seed stall, not another forage - so the Flax CROP could never be
+     planted by anyone. Same 8% as wildberries, the other Lv1 forage. */
+  DROPS.fo_flax=[{id:'flax_seed',chance:0.08}];
 
   /* ── feathers ──
      Three sources so the loop can never hard block. A drop from the two zones
@@ -30768,7 +30807,9 @@ function hasPet(petId){ return !!(state && state.pets && state.pets[petId]); }
       ms:3600+i*420, xp:Math.round(18+i*22), spdMult:Math.min(0.80,0.50+i*0.045),
       minMs:700+i*90, inp:_o(w.log,1), out:{wood_shaft:w.yield}});
   });
-  F.push({id:'fl_string', name:'Spin a bowstring', cat:'shafts', lvl:20, ms:5200, xp:95,
+  /* Lv 1 with the rest of the chain. 34 xp puts it at 23.5k/hr, level with Strip a
+     Bird's Nest; at 95 it was 66k/hr and the best act in the skill by a wide margin. */
+  F.push({id:'fl_string', name:'Spin a bowstring', cat:'shafts', lvl:1, ms:5200, xp:34,
     spdMult:0.60, minMs:1100, inp:{flax:3}, out:{bowstring:1}});
 
   /* ── arrows and bolts ── */
