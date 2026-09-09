@@ -1,6 +1,6 @@
 /* Build the guild-layout artifact: pack the generated art, fill the template. */
 const path = require('path'), fs = require('fs');
-const KIT = 'C:/Users/Jordan/Desktop/cindervale-trailer-kit';
+const KIT = 'C:/Users/Jordan/Desktop/Cindervale/tools/trailer-kit';
 const puppeteer = require(path.join(KIT, 'node_modules/puppeteer-core'));
 const CHROME = path.join(KIT, 'browsers/chrome/win64-151.0.7922.71/chrome-win64/chrome.exe');
 const ART = path.join(__dirname, 'scenes');

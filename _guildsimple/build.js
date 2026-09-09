@@ -5,7 +5,7 @@
  * stacked inline at a lower encode and nothing needs a click to be seen.
  */
 const path = require('path'), fs = require('fs');
-const KIT = 'C:/Users/Jordan/Desktop/cindervale-trailer-kit';
+const KIT = 'C:/Users/Jordan/Desktop/Cindervale/tools/trailer-kit';
 const puppeteer = require(path.join(KIT, 'node_modules/puppeteer-core'));
 const CHROME = path.join(KIT, 'browsers/chrome/win64-151.0.7922.71/chrome-win64/chrome.exe');
 

@@ -2,7 +2,7 @@
  * better on the diagonal. A vertical longbow letterboxes into a hairline: the
  * square tile is sized by the bow's HEIGHT, so its width lands at 7% of the tile. */
 const fs=require('fs'),path=require('path');
-const KIT='C:/Users/Jordan/Desktop/cindervale-trailer-kit';
+const KIT='C:/Users/Jordan/Desktop/Cindervale/tools/trailer-kit';
 const puppeteer=require(KIT+'/node_modules/puppeteer-core');
 const CHROME=KIT+'/browsers/chrome/win64-151.0.7922.71/chrome-win64/chrome.exe';
 const RAW=path.join(__dirname,'raw');

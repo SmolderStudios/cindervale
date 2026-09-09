@@ -1,7 +1,7 @@
 /* Why does a white sliver survive between a pair of boots? Measure the enclosed
  * region instead of guessing at the threshold again. */
 const fs = require('fs'), path = require('path');
-const KIT = 'C:/Users/Jordan/Desktop/cindervale-trailer-kit';
+const KIT = 'C:/Users/Jordan/Desktop/Cindervale/tools/trailer-kit';
 const puppeteer = require(KIT + '/node_modules/puppeteer-core');
 const CHROME = KIT + '/browsers/chrome/win64-151.0.7922.71/chrome-win64/chrome.exe';
 const file = process.argv[2] || 'bronze_boots__painted.png';

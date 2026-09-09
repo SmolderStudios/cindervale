@@ -2,7 +2,7 @@
 // the Combat and Sailing accent tabs, an active header nav item, and the Menu
 // panel that Reset and Import moved into.
 const path = require('path');
-const KIT  = 'C:/Users/Jordan/Desktop/cindervale-trailer-kit';
+const KIT  = 'C:/Users/Jordan/Desktop/Cindervale/tools/trailer-kit';
 const puppeteer = require(KIT + '/node_modules/puppeteer-core');
 const CHROME = KIT + '/browsers/chrome/win64-151.0.7922.71/chrome-win64/chrome.exe';
 const W = 1745;

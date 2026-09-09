@@ -24,12 +24,12 @@
  */
 'use strict';
 const fs = require('fs'), path = require('path');
-const KIT = 'C:/Users/Jordan/Desktop/cindervale-trailer-kit';
+const KIT = 'C:/Users/Jordan/Desktop/Cindervale/tools/trailer-kit';
 const puppeteer = require(KIT + '/node_modules/puppeteer-core');
 const CHROME = KIT + '/browsers/chrome/win64-151.0.7922.71/chrome-win64/chrome.exe';
 
-const SRC = 'C:/Users/Jordan/Desktop/OLD EMBERVALE/Embervale Idle Dev/icon256.png';
-const OUT = 'C:/Users/Jordan/Desktop/Cindervale Store Assets/icons';
+const SRC = 'C:/Users/Jordan/Desktop/Cindervale/wrapper/icon256.png';
+const OUT = 'C:/Users/Jordan/Desktop/Cindervale/store/icons';
 const ICO_SIZES = [16, 24, 32, 48, 64, 128, 256];
 
 const RENDER = `async (uri, size, asJpeg) => {

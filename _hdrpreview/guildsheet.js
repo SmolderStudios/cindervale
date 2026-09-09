@@ -1,7 +1,7 @@
 // Contact sheet of the guild emblems + scenes, so the cover art can be composed
 // from what actually exists rather than from guesses about it.
 const fs = require('fs'), path = require('path');
-const KIT = 'C:/Users/Jordan/Desktop/cindervale-trailer-kit';
+const KIT = 'C:/Users/Jordan/Desktop/Cindervale/tools/trailer-kit';
 const puppeteer = require(KIT + '/node_modules/puppeteer-core');
 const CHROME = KIT + '/browsers/chrome/win64-151.0.7922.71/chrome-win64/chrome.exe';
 const REPO = path.join(__dirname, '..');

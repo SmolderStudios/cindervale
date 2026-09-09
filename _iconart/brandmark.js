@@ -14,12 +14,12 @@
  */
 'use strict';
 const fs = require('fs'), path = require('path');
-const KIT = 'C:/Users/Jordan/Desktop/cindervale-trailer-kit';
+const KIT = 'C:/Users/Jordan/Desktop/Cindervale/tools/trailer-kit';
 const puppeteer = require(KIT + '/node_modules/puppeteer-core');
 const CHROME = KIT + '/browsers/chrome/win64-151.0.7922.71/chrome-win64/chrome.exe';
 
 const GAME = path.join(__dirname, '..', 'cindervale.html');
-const SRC = 'C:/Users/Jordan/Desktop/OLD EMBERVALE/Embervale Idle Dev/icon256.png';
+const SRC = 'C:/Users/Jordan/Desktop/Cindervale/wrapper/icon256.png';
 const SIZE = 192, Q = 0.92;
 
 const ENC = `async (uri, SIZE, Q) => {

@@ -3,7 +3,7 @@
  *   node _cookdesign/shoot.js a b c      -> also inject concept files concept-<id>.js
  */
 const path=require('path'), fs=require('fs');
-const KIT='C:/Users/Jordan/Desktop/cindervale-trailer-kit';
+const KIT='C:/Users/Jordan/Desktop/Cindervale/tools/trailer-kit';
 const puppeteer=require(path.join(KIT,'node_modules/puppeteer-core'));
 const CHROME=path.join(KIT,'browsers/chrome/win64-151.0.7922.71/chrome-win64/chrome.exe');
 const ROOT=path.join(__dirname,'..');

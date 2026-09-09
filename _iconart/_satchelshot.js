@@ -1,7 +1,7 @@
 /* The satchel, full of the new art, at real size. This is the surface that decides
  * whether any of it worked — 15px tiles in a grid, not a contact sheet. */
 const path = require('path');
-const KIT = 'C:/Users/Jordan/Desktop/cindervale-trailer-kit';
+const KIT = 'C:/Users/Jordan/Desktop/Cindervale/tools/trailer-kit';
 const puppeteer = require(KIT + '/node_modules/puppeteer-core');
 const CHROME = KIT + '/browsers/chrome/win64-151.0.7922.71/chrome-win64/chrome.exe';
 const CAT = process.argv[2] || 'all';

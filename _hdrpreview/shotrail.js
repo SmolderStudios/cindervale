@@ -2,7 +2,7 @@
 // background, and the rail-group "running" dot. Neither shows up in a plain
 // screenshot, and both key off box-shadow — which the new segment rules reset.
 const path = require('path');
-const KIT  = 'C:/Users/Jordan/Desktop/cindervale-trailer-kit';
+const KIT  = 'C:/Users/Jordan/Desktop/Cindervale/tools/trailer-kit';
 const puppeteer = require(KIT + '/node_modules/puppeteer-core');
 const CHROME = KIT + '/browsers/chrome/win64-151.0.7922.71/chrome-win64/chrome.exe';
 
