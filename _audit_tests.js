@@ -601,6 +601,60 @@ setTimeout(() => {
     ok('a sub-gold sailing item shows silver, not gold', sail.tipHasRawG===false, 'phrase="'+sail.sellPhrase+'"');
     ok('cape berth survives a reload', sail.hired===sail.afterReload, JSON.stringify({berths:sail.berths,hired:sail.hired,after:sail.afterReload}));
 
+    /* ── #102 · a hull card names its crew ────────────────────────────────────
+       "I am assuming we get more crew by upgrading to a bigger ship, but it would
+       be nice if the number you can upgrade to was in the ship's description along
+       with Hull, Range, Cargo." Berths were the one hull stat never printed, so
+       the assumption was unconfirmable and the next hull's gain invisible. */
+    const hullCard = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      state.sail.hull=SAIL_HULLS.length-1;
+      for(var k in state.xp) state.xp[k]=XP_CUM[99];
+      sailYardTab='hull'; sailTab='yard';
+      try{ renderSail(); }catch(e){ return JSON.stringify({err:String(e)}); }
+      var html=document.body.innerHTML, miss=[], rows=0;
+      SAIL_HULLS.forEach(function(h){
+        /* the row must carry Hull/Range/Cargo AND the crew number beside them */
+        if(html.indexOf('Cargo '+h.hold)<0) return;   // row not drawn at all
+        rows++;
+        if(html.indexOf('Crew '+(h.berths||0))<0) miss.push(h.n+' ('+(h.berths||0)+')');
+      });
+      return JSON.stringify({miss:miss, rows:rows, hulls:SAIL_HULLS.length,
+        crews:SAIL_HULLS.map(function(h){return h.berths||0;})});
+    })()`));
+    ok('the shipyard actually drew its hull rows', (hullCard.rows|0)===(hullCard.hulls|0),
+       (hullCard.err||'')+' rows='+hullCard.rows+' of '+hullCard.hulls);
+    ok('every hull card names how many crew it berths (#102)',
+       hullCard.miss.length===0, hullCard.miss.join(', ')+' of '+hullCard.hulls+
+       ' — crews '+JSON.stringify(hullCard.crews));
+
+    /* ── #101 · something other than Lucky Lure moves the prized rate ─────────
+       "It would be nice if we could get a shop item or a late game perk that helps
+       increase the chance to get prized fish." The Lure was the only lever, and a
+       guild quest that wants prized fish runs on a timer. Multiplicative, so it
+       stacks with the Lure rather than replacing it. */
+    const prized = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      var drop=DROPS.fi8.find(function(d){ return ITEMS[d.id]&&ITEMS[d.id].prizedOf; });
+      var base=skillDropChance('fishing',drop,{master1:false});
+      var lure=skillDropChance('fishing',drop,{master1:true});
+      state.equipped=state.equipped||{}; state.equipped.rod='everflame_rod';
+      var rod =skillDropChance('fishing',drop,{master1:false});
+      var both=skillDropChance('fishing',drop,{master1:true});
+      /* and it must not leak into a non-prized drop, or the rod would buff pearls */
+      var pearl=DROPS.fi8.find(function(d){ return d.id==='pearl'; });
+      var pearlRod=skillDropChance('fishing',pearl,{master1:true});
+      state.equipped.rod=null;
+      var pearlBare=skillDropChance('fishing',pearl,{master1:true});
+      return JSON.stringify({base:base, lure:lure, rod:rod, both:both,
+        pearlSame:Math.abs(pearlRod-pearlBare)<1e-12});
+    })()`));
+    ok('the Everflame Rod doubles the prized rate (#101)',
+       Math.abs(prized.rod/prized.base-2)<1e-9, prized.base+' -> '+prized.rod);
+    ok('and stacks with Lucky Lure rather than replacing it',
+       Math.abs(prized.both/prized.base-4)<1e-9, prized.base+' -> '+prized.both);
+    ok('but it does not touch a non-prized drop', prized.pearlSame===true);
+
     // 7. compendium 'other' now has a chip
     const comp=ev(`(function(){
       var ids=COMP_CATEGORIES.map(function(c){return c.id;});
