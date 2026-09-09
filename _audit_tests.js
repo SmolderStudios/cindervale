@@ -6341,6 +6341,32 @@ setTimeout(() => {
       var orphan=CROPS.filter(function(c){ return !src[c.id]; }).map(function(c){ return c.id; });
       return JSON.stringify({orphan:orphan, crops:CROPS.length});
     })()`));
+    /* ── no achievement hardcodes a total the game can outgrow ───────────────
+       Ashen Ascendant said "all twelve skills" and checked >=12. True at v0.9.41,
+       wrong the moment Thieving shipped: with 14 skills you could max twelve and
+       collect the max-everything achievement while two sat at zero. Its siblings
+       (all_bosses, beastfriend, all_zones) count off the data and never drifted.
+       This asserts the completionist achievements need EVERY one of the thing. */
+    const achTotals = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      var bad=[];
+      function maxAllBut(n){
+        var ks=Object.keys(SKILLS);
+        ks.forEach(function(k){ state.xp[k]=XP_CUM[99]; });
+        for(var i=0;i<n;i++) state.xp[ks[ks.length-1-i]]=0;
+      }
+      maxAllBut(1);
+      if(ACH_BY_ID.ashen_ascend.check()) bad.push('ashen_ascend fires one skill short');
+      maxAllBut(0);
+      if(!ACH_BY_ID.ashen_ascend.check()) bad.push('ashen_ascend will not fire at all');
+      /* and its words must not name a number, which is how it went stale */
+      if(/(twelve|thirteen|fourteen|\d+)\s+skills/i.test(ACH_BY_ID.ashen_ascend.desc))
+        bad.push('desc hardcodes a skill count: "'+ACH_BY_ID.ashen_ascend.desc+'"');
+      return JSON.stringify({bad:bad, skills:Object.keys(SKILLS).length});
+    })()`));
+    ok('the max-every-skill achievement counts every skill there is',
+       achTotals.bad.length === 0, achTotals.bad.join(' | ')+' ('+achTotals.skills+' skills)');
+
     /* ── #105 · an act lists what it can drop ────────────────────────────────
        "Could we get things like foraging to list all their drops?" A card showed
        what it makes and what it costs and said nothing about the seeds and rares
