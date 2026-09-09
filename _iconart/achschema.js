@@ -17,6 +17,10 @@ const raw = fs.readFileSync(path.join(__dirname, '..', 'cindervale.html'), 'utf8
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131.0 Electron/33.0 Safari/537.36';
 const ICONS = 'C:/Users/Jordan/Desktop/Cindervale/store/achievement icons';
 const OUT = path.join(ICONS, 'STEAM_SETUP.txt');
+/* The ids that existed in the PREVIOUS release, pulled straight out of git at
+   commit 112b647 rather than typed. Anything not in here is new in this update
+   and is a row that still has to be created on the partner site. */
+const PREV = new Set(JSON.parse(fs.readFileSync(path.join(__dirname, 'ach_previous.json'), 'utf8')));
 
 (async () => {
   const dom = new JSDOM(raw, { url: 'http://localhost/?cvdev=1', runScripts: 'dangerously', pretendToBeVisual: true,
@@ -42,6 +46,12 @@ const OUT = path.join(ICONS, 'STEAM_SETUP.txt');
   L.push('');
   L.push('HIDDEN = tick "Hidden" so the description stays secret until it is earned.');
   L.push('');
+  const fresh = A.filter(a => !PREV.has(a.id));
+  L.push('NEW marks a row that did not exist before this update: ' + fresh.length +
+         ' to create, ' + (A.length - fresh.length) + ' already in the previous set.');
+  L.push('If the earlier ' + (A.length - fresh.length) + ' are already entered on the partner site, only the');
+  L.push('NEW rows need adding - but re-upload every icon, all 124 were redrawn.');
+  L.push('');
 
   const miss = [];
   for (const [cid, cname] of CATS) {
@@ -50,9 +60,10 @@ const OUT = path.join(ICONS, 'STEAM_SETUP.txt');
     L.push('-'.repeat(104));
     L.push(cname.toUpperCase() + '   (' + rows.length + ')');
     L.push('-'.repeat(104));
-    L.push(w('API NAME', 20) + w('DISPLAY NAME', 24) + w('HIDDEN', 8) + 'DESCRIPTION');
+    L.push(w('NEW', 5) + w('API NAME', 20) + w('DISPLAY NAME', 24) + w('HIDDEN', 8) + 'DESCRIPTION');
     for (const a of rows) {
-      L.push(w(a.id, 20) + w(a.name, 24) + w(a.hidden ? 'YES' : '', 8) + a.desc);
+      L.push(w(PREV.has(a.id) ? '' : 'NEW', 5) + w(a.id, 20) + w(a.name, 24) +
+             w(a.hidden ? 'YES' : '', 8) + a.desc);
       for (const f of [a.id + '.png', a.id + '_locked.png'])
         if (!fs.existsSync(path.join(ICONS, f))) miss.push(f);
     }
@@ -60,11 +71,15 @@ const OUT = path.join(ICONS, 'STEAM_SETUP.txt');
   }
 
   L.push('-'.repeat(104));
+  L.push('NEW THIS UPDATE (' + fresh.length + '): ' + fresh.map(a => a.id).join(', '));
+  L.push('');
+  L.push('-'.repeat(104));
   L.push('ICON CHECK: ' + (miss.length ? miss.length + ' MISSING -> ' + miss.join(', ')
                                        : 'all ' + (A.length * 2) + ' files present in this folder'));
   fs.writeFileSync(OUT, L.join('\r\n'), 'utf8');
   console.log('wrote ' + OUT);
   console.log('  ' + A.length + ' achievements across ' + CATS.length + ' categories');
+  console.log('  ' + A.filter(a => !PREV.has(a.id)).length + ' marked NEW');
   console.log('  icons: ' + (miss.length ? miss.length + ' MISSING (' + miss.slice(0, 6).join(', ') + ')'
                                          : 'all ' + (A.length * 2) + ' present'));
   process.exit(0);
