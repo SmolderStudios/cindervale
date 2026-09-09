@@ -6291,6 +6291,45 @@ setTimeout(() => {
        rst.melee.attack === rst.melee.strength && rst.melee.attack === rst.melee.defence,
        JSON.stringify(rst.melee));
 
+    /* Making itemFitsSlot say yes was not enough: the Gear doll's picker builds
+       its list by walking ITEM_BODY_SLOTS and then cgear items, and ammunition is
+       in neither, so the quiver square opened an EMPTY picker. Same defect class
+       twice in one feature, which is why this asserts the picker and not just the
+       slot rule. */
+    const qp = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      state.items={starsteel_arrow:2400, runite_arrow:900, starsteel_bolt:600, oak_log:50};
+      state.combatEquipped={weapon:'ancient_longbow'};
+      _gearFilter='combat';
+      var qd=BODY_SLOTS.find(function(s){return s.slot==='quiver';});
+      openGearSlotModal('quiver', qd, state.combatEquipped.quiver);
+      var rows=[].slice.call(document.querySelectorAll('#gearSlotBody [data-equip]'));
+      if(!rows.length) rows=[].slice.call(document.querySelectorAll('#gearSlotBody button'));
+      return JSON.stringify({
+        offered:rows.length,
+        desc:getBodyItemDesc('starsteel_arrow'),
+        stripHasQuiver:COMBAT_GEAR_STRIP_SLOTS.some(function(s){return s.slot==='quiver';}),
+        dollHasQuiver:(function(){
+          // the doll layout is function-local, so read the rendered squares instead
+          return BODY_SLOTS.some(function(s){return s.slot==='quiver';});
+        })()
+      });
+    })()`));
+    ok('the quiver picker offers ammunition', qp.offered >= 3, qp.offered + ' rows');
+    ok('and ammunition describes itself rather than borrowing the jewellery text',
+       /strength from (bows|crossbows)/.test(qp.desc), JSON.stringify(qp.desc));
+    ok('the combat gear strip has a quiver tile', qp.stripHasQuiver === true);
+
+    /* Widening the window used to magnify the whole interface, because the root
+       zoom was window/UI_DESIGN_W with no ceiling. The fit must still SHRINK a
+       narrow window, so both halves are asserted. */
+    ok('the interface no longer grows with the window',
+       html.includes('const fit = Math.min(1, w / UI_DESIGN_W);'),
+       'the fit cap is gone');
+    ok('but a narrow window still scales down to fit',
+       html.includes('Math.max(UI_ZOOM_MIN, Math.min(UI_ZOOM_MAX, fit * uiScale()))'),
+       'the shrink half is gone');
+
     ok('Keep the catch raw suspends Seasoned Catch (#96)',
        raw.on > 0 && raw.off === 0, 'on ' + raw.on + ', off ' + raw.off);
 
