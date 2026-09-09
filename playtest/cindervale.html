@@ -1470,6 +1470,21 @@ header h1 .flame{color:var(--ember)}
    against, dim enough that the card still reads as locked. */
 .needs-locked{opacity:.55}
 .needs-locked .mat{filter:saturate(.7)}
+/* Ticket #105: "Could we get things like foraging to list all their drops?"
+   A card showed what it MAKES and what it COSTS, and said nothing about the seeds
+   and rares that fall out of it, so the only way to learn a drop table was to work
+   the act until something dropped. Same chip shape as .needs on purpose - one row
+   is what it takes, the other is what it can give. */
+.act .drops{display:flex;flex-wrap:wrap;gap:4px 5px;align-items:center;
+  font-size:calc(11.5px*var(--tscale));font-family:var(--num);margin-top:3px}
+.act .drops .dl{color:var(--muted);font-size:calc(10.5px*var(--tscale));
+  text-transform:uppercase;letter-spacing:.08em;margin-right:1px}
+.act .drops .drop{position:relative;display:inline-flex;align-items:center;gap:3px;color:#cbb894;
+  background:#140d06;border:1px solid #33240f;border-radius:3px;padding:1px 5px 1px 4px;
+  line-height:1.5;cursor:var(--cur-help)}
+.act .drops .drop svg{width:14px;height:14px;display:block;flex-shrink:0}
+.act .drops .drop.rare{color:#e0a955;border-color:#5a3d14}
+.act .drops .drop .pc{color:#8a7455}
 .act .needs .mat b{font-weight:600}
 .act .needs .mat .sl{color:var(--muted)}
 .act .needs .mat.miss{color:#ff9a78;border-color:#7a2f1e;background:#2a0f08}
@@ -7840,7 +7855,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.124.3">v0.9.124</div>
+  <div class="mm-ver" data-build="0.9.124.4">v0.9.124</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -23860,6 +23875,31 @@ function fmtDuration(ms){
   return mm>0?`${hh}h ${mm}m`:`${hh}h`;
 }
 
+/* What an act can drop, beside what it costs (ticket #105). Reads the same DROPS
+   table the roll itself uses and the same skillDropChance() that applies the
+   player's own bonuses, so the number on the chip is the number you are playing
+   against - not the base rate. Empty string for the many acts with no table. */
+function dropsHtml(act,skillKey,m){
+  const tbl=(typeof DROPS!=='undefined'&&DROPS[act.id])||[];
+  if(!tbl.length) return '';
+  const chips=tbl.map(function(d){
+    const it=ITEMS[d.id]; if(!it) return '';
+    let c=d.chance;
+    try{ if(typeof skillDropChance==='function') c=skillDropChance(skillKey,d,m); }catch(e){}
+    /* Below a tenth of a percent "0.1%" is a lie and "0.06%" is noise on a card
+       this size, so the rarest tail says it is rare and puts the number in the
+       tooltip with everything else. */
+    const pc=c>=0.01?(Math.round(c*1000)/10)+'%'
+            :c>=0.001?(Math.round(c*10000)/100)+'%':'rare';
+    const odds=c>0?('about 1 in '+Math.max(1,Math.round(1/c))):'unknown';
+    return '<span class="drop'+(it.rare?' rare':'')+'" data-item="'+d.id+'"'
+      +' data-itemnote="drops '+odds+' · '+(Math.round(c*10000)/100)+'% per action">'
+      +iconHTML(d.id)+'<span class="pc">'+pc+'</span></span>';
+  }).filter(Boolean).join('');
+  if(!chips) return '';
+  return '<div class="drops"><span class="dl">can drop</span>'+chips+'</div>';
+}
+
 function needsHtml(act,m){
   if(!act.inp) return '';
   const runsLeft=canAfford(act,Infinity,m);
@@ -24081,6 +24121,7 @@ function buildActBtn(act,reqLvl,lvl,m,bestXph,bestRph){
             .needs-locked wrapper dims them so a locked card still reads as
             locked, and the have/need counts stay live and accurate. */''}
       ${toolOwned?'':(locked?`<div class="needs-locked">${needsHtml(act,m)}</div>`:needsHtml(act,m))}
+      ${toolOwned?'':(locked?`<div class="needs-locked">${dropsHtml(act,selectedSkill,m)}</div>`:dropsHtml(act,selectedSkill,m))}
       ${masteryHtml}
       ${runningHtml}
     </div>`;
