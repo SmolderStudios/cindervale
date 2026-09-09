@@ -7811,7 +7811,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.123.20">v0.9.123</div>
+  <div class="mm-ver" data-build="0.9.123.21">v0.9.123</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -17133,6 +17133,17 @@ function getItemSlots(id){
     // armour set) that isn't in the hardcoded map — equip by its own cslot.
     var it=ITEMS[id];
     if(it&&it.cgear&&it.cslot) return [it.cslot];
+    /* Ammunition. The quiver square shipped on the paper doll with NOTHING that
+       fits it: arrows and bolts are not cgear, they were never listed in
+       ITEM_BODY_SLOTS, so getItemSlots returned [] and itemFitsSlot said no to
+       every one of them. Same reasoning as the cgear line above — the item
+       already declares what it is, so read that rather than maintaining a
+       hardcoded list of sixteen ids that grows with every new tier. */
+    /* !ranged matters: a BOW also carries an `ammo` field, saying what it fires.
+       The cgear line above catches bows first today, so this is belt and braces —
+       but a weapon defined without cgear would otherwise become quiver-equippable,
+       and that is a silent one nobody would find. */
+    if(it&&it.ammo&&!it.ranged) return ['quiver'];
     return [];
   }
   return Array.isArray(s)?s:[s];
@@ -20383,6 +20394,28 @@ function ammoStr(){
 }
 /* Which stat a kill's XP goes to. It was this exact ternary copy-pasted into five
    places, so a sixth would have missed ranged in silence. */
+/* Ranged styles, keyed by the SAME three slots melee uses, so state.combatStyle
+   needs no migration and the button row needs no extra case for how many there
+   are. swing and acc are multipliers on playerSwingMs / playerAccuracy. */
+const RANGED_STYLES={
+  attack:  {name:'Accurate',  swing:1.00, acc:1.00, def:false,
+            blurb:'Steady aim. No bonus, no penalty.'},
+  strength:{name:'Rapid',     swing:0.88, acc:0.90, def:false,
+            blurb:'Looses faster and lands less often. The most damage, at every defence.'},
+  defence: {name:'Longrange', swing:1.08, acc:1.00, def:true,
+            blurb:'Slower, and half the XP goes to Defence.'},
+};
+/* The active ranged style, or null when a bow is not in hand. Every consumer
+   checks for null rather than assuming, because the same three slots mean melee
+   would otherwise silently pick up ranged multipliers. */
+function rangedStyle(){
+  if(typeof usingRanged!=='function' || !usingRanged()) return null;
+  return RANGED_STYLES[(state&&state.combatStyle)||'attack'] || RANGED_STYLES.attack;
+}
+/* Which stat's LEVEL a style button should show. Melee trains what it says;
+   every ranged style trains Ranged, so all three read the Ranged level. */
+function styleStatFor(slot){ return rangedStyle() ? 'ranged' : slot; }
+
 function combatXpStat(){
   if(usingRanged()) return 'ranged';
   return (state.combatStyle==='strength'||state.combatStyle==='defence')?state.combatStyle:'attack';
@@ -20398,8 +20431,12 @@ function playerAccuracy(){
   /* accBoost is Point Blank and nothing else today. It is deliberately NOT folded
      into atkBoost: that channel is also read by playerMaxHit, so an accuracy node
      routed through it would silently be a damage node as well. */
+  /* Rapid trades accuracy for speed. Applied here rather than folded into the
+     bonus channels so it cannot leak into anything that reads atkBoost. */
+  const _rs=(typeof rangedStyle==='function')?rangedStyle():null;
+  const _rsa=_rs?_rs.acc:1;
   return Math.round((lvl*COMBAT_P.ACC_LVL + cs.atk*COMBAT_P.ACC_GEAR)
-    * (1 + (b.atkBoost||0) + (b.accBoost||0)) * classAccuracyMult() * rangedArmourMult());
+    * (1 + (b.atkBoost||0) + (b.accBoost||0)) * classAccuracyMult() * rangedArmourMult() * _rsa);
 }
 
 /* Player max hit: (strength lvl ×1.6 + gear str ×5.0) × (1+atkBoost) × class. */
@@ -20464,7 +20501,10 @@ function playerSwingMs(){
      swing time the game was not using. */
   const _ab=(typeof combatBonusesAll==='function')?combatBonusesAll():null;
   const _as=(_ab&&_ab.aspd>0)?(1-_ab.aspd):1;
-  return Math.max(COMBAT_MIN_SWING_MS, Math.round(base*classSwingMult()*_wm*_as));
+  /* Ranged style. Rapid looses faster, Longrange slower; a melee weapon gets 1. */
+  const _rs=(typeof rangedStyle==='function')?rangedStyle():null;
+  const _rsw=_rs?_rs.swing:1;
+  return Math.max(COMBAT_MIN_SWING_MS, Math.round(base*classSwingMult()*_wm*_as*_rsw));
 }
 
 /* Refresh the live combat object's stats from current gear and levels.
@@ -26108,6 +26148,73 @@ function alchMini(p,lvl){
   return d;
 }
 
+/* Which activity category each skill is showing. Module-level, not saved: it is
+   a view state, not progress, and it should not survive into someone's save. */
+let _actCat={}, _actSub={};
+/* The tab bar renderActivities draws when a skill has more categories than fit
+   in one readable grid. Deliberately generic: it reads the cat field every
+   act already carries, so a skill added later gets this for nothing. */
+function _actCatBar(sk, key, acts){
+  const cats=[], seen={};
+  for(const a of acts){ const c=a.cat; if(c&&!seen[c]){ seen[c]=1; cats.push(c); } }
+  /* Two thresholds, both needed. One category is nothing to choose between, and
+     a short list is easier to read whole than to click through. */
+  if(cats.length<2 || acts.length<24) return {acts:acts, bar:null};
+  if(cats.indexOf(_actCat[key])<0) _actCat[key]=cats[0];
+  const sel=_actCat[key];
+
+  const wrap=document.createElement('div');
+  wrap.style.cssText='grid-column:1/-1;display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px';
+  const mk=(k,label,count,on,click)=>{
+    const b=document.createElement('button');
+    b.style.cssText='padding:7px 13px;border:1px solid '+(on?'var(--ember)':'var(--trim-d)')
+      +';border-radius:6px;background:'+(on?'#2a1a0866':'var(--raised-s)')
+      +';color:'+(on?'var(--trim)':'var(--muted)')
+      +';cursor:var(--cur-pointer);font-variant:small-caps;letter-spacing:1px;'
+      +'font-size:calc(14px*var(--tscale))';
+    b.innerHTML=label+'<span style="font-family:var(--num);font-size:calc(11px*var(--tscale));'
+      +'color:var(--muted);margin-left:7px">'+count+'</span>';
+    b.addEventListener('click',click);
+    wrap.appendChild(b);
+  };
+  for(const c of cats){
+    const n=acts.filter(a=>a.cat===c).length;
+    mk(c, MASTERY_CAT_LABEL[c]||(c.charAt(0).toUpperCase()+c.slice(1)), n, sel===c,
+       (function(ck){ return function(){ _actCat[key]=ck; renderActivities(); }; })(c));
+  }
+  let out=acts.filter(a=>a.cat===sel);
+
+  /* A sub-bar when the chosen category is still long and its acts say how they
+     split. Bows is 28 on its own because carving and stringing are separate
+     acts; short and long halve it. */
+  const subs=[], sseen={};
+  for(const a of out){ const c=a.subcat; if(c&&!sseen[c]){ sseen[c]=1; subs.push(c); } }
+  if(subs.length>1 && out.length>16){
+    const sk2=key+':'+sel;
+    if(subs.indexOf(_actSub[sk2])<0) _actSub[sk2]=subs[0];
+    const ssel=_actSub[sk2];
+    const sbar=document.createElement('div');
+    /* flex-basis, not grid-column: the parent is a flex row, so the sub-bar has
+       to claim a full line or it trails along beside the category tabs. */
+    sbar.style.cssText='flex-basis:100%;display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 0';
+    for(const c of subs){
+      const n=out.filter(a=>a.subcat===c).length, on=ssel===c;
+      const b=document.createElement('button');
+      b.style.cssText='padding:5px 11px;border:1px solid '+(on?'var(--trim)':'var(--trim-d)')
+        +';border-radius:5px;background:'+(on?'var(--raised-s)':'transparent')
+        +';color:'+(on?'var(--text)':'var(--muted)')
+        +';cursor:var(--cur-pointer);font-size:calc(12.5px*var(--tscale));letter-spacing:.5px';
+      b.innerHTML=(MASTERY_CAT_LABEL[c]||(c.charAt(0).toUpperCase()+c.slice(1)))
+        +'<span style="font-family:var(--num);color:var(--muted);margin-left:6px">'+n+'</span>';
+      b.addEventListener('click',(function(ck){ return function(){ _actSub[sk2]=ck; renderActivities(); }; })(c));
+      sbar.appendChild(b);
+    }
+    wrap.appendChild(sbar);
+    out=out.filter(a=>a.subcat===ssel);
+  }
+  return {acts:out, bar:wrap};
+}
+
 function renderActivities(){
   // Farming uses the patch system — render it directly into the activity grid
   if(selectedSkill==='farming'){ renderFarming(); return; }
@@ -26175,8 +26282,14 @@ function renderActivities(){
     grid.appendChild(tabBar);
   }
 
+  /* Category tabs for any skill long enough to need them. Fletching is the only
+     one today at 69 acts; everything longer already hands off to its own
+     renderer above. */
+  const _cb=_actCatBar(sk, selectedSkill, sk.acts);
+  if(_cb.bar) grid.appendChild(_cb.bar);
+
   // Track which alchemy families have already rendered (one card per family).
-  for(const act of sk.acts){
+  for(const act of _cb.acts){
     let reqLvl=act.lvl;
     if(act.id==='fo7') reqLvl=moonpetalUnlockLevel();
     if(act.id==='co8') reqLvl=highFishUnlockLevel();
@@ -30582,13 +30695,13 @@ function hasPet(petId){ return !!(state && state.pets && state.pets[petId]); }
       const kind=v[0], label=v[1], logs=v[2];
       const un='unstrung_'+w.k+'_'+kind+'bow', id=w.k+'_'+kind+'bow';
       const lv=w.fl+(kind==='long'?4:0);
-      F.push({id:'fl_cv_'+w.k+'_'+kind, name:'Carve a '+w.n+' '+label, cat:'bows', lvl:lv,
+      F.push({id:'fl_cv_'+w.k+'_'+kind, name:'Carve a '+w.n+' '+label, cat:'bows', subcat:kind, lvl:lv,
         ms:7000+i*900, xp:Math.round(120+i*160), spdMult:Math.min(0.80,0.55+i*0.04),
         minMs:1500+i*180, inp:_o(w.log,logs), out:_o(un,1)});
       /* Stringing is the quick last step. It paid 70+i*95, which made 'String a
          Starfall Crossbow' the best xp/hr act in the whole skill at 99, ahead of the
          assembly that actually eats the materials. The xp belongs where the cost is. */
-      F.push({id:'fl_st_'+w.k+'_'+kind, name:'String a '+w.n+' '+label, cat:'bows', lvl:lv,
+      F.push({id:'fl_st_'+w.k+'_'+kind, name:'String a '+w.n+' '+label, cat:'bows', subcat:kind, lvl:lv,
         ms:3400+i*400, xp:Math.round(26+i*30), spdMult:Math.min(0.80,0.55+i*0.04),
         minMs:900+i*100, inp:_o2(un,1,'bowstring',1), out:_o(id,1)});
     });
@@ -33612,7 +33725,9 @@ var _masterySel=null; // 1.0.19 — currently-selected skill in the Mastery Log 
 var _masteryCat={};
 const MASTERY_CAT_LABEL={helm:'Helms',chest:'Chests',legs:'Legs',gloves:'Gloves',boots:'Boots',
   weapon:'Weapons',shield:'Shields',cape:'Capes',tool:'Tools',tannery:'Tannery',
-  refine:'Refining',ring:'Rings',amulet:'Amulets',pendant:'Pendants',trophy:'Trophy Jewelry'};
+  refine:'Refining',ring:'Rings',amulet:'Amulets',pendant:'Pendants',trophy:'Trophy Jewelry',
+  shafts:'Shafts & String',arrows:'Arrows',bolts:'Bolts',bows:'Bows',crossbows:'Crossbows',
+  short:'Shortbows',long:'Longbows'};
 /* ════ [JS-24b] mastery view ═════════════════════════════════════════════════════ */
 function renderMastery(){
   const box=$('masteryView'); box.innerHTML='';
@@ -36487,6 +36602,19 @@ function combatTick(){
    raises max hit, etc. Skipped for non-combat stats. */
 function grantCombatXp(stat,amount){
   if(!COMBAT_STATS[stat]||!amount||amount<=0) return;
+  /* Longrange splits its XP with Defence. Done HERE rather than at the six call
+     sites that each compute a style and hand it over: this function is the one
+     place all of them pass through, so a new grant site inherits the split
+     instead of quietly forgetting it. The recursion terminates because the
+     second call passes 'defence', which is not 'ranged'. */
+  if(stat==='ranged' && typeof rangedStyle==='function'){
+    const _rs=rangedStyle();
+    if(_rs && _rs.def){
+      const _half=Math.max(1, Math.round(amount*0.5));
+      amount=Math.max(1, amount-_half);
+      grantCombatXp('defence', _half);
+    }
+  }
   // Character-type global XP dial (hardcore 0.75× / accelerated 2×) applies to combat too.
   amount=amount*charTypeXpMult();
   // Combat Mastery XP nodes (Iron Discipline/Veteran/War Banner) — always-on multiplier. (1.0.101)
@@ -36643,7 +36771,11 @@ function updateCombatBars(){
      on a kill, so without this the bar sat still through a whole fight. */
   document.querySelectorAll('.cstyle-btns .cmb-style').forEach(b=>{
     const k=b.getAttribute('data-style'); if(!k||!COMBAT_STATS[k]) return;
-    const pr=cmbLvlProgress(k), f=b.querySelector('.cst-prog'), l=b.querySelector('.cst-lv');
+    /* styleStatFor: with a bow every slot shows the Ranged level, matching the
+       label the button was drawn with. Without it the bar and the number drift
+       back to attack/strength/defence on the next tick. */
+    const _sk=(typeof styleStatFor==='function')?styleStatFor(k):k;
+    const pr=cmbLvlProgress(_sk), f=b.querySelector('.cst-prog'), l=b.querySelector('.cst-lv');
     if(f) f.style.width=pr.pct+'%';
     if(l) l.textContent=pr.lvl;
   });
@@ -37581,12 +37713,22 @@ function renderCombat(){
      fill is the button's own background, not a separate strip — at rail width
      there is no room for one, and "fills the button" is what was asked for. */
   const styleBtnHTML=(k)=>{
-    const c=COMBAT_STATS[k], pr=cmbLvlProgress(k);
-    const tip=`Train ${c.name} — Lv ${pr.lvl}`
+    /* With a bow in hand the same three slots are Accurate / Rapid / Longrange,
+       and all three read the Ranged level rather than the melee stat the slot is
+       named after. */
+    const rs=(typeof RANGED_STYLES!=='undefined' && typeof usingRanged==='function' && usingRanged())
+      ? RANGED_STYLES[k] : null;
+    const statKey=rs?'ranged':k;
+    const c=COMBAT_STATS[statKey], pr=cmbLvlProgress(statKey);
+    const label=rs?rs.name:c.name;
+    const tip=(rs
+        ? `${rs.name} — ${rs.blurb}\nRanged Lv ${pr.lvl}`
+        : `Train ${c.name} — Lv ${pr.lvl}`)
       +(pr.max?' (max)':` · ${pr.pct}% to ${pr.lvl+1} · ${pr.need.toLocaleString()} xp to go`);
-    return `<button class="cmb-style ${style===k?'sel':''}" data-style="${k}" title="${mmEsc(tip)}" ${active?'disabled':''}>`
+    const selected=(state.combatStyle||'attack')===k;
+    return `<button class="cmb-style ${selected?'sel':''}" data-style="${k}" title="${mmEsc(tip)}" ${active?'disabled':''}>`
       +`<i class="cst-prog" style="width:${pr.pct}%"></i>`
-      +`<span class="cst-nm">${c.name}</span><b class="cst-lv">${pr.lvl}</b></button>`;
+      +`<span class="cst-nm">${label}</span><b class="cst-lv">${pr.lvl}</b></button>`;
   };
 
   // Combat stats block — four levels + combat level + derived stats
