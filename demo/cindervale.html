@@ -7840,7 +7840,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.124.1">v0.9.124</div>
+  <div class="mm-ver" data-build="0.9.124.2">v0.9.124</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -17785,7 +17785,7 @@ const SHOP=[
      intended one. */
   {id:'everflame_axe',     name:'Everflame Axe',     icon:'🪓',slot:'axe',   skill:'woodcutting',tier:6,cost:450000,bonus:{speed:0.24,doubleYield:0.08},desc:'+24% chop speed · +8% double logs',       reqLvl:95,req:'eclipse_axe'},
   {id:'everflame_pick',    name:'Everflame Pick',    icon:'⛏️',slot:'pick',  skill:'mining',     tier:6,cost:450000,bonus:{speed:0.24,doubleYield:0.08},desc:'+24% mine speed · +8% double ore',        reqLvl:95,req:'eclipse_pick'},
-  {id:'everflame_rod',     name:'Everflame Rod',     icon:'🎣',slot:'rod',   skill:'fishing',    tier:6,cost:450000,bonus:{speed:0.24,doubleYield:0.08},desc:'+24% fish speed · +8% double catch',      reqLvl:95,req:'voidrod'},
+  {id:'everflame_rod',     name:'Everflame Rod',     icon:'🎣',slot:'rod',   skill:'fishing',    tier:6,cost:450000,bonus:{speed:0.24,doubleYield:0.08,prized:1},desc:'+24% fish speed · +8% double catch · 2x prized catch chance',      reqLvl:95,req:'voidrod'},
   {id:'everflame_satchel', name:'Everflame Satchel', icon:'🎒',slot:'pouch', skill:'foraging',   tier:6,cost:450000,bonus:{speed:0.24,doubleYield:0.08},desc:'+24% forage speed · +8% double herbs',    reqLvl:95,req:'eclipse_satchel'},
   {id:'everflame_forge',   name:'Everflame Forge',   icon:'🌋',slot:'tongs', skill:'smithing',   tier:6,cost:450000,bonus:{speed:0.24,preserve:0.08},   desc:'+24% smelt speed · 8% to keep the ore',   reqLvl:95,req:'eclipse_forge'},
   {id:'everflame_hearth',  name:'Everflame Hearth',  icon:'🌋',slot:'pan',   skill:'cooking',    tier:6,cost:450000,bonus:{speed:0.24,preserve:0.08},   desc:'+24% cook speed · 8% to keep the food',   reqLvl:95,req:'eclipse_hearth'},
@@ -20857,8 +20857,17 @@ function thiefSuccess(act){
 function skillDropChance(skillKey, drop, m){
   let c=effDropChance(drop.chance);
   const dropId=drop.id;
-  if(skillKey==='fishing' && ITEMS[dropId] && ITEMS[dropId].prizedOf && m && m.master1){
-    c*=LUCKY_LURE_MULT;
+  if(skillKey==='fishing' && ITEMS[dropId] && ITEMS[dropId].prizedOf){
+    if(m && m.master1) c*=LUCKY_LURE_MULT;
+    /* Ticket #101 (0.9.124.2). Lucky Lure was the ONLY thing in the game that
+       moved this number, and a prized catch is what a guild quest asks for and
+       what a quest timer runs out on: "if you don't have them on hand, it could
+       be hard to get the amount you need before the quest expires." The Everflame
+       Rod, already the Lv95 end of the rod ladder, now doubles it a second time.
+       Multiplicative, so it stacks with the Lure to 4x rather than replacing it,
+       and gearBonus() is skill-scoped so no other tool can feed this. */
+    const g=(typeof gearBonus==='function')?gearBonus('fishing','prized'):0;
+    if(g>0) c*=(1+g);
   }
   return c;
 }
@@ -43075,8 +43084,17 @@ function renderSail(){
       const afford=Object.keys(hh.cost).every(id=>(state.items[id]||0)>=hh.cost[id]);
       html+='<div class="sl-hull'+(cur?' cur':'')+(!canLvl&&!owned?' lock':'')+'">'+iconHTML(sailHullIcon(t))
         +'<div class="i"><b>'+hh.n+'</b>'
+        /* Ticket #102. Berths are the one hull stat that was never on the card:
+           "I am assuming we get more crew by upgrading to a bigger ship, but it
+           would be nice if the number you can upgrade to was in the ship's
+           description along with Hull, Range, Cargo." He was assuming correctly,
+           and had no way to confirm it or to see what the next hull would buy.
+           Says "Crew" because that is the word the header stat and the crew panel
+           already use; `berths` is the internal name for the same number.
+           The Raft has none, and "Crew 0" is worth saying out loud. */
         +'<div class="st"><span>Sailing '+hh.lv+'</span><span>Hull '+hh.sound+'</span>'
-        +'<span>Range '+hh.stores+'</span><span>Cargo '+hh.hold+'</span></div>';
+        +'<span>Range '+hh.stores+'</span><span>Cargo '+hh.hold+'</span>'
+        +'<span>Crew '+(hh.berths||0)+'</span></div>';
       if(!owned){
         html+='<span class="cst">'+slCostHTML(hh.cost)+'</span>';
       }
