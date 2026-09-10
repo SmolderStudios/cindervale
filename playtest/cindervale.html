@@ -7985,7 +7985,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.124.14">v0.9.124</div>
+  <div class="mm-ver" data-build="0.9.124.15">v0.9.124</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -17460,7 +17460,10 @@ function anyLoadoutHas(id){
 // T8=Lv80 raid, T9=Lv90 raid, T10=Lv99 raid. (Existing ctier8/9 boss drops —
 // Doomblade, Emberwyrm/Demon Lord skulls — come from Lv84-99 bosses, so they're
 // obtained well after their wield level anyway.)
-const COMBAT_GEAR_REQ={1:1,2:10,3:20,4:30,5:40,6:55,7:70,8:80,9:90,10:99};
+/* T11 is the Spire's own rung. It shares 99 with T10 because 99 is the ceiling —
+   without the row, combatGearReq falls through to `||1` and the best gear in the
+   game equips at level one. */
+const COMBAT_GEAR_REQ={1:1,2:10,3:20,4:30,5:40,6:55,7:70,8:80,9:90,10:99,11:99};
 function combatGearReq(id){
   const it=ITEMS[id];
   if(!it||!it.cgear||!it.ctier) return null;
@@ -28018,7 +28021,22 @@ function buildSpireLogBody(raid){
         <th>${iconHTML('sunderstone')} / ${iconHTML('spirecore')}</th><th>Drawn from</th></tr></thead>
       <tbody>${rows}</tbody>
     </table></div>
-    <div class="mlog-legend">Rows you have already reached are lit. Foes are drawn from the four fixed raids in bands, then the bands repeat and the curve carries the difficulty. <b>Spire Weight</b> stacks once every ten floors. Sunderstone and Spire Cores are spent on <b>Ascension</b>, in the Raids tab.</div>
+    <div class="mlog-sec-t" style="margin-top:14px">Its own gear — rarer the shallower you are</div>
+    <div class="mls-wrap"><table class="mls-tbl">
+      <thead><tr><th>Piece</th><th>Slot</th><th>Stats</th>${[10,25,40,55,70].map(f=>`<th>F${f}</th>`).join('')}</tr></thead>
+      <tbody>${SPIRE_GEAR.map(id=>{
+        const it=ITEMS[id]||{}, cs=COMBAT_GEAR_STATS[id]||{};
+        const st=(cs.atk+(cs.str||0))>cs.def?`atk ${cs.atk} str ${cs.str}`:`def ${cs.def}${cs.atk?' atk '+cs.atk:''}`;
+        const have=(state.items&&state.items[id])>0;
+        return `<tr class="${have?'mls-done':''}">
+          <td class="mls-f" style="font-weight:400">${iconHTML(id)} ${it.name||id}</td>
+          <td class="mls-src">${it.cslot||''}</td><td>${st}</td>
+          ${[10,25,40,55,70].map(f=>{const c=spireGearChance(f)*charDropMult();
+            return `<td>${c>=0.995?'always':(c*100).toFixed(c<0.1?3:(c<1?2:1))+'%'}</td>`;}).join('')}
+        </tr>`;
+      }).join('')}</tbody>
+    </table></div>
+    <div class="mlog-legend">Gear rolls on landings only, every ${SPR_BOSS_EVERY}th floor, each piece rolled separately. The chance climbs the whole way up and reaches certainty around floor 70 — well past anything survivable today, which is the point of an endless tower. Rows you have already reached are lit. Foes are drawn from the four fixed raids in bands, then the bands repeat and the curve carries the difficulty. <b>Spire Weight</b> stacks once every ten floors. Sunderstone and Spire Cores are spent on <b>Ascension</b>, in the Raids tab.</div>
   </div>`;
 }
 function buildRaidLogBody(raid){
@@ -30240,6 +30258,50 @@ const HUNT_KIT=[
     desc:'Full set: +10% crit chance and +8% Attack — you move like light off water.' };
 })();
 
+/* ── The Sundered Spire's gear (0.9.124.15) ────────────────────────────────────
+   The Empyrean covers every slot except gloves and quiver, and both its armour
+   sets are complete four-pieces — so anything the Spire dropped in plate or
+   leather could only be "Dawnward but bigger". These four are the slots where
+   there was actually room:
+
+     · gloves — no raid has ever dropped a pair. The whole ladder tops out at a
+       crafted def 24, the weakest best-in-slot on the board by a factor of two.
+     · bow    — one bow exists across all five raids.
+     · sword and shield — the two slots the Empyrean owns outright, taken back so
+       the Spire is worth climbing for something other than Sunderstone.
+
+   The Dawnreaper stays the best two-hander in the game, and the dagger, hammer,
+   both sets and the cape stay Empyrean's. Budgets are ~18% over the T10 rung.
+   T11, so they ascend to ★10 like Empyrean gear. */
+(function(){
+  const WPN  ={light:'#ffe0f4', mid:'#c96a9a', dark:'#7a3560', edge:'#2a0e22', hl:'#fff4fb', accent:'#a8548a', glow:'#e88fc0', sparkles:true};
+  const PLATE={light:'#f6d8ec', mid:'#b45a8e', dark:'#5e2a4a', edge:'#240a1c', hl:'#fff0fa', accent:'#9a4a7c', glow:'#e88fc0', sparkles:true};
+  function S(id,name,emoji,sell,slot,dmgType,stats,extra,desc){
+    ITEMS[id]=Object.assign({name:name, icon:emoji, sell:sell, rare:true, cgear:true, ctier:11, cslot:slot},
+      (slot==='weapon'?{dmgType:dmgType}:{}), extra||{}, {desc:desc});
+    COMBAT_GEAR_STATS[id]=stats;
+  }
+  S('sunderedge','Sunderedge','\u{1F5E1}',210000,'weapon','slash',{atk:106,str:99,def:0},
+    {ubonus:{critChance:0.06, lifesteal:0.05}},
+    "Ground from a shard of the Spire's own fault, where the tower broke the floors it landed on. The edge remembers the fall and passes it on. <b>+6% crit, +5% lifesteal.</b> The finest one-handed blade in Cindervale.");
+  ICONS.sunderedge=_swordSVGwpn(WPN);
+  S('faultward','Faultward','\u{1F6E1}',185000,'shield','',{atk:0,str:0,def:118},
+    {ubonus:{defBoost:0.07, hpBoost:0.06}},
+    "A slab of load-bearing stone that held a floor up for an age and never once gave. <b>+7% Defence, +6% max HP.</b> Nothing in the game guards harder.");
+  ICONS.faultward=_shieldSVG(PLATE);
+  S('plummet','Plummet','\u{1F3F9}',205000,'weapon','stab',{atk:118,str:72,def:0},
+    {ubonus:{atkBoost:0.07, critChance:0.05}},
+    "A longbow strung on a plumb-line taken from the Spire's ruin — it finds true down, and everything it looses arrives like the tower did. <b>+7% Attack, +5% crit.</b> The best bow in Cindervale.");
+  ICONS.plummet=_bowSVGwpn(WPN);
+  /* The one piece that is not just a bigger number. Gloves have never had an
+     identity in this game, and Momentum-per-hit is the only bonus in the game that
+     makes the raid system itself run faster. */
+  S('stonewright_gauntlets','Stonewright Gauntlets','\u{1F9E4}',160000,'gloves','',{atk:16,str:0,def:32},
+    {ubonus:{atkBoost:0.04}, momGain:3, light:true},
+    "The gauntlets of whoever built the Spire, still gripping. The stone in them remembers holding a floor up and carries its own weight, so they never drag a bowstring the way plate does. Every blow you land in a raid builds <b>+3 extra Momentum</b> on top of the usual seven, and they give <b>+4% Attack</b>. The first gloves any raid has ever dropped, and the best pair for <i>every</i> build — melee or ranged, there is nothing to swap them for.");
+  ICONS.stonewright_gauntlets=_glovesSVG(PLATE);
+})();
+
 /* Empyrean Throne — zone + foe icons (1.0.87). Radiant gold silhouettes with an
    indigo "fallen-god" accent; Aureon carries one dawn eye + one void eye to read as
    the Dawnbroken God. Registered on the ICONS map so getMonster/iconHTML render them. */
@@ -31580,6 +31642,24 @@ function grantRaidRewards(raid, timeMs){
    against a clear that does not exist, so a run that ends at floor 37 keeps every
    stone the first 36 floors gave up. Depth is the whole reward curve: floor 40
    pays roughly eight times floor 5. */
+/* ── Spire gear, and the curve that pays it out (0.9.124.15) ──────────────────
+   Vanishingly rare near the bottom and climbing the whole way up, with a real
+   100% ceiling that sits far past anything a maxed player can currently survive:
+   at 1.155 a floor, 0.005% reaches certainty around floor 70, and the measured
+   wall is 33 unascended / 52 fully ascended. So the ceiling is a promise about
+   how the curve behaves rather than a floor anyone is going to stand on.
+
+   Rolled on landings only — every fifth floor — which keeps the maths readable
+   and puts the chase on the beats the tower already marks out. In the band a
+   player actually reaches it works out around 10% per item for a climb to 50,
+   so roughly three deep climbs for a piece and a long haul for all four. */
+const SPR_GEAR_BASE=0.00005;
+const SPR_GEAR_STEP=1.155;
+const SPIRE_GEAR=['sunderedge','faultward','plummet','stonewright_gauntlets'];
+function spireGearChance(floor){
+  return Math.min(1, SPR_GEAR_BASE*Math.pow(SPR_GEAR_STEP, Math.max(0,floor-1)));
+}
+
 function spireFloorLoot(floor){
   const res={gold:0, mats:[]};
   const sc=spireScale(floor);
@@ -31591,6 +31671,18 @@ function spireFloorLoot(floor){
   /* Spire Cores are the deep-floor currency and the last four Ascension ranks are
      the only thing that wants them, so they start where the climb starts hurting. */
   if(floor%SPR_BOSS_EVERY===0 && floor>=15) give('spirecore', 1+Math.floor((floor-15)/20));
+  /* Gear rolls on landings. charDropMult keeps hardcore/accelerated consistent with
+     every other drop in the game; the clamp keeps the dial from pushing past one. */
+  if(floor%SPR_BOSS_EVERY===0){
+    const p=Math.min(1, spireGearChance(floor)*charDropMult());
+    res.gear=[];
+    for(const id of SPIRE_GEAR){
+      if(Math.random()<p && grantItem(id,1)>0){
+        state.discovered[id]=1;
+        res.gear.push(id);
+      }
+    }
+  }
   return res;
 }
 /* A floor cleared. There is no win branch: the run ends when you die, so this only
@@ -31605,6 +31697,12 @@ function handleSpireFloorClear(baseMon){
   const loot=spireFloorLoot(floor);
   cmbLog('\u2714 '+baseMon.name+' falls. Floor '+floor+' cleared \u2014 +'+loot.gold+'g'+
     (loot.mats.length?' \u00b7 '+loot.mats.map(m=>(m.qty>1?m.qty+'\u00d7 ':'')+(ITEMS[m.id]?ITEMS[m.id].name:m.id)).join(', '):''),'win');
+  if(loot.gear&&loot.gear.length){
+    const nm=loot.gear.map(id=>ITEMS[id]?ITEMS[id].name:id).join(', ');
+    cmbLog('\u2605 The Spire gives up '+nm+'.','rare-win');
+    if(typeof toast==='function') toast('\u2605 '+nm+'!');
+    if(typeof logNotification==='function') logNotification('rare','\u2605','Spire floor '+floor+': '+nm+'.');
+  }
   if(!state.spireBest||floor>state.spireBest){
     state.spireBest=floor;
     cmbLog('\u2605 Floor '+floor+' \u2014 a new deepest climb.','rare-win');
@@ -31640,7 +31738,7 @@ const ASC_MAX=10;
    Capped this way, an old piece climbs back into contention without ever reaching
    the top: a fully raised Barrow Blade lands under a freshly dropped Emberforged
    one, so raising it is a bridge you build while you farm, not a destination. */
-const ASC_CAP_BY_TIER={7:5, 8:7, 9:9, 10:10};
+const ASC_CAP_BY_TIER={7:5, 8:7, 9:9, 10:10, 11:10};
 function ascCap(id){
   const t=(ITEMS[id]&&ITEMS[id].ctier)||0;
   return (COMBAT_GEAR_STATS[id] && ASC_CAP_BY_TIER[t]) || 0;
@@ -31944,6 +32042,15 @@ const RAID_ABILS=[
 const RAID_ABIL_BY_ID=(function(){ const m={}; for(const a of RAID_ABILS) m[a.id]=a; return m; })();
 
 function momAdd(v){ if(combat.raid) combat.mom=Math.max(0,Math.min(MOM_MAX,(combat.mom||0)+v)); }
+/* Gear can carry momGain — extra Momentum per landed blow. The Stonewright
+   Gauntlets are the first and only source: the one piece in the game that makes
+   the raid system itself run faster rather than just adding a bigger number. */
+function momGearBonus(){
+  const ce=state&&state.combatEquipped; if(!ce) return 0;
+  let v=0;
+  for(const id of Object.values(ce)){ const it=ITEMS[id]; if(it&&it.momGain>0) v+=it.momGain; }
+  return v;
+}
 function ruinActive(now){ return !!combat.raid && (combat.momRuin||0)>(now||Date.now()); }
 function braceActive(now){ return !!combat.raid && (combat.momBrace||0)>(now||Date.now()); }
 function canUseAbil(id,now){
@@ -37431,7 +37538,7 @@ function combatTick(){
        same total as the void bomb above, so a cleave counts once for each of them
        rather than being dropped by the two newer systems. */
     if(combat.raid){
-      if(youDmg>0) momAdd(MOM_PER_HIT);
+      if(youDmg>0) momAdd(MOM_PER_HIT+momGearBonus());
       if(combat.cast) combat.cast.acc=(combat.cast.acc||0)+youDmg+_cleaveDmg;
     }
     if(youDmg>0){
