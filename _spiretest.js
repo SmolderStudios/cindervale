@@ -576,7 +576,8 @@ setTimeout(()=>{
        multiplier that has nothing to do with affixes. */
     ok('the generated floor is built with them on',
        ev("(function(){var m=spireFoeMods(), f=spireFloor(21,true);"+
-          "return Math.abs(f.hp-Math.round(SPR_BASE.hp*spireScale(21).hp*m.hp))<2;})()"),
+          "var nat=SPIRE_NATIVE_BY_ID[f.id], md=(nat&&nat.mod&&nat.mod.hp)||1;"+
+          "return Math.abs(f.hp-Math.round(SPR_BASE.hp*spireScale(21).hp*m.hp*md))<2;})()"),
        'floor 21 health '+ev('String(spireFloor(21,true).hp)'));
     /* And prove a health affix actually moves it, rather than the check passing
        because today happens to roll nothing that touches health. */
@@ -586,6 +587,149 @@ setTimeout(()=>{
        ev("spireRunAffixes().some(a=>a.id==='bloated') && spireFloor(21,true).hp>_plain*1.25"),
        ev('String(_plain)')+' -> '+ev('String(spireFloor(21,true).hp)')+' with Bloated');
     ev("combat.youHp=0; handleRaidFail(); combat.active=false;");
+  }
+
+  section("The tower's own creatures");
+  {
+    const nats=JSON.parse(ev('JSON.stringify(SPIRE_NATIVES.map(x=>x.id))'));
+    ok('the Spire has a roster of its own', nats.length>=9, nats.length+' natives');
+    ok('every native is flagged as one',
+       ev('SPIRE_NATIVES.every(x=>x.native===true)'));
+    ok('and every one is reachable through the id map',
+       ev('SPIRE_NATIVES.every(x=>SPIRE_NATIVE_BY_ID[x.id]===x)'));
+
+    /* The bug that painted a raw id as 358px of text in the arena. A generated foe
+       resolves its art through iconHTML(id), so an id with no ICONS entry renders
+       the literal string. It cost a shipped build once already. */
+    ok('every native has real drawn art, not a generator fallback',
+       ev("SPIRE_NATIVES.every(x=>{var k=x.art||x.id; return typeof ICONS[k]==='string' && ICONS[k].indexOf('<svg')===0;})"),
+       ev("JSON.stringify(SPIRE_NATIVES.filter(x=>!ICONS[x.art||x.id]).map(x=>x.id))"));
+    ok('and the generated floor id resolves to that art',
+       ev("(function(){for(let i=1;i<=80;i++){const m=spireFloor(i,true); if(!ICONS[m.id]) return 'floor '+i+' '+m.id;} return true;})()")===true);
+
+    /* Every native must actually DO something. A creature that is only a new name
+       and a stat tweak is exactly the staleness this was meant to answer. */
+    ok('every native brings a mechanic, not just a new name',
+       ev("SPIRE_NATIVES.every(x=>!!(x.raidfx||x.monfx||x.castfx||x.bossfx||x.mod))"),
+       ev("JSON.stringify(SPIRE_NATIVES.filter(x=>!(x.raidfx||x.monfx||x.castfx||x.bossfx||x.mod)).map(x=>x.id))"));
+    ok('the two new monster-side mechanics are both used',
+       ev("SPIRE_NATIVES.some(x=>x.monfx&&x.monfx.regen) && SPIRE_NATIVES.some(x=>x.monfx&&x.monfx.enrage)"));
+
+    /* The regression the nativeness gate exists to stop: a recycled raid stage
+       carries its own castfx and (on bosses) its own raidfx, and reading those
+       without asking who `base` is gave floor 2 the Barrow Champion's telegraph
+       and replaced Spire Weight on every landing with that boss's curse. */
+    ok('a recycled foe never inherits its home raid\u2019s telegraph',
+       ev("[1,2,3,4,6,7,8,9,11].every(n=>!spireFloor(n,true).castfx)"),
+       ev("JSON.stringify([1,2,3,4,6,7,8,9,11].filter(n=>!!spireFloor(n,true).castfx))"));
+    ok('and a deep landing still carries Spire Weight, not its raid boss\u2019s curse',
+       ev("(function(){for(const f of [20,30,40,50,60,70]){const m=spireFloor(f,true);"+
+          "const nat=SPIRE_NATIVE_BY_ID[m.id];"+
+          "if(!nat && !(m.raidfx&&/Spire Weight/.test(m.raidfx.name))) return 'floor '+f;} return true;})()")===true);
+    ok('and a native\u2019s own curse replaces Spire Weight rather than stacking',
+       ev("(function(){for(let i=14;i<=80;i++){const m=spireFloor(i,true);"+
+          "const nat=SPIRE_NATIVE_BY_ID[m.id]; if(nat&&nat.raidfx&&m.raidfx.name!==nat.raidfx.name) return 'floor '+i;}"+
+          "return true;})()")===true);
+
+    /* The whole point of the request: more creatures, and a mix rather than four
+       themed stretches in order. */
+    const d40=+ev("(function(){const s=new Set();for(let i=1;i<=40;i++)s.add(spireFloor(i,true).name);return s.size;})()");
+    const d80=+ev("(function(){const s=new Set();for(let i=1;i<=80;i++)s.add(spireFloor(i,true).name);return s.size;})()");
+    console.log('       distinct creatures: '+d40+' in the first 40 floors, '+d80+' in the first 80');
+    ok('a long climb meets a lot of different things', d80>=28, d80+' distinct in 80 floors');
+    ok('and past the bands the pool is every raid at once',
+       ev("(function(){const zones=new Set();for(let i=41;i<=90;i++){const m=spireFloor(i,true);"+
+          "const nat=SPIRE_NATIVE_BY_ID[m.id]; if(!nat) zones.add(m.name);} return zones.size;})()")>=10,
+       ev("(function(){const z=new Set();for(let i=41;i<=90;i++){const m=spireFloor(i,true);"+
+          "if(!SPIRE_NATIVE_BY_ID[m.id]) z.add(m.name);} return z.size+' recycled creatures across floors 41-90';})()"));
+
+    /* Weighting: present from the bottom, and a real share of the tower deep in. */
+    const share=f=>+ev("(function(){let k=0;for(let i="+f+";i<"+f+"+40;i++) if(SPIRE_NATIVE_BY_ID[spireFloor(i,true).id]) k++; return k;})()");
+    const s1=share(1), s60=share(60);
+    console.log('       native share: '+s1+'/40 at the bottom, '+s60+'/40 from floor 60');
+    ok('natives show up from the bottom of the tower', s1>=6, s1+'/40');
+    ok('and take a bigger share the deeper you go', s60>s1, s1+' -> '+s60);
+
+    /* resistTo was being dropped on the floor by spireFloor. It is a real field the
+       damage formula reads at 15%, and every recycled foe was silently losing it. */
+    ok('a foe that resists something keeps that resistance in the tower',
+       ev("(function(){for(let i=1;i<=80;i++){const m=spireFloor(i,true);"+
+          "if(m.resistTo) return true;} return false;})()"));
+  }
+
+  section('Regen and enrage');
+  {
+    ev("state=defaultState(); normalizeState(); state.combatXp={};"+
+       "for(const k of ['attack','strength','defence','hitpoints']) state.combatXp[k]=XP_CUM[99];"+
+       "refreshCombatStats();");
+    /* Drive the mechanic directly rather than waiting for a matching floor to come
+       up: the pick is deterministic, so a test that hunts for a Plumbhang is a test
+       that breaks the day the curve moves. */
+    ev("combat.active=true; combat.raid={id:SPR_ID,stage:0,endless:true,affixDay:0};"+
+       "combat.monId='spr_plumbhang'; combat.foeMaxHp=10000; combat.foeHp=5000;"+
+       "combat.monfx={regen:{tickMs:2500,frac:0.03,label:'Trueing'},raged:false};");
+    const t0=+ev("Date.now()");
+    ev("combat.monfx.regen.nextAt=0; tickMonsterFx("+t0+", {name:'Plumbhang'});");
+    const healed=+ev("combat.foeHp");
+    ok('regen heals the foe a slice of its MAX health', healed===5300, '5000 -> '+healed);
+    ok('and re-arms rather than firing every frame',
+       ev("combat.monfx.regen.nextAt")>t0);
+    ev("tickMonsterFx("+t0+", {name:'Plumbhang'});");
+    ok('so a second call in the same window does nothing', +ev("combat.foeHp")===healed);
+
+    ev("combat.foeHp=combat.foeMaxHp; combat.monfx.regen.nextAt=0;"+
+       "tickMonsterFx("+t0+", {name:'Plumbhang'});");
+    ok('a foe at full health is not healed past it', +ev("combat.foeHp")===10000);
+    ev("combat.foeHp=0; combat.monfx.regen.nextAt=0; tickMonsterFx("+t0+", {name:'Plumbhang'});");
+    ok('and a dead foe is never healed back off zero', +ev("combat.foeHp")===0);
+
+    /* Regen must never outrun the player. A percentage of an exponentially growing
+       health pool does exactly that: measured without the ceiling, a Plumbhang was
+       UNKILLABLE from floor 30 (507 heal/s against 75 dps). */
+    ev("combat.foeMaxHp=10000; combat.foeHp=1000;"+
+       "combat.monfx={regen:{tickMs:2500,frac:0.03,cap:0.30,label:'Trueing'},raged:false};");
+    let ticks=0;
+    for(let i=0;i<200;i++){ ev("combat.monfx.regen.nextAt=0; combat.foeHp=Math.min(combat.foeHp,9000);"+
+                              "tickMonsterFx("+t0+", {name:'Plumbhang'});"); ticks++; }
+    const done=+ev("combat.monfx.regen.done||0");
+    ok('regen stops dead at its lifetime ceiling', done===3000, ticks+' ticks healed '+done+' of a 10,000 pool');
+    ok('so it can never out-heal a player at depth',
+       ev("SPIRE_NATIVES.filter(x=>x.monfx&&x.monfx.regen).every(x=>x.monfx.regen.cap>0&&x.monfx.regen.cap<=0.35)"),
+       ev("JSON.stringify(SPIRE_NATIVES.filter(x=>x.monfx&&x.monfx.regen).map(x=>[x.id,x.monfx.regen.cap]))"));
+
+    /* Enrage is speed and only speed. A damage multiplier measured 7% at floor 22
+       and 0% from floor 30 on, because every roll already sits on RAID_HIT_CAP. */
+    ok('no native enrages with a damage multiplier the hit cap would eat',
+       ev("SPIRE_NATIVES.every(x=>!(x.monfx&&x.monfx.enrage&&x.monfx.enrage.mult))"));
+    ok('and every enrage carries a real speed cut',
+       ev("SPIRE_NATIVES.filter(x=>x.monfx&&x.monfx.enrage).every(x=>x.monfx.enrage.aspd>=0.15)"));
+
+    ev("combat.foeMaxHp=10000; combat.foeHp=6000; combat.foeSwingMs=3100;"+
+       "combat.monfx={enrage:{below:0.5,aspd:0.25,label:'Keystone Pulled'},raged:false};");
+    ev("tickMonsterFx("+t0+", {name:'Keystone Golem'});");
+    ok('enrage holds above its threshold', ev("combat.monfx.raged")===false);
+    ok('and the foe keeps its own swing speed until then', +ev("combat.foeSwingMs")===3100);
+    ev("combat.foeHp=4000; tickMonsterFx("+t0+", {name:'Keystone Golem'});");
+    ok('it triggers when the foe drops below it', ev("combat.monfx.raged")===true);
+    ok('and the foe is genuinely faster from that moment', +ev("combat.foeSwingMs")===2325,
+       '3100ms -> '+ev("combat.foeSwingMs")+'ms');
+    ev("combat.foeHp=9000; tickMonsterFx("+t0+", {name:'Keystone Golem'});");
+    ok('once enraged it stays enraged', ev("monRaged()")===true);
+    ok('and it never compounds its own speed cut', +ev("combat.foeSwingMs")===2325);
+    ok('a swing can never be driven to nothing',
+       ev("(function(){combat.foeSwingMs=700; combat.monfx.raged=false; combat.foeHp=1;"+
+          "tickMonsterFx("+t0+", {name:'x'}); return combat.foeSwingMs>=600;})()"));
+
+    /* The mechanic must not survive the fight. `mon.monfx` is the shared registered
+       floor object, so a fight that mutated it in place would leave rage stacks on
+       floor 22 for every future climb. */
+    ok('the fight works on a copy, never on the registered floor',
+       ev("(function(){const m=spireFloor(22,true); const nat=SPIRE_NATIVE_BY_ID[m.id];"+
+          "if(!nat||!nat.monfx) return true;"+
+          "return nat.monfx.raged===undefined;})()"));
+    ok('and nothing outside a raid carries one', ev("(function(){"+
+       "combat.active=false; combat.raid=null; combat.monfx=null; return monRaged()===false;})()"));
+    ev("combat.active=false; combat.raid=null; combat.monfx=null;");
   }
 
   section('The single-blow cap');
