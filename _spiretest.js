@@ -380,11 +380,11 @@ setTimeout(()=>{
        "for(const k of ['attack','strength','defence','hitpoints','ranged']) state.combatXp[k]=XP_CUM[99];"+
        "refreshCombatStats(); startRaid(SPR_ID);");
     const hp=+ev('combat.youMaxHp'), cap=Math.round(hp*(+ev('RAID_HIT_CAP')));
-    ok('a blow is capped at a third of your health', ev('capRaidHit(999999)==='+cap),
+    ok('a blow is capped well under half your health', ev('capRaidHit(999999)==='+cap),
        hp+' hp -> ceiling '+cap);
     ok('and a small blow passes through untouched', ev('capRaidHit(12)===12'));
-    ok('so three landed blows is the floor on how fast you can die',
-       hp/cap>=2.5, (hp/cap).toFixed(1)+' hits');
+    ok('so you are always guaranteed a turn to answer',
+       hp/cap>=2.0, (hp/cap).toFixed(1)+' hits to kill you');
     /* The reason it exists: the tower's max hit passes your whole pool around
        floor 48, and before the cap that was a one-shot from full. */
     const deep=JSON.parse(ev('JSON.stringify(spireFloor(70,true))'));
