@@ -3349,9 +3349,8 @@ setTimeout(() => {
          a contact sheet later. Do NOT add them to KEEP_SVG. */
       'sunderedge','faultward','plummet','stonewright_gauntlets',
       'sundershaft','sunderbolt',
-      /* T8/T9 bows (0.9.124.21) — same standing, palette generator for now. */
-      'fiendbone_shortbow','fiendbone_longbow',
-      /* Ranged proc weapons (0.9.124.22) — same standing. */
+      /* Ranged proc weapons (0.9.124.22) — same standing. The T9 Fiendbone bows
+         were retired in 0.9.124.23 and are no longer on this list. */
       'thornbite_shortbow','rimeshot_shortbow','mammothhorn_longbow','ashlock_crossbow'];
     const SVG_OK = new Set(['radcliff_tally'].concat(RANGED_PENDING, SPIRE_PENDING));
 
