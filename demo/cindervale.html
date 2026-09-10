@@ -4112,6 +4112,10 @@ body:not(.is-demo) .demo-only{display:none !important}
 .asc-nm{flex:1;min-width:0;font-size:calc(12.5px*var(--tscale));color:var(--text);line-height:1.25}
 .asc-r{margin-left:6px;font-family:var(--num);font-size:calc(10.5px*var(--tscale));font-weight:400;color:var(--gold-hi)}
 .asc-row:not(.maxed) .asc-r:not(:empty){color:#dcc79a}
+.asc-gain{display:block;font-family:var(--num);font-size:calc(10px*var(--tscale));color:var(--muted);margin-top:2px}
+.asc-gain b{color:#a8d264;font-weight:400}
+.asc-row.sv{background:#170f08;border-color:#2c2312}
+.asc-go.sv{font-family:var(--num);font-size:calc(10.5px*var(--tscale));padding:4px 9px;letter-spacing:.3px}
 .asc-pips{display:flex;gap:2px;margin-top:3px}
 .asc-pips i{width:9px;height:4px;border-radius:1px;background:#3a2f16}
 .asc-pips i.on{background:linear-gradient(90deg,#c79b4e,#f4dca4)}
@@ -7958,7 +7962,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.124.11">v0.9.124</div>
+  <div class="mm-ver" data-build="0.9.124.12">v0.9.124</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -13893,7 +13897,7 @@ function skillingGearTipHtml(itemId){
 function _gearStatVec(itemId){
   // Flat combat stats. Leather secondaries (crit/dodge/aspd) live here too.
   var out={};
-  var cs=COMBAT_GEAR_STATS[itemId];
+  var cs=gearStats(itemId);
   if(cs){ for(var k in cs){ if(cs[k]) out[k]=cs[k]; } }
   // Percentage bonuses from shop gear / jewelry.
   var si=(typeof SHOP!=='undefined')?SHOP.find(function(i){return i.id===itemId;}):null;
@@ -13970,7 +13974,7 @@ function gearDeltaHTML(candidateId, equippedId){
 function combatGearStatBlock(itemId){
   var it=ITEMS[itemId];
   if(!it||!it.cgear) return '';
-  var s=COMBAT_GEAR_STATS[itemId]||{atk:0,str:0,def:0};
+  var s=gearStats(itemId)||{atk:0,str:0,def:0};
   var tierNames={1:'Bronze',2:'Iron',3:'Steel',4:'Mithril',5:'Cobalt',6:'Runite',7:'Starsteel',8:'Void'};
   var slotLabels={helmet:'Helmet',chest:'Chest',legs:'Legs',gloves:'Gloves',boots:'Boots',weapon:'Weapon',shield:'Shield',cape:'Cape'};
   var isLeather=!!it.light;   // (1.0.69) leather = light armour with crit/dodge/aspd perks
@@ -17363,7 +17367,7 @@ function getBodyItemDesc(id){
   }
   // Combat gear — show tier + atk/str/def
   if(it&&it.cgear){
-    var s=COMBAT_GEAR_STATS[id]||{atk:0,str:0,def:0};
+    var s=gearStats(id)||{atk:0,str:0,def:0};
     var parts=[];
     if(s.atk) parts.push('+'+s.atk+' Atk');
     if(s.str) parts.push('+'+s.str+' Str');
@@ -20117,7 +20121,7 @@ function armorSplit(){
   const ARMOR=['helmet','chest','legs','gloves','boots'];
   if(ce){
     for(const id of Object.values(ce)){
-      const it=ITEMS[id], cs=COMBAT_GEAR_STATS[id];
+      const it=ITEMS[id], cs=gearStats(id);
       if(!it||!it.cgear||!cs||ARMOR.indexOf(it.cslot)<0) continue;
       if(it.light){ leatherAtk += cs.atk||0; }
       else { plateDef += cs.def||0; }
@@ -20149,7 +20153,7 @@ function armorPerkBonuses(){
   const ce=state&&state.combatEquipped;
   if(ce){
     for(const itemId of Object.values(ce)){
-      const cs=COMBAT_GEAR_STATS[itemId];
+      const cs=gearStats(itemId);
       if(!cs) continue;
       crit  += cs.crit||0;
       dodge += cs.dodge||0;
@@ -20399,7 +20403,7 @@ function combatStats(){
   const ce=state&&state.combatEquipped;
   if(ce){
     for(const itemId of Object.values(ce)){
-      const cs=COMBAT_GEAR_STATS[itemId];
+      const cs=gearStats(itemId);
       if(!cs) continue;
       atk += cs.atk||0;
       str += cs.str||0;
@@ -20441,7 +20445,7 @@ function combatGearBreakdown(){
   const seen={};
   const pushPiece=(itemId)=>{
     if(!itemId||seen[itemId]) return;
-    const stats=COMBAT_GEAR_STATS[itemId];
+    const stats=gearStats(itemId);
     if(!stats) return;
     if(!(stats.atk||stats.str||stats.def)) return;
     seen[itemId]=true;
@@ -20606,7 +20610,7 @@ function rangedArmourMult(){
        penalty. Body armour is the choice this models. */
     if(slot==='weapon'||slot==='quiver'||slot==='shield') continue;
     const id=ce[slot], it=id&&ITEMS[id]; if(!it||it.light) continue;
-    const cs=COMBAT_GEAR_STATS[id]; if(!cs) continue;
+    const cs=gearStats(id); if(!cs) continue;
     heavy += cs.def||0;
   }
   return Math.max(RANGED_PLATE_FLOOR, 1 - heavy*RANGED_PLATE_PER_DEF);
@@ -21103,7 +21107,7 @@ function shieldHpStrBonus(){
 function shieldDamageReduction(){
   const sid=eqCombatShield(); if(!sid) return 0;
   if(_shieldIsBuckler(sid)) return 0;   // bucklers don't block — they're a light offhand
-  const def=(COMBAT_GEAR_STATS[sid]&&COMBAT_GEAR_STATS[sid].def)||0;
+  const _sst=gearStats(sid); const def=(_sst&&_sst.def)||0;
   let dr=Math.min(0.28, def*0.003);   // best shield (Aegis of Dawn, 100 def) → 28%
   if(_lightWepShieldPenalty()) dr*=0.5;   // a light weapon can't brace a shield → half block
   if(typeof charClass==='function' && charClass()==='guardian') dr=Math.min(0.35, dr*1.25);
@@ -21782,7 +21786,9 @@ function foeMaxBlow(mon){
   let d=Math.max(1,Math.round(mon.str||0));
   const sdr=(typeof shieldDamageReduction==='function')?shieldDamageReduction():0;
   if(sdr>0) d=Math.max(1,Math.round(d*(1-sdr)));
-  const cdr=(typeof cmastBonuses==='function')?Math.min(0.60,cmastBonuses().dmgReduce||0):0;
+  const cdr=Math.min(0.60,
+    ((typeof cmastBonuses==='function')?(cmastBonuses().dmgReduce||0):0)
+    + ((typeof ascensionDR==='function')?ascensionDR():0));
   if(cdr>0) d=Math.max(1,Math.round(d*(1-cdr)));
   if(state.cmast&&state.cmast['r_t3_r']>0) d=Math.round(d*1.05);
   return d;
@@ -31347,7 +31353,7 @@ const RAIDS=[
 const SPR_ID='sundered_spire';
 const SPR_BOSS_EVERY=5;
 const SPR_HP_STEP=1.048;    // health per floor
-const SPR_DMG_STEP=1.05;    // attack and max hit per floor — this is the wall
+const SPR_DMG_STEP=1.042;   // attack and max hit per floor — this is the wall
 /* Foe defence deliberately climbs at less than half the rate of everything else.
    On one shared curve, floor 40 sat at 1,675 defence against a best-in-slot 506
    accuracy: a 23% hit chance, which reads as a broken game rather than a hard one,
@@ -31590,10 +31596,102 @@ function ascendItem(id){
   renderAll();
   return true;
 }
-/* Per rank, per equipped piece. Small numbers that add up across nine slots and
-   ten ranks: a fully ascended loadout is worth about +27% attack, which is a tier
-   of gear, not a second game. */
-const ASC_PER_RANK={atkBoost:0.003, defBoost:0.004, hpBoost:0.0025, critChance:0.0015, lifesteal:0.0012};
+/* Ascension raises the item's OWN attack, strength and defence — 6% of base per
+   rank, so a ten-rank piece is worth 1.6 of itself. That is the whole point: a
+   Barrow Blade at 39/32 is vendor trash the day the Emberforge opens, and at ★10
+   it is 62/51, which is a real weapon again. A global percentage could never do
+   that — it scales whatever you are already wearing, so the best item still wins
+   and the graveyard stays a graveyard. */
+const ASC_STAT_PER_RANK=0.06;
+/* What a rank buys BEYOND the item's own numbers.
+
+   The stat scaling above is what makes an old piece wearable again, but on its own
+   it does almost nothing for the Spire: measured, +60% across a full loadout moved
+   the wall by a single floor. Defence sits inside atk/(atk+def) against an attack
+   that grows exponentially, so it diminishes exactly when you need it; and max HP
+   comes from the Hitpoints level, not from gear, so raising defence barely moves
+   the pool. Percentage max HP and flat damage reduction are multiplicative and do
+   not diminish, which is why the depth you can reach rides on these two. */
+const ASC_PER_RANK={critChance:0.0015, lifesteal:0.0012, hpBoost:0.005};
+/* Six worn pieces at ten ranks = 30% less damage taken, capped at 35% so a nine-slot
+   loadout cannot run away with it. Shares the 0.60 ceiling with the Combat Mastery
+   reduction nodes, so carrying both never stacks past it. */
+const ASC_DR_PER_RANK=0.005;
+function ascensionDR(){
+  const ce=state&&state.combatEquipped; if(!ce) return 0;
+  let r=0;
+  for(const id of Object.values(ce)) r+=(typeof ascRank==='function')?ascRank(id):0;
+  return Math.min(0.35, r*ASC_DR_PER_RANK);
+}
+/* Worn stats for one item, after Ascension.
+
+   EVERY readout that shows a number the fight uses comes through here. The gear
+   panel, the slot picker, the compare line, the shield-block maths and combatStats
+   all used to read COMBAT_GEAR_STATS directly; leaving any one of them on the raw
+   table means the item card and the arena quietly disagree, which is the exact
+   class of bug the tooltip audit exists for. Returns the shared object untouched
+   at rank 0, so the common path allocates nothing. */
+function gearStats(id){
+  const base=COMBAT_GEAR_STATS[id];
+  if(!base) return null;
+  const r=(typeof ascRank==='function')?ascRank(id):0;
+  if(r<=0) return base;
+  const m=1+ASC_STAT_PER_RANK*r;
+  return Object.assign({},base,{
+    atk:Math.round((base.atk||0)*m),
+    str:Math.round((base.str||0)*m),
+    def:Math.round((base.def||0)*m)});
+}
+
+/* ── Salvage (0.9.124.12) ─────────────────────────────────────────────────────
+   The four raids drop 44 pieces of gear and roughly eleven of them are ever worn
+   at the end: every tier is 30-40% better than the last across every slot, so each
+   raid's whole table dies the day the next one opens. This is the answer. Anything
+   equippable breaks down into Sunderstone by tier, which turns a duplicate you
+   already have into Ascension fuel instead of a satchel slot you resent.
+
+   Deliberately not a full refund — salvaging your way to one ten-rank piece takes
+   around forty T7 drops, so it supplements the climb rather than replacing it. */
+function salvageYield(id){
+  const it=ITEMS[id];
+  if(!it||!COMBAT_GEAR_STATS[id]) return 0;
+  const tier=Math.max(1,Math.min(12, it.ctier||1));
+  let v=Math.max(2, Math.round(2.2*Math.pow(tier,1.7)));
+  /* An ascended piece hands back half of what went into it, so raising the wrong
+     item is a mistake you can walk back rather than one you live with. */
+  const r=(typeof ascRank==='function')?ascRank(id):0;
+  if(r>0){ let spent=0; for(let k=1;k<=r;k++) spent+=Math.round(12*Math.pow(k,1.75)); v+=Math.round(spent*0.5); }
+  return v;
+}
+function canSalvage(id){
+  if(!COMBAT_GEAR_STATS[id]) return false;
+  if(!state||!state.items||(state.items[id]||0)<=0) return false;
+  /* Never break down the thing you are standing in. The gear panel learned this
+     one the hard way when equipped items turned out to be sellable. */
+  const ce=state.combatEquipped||{}, se=state.skillingEquipped||{};
+  for(const k in ce) if(ce[k]===id) return false;
+  for(const k in se) if(se[k]===id) return false;
+  return true;
+}
+function salvageItem(id, qty){
+  if(!canSalvage(id)) return 0;
+  const have=state.items[id]||0;
+  const take=Math.max(1,Math.min(have, (qty|0)||1));
+  const per=salvageYield(id);
+  const got=grantItem('sunderstone', per*take);
+  if(got<=0){ if(typeof toast==='function') toast('No room in the satchel for Sunderstone.'); return 0; }
+  state.items[id]-=take;
+  if(state.items[id]<=0) delete state.items[id];
+  /* Salvaging the last copy retires its rank with it, so one you re-acquire later
+     does not silently arrive pre-ascended. */
+  if(!state.items[id] && state.asc) delete state.asc[id];
+  if(!state.discovered) state.discovered={};
+  state.discovered.sunderstone=1;
+  if(typeof toast==='function') toast('Salvaged '+(take>1?take+'\u00d7 ':'')+(ITEMS[id]?ITEMS[id].name:id)+' \u2192 '+got+' Sunderstone');
+  if(typeof saveGame==='function') saveGame();
+  renderAll();
+  return got;
+}
 function ascensionBonuses(){
   const b={atkBoost:0,hpBoost:0,defBoost:0,critChance:0,lifesteal:0};
   const ce=state&&state.combatEquipped; if(!ce) return b;
@@ -37525,7 +37623,14 @@ function combatTick(){
     if(foeDmg>0){ const _sdr=(typeof shieldDamageReduction==='function')?shieldDamageReduction():0; if(_sdr>0) foeDmg=Math.max(1,Math.round(foeDmg*(1-_sdr))); }
     // ── Combat Mastery damage reduction (1.0.101) — Bulwark's Ironhide/Stonewall/Shield
     // Wall soak a further flat %, applied after shield block. Clamped so it can't zero a hit.
-    if(foeDmg>0){ const _cdr=(typeof cmastBonuses==='function')?Math.min(0.60,cmastBonuses().dmgReduce||0):0; if(_cdr>0) foeDmg=Math.max(1,Math.round(foeDmg*(1-_cdr))); }
+    if(foeDmg>0){
+      /* Combat Mastery reduction and Ascension reduction share one cap, so a
+         player carrying both never stacks past 60%. */
+      const _cdr=Math.min(0.60,
+        ((typeof cmastBonuses==='function')?(cmastBonuses().dmgReduce||0):0)
+        + ((typeof ascensionDR==='function')?ascensionDR():0));
+      if(_cdr>0) foeDmg=Math.max(1,Math.round(foeDmg*(1-_cdr)));
+    }
     // Berserker downside (1.0.104) — +5% damage taken while below 30% HP (the trade for its +15% dealt).
     if(foeDmg>0 && state.cmast && state.cmast['r_t3_r']>0 && combat.youMaxHp>0 && (combat.youHp/combat.youMaxHp)<0.30){ foeDmg=Math.round(foeDmg*1.05); }
     /* Brace (0.9.125) — the Momentum guard. Applied last so it multiplies with
@@ -37954,7 +38059,7 @@ function ownedItemsForSlot(slot){
 /* Build a one-line stat readout for an item row in the drawer. Combat gear shows
    atk/str/def deltas; jewelry falls back to its description string. */
 function gearRowStatLine(itemId){
-  const cs=COMBAT_GEAR_STATS[itemId];
+  const cs=gearStats(itemId);
   if(cs){
     const parts=[];
     if(cs.atk) parts.push(`+${cs.atk} atk`);
@@ -38828,13 +38933,22 @@ function buildAscensionHTML(){
     const it=ITEMS[id]||{name:id};
     const r=ascRank(id), c=ascCost(id), maxed=r>=ASC_MAX;
     const pips=Array.from({length:ASC_MAX},(_,i)=>`<i class="${i<r?'on':''}"></i>`).join('');
+    /* What the rank is actually worth, in the item's own numbers. A pip row and a
+       price told you the cost and nothing about the return. */
+    const b=COMBAT_GEAR_STATS[id]||{}, now=gearStats(id)||{};
+    const nxt=maxed?null:{atk:Math.round((b.atk||0)*(1+ASC_STAT_PER_RANK*(r+1))),
+                          str:Math.round((b.str||0)*(1+ASC_STAT_PER_RANK*(r+1))),
+                          def:Math.round((b.def||0)*(1+ASC_STAT_PER_RANK*(r+1)))};
+    const statTxt=['atk','str','def'].filter(k=>(b[k]||0)>0)
+      .map(k=>maxed?`${k} ${now[k]}`:`${k} ${now[k]||0}→<b>${nxt[k]}</b>`).join(' · ');
     const costTxt=maxed
       ? '<span class="asc-max">Fully ascended</span>'
       : `${iconHTML('sunderstone')} <b class="${stones>=c.sunderstone?'':'short'}">${c.sunderstone.toLocaleString()}</b>`
         +(c.spirecore?` &nbsp;${iconHTML('spirecore')} <b class="${cores>=c.spirecore?'':'short'}">${c.spirecore}</b>`:'');
     return `<div class="asc-row${maxed?' maxed':''}">
       <span class="asc-ic">${iconHTML(id)}</span>
-      <span class="asc-nm">${it.name}<b class="asc-r">${r?'★'+r:'not ascended'}</b><span class="asc-pips">${pips}</span></span>
+      <span class="asc-nm">${it.name}<b class="asc-r">${r?'★'+r:''}</b>
+        <span class="asc-gain">${statTxt}</span><span class="asc-pips">${pips}</span></span>
       <span class="asc-cost">${costTxt}</span>
       ${maxed?'':`<button class="asc-go" data-asc="${id}"${ascAfford(c)?'':' disabled'}>★ ${c.rank}</button>`}
     </div>`;
@@ -38842,9 +38956,38 @@ function buildAscensionHTML(){
   return `<div class="asc-panel">
     <div class="asc-head"><span class="asc-t">Ascension</span>
       <span class="asc-bank">${iconHTML('sunderstone')} ${stones.toLocaleString()} &nbsp; ${iconHTML('spirecore')} ${cores.toLocaleString()}</span></div>
-    <div class="asc-sub">Spend what the Spire gives up to raise a worn piece through ten ranks. Every rank on every worn piece adds to your attack, guard, health, crit and lifesteal. Spire Cores are asked for from rank 7.</div>
+    <div class="asc-sub">Spend what the Spire gives up to raise a worn piece through ten ranks. Each rank adds <b>6% to that item's own attack, strength and defence</b>, and every rank you own anywhere also adds max health, crit, lifesteal and <b>damage reduction</b> &mdash; which is what actually carries you deeper into the Spire. Spire Cores are asked for from rank 7.${(function(){const dr=(typeof ascensionDR==='function')?ascensionDR():0;return dr>0?` <b style="color:#a8d264">Currently ${(dr*100).toFixed(1)}% less damage taken.</b>`:'';})()}</div>
     ${uniq.length?`<div class="asc-list">${rows}</div>`
       :'<div class="asc-empty">Equip combat gear to ascend it.</div>'}
+    ${buildSalvageHTML()}
+  </div>`;
+}
+
+/* Salvage list. Owned combat gear you are NOT wearing, richest first — which in
+   practice is every raid drop the next raid made redundant. */
+function buildSalvageHTML(){
+  const rows=Object.keys(state.items||{})
+    .filter(id=>canSalvage(id))
+    .map(id=>({id, qty:state.items[id], per:salvageYield(id), name:(ITEMS[id]||{}).name||id}))
+    .filter(x=>x.per>0)
+    .sort((a,b)=>(b.per*b.qty)-(a.per*a.qty));
+  if(!rows.length) return '';
+  const shown=rows.slice(0,14);
+  const total=rows.reduce((a,x)=>a+x.per*x.qty,0);
+  const cells=shown.map(x=>`<div class="asc-row sv">
+      <span class="asc-ic">${iconHTML(x.id)}</span>
+      <span class="asc-nm">${x.name}${x.qty>1?`<b class="asc-r">×${x.qty}</b>`:''}
+        <span class="asc-gain">${x.per} each</span></span>
+      <button class="asc-go sv" data-sv="${x.id}" data-svq="1">Break 1</button>
+      ${x.qty>1?`<button class="asc-go sv" data-sv="${x.id}" data-svq="${x.qty}">All ${x.qty}</button>`:''}
+    </div>`).join('');
+  return `<div class="asc-sv">
+    <div class="asc-head" style="margin-top:14px;padding-top:12px;border-top:1px solid #2a2013">
+      <span class="asc-t" style="font-size:calc(15px*var(--tscale))">Salvage</span>
+      <span class="asc-bank">${iconHTML('sunderstone')} ${total.toLocaleString()} in the satchel</span></div>
+    <div class="asc-sub">Break down combat gear you are not wearing. Every raid tier is 30-40% stronger than the last, so the pieces the next raid made redundant become Ascension fuel instead of dead weight. Equipped gear is never listed.</div>
+    <div class="asc-list">${cells}</div>
+    ${rows.length>shown.length?`<div class="asc-empty" style="margin-top:7px">${rows.length-shown.length} more in the satchel.</div>`:''}
   </div>`;
 }
 
@@ -39525,6 +39668,10 @@ ${combat.raid?buildRaidProgressHTML():''}
   panel.querySelectorAll('.asc-go[data-asc]').forEach(b=>{
     if(b.disabled) return;
     b.addEventListener('click',()=>ascendItem(b.getAttribute('data-asc')));
+  });
+  // Salvage (0.9.124.12) — break redundant gear down into Ascension fuel.
+  panel.querySelectorAll('.asc-go[data-sv]').forEach(b=>{
+    b.addEventListener('click',()=>salvageItem(b.getAttribute('data-sv'), +b.getAttribute('data-svq')||1));
   });
 
   // ── Slayer tab wiring (1.0.73) ───────────────────────────────────────────────
