@@ -113,6 +113,84 @@ setTimeout(()=>{
     ev("combat.youHp=0; handleRaidFail(); combat.active=false;");
   }
 
+  section('Spire gear');
+  {
+    ev("state=defaultState(); normalizeState();");
+    const g=JSON.parse(ev("JSON.stringify(SPIRE_GEAR.map(id=>({id,n:ITEMS[id].name,slot:ITEMS[id].cslot,"+
+      "t:ITEMS[id].ctier,cap:ascCap(id),st:COMBAT_GEAR_STATS[id],ub:ITEMS[id].ubonus||null,mg:ITEMS[id].momGain||0,"+
+      "req:combatGearReq(id)})))"));
+    ok('the Spire drops four pieces', g.length===4, g.map(x=>x.n).join(', '));
+    ok('all of them are T11 and ascend to ten', g.every(x=>x.t===11&&x.cap===10));
+    /* T11 missing from COMBAT_GEAR_REQ makes the best gear in the game equip at
+       level 1, and nothing else in the file would notice. */
+    ok('and every one gates at Lv 99', g.every(x=>x.req&&x.req.level===99),
+       JSON.stringify(g.map(x=>x.req&&x.req.level)));
+    ok('they cover the slots the Empyrean does not',
+       g.map(x=>x.slot).sort().join(',')==='gloves,shield,weapon,weapon',
+       g.map(x=>x.slot).join(', '));
+
+    /* The whole reason these exist: each has to actually be best in slot. */
+    const beats=(id,vs,label)=>{
+      const a=JSON.parse(ev(`JSON.stringify(COMBAT_GEAR_STATS['${id}'])`));
+      const b=JSON.parse(ev(`JSON.stringify(COMBAT_GEAR_STATS['${vs}'])`));
+      const sa=(a.atk+(a.str||0))>a.def?(a.atk+a.str):a.def;
+      const sb=(b.atk+(b.str||0))>b.def?(b.atk+b.str):b.def;
+      ok(label, sa>sb, sa+' vs '+sb);
+    };
+    beats('sunderedge','dawnbreaker','the sword beats Dawnbreaker');
+    beats('faultward','aegis_of_dawn','the shield beats the Aegis of Dawn');
+    beats('plummet','sunpiercer','the bow beats Sunpiercer');
+    beats('stonewright_gauntlets','voidsteel_gloves','the gloves beat the crafted best');
+    /* But the two-hander stays the Empyrean's, by design. */
+    ok('and the Dawnreaper is still the best weapon in the game',
+       ev("COMBAT_GEAR_STATS.dawnreaper.atk+COMBAT_GEAR_STATS.dawnreaper.str > "+
+          "COMBAT_GEAR_STATS.sunderedge.atk+COMBAT_GEAR_STATS.sunderedge.str"),
+       ev("String(COMBAT_GEAR_STATS.dawnreaper.atk+COMBAT_GEAR_STATS.dawnreaper.str)")+' vs '+
+       ev("String(COMBAT_GEAR_STATS.sunderedge.atk+COMBAT_GEAR_STATS.sunderedge.str)"));
+
+    // the curve
+    const c=[1,10,25,40,55,70,90].map(f=>+ev('spireGearChance('+f+')'));
+    console.log('       floors 1/10/25/40/55/70/90: '+c.map(x=>(x*100).toFixed(3)+'%').join('  '));
+    ok('it starts vanishingly rare', c[0]<0.0002, (c[0]*100).toFixed(4)+'% at floor 1');
+    ok('and climbs the whole way', c.every((x,i)=>i===0||x>=c[i-1]));
+    ok('it reaches certainty only far past anything survivable', c[5]>0.9 && c[3]<0.05,
+       'floor 40 '+(c[3]*100).toFixed(2)+'% -> floor 70 '+(c[5]*100).toFixed(0)+'%');
+    ok('and never exceeds certainty', ev('spireGearChance(400)===1'));
+
+    /* Shallow floors must not pay gear, and non-landings must not roll at all. */
+    ev("state.combatXp={}; for(const k of ['attack','strength','defence','hitpoints','ranged']) state.combatXp[k]=XP_CUM[99];"+
+       "refreshCombatStats(); state.items={}; startRaid(SPR_ID);");
+    ev("_g=0;");
+    for(let i=0;i<30;i++) ev("(function(){var r=spireFloorLoot("+(i+1)+"); if(r.gear&&r.gear.length) _g+=r.gear.length;})()");
+    ok('thirty shallow floors give up no gear', ev('_g===0'), String(ev('_g')));
+    ev("_ng=0; for(var f=1;f<=60;f++){ if(f%SPR_BOSS_EVERY!==0){ var r=spireFloorLoot(f); if(r.gear&&r.gear.length) _ng++; } }");
+    ok('and non-landing floors never roll it', ev('_ng===0'), String(ev('_ng')));
+    ev("combat.youHp=0; handleRaidFail(); combat.active=false;");
+
+    /* Heavy armour costs ranged accuracy, so plate gauntlets in the same raid that
+       drops the best bow would put a swap back in. These must be BIS for everyone. */
+    /* rangedArmourMult early-returns 1 without a bow equipped, so the bow has to be
+       on or this measures nothing and passes for the wrong reason. */
+    /* Uses a REAL bow. Sunpiercer and Plummet are bow-shaped melee weapons (no
+       `ranged` flag), so usingRanged() is false for them and the penalty never
+       engages — measuring with one passes for the wrong reason. */
+    ev("_bow=Object.keys(ITEMS).find(id=>ITEMS[id]&&ITEMS[id].ranged&&ITEMS[id].ammo==='arrow');");
+    ev("state.combatEquipped={weapon:_bow,gloves:'voidsteel_gloves'}; _rp0=rangedArmourMult();");
+    ev("state.combatEquipped={weapon:_bow,gloves:'stonewright_gauntlets'}; _rp1=rangedArmourMult();");
+    ok('the test actually engages the ranged penalty', ev('_rp0<1'),
+       'crafted plate costs '+(100*(1-(+ev('_rp0')))).toFixed(1)+'% accuracy');
+    ok('and the gauntlets cost a ranged build nothing', ev('_rp1===1 && _rp1>_rp0'),
+       'crafted '+(+ev('_rp0')).toFixed(3)+' vs Spire '+(+ev('_rp1')).toFixed(3));
+    ok('and they still out-stat every other pair',
+       ev("COMBAT_GEAR_STATS.stonewright_gauntlets.def>COMBAT_GEAR_STATS.voidsteel_gloves.def && "+
+          "COMBAT_GEAR_STATS.stonewright_gauntlets.atk>COMBAT_GEAR_STATS.voidsteel_gloves.atk"));
+
+    // the gloves' mechanic
+    ev("state.combatEquipped={}; _m0=momGearBonus(); state.combatEquipped={gloves:'stonewright_gauntlets'}; _m1=momGearBonus();");
+    ok('the gauntlets add Momentum per hit when worn', ev('_m0===0 && _m1===3'),
+       '+'+ev('String(_m1)')+' on top of '+ev('String(MOM_PER_HIT)'));
+  }
+
   section('Ascension');
   {
     ev("state=defaultState(); normalizeState(); state.combatEquipped=state.combatEquipped||{};");

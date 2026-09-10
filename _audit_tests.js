@@ -3343,7 +3343,11 @@ setTimeout(() => {
        comes off ChatGPT contact sheets and a sheet run cannot happen in the same pass
        that adds the raid they drop from. PENDING, not rejected — same standing as the
        ranged batch above, and same instruction: do NOT add these to KEEP_SVG. */
-    const SPIRE_PENDING = ['sunderstone','spirecore'];
+    const SPIRE_PENDING = ['sunderstone','spirecore',
+      /* The Spire's four gear pieces (0.9.124.15). Same standing: they use the
+         palette-driven generators every tier uses, and the painted art comes off
+         a contact sheet later. Do NOT add them to KEEP_SVG. */
+      'sunderedge','faultward','plummet','stonewright_gauntlets'];
     const SVG_OK = new Set(['radcliff_tally'].concat(RANGED_PENDING, SPIRE_PENDING));
 
     const unexpected = cov.svg.filter(id => !SVG_OK.has(id));

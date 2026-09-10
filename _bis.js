@@ -38,13 +38,21 @@ setTimeout(()=>{
   console.log('  '+String(tot).padStart(4)+'  total equippable combat pieces');
 
   console.log('\n=== BEST IN SLOT (base stats) ===');
+  // maxed value at the item's own Ascension cap, since that is what a player ends on
+  const maxed=(id)=>{ const c=+ev(`ascCap('${id}')`);
+    if(c<=0) return null;
+    ev(`state.asc={'${id}':${c}}`); const g=JSON.parse(ev(`JSON.stringify(gearStats('${id}'))`));
+    ev('state.asc={}'); return {c:c, atk:g.atk, str:g.str, def:g.def}; };
   const show=(label, list, score, fmt)=>{
     if(!list.length){ console.log('  '+label.padEnd(22)+' NONE'); return; }
     const best=list.slice().sort((a,b)=>score(b)-score(a))[0];
     const second=list.slice().sort((a,b)=>score(b)-score(a))[1];
     const gap=second?(' (next: '+second.n+' '+fmt(second)+')'):'';
-    console.log('  '+label.padEnd(22)+best.n.padEnd(22)+fmt(best).padEnd(20)+best.src);
-    if(second) console.log('  '+' '.repeat(22)+'  runner-up: '+second.n+' '+fmt(second));
+    const mx=maxed(best.id);
+    // weapons read atk/str, armour reads def — picking atk first printed a helmet's 5
+    const isWep=(best.atk+best.str)>best.def;
+    const mtxt=mx?('  ->  ★'+mx.c+'  '+(isWep?(mx.atk+'/'+mx.str):('def '+mx.def))):'  (cannot ascend)';
+    console.log('  '+label.padEnd(20)+best.n.padEnd(21)+fmt(best).padEnd(19)+mtxt.padEnd(20)+best.src);
   };
   const wep=(bySlot.weapon||[]);
   const S=x=>x.atk+x.str, F=x=>'atk '+x.atk+' str '+x.str;
