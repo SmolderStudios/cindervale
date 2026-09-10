@@ -4092,6 +4092,12 @@ body:not(.is-demo) .demo-only{display:none !important}
 .cvstage.rx-raid .cvrail.l{left:calc(94px*var(--tscale))}
 /* ════ The Sundered Spire + Ascension (0.9.124.11) ════════════════════════════ */
 .spr-note{font-size:calc(11px*var(--tscale));color:var(--muted);line-height:1.4}
+.spr-fxrow{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+.spr-fxrow.run{margin-top:7px}
+.spr-fx{font-size:calc(10.5px*var(--tscale));font-family:var(--num);letter-spacing:.3px;
+  padding:2px 7px;border-radius:5px;border:1px solid;cursor:var(--cur-help);white-space:nowrap}
+.spr-fx.bad{color:#e8b0a0;border-color:rgba(196,84,58,.55);background:rgba(196,84,58,.13)}
+.spr-fx.good{color:#b9e08a;border-color:rgba(125,163,63,.55);background:rgba(125,163,63,.13)}
 .spr-mats{font-size:calc(12px*var(--tscale));color:#e8c8dc;font-family:var(--num);display:inline-flex;align-items:center;gap:4px}
 .spr-floor{font-family:var(--num);font-weight:700;color:#f0c8e0}
 .spr-chase{font-size:calc(11px*var(--tscale));color:var(--muted);font-family:var(--num)}
@@ -7985,7 +7991,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.124.19">v0.9.124</div>
+  <div class="mm-ver" data-build="0.9.124.20">v0.9.124</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -20419,12 +20425,12 @@ function combatBonusesAll(){
     // Leather crit stacks on top of enchant/socket/set/unique crit — all flow through
     // the single crit roll in combatTick.
     critChance:(e.critChance||0)+ (s.critChance||0) + a.crit + (st.critChance||0) + (u.critChance||0) + (asc.critChance||0) + cm.critChance + tj.critChance,
-    lifesteal: (e.lifesteal||0) + (s.lifesteal||0) + (st.lifesteal||0) + (u.lifesteal||0) + (asc.lifesteal||0) + cm.lifesteal + tj.lifesteal,
+    lifesteal: (e.lifesteal||0) + (s.lifesteal||0) + (st.lifesteal||0) + (u.lifesteal||0) + (asc.lifesteal||0) + cm.lifesteal + tj.lifesteal + ((typeof spireBoon==='function')?spireBoon('lifesteal'):0),
     dodge:     a.dodge,   // chance to fully avoid a foe's landed hit
-    aspd:      a.aspd + cm.aspd,    // fractional swing-time reduction
+    aspd:      a.aspd + cm.aspd + ((typeof spireBoon==='function')?spireBoon('aspd'):0),
     /* Anything cmastBonuses computes has to be RE-LISTED here or it never leaves
        the function. Point Blank read as a dead node for exactly that reason. */
-    accBoost:  cm.accBoost||0,
+    accBoost:  (cm.accBoost||0) + ((typeof spireBoon==='function')?spireBoon('accBoost'):0),
   };
 }
 
@@ -21837,7 +21843,8 @@ function foeMaxBlow(mon){
   if(sdr>0) d=Math.max(1,Math.round(d*(1-sdr)));
   const cdr=Math.min(0.60,
     ((typeof cmastBonuses==='function')?(cmastBonuses().dmgReduce||0):0)
-    + ((typeof ascensionDR==='function')?ascensionDR():0));
+    + ((typeof ascensionDR==='function')?ascensionDR():0)
+    + ((typeof spireDR==='function')?spireDR():0));
   if(cdr>0) d=Math.max(1,Math.round(d*(1-cdr)));
   if(state.cmast&&state.cmast['r_t3_r']>0) d=Math.round(d*1.05);
   return d;
@@ -28037,6 +28044,9 @@ function buildSpireLogBody(raid){
         <div class="mlm-hsub">Endless · Combat Lv ${raid.unlockLvl} · ${best?('deepest floor '+best):'never climbed'}${runs?` · ${runs} climb${runs>1?'s':''}`:''}</div></div>
     </div>
     <div class="mlog-raidfx"><span class="mrfx-ic">✦</span><div>Every floor pays as you clear it, so a climb that ends on floor 37 keeps everything the first 36 gave up. There is no clear and no rating — <b>depth is the reward</b>. Every ${SPR_BOSS_EVERY}th floor is a landing: a harder foe that always telegraphs, and from floor 15 the only source of Spire Cores.</div></div>
+    <div class="mlog-sec-t">Today's affixes</div>
+    <div class="spr-fxrow" style="margin-top:6px">${spireAffixChips(false)}</div>
+    <div class="mlog-legend" style="margin-top:5px">Two against you and one for you, rolled from the calendar day and the same for everyone. They change at midnight, and a climb already under way keeps the set it started with.</div>
     <div class="mlog-sec-t">What a floor pays</div>
     <div class="mls-wrap"><table class="mls-tbl">
       <thead><tr><th>Floor</th><th>Foe health</th><th>Its max hit</th><th>${iconHTML('ui_coin')} Gold</th>
@@ -31559,6 +31569,64 @@ function _sprBandRaid(floor){
   for(const b of SPR_BANDS) if(floor<=b.to) return b.raid;
   return SPR_BANDS[(Math.floor((floor-1)/10))%SPR_BANDS.length].raid;
 }
+/* ── Daily affixes (0.9.124.20) ────────────────────────────────────────────────
+   Every climb was identical: floor 30 today was floor 30 tomorrow, same foe, same
+   numbers, and the only thing that changed on the way up was which raid's art you
+   were looking at. Affixes are what make a tower worth climbing twice.
+
+   Two against you and one for you, so a day has a shape rather than just a
+   difficulty — some days you are fast and fragile, some slow and unkillable. The
+   boon is not charity: it is the reason to check what today is before you climb.
+
+   Rolled off gdDayIndex(), the same calendar-day index the guild boards use. A day
+   INDEX cannot drift the way a "24h since you last looked" stamp does, which is the
+   exact bug that made guild boards land later every day. */
+const SPIRE_FOE_AFFIXES=[
+  {id:'frenzied',  name:'Frenzied',   desc:'Everything in the tower swings 18% faster.',            foe:{swingMs:0.82}},
+  {id:'ironhided', name:'Ironhided',  desc:'Their guard is 35% harder to get through.',             foe:{def:1.35}},
+  {id:'bloated',   name:'Bloated',    desc:'Everything carries 30% more health.',                   foe:{hp:1.30}},
+  {id:'savage',    name:'Savage',     desc:'Their blows land 18% heavier.',                         foe:{str:1.18}},
+  {id:'relentless',name:'Relentless', desc:'They find the gaps: 25% more attack.',                  foe:{atk:1.25}},
+  {id:'looming',   name:'Looming',    desc:'The tower leans twice as hard — Spire Weight stacks every five floors instead of ten.', foe:{curse:2}},
+];
+const SPIRE_BOON_AFFIXES=[
+  {id:'surefooted',name:'Surefooted', desc:'You find your footing: +12% accuracy.',                 you:{accBoost:0.12}},
+  {id:'wellspring',name:'Wellspring', desc:'Momentum builds 60% faster.',                           you:{momMult:1.60}},
+  {id:'bulwarked', name:'Bulwarked',  desc:'You take 12% less damage from everything.',             you:{dmgReduce:0.12}},
+  {id:'bloodlet',  name:'Bloodlet',   desc:'+8% lifesteal on every blow you land.',                 you:{lifesteal:0.08}},
+  {id:'quickened', name:'Quickened',  desc:'You swing 10% faster.',                                 you:{aspd:0.10}},
+  {id:'richseam',  name:'Rich Seam',  desc:'The rubble pays out: +60% Sunderstone from every floor.',you:{stone:1.60}},
+];
+/* Deterministic per day, and the two hostile picks are drawn without replacement
+   so a day never doubles up on the same one. */
+function spireAffixes(day){
+  const d=(typeof day==='number')?day:((typeof gdDayIndex==='function')?gdDayIndex():0);
+  const h=(n)=>{ let x=((d+1)*2654435761 ^ (n*40503))>>>0; x^=x>>>15; return (x*2246822519)>>>0; };
+  const a=SPIRE_FOE_AFFIXES[h(1)%SPIRE_FOE_AFFIXES.length];
+  let b=SPIRE_FOE_AFFIXES[h(2)%SPIRE_FOE_AFFIXES.length];
+  if(b===a) b=SPIRE_FOE_AFFIXES[(SPIRE_FOE_AFFIXES.indexOf(a)+1)%SPIRE_FOE_AFFIXES.length];
+  const c=SPIRE_BOON_AFFIXES[h(3)%SPIRE_BOON_AFFIXES.length];
+  return [a,b,c];
+}
+/* The day is snapshotted when a climb starts. Rolling over at midnight mid-run
+   would silently change the rules under a player forty floors up. */
+function spireRunAffixes(){
+  if(!combat.raid||!combat.raid.endless) return [];
+  return spireAffixes(combat.raid.affixDay);
+}
+function spireFoeMods(){
+  const m={hp:1,atk:1,str:1,def:1,swingMs:1,curse:1};
+  for(const a of spireRunAffixes()){ if(!a.foe) continue;
+    for(const k in a.foe) m[k]=(k==='curse')?a.foe[k]:m[k]*a.foe[k]; }
+  return m;
+}
+function spireBoon(key){
+  let v=(key==='momMult'||key==='stone')?1:0;
+  for(const a of spireRunAffixes()){ if(!a.you||a.you[key]==null) continue;
+    v=(key==='momMult'||key==='stone')?v*a.you[key]:v+a.you[key]; }
+  return v;
+}
+
 function spireScale(floor){
   const e=Math.max(0,floor-1);
   return { hp:Math.pow(SPR_HP_STEP,e), dmg:Math.pow(SPR_DMG_STEP,e),
@@ -31567,8 +31635,8 @@ function spireScale(floor){
 /* Spire Weight — the curse that makes the climb, not just the numbers. One stack
    per ten floors, applied through the existing raidfx channel so refreshCombatStats
    needs no new code. */
-function spireCurse(floor){
-  const st=Math.floor(floor/10);
+function spireCurse(floor, mult){
+  const st=Math.floor(floor/10)*(mult||1);
   if(st<=0) return null;
   return {name:'Spire Weight ×'+st,
     desc:'The tower leans on you — '+(4*st)+'% less Defence and your strikes drag '+(3*st)+'% slower.',
@@ -31585,20 +31653,23 @@ function spireFloor(floor, preview){
   const base=_sprPick(pool.length?pool:src.stages, floor, isBoss?7:0);
   const sc=spireScale(floor);
   const bossMult=isBoss?1.9:1;
+  /* Today's affixes. Applied to the generated foe rather than to the curve, so the
+     ribbon's preview shows what you are actually about to fight. */
+  const fx=spireFoeMods();
   const id='spr_'+base.id;
   const mon={
     id, zone:SPR_ID, name:base.name, icon:base.icon||base.id,
     lvl:Math.min(120, 95+Math.floor(floor/3)),
-    hp:Math.round(SPR_BASE.hp*sc.hp*bossMult),
-    atk:Math.round(SPR_BASE.atk*sc.dmg*(isBoss?1.15:1)),
-    str:Math.round(SPR_BASE.str*sc.dmg*(isBoss?1.15:1)),
-    def:Math.round(SPR_BASE.def*sc.def),
+    hp:Math.round(SPR_BASE.hp*sc.hp*bossMult*fx.hp),
+    atk:Math.round(SPR_BASE.atk*sc.dmg*(isBoss?1.15:1)*fx.atk),
+    str:Math.round(SPR_BASE.str*sc.dmg*(isBoss?1.15:1)*fx.str),
+    def:Math.round(SPR_BASE.def*sc.def*fx.def),
     coins:0, xp:Math.round(SPR_BASE.xp*sc.xp*bossMult),
-    swingMs:base.swingMs||SPR_BASE.swingMs,
+    swingMs:Math.max(900,Math.round((base.swingMs||SPR_BASE.swingMs)*fx.swingMs)),
     dmgType:base.dmgType, weakTo:base.weakTo,
     boss:isBoss, raidBoss:false, miniBoss:isBoss,
     spireFloor:floor,
-    raidfx:spireCurse(floor),
+    raidfx:spireCurse(floor, fx.curse),
   };
   /* Boss floors always telegraph. Ordinary floors start telegraphing at 12, so the
      first stretch teaches the tower before it starts asking for Brace. */
@@ -31713,7 +31784,7 @@ function spireFloorLoot(floor){
   state.coins += res.gold*SILVER_PER_GOLD;
   if(!state.discovered) state.discovered={};
   const give=(id,q)=>{ const got=grantItem(id,q); if(got>0){ state.discovered[id]=1; res.mats.push({id,qty:got}); } };
-  give('sunderstone', 1+Math.floor(floor/6));
+  give('sunderstone', Math.max(1,Math.round((1+Math.floor(floor/6))*spireBoon('stone'))));
   /* Spire Cores are the deep-floor currency and the last four Ascension ranks are
      the only thing that wants them, so they start where the climb starts hurting. */
   if(floor%SPR_BOSS_EVERY===0 && floor>=15) give('spirecore', 1+Math.floor((floor-15)/20));
@@ -31855,6 +31926,8 @@ const ASC_PER_RANK={critChance:0.0015, lifesteal:0.0012, hpBoost:0.005};
    loadout cannot run away with it. Shares the 0.60 ceiling with the Combat Mastery
    reduction nodes, so carrying both never stacks past it. */
 const ASC_DR_PER_RANK=0.005;
+/* Folded in beside Ascension's reduction so both share the one 0.60 ceiling. */
+function spireDR(){ return spireBoon('dmgReduce'); }
 function ascensionDR(){
   const ce=state&&state.combatEquipped; if(!ce) return 0;
   let r=0;
@@ -31954,7 +32027,8 @@ function startRaid(id){
   state.zoneMode='raids';
   combat.rare=false;
   combat.raid={ id:raid.id, stage:0, startMs:Date.now(), n:raid.stages.length, casts:0,
-                floor:raid.endless?1:0, endless:!!raid.endless };
+                floor:raid.endless?1:0, endless:!!raid.endless,
+                affixDay:(typeof gdDayIndex==='function')?gdDayIndex():0 };
   if(raid.endless) state.spireRuns=(state.spireRuns||0)+1;
   combat.cheatDeathReady=true;   // (1.0.85) one cheat-death per raid run (if gear worn)
   clearRaidMomentum();
@@ -37609,7 +37683,7 @@ function combatTick(){
        same total as the void bomb above, so a cleave counts once for each of them
        rather than being dropped by the two newer systems. */
     if(combat.raid){
-      if(youDmg>0) momAdd(MOM_PER_HIT+momGearBonus());
+      if(youDmg>0) momAdd(Math.round((MOM_PER_HIT+momGearBonus())*spireBoon('momMult')));
       if(combat.cast) combat.cast.acc=(combat.cast.acc||0)+youDmg+_cleaveDmg;
     }
     if(youDmg>0){
@@ -37894,7 +37968,8 @@ function combatTick(){
          player carrying both never stacks past 60%. */
       const _cdr=Math.min(0.60,
         ((typeof cmastBonuses==='function')?(cmastBonuses().dmgReduce||0):0)
-        + ((typeof ascensionDR==='function')?ascensionDR():0));
+        + ((typeof ascensionDR==='function')?ascensionDR():0)
+        + ((typeof spireDR==='function')?spireDR():0));
       if(_cdr>0) foeDmg=Math.max(1,Math.round(foeDmg*(1-_cdr)));
     }
     // Berserker downside (1.0.104) — +5% damage taken while below 30% HP (the trade for its +15% dealt).
@@ -39089,6 +39164,7 @@ function buildSpireProgressHTML(raid){
         · <span class="spr-floor" id="rxFloor">Floor ${floor}</span>${(floor%SPR_BOSS_EVERY===0)?' — Landing':''}</span>
       <span class="rp-r">${curse}<span class="spr-chase" id="rxChase">${chase}</span><span class="rp-timer" id="raidTimer">${_fmtRaidTime(ms)}</span></span>
     </div>
+    <div class="spr-fxrow run">${spireAffixChips(true)}</div>
     <div class="rp-warn">⚠ There is no top. Every floor pays as you clear it, and the climb ends when you fall. No single blow can take more than 45% of your health &mdash; how deep you get is a question of how much food you brought.</div>
   </div>`;
 }
@@ -39153,6 +39229,13 @@ function buildRaidMomentumHTML(){
    watching slip away while you fight. */
 /* The Spire's card. It cannot use the ordinary one: there are no stages to draw
    dots for, no rating to beat and no clear to count. Depth is all three. */
+/* Today's affixes as chips. `live` reads the run's snapshotted day so a climb in
+   progress shows what it is actually being fought under, not what midnight rolled. */
+function spireAffixChips(live){
+  const list=live?spireRunAffixes():spireAffixes();
+  if(!list.length) return '';
+  return list.map(a=>`<span class="spr-fx ${a.foe?'bad':'good'}" data-tip="${String(a.desc).replace(/"/g,'&quot;')}">${a.foe?'\u25bc':'\u25b2'} ${a.name}</span>`).join('');
+}
 function buildSpireCardHTML(r, active, inRaid){
   const unlocked=raidUnlocked(r);
   const best=state.spireBest||0, runs=state.spireRuns||0;
@@ -39175,6 +39258,8 @@ function buildSpireCardHTML(r, active, inRaid){
           <span class="spr-note">Every floor pays. Every fifth is a landing. It ends when you fall.</span></div>
         <div class="rc-row" style="margin-top:4px"><span class="rc-lbl">Spoils</span>
           <span class="spr-mats">${iconHTML('sunderstone')} ${stones.toLocaleString()} · ${iconHTML('spirecore')} ${cores.toLocaleString()}</span></div>
+        <div class="rc-row" style="margin-top:4px;align-items:flex-start"><span class="rc-lbl">Today</span>
+          <span class="spr-fxrow">${spireAffixChips(false)}</span></div>
         <div class="rc-foot">
           <span class="rc-best">${bestLine}</span>
           ${unlocked
