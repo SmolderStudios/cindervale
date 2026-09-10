@@ -116,11 +116,26 @@ setTimeout(()=>{
   section('Ascension');
   {
     ev("state=defaultState(); normalizeState(); state.combatEquipped=state.combatEquipped||{};");
-    const gearId=ev("Object.keys(COMBAT_GEAR_STATS)[0]");
-    ev("_gid=Object.keys(COMBAT_GEAR_STATS)[0]; state.combatEquipped.weapon=_gid;");
+    /* Ascension is raid-tier only now, so the first key in the table (a bronze
+       helm) is deliberately NOT ascendable. Pick a real raid piece. */
+    const gearId='dawnbreaker';
+    ev("_gid='dawnbreaker'; state.combatEquipped.weapon=_gid;");
     ok('a fresh item sits at rank 0', ev('ascRank(_gid)===0'), gearId);
     ok('and it can be ascended', ev('ascCanAscend(_gid)===true'));
     ok('something that is not combat gear cannot', ev("ascCanAscend('oak_log')===false"));
+    ok('and neither can gear below the raid tiers', ev("ascCanAscend('bronze_helm')===false"),
+       'bronze cap '+ev("String(ascCap('bronze_helm'))"));
+
+    /* The cap ladder is the whole design: an old piece climbs back into contention
+       without ever passing the tier above it. */
+    const caps=JSON.parse(ev("JSON.stringify(['barrow_blade','emberforged_blade','voidrend','dawnbreaker'].map(id=>ascCap(id)))"));
+    ok('each raid tier caps higher than the last', caps.join(',')==='5,7,9,10', caps.join(' / '));
+    ev("state.asc={barrow_blade:5}");
+    ok('a capped piece refuses the next rank',
+       ev("ascCanAscend('barrow_blade')===false && ascCost('barrow_blade')===null"), 'Barrow at ★5');
+    ev("state.asc={barrow_blade:9}; normalizeState()");
+    ok('and a save carrying a rank past the cap is trimmed on load',
+       ev("ascRank('barrow_blade')===5"), '★'+ev("String(ascRank('barrow_blade'))"));
 
     ok('the first rank has a real price', ev('ascCost(_gid).sunderstone>0'),
        ev('JSON.stringify(ascCost(_gid))'));
@@ -133,7 +148,7 @@ setTimeout(()=>{
       costs.push(ev("JSON.stringify(ascCost(_gid))"));
       ev("ascendItem(_gid)");
     }
-    ok('ten ranks can be bought in order', ev('ascRank(_gid)===10'), '★'+ev('String(ascRank(_gid))'));
+    ok('ten ranks can be bought in order on a top-tier piece', ev('ascRank(_gid)===10'), '★'+ev('String(ascRank(_gid))'));
     ok('and the eleventh cannot', ev('ascCanAscend(_gid)===false && ascCost(_gid)===null'));
     const parsed=costs.map(c=>JSON.parse(c));
     ok('each rank costs strictly more than the last',
@@ -150,15 +165,18 @@ setTimeout(()=>{
        winning and last tier's drops stay trash. */
     ev("state.asc={}; _base=COMBAT_GEAR_STATS.barrow_blade;");
     const b0=JSON.parse(ev("JSON.stringify(gearStats('barrow_blade'))"));
-    ev("state.asc.barrow_blade=10;");
+    /* At its OWN cap, not at ten — the cap is the design. */
+    ev("state.asc={barrow_blade:ascCap('barrow_blade')};");
     const b10=JSON.parse(ev("JSON.stringify(gearStats('barrow_blade'))"));
-    ok('a ten-rank piece is worth about 1.6 of itself',
-       b10.atk>b0.atk && Math.abs(b10.atk/b0.atk-1.6)<0.03,
-       'Barrow Blade '+b0.atk+'/'+b0.str+' -> '+b10.atk+'/'+b10.str);
-    const vr=JSON.parse(ev("JSON.stringify(gearStats('voidrend'))"));
-    ok('and it climbs back into contention with the raid two tiers up',
-       b10.atk+b10.str > (vr.atk+vr.str)*0.75,
-       'ascended Barrow '+(b10.atk+b10.str)+' vs Voidrend '+(vr.atk+vr.str));
+    ok('a piece raised to its cap gains real numbers',
+       b10.atk>b0.atk, 'Barrow Blade '+b0.atk+'/'+b0.str+' -> '+b10.atk+'/'+b10.str+' at ★'+ev("String(ascCap('barrow_blade'))"));
+    /* And the reason the caps exist: a maxed lower-tier piece must not beat the
+       next raid's freshly dropped one, or nobody ever runs the next raid. */
+    ev("state.asc={};");
+    const eb=JSON.parse(ev("JSON.stringify(gearStats('emberforged_blade'))"));
+    ok('but it stays under the next tier that drops',
+       b10.atk+b10.str < eb.atk+eb.str,
+       'Barrow at cap '+(b10.atk+b10.str)+' vs Emberforged base '+(eb.atk+eb.str));
     ok('rank 0 returns the shared table object rather than a copy',
        ev("(state.asc={}, gearStats('barrow_blade')===COMBAT_GEAR_STATS.barrow_blade)"));
     ok('the raw table is never mutated', ev("COMBAT_GEAR_STATS.barrow_blade.atk===_base.atk"),
@@ -189,6 +207,7 @@ setTimeout(()=>{
     ev("state=defaultState(); normalizeState(); state.items={barrow_blade:3}; state.combatEquipped={}; state.skillingEquipped={};");
     ok('redundant raid gear can be broken down', ev("canSalvage('barrow_blade')===true"));
     ok('a log cannot', ev("canSalvage('oak_log')===false"));
+    ok('and neither can gear below the raid tiers', ev("(state.items.bronze_helm=1, canSalvage('bronze_helm')===false)"));
     ok('and neither can something you are not carrying', ev("canSalvage('voidrend')===false"));
     /* The gear panel already shipped this bug once with selling. */
     ev("state.combatEquipped={weapon:'barrow_blade'};");

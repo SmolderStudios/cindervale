@@ -7985,7 +7985,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.124.13">v0.9.124</div>
+  <div class="mm-ver" data-build="0.9.124.14">v0.9.124</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -19020,8 +19020,9 @@ function normalizeState(){
   if(!state.asc||typeof state.asc!=='object'||Array.isArray(state.asc)) state.asc={};
   for(const k in state.asc){
     const v=state.asc[k];
-    if(typeof COMBAT_GEAR_STATS==='undefined'||!COMBAT_GEAR_STATS[k]||typeof v!=='number'||!isFinite(v)||v<=0){ delete state.asc[k]; continue; }
-    state.asc[k]=Math.max(1,Math.min(10,Math.floor(v)));
+    const cap=(typeof ascCap==='function')?ascCap(k):0;
+    if(cap<=0||typeof v!=='number'||!isFinite(v)||v<=0){ delete state.asc[k]; continue; }
+    state.asc[k]=Math.max(1,Math.min(cap,Math.floor(v)));
   }
   // Slayer (1.0.73) — the 13th skill's state. Own XP/level/points/task; not in state.xp.
   if(!state.slayer||typeof state.slayer!=='object'||Array.isArray(state.slayer)) state.slayer={};
@@ -31629,17 +31630,32 @@ function handleSpireFloorClear(baseMon){
    in combatBonusesAll. That is one hook instead of ten, and it means every readout
    that already agrees with the fight keeps agreeing with it. */
 const ASC_MAX=10;
+/* Ascension is capped by the gear's tier, and only raid-tier gear ascends at all.
+
+   Uncapped, the cheapest path to power was always to raise what you already had
+   rather than chase the next raid's drop — and every one of the 141 pieces below
+   T7 was salvage noise worth 2,923 Sunderstone between them, under a single maxed
+   item across the whole early game.
+
+   Capped this way, an old piece climbs back into contention without ever reaching
+   the top: a fully raised Barrow Blade lands under a freshly dropped Emberforged
+   one, so raising it is a bridge you build while you farm, not a destination. */
+const ASC_CAP_BY_TIER={7:5, 8:7, 9:9, 10:10};
+function ascCap(id){
+  const t=(ITEMS[id]&&ITEMS[id].ctier)||0;
+  return (COMBAT_GEAR_STATS[id] && ASC_CAP_BY_TIER[t]) || 0;
+}
 /* What Ascension is paid in. Read by itemUseKind so the satchel can say what these
    are for; keep it in step with ascCost. */
 const ASC_REAGENTS=['sunderstone','spirecore'];
 function ascRank(id){ const r=(state&&state.asc&&state.asc[id])||0; return Math.max(0,Math.min(ASC_MAX,r|0)); }
-function ascCanAscend(id){ return !!(COMBAT_GEAR_STATS[id] && ascRank(id)<ASC_MAX); }
+function ascCanAscend(id){ return ascRank(id)<ascCap(id); }
 /* Cost of taking `id` from its current rank to the next one. Steep on purpose:
    ten ranks across a full loadout is meant to be the thing you are still chipping
    at long after the last raid stopped dropping anything new. */
 function ascCost(id){
   const next=ascRank(id)+1;
-  if(next>ASC_MAX) return null;
+  if(next>ascCap(id)) return null;
   const stone=Math.round(12*Math.pow(next,1.75));
   const core=next>=7?(next-6):0;
   return {rank:next, sunderstone:stone, spirecore:core};
@@ -31734,7 +31750,9 @@ function salvageYield(id){
   return v;
 }
 function canSalvage(id){
-  if(!COMBAT_GEAR_STATS[id]) return false;
+  /* Same gate as Ascension. Breaking down bronze was never worth listing, and
+     letting it feed the system is exactly how it got easy to max. */
+  if(ascCap(id)<=0) return false;
   if(!state||!state.items||(state.items[id]||0)<=0) return false;
   /* Never break down the thing you are standing in. The gear panel learned this
      one the hard way when equipped items turned out to be sellable. */
@@ -38996,13 +39014,13 @@ function buildAscensionHTML(){
   const ce=(state&&state.combatEquipped)||{};
   const stones=(state.items&&state.items.sunderstone)||0;
   const cores=(state.items&&state.items.spirecore)||0;
-  const worn=Object.values(ce).filter(id=>id&&COMBAT_GEAR_STATS[id]);
+  const worn=Object.values(ce).filter(id=>id&&ascCap(id)>0);
   const seen={}, uniq=[];
   for(const id of worn){ if(!seen[id]){ seen[id]=1; uniq.push(id); } }
   const rows=uniq.map(id=>{
     const it=ITEMS[id]||{name:id};
-    const r=ascRank(id), c=ascCost(id), maxed=r>=ASC_MAX;
-    const pips=Array.from({length:ASC_MAX},(_,i)=>`<i class="${i<r?'on':''}"></i>`).join('');
+    const cap=ascCap(id), r=ascRank(id), c=ascCost(id), maxed=r>=cap;
+    const pips=Array.from({length:cap},(_,i)=>`<i class="${i<r?'on':''}"></i>`).join('');
     /* What the rank is actually worth, in the item's own numbers. A pip row and a
        price told you the cost and nothing about the return. */
     const b=COMBAT_GEAR_STATS[id]||{}, now=gearStats(id)||{};
@@ -39012,12 +39030,12 @@ function buildAscensionHTML(){
     const statTxt=['atk','str','def'].filter(k=>(b[k]||0)>0)
       .map(k=>maxed?`${k} ${now[k]}`:`${k} ${now[k]||0}→<b>${nxt[k]}</b>`).join(' · ');
     const costTxt=maxed
-      ? '<span class="asc-max">Fully ascended</span>'
+      ? `<span class="asc-max">Max ★${cap}</span>`
       : `${iconHTML('sunderstone')} <b class="${stones>=c.sunderstone?'':'short'}">${c.sunderstone.toLocaleString()}</b>`
         +(c.spirecore?` &nbsp;${iconHTML('spirecore')} <b class="${cores>=c.spirecore?'':'short'}">${c.spirecore}</b>`:'');
     return `<div class="asc-row${maxed?' maxed':''}">
       <span class="asc-ic">${iconHTML(id)}</span>
-      <span class="asc-nm">${it.name}<b class="asc-r">${r?'★'+r:''}</b>
+      <span class="asc-nm">${it.name}<b class="asc-r">${r?'★'+r+' / '+cap:'max ★'+cap}</b>
         <span class="asc-gain">${statTxt}</span><span class="asc-pips">${pips}</span></span>
       <span class="asc-cost">${costTxt}</span>
       ${maxed?'':`<button class="asc-go" data-asc="${id}"${ascAfford(c)?'':' disabled'}>★ ${c.rank}</button>`}
@@ -39026,9 +39044,9 @@ function buildAscensionHTML(){
   return `<div class="asc-panel">
     <div class="asc-head"><span class="asc-t">Ascension</span>
       <span class="asc-bank">${iconHTML('sunderstone')} ${stones.toLocaleString()} &nbsp; ${iconHTML('spirecore')} ${cores.toLocaleString()}</span></div>
-    <div class="asc-sub">Spend what the Spire gives up to raise a worn piece through ten ranks. Each rank adds <b>6% to that item's own attack, strength and defence</b>, and every rank you own anywhere also adds max health, crit, lifesteal and <b>damage reduction</b> &mdash; which is what actually carries you deeper into the Spire. Spire Cores are asked for from rank 7.${(function(){const dr=(typeof ascensionDR==='function')?ascensionDR():0;return dr>0?` <b style="color:#a8d264">Currently ${(dr*100).toFixed(1)}% less damage taken.</b>`:'';})()}</div>
+    <div class="asc-sub">Spend what the Spire gives up to raise a worn piece. <b>How far it goes depends on where it came from</b> &mdash; Barrow gear stops at ★5, Emberforge ★7, Abyssal ★9, Empyrean ★10 &mdash; so an old piece climbs back into contention without ever passing the tier above it. Each rank adds <b>6% to that item's own attack, strength and defence</b>, and every rank you own anywhere also adds max health, crit, lifesteal and <b>damage reduction</b> &mdash; which is what actually carries you deeper into the Spire. Spire Cores are asked for from rank 7.${(function(){const dr=(typeof ascensionDR==='function')?ascensionDR():0;return dr>0?` <b style="color:#a8d264">Currently ${(dr*100).toFixed(1)}% less damage taken.</b>`:'';})()}</div>
     ${uniq.length?`<div class="asc-list">${rows}</div>`
-      :'<div class="asc-empty">Equip combat gear to ascend it.</div>'}
+      :'<div class="asc-empty">Equip raid-tier gear (T7 and above) to ascend it. Crafted and shop gear below that cannot be raised.</div>'}
     ${buildSalvageHTML()}
   </div>`;
 }
@@ -39055,7 +39073,7 @@ function buildSalvageHTML(){
     <div class="asc-head" style="margin-top:14px;padding-top:12px;border-top:1px solid #2a2013">
       <span class="asc-t" style="font-size:calc(15px*var(--tscale))">Salvage</span>
       <span class="asc-bank">${iconHTML('sunderstone')} ${total.toLocaleString()} in the satchel</span></div>
-    <div class="asc-sub">Break down combat gear you are not wearing. Every raid tier is 30-40% stronger than the last, so the pieces the next raid made redundant become Ascension fuel instead of dead weight. Equipped gear is never listed.</div>
+    <div class="asc-sub">Break down raid-tier gear you are not wearing. Every raid tier is 30-40% stronger than the last, so the pieces the next raid made redundant become Ascension fuel instead of dead weight. Equipped gear is never listed.</div>
     <div class="asc-list">${cells}</div>
     ${rows.length>shown.length?`<div class="asc-empty" style="margin-top:7px">${rows.length-shown.length} more in the satchel.</div>`:''}
   </div>`;
