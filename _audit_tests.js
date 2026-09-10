@@ -3350,7 +3350,9 @@ setTimeout(() => {
       'sunderedge','faultward','plummet','stonewright_gauntlets',
       'sundershaft','sunderbolt',
       /* T8/T9 bows (0.9.124.21) — same standing, palette generator for now. */
-      'scorchhorn_shortbow','scorchhorn_longbow','fiendbone_shortbow','fiendbone_longbow'];
+      'fiendbone_shortbow','fiendbone_longbow',
+      /* Ranged proc weapons (0.9.124.22) — same standing. */
+      'thornbite_shortbow','rimeshot_shortbow','mammothhorn_longbow','ashlock_crossbow'];
     const SVG_OK = new Set(['radcliff_tally'].concat(RANGED_PENDING, SPIRE_PENDING));
 
     const unexpected = cov.svg.filter(id => !SVG_OK.has(id));

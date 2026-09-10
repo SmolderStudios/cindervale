@@ -10,10 +10,10 @@ const d=JSON.parse(ev(`JSON.stringify(MONSTERS.map(function(m){
   return {n:m.name, lvl:m.lvl, zone:z.name||m.zone, boss:!!m.boss, drops:ds.length,
           gear:ds.filter(function(x){return ITEMS[x.id]&&ITEMS[x.id].cgear;}).length};
 }).sort(function(a,b){return a.lvl-b.lvl;}))`));
-console.log('MONSTERS Lv60+ AND HOW MANY DROPS THEY HAVE');
+console.log('LOW-LEVEL MONSTERS WITH THIN TABLES (Lv<=58, <=4 drops)');
 console.log('  lvl  drops  gear  monster                        zone');
 for(const m of d){
-  if(m.lvl<60) continue;
+  if(m.lvl>58||m.drops>4) continue;
   console.log('  '+String(m.lvl).padStart(3)+String(m.drops).padStart(7)+String(m.gear).padStart(6)+
     '  '+(m.n+(m.boss?' (boss)':'')).padEnd(30)+m.zone);
 }

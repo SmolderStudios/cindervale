@@ -384,27 +384,53 @@ setTimeout(()=>{
       "if(it&&it.ranged&&it.ammo==='arrow') (t[it.ctier]=t[it.ctier]||[]).push(COMBAT_GEAR_STATS[id].atk);});"+
       "return t;})())"));
     let holes=[];
-    for(let t=1;t<=11;t++) if(!byTier[t]) holes.push(t);
-    ok('the bow ladder has no gaps from T1 to T11', holes.length===0,
-       holes.length?('missing T'+holes.join(', T')):'T1-T11 all filled');
+    /* T8 is deliberately a crossbow rung now — the Ashlock sits there instead of a
+       pair of plain stat bows, so the bow ladder is allowed one gap and only one. */
+    for(let t=1;t<=11;t++) if(!byTier[t]&&t!==8) holes.push(t);
+    ok('the bow ladder has no gaps except the T8 crossbow rung', holes.length===0,
+       holes.length?('missing T'+holes.join(', T')):'T1-T7, T9-T11 filled');
+    ok('and T8 is covered by a crossbow',
+       ev("Object.keys(ITEMS).some(id=>ITEMS[id].ranged&&ITEMS[id].ammo==='bolt'&&ITEMS[id].ctier===8&&ITEMS[id].wfx)"),
+       'Ashlock Crossbow, burn');
     /* Accuracy must climb the whole way, or a "new" tier is a sidegrade nobody
        has a reason to chase. */
     const tops=[];
-    for(let t=1;t<=11;t++) tops.push(Math.max.apply(null,byTier[t]));
+    for(let t=1;t<=11;t++) if(byTier[t]) tops.push(Math.max.apply(null,byTier[t]));
     ok('and accuracy climbs every rung', tops.every((v,i)=>i===0||v>tops[i-1]), tops.join(' -> '));
     /* Bows carry no strength anywhere on the ladder: the arrow is the damage. */
     ok('every bow leaves the damage to the arrow',
        ev("Object.keys(ITEMS).filter(id=>ITEMS[id].ranged&&ITEMS[id].ammo==='arrow'&&ITEMS[id].ctier<10)"+
           ".every(id=>(COMBAT_GEAR_STATS[id].str||0)===0)"));
 
-    /* Hung on the thinnest tables in the game, all four of which had no gear at all. */
-    const src=JSON.parse(ev("JSON.stringify(['scorchhorn_shortbow','scorchhorn_longbow','fiendbone_shortbow','fiendbone_longbow']"+
+    /* Ranged had no procs at all: sixteen melee weapons carry burn, stun, cleave,
+       poison or reflect and every bow was a bigger number instead of a different
+       one. wfx is read off the equipped weapon with no melee gate, so it fires
+       from a bow exactly as it does from a blade. */
+    const fx=JSON.parse(ev("JSON.stringify(Object.keys(ITEMS).filter(id=>ITEMS[id].ranged&&ITEMS[id].wfx)"+
+      ".map(id=>({n:ITEMS[id].name, t:ITEMS[id].ctier, k:Object.keys(ITEMS[id].wfx)[0]})))"));
+    ok('ranged now carries procs of its own', fx.length>=4,
+       fx.map(x=>'T'+x.t+' '+x.n+' ('+x.k+')').join(', '));
+    ok('and they span more than one kind',
+       new Set(fx.map(x=>x.k)).size>=3, [...new Set(fx.map(x=>x.k))].join(', '));
+    ok('every kind is one the fight actually reads',
+       fx.every(x=>['poison','stun','cleave','burn','reflect'].includes(x.k)));
+    /* A proc weapon that also out-stats its tier is not a choice, it is a
+       replacement, and the crafted ladder stops mattering. */
+    const under=JSON.parse(ev("JSON.stringify(Object.keys(ITEMS).filter(id=>ITEMS[id].ranged&&ITEMS[id].wfx&&ITEMS[id].ammo==='arrow')"+
+      ".map(id=>{var t=ITEMS[id].ctier;"+
+      "var best=Math.max.apply(null,Object.keys(ITEMS).filter(o=>ITEMS[o].ranged&&ITEMS[o].ammo==='arrow'&&ITEMS[o].ctier===t&&!ITEMS[o].wfx).map(o=>COMBAT_GEAR_STATS[o].atk));"+
+      "return {n:ITEMS[id].name, mine:COMBAT_GEAR_STATS[id].atk, best:best};}))"));
+    ok('and each proc bow sits under the crafted bow of its own tier',
+       under.every(x=>x.mine<=x.best), under.map(x=>x.n+' '+x.mine+' vs '+x.best).join(', '));
+
+    /* Hung on the thinnest tables in the game, all of which had no gear at all. */
+    const src=JSON.parse(ev("JSON.stringify(['thornbite_shortbow','rimeshot_shortbow','mammothhorn_longbow','ashlock_crossbow','fiendbone_shortbow','fiendbone_longbow']"+
       ".map(id=>{var from=Object.keys(MONSTER_DROPS).filter(m=>MONSTER_DROPS[m].some(d=>d.id===id));"+
       "return {id, from, n:from.length};}))"));
     ok('each new bow has exactly one source', src.every(x=>x.n===1),
        src.map(x=>x.from[0]||'NONE').join(', '));
     ok('and it is a real monster in the roster',
-       ev("JSON.stringify(['dust_stalker','scorch_rhino','hellhound','abyssal_fiend'].map(id=>!!MONSTERS.find(m=>m.id===id)))")==='[true,true,true,true]');
+       ev("JSON.stringify(['thornback_stag','snow_leopard','ice_mammoth','dust_stalker','hellhound','abyssal_fiend'].map(id=>!!MONSTERS.find(m=>m.id===id)))")==='[true,true,true,true,true,true]');
 
     /* And the leak that reopened when the T9 bow landed: a non-Spire weapon must
        never reach the Spire's own ammunition. */
@@ -414,8 +440,15 @@ setTimeout(()=>{
     ok('and no crossbow outside it draws a Sunderbolt',
        ev("Object.keys(ITEMS).filter(id=>ITEMS[id].ranged&&ITEMS[id].ammo==='bolt'&&ITEMS[id].ctier<10)"+
           ".every(id=>ammoFitsWeapon(id,'sunderbolt')===false)"));
-    ok('but the new bows still take everything craftable',
-       ev("ammoFitsWeapon('fiendbone_longbow','starfall_arrow')===true && ammoFitsWeapon('scorchhorn_longbow','starfall_arrow')===true"));
+    ok('but the new weapons still take everything craftable',
+       ev("ammoFitsWeapon('fiendbone_longbow','starfall_arrow')===true && ammoFitsWeapon('ashlock_crossbow','starfall_bolt')===true"));
+    /* The crossbow follows the same rule as the proc bows: under its tier's
+       crafted weapon, so the burn is the reason to carry it. */
+    ok('and the Ashlock sits under the crafted Starfall Crossbow',
+       ev("COMBAT_GEAR_STATS.ashlock_crossbow.atk < COMBAT_GEAR_STATS.starfall_crossbow.atk"),
+       ev('String(COMBAT_GEAR_STATS.ashlock_crossbow.atk)')+' vs '+ev('String(COMBAT_GEAR_STATS.starfall_crossbow.atk)'));
+    ok('it keeps a hand free, unlike every bow',
+       ev("!ITEMS.ashlock_crossbow.twoHanded && ITEMS.ashlock_crossbow.ammo==='bolt'"));
   }
 
   section('Daily affixes');
