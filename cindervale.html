@@ -4028,6 +4028,72 @@ body:not(.is-demo) .demo-only{display:none !important}
 .rp-dot.done{background:#4a9a8a;border-color:#7fd8c8}
 .rp-dot.cur{background:#9fe6d6;border-color:#dff8f0;box-shadow:0 0 8px rgba(159,230,214,.6)}
 .rp-dot.mini.cur,.rp-dot.mini.todo{border-color:#c9a24a}
+
+/* ════ Raid HUD, layout C (0.9.125) ═══════════════════════════════════════════
+   Picked from four mocked layouts. Its two signatures: a vertical portrait
+   ribbon down the far-left edge, so you can always see what is behind you and
+   what is still coming, and a cast RING that draws a telegraph around the
+   creature rather than on a bar that covers it. The arena's whole point is the
+   358px portrait in the middle, and nothing here is allowed to sit on top of it.
+   Everything is namespaced rx-: bare .cell / .ring / .ab would collide with
+   half the panels in this file. */
+.rx-rib{position:absolute;left:calc(10px*var(--tscale));top:50%;transform:translateY(-50%);z-index:3;
+  display:flex;flex-direction:column;gap:5px;align-items:flex-start}
+.rx-cell{width:calc(62px*var(--tscale));height:calc(62px*var(--tscale));border-radius:7px;padding:4px;
+  border:1px solid rgba(199,155,78,.2);backdrop-filter:blur(8px);position:relative;overflow:hidden;
+  background:radial-gradient(66% 66% at 50% 44%,rgba(199,155,78,.16),rgba(13,8,4,.80));
+  transition:width .18s,height .18s,border-color .18s}
+.rx-cell .ev-icon,.rx-cell svg{width:100%;height:100%;display:block;opacity:.82;transition:opacity .18s}
+.rx-cell.done{border-color:rgba(125,163,63,.42)}
+.rx-cell.done .ev-icon,.rx-cell.done svg{opacity:.46;filter:grayscale(.58)}
+.rx-cell.done::after{content:'';position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(135deg,transparent 44%,rgba(125,163,63,.20) 50%,transparent 56%)}
+.rx-cell.cur{width:calc(76px*var(--tscale));height:calc(76px*var(--tscale));margin-left:calc(-7px*var(--tscale));
+  border-color:var(--raid-accent,#4a9a8a);
+  box-shadow:0 0 15px color-mix(in srgb,var(--raid-accent,#4a9a8a) 44%,transparent)}
+.rx-cell.cur .ev-icon,.rx-cell.cur svg{opacity:1}
+.rx-cell.mini{border-top:2px solid #c9a24a}
+.rx-cell.boss{border-top:2px solid var(--red)}
+.rx-cell .rx-n{position:absolute;left:4px;top:1px;z-index:2;font-family:var(--num);
+  font-size:calc(8px*var(--tscale));color:var(--muted)}
+/* The ring sits BEHIND the creature (z-index 1 against the portrait's 2) so a
+   long cast never dims the thing you are looking at. */
+.rx-ring{position:absolute;left:50%;bottom:13%;transform:translateX(-50%);z-index:1;pointer-events:none;
+  width:calc(440px*var(--tscale));height:calc(440px*var(--tscale));opacity:0;transition:opacity .25s}
+.rx-ring.on{opacity:1}
+.rx-ring i{position:absolute;inset:0;border-radius:50%;
+  background:conic-gradient(from -90deg,var(--rx-col,#c4543a) calc(var(--rx-p,0)*1%),rgba(196,84,58,.11) 0);
+  -webkit-mask:radial-gradient(farthest-side,transparent 88%,#000 89%);
+          mask:radial-gradient(farthest-side,transparent 88%,#000 89%)}
+.rx-ring b{position:absolute;left:0;right:0;bottom:calc(-6px*var(--tscale));text-align:center;
+  font-family:'Cinzel',serif;font-size:calc(15px*var(--tscale));letter-spacing:1px;color:#ffb9a0;
+  text-shadow:0 2px 10px rgba(0,0,0,.95)}
+.cvglass h4 .rx-momv{color:var(--gold-hi);cursor:default}
+.rx-track{height:calc(13px*var(--tscale));border-radius:4px;background:rgba(6,4,2,.8);position:relative;
+  border:1px solid rgba(199,155,78,.18);overflow:hidden;box-shadow:inset 0 2px 5px rgba(0,0,0,.8)}
+.rx-track i{display:block;height:100%;width:0;transition:width .18s linear;
+  background:linear-gradient(90deg,#6e552c,#c79b4e 60%,#f4dca4)}
+.rx-track u{position:absolute;top:-1px;bottom:-1px;width:1px;background:rgba(0,0,0,.62)}
+.rx-abs{display:flex;gap:5px;margin-top:7px}
+.rx-ab{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:1px;
+  padding:calc(6px*var(--tscale)) 2px calc(5px*var(--tscale));border-radius:6px;
+  background:rgba(24,16,8,.62);border:1px solid rgba(199,155,78,.22);color:var(--text);
+  font-family:'Cinzel',serif;cursor:var(--cur-pointer);transition:filter .12s,border-color .12s,box-shadow .12s}
+.rx-ab:hover:not(:disabled){filter:brightness(1.32);border-color:var(--trim)}
+.rx-ab:disabled{opacity:.36;cursor:var(--cur-na)}
+.rx-ab .rx-nm{font-size:calc(12px*var(--tscale));letter-spacing:.4px;line-height:1.1}
+.rx-ab .rx-c{font-family:var(--num);font-size:calc(9.5px*var(--tscale));color:var(--trim)}
+.rx-ab.on{border-color:var(--gold-hi);box-shadow:0 0 13px rgba(240,199,114,.42)}
+.rx-auto{display:flex;align-items:center;gap:6px;margin-top:7px;color:var(--muted);
+  font-size:calc(10.5px*var(--tscale));cursor:var(--cur-pointer);user-select:none}
+.rx-auto input{accent-color:var(--ember);width:13px;height:13px;cursor:var(--cur-pointer)}
+/* During a raid the ribbon owns the far-left edge, so the stats rail slides right
+   to clear it. Outside a raid nothing about the arena changes. */
+.cvstage.rx-raid .cvrail.l{left:calc(94px*var(--tscale))}
+.rp-rank{display:inline-flex;align-items:baseline;gap:5px}
+.rp-rank b{font-family:'Cinzel',serif;font-size:calc(19px*var(--tscale));line-height:1;color:#ffe27a}
+.rp-rank span{font-family:var(--num);font-size:calc(10px*var(--tscale));color:var(--muted)}
+@media(prefers-reduced-motion:reduce){.rx-cell,.rx-ring,.rx-track i{transition:none}}
 .rp-dot.boss.cur,.rp-dot.boss.todo{border-color:#c44a45}
 .rp-warn{font-size:calc(11px*var(--tscale));color:#d9a86a;letter-spacing:.3px}
 /* Raid entries inside the Monster Log */
@@ -7855,7 +7921,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.124.9">v0.9.124</div>
+  <div class="mm-ver" data-build="0.9.124.10">v0.9.124</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -18871,6 +18937,10 @@ function normalizeState(){
   }
   if(!state.raidClears||typeof state.raidClears!=='object'||Array.isArray(state.raidClears)) state.raidClears={};
   for(const k in state.raidClears){ if(typeof state.raidClears[k]!=='number'||state.raidClears[k]<0) state.raidClears[k]=0; }
+  /* Auto-cast (0.9.125) — spend Momentum for you. Defaults ON: this is an idle
+     game and a raid must still clear while nobody is looking. Playing the three
+     abilities by hand is worth about one clear rank, which is the intended gap. */
+  if(typeof state.raidAuto!=='boolean') state.raidAuto=true;
   // Slayer (1.0.73) — the 13th skill's state. Own XP/level/points/task; not in state.xp.
   if(!state.slayer||typeof state.slayer!=='object'||Array.isArray(state.slayer)) state.slayer={};
   if(typeof state.slayer.xp!=='number'||state.slayer.xp<0) state.slayer.xp=0;
@@ -31037,11 +31107,13 @@ const RAIDS=[
       {id:'barrow_sentry',   zone:'sunken_barrow', name:'Barrow Sentry',    icon:'barrow_sentry',   lvl:68, hp:900,  atk:200, str:150, def:100, coins:0, xp:1400, swingMs:2300, dmgType:'slash', weakTo:'crush'},
       {id:'drowned_footman', zone:'sunken_barrow', name:'Drowned Footman',  icon:'drowned_footman', lvl:69, hp:980,  atk:206, str:158, def:104, coins:0, xp:1500, swingMs:2500, dmgType:'stab',  weakTo:'crush'},
       {id:'barrow_champion', zone:'sunken_barrow', name:'Barrow Champion',  icon:'barrow_champion', lvl:71, hp:2100, atk:300, str:230, def:150, coins:0, xp:2600, swingMs:2600, dmgType:'slash', weakTo:'stab',  miniBoss:true,
-        raidfx:{name:'Grave Chill', desc:'Cold seeps into your limbs — your attacks are 25% slower.', swingMult:1.25}},
+        raidfx:{name:'Grave Chill', desc:'Cold seeps into your limbs — your attacks are 25% slower.', swingMult:1.25},
+        castfx:{kinds:['slam'], everyMs:11000, castMs:3200, openMs:5000, frac:0.26, labels:{slam:'Grave Hammer'}}},
       {id:'tomb_revenant',   zone:'sunken_barrow', name:'Tomb Revenant',    icon:'tomb_revenant',   lvl:70, hp:1050, atk:212, str:166, def:108, coins:0, xp:1550, swingMs:2200, dmgType:'crush', weakTo:'slash'},
       {id:'wardens_herald',  zone:'sunken_barrow', name:"Warden's Herald",  icon:'wardens_herald',  lvl:72, hp:1200, atk:226, str:182, def:122, coins:0, xp:1800, swingMs:2400, dmgType:'slash', weakTo:'crush'},
       {id:'barrow_warden',   zone:'sunken_barrow', name:'The Barrow Warden', icon:'barrow_warden',  lvl:74, hp:3200, atk:360, str:290, def:200, coins:0, xp:4200, swingMs:2800, dmgType:'crush', weakTo:'slash', boss:true, raidBoss:true,
-        raidfx:{name:"Warden's Curse", desc:'His death-cold saps you — −20% Defence and your strikes drag 15% slower.', defMult:0.80, swingMult:1.15}},
+        raidfx:{name:"Warden's Curse", desc:'His death-cold saps you — −20% Defence and your strikes drag 15% slower.', defMult:0.80, swingMult:1.15},
+        castfx:{kinds:['slam'], everyMs:10000, castMs:3200, openMs:5000, frac:0.30, labels:{slam:"Warden's Reckoning"}}},
     ],
     // Rating tiers — faster clear = better rank = more materials + higher gear odds.
     // maxMs is the upper time bound for that rank (first tier that fits wins).
@@ -31078,12 +31150,14 @@ const RAIDS=[
       {id:'forge_thrall',   zone:'emberforge', name:'Forge Thrall',    icon:'forge_thrall',   lvl:78, hp:1300, atk:250, str:200, def:130, coins:0, xp:3000, swingMs:2200, dmgType:'crush', weakTo:'slash'},
       {id:'cinder_golem',   zone:'emberforge', name:'Cinder Golem',    icon:'cinder_golem',   lvl:79, hp:1450, atk:258, str:210, def:145, coins:0, xp:3200, swingMs:2600, dmgType:'crush', weakTo:'stab'},
       {id:'molten_sentinel',zone:'emberforge', name:'Molten Sentinel', icon:'molten_sentinel',lvl:82, hp:2900, atk:330, str:270, def:185, coins:0, xp:5200, swingMs:2600, dmgType:'crush', weakTo:'slash', miniBoss:true,
-        raidfx:{name:'Forge Heat', desc:'The air itself scorches — your attacks are 20% slower.', swingMult:1.20}},
+        raidfx:{name:'Forge Heat', desc:'The air itself scorches — your attacks are 20% slower.', swingMult:1.20},
+        castfx:{kinds:['slam'], everyMs:10500, castMs:3000, openMs:4800, frac:0.28, labels:{slam:'Forge Slam'}}},
       {id:'ashbound_brute', zone:'emberforge', name:'Ashbound Brute',  icon:'ashbound_brute', lvl:80, hp:1520, atk:268, str:224, def:150, coins:0, xp:3400, swingMs:2500, dmgType:'slash', weakTo:'stab'},
       {id:'ember_colossus', zone:'emberforge', name:'Emberforged Colossus', icon:'ember_colossus', lvl:82, hp:1750, atk:288, str:250, def:168, coins:0, xp:3900, swingMs:2700, dmgType:'crush', weakTo:'slash'},
       {id:'ignar', zone:'emberforge', name:'Ignar, the Forge-Tyrant', icon:'ignar', lvl:84, hp:4400, atk:400, str:330, def:225, coins:0, xp:8000, swingMs:2800, dmgType:'crush', weakTo:'slash', boss:true, raidBoss:true,
         raidfx:{name:"Tyrant's Wrath", desc:'His forge-heat saps you — −20% Defence and your strikes drag 15% slower.', defMult:0.80, swingMult:1.15},
-        bossfx:{kind:'burn', tickMs:2600, frac:0.05, label:"Tyrant's Fire", desc:'The Tyrant sets you alight — you burn for 5% max HP every 2.6s until the fight ends.'}},
+        bossfx:{kind:'burn', tickMs:2600, frac:0.05, label:"Tyrant's Fire", desc:'The Tyrant sets you alight — you burn for 5% max HP every 2.6s until the fight ends.'},
+        castfx:{kinds:['slam'], everyMs:11000, castMs:3000, openMs:5500, frac:0.28, labels:{slam:'Forge Hammer'}}},
     ],
     ratingTiers:[
       {key:'S', maxMs:210000,   mult:3.0, gold:9000, mats:9, col:'#ffe27a'},
@@ -31117,13 +31191,15 @@ const RAIDS=[
       {id:'void_wretch',  zone:'abyssal_throne', name:'Void Wretch',   icon:'void_wretch',  lvl:88, hp:1700, atk:470, str:390, def:270, coins:0, xp:5200, swingMs:2200, dmgType:'stab',  weakTo:'slash'},
       {id:'rift_stalker', zone:'abyssal_throne', name:'Rift Stalker',  icon:'rift_stalker', lvl:89, hp:1850, atk:485, str:405, def:280, coins:0, xp:5500, swingMs:1700, dmgType:'slash', weakTo:'stab'},
       {id:'null_warden',  zone:'abyssal_throne', name:'Null Warden',   icon:'null_warden',  lvl:92, hp:3400, atk:560, str:470, def:330, coins:0, xp:8600, swingMs:2500, dmgType:'crush', weakTo:'slash', miniBoss:true,
-        raidfx:{name:'Unmaking', desc:'Your form frays at the edges — −25% Defence.', defMult:0.75}},
+        raidfx:{name:'Unmaking', desc:'Your form frays at the edges — −25% Defence.', defMult:0.75},
+        castfx:{kinds:['slam'], everyMs:10000, castMs:3000, openMs:4500, frac:0.28, labels:{slam:'Unmaking Blow'}}},
       {id:'abyssal_maw',  zone:'abyssal_throne', name:'Abyssal Maw',   icon:'abyssal_maw',  lvl:90, hp:1950, atk:500, str:420, def:290, coins:0, xp:5800, swingMs:2400, dmgType:'crush', weakTo:'slash'},
       {id:'void_herald',  zone:'abyssal_throne', name:'Void Herald',   icon:'void_herald',  lvl:91, hp:2100, atk:515, str:435, def:300, coins:0, xp:6100, swingMs:2100, dmgType:'stab',  weakTo:'crush'},
       {id:'riftbound_colossus', zone:'abyssal_throne', name:'Riftbound Colossus', icon:'riftbound_colossus', lvl:92, hp:2400, atk:530, str:455, def:315, coins:0, xp:6600, swingMs:2700, dmgType:'crush', weakTo:'slash'},
       {id:'xorvael', zone:'abyssal_throne', name:"Xor'Vael, the Void Sovereign", icon:'xorvael', lvl:94, hp:5600, atk:620, str:520, def:360, coins:0, xp:12000, swingMs:2700, dmgType:'slash', weakTo:'stab', boss:true, raidBoss:true,
         raidfx:{name:'Erasure', desc:'The Sovereign unwrites you — −28% Defence and your strikes drag 20% slower.', defMult:0.72, swingMult:1.20},
-        bossfx:{kind:'voidbomb', everyMs:8500, reqDmg:800, frac:0.32, label:'Void Rupture', desc:'A void mark ruptures every 8.5s — deal 800 damage in the window or take 32% max HP. Keep your damage up.'}},
+        castfx:{kinds:['rupture','slam'], everyMs:8500, castMs:3400, openMs:5000, frac:0.32, reqDmg:800,
+          labels:{rupture:'Void Rupture', slam:'Sovereign Blow'}}},
     ],
     ratingTiers:[
       {key:'S', maxMs:240000,   mult:3.0, gold:14000, mats:10, col:'#ffe27a'},
@@ -31157,14 +31233,16 @@ const RAIDS=[
       {id:'dawnling',            zone:'empyrean_throne', name:'Dawnling',              icon:'dawnling',            lvl:95, hp:2200, atk:650, str:540, def:380, coins:0, xp:7000, swingMs:2200, dmgType:'stab',  weakTo:'slash'},
       {id:'radiant_wisp',        zone:'empyrean_throne', name:'Radiant Wisp',          icon:'radiant_wisp',        lvl:96, hp:2350, atk:670, str:560, def:390, coins:0, xp:7400, swingMs:1700, dmgType:'slash', weakTo:'crush'},
       {id:'seraph_warden',       zone:'empyrean_throne', name:'Seraph Warden',         icon:'seraph_warden',       lvl:98, hp:4200, atk:760, str:640, def:450, coins:0, xp:11000, swingMs:2500, dmgType:'slash', weakTo:'stab',  miniBoss:true,
-        raidfx:{name:'Blinding Radiance', desc:'The seraph blazes — you fight half-blind, −25% Defence.', defMult:0.75}},
+        raidfx:{name:'Blinding Radiance', desc:'The seraph blazes — you fight half-blind, −25% Defence.', defMult:0.75},
+        castfx:{kinds:['slam'], everyMs:9500, castMs:2900, openMs:4500, frac:0.30, labels:{slam:'Verdict'}}},
       {id:'astral_hound',        zone:'empyrean_throne', name:'Astral Hound',          icon:'astral_hound',        lvl:96, hp:2450, atk:690, str:580, def:400, coins:0, xp:7800, swingMs:2000, dmgType:'crush', weakTo:'slash'},
       {id:'lightbringer_herald', zone:'empyrean_throne', name:'Lightbringer Herald',   icon:'lightbringer_herald', lvl:97, hp:2650, atk:720, str:610, def:415, coins:0, xp:8200, swingMs:2100, dmgType:'stab',  weakTo:'crush'},
       {id:'empyrean_colossus',   zone:'empyrean_throne', name:'Empyrean Colossus',     icon:'empyrean_colossus',   lvl:98, hp:3000, atk:760, str:650, def:440, coins:0, xp:9000, swingMs:2700, dmgType:'crush', weakTo:'slash'},
       {id:'fallen_choir',        zone:'empyrean_throne', name:'The Fallen Choir',      icon:'fallen_choir',        lvl:97, hp:2800, atk:730, str:620, def:420, coins:0, xp:8600, swingMs:2300, dmgType:'slash', weakTo:'stab'},
       {id:'aureon', zone:'empyrean_throne', name:'Aureon, the Dawnbroken God', icon:'aureon', lvl:99, hp:7000, atk:860, str:720, def:500, coins:0, xp:16000, swingMs:2700, dmgType:'slash', weakTo:'stab', boss:true, raidBoss:true,
         raidfx:{name:'Judgment', desc:'The god unmakes you in light — −30% Defence and your strikes drag 20% slower.', defMult:0.70, swingMult:1.20},
-        bossfx:{kind:'voidbomb', everyMs:8000, reqDmg:1000, frac:0.34, label:'Radiant Judgment', desc:'A verdict gathers every 8s — deal 1000 damage in the window or the light passes judgment for 34% max HP. Keep your damage up.'}},
+        castfx:{kinds:['rupture','slam'], everyMs:8000, castMs:3400, openMs:5000, frac:0.34, reqDmg:1000,
+          labels:{rupture:'Radiant Judgment', slam:'Dawnfall'}}},
     ],
     ratingTiers:[
       {key:'S', maxMs:260000,   mult:3.0, gold:20000, mats:11, col:'#ffe27a'},
@@ -31266,8 +31344,10 @@ function startRaid(id){
   state.cmbSubTab='arena';
   state.zoneMode='raids';
   combat.rare=false;
-  combat.raid={ id:raid.id, stage:0, startMs:Date.now(), n:raid.stages.length };
+  combat.raid={ id:raid.id, stage:0, startMs:Date.now(), n:raid.stages.length, casts:0 };
   combat.cheatDeathReady=true;   // (1.0.85) one cheat-death per raid run (if gear worn)
+  clearRaidMomentum();
+  combat.mom=MOM_START;          // (0.9.125) you do not start the gauntlet empty
   _raidResult=null;
   refreshCombatStats();
   _beginRaidStage(raid, 0, true);
@@ -31296,6 +31376,10 @@ function _beginRaidStage(raid, stage, fullHeal){
   combat.foeSwingStart=now;
   // Active boss mechanic (1.0.85) — set only on stages that carry `bossfx`.
   combat.bossfx = mon.bossfx ? Object.assign({}, mon.bossfx, {nextAt: now+(mon.bossfx.everyMs||mon.bossfx.tickMs||3000), acc:0}) : null;
+  /* (0.9.125) Telegraphs are per-stage. `openMs` is the grace before the first one
+     winds up, so a stage never opens mid-cast on the swing you walked in on. */
+  combat.cast=null;
+  combat.nextCast = mon.castfx ? now+(mon.castfx.openMs||4500) : 0;
   const tag=mon.raidBoss?'★ FINAL BOSS':(mon.miniBoss?'◆ MINI-BOSS':`Stage ${stage+1}/${raid.stages.length}`);
   cmbLog(`— ${tag}: ${mon.name} rises to meet you. —`, (mon.raidBoss||mon.miniBoss)?'rare-spawn':'sys');
   if(mon.raidfx){ cmbLog(`✦ ${mon.raidfx.name} — ${mon.raidfx.desc}`,'hit'); }
@@ -31329,7 +31413,7 @@ function _resolvePlayerDeath(){
   if(combat.raid){ handleRaidFail(); }
   else cmbLog('💀 You were defeated and retreat to safety.','lose');
   combat.active=false; combat.rare=false; combat.regens=[]; combat.foeStatus={}; cmastResetFight();
-  combat.bossfx=null; combat.cheatDeathReady=false;
+  combat.bossfx=null; combat.cheatDeathReady=false; clearRaidMomentum();
   combat.youHp=combat.youMaxHp;
   stopCombatTimer(); renderCombat(); refreshCombatTabIndicator();
   if(!combatMode && typeof toast==='function'){ toast('💀 You were defeated in combat.'); }
@@ -31365,6 +31449,159 @@ function tickBossMechanic(now){
   return false;
 }
 
+/* ── Momentum and the three raid abilities (0.9.125) ───────────────────────────
+   The problem this solves: a raid run had no inputs. Auto-eat handled food and
+   the only other button forfeited, so five minutes passed with nothing to decide
+   and the clear rating measured your loadout rather than your run.
+
+   Momentum builds on every landed blow and on every stage cleared, and buys three
+   answers to three different questions: Rally for attrition, Ruin for a damage
+   check, Brace for a telegraphed hit. It accrues whether or not you spend it, and
+   auto-cast plays it on a simple priority, so an idle raid still clears.
+
+   Named Rally / Ruin / Brace on purpose. Onslaught and Bulwark are already Combat
+   Mastery column names and Bulwark is also a potion, so reusing either would make
+   every tooltip in the game ambiguous about which one it meant.                */
+const MOM_MAX=100;
+const MOM_START=20;        // enough to answer the first telegraph, not enough to open with two
+const MOM_PER_HIT=7;
+const MOM_PER_STAGE=25;
+const MOM_LOCK_MS=1200;    // shared lockout, so a full bar cannot be dumped in one frame
+const RUIN_MS=8000, RUIN_MULT=1.60;
+const BRACE_MS=6000, BRACE_CUT=0.30;   // multiplier applied to incoming damage
+const RAID_ABILS=[
+  {id:'rally', key:'1', name:'Rally', cost:30,
+   desc:'Recover a quarter of your health and shake off anything clinging to you.'},
+  {id:'ruin',  key:'2', name:'Ruin',  cost:50,
+   desc:'Your blows land 60% harder for eight seconds. The answer to a damage check.'},
+  {id:'brace', key:'3', name:'Brace', cost:40,
+   desc:'You take 70% less damage for six seconds. The answer to a telegraph.'},
+];
+const RAID_ABIL_BY_ID=(function(){ const m={}; for(const a of RAID_ABILS) m[a.id]=a; return m; })();
+
+function momAdd(v){ if(combat.raid) combat.mom=Math.max(0,Math.min(MOM_MAX,(combat.mom||0)+v)); }
+function ruinActive(now){ return !!combat.raid && (combat.momRuin||0)>(now||Date.now()); }
+function braceActive(now){ return !!combat.raid && (combat.momBrace||0)>(now||Date.now()); }
+function canUseAbil(id,now){
+  const a=RAID_ABIL_BY_ID[id]; if(!a) return false;
+  now=now||Date.now();
+  return !!(combat.raid && combat.active && (combat.mom||0)>=a.cost && (combat.momLock||0)<=now);
+}
+/* Spend Momentum. `auto` suppresses the toast so an idle run does not spam. Does
+   NOT call renderCombat: the panel wipes its own innerHTML, which would kill the
+   splat animation this very function just started. updateCombatBars refreshes the
+   Momentum bar and the button states in place instead. */
+function raidUse(id,auto){
+  const a=RAID_ABIL_BY_ID[id]; if(!a) return false;
+  const now=Date.now();
+  if(!canUseAbil(id,now)) return false;
+  combat.mom-=a.cost;
+  combat.momLock=now+MOM_LOCK_MS;
+  if(id==='rally'){
+    const before=combat.youHp;
+    combat.youHp=Math.min(combat.youMaxHp, combat.youHp+Math.max(1,Math.round(combat.youMaxHp*0.25)));
+    /* Rally is also the answer to anything that stacks on you. Nothing stacks on
+       the player outside a raid yet, so it clears youStatus wholesale rather than
+       naming debuffs it would have to be taught about one at a time later. */
+    const had=Object.keys(combat.youStatus||{}).length;
+    combat.youStatus={};
+    const got=combat.youHp-before;
+    cmbLog('\u2726 Rally \u2014 you recover '+got+(had?' and shake off what was clinging to you':'')+'.','win');
+    if(got>0) cmbSplat(got,'heal');
+  } else if(id==='ruin'){
+    combat.momRuin=now+RUIN_MS;
+    cmbLog('\u2726 Ruin \u2014 your blows land 60% harder for eight seconds.','hit');
+  } else {
+    combat.momBrace=now+BRACE_MS;
+    cmbLog('\u2726 Brace \u2014 you set your guard. 70% less damage for six seconds.','status');
+  }
+  if(!auto && typeof toast==='function') toast(a.name+'!');
+  if(typeof updateCombatBars==='function') updateCombatBars();
+  return true;
+}
+
+/* ── Telegraphed attacks (0.9.125) ────────────────────────────────────────────
+   `castfx` on a raid stage is an attack you can SEE coming: it winds up over
+   castMs with a name and a closing ring, and it has an answer.
+     · slam    — lands for `frac` of your max health. Brace cuts it to 30%.
+     · rupture — a damage check. Deal `reqDmg` to the foe inside the window and it
+                 is suppressed and pays Momentum back; miss it and it lands.
+   Deliberately separate from `bossfx`, which stays exactly what it was: an
+   untelegraphed passive tick (Ignar's burn). One is weather, the other is a
+   decision, and they are allowed to run at the same time. bossfx still carries
+   its own `voidbomb` kind for any future boss that wants the check unannounced. */
+function _startRaidCast(mon,now){
+  const cf=mon.castfx; if(!cf) return;
+  const kinds=cf.kinds||['slam'];
+  const kind=kinds[(combat.raid.casts||0)%kinds.length];
+  combat.raid.casts=(combat.raid.casts||0)+1;
+  combat.cast={ kind, startMs:now, castMs:cf.castMs||3000, frac:cf.frac||0.30,
+                req:cf.reqDmg||0, acc:0,
+                label:(cf.labels&&cf.labels[kind])||(kind==='slam'?'Crushing Blow':'Rupture') };
+  cmbLog('\u2726 '+combat.cast.label+' \u2014 '+(kind==='slam'
+    ? 'Brace, or take it in full.'
+    : 'Deal '+combat.cast.req+' before it resolves.'),'rare-spawn');
+}
+/* Returns true only if it killed you AND death was resolved, so the caller can
+   return straight out of the tick. Same contract as tickBossMechanic. */
+function tickRaidCast(now){
+  if(!combat.raid) return false;
+  const mon=RAID_MON_BY_ID[combat.monId];
+  const cf=mon&&mon.castfx;
+  if(!cf){ combat.cast=null; return false; }
+  if(!combat.cast){
+    if(now>=(combat.nextCast||0)) _startRaidCast(mon,now);
+    return false;
+  }
+  const c=combat.cast;
+  if(now-c.startMs < c.castMs) return false;
+  combat.cast=null;
+  combat.nextCast=now+(cf.everyMs||9000);
+  if(c.kind==='rupture' && (c.acc||0)>=c.req){
+    cmbLog('\u2714 You break the '+c.label+' open \u2014 '+Math.round(c.acc)+' dealt inside the window.','win');
+    momAdd(15);
+    return false;
+  }
+  let dmg=Math.max(1,Math.round(combat.youMaxHp*c.frac));
+  if(c.kind==='slam' && braceActive(now)){
+    dmg=Math.max(1,Math.round(dmg*BRACE_CUT));
+    cmbLog('\u{1F6E1} '+c.label+' lands, but your guard holds \u2014 '+dmg+'.','status');
+  } else if(c.kind==='rupture'){
+    cmbLog('\u{1F4A5} '+c.label+' resolves for '+dmg+'. Only '+Math.round(c.acc||0)+' of '+c.req+' dealt.','lose');
+  } else {
+    cmbLog('\u{1F4A5} '+c.label+' lands unguarded for '+dmg+'.','foe');
+  }
+  combat.youHp=Math.max(0,combat.youHp-dmg);
+  cmbSplat(dmg,'take');
+  if(combat.youHp<=0 && !_tryCheatDeath()) return _resolvePlayerDeath();
+  return false;
+}
+
+/* Auto-cast priority, top down:
+     · a telegraph about to land that Brace answers
+     · a damage check this window is going to fail without Ruin
+     · below 42% health, Rally
+     · at the cap, spend Ruin rather than waste the accrual
+   Deliberately simple and deliberately not optimal — playing it by hand should be
+   worth roughly a rank, and it is only worth that because this leaves room. */
+function raidAutoCast(now){
+  if(!combat.raid || !state.raidAuto || (combat.momLock||0)>now) return;
+  const c=combat.cast;
+  if(c){
+    const left=(c.startMs+c.castMs)-now;
+    if(c.kind==='slam' && left<1400 && !braceActive(now) && canUseAbil('brace',now)){ raidUse('brace',true); return; }
+    if(c.kind==='rupture' && (c.acc||0)<(c.req||0)*0.7 && !ruinActive(now) && canUseAbil('ruin',now)){ raidUse('ruin',true); return; }
+  }
+  if(combat.youMaxHp>0 && combat.youHp/combat.youMaxHp<0.42 && canUseAbil('rally',now)){ raidUse('rally',true); return; }
+  if((combat.mom||0)>=MOM_MAX-2 && !ruinActive(now) && canUseAbil('ruin',now)) raidUse('ruin',true);
+}
+/* Wipe every Momentum and cast field. Called from the win, the fail and the
+   forfeit, so nothing leaks out of a raid into the next ordinary fight. */
+function clearRaidMomentum(){
+  combat.mom=0; combat.momRuin=0; combat.momBrace=0; combat.momLock=0;
+  combat.cast=null; combat.nextCast=0;
+}
+
 /* Called from combatTick when a raid foe dies (before normal loot logic runs).
    Grants per-kill combat XP, then either advances the stage or wins the raid. */
 function handleRaidKill(baseMon){
@@ -31382,7 +31619,8 @@ function handleRaidKill(baseMon){
     const res=grantRaidRewards(raid, timeMs);
     _raidResult=res;
     combat.active=false; combat.raid=null; combat.raidDebuff=null; combat.bossfx=null;
-    combat.foeStatus={}; cmastResetFight(); combat.regens=[];
+    clearRaidMomentum();
+    combat.foeStatus={}; combat.youStatus={}; cmastResetFight(); combat.regens=[];
     combat.youHp=combat.youMaxHp;
     _resetCombatTargetAfterRaid();
     stopCombatTimer();
@@ -31399,7 +31637,10 @@ function handleRaidKill(baseMon){
     refreshCombatTabIndicator();
     return;
   }
-  // Advance — carry current HP into the next stage.
+  // Advance — carry current HP into the next stage. Clearing a stage pays
+  // Momentum (0.9.125), which is what lets you bank through the quiet stages and
+  // arrive at the mini-boss with an answer already in hand.
+  momAdd(MOM_PER_STAGE);
   combat.raid.stage=stage+1;
   _beginRaidStage(raid, stage+1, false);
   if(typeof renderHeader==='function') renderHeader();
@@ -31421,6 +31662,7 @@ function handleRaidFail(){
   const stage=combat.raid.stage;
   _raidResult={ raidId:combat.raid.id, failed:true, stage:stage+1, n:combat.raid.n };
   combat.raid=null; combat.raidDebuff=null;
+  clearRaidMomentum();
   _resetCombatTargetAfterRaid();
   cmbLog(`💀 You fall in ${raid.name} at stage ${stage+1}/${raid.stages.length}. The barrow keeps its treasures.`,'lose');
   if(typeof toast==='function') toast(`💀 Raid failed — ${raid.name}.`);
@@ -31865,6 +32107,18 @@ const combat={
   youStatus:{},     // (1.0.60) reserved for debuffs the player receives (future monster poison)
   raid:null,        // (1.0.66) active raid run: {id, stage, startMs, n} or null
   raidDebuff:null,  // (1.0.66) current raid stage's player curse (from monster.raidfx) or null
+  /* ── Momentum (0.9.125) ──────────────────────────────────────────────────────
+     Runtime only, exactly like combat.raid above: a raid run does not survive a
+     reload anyway, so there is nothing here worth saving. `mom` is 0..MOM_MAX,
+     momRuin/momBrace are the timestamps those two buffs expire at, momLock is the
+     shared lockout that stops all three abilities firing in one frame, and `cast`
+     is the telegraphed attack currently winding up (or null). */
+  mom:0,
+  momRuin:0,
+  momBrace:0,
+  momLock:0,
+  cast:null,
+  nextCast:0,
   log:[],
 };
 let _combatTimer=null;
@@ -36535,6 +36789,13 @@ function combatTick(){
   // Ticks independently of swings; may resolve player death (cheat-death aware).
   if(combat.raid && combat.bossfx && tickBossMechanic(now)){ updateCombatBars(); return; }
 
+  // ── Telegraphed raid attacks + auto-cast (0.9.125). Same contract as the line
+  // above: tickRaidCast returns true only when it resolved a death, so bail.
+  if(combat.raid){
+    if(tickRaidCast(now)){ updateCombatBars(); return; }
+    raidAutoCast(now);
+  }
+
   // ── Player swing — only when their own swing timer has elapsed ───────────
   if(now-combat.youSwingStart>=combat.youSwingMs){
     combat.youSwingStart=now;
@@ -36652,6 +36913,10 @@ function combatTick(){
         const _mm=markDamageMult(mon);
         if(_mm!==1) youDmg=Math.max(1,Math.round(youDmg*_mm));
       }
+      /* Ruin (0.9.125) — the Momentum burst, and the last multiplier in the chain
+         so it compounds with crit, the mastery procs and the mark rather than
+         being diluted by whichever of them happened to roll. */
+      if(youDmg>0 && ruinActive(now)) youDmg=Math.max(1,Math.round(youDmg*RUIN_MULT));
     }
     // ── Cleave (1.0.66) — the Grave Cleaver's Reaping Arc: a landed hit has a
     // chance to strike a second time in the same swing (mirrors the first blow,
@@ -36677,6 +36942,13 @@ function combatTick(){
     combat.foeHp=Math.max(0,combat.foeHp-youDmg-_cleaveDmg);
     // Void-bomb DPS check (1.0.85) — accumulate damage dealt to the boss this window.
     if(combat.bossfx&&combat.bossfx.kind==='voidbomb') combat.bossfx.acc=(combat.bossfx.acc||0)+youDmg+_cleaveDmg;
+    /* Momentum, and the telegraph's own damage check (0.9.125). Both read the
+       same total as the void bomb above, so a cleave counts once for each of them
+       rather than being dropped by the two newer systems. */
+    if(combat.raid){
+      if(youDmg>0) momAdd(MOM_PER_HIT);
+      if(combat.cast) combat.cast.acc=(combat.cast.acc||0)+youDmg+_cleaveDmg;
+    }
     if(youDmg>0){
       cmbLog(`You ${didCrit?'<span style="color:#ffd700">crit</span> ':''}hit the ${mon.name} for ${youDmg}.`,'hit');
       cmbSplat(youDmg,didCrit?'crit':'hit');
@@ -36957,6 +37229,9 @@ function combatTick(){
     if(foeDmg>0){ const _cdr=(typeof cmastBonuses==='function')?Math.min(0.60,cmastBonuses().dmgReduce||0):0; if(_cdr>0) foeDmg=Math.max(1,Math.round(foeDmg*(1-_cdr))); }
     // Berserker downside (1.0.104) — +5% damage taken while below 30% HP (the trade for its +15% dealt).
     if(foeDmg>0 && state.cmast && state.cmast['r_t3_r']>0 && combat.youMaxHp>0 && (combat.youHp/combat.youMaxHp)<0.30){ foeDmg=Math.round(foeDmg*1.05); }
+    /* Brace (0.9.125) — the Momentum guard. Applied last so it multiplies with
+       shield block and mastery reduction instead of sharing their cap. */
+    if(foeDmg>0 && braceActive(now)) foeDmg=Math.max(1,Math.round(foeDmg*BRACE_CUT));
     combat.youHp=Math.max(0,combat.youHp-foeDmg);
     if(foeDmg>0) cmbSplat(foeDmg,'take');
     /* Second Wind (0.9.130) — checked after HP is applied and BEFORE the death check
@@ -37187,7 +37462,7 @@ function updateCombatBars(){
   }
   // Live raid timer (1.0.66) — updated in-place so the run clock ticks without a
   // full panel re-render.
-  if(combat.raid){ const rt=$('raidTimer'); if(rt) rt.textContent=_fmtRaidTime(Date.now()-combat.raid.startMs); }
+  if(combat.raid){ const rt=$('raidTimer'); if(rt) rt.textContent=_fmtRaidTime(Date.now()-combat.raid.startMs); rxSyncHud(); }
   /* (0.9.122.2) Training-button fills, refreshed in place — the panel only rebuilds
      on a kill, so without this the bar sat still through a whole fight. */
   document.querySelectorAll('.cstyle-btns .cmb-style').forEach(b=>{
@@ -37210,6 +37485,38 @@ function updateCombatBars(){
     const stickAtBottom = (logEl.scrollHeight - logEl.scrollTop - logEl.clientHeight) < 8;
     logEl.innerHTML=combat.log.map(l=>`<div class="ln ${l.c}">${l.t}</div>`).join('');
     if(stickAtBottom) logEl.scrollTop=logEl.scrollHeight;
+  }
+}
+
+/* Live raid HUD refresh (0.9.125). The combat panel only rebuilds its innerHTML
+   on a kill, so Momentum, the ability buttons, the closing cast ring and the live
+   clear rating all have to be driven in place from here, once a tick. */
+function rxSyncHud(){
+  if(!combat.raid) return;
+  const now=Date.now();
+  const f=$('rxMomFill'); if(f) f.style.width=(combat.mom||0)+'%';
+  const v=$('rxMomVal');  if(v) v.textContent=Math.floor(combat.mom||0)+' / '+MOM_MAX;
+  document.querySelectorAll('.rx-ab').forEach(b=>{
+    const id=b.getAttribute('data-abil'); if(!id) return;
+    b.disabled=!canUseAbil(id,now);
+    b.classList.toggle('on',(id==='ruin'&&ruinActive(now))||(id==='brace'&&braceActive(now)));
+  });
+  const ring=$('rxRing');
+  if(ring){
+    const c=combat.cast;
+    if(c){
+      ring.classList.add('on');
+      ring.style.setProperty('--rx-p',Math.max(0,Math.min(100,100*(now-c.startMs)/c.castMs)).toFixed(1));
+      const lab=ring.querySelector('b');
+      if(lab) lab.textContent=c.label+'  '+Math.max(0,(c.castMs-(now-c.startMs))/1000).toFixed(1)+'s';
+    } else { ring.classList.remove('on'); const lab=ring.querySelector('b'); if(lab) lab.textContent=''; }
+  }
+  const rk=$('rxRank');
+  if(rk){
+    const raid=getRaid(combat.raid.id), ms=now-combat.raid.startMs, t=raidRating(raid,ms);
+    rk.textContent=t.key; rk.style.color=t.col;
+    const sub=$('rxRankSub');
+    if(sub) sub.textContent = t.maxMs===Infinity ? 'final rank' : _fmtRaidTime(t.maxMs-ms)+' to hold it';
   }
 }
 
@@ -38073,27 +38380,68 @@ function buildRaidsPanelHTML(){
     }
   }
   return `<div class="raid-panel">
-    <div class="raid-intro">🗝 <b>No-retreat gauntlet</b>, one health bar — <b>no loot unless you clear the final boss</b>. Faster clear = better rating &amp; drops. Full drop rates in the <b>Log</b> tab.</div>
+    <div class="raid-intro">🗝 <b>No-retreat gauntlet</b>, one health bar — <b>no loot unless you clear the final boss</b>. Faster clear = better rating &amp; drops.<br>Landing blows builds <b>Momentum</b>, which buys <b>Rally</b>, <b>Ruin</b> and <b>Brace</b> mid-run (keys 1/2/3). Mini-bosses and bosses <b>telegraph</b>: a ring closes around them, and each cast has an answer. Auto-cast plays them for you.</div>
     ${resultBox}
     <div class="raid-list">${cards}</div>
   </div>`;
 }
+/* The gauntlet as a vertical portrait ribbon down the left edge of the stage
+   (0.9.125). It replaces the old row of abstract dots: a dot told you how many
+   stages were left, a portrait tells you what is coming. */
+function buildRaidRibbonHTML(){
+  if(!combat.raid) return '';
+  const raid=getRaid(combat.raid.id), stage=combat.raid.stage;
+  const cells=raid.stages.map((m,i)=>{
+    const cls=i<stage?'done':(i===stage?'cur':'todo');
+    const kind=m.raidBoss?' boss':(m.miniBoss?' mini':'');
+    const tip=`${m.name} — Level ${m.lvl}&#10;${m.hp} health${m.raidfx?'&#10;'+m.raidfx.name:''}${m.castfx?'&#10;Telegraphs':''}`;
+    return `<div class="rx-cell ${cls}${kind}" data-tip="${tip}"><span class="rx-n">${i+1}</span>${iconHTML(m.icon||m.id)}</div>`;
+  }).join('');
+  return `<div class="rx-rib">${cells}</div>`;
+}
+/* The cast ring. Sits behind the creature and closes clockwise as the telegraph
+   winds up; updateCombatBars drives --rx-p every tick. */
+function buildRaidRingHTML(){
+  if(!combat.raid) return '';
+  const c=combat.cast;
+  const p=c?Math.max(0,Math.min(100,100*(Date.now()-c.startMs)/c.castMs)):0;
+  return `<div class="rx-ring${c?' on':''}" id="rxRing" style="--rx-p:${p.toFixed(1)}"><i></i><b>${c?c.label:''}</b></div>`;
+}
+/* Momentum and its three abilities, as a glass panel at the top of the right
+   rail beside Training, Food and the log. */
+function buildRaidMomentumHTML(){
+  if(!combat.raid) return '';
+  const now=Date.now();
+  const btns=RAID_ABILS.map(a=>{
+    const on=(a.id==='ruin'&&ruinActive(now))||(a.id==='brace'&&braceActive(now));
+    return `<button class="rx-ab${on?' on':''}" data-abil="${a.id}"${canUseAbil(a.id,now)?'':' disabled'}
+      data-tip="${a.name} — ${a.cost} Momentum&#10;&#10;${a.desc}&#10;Hotkey ${a.key}">
+      <span class="rx-nm">${a.name}</span><span class="rx-c">${a.cost}</span></button>`;
+  }).join('');
+  return `<div class="cvglass">
+    <h4>Momentum<span class="cvh-cmb rx-momv" id="rxMomVal">${Math.floor(combat.mom||0)} / ${MOM_MAX}</span></h4>
+    <div class="rx-track"><i id="rxMomFill" style="width:${(combat.mom||0)}%"></i><u style="left:30%"></u><u style="left:40%"></u><u style="left:50%"></u></div>
+    <div class="rx-abs">${btns}</div>
+    <label class="rx-auto" data-tip="Spends Momentum for you: Brace an incoming slam, Ruin a damage check, Rally when you get low.&#10;&#10;Playing it by hand is worth about one clear rank."><input type="checkbox" id="rxAuto"${state.raidAuto?' checked':''}> Auto-cast</label>
+  </div>`;
+}
+/* The run strip above the stage. The stage dots moved into the ribbon in 0.9.125,
+   so what is left here is the clock, the curse and the live clear rating — which
+   is the readout that turns the rating from a result into something you are
+   watching slip away while you fight. */
 function buildRaidProgressHTML(){
   if(!combat.raid) return '';
   const raid=getRaid(combat.raid.id);
   const stage=combat.raid.stage;
   const cur=raid.stages[stage]||{};
-  const dots=raid.stages.map((s,i)=>{
-    const cls=i<stage?'done':(i===stage?'cur':'todo');
-    return `<span class="rp-dot ${cls}${s.raidBoss?' boss':s.miniBoss?' mini':''}"></span>`;
-  }).join('');
+  const ms=Date.now()-combat.raid.startMs;
+  const t=raidRating(raid,ms);
   const curse=combat.raidDebuff?`<span class="rp-curse" data-tip="${String(combat.raidDebuff.desc).replace(/"/g,'&quot;')}">✦ ${combat.raidDebuff.name}</span>`:'';
   return `<div class="raid-progress" style="--raid-accent:${raid.accent}">
     <div class="rp-top">
       <span class="rp-l"><span class="rp-ic">${iconHTML(raid.icon)}</span><b>${raid.name}</b> · Stage ${stage+1}/${raid.stages.length}${cur.raidBoss?' — Final Boss':(cur.miniBoss?' — Mini-Boss':'')}</span>
-      <span class="rp-r">${curse}<span class="rp-timer" id="raidTimer">${_fmtRaidTime(Date.now()-combat.raid.startMs)}</span></span>
+      <span class="rp-r">${curse}<span class="rp-rank" data-tip="Your clear rating right now. A faster clear pays more materials and better relic odds."><b id="rxRank" style="color:${t.col}">${t.key}</b><span id="rxRankSub">${t.maxMs===Infinity?'final rank':_fmtRaidTime(t.maxMs-ms)+' to hold it'}</span></span><span class="rp-timer" id="raidTimer">${_fmtRaidTime(ms)}</span></span>
     </div>
-    <div class="rp-dots">${dots}</div>
     <div class="rp-warn">⚠ No retreat — if you fall, the run is lost and you leave with nothing.</div>
   </div>`;
 }
@@ -38437,17 +38785,19 @@ function renderCombat(){
   const arenaBodyHTML=(subTab==='arena')?`
 ${noteHtml}
 ${combat.raid?buildRaidProgressHTML():''}
-    <div class="cvarena cvstage${combat.rare?' rare':''}${baseMon.boss?' boss':''}" style="--zone-accent:${(getZone(state.zone)||{}).accent||'#c79b4e'}">
+    <div class="cvarena cvstage${combat.rare?' rare':''}${baseMon.boss?' boss':''}${combat.raid?' rx-raid':''}" style="--zone-accent:${combat.raid?getRaid(combat.raid.id).accent:((getZone(state.zone)||{}).accent||'#c79b4e')};--raid-accent:${combat.raid?getRaid(combat.raid.id).accent:'#4a9a8a'}">
       ${(typeof ZONE_BG!=='undefined'&&ZONE_BG[state.zone])?`<img class="cvstage-bg" src="${ZONE_BG[state.zone]}" alt="">`:''}
       <div class="cvstage-scrim"></div>
       <div class="cvstage-floor"></div>
+      ${combat.raid?buildRaidRibbonHTML():''}
+      ${combat.raid?buildRaidRingHTML():''}
       <div class="cvarena-foe" data-tip="${mon.name} \u2014 Level ${baseMon.lvl}&#10;&#10;Attack ${mon.atk}&#10;Max Hit ${mon.str}&#10;Defence ${mon.def}&#10;Speed ${(mon.swingMs/1000).toFixed(2)}s&#10;Health ${mon.hp}">
         <div class="cvarena-art">${iconHTML(baseMon.id)}</div>
       </div>
       <div class="cvsplats" id="cmbSplats"></div>
       <div class="cvstage-nm">
         <div class="n">${mon.name}${combat.rare?'<span class="rare-tag">Rare</span>':''}${baseMon.boss?'<span class="boss-tag">Boss</span>':''}</div>
-        <div class="s">${(getZone(state.zone)||{}).name||''} \u00b7 Level ${baseMon.lvl}</div>
+        <div class="s">${combat.raid?getRaid(combat.raid.id).name:((getZone(state.zone)||{}).name||'')} \u00b7 Level ${baseMon.lvl}</div>
       </div>
 
       <div class="cvrail l">
@@ -38469,14 +38819,15 @@ ${combat.raid?buildRaidProgressHTML():''}
             <div class="cvst2${mon.swingMs<yourSwing?' up':''}" data-tip="ITS SWING SPEED — seconds between its attacks.&#10;&#10;Yours: ${speedDisplay}${mon.weakTo?'&#10;Weak to '+mon.weakTo+' (+15% from you)':''}${mon.resistTo?'&#10;Resists '+mon.resistTo+' (-15%)':''}"><b>${(mon.swingMs/1000).toFixed(2)}s</b><i>Swing</i></div>
           </div>
         </div>
-        <div class="cvglass">
+        ${combat.raid?'':`<div class="cvglass">
           <h4>Drops</h4>
           ${cvDropRowsHTML(baseMon)}
-        </div>
+        </div>`}
       </div>
 
       <div class="cvrail r">
         ${active?`<button class="cmb-engage-btn flee" id="cmbFlee"><span class="ceb-ic">\u2715</span>Disengage</button>`:`<button class="cmb-engage-btn engage" id="cmbEngage"><span class="ceb-ic">${iconHTML('ui_swords')}</span>Engage <b>${mon.name}</b></button>`}
+        ${combat.raid?buildRaidMomentumHTML():''}
         <div class="cvglass">
           <h4>Training</h4>
           <div class="cstyle-btns">
@@ -38558,6 +38909,15 @@ ${combat.raid?buildRaidProgressHTML():''}
   $('cmbBack').addEventListener('click',closeCombatPanel);
   const eng=$('cmbEngage'); if(eng) eng.addEventListener('click',engageCombat);
   const flee=$('cmbFlee'); if(flee) flee.addEventListener('click',fleeCombat);
+  // Raid abilities (0.9.125). Also bound to 1 / 2 / 3 at the bottom of the file.
+  panel.querySelectorAll('.rx-ab').forEach(b=>{
+    b.addEventListener('click',()=>raidUse(b.getAttribute('data-abil')));
+  });
+  const rxa=$('rxAuto');
+  if(rxa) rxa.addEventListener('change',function(){
+    state.raidAuto=!!rxa.checked;
+    if(typeof saveGame==='function') saveGame();
+  });
   panel.querySelectorAll('.cmb-mon').forEach(b=>{
     if(b.classList.contains('locked')) return;
     b.addEventListener('click',()=>selectMonster(b.getAttribute('data-mon')));
@@ -45551,6 +45911,19 @@ window.addEventListener('keydown', function(e){
   if(e.key !== 'F11') return;
   e.preventDefault();
   mmToggleFullscreen();
+});
+
+/* Raid ability hotkeys (0.9.125). Inert outside a live raid, and it never takes a
+   keystroke away from a text field or from a browser shortcut. */
+window.addEventListener('keydown', function(e){
+  if(typeof combat==='undefined' || !combat.raid || !combat.active) return;
+  if(e.ctrlKey || e.metaKey || e.altKey) return;
+  var t=e.target;
+  if(t && (t.tagName==='INPUT' || t.tagName==='TEXTAREA' || t.isContentEditable)) return;
+  var id={'1':'rally','2':'ruin','3':'brace'}[e.key];
+  if(!id) return;
+  e.preventDefault();
+  raidUse(id);
 });
 
 // Belt-and-suspenders so no dialog can ever trap you (0.9.26): Escape closes the
