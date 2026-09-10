@@ -4131,6 +4131,29 @@ body:not(.is-demo) .demo-only{display:none !important}
 .asc-go:hover:not(:disabled){filter:brightness(1.3);border-color:var(--trim)}
 .asc-go:disabled{opacity:.38;cursor:var(--cur-na)}
 .asc-empty{font-size:calc(12.5px*var(--tscale));color:var(--dim,#7d6a4d);font-style:italic}
+.mlog-raidtabs{margin-top:-4px;padding-bottom:8px;align-items:center}
+.mlz-grouplbl{font-family:var(--num);font-size:calc(9.5px*var(--tscale));letter-spacing:1.6px;
+  text-transform:uppercase;color:var(--trim-d);padding-right:4px;flex:none}
+/* Drops were one full-width row each with CHANCE and COLLECTED spelled out beneath
+   every number, so eight drops ran ~700px and the panel could not be scanned. Same
+   rows, laid out in columns, with the unit labels inline. */
+.mlog-wrap .mlog-drops{display:grid!important;grid-template-columns:repeat(auto-fill,minmax(352px,1fr));gap:6px}
+.mlog-wrap .mld-rate em,.mlog-wrap .mld-cnt em{display:inline!important;margin:0 0 0 4px}
+.mlog-wrap .mld-rate,.mlog-wrap .mld-cnt{text-align:right;white-space:nowrap}
+.mlog-wrap .mld-nm small{display:inline;margin-left:6px}
+.mls-wrap{overflow-x:auto;border:1px solid var(--trim-d);border-radius:8px;margin-top:8px}
+.mls-tbl{width:100%;border-collapse:collapse;font-size:calc(12px*var(--tscale))}
+.mls-tbl th{background:#1c130a;color:var(--muted);font-weight:600;text-align:left;padding:7px 10px;
+  border-bottom:1px solid var(--trim-d);white-space:nowrap;font-size:calc(10.5px*var(--tscale));
+  letter-spacing:.8px;text-transform:uppercase}
+.mls-tbl th svg{width:14px;height:14px;vertical-align:-2px}
+.mls-tbl td{padding:6px 10px;border-bottom:1px solid #2a2013;font-family:var(--num);color:var(--muted);white-space:nowrap}
+.mls-tbl tr:last-child td{border-bottom:0}
+.mls-tbl tr.mls-done td{color:var(--text);background:rgba(201,106,154,.07)}
+.mls-tbl .mls-f{color:#f0c8e0;font-weight:700}
+.mls-tbl .mls-f i{font-style:normal;font-size:calc(9.5px*var(--tscale));color:var(--red);letter-spacing:.6px}
+.mls-tbl .mls-src{font-family:var(--body);color:var(--dim,#7d6a4d)}
+.mlog-sec-t{margin-top:12px;font-size:calc(10.5px*var(--tscale));letter-spacing:1.4px;text-transform:uppercase;color:var(--trim)}
 .rp-rank{display:inline-flex;align-items:baseline;gap:5px}
 .rp-rank b{font-family:'Cinzel',serif;font-size:calc(19px*var(--tscale));line-height:1;color:#ffe27a}
 .rp-rank span{font-family:var(--num);font-size:calc(10px*var(--tscale));color:var(--muted)}
@@ -7962,7 +7985,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.124.12">v0.9.124</div>
+  <div class="mm-ver" data-build="0.9.134.13">v0.9.134</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -27795,7 +27818,11 @@ function buildMonLogHTML(){
         <span class="mlz-track"><i style="width:${st?st.pct:0}%"></i></span></span>
       <span class="mlz-pct">${unlocked?(st.pct+'%'):('Lv '+z.unlockLvl)}</span>
     </button>`;
-  }).join('') + ((typeof RAIDS!=='undefined')?RAIDS.map(r=>{
+  }).join('');
+  /* Raids used to be appended straight onto the zone list, which pushed them onto a
+     third wrapped row and truncated every one of their names. Their own strip, and
+     without the leading "The", they fit and they read as what they are. */
+  const raidTabs = ((typeof RAIDS!=='undefined')?RAIDS.map(r=>{
     const unlocked = raidUnlocked(r);
     /* Raids ride the same rail and the Ledger opens them the same way -- reading a
        raid's clear-loot table before you can enter is exactly the planning it sells. */
@@ -27803,9 +27830,9 @@ function buildMonLogHTML(){
     const onZ = r.id===zid;
     return `<button class="mlog-zone-tab mlog-raid-tab${onZ?' on':''}${unlocked?'':' locked'}" data-mlog-zone="${r.id}" ${browse?'':'disabled'} style="--zone-accent:${r.accent}">
       <span class="mlz-ic">${iconHTML(r.icon)}</span>
-      <span class="mlz-info"><span class="mlz-nm">${r.name}</span>
+      <span class="mlz-info"><span class="mlz-nm">${r.name.replace(/^The /,'')}</span>
         <span class="mlz-track raid"><i style="width:100%"></i></span></span>
-      <span class="mlz-pct">raid</span>
+      <span class="mlz-pct">${r.endless?'endless':'raid'}</span>
     </button>`;
   }).join(''):'');
 
@@ -27813,6 +27840,7 @@ function buildMonLogHTML(){
   if(isRaid){
     return `<div class="mlog-wrap">
       <div class="mlog-zonetabs">${zoneTabs}</div>
+      <div class="mlog-zonetabs mlog-raidtabs"><span class="mlz-grouplbl">Raids</span>${raidTabs}</div>
       ${buildRaidLogBody(RAID_BY_ID[zid])}
     </div>`;
   }
@@ -27898,6 +27926,7 @@ function buildMonLogHTML(){
   return `<div class="mlog-wrap">
     ${_mlProgHTML()}
     <div class="mlog-zonetabs">${zoneTabs}</div>
+    <div class="mlog-zonetabs mlog-raidtabs"><span class="mlz-grouplbl">Raids</span>${raidTabs}</div>
     <div class="mlog-cols">
       <div class="mlog-monlist">${monRows||'<div class="mlog-empty">No monsters in this zone.</div>'}</div>
       <div class="mlog-details">
@@ -27951,7 +27980,48 @@ function buildMonLogHTML(){
    tiers, relic gear with chance ranges (D→S), and the material pool. Reuses the
    .mlog-* drop rows + tooltip wiring (data-mldrop/data-disc) so hovers behave
    exactly like normal monster drops. */
+/* The Spire's log body. An endless raid has no ratingTiers and no stages, so the
+   shared raid body reads ratingTiers[0].mult off undefined and throws the moment
+   you click its tile. It also has nothing useful to say here: what a player wants
+   from a procedural tower is what a floor pays, when the landings fall, and how
+   hard it gets — not nine fixed percentages. */
+function buildSpireLogBody(raid){
+  const best=state.spireBest||0, runs=state.spireRuns||0;
+  const bandName=f=>{ const r=getRaid(_sprBandRaid(f)); return r?r.name:''; };
+  /* Sample the curve rather than describing it: the numbers are the answer. */
+  const rows=[1,5,10,15,20,25,30,40,50].map(f=>{
+    const m=spireFloor(f,true);
+    const land=(f%SPR_BOSS_EVERY===0);
+    const stone=1+Math.floor(f/6);
+    const core=(land&&f>=15)?(1+Math.floor((f-15)/20)):0;
+    const gold=Math.round(900*Math.pow(1.055,f-1));
+    return `<tr class="${best>=f?'mls-done':''}">
+      <td class="mls-f">${f}${land?' <i>landing</i>':''}</td>
+      <td>${m.hp.toLocaleString()}</td>
+      <td>${m.str.toLocaleString()}</td>
+      <td>${iconHTML('ui_coin')} ${gold.toLocaleString()}g</td>
+      <td>${stone}${core?` &nbsp;+${core}`:''}</td>
+      <td class="mls-src">${bandName(f)}</td>
+    </tr>`;
+  }).join('');
+  return `<div class="mlog-body mlog-spire">
+    <div class="mlog-mhead">
+      <span class="mlm-bigic">${iconHTML(raid.icon)}</span>
+      <div class="mlm-htext"><div class="mlm-hname">${raid.name}</div>
+        <div class="mlm-hsub">Endless · Combat Lv ${raid.unlockLvl} · ${best?('deepest floor '+best):'never climbed'}${runs?` · ${runs} climb${runs>1?'s':''}`:''}</div></div>
+    </div>
+    <div class="mlog-raidfx"><span class="mrfx-ic">✦</span><div>Every floor pays as you clear it, so a climb that ends on floor 37 keeps everything the first 36 gave up. There is no clear and no rating — <b>depth is the reward</b>. Every ${SPR_BOSS_EVERY}th floor is a landing: a harder foe that always telegraphs, and from floor 15 the only source of Spire Cores.</div></div>
+    <div class="mlog-sec-t">What a floor pays</div>
+    <div class="mls-wrap"><table class="mls-tbl">
+      <thead><tr><th>Floor</th><th>Foe health</th><th>Its max hit</th><th>${iconHTML('ui_coin')} Gold</th>
+        <th>${iconHTML('sunderstone')} / ${iconHTML('spirecore')}</th><th>Drawn from</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>
+    <div class="mlog-legend">Rows you have already reached are lit. Foes are drawn from the four fixed raids in bands, then the bands repeat and the curve carries the difficulty. <b>Spire Weight</b> stacks once every ten floors. Sunderstone and Spire Cores are spent on <b>Ascension</b>, in the Raids tab.</div>
+  </div>`;
+}
 function buildRaidLogBody(raid){
+  if(raid.endless) return buildSpireLogBody(raid);
   const dm=charDropMult();
   const tiers=raid.ratingTiers;
   const maxMult=tiers[0].mult, minMult=tiers[tiers.length-1].mult;   // S best, D worst
