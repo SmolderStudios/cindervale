@@ -7991,7 +7991,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.124.22">v0.9.124</div>
+  <div class="mm-ver" data-build="0.9.124.23">v0.9.124</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -29687,8 +29687,7 @@ const MONSTER_DROPS={
   // ── Demon Sanctum drops (1.0.5) — infernal hide/brimstone/void + Infernal Crest ──
   // Lv 86-99 endgame. Demon Lord is the apex voidheart source (0.045). Doomblade
   // (slash greatsword) + Demon Lord's Skull (ultimate trophy) drop direct.
-  hellhound:      [{id:'fiendbone_shortbow', chance:0.006}/*gear drop*/,
-                   {id:'demonhide',      chance:0.30},
+  hellhound:      [{id:'demonhide',      chance:0.30},
                    {id:'demon_meat',     chance:0.34},
                    {id:'brimstone',      chance:0.12},
                    {id:'beast_sinew',    chance:0.055},
@@ -29699,8 +29698,7 @@ const MONSTER_DROPS={
                    {id:'void_cinder',    chance:0.06},
                    {id:'beast_sinew',    chance:0.065},
                    {id:'shade_ember',    chance:0.022}],
-  abyssal_fiend:  [{id:'fiendbone_longbow', chance:0.005}/*gear drop*/,
-                   {id:'void_cinder',    chance:0.24},
+  abyssal_fiend:  [{id:'void_cinder',    chance:0.24},
                    {id:'demon_meat',     chance:0.26},
                    {id:'brimstone',      chance:0.16},
                    {id:'beast_sinew',    chance:0.080},
@@ -30253,8 +30251,8 @@ const HUNT_KIT=[
   ICONS.aegis_of_dawn=_shieldSVG(PLATE);
   W('sunpiercer','Sunpiercer','🏹',120000,'weapon','ranged',{atk:76,str:30,def:0},
     {ranged:true, ammo:'arrow', twoHanded:true, wclass:'light',
-     swingMult:1.00, dmgMult:1.13, reqRanged:99},
-    "A recurve of god-gold strung with a thread of light; it looses shafts of pure dawn. <b>A true bow</b> — it draws on your Ranged level, takes both hands so it carries no shield, and spends an arrow with every loose. Requires <b>Ranged 99</b>.");
+     swingMult:1.00, dmgMult:1.13, reqRanged:99, wfx:{burn:{mult:0.16}}},
+    "A recurve of god-gold strung with a thread of light; it looses shafts of pure dawn. <b>A true bow</b>, and its shafts of held sunrise leave the wound <b>burning</b>. It draws on your Ranged level, takes both hands so it carries no shield, and spends an arrow with every loose. Requires <b>Ranged 99</b>.");
   ICONS.sunpiercer=_bowSVGwpn(WPN);
   W('dawnreaper','Dawnreaper','⚜️',185000,'weapon','slash',{atk:120,str:116,def:0},
     {twoHanded:true, wfx:{cleave:{chance:0.30}, burn:{mult:0.20}}}, "A holy scythe reaped from Aureon's own grip, its crescent a seam of raw sunrise. Its Sunfall Arc catches a second foe on the backswing (30%) and leaves the wound ablaze. The deadliest weapon a mortal has ever carried — and it forgoes a shield.");
@@ -30349,10 +30347,6 @@ const HUNT_KIT=[
     "A stave split from a single mammoth tusk, so heavy it needs a braced foot to string. The shaft carries clean through: <b>15% chance to punch into a second foe</b> on the same loose.");
   R('ashlock_crossbow','Ashlock Crossbow',8,45,false,ASH,true,{burn:{mult:0.14}},
     "A steppe prod, stocked in scorched bone and cranked with a lock that never quite cools. Bolts leave it glowing and the wound keeps <b>burning</b> after. One hand, so a shield or buckler still fits, and every shot spends a bolt.");
-  R('fiendbone_shortbow','Fiendbone Shortbow',9,51,true,FIEND,false,null,
-    "A fiend's ribcage, cleaned and tillered. It draws far too easily for something made of bone. Takes both hands, and every loose spends an arrow.");
-  R('fiendbone_longbow','Fiendbone Longbow',9,64,false,FIEND,false,null,
-    "Long bones from something the Sanctum could not keep hold of. The finest bow a mortal can carry without walking into a raid for it. Takes both hands, and every loose spends an arrow.");
 })();
 
 /* ── The Spire's ammunition (0.9.124.17) ──────────────────────────────────────
@@ -30398,19 +30392,19 @@ const HUNT_KIT=[
       (slot==='weapon'?{dmgType:dmgType}:{}), extra||{}, {desc:desc});
     COMBAT_GEAR_STATS[id]=stats;
   }
-  S('sunderedge','Sunderedge','\u{1F5E1}',210000,'weapon','slash',{atk:106,str:99,def:0},
-    {ubonus:{critChance:0.06, lifesteal:0.05}},
-    "Ground from a shard of the Spire's own fault, where the tower broke the floors it landed on. The edge remembers the fall and passes it on. <b>+6% crit, +5% lifesteal.</b> The finest one-handed blade in Cindervale.");
+  S('sunderedge','Sunderedge','\u{1F5E1}',210000,'weapon','slash',{atk:94,str:87,def:0},
+    {ubonus:{critChance:0.06, lifesteal:0.05}, wfx:{sunder:{per:0.025, cap:8}}},
+    "Ground from a shard of the Spire's own fault, where the tower broke the floors it landed on. The edge remembers the fall and passes it on. Every blow leaves a <b>Sunder</b> stack on the foe and every stack makes the next one land <b>2.5% harder</b>, up to eight — the longer a fight runs, the worse it gets for whatever you are fighting. Also <b>+6% crit, +5% lifesteal.</b> The finest one-handed blade in Cindervale.");
   ICONS.sunderedge=_swordSVGwpn(WPN);
   S('faultward','Faultward','\u{1F6E1}',185000,'shield','',{atk:0,str:0,def:118},
-    {ubonus:{defBoost:0.07, hpBoost:0.06}},
-    "A slab of load-bearing stone that held a floor up for an age and never once gave. <b>+7% Defence, +6% max HP.</b> Nothing in the game guards harder.");
+    {ubonus:{defBoost:0.07, hpBoost:0.06}, blockMom:4},
+    "A slab of load-bearing stone that held a floor up for an age and never once gave. <b>+7% Defence, +6% max HP</b>, and every blow it turns aside pays <b>+4 Momentum</b> in a raid — the only shield that does, and the reason a tank climbs the Spire as fast as anything else. Nothing in the game guards harder.");
   ICONS.faultward=_shieldSVG(PLATE);
   S('plummet','Plummet','\u{1F3F9}',205000,'weapon','ranged',{atk:80,str:34,def:0},
-    {ubonus:{atkBoost:0.07, critChance:0.05},
+    {ubonus:{atkBoost:0.07, critChance:0.05}, wfx:{pierce:{chance:0.22}},
      ranged:true, ammo:'arrow', twoHanded:true, wclass:'light',
      swingMult:1.00, dmgMult:1.16, reqRanged:99},
-    "A longbow strung on a plumb-line taken from the Spire's ruin — it finds true down, and everything it looses arrives like the tower did. <b>+7% Attack, +5% crit.</b> Draws on your Ranged level, takes both hands, and spends an arrow a shot. Requires <b>Ranged 99</b>. The best bow in Cindervale.");
+    "A longbow strung on a plumb-line taken from the Spire's ruin — it finds true down, and everything it looses arrives like the tower did. <b>22% of shots pierce</b> — they ignore the target's guard entirely, which is the ranged answer to armour a melee build would have to shred. Also <b>+7% Attack, +5% crit.</b> Draws on your Ranged level, takes both hands, and spends an arrow a shot. Requires <b>Ranged 99</b>. The best bow in Cindervale.");
   ICONS.plummet=_bowSVGwpn(WPN);
   /* The one piece that is not just a bigger number. Gloves have never had an
      identity in this game, and Momentum-per-hit is the only bonus in the game that
@@ -32251,6 +32245,12 @@ function momAdd(v){ if(combat.raid) combat.mom=Math.max(0,Math.min(MOM_MAX,(comb
 /* Gear can carry momGain — extra Momentum per landed blow. The Stonewright
    Gauntlets are the first and only source: the one piece in the game that makes
    the raid system itself run faster rather than just adding a bigger number. */
+/* Sunder's config off the equipped weapon, or null. Its own function so the two
+   places that need it cannot drift apart. */
+function _wfxSunder(id){
+  const it=id&&ITEMS[id];
+  return (it&&it.wfx&&it.wfx.sunder)||null;
+}
 function momGearBonus(){
   const ce=state&&state.combatEquipped; if(!ce) return 0;
   let v=0;
@@ -37654,7 +37654,13 @@ function combatTick(){
     const _penMul=(_cmPen&&_cmPen.armourPen>0&&typeof usingRanged==='function'&&usingRanged())
       ? (1-_cmPen.armourPen) : 1;
     const _effDef=Math.max(1, mon.def*(1-POISON_DEF_PER_STK*_pStk)*_penMul);
-    const hitChance=Math.max(0.03, Math.min(0.97, combat.youAcc/(combat.youAcc+_effDef)));
+    /* Pierce (0.9.124.23) — Plummet's shot finds true down and the guard does not
+       matter. Rolled before the hit check so a pierced shot simply cannot miss on
+       defence; it is the ranged answer to the armour a melee build shreds. */
+    const _fxIdEarly=(typeof eqCombatWeapon==='function')?eqCombatWeapon():((state.combatEquipped&&state.combatEquipped.weapon)||'');
+    const _pf=_fxIdEarly&&ITEMS[_fxIdEarly]&&ITEMS[_fxIdEarly].wfx&&ITEMS[_fxIdEarly].wfx.pierce;
+    const _pierced=!!(_pf&&Math.random()<(_pf.chance||0));
+    const hitChance=_pierced?0.97:Math.max(0.03, Math.min(0.97, combat.youAcc/(combat.youAcc+_effDef)));
     let youDmg = (Math.random()<hitChance)
       ? Math.max(1, Math.round(combat.youMaxHit*(COMBAT_P.HIT_MIN+(1-COMBAT_P.HIT_MIN)*Math.random())))
       : 0;
@@ -37712,6 +37718,12 @@ function combatTick(){
       if(youDmg>0 && typeof markDamageMult==='function'){
         const _mm=markDamageMult(mon);
         if(_mm!==1) youDmg=Math.max(1,Math.round(youDmg*_mm));
+      }
+      /* Sunder stacks read BEFORE Ruin so the two compound rather than one
+         swallowing the other. */
+      if(youDmg>0 && combat.foeStatus && combat.foeStatus.sunder){
+        const _sd=combat.foeStatus.sunder;
+        youDmg=Math.max(1,Math.round(youDmg*(1+(_sd.per||0.04)*(_sd.stacks||0))));
       }
       /* Ruin (0.9.125) — the Momentum burst, and the last multiplier in the chain
          so it compounds with crit, the mastery procs and the mark rather than
@@ -37788,6 +37800,18 @@ function combatTick(){
           };
           if(!_bp) cmbLog(`🩸 Your crit opens a bleeding wound on the ${mon.name}!`,'status');
         }
+      }
+      /* Sunder (0.9.124.23) — the Sundered Spire's own effect, and the reason its
+         sword is worth carrying over a Dawnbreaker. Every landed blow leaves a
+         stack on the foe and every stack makes the NEXT one land harder, so the
+         longer a fight runs the worse it gets for whatever you are fighting. Dies
+         with the foe, like every other foeStatus. */
+      if(youDmg>0 && _wfxSunder(_fxIdEarly)){
+        if(!combat.foeStatus) combat.foeStatus={};
+        const _sn=_wfxSunder(_fxIdEarly);
+        const _sc=Math.min(_sn.cap||8, ((combat.foeStatus.sunder&&combat.foeStatus.sunder.stacks)||0)+1);
+        combat.foeStatus.sunder={stacks:_sc, per:_sn.per||0.04};
+        if(_sc===1) cmbLog(`\u{1FA93} The fault opens \u2014 every blow on the ${mon.name} now lands harder.`,'status');
       }
       // ── Weapon on-hit effects (1.0.60) — poison / stun procs ─────────────
       // The equipped weapon may carry a `wfx` proc. Poison stacks a bleed;
@@ -38023,7 +38047,17 @@ function combatTick(){
     // ── Shield block (1.0.87) — a raised shield soaks a flat % of the landed blow
     // (scales with shield Defence). Applied after dodge; never fully negates (min 1).
     // This is what makes the shield build the true tank: smaller hits → far less food.
-    if(foeDmg>0){ const _sdr=(typeof shieldDamageReduction==='function')?shieldDamageReduction():0; if(_sdr>0) foeDmg=Math.max(1,Math.round(foeDmg*(1-_sdr))); }
+    if(foeDmg>0){ const _sdr=(typeof shieldDamageReduction==='function')?shieldDamageReduction():0;
+      if(_sdr>0){
+        foeDmg=Math.max(1,Math.round(foeDmg*(1-_sdr)));
+        /* (0.9.124.23) A shield can pay Momentum for the blow it turned. Faultward
+           is the only one, and it is what makes a tank build climb the Spire as
+           fast as a damage one. */
+        const _shId=(typeof eqCombatShield==='function')?eqCombatShield():'';
+        const _bm=_shId&&ITEMS[_shId]&&ITEMS[_shId].blockMom;
+        if(_bm>0) momAdd(_bm);
+      }
+    }
     // ── Combat Mastery damage reduction (1.0.101) — Bulwark's Ironhide/Stonewall/Shield
     // Wall soak a further flat %, applied after shield block. Clamped so it can't zero a hit.
     if(foeDmg>0){

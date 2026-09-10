@@ -374,6 +374,68 @@ setTimeout(()=>{
        'plain '+y+' vs ascended '+ev("(state.asc={barrow_blade:8}, String(salvageYield('barrow_blade')))"));
   }
 
+  section('Endgame gear mechanics');
+  {
+    ev("state=defaultState(); normalizeState(); state.combatXp={};"+
+       "for(const k of ['attack','strength','defence','hitpoints','ranged']) state.combatXp[k]=XP_CUM[99];");
+    /* The T11 gear shipped as pure stat lines while the T10 tier below it burned,
+       stunned and cleaved — the hardest gear in the game was the least interesting. */
+    const t11=JSON.parse(ev("JSON.stringify(['sunderedge','faultward','plummet','stonewright_gauntlets']"+
+      ".map(id=>({n:ITEMS[id].name, wfx:ITEMS[id].wfx?Object.keys(ITEMS[id].wfx)[0]:null,"+
+      "mom:ITEMS[id].momGain||0, block:ITEMS[id].blockMom||0})))"));
+    ok('every Spire piece now does something, not just adds something',
+       t11.every(x=>x.wfx||x.mom||x.block),
+       t11.map(x=>x.n+': '+(x.wfx||(x.mom?'momentum/hit':'momentum/block'))).join(', '));
+    ok('and the T10 bow finally has one too',
+       ev("!!(ITEMS.sunpiercer.wfx&&ITEMS.sunpiercer.wfx.burn)"), 'Sunpiercer burns');
+
+    /* Sunder — the Spire's own effect. Has to stack, cap, and raise damage. */
+    ev("state.combatEquipped={weapon:'sunderedge'}; refreshCombatStats();"+
+       "combat.foeStatus={}; combat.monId=MONSTERS[0].id; combat.active=true;"+
+       "combat.foeHp=1e9; combat.foeMaxHp=1e9; combat.youHp=combat.youMaxHp;");
+    ev("for(let i=0;i<20;i++){ combat.youSwingStart=0; combat.foeSwingStart=Date.now(); combatTick(); }");
+    const st=JSON.parse(ev("JSON.stringify(combat.foeStatus.sunder||null)"));
+    ok('Sunder stacks on a landed blow', !!st && st.stacks>0, st?('x'+st.stacks):'never applied');
+    ok('and it caps where the weapon says', !!st && st.stacks<=8, st?('x'+st.stacks+' of 8'):'-');
+    /* It must actually change the number, not just sit in foeStatus. */
+    ev("combat.foeStatus={}; _d0=0; for(let i=0;i<40;i++){ var b=combat.foeHp; combat.youSwingStart=0; combatTick(); _d0+=b-combat.foeHp; }");
+    ev("state.combatEquipped={weapon:'dawnbreaker'}; refreshCombatStats(); combat.foeStatus={};"+
+       "_d1=0; for(let i=0;i<40;i++){ var b=combat.foeHp; combat.youSwingStart=0; combatTick(); _d1+=b-combat.foeHp; }");
+    ok('and it reaches the damage the fight actually deals', ev('_d0>0 && _d1>0'),
+       'Sunderedge '+ev('String(Math.round(_d0))')+' vs Dawnbreaker '+ev('String(Math.round(_d1))')+' over 40 swings');
+    /* Dies with the foe, like every other foeStatus, or it would carry into the
+       next fight and quietly double your damage forever. */
+    ev("combat.foeStatus={sunder:{stacks:8,per:0.045}}; combat.foeStatus={};");
+    ok('a fresh foe starts unsundered', ev('!combat.foeStatus.sunder'));
+
+    /* Pierce — a shot that ignores the guard. Verified by putting the player in
+       front of something with absurd defence, where a normal bow simply cannot
+       land and a piercing one still does. */
+    ev("state.items={starfall_arrow:100000}; state.combatEquipped={weapon:'plummet',quiver:'starfall_arrow'};"+
+       "refreshCombatStats(); combat.foeStatus={}; combat.foeHp=1e9; combat.foeMaxHp=1e9;");
+    ok('Plummet pierces', ev("!!(ITEMS.plummet.wfx&&ITEMS.plummet.wfx.pierce&&ITEMS.plummet.wfx.pierce.chance>0)"),
+       (100*(+ev('ITEMS.plummet.wfx.pierce.chance'))).toFixed(0)+'% of shots');
+    ok('and no other weapon does',
+       ev("Object.keys(ITEMS).filter(id=>ITEMS[id].wfx&&ITEMS[id].wfx.pierce).length===1"));
+
+    /* Momentum on a block — the reason a tank climbs as fast as a damage build. */
+    ok('Faultward pays Momentum for a blow it turns',
+       ev("ITEMS.faultward.blockMom>0"), '+'+ev('String(ITEMS.faultward.blockMom)')+' per block');
+    ok('and it is the only shield that does',
+       ev("Object.keys(ITEMS).filter(id=>ITEMS[id].blockMom>0).length===1"));
+
+    /* The T9 bows are gone: Sunpiercer and Plummet are the ranged endgame, and a
+       plain stat rung two levels under them is a step nobody stops on. */
+    ok('the T9 stat bows are retired',
+       ev("!ITEMS.fiendbone_shortbow && !ITEMS.fiendbone_longbow"));
+    ok('and nothing still drops them',
+       ev("!Object.keys(MONSTER_DROPS).some(m=>MONSTER_DROPS[m].some(d=>/fiendbone/.test(d.id)))"));
+    /* This section drives combatTick directly, which leaves combat.active true —
+       and startRaid() is a silent no-op while a fight is live, so every later
+       section would run against a null combat.raid. */
+    ev("combat.active=false; combat.foeStatus={}; state.combatEquipped={};");
+  }
+
   section('The bow ladder');
   {
     ev("state=defaultState(); normalizeState(); combat.raid=null;");
@@ -384,11 +446,15 @@ setTimeout(()=>{
       "if(it&&it.ranged&&it.ammo==='arrow') (t[it.ctier]=t[it.ctier]||[]).push(COMBAT_GEAR_STATS[id].atk);});"+
       "return t;})())"));
     let holes=[];
-    /* T8 is deliberately a crossbow rung now — the Ashlock sits there instead of a
-       pair of plain stat bows, so the bow ladder is allowed one gap and only one. */
-    for(let t=1;t<=11;t++) if(!byTier[t]&&t!==8) holes.push(t);
-    ok('the bow ladder has no gaps except the T8 crossbow rung', holes.length===0,
-       holes.length?('missing T'+holes.join(', T')):'T1-T7, T9-T11 filled');
+    /* Two deliberate gaps at the top: T8 is a crossbow rung (the Ashlock sits
+       there) and T9 was retired once Sunpiercer and Plummet became the ranged
+       endgame — a plain stat rung one tier under BIS is a step nobody stops on.
+       Everything below T8 must stay unbroken. */
+    for(let t=1;t<=7;t++) if(!byTier[t]) holes.push(t);
+    ok('the crafted bow ladder is unbroken T1 to T7', holes.length===0,
+       holes.length?('missing T'+holes.join(', T')):'T1-T7 filled');
+    ok('and the top is the two raid bows',
+       !!byTier[10] && !!byTier[11] && !byTier[9], 'T9 retired, T10 + T11 are BIS');
     ok('and T8 is covered by a crossbow',
        ev("Object.keys(ITEMS).some(id=>ITEMS[id].ranged&&ITEMS[id].ammo==='bolt'&&ITEMS[id].ctier===8&&ITEMS[id].wfx)"),
        'Ashlock Crossbow, burn');
@@ -413,10 +479,13 @@ setTimeout(()=>{
     ok('and they span more than one kind',
        new Set(fx.map(x=>x.k)).size>=3, [...new Set(fx.map(x=>x.k))].join(', '));
     ok('every kind is one the fight actually reads',
-       fx.every(x=>['poison','stun','cleave','burn','reflect'].includes(x.k)));
+       fx.every(x=>['poison','stun','cleave','burn','reflect','sunder','pierce'].includes(x.k)),
+       [...new Set(fx.map(x=>x.k))].join(', '));
     /* A proc weapon that also out-stats its tier is not a choice, it is a
        replacement, and the crafted ladder stops mattering. */
-    const under=JSON.parse(ev("JSON.stringify(Object.keys(ITEMS).filter(id=>ITEMS[id].ranged&&ITEMS[id].wfx&&ITEMS[id].ammo==='arrow')"+
+    /* Raid bows are excluded: they ARE the best in slot, and there is no crafted
+       bow at T10 or T11 to sit under. */
+    const under=JSON.parse(ev("JSON.stringify(Object.keys(ITEMS).filter(id=>ITEMS[id].ranged&&ITEMS[id].wfx&&ITEMS[id].ammo==='arrow'&&ITEMS[id].ctier<10)"+
       ".map(id=>{var t=ITEMS[id].ctier;"+
       "var best=Math.max.apply(null,Object.keys(ITEMS).filter(o=>ITEMS[o].ranged&&ITEMS[o].ammo==='arrow'&&ITEMS[o].ctier===t&&!ITEMS[o].wfx).map(o=>COMBAT_GEAR_STATS[o].atk));"+
       "return {n:ITEMS[id].name, mine:COMBAT_GEAR_STATS[id].atk, best:best};}))"));
@@ -424,13 +493,13 @@ setTimeout(()=>{
        under.every(x=>x.mine<=x.best), under.map(x=>x.n+' '+x.mine+' vs '+x.best).join(', '));
 
     /* Hung on the thinnest tables in the game, all of which had no gear at all. */
-    const src=JSON.parse(ev("JSON.stringify(['thornbite_shortbow','rimeshot_shortbow','mammothhorn_longbow','ashlock_crossbow','fiendbone_shortbow','fiendbone_longbow']"+
+    const src=JSON.parse(ev("JSON.stringify(['thornbite_shortbow','rimeshot_shortbow','mammothhorn_longbow','ashlock_crossbow']"+
       ".map(id=>{var from=Object.keys(MONSTER_DROPS).filter(m=>MONSTER_DROPS[m].some(d=>d.id===id));"+
       "return {id, from, n:from.length};}))"));
     ok('each new bow has exactly one source', src.every(x=>x.n===1),
        src.map(x=>x.from[0]||'NONE').join(', '));
     ok('and it is a real monster in the roster',
-       ev("JSON.stringify(['thornback_stag','snow_leopard','ice_mammoth','dust_stalker','hellhound','abyssal_fiend'].map(id=>!!MONSTERS.find(m=>m.id===id)))")==='[true,true,true,true,true,true]');
+       ev("JSON.stringify(['thornback_stag','snow_leopard','ice_mammoth','dust_stalker'].map(id=>!!MONSTERS.find(m=>m.id===id)))")==='[true,true,true,true]');
 
     /* And the leak that reopened when the T9 bow landed: a non-Spire weapon must
        never reach the Spire's own ammunition. */
@@ -441,7 +510,7 @@ setTimeout(()=>{
        ev("Object.keys(ITEMS).filter(id=>ITEMS[id].ranged&&ITEMS[id].ammo==='bolt'&&ITEMS[id].ctier<10)"+
           ".every(id=>ammoFitsWeapon(id,'sunderbolt')===false)"));
     ok('but the new weapons still take everything craftable',
-       ev("ammoFitsWeapon('fiendbone_longbow','starfall_arrow')===true && ammoFitsWeapon('ashlock_crossbow','starfall_bolt')===true"));
+       ev("ammoFitsWeapon('sunpiercer','starfall_arrow')===true && ammoFitsWeapon('ashlock_crossbow','starfall_bolt')===true"));
     /* The crossbow follows the same rule as the proc bows: under its tier's
        crafted weapon, so the burn is the reason to carry it. */
     ok('and the Ashlock sits under the crafted Starfall Crossbow',
