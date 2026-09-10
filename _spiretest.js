@@ -374,6 +374,74 @@ setTimeout(()=>{
        'plain '+y+' vs ascended '+ev("(state.asc={barrow_blade:8}, String(salvageYield('barrow_blade')))"));
   }
 
+  section('Daily affixes');
+  {
+    ev("state=defaultState(); normalizeState(); combat.raid=null;");
+    /* Same day must always give the same set, or the card lies about what you are
+       walking into and two players compare different towers. */
+    const a1=ev("JSON.stringify(spireAffixes(500).map(x=>x.id))");
+    const a2=ev("JSON.stringify(spireAffixes(500).map(x=>x.id))");
+    ok('a day always rolls the same set', a1===a2, a1);
+    ok('and a different day rolls a different one',
+       a1!==ev("JSON.stringify(spireAffixes(501).map(x=>x.id))"),
+       'day 500 '+a1+'  day 501 '+ev("JSON.stringify(spireAffixes(501).map(x=>x.id))"));
+
+    let two=0, one=0, dupes=0, sizes=0;
+    for(let d=0;d<400;d++){
+      const set=JSON.parse(ev('JSON.stringify(spireAffixes('+d+').map(x=>({id:x.id,foe:!!x.foe})))'));
+      if(set.length!==3){ sizes++; continue; }
+      const f=set.filter(x=>x.foe).length;
+      if(f===2) two++;
+      if(set.length-f===1) one++;
+      if(set[0].id===set[1].id) dupes++;
+    }
+    ok('every day is two against you and one for you', two===400 && one===400 && sizes===0,
+       two+'/400 hostile pairs, '+one+'/400 boons');
+    ok('and the two hostile picks are never the same one', dupes===0, dupes+' duplicate days');
+    /* A whole month of the same three would be worse than none. */
+    const spread=new Set();
+    for(let d=0;d<30;d++) spread.add(ev('JSON.stringify(spireAffixes('+d+').map(x=>x.id))'));
+    ok('a month is not the same three over and over', spread.size>=12, spread.size+' distinct sets in 30 days');
+
+    /* An affix key nothing reads is a chip on the card that does nothing, and
+       nothing in the file would throw to tell you. */
+    const keys=JSON.parse(ev("JSON.stringify({foe:[...new Set(SPIRE_FOE_AFFIXES.flatMap(a=>Object.keys(a.foe)))],"+
+      "you:[...new Set(SPIRE_BOON_AFFIXES.flatMap(a=>Object.keys(a.you)))]})"));
+    ok('every hostile key is one spireFoeMods applies',
+       keys.foe.every(k=>['hp','atk','str','def','swingMs','curse'].includes(k)), keys.foe.join(', '));
+    ok('every boon key is one something actually reads',
+       keys.you.every(k=>['accBoost','momMult','dmgReduce','lifesteal','aspd','stone'].includes(k)), keys.you.join(', '));
+
+    ok('no affix applies outside a Spire run',
+       ev("spireRunAffixes().length===0 && spireBoon('accBoost')===0 && spireBoon('momMult')===1"));
+    ok('and the foe modifiers sit at 1 outside one',
+       ev("Object.values(spireFoeMods()).every(v=>v===1)"), ev("JSON.stringify(spireFoeMods())"));
+
+    /* Snapshotted at run start: midnight must not change the rules under someone
+       forty floors up. */
+    ev("state.combatXp={}; for(const k of ['attack','strength','defence','hitpoints','ranged']) state.combatXp[k]=XP_CUM[99];"+
+       "refreshCombatStats(); startRaid(SPR_ID);");
+    ok('a run snapshots the day it started', ev('typeof combat.raid.affixDay==="number"'),
+       'day '+ev('String(combat.raid.affixDay)'));
+    ev("combat.raid.affixDay=500;");
+    ok('and reads its own snapshot rather than the clock',
+       ev("JSON.stringify(spireRunAffixes().map(x=>x.id))")===a1, a1);
+    /* Floor 21, not 20: every fifth floor is a landing and carries a 1.9x boss
+       multiplier that has nothing to do with affixes. */
+    ok('the generated floor is built with them on',
+       ev("(function(){var m=spireFoeMods(), f=spireFloor(21,true);"+
+          "return Math.abs(f.hp-Math.round(SPR_BASE.hp*spireScale(21).hp*m.hp))<2;})()"),
+       'floor 21 health '+ev('String(spireFloor(21,true).hp)'));
+    /* And prove a health affix actually moves it, rather than the check passing
+       because today happens to roll nothing that touches health. */
+    ev("_plain=spireFloor(21,true).hp;");
+    ev("combat.raid.affixDay=501;");   // day 501 rolls Bloated
+    ok('a health affix visibly changes the floor',
+       ev("spireRunAffixes().some(a=>a.id==='bloated') && spireFloor(21,true).hp>_plain*1.25"),
+       ev('String(_plain)')+' -> '+ev('String(spireFloor(21,true).hp)')+' with Bloated');
+    ev("combat.youHp=0; handleRaidFail(); combat.active=false;");
+  }
+
   section('The single-blow cap');
   {
     ev("state=defaultState(); normalizeState(); state.combatXp={};"+
