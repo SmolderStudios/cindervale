@@ -7985,7 +7985,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.124.15">v0.9.124</div>
+  <div class="mm-ver" data-build="0.9.124.16">v0.9.124</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -30213,8 +30213,10 @@ const HUNT_KIT=[
   W('aegis_of_dawn','Aegis of Dawn','🛡️',95000,'shield','',{atk:0,str:0,def:100},
     {ubonus:{hpBoost:0.08,defBoost:0.05}, hpBlock:{per:120,cap:0.08}, hpStr:{per:50,cap:20}}, "A shield beaten from a single sheet of dawnsteel — blows break on it like night on morning. <b>+8% max HP, +5% Defence</b>, and its guard <b>hardens with the life it shields</b>: bonus block <i>and</i> bonus Strength both scale with your max HP (up to +8% block and +20 Str). The more life the tank carries, the harder the shield-bash lands. The definitive tank shield.");
   ICONS.aegis_of_dawn=_shieldSVG(PLATE);
-  W('sunpiercer','Sunpiercer','🏹',120000,'weapon','stab',{atk:100,str:60,def:0},
-    {}, "A recurve of god-gold strung with a thread of light; it looses shafts of pure dawn. A ranged relic — it equips and swings now, and becomes true BIS when Ranged combat arrives.");
+  W('sunpiercer','Sunpiercer','🏹',120000,'weapon','ranged',{atk:88,str:44,def:0},
+    {ranged:true, ammo:'arrow', twoHanded:true, wclass:'light',
+     swingMult:1.00, dmgMult:1.13, reqRanged:99},
+    "A recurve of god-gold strung with a thread of light; it looses shafts of pure dawn. <b>A true bow</b> — it draws on your Ranged level, takes both hands so it carries no shield, and spends an arrow with every loose. Requires <b>Ranged 99</b>.");
   ICONS.sunpiercer=_bowSVGwpn(WPN);
   W('dawnreaper','Dawnreaper','⚜️',185000,'weapon','slash',{atk:120,str:116,def:0},
     {twoHanded:true, wfx:{cleave:{chance:0.30}, burn:{mult:0.20}}}, "A holy scythe reaped from Aureon's own grip, its crescent a seam of raw sunrise. Its Sunfall Arc catches a second foe on the backswing (30%) and leaves the wound ablaze. The deadliest weapon a mortal has ever carried — and it forgoes a shield.");
@@ -30289,9 +30291,11 @@ const HUNT_KIT=[
     {ubonus:{defBoost:0.07, hpBoost:0.06}},
     "A slab of load-bearing stone that held a floor up for an age and never once gave. <b>+7% Defence, +6% max HP.</b> Nothing in the game guards harder.");
   ICONS.faultward=_shieldSVG(PLATE);
-  S('plummet','Plummet','\u{1F3F9}',205000,'weapon','stab',{atk:118,str:72,def:0},
-    {ubonus:{atkBoost:0.07, critChance:0.05}},
-    "A longbow strung on a plumb-line taken from the Spire's ruin — it finds true down, and everything it looses arrives like the tower did. <b>+7% Attack, +5% crit.</b> The best bow in Cindervale.");
+  S('plummet','Plummet','\u{1F3F9}',205000,'weapon','ranged',{atk:94,str:48,def:0},
+    {ubonus:{atkBoost:0.07, critChance:0.05},
+     ranged:true, ammo:'arrow', twoHanded:true, wclass:'light',
+     swingMult:1.00, dmgMult:1.16, reqRanged:99},
+    "A longbow strung on a plumb-line taken from the Spire's ruin — it finds true down, and everything it looses arrives like the tower did. <b>+7% Attack, +5% crit.</b> Draws on your Ranged level, takes both hands, and spends an arrow a shot. Requires <b>Ranged 99</b>. The best bow in Cindervale.");
   ICONS.plummet=_bowSVGwpn(WPN);
   /* The one piece that is not just a bigger number. Gloves have never had an
      identity in this game, and Momentum-per-hit is the only bonus in the game that
