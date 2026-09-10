@@ -7985,7 +7985,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.124.17">v0.9.124</div>
+  <div class="mm-ver" data-build="0.9.124.18">v0.9.124</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -32043,7 +32043,7 @@ function tickBossMechanic(now){
     // One tick per call, reset relative to `now` — no catch-up burst if the tab
     // was backgrounded and combatTick fell behind.
     if(now>=bf.nextAt){ bf.nextAt=now+(bf.tickMs||2600);
-      const dmg=Math.max(1,Math.round(combat.youMaxHp*(bf.frac||0.05)));
+      const dmg=capRaidHit(Math.max(1,Math.round(combat.youMaxHp*(bf.frac||0.05))));
       combat.youHp=Math.max(0,combat.youHp-dmg);
       cmbLog(`🔥 ${bf.label||'Burning'} sears you for ${dmg}.`,'foe');
       if(combat.youHp<=0 && !_tryCheatDeath()) return _resolvePlayerDeath();
@@ -32051,7 +32051,7 @@ function tickBossMechanic(now){
   } else if(bf.kind==='voidbomb'){
     if(now>=bf.nextAt){ bf.nextAt=now+(bf.everyMs||8000);
       if((bf.acc||0) < (bf.reqDmg||500)){
-        const dmg=Math.max(1,Math.round(combat.youMaxHp*(bf.frac||0.30)));
+        const dmg=capRaidHit(Math.max(1,Math.round(combat.youMaxHp*(bf.frac||0.30))));
         combat.youHp=Math.max(0,combat.youHp-dmg);
         cmbLog(`🌀 ${bf.label||'Void'} ruptures for ${dmg}! Keep your damage up — needed ${bf.reqDmg||500} in the window.`,'lose');
         bf.acc=0;
@@ -32095,6 +32095,20 @@ const RAID_ABILS=[
 ];
 const RAID_ABIL_BY_ID=(function(){ const m={}; for(const a of RAID_ABILS) m[a.id]=a; return m; })();
 
+/* ── The single-blow cap (0.9.124.18) ─────────────────────────────────────────
+   Raids only. Ordinary zones never come close to one-shotting anyone, and applying
+   this everywhere would quietly make every under-levelled fight in the game
+   survivable — a much bigger change than the one being made here.
+
+   A third of your maximum, so three landed blows is the floor on how fast you can
+   be killed and you always get a turn to answer. Applied last, after armour, shield
+   block, mastery reduction and Brace, so it is a true ceiling rather than another
+   multiplier that an exponential eventually swallows. */
+const RAID_HIT_CAP=0.34;
+function capRaidHit(dmg){
+  if(!combat.raid || !(combat.youMaxHp>0)) return dmg;
+  return Math.min(dmg, Math.max(1, Math.round(combat.youMaxHp*RAID_HIT_CAP)));
+}
 function momAdd(v){ if(combat.raid) combat.mom=Math.max(0,Math.min(MOM_MAX,(combat.mom||0)+v)); }
 /* Gear can carry momGain — extra Momentum per landed blow. The Stonewright
    Gauntlets are the first and only source: the one piece in the game that makes
@@ -32187,7 +32201,7 @@ function tickRaidCast(now){
     momAdd(15);
     return false;
   }
-  let dmg=Math.max(1,Math.round(combat.youMaxHp*c.frac));
+  let dmg=capRaidHit(Math.max(1,Math.round(combat.youMaxHp*c.frac)));
   if(c.kind==='slam' && braceActive(now)){
     dmg=Math.max(1,Math.round(dmg*BRACE_CUT));
     cmbLog('\u{1F6E1} '+c.label+' lands, but your guard holds \u2014 '+dmg+'.','status');
@@ -37887,6 +37901,8 @@ function combatTick(){
     /* Brace (0.9.125) — the Momentum guard. Applied last so it multiplies with
        shield block and mastery reduction instead of sharing their cap. */
     if(foeDmg>0 && braceActive(now)) foeDmg=Math.max(1,Math.round(foeDmg*BRACE_CUT));
+    /* Last, so nothing downstream can push a blow back over the ceiling. */
+    if(foeDmg>0) foeDmg=capRaidHit(foeDmg);
     combat.youHp=Math.max(0,combat.youHp-foeDmg);
     if(foeDmg>0) cmbSplat(foeDmg,'take');
     /* Second Wind (0.9.130) — checked after HP is applied and BEFORE the death check
@@ -39072,7 +39088,7 @@ function buildSpireProgressHTML(raid){
         · <span class="spr-floor" id="rxFloor">Floor ${floor}</span>${(floor%SPR_BOSS_EVERY===0)?' — Landing':''}</span>
       <span class="rp-r">${curse}<span class="spr-chase" id="rxChase">${chase}</span><span class="rp-timer" id="raidTimer">${_fmtRaidTime(ms)}</span></span>
     </div>
-    <div class="rp-warn">⚠ There is no top. Every floor pays as you clear it, and the climb ends when you fall.</div>
+    <div class="rp-warn">⚠ There is no top. Every floor pays as you clear it, and the climb ends when you fall. No single blow can take more than a third of your health &mdash; how deep you get is a question of how much food you brought.</div>
   </div>`;
 }
 
