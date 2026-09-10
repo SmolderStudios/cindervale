@@ -3339,7 +3339,12 @@ setTimeout(() => {
       });
       return JSON.stringify(out);
     })()`));
-    const SVG_OK = new Set(['radcliff_tally'].concat(RANGED_PENDING));
+    /* Spire materials (0.9.124.11) shipped with hand-drawn SVG because the item art
+       comes off ChatGPT contact sheets and a sheet run cannot happen in the same pass
+       that adds the raid they drop from. PENDING, not rejected — same standing as the
+       ranged batch above, and same instruction: do NOT add these to KEEP_SVG. */
+    const SPIRE_PENDING = ['sunderstone','spirecore'];
+    const SVG_OK = new Set(['radcliff_tally'].concat(RANGED_PENDING, SPIRE_PENDING));
 
     const unexpected = cov.svg.filter(id => !SVG_OK.has(id));
     ok('only known-exempt items are still on SVG, and none is iconless',

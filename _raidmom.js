@@ -32,7 +32,10 @@ setTimeout(()=>{
 
   section('Telegraph data — every raid has something to answer');
   {
-    const raids=ev('RAIDS.map(r=>({name:r.name, id:r.id, tele:r.stages.filter(s=>s.castfx).map(s=>({'+
+    /* The Spire is skipped here on purpose: it has no `stages` to inspect because
+       its floors are generated, and every landing telegraphs by construction.
+       _spiretest.js is what proves that. */
+    const raids=ev('RAIDS.filter(r=>!r.endless).map(r=>({name:r.name, id:r.id, tele:r.stages.filter(s=>s.castfx).map(s=>({'+
       'name:s.name, kinds:s.castfx.kinds, castMs:s.castfx.castMs, everyMs:s.castfx.everyMs,'+
       'openMs:s.castfx.openMs, frac:s.castfx.frac, req:s.castfx.reqDmg||0,'+
       'labelled:(s.castfx.kinds||[]).every(k=>s.castfx.labels&&s.castfx.labels[k])}))}))');
