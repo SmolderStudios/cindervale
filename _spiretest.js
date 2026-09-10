@@ -151,7 +151,57 @@ setTimeout(()=>{
        so the Dawnreaper's 117% of a melee one-hander is the benchmark - not the
        one-hander itself. Before this they sat at 123% and 156%. */
     ok('  and neither runs away with the game',
-       true, 'Sunpiercer 103% of melee 1H, Plummet 121%, Dawnreaper 117%');
+       true, 'Sunpiercer 96% of melee 1H, Plummet 113%, Dawnreaper 117%');
+
+    /* The Spire's ammunition — the only ammo in the game no fletcher can make. */
+    const am=JSON.parse(ev("JSON.stringify(['sundershaft','sunderbolt'].map(id=>({id,"+
+      "n:ITEMS[id].name, ammo:ITEMS[id].ammo, str:ITEMS[id].ammoStr, tier:ITEMS[id].ammoTier,"+
+      "use:itemUseKind(id)})))"));
+    ok('the Spire drops its own arrow and bolt',
+       am.length===2 && am[0].ammo==='arrow' && am[1].ammo==='bolt',
+       am.map(x=>x.n+' ('+x.ammo+' '+x.str+' str)').join(', '));
+    ok('both beat the top craftable ammunition',
+       am[0].str>ev('ITEMS.starfall_arrow.ammoStr') && am[1].str>ev('ITEMS.starfall_bolt.ammoStr'),
+       'Starfall arrow '+ev('String(ITEMS.starfall_arrow.ammoStr)')+' -> Sundershaft '+am[0].str);
+    /* An ammo item with no recipe reads as vendor trash unless itemUseKind knows
+       better, and the satchel would tell you to sell your endgame ammunition. */
+    ok('and the satchel knows what they are for', am.every(x=>x.use==='ammo'),
+       am.map(x=>x.use).join(', '));
+    ok('no fletching recipe can make them',
+       ev("!Object.values(SKILLS).some(sk=>(sk.acts||[]).some(a=>a.out&&(a.out.sundershaft||a.out.sunderbolt)))"));
+
+    /* Ammunition burns ~1,769 an hour, so a rare roll would be a trophy nobody
+       could shoot. These have to arrive in bulk, and only on landings. */
+    ev("state.items={}; _q=0; for(var f=1;f<=50;f++){ var r=spireFloorLoot(f); }");
+    ok('a climb to 50 stocks a real quiver', ev('(state.items.sundershaft||0)>500'),
+       ev('String(state.items.sundershaft||0)')+' arrows, '+ev('String(state.items.sunderbolt||0)')+' bolts');
+    ev("state.items={}; _n=0; for(var f=1;f<=60;f++){ if(f%SPR_BOSS_EVERY!==0) spireFloorLoot(f); }");
+    ok('and non-landing floors give none', ev('!state.items.sundershaft'),
+       String(ev('state.items.sundershaft||0')));
+
+    /* Ammunition is gated by the WEAPON's tier, not the archer's level. Without
+       this a Pine Shortbow could loose a Sundershaft the moment one dropped. */
+    ok('a starting bow cannot draw the best arrow',
+       ev("ammoFitsWeapon('pine_shortbow','sundershaft')===false"));
+    ok('nor anything past its own rung',
+       ev("ammoFitsWeapon('pine_shortbow','iron_arrow')===true && ammoFitsWeapon('pine_shortbow','steel_arrow')===false"),
+       'Pine reaches iron, not steel');
+    ok('the top craftable bow still fires the top craftable arrow',
+       ev("ammoFitsWeapon('ancient_longbow','starfall_arrow')===true"),
+       'one tier of headroom, or Starfall arrows would have nothing to fire them');
+    ok('but not the Spire arrow', ev("ammoFitsWeapon('ancient_longbow','sundershaft')===false"));
+    /* The crafted T8 crossbow was reaching the Spire's own bolts without ever
+       entering the Spire, while the T7 bow was correctly shut out. */
+    ok('and the crafted crossbow cannot reach the Spire bolt',
+       ev("ammoFitsWeapon('starfall_crossbow','sunderbolt')===false && ammoFitsWeapon('starfall_crossbow','starfall_bolt')===true"));
+    ok('only the two raid bows draw a Sundershaft',
+       ev("ammoFitsWeapon('sunpiercer','sundershaft')===true && ammoFitsWeapon('plummet','sundershaft')===true"));
+    ok('and a bow still refuses a bolt outright',
+       ev("ammoFitsWeapon('plummet','sunderbolt')===false"));
+    /* The level must NOT be what opens it. */
+    ev("state.combatXp.ranged=XP_CUM[99]; state.combatEquipped={weapon:'pine_shortbow',quiver:'sundershaft'}; state.items.sundershaft=999;");
+    ok('Ranged 99 does not unlock it for a starting bow', ev('readyAmmo()===null'),
+       'readyAmmo refuses at Ranged '+ev("String(cmbLvl('ranged'))"));
     beats('stonewright_gauntlets','voidsteel_gloves','the gloves beat the crafted best');
     /* But the two-hander stays the Empyrean's, by design. */
     ok('and the Dawnreaper is still the best weapon in the game',

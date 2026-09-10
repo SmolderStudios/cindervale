@@ -3347,7 +3347,8 @@ setTimeout(() => {
       /* The Spire's four gear pieces (0.9.124.15). Same standing: they use the
          palette-driven generators every tier uses, and the painted art comes off
          a contact sheet later. Do NOT add them to KEEP_SVG. */
-      'sunderedge','faultward','plummet','stonewright_gauntlets'];
+      'sunderedge','faultward','plummet','stonewright_gauntlets',
+      'sundershaft','sunderbolt'];
     const SVG_OK = new Set(['radcliff_tally'].concat(RANGED_PENDING, SPIRE_PENDING));
 
     const unexpected = cov.svg.filter(id => !SVG_OK.has(id));
