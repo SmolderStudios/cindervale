@@ -6,7 +6,7 @@ const dom=new JSDOM(html,{url:'http://localhost/',runScripts:'dangerously',prete
 setTimeout(()=>{const w=dom.window,ev=e=>w.eval(e);ev('state=defaultState();normalizeState();');
 console.log(JSON.parse(ev(`JSON.stringify((function(){
   var o=[];
-  var bows=['pine_shortbow','ironbark_longbow','ancient_longbow','sunpiercer','plummet'];
+  var bows=['pine_shortbow','ironbark_longbow','ancient_longbow','scorchhorn_longbow','fiendbone_longbow','sunpiercer','plummet'];
   var arrows=RANGED_AMMO.map(function(a){return a.k+'_arrow';}).concat(['sundershaft']);
   o.push('        '+arrows.map(function(a){return (ITEMS[a].name||a).replace(' Arrow','').slice(0,6).padEnd(7);}).join(''));
   bows.forEach(function(b){

@@ -7991,7 +7991,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.124.20">v0.9.124</div>
+  <div class="mm-ver" data-build="0.9.124.21">v0.9.124</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -29687,7 +29687,8 @@ const MONSTER_DROPS={
   // ── Demon Sanctum drops (1.0.5) — infernal hide/brimstone/void + Infernal Crest ──
   // Lv 86-99 endgame. Demon Lord is the apex voidheart source (0.045). Doomblade
   // (slash greatsword) + Demon Lord's Skull (ultimate trophy) drop direct.
-  hellhound:      [{id:'demonhide',      chance:0.30},
+  hellhound:      [{id:'fiendbone_shortbow', chance:0.006}/*gear drop*/,
+                   {id:'demonhide',      chance:0.30},
                    {id:'demon_meat',     chance:0.34},
                    {id:'brimstone',      chance:0.12},
                    {id:'beast_sinew',    chance:0.055},
@@ -29698,7 +29699,8 @@ const MONSTER_DROPS={
                    {id:'void_cinder',    chance:0.06},
                    {id:'beast_sinew',    chance:0.065},
                    {id:'shade_ember',    chance:0.022}],
-  abyssal_fiend:  [{id:'void_cinder',    chance:0.24},
+  abyssal_fiend:  [{id:'fiendbone_longbow', chance:0.005}/*gear drop*/,
+                   {id:'void_cinder',    chance:0.24},
                    {id:'demon_meat',     chance:0.26},
                    {id:'brimstone',      chance:0.16},
                    {id:'beast_sinew',    chance:0.080},
@@ -29977,8 +29979,10 @@ const HUNT_SECONDARY={
   ash_jackal:     [{id:'gnawed_bone', chance:0.16}],
   cinder_boar:    [{id:'boar_meat',   chance:0.32},
                    {id:'cinder_gland',chance:0.08}],
-  dust_stalker:   [{id:'shade_ember', chance:0.010}],
-  scorch_rhino:   [{id:'rhino_meat',  chance:0.45},
+  dust_stalker:   [{id:'scorchhorn_shortbow', chance:0.008}/*gear drop — this table was one line*/,
+                   {id:'shade_ember', chance:0.010}],
+  scorch_rhino:   [{id:'scorchhorn_longbow', chance:0.006}/*gear drop*/,
+                   {id:'rhino_meat',  chance:0.45},
                    {id:'brimstone',   chance:0.10}],
 };
 
@@ -30292,6 +30296,45 @@ const HUNT_KIT=[
     desc:'Full set: +10% crit chance and +8% Attack — you move like light off water.' };
 })();
 
+/* ── T8 and T9 bows (0.9.124.21) ──────────────────────────────────────────────
+   The crafted ladder stopped dead at the Ancient Longbow, T7, atk 38, and the next
+   bow in the game was Sunpiercer at T10. Two whole tiers of nothing, right where a
+   ranged character finishes the fletching tree and has nowhere left to go.
+
+   These are DROPS rather than recipes, and they are hung on the four thinnest
+   tables in the game — every one of them a monster with no gear drop at all and
+   two to six lines total:
+
+     Dust Stalker   Lv80  2 drops   ->  Scorchhorn Shortbow
+     Scorch Rhino   Lv88  3 drops   ->  Scorchhorn Longbow
+     Hellhound      Lv86  5 drops   ->  Fiendbone Shortbow
+     Abyssal Fiend  Lv92  6 drops   ->  Fiendbone Longbow
+
+   Rates sit beside the Doomblade's 0.005, the only comparable gear drop already in
+   the game. Strength stays 0 the whole way up the bow ladder: a bow is accuracy and
+   the arrow is the damage, which is the entire shape of the ranged build. */
+(function(){
+  const ASH ={light:'#ffd9a8', mid:'#c8702a', dark:'#6a3410', edge:'#2a1206', hl:'#fff0d8', accent:'#e08a2a', glow:'#ff9a3a'};
+  const FIEND={light:'#e8b0c8', mid:'#9a3050', dark:'#4a1024', edge:'#1e0610', hl:'#ffd8e4', accent:'#c04060', glow:'#ff5070'};
+  function B(id,name,tier,atk,short,pal,desc){
+    ITEMS[id]={name:name, icon:'\u{1F3F9}', sell:tier===8?26000:52000, rare:true,
+      cgear:true, ctier:tier, cslot:'weapon',
+      dmgType:'ranged', twoHanded:true, wclass:'light', ranged:true, ammo:'arrow',
+      swingMult:short?0.85:1.00, dmgMult:short?1.00:1.13, reqRanged:tier===8?80:90,
+      desc:desc};
+    COMBAT_GEAR_STATS[id]={atk:atk, str:0, def:0};
+    ICONS[id]=_bowSVGwpn(pal);
+  }
+  B('scorchhorn_shortbow','Scorchhorn Shortbow',8,39,true,ASH,
+    "Cut from a scorch rhino's horn and strung while it was still warm. Short in the limb and quick to draw, and it does not char through the way ashwood does. Takes both hands, so no shield, and every loose spends an arrow.");
+  B('scorchhorn_longbow','Scorchhorn Longbow',8,49,false,ASH,
+    "A full stave of rhino horn, slow to bring round and worth the wait. The Steppe's best answer to something far away. Takes both hands, and every loose spends an arrow.");
+  B('fiendbone_shortbow','Fiendbone Shortbow',9,51,true,FIEND,
+    "A fiend's ribcage, cleaned and tillered. It draws far too easily for something made of bone. Takes both hands, and every loose spends an arrow.");
+  B('fiendbone_longbow','Fiendbone Longbow',9,64,false,FIEND,
+    "Long bones from something the Sanctum could not keep hold of. The finest bow a mortal can carry without walking into a raid for it. Takes both hands, and every loose spends an arrow.");
+})();
+
 /* ── The Spire's ammunition (0.9.124.17) ──────────────────────────────────────
    The fletching ladder tops out at the Starfall Arrow, 28 strength, craftable at
    Fletching 88. These sit above it and are the only ammunition in the game that
@@ -30302,10 +30345,10 @@ const HUNT_KIT=[
 (function(){
   const P={light:'#ffe0f4', mid:'#c96a9a', dark:'#7a3560', edge:'#2a0e22'};
   ITEMS.sundershaft={name:'Sundershaft', icon:'\u{1F3F9}', sell:520, rare:true,
-    ammo:'arrow', ammoStr:38, ammoTier:10,
+    ammo:'arrow', ammoStr:38, ammoTier:11,
     desc:'A shaft of Spire stone drawn out fine enough to fly, fletched with something that was never a bird. Adds <b>38 strength</b> to every shot from a bow. No fletcher can make one — the tower gives them up or nobody has them.'};
   ITEMS.sunderbolt={name:'Sunderbolt', icon:'\u{1F3F9}', sell:660, rare:true,
-    ammo:'bolt', ammoStr:44, ammoTier:10,
+    ammo:'bolt', ammoStr:44, ammoTier:11,
     desc:'The same stone, cut short and heavy for a prod. Adds <b>44 strength</b> to every shot from a crossbow. Only the Spire has them.'};
   ICONS.sundershaft=(typeof _ammoSVGspire==='function')?_ammoSVGspire(P):
     '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="sdsh" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="'+P.light+'"/><stop offset="1" stop-color="'+P.dark+'"/></linearGradient></defs><path d="M30 54 L30 16 L34 16 L34 54 Z" fill="url(#sdsh)" stroke="'+P.edge+'" stroke-width="1"/><path d="M32 4 L42 22 L32 18 L22 22 Z" fill="url(#sdsh)" stroke="'+P.edge+'" stroke-width="1.2" stroke-linejoin="round"/><path d="M30 44 L22 52 L30 50 Z M34 44 L42 52 L34 50 Z" fill="'+P.mid+'" stroke="'+P.edge+'" stroke-width="0.8"/></svg>';

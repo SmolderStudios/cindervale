@@ -374,6 +374,50 @@ setTimeout(()=>{
        'plain '+y+' vs ascended '+ev("(state.asc={barrow_blade:8}, String(salvageYield('barrow_blade')))"));
   }
 
+  section('The bow ladder');
+  {
+    ev("state=defaultState(); normalizeState(); combat.raid=null;");
+    /* Two whole tiers of nothing between the Ancient Longbow and Sunpiercer is
+       where a ranged character finished the fletching tree and stopped. */
+    const byTier=JSON.parse(ev("JSON.stringify((function(){var t={};"+
+      "Object.keys(ITEMS).forEach(function(id){var it=ITEMS[id];"+
+      "if(it&&it.ranged&&it.ammo==='arrow') (t[it.ctier]=t[it.ctier]||[]).push(COMBAT_GEAR_STATS[id].atk);});"+
+      "return t;})())"));
+    let holes=[];
+    for(let t=1;t<=11;t++) if(!byTier[t]) holes.push(t);
+    ok('the bow ladder has no gaps from T1 to T11', holes.length===0,
+       holes.length?('missing T'+holes.join(', T')):'T1-T11 all filled');
+    /* Accuracy must climb the whole way, or a "new" tier is a sidegrade nobody
+       has a reason to chase. */
+    const tops=[];
+    for(let t=1;t<=11;t++) tops.push(Math.max.apply(null,byTier[t]));
+    ok('and accuracy climbs every rung', tops.every((v,i)=>i===0||v>tops[i-1]), tops.join(' -> '));
+    /* Bows carry no strength anywhere on the ladder: the arrow is the damage. */
+    ok('every bow leaves the damage to the arrow',
+       ev("Object.keys(ITEMS).filter(id=>ITEMS[id].ranged&&ITEMS[id].ammo==='arrow'&&ITEMS[id].ctier<10)"+
+          ".every(id=>(COMBAT_GEAR_STATS[id].str||0)===0)"));
+
+    /* Hung on the thinnest tables in the game, all four of which had no gear at all. */
+    const src=JSON.parse(ev("JSON.stringify(['scorchhorn_shortbow','scorchhorn_longbow','fiendbone_shortbow','fiendbone_longbow']"+
+      ".map(id=>{var from=Object.keys(MONSTER_DROPS).filter(m=>MONSTER_DROPS[m].some(d=>d.id===id));"+
+      "return {id, from, n:from.length};}))"));
+    ok('each new bow has exactly one source', src.every(x=>x.n===1),
+       src.map(x=>x.from[0]||'NONE').join(', '));
+    ok('and it is a real monster in the roster',
+       ev("JSON.stringify(['dust_stalker','scorch_rhino','hellhound','abyssal_fiend'].map(id=>!!MONSTERS.find(m=>m.id===id)))")==='[true,true,true,true]');
+
+    /* And the leak that reopened when the T9 bow landed: a non-Spire weapon must
+       never reach the Spire's own ammunition. */
+    ok('no bow outside the Spire draws a Sundershaft',
+       ev("Object.keys(ITEMS).filter(id=>ITEMS[id].ranged&&ITEMS[id].ctier<10)"+
+          ".every(id=>ammoFitsWeapon(id,'sundershaft')===false)"));
+    ok('and no crossbow outside it draws a Sunderbolt',
+       ev("Object.keys(ITEMS).filter(id=>ITEMS[id].ranged&&ITEMS[id].ammo==='bolt'&&ITEMS[id].ctier<10)"+
+          ".every(id=>ammoFitsWeapon(id,'sunderbolt')===false)"));
+    ok('but the new bows still take everything craftable',
+       ev("ammoFitsWeapon('fiendbone_longbow','starfall_arrow')===true && ammoFitsWeapon('scorchhorn_longbow','starfall_arrow')===true"));
+  }
+
   section('Daily affixes');
   {
     ev("state=defaultState(); normalizeState(); combat.raid=null;");
