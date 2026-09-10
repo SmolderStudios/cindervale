@@ -4090,6 +4090,43 @@ body:not(.is-demo) .demo-only{display:none !important}
 /* During a raid the ribbon owns the far-left edge, so the stats rail slides right
    to clear it. Outside a raid nothing about the arena changes. */
 .cvstage.rx-raid .cvrail.l{left:calc(94px*var(--tscale))}
+/* ════ The Sundered Spire + Ascension (0.9.124.11) ════════════════════════════ */
+.spr-note{font-size:calc(11px*var(--tscale));color:var(--muted);line-height:1.4}
+.spr-mats{font-size:calc(12px*var(--tscale));color:#e8c8dc;font-family:var(--num);display:inline-flex;align-items:center;gap:4px}
+.spr-floor{font-family:var(--num);font-weight:700;color:#f0c8e0}
+.spr-chase{font-size:calc(11px*var(--tscale));color:var(--muted);font-family:var(--num)}
+.asc-panel{margin-top:10px;padding:12px 15px 14px;border-radius:9px;border:1px solid var(--trim-d);
+  background:linear-gradient(178deg,var(--lit-top),var(--lit-bot) 78%);
+  box-shadow:inset 0 1px 0 var(--rim),inset 0 -1px 0 var(--under),var(--sh-1)}
+.asc-head{display:flex;align-items:baseline;gap:12px}
+.asc-t{font-family:'Cinzel',serif;font-size:calc(17px*var(--tscale));color:var(--gold-hi);letter-spacing:.5px}
+.asc-bank{margin-left:auto;font-family:var(--num);font-size:calc(12.5px*var(--tscale));color:#e8c8dc;
+  display:inline-flex;align-items:center;gap:3px}
+.asc-sub{font-size:calc(12px*var(--tscale));color:var(--muted);line-height:1.5;margin:5px 0 11px;max-width:78ch}
+.asc-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:7px}
+.asc-row{display:flex;align-items:center;gap:9px;padding:6px 10px;border-radius:7px;
+  background:#1a1208;border:1px solid #33280f}
+.asc-row.maxed{border-color:#6e552c;background:linear-gradient(180deg,#2a2010,#1a1208)}
+.asc-ic{font-size:calc(22px*var(--tscale));line-height:1;flex:none;display:flex}
+.asc-ic svg{width:22px;height:22px}
+.asc-nm{flex:1;min-width:0;font-size:calc(12.5px*var(--tscale));color:var(--text);line-height:1.25}
+.asc-r{margin-left:6px;font-family:var(--num);font-size:calc(10.5px*var(--tscale));font-weight:400;color:var(--gold-hi)}
+.asc-row:not(.maxed) .asc-r:not(:empty){color:#dcc79a}
+.asc-pips{display:flex;gap:2px;margin-top:3px}
+.asc-pips i{width:9px;height:4px;border-radius:1px;background:#3a2f16}
+.asc-pips i.on{background:linear-gradient(90deg,#c79b4e,#f4dca4)}
+.asc-cost{font-family:var(--num);font-size:calc(11.5px*var(--tscale));color:var(--muted);white-space:nowrap;
+  display:inline-flex;align-items:center;gap:3px}
+.asc-cost svg{width:15px;height:15px}
+.asc-cost b{color:#dcc79a;font-weight:400}
+.asc-cost b.short{color:var(--red)}
+.asc-max{color:var(--gold-hi);font-family:'Cinzel',serif;letter-spacing:.4px}
+.asc-go{flex:none;font-family:'Cinzel',serif;font-size:calc(12.5px*var(--tscale));letter-spacing:.4px;
+  padding:5px 12px;border-radius:6px;cursor:var(--cur-pointer);color:#f0e0c0;
+  background:linear-gradient(180deg,#4a3218,#2a1c0a);border:1px solid var(--trim-d);transition:filter .12s,border-color .12s}
+.asc-go:hover:not(:disabled){filter:brightness(1.3);border-color:var(--trim)}
+.asc-go:disabled{opacity:.38;cursor:var(--cur-na)}
+.asc-empty{font-size:calc(12.5px*var(--tscale));color:var(--dim,#7d6a4d);font-style:italic}
 .rp-rank{display:inline-flex;align-items:baseline;gap:5px}
 .rp-rank b{font-family:'Cinzel',serif;font-size:calc(19px*var(--tscale));line-height:1;color:#ffe27a}
 .rp-rank span{font-family:var(--num);font-size:calc(10px*var(--tscale));color:var(--muted)}
@@ -7921,7 +7958,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.124.10">v0.9.124</div>
+  <div class="mm-ver" data-build="0.9.124.11">v0.9.124</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -9845,6 +9882,8 @@ const ITEMS={
   riftcrusher:   {name:'Riftcrusher',     icon:'🔨',sell:92000,rare:true, cgear:true,ctier:9,cslot:'weapon', dmgType:'crush', wfx:{stun:{chance:0.12,dur:1.4}}, desc:"A one-handed maul of collapsed rift-stone, impossibly heavy for its size. Every blow folds space around the impact — a strong chance to stun. The Abyssal Throne's weapon for those who break things."},
   voidsteel_bar: {name:'Voidsteel Bar',   icon:'🟪',sell:4200, desc:'An ingot of null-forged metal, cold as the space between stars. The T9 smithing metal — forge it into Voidsteel gear.'},
   voidweave:     {name:'Voidweave',       icon:'🧵',sell:3200, desc:'Cloth spun from unravelled rift-thread; it drinks the light that touches it. A T9 leathercrafting hide.'},
+  sunderstone:   {name:'Sunderstone',     icon:'🪨',sell:2400, desc:'Rubble from a tower that fell hard enough to break the floors it landed on. Every step up the Spire shakes more of it loose. Spent on Ascension.'},
+  spirecore:     {name:'Spire Core',      icon:'💠',sell:26000, rare:true, desc:'The dense, humming heart of a Spire landing. Only the deep floors give them up, and only the last Ascension ranks ask for them.'},
   riftshard:     {name:'Riftshard',       icon:'🔮',sell:6800, rare:true, desc:'A splinter of a sealed rift, still humming with the void it once opened. A rare T9 reagent.'},
   dawnshard:     {name:'Dawnshard',       icon:'✨',sell:12000, rare:true, desc:"A shard of the Dawnbroken God's cooling blood — warm to the touch and faintly singing. The signature relic of The Empyrean Throne; a future Dawnsteel reagent."},
   /* ─── Sailing troves (0.9.60) — one per archipelago, pulled up on expeditions.
@@ -13129,6 +13168,9 @@ const ICONS = {
   voidcleaver: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="vcl_h" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a2458"/><stop offset="1" stop-color="#140828"/></linearGradient><linearGradient id="vcl_hd" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8a6ab0"/><stop offset="0.5" stop-color="#3a2458"/><stop offset="1" stop-color="#140828"/></linearGradient><linearGradient id="vcl_e" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e0b0ff"/><stop offset="1" stop-color="#8040c0"/></linearGradient></defs><ellipse cx="32" cy="60" rx="7" ry="1.8" fill="#000" opacity="0.4"/><rect x="30.5" y="8" width="3" height="52" rx="1.4" fill="url(#vcl_h)" stroke="#0a0418" stroke-width="0.5"/><path d="M31 14 Q14 16 10 30 Q20 30 31 26 Z" fill="url(#vcl_hd)" stroke="#0a0418" stroke-width="0.9" stroke-linejoin="round"/><path d="M31 14 Q14 16 10 30" stroke="url(#vcl_e)" stroke-width="1.6" fill="none"/><path d="M33 14 Q50 16 54 30 Q44 30 33 26 Z" fill="url(#vcl_hd)" stroke="#0a0418" stroke-width="0.9" stroke-linejoin="round"/><path d="M33 14 Q50 16 54 30" stroke="url(#vcl_e)" stroke-width="1.6" fill="none"/><circle cx="32" cy="21" r="3.4" fill="url(#vcl_e)"/><circle cx="32" cy="21" r="1.3" fill="#fff"/><path d="M30.5 8 L32 2 L33.5 8 Z" fill="url(#vcl_e)"/><circle cx="32" cy="59" r="2.4" fill="#3a2458"/></svg>',
   voidsteel_bar: _barSVG({top:'#a878e0', front:'#5a2c98', edge:'#1a0a34', stamp:'#0c0420', hl:'#e0b0ff', glow:'#8040c0'}),
   voidweave: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="vwv_g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#a880e0"/><stop offset="0.5" stop-color="#5a2c98"/><stop offset="1" stop-color="#1e0a3c"/></linearGradient></defs><ellipse cx="32" cy="57" rx="13" ry="2.6" fill="#000" opacity="0.35"/><rect x="16" y="20" width="4" height="28" rx="1.5" fill="#1e1030" stroke="#0a0418" stroke-width="0.6"/><rect x="44" y="20" width="4" height="28" rx="1.5" fill="#1e1030" stroke="#0a0418" stroke-width="0.6"/><path d="M20 24 Q32 30 44 24 M20 30 Q32 24 44 30 M20 36 Q32 42 44 36 M20 42 Q32 36 44 42" stroke="url(#vwv_g)" stroke-width="3.2" fill="none"/><path d="M22 27 Q32 32 42 27" stroke="#e0b0ff" stroke-width="0.7" fill="none" opacity="0.7"/><path d="M44 40 Q52 42 50 50" stroke="#8040c0" stroke-width="1.6" fill="none"/></svg>',
+  sunderstone: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="sds_g" x1="0" y1="0" x2="0.7" y2="1"><stop offset="0" stop-color="#e6c2da"/><stop offset="0.5" stop-color="#a4628c"/><stop offset="1" stop-color="#3a1c30"/></linearGradient><linearGradient id="sds_f" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f4dcec"/><stop offset="1" stop-color="#7c4468"/></linearGradient></defs><ellipse cx="32" cy="56" rx="16" ry="3" fill="#000" opacity="0.45"/><path d="M14 46 L20 22 L38 14 L52 26 L48 48 L28 54 Z" fill="url(#sds_g)" stroke="#2a1220" stroke-width="1.4" stroke-linejoin="round"/><path d="M20 22 L34 30 L48 26 M34 30 L30 52" fill="none" stroke="#2a1220" stroke-width="1.1" opacity="0.65"/><path d="M38 14 L52 26 L48 48 L34 30 Z" fill="url(#sds_f)" opacity="0.32"/><path d="M22 30 L26 26 L29 31 Z" fill="#f8e6f2" opacity="0.75"/></svg>',
+  spirecore: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><radialGradient id="spc_gl" cx="0.5" cy="0.5" r="0.55"><stop offset="0" stop-color="#ffb4e4" stop-opacity="0.85"/><stop offset="1" stop-color="#c96a9a" stop-opacity="0"/></radialGradient><linearGradient id="spc_g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffe0f4"/><stop offset="0.45" stop-color="#c96a9a"/><stop offset="1" stop-color="#3c1630"/></linearGradient></defs><circle cx="32" cy="32" r="24" fill="url(#spc_gl)"/><path d="M32 6 L50 20 L50 44 L32 58 L14 44 L14 20 Z" fill="url(#spc_g)" stroke="#2c1024" stroke-width="1.4" stroke-linejoin="round"/><path d="M32 6 L32 58 M14 20 L50 44 M50 20 L14 44" stroke="#2c1024" stroke-width="0.8" opacity="0.45"/><circle cx="32" cy="32" r="7" fill="#ffe8f6"/><circle cx="32" cy="32" r="3" fill="#8a3c68"/></svg>',
+  sundered_spire: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="ssp_g" x1="0.08" y1="0" x2="0.92" y2="0.9"><stop offset="0" stop-color="#f6d8ec"/><stop offset="0.4" stop-color="#bb5f95"/><stop offset="1" stop-color="#2e0d24"/></linearGradient><linearGradient id="ssp_d" x1="0" y1="0" x2="1" y2="0.5"><stop offset="0" stop-color="#843865"/><stop offset="1" stop-color="#250a1c"/></linearGradient></defs><ellipse cx="29" cy="58" rx="22" ry="3.2" fill="#000" opacity="0.5"/><path d="M45 3 L57 8 L52 20 L40 15 Z" fill="url(#ssp_g)" stroke="#250a1c" stroke-width="1.3" stroke-linejoin="round"/><path d="M45 3 L52 20 L40 15 Z" fill="#000" opacity="0.24"/><path d="M19 57 L23 12 L34 8 L36 24 L34 57 Z" fill="url(#ssp_g)" stroke="#250a1c" stroke-width="1.4" stroke-linejoin="round"/><path d="M28.5 9.8 L36 24 L34 57 L29 57 Z" fill="url(#ssp_d)" opacity="0.6"/><path d="M21.9 26 L35.2 26 M21.0 38 L34.6 38 M20.2 49 L34.2 49" stroke="#250a1c" stroke-width="1.2" opacity="0.7"/><path d="M29 11 L26 26 L31 33 L27 44 L29 57" fill="none" stroke="#250a1c" stroke-width="1.2" opacity="0.85"/><path d="M7 57 L12 47 L19 53 L17 57 Z" fill="url(#ssp_d)" stroke="#250a1c" stroke-width="1.1" stroke-linejoin="round"/><path d="M37 57 L44 48 L53 56 L50 57 Z" fill="url(#ssp_d)" stroke="#250a1c" stroke-width="1.1" stroke-linejoin="round"/><path d="M54 41 L60 38 L61 46 Z" fill="url(#ssp_d)" stroke="#250a1c" stroke-width="1" stroke-linejoin="round"/><rect x="25.4" y="17" width="4.6" height="3.6" rx="1" fill="#ffe0f4" opacity="0.92"/><rect x="24.6" y="42" width="4.2" height="3.4" rx="1" fill="#ffe0f4" opacity="0.62"/></svg>',
   riftshard: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="rsh_g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e0b0ff"/><stop offset="0.5" stop-color="#8040c0"/><stop offset="1" stop-color="#2a1048"/></linearGradient><radialGradient id="rsh_gl" cx="0.5" cy="0.5" r="0.6"><stop offset="0" stop-color="#8040c0" stop-opacity="0.7"/><stop offset="1" stop-color="#8040c0" stop-opacity="0"/></radialGradient></defs><ellipse cx="32" cy="58" rx="10" ry="2.4" fill="#000" opacity="0.4"/><circle cx="32" cy="30" r="22" fill="url(#rsh_gl)"/><path d="M32 6 L44 26 L36 54 L28 54 L20 26 Z" fill="url(#rsh_g)" stroke="#160830" stroke-width="1" stroke-linejoin="round"/><path d="M32 6 L32 54 M20 26 L44 26" stroke="#160830" stroke-width="0.6" opacity="0.5"/><circle cx="32" cy="24" r="2" fill="#fff" opacity="0.9"/></svg>',
 
   /* ─── HUNTING GROUNDS (1.0.74) — 3 zones + 12 beasts ─── */
@@ -18941,6 +18983,19 @@ function normalizeState(){
      game and a raid must still clear while nobody is looking. Playing the three
      abilities by hand is worth about one clear rank, which is the intended gap. */
   if(typeof state.raidAuto!=='boolean') state.raidAuto=true;
+  /* The Sundered Spire (0.9.124.11) — deepest floor ever reached, and how many
+     climbs it took. The run itself is runtime state like every other raid. */
+  if(typeof state.spireBest!=='number'||!isFinite(state.spireBest)||state.spireBest<0) state.spireBest=0;
+  if(typeof state.spireRuns!=='number'||!isFinite(state.spireRuns)||state.spireRuns<0) state.spireRuns=0;
+  /* Ascension ranks, keyed by item id. Anything that is not a real, ascendable
+     piece of combat gear is dropped rather than carried, so a hand-edited save
+     cannot put a rank on a log or push one past the cap. */
+  if(!state.asc||typeof state.asc!=='object'||Array.isArray(state.asc)) state.asc={};
+  for(const k in state.asc){
+    const v=state.asc[k];
+    if(typeof COMBAT_GEAR_STATS==='undefined'||!COMBAT_GEAR_STATS[k]||typeof v!=='number'||!isFinite(v)||v<=0){ delete state.asc[k]; continue; }
+    state.asc[k]=Math.max(1,Math.min(10,Math.floor(v)));
+  }
   // Slayer (1.0.73) — the 13th skill's state. Own XP/level/points/task; not in state.xp.
   if(!state.slayer||typeof state.slayer!=='object'||Array.isArray(state.slayer)) state.slayer={};
   if(typeof state.slayer.xp!=='number'||state.slayer.xp<0) state.slayer.xp=0;
@@ -20309,6 +20364,7 @@ function combatBonusesAll(){
   const a=armorPerkBonuses();
   const st=combatSetBonus();
   const u=combatUniqueBonuses();
+  const asc=(typeof ascensionBonuses==='function')?ascensionBonuses():{atkBoost:0,hpBoost:0,defBoost:0,critChance:0,lifesteal:0};
   const cm=cmastBonuses();
   // Trophy jewelry innate combat keys — read from the COMBAT loadout only, so a
   // ring worn for skilling gold doesn't also buff combat (and vice-versa).
@@ -20321,13 +20377,13 @@ function combatBonusesAll(){
     lifesteal: jewelryInnateBonus(ce,'lifesteal'),
   };
   return {
-    atkBoost:  (e.atkBoost||0)  + (s.atkBoost||0) + (st.atkBoost||0) + (u.atkBoost||0) + cm.atkBoost + tj.atkBoost,
-    hpBoost:   (e.hpBoost||0)   + (s.hpBoost||0)  + (st.hpBoost||0)  + (u.hpBoost||0)  + cm.hpBoost + tj.hpBoost,
-    defBoost:  (e.defBoost||0)  + (s.defBoost||0) + (st.defBoost||0) + (u.defBoost||0) + cm.defBoost + tj.defBoost,
+    atkBoost:  (e.atkBoost||0)  + (s.atkBoost||0) + (st.atkBoost||0) + (u.atkBoost||0) + (asc.atkBoost||0) + cm.atkBoost + tj.atkBoost,
+    hpBoost:   (e.hpBoost||0)   + (s.hpBoost||0)  + (st.hpBoost||0)  + (u.hpBoost||0)  + (asc.hpBoost||0) + cm.hpBoost + tj.hpBoost,
+    defBoost:  (e.defBoost||0)  + (s.defBoost||0) + (st.defBoost||0) + (u.defBoost||0) + (asc.defBoost||0) + cm.defBoost + tj.defBoost,
     // Leather crit stacks on top of enchant/socket/set/unique crit — all flow through
     // the single crit roll in combatTick.
-    critChance:(e.critChance||0)+ (s.critChance||0) + a.crit + (st.critChance||0) + (u.critChance||0) + cm.critChance + tj.critChance,
-    lifesteal: (e.lifesteal||0) + (s.lifesteal||0) + (st.lifesteal||0) + (u.lifesteal||0) + cm.lifesteal + tj.lifesteal,
+    critChance:(e.critChance||0)+ (s.critChance||0) + a.crit + (st.critChance||0) + (u.critChance||0) + (asc.critChance||0) + cm.critChance + tj.critChance,
+    lifesteal: (e.lifesteal||0) + (s.lifesteal||0) + (st.lifesteal||0) + (u.lifesteal||0) + (asc.lifesteal||0) + cm.lifesteal + tj.lifesteal,
     dodge:     a.dodge,   // chance to fully avoid a foe's landed hit
     aspd:      a.aspd + cm.aspd,    // fractional swing-time reduction
     /* Anything cmastBonuses computes has to be RE-LISTED here or it never leaves
@@ -31273,6 +31329,116 @@ const RAIDS=[
     matPool:DAWN_MAT_POOL,
   },
 ];
+/* ── The Sundered Spire (0.9.124.11) — the endless raid ────────────────────────
+   Every other raid is a fixed gauntlet with a win condition. This one has no top:
+   floors scale until they kill you, and how deep you got is the score.
+
+   Three things make it a different animal from a normal raid, and all three are
+   why it needed its own branches rather than another RAIDS row:
+     · `endless:true` — `stages` is empty and floors come from spireFloor(n).
+     · Loot is banked PER FLOOR, not on a clear. There is no clear. Dying ends the
+       run, it does not void what the run already paid — otherwise a 40-floor push
+       would be a 40-minute coin flip.
+     · No rating. Depth is the rating.
+
+   Floors are deterministic on the floor number, so the ribbon can honestly show
+   what is coming two floors ahead. Difficulty is one curve, not a roster: the
+   roster only decides what the thing LOOKS like. */
+const SPR_ID='sundered_spire';
+const SPR_BOSS_EVERY=5;
+const SPR_HP_STEP=1.048;    // health per floor
+const SPR_DMG_STEP=1.05;    // attack and max hit per floor — this is the wall
+/* Foe defence deliberately climbs at less than half the rate of everything else.
+   On one shared curve, floor 40 sat at 1,675 defence against a best-in-slot 506
+   accuracy: a 23% hit chance, which reads as a broken game rather than a hard one,
+   and it made every deep floor a sponge on top. */
+const SPR_DEF_STEP=1.022;
+const SPR_XP_STEP=1.06;
+/* Floor-1 baseline. Deliberately NOT a copy of any raid's stats: a normalised base
+   means the visual roster below can be swapped or extended without moving the
+   difficulty curve a single floor. */
+const SPR_BASE={hp:1400, atk:420, str:330, def:250, xp:5000, swingMs:2400};
+/* What a floor looks like, banded so the climb walks up through the game's own
+   bestiary before it starts repeating. Past the last band it cycles, and the
+   curve carries the difficulty from there. */
+const SPR_BANDS=[
+  {to:9,  raid:'sunken_barrow'},
+  {to:19, raid:'emberforge'},
+  {to:29, raid:'abyssal_throne'},
+  {to:39, raid:'empyrean_throne'},
+];
+/* Deterministic, cheap, and good enough to look unpatterned across 60 floors. */
+function _sprHash(n){ let h=(n*2654435761)>>>0; h^=h>>>15; h=(h*2246822519)>>>0; h^=h>>>13; return h>>>0; }
+function _sprPick(arr,n,salt){ return arr[(_sprHash(n*31+(salt||0)))%arr.length]; }
+function _sprBandRaid(floor){
+  for(const b of SPR_BANDS) if(floor<=b.to) return b.raid;
+  return SPR_BANDS[(Math.floor((floor-1)/10))%SPR_BANDS.length].raid;
+}
+function spireScale(floor){
+  const e=Math.max(0,floor-1);
+  return { hp:Math.pow(SPR_HP_STEP,e), dmg:Math.pow(SPR_DMG_STEP,e),
+           def:Math.pow(SPR_DEF_STEP,e), xp:Math.pow(SPR_XP_STEP,e) };
+}
+/* Spire Weight — the curse that makes the climb, not just the numbers. One stack
+   per ten floors, applied through the existing raidfx channel so refreshCombatStats
+   needs no new code. */
+function spireCurse(floor){
+  const st=Math.floor(floor/10);
+  if(st<=0) return null;
+  return {name:'Spire Weight ×'+st,
+    desc:'The tower leans on you — '+(4*st)+'% less Defence and your strikes drag '+(3*st)+'% slower.',
+    defMult:Math.max(0.30,1-0.04*st), swingMult:Math.min(2.2,1+0.03*st)};
+}
+/* Build (and register) floor N's foe. The generated monster is written into
+   RAID_MON_BY_ID so getMonster() resolves it with no special case, exactly like a
+   hand-written raid stage. Ids are keyed on the SOURCE creature, not the floor, so
+   the Monster Log groups a hundred floors of Void Wretches into one row. */
+function spireFloor(floor, preview){
+  const src=getRaid(_sprBandRaid(floor));
+  const isBoss=(floor%SPR_BOSS_EVERY)===0;
+  const pool=src.stages.filter(m=>isBoss ? (m.raidBoss||m.miniBoss) : !m.raidBoss);
+  const base=_sprPick(pool.length?pool:src.stages, floor, isBoss?7:0);
+  const sc=spireScale(floor);
+  const bossMult=isBoss?1.9:1;
+  const id='spr_'+base.id;
+  const mon={
+    id, zone:SPR_ID, name:base.name, icon:base.icon||base.id,
+    lvl:Math.min(120, 95+Math.floor(floor/3)),
+    hp:Math.round(SPR_BASE.hp*sc.hp*bossMult),
+    atk:Math.round(SPR_BASE.atk*sc.dmg*(isBoss?1.15:1)),
+    str:Math.round(SPR_BASE.str*sc.dmg*(isBoss?1.15:1)),
+    def:Math.round(SPR_BASE.def*sc.def),
+    coins:0, xp:Math.round(SPR_BASE.xp*sc.xp*bossMult),
+    swingMs:base.swingMs||SPR_BASE.swingMs,
+    dmgType:base.dmgType, weakTo:base.weakTo,
+    boss:isBoss, raidBoss:false, miniBoss:isBoss,
+    spireFloor:floor,
+    raidfx:spireCurse(floor),
+  };
+  /* Boss floors always telegraph. Ordinary floors start telegraphing at 12, so the
+     first stretch teaches the tower before it starts asking for Brace. */
+  if(isBoss){
+    mon.castfx={kinds:floor>=20?['rupture','slam']:['slam'], everyMs:9000, castMs:3200, openMs:5000,
+      frac:Math.min(0.44,0.26+floor*0.002),
+      reqDmg:Math.round(500*Math.pow(1.05,floor-1)),
+      labels:{slam:'Falling Masonry', rupture:'Sundering'}};
+  } else if(floor>=12){
+    mon.castfx={kinds:['slam'], everyMs:12000, castMs:3000, openMs:6000,
+      frac:Math.min(0.32,0.20+floor*0.0015), labels:{slam:'Collapse'}};
+  }
+  /* Alias the source creature's art onto the generated id. Done here at floor-build
+     time rather than once at load, because the item-art block assigns over ICONS
+     last: anything that snapshots ICONS earlier captures the pre-art SVG. */
+  if(!ICONS[id]) ICONS[id]=ICONS[base.icon||base.id];
+  if(!preview) RAID_MON_BY_ID[id]=mon;
+  return mon;
+}
+RAIDS.push({
+  id:SPR_ID, name:'The Sundered Spire', icon:'sundered_spire',
+  accent:'#c96a9a', unlockLvl:99, endless:true, stages:[],
+  blurb:'A tower that fell so hard it broke the floors it landed on. Every landing you climb past belonged to somebody else\u2019s world, and some of them are still in it. There is no top. There is only how far you got.',
+  ratingTiers:[], gearDrops:[], matPool:[],
+});
 const RAID_BY_ID=(function(){ const m={}; for(const r of RAIDS) m[r.id]=r; return m; })();
 const RAID_MON_BY_ID=(function(){ const m={}; for(const r of RAIDS) for(const s of r.stages) m[s.id]=s; return m; })();
 function getRaid(id){ return RAID_BY_ID[id]||RAIDS[0]; }
@@ -31333,6 +31499,111 @@ function grantRaidRewards(raid, timeMs){
   return res;
 }
 
+/* What a floor pays. Granted the moment the floor is cleared rather than banked
+   against a clear that does not exist, so a run that ends at floor 37 keeps every
+   stone the first 36 floors gave up. Depth is the whole reward curve: floor 40
+   pays roughly eight times floor 5. */
+function spireFloorLoot(floor){
+  const res={gold:0, mats:[]};
+  const sc=spireScale(floor);
+  res.gold=Math.round(900*Math.pow(1.055,floor-1));
+  state.coins += res.gold*SILVER_PER_GOLD;
+  if(!state.discovered) state.discovered={};
+  const give=(id,q)=>{ const got=grantItem(id,q); if(got>0){ state.discovered[id]=1; res.mats.push({id,qty:got}); } };
+  give('sunderstone', 1+Math.floor(floor/6));
+  /* Spire Cores are the deep-floor currency and the last four Ascension ranks are
+     the only thing that wants them, so they start where the climb starts hurting. */
+  if(floor%SPR_BOSS_EVERY===0 && floor>=15) give('spirecore', 1+Math.floor((floor-15)/20));
+  return res;
+}
+/* A floor cleared. There is no win branch: the run ends when you die, so this only
+   ever pays out and steps up. */
+function handleSpireFloorClear(baseMon){
+  const floor=combat.raid.floor||1;
+  const style=combatXpStat();
+  grantCombatXp(style, Math.round((baseMon.xp||0)*0.75));
+  grantCombatXp('hitpoints', Math.round((baseMon.xp||0)*0.25));
+  if(state.monKills) state.monKills[baseMon.id]=(state.monKills[baseMon.id]||0)+1;
+  if(typeof gdOnKill==='function') gdOnKill(baseMon.id);
+  const loot=spireFloorLoot(floor);
+  cmbLog('\u2714 '+baseMon.name+' falls. Floor '+floor+' cleared \u2014 +'+loot.gold+'g'+
+    (loot.mats.length?' \u00b7 '+loot.mats.map(m=>(m.qty>1?m.qty+'\u00d7 ':'')+(ITEMS[m.id]?ITEMS[m.id].name:m.id)).join(', '):''),'win');
+  if(!state.spireBest||floor>state.spireBest){
+    state.spireBest=floor;
+    cmbLog('\u2605 Floor '+floor+' \u2014 a new deepest climb.','rare-win');
+    if(typeof toast==='function') toast('\u2605 Spire floor '+floor+'!');
+  }
+  momAdd(MOM_PER_STAGE);
+  combat.raid.floor=floor+1;
+  combat.raid.stage=floor;              // keeps the shared stage machinery honest
+  _beginRaidStage(getRaid(SPR_ID), floor, false);
+  if(typeof renderHeader==='function') renderHeader();
+  updateCombatBars();
+  if(combatMode) renderCombat();
+}
+
+/* ── Ascension (0.9.124.11) ───────────────────────────────────────────────────
+   The Spire's sink. Any piece of combat gear can be raised through ten ranks with
+   Sunderstone (and Spire Cores for the last four). Ranks are stored per ITEM ID, so
+   ascending a Dawnbreaker ascends the one you own and any other you ever pick up —
+   there is no per-instance identity anywhere in this game and inventing one here
+   would leak into the satchel, the shop and every save.
+
+   The bonus rides the SAME channels as enchants, sockets, sets and uniques, summed
+   in combatBonusesAll. That is one hook instead of ten, and it means every readout
+   that already agrees with the fight keeps agreeing with it. */
+const ASC_MAX=10;
+/* What Ascension is paid in. Read by itemUseKind so the satchel can say what these
+   are for; keep it in step with ascCost. */
+const ASC_REAGENTS=['sunderstone','spirecore'];
+function ascRank(id){ const r=(state&&state.asc&&state.asc[id])||0; return Math.max(0,Math.min(ASC_MAX,r|0)); }
+function ascCanAscend(id){ return !!(COMBAT_GEAR_STATS[id] && ascRank(id)<ASC_MAX); }
+/* Cost of taking `id` from its current rank to the next one. Steep on purpose:
+   ten ranks across a full loadout is meant to be the thing you are still chipping
+   at long after the last raid stopped dropping anything new. */
+function ascCost(id){
+  const next=ascRank(id)+1;
+  if(next>ASC_MAX) return null;
+  const stone=Math.round(12*Math.pow(next,1.75));
+  const core=next>=7?(next-6):0;
+  return {rank:next, sunderstone:stone, spirecore:core};
+}
+function ascAfford(c){
+  if(!c) return false;
+  if((state.items&&state.items.sunderstone||0)<c.sunderstone) return false;
+  if(c.spirecore>0 && (state.items&&state.items.spirecore||0)<c.spirecore) return false;
+  return true;
+}
+function ascendItem(id){
+  if(!ascCanAscend(id)) return false;
+  const c=ascCost(id);
+  if(!ascAfford(c)){ if(typeof toast==='function') toast('Not enough materials to ascend.'); return false; }
+  state.items.sunderstone-=c.sunderstone;
+  if(state.items.sunderstone<=0) delete state.items.sunderstone;
+  if(c.spirecore>0){ state.items.spirecore-=c.spirecore;
+    if(state.items.spirecore<=0) delete state.items.spirecore; }
+  if(!state.asc) state.asc={};
+  state.asc[id]=c.rank;
+  refreshCombatStats();
+  if(typeof toast==='function') toast('\u2605 '+(ITEMS[id]?ITEMS[id].name:id)+' ascended to \u2605'+c.rank);
+  if(typeof saveGame==='function') saveGame();
+  renderAll();
+  return true;
+}
+/* Per rank, per equipped piece. Small numbers that add up across nine slots and
+   ten ranks: a fully ascended loadout is worth about +27% attack, which is a tier
+   of gear, not a second game. */
+const ASC_PER_RANK={atkBoost:0.003, defBoost:0.004, hpBoost:0.0025, critChance:0.0015, lifesteal:0.0012};
+function ascensionBonuses(){
+  const b={atkBoost:0,hpBoost:0,defBoost:0,critChance:0,lifesteal:0};
+  const ce=state&&state.combatEquipped; if(!ce) return b;
+  for(const id of Object.values(ce)){
+    const r=ascRank(id); if(r<=0) continue;
+    for(const k in ASC_PER_RANK) b[k]+=ASC_PER_RANK[k]*r;
+  }
+  return b;
+}
+
 /* Enter a raid — sets up the run and engages stage 1. No-op mid-fight. */
 function startRaid(id){
   if(combat.active) return;
@@ -31344,7 +31615,9 @@ function startRaid(id){
   state.cmbSubTab='arena';
   state.zoneMode='raids';
   combat.rare=false;
-  combat.raid={ id:raid.id, stage:0, startMs:Date.now(), n:raid.stages.length, casts:0 };
+  combat.raid={ id:raid.id, stage:0, startMs:Date.now(), n:raid.stages.length, casts:0,
+                floor:raid.endless?1:0, endless:!!raid.endless };
+  if(raid.endless) state.spireRuns=(state.spireRuns||0)+1;
   combat.cheatDeathReady=true;   // (1.0.85) one cheat-death per raid run (if gear worn)
   clearRaidMomentum();
   combat.mom=MOM_START;          // (0.9.125) you do not start the gauntlet empty
@@ -31361,7 +31634,10 @@ function startRaid(id){
 /* Set up a single raid stage's foe. fullHeal only on stage 1; later stages carry
    your current HP forward (the risk). Applies the stage's raidfx curse. */
 function _beginRaidStage(raid, stage, fullHeal){
-  const mon=raid.stages[stage];
+  /* The Spire has no `stages` — floor N is built on demand and registered into
+     RAID_MON_BY_ID, so everything below (and getMonster) treats it as an ordinary
+     raid foe from here on. */
+  const mon=raid.endless?spireFloor(stage+1):raid.stages[stage];
   combat.monId=mon.id;
   combat.active=true;
   combat.foeHp=mon.hp;
@@ -31380,7 +31656,9 @@ function _beginRaidStage(raid, stage, fullHeal){
      winds up, so a stage never opens mid-cast on the swing you walked in on. */
   combat.cast=null;
   combat.nextCast = mon.castfx ? now+(mon.castfx.openMs||4500) : 0;
-  const tag=mon.raidBoss?'★ FINAL BOSS':(mon.miniBoss?'◆ MINI-BOSS':`Stage ${stage+1}/${raid.stages.length}`);
+  const tag=raid.endless
+    ? ((stage+1)%SPR_BOSS_EVERY===0?`◆ FLOOR ${stage+1} — LANDING`:`Floor ${stage+1}`)
+    : (mon.raidBoss?'★ FINAL BOSS':(mon.miniBoss?'◆ MINI-BOSS':`Stage ${stage+1}/${raid.stages.length}`));
   cmbLog(`— ${tag}: ${mon.name} rises to meet you. —`, (mon.raidBoss||mon.miniBoss)?'rare-spawn':'sys');
   if(mon.raidfx){ cmbLog(`✦ ${mon.raidfx.name} — ${mon.raidfx.desc}`,'hit'); }
   if(mon.bossfx){ cmbLog(`✦ ${mon.bossfx.label} — ${mon.bossfx.desc||'an active hazard; stay sharp.'}`,'rare-spawn'); }
@@ -31606,6 +31884,8 @@ function clearRaidMomentum(){
    Grants per-kill combat XP, then either advances the stage or wins the raid. */
 function handleRaidKill(baseMon){
   const raid=getRaid(combat.raid.id);
+  // The Spire pays per floor and never "wins", so it takes its own path entirely.
+  if(raid.endless){ handleSpireFloorClear(baseMon); return; }
   const style=combatXpStat();
   grantCombatXp(style, Math.round((baseMon.xp||0)*0.75));
   grantCombatXp('hitpoints', Math.round((baseMon.xp||0)*0.25));
@@ -31660,13 +31940,25 @@ function _resetCombatTargetAfterRaid(){
 function handleRaidFail(){
   const raid=getRaid(combat.raid.id);
   const stage=combat.raid.stage;
-  _raidResult={ raidId:combat.raid.id, failed:true, stage:stage+1, n:combat.raid.n };
+  const endless=!!raid.endless, floor=combat.raid.floor||1;
+  _raidResult = endless
+    ? { raidId:combat.raid.id, failed:true, spire:true, floor, best:state.spireBest||0 }
+    : { raidId:combat.raid.id, failed:true, stage:stage+1, n:combat.raid.n };
   combat.raid=null; combat.raidDebuff=null;
   clearRaidMomentum();
   _resetCombatTargetAfterRaid();
-  cmbLog(`💀 You fall in ${raid.name} at stage ${stage+1}/${raid.stages.length}. The barrow keeps its treasures.`,'lose');
-  if(typeof toast==='function') toast(`💀 Raid failed — ${raid.name}.`);
-  if(typeof logNotification==='function') logNotification('combat','💀',`Fell in ${raid.name} (stage ${stage+1}/${raid.stages.length}).`);
+  if(endless){
+    /* Never "the barrow keeps its treasures" for a climb: every floor below this
+       one already paid out, and saying otherwise reads as a bug. */
+    cmbLog(`🗼 The Spire takes you on floor ${floor}. Everything the climb already paid is yours.`,'lose');
+    if(typeof toast==='function') toast(`🗼 Fell on Spire floor ${floor}.`);
+    if(typeof logNotification==='function') logNotification('combat','🗼',`Fell on Spire floor ${floor} (deepest ${state.spireBest||0}).`);
+    if(typeof saveGame==='function') saveGame();
+  } else {
+    cmbLog(`💀 You fall in ${raid.name} at stage ${stage+1}/${raid.stages.length}. The barrow keeps its treasures.`,'lose');
+    if(typeof toast==='function') toast(`💀 Raid failed — ${raid.name}.`);
+    if(typeof logNotification==='function') logNotification('combat','💀',`Fell in ${raid.name} (stage ${stage+1}/${raid.stages.length}).`);
+  }
 }
 
 /* Does the player own the Bounty Ledger? Its one job is opening the Monster Log's
@@ -33240,6 +33532,10 @@ function itemUseKind(id){
   const it=(typeof ITEMS!=='undefined')&&ITEMS[id];
   if(!it) return 'none';
   if(bossKeyFor(id)) return 'bosskey';
+  /* Ascension reagents (0.9.124.11). No recipe names them — they are spent from
+     the Spire's own panel — so without this they read as vendor trash and the
+     satchel tells the player to sell the only thing Ascension runs on. */
+  if(typeof ASC_REAGENTS!=='undefined' && ASC_REAGENTS.indexOf(id)>=0) return 'ascend';
   try{ if((usageMap()[id]||[]).length) return 'recipe'; }catch(e){}
   if(it.cgear||it.tool||it.skillGear) return 'equip';
   if(it.potion) return 'consume';
@@ -33528,7 +33824,10 @@ function showItemTooltip(itemId, x, y, note){
   const _act={bosskey:['#e0b05c',`${iconHTML('ui_lock')} Opens the ${escapeHTML(String(bossKeyFor(itemId)))}'s lair. Keep one.`],
               none:['#7da33f','Nothing uses this. Sell it.'],
               ammo:['#a8c86a','Sits in your quiver, spent a shot at a time.'],
-              keepsake:['#a08a64','Nothing uses this, and it cannot be sold. It is yours to keep.']};
+              keepsake:['#a08a64','Nothing uses this, and it cannot be sold. It is yours to keep.'],
+              /* (0.9.124.11) No recipe names these, so without a line here the
+                 tooltip would fall through to "Nothing uses this. Sell it." */
+              ascend:['#f0c8e0','Spent on Ascension, in the Raids tab. Do not sell these.']};
   if(_useKind==='bosskey' || (!usages.length && _act[_useKind]))
     html+=`<div class="nt-sec" style="color:${_act[_useKind][0]};font-size:calc(12.5px*var(--tscale))">${_act[_useKind][1]}</div>`;
 
@@ -37511,6 +37810,14 @@ function rxSyncHud(){
       if(lab) lab.textContent=c.label+'  '+Math.max(0,(c.castMs-(now-c.startMs))/1000).toFixed(1)+'s';
     } else { ring.classList.remove('on'); const lab=ring.querySelector('b'); if(lab) lab.textContent=''; }
   }
+  const fl=$('rxFloor');
+  if(fl) fl.textContent='Floor '+(combat.raid.floor||1);
+  const ch=$('rxChase');
+  if(ch){
+    const f=combat.raid.floor||1, best=state.spireBest||0;
+    ch.innerHTML = best<=0 ? 'no record yet'
+      : (f>best ? '<b style="color:#ffe27a">new deepest climb</b>' : 'best '+best+' · '+(best-f+1)+' to beat it');
+  }
   const rk=$('rxRank');
   if(rk){
     const raid=getRaid(combat.raid.id), ms=now-combat.raid.startMs, t=raidRating(raid,ms);
@@ -38328,6 +38635,7 @@ function buildRaidsPanelHTML(){
   const esc=s=>String(s==null?'':s).replace(/"/g,'&quot;');
   const active=combat.active, inRaid=!!combat.raid;
   const cards=RAIDS.map(r=>{
+    if(r.endless) return buildSpireCardHTML(r, active, inRaid);
     const unlocked=raidUnlocked(r);
     const best=state.raidBest&&state.raidBest[r.id];
     const clears=(state.raidClears&&state.raidClears[r.id])||0;
@@ -38362,7 +38670,12 @@ function buildRaidsPanelHTML(){
   let resultBox='';
   if(_raidResult){
     const R=_raidResult, raid=getRaid(R.raidId);
-    if(R.failed){
+    if(R.spire){
+      /* Never "no spoils recovered" for a climb — every floor below this one was
+         already paid out, and saying otherwise reads as a bug. */
+      resultBox=`<div class="raid-result fail" style="border-color:#7a3c68"><b>🗼 Climb ended on floor ${R.floor}</b> — ${raid.name}.
+        ${R.floor>R.best?'A new deepest climb. ':''}Everything the floors below paid is already yours.</div>`;
+    } else if(R.failed){
       resultBox=`<div class="raid-result fail"><b>${R.forfeit?'🏳 Run forfeit':'💀 Raid failed'}</b> — ${raid.name}, stage ${R.stage}/${R.n}. No spoils recovered.</div>`;
     }else{
       const tier=raid.ratingTiers.find(t=>t.key===R.rating)||{};
@@ -38383,14 +38696,50 @@ function buildRaidsPanelHTML(){
     <div class="raid-intro">🗝 <b>No-retreat gauntlet</b>, one health bar — <b>no loot unless you clear the final boss</b>. Faster clear = better rating &amp; drops.<br>Landing blows builds <b>Momentum</b>, which buys <b>Rally</b>, <b>Ruin</b> and <b>Brace</b> mid-run (keys 1/2/3). Mini-bosses and bosses <b>telegraph</b>: a ring closes around them, and each cast has an answer. Auto-cast plays them for you.</div>
     ${resultBox}
     <div class="raid-list">${cards}</div>
+    ${(raidUnlocked(getRaid(SPR_ID))||(state.items&&(state.items.sunderstone||state.items.spirecore)))?buildAscensionHTML():''}
   </div>`;
 }
+/* The Spire's run strip. No rating and no stage count: the readouts that matter
+   are the floor you are on, the record you are chasing and the curse the tower has
+   piled on you so far. */
+function buildSpireProgressHTML(raid){
+  const floor=combat.raid.floor||1;
+  const best=state.spireBest||0;
+  const ms=Date.now()-combat.raid.startMs;
+  const curse=combat.raidDebuff?`<span class="rp-curse" data-tip="${String(combat.raidDebuff.desc).replace(/"/g,'&quot;')}">✦ ${combat.raidDebuff.name}</span>`:'';
+  const chase=best>0
+    ? (floor>best?'<b style="color:#ffe27a">new deepest climb</b>':`best ${best} · ${best-floor+1} to beat it`)
+    : 'no record yet';
+  return `<div class="raid-progress" style="--raid-accent:${raid.accent}">
+    <div class="rp-top">
+      <span class="rp-l"><span class="rp-ic">${iconHTML(raid.icon)}</span><b>${raid.name}</b>
+        · <span class="spr-floor" id="rxFloor">Floor ${floor}</span>${(floor%SPR_BOSS_EVERY===0)?' — Landing':''}</span>
+      <span class="rp-r">${curse}<span class="spr-chase" id="rxChase">${chase}</span><span class="rp-timer" id="raidTimer">${_fmtRaidTime(ms)}</span></span>
+    </div>
+    <div class="rp-warn">⚠ There is no top. Every floor pays as you clear it, and the climb ends when you fall.</div>
+  </div>`;
+}
+
 /* The gauntlet as a vertical portrait ribbon down the left edge of the stage
    (0.9.125). It replaces the old row of abstract dots: a dot told you how many
    stages were left, a portrait tells you what is coming. */
 function buildRaidRibbonHTML(){
   if(!combat.raid) return '';
   const raid=getRaid(combat.raid.id), stage=combat.raid.stage;
+  /* Endless has no stage list to draw, so the ribbon becomes a window: two floors
+     behind, the one you are on, two ahead. Preview floors are generated with the
+     preview flag so they cannot overwrite the live floor's registered stats. */
+  if(raid.endless){
+    const f=combat.raid.floor||1, out=[];
+    for(let i=f-2;i<=f+2;i++){
+      if(i<1) continue;
+      const m=(i===f)?getMonster(combat.monId):spireFloor(i,true);
+      const cls=i<f?'done':(i===f?'cur':'todo');
+      const kind=(i%SPR_BOSS_EVERY===0)?' boss':'';
+      out.push(`<div class="rx-cell ${cls}${kind}" data-tip="Floor ${i} — ${m.name}&#10;${m.hp.toLocaleString()} health${(i%SPR_BOSS_EVERY===0)?'&#10;Landing — telegraphs':''}"><span class="rx-n">${i}</span>${iconHTML(m.icon||m.id)}</div>`);
+    }
+    return `<div class="rx-rib">${out.join('')}</div>`;
+  }
   const cells=raid.stages.map((m,i)=>{
     const cls=i<stage?'done':(i===stage?'cur':'todo');
     const kind=m.raidBoss?' boss':(m.miniBoss?' mini':'');
@@ -38429,10 +38778,81 @@ function buildRaidMomentumHTML(){
    so what is left here is the clock, the curse and the live clear rating — which
    is the readout that turns the rating from a result into something you are
    watching slip away while you fight. */
+/* The Spire's card. It cannot use the ordinary one: there are no stages to draw
+   dots for, no rating to beat and no clear to count. Depth is all three. */
+function buildSpireCardHTML(r, active, inRaid){
+  const unlocked=raidUnlocked(r);
+  const best=state.spireBest||0, runs=state.spireRuns||0;
+  const stones=(state.items&&state.items.sunderstone)||0;
+  const cores=(state.items&&state.items.spirecore)||0;
+  const bestLine=best
+    ? `Deepest <b style="color:#f0c8e0">floor ${best}</b>${runs?` · ${runs} climb${runs>1?'s':''}`:''}`
+    : 'Never climbed';
+  return `<div class="raid-card${unlocked?'':' locked'}" style="--raid-accent:${r.accent}">
+    <div class="rc-body">
+      <div class="rc-left">
+        <div class="rc-head">
+          <span class="rc-ic">${iconHTML(r.icon)}</span>
+          <div class="rc-title"><span class="rc-nm">${r.name}</span><span class="rc-lv">Combat Lv ${r.unlockLvl}+ · Endless</span></div>
+        </div>
+        <div class="rc-blurb">${r.blurb}</div>
+      </div>
+      <div class="rc-right">
+        <div class="rc-row"><span class="rc-lbl">Climb</span>
+          <span class="spr-note">Every floor pays. Every fifth is a landing. It ends when you fall.</span></div>
+        <div class="rc-row" style="margin-top:4px"><span class="rc-lbl">Spoils</span>
+          <span class="spr-mats">${iconHTML('sunderstone')} ${stones.toLocaleString()} · ${iconHTML('spirecore')} ${cores.toLocaleString()}</span></div>
+        <div class="rc-foot">
+          <span class="rc-best">${bestLine}</span>
+          ${unlocked
+            ? `<button class="raid-enter" data-raid="${r.id}"${(active||inRaid)?' disabled':''}>${inRaid?'In progress…':'⚔ Climb'}</button>`
+            : `<button class="raid-enter locked" disabled>🔒 Lv ${r.unlockLvl}</button>`}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ── Ascension panel (0.9.124.11) ─────────────────────────────────────────────
+   Lives under the raid list rather than in the Gear tab on purpose: the Spire is
+   the only source of both materials, so the sink sits where the loot lands. Shows
+   the COMBAT loadout only, because that is what ascensionBonuses reads. */
+function buildAscensionHTML(){
+  const ce=(state&&state.combatEquipped)||{};
+  const stones=(state.items&&state.items.sunderstone)||0;
+  const cores=(state.items&&state.items.spirecore)||0;
+  const worn=Object.values(ce).filter(id=>id&&COMBAT_GEAR_STATS[id]);
+  const seen={}, uniq=[];
+  for(const id of worn){ if(!seen[id]){ seen[id]=1; uniq.push(id); } }
+  const rows=uniq.map(id=>{
+    const it=ITEMS[id]||{name:id};
+    const r=ascRank(id), c=ascCost(id), maxed=r>=ASC_MAX;
+    const pips=Array.from({length:ASC_MAX},(_,i)=>`<i class="${i<r?'on':''}"></i>`).join('');
+    const costTxt=maxed
+      ? '<span class="asc-max">Fully ascended</span>'
+      : `${iconHTML('sunderstone')} <b class="${stones>=c.sunderstone?'':'short'}">${c.sunderstone.toLocaleString()}</b>`
+        +(c.spirecore?` &nbsp;${iconHTML('spirecore')} <b class="${cores>=c.spirecore?'':'short'}">${c.spirecore}</b>`:'');
+    return `<div class="asc-row${maxed?' maxed':''}">
+      <span class="asc-ic">${iconHTML(id)}</span>
+      <span class="asc-nm">${it.name}<b class="asc-r">${r?'★'+r:'not ascended'}</b><span class="asc-pips">${pips}</span></span>
+      <span class="asc-cost">${costTxt}</span>
+      ${maxed?'':`<button class="asc-go" data-asc="${id}"${ascAfford(c)?'':' disabled'}>★ ${c.rank}</button>`}
+    </div>`;
+  }).join('');
+  return `<div class="asc-panel">
+    <div class="asc-head"><span class="asc-t">Ascension</span>
+      <span class="asc-bank">${iconHTML('sunderstone')} ${stones.toLocaleString()} &nbsp; ${iconHTML('spirecore')} ${cores.toLocaleString()}</span></div>
+    <div class="asc-sub">Spend what the Spire gives up to raise a worn piece through ten ranks. Every rank on every worn piece adds to your attack, guard, health, crit and lifesteal. Spire Cores are asked for from rank 7.</div>
+    ${uniq.length?`<div class="asc-list">${rows}</div>`
+      :'<div class="asc-empty">Equip combat gear to ascend it.</div>'}
+  </div>`;
+}
+
 function buildRaidProgressHTML(){
   if(!combat.raid) return '';
   const raid=getRaid(combat.raid.id);
   const stage=combat.raid.stage;
+  if(raid.endless) return buildSpireProgressHTML(raid);
   const cur=raid.stages[stage]||{};
   const ms=Date.now()-combat.raid.startMs;
   const t=raidRating(raid,ms);
@@ -39100,6 +39520,11 @@ ${combat.raid?buildRaidProgressHTML():''}
   panel.querySelectorAll('.raid-enter[data-raid]').forEach(b=>{
     if(b.disabled) return;
     b.addEventListener('click',()=>startRaid(b.getAttribute('data-raid')));
+  });
+  // Ascension (0.9.124.11) — spend Spire materials to raise a worn piece a rank.
+  panel.querySelectorAll('.asc-go[data-asc]').forEach(b=>{
+    if(b.disabled) return;
+    b.addEventListener('click',()=>ascendItem(b.getAttribute('data-asc')));
   });
 
   // ── Slayer tab wiring (1.0.73) ───────────────────────────────────────────────
