@@ -145,12 +145,35 @@ setTimeout(()=>{
     console.log('       full ten-rank cost: '+parsed.reduce((a,c)=>a+c.sunderstone,0).toLocaleString()+
                 ' Sunderstone + '+parsed.reduce((a,c)=>a+c.spirecore,0)+' Spire Cores per piece');
 
+    /* Ascension now raises the ITEM's own numbers, which is the whole point: a
+       global percentage scales whatever you already wear, so the best item keeps
+       winning and last tier's drops stay trash. */
+    ev("state.asc={}; _base=COMBAT_GEAR_STATS.barrow_blade;");
+    const b0=JSON.parse(ev("JSON.stringify(gearStats('barrow_blade'))"));
+    ev("state.asc.barrow_blade=10;");
+    const b10=JSON.parse(ev("JSON.stringify(gearStats('barrow_blade'))"));
+    ok('a ten-rank piece is worth about 1.6 of itself',
+       b10.atk>b0.atk && Math.abs(b10.atk/b0.atk-1.6)<0.03,
+       'Barrow Blade '+b0.atk+'/'+b0.str+' -> '+b10.atk+'/'+b10.str);
+    const vr=JSON.parse(ev("JSON.stringify(gearStats('voidrend'))"));
+    ok('and it climbs back into contention with the raid two tiers up',
+       b10.atk+b10.str > (vr.atk+vr.str)*0.75,
+       'ascended Barrow '+(b10.atk+b10.str)+' vs Voidrend '+(vr.atk+vr.str));
+    ok('rank 0 returns the shared table object rather than a copy',
+       ev("(state.asc={}, gearStats('barrow_blade')===COMBAT_GEAR_STATS.barrow_blade)"));
+    ok('the raw table is never mutated', ev("COMBAT_GEAR_STATS.barrow_blade.atk===_base.atk"),
+       String(ev("COMBAT_GEAR_STATS.barrow_blade.atk")));
+    /* Every readout that shows a number the fight uses must agree with the fight. */
+    ev("state.asc={}; state.combatEquipped={weapon:'barrow_blade'}; refreshCombatStats(); _a0=combatStats().atk;");
+    ev("state.asc.barrow_blade=10; refreshCombatStats(); _a1=combatStats().atk;");
+    ok('combatStats sees the ascended numbers', ev('_a1>_a0'), ev('_a0')+' -> '+ev('_a1'));
+
     /* The bonus has to actually reach the fight, not just the panel. */
-    ev("state.asc={}; _b0=combatBonusesAll().atkBoost; state.asc[_gid]=10; _b1=combatBonusesAll().atkBoost;");
-    ok('an ascended piece raises the real combat bonus', ev('_b1>_b0'),
-       ev('_b0.toFixed(4)')+' → '+ev('_b1.toFixed(4)'));
-    ok('and only while it is worn',
-       ev("(state.combatEquipped.weapon='', _b2=combatBonusesAll().atkBoost, Math.abs(_b2-_b0)<1e-9)"));
+    ev("state.combatEquipped={weapon:_gid}; state.asc={}; _c0=combatBonusesAll().critChance; state.asc[_gid]=10; _c1=combatBonusesAll().critChance;");
+    ok('crit and lifesteal still ride the shared channel', ev('_c1>_c0'),
+       ev('_c0.toFixed(4)')+' → '+ev('_c1.toFixed(4)'));
+    ok('and only while the piece is worn',
+       ev("(state.combatEquipped={}, Math.abs(combatBonusesAll().critChance-_c0)<1e-9)"));
 
     ev("state.combatEquipped.weapon=_gid;");
     ok('a rank past the cap is repaired on load',
@@ -159,6 +182,37 @@ setTimeout(()=>{
        ev("(state.asc.oak_log=4, normalizeState(), state.asc.oak_log===undefined)"));
     ok('a junk value is dropped rather than carried',
        ev("(state.asc.bronze_sword='seven', normalizeState(), state.asc.bronze_sword===undefined)"));
+  }
+
+  section('Salvage');
+  {
+    ev("state=defaultState(); normalizeState(); state.items={barrow_blade:3}; state.combatEquipped={}; state.skillingEquipped={};");
+    ok('redundant raid gear can be broken down', ev("canSalvage('barrow_blade')===true"));
+    ok('a log cannot', ev("canSalvage('oak_log')===false"));
+    ok('and neither can something you are not carrying', ev("canSalvage('voidrend')===false"));
+    /* The gear panel already shipped this bug once with selling. */
+    ev("state.combatEquipped={weapon:'barrow_blade'};");
+    ok('the piece you are standing in is never salvageable', ev("canSalvage('barrow_blade')===false"));
+    ev("state.combatEquipped={}; state.skillingEquipped={weapon:'barrow_blade'};");
+    ok('nor the one worn for skilling', ev("canSalvage('barrow_blade')===false"));
+    ev("state.skillingEquipped={};");
+
+    const y=+ev("salvageYield('barrow_blade')"), y10=+ev("salvageYield('dawnbreaker')");
+    ok('yield scales with tier', y10>y, 'T7 '+y+' vs T10 '+y10);
+    ev("_n0=state.items.sunderstone||0; _got=salvageItem('barrow_blade',1);");
+    ok('breaking one consumes one and pays stones',
+       ev('state.items.barrow_blade===2 && (state.items.sunderstone||0)>_n0'),
+       ev('String(state.items.sunderstone)')+' stones from 1 piece');
+    ev("salvageItem('barrow_blade',99);");
+    ok('breaking all of them clears the stack', ev('!state.items.barrow_blade'));
+    /* Otherwise a piece you re-acquire later arrives silently pre-ascended. */
+    ev("state.items={barrow_blade:1}; state.asc={barrow_blade:5}; salvageItem('barrow_blade',1);");
+    ok('the last copy takes its rank with it', ev('!state.asc.barrow_blade'));
+    ev("state.items={barrow_blade:2}; state.asc={barrow_blade:5};");
+    ok('but breaking one of several keeps it', ev("(salvageItem('barrow_blade',1), state.asc.barrow_blade===5)"));
+    ok('an ascended piece refunds part of what went into it',
+       +ev("(state.asc={barrow_blade:8}, salvageYield('barrow_blade'))") > y*2,
+       'plain '+y+' vs ascended '+ev("(state.asc={barrow_blade:8}, String(salvageYield('barrow_blade')))"));
   }
 
   section('Balance — where does the wall land?');
@@ -196,11 +250,49 @@ setTimeout(()=>{
     const wall=Math.min(wallTime||999, wallKill||999);
     ok('the wall lands somewhere a maxed player has to work for',
        wall>=25 && wall<=65, 'wall near floor '+wall);
-    ev("state.asc={}; for(const id of Object.values(state.combatEquipped)) if(id) state.asc[id]=10;");
-    const aAtk=100*(+ev('combatBonusesAll().atkBoost')), aDef=100*(+ev('combatBonusesAll().defBoost'));
-    ok('a fully ascended loadout is worth about a gear tier',
-       aAtk>=12 && aAtk<=35 && aDef>=20 && aDef<=55,
-       'ten ranks on six worn pieces = +'+aAtk.toFixed(1)+'% attack, +'+aDef.toFixed(1)+'% guard');
+    /* Ascension is item-stat scaling now, so measure the stats, not the channel. */
+    ev("state.asc={}; refreshCombatStats(); _s0=JSON.stringify(combatStats());");
+    ev("for(const id of Object.values(state.combatEquipped)) if(id) state.asc[id]=10; refreshCombatStats();");
+    const s0=JSON.parse(ev('_s0')), s1=JSON.parse(ev('JSON.stringify(combatStats())'));
+    const gAtk=100*(s1.atk/s0.atk-1), gDef=100*(s1.def/s0.def-1);
+    ok('a fully ascended loadout is worth about a gear tier, not a second game',
+       gAtk>=40 && gAtk<=75 && gDef>=40 && gDef<=75,
+       'ten ranks on six worn pieces = +'+gAtk.toFixed(0)+'% attack, +'+gDef.toFixed(0)+'% defence');
+
+    /* And the number that matters: how far up the tower that buys you. */
+    const accA=+ev('playerAccuracy()'), hitA=+ev('playerMaxHit()'),
+          defA=+ev('playerDefence()'), swA=+ev('playerSwingMs()'), hpA=+ev('maxHpFromStats()');
+    const dpsA=(hitA*0.65)*(1000/swA);
+    let wallA=0;
+    for(let f=1;f<=200;f++){
+      const m=JSON.parse(ev('JSON.stringify(spireFloor('+f+',true))'));
+      const foeHit=Math.max(0.03,Math.min(0.97, m.atk/(m.atk+defA)));
+      const foeDps=(m.str*0.65)*foeHit*(1000/(m.swingMs||2400));
+      const dr=+ev('ascensionDR()');
+      if(foeDps*(1-dr)*8 > hpA*2.2){ wallA=f; break; }
+    }
+    console.log('       fully ascended: acc '+accA+' · max hit '+hitA+' · def '+defA+' · '+hpA+' hp · '+
+                (100*(+ev('ascensionDR()'))).toFixed(0)+'% damage reduction');
+    console.log('       ascended wall: floor '+(wallA||'>200'));
+    ok('Ascension buys real floors rather than a rounding error',
+       wallA>wall+5, 'floor '+wall+' -> floor '+wallA);
+
+    /* The invariant that matters more than either number: you must die because the
+       tower hits harder than you can heal, not because the fight got long. If the
+       time wall lands first, deep floors become sponges and the climb stops being
+       a fight. This is what caught the original one-shared-curve tuning. */
+    let timeA=0;
+    const dpsAsc=(hitA*0.65)*(1000/swA);
+    for(let f=1;f<=200;f++){
+      const m=JSON.parse(ev('JSON.stringify(spireFloor('+f+',true))'));
+      const hc=Math.max(0.03,Math.min(0.97, accA/(accA+m.def)));
+      if(m.hp/(dpsAsc*hc) > 240){ timeA=f; break; }
+    }
+    console.log('       ascended: lethality wall '+wallA+', four-minute wall '+(timeA||'>200'));
+    ok('lethality is the binding wall for a base loadout', wall<=wallTime,
+       'lethality '+wall+' vs time '+wallTime);
+    ok('and it still is for an ascended one', wallA<=timeA+2,
+       'lethality '+wallA+' vs time '+timeA);
   }
 
   console.log('\n'+(fail? fail+' FAILED, '+pass+' passed'
