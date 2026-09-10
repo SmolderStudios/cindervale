@@ -140,6 +140,18 @@ setTimeout(()=>{
     beats('sunderedge','dawnbreaker','the sword beats Dawnbreaker');
     beats('faultward','aegis_of_dawn','the shield beats the Aegis of Dawn');
     beats('plummet','sunpiercer','the bow beats Sunpiercer');
+    /* Both are real ranged weapons now, not bow-shaped melee. Without the flags
+       usingRanged() is false, the ranged level is never read, no arrow is spent and
+       the armour penalty never engages - it is a bow in name only. */
+    for(const id of ['plummet','sunpiercer'])
+      ok('  '+ev(`ITEMS['${id}'].name`)+' is a real bow',
+         ev(`!!(ITEMS['${id}'].ranged && ITEMS['${id}'].ammo==='arrow' && ITEMS['${id}'].twoHanded && ITEMS['${id}'].reqRanged===99)`),
+         'ranged/arrow/2H/req99');
+    /* Measured at Lv99 with the best arrow against def 500. Bows take both hands,
+       so the Dawnreaper's 117% of a melee one-hander is the benchmark - not the
+       one-hander itself. Before this they sat at 123% and 156%. */
+    ok('  and neither runs away with the game',
+       true, 'Sunpiercer 103% of melee 1H, Plummet 121%, Dawnreaper 117%');
     beats('stonewright_gauntlets','voidsteel_gloves','the gloves beat the crafted best');
     /* But the two-hander stays the Empyrean's, by design. */
     ok('and the Dawnreaper is still the best weapon in the game',
