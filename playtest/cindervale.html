@@ -7991,7 +7991,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.124.21">v0.9.124</div>
+  <div class="mm-ver" data-build="0.9.124.22">v0.9.124</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -29969,20 +29969,22 @@ const HUNT_SECONDARY={
   wild_boar:      [{id:'boar_meat',   chance:0.42},
                    {id:'gnawed_bone', chance:0.22}],
   timber_wolf:    [{id:'gnawed_bone', chance:0.18}],
-  thornback_stag: [{id:'gnawed_bone', chance:0.24}],
+  thornback_stag: [{id:'thornbite_shortbow', chance:0.010}/*gear drop — the only one in the Thicket*/,
+                   {id:'gnawed_bone', chance:0.24}],
   briar_lynx:     [{id:'gnawed_bone', chance:0.12}],
   frost_bear:     [{id:'gnawed_bone', chance:0.14}],
-  snow_leopard:   [{id:'frostfur',    chance:0.10}],
+  snow_leopard:   [{id:'rimeshot_shortbow', chance:0.009}/*gear drop — this table was one line*/,
+                   {id:'frostfur',    chance:0.10}],
   tundra_elk:     [{id:'elk_meat',    chance:0.45},
                    {id:'gnawed_bone', chance:0.22}],
-  ice_mammoth:    [{id:'frostfur',    chance:0.12}],
+  ice_mammoth:    [{id:'mammothhorn_longbow', chance:0.008}/*gear drop — this table was one line*/,
+                   {id:'frostfur',    chance:0.12}],
   ash_jackal:     [{id:'gnawed_bone', chance:0.16}],
   cinder_boar:    [{id:'boar_meat',   chance:0.32},
                    {id:'cinder_gland',chance:0.08}],
-  dust_stalker:   [{id:'scorchhorn_shortbow', chance:0.008}/*gear drop — this table was one line*/,
+  dust_stalker:   [{id:'ashlock_crossbow', chance:0.007}/*gear drop — this table was one line*/,
                    {id:'shade_ember', chance:0.010}],
-  scorch_rhino:   [{id:'scorchhorn_longbow', chance:0.006}/*gear drop*/,
-                   {id:'rhino_meat',  chance:0.45},
+  scorch_rhino:   [{id:'rhino_meat',  chance:0.45},
                    {id:'brimstone',   chance:0.10}],
 };
 
@@ -30296,42 +30298,60 @@ const HUNT_KIT=[
     desc:'Full set: +10% crit chance and +8% Attack — you move like light off water.' };
 })();
 
-/* ── T8 and T9 bows (0.9.124.21) ──────────────────────────────────────────────
-   The crafted ladder stopped dead at the Ancient Longbow, T7, atk 38, and the next
-   bow in the game was Sunpiercer at T10. Two whole tiers of nothing, right where a
-   ranged character finishes the fletching tree and has nowhere left to go.
+/* ── Ranged procs, and the T9 bows (0.9.124.22) ───────────────────────────────
+   The crafted ladder stopped dead at the Ancient Longbow (T7, atk 38) and the next
+   bow was Sunpiercer at T10, so a ranged character finished the fletching tree and
+   had nowhere to go. Worse, no bow or crossbow in the game carried a single proc:
+   sixteen melee weapons have burn, stun, cleave, poison or reflect, and every
+   ranged choice was a bigger number rather than a different one.
 
-   These are DROPS rather than recipes, and they are hung on the four thinnest
-   tables in the game — every one of them a monster with no gear drop at all and
-   two to six lines total:
+   Drops, not recipes, hung on the thinnest tables in the game - every one a
+   monster with no gear drop at all and one to four lines total:
 
-     Dust Stalker   Lv80  2 drops   ->  Scorchhorn Shortbow
-     Scorch Rhino   Lv88  3 drops   ->  Scorchhorn Longbow
-     Hellhound      Lv86  5 drops   ->  Fiendbone Shortbow
-     Abyssal Fiend  Lv92  6 drops   ->  Fiendbone Longbow
+     Thornback Stag  Lv16  2 drops  ->  Thornbite Shortbow   T2  poison
+     Snow Leopard    Lv42  1 drop   ->  Rimeshot Shortbow    T4  stun
+     Ice Mammoth     Lv55  1 drop   ->  Mammothhorn Longbow  T6  cleave
+     Dust Stalker    Lv80  1 drop   ->  Ashlock Crossbow     T8  burn
+     Hellhound       Lv86  5 drops  ->  Fiendbone Shortbow   T9
+     Abyssal Fiend   Lv92  6 drops  ->  Fiendbone Longbow    T9
 
-   Rates sit beside the Doomblade's 0.005, the only comparable gear drop already in
-   the game. Strength stays 0 the whole way up the bow ladder: a bow is accuracy and
-   the arrow is the damage, which is the entire shape of the ranged build. */
+   Each proc bow trades a little accuracy against the crafted bow of its own tier,
+   so it is a choice rather than a replacement. Proc strengths sit beside the melee
+   precedents at the same rung (Plague Fang poison 0.10 at T1, Barrow Maul stun
+   0.10/1.2 at T7, Grave Cleaver cleave 0.25 at T7).
+
+   Strength stays 0 the whole way up the bow ladder: a bow is accuracy, the arrow
+   is the damage, and that is the shape of the ranged build. */
 (function(){
-  const ASH ={light:'#ffd9a8', mid:'#c8702a', dark:'#6a3410', edge:'#2a1206', hl:'#fff0d8', accent:'#e08a2a', glow:'#ff9a3a'};
+  const THORN={light:'#d8e8a8', mid:'#6a8a38', dark:'#2e4416', edge:'#131e08', hl:'#f0f8d0', accent:'#9ac04a', glow:'#a8d264'};
+  const RIME ={light:'#e0f4ff', mid:'#5a9ac0', dark:'#22485e', edge:'#0c1a24', hl:'#f4fdff', accent:'#7ec8e8', glow:'#9adcf4'};
+  const TUSK ={light:'#f0e4c8', mid:'#b09868', dark:'#5a4a2c', edge:'#221a0e', hl:'#fff8e8', accent:'#d8c090', glow:'#e8d8a8'};
+  const ASH  ={light:'#ffd9a8', mid:'#c8702a', dark:'#6a3410', edge:'#2a1206', hl:'#fff0d8', accent:'#e08a2a', glow:'#ff9a3a'};
   const FIEND={light:'#e8b0c8', mid:'#9a3050', dark:'#4a1024', edge:'#1e0610', hl:'#ffd8e4', accent:'#c04060', glow:'#ff5070'};
-  function B(id,name,tier,atk,short,pal,desc){
-    ITEMS[id]={name:name, icon:'\u{1F3F9}', sell:tier===8?26000:52000, rare:true,
+  /* `bolt` swaps the whole weapon over to the crossbow contract: one hand, so the
+     shield stays, slower to crank, and it eats bolts rather than arrows. */
+  function R(id,name,tier,atk,short,pal,bolt,wfx,desc){
+    ITEMS[id]=Object.assign({name:name, icon:'\u{1F3F9}', sell:Math.round(900*Math.pow(2.1,tier-1)), rare:true,
       cgear:true, ctier:tier, cslot:'weapon',
-      dmgType:'ranged', twoHanded:true, wclass:'light', ranged:true, ammo:'arrow',
-      swingMult:short?0.85:1.00, dmgMult:short?1.00:1.13, reqRanged:tier===8?80:90,
-      desc:desc};
+      dmgType:'ranged', ranged:true, ammo:bolt?'bolt':'arrow',
+      twoHanded:!bolt, wclass:bolt?'heavy':'light',
+      swingMult:bolt?1.15:(short?0.85:1.00), dmgMult:bolt?1.24:(short?1.00:1.13),
+      reqRanged:[1,10,20,30,40,55,70,80,90,99,99][tier-1]},
+      wfx?{wfx:wfx}:{}, {desc:desc});
     COMBAT_GEAR_STATS[id]={atk:atk, str:0, def:0};
     ICONS[id]=_bowSVGwpn(pal);
   }
-  B('scorchhorn_shortbow','Scorchhorn Shortbow',8,39,true,ASH,
-    "Cut from a scorch rhino's horn and strung while it was still warm. Short in the limb and quick to draw, and it does not char through the way ashwood does. Takes both hands, so no shield, and every loose spends an arrow.");
-  B('scorchhorn_longbow','Scorchhorn Longbow',8,49,false,ASH,
-    "A full stave of rhino horn, slow to bring round and worth the wait. The Steppe's best answer to something far away. Takes both hands, and every loose spends an arrow.");
-  B('fiendbone_shortbow','Fiendbone Shortbow',9,51,true,FIEND,
+  R('thornbite_shortbow','Thornbite Shortbow',2,5,true,THORN,false,{poison:{mult:0.08}},
+    "Stag antler and briar-gut, and the arrows come away from it wet. Every shot that lands leaves the wound <b>poisoned</b> — it stacks, and each stack shaves the foe's guard. Slightly less accurate than an oak bow, and it does not need to be accurate twice.");
+  R('rimeshot_shortbow','Rimeshot Shortbow',4,13,true,RIME,false,{stun:{chance:0.08,dur:1.0}},
+    "Cut from a leopard's ribs and kept cold. The shaft leaves it frozen to the fletching, and a hit has an <b>8% chance to stagger</b> whatever it lands in for a second. Quick to draw, and it buys you the swing back.");
+  R('mammothhorn_longbow','Mammothhorn Longbow',6,27,false,TUSK,false,{cleave:{chance:0.15}},
+    "A stave split from a single mammoth tusk, so heavy it needs a braced foot to string. The shaft carries clean through: <b>15% chance to punch into a second foe</b> on the same loose.");
+  R('ashlock_crossbow','Ashlock Crossbow',8,45,false,ASH,true,{burn:{mult:0.14}},
+    "A steppe prod, stocked in scorched bone and cranked with a lock that never quite cools. Bolts leave it glowing and the wound keeps <b>burning</b> after. One hand, so a shield or buckler still fits, and every shot spends a bolt.");
+  R('fiendbone_shortbow','Fiendbone Shortbow',9,51,true,FIEND,false,null,
     "A fiend's ribcage, cleaned and tillered. It draws far too easily for something made of bone. Takes both hands, and every loose spends an arrow.");
-  B('fiendbone_longbow','Fiendbone Longbow',9,64,false,FIEND,
+  R('fiendbone_longbow','Fiendbone Longbow',9,64,false,FIEND,false,null,
     "Long bones from something the Sanctum could not keep hold of. The finest bow a mortal can carry without walking into a raid for it. Takes both hands, and every loose spends an arrow.");
 })();
 
