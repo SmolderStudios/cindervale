@@ -28,6 +28,15 @@ console.log(JSON.parse(ev(`JSON.stringify((function(){
   });});
   o.push('  raid foes:     '+rp+' painted, '+rs+' still SVG');
   if(rlist.length) o.push('    '+rlist.join(', '));
+  /* The Spire has no stages, so its natives were invisible to the loop above and
+     the report undercounted the real art backlog by nine. */
+  var np=0, ns=0, nlist=[];
+  (typeof SPIRE_NATIVES!=='undefined'?SPIRE_NATIVES:[]).forEach(function(x){
+    var ic=String(ICONS[x.art||x.id]||'');
+    if(/^<img/.test(ic)) np++; else { ns++; nlist.push(x.name); }
+  });
+  o.push('  Spire natives: '+np+' painted, '+ns+' still SVG');
+  if(nlist.length) o.push('    '+nlist.join(', '));
   o.push('');
   o.push('RAID ABILITY ICONS');
   o.push('  '+RAID_ABILS.map(function(a){return a.name+': '+(ICONS['ui_'+a.id]?'yes':'no icon, text only');}).join('  |  '));

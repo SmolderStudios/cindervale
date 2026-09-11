@@ -6,13 +6,16 @@ Enumerated from the live file with `node _artgaps.js`, not remembered.
 |---|---|
 | Zone monsters | **57 painted, 0 on SVG** |
 | **Raid foes** | **0 painted, 27 on SVG** |
+| **Spire natives** | **0 painted, 9 on SVG** |
 | Zone backdrops | **12 of 12** |
 | **Raid backdrops** | **0 of 5** |
 | Rally / Ruin / Brace icons | **none — text-only buttons** |
 
-**The Spire needs no new monsters.** Floors 1–40 draw 21 distinct creatures, all
-recycled from the four fixed raids, and past floor 40 the bands repeat while the
-curve carries the difficulty. Painting the 27 below covers the Spire completely.
+**Superseded in 0.9.124.26.** This used to say the Spire needed no new monsters,
+because floors 1–40 already drew 21 recycled creatures. True about the count,
+wrong about the problem: all 21 fought the same way. Nine natives landed in
+0.9.124.26, the bands now open to every raid past floor 40, and the roster runs 32
+distinct creatures over 80 floors. They are **Batch 1b** below.
 
 ---
 
@@ -107,6 +110,81 @@ dawnling radiant_wisp seraph_warden astral_hound lightbringer_herald empyrean_co
 ground ellipse and drop-shadow filter. A portrait that looks great on a white grid
 and dies on the live band is not a usable asset — that is the whole lesson of the
 first 57.
+
+---
+
+## Batch 1b: the 9 Sundered Spire natives (SwarmUI, `mongen`)
+
+Same pipeline, same recipe. Three things specific to this set:
+
+- **NEAR-BLACK backdrop, all nine.** Every one of them is pale masonry. On the
+  white plate the border flood-fill walks straight into them and punches holes,
+  which is exactly what happened to the frost bear in probe 4.
+- **Do NOT write "rose" or "pink" into the stone.** The Spire's accent
+  (`#c96a9a`) arrives from the arena band's CSS lighting, and pushing it into the
+  material is the "moss green haft" mistake that came back as an entirely green
+  axe. Describe them as pale grey limestone, old plaster, weathered sandstone,
+  dry mortar. The tower's colour is the light, not the rock.
+- **These are architecture, not animals.** Across three passes of the SVG versions
+  every one of them kept collapsing into a small humanoid robot. The fix each time
+  was to name the building part it used to be and keep the silhouette lopsided:
+  an arch, a column, a landing, a plumb line.
+
+Seeds are **4101–4109**, clear of the 1101–2305 block the 57 zone monsters hold.
+Give the 27 raid foes above the 3xxx block when they go in.
+
+### Ready to paste into `subjects.js`
+
+````js
+  /* The Sundered Spire: pale masonry, all nine. NEAR-BLACK backdrop. */
+  spr_rubble_shade: { seed: 4101, desc: 'a broken stone column caught in mid collapse and never allowed to finish, six or seven angular chunks of pale grey masonry hanging apart from one another with clear gaps of empty air between them, the whole stack leaning hard off its own axis, two small cold points of light buried deep in the largest chunk, no head and no limbs, hovering just clear of the ground with dust falling from it' },
+
+  spr_floorwarden: { seed: 4102, desc: 'a squat load bearing archway grown into a warden, a wide low stone arch where its head and shoulders should be, one enormous slab of a forearm hanging almost to the floor and the other arm a short broken stump, pale limestone banded with dry mortar courses, a lit opening burning in the middle of its chest like a doorway with something behind it, planted wide and lopsided, feet set like footings' },
+
+  spr_stairwraith: { seed: 4103, desc: 'a tall thin hooded figure in heavy grey stone robes with no face inside the hood, only two narrow slits of cold light, the front of the robe standing open onto a flight of pale stone stairs receding away into the body toward a vanishing point far behind it, the stairs lit from deep inside, the whole figure leaning off vertical as if the floor under it runs the wrong way, the hem trailing to the ground' },
+
+  spr_mortarfiend: { seed: 4104, desc: 'a low wide sagging mass of wet grey mortar half set and still slumping, a thick crusted dried shell over the top and glossy wet mortar underneath, far broader than it is tall, two small sunken eyes of pale light, a wide jagged split across the front for a mouth, three stubby dripping feet planted on the ground, rivulets running off it' },
+
+  spr_keystone_golem: { seed: 4105, desc: 'a massive hunched golem of pale dressed stone blocks, enormous slab shoulders with a small blunt head sunk down between them, arms far too long and hanging to the floor, a single wedge shaped keystone set into its chest burning with light from inside, hairline cracks radiating out from the keystone across the whole torso, standing heavy and still on thick legs' },
+
+  spr_plumbhang: { seed: 4106, desc: 'a tapered stone weight the size of a body hanging dead straight from a fine chain that runs up out of the frame, smooth pale plaster narrowing to a heavy pointed plumb bob tip at the bottom, two small stubby useless arms, two cold slitted eyes set high on the taper, absolutely vertical and perfectly still, nothing touching the ground beneath it' },
+
+  spr_ashen_architect: { seed: 4107, desc: 'a tall gaunt figure in long ash grey robes and a deep hood, one arm ending not in a hand but in a huge pair of open brass dividers raised high, the other arm holding a straightedge low at its side, a faint burning line scribed on the air where the dividers have already passed, pale dust falling off the robe, standing straight and narrow with the hem on the ground' },
+
+  spr_hollow_choirstone: { seed: 4108, desc: 'a single fluted stone pillar taller than a man and widening toward its base, four human faces of different sizes fused into the shaft at different heights and angles, every one of them with its mouth stretched wide open and light pouring out of the throat, no eyes on any of them, thin ripples of sound visible coming off the stone, standing square on the ground' },
+
+  spr_the_landing: { seed: 4109, desc: 'an entire stone floor slab of a stairwell landing torn free and rearing up off the ground at a steep tilt, pale flagstones and mortar joints still visible across its face, a long ragged split running the width of it lined with broken flagstone teeth and lit from inside like a mouth, two huge stone hands gripping the near edge and planted on the ground holding it upright, vast, no head and no body, colossal scale' },
+````
+
+<details><summary>id order for <code>mkjobs.js</code></summary>
+
+```
+spr_rubble_shade spr_floorwarden spr_stairwraith spr_mortarfiend spr_keystone_golem
+spr_plumbhang spr_ashen_architect spr_hollow_choirstone spr_the_landing
+```
+</details>
+
+**`mkjobs.js` asserts subjects.js covers exactly the live ids**, and the Spire's
+foes are built on demand rather than sitting in a `stages` array, so these nine will
+not be in whatever id list it walks. Feed them explicitly, or widen its source to
+include `SPIRE_NATIVES`. Every per-floor copy (a Rubble Shade on floor 9, 23, 41...)
+aliases back to the same key, so nine images cover every floor they appear on.
+
+**Where the images go:** the ICONS key is the native's `art` field, which is the id
+without the `spr_` prefix (`rubble_shade`, `the_landing`...). Paint against the
+`spr_` ids above so they sort with the rest of the Spire; inject against the bare
+ones.
+
+Two that will fight you, judging by how the same nine went in SVG:
+
+- **The Landing** is the only one with no head, no body and no feet, so `COMP`'s
+  "feet at the bottom of the frame, entire creature visible" pulls against it. The
+  stone hands planted on the ground are doing that job in the description on
+  purpose. If it still comes back as a creature standing on a slab, drop "full
+  body" from COMP for this one entry only.
+- **Rubble Shade** wants to become a golem. If the chunks fuse into one body, push
+  the gaps harder ("wide gaps of empty black air between every piece") before
+  touching anything else.
 
 ---
 
