@@ -3343,15 +3343,10 @@ setTimeout(() => {
        comes off ChatGPT contact sheets and a sheet run cannot happen in the same pass
        that adds the raid they drop from. PENDING, not rejected — same standing as the
        ranged batch above, and same instruction: do NOT add these to KEEP_SVG. */
-    const SPIRE_PENDING = ['sunderstone','spirecore',
-      /* The Spire's four gear pieces (0.9.124.15). Same standing: they use the
-         palette-driven generators every tier uses, and the painted art comes off
-         a contact sheet later. Do NOT add them to KEEP_SVG. */
-      'sunderedge','faultward','plummet','stonewright_gauntlets',
-      'sundershaft','sunderbolt',
-      /* Ranged proc weapons (0.9.124.22) — same standing. The T9 Fiendbone bows
-         were retired in 0.9.124.23 and are no longer on this list. */
-      'thornbite_shortbow','rimeshot_shortbow','mammothhorn_longbow','ashlock_crossbow'];
+    /* Empty since 0.9.124.27: all twelve Spire and ranged-proc items are painted,
+       off the three sheets in _iconart/sheets/spire_*.png. Kept as a list so the
+       next batch of generator-drawn items has somewhere to wait. */
+    const SPIRE_PENDING = [];
     const SVG_OK = new Set(['radcliff_tally'].concat(RANGED_PENDING, SPIRE_PENDING));
 
     const unexpected = cov.svg.filter(id => !SVG_OK.has(id));

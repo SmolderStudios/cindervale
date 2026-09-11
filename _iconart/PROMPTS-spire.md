@@ -12,6 +12,8 @@ node _pending.js
 | The Spire's spoils | 4 | A |
 | Ranged proc weapons | 4 | B |
 | The Spire's endgame gear | 4 | C |
+| The Spire's own creatures | 9 | D |
+| The Spire's backdrop | 1 image | E |
 
 **12 images, 12 assets.** No recolour ladders here — every one is a one-off, so
 what comes back is what ships.
@@ -171,6 +173,163 @@ stonewright_gauntlets
 
 ---
 
+## Sheet D: The Spire's own creatures (9, grid 3x3)
+
+The nine natives that live in the tower's own stretches. Creatures, not items,
+so **start a new chat and paste the creature block below instead of the item
+style block.** The drawing rules are the same on purpose: same ink, same flat
+shading, same stone as Sheets A and C, so they read as the same place.
+
+Two things matter more here than on any item sheet:
+
+- **Keep the bodies mostly DARK**, like the sword, shield and gauntlets on the
+  gear sheet you already made. The arena is a dark stage, and a dark body with
+  a lit top edge is what reads there. It also keys cleanly off the white sheet.
+- **They are buildings that got up, not animals and not robots.** Every one is a
+  building part: a column, an arch, a staircase, a plumb line, a floor slab. My
+  own SVG versions kept turning into small robots until I named the part.
+
+### The creature block (paste once, in a new chat)
+
+````
+You are drawing creature portraits for the combat arena of a dark-fantasy RPG. I
+will give you one SHEET at a time. Draw every creature on that sheet in ONE image,
+as a labelled grid, on a single flat pure-white background, with the creature's
+short label in small plain text under each cell.
+
+STYLE, identical on every cell
+Hand-painted stylised fantasy game art. Bold clean shapes with a thick dark ink
+outline holding the whole silhouette closed. Flat cel-like shading, three or four
+value steps, NOT smooth gradients. Chunky, slightly exaggerated proportions. Strong
+rim light along the top edges, deep shadow underneath. Rich colour.
+
+It must read as painted game art, NOT a photograph, NOT photorealistic, NOT a 3D
+render. Use LESS detail than feels right: each creature is shown large in the
+arena but also as a 26 pixel thumbnail, so one big readable silhouette and two or
+three big shapes matter more than texture.
+
+FRAMING
+Exactly ONE creature per cell, whole body visible, three quarter view facing the
+viewer, filling about 85% of its cell, its lowest point near the bottom of the
+cell. No ground, no floor line, no cast shadow, no scenery, no pedestal, no second
+creature.
+
+BACKGROUND
+Flat pure white, edge to edge. No gradient, no vignette, no drop shadow.
+
+Several of these creatures are made of buildings. Draw the building part the name
+describes, alive. Not a person wearing it and not a robot.
+````
+
+### The sheet
+
+````
+SHEET: The Sundered Spire's own creatures. 9 cells, 3 across and 3 down.
+
+All nine are made of the same fallen tower's stone and share one palette: dark plum
+stone bodies, pale dusty rose highlights only along the top edges, a near-black ink
+outline, and a cold rose pink light glowing out of their cracks, eyes and mouths.
+Mostly dark. Not gold, not blue-violet void crystal, not plain grey.
+
+CELLS:
+  1. Rubble Shade      - a broken stone column caught halfway through collapsing:
+                         six or seven angular chunks hanging apart in the air with
+                         clear white gaps between every piece, leaning hard to one
+                         side, two small points of rose light buried in the biggest
+                         chunk. No head, no arms, no legs. The gaps are the point.
+  2. Floorwarden       - a squat, wide stone archway that stood up: the arch is its
+                         head and shoulders, one enormous slab of an arm hangs to
+                         the floor and the other is a short broken stump, a glowing
+                         doorway opening in its chest, planted on two blocky feet.
+                         Lopsided on purpose.
+  3. Stairwraith       - a tall thin hooded figure in heavy stone robes, no face in
+                         the hood, only two slit eyes of light. The robe hangs open
+                         down the front and inside it a flight of glowing stairs
+                         runs away INTO its body, shrinking into the distance. The
+                         whole figure leans off vertical.
+  4. Mortarfiend       - a low, wide, sagging lump of wet mortar, much wider than it
+                         is tall, a cracked crust across its back, two small sunken
+                         eyes of light and a long jagged split of a mouth across the
+                         front, three stubby dripping feet.
+  5. Keystone Golem    - a massive hunched stone golem, huge slab shoulders with a
+                         small blunt head sunk low between them, arms hanging to the
+                         floor, and a single wedge shaped keystone set in its chest
+                         burning bright, with glowing cracks running out from it.
+  6. Plumbhang         - a tapered stone plumb weight the size of a body, hanging
+                         dead straight from a chain that runs up out of the top of
+                         the cell, narrowing to a heavy sharp point at the bottom,
+                         two small stubby arms, two slit eyes near the top.
+                         Perfectly vertical, touching nothing.
+  7. Ashen Architect   - a tall gaunt robed figure with a deep hood, one arm ending
+                         in a huge pair of open drafting dividers held up high
+                         instead of a hand, a glowing scribed arc hanging in the
+                         air where the dividers have passed, dust falling off it.
+  8. Hollow Choirstone - one fluted stone pillar, widening toward the base, with
+                         four human faces of different sizes fused into it at
+                         different heights, every mouth stretched wide open and
+                         light pouring out of each throat. No eyes on any of them.
+  9. The Landing       - a whole stone floor slab from a stairwell landing, torn
+                         free and rearing up at a steep tilt, flagstone joints
+                         across its face, a long ragged split across it lined with
+                         broken stone teeth and lit from inside like a mouth, two
+                         huge stone hands gripping its near edge and holding it up.
+                         The biggest thing on the sheet.
+````
+
+<details><summary>id order for <code>sheets/spire_natives.txt</code></summary>
+
+```
+rubble_shade
+floorwarden
+stairwraith
+mortarfiend
+keystone_golem
+plumbhang
+ashen_architect
+hollow_choirstone
+the_landing
+```
+</details>
+
+If one comes back wrong, re-roll just that cell in the same chat ("redraw cell 1
+only, same sheet") rather than the whole sheet, so the other eight keep their look.
+The two most likely to fight you: **Rubble Shade** fusing into one solid golem (ask
+for bigger white gaps between the pieces), and **The Landing** turning into a
+creature standing on a slab (it IS the slab).
+
+---
+
+## Sheet E: The Spire's backdrop (one image, not a sheet)
+
+Every third stretch of five floors is the tower itself, and this is what stands
+behind the natives there. Raid stretches borrow it too until the five raid
+backdrops exist. Same chat is fine; this one is a single picture.
+
+````
+Paint a single background plate for a dark-fantasy RPG combat arena, in TALL
+portrait format (2:3). A creature will be drawn on top of it in the lower middle,
+so this picture has to LOSE that fight on purpose.
+
+THE PLACE: the inside of a huge tower that fell over and is lying on its side.
+Floors and staircases run at the wrong angle, walls have become ceilings, masonry
+is sheared clean through, and pale pink dust hangs in the air. Cold light comes in
+through a crack far above. The stone is the same dark rose and plum stone as the
+creatures, but softer and further away.
+
+RULES:
+- Low contrast, soft haze, lots of depth. No focal point anywhere.
+- The bottom third is an empty, fairly flat stretch of broken floor where the
+  creature will stand. Nothing interesting there.
+- Darker overall than a normal painting: it sits behind bright creatures on a
+  dark screen.
+- No creatures, no people, no text, no frame, no border.
+- Painted in the same hand as the creature art. Not a photo, not a 3D render.
+````
+
+Save it as `spire_backdrop.png` in `icons-inbox`.
+
+---
+
 ## Not on a sheet: the raid icon
 
 `ICONS.sundered_spire` is a zone/raid icon, not an item, so it does not go through
@@ -185,6 +344,10 @@ node _iconart/cutall.js spire_spoils      # add the geometry to cutall.js PLAN f
 node _iconart/pack.js --picks _iconart/picks.json
 node _iconart/inject.js
 ```
+
+**Sheet D is different from A to C.** Monster art lives in the `ART_MON` block at
+256px, not the item block at 96px, so it cuts the same way and packs a different
+way. Drop it in `icons-inbox` and say so; that step is mine.
 
 Then delete these ids from `SPIRE_PENDING` in `_audit_tests.js` — that list is
 what stops the art audit failing, and it is meant to shrink to nothing:

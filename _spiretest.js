@@ -224,7 +224,15 @@ setTimeout(()=>{
        "refreshCombatStats(); state.items={}; startRaid(SPR_ID);");
     ev("_g=0;");
     for(let i=0;i<30;i++) ev("(function(){var r=spireFloorLoot("+(i+1)+"); if(r.gear&&r.gear.length) _g+=r.gear.length;})()");
-    ok('thirty shallow floors give up no gear', ev('_g===0'), String(ev('_g')));
+    /* Tested on the odds, not on a roll. This used to assert that thirty real
+       Math.random rolls produced nothing, and a legitimate lucky roll failed it
+       about one run in forty (four pieces on six landings is a 2.5% chance). The
+       loop above still runs, so the loot path is exercised either way. */
+    const _shallow=+ev("(function(){let e=0; for(let f=SPR_BOSS_EVERY;f<=30;f+=SPR_BOSS_EVERY)"+
+                       " e+=spireGearChance(f)*SPIRE_GEAR.length*charDropMult(); return e;})()");
+    console.log('       gear from this climb to 30: '+ev('_g')+' (a lucky roll is allowed)');
+    ok('a climb to floor 30 almost never gives up gear', _shallow<0.05,
+       (_shallow*100).toFixed(2)+'% expected pieces per climb');
     ev("_ng=0; for(var f=1;f<=60;f++){ if(f%SPR_BOSS_EVERY!==0){ var r=spireFloorLoot(f); if(r.gear&&r.gear.length) _ng++; } }");
     ok('and non-landing floors never roll it', ev('_ng===0'), String(ev('_ng')));
     ev("combat.youHp=0; handleRaidFail(); combat.active=false;");
@@ -620,8 +628,8 @@ setTimeout(()=>{
        without asking who `base` is gave floor 2 the Barrow Champion's telegraph
        and replaced Spire Weight on every landing with that boss's curse. */
     ok('a recycled foe never inherits its home raid\u2019s telegraph',
-       ev("[1,2,3,4,6,7,8,9,11].every(n=>!spireFloor(n,true).castfx)"),
-       ev("JSON.stringify([1,2,3,4,6,7,8,9,11].filter(n=>!!spireFloor(n,true).castfx))"));
+       ev("[1,2,3,4,6,7,8,9].every(n=>!spireFloor(n,true).castfx)"),
+       ev("JSON.stringify([1,2,3,4,6,7,8,9].filter(n=>!!spireFloor(n,true).castfx))"));
     ok('and a deep landing still carries Spire Weight, not its raid boss\u2019s curse',
        ev("(function(){for(const f of [20,30,40,50,60,70]){const m=spireFloor(f,true);"+
           "const nat=SPIRE_NATIVE_BY_ID[m.id];"+
@@ -637,24 +645,113 @@ setTimeout(()=>{
     const d80=+ev("(function(){const s=new Set();for(let i=1;i<=80;i++)s.add(spireFloor(i,true).name);return s.size;})()");
     console.log('       distinct creatures: '+d40+' in the first 40 floors, '+d80+' in the first 80');
     ok('a long climb meets a lot of different things', d80>=28, d80+' distinct in 80 floors');
-    ok('and past the bands the pool is every raid at once',
-       ev("(function(){const zones=new Set();for(let i=41;i<=90;i++){const m=spireFloor(i,true);"+
-          "const nat=SPIRE_NATIVE_BY_ID[m.id]; if(!nat) zones.add(m.name);} return zones.size;})()")>=10,
-       ev("(function(){const z=new Set();for(let i=41;i<=90;i++){const m=spireFloor(i,true);"+
-          "if(!SPIRE_NATIVE_BY_ID[m.id]) z.add(m.name);} return z.size+' recycled creatures across floors 41-90';})()"));
+    ok('and every raid turns up as a place of its own',
+       ev("(function(){const seen=new Set();for(let f=1;f<=600;f+=5){const p=spirePlace(f); if(p.kind==='raid') seen.add(p.id);} return seen.size;})()")===4);
 
-    /* Weighting: present from the bottom, and a real share of the tower deep in. */
-    const share=f=>+ev("(function(){let k=0;for(let i="+f+";i<"+f+"+40;i++) if(SPIRE_NATIVE_BY_ID[spireFloor(i,true).id]) k++; return k;})()");
-    const s1=share(1), s60=share(60);
-    console.log('       native share: '+s1+'/40 at the bottom, '+s60+'/40 from floor 60');
-    ok('natives show up from the bottom of the tower', s1>=6, s1+'/40');
-    ok('and take a bigger share the deeper you go', s60>s1, s1+' -> '+s60);
+    /* A third of the tower is the tower's own. */
+    const natN=+ev("(function(){let k=0;for(let i=1;i<=90;i++) if(SPIRE_NATIVE_BY_ID[spireFloor(i,true).id]) k++; return k;})()");
+    console.log('       natives hold '+natN+' of the first 90 floors');
+    ok('natives hold a third of the tower', natN===30, natN+'/90');
 
     /* resistTo was being dropped on the floor by spireFloor. It is a real field the
        damage formula reads at 15%, and every recycled foe was silently losing it. */
     ok('a foe that resists something keeps that resistance in the tower',
        ev("(function(){for(let i=1;i<=80;i++){const m=spireFloor(i,true);"+
           "if(m.resistTo) return true;} return false;})()"));
+  }
+
+  section('Stretches and backdrops');
+  {
+    ev("combat.raid=null; combat.active=false;");
+    ok('five floors make a stretch, and a stretch is one place',
+       ev("(function(){for(let k=0;k<24;k++){const a=spirePlace(k*5+1).id; for(let q=2;q<=5;q++) if(spirePlace(k*5+q).id!==a) return 'stretch '+k;} return true;})()")===true);
+    ok('every third stretch is the tower itself',
+       ev("[11,12,15,26,30,41,45,56].every(f=>spirePlace(f).kind==='tower') && [1,5,6,10,16,25,31,40].every(f=>spirePlace(f).kind!=='tower')"));
+    ok('and the natives live there and nowhere else',
+       ev("(function(){for(let f=1;f<=90;f++){const m=spireFloor(f,true); if(!!SPIRE_NATIVE_BY_ID[m.id]!==spireIsTowerStretch(f)) return 'floor '+f+' '+m.id;} return true;})()")===true);
+    ok('the first tower stretch meets four different natives',
+       +ev("new Set([11,12,13,14].map(f=>spireFloor(f,true).id)).size")===4);
+    ok('and its landing is the tower\u2019s own boss', ev("spireFloor(15,true).id")==='spr_the_landing');
+    ok('a native\u2019s listed floor is one it can really be met on',
+       ev("SPIRE_NATIVES.every(x=>spireIsTowerStretch(spireFirstFloor(x)) && (!!x.boss===(spireFirstFloor(x)%5===0)))"));
+
+    /* A dungeon stretch: its own four, then its own boss. */
+    const zf=+ev("(function(){for(let f=1;f<=400;f+=5){const p=spirePlace(f); if(p.kind==='zone'&&MONSTERS.some(m=>m.zone===p.id&&m.boss)) return f;} return 0;})()");
+    const zid=ev("spirePlace("+zf+").id");
+    ok('a zone stretch fields that zone\u2019s own creatures',
+       ev("[0,1,2,3].every(q=>{const m=spireFloor("+zf+"+q,true); return MONSTERS.some(z=>z.zone==='"+zid+"'&&('spr_'+z.id)===m.id);})"),
+       zid+' from floor '+zf);
+    ok('all four of them, not one of them twice',
+       +ev("new Set([0,1,2,3].map(q=>spireFloor("+zf+"+q,true).id)).size")===4);
+    ok('and its landing is that zone\u2019s boss',
+       ev("(function(){const b=MONSTERS.find(z=>z.zone==='"+zid+"'&&z.boss); return spireFloor("+zf+"+4,true).id==='spr_'+b.id;})()"));
+    const hf=+ev("(function(){for(let f=1;f<=600;f+=5){const p=spirePlace(f); if(p.kind==='zone'&&!MONSTERS.some(m=>m.zone===p.id&&m.boss)) return f;} return 0;})()");
+    ok('a hunting ground has no boss, so its biggest creature holds the landing',
+       hf>0 && ev("(function(){const p=spirePlace("+hf+"); const zm=MONSTERS.filter(m=>m.zone===p.id);"+
+                  "const big=zm.reduce((a,m)=>m.lvl>a.lvl?m:a,zm[0]); return spireFloor("+hf+"+4,true).id==='spr_'+big.id;})()"),
+       hf?ev("spirePlace("+hf+").name")+', landing on floor '+(hf+4):'none in 600 floors');
+    ok('zone creatures are scaled to the floor, not to their zone',
+       ev("(function(){const m=spireFloor("+zf+",true), fx=spireFoeMods();"+
+          "return Math.abs(m.hp-Math.round(SPR_BASE.hp*spireScale("+zf+").hp*fx.hp))<2;})()"));
+    ok('and they keep their painted portraits',
+       ev("/^<img/.test(String(ICONS[spireFloor("+zf+",true).id]))"));
+    /* The trap that shipped once already: an id with no ICONS entry paints itself
+       as 358px of text, and every zone monster carries a legacy emoji in `icon`. */
+    ok('no floor ever resolves its art to an emoji or to nothing',
+       ev("(function(){for(let f=1;f<=150;f++){const m=spireFloor(f,true); const a=String(ICONS[m.id]||'');"+
+          "if(!/^<(svg|img)/.test(a)) return 'floor '+f+' '+m.id; if(m.icon!==m.id) return 'icon field '+m.icon;} return true;})()")===true);
+
+    /* The route. */
+    ok('the route visits every zone and raid before any place comes round again',
+       ev("(function(){const n=_sprPlaces().length, seen=new Set(); let f=1;"+
+          "while(seen.size<n){ if(!spireIsTowerStretch(f)){ const id=spirePlace(f).id; if(seen.has(id)) return 'repeat '+id+' at '+f; seen.add(id);} f+=5; }"+
+          "return n===16?true:'places '+n;})()")===true);
+    ok('and no place ever follows itself, even across a reshuffle',
+       ev("(function(){let prev=null; for(let f=1;f<=900;f+=5){ if(spireIsTowerStretch(f)) continue;"+
+          "const id=spirePlace(f).id; if(id===prev) return 'floor '+f; prev=id;} return true;})()")===true);
+    ev("combat.raid={id:SPR_ID,stage:0,floor:1,endless:true,affixDay:500};");
+    const r500=ev("[1,6,16,21,31,36].map(f=>spirePlace(f).id).join()");
+    ev("combat.raid.affixDay=501;");
+    const r501=ev("[1,6,16,21,31,36].map(f=>spirePlace(f).id).join()");
+    ok('each day draws a different route', r500!==r501, r500.split(',').slice(0,3).join(' / ')+' ...');
+    ev("combat.raid.affixDay=500;");
+    ok('and a climb keeps the route it started with, whatever the clock says',
+       ev("spirePlace(6).id")===r500.split(',')[1] && +ev("gdDayIndex()")!==500);
+
+    /* Backdrops. */
+    ev("combat.raid={id:SPR_ID,stage:"+(zf-1)+",floor:"+zf+",endless:true,affixDay:gdDayIndex()}; state.zone='rat_warrens';");
+    ok('a zone stretch stands in front of that zone\u2019s backdrop',
+       ev("arenaPlace().bg===ZONE_BG['"+zid+"']"), zid);
+    ok('and lights the arena in that zone\u2019s colour',
+       ev("arenaPlace().accent===getZone('"+zid+"').accent"));
+    ev("combat.raid.floor=11;");
+    ok('a tower stretch uses the tower\u2019s backdrop, or none, never the last zone',
+       ev("arenaPlace().bg===(ZONE_BG[SPR_ID]||null)"));
+    ev("combat.raid={id:'sunken_barrow',stage:0,n:6,endless:false}; state.zone='rat_warrens';");
+    ok('a fixed raid never shows the zone you last fought in',
+       ev("arenaPlace().bg!==ZONE_BG.rat_warrens"));
+    ev("combat.raid=null; state.zone='wolf_den';");
+    ok('outside a raid the zone backdrop is untouched',
+       ev("arenaPlace().bg===ZONE_BG.wolf_den && arenaPlace().accent===getZone('wolf_den').accent"));
+    ok('and the stage really renders it',
+       ev("arenaBgHTML().indexOf(ZONE_BG.wolf_den.slice(0,80))>0"));
+    ok('the fade only plays on a fresh stretch',
+       ev("arenaBgHTML().indexOf('rx-newplace')<0"));
+
+    /* Swing speed is shape, not difficulty. Checked with no run active, so every
+       affix multiplier sits at 1 and the floor's baseline is exact. */
+    ok('damage per second is the floor\u2019s, whatever is swinging',
+       ev("(function(){for(let f=1;f<=90;f++){const m=spireFloor(f,true), nat=SPIRE_NATIVE_BY_ID[m.id];"+
+          "const want=SPR_BASE.str*spireScale(f).dmg*(f%5===0?1.15:1)*((nat&&nat.mod&&nat.mod.str)||1)/SPR_BASE.swingMs;"+
+          "const got=m.str/m.swingMs; if(Math.abs(got-want)/want>0.02) return 'floor '+f+' '+m.name+' '+got.toFixed(3)+' vs '+want.toFixed(3);}"+
+          "return true;})()")===true);
+    ev("combat.raid={id:SPR_ID,stage:0,floor:1,endless:true,affixDay:0}; combat.youMaxHp=1000;");
+    ok('a fast creature\u2019s blows are capped lower', +ev("capRaidHit(900,0.5)")===225);
+    ok('and nothing ever raises the cap past 45%', +ev("capRaidHit(900,1.7)")===450 && +ev("capRaidHit(900)")===450);
+    ok('enrage and frenzy still bite: the cap reads the creature\u2019s base speed',
+       ev("(function(){const m=spireFloor(29,true); RAID_MON_BY_ID[m.id]=m; combat.monId=m.id;"+
+          "combat.foeSwingMs=100; return spireSwingCap()===m.swingScale;})()"));
+    ev("combat.raid=null; combat.active=false;");
   }
 
   section('Regen and enrage');

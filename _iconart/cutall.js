@@ -78,6 +78,17 @@ const PLAN = [
   { name: 'w4', sheet: 'w4.png', ids: 'weapons-4.txt', grid: '5x1', inset: 8, crop: '2,2,1534,418' },
   { name: 'cured',    sheet: 'curedleather.png', ids: 'cured-leathers.txt', grid: '5x2', inset: 8, crop: '4,4,1980,789' },
   { name: 'leftover', sheet: 'leftovers.png',    ids: 'the-ones-we-missed-catch-up-sheet.txt', grid: '4x1', inset: 8, crop: '4,4,1770,450' },
+  /* The Spire's three sheets (0.9.124.27). Ruled 2x2 tables at 1254px, so crop
+     inside the outer rule and inset past the centre cross. */
+  { name: 'spire_spoils', sheet: 'spire_spoils.png', ids: 'spire_spoils.txt', grid: '2x2', inset: 8, crop: '4,4,1250,1250' },
+  { name: 'spire_procs',  sheet: 'spire_procs.png',  ids: 'spire_procs.txt',  grid: '2x2', inset: 8, crop: '4,4,1250,1250' },
+  { name: 'spire_gear',   sheet: 'spire_gear.png',   ids: 'spire_gear.txt',   grid: '2x2', inset: 8, crop: '4,4,1250,1250' },
+  /* The gauntlets' two-line caption fooled the caption trim into cutting the pair
+     down to its cuffs. Given a crop of their own that stops above the caption, and
+     cut after the sheet so it wins. */
+  { name: 'spire_gauntlets', sheet: 'spire_gear.png', rows: [
+    { ids: 'stonewright_gauntlets', crop: '632,632,1250,1112', grid: '1x1' },
+  ]},
 
   /* ---- sheets whose ROW PITCH wanders: explicit bands ----------------------- */
   /* The crafted ladder arrived as a labelled matrix, 7 tiers across by 4 slots down,
