@@ -196,5 +196,7 @@ for (const p of PLAN) {
 if (!LIST) {
   fs.rmSync(TMP, { force: true });
   console.log('\n' + total + ' icons -> raw/');
-  console.log('next:  node _iconart/key.js && node _iconart/picks.js && node _iconart/pack.js && node _iconart/inject.js');
+  /* Never suggest picks.js here. It rebuilds picks.json from the retired SwarmUI
+     subject list, and the next inject silently drops every icon added since. */
+  console.log('next:  node _iconart/key.js, add the new ids to _iconart/picks.json BY HAND, node _iconart/pack.js --picks _iconart/picks.json, diff the pack against the live block, node _iconart/inject.js');
 }

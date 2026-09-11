@@ -309,5 +309,5 @@ const WORK = `async (uri, COLS, ROWS, PAD, CAP_START, CROP, INSET, COLX, ROWCOLS
     if (!DRY) fs.writeFileSync(out, buf);
     console.log(`  ${DRY ? 'would write' : 'wrote'}  ${(id + '__' + STYLE + '.png').padEnd(30)} src ${cell.w}x${cell.h}  ${(buf.length/1024).toFixed(0)}kb`);
   });
-  console.log(`\nnext:  node _iconart/key.js  &&  node _iconart/pack.js  &&  node _iconart/inject.js`);
+  console.log(`\nnext:  node _iconart/key.js, add the new ids to _iconart/picks.json BY HAND, node _iconart/pack.js --picks _iconart/picks.json, diff the pack against the live block, node _iconart/inject.js`);
 })().catch(e => { console.error(e); process.exit(1); });
