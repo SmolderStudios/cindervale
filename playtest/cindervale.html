@@ -7347,6 +7347,9 @@ body:not(.is-demo) .demo-only{display:none !important}
 .cvsplat.miss{color:#8a7550;font-size:calc(17px*var(--tscale));font-style:italic;font-weight:600}
 .cvsplat.poison{color:#8fd44e}
 .cvsplat.burn{color:#ff8a3d}
+/* (0.9.124.26) A foe healing itself. Deliberately the only cold green on the
+   stage, and it rises from the creature's own side. */
+.cvsplat.mend{color:#6fd8a8;font-size:calc(21px*var(--tscale))}
 /* Damage you take falls instead of rising, so it is never confused with damage
    you dealt. It sits high-left of the creature rather than low-centre: at the
    bottom of the stage it was hidden behind the health panel entirely. */
@@ -7991,7 +7994,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.124.25">v0.9.124</div>
+  <div class="mm-ver" data-build="0.9.124.26">v0.9.124</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -13191,6 +13194,20 @@ const ICONS = {
   abyssal_throne: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><radialGradient id="at_glow" cx="0.5" cy="0.5" r="0.6"><stop offset="0" stop-color="#8040c0" stop-opacity="0.85"/><stop offset="1" stop-color="#160830" stop-opacity="0"/></radialGradient><linearGradient id="at_thr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a2458"/><stop offset="0.5" stop-color="#20103a"/><stop offset="1" stop-color="#0e0420"/></linearGradient><linearGradient id="at_rift" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e0b0ff"/><stop offset="0.5" stop-color="#8040c0"/><stop offset="1" stop-color="#2a1048"/></linearGradient></defs><circle cx="32" cy="32" r="28" fill="url(#at_glow)"/><path d="M14 20 L20 16 L20 10 L24 14 L28 10 L28 16 L36 16 L36 10 L40 14 L44 10 L44 16 L50 20 L48 52 L16 52 Z" fill="url(#at_thr)" stroke="#0a0418" stroke-width="0.9" stroke-linejoin="round"/><path d="M30 18 Q32 14 34 18 Q40 32 34 46 Q32 50 30 46 Q24 32 30 18 Z" fill="url(#at_rift)"/><path d="M32 16 L32 48" stroke="#fff" stroke-width="0.5" opacity="0.7"/><circle cx="32" cy="30" r="2.2" fill="#fff" opacity="0.9"/><path d="M16 52 L48 52 L46 56 L18 56 Z" fill="#160830" stroke="#0a0418" stroke-width="0.6"/></svg>',
   void_wretch: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="vw_body" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a2c70"/><stop offset="0.5" stop-color="#281448"/><stop offset="1" stop-color="#100420"/></linearGradient></defs><ellipse cx="32" cy="58" rx="12" ry="2.6" fill="#000" opacity="0.4"/><path d="M20 32 Q32 22 44 32 Q46 50 40 54 Q32 58 24 54 Q18 50 20 32 Z" fill="url(#vw_body)" stroke="#0a0418" stroke-width="0.9" stroke-linejoin="round"/><path d="M24 30 Q32 12 40 30 Q32 26 24 30 Z" fill="url(#vw_body)" stroke="#0a0418" stroke-width="0.9"/><circle cx="28.5" cy="24" r="1.8" fill="#c890ff"/><circle cx="35.5" cy="24" r="1.8" fill="#c890ff"/><circle cx="28.5" cy="24" r="0.7" fill="#fff"/><circle cx="35.5" cy="24" r="0.7" fill="#fff"/><path d="M26 38 L30 44 M38 36 L34 42 M32 34 L32 50" stroke="#8040c0" stroke-width="1.1" fill="none" opacity="0.8"/><path d="M18 38 Q14 46 18 52 M46 38 Q50 46 46 52" stroke="#3a2458" stroke-width="1.4" fill="none"/></svg>',
   rift_stalker: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="rst_body" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5a3488"/><stop offset="0.5" stop-color="#2a1450"/><stop offset="1" stop-color="#0e0420"/></linearGradient></defs><ellipse cx="32" cy="56" rx="18" ry="3" fill="#000" opacity="0.4"/><path d="M10 34 Q20 26 34 28 Q48 30 54 26 Q50 38 40 40 L36 52 L32 40 Q22 42 18 50 L16 40 Q10 40 10 34 Z" fill="url(#rst_body)" stroke="#0a0418" stroke-width="0.9" stroke-linejoin="round"/><path d="M50 26 L58 22 L54 30 Z" fill="url(#rst_body)" stroke="#0a0418" stroke-width="0.7"/><circle cx="50" cy="30" r="1.6" fill="#c890ff"/><path d="M20 32 L28 34 M34 32 L42 32" stroke="#8040c0" stroke-width="0.9" opacity="0.7" fill="none"/><path d="M24 44 L24 54 M40 42 L42 52" stroke="#2a1450" stroke-width="2"/></svg>',
+  /* -- The Sundered Spire's natives (0.9.124.26) ----------------------------
+     Rose-grey stone, plum shadow, near-black edge, a cold rose light from inside
+     the break. Dark body with an explicit lit rim along the top edges: the arena
+     band is a dark radial with two dark drop-shadows stacked on it and swallows
+     anything that is mid-tone all the way through. */
+  rubble_shade: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="rbs_s" x1="0.25" y1="0" x2="0.7" y2="1"><stop offset="0" stop-color="#caa2b2"/><stop offset="0.16" stop-color="#6d4557"/><stop offset="0.5" stop-color="#2b1723"/><stop offset="1" stop-color="#120a10"/></linearGradient><linearGradient id="rbs_d" x1="0.2" y1="0" x2="0.8" y2="1"><stop offset="0" stop-color="#8b5f70"/><stop offset="0.26" stop-color="#3a2130"/><stop offset="1" stop-color="#0f070f"/></linearGradient><radialGradient id="rbs_e" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#ffd8ea"/><stop offset="0.35" stop-color="#e06fa8" stop-opacity="0.7"/><stop offset="1" stop-color="#c96a9a" stop-opacity="0"/></radialGradient></defs><ellipse cx="31" cy="59" rx="12" ry="2.5" fill="#000" opacity="0.38"/><ellipse cx="32" cy="31" rx="15" ry="19" fill="url(#rbs_e)" opacity="0.5"/><path d="M25 50 L37 47 L41 55 L30 58 L23 55 Z" fill="url(#rbs_d)" stroke="#0e0710" stroke-width="0.9" stroke-linejoin="round"/><path d="M19 34 L33 30 L38 41 L25 45 L17 41 Z" fill="url(#rbs_s)" stroke="#0e0710" stroke-width="1" stroke-linejoin="round"/><path d="M40 30 L52 33 L50 44 L40 43 L37 35 Z" fill="url(#rbs_d)" stroke="#0e0710" stroke-width="0.9" stroke-linejoin="round"/><path d="M8 25 L20 20 L23 29 L12 34 Z" fill="url(#rbs_d)" stroke="#0e0710" stroke-width="0.9" stroke-linejoin="round"/><path d="M23 12 L38 8 L45 19 L38 27 L24 26 L19 18 Z" fill="url(#rbs_s)" stroke="#0e0710" stroke-width="1.1" stroke-linejoin="round"/><path d="M44 12 L55 17 L51 26 L42 22 Z" fill="url(#rbs_d)" stroke="#0e0710" stroke-width="0.9" stroke-linejoin="round"/><path d="M27 2 L38 1 L41 7 L28 9 Z" fill="url(#rbs_d)" stroke="#0e0710" stroke-width="0.8" stroke-linejoin="round"/><path d="M5 45 L11 43 L12 48 L6 50 Z M56 46 L61 44 L62 49 L57 50 Z M14 8 L19 6 L20 11 L15 13 Z" fill="#33202c" stroke="#0e0710" stroke-width="0.6" stroke-linejoin="round"/><circle cx="27" cy="19" r="4.6" fill="url(#rbs_e)"/><circle cx="37" cy="18" r="4" fill="url(#rbs_e)"/><circle cx="27" cy="19" r="1.5" fill="#fff2f8"/><circle cx="37" cy="18" r="1.2" fill="#fff2f8"/><path d="M23 12 L38 8 L45 19" fill="none" stroke="#f4c6da" stroke-width="1.4" stroke-linejoin="round" opacity="0.9"/><path d="M19 34 L33 30 L38 41" fill="none" stroke="#e3a9c1" stroke-width="1.1" stroke-linejoin="round" opacity="0.7"/><path d="M8 25 L20 20 M44 12 L55 17 M40 30 L52 33 M27 2 L38 1" fill="none" stroke="#d99ab4" stroke-width="0.95" opacity="0.6"/></svg>',
+  floorwarden: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="fwd_b" x1="0.2" y1="0" x2="0.65" y2="1"><stop offset="0" stop-color="#c69cab"/><stop offset="0.14" stop-color="#6b4354"/><stop offset="0.48" stop-color="#2a1722"/><stop offset="1" stop-color="#110910"/></linearGradient><linearGradient id="fwd_a" x1="0.1" y1="0" x2="0.9" y2="1"><stop offset="0" stop-color="#8f6272"/><stop offset="0.28" stop-color="#331d29"/><stop offset="1" stop-color="#0f070e"/></linearGradient><radialGradient id="fwd_g" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#ffcbe2"/><stop offset="0.4" stop-color="#d861a0" stop-opacity="0.65"/><stop offset="1" stop-color="#b8548a" stop-opacity="0"/></radialGradient></defs><ellipse cx="32" cy="59" rx="21" ry="3.2" fill="#000" opacity="0.46"/><path d="M18 42 L31 42 L30 58 L16 58 Z" fill="url(#fwd_a)" stroke="#0d0710" stroke-width="0.9" stroke-linejoin="round"/><path d="M36 42 L48 43 L49 58 L36 58 Z" fill="url(#fwd_a)" stroke="#0d0710" stroke-width="0.9" stroke-linejoin="round"/><path d="M45 22 L61 26 L60 47 L47 51 L43 34 Z" fill="url(#fwd_a)" stroke="#0d0710" stroke-width="1" stroke-linejoin="round"/><path d="M48 47 L61 44 L60 52 L49 54 Z" fill="#1a0e16" stroke="#0d0710" stroke-width="0.8" stroke-linejoin="round"/><path d="M18 24 L10 27 L9 39 L19 40 Z" fill="url(#fwd_a)" stroke="#0d0710" stroke-width="0.9" stroke-linejoin="round"/><path d="M17 22 Q32 8 47 22 L48 45 L16 45 Z" fill="url(#fwd_b)" stroke="#0d0710" stroke-width="1.2" stroke-linejoin="round"/><path d="M23 27 Q32 18 41 27 L41 45 L23 45 Z" fill="#150c14" opacity="0.8"/><ellipse cx="32" cy="33" rx="11" ry="10" fill="url(#fwd_g)"/><path d="M27 27 Q32 22 37 27 L36 38 L28 38 Z" fill="#ffd6e8" opacity="0.55"/><path d="M25 46 L27 52 M32 46 L32 53 M39 46 L37 52" stroke="#0d0710" stroke-width="1.1" opacity="0.7"/><path d="M17 22 Q32 8 47 22" fill="none" stroke="#f4c6da" stroke-width="1.5" opacity="0.9"/><path d="M45 22 L61 26" fill="none" stroke="#dfa5bc" stroke-width="1.1" opacity="0.7"/><path d="M18 24 L10 27" fill="none" stroke="#dfa5bc" stroke-width="1" opacity="0.6"/></svg>',
+  stairwraith: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="stw_c" x1="0.15" y1="0" x2="0.7" y2="1"><stop offset="0" stop-color="#b592a9"/><stop offset="0.14" stop-color="#573a51"/><stop offset="0.48" stop-color="#241726"/><stop offset="1" stop-color="#0e090f"/></linearGradient><radialGradient id="stw_v" cx="0.62" cy="0.72" r="0.75"><stop offset="0" stop-color="#ffd6ef"/><stop offset="0.3" stop-color="#b4468a"/><stop offset="1" stop-color="#180517"/></radialGradient><radialGradient id="stw_e" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#ffdbef"/><stop offset="0.38" stop-color="#d668ab" stop-opacity="0.65"/><stop offset="1" stop-color="#b45c96" stop-opacity="0"/></radialGradient></defs><ellipse cx="33" cy="59" rx="11" ry="2.4" fill="#000" opacity="0.34"/><path d="M19 13 Q14 32 20 47 Q17 55 22 59 Q32 62 43 57 Q47 52 45 46 Q50 30 45 13 Z" fill="url(#stw_c)" stroke="#0c0710" stroke-width="1.1" stroke-linejoin="round"/><path d="M22 57 L26 50 L29 59 M34 60 L36 51 L41 56" fill="none" stroke="#0c0710" stroke-width="1.1" opacity="0.85"/><path d="M23 19 L42 19 Q45 34 41 48 Q32 52 23 48 Q20 33 23 19 Z" fill="url(#stw_v)" stroke="#0c0710" stroke-width="0.8"/><path d="M24 44 L41 44 L39 48 L26 48 Z" fill="#ffd9ef" opacity="0.92"/><path d="M26 37 L40 37 L39 41 L27 41 Z" fill="#f7a9d3" opacity="0.8"/><path d="M28 31 L39 31 L38 34 L29 34 Z" fill="#d97ab0" opacity="0.7"/><path d="M30 26 L38 26 L37.5 28.5 L30.5 28.5 Z" fill="#a95186" opacity="0.62"/><path d="M31.5 22 L37 22 L36.7 24 L31.8 24 Z" fill="#7c3563" opacity="0.55"/><path d="M17 23 Q8 29 7 38 L12 40 Q14 31 20 27 Z" fill="url(#stw_c)" stroke="#0c0710" stroke-width="0.9" stroke-linejoin="round"/><path d="M47 21 Q57 26 58 35 L53 37 Q51 28 45 25 Z" fill="url(#stw_c)" stroke="#0c0710" stroke-width="0.9" stroke-linejoin="round"/><path d="M21 9 Q32 0 44 9 L45 17 Q32 22 19 17 Z" fill="url(#stw_c)" stroke="#0c0710" stroke-width="1.2" stroke-linejoin="round"/><ellipse cx="32" cy="13" rx="9" ry="5" fill="url(#stw_e)"/><path d="M26 11 L30 14 L26 16 Z M38 11 L34 14 L38 16 Z" fill="#ffe8f6"/><path d="M21 9 Q32 0 44 9" fill="none" stroke="#f4c8dd" stroke-width="1.5" opacity="0.9"/><path d="M19 13 Q14 32 20 47" fill="none" stroke="#e0aac7" stroke-width="1.1" opacity="0.6"/><path d="M17 23 Q8 29 7 38 M47 21 Q57 26 58 35" fill="none" stroke="#d69fbe" stroke-width="0.9" opacity="0.55"/></svg>',
+  mortarfiend: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="mtf_b" x1="0.25" y1="0" x2="0.7" y2="1"><stop offset="0" stop-color="#c199a6"/><stop offset="0.13" stop-color="#6a4351"/><stop offset="0.46" stop-color="#2a1722"/><stop offset="1" stop-color="#120a11"/></linearGradient><linearGradient id="mtf_l" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8b5f71"/><stop offset="1" stop-color="#150c13"/></linearGradient><radialGradient id="mtf_e" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#ffd0e6"/><stop offset="0.42" stop-color="#dd66a4" stop-opacity="0.6"/><stop offset="1" stop-color="#c05f92" stop-opacity="0"/></radialGradient></defs><ellipse cx="32" cy="58" rx="24" ry="3.4" fill="#000" opacity="0.46"/><path d="M6 41 Q7 26 20 21 Q29 14 40 20 Q56 23 59 40 Q60 53 47 56 L16 56 Q4 53 6 41 Z" fill="url(#mtf_b)" stroke="#0e0810" stroke-width="1.2" stroke-linejoin="round"/><path d="M12 33 Q17 25 25 23 Q31 18 38 22 Q48 25 52 33 Q44 38 32 38 Q19 38 12 33 Z" fill="#1c1019" opacity="0.55"/><path d="M13 54 Q11 60 16 60 Q20 60 18 54 Z M29 55 Q28 61 33 61 Q37 61 35 55 Z M45 54 Q43 60 48 60 Q52 60 50 54 Z" fill="url(#mtf_l)" stroke="#0e0810" stroke-width="0.8" stroke-linejoin="round"/><ellipse cx="24" cy="33" rx="6" ry="4.5" fill="url(#mtf_e)"/><ellipse cx="41" cy="34" rx="5" ry="4" fill="url(#mtf_e)"/><path d="M21 32 Q24 29 27 32 Q24 35 21 32 Z M38 33 Q41 30 44 33 Q41 36 38 33 Z" fill="#160b13"/><circle cx="24" cy="32.6" r="1.5" fill="#fff0f7"/><circle cx="41" cy="33.6" r="1.3" fill="#fff0f7"/><path d="M16 44 Q22 41 26 46 Q31 41 36 46 Q41 41 47 45" fill="none" stroke="#0e0810" stroke-width="2.4" stroke-linejoin="round"/><path d="M16 44 Q22 41 26 46 Q31 41 36 46 Q41 41 47 45" fill="none" stroke="#eab9d1" stroke-width="1" stroke-linejoin="round" opacity="0.75"/><path d="M9 28 L3 24 L9 22 Z M56 30 L62 26 L56 24 Z" fill="url(#mtf_l)" stroke="#0e0810" stroke-width="0.7" stroke-linejoin="round"/><path d="M6 41 Q7 26 20 21 Q29 14 40 20 Q56 23 59 40" fill="none" stroke="#f0bed4" stroke-width="1.4" opacity="0.85"/></svg>',
+  keystone_golem: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="ksg_b" x1="0.2" y1="0" x2="0.7" y2="1"><stop offset="0" stop-color="#bd94a3"/><stop offset="0.13" stop-color="#653e4d"/><stop offset="0.46" stop-color="#26141f"/><stop offset="1" stop-color="#100810"/></linearGradient><linearGradient id="ksg_a" x1="0.1" y1="0" x2="0.9" y2="1"><stop offset="0" stop-color="#8a5d6d"/><stop offset="0.3" stop-color="#301b27"/><stop offset="1" stop-color="#0e070d"/></linearGradient><linearGradient id="ksg_k" x1="0" y1="0" x2="0.3" y2="1"><stop offset="0" stop-color="#fff0f8"/><stop offset="0.35" stop-color="#f087bd"/><stop offset="1" stop-color="#8e2f60"/></linearGradient><radialGradient id="ksg_g" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#ff9dcb"/><stop offset="0.45" stop-color="#e0509a" stop-opacity="0.5"/><stop offset="1" stop-color="#c9407f" stop-opacity="0"/></radialGradient></defs><ellipse cx="32" cy="59" rx="21" ry="3.2" fill="#000" opacity="0.48"/><path d="M17 45 L29 45 L28 58 L14 58 Z" fill="url(#ksg_a)" stroke="#0c0610" stroke-width="0.9" stroke-linejoin="round"/><path d="M36 45 L48 45 L50 58 L36 58 Z" fill="url(#ksg_a)" stroke="#0c0610" stroke-width="0.9" stroke-linejoin="round"/><path d="M13 20 L3 27 L6 45 L17 44 L18 28 Z" fill="url(#ksg_a)" stroke="#0c0610" stroke-width="1" stroke-linejoin="round"/><path d="M51 20 L61 27 L58 45 L47 44 L46 28 Z" fill="url(#ksg_a)" stroke="#0c0610" stroke-width="1" stroke-linejoin="round"/><path d="M14 22 Q22 11 32 12 Q42 11 50 22 L48 48 L16 48 Z" fill="url(#ksg_b)" stroke="#0c0610" stroke-width="1.3" stroke-linejoin="round"/><path d="M25 8 L39 8 L41 16 L23 16 Z" fill="url(#ksg_a)" stroke="#0c0610" stroke-width="1" stroke-linejoin="round"/><path d="M27 11 L31 11 L31 13 L27 13 Z M34 11 L38 11 L38 13 L34 13 Z" fill="#ffbfdd"/><ellipse cx="32" cy="33" rx="16" ry="14" fill="url(#ksg_g)"/><path d="M24 23 L40 23 L36 42 L28 42 Z" fill="url(#ksg_k)" stroke="#0c0610" stroke-width="1.1" stroke-linejoin="round"/><path d="M26 23 L38 23 L37 28 L27 28 Z" fill="#fff6fb" opacity="0.55"/><path d="M24 24 L15 17 M40 24 L49 17 M28 42 L21 49 M36 42 L44 49 M32 42 L32 48" stroke="#ff9dcb" stroke-width="1.2" opacity="0.6" fill="none"/><path d="M14 22 Q22 11 32 12 Q42 11 50 22" fill="none" stroke="#f6c9dc" stroke-width="1.6" opacity="0.9"/><path d="M13 20 L3 27 M51 20 L61 27" fill="none" stroke="#dda7bc" stroke-width="1.1" opacity="0.65"/></svg>',
+  plumbhang: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="plh_b" x1="0.25" y1="0" x2="0.75" y2="1"><stop offset="0" stop-color="#c49aab"/><stop offset="0.14" stop-color="#67404f"/><stop offset="0.5" stop-color="#28151f"/><stop offset="1" stop-color="#110910"/></linearGradient><linearGradient id="plh_w" x1="0" y1="0" x2="0.7" y2="1"><stop offset="0" stop-color="#f0d0de"/><stop offset="0.3" stop-color="#a8768f"/><stop offset="1" stop-color="#1e1019"/></linearGradient><radialGradient id="plh_e" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#ffd8ec"/><stop offset="0.42" stop-color="#dd6bab" stop-opacity="0.6"/><stop offset="1" stop-color="#bd5c94" stop-opacity="0"/></radialGradient></defs><ellipse cx="32" cy="61" rx="6" ry="1.8" fill="#000" opacity="0.28"/><path d="M32 1 L32 11" stroke="#7d5c6c" stroke-width="1.6"/><path d="M32 1 L32 11" stroke="#d0a6b9" stroke-width="0.7"/><circle cx="32" cy="4" r="2.4" fill="none" stroke="#c49aae" stroke-width="1.2"/><circle cx="32" cy="8.5" r="2.4" fill="none" stroke="#7d5c6c" stroke-width="1.2"/><path d="M32 11 Q19 16 17 30 Q16 41 24 45 L40 45 Q48 41 47 30 Q45 16 32 11 Z" fill="url(#plh_b)" stroke="#0e0810" stroke-width="1.2" stroke-linejoin="round"/><path d="M32 16 Q23 20 22 30 Q21 38 26 41 L38 41 Q43 38 42 30 Q41 20 32 16 Z" fill="#180d15" opacity="0.6"/><ellipse cx="26" cy="28" rx="5.5" ry="4.5" fill="url(#plh_e)"/><ellipse cx="39" cy="28" rx="5" ry="4" fill="url(#plh_e)"/><path d="M22 27 L29 29 L22 31 Z M43 27 L36 29 L43 31 Z" fill="#ffe8f6"/><path d="M18 27 L5 33 L7 38 L19 33 Z" fill="url(#plh_b)" stroke="#0e0810" stroke-width="0.9" stroke-linejoin="round"/><path d="M46 27 L59 33 L57 38 L45 33 Z" fill="url(#plh_b)" stroke="#0e0810" stroke-width="0.9" stroke-linejoin="round"/><path d="M24 45 L40 45 L36 50 L28 50 Z" fill="url(#plh_b)" stroke="#0e0810" stroke-width="0.9" stroke-linejoin="round"/><path d="M28 50 L36 50 L32 62 Z" fill="url(#plh_w)" stroke="#0e0810" stroke-width="1" stroke-linejoin="round"/><path d="M29 51 L33 51 L31 56 Z" fill="#f8dcea" opacity="0.65"/><path d="M32 11 Q19 16 17 30" fill="none" stroke="#f2c4d8" stroke-width="1.4" opacity="0.85"/><path d="M32 11 Q45 16 47 30" fill="none" stroke="#dba7c0" stroke-width="1.1" opacity="0.6"/><path d="M18 27 L5 33 M46 27 L59 33" fill="none" stroke="#d9a3bd" stroke-width="0.9" opacity="0.55"/></svg>',
+  ashen_architect: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="aar_r" x1="0.2" y1="0" x2="0.7" y2="1"><stop offset="0" stop-color="#b08b9c"/><stop offset="0.14" stop-color="#563749"/><stop offset="0.48" stop-color="#221420"/><stop offset="1" stop-color="#0f090f"/></linearGradient><linearGradient id="aar_m" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e8c0d0"/><stop offset="0.45" stop-color="#9d6980"/><stop offset="1" stop-color="#3a2130"/></linearGradient><radialGradient id="aar_e" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#ffe0f0"/><stop offset="0.42" stop-color="#dc69a8" stop-opacity="0.6"/><stop offset="1" stop-color="#c25f96" stop-opacity="0"/></radialGradient></defs><ellipse cx="31" cy="59" rx="16" ry="3" fill="#000" opacity="0.44"/><path d="M25 21 L40 21 L48 55 Q31 61 15 55 Z" fill="url(#aar_r)" stroke="#0d070d" stroke-width="1.2" stroke-linejoin="round"/><path d="M27 25 L38 25 L43 51 Q31 55 21 51 Z" fill="#170d15" opacity="0.65"/><path d="M27 32 L31 36 L35 32 M26 42 L31 47 L36 42" fill="none" stroke="#e0acc6" stroke-width="1.1" opacity="0.5"/><path d="M22 8 Q32 0 42 8 L45 22 Q31 28 19 22 Z" fill="url(#aar_r)" stroke="#0d070d" stroke-width="1.2" stroke-linejoin="round"/><ellipse cx="32" cy="17" rx="10" ry="6" fill="url(#aar_e)"/><path d="M26 14 L31 18 L26 20 Z M38 14 L34 18 L38 20 Z" fill="#ffeaf7"/><path d="M43 24 L54 14" stroke="#0d070d" stroke-width="3.4" stroke-linecap="round"/><path d="M43 24 L54 14" stroke="url(#aar_m)" stroke-width="2.2" stroke-linecap="round"/><path d="M52 12 L61 20 L58 24 L49 16 Z" fill="url(#aar_m)" stroke="#0d070d" stroke-width="0.9" stroke-linejoin="round"/><path d="M57 19 L63 26" stroke="#ffbfdd" stroke-width="1.5" stroke-linecap="round"/><path d="M58 24 L60 30" stroke="#0d070d" stroke-width="1.6" stroke-linecap="round"/><path d="M20 26 L7 36 L10 41 L23 32 Z" fill="url(#aar_r)" stroke="#0d070d" stroke-width="1" stroke-linejoin="round"/><path d="M8 40 Q19 51 33 53" fill="none" stroke="#ff9ecb" stroke-width="1.3" opacity="0.6" stroke-dasharray="3.5 3.5"/><path d="M22 8 Q32 0 42 8" fill="none" stroke="#f5c9dd" stroke-width="1.5" opacity="0.9"/><path d="M25 21 L40 21" fill="none" stroke="#dfa9c2" stroke-width="1.1" opacity="0.6"/><path d="M20 26 L7 36" fill="none" stroke="#d8a1bb" stroke-width="0.9" opacity="0.55"/></svg>',
+  hollow_choirstone: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="hcs_b" x1="0.2" y1="0" x2="0.7" y2="1"><stop offset="0" stop-color="#c396a6"/><stop offset="0.13" stop-color="#67404f"/><stop offset="0.46" stop-color="#28151f"/><stop offset="1" stop-color="#110910"/></linearGradient><radialGradient id="hcs_m" cx="0.5" cy="0.35" r="0.65"><stop offset="0" stop-color="#ffcfe6"/><stop offset="0.4" stop-color="#c2477f"/><stop offset="1" stop-color="#2e0a1e"/></radialGradient><radialGradient id="hcs_g" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#ff9ecb" stop-opacity="0.55"/><stop offset="1" stop-color="#c9407f" stop-opacity="0"/></radialGradient></defs><ellipse cx="32" cy="59" rx="19" ry="3.2" fill="#000" opacity="0.47"/><path d="M25 3 L40 4 L45 19 L41 33 L47 50 L50 58 L15 58 L18 50 L23 33 L20 18 Z" fill="url(#hcs_b)" stroke="#0e0810" stroke-width="1.2" stroke-linejoin="round"/><ellipse cx="32" cy="34" rx="19" ry="21" fill="url(#hcs_g)"/><path d="M26 8 Q32 5 38 8 Q38 15 32 17 Q26 15 26 8 Z" fill="url(#hcs_m)" stroke="#0e0810" stroke-width="0.9"/><path d="M28 10 Q32 8 36 10 Q35 14 32 15 Q29 14 28 10 Z" fill="#210715"/><path d="M21 21 Q28 17 33 21 Q32 30 26 31 Q21 29 21 21 Z" fill="url(#hcs_m)" stroke="#0e0810" stroke-width="0.9"/><path d="M24 23 Q27 21 30 23 Q29 28 27 28 Q24 28 24 23 Z" fill="#210715"/><path d="M36 23 Q43 20 45 25 Q44 33 39 34 Q34 32 36 23 Z" fill="url(#hcs_m)" stroke="#0e0810" stroke-width="0.9"/><path d="M38 26 Q41 24 43 26 Q42 31 40 31 Q38 31 38 26 Z" fill="#210715"/><path d="M24 38 Q32 33 40 38 Q39 49 32 51 Q25 49 24 38 Z" fill="url(#hcs_m)" stroke="#0e0810" stroke-width="1"/><path d="M27 41 Q32 37 37 41 Q36 47 32 48 Q28 47 27 41 Z" fill="#210715"/><path d="M16 44 Q11 39 8 44 M48 44 Q53 39 56 44 M13 31 Q7 27 4 32 M51 31 Q57 27 60 32 M15 17 Q10 14 8 18 M49 17 Q54 14 56 18" fill="none" stroke="#ff9ecb" stroke-width="1.2" opacity="0.5"/><path d="M25 3 L40 4 L45 19" fill="none" stroke="#f3c5d9" stroke-width="1.4" opacity="0.88"/><path d="M20 18 L25 3" fill="none" stroke="#e0aac1" stroke-width="1" opacity="0.6"/></svg>',
+  the_landing: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="tld_f" x1="0.1" y1="0" x2="0.55" y2="1"><stop offset="0" stop-color="#cba0b0"/><stop offset="0.12" stop-color="#6b4354"/><stop offset="0.5" stop-color="#281620"/><stop offset="1" stop-color="#100810"/></linearGradient><linearGradient id="tld_u" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a2230"/><stop offset="1" stop-color="#0c0509"/></linearGradient><linearGradient id="tld_h" x1="0.2" y1="0" x2="0.8" y2="1"><stop offset="0" stop-color="#9a6b7d"/><stop offset="0.3" stop-color="#341d29"/><stop offset="1" stop-color="#0d060c"/></linearGradient><radialGradient id="tld_m" cx="0.5" cy="0.25" r="0.75"><stop offset="0" stop-color="#ffc2e0"/><stop offset="0.35" stop-color="#c2477f"/><stop offset="1" stop-color="#210617"/></radialGradient></defs><ellipse cx="32" cy="59" rx="27" ry="3.4" fill="#000" opacity="0.44"/><path d="M2 25 L57 12 L62 39 L8 53 Z" fill="url(#tld_f)" stroke="#0b060c" stroke-width="1.3" stroke-linejoin="round"/><path d="M8 53 L62 39 L61 46 L9 58 Z" fill="url(#tld_u)" stroke="#0b060c" stroke-width="1" stroke-linejoin="round"/><path d="M13 23 L17 48 M27 20 L30 45 M42 16 L45 42" stroke="#1c0f18" stroke-width="1.2" opacity="0.7"/><path d="M10 33 L58 21" stroke="#1c0f18" stroke-width="1.2" opacity="0.6"/><path d="M11 31 Q23 24 33 27 Q46 30 56 25 Q48 41 33 42 Q18 42 11 31 Z" fill="url(#tld_m)" stroke="#0b060c" stroke-width="1.2" stroke-linejoin="round"/><path d="M14 30 L18 36 L23 29 L27 36 L32 29 L36 36 L41 29 L45 35 L50 28 L54 29" fill="none" stroke="#ffe6f4" stroke-width="1.6" stroke-linejoin="round"/><path d="M17 39 L21 34 L26 40 L30 34 L35 40 L39 34 L44 39" fill="none" stroke="#ffcbe5" stroke-width="1.4" stroke-linejoin="round" opacity="0.85"/><path d="M5 43 L2 55 L8 56 L12 45 Z" fill="url(#tld_h)" stroke="#0b060c" stroke-width="1" stroke-linejoin="round"/><path d="M2 55 L4 60 M5 54 L6 59 M8 53 L9 58 M11 51 L11 56" stroke="#0b060c" stroke-width="1"/><path d="M54 37 L59 47 L53 51 L48 41 Z" fill="url(#tld_h)" stroke="#0b060c" stroke-width="1" stroke-linejoin="round"/><path d="M56 48 L58 54 M53 50 L54 56 M50 48 L50 54" stroke="#0b060c" stroke-width="1"/><path d="M2 25 L57 12" fill="none" stroke="#f4c5da" stroke-width="1.6" opacity="0.9"/><path d="M57 12 L62 39" fill="none" stroke="#dda6bd" stroke-width="1.1" opacity="0.6"/><path d="M5 43 L12 45 M54 37 L48 41" fill="none" stroke="#d9a2ba" stroke-width="0.9" opacity="0.55"/></svg>',
   null_warden: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="nwr_ir" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6a4a9a"/><stop offset="0.5" stop-color="#301a54"/><stop offset="1" stop-color="#100628"/></linearGradient><radialGradient id="nwr_c" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#e0b0ff"/><stop offset="1" stop-color="#6028a0" stop-opacity="0"/></radialGradient></defs><ellipse cx="32" cy="59" rx="13" ry="2.8" fill="#000" opacity="0.4"/><path d="M26 44 L24 58 L29 58 L30 44 Z M38 44 L40 58 L35 58 L34 44 Z" fill="url(#nwr_ir)" stroke="#0a0418" stroke-width="0.7"/><path d="M20 26 L44 26 L46 44 Q32 50 18 44 Z" fill="url(#nwr_ir)" stroke="#0a0418" stroke-width="0.9" stroke-linejoin="round"/><path d="M18 27 L8 24 L16 31 Z M46 27 L56 24 L48 31 Z" fill="url(#nwr_ir)" stroke="#0a0418" stroke-width="0.7"/><path d="M25 10 L39 10 L41 24 L23 24 Z" fill="url(#nwr_ir)" stroke="#0a0418" stroke-width="0.8"/><path d="M32 10 L32 4" stroke="#8040c0" stroke-width="2"/><rect x="26" y="15" width="12" height="3" rx="1.5" fill="#c890ff"/><circle cx="32" cy="35" r="5" fill="url(#nwr_c)"/><circle cx="32" cy="35" r="2" fill="#e0b0ff"/></svg>',
   abyssal_maw: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><radialGradient id="am_g" cx="0.5" cy="0.5" r="0.55"><stop offset="0" stop-color="#1a0a30"/><stop offset="0.7" stop-color="#3a1c60"/><stop offset="1" stop-color="#0e0420"/></radialGradient><radialGradient id="am_gl" cx="0.5" cy="0.5" r="0.6"><stop offset="0" stop-color="#8040c0" stop-opacity="0.7"/><stop offset="1" stop-color="#8040c0" stop-opacity="0"/></radialGradient></defs><circle cx="32" cy="32" r="28" fill="url(#am_gl)"/><circle cx="32" cy="32" r="20" fill="url(#am_g)" stroke="#4a2c70" stroke-width="1.2"/><g fill="#e0d0f8"><path d="M18 24 L22 30 L16 30 Z"/><path d="M26 20 L30 28 L22 28 Z"/><path d="M36 20 L42 28 L34 28 Z"/><path d="M46 24 L48 30 L42 30 Z"/><path d="M18 40 L24 36 L22 42 Z"/><path d="M30 44 L34 36 L38 44 Z"/><path d="M44 40 L46 36 L48 42 Z"/></g><circle cx="32" cy="32" r="6" fill="#000"/><circle cx="32" cy="30" r="1.6" fill="#c890ff"/></svg>',
   void_herald: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="vhd_robe" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a2c78"/><stop offset="0.5" stop-color="#241044"/><stop offset="1" stop-color="#0e0420"/></linearGradient></defs><ellipse cx="32" cy="58" rx="14" ry="2.6" fill="#000" opacity="0.4"/><path d="M22 26 Q32 16 42 26 L48 56 L16 56 Z" fill="url(#vhd_robe)" stroke="#0a0418" stroke-width="0.9" stroke-linejoin="round"/><path d="M24 26 Q32 12 40 26 Q32 24 24 26 Z" fill="url(#vhd_robe)" stroke="#0a0418" stroke-width="0.9"/><ellipse cx="32" cy="26" rx="5" ry="6" fill="#0a0418"/><circle cx="30" cy="26" r="1.3" fill="#c890ff"/><circle cx="34" cy="26" r="1.3" fill="#c890ff"/><path d="M32 34 L32 54 M26 40 L26 54 M38 40 L38 54" stroke="#160830" stroke-width="0.7" opacity="0.6"/><circle cx="47" cy="30" r="4" fill="none" stroke="#8040c0" stroke-width="1"/><circle cx="47" cy="30" r="1.6" fill="#c890ff"/></svg>',
@@ -28020,7 +28037,7 @@ function buildMonLogHTML(){
    hard it gets — not nine fixed percentages. */
 function buildSpireLogBody(raid){
   const best=state.spireBest||0, runs=state.spireRuns||0;
-  const bandName=f=>{ const r=getRaid(_sprBandRaid(f)); return r?r.name:''; };
+  const bandName=f=>{ if(f>39) return 'any raid'; const r=getRaid(_sprBandRaid(f)); return r?r.name:''; };
   /* Sample the curve rather than describing it: the numbers are the answer. */
   const rows=[1,5,10,15,20,25,30,40,50].map(f=>{
     const m=spireFloor(f,true);
@@ -28047,6 +28064,44 @@ function buildSpireLogBody(raid){
     <div class="mlog-sec-t">Today's affixes</div>
     <div class="spr-fxrow" style="margin-top:6px">${spireAffixChips(false)}</div>
     <div class="mlog-legend" style="margin-top:5px">Two against you and one for you, rolled from the calendar day and the same for everyone. They change at midnight, and a climb already under way keeps the set it started with.</div>
+    <div class="mlog-sec-t">The tower's own</div>
+    <div class="mls-wrap"><table class="mls-tbl">
+      <thead><tr><th>Creature</th><th>From</th><th>What it does</th></tr></thead>
+      <tbody>${SPIRE_NATIVES.map(x=>{
+        const seen=(state.monKills&&state.monKills[x.id])||0;
+        const bits=[];
+        /* How it is shaped against the floor's own baseline. Read off `mod` and the
+           swing rather than written out by hand, so a retune can never leave the
+           description behind. */
+        const md=x.mod||{}, sh=[];
+        const pc=v=>Math.round(Math.abs(v-1)*100)+'%';
+        if(md.hp>=1.15) sh.push(pc(md.hp)+' more health');
+        else if(md.hp&&md.hp<=0.85) sh.push(pc(md.hp)+' less health');
+        if(md.def>=1.15) sh.push(pc(md.def)+' more Defence');
+        if(md.str>=1.10) sh.push('hits '+pc(md.str)+' harder');
+        else if(md.str&&md.str<=0.90) sh.push('hits '+pc(md.str)+' lighter');
+        const sw=(x.swingMs||SPR_BASE.swingMs)/SPR_BASE.swingMs;
+        if(sw<=0.92) sh.push('swings '+pc(sw)+' faster');
+        else if(sw>=1.08) sh.push('swings '+pc(sw)+' slower');
+        if(sh.length) bits.push('<b>Shape</b> \u2014 '+sh.join(', ')+' than the floor it stands on.');
+        if(x.raidfx) bits.push('<b>'+x.raidfx.name+'</b> \u2014 '+x.raidfx.desc);
+        if(x.monfx&&x.monfx.regen) bits.push('<b>'+(x.monfx.regen.label||'Mends')+'</b> \u2014 heals '
+          +(x.monfx.regen.frac*100).toFixed(1)+'% of its health every '+(x.monfx.regen.tickMs/1000).toFixed(1)
+          +'s, up to '+Math.round(x.monfx.regen.cap*100)+'% of its health in a fight, then it is spent.');
+        if(x.monfx&&x.monfx.enrage) bits.push('<b>'+(x.monfx.enrage.label||'Enrages')+'</b> \u2014 below '
+          +Math.round(x.monfx.enrage.below*100)+'% health it swings '
+          +Math.round(x.monfx.enrage.aspd*100)+'% faster for the rest of the fight.');
+        if(x.bossfx) bits.push('<b>'+x.bossfx.label+'</b> \u2014 '+x.bossfx.desc);
+        if(x.castfx) bits.push('<b>Telegraphs</b> \u2014 '+Object.keys(x.castfx.labels||{}).map(k=>x.castfx.labels[k]).join(' and ')+'.');
+        if(!bits.length) bits.push(x.blurb);
+        return `<tr class="${seen?'mls-done':''}">
+          <td class="mls-f" style="font-weight:400">${iconHTML(x.art||x.id)} ${x.name}${x.boss?' <i>landing</i>':''}</td>
+          <td>${'floor '+x.from}</td>
+          <td class="mls-src" style="white-space:normal;line-height:1.5">${bits.join('<br>')}</td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table></div>
+    <div class="mlog-legend">Nine creatures that belong to the tower rather than to any raid it fell through. They mix into the roster from the floor listed and take a bigger share of it the higher you go \u2014 about a fifth near the bottom, half past floor 60. Rows you have already killed are lit. A native's own curse replaces Spire Weight for that floor rather than stacking with it.</div>
     <div class="mlog-sec-t">What a floor pays</div>
     <div class="mls-wrap"><table class="mls-tbl">
       <thead><tr><th>Floor</th><th>Foe health</th><th>Its max hit</th><th>${iconHTML('ui_coin')} Gold</th>
@@ -28068,7 +28123,7 @@ function buildSpireLogBody(raid){
         </tr>`;
       }).join('')}</tbody>
     </table></div>
-    <div class="mlog-legend">Gear rolls on landings only, every ${SPR_BOSS_EVERY}th floor, each piece rolled separately. The chance climbs the whole way up and reaches certainty around floor 70 — well past anything survivable today, which is the point of an endless tower. Rows you have already reached are lit. Foes are drawn from the four fixed raids in bands, then the bands repeat and the curve carries the difficulty. <b>Spire Weight</b> stacks once every ten floors. Sunderstone and Spire Cores are spent on <b>Ascension</b>, in the Raids tab.</div>
+    <div class="mlog-legend">Gear rolls on landings only, every ${SPR_BOSS_EVERY}th floor, each piece rolled separately. The chance climbs the whole way up and reaches certainty around floor 70 — well past anything survivable today, which is the point of an endless tower. Rows you have already reached are lit. Up to floor 40 the foes are drawn from the four fixed raids in bands, mixed with the tower's own; past 40 the bands stop and <b>every raid is in the pool at once</b>, so a deep climb is a genuine mix rather than four themed stretches in order. <b>Spire Weight</b> stacks once every ten floors. Sunderstone and Spire Cores are spent on <b>Ascension</b>, in the Raids tab.</div>
   </div>`;
 }
 function buildRaidLogBody(raid){
@@ -31684,6 +31739,91 @@ function spireBoon(key){
   return v;
 }
 
+/* -- The Spire's own creatures (0.9.124.26) ----------------------------------
+   Twenty-one recycled foes across forty floors is thin for a tower with no top,
+   and the deeper problem was that all twenty-one fight the same way: swing, swing,
+   swing, with the curve doing all the work. These nine are natives, and each one
+   asks a different question rather than the same question louder.
+
+   They do not replace the recycled roster, they mix into it, and their share of
+   the pool climbs with depth. Past floor 40 the bands also stop and every raid is
+   in the pool at once, so a deep climb is a genuine mix instead of a march through
+   four themed stretches in order.
+
+   `mod` reshapes the floor's baseline without changing how hard the floor is: a
+   Rubble Shade is half the health and swings nearly twice as often, a Keystone
+   Golem is the reverse. The curve still decides the difficulty; `mod` decides what
+   shape that difficulty arrives in. */
+/* `native:true` on every entry is not decoration. spireFloor's `base` is either one
+   of these or a recycled raid stage, and a raid stage already carries a castfx, a
+   bossfx and (on its bosses) a raidfx of its own. Reading those without asking who
+   `base` is handed floor 2 the Barrow Champion's telegraph and quietly replaced
+   Spire Weight on every landing with that raid boss's curse. */
+const SPIRE_NATIVES=[
+  {id:'spr_rubble_shade', name:'Rubble Shade', from:6, art:'rubble_shade', native:true,
+   swingMs:1350, dmgType:'crush', weakTo:'slash',
+   mod:{hp:0.55, str:0.78},
+   blurb:'Loose masonry that never finished falling. It hits often and it hits light.'},
+
+  {id:'spr_floorwarden', name:'Floorwarden', from:10, art:'floorwarden', native:true,
+   swingMs:2900, dmgType:'crush', weakTo:'crush', resistTo:'slash',
+   mod:{hp:1.30, def:1.30, str:1.12},
+   castfx:{kinds:['slam'], everyMs:9500, castMs:3000, openMs:5000, frac:0.30,
+           labels:{slam:'Floor Drop'}},
+   blurb:'It held this landing up and nobody ever told it to stop.'},
+
+  {id:'spr_stairwraith', name:'Stairwraith', from:14, art:'stairwraith', native:true,
+   swingMs:1200, dmgType:'stab', weakTo:'crush',
+   mod:{hp:0.68, str:0.92},
+   raidfx:{name:'Vertigo', desc:'The stairs run the wrong way \u2014 18% less accuracy while it lives.',
+           accMult:0.82},
+   blurb:'Something that walked up a staircase which was already sideways.'},
+
+  {id:'spr_mortarfiend', name:'Mortarfiend', from:18, art:'mortarfiend', native:true,
+   swingMs:2500, dmgType:'crush', weakTo:'slash', resistTo:'stab',
+   mod:{def:1.45, hp:1.10},
+   castfx:{kinds:['rupture'], everyMs:9000, castMs:3200, openMs:5000, frac:0.30,
+           reqDmg:520, labels:{rupture:'Setting Fast'}},
+   blurb:'It is trying to set. Break it open before it does.'},
+
+  {id:'spr_keystone_golem', name:'Keystone Golem', from:22, art:'keystone_golem', native:true,
+   swingMs:3100, dmgType:'crush', weakTo:'stab',
+   mod:{hp:1.70, str:0.85},
+   monfx:{enrage:{below:0.50, aspd:0.25, label:'Keystone Pulled'}},
+   blurb:'Pull the keystone and everything above it comes down. It knows that.'},
+
+  {id:'spr_plumbhang', name:'Plumbhang', from:25, art:'plumbhang', native:true,
+   swingMs:2200, dmgType:'stab', weakTo:'crush',
+   mod:{hp:1.15},
+   monfx:{regen:{tickMs:2500, frac:0.030, cap:0.30, label:'Trueing'}},
+   blurb:'It hangs dead true, and it knits itself back together while it hangs.'},
+
+  {id:'spr_ashen_architect', name:'Ashen Architect', from:28, art:'ashen_architect', native:true,
+   swingMs:2600, dmgType:'slash', weakTo:'crush',
+   mod:{str:1.12},
+   raidfx:{name:'Redrawn', desc:'It is rebuilding the room around you \u2014 18% less Defence.',
+           defMult:0.82},
+   bossfx:{kind:'burn', tickMs:3000, frac:0.030, label:'Quicklime',
+           desc:'Quicklime works into every cut \u2014 3% of your health every 3s.'},
+   blurb:'Still drawing the floor you are standing on.'},
+
+  {id:'spr_hollow_choirstone', name:'Hollow Choirstone', from:32, art:'hollow_choirstone', native:true,
+   swingMs:2000, dmgType:'slash', weakTo:'stab', resistTo:'crush',
+   mod:{hp:1.20, str:1.05},
+   monfx:{regen:{tickMs:3000, frac:0.022, cap:0.22, label:'Reprise'},
+          enrage:{below:0.35, aspd:0.22, label:'Crescendo'}},
+   blurb:'A pillar of fused singing faces. It only gets louder as it goes.'},
+
+  {id:'spr_the_landing', name:'The Landing', from:30, boss:true, art:'the_landing', native:true,
+   swingMs:2800, dmgType:'crush', weakTo:'slash',
+   mod:{hp:1.25, str:1.12, def:1.15},
+   monfx:{enrage:{below:0.40, aspd:0.28, label:'Giving Way'}},
+   castfx:{kinds:['rupture','slam'], everyMs:8500, castMs:3300, openMs:5000, frac:0.34,
+           reqDmg:640, labels:{rupture:'Load Bearing', slam:'Collapse'}},
+   blurb:'Not a creature. The floor itself, and it has had enough of being walked on.'},
+];
+const SPIRE_NATIVE_BY_ID=(function(){ const m={}; for(const x of SPIRE_NATIVES) m[x.id]=x; return m; })();
+
 function spireScale(floor){
   const e=Math.max(0,floor-1);
   return { hp:Math.pow(SPR_HP_STEP,e), dmg:Math.pow(SPR_DMG_STEP,e),
@@ -31704,33 +31844,62 @@ function spireCurse(floor, mult){
    hand-written raid stage. Ids are keyed on the SOURCE creature, not the floor, so
    the Monster Log groups a hundred floors of Void Wretches into one row. */
 function spireFloor(floor, preview){
-  const src=getRaid(_sprBandRaid(floor));
   const isBoss=(floor%SPR_BOSS_EVERY)===0;
-  const pool=src.stages.filter(m=>isBoss ? (m.raidBoss||m.miniBoss) : !m.raidBoss);
-  const base=_sprPick(pool.length?pool:src.stages, floor, isBoss?7:0);
+  /* Past the last band the pool opens to EVERY raid at once instead of cycling the
+     four in order, so floor 60 can be a drowned footman, then a rift stalker, then
+     the tower's own masonry. Variety past the bands was the whole ask. */
+  let pool=[];
+  if(floor>39){
+    for(const r of RAIDS){ if(r.endless) continue;
+      for(const m of r.stages) if(isBoss?(m.raidBoss||m.miniBoss):!m.raidBoss) pool.push(m); }
+  } else {
+    const src=getRaid(_sprBandRaid(floor));
+    pool=src.stages.filter(m=>isBoss ? (m.raidBoss||m.miniBoss) : !m.raidBoss);
+    if(!pool.length) pool=src.stages.slice();
+  }
+  /* The tower's own creatures, weighted in harder the deeper you go: about a fifth
+     of floors near the bottom, up to half past floor 60. Pushed in as duplicate
+     entries rather than as a separate roll, so _sprPick stays one deterministic
+     index into one array. */
+  const nat=SPIRE_NATIVES.filter(x=>floor>=x.from && (isBoss ? !!x.boss : !x.boss));
+  if(nat.length && pool.length){
+    const want=Math.min(0.50, 0.18+floor*0.005);
+    const copies=Math.max(1, Math.round(pool.length*want/((1-want)*nat.length)));
+    for(let i=0;i<copies;i++) for(const x of nat) pool.push(x);
+  }
+  if(!pool.length) pool=nat.slice();
+  const base=_sprPick(pool, floor, isBoss?7:0);
   const sc=spireScale(floor);
   const bossMult=isBoss?1.9:1;
+  /* A native's shape. Applied on top of the shared curve, never instead of it. */
+  const nat0=!!(base&&base.native);
+  const md=Object.assign({hp:1,atk:1,str:1,def:1}, (nat0&&base.mod)||{});
   /* Today's affixes. Applied to the generated foe rather than to the curve, so the
      ribbon's preview shows what you are actually about to fight. */
   const fx=spireFoeMods();
-  const id='spr_'+base.id;
+  const id=base.id.indexOf('spr_')===0?base.id:('spr_'+base.id);
   const mon={
     id, zone:SPR_ID, name:base.name, icon:base.icon||base.id,
     lvl:Math.min(120, 95+Math.floor(floor/3)),
-    hp:Math.round(SPR_BASE.hp*sc.hp*bossMult*fx.hp),
-    atk:Math.round(SPR_BASE.atk*sc.dmg*(isBoss?1.15:1)*fx.atk),
-    str:Math.round(SPR_BASE.str*sc.dmg*(isBoss?1.15:1)*fx.str),
-    def:Math.round(SPR_BASE.def*sc.def*fx.def),
+    hp:Math.round(SPR_BASE.hp*sc.hp*bossMult*fx.hp*md.hp),
+    atk:Math.round(SPR_BASE.atk*sc.dmg*(isBoss?1.15:1)*fx.atk*md.atk),
+    str:Math.round(SPR_BASE.str*sc.dmg*(isBoss?1.15:1)*fx.str*md.str),
+    def:Math.round(SPR_BASE.def*sc.def*fx.def*md.def),
     coins:0, xp:Math.round(SPR_BASE.xp*sc.xp*bossMult),
     swingMs:Math.max(900,Math.round((base.swingMs||SPR_BASE.swingMs)*fx.swingMs)),
-    dmgType:base.dmgType, weakTo:base.weakTo,
+    dmgType:base.dmgType, weakTo:base.weakTo, resistTo:base.resistTo,
     boss:isBoss, raidBoss:false, miniBoss:isBoss,
-    spireFloor:floor,
-    raidfx:spireCurse(floor, fx.curse),
+    spireFloor:floor, blurb:(nat0&&base.blurb)||undefined,
+    /* A native's own curse REPLACES Spire Weight rather than stacking with it. Two
+       curses at once reads as one unexplained pile of minus signs, and the panel
+       only has room to name one. */
+    raidfx:(nat0&&base.raidfx)||spireCurse(floor, fx.curse),
+    monfx:(nat0&&base.monfx)||null,
   };
   /* Boss floors always telegraph. Ordinary floors start telegraphing at 12, so the
      first stretch teaches the tower before it starts asking for Brace. */
-  if(isBoss){
+  if(nat0 && base.castfx){ mon.castfx=base.castfx; }
+  else if(isBoss){
     mon.castfx={kinds:floor>=20?['rupture','slam']:['slam'], everyMs:9000, castMs:3200, openMs:5000,
       frac:Math.min(0.44,0.26+floor*0.002),
       reqDmg:Math.round(500*Math.pow(1.05,floor-1)),
@@ -31742,7 +31911,8 @@ function spireFloor(floor, preview){
   /* Alias the source creature's art onto the generated id. Done here at floor-build
      time rather than once at load, because the item-art block assigns over ICONS
      last: anything that snapshots ICONS earlier captures the pre-art SVG. */
-  if(!ICONS[id]) ICONS[id]=ICONS[base.icon||base.id];
+  if(nat0 && base.bossfx) mon.bossfx=base.bossfx;
+  if(!ICONS[id]) ICONS[id]=ICONS[base.art||base.icon||base.id];
   if(!preview) RAID_MON_BY_ID[id]=mon;
   return mon;
 }
@@ -32121,6 +32291,14 @@ function _beginRaidStage(raid, stage, fullHeal){
   combat.foeSwingStart=now;
   // Active boss mechanic (1.0.85) — set only on stages that carry `bossfx`.
   combat.bossfx = mon.bossfx ? Object.assign({}, mon.bossfx, {nextAt: now+(mon.bossfx.everyMs||mon.bossfx.tickMs||3000), acc:0}) : null;
+  /* (0.9.124.26) The foe's own mechanic. Copied rather than referenced, because
+     `mon` is the shared registered floor object and a fight must not leave rage
+     stacks or a regen clock on it for the next climb. */
+  combat.monfx = mon.monfx ? JSON.parse(JSON.stringify(mon.monfx)) : null;
+  if(combat.monfx){
+    if(combat.monfx.regen) combat.monfx.regen.nextAt=now+(combat.monfx.regen.tickMs||2500);
+    combat.monfx.raged=false;
+  }
   /* (0.9.125) Telegraphs are per-stage. `openMs` is the grace before the first one
      winds up, so a stage never opens mid-cast on the swing you walked in on. */
   combat.cast=null;
@@ -32160,11 +32338,67 @@ function _resolvePlayerDeath(){
   if(combat.raid){ handleRaidFail(); }
   else cmbLog('💀 You were defeated and retreat to safety.','lose');
   combat.active=false; combat.rare=false; combat.regens=[]; combat.foeStatus={}; cmastResetFight();
-  combat.bossfx=null; combat.cheatDeathReady=false; clearRaidMomentum();
+  combat.bossfx=null; combat.monfx=null; combat.cheatDeathReady=false; clearRaidMomentum();
   combat.youHp=combat.youMaxHp;
   stopCombatTimer(); renderCombat(); refreshCombatTabIndicator();
   if(!combatMode && typeof toast==='function'){ toast('💀 You were defeated in combat.'); }
   return true;
+}
+/* ---- The foe's own mechanics (0.9.124.26) ---------------------------------
+   Everything before this was a mechanic the PLAYER answers on the player's own
+   clock: telegraphs, curses, burn. These two belong to the creature.
+
+   regen  — it knits a slice of its health back on a timer, up to a hard lifetime
+            ceiling. The ceiling is not padding: a percentage of an exponentially
+            growing health pool outruns a player's damage completely, and measured
+            without one this was UNKILLABLE from floor 30 (a 3%/2.5s tick on floor
+            60 heals 507/s against 75 dps). Capped, it is a burst check near the
+            bottom and a fixed slab of extra health deep in, which is what the
+            curve does anyway.
+   enrage — below a health threshold it swings faster, and only faster. It was
+            written as a damage multiplier first, and measured over 200k rolls that
+            multiplier is worth 7% at floor 22 and exactly 0% from floor 30 on:
+            every roll already sits on RAID_HIT_CAP, so there is nothing for it to
+            multiply. Speed is not capped by anything, so it is felt at any depth,
+            and it turns the back half of a fight into a reason to finish.
+
+   Both are announced in the log and shown on the arena the frame they happen. A
+   health bar that silently goes back up is a bug report, not a mechanic. */
+function tickMonsterFx(now, mon){
+  const mf=combat.monfx; if(!mf) return;
+  const rg=mf.regen;
+  if(rg && combat.foeHp>0 && combat.foeHp<combat.foeMaxHp && now>=(rg.nextAt||0)){
+    rg.nextAt=now+(rg.tickMs||2500);
+    const budget=Math.round(combat.foeMaxHp*(rg.cap||0.30))-(rg.done||0);
+    if(budget>0){
+      const heal=Math.min(budget, Math.max(1,Math.round(combat.foeMaxHp*(rg.frac||0.02))));
+      const before=combat.foeHp;
+      combat.foeHp=Math.min(combat.foeMaxHp, combat.foeHp+heal);
+      const got=combat.foeHp-before;
+      rg.done=(rg.done||0)+got;
+      if(got>0){
+        cmbLog('\u2726 '+(rg.label||'It mends')+' \u2014 the '+mon.name+' knits back '+got+'.','status');
+        cmbSplat('+'+got,'mend');
+      }
+      if(rg.done>=Math.round(combat.foeMaxHp*(rg.cap||0.30)))
+        cmbLog('\u2714 The '+mon.name+' has nothing left to knit with.','win');
+    }
+  }
+  const en=mf.enrage;
+  if(en && !mf.raged && combat.foeMaxHp>0 && combat.foeHp>0
+     && combat.foeHp/combat.foeMaxHp<=(en.below||0.4)){
+    mf.raged=true;
+    const _fast=en.aspd||0.25;
+    combat.foeSwingMs=Math.max(600, Math.round(combat.foeSwingMs*(1-_fast)));
+    cmbLog('\u2726 '+(en.label||'It turns')+' \u2014 the '+mon.name+' is swinging '
+      +Math.round(_fast*100)+'% faster from here. Finish it.','rare-spawn');
+  }
+}
+/* Whether a foe is enraged. Kept as a named helper rather than an inline read so
+   the arena readout and the swing can never disagree about it. */
+function monRaged(){
+  const mf=combat.monfx;
+  return !!(mf&&mf.raged&&mf.enrage);
 }
 /* Tick a raid boss's active mechanic. Returns true if it killed you and death was
    resolved (after a cheat-death check) — the caller should then return. */
@@ -32397,7 +32631,7 @@ function handleRaidKill(baseMon){
     const timeMs=Date.now()-combat.raid.startMs;
     const res=grantRaidRewards(raid, timeMs);
     _raidResult=res;
-    combat.active=false; combat.raid=null; combat.raidDebuff=null; combat.bossfx=null;
+    combat.active=false; combat.raid=null; combat.raidDebuff=null; combat.bossfx=null; combat.monfx=null;
     clearRaidMomentum();
     combat.foeStatus={}; combat.youStatus={}; cmastResetFight(); combat.regens=[];
     combat.youHp=combat.youMaxHp;
@@ -32898,6 +33132,7 @@ const combat={
   youStatus:{},     // (1.0.60) reserved for debuffs the player receives (future monster poison)
   raid:null,        // (1.0.66) active raid run: {id, stage, startMs, n} or null
   raidDebuff:null,  // (1.0.66) current raid stage's player curse (from monster.raidfx) or null
+  monfx:null,       // (0.9.124.26) the FOE's own mechanic this fight: {regen,enrage} or null
   /* ── Momentum (0.9.125) ──────────────────────────────────────────────────────
      Runtime only, exactly like combat.raid above: a raid run does not survive a
      reload anyway, so there is nothing here worth saving. `mom` is 0..MOM_MAX,
@@ -37314,7 +37549,7 @@ function engageCombat(){
   combat.foeHp=effMon.hp;
   combat.foeMaxHp=effMon.hp;   // (1.0.104) for cmast HP-conditional procs (Executioner/Savage Edge)
   combat.youHp=combat.youMaxHp;
-  combat.bossfx=null;             // (1.0.85) normal fights carry no active boss mechanic
+  combat.bossfx=null; combat.monfx=null;             // (1.0.85) normal fights carry no active boss mechanic
   combat.cheatDeathReady=true;    // (1.0.85) one cheat-death per fight (if gear worn)
   combat.regens=[];   // (1.0.21) fresh fight — no carried-over food regen
   combat.foeStatus={}; cmastResetFight(); // (1.0.60) clean foe — no carried-over poison/stun
@@ -37339,7 +37574,7 @@ function fleeCombat(){
     const raid=getRaid(combat.raid.id); const stage=combat.raid.stage;
     _raidResult={ raidId:combat.raid.id, failed:true, forfeit:true, stage:stage+1, n:combat.raid.n };
     cmbLog(`🏳 You withdraw from ${raid?raid.name:'the raid'} at stage ${stage+1}/${combat.raid.n} — the run is forfeit.`,'lose');
-    combat.raid=null; combat.raidDebuff=null; combat.bossfx=null;
+    combat.raid=null; combat.raidDebuff=null; combat.bossfx=null; combat.monfx=null;
     _resetCombatTargetAfterRaid();
   }
   stopCombatTimer();
@@ -37370,7 +37605,7 @@ function resumeCombatSession(){
   combat.active=true;
   combat.foeHp=eff.hp; combat.foeMaxHp=eff.hp;
   combat.youHp=Math.max(1, Math.min(combat.youMaxHp, cs.youHp||combat.youMaxHp));
-  combat.bossfx=null; combat.cheatDeathReady=true;
+  combat.bossfx=null; combat.monfx=null; combat.cheatDeathReady=true;
   combat.regens=[]; combat.foeStatus={};
   if(typeof cmastResetFight==='function') cmastResetFight();
   combat.foeSwingMs=mon.swingMs||COMBAT_BASE_SWING_MS;
@@ -37586,6 +37821,9 @@ function combatTick(){
   // ── Active boss mechanic (1.0.85) — burn / void-bomb on raid final bosses.
   // Ticks independently of swings; may resolve player death (cheat-death aware).
   if(combat.raid && combat.bossfx && tickBossMechanic(now)){ updateCombatBars(); return; }
+
+  // The foe's own mechanic (0.9.124.26). Cannot kill you, so nothing to bail on.
+  if(combat.monfx) tickMonsterFx(now, mon);
 
   // ── Telegraphed raid attacks + auto-cast (0.9.125). Same contract as the line
   // above: tickRaidCast returns true only when it resolved a death, so bail.
