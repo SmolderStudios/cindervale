@@ -1994,15 +1994,17 @@ setTimeout(() => {
     ev(`state=defaultState(); normalizeState();
         ['attack','strength','defence','hitpoints'].forEach(function(k){ state.combatXp[k]=XP_CUM[40]; });
         combatMode=true; document.getElementById('combatPanel').style.display=''; renderCombat();`);
-    const stack = ev(`(function(){
-      var col=document.querySelector('.cmb-zicons'), mon=document.querySelector('.cmb-zright .cmb-mon');
-      if(!col||!mon) return {missing:true};
-      var cz=parseInt(getComputedStyle(col).zIndex,10), mz=parseInt(getComputedStyle(mon).zIndex,10);
-      return {colZ:cz, monZ:mz, colPos:getComputedStyle(col).position, beats:cz>mz}; })()`);
-    ok('the zone column outranks the creature list with nothing hovered',
-       stack.beats === true, JSON.stringify(stack));
-    ok('and it is positioned, so its z-index actually applies',
-       stack.colPos === 'relative' || stack.colPos === 'absolute', stack.colPos);
+    /* 0.9.124.30 replaced that browser. The zone strip and the creature list are
+       gone, and with them the hover layer that kept losing the stacking fight: the
+       Field Guide states the same facts inline. So the assertion becomes the reason
+       the bug cannot come back, rather than a check against markup that is no
+       longer rendered. */
+    const guide = ev(`buildCombatGuideHTML()`);
+    ok('the zone browser needs no hover layer to say what is in a zone',
+       guide.indexOf('cmb-zone-tip') < 0 && guide.indexOf('cmb-mon-tip') < 0);
+    ok('and a zone card states its level range and kills outright',
+       /Lv \d+ to \d+/.test(guide) && /kills/.test(guide),
+       (guide.match(/Lv \d+ to \d+/) || ['no range'])[0]);
 
     /* --- Ticket #17: the panel promised skilling runs through a fight -------
        It does not, and has not since v0.9.109. Assert the PROMISE with a phrase
@@ -6728,6 +6730,47 @@ setTimeout(() => {
 
     ok('every cooked dish files as food, heal or no heal (#85/#86)',
        cook.length === 0, cook.slice(0, 6).join(', '));
+  }
+
+  section('The Field Guide combat page (0.9.124.30)');
+  {
+    /* None of this throws when it breaks. A guide that renders an empty rail, a
+       fight left ticking behind a browser, or a way back that quietly forfeits a
+       raid all look fine to a smoke test. */
+    ev(`state=defaultState(); normalizeState(); state.combatXp={};
+        for(const k of ['attack','strength','defence','hitpoints']) state.combatXp[k]=XP_CUM[99];
+        refreshCombatStats(); combat.active=false; combat.raid=null;
+        state.zone='wolf_den'; state.zoneMode='dungeons'; combat.monId='wolf';`);
+    ok('a fresh save opens on the guide, not the arena', ev(`state.cmbView`)==='guide');
+    ev(`state.cmbView='nonsense'; normalizeState();`);
+    ok('and an unknown view normalises back to it', ev(`state.cmbView`)==='guide');
+
+    const g=ev(`buildCombatGuideHTML()`);
+    ok('the guide draws a card for every zone in the mode',
+       (g.match(/data-cgzone=/g)||[]).length === +ev(`zonesForMode('dungeons').length`),
+       (g.match(/data-cgzone=/g)||[]).length+' cards');
+    ok('every zone card carries its own dungeon art',
+       /class="plate" style="background-image:url\(data:image/.test(g));
+    ok('the selected zone lists its foes',
+       (g.match(/data-cgfoe=/g)||[]).length === +ev(`monstersInZone('wolf_den').length`));
+    ok('the foe detail shows drops with icons and rates', /class="ic"/.test(g) && /class="rt"/.test(g));
+    ok('and the guide never contains the arena', g.indexOf('cvarena')<0);
+
+    ok('a boss whose key you lack cannot be fought from it',
+       ev(`(function(){var b=MONSTERS.find(m=>m.boss&&m.bossReq);
+            if(!b) return true; state.items={}; return cgFoeLocked(b)===true;})()`));
+
+    /* The arena must win whenever a fight is really running, whatever the saved
+       view says, or a reload mid-raid strands you on a browser. */
+    ev(`state=defaultState(); normalizeState(); state.combatXp={};
+        for(const k of ['attack','strength','defence','hitpoints']) state.combatXp[k]=XP_CUM[99];
+        refreshCombatStats(); state.cmbView='guide'; startRaid(SPR_ID);`);
+    ok('a raid forces the arena even with the view saved as guide',
+       ev(`!!(combat.active||combat.raid||state.cmbView==='fight')`));
+    ok('and the way back refuses to forfeit a raid',
+       ev(`(function(){var before=combat.raid&&combat.raid.id; cgBack();
+            return !!combat.raid && combat.raid.id===before;})()`));
+    ev(`combat.active=false; combat.raid=null; state.cmbView='guide';`);
   }
 
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));
