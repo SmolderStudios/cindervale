@@ -3943,9 +3943,28 @@ body:not(.is-demo) .demo-only{display:none !important}
 /* ════════ [CSS-31 END] MONSTER LOG ═══════════════════════════════════════════════ */
 
 /* ════════ [CSS-32] RAIDS (1.0.66) ═════════════════════════════════════════════════ */
-.raid-panel{display:flex;flex-direction:column;gap:9px;padding:3px 0}
-.raid-intro{font-size:calc(11.5px*var(--tscale));line-height:1.5;color:var(--muted);background:linear-gradient(180deg,#171f1e,#101615);border:1px solid var(--trim-d);border-left:3px solid #4a9a8a;border-radius:6px;padding:7px 11px}
-.raid-intro b{color:#bfe6db}
+.raid-panel{display:flex;flex-direction:column;gap:11px;padding:3px 0}
+/* The rules used to be one grey paragraph with six bolded fragments competing
+   inside it, which is a wall rather than a thing you read. Three tiles, one idea
+   each, and the bolding is spent only on the ability names and the keys. */
+.raid-rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:9px}
+.rl-tile{display:flex;gap:10px;align-items:flex-start;
+  background:linear-gradient(178deg,#241a10,#150f09 78%);
+  border:1px solid var(--trim-d);border-radius:8px;padding:9px 12px;
+  box-shadow:inset 0 1px 0 var(--rim),inset 0 -1px 0 var(--under),0 2px 5px rgba(0,0,0,.45)}
+.rl-ic{flex:none;font-size:calc(19px*var(--tscale));line-height:1;margin-top:1px;
+  filter:drop-shadow(0 0 6px rgba(224,118,47,.35))}
+.rl-ic .ev-icon{width:1em;height:1em}
+.rl-tx{min-width:0}
+.rl-h{display:block;font-family:'Cinzel',serif;font-size:calc(12.5px*var(--tscale));
+  color:var(--trim);letter-spacing:.5px;line-height:1.2;margin-bottom:3px}
+.rl-p{display:block;font-family:'Crimson Pro',Georgia,serif;
+  font-size:calc(12px*var(--tscale));line-height:1.45;color:var(--muted)}
+.rl-p b{color:#e3cc9c;font-weight:600}
+.rl-foot{font-family:'Crimson Pro',Georgia,serif;font-size:calc(12px*var(--tscale));
+  line-height:1.5;color:var(--muted);padding:7px 12px;border-radius:0 6px 6px 0;
+  border-left:3px solid var(--ember);background:rgba(224,118,47,.07)}
+.rl-foot b{color:#e3cc9c;font-weight:600}
 /* Shared skill "how-to" intro (1.0.89) — one consistent, readable style for the
    handful of skills that explain their flow at the top (crafting/jeweler/enchant/socket). */
 .skill-intro{margin-bottom:10px;padding:8px 11px;background:var(--raised);border:1px solid var(--trim-d);
@@ -3973,37 +3992,170 @@ body:not(.is-demo) .demo-only{display:none !important}
   padding:6px 15px;border-radius:5px;cursor:var(--cur-pointer)}
 .tut-next:hover{background:#f0a050}
 @media(prefers-reduced-motion:reduce){.tut-spot,.tut-callout{transition:none}}
-.raid-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(400px,1fr));gap:10px;align-items:start}
-.raid-card{background:linear-gradient(180deg,#161c1b,#0e1312);border:1px solid var(--trim-d);border-radius:9px;padding:10px 13px 10px 15px;position:relative;overflow:hidden}
-.raid-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--raid-accent,#4a9a8a)}
-.raid-card.locked{opacity:.62;filter:saturate(.5)}
-/* 2-column body — description on the left, gauntlet/relics/action on the right.
-   Both flex so a single wide card splits side-by-side, and a narrow one stacks. */
-.rc-body{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:stretch}
-.rc-left{flex:1 1 215px;min-width:0;display:flex;flex-direction:column}
-.rc-right{flex:1 1 205px;min-width:0;display:flex;flex-direction:column;gap:3px;justify-content:center;border-left:1px solid var(--trim-d);padding-left:14px}
-.rc-head{display:flex;align-items:center;gap:10px;margin-bottom:6px}
-.rc-ic{font-size:calc(34px*var(--tscale));line-height:1;filter:drop-shadow(0 2px 4px rgba(0,0,0,.6))}
-.rc-title{display:flex;flex-direction:column;flex:1;min-width:0}
-.rc-nm{font-family:'Cinzel',serif;font-size:calc(17px*var(--tscale));color:#e7efe9;letter-spacing:.4px;line-height:1.1}
-.rc-lv{font-size:calc(10.5px*var(--tscale));color:var(--muted);letter-spacing:.6px}
-.rc-blurb{font-size:calc(11.5px*var(--tscale));line-height:1.45;color:var(--muted);font-style:italic;
-  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.rc-row{display:flex;align-items:center;gap:8px}
-.rc-lbl{font-size:calc(9.5px*var(--tscale));letter-spacing:1.1px;text-transform:uppercase;color:#6d8079;min-width:50px}
-.rc-cnt{font-size:calc(9.5px*var(--tscale));color:#6d8079;margin-left:auto;white-space:nowrap;font-family:var(--num)}
-.rc-dots{display:inline-flex;gap:4px;align-items:center}
-.rd-dot{width:13px;height:13px;border-radius:50%;background:#31403c;border:1px solid #5a736c;display:inline-flex;align-items:center;justify-content:center;font-size:calc(9px*var(--tscale));color:#0e1312;cursor:default}
-.rd-dot.mini{background:#c9a24a;border-color:#f0d59a;width:15px;height:15px}
-.rd-dot.boss{background:#c44a45;border-color:#ffb0aa;width:17px;height:17px;font-size:calc(10px*var(--tscale))}
-.rc-gicons{display:inline-flex;gap:4px}
-.rd-gi{font-size:calc(21px*var(--tscale));line-height:1;cursor:default;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))}
-.rc-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:6px;padding-top:7px;border-top:1px solid var(--trim-d)}
-.rc-best{font-size:calc(11px*var(--tscale));color:#a9c4bc;font-family:var(--num);line-height:1.3}
-.raid-enter{background:linear-gradient(180deg,#2c4a44,#183029);color:#dff2ec;border:1px solid #4a9a8a;border-radius:6px;padding:8px 16px;font-family:'Cinzel',serif;font-size:calc(14px*var(--tscale));letter-spacing:.6px;cursor:var(--cur-pointer);white-space:nowrap;transition:filter .12s}
-.raid-enter:hover:not(:disabled){filter:brightness(1.22)}
-.raid-enter:disabled{opacity:.5;cursor:default}
-.raid-enter.locked{background:#20201c;border-color:#4a4438;color:#8a8270}
+/* THE RAID CARDS (0.9.124.33).
+
+   Before this, every card was the same hardcoded teal gradient with the same
+   hardcoded name colour and the same hardcoded teal button, and the raid's own
+   accent reached exactly one thing: a 4px bar down the left edge. Four of the
+   five raids advertised a colour they never actually wore, which is what Jordan
+   meant by "all the same color".
+
+   Now ONE input drives the card: --raid-accent, which both builders already set
+   inline. Every colour below is color-mix()'d off it at a FIXED percentage
+   against a house colour, so between cards only the HUE moves. Measured: body
+   text #cbb894 sits between 7.76:1 and 9.16:1 on all five grounds, so the five
+   share one value band and differ only in hue. That is what keeps them a family
+   rather than five mismatched cards. NEVER vary these percentages per raid.
+
+   The color-mix bases are literal hex on purpose. --panel-2 is not declared in
+   :root (it only ever appears as var(--panel-2,#1d150f)), and an unresolved var
+   inside color-mix drops the whole declaration silently. */
+.raid-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:11px}
+/* align-items:start is GONE on purpose: it was the ragged-row cause. The default
+   stretch makes every card in a row match the tallest in THAT row, while each row
+   still sizes to its own content. Do not add grid-auto-rows:1fr, which would also
+   drag short rows up to the tall one. */
+.raid-card{
+  --ra:var(--raid-accent,#4a9a8a);
+  --ra-ink:color-mix(in srgb,var(--ra) 74%,#fff4e2);
+  --ra-dim:color-mix(in srgb,var(--ra) 42%,#3d2c1d);
+  --ra-ground:color-mix(in srgb,var(--ra) 12%,#130e09);
+  --ra-lintel:color-mix(in srgb,var(--ra) 26%,#1d150f);
+  display:flex;flex-direction:column;height:100%;position:relative;overflow:hidden;
+  background:linear-gradient(178deg,color-mix(in srgb,var(--ra) 16%,#1d150f),var(--ra-ground) 44%);
+  border:1px solid var(--ra-dim);border-radius:10px;
+  box-shadow:inset 0 1px 0 var(--rim),inset 0 -1px 0 var(--under),0 3px 9px rgba(0,0,0,.5);
+  transition:border-color .14s,box-shadow .14s}
+/* The old left bar becomes a light across the lintel, so the card reads as lit
+   from above like every other surface in the game rather than flagged from the side. */
+.raid-card::before{content:'';position:absolute;left:0;right:0;top:0;height:2px;z-index:2;
+  background:linear-gradient(90deg,transparent,var(--ra),transparent);opacity:.75}
+.raid-card::after{content:'';position:absolute;left:-34px;top:-44px;width:200px;height:140px;
+  border-radius:50%;pointer-events:none;z-index:0;
+  background:radial-gradient(circle,color-mix(in srgb,var(--ra) 22%,transparent),transparent 68%)}
+/* REQUIRED: without this the ::after bloom paints over the icon and the name. */
+.raid-card>*{position:relative;z-index:1}
+.raid-card:hover{border-color:color-mix(in srgb,var(--ra) 62%,#3d2c1d);
+  box-shadow:inset 0 1px 0 var(--rim),inset 0 -1px 0 var(--under),0 4px 14px rgba(0,0,0,.55),
+             0 0 18px color-mix(in srgb,var(--ra) 16%,transparent)}
+/* A locked card flattens its SURFACE but keeps its hue in the trim and the top
+   light, so five locked raids still read as five different places you have not
+   earned yet rather than five identical stone slabs. No filter:saturate() here,
+   it would drain the ember lock button too, and a filter makes the card a
+   containing block. */
+.raid-card.locked{--ra-ground:#17120c;--ra-lintel:#1d150f;--ra-ink:#9e885f;opacity:.88}
+.raid-card.locked::after{opacity:.35}
+
+/* ── Band 1: lintel ──────────────────────────────────────────────────────── */
+.rc-lintel{display:flex;align-items:center;gap:11px;padding:10px 13px 9px;
+  background:linear-gradient(178deg,var(--ra-lintel),transparent);
+  border-bottom:1px solid var(--ra-dim)}
+.rc-ic{flex:none;width:calc(46px*var(--tscale));height:calc(46px*var(--tscale));
+  display:inline-flex;align-items:center;justify-content:center;border-radius:50%;
+  font-size:calc(30px*var(--tscale));line-height:1;
+  background:radial-gradient(circle at 50% 38%,color-mix(in srgb,var(--ra) 34%,transparent),transparent 72%);
+  border:1px solid var(--ra-dim);
+  box-shadow:0 0 16px color-mix(in srgb,var(--ra) 24%,transparent),inset 0 1px 0 var(--rim);
+  filter:drop-shadow(0 2px 4px rgba(0,0,0,.6))}
+.rc-ic .ev-icon{width:1em;height:1em}
+.rc-title{display:flex;flex-direction:column;flex:1;min-width:0;gap:2px}
+.rc-nm{font-family:'Cinzel',serif;font-size:calc(17.5px*var(--tscale));color:var(--ra-ink);
+  letter-spacing:.4px;line-height:1.15;
+  text-shadow:0 0 14px color-mix(in srgb,var(--ra) 30%,transparent)}
+.rc-kind{font-family:var(--num);font-size:calc(9.5px*var(--tscale));letter-spacing:1px;
+  text-transform:uppercase;color:#8c7a5c}
+.rc-gate{flex:none;align-self:center;white-space:nowrap;font-family:var(--num);
+  font-size:calc(10.5px*var(--tscale));letter-spacing:.6px;padding:4px 10px;border-radius:20px;
+  color:#e3cc9c;background:rgba(199,155,78,.12);border:1px solid var(--trim-d)}
+.raid-card.locked .rc-gate{color:#ffc089;background:rgba(224,118,47,.14);border-color:#8a4a1e}
+
+/* ── Band 2: blurb, the ONLY band that grows ─────────────────────────────── */
+/* No line clamp. flex:1 lets it run to full height and the row's stretch absorbs
+   the difference between cards, which is what stopped the blurbs truncating
+   mid-sentence. */
+.rc-blurb{flex:1 1 auto;padding:9px 13px 0;font-family:'Crimson Pro',Georgia,serif;
+  font-size:calc(12.5px*var(--tscale));line-height:1.5;color:#cbb894;font-style:italic}
+.rc-sub{display:block;margin-top:6px;font-style:normal;
+  font-family:'Crimson Pro',Georgia,serif;font-size:calc(11.5px*var(--tscale));
+  line-height:1.45;color:var(--muted)}
+.rc-sub b{font-family:var(--num);font-weight:600;color:var(--ra-ink)}
+
+/* ── Bands 3 and 4: label, payload, count ────────────────────────────────── */
+.rc-strip{display:flex;align-items:center;gap:9px;padding:8px 13px 0;
+  min-height:calc(26px*var(--tscale))}
+/* The route strip is recessed so the card reads raised, sunken, raised and you
+   can find the gauntlet with your eye out of focus. Neutral, not accent, so it
+   does not disturb the colour maths above. */
+.rc-strip.sunk{margin:9px 13px 0;padding:7px 11px;border-radius:7px;
+  background:linear-gradient(180deg,#120b05,#170f07);
+  box-shadow:inset 0 2px 5px rgba(0,0,0,.7)}
+.rc-lbl{flex:none;width:calc(54px*var(--tscale));font-family:var(--num);
+  font-size:calc(9px*var(--tscale));letter-spacing:1.2px;text-transform:uppercase;
+  color:color-mix(in srgb,var(--ra) 34%,#8c7a5c)}
+.rc-val{flex:1;min-width:0;display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.rc-cnt{flex:none;margin-left:auto;font-family:var(--num);
+  font-size:calc(9.5px*var(--tscale));color:#8c7a5c;white-space:nowrap}
+.rc-none{font-family:'Crimson Pro',Georgia,serif;font-style:italic;color:#7a6a52;
+  font-size:calc(11.5px*var(--tscale))}
+
+/* Stage dots carry the raid's hue. The mini and boss markers NEVER do: gold
+   square means mini and red disc means boss on all five cards, one language
+   learned once, and the shape carries it even for a colourblind player. */
+.rc-dots{display:inline-flex;gap:5px;align-items:center;flex-wrap:wrap}
+.rd-dot{width:13px;height:13px;border-radius:50%;
+  background:color-mix(in srgb,var(--ra) 34%,#241b12);
+  border:1px solid color-mix(in srgb,var(--ra) 55%,#3d2c1d);
+  display:inline-flex;align-items:center;justify-content:center;line-height:1;
+  font-size:calc(9px*var(--tscale));color:#120c07;cursor:var(--cur-help)}
+.rd-dot.mini{width:15px;height:15px;border-radius:3px;background:#c9a24a;border-color:#f0d59a;
+  box-shadow:0 0 7px rgba(201,162,74,.45)}
+.rd-dot.boss{width:17px;height:17px;border-radius:50%;background:#c44a45;border-color:#ffb0aa;
+  font-size:calc(10px*var(--tscale));box-shadow:0 0 9px rgba(196,84,58,.5)}
+
+.rc-best{font-family:var(--num);font-size:calc(11.5px*var(--tscale));color:#cbb894;line-height:1.3}
+.rc-best.none{font-family:'Crimson Pro',Georgia,serif;font-style:italic;color:#8c7a5c}
+
+/* ── Band 5: foot ────────────────────────────────────────────────────────── */
+.rc-foot{display:flex;align-items:center;gap:11px;margin-top:9px;padding:9px 13px 11px;
+  border-top:1px solid var(--ra-dim);
+  background:linear-gradient(180deg,transparent,rgba(0,0,0,.30))}
+.rc-hold{display:flex;align-items:center;gap:10px;min-width:0;flex-wrap:wrap;
+  font-family:var(--num);font-size:calc(12px*var(--tscale));color:#cbb894}
+.rc-hold:empty{display:none}
+/* The clear rank as a tile, matching .rr-rank in the result box so it is the
+   same reading in both places rather than a new one. */
+.rc-rank{flex:none;width:calc(34px*var(--tscale));height:calc(34px*var(--tscale));
+  display:inline-flex;align-items:center;justify-content:center;border-radius:7px;
+  font-family:'Cinzel',serif;font-size:calc(17px*var(--tscale));line-height:1;
+  color:var(--tc,#ffe27a);border:1px solid var(--tc,#ffe27a);
+  background:color-mix(in srgb,var(--tc,#ffe27a) 12%,#120c07);
+  box-shadow:0 0 12px color-mix(in srgb,var(--tc,#ffe27a) 22%,transparent)}
+/* How far off a locked raid is, rather than repeating the level on the button. */
+.rc-gap{display:flex;flex-direction:column;gap:4px;min-width:calc(112px*var(--tscale))}
+.rc-gap i{font-style:normal;font-family:var(--num);font-size:calc(10.5px*var(--tscale));color:#a08a64}
+.rc-bar{height:4px;border-radius:3px;background:#241b12;overflow:hidden}
+.rc-bar span{display:block;height:100%;background:linear-gradient(90deg,#8a6a2a,var(--trim))}
+
+.raid-enter{flex:none;margin-left:auto;display:inline-flex;align-items:center;gap:7px;
+  font-family:'Cinzel',serif;font-size:calc(14px*var(--tscale));letter-spacing:.7px;
+  padding:9px 20px;border-radius:7px;white-space:nowrap;cursor:var(--cur-pointer);
+  color:color-mix(in srgb,var(--ra) 30%,#ffeecb);
+  background:linear-gradient(180deg,color-mix(in srgb,var(--ra) 34%,#1a120b),
+                                    color-mix(in srgb,var(--ra) 18%,#0d0906));
+  border:1px solid color-mix(in srgb,var(--ra) 58%,#3d2c1d);
+  box-shadow:inset 0 1px 0 var(--rim),0 2px 6px rgba(0,0,0,.5);
+  transition:filter .12s,box-shadow .12s,transform .08s}
+.raid-enter .ev-icon{width:1em;height:1em}
+.raid-enter:hover:not(:disabled){filter:brightness(1.2);
+  box-shadow:inset 0 1px 0 var(--rim),0 2px 6px rgba(0,0,0,.5),
+             0 0 16px color-mix(in srgb,var(--ra) 38%,transparent)}
+.raid-enter:active:not(:disabled){transform:translateY(1px)}
+.raid-enter:disabled{opacity:.45;cursor:default;filter:saturate(.4)}
+/* MUST stay after :disabled. Equal specificity (0,2,0), so later wins. The lock
+   button is also [disabled] and without this it goes translucent, which made the
+   one element carrying the level requirement the hardest thing on the card to read. */
+.raid-enter.locked{opacity:1;filter:none;cursor:default;color:#f0b184;
+  background:linear-gradient(180deg,#2a1a0e,#160d07);border-color:#8a4a1e}
 /* Result box — horizontal: big rank letter, then a 2-line body (title/time + loot). */
 .raid-result{border-radius:9px;padding:10px 14px;font-size:calc(12.5px*var(--tscale))}
 .raid-result.fail{background:linear-gradient(180deg,#241416,#180d0e);border:1px solid #5a2c2c;color:#e0b0aa}
@@ -4097,14 +4249,17 @@ body:not(.is-demo) .demo-only{display:none !important}
    to clear it. Outside a raid nothing about the arena changes. */
 .cvstage.rx-raid .cvrail.l{left:calc(94px*var(--tscale))}
 /* ════ The Sundered Spire + Ascension (0.9.124.11) ════════════════════════════ */
-.spr-note{font-size:calc(11px*var(--tscale));color:var(--muted);line-height:1.4}
 .spr-fxrow{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
 .spr-fxrow.run{margin-top:7px}
 .spr-fx{font-size:calc(10.5px*var(--tscale));font-family:var(--num);letter-spacing:.3px;
   padding:2px 7px;border-radius:5px;border:1px solid;cursor:var(--cur-help);white-space:nowrap}
 .spr-fx.bad{color:#e8b0a0;border-color:rgba(196,84,58,.55);background:rgba(196,84,58,.13)}
 .spr-fx.good{color:#b9e08a;border-color:rgba(125,163,63,.55);background:rgba(125,163,63,.13)}
-.spr-mats{font-size:calc(12px*var(--tscale));color:#e8c8dc;font-family:var(--num);display:inline-flex;align-items:center;gap:4px}
+/* A locked Spire is stone, so its chips must not be the only colour left on it. */
+.raid-card.locked .spr-fx{filter:saturate(.3);opacity:.8}
+.spr-mats{display:inline-flex;align-items:center;gap:5px;font-family:var(--num);
+  font-size:calc(12px*var(--tscale));color:#cbb894;cursor:var(--cur-help)}
+.spr-mats .ev-icon{width:1em;height:1em}
 .spr-floor{font-family:var(--num);font-weight:700;color:#f0c8e0}
 .spr-chase{font-size:calc(11px*var(--tscale));color:var(--muted);font-family:var(--num)}
 .asc-panel{margin-top:10px;padding:12px 15px 14px;border-radius:9px;border:1px solid var(--trim-d);
@@ -8135,7 +8290,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.124.32">v0.9.124</div>
+  <div class="mm-ver" data-build="0.9.124.33">v0.9.124</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -31623,19 +31778,19 @@ const RAIDS=[
     // entire reward table sat unequippable in the satchel for ten combat levels.
     // Every other raid already lines up (Emberforge 80/80, Abyssal 90/90).
     accent:'#4a9a8a', unlockLvl:70,
-    blurb:"A warrior-king's tomb, drowned when the old dam broke. His honour guard never stopped their vigil — and they do not open the door for the living.",
+    blurb:"A warrior-king's tomb, drowned when the old dam broke. His honour guard never stopped their vigil, and they do not open the door for the living.",
     // Sequence — 4 revenants + 1 mini-boss + 1 final boss. HP totals ~9.4k with no
     // heal between stages; a geared Lv70 raider clears in ~3.5–5 min.
     stages:[
       {id:'barrow_sentry',   zone:'sunken_barrow', name:'Barrow Sentry',    icon:'barrow_sentry',   lvl:68, hp:900,  atk:200, str:150, def:100, coins:0, xp:1400, swingMs:2300, dmgType:'slash', weakTo:'crush'},
       {id:'drowned_footman', zone:'sunken_barrow', name:'Drowned Footman',  icon:'drowned_footman', lvl:69, hp:980,  atk:206, str:158, def:104, coins:0, xp:1500, swingMs:2500, dmgType:'stab',  weakTo:'crush'},
       {id:'barrow_champion', zone:'sunken_barrow', name:'Barrow Champion',  icon:'barrow_champion', lvl:71, hp:2100, atk:300, str:230, def:150, coins:0, xp:2600, swingMs:2600, dmgType:'slash', weakTo:'stab',  miniBoss:true,
-        raidfx:{name:'Grave Chill', desc:'Cold seeps into your limbs — your attacks are 25% slower.', swingMult:1.25},
+        raidfx:{name:'Grave Chill', desc:'Cold seeps into your limbs. Your attacks are 25% slower.', swingMult:1.25},
         castfx:{kinds:['slam'], everyMs:11000, castMs:3200, openMs:5000, frac:0.26, labels:{slam:'Grave Hammer'}}},
       {id:'tomb_revenant',   zone:'sunken_barrow', name:'Tomb Revenant',    icon:'tomb_revenant',   lvl:70, hp:1050, atk:212, str:166, def:108, coins:0, xp:1550, swingMs:2200, dmgType:'crush', weakTo:'slash'},
       {id:'wardens_herald',  zone:'sunken_barrow', name:"Warden's Herald",  icon:'wardens_herald',  lvl:72, hp:1200, atk:226, str:182, def:122, coins:0, xp:1800, swingMs:2400, dmgType:'slash', weakTo:'crush'},
       {id:'barrow_warden',   zone:'sunken_barrow', name:'The Barrow Warden', icon:'barrow_warden',  lvl:74, hp:3200, atk:360, str:290, def:200, coins:0, xp:4200, swingMs:2800, dmgType:'crush', weakTo:'slash', boss:true, raidBoss:true,
-        raidfx:{name:"Warden's Curse", desc:'His death-cold saps you — −20% Defence and your strikes drag 15% slower.', defMult:0.80, swingMult:1.15},
+        raidfx:{name:"Warden's Curse", desc:'His death-cold saps you. 20% less Defence, and your strikes drag 15% slower.', defMult:0.80, swingMult:1.15},
         castfx:{kinds:['slam'], everyMs:10000, castMs:3200, openMs:5000, frac:0.30, labels:{slam:"Warden's Reckoning"}}},
     ],
     // Rating tiers — faster clear = better rank = more materials + higher gear odds.
@@ -31667,19 +31822,19 @@ const RAIDS=[
   {
     id:'emberforge', name:'The Emberforge Deep', icon:'emberforge',
     accent:'#ff7a1e', unlockLvl:80,
-    blurb:"A forge drowned an age ago, rekindled when the tyrant Ignar woke and breathed his own fire back into the bellows. Molten constructs keep it roaring — and they do not stop for the living.",
+    blurb:"A forge drowned an age ago, rekindled when the tyrant Ignar woke and breathed his own fire back into the bellows. Molten constructs keep it roaring, and they do not stop for the living.",
     // 6 stages · ~13,300 total HP on one bar · a geared Lv80 raider clears in ~4-6 min.
     stages:[
       {id:'forge_thrall',   zone:'emberforge', name:'Forge Thrall',    icon:'forge_thrall',   lvl:78, hp:1300, atk:250, str:200, def:130, coins:0, xp:3000, swingMs:2200, dmgType:'crush', weakTo:'slash'},
       {id:'cinder_golem',   zone:'emberforge', name:'Cinder Golem',    icon:'cinder_golem',   lvl:79, hp:1450, atk:258, str:210, def:145, coins:0, xp:3200, swingMs:2600, dmgType:'crush', weakTo:'stab'},
       {id:'molten_sentinel',zone:'emberforge', name:'Molten Sentinel', icon:'molten_sentinel',lvl:82, hp:2900, atk:330, str:270, def:185, coins:0, xp:5200, swingMs:2600, dmgType:'crush', weakTo:'slash', miniBoss:true,
-        raidfx:{name:'Forge Heat', desc:'The air itself scorches — your attacks are 20% slower.', swingMult:1.20},
+        raidfx:{name:'Forge Heat', desc:'The air itself scorches. Your attacks are 20% slower.', swingMult:1.20},
         castfx:{kinds:['slam'], everyMs:10500, castMs:3000, openMs:4800, frac:0.28, labels:{slam:'Forge Slam'}}},
       {id:'ashbound_brute', zone:'emberforge', name:'Ashbound Brute',  icon:'ashbound_brute', lvl:80, hp:1520, atk:268, str:224, def:150, coins:0, xp:3400, swingMs:2500, dmgType:'slash', weakTo:'stab'},
       {id:'ember_colossus', zone:'emberforge', name:'Emberforged Colossus', icon:'ember_colossus', lvl:82, hp:1750, atk:288, str:250, def:168, coins:0, xp:3900, swingMs:2700, dmgType:'crush', weakTo:'slash'},
       {id:'ignar', zone:'emberforge', name:'Ignar, the Forge-Tyrant', icon:'ignar', lvl:84, hp:4400, atk:400, str:330, def:225, coins:0, xp:8000, swingMs:2800, dmgType:'crush', weakTo:'slash', boss:true, raidBoss:true,
-        raidfx:{name:"Tyrant's Wrath", desc:'His forge-heat saps you — −20% Defence and your strikes drag 15% slower.', defMult:0.80, swingMult:1.15},
-        bossfx:{kind:'burn', tickMs:2600, frac:0.05, label:"Tyrant's Fire", desc:'The Tyrant sets you alight — you burn for 5% max HP every 2.6s until the fight ends.'},
+        raidfx:{name:"Tyrant's Wrath", desc:'His forge-heat saps you. 20% less Defence, and your strikes drag 15% slower.', defMult:0.80, swingMult:1.15},
+        bossfx:{kind:'burn', tickMs:2600, frac:0.05, label:"Tyrant's Fire", desc:'The Tyrant sets you alight. You burn for 5% max HP every 2.6s until the fight ends.'},
         castfx:{kinds:['slam'], everyMs:11000, castMs:3000, openMs:5500, frac:0.28, labels:{slam:'Forge Hammer'}}},
     ],
     ratingTiers:[
@@ -31708,19 +31863,19 @@ const RAIDS=[
   {
     id:'abyssal_throne', name:'The Abyssal Throne', icon:'abyssal_throne',
     accent:'#8040c0', unlockLvl:90,
-    blurb:"Past the Sanctum, reality thins to nothing. On a throne of unmade world sits Xor'Vael, the Void Sovereign — and everything between the door and the dais wants you erased.",
+    blurb:"Past the Sanctum, reality thins to nothing. On a throne of unmade world sits Xor'Vael, the Void Sovereign, and everything between the door and the dais wants you erased.",
     // 7 stages · ~19,300 total HP on one bar · the true endgame gauntlet.
     stages:[
       {id:'void_wretch',  zone:'abyssal_throne', name:'Void Wretch',   icon:'void_wretch',  lvl:88, hp:1700, atk:470, str:390, def:270, coins:0, xp:5200, swingMs:2200, dmgType:'stab',  weakTo:'slash'},
       {id:'rift_stalker', zone:'abyssal_throne', name:'Rift Stalker',  icon:'rift_stalker', lvl:89, hp:1850, atk:485, str:405, def:280, coins:0, xp:5500, swingMs:1700, dmgType:'slash', weakTo:'stab'},
       {id:'null_warden',  zone:'abyssal_throne', name:'Null Warden',   icon:'null_warden',  lvl:92, hp:3400, atk:560, str:470, def:330, coins:0, xp:8600, swingMs:2500, dmgType:'crush', weakTo:'slash', miniBoss:true,
-        raidfx:{name:'Unmaking', desc:'Your form frays at the edges — −25% Defence.', defMult:0.75},
+        raidfx:{name:'Unmaking', desc:'Your form frays at the edges. 25% less Defence.', defMult:0.75},
         castfx:{kinds:['slam'], everyMs:10000, castMs:3000, openMs:4500, frac:0.28, labels:{slam:'Unmaking Blow'}}},
       {id:'abyssal_maw',  zone:'abyssal_throne', name:'Abyssal Maw',   icon:'abyssal_maw',  lvl:90, hp:1950, atk:500, str:420, def:290, coins:0, xp:5800, swingMs:2400, dmgType:'crush', weakTo:'slash'},
       {id:'void_herald',  zone:'abyssal_throne', name:'Void Herald',   icon:'void_herald',  lvl:91, hp:2100, atk:515, str:435, def:300, coins:0, xp:6100, swingMs:2100, dmgType:'stab',  weakTo:'crush'},
       {id:'riftbound_colossus', zone:'abyssal_throne', name:'Riftbound Colossus', icon:'riftbound_colossus', lvl:92, hp:2400, atk:530, str:455, def:315, coins:0, xp:6600, swingMs:2700, dmgType:'crush', weakTo:'slash'},
       {id:'xorvael', zone:'abyssal_throne', name:"Xor'Vael, the Void Sovereign", icon:'xorvael', lvl:94, hp:5600, atk:620, str:520, def:360, coins:0, xp:12000, swingMs:2700, dmgType:'slash', weakTo:'stab', boss:true, raidBoss:true,
-        raidfx:{name:'Erasure', desc:'The Sovereign unwrites you — −28% Defence and your strikes drag 20% slower.', defMult:0.72, swingMult:1.20},
+        raidfx:{name:'Erasure', desc:'The Sovereign unwrites you. 28% less Defence, and your strikes drag 20% slower.', defMult:0.72, swingMult:1.20},
         castfx:{kinds:['rupture','slam'], everyMs:8500, castMs:3400, openMs:5000, frac:0.32, reqDmg:800,
           labels:{rupture:'Void Rupture', slam:'Sovereign Blow'}}},
     ],
@@ -31750,20 +31905,20 @@ const RAIDS=[
   {
     id:'empyrean_throne', name:'The Empyrean Throne', icon:'empyrean_throne',
     accent:'#ffcf5a', unlockLvl:97,
-    blurb:"Climb out of the void and you do not find more darkness — you find a wound of blinding light. On a throne of dead suns slumbers Aureon, the first god, still dreaming the world. Everything between the stair and the dais burns to keep him asleep.",
+    blurb:"Climb out of the void and you do not find more darkness. You find a wound of blinding light. On a throne of dead suns slumbers Aureon, the first god, still dreaming the world. Everything between the stair and the dais burns to keep him asleep.",
     // 8 stages · ~26,650 total HP on one bar · the true capstone gauntlet (Lv99 / T10).
     stages:[
       {id:'dawnling',            zone:'empyrean_throne', name:'Dawnling',              icon:'dawnling',            lvl:95, hp:2200, atk:650, str:540, def:380, coins:0, xp:7000, swingMs:2200, dmgType:'stab',  weakTo:'slash'},
       {id:'radiant_wisp',        zone:'empyrean_throne', name:'Radiant Wisp',          icon:'radiant_wisp',        lvl:96, hp:2350, atk:670, str:560, def:390, coins:0, xp:7400, swingMs:1700, dmgType:'slash', weakTo:'crush'},
       {id:'seraph_warden',       zone:'empyrean_throne', name:'Seraph Warden',         icon:'seraph_warden',       lvl:98, hp:4200, atk:760, str:640, def:450, coins:0, xp:11000, swingMs:2500, dmgType:'slash', weakTo:'stab',  miniBoss:true,
-        raidfx:{name:'Blinding Radiance', desc:'The seraph blazes — you fight half-blind, −25% Defence.', defMult:0.75},
+        raidfx:{name:'Blinding Radiance', desc:'The seraph blazes. You fight half-blind, 25% less Defence.', defMult:0.75},
         castfx:{kinds:['slam'], everyMs:9500, castMs:2900, openMs:4500, frac:0.30, labels:{slam:'Verdict'}}},
       {id:'astral_hound',        zone:'empyrean_throne', name:'Astral Hound',          icon:'astral_hound',        lvl:96, hp:2450, atk:690, str:580, def:400, coins:0, xp:7800, swingMs:2000, dmgType:'crush', weakTo:'slash'},
       {id:'lightbringer_herald', zone:'empyrean_throne', name:'Lightbringer Herald',   icon:'lightbringer_herald', lvl:97, hp:2650, atk:720, str:610, def:415, coins:0, xp:8200, swingMs:2100, dmgType:'stab',  weakTo:'crush'},
       {id:'empyrean_colossus',   zone:'empyrean_throne', name:'Empyrean Colossus',     icon:'empyrean_colossus',   lvl:98, hp:3000, atk:760, str:650, def:440, coins:0, xp:9000, swingMs:2700, dmgType:'crush', weakTo:'slash'},
       {id:'fallen_choir',        zone:'empyrean_throne', name:'The Fallen Choir',      icon:'fallen_choir',        lvl:97, hp:2800, atk:730, str:620, def:420, coins:0, xp:8600, swingMs:2300, dmgType:'slash', weakTo:'stab'},
       {id:'aureon', zone:'empyrean_throne', name:'Aureon, the Dawnbroken God', icon:'aureon', lvl:99, hp:7000, atk:860, str:720, def:500, coins:0, xp:16000, swingMs:2700, dmgType:'slash', weakTo:'stab', boss:true, raidBoss:true,
-        raidfx:{name:'Judgment', desc:'The god unmakes you in light — −30% Defence and your strikes drag 20% slower.', defMult:0.70, swingMult:1.20},
+        raidfx:{name:'Judgment', desc:'The god unmakes you in light. 30% less Defence, and your strikes drag 20% slower.', defMult:0.70, swingMult:1.20},
         castfx:{kinds:['rupture','slam'], everyMs:8000, castMs:3400, openMs:5000, frac:0.34, reqDmg:1000,
           labels:{rupture:'Radiant Judgment', slam:'Dawnfall'}}},
     ],
@@ -39716,6 +39871,8 @@ function buildSlayerHTML(){
     <div class="sly-hint">Take a bounty, then kill that monster anywhere in the Arena. Every kill gives <b style="color:#e7dcc4">Slayer XP</b>. Finishing the bounty gives <b style="color:#ffd24a">Slayer Points</b>.</div>
   </div>`;
 }
+/* "3:00" reads in a sentence where _fmtRaidTime's "3m 0s" does not. */
+function _raidClock(ms){const t=Math.round(ms/1000);return Math.floor(t/60)+':'+String(t%60).padStart(2,'0');}
 function buildRaidsPanelHTML(){
   const esc=s=>String(s==null?'':s).replace(/"/g,'&quot;');
   const active=combat.active, inRaid=!!combat.raid;
@@ -39728,27 +39885,46 @@ function buildRaidsPanelHTML(){
     const nMini=r.stages.filter(s=>s.miniBoss).length;
     const dots=r.stages.map(s=>`<span class="rd-dot${s.raidBoss?' boss':s.miniBoss?' mini':''}" data-rtip="${esc(s.name)}&#10;Level ${s.lvl} · ${s.hp.toLocaleString()} HP${s.raidBoss?'&#10;Final boss. Clear this or the run pays nothing.':s.miniBoss?'&#10;Mini-boss. It telegraphs, and the cast has an answer.':''}${s.raidfx?'&#10;'+esc(s.raidfx.name)+(s.raidfx.desc?': '+esc(s.raidfx.desc):''):''}">${s.raidBoss?'★':s.miniBoss?'◆':''}</span>`).join('');
     const tierCol=best?((r.ratingTiers.find(t=>t.key===best.rating)||{}).col||'#ccc'):'#ccc';
+    /* The clears move to the Record row's own count slot, so the line keeps the
+       rank and the time and stops being three facts crammed into one string. */
     const bestLine=best
-      ? `Best <b style="color:${tierCol}">${best.rating}</b> · ${_fmtRaidTime(best.timeMs)}${clears?` · ${clears}× cleared`:''}`
+      ? `Best <b style="color:${tierCol}">${best.rating}</b> · ${_fmtRaidTime(best.timeMs)}`
       : 'Not yet cleared';
+    /* The final boss's name lived only inside a dot tooltip. It is the single most
+       useful fact about a raid you have not run, so it goes on the face of the card. */
+    const bossNm=(r.stages.find(s=>s.raidBoss)||{}).name||'';
+    const lvl=(typeof combatLevel==='function')?combatLevel():0;
+    const hold=unlocked
+      ? (best?`<span class="rc-rank" style="--tc:${tierCol}">${best.rating}</span>`:'')
+      : `<span class="rc-gap"><i>Combat ${lvl} / ${r.unlockLvl}</i>
+          <span class="rc-bar"><span style="width:${Math.min(100,Math.round(100*lvl/r.unlockLvl))}%"></span></span></span>`;
     return `<div class="raid-card${unlocked?'':' locked'}" style="--raid-accent:${r.accent}">
-      <div class="rc-body">
-        <div class="rc-left">
-          <div class="rc-head">
-            <span class="rc-ic">${iconHTML(r.icon)}</span>
-            <div class="rc-title"><span class="rc-nm">${r.name}</span><span class="rc-lv">Combat Lv ${r.unlockLvl}+</span></div>
-          </div>
-          <div class="rc-blurb">${r.blurb}</div>
+      <div class="rc-lintel">
+        <span class="rc-ic">${iconHTML(r.icon)}</span>
+        <div class="rc-title">
+          <span class="rc-nm">${r.name}</span>
+          <span class="rc-kind">${n} stage gauntlet</span>
         </div>
-        <div class="rc-right">
-          <div class="rc-row"><span class="rc-lbl">Gauntlet</span><span class="rc-dots">${dots}</span><span class="rc-cnt">${n} stages · ${nMini}+boss</span></div>
-          <div class="rc-foot">
-            <span class="rc-best">${bestLine}</span>
-            ${unlocked
-              ? `<button class="raid-enter" data-raid="${r.id}"${(active||inRaid)?' disabled':''}>${inRaid?'In progress…':'⚔ Enter'}</button>`
-              : `<button class="raid-enter locked" disabled>🔒 Lv ${r.unlockLvl}</button>`}
-          </div>
-        </div>
+        <span class="rc-gate">Combat Lv ${r.unlockLvl}</span>
+      </div>
+      <div class="rc-blurb">${r.blurb}
+        <span class="rc-sub">${bossNm?`Ends with <b>${esc(bossNm)}</b>. `:''}Clear inside <b>${_raidClock(r.ratingTiers[0].maxMs)}</b> for an S rank.</span>
+      </div>
+      <div class="rc-strip sunk">
+        <span class="rc-lbl">Route</span>
+        <span class="rc-val"><span class="rc-dots">${dots}</span></span>
+        <span class="rc-cnt">${nMini} mini ◆ · boss ★</span>
+      </div>
+      <div class="rc-strip">
+        <span class="rc-lbl">Record</span>
+        <span class="rc-val"><span class="rc-best${best?'':' none'}">${bestLine}</span></span>
+        ${clears?`<span class="rc-cnt">${clears} cleared</span>`:''}
+      </div>
+      <div class="rc-foot">
+        <span class="rc-hold">${hold}</span>
+        ${unlocked
+          ? `<button class="raid-enter" data-raid="${r.id}"${(active||inRaid)?' disabled':''}>${iconHTML('ui_swords')} ${inRaid?'In progress':'Enter'}</button>`
+          : `<button class="raid-enter locked" disabled>${iconHTML('ui_lock')} Combat Lv ${r.unlockLvl}</button>`}
       </div>
     </div>`;
   }).join('');
@@ -39778,7 +39954,18 @@ function buildRaidsPanelHTML(){
     }
   }
   return `<div class="raid-panel">
-    <div class="raid-intro">🗝 <b>No-retreat gauntlet</b>, one health bar — <b>no loot unless you clear the final boss</b>. Faster clear = better rating &amp; drops.<br>Landing blows builds <b>Momentum</b>, which buys <b>Rally</b>, <b>Ruin</b> and <b>Brace</b> mid-run (keys 1/2/3). Mini-bosses and bosses <b>telegraph</b>: a ring closes around them, and each cast has an answer. Auto-cast plays them for you.</div>
+    <div class="raid-rules">
+      <div class="rl-tile"><span class="rl-ic">${iconHTML('ui_heart')}</span><span class="rl-tx">
+        <span class="rl-h">One bar, no retreat</span>
+        <span class="rl-p">Your health carries across every stage with no break to heal. If you fall, the run is over.</span></span></div>
+      <div class="rl-tile"><span class="rl-ic">${iconHTML('ui_bolt')}</span><span class="rl-tx">
+        <span class="rl-h">Momentum buys answers</span>
+        <span class="rl-p">Landing hits builds Momentum. Spend it on <b>Rally</b>, <b>Ruin</b> or <b>Brace</b> with keys <b>1</b>, <b>2</b> and <b>3</b>.</span></span></div>
+      <div class="rl-tile"><span class="rl-ic">${iconHTML('ui_skull')}</span><span class="rl-tx">
+        <span class="rl-h">Bosses telegraph</span>
+        <span class="rl-p">A ring closes in before a big cast. Each cast has one right answer, and auto-cast will play it for you.</span></span></div>
+    </div>
+    <div class="rl-foot">Loot only drops if the final boss falls. A faster clear means a better rank, more materials and better odds on a relic.</div>
     ${resultBox}
     <div class="raid-list">${cards}</div>
     ${(raidUnlocked(getRaid(SPR_ID))||(state.items&&(state.items.sunderstone||state.items.spirecore)))?buildAscensionHTML():''}
@@ -39879,35 +40066,43 @@ function buildSpireCardHTML(r, active, inRaid){
   const stones=(state.items&&state.items.sunderstone)||0;
   const cores=(state.items&&state.items.spirecore)||0;
   const bestLine=best
-    ? `Deepest <b style="color:#f0c8e0">floor ${best}</b>${runs?` · ${runs} climb${runs>1?'s':''}`:''}`
+    ? `Deepest <b style="color:var(--ra-ink)">floor ${best}</b>`
     : 'Never climbed';
+  const chips=spireAffixChips(false);
+  const lvl=(typeof combatLevel==='function')?combatLevel():0;
   return `<div class="raid-card${unlocked?'':' locked'}" style="--raid-accent:${r.accent}">
-    <div class="rc-body">
-      <div class="rc-left">
-        <div class="rc-head">
-          <span class="rc-ic">${iconHTML(r.icon)}</span>
-          <div class="rc-title"><span class="rc-nm">${r.name}</span><span class="rc-lv">Combat Lv ${r.unlockLvl}+ · Endless</span></div>
-        </div>
-        <div class="rc-blurb">${r.blurb}</div>
+    <div class="rc-lintel">
+      <span class="rc-ic">${iconHTML(r.icon)}</span>
+      <div class="rc-title">
+        <span class="rc-nm">${r.name}</span>
+        <span class="rc-kind">Endless climb</span>
       </div>
-      <div class="rc-right">
-        <div class="rc-row"><span class="rc-lbl">Climb</span>
-          <span class="spr-note">Every floor pays. Every fifth is a landing. It ends when you fall.</span></div>
-        <div class="rc-row" style="margin-top:4px"><span class="rc-lbl">Spoils</span>
-          <span class="spr-mats">${iconHTML('sunderstone')} ${stones.toLocaleString()} · ${iconHTML('spirecore')} ${cores.toLocaleString()}</span></div>
-        <div class="rc-row" style="margin-top:4px;align-items:flex-start"><span class="rc-lbl">Today</span>
-          <span class="spr-fxrow">${spireAffixChips(false)}</span></div>
-        <div class="rc-foot">
-          <span class="rc-best">${bestLine}</span>
-          ${unlocked
-            ? `<button class="raid-enter" data-raid="${r.id}"${(active||inRaid)?' disabled':''}>${inRaid?'In progress…':'⚔ Climb'}</button>`
-            : `<button class="raid-enter locked" disabled>🔒 Lv ${r.unlockLvl}</button>`}
-        </div>
-      </div>
+      <span class="rc-gate">Combat Lv ${r.unlockLvl}</span>
+    </div>
+    <div class="rc-blurb">${r.blurb}
+      <span class="rc-sub">Every floor pays. Every fifth is a landing. It ends when you fall.</span>
+    </div>
+    <div class="rc-strip sunk">
+      <span class="rc-lbl">Today</span>
+      <span class="rc-val">${chips?`<span class="spr-fxrow">${chips}</span>`:'<span class="rc-none">No affixes today</span>'}</span>
+    </div>
+    <div class="rc-strip">
+      <span class="rc-lbl">Record</span>
+      <span class="rc-val"><span class="rc-best${best?'':' none'}">${bestLine}</span></span>
+      ${runs?`<span class="rc-cnt">${runs} climb${runs>1?'s':''}</span>`:''}
+    </div>
+    <div class="rc-foot">
+      <span class="rc-hold">${unlocked?`
+        <span class="spr-mats" data-rtip="Sunderstone&#10;Spent on Ascension to raise the gear you are wearing.">${iconHTML('sunderstone')} ${stones.toLocaleString()}</span>
+        <span class="spr-mats" data-rtip="Spire Core&#10;Needed alongside Sunderstone from rank 7.">${iconHTML('spirecore')} ${cores.toLocaleString()}</span>`
+        : `<span class="rc-gap"><i>Combat ${lvl} / ${r.unlockLvl}</i>
+            <span class="rc-bar"><span style="width:${Math.min(100,Math.round(100*lvl/r.unlockLvl))}%"></span></span></span>`}</span>
+      ${unlocked
+        ? `<button class="raid-enter" data-raid="${r.id}"${(active||inRaid)?' disabled':''}>${iconHTML('ui_swords')} ${inRaid?'In progress':'Climb'}</button>`
+        : `<button class="raid-enter locked" disabled>${iconHTML('ui_lock')} Combat Lv ${r.unlockLvl}</button>`}
     </div>
   </div>`;
 }
-
 /* ── Ascension panel (0.9.124.11) ─────────────────────────────────────────────
    Lives under the raid list rather than in the Gear tab on purpose: the Spire is
    the only source of both materials, so the sink sits where the loot lands. Shows
@@ -39946,9 +40141,9 @@ function buildAscensionHTML(){
   return `<div class="asc-panel">
     <div class="asc-head"><span class="asc-t">Ascension</span>
       <span class="asc-bank">${iconHTML('sunderstone')} ${stones.toLocaleString()} &nbsp; ${iconHTML('spirecore')} ${cores.toLocaleString()}</span></div>
-    <div class="asc-sub">Spend what the Spire gives up to raise a worn piece. <b>How far it goes depends on where it came from</b> &mdash; Barrow gear stops at ★5, Emberforge ★7, Abyssal ★9, Empyrean ★10 &mdash; so an old piece climbs back into contention without ever passing the tier above it. Each rank adds <b>6% to that item's own attack, strength and defence</b>, and every rank you own anywhere also adds max health, crit, lifesteal and <b>damage reduction</b> &mdash; which is what actually carries you deeper into the Spire. Spire Cores are asked for from rank 7.${(function(){const dr=(typeof ascensionDR==='function')?ascensionDR():0;return dr>0?` <b style="color:#a8d264">Currently ${(dr*100).toFixed(1)}% less damage taken.</b>`:'';})()}</div>
+    <div class="asc-sub">Spend <b>Sunderstone</b> to raise a piece of combat gear you are wearing, and <b>Spire Cores</b> as well from rank 7. Each rank adds <b>6% to that item's own attack, strength and defence</b>. Ranks stack across everything you have equipped too: every one adds max health, crit, lifesteal and <b>damage reduction</b>, and the damage reduction is what gets you deeper into the Spire. <b>How high a piece goes depends on the raid it came from</b>: Barrow ★5, Emberforge ★7, Abyssal ★9, Empyrean ★10.${(function(){const dr=(typeof ascensionDR==='function')?ascensionDR():0;return dr>0?` <b style="color:#a8d264">Currently ${(dr*100).toFixed(1)}% less damage taken.</b>`:'';})()}</div>
     ${uniq.length?`<div class="asc-list">${rows}</div>`
-      :'<div class="asc-empty">Equip raid-tier gear (T7 and above) to ascend it. Crafted and shop gear below that cannot be raised.</div>'}
+      :'<div class="asc-empty">Wear raid-tier gear (T7 and above) and it shows up here to raise. Crafted and shop gear cannot be raised.</div>'}
     ${buildSalvageHTML()}
   </div>`;
 }
@@ -39975,7 +40170,7 @@ function buildSalvageHTML(){
     <div class="asc-head" style="margin-top:14px;padding-top:12px;border-top:1px solid #2a2013">
       <span class="asc-t" style="font-size:calc(15px*var(--tscale))">Salvage</span>
       <span class="asc-bank">${iconHTML('sunderstone')} ${total.toLocaleString()} in the satchel</span></div>
-    <div class="asc-sub">Break down raid-tier gear you are not wearing. Every raid tier is 30-40% stronger than the last, so the pieces the next raid made redundant become Ascension fuel instead of dead weight. Equipped gear is never listed.</div>
+    <div class="asc-sub">Break down raid-tier gear you are not wearing and get <b>Sunderstone</b> for it. Every raid tier is 30 to 40% stronger than the last, so anything a newer raid replaced is worth breaking. An ascended piece hands back half the Sunderstone you spent on it. Gear you are wearing is never listed.</div>
     <div class="asc-list">${cells}</div>
     ${rows.length>shown.length?`<div class="asc-empty" style="margin-top:7px">${rows.length-shown.length} more in the satchel.</div>`:''}
   </div>`;
