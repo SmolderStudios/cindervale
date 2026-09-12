@@ -89,6 +89,61 @@ const PLAN = [
   /* The nine Sundered Spire natives (0.9.124.28). Ruled 3x3 at 1254px, MONSTER art:
      keyed at 256px into cut_mon/ and packed into ART_MON, not the item block. */
   { name: 'spire_natives', sheet: 'spire_natives.png', ids: 'spire_natives.txt', grid: '3x3', inset: 8, crop: '4,4,1250,1250' },
+  /* The 57 zone monsters, redrawn 2026-09-12. No ruled frame and the bottom row is
+     NOT aligned to the top row's columns, so rowcols (which measures each row's
+     column edges off the artwork) rather than a grid. */
+  { name: 'mon_rat_warrens', sheet: 'mon_rat_warrens.png', rows: [
+    { ids: 'rat plague_rat dire_rat', crop: '0,0,1448,442', grid: '3x1', colx: '0,493,935,1448' },
+    { ids: 'brood_rat rat_queen', crop: '0,442,1448,1086', grid: '2x1', colx: '0,720,1448' },
+  ]},
+  { name: 'mon_spider_hollow', sheet: 'mon_spider_hollow.png', rows: [
+    { ids: 'spider web_weaver venomfang', crop: '0,0,1536,468', grid: '3x1', colx: '0,552,998,1536' },
+    { ids: 'brood_matron silkweaver_queen', crop: '0,468,1536,1024', grid: '2x1', colx: '0,763,1536' },
+  ]},
+  { name: 'mon_goblin_cave', sheet: 'mon_goblin_cave.png', rows: [
+    { ids: 'goblin goblin_archer goblin_brute', crop: '0,0,1536,463', grid: '3x1', colx: '0,517,985,1536' },
+    { ids: 'goblin_shaman goblin_warchief', crop: '0,463,1536,1024', grid: '2x1', colx: '0,776,1536' },
+  ]},
+  { name: 'mon_skeleton_crypt', sheet: 'mon_skeleton_crypt.png', rows: [
+    { ids: 'skeleton skel_archer crypt_wight', crop: '0,0,1536,459', grid: '3x1', colx: '0,531,1030,1536' },
+    { ids: 'bone_knight lich', crop: '0,459,1536,1024', grid: '2x1', colx: '0,699,1536' },
+  ]},
+  { name: 'mon_wolf_den', sheet: 'mon_wolf_den.png', rows: [
+    { ids: 'wolf frost_wolf alpha_wolf', crop: '0,0,1448,542', grid: '3x1', colx: '0,479,983,1448' },
+    { ids: 'pack_hunter ironfang', crop: '0,542,1448,1086', grid: '2x1', colx: '0,672,1448' },
+  ]},
+  { name: 'mon_ogre_stronghold', sheet: 'mon_ogre_stronghold.png', rows: [
+    { ids: 'ogre_grunt ogre ogre_houndmaster', crop: '0,0,1536,475', grid: '3x1', colx: '0,514,988,1536' },
+    { ids: 'ogre_seer ogre_warlord', crop: '0,475,1536,1024', grid: '2x1', colx: '0,771,1536' },
+  ]},
+  { name: 'mon_troll_caverns', sheet: 'mon_troll_caverns.png', rows: [
+    { ids: 'cave_troll troll moss_troll', crop: '0,0,1536,465', grid: '3x1', colx: '0,504,984,1536' },
+    { ids: 'cavern_troll troll_king', crop: '0,465,1536,1024', grid: '2x1', colx: '0,731,1536' },
+  ]},
+  { name: 'mon_wyvern_roost', sheet: 'mon_wyvern_roost.png', rows: [
+    { ids: 'drake wyvern cinder_drake', crop: '0,0,1536,442', grid: '3x1', colx: '0,517,991,1536' },
+    { ids: 'magma_wyrm emberwyrm', crop: '0,442,1536,1024', grid: '2x1', colx: '0,646,1536' },
+  ]},
+  { name: 'mon_demon_sanctum', sheet: 'mon_demon_sanctum.png', rows: [
+    { ids: 'hellhound demon abyssal_fiend', crop: '0,0,1536,449', grid: '3x1', colx: '0,557,904,1536' },
+    { ids: 'dread_knight demon_lord', crop: '0,449,1536,1024', grid: '2x1', colx: '0,600,1536' },
+  ]},
+  { name: 'mon_thornwood', sheet: 'mon_thornwood.png', rows: [
+    { ids: 'wild_boar timber_wolf', crop: '0,0,1254,573', grid: '2x1', colx: '0,637,1254' },
+    { ids: 'thornback_stag briar_lynx', crop: '0,573,1254,1254', grid: '2x1', colx: '0,627,1254' },
+  ]},
+  { name: 'mon_frostfang', sheet: 'mon_frostfang.png', rows: [
+    { ids: 'frost_bear snow_leopard', crop: '0,0,1227,592', grid: '2x1', colx: '0,597,1227' },
+    /* The elk's breath cloud and the mammoth's left tusk overlap horizontally, so no
+       single edge separates them. Each gets its own crop and the overlapping sliver
+       is dropped from both. */
+    { ids: 'tundra_elk',  crop: '0,592,548,1282',    grid: '1x1' },
+    { ids: 'ice_mammoth', crop: '592,592,1227,1282', grid: '1x1' },
+  ]},
+  { name: 'mon_ashen_steppe', sheet: 'mon_ashen_steppe.png', rows: [
+    { ids: 'ash_jackal cinder_boar', crop: '0,0,1254,567', grid: '2x1', colx: '0,622,1254' },
+    { ids: 'dust_stalker scorch_rhino', crop: '0,567,1254,1254', grid: '2x1', colx: '0,617,1254' },
+  ]},
   { name: 'spire_gauntlets', sheet: 'spire_gear.png', rows: [
     { ids: 'stonewright_gauntlets', crop: '632,632,1250,1112', grid: '1x1' },
   ]},
