@@ -6771,6 +6771,24 @@ setTimeout(() => {
        ev(`(function(){var before=combat.raid&&combat.raid.id; cgBack();
             return !!combat.raid && combat.raid.id===before;})()`));
     ev(`combat.active=false; combat.raid=null; state.cmbView='guide';`);
+
+    /* ICONS IS ONE FLAT NAMESPACE and the art packs are spliced in one after
+       another, so the LAST pack to claim an id wins everywhere that id is drawn.
+       The achievement emblem for "demon_lord" is injected after the monster
+       portraits, and it took the Demon Lord's id: the final boss of the game
+       fought as a skull on a shield, in the arena and in the guide, and nothing
+       threw. injectach.js now prefixes a claimed id with ach_, and this is what
+       catches it if another pack ever lands on a creature again. */
+    const stolen = ev(`(function(){var bad=[];
+      for(var i=0;i<MONSTERS.length;i++){ var m=MONSTERS[i];
+        if(!m.zone||!m.lvl) continue;
+        if(String(ICONS[m.id]||'').indexOf('art-mon')<0) bad.push(m.id); }
+      return bad.join(', ');})()`);
+    ok('every zone monster still draws its OWN painted portrait', stolen === '', stolen || 'all 57');
+    ok('and the achievement emblem that used to take one has its own key',
+       ev(`String(ICONS['ach_demon_lord']||'').indexOf('art-ach')>=0`));
+    ok('no achievement asks for an icon that does not exist',
+       ev(`ACHIEVEMENTS.filter(a=>!ICONS[a.icon]).map(a=>a.id).join(', ')`) === '');
   }
 
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));

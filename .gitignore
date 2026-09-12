@@ -96,3 +96,6 @@ _iconart/pack.*.json
 # injectnodes.js regenerates from cut/ in seconds. picks_nodes.json IS committed,
 # because that one is the id list, not the payload.
 _iconart/pack_nodes.json
+_iconart/cut_seg/
+_iconart/raw_mon/
+_monseg.html

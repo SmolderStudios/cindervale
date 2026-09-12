@@ -1,0 +1,24 @@
+[
+ {
+  "f": "ice_mammoth__painted.png",
+  "cutPct": 50,
+  "onWhite": true,
+  "fill": 77,
+  "aspect": 1.03,
+  "backdropOk": true,
+  "cornerMean": 255,
+  "holes": 12,
+  "holePct": 0.8
+ },
+ {
+  "f": "tundra_elk__painted.png",
+  "cutPct": 64,
+  "onWhite": true,
+  "fill": 70,
+  "aspect": 0.88,
+  "backdropOk": true,
+  "cornerMean": 255,
+  "holes": 11,
+  "holePct": 1
+ }
+]
