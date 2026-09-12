@@ -6789,6 +6789,39 @@ setTimeout(() => {
        ev(`String(ICONS['ach_demon_lord']||'').indexOf('art-ach')>=0`));
     ok('no achievement asks for an icon that does not exist',
        ev(`ACHIEVEMENTS.filter(a=>!ICONS[a.icon]).map(a=>a.id).join(', ')`) === '');
+
+    /* DEAD TOOLTIPS. A data-tip only renders if some rule in the stylesheet names
+       that element, because the ::after tooltips are a WHITELIST of selectors, and
+       even then an ancestor with overflow:hidden clips it. Both traps are silent:
+       the attribute sits in the markup looking correct and nothing ever appears.
+       The raids page lost 27 gauntlet stage tips and all three Spire affix chips
+       to exactly this, plus the arena foe stats and the fight bar swap buttons.
+       Anything that cannot be reached by a rule has to use data-rtip instead,
+       which draws in the floating card and cannot be clipped. */
+    const tipOrphans = ev(`(function(){
+      var css=''; var st=document.querySelectorAll('style');
+      for(var i=0;i<st.length;i++) css+=st[i].textContent;
+      /* No regex: this string lives in a template literal, so a backslash n
+         inside a character class becomes a real newline and the literal breaks. */
+      var sels=[], lines=css.split(String.fromCharCode(10));
+      for(var L=0;L<lines.length;L++){
+        var parts=lines[L].split(',');
+        for(var p=0;p<parts.length;p++){
+          var t=parts[p].trim(), ix=t.indexOf('[data-tip]:hover::after');
+          if(ix>0) sels.push(t.slice(0,ix)+'[data-tip]');
+        }
+      }
+      var bad={};
+      var els=document.querySelectorAll('#combatPanel [data-tip]');
+      for(var j=0;j<els.length;j++){
+        var e=els[j], hit=false;
+        for(var k=0;k<sels.length;k++){ try{ if(e.matches(sels[k])){ hit=true; break; } }catch(_){} }
+        if(!hit) bad[String(e.getAttribute('class')||e.tagName).split(' ')[0]]=1;
+      }
+      return Object.keys(bad).join(', ');
+    })()`);
+    ok('every data-tip on the combat page can actually be reached by a rule',
+       tipOrphans === '', tipOrphans || 'none orphaned');
   }
 
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));
