@@ -52,6 +52,11 @@ const LAYOUT = {
   mon_thornwood:       [2, 2],
   mon_frostfang:       [2, 2],
   mon_ashen_steppe:    [2, 2],
+  /* The 27 raid foes. Uneven rosters, so the row split is not always even. */
+  mon_sunken_barrow:   [3, 3],
+  mon_emberforge:      [3, 3],
+  mon_abyssal_throne:  [4, 3],
+  mon_empyrean_throne: [4, 4],
 };
 
 const WORK = fs.readFileSync(path.join(__dirname, '_monseg_work.js'), 'utf8');
