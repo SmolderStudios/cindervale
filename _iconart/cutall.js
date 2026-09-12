@@ -86,6 +86,9 @@ const PLAN = [
   /* The gauntlets' two-line caption fooled the caption trim into cutting the pair
      down to its cuffs. Given a crop of their own that stops above the caption, and
      cut after the sheet so it wins. */
+  /* The nine Sundered Spire natives (0.9.124.28). Ruled 3x3 at 1254px, MONSTER art:
+     keyed at 256px into cut_mon/ and packed into ART_MON, not the item block. */
+  { name: 'spire_natives', sheet: 'spire_natives.png', ids: 'spire_natives.txt', grid: '3x3', inset: 8, crop: '4,4,1250,1250' },
   { name: 'spire_gauntlets', sheet: 'spire_gear.png', rows: [
     { ids: 'stonewright_gauntlets', crop: '632,632,1250,1112', grid: '1x1' },
   ]},

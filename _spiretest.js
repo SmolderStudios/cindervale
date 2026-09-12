@@ -609,8 +609,11 @@ setTimeout(()=>{
     /* The bug that painted a raw id as 358px of text in the arena. A generated foe
        resolves its art through iconHTML(id), so an id with no ICONS entry renders
        the literal string. It cost a shipped build once already. */
-    ok('every native has real drawn art, not a generator fallback',
-       ev("SPIRE_NATIVES.every(x=>{var k=x.art||x.id; return typeof ICONS[k]==='string' && ICONS[k].indexOf('<svg')===0;})"),
+    /* Painted since 0.9.124.28, hand-drawn SVG before that. Either is real art;
+       what must never happen is no entry at all, which paints the raw id as 358px
+       of text in the arena. */
+    ok('every native has real drawn art, painted or drawn',
+       ev("SPIRE_NATIVES.every(x=>{var k=x.art||x.id; return typeof ICONS[k]==='string' && /^<(svg|img)/.test(ICONS[k]);})"),
        ev("JSON.stringify(SPIRE_NATIVES.filter(x=>!ICONS[x.art||x.id]).map(x=>x.id))"));
     ok('and the generated floor id resolves to that art',
        ev("(function(){for(let i=1;i<=80;i++){const m=spireFloor(i,true); if(!ICONS[m.id]) return 'floor '+i+' '+m.id;} return true;})()")===true);
