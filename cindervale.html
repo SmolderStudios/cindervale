@@ -4026,7 +4026,7 @@ body:not(.is-demo) .demo-only{display:none !important}
   --ra:var(--raid-accent,#4a9a8a);
   --ra-ink:color-mix(in srgb,var(--ra) 62%,#fff4e2);
   --ra-dim:color-mix(in srgb,var(--ra) 38%,#3d2c1d);
-  --wash:.44;
+  --wash:.68;
   position:relative;display:grid;grid-template-columns:minmax(0,1fr) calc(300px*var(--tscale));
   min-height:calc(188px*var(--tscale));border-radius:12px;overflow:hidden;
   border:1px solid var(--ra-dim);background-color:#0c0806;
@@ -4046,7 +4046,7 @@ body:not(.is-demo) .demo-only{display:none !important}
 .raid-card:hover .rc-lair{opacity:calc(var(--wash) + .16);transform:scale(1.035)}
 /* Locked drains the lair and the ink but keeps the hue in the trim, so five locked
    raids still read as five different places you have not earned yet. */
-.raid-card.locked{--wash:.14;--ra-ink:#9e885f;opacity:.9}
+.raid-card.locked{--wash:.18;--ra-ink:#9e885f;opacity:.9}
 
 .rc-txt{padding:16px 20px;position:relative;z-index:3;display:flex;flex-direction:column;gap:6px}
 .rc-meta{font-family:var(--num);font-size:calc(10.5px*var(--tscale));letter-spacing:1.3px;
@@ -8254,7 +8254,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.124.35">v0.9.124</div>
+  <div class="mm-ver" data-build="0.9.124.36">v0.9.124</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -28361,7 +28361,7 @@ function buildSpireLogBody(raid){
       <div class="mlm-htext"><div class="mlm-hname">${raid.name}</div>
         <div class="mlm-hsub">Endless · Combat Lv ${raid.unlockLvl} · ${best?('deepest floor '+best):'never climbed'}${runs?` · ${runs} climb${runs>1?'s':''}`:''}</div></div>
     </div>
-    <div class="mlog-raidfx"><span class="mrfx-ic">✦</span><div>Every floor pays as you clear it, so a climb that ends on floor 37 keeps everything the first 36 gave up. There is no clear and no rating: <b>depth is the reward</b>. Every ${SPR_BOSS_EVERY}th floor is a landing: a harder foe that always telegraphs, and from floor 15 the only source of Spire Cores.</div></div>
+    <div class="mlog-raidfx"><span class="mrfx-ic">✦</span><div>Every floor drops its loot as you clear it, so a climb that ends on floor 37 keeps everything the first 36 gave. There is no clear and no rating: <b>depth is the reward</b>. Every ${SPR_BOSS_EVERY}th floor is a landing: a harder foe that always telegraphs, and from floor 15 the only source of Spire Cores.</div></div>
     <div class="mlog-sec-t">Today's affixes</div>
     <div class="spr-fxrow" style="margin-top:6px">${spireAffixChips(false)}</div>
     <div class="mlog-legend" style="margin-top:5px">Two against you and one for you, rolled from the calendar day and the same for everyone. They change at midnight, and a climb already under way keeps the set it started with.</div>
@@ -39894,7 +39894,7 @@ function buildRaidsPanelHTML(){
     const clears=(state.raidClears&&state.raidClears[r.id])||0;
     const n=r.stages.length;
     const nMini=r.stages.filter(s=>s.miniBoss).length;
-    const dots=r.stages.map(s=>`<span class="rd-dot${s.raidBoss?' boss':s.miniBoss?' mini':''}" data-rtip="${esc(s.name)}&#10;Level ${s.lvl} · ${s.hp.toLocaleString()} HP${s.raidBoss?'&#10;Final boss. Clear this or the run pays nothing.':s.miniBoss?'&#10;Mini-boss. It telegraphs, and the cast has an answer.':''}${s.raidfx?'&#10;'+esc(s.raidfx.name)+(s.raidfx.desc?': '+esc(s.raidfx.desc):''):''}">${s.raidBoss?'★':s.miniBoss?'◆':''}</span>`).join('');
+    const dots=r.stages.map(s=>`<span class="rd-dot${s.raidBoss?' boss':s.miniBoss?' mini':''}" data-rtip="${esc(s.name)}&#10;Level ${s.lvl} · ${s.hp.toLocaleString()} HP${s.raidBoss?'&#10;Final boss. Clear this or the run gives nothing.':s.miniBoss?'&#10;Mini-boss. It telegraphs, and the cast has an answer.':''}${s.raidfx?'&#10;'+esc(s.raidfx.name)+(s.raidfx.desc?': '+esc(s.raidfx.desc):''):''}">${s.raidBoss?'★':s.miniBoss?'◆':''}</span>`).join('');
     const tierCol=best?((r.ratingTiers.find(t=>t.key===best.rating)||{}).col||'#ccc'):'#ccc';
     /* The final boss and his portrait. Both were facts that existed only inside a
        dot tooltip, and the boss is the most useful thing to know about a raid you
@@ -39989,7 +39989,7 @@ function buildSpireProgressHTML(raid){
       <span class="rp-r">${curse}<span class="spr-chase" id="rxChase">${chase}</span><span class="rp-timer" id="raidTimer">${_fmtRaidTime(ms)}</span></span>
     </div>
     <div class="spr-fxrow run">${spireAffixChips(true)}</div>
-    <div class="rp-warn">⚠ There is no top. Every floor pays as you clear it, and the climb ends when you fall. No single blow can take more than 45% of your health &mdash; how deep you get is a question of how much food you brought.</div>
+    <div class="rp-warn">⚠ There is no top. Every floor drops its loot as you clear it, and the climb ends when you fall. No single blow can take more than 45% of your health, so how deep you get is a question of how much food you brought.</div>
   </div>`;
 }
 
@@ -40083,7 +40083,7 @@ function buildSpireCardHTML(r, active, inRaid){
       <div class="rc-meta">Endless climb · Combat Lv ${r.unlockLvl}</div>
       <h3 class="rc-name">${r.name}</h3>
       <p class="rc-bl">${r.blurb}</p>
-      <div class="rc-ends">${bestLine}. Every floor pays, every fifth is a landing, and it ends when you fall.</div>
+      <div class="rc-ends">${bestLine}. Every floor drops loot, every fifth is a landing, and it ends when you fall.</div>
       <div class="rc-act">
         ${unlocked
           ? `<button class="raid-enter" data-raid="${r.id}"${(active||inRaid)?' disabled':''}>${iconHTML('ui_swords')} ${inRaid?'In progress':'Climb'}</button>`
