@@ -40,7 +40,11 @@ const DRY = process.argv.includes('--dry');
    The audit fails the build over 12 MB, which is the wrapper's 6s fetch abort on
    a tester's connection, so these two numbers are a real constraint not a taste. */
 const MON_SIZE = +(process.env.CVMONSIZE || 256), MON_Q = +(process.env.CVMONQ || 0.8);
-const BG_W = 560, BG_H = 818, BG_Q = 0.82;   // matches the twelve zone plates already in
+/* Overridable for the same reason MON_* are: the audit fails the build over 12 MB,
+   which is the wrapper's 6s fetch abort on a tester's connection, so a plate's
+   quality is a delivery constraint that has to be measured rather than assumed.
+     CVBGQ=0.7 node _iconart/injectmon.js --bg <file> <id> */
+const BG_W = 560, BG_H = 818, BG_Q = +(process.env.CVBGQ || 0.82);
 
 /* Square encode for a portrait: the cut is already trimmed and letterboxed. */
 const ENC_SQ = `async (uri, S, Q) => {

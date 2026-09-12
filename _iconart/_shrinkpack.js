@@ -28,6 +28,9 @@ const PACK = process.argv[2];
 const SIZE = +process.argv[3];
 const Q = +(process.argv[4] || 0.8);
 const DRY = process.argv.includes('--dry');
+/* Re-encode at the SAME size for quality alone. A 96px item icon drawn at 96px
+   cannot be made smaller without hurting, but it can be made cheaper. */
+const REQUAL = process.argv.includes('--requal');
 if (!PACK || !SIZE) { console.error('usage: _shrinkpack.js <PACK> <size> [quality] [--dry]'); process.exit(1); }
 
 const ENC = `async (uri, S, Q) => {
@@ -85,10 +88,10 @@ function parseBlock(body) {
     if (!m) { await b.close(); throw new Error(id + ' did not round-trip; writing nothing'); }
     const cls = /class=\\"([^\\]+)\\"/.exec(tag);
     const r = await p.evaluate((fn, u, S, q) => fn(u, S, q), enc, m[1], SIZE, Q);
-    if (r.w <= SIZE) { console.log('  ' + id.padEnd(22) + 'already ' + r.w + 'px, left alone'); now += m[1].length; was += m[1].length; continue; }
+    if (!REQUAL && r.w <= SIZE) { now += m[1].length; was += m[1].length; continue; }
     was += m[1].length; now += r.out.length;
     map[id] = '<img class=\\"' + (cls ? cls[1] : 'ev-icon') + '\\" alt=\\"\\" loading=\\"lazy\\" src=\\"' + r.out + '\\">';
-    console.log('  ' + id.padEnd(22) + r.w + 'px ' + kb(m[1].length) + '  ->  ' + SIZE + 'px ' + kb(r.out.length));
+    if (!REQUAL) console.log('  ' + id.padEnd(22) + r.w + 'px ' + kb(m[1].length) + '  ->  ' + SIZE + 'px ' + kb(r.out.length));
   }
   await b.close();
 
