@@ -20,9 +20,14 @@ const COLS = 6, PER = 24, TILE = 210;
 
 (async () => {
   fs.mkdirSync(OUT, { recursive: true });
+  /* Optional sheet-name arguments narrow it to one batch, so a raid pass does not
+     render three pages of blanks for the 57 zone monsters. */
+  const want = process.argv.slice(2).filter(a => !a.startsWith('--'));
   const ids = [];
-  for (const f of fs.readdirSync(SHEETS).filter(f => /^mon_.*\.txt$/.test(f)).sort())
+  for (const f of fs.readdirSync(SHEETS).filter(f => /^mon_.*\.txt$/.test(f)).sort()) {
+    if (want.length && want.indexOf(f.replace(/\.txt$/, '')) < 0) continue;
     for (const id of fs.readFileSync(path.join(SHEETS, f), 'utf8').split(/\s+/).filter(Boolean)) ids.push(id);
+  }
 
   const b = await puppeteer.launch({ executablePath: CHROME, headless: true,
     args: ['--allow-file-access-from-files'] });

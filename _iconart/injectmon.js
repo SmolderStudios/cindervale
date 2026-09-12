@@ -35,7 +35,11 @@ const GAME = path.join(__dirname, '..', 'cindervale.html');
 const CUT  = path.join(__dirname, process.env.CVCUT || 'cut_mon');
 const arg = k => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : null; };
 const DRY = process.argv.includes('--dry');
-const MON_SIZE = 256, MON_Q = 0.8;
+/* Overridable so a size pass can be measured rather than guessed:
+     CVMONQ=0.7 CVMONSIZE=240 node _iconart/injectmon.js
+   The audit fails the build over 12 MB, which is the wrapper's 6s fetch abort on
+   a tester's connection, so these two numbers are a real constraint not a taste. */
+const MON_SIZE = +(process.env.CVMONSIZE || 256), MON_Q = +(process.env.CVMONQ || 0.8);
 const BG_W = 560, BG_H = 818, BG_Q = 0.82;   // matches the twelve zone plates already in
 
 /* Square encode for a portrait: the cut is already trimmed and letterboxed. */

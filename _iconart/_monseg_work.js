@@ -29,6 +29,41 @@ async (uri, rows, SIZE, MARGIN) => {
     if (Y > 0)     st.push(i - W);
     if (Y < H - 1) st.push(i + W);
   }
+  /* CAST SHADOWS. The sheets ask for no ground and no cast shadow, and the model
+     draws them anyway: a soft grey pool under the feet. It sits just under the
+     page cut, so the border fill stops at its edge and leaves the core behind as
+     a pale blob at the creature's base once it is on the dark panel. That is what
+     Jordan has been seeing as a white patch at the feet.
+
+     Grow the page into anything PALE and DESATURATED that touches it. The guard
+     is the thick dark ink outline every creature is drawn with: the growth stops
+     dead at it, so a bone white limb or a marble shoulder survives, while a
+     shadow, which has no outline of its own, does not. */
+  const chroma = i => {
+    const r = px[i*4], g = px[i*4+1], b2 = px[i*4+2];
+    return Math.max(r, g, b2) - Math.min(r, g, b2);
+  };
+  const sh = [];
+  for (let i = 0; i < N; i++) {
+    if (!bg[i]) continue;
+    const X = i % W, Y = (i / W) | 0;
+    if ((X > 0 && !bg[i-1]) || (X < W-1 && !bg[i+1]) ||
+        (Y > 0 && !bg[i-W]) || (Y < H-1 && !bg[i+W])) sh.push(i);
+  }
+  let shadowPx = 0;
+  while (sh.length) {
+    const i = sh.pop();
+    const X = i % W, Y = (i / W) | 0;
+    const push = j => {
+      if (bg[j] || lum[j] <= 168 || chroma(j) >= 22) return;
+      bg[j] = 1; shadowPx++; sh.push(j);
+    };
+    if (X > 0)     push(i - 1);
+    if (X < W - 1) push(i + 1);
+    if (Y > 0)     push(i - W);
+    if (Y < H - 1) push(i + W);
+  }
+
   /* Enclosed page: the gap under an arm, the hole in a ribcage. Tighter cut and a
      flatness guard so a highlight on armour is not mistaken for paper. */
   const seenH = new Uint8Array(N);
@@ -231,5 +266,5 @@ async (uri, rows, SIZE, MARGIN) => {
                  inkPct: Math.round(ink / (bw * bh) * 100),
                  edge: x0 <= 1 || y0 <= 1 || x1 >= W - 2 || y1 >= H - 2 });
   }
-  return { cells, blobs: live.length, glyphs, split };
+  return { cells, blobs: live.length, glyphs, split, shadowPx };
 }

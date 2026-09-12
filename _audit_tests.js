@@ -6785,6 +6785,18 @@ setTimeout(() => {
         if(String(ICONS[m.id]||'').indexOf('art-mon')<0) bad.push(m.id); }
       return bad.join(', ');})()`);
     ok('every zone monster still draws its OWN painted portrait', stolen === '', stolen || 'all 57');
+    /* Same trap, other end of the file. ICONS is written in FILE ORDER, and the
+       Empyrean Throne's eight placeholder SVGs sit thousands of lines below where
+       ART_MON copies itself in, so a plain Object.assign took all eight raid foes
+       back off their portraits. Nothing threw. Raid stages are not in MONSTERS, so
+       the check above could never have seen them. */
+    const raidStolen = ev(`(function(){var bad=[];
+      for(var i=0;i<RAIDS.length;i++){ var st=RAIDS[i].stages||[];
+        for(var j=0;j<st.length;j++){
+          var s=String(ICONS[st[j].id]||'');
+          if(s.indexOf('art-mon')<0) bad.push(st[j].id); } }
+      return bad.join(', ');})()`);
+    ok('and so does every raid stage foe', raidStolen === '', raidStolen || 'all 27');
     ok('and the achievement emblem that used to take one has its own key',
        ev(`String(ICONS['ach_demon_lord']||'').indexOf('art-ach')>=0`));
     ok('no achievement asks for an icon that does not exist',

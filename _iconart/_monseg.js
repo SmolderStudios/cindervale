@@ -83,7 +83,9 @@ const WORK = fs.readFileSync(path.join(__dirname, '_monseg_work.js'), 'utf8');
     const uri = 'data:image/png;base64,' + fs.readFileSync(path.join(SHEETS, name + '.png')).toString('base64');
     const r = await p.evaluate((fn, u, rows, S, M) => fn(u, rows, S, M), fn, uri, rows, SIZE, MARGIN);
     if (r.err) { console.log(name.padEnd(22) + 'FAILED - ' + r.err); warn.push(name + ': ' + r.err); continue; }
-    console.log(name.padEnd(22) + r.blobs + ' blobs, ' + r.glyphs + ' caption glyphs dropped, split y=' + r.split.join('/'));
+    console.log(name.padEnd(22) + r.blobs + ' blobs, ' + r.glyphs + ' caption glyphs dropped, '
+      + (r.shadowPx ? (r.shadowPx/1000).toFixed(0) + 'K shadow px removed, ' : '')
+      + 'split y=' + r.split.join('/'));
     r.cells.forEach((c, i) => {
       const id = ids[i];
       fs.writeFileSync(path.join(CUT, id + '__painted.png'), Buffer.from(c.png.split(',')[1], 'base64'));
