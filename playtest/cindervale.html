@@ -6179,6 +6179,17 @@ body:not(.is-demo) .demo-only{display:none !important}
              0 0 0 1px rgba(199,155,78,.4);
 }
 .skill-row{ padding:6px 9px; margin-bottom:2px; border-radius:7px; }
+/* Dragging a skill to a new place (0.9.124.48): the row you hold fades, a gold line
+   shows where it will land. ::before is the XP fill, so the line is ::after. */
+#skillList .skill-row.sk-dragging{ opacity:.4; }
+#skillList .skill-row.sk-drop-above::after,
+#skillList .skill-row.sk-drop-below::after{
+  content:'';position:absolute;left:3px;right:3px;height:3px;border-radius:2px;z-index:2;pointer-events:none;
+  background:var(--gold-hi);box-shadow:0 0 6px rgba(240,199,114,.7);
+}
+#skillList .skill-row.sk-drop-above::after{ top:0; }
+#skillList .skill-row.sk-drop-below::after{ bottom:0; }
+.sk-order-hint{ margin:0 2px 6px;font-size:calc(11px*var(--tscale));color:#8a7657;font-style:italic; }
 .skill-top{ gap:9px; }
 .skill-top .icon{ width:27px; height:27px; border-radius:7px; }
 .skill-top .icon svg{ width:19px; height:19px; }
@@ -7415,11 +7426,43 @@ body:not(.is-demo) .demo-only{display:none !important}
 .bag-tab.drop-on{background:#1f2a12;box-shadow:inset 0 0 0 2px var(--green);color:#cfe6a8}
 .bag-tab-dot{width:14px;height:14px;border-radius:50%;border:1px dashed rgba(214,170,96,.45)}
 .bag-tab-nm{max-width:110px;overflow:hidden;text-overflow:ellipsis}
-.bag-tabbar{display:flex;gap:6px;align-items:center}
+.bag-tab[draggable="true"]:active{cursor:grabbing}
+.bag-tab.dragging{opacity:.4}
+.bag-tab.tab-drop-l{box-shadow:inset 3px 0 0 var(--gold-hi),inset 0 0 0 1px rgba(240,199,114,.5)}
+.bag-tab.tab-drop-r{box-shadow:inset -3px 0 0 var(--gold-hi),inset 0 0 0 1px rgba(240,199,114,.5)}
+/* the open tab's bar (0.9.124.48): picture, name, move, sort, delete */
+.bag-tabbar{position:relative;display:flex;gap:6px;align-items:center}
 .bag-tabbar:empty{display:none}
-.bag-tabname{flex:1;min-width:0;height:30px;padding:0 10px;border-radius:7px;background:#100b06;
-  border:1px solid rgba(214,170,96,.18);color:var(--text);font-family:inherit;font-size:calc(13px*var(--tscale))}
-.bag-tabname:focus{border-color:rgba(240,199,114,.5);outline:none}
+.bag-facebtn{flex:none;display:inline-flex;align-items:center;gap:2px;height:36px;padding:0 5px 0 6px;border-radius:7px;border:0;
+  background:rgba(0,0,0,.3);box-shadow:inset 0 0 0 1px rgba(214,170,96,.22);color:#c9a86a;cursor:var(--cur-pointer)}
+.bag-facebtn .ev-icon{width:26px;height:26px}
+.bag-facebtn:hover,.bag-facebtn.on{box-shadow:inset 0 0 0 1px rgba(240,199,114,.6);color:var(--gold-hi)}
+.bag-caret{font-size:10px;line-height:1}
+.bag-namewrap{flex:1;min-width:0;display:flex;align-items:center;gap:7px;height:36px;padding:0 10px;border-radius:7px;
+  background:transparent;box-shadow:inset 0 0 0 1px rgba(214,170,96,.14);cursor:text}
+.bag-namewrap:hover{background:rgba(0,0,0,.22);box-shadow:inset 0 0 0 1px rgba(214,170,96,.35)}
+.bag-namewrap:focus-within{background:#100b06;box-shadow:inset 0 0 0 1px rgba(240,199,114,.55),inset 0 2px 4px rgba(0,0,0,.8)}
+.bag-pen{flex:none;color:#b8955a;font-size:calc(14px*var(--tscale));line-height:1}
+.bag-namewrap:hover .bag-pen,.bag-namewrap:focus-within .bag-pen{color:var(--gold-hi)}
+.bag-tabname{flex:1;min-width:0;height:100%;padding:0;border:0;background:transparent;color:var(--gold-hi);
+  font-family:'Cinzel',serif;font-size:calc(14px*var(--tscale));letter-spacing:.04em}
+.bag-tabname:focus{outline:none}
+.bag-tabname::placeholder{color:#8a7657;font-family:inherit}
+#inventory .bag-tabbar .bag-btn{height:36px}
+#inventory .bag-tabbar .bag-mv{width:36px;padding:0;font-size:15px}
+.bag-pick{position:absolute;top:calc(100% + 6px);left:0;z-index:30;width:min(400px,100%);padding:10px;border-radius:10px;
+  background:#1b130a;box-shadow:inset 0 0 0 1px rgba(214,170,96,.35),0 12px 28px rgba(0,0,0,.7)}
+.bag-pick[hidden]{display:none}
+.bag-pick-h{font-size:calc(10.5px*var(--tscale));letter-spacing:.12em;text-transform:uppercase;color:#8a7657;margin:0 0 8px}
+#inventory .bag-pick .bag-pick-auto{height:28px;margin-bottom:8px}
+.bag-pick-auto.on{box-shadow:inset 0 0 0 1px rgba(240,199,114,.7)}
+.bag-pick-grid{display:grid;grid-template-columns:repeat(auto-fill,50px);gap:6px;max-height:230px;overflow-y:auto}
+.bag-pick-ic{width:50px;height:50px;padding:0;border:0;border-radius:7px;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(110% 110% at 50% 10%,#221507,#0d0704);box-shadow:inset 0 2px 5px rgba(0,0,0,.85);cursor:var(--cur-pointer)}
+.bag-pick-ic .ev-icon{width:40px;height:40px}
+.bag-pick-ic:hover{box-shadow:inset 0 2px 5px rgba(0,0,0,.85),0 0 0 1px rgba(240,199,114,.5)}
+.bag-pick-ic.on{box-shadow:inset 0 2px 5px rgba(0,0,0,.85),0 0 0 2px var(--gold-hi)}
+.bag-pick-none{font-size:calc(12px*var(--tscale));color:#8a7657}
 
 #inventory .bag-cap{display:flex;align-items:center;gap:8px;margin:0;padding:0;background:none;border:0;box-shadow:none;
   font-family:var(--num);font-size:calc(12px*var(--tscale));color:#a8916a}
@@ -8561,7 +8604,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.124.47">v0.9.124</div>
+  <div class="mm-ver" data-build="0.9.124.48">v0.9.124</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -8990,6 +9033,7 @@ body:not(.is-demo) .demo-only{display:none !important}
           <option value="active">Active first</option>
           <option value="az">A – Z</option>
           <option value="level">Level</option>
+          <option value="custom">Your order</option>
         </select>
       </div>
       <div id="skillList"></div>
@@ -9030,7 +9074,7 @@ body:not(.is-demo) .demo-only{display:none !important}
     <div class="inv-head">
       <button type="button" class="inv-back" id="invBack">← Back</button>
       <span class="inv-title">Satchel</span>
-      <span class="inv-note">Drag an item onto a tab to move it there, or onto + to give it a tab of its own.</span>
+      <span class="inv-note">Drag items onto a tab or onto +. Double-click a tab to rename it, drag tabs to move them.</span>
     </div>
     <div class="inv-grid">
       <section class="inv-gear" id="invGear"></section>
@@ -19636,7 +19680,9 @@ function normalizeState(){
     for(const t of state.bagTabs){
       if(!t||typeof t!=='object'||typeof t.id!=='string'||!/^t\d+$/.test(t.id)||kept.some(k=>k.id===t.id)) continue;
       const items=(Array.isArray(t.items)?t.items:[]).filter(id=>typeof id==='string'&&ITEMS[id]&&!seen[id]&&(seen[id]=1));
-      kept.push({id:t.id, name:typeof t.name==='string'?t.name.slice(0,20):'', items:items});
+      const tab={id:t.id, name:typeof t.name==='string'?t.name.slice(0,20):'', items:items};
+      if(typeof t.icon==='string'&&ITEMS[t.icon]) tab.icon=t.icon;   // the picture you chose (0.9.124.48)
+      kept.push(tab);
       if(kept.length>=9) break;   // BAG_TAB_MAX, which is declared further down the file
     }
     state.bagTabs=kept;
@@ -25025,30 +25071,77 @@ function railRunDot(){
    prefs rather than in the save - it belongs to the player, not a character.
    'active' stays the default so nobody's rail reorders itself unasked. */
 const SKILL_SORT_KEY='cindervale_skill_sort';
-const SKILL_SORTS={active:1, az:1, level:1};
+const SKILL_SORTS={active:1, az:1, level:1, custom:1};
 function skillSort(){ const v=lsGet(SKILL_SORT_KEY); return SKILL_SORTS[v]?v:'active'; }
 function setSkillSort(v){
   if(!SKILL_SORTS[v]) v='active';
   lsSet(SKILL_SORT_KEY,v);
+  const ss=$('skillSort'); if(ss&&ss.value!==v) ss.value=v;
   renderSkillList();
 }
-
-function renderSkillList(){
-  const box=$('skillList'); box.innerHTML='';
-  // Order is the player's choice; see SKILL_SORT_KEY. The SELECTED skill is only
-  // highlighted in place — clicking a skill never yanks it to the top.
+/* Your order (0.9.124.48). Jordan: "let us drag and move the skills on the left, so
+   we can freely organize them". Saved beside the sort choice, per player. A skill
+   the saved list does not know (a new one, or none saved yet) goes at the end, A-Z. */
+const SKILL_ORDER_KEY='cindervale_skill_order';
+function skillOrderSaved(){
+  let arr=null;
+  try{ arr=JSON.parse(lsGet(SKILL_ORDER_KEY)||'null'); }catch(e){ arr=null; }
+  return Array.isArray(arr)?arr:null;
+}
+function skillOrder(){
+  const seen={}, out=[];
+  (skillOrderSaved()||[]).forEach(function(k){ if(typeof k==='string'&&SKILLS[k]&&!seen[k]){ seen[k]=1; out.push(k); } });
+  Object.keys(SKILLS).sort(function(a,b){ return SKILLS[a].name.localeCompare(SKILLS[b].name); })
+    .forEach(function(k){ if(!seen[k]) out.push(k); });
+  return out;
+}
+/* Every skill, in the order the rail shows it for `mode`, before the Show filter. */
+function skillKeysSorted(mode){
+  if(mode==='custom') return skillOrder();
   const activeKey=(state.action&&state.action.skill)||null;
-  const _sortMode=skillSort();
-  const sortedKeys=Object.keys(SKILLS).sort(function(a,b){
-    if(_sortMode==='active'){
+  return Object.keys(SKILLS).sort(function(a,b){
+    if(mode==='active'){
       const aActive=a===activeKey, bActive=b===activeKey;
       if(aActive!==bActive) return aActive?-1:1;
-    }else if(_sortMode==='level'){
+    }else if(mode==='level'){
       const d=levelFromXp(state.xp[b])-levelFromXp(state.xp[a]);
       if(d) return d;
     }
     return SKILLS[a].name.localeCompare(SKILLS[b].name);
   });
+}
+/* Put `key` next to `target`: after it when `after`, else before it. No target puts
+   it last. It starts from the order you can see, so in any other sort only the skill
+   you moved changes place, and the rail switches to Your order. */
+function moveSkill(key, target, after){
+  if(!SKILLS[key]||key===target) return false;
+  const order=skillKeysSorted(skillSort()).filter(function(k){ return k!==key; });
+  let i=(target&&SKILLS[target])?order.indexOf(target):-1;
+  if(i<0) i=order.length; else if(after) i++;
+  order.splice(i,0,key);
+  lsSet(SKILL_ORDER_KEY, JSON.stringify(order));
+  setSkillSort('custom');
+  return true;
+}
+/* The rail waits while a skill is dragged: it repaints every second, and a rebuilt
+   list would pull the row out from under the pointer. */
+let _skDrag=null, _skDragOwed=false;
+
+function renderSkillList(){
+  const box=$('skillList');
+  if(_skDrag&&Date.now()-_skDrag.t<60000){ _skDragOwed=true; return; }
+  _skDrag=null; _skDragOwed=false;
+  box.innerHTML='';
+  if(!box._skDnd){ box._skDnd=true; bindSkillDrag(box); }
+  // Order is the player's choice; see SKILL_SORT_KEY. The SELECTED skill is only
+  // highlighted in place — clicking a skill never yanks it to the top.
+  const _sortMode=skillSort();
+  const sortedKeys=skillKeysSorted(_sortMode);
+  if(_sortMode==='custom'&&!skillOrderSaved()){
+    const hint=document.createElement('div'); hint.className='sk-order-hint';
+    hint.textContent='Drag a skill to move it.';
+    box.appendChild(hint);
+  }
   for(const key of sortedKeys){
     /* A tab is a filter, not a suggestion. The selected and running skills used to be
        exempt from it, so clicking Crafting and then Gather left Crafting sitting in the
@@ -25079,6 +25172,7 @@ function renderSkillList(){
       btn.style.borderColor='var(--ember)';
     }
     btn.setAttribute('data-skill',key);
+    btn.setAttribute('draggable','true');   // drag onto another skill to move it
     /* [UI-PREVIEW] Hand the XP percentage to CSS so the row itself can fill, instead of
        carrying a 3px rule that reads as a separator. */
     btn.style.setProperty('--xp',pct+'%');
@@ -25158,6 +25252,51 @@ function renderSkillList(){
     rb.addEventListener('click',e=>{ e.stopPropagation(); resetXphTracker(rb.dataset.sk); renderSkillList(); });
   });
   railRunDot();
+}
+/* Drag a skill onto another: it lands below one further down and above one further
+   up, which is where the line shows. Onto Offline puts it last. Bound once; the list
+   itself is rebuilt on every repaint. */
+function bindSkillDrag(box){
+  const clear=()=>box.querySelectorAll('.sk-dragging,.sk-drop-above,.sk-drop-below')
+    .forEach(x=>x.classList.remove('sk-dragging','sk-drop-above','sk-drop-below'));
+  const spot=e=>{
+    const row=e.target&&e.target.closest?e.target.closest('.skill-row'):null;
+    if(!row||!_skDrag) return null;
+    const key=row.getAttribute('data-skill');
+    if(!key) return {row:row, target:null, after:false, cls:'sk-drop-above'};   // Offline: last
+    if(key===_skDrag.key) return null;
+    const order=skillKeysSorted(skillSort());
+    const after=order.indexOf(_skDrag.key)<order.indexOf(key);
+    return {row:row, target:key, after:after, cls:after?'sk-drop-below':'sk-drop-above'};
+  };
+  box.addEventListener('dragstart',e=>{
+    const row=e.target&&e.target.closest?e.target.closest('.skill-row[data-skill]'):null;
+    if(!row) return;
+    _skDrag={key:row.getAttribute('data-skill'), t:Date.now()};
+    try{ e.dataTransfer.effectAllowed='move'; e.dataTransfer.setData('text/plain',_skDrag.key); }catch(_){}
+    row.classList.add('sk-dragging');
+  });
+  box.addEventListener('dragover',e=>{
+    const s=spot(e); if(!s) return;
+    e.preventDefault();
+    try{ e.dataTransfer.dropEffect='move'; }catch(_){}
+    if(!s.row.classList.contains(s.cls)){
+      box.querySelectorAll('.sk-drop-above,.sk-drop-below').forEach(x=>x.classList.remove('sk-drop-above','sk-drop-below'));
+      s.row.classList.add(s.cls);
+    }
+  });
+  box.addEventListener('drop',e=>{
+    if(!_skDrag) return;
+    const s=spot(e), key=_skDrag.key;
+    e.preventDefault();
+    _skDrag=null; clear();
+    if(s) moveSkill(key, s.target, s.after); else renderSkillList();
+  });
+  box.addEventListener('dragend',()=>{
+    if(!_skDrag) return;   // dropped on the list: already moved and repainted
+    _skDrag=null; clear();
+    renderSkillList();     // dropped somewhere else: catch up on the repaints it held
+  });
 }
 
 function fmtK(n){
@@ -29609,6 +29748,10 @@ const INV_PAGE_SIZE=10;
      does not drag.
    - A tab remembers an item you have run out of, so it goes back to its tab when
      you get more.
+   - Jordan: "can we rename tabs and stuff?" (0.9.124.48). The open tab's bar has
+     its picture (pick any item in it), its name (renames as you type), arrows to
+     move it, Sort by type and Delete. Double-click a tab to rename it, drag a tab
+     onto another to move it.
 
    History: a 300px list (to 0.9.124.40), then a grid in a 400px right bar
    (0.9.124.41), which pushed the middle column down on most windows (0.9.124.43).
@@ -29629,6 +29772,9 @@ let _bagOrderKey='';
 let _bagDockSig='';
 let invTab='all';            // the open tab: 'all' or a tab id
 let _bagDrag=null;           // the id being dragged
+let _bagTabDrag=null;        // {id, t}: a tab being dragged to a new place
+let _bagPickOpen=false;      // the open tab's picture picker
+let _bagNameWas=null;        // the name before this edit, for Escape
 let _bagCatFn=null, _bagCatOrder=null;   // set by renderInventory, read by bagSortTab
 
 /* ── tabs ─────────────────────────────────────────────────────────────────────── */
@@ -29672,10 +29818,40 @@ function bagNewTab(){
   tabs.push(t);
   return t;
 }
-function bagRenameTab(tid, name){
+/* `live` is a keystroke: the tab shows the name as you type it and the save waits
+   for Enter or clicking away (0.9.124.48). */
+function bagRenameTab(tid, name, live){
   const t=bagTabs().find(function(x){ return x.id===tid; }); if(!t) return;
   t.name=String(name||'').replace(/\s+/g,' ').trim().slice(0,20);
+  if(!live) saveGame();
+  renderInventory();
+}
+/* The picture on a tab: the one you chose, or else its first item you have. */
+function bagTabFace(t, ownedSet){
+  if(t.icon&&ITEMS[t.icon]) return t.icon;
+  return t.items.find(function(id){ return ownedSet?ownedSet.has(id):(state.items[id]||0)>0; })||null;
+}
+/* '' goes back to the first item. */
+function bagSetTabIcon(tid, id){
+  const t=bagTabs().find(function(x){ return x.id===tid; }); if(!t) return false;
+  if(id&&ITEMS[id]) t.icon=id; else delete t.icon;
   saveGame(); renderInventory();
+  return true;
+}
+/* Put a tab at position `to` (0 is first, right after All). */
+function bagMoveTab(tid, to){
+  const tabs=bagTabs(), i=tabs.findIndex(function(x){ return x.id===tid; });
+  if(i<0) return false;
+  to=Math.max(0,Math.min(tabs.length-1,to|0));
+  if(to===i) return false;
+  const t=tabs.splice(i,1)[0]; tabs.splice(to,0,t);
+  saveGame(); renderInventory();
+  return true;
+}
+/* Double-click a tab, or make one with +, and its name is ready to type over. */
+function bagFocusName(){
+  const inp=document.querySelector('#inventory .bag-tabname'); if(!inp) return;
+  inp.focus(); try{ inp.select(); }catch(e){}
 }
 function bagDeleteTab(tid){
   state.bagTabs=bagTabs().filter(function(x){ return x.id!==tid; });
@@ -29719,7 +29895,7 @@ function openInventory(){
 }
 function closeInventory(){
   if(!invOpen) return;
-  invOpen=false; _bagDrag=null;
+  invOpen=false; _bagDrag=null; _bagTabDrag=null; _bagPickOpen=false;
   if(typeof hideTooltip==='function') hideTooltip();
   updateModePanels(); renderRightPanel(); renderCenter();
 }
@@ -29908,9 +30084,9 @@ function renderInventory(){
     box.className='bag';
     box.innerHTML='<section class="inv-main"><div class="bag-top">'
       +'<div class="bag-tabs"></div>'
+      +'<div class="bag-tabbar"></div>'
       +'<div class="bag-row"><input type="text" class="inv-search bag-search" autocomplete="off" spellcheck="false">'
-      +'<button type="button" class="inv-sort on bag-pill" title="Sort order. Left-click: next, right-click: previous"></button></div>'
-      +'<div class="bag-tabbar"></div></div>'
+      +'<button type="button" class="inv-sort on bag-pill" title="Sort order. Left-click: next, right-click: previous"></button></div></div>'
       +'<div class="bag-scroll"><div class="bag-body"></div></div></section>'
       +'<aside class="inv-side"><div class="bag-capwrap"></div><div class="bag-dock"></div></aside>';
     /* The drops feed is written to by id from the moment the game boots, so it lives
@@ -29932,15 +30108,47 @@ function renderInventory(){
     };
     sortBtn.addEventListener('click',()=>stepSort(1));
     sortBtn.addEventListener('contextmenu',e=>{ e.preventDefault(); stepSort(-1); });
+    const isName=el=>!!(el&&el.classList&&el.classList.contains('bag-tabname'));
     box.addEventListener('keydown',e=>{
       if(e.key==='Enter'&&e.target.classList&&e.target.classList.contains('inv-qtybox')){
         const b=box.querySelector('.bag-dock [data-bag="sellx"]'); if(b) b.click();
       }
+      if(isName(e.target)){
+        if(e.key==='Enter'){ e.preventDefault(); e.target.blur(); }
+        else if(e.key==='Escape'){
+          // put the old name back; the satchel stays open
+          e.preventDefault(); e.stopPropagation();
+          if(_bagNameWas!==null){ e.target.value=_bagNameWas; bagRenameTab(invTab,_bagNameWas,true); }
+          e.target.blur();
+        }
+      } else if(e.key==='Escape'&&_bagPickOpen){
+        e.stopPropagation(); _bagPickOpen=false; renderInventory();
+      }
     });
+    box.addEventListener('focus',e=>{
+      if(!isName(e.target)) return;
+      const t=bagTabs().find(x=>x.id===invTab); _bagNameWas=t?(t.name||''):null;
+    },true);
+    box.addEventListener('input',e=>{ if(isName(e.target)) bagRenameTab(invTab,e.target.value,true); });
     box.addEventListener('change',e=>{
-      if(e.target.classList&&e.target.classList.contains('bag-tabname')) bagRenameTab(invTab,e.target.value);
+      if(isName(e.target)) bagRenameTab(invTab,e.target.value);
+    });
+    box.addEventListener('dblclick',e=>{
+      const tab=e.target.closest?e.target.closest('.bag-tab'):null;
+      const key=tab?tab.getAttribute('data-tab'):'';
+      if(!/^t\d+$/.test(key||'')||!bagTabs().some(t=>t.id===key)) return;
+      if(invTab!==key){ invTab=key; if(state.invPrefs) state.invPrefs.tab=key; saveGame(); renderInventory(); }
+      bagFocusName();
+    });
+    /* A click anywhere but the picker closes it. Clicks inside the satchel are marked
+       rather than tested with contains(): the click that opens the picker repaints
+       the button, so its target is no longer in the page by the time it gets here. */
+    document.addEventListener('click',e=>{
+      if(_bagPickOpen&&!e._inBag&&!box.contains(e.target)){ _bagPickOpen=false; renderInventory(); }
     });
     box.addEventListener('click',e=>{
+      e._inBag=true;
+      if(_bagPickOpen&&!(e.target.closest&&e.target.closest('.bag-pick,.bag-facebtn'))){ _bagPickOpen=false; renderInventory(); }
       const el=e.target.closest?e.target.closest('[data-bag]'):null;
       if(!el||!box.contains(el)||el.disabled) return;
       const act=el.getAttribute('data-bag');
@@ -29960,21 +30168,34 @@ function renderInventory(){
              unlimited gold and every item, none of it through addSkillXp. */
           if(_devSellTaps>=5&&!IS_DEMO){ _devSellTaps=0; $('devPanel').classList.toggle('hidden'); if(!$('devPanel').classList.contains('hidden')){ renderDevSteam(); _auditPing('Dev/cheat panel opened', null, 'devopen'); } }
         }
+        let naming=false;
         if(key==='new'){
           /* With an item picked, + gives it a tab of its own; with nothing picked it
-             opens an empty tab to drag things into. */
+             opens an empty tab to drag things into, with its name ready to type. */
           if(_bagSel&&ITEMS[_bagSel]){ bagMoveItem(_bagSel,'new'); return; }
           const t=bagNewTab(); if(!t) return;
-          invTab=t.id;
-        } else invTab=key;
+          invTab=t.id; naming=true;
+        } else {
+          // the second click of a double-click on a tab: rename it
+          naming=e.detail>=2&&key!=='all'&&key===invTab;
+          invTab=key;
+        }
         if(state.invPrefs) state.invPrefs.tab=invTab;
         saveGame();
         box.querySelector('.bag-scroll').scrollTop=0;
         renderInventory();
+        if(naming) bagFocusName();
         return;
       }
       if(act==='tabsort'){ bagSortTab(invTab); return; }
       if(act==='tabdel'){ bagDeleteTab(invTab); return; }
+      if(act==='tabmove'){
+        const i=bagTabs().findIndex(t=>t.id===invTab);
+        if(i>=0) bagMoveTab(invTab, i+(parseInt(el.getAttribute('data-dir'),10)||0));
+        return;
+      }
+      if(act==='tabicon'){ _bagPickOpen=!_bagPickOpen; renderInventory(); return; }
+      if(act==='seticon'){ _bagPickOpen=false; bagSetTabIcon(invTab, el.getAttribute('data-id')||''); return; }
       if(act==='goshop'){ closeInventory(); gotoShopCat('storage'); return; }
       const id=_bagSel; if(!id||!ITEMS[id]) return;
       if(act==='moveto'){ bagMoveItem(id, el.getAttribute('data-tab')); return; }
@@ -29989,17 +30210,54 @@ function renderInventory(){
       if(act==='remove'){ unequipBodyItem(ITEMS[id].cslot,'combat'); return; }
       if(act==='use'){ usePotion(id); renderRightPanel(); return; }
     });
-    /* Drag an item onto a tab, onto +, or onto another item. */
-    const clearDrag=()=>box.querySelectorAll('.dragging,.drop-on').forEach(x=>x.classList.remove('dragging','drop-on'));
+    /* Drag an item onto a tab, onto +, or onto another item. Drag a tab onto another
+       tab to put it there: it lands after one further right, before one further
+       left. Onto All makes it first, onto + makes it last. */
+    const clearDrag=()=>box.querySelectorAll('.dragging,.drop-on,.tab-drop-l,.tab-drop-r').forEach(x=>x.classList.remove('dragging','drop-on','tab-drop-l','tab-drop-r'));
+    const tabDropSpot=tgt=>{
+      const tabs=bagTabs(), key=tgt.getAttribute('data-tab');
+      const from=tabs.findIndex(t=>t.id===_bagTabDrag.id);
+      if(from<0) return null;
+      const to=key==='all'?0:key==='new'?tabs.length-1:tabs.findIndex(t=>t.id===key);
+      if(to<0||to===from) return null;
+      if(key==='all') return {to:0, side:'r'};
+      if(key==='new') return {to:to, side:'l'};
+      return {to:to, side:from<to?'r':'l'};
+    };
     box.addEventListener('dragstart',e=>{
+      const chip=e.target.closest?e.target.closest('.bag-tab[draggable="true"]'):null;
+      if(chip){
+        _bagDrag=null; _bagTabDrag={id:chip.getAttribute('data-tab'), t:Date.now()};
+        try{ e.dataTransfer.effectAllowed='move'; e.dataTransfer.setData('text/plain',_bagTabDrag.id); }catch(_){}
+        chip.classList.add('dragging');
+        return;
+      }
       const t=e.target.closest?e.target.closest('.bag-tile'):null; if(!t) return;
+      _bagTabDrag=null;
       _bagDrag=t.getAttribute('data-id');
       try{ e.dataTransfer.effectAllowed='move'; e.dataTransfer.setData('text/plain',_bagDrag); }catch(_){}
       t.classList.add('dragging');
       if(typeof hideTooltip==='function') hideTooltip();
     });
-    box.addEventListener('dragend',()=>{ _bagDrag=null; clearDrag(); });
+    box.addEventListener('dragend',()=>{
+      const wasTab=!!_bagTabDrag;
+      _bagDrag=null; _bagTabDrag=null; clearDrag();
+      if(wasTab) renderInventory();   // the tab row waited for the drag to finish
+    });
     box.addEventListener('dragover',e=>{
+      if(_bagTabDrag){
+        const tgt=e.target.closest?e.target.closest('.bag-tab'):null;
+        const spot=tgt?tabDropSpot(tgt):null;
+        if(!spot) return;
+        e.preventDefault();
+        try{ e.dataTransfer.dropEffect='move'; }catch(_){}
+        const cls='tab-drop-'+spot.side;
+        if(!tgt.classList.contains(cls)){
+          box.querySelectorAll('.tab-drop-l,.tab-drop-r').forEach(x=>x.classList.remove('tab-drop-l','tab-drop-r'));
+          tgt.classList.add(cls);
+        }
+        return;
+      }
       if(!_bagDrag) return;
       const tgt=e.target.closest?(e.target.closest('.bag-tab')||e.target.closest('.bag-tile')):null;
       if(!tgt) return;
@@ -30008,6 +30266,14 @@ function renderInventory(){
       if(!tgt.classList.contains('drop-on')){ box.querySelectorAll('.drop-on').forEach(x=>x.classList.remove('drop-on')); tgt.classList.add('drop-on'); }
     });
     box.addEventListener('drop',e=>{
+      if(_bagTabDrag){
+        const tgt=e.target.closest?e.target.closest('.bag-tab'):null;
+        const spot=tgt?tabDropSpot(tgt):null;
+        const id=_bagTabDrag.id; _bagTabDrag=null; clearDrag();
+        if(tgt) e.preventDefault();
+        if(spot) bagMoveTab(id, spot.to); else renderInventory();
+        return;
+      }
       if(!_bagDrag) return;
       const id=_bagDrag; _bagDrag=null; clearDrag();
       const tab=e.target.closest?e.target.closest('.bag-tab'):null;
@@ -30092,7 +30358,7 @@ function renderInventory(){
   if(invTab==='all'){
     tabs.forEach(t=>{
       const ids=t.items.filter(id=>ownedSet.has(id)&&match(id));
-      if(ids.length) sections.push({tab:t.id, label:bagTabLabel(t), face:t.items.find(id=>ownedSet.has(id)), ids:ids});
+      if(ids.length) sections.push({tab:t.id, label:bagTabLabel(t), face:bagTabFace(t,ownedSet), ids:ids});
     });
     const loose=owned.filter(id=>!inTab.has(id)&&match(id)).sort(sortFn);
     if(loose.length){
@@ -30122,26 +30388,68 @@ function renderInventory(){
   // tabs
   const tabsEl=box.querySelector('.bag-tabs');
   const counts=tabs.map(t=>t.items.filter(id=>ownedSet.has(id)).length);
-  const tabKey=invTab+'|'+owned.length+'|'+tabs.map((t,i)=>t.id+':'+t.name+':'+counts[i]+':'+(t.items.find(id=>ownedSet.has(id))||'')).join(',');
-  if(tabsEl.getAttribute('data-key')!==tabKey){
+  const faces=tabs.map(t=>bagTabFace(t,ownedSet));
+  const tabKey=invTab+'|'+owned.length+'|'+tabs.map((t,i)=>t.id+':'+t.name+':'+counts[i]+':'+(faces[i]||'')).join(',');
+  /* Not while a tab is being dragged: rebuilding would pull the dragged tab out from
+     under the pointer. dragend repaints. */
+  const tabDragging=!!(_bagTabDrag&&Date.now()-_bagTabDrag.t<60000);
+  if(tabsEl.getAttribute('data-key')!==tabKey&&!tabDragging){
     tabsEl.setAttribute('data-key',tabKey);
     tabsEl.innerHTML='<button type="button" class="bag-tab'+(invTab==='all'?' on':'')+'" data-bag="tab" data-tab="all" title="Everything in your satchel">All <i>'+owned.length.toLocaleString()+'</i></button>'
       +tabs.map((t,i)=>{
-        const face=t.items.find(id=>ownedSet.has(id));
-        return '<button type="button" class="bag-tab'+(invTab===t.id?' on':'')+(face?'':' bare')+'" data-bag="tab" data-tab="'+t.id+'" title="'+_bagEsc(bagTabLabel(t))+'">'
+        const face=faces[i];
+        return '<button type="button" class="bag-tab'+(invTab===t.id?' on':'')+(face?'':' bare')+'" data-bag="tab" data-tab="'+t.id+'"'
+          +(face?' data-face="'+face+'"':'')+' draggable="true" title="'+_bagEsc(bagTabLabel(t))+'. Double-click to rename, drag to move">'
           +(face?iconHTML(face):'<span class="bag-tab-dot"></span>')
           +(t.name?'<span class="bag-tab-nm">'+_bagEsc(t.name)+'</span>':'')+'<i>'+counts[i]+'</i></button>';
       }).join('')
       +(tabs.length<BAG_TAB_MAX?'<button type="button" class="bag-tab add" data-bag="tab" data-tab="new" title="Drag an item here to give it a tab of its own">+</button>':'');
   }
-  // the open tab's own controls: its name, a sort, and delete
+  /* The open tab's own bar: its picture, its name, move it, sort it, delete it.
+     Built when the open tab changes, then only updated, so the name box keeps
+     focus while you type and the game repaints around it. */
   const bar=box.querySelector('.bag-tabbar');
+  const openT=tabs.find(x=>x.id===invTab);
   if(bar.getAttribute('data-tab')!==invTab){
-    bar.setAttribute('data-tab',invTab);
-    const t=tabs.find(x=>x.id===invTab);
-    bar.innerHTML=!t?'':'<input type="text" class="bag-tabname" maxlength="20" placeholder="Name this tab" value="'+_bagEsc(t.name||'')+'">'
+    bar.setAttribute('data-tab',invTab); _bagPickOpen=false;
+    bar.innerHTML=!openT?'':'<button type="button" class="bag-facebtn" data-bag="tabicon" title="Choose the picture on this tab"></button>'
+      +'<label class="bag-namewrap" title="Rename this tab"><span class="bag-pen" aria-hidden="true">✎</span>'
+      +'<input type="text" class="bag-tabname" maxlength="20" placeholder="Name this tab" spellcheck="false" autocomplete="off" value="'+_bagEsc(openT.name||'')+'"></label>'
+      +'<button type="button" class="bag-btn bag-mv" data-bag="tabmove" data-dir="-1" title="Move this tab left">←</button>'
+      +'<button type="button" class="bag-btn bag-mv" data-bag="tabmove" data-dir="1" title="Move this tab right">→</button>'
       +'<button type="button" class="bag-btn" data-bag="tabsort" title="Puts this tab in order by type, once">Sort by type</button>'
-      +'<button type="button" class="bag-btn" data-bag="tabdel" title="Its items go back to All">Delete tab</button>';
+      +'<button type="button" class="bag-btn" data-bag="tabdel" title="Its items go back to All">Delete tab</button>'
+      +'<div class="bag-pick" hidden></div>';
+  }
+  if(openT){
+    const idx=tabs.indexOf(openT), face=bagTabFace(openT,ownedSet);
+    const fb=bar.querySelector('.bag-facebtn'), fk=(face||'-')+'|'+(openT.icon?1:0);
+    if(fb.getAttribute('data-key')!==fk){
+      fb.setAttribute('data-key',fk);
+      fb.innerHTML=(face?iconHTML(face):'<span class="bag-tab-dot"></span>')+'<span class="bag-caret">▾</span>';
+    }
+    fb.classList.toggle('on',_bagPickOpen);
+    const mv=bar.querySelectorAll('.bag-mv');
+    if(mv[0]) mv[0].disabled=idx<=0;
+    if(mv[1]) mv[1].disabled=idx>=tabs.length-1;
+    const inp=bar.querySelector('.bag-tabname');
+    if(inp&&document.activeElement!==inp&&inp.value!==(openT.name||'')) inp.value=openT.name||'';
+    const pick=bar.querySelector('.bag-pick');
+    if(pick){
+      if(_bagPickOpen){
+        const ids=openT.items.filter(id=>ownedSet.has(id));
+        const pk=ids.join(',')+'|'+(openT.icon||'');
+        if(pick.getAttribute('data-key')!==pk){
+          pick.setAttribute('data-key',pk);
+          pick.innerHTML='<div class="bag-pick-h">Tab picture</div>'
+            +'<button type="button" class="bag-btn bag-pick-auto'+(openT.icon?'':' on')+'" data-bag="seticon" data-id="">First item</button>'
+            +(ids.length
+              ?'<div class="bag-pick-grid">'+ids.map(id=>'<button type="button" class="bag-pick-ic'+(openT.icon===id?' on':'')+'" data-bag="seticon" data-id="'+id+'" title="'+_bagEsc(ITEMS[id].name)+'">'+iconHTML(id)+'</button>').join('')+'</div>'
+              :'<div class="bag-pick-none">Put items in this tab to pick one of them.</div>');
+        }
+        pick.hidden=false;
+      } else pick.hidden=true;
+    }
   }
 
   // capacity
