@@ -1491,6 +1491,17 @@ header h1 .flame{color:var(--ember)}
 .act .drops .drop svg{width:14px;height:14px;display:block;flex-shrink:0}
 .act .drops .drop.rare{color:#e0a955;border-color:#5a3d14}
 .act .drops .drop .pc{color:#8a7455}
+.act .drops .drop.shut{color:var(--muted);border-style:dashed}
+/* What one action makes, when that is more than one of something (#113 #122). Same
+   chip as the drop row, with the count in the body colour, since it is not a chance. */
+.act .makes{display:flex;flex-wrap:wrap;gap:4px 5px;align-items:center;
+  font-size:calc(11.5px*var(--tscale));font-family:var(--num);margin-top:3px}
+.act .makes .dl{color:var(--muted);font-size:calc(10.5px*var(--tscale));
+  text-transform:uppercase;letter-spacing:.08em;margin-right:1px}
+.act .makes .drop{position:relative;display:inline-flex;align-items:center;gap:3px;color:#e6d3ab;
+  background:#140d06;border:1px solid #33240f;border-radius:3px;padding:1px 5px 1px 4px;
+  line-height:1.5;cursor:var(--cur-help)}
+.act .makes .drop svg{width:14px;height:14px;display:block;flex-shrink:0}
 .act .needs .mat b{font-weight:600}
 .act .needs .mat .sl{color:var(--muted)}
 .act .needs .mat.miss{color:#ff9a78;border-color:#7a2f1e;background:#2a0f08}
@@ -5383,6 +5394,8 @@ body:not(.is-demo) .demo-only{display:none !important}
 .ck-hp .v.dim{color:#5f7a4a;text-shadow:none}
 .ck-hp .k{font-size:calc(9.5px*var(--tscale));letter-spacing:2px;text-transform:uppercase;
   color:#8a7657;margin-top:4px}
+.ck-hp .lv{font-size:calc(10.5px*var(--tscale));color:#a8916a;margin-top:6px;white-space:nowrap;
+  font-variant-numeric:tabular-nums lining-nums}
 /* .ck-hp .t is gone with 0.9.122.19 — the hero column carried the runs label only
    while the ingredient chips were conditional, and they are always on now. */
 /* ════════ [CSS-44 END] COOKING ══════════════════════════════════ */
@@ -7563,6 +7576,11 @@ body:not(.is-demo) .demo-only{display:none !important}
 .cmb-style .cst-nm,.cmb-style .cst-lv{position:relative;z-index:1}
 .cvrail .cmb-foodmenu{background:transparent;border:0;padding:0}
 .cvrail .cmb-foodmenu-head{display:none}
+/* The rail's own .cvfood-scroll is the scroller. The wrapper these rules are scoped
+   to went missing in v0.9.123, so every food rendered as a one-per-row strip and 22
+   foods took 683px in a 152px window (#117); with it back, the grid's own max-height
+   would nest a second scroller inside the first. */
+.cvrail .cmb-foodmenu .fm-icons{max-height:none;overflow:visible}
 /* The empty-state line is .fm-empty and inherits a serif body size; at rail
    width that rendered as three lines of large text and swamped the panel. */
 /* .fm-empty is returned by healPickHTML directly, so it is a child of .cvglass
@@ -8256,7 +8274,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.124.38">v0.9.124</div>
+  <div class="mm-ver" data-build="0.9.124.39">v0.9.124</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -14254,6 +14272,15 @@ function _gearStatVec(itemId){
   // Trophy jewelry carries an innate jbonus (combat + skilling percentage keys),
   // so the v0.9.48 hover comparison covers it too.
   if(it&&it.trophyJewel&&it.jbonus){ for(var jb in it.jbonus){ if(it.jbonus[jb]) out['%'+jb]=(out['%'+jb]||0)+it.jbonus[jb]; } }
+  /* Gems and enchants are stored per item id, so they are part of what swapping
+     the piece changes. Without them a worn ring with Squire and a Flawless Sanguine
+     read "Same stats as equipped" against a bare one (#137). Skill-only enchants
+     are left out: they do not apply to the slot as a whole. */
+  var sd=state.sockets&&state.sockets[itemId];
+  if(sd&&sd.slots){ for(var gi=0;gi<sd.slots;gi++){ var gd=sd.gems[gi]&&SOCKET_GEMS[sd.gems[gi]];
+    if(gd&&gd.bonus){ for(var gk in gd.bonus){ if(gd.bonus[gk]) out['%'+gk]=(out['%'+gk]||0)+gd.bonus[gk]; } } } }
+  var en=state.enchantments&&state.enchantments[itemId], ed=en&&ENCHANTS[en];
+  if(ed&&ed.bonus&&!ed.skill){ for(var ek in ed.bonus){ if(ed.bonus[ek]) out['%'+ek]=(out['%'+ek]||0)+ed.bonus[ek]; } }
   return out;
 }
 /* Clean names only — the value already gets a trailing % for percentage stats,
@@ -14344,7 +14371,7 @@ function combatGearStatBlock(itemId){
   var req=(typeof combatGearReq==='function')?combatGearReq(itemId):null;
   if(req){
     var met=(typeof cmbLvl==='function')&&cmbLvl(req.stat)>=req.level;
-    var statName=req.stat==='attack'?'Attack':'Defence';
+    var statName=COMBAT_STAT_NAME[req.stat]||req.stat;
     reqLine='<div style="font-size:calc(12px*var(--tscale));margin-top:6px;color:'+(met?'#7da33f':'#d04848')+'">'
       +(met?'✓':iconHTML('ui_lock'))+' Requires '+req.level+' '+statName+(met?'':' (you have '+cmbLvl(req.stat)+')')+'</div>';
   }
@@ -14404,6 +14431,21 @@ function combatGearStatBlock(itemId){
     else if(_wc==='standard') chips.push(_chip('#d6aa60','ui_sword','Standard'));
   }
   if(it.twoHanded) chips.push(_chip('#c9a86a','ui_swords','Two-handed'));
+  /* Ticket #129. With a bow or crossbow, every point of Defence on armour that is
+     not light costs 0.6% ranged accuracy, down to a floor (rangedArmourMult). Nothing
+     on screen said so, or said which pieces were light. Each armour piece now names
+     its class and what it costs an archer, and a bow says what your armour costs it. */
+  if({helmet:1,chest:1,legs:1,gloves:1,boots:1,cape:1}[it.cslot] && (s.def||0)>0){
+    if(it.light) chips.push(_chip('#7fd8c8','ui_wind','Light armour'));
+    else {
+      chips.push(_chip('#e0762f','ui_muscle','Heavy armour'));
+      chips.push(_chip('#e0762f','','-'+(Math.round(s.def*RANGED_PLATE_PER_DEF*1000)/10)+'% ranged accuracy'));
+    }
+  }
+  if(it.cslot==='weapon' && it.ranged){
+    var _hvy=1-Math.max(RANGED_PLATE_FLOOR,1-heavyArmourDef()*RANGED_PLATE_PER_DEF);
+    if(_hvy>0) chips.push(_chip('#e0762f','ui_muscle','Your heavy armour: -'+Math.round(_hvy*100)+'% accuracy'));
+  }
   var chipLine=chips.length?'<div class="nt-chips">'+chips.join('')+'</div>':'';
 
   /* The tier/slot line moved up into the card's header band, where it is the first
@@ -14473,28 +14515,38 @@ function socketStatusBlock(itemId){
   var cap=maxSocketsFor(itemId);
   var sd=(state.sockets&&state.sockets[itemId])||null;
   var cur=sd?sd.slots:0;
-  if(!cur) return '<div class="tt-sub" style="color:var(--muted)">'+iconHTML('ui_gem')+' Socketable (0/'+cap+') — drill it on the Socket page</div>';
+  if(!cur) return '<div class="tt-sub" style="color:var(--muted)">'+iconHTML('ui_gem')+' Socketable (0/'+cap+'). Drill it on the Socket page.</div>';
   var gems=sd.gems.slice(0,cur);
   var filled=gems.filter(function(g){return !!g;}).length;
-  var gemList=gems.map(function(g){
-    if(!g) return '<span style="color:var(--muted)">empty</span>';
-    var gd=SOCKET_GEMS[g];
-    return gd?'<span style="color:var(--ember)">'+gd.name+'</span>':g;
-  }).join(', ');
-  return '<div class="tt-sub" style="color:var(--ember)">'+iconHTML('ui_gem')+' Sockets '+filled+'/'+cur+' &middot; '+gemList+'</div>';
+  /* Ticket #136. This used to print the gem's NAME and nothing else, so reading
+     what a socketed ring did meant a trip to the Socket page to look it up. Each
+     gem now says its effect, and says so when the loadout it is worn on ignores it. */
+  var w=_soWornIn(itemId), worn=w.combat||w.skilling;
+  var lines=gems.map(function(g){
+    if(!g) return '<span style="color:var(--muted)">Empty socket</span>';
+    var gd=SOCKET_GEMS[g]; if(!gd) return g;
+    var idle=worn&&!_soGemLive(itemId,g);
+    var kind=(gd.color==='topaz'||gd.color==='onyx')?'skilling':'combat';
+    return '<span style="color:var(--ember)">'+gd.name+'</span> '
+      +'<span'+(idle?' style="color:var(--muted)"':'')+'>'+_soShort(gd.desc)
+      +(idle?' (only works on '+kind+' gear)':'')+'</span>';
+  });
+  return '<div class="tt-sub" style="color:var(--ember);margin-bottom:0">'+iconHTML('ui_gem')+' Sockets '+filled+'/'+cur+'</div>'
+    +'<div class="tt-sub" style="line-height:1.5">'+lines.join('<br>')+'</div>';
 }
+/* Trophy and sea jewellery bonus names, shared by the tooltip and the swap picker. */
+var JBONUS_LABEL={atkBoost:['Melee damage','#d04848'],hpBoost:['Max HP','#7fd07f'],defBoost:['Defence','#5478c8'],
+  critChance:['Crit chance','#ffd24a'],lifesteal:['Lifesteal','#e07a6a'],gpBoost:['Gold from sales','#f0c060'],
+  xpBoost:['All skill XP','#7fd8c8']};
 function trophyJewelBlock(itemId){
   var it=ITEMS[itemId]; if(!it||!it.jbonus) return '';
-  var L={atkBoost:['Melee damage','#d04848'],hpBoost:['Max HP','#7fd07f'],defBoost:['Defence','#5478c8'],
-    critChance:['Crit chance','#ffd24a'],lifesteal:['Lifesteal','#e07a6a'],gpBoost:['Gold from sales','#f0c060'],
-    xpBoost:['All skill XP','#7fd8c8']};
   var parts=[];
   for(var k in it.jbonus){
-    var meta=L[k]||[k,'#a08a64'];
+    var meta=JBONUS_LABEL[k]||[k,'#a08a64'];
     parts.push('<span style="color:'+meta[1]+'">+'+Math.round(it.jbonus[k]*1000)/10+'% '+meta[0]+'</span>');
   }
   return '<div style="font-size:calc(12.5px*var(--tscale));line-height:1.5;margin-top:6px;padding-top:6px;border-top:1px solid #3a2a18">'
-    +'<span style="color:var(--ember);letter-spacing:.5px">'+iconHTML('ui_spark')+' Trophy — always active</span><br>'
+    +'<span style="color:var(--ember);letter-spacing:.5px">'+iconHTML('ui_spark')+' Always active</span><br>'
     +parts.join(' &nbsp; ')+'</div>';
 }
 function jewelryEnchantBlock(itemId){
@@ -16099,7 +16151,7 @@ const TREES = {
     {id:'th_gm_success',name:'Ghost',      icon:'',max:8,req:80, desc:r=>`+${r*2}% chance a steal succeeds`,               next:r=>`+2% success → ${r*2}%`},
     {id:'th_gm_goods', name:'Magpie',      icon:'', max:8,req:85, desc:r=>`+${r*2}% chance a steal also lifts goods`,        next:r=>`+2% goods → ${r*2}%`},
     {id:'th_gm_2x_xp', name:'Fast Talker', icon:'', max:1,req:90, desc:r=>r?'Thieving XP x1.5':'Thieving XP x1.5',           next:()=>'Thieving XP x1.5'},
-    {id:'th_gm_cape',  name:'Untouchable', icon:'',  max:1,req:99, reqCape:true, desc:r=>r?'A failed steal refunds its full time':'A failed steal refunds its full time', next:()=>'Requires the Thieving Cape'},
+    {id:'th_gm_cape',  name:'Untouchable', icon:'',  max:1,req:99, reqCape:true, desc:r=>r?'A failed steal refunds its full time':'A failed steal refunds its full time', next:()=>'A failed steal refunds its full time · requires the Thieving Cape'},
   ],
 
   agility:[
@@ -16593,7 +16645,6 @@ function tendPatch(patchId, silent){
   if(!crop){return false;}
   var now=Date.now();
   var m=mods('farming');
-  if(typeof gdOnAction==='function') gdOnAction('farming',1);
   // Speed perks (fa_speed tree + trowel gear) reduce the tend cooldown
   var speedMult=1-Math.min(0.70,m.speed); // cap at 70% reduction
   var effectiveTendInterval=Math.max(15000,Math.round(crop.tendInterval*speedMult));
@@ -16610,6 +16661,10 @@ function tendPatch(patchId, silent){
   var boost=Math.round(crop.growMs*crop.tendBoost*(gmTend?2:1));
   ps.tendedMs=(ps.tendedMs||0)+boost;
   ps.lastTended=now;
+  /* Counted here, after the cooldown refusal, not before it: a patch clicked while
+     still cooling counted as a tend, and a tier-3 farmhand retrying eight patches
+     every 2s filled "Tend 32 patches" in eight seconds of nothing. */
+  if(typeof gdOnAction==='function') gdOnAction('farming',1);
   // XP for tending — uses full xpMult from tree and potions
   var xpGain=addSkillXp('farming', Math.round(crop.xp*0.15*m.xpMult));
   // Routed through addSkillXp: it is the single funnel that enforces XP_CAP
@@ -17704,12 +17759,29 @@ function getBodyItemDef(id){
   return null;
 }
 
+/* Ticket #137. The swap picker lists every candidate by this line, and it named a
+   piece's enchant but never its gems, so two rings that differed only by a Flawless
+   Sanguine read the same. Sockets are appended to whatever the base line says. */
 function getBodyItemDesc(id){
+  var b=_bodyItemDescBase(id), s=socketDescInline(id);
+  return s?(b?b+' · ':'')+s:b;
+}
+function socketDescInline(id){
+  var sd=state.sockets&&state.sockets[id]; if(!sd||!sd.slots) return '';
+  var p=[], empty=0;
+  for(var i=0;i<sd.slots;i++){
+    var gd=sd.gems[i]&&SOCKET_GEMS[sd.gems[i]];
+    if(gd) p.push('<span style="color:var(--ember)">'+gd.name+'</span> '+_soShort(gd.desc)); else empty++;
+  }
+  if(empty) p.push(empty+' empty socket'+(empty>1?'s':''));
+  return p.join(' · ');
+}
+function _bodyItemDescBase(id){
   // Skilling gear — show XP bonus
   var it=ITEMS[id];
   if(it&&it.skillGear){
     var skName=SKILLS[it.gearSkill]?SKILLS[it.gearSkill].name:it.gearSkill;
-    return it.name+' — +3% '+skName+' XP (set: +8% more at 4/4)';
+    return it.name+': +3% '+skName+' XP (set: +8% more at 4/4)';
   }
   // Combat gear — show tier + atk/str/def
   if(it&&it.cgear){
@@ -17734,6 +17806,20 @@ function getBodyItemDesc(id){
       +'+'+(it.ammoStr||0)+' strength from '+_fires
       +(_n?(' · '+_n.toLocaleString()+' in the satchel'):'');
   }
+  /* Trophy and sea jewellery carry a fixed bonus and cannot be enchanted, and the
+     rest of the shop's rings and capes are not gem jewellery either. All of them
+     fell through to the line below and read "warren_signet - Unenchanted (visit
+     Enchanting tab)": the raw id, and advice that did not apply. */
+  if(it&&it.trophyJewel&&it.jbonus){
+    return Object.keys(it.jbonus).map(function(k){
+      return '+'+Math.round(it.jbonus[k]*1000)/10+'% '+((JBONUS_LABEL[k]||[k])[0]);
+    }).join(' · ')+' · always active';
+  }
+  if(!JEWELRY_GEM_TIER[id]){
+    var _si=SHOP.find(function(s){return s.id===id;});
+    var _d=(_si&&_si.desc)||(it&&it.desc)||'';
+    if(_d) return _d;
+  }
   // Show enchantment if applied — for gem-tier jewelry, include the bonus description
   var ench=getSlotEnchantment(id);
   var base={
@@ -17748,9 +17834,9 @@ function getBodyItemDesc(id){
   };
   var bname=base[id]||id;
   if(ench && ENCHANTS[ench]){
-    return bname+' — ✦ <b style="color:#fbd24e">'+ENCHANTS[ench].name+'</b> · '+ENCHANTS[ench].desc;
+    return bname+' · ✦ <b style="color:#fbd24e">'+ENCHANTS[ench].name+'</b> · '+ENCHANTS[ench].desc;
   }
-  return bname+' — Unenchanted (visit Enchanting tab)';
+  return bname+' · not enchanted (visit the Enchanting tab)';
 }
 
 function getSlotEnchantment(itemId){
@@ -17792,12 +17878,17 @@ function anyLoadoutHas(id){
    without the row, combatGearReq falls through to `||1` and the best gear in the
    game equips at level one. */
 const COMBAT_GEAR_REQ={1:1,2:10,3:20,4:30,5:40,6:55,7:70,8:80,9:90,10:99,11:99};
+/* Bows and crossbows gate on Ranged (found on ticket #120). Every ranged weapon was
+   written with a reqRanged that nothing read, and this returned Attack for any
+   weapon, so Attack 70 with Ranged 1 could draw an Ancient Shortbow while Ranged 99
+   could not. Same level ladder as a blade, on the stat the weapon actually trains. */
 function combatGearReq(id){
   const it=ITEMS[id];
   if(!it||!it.cgear||!it.ctier) return null;
-  const stat=(it.cslot==='weapon')?'attack':'defence';
+  const stat=(it.cslot==='weapon')?(it.ranged?'ranged':'attack'):'defence';
   return {stat, level:COMBAT_GEAR_REQ[it.ctier]||1};
 }
+const COMBAT_STAT_NAME={attack:'Attack',strength:'Strength',defence:'Defence',hitpoints:'Hitpoints',ranged:'Ranged',magic:'Magic'};
 /* True if the player meets a combat item's level requirement (or it has none). */
 function meetsCombatReq(id){
   const r=combatGearReq(id);
@@ -17809,7 +17900,7 @@ function equipBodyItem(id,slot,scope){
   // ── Combat gear level gate (1.0.26) ──
   const _req=combatGearReq(id);
   if(_req && cmbLvl(_req.stat)<_req.level){
-    toast(`🔒 Requires ${_req.level} ${_req.stat==='attack'?'Attack':'Defence'} to wield ${(ITEMS[id]&&ITEMS[id].name)||'this'}.`);
+    toast(`🔒 Requires ${_req.level} ${COMBAT_STAT_NAME[_req.stat]||_req.stat} to wield ${(ITEMS[id]&&ITEMS[id].name)||'this'}.`);
     return;
   }
   // Ownership lives in three places: state.items (satchel quantity), state.gear
@@ -19494,8 +19585,24 @@ function satchelCap(){
   return SATCHEL_BASE + bought*SATCHEL_SLOT_STEP + slayerSlots;
 }
 
+/* Ticket #130. Equipping never takes an item out of state.items (a loadout only
+   names an id), so everything you wore still used a satchel slot: a full combat
+   loadout took 12 of the 33 base slots by itself. A stack only counts now if it holds
+   more copies than the busiest loadout is wearing, the rule reservedForEquip() uses.
+   The quiver counts as wearing its whole stack. */
 function satchelUsed(){
-  return Object.keys(state.items).filter(id=>ITEMS[id]&&(state.items[id]||0)>0).length;
+  const worn={};
+  for(const mp of [state.equipped,state.combatEquipped,state.skillingEquipped]){
+    if(!mp) continue;
+    const n={};
+    for(const s in mp){ const id=mp[s]; if(id) n[id]=(n[id]||0)+1; }
+    for(const k in n) if(n[k]>(worn[k]||0)) worn[k]=n[k];
+  }
+  const qv=state.combatEquipped&&state.combatEquipped.quiver;
+  return Object.keys(state.items).filter(id=>{
+    const q=state.items[id]||0;
+    return ITEMS[id]&&q>0&&id!==qv&&q>(worn[id]||0);
+  }).length;
 }
 
 /* ════ SEED VAULT (0.9.122.17) ═══════════════════════════════════════════════
@@ -20958,7 +21065,12 @@ const RANGED_PLATE_PER_DEF = 0.006;   // -0.6% ranged accuracy per point of heav
 const RANGED_PLATE_FLOOR   = 0.55;    // a cost, never a wall
 function rangedArmourMult(){
   if(!usingRanged()) return 1;
-  const ce=state&&state.combatEquipped; if(!ce) return 1;
+  return Math.max(RANGED_PLATE_FLOOR, 1 - heavyArmourDef()*RANGED_PLATE_PER_DEF);
+}
+/* Defence on worn armour that is not light, the number the ranged penalty is taken
+   from. Split out so a tooltip can say what the penalty is without holding a bow. */
+function heavyArmourDef(){
+  const ce=state&&state.combatEquipped; if(!ce) return 0;
   let heavy=0;
   for(const slot in ce){
     /* The SHIELD is exempt. It is heavy, but a crossbow's entire identity is that
@@ -20971,7 +21083,7 @@ function rangedArmourMult(){
     const cs=gearStats(id); if(!cs) continue;
     heavy += cs.def||0;
   }
-  return Math.max(RANGED_PLATE_FLOOR, 1 - heavy*RANGED_PLATE_PER_DEF);
+  return heavy;
 }
 /* The arrow or bolt in the quiver, but only if it is the kind this weapon fires.
    Loading bolts into a bow is not a small mistake, so it is not a small penalty:
@@ -21370,7 +21482,8 @@ function thiefPoolOpen(key){
 function thiefPoolPick(key){
   const open=thiefPoolOpen(key);
   if(!open.length) return null;
-  let total=0; const w=open.map(function(_,i){ const x=1/(1+i*0.35); total+=x; return x; });
+  const w=thiefPoolWeights(open.length);   // shared with the card's odds (#115)
+  let total=0; for(const x of w) total+=x;
   let r=Math.random()*total;
   for(let i=0;i<open.length;i++){ r-=w[i]; if(r<=0) return open[i]; }
   return open[open.length-1];
@@ -21934,6 +22047,14 @@ function platinumMasteryCount(){
       if(masteryTier(masteryLevel(act.id))==='plat') n++;
   return (_platCache=n);
 }
+
+/* Ticket #131. Some activities can only be done once: a skilling tool is a one-time
+   unlock, and a trophy piece needs a trophy that drops once per boss. One craft is
+   1.25 mastery XP against 354 for Bronze, so those bars could never move and 81 of
+   the log's 542 entries sat at zero for good. They stay out of the log and off
+   their cards. Mastery already saved on them is left alone. */
+function masteryExempt(act){ return !!act && gdOneTimeAct(act); }
+function masteryActs(sk){ return ((sk&&sk.acts)||[]).filter(a=>!masteryExempt(a)); }
 
 /* The row itself, so the panels that draw their own cards stop having to choose
    whether to have one. buildActBtn kept this inline and four bespoke renderers
@@ -22918,9 +23039,6 @@ function openFuelModal(){
 /* ════ [JS-21c] action completion (solo) ═════════════════════════════════════════ */
 function completeAction(act,skillKey,times){
   const m=mods(skillKey);
-  /* Guild quests count what you were going to do anyway. Bails immediately when no
-     joined guild wants this skill, because this runs on every completed action. */
-  if(typeof gdOnAction==='function') gdOnAction(skillKey,times,act&&act.id);
   const IS_G=IS_GATHER[skillKey];
 
   // Cooking: fire must be lit. Continuous burn in tick() handles fuel deduction
@@ -22989,6 +23107,14 @@ function completeAction(act,skillKey,times){
       if(state.items[id]<0) state.items[id]=0;
     }
   }
+
+  /* Guild quests count what you were going to do anyway. Bails immediately when no
+     joined guild wants this skill, because this runs on every completed action.
+     It used to sit at the top of this function, above the unlit fire, the full
+     satchel and canAfford, so a refused action still counted: a smelt with bars for
+     one filled a quest by 50, and an offline thread on an empty satchel filled
+     "Smelt 100" while making nothing. Here `times` is what actually happened. */
+  if(typeof gdOnAction==='function') gdOnAction(skillKey,times,act&&act.id);
 
   // Verdant Pyre: pre-compute burned log count before item loop (used in both qty and XP sections)
   const wcBurned=(skillKey==='woodcutting'&&m.wc_burnChance>0)?binom(times,m.wc_burnChance):0;
@@ -23224,10 +23350,7 @@ function completeAction(act,skillKey,times){
       if(coins>0){ state.coins+=coins; showCoinPop(coins); }
       const L=act.loot;
       if(L&&L.pool){
-        let gc=L.chance + treeRank('thieving','th_goods')*0.01
-                        + (treeRank('thieving','th_gm_goods')*0.02);
-        gc=Math.min(0.95,gc);
-        const lifted=binom(hits, gc);
+        const lifted=binom(hits, thiefGoodsChance(act));   // shared with the card's odds (#115)
         for(let i=0;i<lifted;i++){
           const id=thiefPoolPick(L.pool);
           if(id) grantItem(id,1);
@@ -23388,6 +23511,9 @@ function setFishDoubleAct(actId){
 
 function completeFishDoubleAction(act,cycles){
   const skill='fishing';
+  /* Ticket #128. The #95 fix gave the woodcutting second bar its guild hook and
+     missed this copy and the mining one, so a fish caught here never counted. */
+  if(typeof gdOnAction==='function') gdOnAction(skill,cycles,act&&act.id);
   const m=mods(skill);
   for(const [id,q] of Object.entries(act.out)){
     let qty=q*cycles;
@@ -23449,6 +23575,7 @@ function completeDoubleAction(act,cycles){
   // Mirrors completeAction for mining but at 50% speed (handled by caller using 2x ms)
   // Grants ore, applies all mining passives (vein bonus, coal seeker, veinbreaker, motherlode)
   const skill='mining';
+  if(typeof gdOnAction==='function') gdOnAction(skill,cycles,act&&act.id);   // ticket #128
   const m=mods(skill);
   for(const [id,q] of Object.entries(act.out)){
     let qty=q*cycles;
@@ -23558,7 +23685,12 @@ function tick(){
       const _dAct=getAct('mining',state.mineDoubleAct.actId);
       if(_dAct&&state.mineDoubleAct.actId!==state.action.actId){
         const _dMs=actMs(_dAct,'mining')*2;
-        const _dElapsed=now-(state.mineDoubleAct.start||now);
+        let _dElapsed=now-(state.mineDoubleAct.start||now);
+        /* The main bar's catch-up clamp, which the three second bars never had: an
+           8h relaunch paid them 100% of the live rate for the whole gap, on top of
+           the offline grant. With a guild hook on them that also filled any quest
+           on the first tick. */
+        if(_dElapsed>TICK_CATCHUP_MAX_MS){ state.mineDoubleAct.start=now-TICK_CATCHUP_MAX_MS; _dElapsed=TICK_CATCHUP_MAX_MS; }
         if(_dElapsed>=_dMs){
           const _dCyc=Math.floor(_dElapsed/_dMs);
           completeDoubleAction(_dAct,_dCyc);
@@ -23582,7 +23714,8 @@ function tick(){
       const _wcAct=getAct('woodcutting',state.wcDoubleAct.actId);
       if(_wcAct&&state.wcDoubleAct.actId!==state.action.actId){
         const _wcMs=actMs(_wcAct,'woodcutting')*2;
-        const _wcElapsed=now-(state.wcDoubleAct.start||now);
+        let _wcElapsed=now-(state.wcDoubleAct.start||now);
+        if(_wcElapsed>TICK_CATCHUP_MAX_MS){ state.wcDoubleAct.start=now-TICK_CATCHUP_MAX_MS; _wcElapsed=TICK_CATCHUP_MAX_MS; }
         if(_wcElapsed>=_wcMs){
           const _wcCyc=Math.floor(_wcElapsed/_wcMs);
           completeWcDoubleAction(_wcAct,_wcCyc);
@@ -23606,7 +23739,8 @@ function tick(){
       const _fiAct=getAct('fishing',state.fishDoubleAct.actId);
       if(_fiAct&&state.fishDoubleAct.actId!==state.action.actId){
         const _fiMs=actMs(_fiAct,'fishing')*2;
-        const _fiElapsed=now-(state.fishDoubleAct.start||now);
+        let _fiElapsed=now-(state.fishDoubleAct.start||now);
+        if(_fiElapsed>TICK_CATCHUP_MAX_MS){ state.fishDoubleAct.start=now-TICK_CATCHUP_MAX_MS; _fiElapsed=TICK_CATCHUP_MAX_MS; }
         if(_fiElapsed>=_fiMs){
           const _fiCyc=Math.floor(_fiElapsed/_fiMs);
           completeFishDoubleAction(_fiAct,_fiCyc);
@@ -23810,8 +23944,17 @@ function offlineCombatResolve(awayMs, om){
       }
     }
   }
-  if(typeof state.monsterKills==='object' && state.monsterKills)
-    state.monsterKills[base.id]=(state.monsterKills[base.id]||0)+kills;
+  /* The live path counts into state.monKills. This wrote state.monsterKills, which
+     does not exist, so offline kills never reached the Monster Log, a guild's kill
+     quest or a kill-count achievement: 902 offline kills left "Kill 10 Cave Rat" at 0
+     (found on ticket #128). */
+  if(state.monKills){
+    state.monKills[base.id]=(state.monKills[base.id]||0)+kills;
+    if(!state.monDrops) state.monDrops={};
+    if(!state.monDrops[base.id]) state.monDrops[base.id]={};
+    for(const _d in items) state.monDrops[base.id][_d]=(state.monDrops[base.id][_d]||0)+items[_d];
+  }
+  if(kills>0&&typeof gdOnKill==='function') gdOnKill(base.id,kills);
 
   /* Out of food means the fight is over - do not silently resume it on a body
      that cannot be healed. Otherwise the session stands and the fight picks up. */
@@ -23997,6 +24140,11 @@ function grantOffline(){
   }
 
   state.actionStart=Date.now();
+  /* The second bars restart with the main one. They are not part of the offline
+     award, and a start left hours in the past was paid at the live rate on the
+     first tick after a relaunch. */
+  for(const _k of ['mineDoubleAct','wcDoubleAct','fishDoubleAct'])
+    if(state[_k]) state[_k].start=state.actionStart;
 
   /* The whole offline award was pushed into the XP/hr ring buffer as ONE entry
      stamped "now", so liveXph divided hours of XP by a few seconds of span —
@@ -24408,6 +24556,55 @@ function dropsHtml(act,skillKey,m){
   return '<div class="drops"><span class="dl">can drop</span>'+chips+'</div>';
 }
 
+/* Tickets #113 / #122. A card showed the icon of what it makes and never how many,
+   so a log's shafts (8 to 26 by wood), a bar's arrowheads (15) and bolt tips (12),
+   and Firemaking's charcoal and ember dust were all a guess. Drawn only when one
+   action makes more than one thing, since a single output is already the icon. */
+function makesHtml(act){
+  const ids=Object.keys(act.out||{}).filter(id=>ITEMS[id]);
+  if(!ids.length||(ids.length===1&&(act.out[ids[0]]||1)<=1)) return '';
+  return '<div class="makes"><span class="dl">makes</span>'+ids.map(function(id){
+    const q=act.out[id]||1;
+    return '<span class="drop" data-item="'+id+'" data-itemnote="makes '+q+' per action">'
+      +iconHTML(id)+'<span class="pc">×'+q+'</span></span>';
+  }).join('')+'</div>';
+}
+
+/* Ticket #115. A thieving act's goods live in THIEF_POOLS, not DROPS, so the #105
+   row never drew on a single stall. These are the roll's own odds: the steal has to
+   work, then the goods chance, then the same low-biased pick over whatever your
+   level has opened. Goods your level has not reached are one dashed chip. */
+function thiefGoodsChance(act){
+  return Math.min(0.95,((act.loot&&act.loot.chance)||0)
+    + treeRank('thieving','th_goods')*0.01
+    + treeRank('thieving','th_gm_goods')*0.02);
+}
+function thiefPoolWeights(n){ const w=[]; for(let i=0;i<n;i++) w.push(1/(1+i*0.35)); return w; }
+function thiefLootHtml(act){
+  const P=act&&act.loot&&THIEF_POOLS[act.loot.pool]; if(!P) return '';
+  const open=thiefPoolOpen(act.loot.pool);
+  const shut=P.tiers.filter(t=>ITEMS[t[1]]&&open.indexOf(t[1])<0);
+  const w=thiefPoolWeights(open.length), W=w.reduce((a,b)=>a+b,0)||1;
+  const per=(act.succ==null?1:thiefSuccess(act))*thiefGoodsChance(act);
+  const MAX=open.length<=9?9:8;   // never "+1 more" in place of the one chip
+  const chips=open.slice(0,MAX).map(function(id,i){
+    const it=ITEMS[id], c=per*w[i]/W;
+    const pc=c>=0.01?(Math.round(c*1000)/10)+'%':c>=0.001?(Math.round(c*10000)/100)+'%':'rare';
+    return '<span class="drop'+(it.rare?' rare':'')+'" data-item="'+id+'"'
+      +' data-itemnote="stolen about 1 in '+Math.max(1,Math.round(1/Math.max(c,1e-9)))+' tries · '+(Math.round(c*10000)/100)+'% per try">'
+      +iconHTML(id)+'<span class="pc">'+pc+'</span></span>';
+  });
+  if(open.length>MAX) chips.push('<span class="drop shut">+'+(open.length-MAX)+' more</span>');
+  if(shut.length){
+    const who=P.skill&&SKILLS[P.skill]?SKILLS[P.skill].name:'Thieving';
+    const tip=('Needs a higher level\n'+shut.map(t=>who+' '+t[0]+': '+ITEMS[t[1]].name).join('\n'))
+      .replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+    chips.push('<span class="drop shut" data-rtip="'+tip+'">+'+shut.length+' at higher '+who+'</span>');
+  }
+  if(!chips.length) return '';
+  return '<div class="drops"><span class="dl">can steal</span>'+chips.join('')+'</div>';
+}
+
 function needsHtml(act,m){
   if(!act.inp) return '';
   const runsLeft=canAfford(act,Infinity,m);
@@ -24529,8 +24726,9 @@ function buildActBtn(act,reqLvl,lvl,m,bestXph,bestRph){
      card — carried nothing, so hovering the item you are about to make told you less
      than hovering what it costs. Agility's out:{} falls back to the skill glyph and
      stays untagged, since there is no item to describe. */
+  const outQty=(primaryOutId&&act.out&&act.out[primaryOutId])||1;
   const outTipAttrs=(primaryOutId&&ITEMS[primaryOutId])
-    ? ` data-item="${primaryOutId}" data-itemnote="${Math.round(xpPerAction(act,selectedSkill))} XP per action · ${(ms/1000).toFixed(1)}s"`
+    ? ` data-item="${primaryOutId}" data-itemnote="${outQty>1?'makes '+outQty+' · ':''}${Math.round(xpPerAction(act,selectedSkill))} XP per action · ${(ms/1000).toFixed(1)}s"`
     : '';
 
   const outName=Object.keys(act.out||{}).map(id=>ITEMS[id]?`<span data-item="${id}">${iconHTML(id)} ${ITEMS[id].name}</span>`:id).join(', ');
@@ -24587,7 +24785,7 @@ function buildActBtn(act,reqLvl,lvl,m,bestXph,bestRph){
   const metaText = metaState;
 
   let masteryHtml='';
-  if(!locked) masteryHtml=masteryRowHTML(act.id);
+  if(!locked&&!masteryExempt(act)) masteryHtml=masteryRowHTML(act.id);
 
   const runningHtml=isActive
     ?`<div class="prog"><i></i></div>
@@ -24628,8 +24826,9 @@ function buildActBtn(act,reqLvl,lvl,m,bestXph,bestRph){
             no way to stockpile ahead of it. Show the chips either way; the
             .needs-locked wrapper dims them so a locked card still reads as
             locked, and the have/need counts stay live and accurate. */''}
+      ${toolOwned?'':(locked?`<div class="needs-locked">${makesHtml(act)}</div>`:makesHtml(act))}
       ${toolOwned?'':(locked?`<div class="needs-locked">${needsHtml(act,m)}</div>`:needsHtml(act,m))}
-      ${toolOwned?'':(locked?`<div class="needs-locked">${dropsHtml(act,selectedSkill,m)}</div>`:dropsHtml(act,selectedSkill,m))}
+      ${toolOwned?'':(locked?`<div class="needs-locked">${dropsHtml(act,selectedSkill,m)||thiefLootHtml(act)}</div>`:(dropsHtml(act,selectedSkill,m)||thiefLootHtml(act)))}
       ${masteryHtml}
       ${runningHtml}
     </div>`;
@@ -24641,7 +24840,7 @@ function buildActBtn(act,reqLvl,lvl,m,bestXph,bestRph){
      overstated for every player, and a new one would read "90 XP per action", get
      72, and reasonably call it a bug. xpPerAction is the same function the xp/hr
      beside it comes from, so the two can no longer disagree. */
-  btn.title=act.name+' · '+Math.round(xpPerAction(act,selectedSkill))+' XP per action · '+(ms/1000).toFixed(1)+'s'
+  btn.title=act.name+(outQty>1?' · makes '+outQty:'')+' · '+Math.round(xpPerAction(act,selectedSkill))+' XP per action · '+(ms/1000).toFixed(1)+'s'
     +(locked?' · unlocks at Lv '+reqLvl:' · '+fmtK(xph)+' xp/hr')
     +(act.succ!=null?' \u00b7 '+Math.round(thiefSuccess(act)*100)+'% success':'')
     +(dupeJewel?'\n\nYou already own one. A second ring can be worn in your other hand, but the'
@@ -24661,7 +24860,7 @@ const JW_CATS=[
   // NOTE: pendants moved from the hand slots to the NECK in 1.0.91 — see ITEM_BODY_SLOTS.
   {key:'amulet', label:'Amulets', icon:'📿', desc:'Cut gem + metal bar → amulet. Fits the neck slot.'},
   {key:'pendant',label:'Pendants',icon:'📿', desc:'Cut gem + metal bar → pendant. Fits the neck slot (shares it with amulets).'},
-  {key:'trophy', label:'Trophy',  icon:'💎', desc:'Boss trophy + cut gem → a unique piece with an always-on bonus. Each boss drops the trophy for its own piece.'},
+  {key:'trophy', label:'Trophy',  icon:'💎', desc:'Boss trophy + cut gem → a unique piece with an always-on bonus. Each boss drops its trophy once, on your first kill.'},
   /* Emoji here matches the five tabs above rather than the ui_* SVG set — a lone
      SVG in an all-emoji tab bar reads as a mistake. Convert the row together or not at all. */
   {key:'sea',    label:'Sea',     icon:'⚓', desc:'Sea material + cut gem → a unique piece with an always-on bonus. Every stone here comes back from a voyage and nowhere else.'},
@@ -24737,6 +24936,7 @@ let _crToolSubTab='woodcutting';
    tools sub-tab pattern. Each weapon recipe carries a `subcat` field. */
 let _crWeaponSubTab='sword';
 let _crArmorSubTab='plate';   // (1.0.69) Plate | Leather split within armour categories
+let _crShieldSubTab='shield';  // (#124) Shields | Bucklers
 /* Lookup of crafting tool recipe id → owning skill. Built lazily on first call
    so SHOP and SKILLS are fully populated. Resolves via each recipe's primary
    output id (e.g. cr_tl_bronze_axe → bronze_axe → SHOP entry → woodcutting). */
@@ -24948,9 +25148,42 @@ function renderCrafting(){
     acts=(_crArmorSubTab==='leather') ? acts.filter(a=>a.subcat==='leather') : acts.filter(a=>!a.subcat);
   }
 
+  /* Ticket #124. Shields and bucklers shared one grid of 21 cards, and without a
+     subcat the bucklers were numbered T11 to T20 and all wore the top tier's stripe.
+     They are two lines with opposite jobs, so they get the split armour has. */
+  if(cat.key==='shield'){
+    const SHIELD_SUBCATS=[
+      {key:'shield', label:'Shields',  icon:'bronze_shield',  note:'bars + log · blocks hits'},
+      {key:'buckler',label:'Bucklers', icon:'bronze_buckler', note:'bars · crit, dodge, speed'},
+    ];
+    if(!SHIELD_SUBCATS.some(a=>a.key===_crShieldSubTab)) _crShieldSubTab='shield';
+    const subBar=document.createElement('div');
+    subBar.style.cssText='display:flex;gap:5px;margin-bottom:10px;flex-wrap:wrap;padding:6px 8px;background:var(--raised);border:1px solid var(--trim-d);border-radius:6px';
+    const tLbl=document.createElement('span');
+    tLbl.style.cssText='font-size:calc(11px*var(--tscale));color:var(--muted);letter-spacing:2px;text-transform:uppercase;align-self:center;margin-right:4px';
+    tLbl.textContent='Type:';
+    subBar.appendChild(tLbl);
+    for(const sc of SHIELD_SUBCATS){
+      const isSel=_crShieldSubTab===sc.key;
+      const sub=document.createElement('button');
+      sub.style.cssText='padding:5px 11px;border:1px solid '+(isSel?'var(--ember)':'var(--trim-d)')
+        +';border-radius:5px;background:'+(isSel?'#2a1a0866':'var(--raised-s)')
+        +';color:'+(isSel?'var(--trim)':'var(--muted)')
+        +';cursor:var(--cur-pointer);font-variant:small-caps;letter-spacing:1px;font-size:calc(13px*var(--tscale));display:flex;align-items:center;gap:5px';
+      sub.innerHTML='<span style="font-size:calc(16px*var(--tscale));line-height:1">'+iconHTML(sc.icon)+'</span><span>'+sc.label+'</span>'
+        +'<span style="font-size:calc(10px*var(--tscale));color:var(--muted);opacity:0.7;text-transform:none;letter-spacing:0.3px;margin-left:2px">·'+sc.note+'</span>';
+      (function(k){ sub.addEventListener('click',function(){ _crShieldSubTab=k; renderCrafting(); }); })(sc.key);
+      subBar.appendChild(sub);
+    }
+    grid.appendChild(subBar);
+    acts=(_crShieldSubTab==='buckler') ? acts.filter(a=>a.subcat==='buckler') : acts.filter(a=>a.subcat!=='buckler');
+  }
+
   const desc=document.createElement('div');
   desc.style.cssText='font-size:calc(13px*var(--tscale));color:var(--muted);margin-bottom:10px';
-  desc.textContent=cat.desc;
+  desc.textContent=(cat.key==='shield'&&_crShieldSubTab==='buckler')
+    ? '2 bars → buckler. No block, but it adds crit, dodge and attack speed, and never slows a light weapon.'
+    : cat.desc;
   grid.appendChild(desc);
 
   const inner=document.createElement('div');
@@ -25257,6 +25490,42 @@ function gdBestActs(skill){
    table, which is why they survived this long. */
 function gdOneTimeAct(a){
   for(const o in (a.out||{})){ const it=ITEMS[o]; if(it&&(it.tool||it.skillGear)) return true; }
+  /* Ticket #135. The same is true of anything made from a boss trophy: a trophy
+     drops once per boss per save, so "Make 25 Alpha Fang Ring" could be finished one
+     ring in and never again. 37 to 48% of Gilded Facet quests were like that. */
+  const once=gdOnceItems();
+  for(const i in (a.inp||{})) if(once[i]) return true;
+  return false;
+}
+/* Items a save can only ever get once: a monster drop marked `once` with no other
+   source anywhere, plus anything that can only be made out of one of those. Worked
+   out from the drop tables and the source map, so a new trophy is covered without
+   anyone adding it to a list. */
+let _gdOnce=null;
+function gdOnceItems(){
+  if(_gdOnce) return _gdOnce;
+  const s={};
+  try{
+    const once={}, rep={}, SM=sourceMap();
+    for(const mid in MONSTER_DROPS) for(const d of (MONSTER_DROPS[mid]||[])) if(d&&d.id) (d.once?once:rep)[d.id]=1;
+    for(const id in once) if(!rep[id] && !(SM[id]||[]).some(x=>x&&x.skKey!=='combat')) s[id]=1;
+    const gated={}, free={};
+    for(const sk in SKILLS) for(const a of (SKILLS[sk].acts||[])){
+      const g=Object.keys(a.inp||{}).some(i=>s[i]);
+      for(const o in (a.out||{})) (g?gated:free)[o]=1;
+    }
+    for(const o in gated) if(!free[o] && !(SM[o]||[]).some(x=>x&&!SKILLS[x.skKey])) s[o]=1;
+  }catch(e){ return {}; }   // too early in boot; try again next call
+  return (_gdOnce=s);
+}
+/* A board rolled before #135 can still hold one of those quests until midnight.
+   Swap just that quest for a fresh one of the same size, without using the skip. */
+function gdQuestImpossible(q){
+  if(!q||q.done) return false;
+  const once=gdOnceItems();
+  if(q.kind==='do'&&q.act){ const a=getAct(q.skill,q.act); return !!(a&&gdOneTimeAct(a)); }
+  if(q.kind==='deliver') return !!once[q.target];
+  if(q.kind==='supply') return Object.keys(q.items||{}).some(i=>once[i]);
   return false;
 }
 /* ...and of those, the ones that put a real item in the satchel — the only acts a
@@ -25535,13 +25804,20 @@ function gdRollOne(g,size){
      An act with no output at all is agility or thieving. Agility's names are PLACES
      ("Ivy Wall"), so the verb goes in front. Thieving's are already orders
      ("Pickpocket a noble"), and putting the verb in front of one of those produced
-     "Steal the Pickpocket a noble 100 times" on the Nightmarket board. */
+     "Steal the Pickpocket a noble 100 times" on the Nightmarket board.
+
+     Tickets #133 / #134. A do quest counts ACTIONS, and that is the unit its size and
+     its XP are worked out in, but "Mine 40 Iron Ore" promised forty ore. Three ore
+     off one swing counted once, and a smith making twelve bolt tips a strike read
+     "Smelt 100 Bolt Tip" and made 1,200. Every do quest now says "times". Acts named
+     after their own item (most crafting and jewellery) keep the verb in front. */
   const shared=outId && acts.filter(a=>gdActOut(a)===outId).length>1;
   const nameIsOrder=(skill==='thieving');
+  const itemNamed=outId && act.name.toLowerCase()===ITEMS[outId].name.toLowerCase();
   const name = !outId ? (nameIsOrder ? act.name+' '+n+' times'
                                      : verb+' the '+act.name+' '+n+' times')
-             : shared ? act.name+' '+n+' times'
-             :          verb+' '+n+' '+ITEMS[outId].name;
+             : (shared||!itemNamed) ? act.name+' '+n+' times'
+             :          verb+' '+ITEMS[outId].name+' '+n+' times';
   return {kind:'do',size,skill,act:act.id,name:name,need:n,have:0,done:false};
 }
 
@@ -25603,7 +25879,13 @@ function gdRefreshDue(){
     /* A record that has never rolled carries day -1, so it is due immediately: the
        farmhand migration creates a Furrow record without rolling one, and an
        is-it-a-day-old test left that player staring at an empty board forever. */
-    if(r.day!==today){ gdRollQuests(id,true); any=true; }
+    if(r.day!==today){ gdRollQuests(id,true); any=true; continue; }
+    const g=GD_BY[id];
+    if(g&&Array.isArray(r.q)) for(let i=0;i<r.q.length;i++){
+      if(!gdQuestImpossible(r.q[i])) continue;
+      const nq=gdRollOne(g,r.q[i].size);
+      if(nq&&!gdQuestImpossible(nq)){ r.q[i]=nq; any=true; }
+    }
   }
   return any;
 }
@@ -25644,13 +25926,13 @@ function gdOnAction(skillKey,times,actId){
     }
   }
 }
-function gdOnKill(monId){
+function gdOnKill(monId,n){
   if(!state||!state.gd) return;
   for(const id in state.gd){
     const g=GD_BY[id]; if(!g||!g.combat) continue;
     for(const q of state.gd[id].q){
       if(q.done||q.kind!=='kill'||q.target!==monId) continue;
-      q.have=Math.min(q.need,q.have+1);
+      q.have=Math.min(q.need,q.have+(n>0?n:1));
     }
   }
 }
@@ -26339,7 +26621,12 @@ function ckCard(act, reqLvl, lvl, m){
    +'</div>'
    /* .ck-hp used to carry the runs label whenever the chips were hidden. The chips
       are never hidden now, so the hero column is the heal and nothing else. */
-   +`<div class="ck-hp"><span class="v${locked?' dim':''}">${f.hp}</span><span class="k">HP</span></div>`;
+   /* Ticket #123. The level badge came off the head row in 0.9.122.9 so a four-up
+      card could fit the dish name, which left an unlocked cooking card as the only
+      card in the game that never said its level. It sits under the heal instead. */
+   +`<div class="ck-hp"><span class="v${locked?' dim':''}">${f.hp}</span><span class="k">HP</span>`
+     +(locked?'':`<span class="lv">Lv ${reqLvl}</span>`)+'</div>';
+  btn.title=(ITEMS[out]?ITEMS[out].name:act.name)+' · Lv '+reqLvl+' · '+Math.round(xpPerAction(act,'cooking'))+' XP per cook';
 
   if(!nonInteractive){
     btn.addEventListener('click',()=>setAction('cooking',act.id));
@@ -27178,7 +27465,12 @@ function ftNodeState(skill,node,ctx){
 function ftDockHTML(skill,node,ctx){
   const st=ftNodeState(skill,node,ctx);
   const cur=st.rank>0?node.desc(st.rank):'';
-  const nxt=st.rank<node.max?node.next(st.rank+1):'';
+  /* #111 #114 #119. next(r) is written as "+step to total", so at rank 0 it read
+     "+3% to 3%" and never named the stat. desc() is the only text that does, and it
+     stayed hidden until rank 1. A multi-rank node's first rank now reads as desc(1).
+     Single-rank next() strings are hand-written and say more than desc(1), so they
+     stay. A locked node shows it too: it was the only row that said what it does. */
+  const nxt=st.rank>=node.max?'':(st.rank===0&&node.max>1)?node.desc(1):node.next(st.rank+1);
   const tip=PASSIVE_TIPS[node.id]||'';
   const sub=node.req>=75?'Grandmaster · Lv '+(node.lvl||node.req)
            :node.req?node.req+' points spent'
@@ -27186,7 +27478,7 @@ function ftDockHTML(skill,node,ctx){
   let rows='';
   if(st.locked)        rows+='<div class="ft-row lock"><i>Locked</i><span>'+st.why+'</span></div>';
   if(cur)              rows+='<div class="ft-row"><i>Now</i><span>'+cur+'</span></div>';
-  if(nxt&&!st.locked)  rows+='<div class="ft-row next"><i>Next</i><span>'+nxt+'</span></div>';
+  if(nxt)              rows+='<div class="ft-row next"><i>Next</i><span>'+nxt+'</span></div>';
   if(tip)              rows+='<div class="ft-flav">'+tip+'</div>';
   const label=st.maxed?'Maxed':st.locked?'Locked'
              :ctx.avail<=0?'No points to spend'
@@ -28831,7 +29123,10 @@ function renderInventory(){
     // everything equippable that used to scatter into 'misc'. Tools and skilling
     // gear live in state.gear / state.skillingGear, not the satchel, so they
     // never reach here. Trophy jewelry stays with the rings/amulets in 'jewelry'.
-    if(ITEMS[id]&&ITEMS[id].cgear) return 'gear';
+    /* Arrows and bolts carry `ammo`, not `cgear`, so they fell to 'misc', which has
+       no chip: only All showed them, sorted last (#125). They go in the quiver, so
+       they sit with the rest of the combat gear. */
+    if(ITEMS[id]&&(ITEMS[id].cgear||(ITEMS[id].ammo&&!ITEMS[id].ranged))) return 'gear';
     if(ITEMS[id]&&ITEMS[id].trophyJewel) return 'jewelry';
     /* Sea materials (0.9.66) get their own bucket, checked early — several of them
        would otherwise be swallowed by the generic suffix rules below, and 24 new
@@ -29063,7 +29358,7 @@ function renderInventory(){
            it either, so this is often the first place the player learns it. */
         eqBtn.textContent='Lv '+req.level;
         eqBtn.disabled=true;
-        eqBtn.title='Requires '+req.level+' '+(req.stat==='attack'?'Attack':'Defence')
+        eqBtn.title='Requires '+req.level+' '+(COMBAT_STAT_NAME[req.stat]||req.stat)
                    +' to wield (you have '+cmbLvl(req.stat)+')';
       }else{
         eqBtn.textContent='Equip';
@@ -30554,6 +30849,9 @@ const HUNT_KIT=[
     const id=u[0];
     ITEMS[id]={name:u[1], icon:'🔥', sell:u[7], rare:true, cgear:true, ctier:8, cslot:u[4], ubonus:u[8],
       desc:'A unique relic of The Emberforge Deep — worn power, no set required. <b>'+u[9]+'</b> while equipped.'};
+    /* The two leather pieces never carried `light`, so they cost an archer accuracy
+       as plate and counted toward Guardian's plate bonus (found on ticket #129). */
+    if(u[3]===HIDE) ITEMS[id].light=true;
     COMBAT_GEAR_STATS[id]={atk:u[6], str:0, def:u[5]};
     ICONS[id]=u[2](u[3]);
   });
@@ -30578,6 +30876,7 @@ const HUNT_KIT=[
     ITEMS[id]={name:u[1], icon:'🔮', sell:u[7], rare:true, cgear:true, ctier:9, cslot:u[4], ubonus:u[8],
       desc:'A unique relic of The Abyssal Throne — worn power, no set required. <b>'+u[9]+'</b> while equipped.'};
     if(u[10]) ITEMS[id].cheatDeath=true;
+    if(u[3]===HIDE) ITEMS[id].light=true;   // same fix as the Emberforge leather above
     COMBAT_GEAR_STATS[id]={atk:u[6], str:0, def:u[5]};
     ICONS[id]=u[2](u[3]);
   });
@@ -30923,7 +31222,7 @@ Object.assign(ICONS,{
     COMBAT_GEAR_STATS[id]={atk:r[3], str:0, def:r[2], crit:r[4], dodge:r[5], aspd:r[6]};
     ICONS[id]=_bucklerSVG(PAL[ct]);
     const s=shldAt(r[1]);
-    const rec={id:'cr_buckler_'+ct, name:nm, cat:'shield', lvl:r[1], ms:Math.round(s[1]), xp:Math.round(s[2]*0.88), spdMult:+s[3].toFixed(3), minMs:Math.round(s[4]), inp:{}, out:{}};
+    const rec={id:'cr_buckler_'+ct, name:nm, cat:'shield', subcat:'buckler', lvl:r[1], ms:Math.round(s[1]), xp:Math.round(s[2]*0.88), spdMult:+s[3].toFixed(3), minMs:Math.round(s[4]), inp:{}, out:{}};
     rec.inp[BAR[ct]]=2; if(ct===10) rec.inp.dawnshard=1; rec.out[id]=1;
     if(typeof SKILLS!=='undefined'&&SKILLS.crafting&&SKILLS.crafting.acts) SKILLS.crafting.acts.push(rec);
   });
@@ -31617,18 +31916,20 @@ function hasPet(petId){ return !!(state && state.pets && state.pets[petId]); }
   });
 
   /* ── bows: carve a stave, then string it ── */
+  /* "String a Ancient Longbow": four of the seven woods, and Iron, start with a vowel. */
+  const _an=n=>(/^[AEIOU]/i.test(n)?'an ':'a ')+n;
   WOODS.forEach(function(w,i){
     [['short','Shortbow',6],['long','Longbow',9]].forEach(function(v){
       const kind=v[0], label=v[1], logs=v[2];
       const un='unstrung_'+w.k+'_'+kind+'bow', id=w.k+'_'+kind+'bow';
       const lv=w.fl+(kind==='long'?4:0);
-      F.push({id:'fl_cv_'+w.k+'_'+kind, name:'Carve a '+w.n+' '+label, cat:'bows', subcat:kind, lvl:lv,
+      F.push({id:'fl_cv_'+w.k+'_'+kind, name:'Carve '+_an(w.n)+' '+label, cat:'bows', subcat:kind, lvl:lv,
         ms:7000+i*900, xp:Math.round(120+i*160), spdMult:Math.min(0.80,0.55+i*0.04),
         minMs:1500+i*180, inp:_o(w.log,logs), out:_o(un,1)});
       /* Stringing is the quick last step. It paid 70+i*95, which made 'String a
          Starfall Crossbow' the best xp/hr act in the whole skill at 99, ahead of the
          assembly that actually eats the materials. The xp belongs where the cost is. */
-      F.push({id:'fl_st_'+w.k+'_'+kind, name:'String a '+w.n+' '+label, cat:'bows', subcat:kind, lvl:lv,
+      F.push({id:'fl_st_'+w.k+'_'+kind, name:'String '+_an(w.n)+' '+label, cat:'bows', subcat:kind, lvl:lv,
         ms:3400+i*400, xp:Math.round(26+i*30), spdMult:Math.min(0.80,0.55+i*0.04),
         minMs:900+i*100, inp:_o2(un,1,'bowstring',1), out:_o(id,1)});
     });
@@ -31638,26 +31939,31 @@ function hasPet(petId){ return !!(state && state.pets && state.pets[petId]); }
   AMMO.forEach(function(a,i){
     const wk=WOODS[Math.min(WOODS.length-1, Math.floor(i*WOODS.length/AMMO.length))];
     const un='unstrung_'+a.k+'_crossbow', id=a.k+'_crossbow';
-    F.push({id:'fl_cx_'+a.k, name:'Assemble a '+a.n+' Crossbow', cat:'crossbows', lvl:a.fl+2,
+    F.push({id:'fl_cx_'+a.k, name:'Assemble '+_an(a.n)+' Crossbow', cat:'crossbows', lvl:a.fl+2,
       ms:8000+i*1000, xp:Math.round(150+i*190), spdMult:Math.min(0.80,0.55+i*0.04),
       minMs:1700+i*200, inp:_o2(wk.log,5,a.bar,4), out:_o(un,1)});
-    F.push({id:'fl_cs_'+a.k, name:'String a '+a.n+' Crossbow', cat:'crossbows', lvl:a.fl+2,
+    F.push({id:'fl_cs_'+a.k, name:'String '+_an(a.n)+' Crossbow', cat:'crossbows', lvl:a.fl+2,
       ms:3600+i*430, xp:Math.round(30+i*34), spdMult:Math.min(0.80,0.55+i*0.04),
       minMs:950+i*110, inp:_o2(un,1,'bowstring',1), out:_o(id,1)});
   });
 
   /* ── smithing makes the heads, which is where the metal ladder rejoins ── */
   AMMO.forEach(function(a,i){
-    SKILLS.smithing.acts.push({id:'sm_ah_'+a.k, name:'Hammer '+a.n+' arrowheads',
+    SKILLS.smithing.acts.push({id:'sm_ah_'+a.k, name:'Hammer '+a.n+' arrowheads', cat:'heads', subcat:'arrow',
       /* 0.55x the old rate. At 35+i*52 hammering heads paid 1.6 to 1.8 TIMES the xp
          of smelting the bar it consumes, which would have made arrowheads the
          Smithing meta for reasons that have nothing to do with archery. */
       lvl:a.fl, ms:4000+i*480, xp:Math.round(19+i*29), spdMult:Math.min(0.80,0.52+i*0.038),
       minMs:800+i*100, inp:_o(a.bar,1), out:_o(a.k+'_arrowhead',15)});
-    SKILLS.smithing.acts.push({id:'sm_bt_'+a.k, name:'Hammer '+a.n+' bolt tips',
+    SKILLS.smithing.acts.push({id:'sm_bt_'+a.k, name:'Hammer '+a.n+' bolt tips', cat:'heads', subcat:'bolt',
       lvl:a.fl+2, ms:4200+i*500, xp:Math.round(21+i*31), spdMult:Math.min(0.80,0.52+i*0.038),
       minMs:830+i*104, inp:_o(a.bar,1), out:_o(a.k+'_bolt_tip',12)});
   });
+  /* Ticket #121. Smithing is now 14 bars and 16 heads, long enough for the category
+     bar every other long skill draws, and that bar reads `cat`. An act with no cat
+     would drop out of the grid once the tabs are on, so everything that is not a
+     head is a bar. */
+  SKILLS.smithing.acts.forEach(function(a){ if(!a.cat) a.cat='bars'; });
 
   function _o(k,v){ const o={}; o[k]=v; return o; }
   function _o2(a,b,c,d){ const o={}; o[a]=b; o[c]=d; return o; }
@@ -34956,6 +35262,49 @@ function showItemTooltip(itemId, x, y, note){
       html+=`<div class="tt-sub" style="color:#e0762f88;font-size:calc(12px*var(--tscale));margin-top:2px">⚠ Same type blocks others · same potion stacks ×3 (duration only)</div>`;
     }
   }
+  /* Ticket #139. A seed said "Used in Farming" and nothing more, and some grow into
+     something with another name: an Ancient Seed grows Voidbloom. The seed card says
+     what one harvest gives, the chance finds, and how often the seed comes back,
+     read off the same CROPS row and bonuses harvestPatch() uses. */
+  const _crop=(typeof getCrop==='function')?getCrop(itemId):null;
+  if(_crop){
+    const _fm=mods('farming');
+    const _outs=Object.keys(_crop.out||{}).filter(id=>ITEMS[id])
+      .map(id=>`${iconHTML(id)} ${ITEMS[id].name} ×${_crop.out[id]}`);
+    const _rares=(_crop.rareDrops||[]).filter(rd=>ITEMS[rd.id])
+      .map(rd=>`${iconHTML(rd.id)} ${ITEMS[rd.id].name} <span style="color:var(--muted)">${Math.round(effDropChance(rd.chance)*1000)/10}% chance</span>`);
+    const _back=_fm.master3?1:Math.min(1,(_crop.seedReturn||0)+(treeRank('farming','fa_seed')||0)*0.05);
+    html+=`<div class="tt-sub" style="color:var(--ember);margin:4px 0 0">Grows into · Farming ${_crop.lvl} · ${fmtTime(_crop.growMs)}</div>`
+      +`<div class="tt-sub" style="line-height:1.55">${_outs.concat(_rares).join('<br>')}`
+      +`<br><span style="color:var(--muted)">Seed comes back:</span> ${Math.round(_back*100)}%</div>`;
+  }
+  /* Ticket #120. An arrow's card said "Ammunition · Bows" and stopped, so nothing
+     said that Starfall Arrows need a bow able to draw them, or what that bow asks
+     of you. It gives its strength, the lightest weapon that fires it with that
+     weapon's requirement, and whether the weapon you hold can. */
+  if(it.ammo && !it.ranged){
+    let _lightest=null;
+    for(const wid in ITEMS){
+      const w=ITEMS[wid];
+      if(!w||!w.ranged||!w.cgear||!ammoFitsWeapon(wid,itemId)) continue;
+      if(!_lightest||(w.ctier||1)<(ITEMS[_lightest].ctier||1)) _lightest=wid;
+    }
+    html+=`<div class="tt-sub">+${it.ammoStr||0} strength to every shot</div>`;
+    if(_lightest){
+      const _rq=combatGearReq(_lightest);
+      html+=`<div class="tt-sub">Fired by ${ITEMS[_lightest].name} or better`
+        +(_rq?` (needs ${_rq.level} ${COMBAT_STAT_NAME[_rq.stat]||_rq.stat})`:'')+`</div>`;
+    } else {
+      html+=`<div class="tt-sub" style="color:var(--muted)">No weapon can fire this</div>`;
+    }
+    const _held=(typeof eqCombatWeapon==='function')?eqCombatWeapon():'';
+    const _hw=_held&&ITEMS[_held];
+    if(_hw&&_hw.ranged&&_hw.ammo===it.ammo){
+      const _fits=ammoFitsWeapon(_held,itemId);
+      html+=`<div class="tt-sub" style="color:${_fits?'#7da33f':'#d04848'}">`
+        +(_fits?`✓ Your ${_hw.name} can fire it`:`Too heavy for your ${_hw.name}`)+`</div>`;
+    }
+  }
   // Item flavor / info text — many items (esp. enchanting materials) explain
   // what they are and where they come from here. Previously never shown on
   // hover, which left icon-only UI (like the enchant cost row) unreadable.
@@ -35344,7 +35693,7 @@ const COMP_CATEGORIES=[
 function itemCompCat(id){
   const it=ITEMS[id];
   if(!it) return 'other';
-  if(it.cgear) return 'crafted_gear';
+  if(it.cgear||it.ammo) return 'crafted_gear';   // arrows and bolts sat in Spoils (#125)
   /* Sea materials (0.9.68) need their own tab. Without it they fell through to
      'other', which has no chip in COMP_CATEGORIES — so the 14 non-rare ones were
      reachable only via All, and sorted to the very front of it because
@@ -35717,7 +36066,7 @@ const MASTERY_CAT_LABEL={helm:'Helms',chest:'Chests',legs:'Legs',gloves:'Gloves'
   weapon:'Weapons',shield:'Shields',cape:'Capes',tool:'Tools',tannery:'Tannery',
   refine:'Refining',ring:'Rings',amulet:'Amulets',pendant:'Pendants',trophy:'Trophy Jewelry',
   shafts:'Shafts & String',arrows:'Arrows',bolts:'Bolts',bows:'Bows',crossbows:'Crossbows',
-  short:'Shortbows',long:'Longbows'};
+  short:'Shortbows',long:'Longbows',bars:'Bars',heads:'Arrowheads & Bolt Tips'};
 /* ════ [JS-24b] mastery view ═════════════════════════════════════════════════════ */
 function renderMastery(){
   const box=$('masteryView'); box.innerHTML='';
@@ -35725,7 +36074,7 @@ function renderMastery(){
   // Summary counts
   let totalActs=0,bronze=0,silver=0,gold=0,plat=0;
   for(const [,sk] of Object.entries(SKILLS))
-    for(const act of sk.acts){
+    for(const act of masteryActs(sk)){
       totalActs++;
       const t=masteryTier(masteryLevel(act.id));
       if(t==='bronze')bronze++;
@@ -35758,7 +36107,7 @@ function renderMastery(){
   picker.className='mlog-skgrid';
   for(const [skKey,sk] of Object.entries(SKILLS)){
     let skEarned=0, skTotal=0;
-    for(const act of sk.acts){ skTotal++; if(masteryTier(masteryLevel(act.id))!=='none') skEarned++; }
+    for(const act of masteryActs(sk)){ skTotal++; if(masteryTier(masteryLevel(act.id))!=='none') skEarned++; }
     const btn=document.createElement('button');
     btn.className='mlog-skbtn'+(_masterySel===skKey?' on':'');
     btn.innerHTML=`<span class="msk-ic">${iconHTML(skKey)}</span><span class="msk-nm">${sk.name}</span><span class="msk-cnt">${skEarned}/${skTotal}</span>`;
@@ -35775,9 +36124,10 @@ function renderMastery(){
      category are unaffected and render exactly as before. Defaults to the first
      category rather than "All", because "All" is the length problem. */
   const cats=[]; const _seenCat={};
-  for(const act of selSk.acts){ const c=act.cat; if(c&&!_seenCat[c]){ _seenCat[c]=1; cats.push(c); } }
-  const useCats = cats.length>1 && selSk.acts.length>=24;
-  let actList=selSk.acts;
+  const selActs=masteryActs(selSk);
+  for(const act of selActs){ const c=act.cat; if(c&&!_seenCat[c]){ _seenCat[c]=1; cats.push(c); } }
+  const useCats = cats.length>1 && selActs.length>=24;
+  let actList=selActs;
   if(useCats){
     if(!_masteryCat[_masterySel] || (_masteryCat[_masterySel]!=='__all' && cats.indexOf(_masteryCat[_masterySel])<0))
       _masteryCat[_masterySel]=cats[0];
@@ -35788,7 +36138,7 @@ function renderMastery(){
       const b=document.createElement('button');
       b.className='mlog-catbtn'+(sel===key?' on':'');
       let done=0;
-      const pool=key==='__all'?selSk.acts:selSk.acts.filter(a=>a.cat===key);
+      const pool=key==='__all'?selActs:selActs.filter(a=>a.cat===key);
       for(const a of pool) if(masteryTier(masteryLevel(a.id))!=='none') done++;
       b.innerHTML=label+'<span class="mcat-cnt">'+done+'/'+pool.length+'</span>';
       b.addEventListener('click',()=>{ _masteryCat[_masterySel]=key; renderMastery(); });
@@ -35797,7 +36147,7 @@ function renderMastery(){
     for(const c of cats) mkBtn(c, MASTERY_CAT_LABEL[c]||(c.charAt(0).toUpperCase()+c.slice(1)));
     mkBtn('__all','All');
     box.appendChild(bar);
-    if(sel!=='__all') actList=selSk.acts.filter(a=>a.cat===sel);
+    if(sel!=='__all') actList=selActs.filter(a=>a.cat===sel);
   }
 
   const grid=document.createElement('div');
@@ -36829,7 +37179,7 @@ function buildTree(body, redraw){
         :(locked?'<span class="nreq">Needs '+node.req+' points spent first</span>':''))
       +'<span class="nd">'+(maxed?node.desc(rank)
         :(rank>0?node.desc(rank)+' · next: '+node.next(rank+1)
-                :'Next: '+node.next(rank+1)))+'</span></span>'
+                :'Next: '+(node.max>1?node.desc(1):node.next(1))))+'</span></span>'
       +'<span class="nr">'+rank+'/'+node.max+'</span>';
     const buy=_ofpEl('button','ofp-buy',maxed?'✓':'+');
     buy.disabled=maxed||!!locked||avail<=0;
@@ -40117,7 +40467,7 @@ function buildAscensionHTML(){
                           str:Math.round((b.str||0)*(1+ASC_STAT_PER_RANK*(r+1))),
                           def:Math.round((b.def||0)*(1+ASC_STAT_PER_RANK*(r+1)))};
     const statTxt=['atk','str','def'].filter(k=>(b[k]||0)>0)
-      .map(k=>maxed?`${k} ${now[k]}`:`${k} ${now[k]||0}→<b>${nxt[k]}</b>`).join(' · ');
+      .map(k=>(maxed||nxt[k]===(now[k]||0))?`${k} ${now[k]||0}`:`${k} ${now[k]||0}→<b>${nxt[k]}</b>`).join(' · ');
     const costTxt=maxed
       ? `<span class="asc-max">Max ★${cap}</span>`
       : `${iconHTML('sunderstone')} <b class="${stones>=c.sunderstone?'':'short'}">${c.sunderstone.toLocaleString()}</b>`
@@ -40330,6 +40680,16 @@ function cgBack(){
   state.cmbView='guide';
   renderCombat();
 }
+
+/* Ticket #117. The Food & Potions list is rebuilt with the rest of #combatPanel on
+   every kill and every auto-eat, so it jumped back to the top on nearly every swing.
+   Its offset is kept by a scroll listener rather than read at render time, because
+   a rebuild while the combat page is hidden reads 0 off a list with no layout. */
+let _cvFoodTop=0;
+document.addEventListener('scroll',function(e){
+  const t=e.target;
+  if(t&&t.classList&&t.classList.contains('cvfood-scroll')&&t.clientHeight) _cvFoodTop=t.scrollTop;
+},true);
 
 function renderCombat(){
   const panel=$('combatPanel');
@@ -40621,17 +40981,17 @@ function renderCombat(){
     const regens=combatRegenFoods();        // heal-over-time foods
     const ah=state.autoHeal||{enabled:false,thresholdPct:30,itemId:''};
     if(!heals.length&&!regens.length){
-      return '<div class="fm-empty">No food or potions yet — cook fish or brew draughts to heal here.</div>';
+      return '<div class="fm-empty">No food or potions yet. Cook fish or brew draughts to heal here.</div>';
     }
     /* The padlock is a button INSIDE the food button, which is invalid HTML, so
        it is a span with its own handler instead. Clicking the lock sets the food
        aside from auto-eat; clicking anywhere else still eats it. */
-    const lockIco=id=>`<span class="fm-lock${healReserved(id)?' on':''}" data-lock="${id}" role="button" tabindex="0" data-tip="${healReserved(id)?'Set aside — auto-eat leaves this alone. Click to release.':'Click to set aside, so auto-eat never spends it.'}">${healReserved(id)?'&#128274;':'&#128275;'}</span>`;
-    const healIco=h=>`<button class="fm-icon cmb-pot-btn${healReserved(h.id)?' reserved':''}" data-heal="${h.id}" data-tip="${_fmEsc(h.it.name)}&#10;+${h.heal} HP · instant&#10;${h.cnt} in satchel${healReserved(h.id)?'&#10;Set aside from auto-eat':''}"${active?'':' disabled'}><span class="fm-ic">${iconHTML(h.id)}</span><span class="ct">${h.cnt}</span>${lockIco(h.id)}</button>`;
-    const regenIco=r=>`<button class="fm-icon cmb-pot-btn${healReserved(r.id)?' reserved':''}" data-regen="${r.id}" data-tip="${_fmEsc(r.it.name)}&#10;+${r.total} HP over ${r.dur}s&#10;${r.cnt} in satchel${healReserved(r.id)?'&#10;Set aside from auto-eat':''}"${active?'':' disabled'}><span class="fm-ic">${iconHTML(r.id)}</span><span class="ct">${r.cnt}</span>${lockIco(r.id)}</button>`;
+    const lockIco=id=>`<span class="fm-lock${healReserved(id)?' on':''}" data-lock="${id}" role="button" tabindex="0" data-rtip="${healReserved(id)?'Set aside&#10;Auto-eat leaves this alone. Click to release.':'Set aside&#10;Click so auto-eat never eats this.'}">${healReserved(id)?'&#128274;':'&#128275;'}</span>`;
+    const healIco=h=>`<button class="fm-icon cmb-pot-btn${healReserved(h.id)?' reserved':''}" data-heal="${h.id}" data-rtip="${_fmEsc(h.it.name)}&#10;+${h.heal} HP · instant&#10;${h.cnt} in satchel${healReserved(h.id)?'&#10;Set aside from auto-eat':''}"${active?'':' disabled'}><span class="fm-ic">${iconHTML(h.id)}</span><span class="ct">${h.cnt}</span>${lockIco(h.id)}</button>`;
+    const regenIco=r=>`<button class="fm-icon cmb-pot-btn${healReserved(r.id)?' reserved':''}" data-regen="${r.id}" data-rtip="${_fmEsc(r.it.name)}&#10;+${r.total} HP over ${r.dur}s&#10;${r.cnt} in satchel${healReserved(r.id)?'&#10;Set aside from auto-eat':''}"${active?'':' disabled'}><span class="fm-ic">${iconHTML(r.id)}</span><span class="ct">${r.cnt}</span>${lockIco(r.id)}</button>`;
     const icons=heals.map(healIco).join('')+regens.map(regenIco).join('');
     const thr=[10,20,30,40,50,60,75].map(t=>`<option value="${t}"${t===ah.thresholdPct?' selected':''}>≤ ${t}%</option>`).join('');
-    return `<div class="fm-sub">Food &amp; Heals — tap to eat</div>
+    return `<div class="fm-sub">Food &amp; Heals · tap to eat</div>
       <div class="fm-icons">${icons}</div>
       <div class="fm-row fm-auto">
         <label class="fm-toggle"><input type="checkbox" id="cmbAutoHealChk"${ah.enabled?' checked':''}/><span>Auto-eat</span></label>
@@ -40648,7 +41008,7 @@ function renderCombat(){
     const ab=state.autoBuff||{enabled:false,itemId:''};
     const shortOf=it=>{const p=it.potion||{};return [p.atk?'+'+p.atk+' Atk':'',p.str?'+'+p.str+' Str':'',p.def?'+'+p.def+' Def':''].filter(Boolean).join(' / ');};
     const tintOf=it=>{const p=it.potion||{};const n=(p.atk?1:0)+(p.str?1:0)+(p.def?1:0);return n>1?'buff-triple':p.atk?'buff-atk':p.str?'buff-str':p.def?'buff-def':'';};
-    const buffIco=b=>`<button class="fm-icon ${tintOf(b.it)} cmb-pot-btn" data-buff="${b.id}" data-tip="${_fmEsc(b.it.name)}&#10;${_fmEsc(shortOf(b.it))}&#10;${(state.items[b.id]||0)} in satchel"${active?'':' disabled'}><span class="fm-ic">${iconHTML(b.id)}</span><span class="ct">${(state.items[b.id]||0)}</span></button>`;
+    const buffIco=b=>`<button class="fm-icon ${tintOf(b.it)} cmb-pot-btn" data-buff="${b.id}" data-rtip="${_fmEsc(b.it.name)}&#10;${_fmEsc(shortOf(b.it))}&#10;${(state.items[b.id]||0)} in satchel"${active?'':' disabled'}><span class="fm-ic">${iconHTML(b.id)}</span><span class="ct">${(state.items[b.id]||0)}</span></button>`;
     const icons=buffs.map(buffIco).join('');
     const nowT=Date.now();
     const activeBuffs=(state.effects||[]).filter(e=>e.expires>nowT&&(e.atk||e.str||e.def)).length;
@@ -40727,7 +41087,7 @@ ${combat.raid?buildRaidProgressHTML():''}
         </div>
         <div class="cvglass">
           <h4>Food &amp; potions</h4>
-          <div class="cvfood-scroll">${healPickHTML}${buffPickHTML}</div>
+          <div class="cvfood-scroll"><div class="cmb-foodmenu">${healPickHTML}${buffPickHTML}</div></div>
         </div>
         <div class="cvglass">
           <h4>Combat log</h4>
@@ -40762,6 +41122,11 @@ ${combat.raid?buildRaidProgressHTML():''}
   /* #combatPanel is rebuilt wholesale on every render, so the zone rail snapped
      back to the top the moment you picked a zone out of it. Carry its scroll. */
   const _railTop=(()=>{const r=panel.querySelector('.cg-rail');return r?r.scrollTop:0;})();
+  /* Same for the Monster Log's list, and the combat log: it was pinned to the bottom
+     on every rebuild even while you had scrolled up to read it. */
+  const _monTop=(()=>{const r=panel.querySelector('.mlog-monlist');return r?r.scrollTop:0;})();
+  const _lg=panel.querySelector('#cmbLog');
+  const _logPinned=!_lg||(_lg.scrollHeight-_lg.scrollTop-_lg.clientHeight)<8, _logTop=_lg?_lg.scrollTop:0;
   /* #combatPanel is rebuilt wholesale, and every kill triggers that. Whatever the
      pointer was over is about to be detached, and a tooltip whose anchor no longer
      exists never gets a mouseout, so it hangs on screen over nothing. */
@@ -40781,6 +41146,8 @@ ${combat.raid?buildRaidProgressHTML():''}
     ${arenaBodyHTML}
   `;
   if(_railTop){const _r=panel.querySelector('.cg-rail'); if(_r) _r.scrollTop=_railTop;}
+  if(_cvFoodTop){const _f=panel.querySelector('.cvfood-scroll'); if(_f) _f.scrollTop=_cvFoodTop;}
+  if(_monTop){const _ml=panel.querySelector('.mlog-monlist'); if(_ml) _ml.scrollTop=_monTop;}
 
   // wire controls
   // Back button closes the combat panel — fight (if any) keeps ticking in the
@@ -41201,7 +41568,7 @@ ${combat.raid?buildRaidProgressHTML():''}
     }
   });
 
-  const logEl=$('cmbLog'); if(logEl) logEl.scrollTop=logEl.scrollHeight;
+  const logEl=$('cmbLog'); if(logEl) logEl.scrollTop=_logPinned?logEl.scrollHeight:_logTop;
 }
 
 /* ════ [JS-24g] frame loop (renderAll / animate) ═════════════════════════════════ */
@@ -46820,7 +47187,7 @@ const HINTS={
   craft_gear_req:{
     guard:true,
     title:'You cannot wear that yet',
-    body:"Combat gear needs a level to wear it, and the crafting card does not show it. Weapons need Attack, everything else needs Defence. Iron needs 10, Steel 20, Mithril 30.\n\nThat is a combat level, not a crafting level.\n\nThe piece keeps. Craft ahead if you want, you just cannot wear it yet.",
+    body:"Combat gear needs a level to wear it, and the crafting card does not show it. Weapons need Attack, bows and crossbows need Ranged, everything else needs Defence. Iron needs 10, Steel 20, Mithril 30.\n\nThat is a combat level, not a crafting level.\n\nThe piece keeps. Craft ahead if you want, you just cannot wear it yet.",
   },
   craft_leather:{
     guard:true,
