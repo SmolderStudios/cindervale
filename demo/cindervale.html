@@ -7530,28 +7530,27 @@ body:not(.is-demo) .demo-only{display:none !important}
 .lo-pick-tx .ds{font-size:calc(12.5px*var(--tscale));color:var(--muted);line-height:1.4}
 .lo-pick-none{font-size:calc(13px*var(--tscale));color:var(--muted);font-style:italic;padding:6px 2px}
 
-/* gear doll: also used by the preset editor */
-.eq-doll{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
-.eq-doll.pe{max-width:340px;margin:0 auto 10px}
-.eq-cell{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
-  padding:6px 4px;border-radius:8px;min-height:72px;min-width:0;cursor:var(--cur-pointer);
-  background:linear-gradient(178deg,var(--lit-top),var(--lit-bot) 78%);
-  box-shadow:inset 0 1px 0 var(--rim),inset 0 -1px 0 var(--under),0 3px 8px rgba(0,0,0,.45)}
-.eq-cell:hover{filter:brightness(1.12)}
-.eq-cell>.ev-icon{width:32px;height:32px}
-.eq-doll.pe .eq-cell{min-height:82px}
-.eq-doll.pe .eq-cell>.ev-icon{width:36px;height:36px}
-.eq-cell .sl{font-size:calc(9.5px*var(--tscale));letter-spacing:.12em;text-transform:uppercase;color:#8a7657}
-.eq-cell .nm{font-size:calc(11px*var(--tscale));color:#e6d3ab;text-align:center;line-height:1.15;
-  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;width:100%}
-.eq-cell.empty{background:rgba(0,0,0,.18);box-shadow:none;border:1px dashed rgba(214,170,96,.16)}
-.eq-cell.set{box-shadow:inset 0 1px 0 var(--rim),inset 0 0 0 1px rgba(224,118,47,.45),0 3px 8px rgba(0,0,0,.45)}
-.eq-cell.miss>.ev-icon{opacity:.4;filter:grayscale(1)}
-.eq-cell.miss .nm{color:#e89a7e}
-.eq-cell.blank{visibility:hidden;min-height:0}
-.eq-cell .sg-prog{top:4px;right:5px}
+/* paper doll: the Gear tab and the preset editor (0.9.124.44) */
+.dl-doll{position:relative;display:grid;width:max-content;margin:6px auto 4px}
+.dl-lines{position:absolute;left:0;top:0;pointer-events:none;overflow:visible}
+.dl-lines path{fill:none;stroke:rgba(214,170,96,.24);stroke-width:2;stroke-linecap:round}
+.dl-sq{position:relative;z-index:1;display:grid;place-items:center;border-radius:7px;cursor:var(--cur-pointer);
+  background:radial-gradient(circle at 50% 40%,#2c1f11,#140d07 74%);
+  box-shadow:inset 0 2px 5px rgba(0,0,0,.85),0 0 0 1px rgba(214,170,96,.3),0 2px 6px rgba(0,0,0,.5)}
+.dl-sq:hover{box-shadow:inset 0 2px 5px rgba(0,0,0,.85),0 0 0 1px rgba(240,199,114,.8),0 0 10px rgba(240,199,114,.2)}
+.dl-sq>.ev-icon{width:82%;height:82%}
+.dl-sq.empty{background:#110b06;box-shadow:inset 0 2px 5px rgba(0,0,0,.9),0 0 0 1px rgba(214,170,96,.16)}
+.dl-sq.empty:hover{box-shadow:inset 0 2px 5px rgba(0,0,0,.9),0 0 0 1px rgba(240,199,114,.55)}
+.dl-sq.empty>.ev-icon{width:72%;height:72%;filter:brightness(1.4)}
+.dl-sq.set{box-shadow:inset 0 2px 5px rgba(0,0,0,.85),0 0 0 1.5px rgba(224,118,47,.7),0 2px 6px rgba(0,0,0,.5)}
+.dl-sq.miss{box-shadow:inset 0 2px 5px rgba(0,0,0,.85),0 0 0 1.5px rgba(208,72,72,.8)}
+.dl-sq.miss>.ev-icon{opacity:.4;filter:grayscale(1)}
+.dl-sq .sg-prog{top:-7px;right:-10px;font-size:calc(10px*var(--tscale))}
+.dl-sq .eq-x{top:-7px;right:-7px}
+.dl-names{display:flex;flex-wrap:wrap;justify-content:center;gap:4px;margin-top:4px}
+.dl-names.none{font-size:calc(12px*var(--tscale));color:var(--muted);font-style:italic}
 .eq-x{position:absolute;top:3px;right:4px;width:18px;height:18px;border:0;border-radius:50%;padding:0;line-height:16px;
-  background:rgba(0,0,0,.45);color:#e89a7e;font-size:14px;cursor:var(--cur-pointer)}
+  background:rgba(0,0,0,.6);color:#e89a7e;font-size:14px;cursor:var(--cur-pointer);z-index:2}
 .eq-x:hover{background:#5a1e12;color:#ffd0c0}
 .eq-stats{margin-top:8px;padding:8px 10px;border-radius:9px;background:#140d06;
   box-shadow:inset 0 2px 5px rgba(0,0,0,.85),inset 0 -1px 0 rgba(214,170,96,.08)}
@@ -8520,7 +8519,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.124.43">v0.9.124</div>
+  <div class="mm-ver" data-build="0.9.124.44">v0.9.124</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -10344,7 +10343,7 @@ const ITEMS={
   royal_rat_sigil:  {name:'Royal Rat Sigil',   icon:'🔱',sell:4500, rare:true, desc:"A grim emblem of the Warren court. Hold this and the Queen's Lair will open to you."},
   rat_queen_crown:  {name:"Rat Queen's Crown", icon:'👑',sell:22000,rare:true, cgear:true,ctier:2,cslot:'helmet', desc:'The blackened circlet of the fallen Queen — proof of conquest.'},
   // ── Spider Hollow drops ────────────────────────────────────────────────────
-  spider_silk:      {name:'Spider Silk',       icon:'🕸️',sell:14,   desc:'A bolt of pale, impossibly strong thread. Fletchers and tailors will pay.'},
+  spider_silk:      {name:'Spider Silk',       icon:'🕸️',sell:14,   desc:'A bolt of pale, impossibly strong thread. Fletchers and tailors prize it.'},
   chitin_shard:     {name:'Chitin Shard',      icon:'🟪',sell:28,   desc:'A jagged plate of dark carapace. Alchemists steep the shards for hardening draughts.'},
   venom_sac:        {name:'Venom Sac',         icon:'🟢',sell:65,   desc:'A pulsing gland heavy with paralytic venom. Sought after by alchemists.'},
   spinneret:        {name:'Spinneret',         icon:'🟣',sell:175,  desc:'A barbed silk-spinning organ. Advanced crafters covet these.'},
@@ -10504,7 +10503,7 @@ const ITEMS={
   salvaged_powder:{name:'Salvaged Powder',     icon:'🛢️',sell:1400, sea:1, desc:"Dry kegs out of a dead magazine. Whoever sealed them knew their trade and did not survive it."},
   sailors_locket: {name:"Sailor's Locket",     icon:'📿',sell:2600, sea:1, desc:"Brass, tarnished, and there is a face inside it. The Emberwatch jewellers will rework it and not ask."},
   ship_bell:      {name:"Cracked Ship's Bell", icon:'🔔',sell:6800, sea:1, rare:true, desc:"Split down one side, so it sounds wrong — but bell bronze is bell bronze, and no mine on the coast yields it."},
-  drowned_ledger: {name:'Drowned Ledger',      icon:'📕',sell:14000,sea:1, rare:true, desc:"A cargo manifest, legible and stamped. The Admiralty pays a bounty for these and does not explain why."},
+  drowned_ledger: {name:'Drowned Ledger',      icon:'📕',sell:14000,sea:1, rare:true, desc:"A cargo manifest, legible and stamped. The Admiralty offers a bounty for these and does not explain why."},
   // The Mistlands
   mistglass:      {name:'Mistglass',           icon:'🔮',sell:2900, sea:1, desc:"It refracts wrong — the light comes out at an angle it did not go in at. Jewellers pay well and work fast."},
   fogweed:        {name:'Fogweed',             icon:'☘️',sell:2400, sea:1, desc:"Grows where no light reaches, which should not be possible. Alchemists have stopped asking."},
@@ -18251,11 +18250,16 @@ function presetStatus(scope,key){
 function saveGearPreset(skillKey, customPreset){
   if(!state.gearPresets) state.gearPresets={};
   const src=customPreset||state.skillingEquipped||{};
-  const p={}; PRESET_BODY_SLOTS.forEach(function(s){ if(src[s]) p[s]=src[s]; });
+  const p={}; let left=0;
+  PRESET_BODY_SLOTS.forEach(function(s){
+    if(!src[s]) return;
+    if(presetFitsSkill(src[s],skillKey)) p[s]=src[s]; else left++;
+  });
   state.gearPresets[skillKey]=p;
   saveGame();
   var sk=SKILLS[skillKey];
-  toast((sk?sk.icon+' '+sk.name:'')+' preset saved.');
+  toast((sk?sk.icon+' '+sk.name:'')+' preset saved.'
+    +(left?' Left out '+left+' piece'+(left>1?'s':'')+' made for another skill.':''));
   renderCenter();
   if(rightTab==='presets') renderPresets();
 }
@@ -18272,7 +18276,7 @@ function equipGearPreset(skillKey, silent){
   var applied=0, missing=0, used={};
   PRESET_BODY_SLOTS.forEach(function(slot){
     var itemId=preset[slot];
-    if(!itemId) return;
+    if(!itemId||!presetFitsSkill(itemId,skillKey)) return;
     if(!_presetOwns(itemId)){ missing++; return; }
     // A preset may name one id in both ring hands, but only if the pair exists —
     // this writes the loadout directly and so has to enforce the cap itself.
@@ -18402,70 +18406,117 @@ function openPresetEditor(key, scope){
   $('presetEditorModal').classList.remove('hidden');
 }
 
-/* One paper doll for the Gear tab and the preset editor, so a slot sits in the
-   same place in both. The skilling side has no weapon, off-hand or quiver, since
-   nothing you train with goes there, so its middle folds into one row; the top
-   and bottom rows match the combat side. */
+/* ── The paper doll (0.9.124.44), shared by the Gear tab and the preset editor ──
+   Laid out like the OSRS equipment screen: square slots with room between them,
+   lines joining them into a body, an empty slot drawn as its outline, and the
+   name on hover. The grid of big named cards before it packed twelve boxes edge
+   to edge, which read as "all too close and confusing". A slot sits in the same
+   place on both sides; the skilling side has no weapon, off-hand or quiver, since
+   nothing you train with goes there. */
 var DOLL_LAYOUT_PE_COMBAT=[
-  ['cape',   'helmet', 'amulet'],
+  [null,     'helmet', null    ],
+  ['cape',   'amulet', 'quiver'],
   ['weapon', 'chest',  'shield'],
-  ['gloves', 'legs',   'quiver'],
-  ['ring_l', 'boots',  'ring_r'],
-];
-var DOLL_LAYOUT_PE=[
-  ['cape',   'helmet', 'amulet'],
-  ['gloves', 'chest',  'legs'  ],
+  ['gloves', 'legs',   null    ],
   ['ring_l', 'boots',  'ring_r'],
 ];
 var DOLL_COMBAT_ONLY={weapon:1,shield:1,quiver:1};
+var DOLL_LAYOUT_PE=DOLL_LAYOUT_PE_COMBAT.map(function(r){ return r.map(function(s){ return DOLL_COMBAT_ONLY[s]?null:s; }); });
+var DOLL_LINKS=[['helmet','amulet'],['amulet','chest'],['chest','legs'],['legs','boots'],['cape','amulet'],
+  ['amulet','quiver'],['weapon','chest'],['chest','shield'],['gloves','legs'],['ring_l','boots'],['boots','ring_r']];
+/* Rows of slot keys (null for a gap) in, a doll element out. make(slot) builds one
+   square; the lines are drawn from the same numbers the grid is laid out with. */
+function buildDoll(layout, make, sq, cg, rg){
+  var wrap=document.createElement('div');
+  wrap.className='dl-doll';
+  wrap.style.gridTemplateColumns='repeat(3,'+sq+'px)';
+  wrap.style.gridAutoRows=sq+'px';
+  wrap.style.columnGap=cg+'px'; wrap.style.rowGap=rg+'px';
+  var W=3*sq+2*cg, Ht=layout.length*sq+(layout.length-1)*rg, at={}, d='';
+  layout.forEach(function(row,r){ row.forEach(function(s,c){ if(s) at[s]=[c*(sq+cg)+sq/2, r*(sq+rg)+sq/2]; }); });
+  DOLL_LINKS.forEach(function(l){ var a=at[l[0]], b=at[l[1]]; if(a&&b) d+='M'+a[0]+' '+a[1]+'L'+b[0]+' '+b[1]; });
+  wrap.innerHTML='<svg class="dl-lines" width="'+W+'" height="'+Ht+'" viewBox="0 0 '+W+' '+Ht+'"><path d="'+d+'"/></svg>';
+  layout.forEach(function(row,r){ row.forEach(function(s,c){
+    if(!s) return;
+    var el=make(s);
+    el.setAttribute('data-slot',s);
+    el.style.gridRow=String(r+1); el.style.gridColumn=String(c+1);
+    wrap.appendChild(el);
+  }); });
+  return wrap;
+}
 
 function renderPresetEditorDoll(){
   var box=$('presetEditorDoll'); box.innerHTML='';
-  var grid=document.createElement('div');
-  grid.className='eq-doll pe';
   var layout=_presetEditorScope==='combat'?DOLL_LAYOUT_PE_COMBAT:DOLL_LAYOUT_PE;
-
-  layout.forEach(function(row){
-    row.forEach(function(slotKey){
-      var cell=document.createElement('div');
-      if(!slotKey){ cell.className='eq-cell blank'; grid.appendChild(cell); return; }
-      var def=BODY_SLOTS.find(function(s){return s.slot===slotKey;});
-      var itemId=_presetDraft[slotKey]||null;
-      var itemDef=itemId?getBodyItemDef(itemId):null;
-      var filled=!!itemDef;
-      var missing=filled&&!_presetOwns(itemId);
-      cell.className='eq-cell'+(filled?'':' empty')+(missing?' miss':'');
-      cell.title=(def?def.label:'')+(filled?': '+itemDef.name+(missing?' (you do not have this)':''):': empty, click to set');
-      cell.innerHTML=filled?iconHTML(itemId)+'<span class="nm">'+itemDef.name+'</span>'
-                           :'<span class="sl">'+(BAG_SLOT_LABEL[slotKey]||(def?def.label:slotKey))+'</span>';
-      if(filled){
-        var clr=document.createElement('button');
-        clr.type='button'; clr.className='eq-x'; clr.textContent='×';
-        clr.title='Take it out of this preset';
-        (function(sk){ clr.addEventListener('click',function(e){
-          e.stopPropagation();
-          delete _presetDraft[sk];
-          renderPresetEditorDoll();
-        }); })(slotKey);
-        cell.appendChild(clr);
-      }
-      (function(sk,d){ cell.addEventListener('click',function(){
-        openPresetSlotPicker(sk,d);
-      }); })(slotKey,def);
-      grid.appendChild(cell);
-    });
-  });
-  box.appendChild(grid);
-  var chips=$('presetEditorChips'); if(chips) chips.innerHTML='';
+  var doll=buildDoll(layout,function(slotKey){
+    var def=BODY_SLOTS.find(function(s){return s.slot===slotKey;});
+    var itemId=_presetDraft[slotKey]||null;
+    var itemDef=itemId?getBodyItemDef(itemId):null;
+    var filled=!!itemDef;
+    var missing=filled&&!_presetOwns(itemId);
+    var cell=document.createElement('div');
+    cell.className='dl-sq'+(filled?'':' empty')+(missing?' miss':'');
+    cell.title=(def?def.label:'')+(filled?': '+itemDef.name+(missing?' (you do not have this)':''):': empty, click to set');
+    cell.innerHTML=filled?iconHTML(itemId):((def&&def.empty)||'');
+    if(filled){
+      var clr=document.createElement('button');
+      clr.type='button'; clr.className='eq-x'; clr.textContent='×';
+      clr.title='Take it out of this preset';
+      clr.addEventListener('click',function(e){
+        e.stopPropagation();
+        delete _presetDraft[slotKey];
+        renderPresetEditorDoll();
+      });
+      cell.appendChild(clr);
+    }
+    cell.addEventListener('click',function(){ openPresetSlotPicker(slotKey,def); });
+    return cell;
+  },64,46,12);
+  doll.classList.add('pe');
+  box.appendChild(doll);
+  /* The doll shows pictures only, so the editor lists the names underneath. */
+  var chips=$('presetEditorChips');
+  if(chips){
+    var names=[];
+    layout.forEach(function(row){ row.forEach(function(s){
+      var id=s&&_presetDraft[s]; if(!id) return;
+      var dd=getBodyItemDef(id); if(!dd) return;
+      names.push('<span class="dk-chip'+(_presetOwns(id)?'':' bad')+'">'+iconHTML(id)+dd.name+'</span>');
+    }); });
+    chips.innerHTML=names.length?'<div class="dl-names">'+names.join('')+'</div>'
+      :'<div class="dl-names none">Nothing in this preset yet. Click a slot to add something.</div>';
+  }
 }
 
 /* What can go in a slot of a preset being edited. Skilling presets never offer
    combat gear or tools; combat presets never offer skilling set pieces or tools.
    The old picker only walked ITEM_BODY_SLOTS, which cannot list a leather chest, a
    bow, a raid piece or an arrow: 171 combat pieces and every ammunition. */
-function _presetCandidates(slotKey, scope){
+/* Which skills a piece is made for: a set piece's skill, a skill cape's skill, a
+   ring's `skills` list. Null is general gear, which any preset can hold. A skilling
+   preset only takes its own skill's pieces (0.9.124.44): the Woodcutting preset
+   offered the whole Agility set, which does nothing for Woodcutting. */
+function presetGearSkills(id){
+  var it=ITEMS[id];
+  if(it&&it.skillGear) return it.gearSkill?[it.gearSkill]:null;
+  var si=SHOP.find(function(s){ return s.id===id; });
+  if(si){ if(si.skills) return si.skills; if(si.skill) return [si.skill]; }
+  return null;
+}
+function presetFitsSkill(id, skillKey){
+  if(!SKILLS[skillKey]) return true;
+  var k=presetGearSkills(id);
+  return !k||k.indexOf(skillKey)>=0;
+}
+function _presetCandidates(slotKey, scope, key){
+  if(key==null) key=_presetEditorSkill;
   var out=[];
-  var add=function(id){ if(id&&out.indexOf(id)<0) out.push(id); };
+  var add=function(id){
+    if(!id||out.indexOf(id)>=0) return;
+    if(scope!=='combat'&&!presetFitsSkill(id,key)) return;
+    out.push(id);
+  };
   for(var iid in ITEM_BODY_SLOTS){
     if(!itemFitsSlot(iid,slotKey)||!_presetOwns(iid)) continue;
     var it=ITEMS[iid];
@@ -19439,7 +19490,8 @@ function normalizeState(){
     for(var k in state.gearPresets){
       var gp=state.gearPresets[k];
       if(!gp||typeof gp!=='object'||Array.isArray(gp)){ delete state.gearPresets[k]; continue; }
-      for(var s in gp){ if(PRESET_BODY_SLOTS.indexOf(s)<0||shoeTier[gp[s]]!=null) delete gp[s]; }
+      // body gear only, and a skill's preset holds no other skill's set pieces (0.9.124.44)
+      for(var s in gp){ if(PRESET_BODY_SLOTS.indexOf(s)<0||shoeTier[gp[s]]!=null||!presetFitsSkill(gp[s],k)) delete gp[s]; }
     }
   })();
   if(!state.combatPresets||typeof state.combatPresets!=='object'||Array.isArray(state.combatPresets)) state.combatPresets={};
@@ -20532,7 +20584,7 @@ const OFFLINE_TREE=[
     tip:'The longest stretch the game keeps counting while you are away. Time past the cap earns nothing, so raise this if you log in less often.'},
   {id:'of_xp',     name:'Dream Study',   max:10,req:0, tier:'The Basics',
     desc:r=>`Offline XP rate +${r*8}%`,            next:r=>`+8% → ${r*8}%`,
-    tip:'Increases the XP earned by the Offline skill itself while you are away — the skill that pays for this tree. Does not affect your chosen training skill.'},
+    tip:'Increases the XP earned by the Offline skill itself while you are away. That skill earns the points for this tree. Does not affect your chosen training skill.'},
   /* ── Tier 2 · how the night is spent (req 6) ──
      The first two are the point of the rework: a point here buys a new WAY to
      spend the night rather than a bigger number on the old one. */
@@ -20578,7 +20630,7 @@ const OFFLINE_TREE=[
     tip:'Grandmaster efficiency, stacking on top of Night Owl. Between them they reach the ceiling exactly — and the ceiling is what stops offline ever matching live play.'},
   {id:'of_gm_xp',  name:'Subconscious',  max:6, req:34, gm:true, tier:'Grandmaster',
     desc:r=>`Offline XP rate +${r*12}% (grandmaster)`, next:r=>`+12% → ${r*12}%`,
-    tip:'Grandmaster boost to the Offline skill XP rate, stacking with Dream Study. Levels this skill faster, which is what pays for the rest of the tree.'},
+    tip:'Grandmaster boost to the Offline skill XP rate, stacking with Dream Study. Levels this skill faster, which earns the points for the rest of the tree.'},
   {id:'of_gm_cap', name:'Eternal Rest',  max:1, req:34, gm:true, tier:'Grandmaster',
     desc:r=>r?'Offline cap at least 72h (3 days)':'Cap extended to 72h',
     next:()=>'Cap: at least 72h',
@@ -24660,7 +24712,7 @@ function showOfflineSummary(awayMs, lines, meta){
   if(meta.capped) head+='<span class="off-tag warn" data-tip="Your offline cap is '
     +fmtDur(meta.capMs||awayMs)+'. Hours past it earn nothing — raise the cap in the Offline skill tree.">'
     +'only '+fmtDur(meta.capMs||awayMs)+' counted</span>';
-  head+='<span class="off-tag rate" data-tip="Offline pays a fraction of what the same time pays while you are playing. Levels in the Offline skill raise it.">'
+  head+='<span class="off-tag rate" data-tip="Offline gives a fraction of what the same time gives while you are playing. Levels in the Offline skill raise it.">'
     +eff+'% of live rate</span>';
   /* Which stance ran. Only shown when it was not Steady — naming the default on
      every single return would be noise. */
@@ -26505,13 +26557,13 @@ const GD_SHOP=[
 const GD_SHOP_NAMES={
   furrow:    {xp:'The almanac',            coin:'Market takings',     crate:'Harvest barrow'},
   timber:    {xp:"The feller's ledger",    coin:'Timber sale',        crate:'Cord of wood'},
-  delvers:   {xp:'Survey charts',          coin:'Assay payout',       crate:'Ore cart'},
+  delvers:   {xp:'Survey charts',          coin:"Assayer's purse",       crate:'Ore cart'},
   deepwater: {xp:"The pilot's log",        coin:'Share of the catch', crate:'Packed barrel'},
   emberforge:{xp:'Pattern book',           coin:'Forge commission',   crate:'Pallet of stock'},
   ashen:     {xp:"The Circle's grimoire",  coin:'Sale of remedies',   crate:'Reagent chest'},
   facet:     {xp:"Lapidary's notes",       coin:'Commission fee',     crate:'Velvet case'},
   night:     {xp:"The runner's map",       coin:"Night's takings"},
-  legion:    {xp:'The drill field',        coin:'Campaign pay'},
+  legion:    {xp:'The drill field',        coin:'Campaign spoils'},
   quiethand: {xp:'The dark room',          coin:'Contract fee'},
 };
 const GD_CRATE_QTY=50;
@@ -29174,7 +29226,7 @@ function buildSpireLogBody(raid){
       }).join('')}</tbody>
     </table></div>
     <div class="mlog-legend">Nine creatures that belong to the tower rather than to anything it fell through. They hold every third stretch of five floors, 11 to 15, 26 to 30, 41 to 45 and on up, and each of those stretches brings in more of them. Rows you have already killed are lit. A native's own curse replaces Spire Weight for that floor rather than stacking with it.</div>
-    <div class="mlog-sec-t">What a floor pays</div>
+    <div class="mlog-sec-t">What a floor gives</div>
     <div class="mls-wrap"><table class="mls-tbl">
       <thead><tr><th>Floor</th><th>Foe health</th><th>Its max hit</th><th>${iconHTML('ui_coin')} Gold</th>
         <th>${iconHTML('sunderstone')} / ${iconHTML('spirecore')}</th><th>Drawn from</th></tr></thead>
@@ -31396,7 +31448,7 @@ const HUNT_KIT=[
   ICONS.sunderedge=_swordSVGwpn(WPN);
   S('faultward','Faultward','\u{1F6E1}',185000,'shield','',{atk:0,str:0,def:118},
     {ubonus:{defBoost:0.07, hpBoost:0.06}, blockMom:4},
-    "A slab of load-bearing stone that held a floor up for an age and never once gave. <b>+7% Defence, +6% max HP</b>, and every blow it turns aside pays <b>+4 Momentum</b> in a raid — the only shield that does, and the reason a tank climbs the Spire as fast as anything else. Nothing in the game guards harder.");
+    "A slab of load-bearing stone that held a floor up for an age and never once gave. <b>+7% Defence, +6% max HP</b>, and every blow it turns aside gives <b>+4 Momentum</b> in a raid. It is the only shield that does, and the reason a tank climbs the Spire as fast as anything else. Nothing in the game guards harder.");
   ICONS.faultward=_shieldSVG(PLATE);
   S('plummet','Plummet','\u{1F3F9}',205000,'weapon','ranged',{atk:80,str:34,def:0},
     {ubonus:{atkBoost:0.07, critChance:0.05}, wfx:{pierce:{chance:0.22}},
@@ -32753,7 +32805,7 @@ const SPIRE_BOON_AFFIXES=[
   {id:'bulwarked', name:'Bulwarked',  desc:'You take 12% less damage from everything.',             you:{dmgReduce:0.12}},
   {id:'bloodlet',  name:'Bloodlet',   desc:'+8% lifesteal on every blow you land.',                 you:{lifesteal:0.08}},
   {id:'quickened', name:'Quickened',  desc:'You swing 10% faster.',                                 you:{aspd:0.10}},
-  {id:'richseam',  name:'Rich Seam',  desc:'The rubble pays out: +60% Sunderstone from every floor.',you:{stone:1.60}},
+  {id:'richseam',  name:'Rich Seam',  desc:'The rubble is rich: +60% Sunderstone from every floor.',you:{stone:1.60}},
 ];
 /* Deterministic per day, and the two hostile picks are drawn without replacement
    so a day never doubles up on the same one. */
@@ -33760,7 +33812,7 @@ function handleRaidFail(){
   if(endless){
     /* Never "the barrow keeps its treasures" for a climb: every floor below this
        one already paid out, and saying otherwise reads as a bug. */
-    cmbLog(`🗼 The Spire takes you on floor ${floor}. Everything the climb already paid is yours.`,'lose');
+    cmbLog(`🗼 The Spire takes you on floor ${floor}. Everything you earned on the climb is yours.`,'lose');
     if(typeof toast==='function') toast(`🗼 Fell on Spire floor ${floor}.`);
     if(typeof logNotification==='function') logNotification('combat','🗼',`Fell on Spire floor ${floor} (deepest ${state.spireBest||0}).`);
     if(typeof saveGame==='function') saveGame();
@@ -34502,62 +34554,52 @@ function renderGear(){
   });
   box.appendChild(filterRow);
 
-  /* The doll is a fixed 3-wide grid, so a new BODY_SLOTS entry does NOT appear here
-     on its own. The quiver sits under the shield: both hang off the off-hand column.
-     A skilling loadout can still hold a weapon from before the loadouts split
-     (v1.0.46); a row for it shows until that comes off, or it could never be removed. */
-  const dollGrid=document.createElement('div');
-  dollGrid.className='eq-doll';
+  /* The doll (see buildDoll) is a fixed 3-wide layout, so a new BODY_SLOTS entry
+     does NOT appear here on its own. A skilling loadout can still hold a weapon
+     from before the loadouts split (v1.0.46); its square shows until that comes
+     off, or it could never be removed. */
   var dollLoadout=_gearFilter==='combat' ? state.combatEquipped : state.skillingEquipped;
-  var dollLayout=_gearFilter==='combat'?DOLL_LAYOUT_PE_COMBAT:DOLL_LAYOUT_PE.slice();
-  if(_gearFilter!=='combat'&&(dollLoadout.weapon||dollLoadout.shield||dollLoadout.quiver))
-    dollLayout.push(['weapon','shield','quiver'].map(function(s){ return dollLoadout[s]?s:null; }));
-  for(var ri=0;ri<dollLayout.length;ri++){
-    for(var ci=0;ci<3;ci++){
-      var slotKey=dollLayout[ri][ci];
-      var cell=document.createElement('div');
-      if(!slotKey){ cell.className='eq-cell blank'; dollGrid.appendChild(cell); continue; }
-      var def=BODY_SLOTS.find(function(s){return s.slot===slotKey;});
-      var equippedId=dollLoadout[slotKey];
-      var equippedDef=equippedId?getBodyItemDef(equippedId):null;
-      var filled=!!equippedDef;
-      var isSkillingGear=filled&&ITEMS[equippedId]&&ITEMS[equippedId].skillGear;
-      cell.className='eq-cell'+(filled?'':' empty')+(isSkillingGear?' set':'');
-      cell.title=def.label+(filled?': '+equippedDef.name:': empty, click to equip');
-      cell.innerHTML=filled?iconHTML(equippedId)+'<span class="nm">'+equippedDef.name+'</span>'
-                           :'<span class="sl">'+(BAG_SLOT_LABEL[slotKey]||def.label)+'</span>';
-      // X/4 badge for skilling set pieces, only while viewing the skilling loadout
-      if(isSkillingGear && _gearFilter==='skilling'){
-        var sgIt=ITEMS[equippedId];
-        var sgSetDef=SKILLING_SETS[sgIt.gearSkill];
-        if(sgSetDef){
-          var sgEqCt=0;
-          for(var sbi=0;sbi<sgSetDef.pieces.length;sbi++){
-            var sbpid=sgSetDef.pieces[sbi];
-            if(state.skillingEquipped[(ITEMS[sbpid]||{}).gearSlot]===sbpid) sgEqCt++;
-          }
-          var badge=document.createElement('span');
-          badge.className='sg-prog'+(sgEqCt===4?' complete':'');
-          badge.textContent=sgEqCt+'/4';
-          cell.appendChild(badge);
+  var dollLayout=DOLL_LAYOUT_PE_COMBAT.map(function(r){ return r.map(function(s){
+    return (_gearFilter!=='combat'&&DOLL_COMBAT_ONLY[s]&&!dollLoadout[s])?null:s; }); });
+  const dollGrid=buildDoll(dollLayout,function(slotKey){
+    var def=BODY_SLOTS.find(function(s){return s.slot===slotKey;});
+    var equippedId=dollLoadout[slotKey];
+    var equippedDef=equippedId?getBodyItemDef(equippedId):null;
+    var filled=!!equippedDef;
+    var isSkillingGear=filled&&ITEMS[equippedId]&&ITEMS[equippedId].skillGear;
+    var cell=document.createElement('div');
+    cell.className='dl-sq'+(filled?'':' empty')+(isSkillingGear?' set':'');
+    cell.title=def.label+(filled?': '+equippedDef.name:': empty, click to equip');
+    cell.innerHTML=filled?iconHTML(equippedId):(def.empty||'');
+    // X/4 badge for skilling set pieces, only while viewing the skilling loadout
+    if(isSkillingGear && _gearFilter==='skilling'){
+      var sgSetDef=SKILLING_SETS[ITEMS[equippedId].gearSkill];
+      if(sgSetDef){
+        var sgEqCt=0;
+        for(var sbi=0;sbi<sgSetDef.pieces.length;sbi++){
+          var sbpid=sgSetDef.pieces[sbi];
+          if(state.skillingEquipped[(ITEMS[sbpid]||{}).gearSlot]===sbpid) sgEqCt++;
         }
+        var badge=document.createElement('span');
+        badge.className='sg-prog'+(sgEqCt===4?' complete':'');
+        badge.textContent=sgEqCt+'/4';
+        cell.appendChild(badge);
       }
-      (function(sk,d,eqId){
-        cell.addEventListener('click',function(){openGearSlotModal(sk,d,dollLoadout[sk]);});
-        if(eqId){
-          cell.addEventListener('mouseenter',function(e){
-            var html=ITEMS[eqId]&&ITEMS[eqId].skillGear
-              ?skillingGearTipHtml(eqId)
-              :shopItemTipHtml(eqId);
-            if(html) showGearTip(html,e.clientX,e.clientY);
-          });
-          cell.addEventListener('mousemove',function(e){ showGearTip(_gtEl().innerHTML,e.clientX,e.clientY); });
-          cell.addEventListener('mouseleave',hideGearTip);
-        }
-      })(slotKey,def,equippedId);
-      dollGrid.appendChild(cell);
     }
-  }
+    cell.addEventListener('click',function(){openGearSlotModal(slotKey,def,dollLoadout[slotKey]);});
+    if(equippedId){
+      cell.removeAttribute('title');   // the hover card names it
+      cell.addEventListener('mouseenter',function(e){
+        var html=ITEMS[equippedId]&&ITEMS[equippedId].skillGear
+          ?skillingGearTipHtml(equippedId)
+          :shopItemTipHtml(equippedId);
+        if(html) showGearTip(html,e.clientX,e.clientY);
+      });
+      cell.addEventListener('mousemove',function(e){ showGearTip(_gtEl().innerHTML,e.clientX,e.clientY); });
+      cell.addEventListener('mouseleave',hideGearTip);
+    }
+    return cell;
+  },56,30,10);
   box.appendChild(dollGrid);
 
   const stats=document.createElement('div');
@@ -36991,7 +37033,7 @@ const ACHIEVEMENTS=[
   {id:'all_isles',    cat:'sailing',  icon:'all_isles',    name:'Cartographer',  desc:'Find every island.',                    check:()=>_achIsles()>=SAIL_ISLES.length},
   {id:'leviathan',    cat:'sailing',  icon:'leviathan',    name:'Leviathan',     desc:'Build the Ancient Leviathan.',          check:()=>((state.sail&&state.sail.hull)||0)>=SAIL_HULLS.length-1},
   {id:'consort',      cat:'sailing',  icon:'consort',      name:'Two Sails',     desc:'Bring the consort level with your own ship.', check:()=>!!(state.sail&&state.sail.consort&&state.sail.hull2>=state.sail.hull&&state.sail.hull>0)},
-  {id:'commissions',  cat:'sailing',  icon:'commissions',  name:'The Admiralty', desc:'Pay 25 commissions.',                   check:()=>((state.sail&&state.sail.commsDone)||0)>=25},
+  {id:'commissions',  cat:'sailing',  icon:'commissions',  name:'The Admiralty', desc:'Complete 25 commissions.',                   check:()=>((state.sail&&state.sail.commsDone)||0)>=25},
 
   // ── Guilds ── (GD_REP has six rungs; gdTitleNum returns 1..6)
   {id:'first_guild',  cat:'guild',    icon:'first_guild',  name:'Signed On',     desc:'Reach the second rank in any guild.',   check:()=>_achGuildsAtRank(2)>=1},
@@ -37737,8 +37779,8 @@ function _ewSetTipHtml(def,gem,kind,live){
           +'An amulet of the same gem drives the skilling set instead.'
         : 'Read off your <b>skilling</b> loadout.')
       +(_ewSetSpansBoth(def)
-        ? ' Its Attack, Defence and Max HP lines pay from the <b>combat</b> loadout — '
-          +'wear the pair there too for those.'
+        ? ' Its Attack, Defence and Max HP lines count on the <b>combat</b> loadout, '
+          +'so wear the pair there too for those.'
         : '')
     +'</div>';
 }
@@ -40605,7 +40647,7 @@ function buildRaidsPanelHTML(){
       /* Never "no spoils recovered" for a climb — every floor below this one was
          already paid out, and saying otherwise reads as a bug. */
       resultBox=`<div class="raid-result fail" style="border-color:#7a3c68"><b>🗼 Climb ended on floor ${R.floor}</b> — ${raid.name}.
-        ${R.floor>R.best?'A new deepest climb. ':''}Everything the floors below paid is already yours.</div>`;
+        ${R.floor>R.best?'A new deepest climb. ':''}Everything you earned on the floors below is already yours.</div>`;
     } else if(R.failed){
       resultBox=`<div class="raid-result fail"><b>${R.forfeit?'🏳 Run forfeit':'💀 Raid failed'}</b> — ${raid.name}, stage ${R.stage}/${R.n}. No spoils recovered.</div>`;
     }else{
@@ -40854,7 +40896,7 @@ function buildRaidProgressHTML(){
   return `<div class="raid-progress" style="--raid-accent:${raid.accent}">
     <div class="rp-top">
       <span class="rp-l"><span class="rp-ic">${iconHTML(raid.icon)}</span><b>${raid.name}</b> · Stage ${stage+1}/${raid.stages.length}${cur.raidBoss?' — Final Boss':(cur.miniBoss?' — Mini-Boss':'')}</span>
-      <span class="rp-r">${curse}<span class="rp-rank" data-tip="Your clear rating right now. A faster clear pays more materials and better relic odds."><b id="rxRank" style="color:${t.col}">${t.key}</b><span id="rxRankSub">${t.maxMs===Infinity?'final rank':_fmtRaidTime(t.maxMs-ms)+' to hold it'}</span></span><span class="rp-timer" id="raidTimer">${_fmtRaidTime(ms)}</span></span>
+      <span class="rp-r">${curse}<span class="rp-rank" data-tip="Your clear rating right now. A faster clear gives more materials and better relic odds."><b id="rxRank" style="color:${t.col}">${t.key}</b><span id="rxRankSub">${t.maxMs===Infinity?'final rank':_fmtRaidTime(t.maxMs-ms)+' to hold it'}</span></span><span class="rp-timer" id="raidTimer">${_fmtRaidTime(ms)}</span></span>
     </div>
     <div class="rp-warn">⚠ No retreat — if you fall, the run is lost and you leave with nothing.</div>
   </div>`;
@@ -43325,7 +43367,7 @@ const SAIL_COMM_KINDS={
       return {k:'salvage', arg:id, need:Math.max(3, Math.round((4+lvl*0.18)*(0.7+Math.random()*0.6)))};
     },
     text(c){ return 'Bring back '+c.need+'× '+(ITEMS[c.arg]?ITEMS[c.arg].name:c.arg); },
-    hint(){ return 'Salvage — deeper water pays better.'; }
+    hint(){ return 'Salvage: deeper water gives more.'; }
   },
   sea:{
     make(lvl){
@@ -43405,7 +43447,7 @@ function sailCommClaim(idx){
   sailCommBoard();          // refill the slot straight away
   sailCheckChapters();
   saveGame(); renderSail();
-  toast('Commission paid — '+rw.gold.toLocaleString()+'g and '+rw.xp.toLocaleString()+' Sailing xp.');
+  toast('Commission done: '+rw.gold.toLocaleString()+'g and '+rw.xp.toLocaleString()+' Sailing xp.');
 }
 
 /* ── chapters ──────────────────────────────────────────────────────────────────
@@ -43502,12 +43544,12 @@ function sailLedger(){
     {k:'Treasure maps',   a:Object.keys(SAIL_CHARTS).filter(cid=>sailHasChart(cid)).length, b:Object.keys(SAIL_CHARTS).length,
      d:'Four islands are sealed behind a map rather than a level.'},
     {k:'Trove kinds held', a:SAIL_TROVES.filter(t=>sailTroveCount(t.id)>0).length, b:SAIL_TROVES.length,
-     d:'One per region of the chart. Holding all five pays a permanent xp bonus.'},
+     d:'One per region of the chart. Holding all five gives a permanent xp bonus.'},
     {k:'Hulls built',     a:(s.hull|0)+1, b:SAIL_HULLS.length,
      d:'The ship ladder, from the Lashed Raft to the Ancient Leviathan.'},
     {k:'Admiralty papers', a:sailChapterCount(), b:SAIL_CHAPTERS.length,
      d:'What the salvage has been adding up to.'},
-    {k:'Commissions paid', a:(s.commsDone|0), b:null,
+    {k:'Commissions done', a:(s.commsDone|0), b:null,
      d:'No ceiling — the board refills as fast as you clear it.'},
     {k:'Voyages completed', a:(s.voyages|0), b:null, d:'Every crossing either ship has made.'}
   ];
@@ -46066,7 +46108,7 @@ function renderSail(){
           +'</h5><p>'
           +(L.fogged?'<b>Blackfog took her off course.</b> She made landfall at '+di.n+', which is on no Admiralty chart. It is on yours now. ':'')
           +gr.p+'</p><div class="sl-chips">';
-        if(L.gold) html+='<span class="sl-chip gold"'+_slTip('Paid on return. Every voyage pays gold; the grade multiplies it.')
+        if(L.gold) html+='<span class="sl-chip gold"'+_slTip('Added when you return. Every voyage brings back gold; the grade multiplies it.')
           +'>'+iconHTML('ui_coin')+'+'+L.gold.toLocaleString()+'g</span>';
         for(const id in L.got){
           const rare=ITEMS[id]&&ITEMS[id].rare;
@@ -46513,8 +46555,8 @@ function renderSail(){
         +'</span></div></div>';
     });
     html+='<div class="sl-lab">Holding one of every kind</div>'
-      +'<p class="sl-note" style="margin:0">Hold at least one of all five at once — including the Steady Lantern, which only rolls on the '
-      +'island you have to get lost in Blackfog to find — and every voyage pays <b>+'+Math.round(SAIL_TROVE_SET_XP*100)+'% Sailing xp</b> on top of everything above. '
+      +'<p class="sl-note" style="margin:0">Hold at least one of all five at once, including the Steady Lantern, which only rolls on the '
+      +'island you have to get lost in Blackfog to find, and every voyage gives <b>+'+Math.round(SAIL_TROVE_SET_XP*100)+'% Sailing xp</b> on top of everything above. '
       +(setOn?'<b style="color:#b4d472">Active.</b>':'You are missing '+(SAIL_TROVES.length-kept)+'.')+'</p>';
     html+='</div>';
 
@@ -46535,9 +46577,9 @@ function renderSail(){
     html+='<div class="sl-sidebody">';
     if(sailAdmTab==='comms'){
     html+='<div class="sl-card"><div class="sl-cardhd"><div><h4>Commissions</h4>'
-      +'<div class="sl-metarow"><span class="sl-chip mut">'+((s.commsDone|0)).toLocaleString()+' paid</span>'
+      +'<div class="sl-metarow"><span class="sl-chip mut">'+((s.commsDone|0)).toLocaleString()+' done</span>'
       +'<span class="sl-chip mut">3 open at once</span></div></div></div>'
-      +'<p class="sl-note" style="margin:0 0 10px">The Admiralty pays for work it could do itself and would rather not. '
+      +'<p class="sl-note" style="margin:0 0 10px">The Admiralty hands out work it could do itself and would rather not. '
       +'A commission fills as you sail — nothing to start and nothing to fail. Claiming one immediately '
       +'posts another in its place.</p>';
     if(!board.length){
@@ -46551,7 +46593,7 @@ function renderSail(){
         +'<span class="cst">'+kind.hint(c)+'</span>'
         +'<div class="sl-cbar"><i style="width:'+pc+'%"></i></div>'
         +'<div class="st"><span>'+Math.min(c.prog,c.need).toLocaleString()+' of '+c.need.toLocaleString()+'</span>'
-        +'<span class="pay">pays '+iconHTML('ui_coin')+' '+rw.gold.toLocaleString()+'g</span>'
+        +'<span class="pay">'+iconHTML('ui_coin')+' '+rw.gold.toLocaleString()+'g</span>'
         +'<span class="pay">'+Math.round(rw.xp*XP_SCALE).toLocaleString()+' Sailing xp</span></div></div>'
         +(done?'<button class="sl-btn sm" data-slclaim="'+ci+'">Claim</button>'
               :'<span class="sl-chip mut">in progress</span>')
