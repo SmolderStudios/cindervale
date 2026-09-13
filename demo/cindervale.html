@@ -7460,6 +7460,119 @@ body:not(.is-demo) .demo-only{display:none !important}
 #satchelView .item-drop-row .id-icon{font-size:calc(15px*var(--tscale))}
 #satchelView .item-drop-row .id-name{font-size:calc(12px*var(--tscale))}
 #satchelView .item-drop-row .id-qty{font-size:calc(12px*var(--tscale));margin-left:2px}
+/* ── Presets tab (loadouts) and the Gear tab (0.9.124.42) ── */
+.lo-seg{display:flex;border-radius:9px;overflow:hidden;box-shadow:0 0 0 1px rgba(214,170,96,.25);margin:0 0 10px}
+.lo-seg button{flex:1;height:34px;border:0;background:rgba(0,0,0,.28);color:#bfa981;font-family:'Cinzel',serif;
+  font-size:calc(13px*var(--tscale));letter-spacing:.04em;cursor:var(--cur-pointer)}
+.lo-seg button:hover{color:#e6d3ab}
+.lo-seg button.on{background:linear-gradient(178deg,#4a3316,#2e1f0d);color:var(--gold-hi)}
+.lo-note{font-size:calc(12px*var(--tscale));color:#a8916a;line-height:1.45;margin:0 2px 8px}
+.lo-auto{display:flex;align-items:center;gap:9px;width:100%;margin:0 0 10px;padding:8px 10px;border-radius:9px;
+  background:rgba(0,0,0,.25);border:1px solid rgba(214,170,96,.12);font-family:inherit;text-align:left;
+  font-size:calc(12px*var(--tscale));color:#c9b48c;cursor:var(--cur-pointer)}
+.lo-auto:hover{border-color:rgba(214,170,96,.3)}
+.lo-auto .tg{flex:none;width:32px;height:17px;border-radius:9px;background:#3a2a18;position:relative;box-shadow:inset 0 1px 2px rgba(0,0,0,.6)}
+.lo-auto .tg::after{content:'';position:absolute;left:2px;top:2px;width:13px;height:13px;border-radius:50%;background:#8a7657;transition:left .15s}
+.lo-auto.on{color:#e6d3ab}
+.lo-auto.on .tg{background:#4a6a26}
+.lo-auto.on .tg::after{left:17px;background:#e8f2d0}
+.lo-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.lo-list{display:flex;flex-direction:column;gap:8px}
+.lo-card{padding:9px 10px 10px;border-radius:10px;min-width:0;
+  background:linear-gradient(178deg,var(--lit-top),var(--lit-bot) 78%);
+  box-shadow:inset 0 1px 0 var(--rim),inset 0 -1px 0 var(--under),0 3px 8px rgba(0,0,0,.45)}
+.lo-card.active{box-shadow:inset 0 1px 0 var(--rim),0 0 0 1.5px rgba(155,197,90,.75),0 3px 10px rgba(0,0,0,.5)}
+.lo-card.off{opacity:.5}
+.lo-head{display:flex;align-items:center;gap:8px;min-width:0}
+.lo-head>.ev-icon{width:24px;height:24px;flex:none}
+.lo-tt{display:flex;flex-direction:column;min-width:0;line-height:1.15}
+.lo-tt .nm{font-family:'Cinzel',serif;font-size:calc(13px*var(--tscale));color:#f0dfb8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lo-sub{font-size:calc(11.5px*var(--tscale));color:#a8916a;margin-top:2px}
+.lo-st{margin-top:2px;font-size:calc(10px*var(--tscale));letter-spacing:.06em;text-transform:uppercase;color:#8a7657;white-space:nowrap}
+.lo-head>.lo-st{margin:0 0 0 auto}
+.lo-st.on{color:#9bc55a}
+.lo-st.warn{color:#e0a955}
+.lo-slots{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin:8px 0}
+.lo-card.big .lo-slots{grid-template-columns:repeat(6,1fr)}
+.lo-card.big .lo-tt .nm{font-size:calc(15px*var(--tscale))}
+.lo-card.big .lo-head>.ev-icon{width:28px;height:28px}
+.lo-slot{aspect-ratio:1;display:grid;place-items:center;border-radius:6px;background:#100b06;min-width:0;
+  box-shadow:inset 0 2px 4px rgba(0,0,0,.9),inset 0 -1px 0 rgba(214,170,96,.08)}
+.lo-slot .ev-icon{width:78%;height:78%}
+.lo-slot.empty{background:transparent;box-shadow:none;border:1px dashed rgba(214,170,96,.16)}
+.lo-slot.miss{box-shadow:inset 0 2px 4px rgba(0,0,0,.9),0 0 0 1px rgba(208,72,72,.7)}
+.lo-slot.miss .ev-icon{opacity:.35;filter:grayscale(1)}
+.lo-slot.lock{box-shadow:inset 0 2px 4px rgba(0,0,0,.9),0 0 0 1px rgba(224,169,85,.7)}
+.lo-slot.lock .ev-icon{opacity:.55}
+.lo-slot.more{font-family:var(--num);font-size:calc(12px*var(--tscale));color:#c9b48c}
+.lo-btns{display:flex;gap:5px}
+.lo-btns .bag-btn{flex:1;height:28px;padding:0 6px;font-size:calc(12px*var(--tscale))}
+.lo-btns .bag-btn.warn{border-color:rgba(224,120,80,.75);background:#3a170c;color:#ffc9a8}
+
+/* the preset slot picker */
+.lo-pick{display:flex;align-items:center;gap:10px;padding:8px 10px;margin-bottom:6px;border-radius:8px;cursor:var(--cur-pointer);
+  background:var(--raised);border:1px solid var(--trim-d)}
+.lo-pick:hover{border-color:var(--trim)}
+.lo-pick.on{border-color:var(--green);background:var(--raised-s)}
+.lo-pick-ic{flex:none;width:34px;height:34px;display:grid;place-items:center}
+.lo-pick-ic .ev-icon{width:30px;height:30px}
+.lo-pick-tx{flex:1;min-width:0}
+.lo-pick-tx .nm{font-size:calc(14px*var(--tscale));color:var(--text)}
+.lo-pick-tx .nm em{font-style:normal;font-size:calc(11.5px*var(--tscale));color:var(--green);margin-left:6px}
+.lo-pick-tx .nm .rq{font-size:calc(11.5px*var(--tscale));color:#e89a7e;margin-left:6px}
+.lo-pick-tx .ds{font-size:calc(12.5px*var(--tscale));color:var(--muted);line-height:1.4}
+.lo-pick-none{font-size:calc(13px*var(--tscale));color:var(--muted);font-style:italic;padding:6px 2px}
+
+/* gear doll: also used by the preset editor */
+.eq-doll{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.eq-doll.pe{max-width:340px;margin:0 auto 10px}
+.eq-cell{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  padding:8px 5px;border-radius:9px;min-height:86px;min-width:0;cursor:var(--cur-pointer);
+  background:linear-gradient(178deg,var(--lit-top),var(--lit-bot) 78%);
+  box-shadow:inset 0 1px 0 var(--rim),inset 0 -1px 0 var(--under),0 3px 8px rgba(0,0,0,.45)}
+.eq-cell:hover{filter:brightness(1.12)}
+.eq-cell>.ev-icon{width:38px;height:38px}
+.eq-cell .sl{font-size:calc(9.5px*var(--tscale));letter-spacing:.12em;text-transform:uppercase;color:#8a7657}
+.eq-cell .nm{font-size:calc(11.5px*var(--tscale));color:#e6d3ab;text-align:center;line-height:1.15;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;width:100%}
+.eq-cell.empty{background:rgba(0,0,0,.18);box-shadow:none;border:1px dashed rgba(214,170,96,.16)}
+.eq-cell.set{box-shadow:inset 0 1px 0 var(--rim),inset 0 0 0 1px rgba(224,118,47,.45),0 3px 8px rgba(0,0,0,.45)}
+.eq-cell.miss>.ev-icon{opacity:.4;filter:grayscale(1)}
+.eq-cell.miss .nm{color:#e89a7e}
+.eq-cell.blank{visibility:hidden;min-height:0}
+.eq-cell .sg-prog{top:4px;right:5px}
+.eq-x{position:absolute;top:3px;right:4px;width:18px;height:18px;border:0;border-radius:50%;padding:0;line-height:16px;
+  background:rgba(0,0,0,.45);color:#e89a7e;font-size:14px;cursor:var(--cur-pointer)}
+.eq-x:hover{background:#5a1e12;color:#ffd0c0}
+.eq-stats{margin-top:10px;padding:10px 12px;border-radius:10px;background:#140d06;
+  box-shadow:inset 0 2px 5px rgba(0,0,0,.85),inset 0 -1px 0 rgba(214,170,96,.08)}
+.eq-for{display:flex;align-items:center;gap:6px;margin-bottom:8px;font-size:calc(11.5px*var(--tscale));color:#a8916a}
+.eq-for .ev-icon{width:16px;height:16px}
+.eq-sgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;text-align:center}
+.eq-sgrid b{display:block;font-family:var(--num);font-size:calc(17px*var(--tscale));color:var(--gold-hi);font-weight:600}
+.eq-sgrid b.z{color:#6d5c44}
+.eq-sgrid span{font-size:calc(9.5px*var(--tscale));letter-spacing:.1em;text-transform:uppercase;color:#8a7657}
+#presetEditorModal .modal{max-width:520px!important}
+#presetEditorModal .mrow .m-btn{white-space:nowrap}
+.eq-bon{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px}
+.eq-foot{display:flex;gap:6px;margin:10px 0 4px}
+.eq-foot .bag-btn{flex:1}
+.eq-sec{display:flex;justify-content:space-between;align-items:center;margin:14px 2px 8px;padding-top:10px;
+  border-top:1px solid rgba(214,170,96,.14);font-size:calc(11px*var(--tscale));letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ember);cursor:var(--cur-pointer);user-select:none}
+.eq-tools{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:4px}
+.eq-tool{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:8px;cursor:var(--cur-pointer);min-width:0;
+  background:linear-gradient(178deg,var(--lit-top),var(--lit-bot) 78%);
+  box-shadow:inset 0 1px 0 var(--rim),inset 0 -1px 0 var(--under),0 2px 6px rgba(0,0,0,.4)}
+.eq-tool:hover{filter:brightness(1.12)}
+.eq-tool .ic{flex:none;width:30px;height:30px;display:grid;place-items:center}
+.eq-tool .ic .ev-icon{width:28px;height:28px}
+.eq-tool .tx{display:flex;flex-direction:column;min-width:0;line-height:1.2}
+.eq-tool .lb{font-size:calc(9.5px*var(--tscale));letter-spacing:.1em;text-transform:uppercase;color:#8a7657}
+.eq-tool .nm{font-size:calc(12px*var(--tscale));color:#e6d3ab;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.eq-tool.empty{background:rgba(0,0,0,.18);box-shadow:none;border:1px dashed rgba(214,170,96,.16)}
+.eq-tool.empty .ic{opacity:.45;filter:grayscale(.6)}
+.eq-tool.empty .nm{color:#8a7657;font-style:italic}
 </style>
 
 
@@ -8398,7 +8511,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.124.41">v0.9.124</div>
+  <div class="mm-ver" data-build="0.9.124.42">v0.9.124</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -9042,6 +9155,7 @@ body:not(.is-demo) .demo-only{display:none !important}
     <div class="mrow">
       <button class="m-btn primary" id="presetEditorSave"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h11l3 3v13H5z"/><path d="M8 4v5h7V4M8 20v-6h8v6"/></svg> Save Preset</button>
       <button class="m-btn" id="presetEditorEquipSave"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3 4 14h6l-1 7 9-11h-6z"/></svg> Equip &amp; Save</button>
+      <button class="m-btn" id="presetEditorClear">Clear</button>
       <button class="m-btn" onclick="$('presetEditorModal').classList.add('hidden')">Close</button>
     </div>
   </div>
@@ -18078,12 +18192,58 @@ function unequipBodyItem(slot,scope){
    state.gearPresets[skillKey] = { slot: itemId, ... }
    ================================================================= */
 
+/* A skilling preset holds BODY gear only (0.9.124.42). It used to copy the whole
+   skilling loadout, and that map also carries the skill tools, so a preset saved
+   with a Bronze Axe put the Bronze Axe back over an Eclipse Axe every time it was
+   applied. A tool is an upgrade you own, not a choice you make per skill. */
+const PRESET_BODY_SLOTS=['helmet','cape','amulet','chest','gloves','legs','boots','ring_l','ring_r'];
+const COMBAT_PRESET_SLOTS=['weapon','shield','quiver','helmet','cape','amulet','chest','gloves','legs','boots','ring_l','ring_r'];
+/* Combat loadouts (ticket #126). One saved setup per way of fighting. */
+const COMBAT_LOADOUTS=[
+  {key:'melee',  label:'Melee',  icon:'ui_swords', sub:'Blade and shield'},
+  {key:'ranged', label:'Ranged', icon:'fletching', sub:'Bow or crossbow, and a quiver'},
+  {key:'magic',  label:'Magic',  icon:'ui_spark',  sub:'Comes with the Magic update', soon:true},
+];
+let _loScope='skilling';   // which half of the Presets tab is open
+
+function _presetOwns(id){
+  return !!((ITEMS[id]&&(state.items[id]||0)>0)
+    ||(state.skillingGear&&state.skillingGear[id])
+    ||(state.gear&&state.gear.includes(id)));
+}
+/* A saved preset held up against what you have: each piece, whether it is
+   missing, and whether the loadout is already on. One function, so the card, the
+   auto-equip and the tests cannot disagree about it. */
+function presetStatus(scope,key){
+  const src=scope==='combat'?(state.combatPresets||{})[key]:(state.gearPresets||{})[key];
+  const slots=scope==='combat'?COMBAT_PRESET_SLOTS:PRESET_BODY_SLOTS;
+  const lo=(scope==='combat'?state.combatEquipped:state.skillingEquipped)||{};
+  const out={set:false,pieces:[],missing:0,locked:0,worn:false};
+  if(!src) return out;
+  const used={};
+  let worn=true;
+  for(const s of slots){
+    const id=src[s]||null;
+    if((lo[s]||null)!==id) worn=false;
+    if(!id) continue;
+    used[id]=(used[id]||0)+1;
+    const miss=!_presetOwns(id)||used[id]>Math.max(1,ownedCopies(id));
+    // equipCombatPreset skips a piece your level cannot wear, so the card says so
+    const lock=!miss&&scope==='combat'&&!meetsCombatReq(id);
+    out.pieces.push({slot:s,id:id,miss:miss,lock:lock});
+    if(miss) out.missing++;
+    if(lock) out.locked++;
+  }
+  out.set=out.pieces.length>0;
+  out.worn=out.set&&worn;
+  return out;
+}
+
 function saveGearPreset(skillKey, customPreset){
   if(!state.gearPresets) state.gearPresets={};
-  // Skilling-only — snapshots state.skillingEquipped. Combat loadout has no preset
-  // system (it's "whatever you have on right now" — there's just one combat
-  // loadout, not per-skill).
-  state.gearPresets[skillKey]=Object.assign({},customPreset||state.skillingEquipped);
+  const src=customPreset||state.skillingEquipped||{};
+  const p={}; PRESET_BODY_SLOTS.forEach(function(s){ if(src[s]) p[s]=src[s]; });
+  state.gearPresets[skillKey]=p;
   saveGame();
   var sk=SKILLS[skillKey];
   toast((sk?sk.icon+' '+sk.name:'')+' preset saved.');
@@ -18093,31 +18253,30 @@ function saveGearPreset(skillKey, customPreset){
 
 function equipGearPreset(skillKey, silent){
   if(!state.gearPresets||!state.gearPresets[skillKey]){
-    if(!silent) toast('No preset saved for this skill yet — open Presets to create one.');
+    if(!silent) toast('No preset saved for this skill yet. Open Presets to make one.');
     return false;
   }
   var preset=state.gearPresets[skillKey];
-  // Apply only to the skilling loadout — combat loadout stays untouched.
-  BODY_SLOTS.forEach(function(s){ delete state.skillingEquipped[s.slot]; });
+  var se=state.skillingEquipped;
+  // Body slots only: the tools and anything else in the loadout stay as they are.
+  PRESET_BODY_SLOTS.forEach(function(s){ delete se[s]; });
   var applied=0, missing=0, used={};
-  Object.keys(preset).forEach(function(slot){
+  PRESET_BODY_SLOTS.forEach(function(slot){
     var itemId=preset[slot];
     if(!itemId) return;
-    var ownedSatchel=ITEMS[itemId]&&(state.items[itemId]||0)>0;
-    var ownedSkilling=!!(state.skillingGear&&state.skillingGear[itemId]);
-    var ownedShop=state.gear&&state.gear.includes(itemId);
-    if(!(ownedSatchel||ownedSkilling||ownedShop)){ missing++; return; }
+    if(!_presetOwns(itemId)){ missing++; return; }
     // A preset may name one id in both ring hands, but only if the pair exists —
     // this writes the loadout directly and so has to enforce the cap itself.
     var cap=Math.max(1,ownedCopies(itemId));
     if((used[itemId]||0)>=cap){ missing++; return; }
     used[itemId]=(used[itemId]||0)+1;
-    state.skillingEquipped[slot]=itemId; applied++;
+    se[slot]=itemId; applied++;
   });
   renderAll(); saveGame();
   if(!silent){
-    var msg=SKILLS[skillKey].icon+' '+SKILLS[skillKey].name+' preset equipped ('+applied+' item'+(applied!==1?'s':'')+')';
-    if(missing>0) msg+=' — '+missing+' missing from inventory';
+    var sk=SKILLS[skillKey];
+    var msg=(sk?sk.icon+' '+sk.name:'')+' preset equipped ('+applied+' item'+(applied!==1?'s':'')+')';
+    if(missing>0) msg+=', '+missing+' missing';
     toast(msg+'.');
   }
   return true;
@@ -18138,70 +18297,142 @@ function hasGearPreset(skillKey){
     &&Object.keys(state.gearPresets[skillKey]).length>0);
 }
 
+function saveCombatPreset(key, custom){
+  if(!state.combatPresets) state.combatPresets={};
+  const src=custom||state.combatEquipped||{};
+  const p={}; COMBAT_PRESET_SLOTS.forEach(function(s){ if(src[s]) p[s]=src[s]; });
+  state.combatPresets[key]=p;
+  saveGame();
+  const d=COMBAT_LOADOUTS.find(function(x){ return x.key===key; });
+  toast((d?d.label:'Combat')+' loadout saved.');
+  if(rightTab==='presets') renderPresets();
+}
+/* Swap the whole combat setup. Same rules the Gear tab enforces one piece at a
+   time: you must own it, a pair needs two, the level has to be met, and a
+   two-hander leaves no shield. Slots the loadout leaves empty come off. */
+function equipCombatPreset(key, silent){
+  const preset=state.combatPresets&&state.combatPresets[key];
+  if(!preset||!Object.keys(preset).length){ if(!silent) toast('Nothing is saved in that loadout yet.'); return false; }
+  const ce=state.combatEquipped;
+  const next={}, used={};
+  let applied=0, missing=0, locked=0;
+  COMBAT_PRESET_SLOTS.forEach(function(slot){
+    const id=preset[slot]; if(!id) return;
+    if(!_presetOwns(id)){ missing++; return; }
+    if((used[id]||0)>=Math.max(1,ownedCopies(id))){ missing++; return; }
+    if(!meetsCombatReq(id)){ locked++; return; }
+    used[id]=(used[id]||0)+1;
+    next[slot]=id; applied++;
+  });
+  if(next.weapon&&ITEMS[next.weapon]&&ITEMS[next.weapon].twoHanded) delete next.shield;
+  COMBAT_PRESET_SLOTS.forEach(function(s){ delete ce[s]; });
+  Object.assign(ce,next);
+  refreshCombatStats();
+  renderAll(); saveGame();
+  if(!silent){
+    const d=COMBAT_LOADOUTS.find(function(x){ return x.key===key; });
+    let msg=(d?d.label:'Combat')+' loadout on ('+applied+' item'+(applied!==1?'s':'')+')';
+    if(missing) msg+=', '+missing+' missing';
+    if(locked) msg+=', '+locked+' need a higher level';
+    toast(msg+'.');
+  }
+  return true;
+}
+function clearCombatPreset(key){
+  if(state.combatPresets) delete state.combatPresets[key];
+  saveGame();
+  if(rightTab==='presets') renderPresets();
+}
+/* Put a skill's preset on when that skill starts, if the player turned it on. */
+function presetAutoApply(skillKey){
+  if(!state.presetAuto||!hasGearPreset(skillKey)) return false;
+  if(presetStatus('skilling',skillKey).worn) return false;
+  equipGearPreset(skillKey,true);
+  var sk=SKILLS[skillKey];
+  toast((sk?sk.icon+' ':'')+'Put on your '+(sk?sk.name:'')+' gear.');
+  return true;
+}
+
 /* ── Preset Editor Modal ── */
 var _presetDraft={}; // working copy while editor is open
 var _presetEditorSkill=null;
+var _presetEditorScope='skilling';
 
-function openPresetEditor(skillKey){
-  _presetEditorSkill=skillKey;
-  // Start draft from saved preset, or from current equipped if none
-  _presetDraft=Object.assign({}, state.gearPresets&&state.gearPresets[skillKey]
-    ? state.gearPresets[skillKey] : state.skillingEquipped);
-  var sk=SKILLS[skillKey];
-  $('presetEditorTitle').textContent=sk.icon+' '+sk.name+' Preset';
-  $('presetEditorSubtitle').textContent=
-    'Click any slot to change what goes in that slot for this preset. '
-    +'Slots left empty will be unequipped when you equip this preset.';
+function openPresetEditor(key, scope){
+  scope=scope==='combat'?'combat':'skilling';
+  _presetEditorScope=scope; _presetEditorSkill=key;
+  var slots=scope==='combat'?COMBAT_PRESET_SLOTS:PRESET_BODY_SLOTS;
+  var saved=scope==='combat'?(state.combatPresets||{})[key]:(state.gearPresets||{})[key];
+  var src=saved||(scope==='combat'?state.combatEquipped:state.skillingEquipped)||{};
+  _presetDraft={}; slots.forEach(function(s){ if(src[s]) _presetDraft[s]=src[s]; });
+  var label=scope==='combat'
+    ?(((COMBAT_LOADOUTS.find(function(x){ return x.key===key; })||{}).label)||'Combat')+' loadout'
+    :(((SKILLS[key]||{}).name)||key)+' preset';
+  $('presetEditorTitle').textContent=label;
+  $('presetEditorSubtitle').textContent=(saved?'':'Starts from what you wear now. ')
+    +'Click a slot to change it. Empty slots come off when you equip this.';
   renderPresetEditorDoll();
   $('presetEditorSave').onclick=function(){
-    saveGearPreset(skillKey,_presetDraft);
+    if(scope==='combat') saveCombatPreset(key,_presetDraft); else saveGearPreset(key,_presetDraft);
     $('presetEditorModal').classList.add('hidden');
   };
   $('presetEditorEquipSave').onclick=function(){
-    saveGearPreset(skillKey,_presetDraft);
-    equipGearPreset(skillKey,true);
+    if(scope==='combat'){ saveCombatPreset(key,_presetDraft); equipCombatPreset(key,true); }
+    else { saveGearPreset(key,_presetDraft); equipGearPreset(key,true); }
     $('presetEditorModal').classList.add('hidden');
-    toast(sk.icon+' '+sk.name+' preset saved and equipped.');
+    toast(label+' saved and equipped.');
   };
+  var clr=$('presetEditorClear');
+  if(clr){
+    clr.style.display=saved?'':'none';
+    clr.onclick=function(){
+      if(scope==='combat') clearCombatPreset(key); else clearGearPreset(key);
+      $('presetEditorModal').classList.add('hidden');
+    };
+  }
   $('presetEditorModal').classList.remove('hidden');
 }
 
-var DOLL_LAYOUT_PE=[
-  [null,     'helmet', null    ],
-  ['cape',   'amulet', null    ],
-  ['gloves', 'chest',  null    ],
-  [null,     'legs',   null    ],
+/* One paper doll for the Gear tab and the preset editor, so a slot sits in the
+   same place in both. The skilling side has no weapon, off-hand or quiver, since
+   nothing you train with goes there, so its middle folds into one row; the top
+   and bottom rows match the combat side. */
+var DOLL_LAYOUT_PE_COMBAT=[
+  ['cape',   'helmet', 'amulet'],
+  ['weapon', 'chest',  'shield'],
+  ['gloves', 'legs',   'quiver'],
   ['ring_l', 'boots',  'ring_r'],
 ];
+var DOLL_LAYOUT_PE=[
+  ['cape',   'helmet', 'amulet'],
+  ['gloves', 'chest',  'legs'  ],
+  ['ring_l', 'boots',  'ring_r'],
+];
+var DOLL_COMBAT_ONLY={weapon:1,shield:1,quiver:1};
 
 function renderPresetEditorDoll(){
   var box=$('presetEditorDoll'); box.innerHTML='';
   var grid=document.createElement('div');
-  grid.style.cssText='display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;max-width:280px;margin:0 auto 10px';
+  grid.className='eq-doll pe';
+  var layout=_presetEditorScope==='combat'?DOLL_LAYOUT_PE_COMBAT:DOLL_LAYOUT_PE;
 
-  DOLL_LAYOUT_PE.forEach(function(row){
+  layout.forEach(function(row){
     row.forEach(function(slotKey){
       var cell=document.createElement('div');
-      if(!slotKey){ cell.style.minHeight='58px'; grid.appendChild(cell); return; }
+      if(!slotKey){ cell.className='eq-cell blank'; grid.appendChild(cell); return; }
       var def=BODY_SLOTS.find(function(s){return s.slot===slotKey;});
       var itemId=_presetDraft[slotKey]||null;
       var itemDef=itemId?getBodyItemDef(itemId):null;
       var filled=!!itemDef;
-      var isSkillingGear=filled&&ITEMS[itemId]&&ITEMS[itemId].skillGear;
-      cell.style.cssText='position:relative;background:var(--raised);border:1px solid '
-        +(isSkillingGear?'var(--ember)':filled?'var(--trim)':'#3a2a1733')
-        +';border-radius:5px;padding:5px 2px;text-align:center;cursor:var(--cur-pointer);min-height:58px;'
-        +'display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;'
-        +'opacity:'+(filled?'1':'0.45');
-      cell.title=(def?def.label:'')+(filled?' — '+itemDef.name:' — empty (click to set)');
-      cell.innerHTML='<span style="font-size:calc(22px*var(--tscale));line-height:1">'+(filled?iconHTML(itemId):def.empty)+'</span>'
-        +'<span style="font-size:calc(11px*var(--tscale));color:'+(filled?'var(--trim)':'var(--muted)')+';line-height:1.3;font-variant:small-caps">'
-        +(filled?itemDef.name:def.label)+'</span>';
+      var missing=filled&&!_presetOwns(itemId);
+      cell.className='eq-cell'+(filled?'':' empty')+(missing?' miss':'');
+      cell.title=(def?def.label:'')+(filled?': '+itemDef.name+(missing?' (you do not have this)':''):': empty, click to set');
+      cell.innerHTML=filled?iconHTML(itemId)+'<span class="nm">'+itemDef.name+'</span>'
+                           :'<span class="sl">'+(BAG_SLOT_LABEL[slotKey]||(def?def.label:slotKey))+'</span>';
       if(filled){
-        var clr=document.createElement('span');
-        clr.style.cssText='position:absolute;top:2px;right:3px;font-size:calc(11px*var(--tscale));color:var(--red);cursor:var(--cur-pointer);font-weight:bold;line-height:1;padding:1px 3px';
-        clr.textContent='✕';
-        clr.title='Remove from preset';
+        var clr=document.createElement('button');
+        clr.type='button'; clr.className='eq-x'; clr.textContent='×';
+        clr.title='Take it out of this preset';
         (function(sk){ clr.addEventListener('click',function(e){
           e.stopPropagation();
           delete _presetDraft[sk];
@@ -18216,50 +18447,47 @@ function renderPresetEditorDoll(){
     });
   });
   box.appendChild(grid);
+  var chips=$('presetEditorChips'); if(chips) chips.innerHTML='';
+}
 
-  // Chips summary
-  var chips=$('presetEditorChips'); chips.innerHTML='';
-  var filled=Object.keys(_presetDraft).filter(function(s){return _presetDraft[s];});
-  if(filled.length===0){
-    chips.innerHTML='<span style="font-size:calc(13px*var(--tscale));color:var(--muted);font-style:italic">No items set — click slots above to add gear.</span>';
-  } else {
-    var wrap=document.createElement('div');
-    wrap.style.cssText='display:flex;flex-wrap:wrap;gap:4px';
-    filled.forEach(function(sl){
-      var d=getBodyItemDef(_presetDraft[sl]); if(!d) return;
-      var chip=document.createElement('span');
-      chip.style.cssText='background:var(--raised-s);border:1px solid var(--trim-d);border-radius:10px;padding:2px 8px;font-size:calc(13px*var(--tscale));color:var(--text);display:inline-flex;align-items:center;gap:4px';
-      chip.innerHTML='<span style="font-size:calc(14px*var(--tscale));line-height:1">'+iconHTML(d.id)+'</span>'+d.name;
-      wrap.appendChild(chip);
-    });
-    chips.appendChild(wrap);
+/* What can go in a slot of a preset being edited. Skilling presets never offer
+   combat gear or tools; combat presets never offer skilling set pieces or tools.
+   The old picker only walked ITEM_BODY_SLOTS, which cannot list a leather chest, a
+   bow, a raid piece or an arrow: 171 combat pieces and every ammunition. */
+function _presetCandidates(slotKey, scope){
+  var out=[];
+  var add=function(id){ if(id&&out.indexOf(id)<0) out.push(id); };
+  for(var iid in ITEM_BODY_SLOTS){
+    if(!itemFitsSlot(iid,slotKey)||!_presetOwns(iid)) continue;
+    var it=ITEMS[iid];
+    if(scope==='combat'&&it&&it.skillGear) continue;
+    if(scope!=='combat'&&it&&(it.cgear||it.ammo)) continue;
+    add(iid);
   }
+  if(scope==='combat'){
+    for(var cid in state.items){
+      var c=ITEMS[cid];
+      if(!c||(state.items[cid]||0)<=0) continue;
+      if((c.cgear||(c.ammo&&!c.ranged))&&itemFitsSlot(cid,slotKey)) add(cid);
+    }
+  }
+  SHOP.forEach(function(si){
+    if(si.tool||!state.gear||!state.gear.includes(si.id)) return;
+    if(si.slot!==slotKey&&!itemFitsSlot(si.id,slotKey)) return;
+    add(si.id);
+  });
+  return out;
 }
 
 function openPresetSlotPicker(slotKey, def){
-  $('presetSlotTitle').textContent=(def?def.label:'Slot')+' — choose item';
+  $('presetSlotTitle').textContent=(def?def.label:'Slot')+': choose an item';
   var body=$('presetSlotBody'); body.innerHTML='';
+  var scope=_presetEditorScope;
+  var options=_presetCandidates(slotKey,scope);
 
-  // Gather all items that fit this slot and are owned
-  var options=[];
-  for(var iid in ITEM_BODY_SLOTS){
-    if(!itemFitsSlot(iid,slotKey)) continue;
-    var inSatchel=(state.items[iid]||0)>0;
-    var inSkilling=!!(state.skillingGear&&state.skillingGear[iid]);
-    if(inSatchel||inSkilling) options.push(iid);
-  }
-  // Shop items
-  SHOP.forEach(function(si){
-    if(!state.gear||!state.gear.includes(si.id)) return;
-    var slots=getItemSlots(si.id);
-    if(slots.indexOf(slotKey)<0 && si.slot!==slotKey) return;
-    if(options.indexOf(si.id)<0) options.push(si.id);
-  });
-
-  // "Empty this slot" option
   var emptyRow=document.createElement('div');
-  emptyRow.style.cssText='display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--raised);border:1px solid var(--trim-d);border-radius:5px;margin-bottom:6px;cursor:var(--cur-pointer)';
-  emptyRow.innerHTML='<span style="font-size:calc(22px*var(--tscale))">🚫</span><div style="flex:1;font-size:calc(14px*var(--tscale));color:var(--muted)">Empty — unequip this slot when preset is applied</div>';
+  emptyRow.className='lo-pick';
+  emptyRow.innerHTML='<span class="lo-pick-ic"></span><div class="lo-pick-tx"><div class="nm">Empty</div><div class="ds">This slot comes off when you equip the preset</div></div>';
   emptyRow.addEventListener('click',function(){
     delete _presetDraft[slotKey];
     renderPresetEditorDoll();
@@ -18269,29 +18497,28 @@ function openPresetSlotPicker(slotKey, def){
 
   if(options.length===0){
     var none=document.createElement('div');
-    none.style.cssText='font-size:calc(14px*var(--tscale));color:var(--muted);font-style:italic;padding:8px';
-    none.textContent='No owned items fit this slot.';
+    none.className='lo-pick-none';
+    none.textContent='Nothing you own fits this slot.';
     body.appendChild(none);
   }
 
   options.forEach(function(itemId){
     var d=getBodyItemDef(itemId); if(!d) return;
     var isSet=_presetDraft[slotKey]===itemId;
+    var req=(typeof combatGearReq==='function')?combatGearReq(itemId):null;
+    var reqTxt=req&&!meetsCombatReq(itemId)?'<span class="rq">Needs '+req.level+' '+(COMBAT_STAT_NAME[req.stat]||req.stat)+'</span>':'';
     var row=document.createElement('div');
-    row.style.cssText='display:flex;align-items:center;gap:10px;padding:8px 10px;'
-      +'background:'+(isSet?'var(--raised-s)':'var(--raised)')+';'
-      +'border:1px solid '+(isSet?'var(--green)':'var(--trim-d)')+';'
-      +'border-radius:5px;margin-bottom:6px;cursor:var(--cur-pointer)';
-    row.innerHTML='<span style="font-size:calc(22px*var(--tscale))">'+iconHTML(itemId)+'</span>'
-      +'<div style="flex:1"><div style="font-size:calc(14px*var(--tscale));color:'+(isSet?'var(--green)':'var(--text)')+'">'+d.name
-      +(isSet?' <span style="font-size:calc(12px*var(--tscale));color:var(--green)">● In preset</span>':'')+'</div>'
-      +'<div style="font-size:calc(13px*var(--tscale));color:var(--muted)">'+(d.desc||'')+'</div></div>';
+    row.className='lo-pick'+(isSet?' on':'');
+    row.innerHTML='<span class="lo-pick-ic">'+iconHTML(itemId)+'</span>'
+      +'<div class="lo-pick-tx"><div class="nm">'+d.name+(isSet?' <em>in this preset</em>':'')+reqTxt+'</div>'
+      +'<div class="ds">'+(d.desc||'')+'</div></div>';
     row.addEventListener('click',function(){
       _presetDraft[slotKey]=itemId;
-      // Remove from any other slot in the draft (prevent duplicates for multi-slot items)
-      Object.keys(_presetDraft).forEach(function(s){
-        if(s!==slotKey&&_presetDraft[s]===itemId) delete _presetDraft[s];
-      });
+      /* A matched pair is allowed when you own two; past that, the oldest other
+         slot holding the same item gives it up. */
+      var cap=Math.max(1,ownedCopies(itemId));
+      var others=Object.keys(_presetDraft).filter(function(s){ return s!==slotKey&&_presetDraft[s]===itemId; });
+      while(others.length+1>cap) delete _presetDraft[others.shift()];
       renderPresetEditorDoll();
       $('presetSlotModal').classList.add('hidden');
     });
@@ -18301,80 +18528,99 @@ function openPresetSlotPicker(slotKey, def){
   $('presetSlotModal').classList.remove('hidden');
 }
 
-/* Render the Presets tab in the right panel */
+/* ════ PRESETS TAB (0.9.124.42) ═════════════════════════════════════════════════
+   Was fourteen text rows reading "no preset" with an Edit button each, and no
+   combat side at all. Now two halves. Skilling: a card per skill, A-Z (ticket #104),
+   showing what the preset holds, whether it is on, and what is missing. Combat: a
+   card per way of fighting (ticket #126). Picked from mockups. */
+function _loSlotsHTML(st,n){
+  var h='';
+  for(var i=0;i<n;i++){
+    var p=st.pieces[i];
+    if(i===n-1&&st.pieces.length>n){ h+='<span class="lo-slot more">+'+(st.pieces.length-n+1)+'</span>'; break; }
+    h+=p?'<span class="lo-slot'+(p.miss?' miss':p.lock?' lock':'')+'" data-item="'+p.id+'">'+iconHTML(p.id)+'</span>'
+        :'<span class="lo-slot empty"></span>';
+  }
+  return h;
+}
+function _loStatusHTML(st){
+  if(!st.set) return '<span class="lo-st">Not set</span>';
+  if(st.worn) return '<span class="lo-st on">Worn now</span>';
+  if(st.missing) return '<span class="lo-st warn">'+st.missing+' missing</span>';
+  if(st.locked) return '<span class="lo-st warn">'+st.locked+' need a level</span>';
+  return '<span class="lo-st">Ready</span>';
+}
+/* Saving over a combat loadout you are not wearing replaces it, so the first
+   click only asks. Kept here, not on the button: the tab repaints as actions
+   finish and would forget it. */
+var _loArm=null;
+function _loBtnsHTML(scope,key,st){
+  var a=' data-scope="'+scope+'" data-key="'+key+'"';
+  var eq=!st.set?'':(st.worn?'<button type="button" class="bag-btn" disabled>Equipped</button>'
+                           :'<button type="button" class="bag-btn gold" data-lo="equip"'+a+'>Equip</button>');
+  var armed=_loArm&&_loArm.key===scope+':'+key&&Date.now()<_loArm.until;
+  var save=(!st.set||scope==='combat')?'<button type="button" class="bag-btn'+(armed?' warn':'')+'" data-lo="save"'+a+'>'+(armed?'Replace it?':'Save current')+'</button>':'';
+  return eq+save+'<button type="button" class="bag-btn" data-lo="edit"'+a+'>Edit</button>';
+}
 function renderPresets(){
   var box=$('presetsView'); if(!box) return;
-  box.innerHTML='';
-
-  var note=document.createElement('div');
-  note.style.cssText='font-size:calc(12px*var(--tscale));color:var(--muted);margin-bottom:10px;line-height:1.5;'
-    +'padding:6px 8px;background:var(--raised);border-radius:5px;border:1px solid var(--trim-d)';
-  note.innerHTML='<b style="color:var(--trim)">'+iconHTML('ui_scroll')+' Gear Presets</b> — save a gear loadout per skill. '
-    +'Click <b>Edit</b> to open the preset builder, then equip it in one tap from any skill panel.';
-  box.appendChild(note);
-
-  /* Ticket #104: "Can we get a sorting list for the presets or get them a-z by
-     default?" They came out in SKILLS declaration order, which is the order the
-     skills were WRITTEN and means nothing to a player scanning fourteen rows for
-     one name. Sorted by the name actually printed on the row, so the list reads
-     the way it looks. */
-  Object.keys(SKILLS).slice().sort(function(a,b){
-    return String(SKILLS[a].name||a).localeCompare(String(SKILLS[b].name||b));
-  }).forEach(function(sk){
-    var def=SKILLS[sk];
-    var hasPre=hasGearPreset(sk);
-    var row=document.createElement('div');
-    row.className='preset-row';
-
-    var ico=document.createElement('span'); ico.className='preset-skill-icon'; ico.textContent=def.icon;
-    row.appendChild(ico);
-
-    var nameWrap=document.createElement('div');
-    nameWrap.style.cssText='flex:1;min-width:0';
-    var nm=document.createElement('div'); nm.className='preset-skill-name'; nm.textContent=def.name;
-    nameWrap.appendChild(nm);
-    if(hasPre){
-      var ct=Object.keys(state.gearPresets[sk]).length;
-      var sub=document.createElement('div');
-      sub.style.cssText='font-size:calc(11px*var(--tscale));color:var(--green);font-family:var(--num)';
-      sub.textContent=ct+' slot'+(ct!==1?'s':'')+' saved';
-      nameWrap.appendChild(sub);
-    } else {
-      var sub=document.createElement('div');
-      sub.style.cssText='font-size:calc(11px*var(--tscale));color:var(--muted);font-style:italic';
-      sub.textContent='no preset';
-      nameWrap.appendChild(sub);
-    }
-    row.appendChild(nameWrap);
-
-    var btns=document.createElement('div'); btns.className='preset-btns';
-
-    var editBtn=document.createElement('button');
-    editBtn.className='preset-btn save';
-    editBtn.textContent='Edit';
-    editBtn.title='Open preset builder for '+def.name;
-    (function(key){ editBtn.addEventListener('click',function(){ openPresetEditor(key); }); })(sk);
-    btns.appendChild(editBtn);
-
-    if(hasPre){
-      var eqBtn=document.createElement('button');
-      eqBtn.className='preset-btn equip';
-      eqBtn.textContent='Equip';
-      eqBtn.title='Equip saved '+def.name+' preset';
-      (function(key){ eqBtn.addEventListener('click',function(){ equipGearPreset(key); }); })(sk);
-      btns.appendChild(eqBtn);
-
-      var clrBtn=document.createElement('button');
-      clrBtn.className='preset-btn clear';
-      clrBtn.textContent='✕';
-      clrBtn.title='Clear '+def.name+' preset';
-      (function(key){ clrBtn.addEventListener('click',function(){ clearGearPreset(key); }); })(sk);
-      btns.appendChild(clrBtn);
-    }
-
-    row.appendChild(btns);
-    box.appendChild(row);
-  });
+  var keep=box.scrollTop;
+  if(!box._loWired){
+    box._loWired=true;
+    box.addEventListener('click',function(e){
+      var el=e.target.closest?e.target.closest('[data-lo]'):null;
+      if(!el||!box.contains(el)||el.disabled) return;
+      var act=el.getAttribute('data-lo'), scope=el.getAttribute('data-scope'), key=el.getAttribute('data-key');
+      if(act==='scope'){ _loScope=el.getAttribute('data-v'); box.scrollTop=0; renderPresets(); return; }
+      if(act==='auto'){ state.presetAuto=!state.presetAuto; saveGame(); renderPresets(); return; }
+      if(act==='equip'){ if(scope==='combat') equipCombatPreset(key); else equipGearPreset(key); return; }
+      if(act==='save'){
+        var st=presetStatus(scope,key), id=scope+':'+key;
+        if(scope==='combat'&&st.set&&!st.worn&&!(_loArm&&_loArm.key===id&&Date.now()<_loArm.until)){
+          _loArm={key:id,until:Date.now()+4000}; renderPresets();
+          setTimeout(function(){ if(_loArm&&_loArm.key===id&&Date.now()>=_loArm.until){ _loArm=null; if(rightTab==='presets') renderPresets(); } },4100);
+          return;
+        }
+        _loArm=null;
+        if(scope==='combat') saveCombatPreset(key); else saveGearPreset(key);
+        return;
+      }
+      if(act==='edit'){ openPresetEditor(key,scope); return; }
+    });
+  }
+  var html='<div class="lo-seg">'
+    +'<button type="button" class="'+(_loScope==='skilling'?'on':'')+'" data-lo="scope" data-v="skilling">Skilling</button>'
+    +'<button type="button" class="'+(_loScope==='combat'?'on':'')+'" data-lo="scope" data-v="combat">Combat</button></div>';
+  if(_loScope==='combat'){
+    html+='<div class="lo-note">Save what you fight in, then swap your whole setup in one click.</div><div class="lo-list">';
+    COMBAT_LOADOUTS.forEach(function(d){
+      if(d.soon){
+        html+='<div class="lo-card big off"><div class="lo-head">'+iconHTML(d.icon)+'<div class="lo-tt"><span class="nm">'+d.label+'</span>'
+          +'<span class="lo-sub">'+d.sub+'</span></div><span class="lo-st">Soon</span></div>'
+          +'<div class="lo-slots">'+'<span class="lo-slot empty"></span>'.repeat(6)+'</div></div>';
+        return;
+      }
+      var st=presetStatus('combat',d.key);
+      html+='<div class="lo-card big'+(st.worn?' active':'')+'"><div class="lo-head">'+iconHTML(d.icon)
+        +'<div class="lo-tt"><span class="nm">'+d.label+'</span><span class="lo-sub">'+d.sub+'</span></div>'+_loStatusHTML(st)+'</div>'
+        +'<div class="lo-slots">'+_loSlotsHTML(st,6)+'</div><div class="lo-btns">'+_loBtnsHTML('combat',d.key,st)+'</div></div>';
+    });
+    html+='</div>';
+  } else {
+    html+='<button type="button" class="lo-auto'+(state.presetAuto?' on':'')+'" data-lo="auto">'
+      +'<span class="tg"></span><span>Put on a skill’s gear when you start that skill</span></button><div class="lo-grid">';
+    Object.keys(SKILLS).slice().sort(function(a,b){
+      return String(SKILLS[a].name||a).localeCompare(String(SKILLS[b].name||b));
+    }).forEach(function(sk){
+      var st=presetStatus('skilling',sk);
+      html+='<div class="lo-card'+(st.worn?' active':'')+'"><div class="lo-head">'+iconHTML(sk)
+        +'<div class="lo-tt"><span class="nm preset-skill-name">'+SKILLS[sk].name+'</span>'+_loStatusHTML(st)+'</div></div>'
+        +'<div class="lo-slots">'+_loSlotsHTML(st,5)+'</div><div class="lo-btns">'+_loBtnsHTML('skilling',sk,st)+'</div></div>';
+    });
+    html+='</div>';
+  }
+  box.innerHTML=html;
+  box.scrollTop=keep;
 }
 
 
@@ -18442,12 +18688,12 @@ const SHOP=[
   {id:'void_tinder', name:'Void Tinderbox',  icon:'🔥',slot:'tinder',skill:'firemaking',tier:4,cost:8000, bonus:{speed:0.16},desc:'+16% burn speed', reqLvl:60,req:'ember_tinder'},
   {id:'eclipse_tinder',name:'Eclipse Tinder',icon:'🔥',slot:'tinder',skill:'firemaking',tier:5,cost:20000,bonus:{speed:0.20},desc:'+20% burn speed', reqLvl:80,req:'void_tinder'},
 
-  // AGILITY — boots slot
-  {id:'leather_boots',name:'Leather Boots',  icon:'👟',slot:'boots', skill:'agility',   tier:1,cost:120,  bonus:{speed:0.04},desc:'+4% run speed',   reqLvl:1},
-  {id:'iron_runners',name:'Iron Runners',   icon:'👟',slot:'boots', skill:'agility',   tier:2,cost:550,  bonus:{speed:0.08},desc:'+8% run speed',   reqLvl:20,req:'leather_boots'},
-  {id:'swift_boots', name:'Swift Boots',      icon:'👟',slot:'boots', skill:'agility',   tier:3,cost:2200, bonus:{speed:0.12},desc:'+12% run speed',  reqLvl:40,req:'iron_runners'},
-  {id:'wind_treads', name:'Wind Treads',      icon:'👟',slot:'boots', skill:'agility',   tier:4,cost:9000, bonus:{speed:0.16},desc:'+16% run speed',  reqLvl:60,req:'swift_boots'},
-  {id:'eclipse_treads',name:'Eclipse Treads', icon:'👟',slot:'boots', skill:'agility',   tier:5,cost:20000,bonus:{speed:0.20},desc:'+20% run speed',  reqLvl:80,req:'wind_treads'},
+  // AGILITY, shoes slot (it was 'boots', the body slot, until 0.9.124.42)
+  {id:'leather_boots',name:'Leather Boots',  icon:'👟',slot:'shoes', skill:'agility',   tier:1,cost:120,  bonus:{speed:0.04},desc:'+4% run speed',   reqLvl:1},
+  {id:'iron_runners',name:'Iron Runners',   icon:'👟',slot:'shoes', skill:'agility',   tier:2,cost:550,  bonus:{speed:0.08},desc:'+8% run speed',   reqLvl:20,req:'leather_boots'},
+  {id:'swift_boots', name:'Swift Boots',      icon:'👟',slot:'shoes', skill:'agility',   tier:3,cost:2200, bonus:{speed:0.12},desc:'+12% run speed',  reqLvl:40,req:'iron_runners'},
+  {id:'wind_treads', name:'Wind Treads',      icon:'👟',slot:'shoes', skill:'agility',   tier:4,cost:9000, bonus:{speed:0.16},desc:'+16% run speed',  reqLvl:60,req:'swift_boots'},
+  {id:'eclipse_treads',name:'Eclipse Treads', icon:'👟',slot:'shoes', skill:'agility',   tier:5,cost:20000,bonus:{speed:0.20},desc:'+20% run speed',  reqLvl:80,req:'wind_treads'},
 
   // THIEVING — lockpick slot (0.9.122.31)
   {id:'bronze_lockpicks',name:'Bronze Lockpicks',icon:'🗝️',slot:'picks',skill:'thieving',tier:1,cost:250,  bonus:{speed:0.04},desc:'+4% steal speed',  reqLvl:1},
@@ -18497,7 +18743,7 @@ const SHOP=[
   {id:'everflame_lens',    name:'Everflame Lens',    icon:'🔍',slot:'lens',  skill:'jeweler',    tier:6,cost:450000,bonus:{speed:0.24,preserve:0.08},   desc:'+24% cut speed · 8% to keep the gem',     reqLvl:95,req:'eclipse_lens'},
   {id:'everflame_trowel',  name:'Everflame Trowel',  icon:'🪴',slot:'trowel',skill:'farming',    tier:6,cost:450000,bonus:{speed:0.24,preserve:0.08},   desc:'+24% tend speed · 8% to keep the seed',   reqLvl:95,req:'eclipse_trowel'},
   {id:'everflame_lockpicks',name:'Everflame Lockpicks',icon:'🗝️',slot:'picks',skill:'thieving',tier:6,cost:450000,bonus:{speed:0.24,doubleYield:0.08},desc:'+24% steal speed · +8% double goods', reqLvl:95,req:'eclipse_lockpicks'},
-  {id:'everflame_treads',  name:'Everflame Treads',  icon:'👟',slot:'boots', skill:'agility',    tier:6,cost:450000,bonus:{speed:0.30},                 desc:'+30% run speed',                          reqLvl:95,req:'eclipse_treads'},
+  {id:'everflame_treads',  name:'Everflame Treads',  icon:'👟',slot:'shoes', skill:'agility',    tier:6,cost:450000,bonus:{speed:0.30},                 desc:'+30% run speed',                          reqLvl:95,req:'eclipse_treads'},
 
   {id:'cape_woodcutting',name:'Woodcutting Cape',icon:'🪓',slot:'cape',skill:'woodcutting',tier:5,cost:100000,bonus:{speed:0.05,skillXp:0.05},desc:'+5% chop speed · +5% Woodcutting XP', reqLvl:99},
   {id:'cape_mining',     name:'Mining Cape',     icon:'⛏️',slot:'cape',skill:'mining',     tier:5,cost:100000,bonus:{speed:0.05,skillXp:0.05},desc:'+5% mine speed · +5% Mining XP',     reqLvl:99},
@@ -18737,10 +18983,11 @@ function buyCharm(id){
        lookups resolve naturally (sell:0 — tools are unlock-once gear, not
        sellable satchel stock),
      • grantItem routes tool:true items into state.gear instead of state.items.
-   Slots that identify a tool: axe pick rod pouch tongs pan mortar tinder boots
-   lens trowel. Jewelry (skill:null) and skillcapes (slot:'cape') are excluded. */
+   Slots that identify a tool: axe pick rod pouch tongs pan mortar tinder shoes
+   lens trowel picks. Jewelry (skill:null) and skillcapes (slot:'cape') are excluded.
+   The agility tools were slot 'boots' until 0.9.124.42. */
 (function(){
-  const TOOL_SHOP_SLOTS={axe:1,pick:1,rod:1,pouch:1,tongs:1,pan:1,mortar:1,tinder:1,boots:1,lens:1,trowel:1,picks:1};
+  const TOOL_SHOP_SLOTS={axe:1,pick:1,rod:1,pouch:1,tongs:1,pan:1,mortar:1,tinder:1,shoes:1,lens:1,trowel:1,picks:1};
   for(const si of SHOP){
     if(TOOL_SHOP_SLOTS[si.slot] && si.skill){
       si.tool = true;
@@ -19158,6 +19405,38 @@ function normalizeState(){
   }
   _migPendantToNeck(state.combatEquipped);
   _migPendantToNeck(state.skillingEquipped);
+  /* ── Agility tools get their own slot (0.9.124.42) ──────────────────────────
+     Leather Boots up to Everflame Treads were written with slot:'boots', the same
+     key as the body boots, in the same skilling loadout. Buying or equipping one
+     took off whatever boots you wore, Runner's Shoes set piece included, and
+     equipping those put the tool away and dropped agility speed to nothing. The
+     tools live in 'shoes' now. Presets hold body gear only, so a stale tool saved
+     in one can never come back over a better tool. */
+  (function(){
+    var shoeTier={}; SHOP.forEach(function(x){ if(x.slot==='shoes') shoeTier[x.id]=x.tier||0; });
+    var se=state.skillingEquipped, ce=state.combatEquipped;
+    if(shoeTier[se.boots]!=null){ if(!se.shoes) se.shoes=se.boots; delete se.boots; }
+    if(shoeTier[ce.boots]!=null) delete ce.boots;
+    if(ce.shoes) delete ce.shoes;
+    /* Someone who wore Runner's Shoes had to leave their agility tool off. Once,
+       put the best one they own back on; after that an empty slot is their call. */
+    if(!state._shoesV1){
+      if(!se.shoes) state.gear.forEach(function(id){ if(shoeTier[id]!=null&&(!se.shoes||shoeTier[id]>shoeTier[se.shoes])) se.shoes=id; });
+      state._shoesV1=true;
+    }
+    for(var k in state.gearPresets){
+      var gp=state.gearPresets[k];
+      if(!gp||typeof gp!=='object'||Array.isArray(gp)){ delete state.gearPresets[k]; continue; }
+      for(var s in gp){ if(PRESET_BODY_SLOTS.indexOf(s)<0||shoeTier[gp[s]]!=null) delete gp[s]; }
+    }
+  })();
+  if(!state.combatPresets||typeof state.combatPresets!=='object'||Array.isArray(state.combatPresets)) state.combatPresets={};
+  for(var _cpk in state.combatPresets){
+    var _cp=state.combatPresets[_cpk];
+    if(!_cp||typeof _cp!=='object'||Array.isArray(_cp)){ delete state.combatPresets[_cpk]; continue; }
+    for(var _cps in _cp){ if(COMBAT_PRESET_SLOTS.indexOf(_cps)<0) delete _cp[_cps]; }
+  }
+  if(typeof state.presetAuto!=='boolean') state.presetAuto=false;
   for(var _gpKey2 in state.gearPresets) _migPendantToNeck(state.gearPresets[_gpKey2]);
   if(!state.mastery||typeof state.mastery!=='object'||Array.isArray(state.mastery)) state.mastery={};
   if(!Array.isArray(state.effects)) state.effects=[];
@@ -24488,6 +24767,7 @@ function setAction(skillKey,actId){
     // Switching activity — don't wipe buffer, let the window absorb the new rate naturally
     state.action={skill:skillKey,actId};
     state.actionStart=Date.now();
+    presetAutoApply(skillKey);   // off unless the player turned it on in Presets
   }
   renderAll(); saveGame();
 }
@@ -28154,10 +28434,9 @@ function shopCatForSlot(slot){
   return null;
 }
 
-/* Returns true if the given body slot is filled by a Crafting tool (v1.0.47+).
-   Tool slots include the agility 'boots' slot — but the player only equips the
-   crafted Forgemaster's Boots / crafted-combat-boots there too, and Crafting is
-   the right destination for ALL of them. */
+/* Returns true if the given slot is filled by a Crafting tool (v1.0.47+). The
+   agility tools have their own 'shoes' slot since 0.9.124.42, so body boots are
+   no longer a tool slot. */
 function craftingHasSlot(slot){
   for(const it of SHOP){ if(it.tool && it.slot===slot) return true; }
   return false;
@@ -28170,8 +28449,7 @@ function gotoCraftToolsSlot(slot){
   selectedSkill='crafting';
   viewTab='acts';
   _crTab='tool';
-  // Slot → owning skill via SHOP. First tool match wins; for shared slots like
-  // boots that are also agility tool-runners, that's the agility lookup.
+  // Slot → owning skill via SHOP. Every tool slot belongs to exactly one skill.
   const si=SHOP.find(function(s){return s.tool&&s.slot===slot;});
   if(si&&si.skill) _crToolSubTab=si.skill;
   renderAll();
@@ -33931,7 +34209,7 @@ const combat={
 let _combatTimer=null;
 /* Gear panel section open/closed — persists across re-renders so equip/unequip doesn't re-expand them.
    Default both closed so the panel opens compact; user explicitly opens what they need. */
-var _gearToolsOpen=false;
+var _gearToolsOpen=true;   // open by default since the doll got compact (0.9.124.42)
 var _gearSetsOpen=false;
 var _enchantSel=null;   // currently-selected jewelry item id in the Enchant grid
 var _socketSel=null;    // currently-selected gear item id in the Socket grid
@@ -34130,92 +34408,107 @@ function renderNotifications(){
 }
 
 /* ════ [JS-22h] gear panel ═══════════════════════════════════════════════════════ */
+/* ════ GEAR TAB (0.9.124.42) ════════════════════════════════════════════════════
+   Bigger slots with names, your numbers under the doll, and no second list of the
+   same items. The doll used to be 89x59 cells with 22px icons and 11px names, and
+   the only stats anywhere near it were in the combat panel. Picked from mockups. */
+function _gearStatsHTML(){
+  if(_gearFilter==='combat'){
+    let acc='?',hit='?',def='?',spd='?';
+    try{ acc=playerAccuracy(); }catch(e){}
+    try{ hit=playerMaxHit(); }catch(e){}
+    try{ def=playerDefence(); }catch(e){}
+    try{ spd=(playerSwingMs()/1000).toFixed(2)+'s'; }catch(e){}
+    const chips=[];
+    try{
+      const b=combatBonusesAll();
+      const pc=v=>Math.round(v*1000)/10;
+      if(b.atkBoost)   chips.push('+'+pc(b.atkBoost)+'% Attack');
+      if(b.defBoost)   chips.push('+'+pc(b.defBoost)+'% Defence');
+      if(b.hpBoost)    chips.push('+'+pc(b.hpBoost)+'% Max HP');
+      if(b.critChance) chips.push('+'+pc(b.critChance)+'% crit');
+      if(b.lifesteal)  chips.push('+'+pc(b.lifesteal)+'% lifesteal');
+      if(b.dodge)      chips.push('+'+pc(b.dodge)+'% dodge');
+      if(b.aspd)       chips.push('+'+pc(b.aspd)+'% attack speed');
+    }catch(e){}
+    let heavy=0;
+    try{ heavy=Math.round((1-Math.max(RANGED_PLATE_FLOOR,1-heavyArmourDef()*RANGED_PLATE_PER_DEF))*100); }catch(e){}
+    return '<div class="eq-stats"><div class="eq-sgrid">'
+      +'<div><b>'+acc+'</b><span>Accuracy</span></div><div><b>'+hit+'</b><span>Max hit</span></div>'
+      +'<div><b>'+def+'</b><span>Defence</span></div><div><b>'+spd+'</b><span>Swing</span></div></div>'
+      +((chips.length||heavy)?'<div class="eq-bon">'+chips.map(c=>'<span class="dk-chip good">'+c+'</span>').join('')
+        +(heavy?'<span class="dk-chip bad">Heavy armour: -'+heavy+'% ranged accuracy</span>':'')+'</div>':'')
+      +'</div>';
+  }
+  /* The skilling half says what the worn gear alone gives the skill you are on:
+     tools, capes and rings, enchants, gems and set pieces. The same terms mods()
+     adds, less the tree and potions, which are not on the doll. */
+  let sk=(state.action&&SKILLS[state.action.skill])?state.action.skill:(SKILLS[selectedSkill]?selectedSkill:'woodcutting');
+  const pct=v=>{ const n=Math.round(v*1000)/10; return n?'<b>'+(n>0?'+':'')+n+'%</b>':'<b class="z">0%</b>'; };
+  let speed=0,xp=0,dbl=0,sell=0;
+  try{
+    const eb=enchantBonuses(sk), sb=socketBonuses(sk);
+    speed=gearBonus(sk,'speed')+(eb.speed||0)+(sb.speed||0);
+    xp=gearSkillXp(sk)+jewelryBonus('xpBoost')+(eb.xpBoost||0)+(sb.xpBoost||0)+skillingSetBonus(sk);
+    dbl=gearBonus(sk,'doubleYield')+jewelryBonus('doubleYield')+(eb.doubleYield||0)+(sb.doubleYield||0);
+    sell=jewelryBonus('gpBoost')+(eb.gpBoost||0)+(sb.gpBoost||0);
+  }catch(e){}
+  return '<div class="eq-stats"><div class="eq-for">'+iconHTML(sk)+'What you wear gives '+SKILLS[sk].name+'</div><div class="eq-sgrid">'
+    +'<div>'+pct(speed)+'<span>Speed</span></div><div>'+pct(xp)+'<span>XP</span></div>'
+    +'<div>'+pct(dbl)+'<span>Double</span></div><div>'+pct(sell)+'<span>Sell value</span></div></div></div>';
+}
+
 function renderGear(){
   // Two-layer guard: skip rebuild if a select inside the gear panel is focused,
   // OR if the user interacted with any gear select in the last 3 seconds.
-  // This prevents native dropdowns (skilling sets, etc.) from snapping shut mid-click.
   var _gaf=document.activeElement;
   if(_gaf&&_gaf.tagName==='SELECT'&&$('gearView')&&$('gearView').contains(_gaf)) return;
   if(Date.now()-_gearInteractAt<3000) return;
-  const box=$('gearView'); box.innerHTML='';
+  const box=$('gearView');
+  const keep=box.scrollTop;
+  box.innerHTML='';
 
-  // ── Combat / Skilling filter toggle — scopes the picker modal + sub-sections ──
+  // ── Combat / Skilling switch: scopes the doll, the picker and the sections below ──
   var filterRow=document.createElement('div');
-  filterRow.className='gear-filter-row';
+  filterRow.className='lo-seg';
   filterRow.innerHTML=
-    '<button class="gear-filter-btn '+(_gearFilter==='combat'?'sel':'')+'" data-gf="combat">'
-    +  '<span class="gfb-ic">⚔</span><span class="gfb-lbl">Combat</span>'
-    +'</button>'
-    +'<button class="gear-filter-btn '+(_gearFilter==='skilling'?'sel':'')+'" data-gf="skilling">'
-    +  '<span class="gfb-ic">⚒</span><span class="gfb-lbl">Skilling</span>'
-    +'</button>';
-  filterRow.querySelectorAll('.gear-filter-btn').forEach(function(b){
+     '<button type="button" class="'+(_gearFilter==='combat'?'on':'')+'" data-gf="combat">Combat</button>'
+    +'<button type="button" class="'+(_gearFilter==='skilling'?'on':'')+'" data-gf="skilling">Skilling</button>';
+  filterRow.querySelectorAll('[data-gf]').forEach(function(b){
     b.addEventListener('click',function(){
       _gearFilter=b.getAttribute('data-gf');
       _gearInteractAt=0; // bypass the 3s focus guard for this user-driven switch
+      box.scrollTop=0;
       renderGear();
     });
   });
   box.appendChild(filterRow);
 
-  // Paper doll header
-  const dollTitle=document.createElement('div');
-  dollTitle.style.cssText='font-size:calc(12px*var(--tscale));color:var(--ember);text-transform:uppercase;letter-spacing:2px;margin-bottom:8px';
-  dollTitle.textContent='Equipment';
-  box.appendChild(dollTitle);
-
   /* The doll is a fixed 3-wide grid, so a new BODY_SLOTS entry does NOT appear here
-     on its own: adding the quiver to BODY_SLOTS gave it a picker and an equip path
-     but no square, so an equipped quiver was invisible on the doll and only showed
-     in the list underneath. It takes the empty cell under the shield, which is the
-     carried-gear column. */
-  /* The quiver sits ABOVE the shield, not below it. Both hang off the off-hand
-     column, and reading down that column as quiver -> shield -> nothing puts the
-     two things competing for that side of the body next to each other. */
-  const DOLL_LAYOUT=[
-    [null,     'helmet', null    ],
-    ['cape',   'amulet', 'quiver'],
-    ['weapon', 'chest',  'shield'],
-    ['gloves', 'legs',   null    ],
-    ['ring_l', 'boots',  'ring_r'],
-  ];
-
+     on its own. The quiver sits under the shield: both hang off the off-hand column.
+     A skilling loadout can still hold a weapon from before the loadouts split
+     (v1.0.46); a row for it shows until that comes off, or it could never be removed. */
   const dollGrid=document.createElement('div');
-  dollGrid.style.cssText='display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;max-width:280px;margin:0 auto 10px';
-
-  // Paper doll shows whichever loadout matches the current filter tab. The two
-  // loadouts (combat + skilling) are fully independent — clicking a slot opens
-  // a picker that writes back to the SAME loadout being displayed.
+  dollGrid.className='eq-doll';
   var dollLoadout=_gearFilter==='combat' ? state.combatEquipped : state.skillingEquipped;
-  for(var ri=0;ri<DOLL_LAYOUT.length;ri++){
+  var dollLayout=_gearFilter==='combat'?DOLL_LAYOUT_PE_COMBAT:DOLL_LAYOUT_PE.slice();
+  if(_gearFilter!=='combat'&&(dollLoadout.weapon||dollLoadout.shield||dollLoadout.quiver))
+    dollLayout.push(['weapon','shield','quiver'].map(function(s){ return dollLoadout[s]?s:null; }));
+  for(var ri=0;ri<dollLayout.length;ri++){
     for(var ci=0;ci<3;ci++){
-      var slotKey=DOLL_LAYOUT[ri][ci];
+      var slotKey=dollLayout[ri][ci];
       var cell=document.createElement('div');
-      if(!slotKey){
-        cell.style.minHeight='58px';
-        dollGrid.appendChild(cell);
-        continue;
-      }
+      if(!slotKey){ cell.className='eq-cell blank'; dollGrid.appendChild(cell); continue; }
       var def=BODY_SLOTS.find(function(s){return s.slot===slotKey;});
       var equippedId=dollLoadout[slotKey];
       var equippedDef=equippedId?getBodyItemDef(equippedId):null;
       var filled=!!equippedDef;
       var isSkillingGear=filled&&ITEMS[equippedId]&&ITEMS[equippedId].skillGear;
-
-      cell.style.cssText='position:relative;background:var(--raised);border:1px solid '
-        +(isSkillingGear?'var(--ember)':filled?'var(--trim-d)':'#3a2a1733')
-        +';border-radius:5px;padding:5px 2px;text-align:center;cursor:var(--cur-pointer);min-height:58px;'
-        +'display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;'
-        +'opacity:'+(filled?'1':'0.42');
-      cell.title=def.label+(filled?' - '+equippedDef.name:' - empty, click to equip');
-      cell.innerHTML='<span style="font-size:calc(22px*var(--tscale));line-height:1">'
-        +(filled?iconHTML(equippedId):def.empty)+'</span>'
-        +'<span style="font-size:calc(11px*var(--tscale));color:'+(filled?'var(--trim)':'var(--muted)')
-        +';line-height:1.3;font-variant:small-caps">'
-        +(filled?equippedDef.name:def.label)+'</span>';
-
-      // X/4 badge for skilling gear pieces — only meaningful while viewing the
-      // skilling loadout, since combat loadout pieces are tier-graded, not set-graded
+      cell.className='eq-cell'+(filled?'':' empty')+(isSkillingGear?' set':'');
+      cell.title=def.label+(filled?': '+equippedDef.name:': empty, click to equip');
+      cell.innerHTML=filled?iconHTML(equippedId)+'<span class="nm">'+equippedDef.name+'</span>'
+                           :'<span class="sl">'+(BAG_SLOT_LABEL[slotKey]||def.label)+'</span>';
+      // X/4 badge for skilling set pieces, only while viewing the skilling loadout
       if(isSkillingGear && _gearFilter==='skilling'){
         var sgIt=ITEMS[equippedId];
         var sgSetDef=SKILLING_SETS[sgIt.gearSkill];
@@ -34231,10 +34524,8 @@ function renderGear(){
           cell.appendChild(badge);
         }
       }
-
       (function(sk,d,eqId){
         cell.addEventListener('click',function(){openGearSlotModal(sk,d,dollLoadout[sk]);});
-        // Hover tooltip
         if(eqId){
           cell.addEventListener('mouseenter',function(e){
             var html=ITEMS[eqId]&&ITEMS[eqId].skillGear
@@ -34251,54 +34542,43 @@ function renderGear(){
   }
   box.appendChild(dollGrid);
 
-  // Equipped chips row — also reflects the loadout being shown
-  var bodyEq=BODY_SLOTS.filter(function(s){return !!dollLoadout[s.slot];});
-  if(bodyEq.length){
-    var chips=document.createElement('div');
-    chips.style.cssText='display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px';
-    for(var bi=0;bi<bodyEq.length;bi++){
-      var bdid=dollLoadout[bodyEq[bi].slot];
-      var bd=getBodyItemDef(bdid);
-      if(!bd) continue;
-      var chip=document.createElement('span');
-      chip.style.cssText='background:var(--raised-s);border:1px solid var(--trim-d);border-radius:10px;padding:2px 8px;font-size:calc(13px*var(--tscale));color:var(--text)';
-      chip.innerHTML=iconHTML(bdid)+' '+bd.name;
-      chips.appendChild(chip);
-    }
-    box.appendChild(chips);
-  }
+  const stats=document.createElement('div');
+  stats.innerHTML=_gearStatsHTML();
+  box.appendChild(stats.firstChild);
 
-  // ── Skill Tools & Skilling Sets — only visible in the Skilling tab. The
-  // entire pickaxes/axes/fishing-rod section is irrelevant when the player is
-  // managing a combat loadout, and showing the skilling-armor sets browser
-  // here would muddy the filter intent. Wrap both in a single guard. ──
+  const foot=document.createElement('div');
+  foot.className='eq-foot';
+  foot.innerHTML='<button type="button" class="bag-btn gold">'+(_gearFilter==='combat'?'Combat loadouts':'Skilling presets')+'</button>';
+  foot.firstChild.addEventListener('click',function(){ _loScope=_gearFilter; rightTab='presets'; renderRightPanel(); });
+  box.appendChild(foot);
+
+  // ── Skill Tools and Skilling Sets, only in the Skilling half ──
   if(_gearFilter==='skilling'){
 
-  // Skill Tools section
   var toolsOpen=_gearToolsOpen;
   var toolsHdr=document.createElement('div');
-  toolsHdr.style.cssText='font-size:calc(12px*var(--tscale));color:var(--ember);text-transform:uppercase;letter-spacing:2px;margin-bottom:8px;border-top:1px solid var(--trim-d);padding-top:10px;display:flex;justify-content:space-between;cursor:var(--cur-pointer);user-select:none';
-  toolsHdr.innerHTML='<span>Skill Tools</span><span id="toolsToggleIcon">&#9662;</span>';
+  toolsHdr.className='eq-sec';
+  toolsHdr.innerHTML='<span>Skill Tools</span><span id="toolsToggleIcon">'+(toolsOpen?'&#9662;':'&#9656;')+'</span>';
   box.appendChild(toolsHdr);
 
   var toolsBody=document.createElement('div');
-
+  /* 'shoes', not 'boots' (0.9.124.42): the agility tools shared the body boots' key
+     in the same loadout, so one always took the other off. */
   var TOOL_SLOTS=[
-    {slot:'axe',skill:'woodcutting',label:'Axe',eicon:'&#128369;'},
-    {slot:'pick',skill:'mining',label:'Pickaxe',eicon:'&#9935;&#65039;'},
-    {slot:'rod',skill:'fishing',label:'Fishing Rod',eicon:'&#127907;'},
-    {slot:'pouch',skill:'foraging',label:'Pouch',eicon:'&#127896;'},
-    {slot:'tongs',skill:'smithing',label:'Forge Tongs',eicon:'&#128295;'},
-    {slot:'pan',skill:'cooking',label:'Cooking Pan',eicon:'&#127859;'},
-    {slot:'mortar',skill:'alchemy',label:'Mortar & Pestle',eicon:'&#9879;&#65039;'},
-    {slot:'tinder',skill:'firemaking',label:'Tinderbox',eicon:'&#128293;'},
-    {slot:'boots',skill:'agility',label:'Boots',eicon:'&#128159;'},
-    {slot:'lens',skill:'jeweler',label:'Jeweler Lens',eicon:'&#128269;'},
-  {slot:'picks',skill:'thieving',label:'Lockpicks',eicon:'&#128477;'},
-    {slot:'trowel',skill:'farming',label:'Trowel',eicon:'&#127802;'},
+    {slot:'axe',skill:'woodcutting',label:'Axe'},
+    {slot:'pick',skill:'mining',label:'Pickaxe'},
+    {slot:'rod',skill:'fishing',label:'Fishing Rod'},
+    {slot:'pouch',skill:'foraging',label:'Pouch'},
+    {slot:'tongs',skill:'smithing',label:'Forge Tongs'},
+    {slot:'pan',skill:'cooking',label:'Cooking Pan'},
+    {slot:'mortar',skill:'alchemy',label:'Mortar & Pestle'},
+    {slot:'tinder',skill:'firemaking',label:'Tinderbox'},
+    {slot:'shoes',skill:'agility',label:'Running Shoes'},
+    {slot:'lens',skill:'jeweler',label:'Jeweler Lens'},
+    {slot:'picks',skill:'thieving',label:'Lockpicks'},
+    {slot:'trowel',skill:'farming',label:'Trowel'},
   ];
-
-  toolsBody.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:4px';
+  toolsBody.className='eq-tools';
   toolsBody.style.display=toolsOpen?'grid':'none';
 
   for(var ti=0;ti<TOOL_SLOTS.length;ti++){
@@ -34306,25 +34586,15 @@ function renderGear(){
     var teqId=state.equipped[tdef.slot];
     var teqItem=teqId?SHOP.find(function(i){return i.id===teqId;}):null;
     var ownedInSlot=state.gear.map(function(id){return SHOP.find(function(i){return i.id===id;});}).filter(function(i){return i&&i.slot===tdef.slot;});
-
     var card=document.createElement('div');
-    var filled=!!teqItem;
-    card.style.cssText='display:flex;flex-direction:column;align-items:center;justify-content:center;'
-      +'background:var(--raised);border:1px solid '+(filled?'var(--trim-d)':'#3a2a1733')+';'
-      +'border-radius:5px;padding:6px 4px;text-align:center;cursor:var(--cur-pointer);'
-      +'min-height:60px;gap:2px;opacity:'+(filled?'1':'0.52');
-    card.innerHTML='<span style="font-size:calc(20px*var(--tscale));line-height:1">'+(filled?teqItem.icon:tdef.eicon)+'</span>'
-      +'<span style="font-size:calc(11px*var(--tscale));color:var(--muted);text-transform:uppercase;letter-spacing:.5px;line-height:1.2">'+tdef.label+'</span>'
-      +'<span style="font-size:calc(12px*var(--tscale));color:'+(filled?'var(--trim)':'var(--muted)')+';line-height:1.3;font-style:'+(filled?'normal':'italic')+';">'
-      +(filled?teqItem.name:'empty')+'</span>';
-    if(ownedInSlot.length>0&&!filled){
-      card.style.opacity='0.75';
-      card.innerHTML+='<span style="font-size:calc(11px*var(--tscale));color:var(--ember)">'+ownedInSlot.length+' owned</span>';
-    }
-
-    (function(slotKey,def,eqId){
+    var tfilled=!!teqItem;
+    card.className='eq-tool'+(tfilled?'':' empty');
+    card.innerHTML='<span class="ic">'+iconHTML(tfilled?teqItem.id:tdef.skill)+'</span>'
+      +'<span class="tx"><span class="lb">'+tdef.label+'</span>'
+      +'<span class="nm">'+(tfilled?teqItem.name:(ownedInSlot.length?ownedInSlot.length+' owned, none on':'None'))+'</span></span>';
+    (function(slotKey,d,eqId){
       card.addEventListener('click',function(){
-        openGearSlotModal(slotKey,{label:def.label},state.equipped[slotKey]);
+        openGearSlotModal(slotKey,{label:d.label},state.equipped[slotKey]);
       });
       if(eqId){
         card.addEventListener('mouseenter',function(e){ showGearTip(shopItemTipHtml(eqId),e.clientX,e.clientY); });
@@ -34332,7 +34602,6 @@ function renderGear(){
         card.addEventListener('mouseleave',hideGearTip);
       }
     })(tdef.slot,tdef,teqId);
-
     toolsBody.appendChild(card);
   }
   box.appendChild(toolsBody);
@@ -34346,17 +34615,14 @@ function renderGear(){
 
   // === Skilling Sets panel — full slot cards per set ===
   var setsHdr=document.createElement('div');
-  setsHdr.style.cssText='font-size:calc(12px*var(--tscale));color:var(--ember);text-transform:uppercase;letter-spacing:2px;'
-    +'margin-bottom:8px;border-top:1px solid var(--trim-d);padding-top:10px;'
-    +'display:flex;justify-content:space-between;align-items:center;cursor:var(--cur-pointer);user-select:none';
-  setsHdr.innerHTML='<span>⚔ Skilling Sets</span><span id="setsToggleIcon">&#9662;</span>';
+  setsHdr.className='eq-sec';
+  setsHdr.innerHTML='<span>Skilling Sets</span><span id="setsToggleIcon">'+(_gearSetsOpen?'&#9662;':'&#9656;')+'</span>';
   box.appendChild(setsHdr);
 
   var setsBody=document.createElement('div');
   var setsOpen=_gearSetsOpen;
   setsBody.style.display=setsOpen?'':'none';
 
-  // Compact info line
   var setsInfo=document.createElement('div');
   setsInfo.style.cssText='font-size:calc(12px*var(--tscale));color:var(--muted);margin-bottom:8px;line-height:1.5';
   setsInfo.innerHTML='Rare drops per skill · <b style="color:var(--ember)">+3% XP</b> per piece · '
@@ -34374,11 +34640,10 @@ function renderGear(){
       var bp=SKILLING_SETS[b].pieces[pi2];
       if(!!(state.skillingGear&&state.skillingGear[bp])||Object.values(state.equipped).indexOf(bp)>=0) bF++;
     }
-    if(aF!==bF) return bF-aF; // more found first
+    if(aF!==bF) return bF-aF;
     return SKILLS[a].name.localeCompare(SKILLS[b].name);
   });
 
-  // Default selected key: first with any found piece, or first overall
   if(!_gearSelectedSetKey||!SKILLING_SETS[_gearSelectedSetKey]){
     _gearSelectedSetKey=setSkillKeys[0];
     for(var si2=0;si2<setSkillKeys.length;si2++){
@@ -34390,10 +34655,8 @@ function renderGear(){
     }
   }
 
-  // Custom themed skill-icon grid selector (replaces native <select>)
   var setGrid=document.createElement('div');
-  setGrid.style.cssText='display:grid;grid-template-columns:repeat(4,1fr);gap:3px;margin-bottom:10px';
-
+  setGrid.style.cssText='display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:10px';
   for(var ski=0;ski<setSkillKeys.length;ski++){
     var ssk2=setSkillKeys[ski];
     var sdef2=SKILLING_SETS[ssk2];
@@ -34411,38 +34674,25 @@ function renderGear(){
     var bdrCol2=eqCt2===4?'var(--green)':foundCt===4?'var(--ember)':foundCt>0?'var(--trim)':'var(--trim-d)';
     var cell2=document.createElement('div');
     cell2.style.cssText='background:'+(isSel2?'var(--raised-s)':'var(--raised)')+';'
-      +'border:'+(isSel2?'2px':'1px')+' solid '+bdrCol2+';border-radius:5px;'
-      +'padding:5px 3px;text-align:center;cursor:var(--cur-pointer);transition:border-color .15s,background .15s;'
-      +'display:flex;flex-direction:column;align-items:center;gap:1px;'
+      +'border:'+(isSel2?'2px':'1px')+' solid '+bdrCol2+';border-radius:6px;'
+      +'padding:6px 3px;text-align:center;cursor:var(--cur-pointer);'
+      +'display:flex;flex-direction:column;align-items:center;gap:2px;'
       +(isSel2?'box-shadow:inset 0 0 8px rgba(0,0,0,.4);':'');
-    var skillShort2=SKILLS[ssk2].name.replace(/ing$/,'').replace(/ing/,'');
-    cell2.innerHTML='<span style="font-size:calc(17px*var(--tscale));line-height:1">'+iconHTML(ssk2)+'</span>'
-      +'<span style="font-size:calc(11px*var(--tscale));color:'+(isSel2?'var(--trim)':'var(--muted)')+';line-height:1.2;'
-      +'font-variant:small-caps;letter-spacing:.3px;word-break:break-all">'+skillShort2+'</span>'
+    cell2.innerHTML='<span style="font-size:calc(20px*var(--tscale));line-height:1">'+iconHTML(ssk2)+'</span>'
+      +'<span style="font-size:calc(11px*var(--tscale));color:'+(isSel2?'var(--trim)':'var(--muted)')+';line-height:1.2">'+SKILLS[ssk2].name+'</span>'
       +(foundCt>0?'<span style="font-size:calc(11px*var(--tscale));color:'+(eqCt2===4?'var(--green)':foundCt===4?'var(--ember)':'var(--trim)')+';line-height:1">'+foundCt+'/4</span>':'');
-    (function(key,c){
-      c.addEventListener('click',function(){
-        _gearSelectedSetKey=key; _gearInteractAt=0; renderGear();
-      });
-      c.addEventListener('mouseenter',function(){
-        if(key!==_gearSelectedSetKey) c.style.background='var(--raised-s)';
-      });
-      c.addEventListener('mouseleave',function(){
-        if(key!==_gearSelectedSetKey) c.style.background='var(--raised)';
-      });
-    })(ssk2,cell2);
+    (function(key){
+      cell2.addEventListener('click',function(){ _gearSelectedSetKey=key; _gearInteractAt=0; renderGear(); });
+    })(ssk2);
     setGrid.appendChild(cell2);
   }
   setsBody.appendChild(setGrid);
 
-  // Render the selected set's card
   (function(){
     var ssk=_gearSelectedSetKey;
     var sdef=SKILLING_SETS[ssk];
     var sk2=SKILLS[ssk];
     if(!sdef||!sk2) return;
-
-    // Per-piece status
     var pieceStatus={};
     var collectedCount=0, equippedCount=0;
     for(var spi=0;spi<sdef.pieces.length;spi++){
@@ -34455,49 +34705,38 @@ function renderGear(){
       if(shave||seqp) collectedCount++;
       if(seqp) equippedCount++;
     }
-
     var bonus=skillingSetBonus(ssk);
     var borderCol=equippedCount===4?'var(--green)':collectedCount>0?'var(--ember)':'var(--trim-d)';
-
     var setCard=document.createElement('div');
-    setCard.style.cssText='border:1px solid '+borderCol+';border-radius:6px;overflow:hidden;width:100%;box-sizing:border-box';
-
-    // Set header
+    setCard.style.cssText='border:1px solid '+borderCol+';border-radius:8px;overflow:hidden;width:100%;box-sizing:border-box';
     var setCardHdr=document.createElement('div');
-    setCardHdr.style.cssText='display:flex;align-items:center;gap:7px;padding:5px 8px;background:var(--raised-s);'
+    setCardHdr.style.cssText='display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--raised-s);'
       +'border-bottom:1px solid '+borderCol;
-    setCardHdr.innerHTML='<span style="font-size:calc(17px*var(--tscale));line-height:1">'+iconHTML(ssk)+'</span>'
+    setCardHdr.innerHTML='<span style="font-size:calc(19px*var(--tscale));line-height:1">'+iconHTML(ssk)+'</span>'
       +'<div style="flex:1;min-width:0">'
-      +'<div style="font-size:calc(13px*var(--tscale));color:var(--trim);font-variant:small-caps;letter-spacing:.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+sdef.name+'</div>'
-      +'<div style="font-size:calc(12px*var(--tscale));color:var(--muted)">'+sk2.name+' · '
-      +collectedCount+'/4 found'
+      +'<div style="font-size:calc(13.5px*var(--tscale));color:var(--trim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+sdef.name+'</div>'
+      +'<div style="font-size:calc(12px*var(--tscale));color:var(--muted)">'+sk2.name+' · '+collectedCount+'/4 found'
       +(bonus>0?' · <span style="color:var(--green)">+'+Math.round(bonus*100)+'% XP</span>':'')
       +'</div></div>'
-      +'<span style="font-size:calc(12px*var(--tscale));font-family:var(--num);color:'
+      +'<span style="font-size:calc(12.5px*var(--tscale));font-family:var(--num);color:'
       +(equippedCount===4?'var(--green)':equippedCount>0?'var(--ember)':'var(--muted)')
-      +';flex-shrink:0">'+equippedCount+'/4</span>';
+      +';flex-shrink:0">'+equippedCount+'/4 on</span>';
     setCard.appendChild(setCardHdr);
-
-    // 4-piece grid — tightened padding and gap
     var pieceGrid2=document.createElement('div');
-    pieceGrid2.style.cssText='display:grid;grid-template-columns:repeat(4,1fr);gap:3px;padding:5px;box-sizing:border-box';
-
+    pieceGrid2.style.cssText='display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:6px;box-sizing:border-box';
     for(var sgi=0;sgi<sdef.pieces.length;sgi++){
       var sgpid=sdef.pieces[sgi];
       var sgit=ITEMS[sgpid];
       var sgst=pieceStatus[sgpid];
-      var sgSlotLabel=sgit?sgit.gearSlot:'';
-
+      var sgSlotLabel=sgit?(BAG_SLOT_LABEL[sgit.gearSlot]||sgit.gearSlot):'';
       var pCell=document.createElement('div');
-      pCell.className='sg-slot'
-        +(sgst.equipped?' sg-equipped':sgst.have?' sg-collected':' sg-empty');
-      pCell.innerHTML='<div style="font-size:calc(19px*var(--tscale));line-height:1">'+(sgst.have||sgst.equipped?(sgit?iconHTML(sgpid):'?'):'❓')+'</div>'
+      pCell.className='sg-slot'+(sgst.equipped?' sg-equipped':sgst.have?' sg-collected':' sg-empty');
+      pCell.innerHTML='<div style="font-size:calc(22px*var(--tscale));line-height:1">'+(sgst.have||sgst.equipped?(sgit?iconHTML(sgpid):'?'):'?')+'</div>'
         +'<div style="font-size:calc(11px*var(--tscale));color:'+(sgst.equipped?'var(--green)':sgst.have?'var(--ember)':'var(--muted)')
-        +';line-height:1.2;margin-top:1px;word-break:break-word;text-align:center">'+(sgst.have||sgst.equipped?(sgit?sgit.name:''):'???')+'</div>'
-        +'<div style="font-size:calc(11px*var(--tscale));color:var(--muted);text-transform:uppercase;letter-spacing:.5px">'+sgSlotLabel+'</div>'
-        +(sgst.equipped?'<div style="font-size:calc(11px*var(--tscale));color:var(--green)">● Equipped</div>':
-          sgst.have?'<div style="font-size:calc(11px*var(--tscale));color:var(--ember)">In satchel</div>':'');
-
+        +';line-height:1.2;margin-top:2px;word-break:break-word;text-align:center">'+(sgst.have||sgst.equipped?(sgit?sgit.name:''):'Not found')+'</div>'
+        +'<div style="font-size:calc(10px*var(--tscale));color:var(--muted);text-transform:uppercase;letter-spacing:.5px">'+sgSlotLabel+'</div>'
+        +(sgst.equipped?'<div style="font-size:calc(11px*var(--tscale));color:var(--green)">On</div>':
+          sgst.have?'<div style="font-size:calc(11px*var(--tscale));color:var(--ember)">Owned</div>':'');
       (function(pid,slot,st){
         pCell.addEventListener('mouseenter',function(e){ showGearTip(skillingGearTipHtml(pid),e.clientX,e.clientY); });
         pCell.addEventListener('mousemove',function(e){ showGearTip(_gtEl().innerHTML,e.clientX,e.clientY); });
@@ -34510,7 +34749,6 @@ function renderGear(){
           });
         }
       })(sgpid, sgit?sgit.gearSlot:'', sgst);
-
       pieceGrid2.appendChild(pCell);
     }
     setCard.appendChild(pieceGrid2);
@@ -34527,6 +34765,7 @@ function renderGear(){
   });
 
   } // ← end if(_gearFilter==='skilling')
+  box.scrollTop=keep;
 }
 
 function openGearSlotModal(slotKey,def,currentId){
@@ -34608,8 +34847,9 @@ function openGearSlotModal(slotKey,def,currentId){
       btnWrap.appendChild(eqBtn);
     }
 
-    // Sell button — only for shop items NOT equipped anywhere (refunds 50%)
-    if(isShopItem&&!isEquipped&&!equippedElsewhere){
+    // Sell button, only for shop items NOT equipped anywhere (refunds 50%). Never on
+    // a tool: sellShopItem refuses those, so the button offered a price and said no.
+    if(isShopItem&&!shopItem.tool&&!isEquipped&&!equippedElsewhere){
       var sellBtn=document.createElement('button');
       sellBtn.className='m-btn';
       sellBtn.style.cssText='font-size:calc(12px*var(--tscale));padding:4px 8px;color:var(--muted);border-color:var(--trim-d)';
@@ -34652,7 +34892,7 @@ function openGearSlotModal(slotKey,def,currentId){
       if(it&&it.skillGear) return false;
       // Skill tools (shop items with a tool slot like 'axe', 'pick'): hide in combat
       var shop=SHOP.find(function(s){return s.id===id;});
-      if(shop&&['axe','pick','rod','pouch','tongs','pan','mortar','tinder','lens','trowel'].indexOf(shop.slot)>=0) return false;
+      if(shop&&['axe','pick','rod','pouch','tongs','pan','mortar','tinder','lens','trowel','shoes','picks'].indexOf(shop.slot)>=0) return false;
       return true;
     }
     if(_gearFilter==='skilling'){
@@ -34777,7 +35017,7 @@ function openGearSlotModal(slotKey,def,currentId){
     if(!currentId){
       var empty=document.createElement('p');
       empty.style.cssText='font-size:calc(14px*var(--tscale));color:var(--muted);padding:8px 0;font-style:italic';
-      empty.textContent=(shopHasSlot||toolHasSlot)?'No items owned for this slot yet.':'No items for this slot yet. Craft jewelry in the Jeweler skill.';
+      empty.textContent='Nothing you own fits this slot yet.';
       body.appendChild(empty);
     }
   } else {
@@ -39581,7 +39821,7 @@ function ownedItemsForSlot(slot){
   const seen={};
   // Combat-only filter — mirrors the gear-panel's Combat filter rules. Excludes
   // items flagged skillGear, plus skill-tool shop entries (axes/picks/etc).
-  const TOOL_SLOTS={axe:1,pick:1,rod:1,pouch:1,tongs:1,pan:1,mortar:1,tinder:1,lens:1,trowel:1};
+  const TOOL_SLOTS={axe:1,pick:1,rod:1,pouch:1,tongs:1,pan:1,mortar:1,tinder:1,lens:1,trowel:1,shoes:1,picks:1};
   const isCombatOnly=id=>{
     const it=ITEMS[id];
     if(it&&it.skillGear) return false;
@@ -46554,10 +46794,10 @@ async function resetCharacter(){
 document.querySelectorAll('#railGroups .rg').forEach(b=>{
   b.addEventListener('click',()=>setRailGroup(b.dataset.rg));
 });
-$('tabSatchel').addEventListener('click',()=>{ rightTab='satchel'; _gearToolsOpen=false; _gearSetsOpen=false; renderRightPanel(); });
+$('tabSatchel').addEventListener('click',()=>{ rightTab='satchel'; _gearSetsOpen=false; renderRightPanel(); });
 $('tabGear').addEventListener('click',()=>{ rightTab='gear'; renderRightPanel(); });
-$('tabNotifs').addEventListener('click',()=>{ rightTab='notifs'; _gearToolsOpen=false; _gearSetsOpen=false; renderRightPanel(); });
-$('tabPresets').addEventListener('click',()=>{ rightTab='presets'; _gearToolsOpen=false; _gearSetsOpen=false; renderRightPanel(); });
+$('tabNotifs').addEventListener('click',()=>{ rightTab='notifs'; _gearSetsOpen=false; renderRightPanel(); });
+$('tabPresets').addEventListener('click',()=>{ rightTab='presets'; _gearSetsOpen=false; renderRightPanel(); });
 /* Combat tab moved into the left-panel tab strip (v1.0.65). It opens the combat
    arena; skilling/stats tabs close the panel but leave any active fight running
    in the background — the tab pulses `.fight-active` to indicate that. */
