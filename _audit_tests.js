@@ -7464,6 +7464,54 @@ setTimeout(() => {
     ok('the editor doll matches the Gear tab: twelve combat squares, nine skilling', pick.combatSquares === 12 && pick.skillSquares === 9, JSON.stringify(pick));
   }
 
+  section('A tighter right bar, and satchel hovers (0.9.124.43)');
+  {
+    /* A fixed 400px bar took up to 100px from the middle column on any window under
+       about 1870px wide, and the skill cards wrapped and pushed everything down.
+       jsdom does no layout, so this pins the two things that make it work: the bar
+       column flexes and the middle one has a cap, and the layout's max width is the
+       design width the root zoom divides by. */
+    const lay = ev(`(function(){
+      var cs=getComputedStyle(document.getElementById('mainLayout'));
+      return {cols:cs.gridTemplateColumns.replace(/\\s+/g,' ').trim(), maxW:cs.maxWidth, design:UI_DESIGN_W};
+    })()`);
+    ok('the bar takes spare width, and the middle column keeps its 1064px first',
+       /^320px minmax\(auto, ?1064px\) minmax\(320px, ?1fr\)$/.test(lay.cols), lay.cols);
+    ok('the layout max width and the zoom design width are the same number', lay.maxW === lay.design + 'px', JSON.stringify(lay));
+
+    /* The card was on the picture only (data-item sat on .bag-ic), so most of a tile
+       showed nothing; and it opened below the pointer, over the dock's Sell buttons. */
+    const hov = ev(`(function(){
+      state=defaultState(); normalizeState(); rightTab='satchel'; invSearch=''; state.invPrefs.cat='all'; state.invPrefs.sort='category';
+      state.items={iron_ore:5, pine_log:3}; _bagSel=null; renderRightPanel();
+      var z=parseFloat(getComputedStyle(document.documentElement).zoom)||1, tt=ttEl();
+      tt.style.top=''; tt.style.display='none';   // nothing left over from an earlier hover
+      var tn=document.querySelector('#inventory .bag-tile[data-id="iron_ore"] .bag-tn');
+      tn.dispatchEvent(new MouseEvent('mouseover',{bubbles:true,clientX:300,clientY:500}));
+      var r={name:tt.style.display, tileTop:parseFloat(tt.style.top), tileCy:500/z};
+      tn.dispatchEvent(new MouseEvent('mouseout',{bubbles:true,relatedTarget:document.body}));
+      r.hidden=tt.style.display;
+      var s=document.createElement('span'); s.setAttribute('data-item','iron_ore'); document.body.appendChild(s);
+      s.dispatchEvent(new MouseEvent('mouseover',{bubbles:true,clientX:300,clientY:300}));
+      r.plainTop=parseFloat(tt.style.top); r.plainCy=300/z;
+      s.dispatchEvent(new MouseEvent('mouseout',{bubbles:true,relatedTarget:document.body})); s.remove();
+      return r;
+    })()`);
+    ok('hovering any part of a satchel tile, not just its picture, shows the item card', hov.name === 'block' && hov.hidden === 'none', JSON.stringify(hov));
+    ok('and the card opens above the pointer, clear of the dock', hov.name === 'block' && hov.tileTop < hov.tileCy, JSON.stringify(hov));
+    ok('every other item hover still opens below', hov.plainTop > hov.plainCy, JSON.stringify(hov));
+
+    const chips = ev(`(function(){
+      state=defaultState(); normalizeState(); rightTab='satchel'; invSearch=''; state.invPrefs.cat='all';
+      state.items={iron_ore:5, copper_ore:2, pine_log:3}; _bagSel=null; renderRightPanel();
+      var c=document.querySelectorAll('#inventory .bag-cat');
+      return {counts:document.querySelectorAll('#inventory .bag-cat i').length, open:(document.querySelector('#inventory .bag-cat.on i')||{}).textContent,
+        tips:[].map.call(c,function(x){ return x.title; }).join('|')};
+    })()`);
+    ok('only the open chip prints its count; the rest carry it in their tip',
+       chips.counts === 1 && chips.open === '3' && /Ores & Bars: 2/.test(chips.tips) && /Logs: 1/.test(chips.tips), JSON.stringify(chips));
+  }
+
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));
   process.exit(fail ? 1 : 0);
 }, 2500);
