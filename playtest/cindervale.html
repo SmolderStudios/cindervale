@@ -8520,7 +8520,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.124.45">v0.9.124</div>
+  <div class="mm-ver" data-build="0.9.124.46">v0.9.124</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -30128,6 +30128,29 @@ const ZONES=[
   {id:'frostfang',    name:'Frostfang Tundra',  icon:'frostfang',    accent:'#7fb8d4', unlockLvl:35, type:'hunt', blurb:"A white waste where the wind screams and the cold hunts alongside the beasts."},
   {id:'ashen_steppe', name:'Ashen Steppe',      icon:'ashen_steppe', accent:'#b0704a', unlockLvl:65, type:'hunt', blurb:"Cracked red earth under a bruised sky — only the hardiest predators still range here."},
 ];
+/* ── Stormcrest Aerie, the bird hunting ground (0.9.124.46) ─────────────────────
+   Ticket #110 and Jordan: "add bird monsters ... gryphons or birds like eagles,
+   phoenix". Four birds that fill the level gaps between the hunting grounds (26,
+   45, 60, 90). Glass cannons: less health than the beasts beside them, faster
+   and harder swings, and weak to arrows. They drop feathers by the handful, raw
+   fowl, and plumes that Fletching splits into feathers.
+
+   OFF until the art is in. A monster ships with a painted portrait (the audit
+   checks every one), and those come from Jordan's ChatGPT sheets: see
+   _iconart/PROMPTS-aerie.md. Load the game with ?aerie=1 to preview it with the
+   placeholder icons. Going live is: inject the art, set AERIE_LIVE true, run the
+   harnesses (the Spire's place count and the portrait test will want the zone). */
+const AERIE_LIVE = /[?&]aerie=1/.test((typeof location!=='undefined'&&location.search)||'');
+if(AERIE_LIVE){
+  MONSTERS.push(
+    {id:'crag_hawk',   zone:'aerie', name:'Crag Hawk',   icon:'crag_hawk',   lvl:26, hp:265,  atk:72,  str:50,  def:28,  coins:45,  xp:98,   swingMs:1300, dmgType:'slash', weakTo:'ranged'},
+    {id:'storm_eagle', zone:'aerie', name:'Storm Eagle', icon:'storm_eagle', lvl:45, hp:500,  atk:130, str:104, def:54,  coins:125, xp:205,  swingMs:1400, dmgType:'slash', weakTo:'ranged'},
+    {id:'gryphon',     zone:'aerie', name:'Gryphon',     icon:'gryphon',     lvl:60, hp:860,  atk:185, str:165, def:98,  coins:330, xp:540,  swingMs:1900, dmgType:'stab',  weakTo:'ranged'},
+    {id:'phoenix',     zone:'aerie', name:'Phoenix',     icon:'phoenix',     lvl:90, hp:1500, atk:340, str:250, def:170, coins:1400,xp:2050, swingMs:1700, dmgType:'slash', weakTo:'ranged', resistTo:'crush'}
+  );
+  ZONES.push({id:'aerie', name:'Stormcrest Aerie', icon:'aerie', accent:'#9ab4c8', unlockLvl:26, type:'hunt',
+    blurb:"Cliffs above the cloud line where the big birds nest. Bring a bow."});
+}
 function getZone(id){ return ZONES.find(z=>z.id===id)||ZONES[0]; }
 function monstersInZone(id){ return MONSTERS.filter(m=>m.zone===id); }
 function zoneUnlocked(z){ return combatLevel()>=z.unlockLvl; }
@@ -32318,7 +32341,6 @@ function hasPet(petId){ return !!(state && state.pets && state.pets[petId]); }
     add('timber_wolf',   [{id:'feather', chance:0.18, qty:[2,6]}]);
     add('snow_leopard',  [{id:'feather', chance:0.28, qty:[5,11]},
                           {id:'raw_fowl',chance:0.20}]);
-    add('frost_hare',    [{id:'feather', chance:0.24, qty:[4,8]}]);
   }
 
   /* ── ammunition, off the things that carry it ──
@@ -32455,6 +32477,59 @@ function hasPet(petId){ return !!(state && state.pets && state.pets[petId]); }
   function _o(k,v){ const o={}; o[k]=v; return o; }
   function _o2(a,b,c,d){ const o={}; o[a]=b; o[c]=d; return o; }
   function _o3(a,b,c,d,e,f){ const o={}; o[a]=b; o[c]=d; o[e]=f; return o; }
+
+  /* Stormcrest Aerie (see AERIE_LIVE by ZONES). Drops are set here, after every
+     load-time pass over MONSTER_DROPS, so nothing adds to or trims them. */
+  if(AERIE_LIVE){
+    ITEMS.storm_plume  ={name:'Storm Plume',   icon:'\u{1FAB6}', sell:45,
+      desc:'A long grey flight feather that crackles when you bend it. Splits into 12 feathers.'};
+    ITEMS.gryphon_plume={name:'Gryphon Plume', icon:'\u{1FAB6}', sell:140,
+      desc:'Gold at the root and stiff as a quill knife. Splits into 24 feathers.'};
+    ITEMS.phoenix_plume={name:'Phoenix Plume', icon:'\u{1FAB6}', sell:700, rare:true,
+      desc:'Still warm. Splits into 50 feathers.'};
+    MONSTER_DROPS.crag_hawk  =[{id:'feather',chance:0.45,qty:[6,12]},{id:'raw_fowl',chance:0.22}];
+    MONSTER_DROPS.storm_eagle=[{id:'feather',chance:0.45,qty:[8,16]},{id:'raw_fowl',chance:0.20},{id:'storm_plume',chance:0.05}];
+    MONSTER_DROPS.gryphon    =[{id:'feather',chance:0.40,qty:[10,20]},{id:'gryphon_plume',chance:0.06},{id:'raw_fowl',chance:0.15}];
+    MONSTER_DROPS.phoenix    =[{id:'feather',chance:0.40,qty:[14,26]},{id:'phoenix_plume',chance:0.04},
+                               {id:'ember_dust',chance:0.25,qty:[3,8]},{id:'shade_ember',chance:0.008}];
+    F.push({id:'fl_pl_storm',   name:'Split a storm plume',   cat:'shafts', lvl:20, ms:3200, xp:40,  spdMult:0.5, minMs:900,  inp:{storm_plume:1},   out:{feather:12}});
+    F.push({id:'fl_pl_gryphon', name:'Split a gryphon plume', cat:'shafts', lvl:45, ms:3600, xp:95,  spdMult:0.5, minMs:1000, inp:{gryphon_plume:1}, out:{feather:24}});
+    F.push({id:'fl_pl_phoenix', name:'Split a phoenix plume', cat:'shafts', lvl:75, ms:4200, xp:230, spdMult:0.5, minMs:1100, inp:{phoenix_plume:1}, out:{feather:50}});
+    PETS.aerie={id:'pet_gryphling', name:'Gryphling', zone:'aerie'};
+    /* Placeholders in the house style until the painted art lands. */
+    const plume=(k,a,b,c,glow)=>'<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="'+k+'" x1="0.2" y1="0" x2="0.9" y2="1">'
+      +'<stop offset="0" stop-color="'+a+'"/><stop offset="0.5" stop-color="'+b+'"/><stop offset="1" stop-color="'+c+'"/></linearGradient></defs>'
+      +(glow?'<ellipse cx="33" cy="32" rx="26" ry="26" fill="'+glow+'" opacity="0.22"/>':'')
+      +'<path d="M50 6 C28 12 12 32 9 56 C34 52 54 34 58 10 Z" fill="url(#'+k+')" stroke="#241c12" stroke-width="1.4" stroke-linejoin="round"/>'
+      +'<path d="M56 8 L8 58" stroke="#3a2e1c" stroke-width="2" stroke-linecap="round"/>'
+      +'<path d="M47 12 L26 20 M43 19 L22 29 M39 26 L19 38 M35 33 L15 46 M52 16 L44 36 M46 26 L38 44" stroke="#fff" stroke-width="1" opacity="0.28"/></svg>';
+    ICONS.storm_plume  =plume('aepl1','#eef3f7','#9aa8b6','#46525e');
+    ICONS.gryphon_plume=plume('aepl2','#f6dc8a','#c08a3a','#5e3a14');
+    ICONS.phoenix_plume=plume('aepl3','#ffe27a','#f0741a','#8a1a08','#ff9a3a');
+    const head=(k,a,b,c,beak,eye,extra)=>'<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="'+k+'" x1="0" y1="0" x2="0" y2="1">'
+      +'<stop offset="0" stop-color="'+a+'"/><stop offset="0.55" stop-color="'+b+'"/><stop offset="1" stop-color="'+c+'"/></linearGradient></defs>'
+      +'<ellipse cx="32" cy="57" rx="13" ry="3" fill="#000" opacity="0.3"/>'+(extra||'')
+      +'<path d="M14 30 Q14 11 32 9 Q50 11 50 30 Q50 44 40 52 L24 52 Q14 44 14 30 Z" fill="url(#'+k+')" stroke="#1a120a" stroke-width="1.2"/>'
+      +'<path d="M19 22 Q25 17 30 23 M45 22 Q39 17 34 23" stroke="#1a120a" stroke-width="2.4" fill="none" stroke-linecap="round"/>'
+      +'<circle cx="25" cy="28" r="3.4" fill="'+eye+'"/><circle cx="25" cy="28" r="1.5" fill="#100a05"/>'
+      +'<circle cx="39" cy="28" r="3.4" fill="'+eye+'"/><circle cx="39" cy="28" r="1.5" fill="#100a05"/>'
+      +'<path d="M26 33 Q32 29 38 33 L34.5 46 Q32 51 29.5 46 Z" fill="'+beak+'" stroke="#2a1c0a" stroke-width="1"/></svg>';
+    ICONS.crag_hawk  =head('aeh1','#c89a62','#8a5c30','#4a2e16','#e8b848','#f2c84a');
+    ICONS.storm_eagle=head('aeh2','#f2f5f8','#9aa6b2','#3e4854','#f0c040','#f2d25a',
+      '<path d="M22 14 L18 2 L28 11 M32 10 L32 0 L36 10 M42 14 L46 2 L37 11" fill="#c8d2dc" stroke="#3e4854" stroke-width="1"/>');
+    ICONS.gryphon    =head('aeh3','#f0d48a','#b8883e','#5a3812','#3a2a1a','#ffcf5a',
+      '<path d="M14 26 Q4 30 8 42 Q14 40 17 34 Z M50 26 Q60 30 56 42 Q50 40 47 34 Z" fill="#a8743a" stroke="#3a2410" stroke-width="1"/>');
+    ICONS.phoenix    =head('aeh4','#ffe07a','#f07a1a','#8a1e0a','#ffd24a','#fff2b0',
+      '<ellipse cx="32" cy="30" rx="28" ry="27" fill="#ff8a2a" opacity="0.20"/>'
+      +'<path d="M24 12 Q20 0 28 4 Q30 8 30 11 M32 9 Q32 -2 38 3 Q37 7 35 10 M40 12 Q46 2 48 9 Q44 11 42 14" fill="#ffb03a" stroke="#8a2a0a" stroke-width="1"/>');
+    ICONS.aerie='<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="aez1" x1="0" y1="0" x2="0" y2="1">'
+      +'<stop offset="0" stop-color="#cfdbe6"/><stop offset="1" stop-color="#5a6a78"/></linearGradient>'
+      +'<linearGradient id="aez2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a8f96"/><stop offset="1" stop-color="#34383e"/></linearGradient></defs>'
+      +'<path d="M6 58 L22 22 L30 34 L40 12 L58 58 Z" fill="url(#aez2)" stroke="#1c1f24" stroke-width="1.3" stroke-linejoin="round"/>'
+      +'<path d="M36 20 Q40 16 44 20 Q40 22 36 20 Z" fill="#6a4a2a"/>'
+      +'<path d="M14 14 Q20 9 26 14 Q20 12 14 14 Z M44 8 Q49 4 54 8 Q49 6 44 8 Z" fill="#e8eef4" stroke="#2a3440" stroke-width="0.9"/></svg>';
+    ICONS.pet_gryphling=_critterSVG({body:'#d8a852', belly:'#f4e2b0', dark:'#4a2e10', eye:'#ffd86a', glow:'#f0c060', ear:'wing'});
+  }
 
   /* ── the tree. 98 points, the hard invariant every skill holds to. ── */
   if(typeof TREES!=='undefined' && typeof N==='function'){
@@ -33964,6 +34039,7 @@ const ZONE_FAMILY={
   troll_caverns:'giant',   wyvern_roost:'draconic',  demon_sanctum:'demon',
   thornwood:'beast',       frostfang:'beast',        ashen_steppe:'beast',
 };
+if(AERIE_LIVE){ SLAYER_FAMILIES.push({id:'avian', name:'Birds'}); ZONE_FAMILY.aerie='avian'; }
 function monsterFamily(mon){
   if(!mon) return null;
   if(mon.family) return mon.family;              // a per-monster override still wins
