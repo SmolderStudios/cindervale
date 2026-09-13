@@ -5640,6 +5640,7 @@ body:not(.is-demo) .demo-only{display:none !important}
 
 /* the six titles */
 .gd-titles{display:grid;gap:5px}
+.gd-tot{margin:8px 2px 0;font-size:calc(12.5px*var(--tscale));color:#b9dd84;line-height:1.45}
 .gd-t{display:flex;align-items:center;gap:11px;padding:9px 12px;border-radius:7px;
   background:#0c0704;box-shadow:inset 0 1px 3px rgba(0,0,0,.75);opacity:.5}
 .gd-t.have{opacity:1;background:linear-gradient(178deg,#241a0c,#170f07 78%);
@@ -8519,7 +8520,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.124.44">v0.9.124</div>
+  <div class="mm-ver" data-build="0.9.124.45">v0.9.124</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -16389,15 +16390,15 @@ const TREES = {
     {id:'th_coins',  name:'Deep Pockets',  icon:'',  max:12,req:0,  desc:r=>`+${r*3}% coins from a successful steal`,           next:r=>`+3% coins → ${r*3}%`},
     {id:'th_xp',     name:'Street Wisdom', icon:'',     max:10,req:10,  desc:r=>`+${r*3}% Thieving XP`,                             next:r=>`+3% XP → ${r*3}%`},
     {id:'th_goods',  name:'Sticky Fingers',icon:'',  max:12,req:15, desc:r=>`+${r}% chance a steal also lifts goods`,           next:r=>`+1% goods → ${r}%`},
-    {id:'th_caught', name:'Slippery',      icon:'', max:10,req:25, desc:r=>`+${(r*0.8).toFixed(1)}% success when a steal is above your level`, next:r=>`+0.8% → ${(r*0.8).toFixed(1)}%`},
+    {id:'th_caught', name:'Slippery',      icon:'', max:10,req:25, desc:r=>`+${(r*0.8).toFixed(1)}% chance a steal succeeds`, next:r=>`+0.8% success → ${(r*0.8).toFixed(1)}%`},
     {id:'th_master1',name:'Cutpurse',      icon:'',max:1, req:20, desc:r=>r?'Coins from every steal +20%':'Coins from every steal +20%', next:()=>'+20% coins from every steal'},
     {id:'th_master2',name:'Better Prices', icon:'',max:1, req:40, desc:r=>r?'Stolen goods sell for +25%':'Stolen goods sell for +25%',   next:()=>'+25% on every stolen good'},
-    {id:'th_master3',name:'Second Pocket', icon:'',max:1, req:60, desc:r=>r?'10% chance a successful steal pays twice':'10% chance a successful steal pays twice', next:()=>'10% chance to steal twice'},
+    {id:'th_master3',name:'Second Pocket', icon:'',max:1, req:60, desc:r=>'10% chance for an extra steal that gives loot, not XP', next:()=>'10% chance for an extra steal (loot only)'},
     {id:'th_gm_speed', name:'Master Thief',icon:'', max:9,req:75, desc:r=>`Reduces task time by a further ${(r*1.8).toFixed(1)}%`, next:r=>`+1.8% faster → ${(r*1.8).toFixed(1)}%`},
     {id:'th_gm_success',name:'Ghost',      icon:'',max:8,req:80, desc:r=>`+${r*2}% chance a steal succeeds`,               next:r=>`+2% success → ${r*2}%`},
     {id:'th_gm_goods', name:'Magpie',      icon:'', max:8,req:85, desc:r=>`+${r*2}% chance a steal also lifts goods`,        next:r=>`+2% goods → ${r*2}%`},
     {id:'th_gm_2x_xp', name:'Fast Talker', icon:'', max:1,req:90, desc:r=>r?'Thieving XP x1.5':'Thieving XP x1.5',           next:()=>'Thieving XP x1.5'},
-    {id:'th_gm_cape',  name:'Untouchable', icon:'',  max:1,req:99, reqCape:true, desc:r=>r?'A failed steal refunds its full time':'A failed steal refunds its full time', next:()=>'A failed steal refunds its full time · requires the Thieving Cape'},
+    {id:'th_gm_cape',  name:'Untouchable', icon:'',  max:1,req:99, reqCape:true, desc:r=>'A failed steal gives back half its time', next:()=>'A failed steal gives back half its time · requires the Thieving Cape'},
   ],
 
   agility:[
@@ -20982,7 +20983,7 @@ const HOT_PENALTY=0.35;
 function hotSellMult(){
   if(typeof gdTitleNum!=='function') return HOT_PENALTY;
   const rank=gdRec&&gdRec('night')?gdTitleNum('night'):0;
-  return Math.min(1, HOT_PENALTY + rank*0.13);
+  return Math.min(1, HOT_PENALTY + rank*(1-HOT_PENALTY)/6);   // full price at title 6, where the text says it
 }
 /* What the Nightmarket counter pays. Nowhere else pays this. */
 function nightmarketSell(id){
@@ -21000,6 +21001,7 @@ function effectiveItemSell(id){
   if(it.hot) return Math.round(effectiveSellValue(it.sell, bonus) * HOT_PENALTY);
   const skill=producingSkillOf(id);
   if(skill) bonus+=mods(skill).extraSell;
+  bonus+=gdSellBonus();
   return effectiveSellValue(it.sell, bonus);
 }
 
@@ -21308,6 +21310,10 @@ function combatBonusesAll(){
   const u=combatUniqueBonuses();
   const asc=(typeof ascensionBonuses==='function')?ascensionBonuses():{atkBoost:0,hpBoost:0,defBoost:0,critChance:0,lifesteal:0};
   const cm=cmastBonuses();
+  /* Iron Legion melee damage and Quiet Hand crit (0.9.124.45). A bow gets no melee
+     damage, the same gate Brutal Strikes uses. */
+  const gdc=(typeof gdCombatBonus==='function')?gdCombatBonus():{cdmg:0,crit:0};
+  const gdMelee=(typeof usingRanged==='function'&&usingRanged())?0:(gdc.cdmg||0);
   // Trophy jewelry innate combat keys — read from the COMBAT loadout only, so a
   // ring worn for skilling gold doesn't also buff combat (and vice-versa).
   const ce=(state&&state.combatEquipped)||{};
@@ -21319,18 +21325,19 @@ function combatBonusesAll(){
     lifesteal: jewelryInnateBonus(ce,'lifesteal'),
   };
   return {
-    atkBoost:  (e.atkBoost||0)  + (s.atkBoost||0) + (st.atkBoost||0) + (u.atkBoost||0) + (asc.atkBoost||0) + cm.atkBoost + tj.atkBoost,
+    atkBoost:  (e.atkBoost||0)  + (s.atkBoost||0) + (st.atkBoost||0) + (u.atkBoost||0) + (asc.atkBoost||0) + cm.atkBoost + tj.atkBoost + gdMelee,
     hpBoost:   (e.hpBoost||0)   + (s.hpBoost||0)  + (st.hpBoost||0)  + (u.hpBoost||0)  + (asc.hpBoost||0) + cm.hpBoost + tj.hpBoost,
     defBoost:  (e.defBoost||0)  + (s.defBoost||0) + (st.defBoost||0) + (u.defBoost||0) + (asc.defBoost||0) + cm.defBoost + tj.defBoost,
     // Leather crit stacks on top of enchant/socket/set/unique crit — all flow through
     // the single crit roll in combatTick.
-    critChance:(e.critChance||0)+ (s.critChance||0) + a.crit + (st.critChance||0) + (u.critChance||0) + (asc.critChance||0) + cm.critChance + tj.critChance,
+    critChance:(e.critChance||0)+ (s.critChance||0) + a.crit + (st.critChance||0) + (u.critChance||0) + (asc.critChance||0) + cm.critChance + tj.critChance + (gdc.crit||0),
     lifesteal: (e.lifesteal||0) + (s.lifesteal||0) + (st.lifesteal||0) + (u.lifesteal||0) + (asc.lifesteal||0) + cm.lifesteal + tj.lifesteal + ((typeof spireBoon==='function')?spireBoon('lifesteal'):0),
     dodge:     a.dodge,   // chance to fully avoid a foe's landed hit
     aspd:      a.aspd + cm.aspd + ((typeof spireBoon==='function')?spireBoon('aspd'):0),
     /* Anything cmastBonuses computes has to be RE-LISTED here or it never leaves
        the function. Point Blank read as a dead node for exactly that reason. */
-    accBoost:  (cm.accBoost||0) + ((typeof spireBoon==='function')?spireBoon('accBoost'):0),
+    accBoost:  (cm.accBoost||0) + ((typeof spireBoon==='function')?spireBoon('accBoost'):0)
+               + ((typeof usingRanged==='function'&&usingRanged())?treeRank('fletching','fl_acc')*FL_ACC_RANK:0),   // Keen Heads
   };
 }
 
@@ -21568,15 +21575,45 @@ function heavyArmourDef(){
    (Ancient) while arrows run to T8 (Starfall), so without it the top craftable
    arrow would have nothing left in the game able to fire it. */
 const AMMO_TIER_HEADROOM=1;
+/* Fletching tree, per rank (0.9.124.45). See the note on the nodes for why small. */
+const FL_ACC_RANK=0.004, FL_DMG_RANK=0.002, FL_WIND_RANK=0.002, FL_BARB_RANK=0.002;
+function fmtRank(v){ return String(Math.round(v*100)/100); }
+/* Windcutter's sure-shot and Barbed's bleed chance: bows and crossbows only. */
+function flWindChance(){ return (typeof usingRanged==='function'&&usingRanged())?treeRank('fletching','fl_wind')*FL_WIND_RANK:0; }
+function flBarbChance(){ return (typeof usingRanged==='function'&&usingRanged())?treeRank('fletching','fl_barb')*FL_BARB_RANK:0; }
+/* Splitter adds shafts per log, Quiverfull adds arrows or bolts per batch, and the
+   Fletcher's Cape doubles arrows and bolts. One function, so the batch and the /hr
+   numbers cannot disagree. */
+function fletchOutBonus(id){
+  const it=ITEMS[id]||{}, ammo=!!(it.ammo&&!it.ranged);
+  return {
+    add: id==='wood_shaft'?treeRank('fletching','fl_split') : ammo?treeRank('fletching','fl_quiver') : 0,
+    mult: (ammo&&treeRank('fletching','fl_cape')>0&&hasSkillCape('fletching'))?2:1,
+  };
+}
 function ammoMaxTier(wid){
   const w=ITEMS[wid];
   return (w&&w.ranged)?((w.ctier||1)+AMMO_TIER_HEADROOM):0;
+}
+/* The best weapons of a kind fire the best ammunition of that kind (0.9.124.44).
+   Sunderbolts are tier 11 and no crossbow is above tier 8, so under the plain rule
+   nothing in the game could fire the Spire's bolts. An ammo tier above anything
+   its kind of weapon reaches now asks for the top tier of that weapon instead.
+   Arrows are untouched: the Spire and raid bows reach tier 11 themselves. */
+let _ammoTopTier=null;
+function ammoKindTopTier(kind){
+  if(!_ammoTopTier){
+    _ammoTopTier={};
+    for(const id in ITEMS){ const w=ITEMS[id]; if(w&&w.ranged&&w.ammo) _ammoTopTier[w.ammo]=Math.max(_ammoTopTier[w.ammo]||0,w.ctier||1); }
+  }
+  return _ammoTopTier[kind]||0;
 }
 function ammoFitsWeapon(wid,qid){
   const w=ITEMS[wid], q=ITEMS[qid];
   if(!w||!q||!w.ranged||!q.ammo) return false;
   if(q.ammo!==w.ammo) return false;
-  return (q.ammoTier||1) <= ammoMaxTier(wid);
+  const need=Math.min(q.ammoTier||1, ammoKindTopTier(q.ammo)+AMMO_TIER_HEADROOM);
+  return need <= ammoMaxTier(wid);
 }
 function readyAmmo(){
   const w=eqCombatWeapon(), q=eqQuiver();
@@ -21652,7 +21689,8 @@ function playerMaxHit(){
        80-90% of melee. Damage does not saturate. */
     const _wm=(ITEMS[eqCombatWeapon()]||{}).dmgMult||1;
     return Math.max(1, Math.round((cmbLvl('ranged')*RANGED_HIT_LVL + (cs.str+ammoStr())*COMBAT_P.HIT_GEAR)
-      * _wm * (1 + (b.atkBoost||0)) * classMaxHitMult()));
+      * _wm * (1 + (b.atkBoost||0)) * classMaxHitMult()
+      * (1 + treeRank('fletching','fl_dmg')*FL_DMG_RANK)));   // Practised Draw: damage only, not accuracy
   }
   return Math.max(1, Math.round((cmbLvl('strength')*COMBAT_P.HIT_LVL + (cs.str+bonusStr)*COMBAT_P.HIT_GEAR) * (1 + (b.atkBoost||0)) * classMaxHitMult()));
 }
@@ -21895,7 +21933,7 @@ function luckyStrideMult(){
 function effDropChance(c,combat){
   if(!(c>0)) return c||0;
   if(c>=0.99) return c;
-  return Math.min(RARE_DROP_CAP, c*charDropMult()*(combat?1:luckyStrideMult()));
+  return Math.min(RARE_DROP_CAP, c*charDropMult()*(combat?1+((typeof gdCombatBonus==='function')?gdCombatBonus().drop:0):luckyStrideMult()));
 }
 /* A prized catch's chance, after Lucky Lure. There are FOUR places that roll a
    skilling drop table — the main completeAction path and one per double-action bar
@@ -21966,12 +22004,22 @@ function thiefPoolPick(key){
    requirement, plus the tree. Clamped so the hardest act never becomes free and the
    easiest never becomes a coin flip. */
 const THIEF_SUCC_CAP=0.95;
+/* Untouchable, the Thieving capstone: a failed steal gives back half its time. The
+   live tick credits it per failure; offline and previews take the expected value. */
+const TH_CAPE_REFUND=0.5;
+let _thiefFails=0;
+function thiefCapeOn(){ return treeRank('thieving','th_gm_cape')>0&&hasSkillCape('thieving'); }
+function thiefTimeEV(act,skill){
+  if(skill!=='thieving'||!act||typeof act.succ!=='number'||!thiefCapeOn()) return 1;
+  return 1-(1-thiefSuccess(act))*TH_CAPE_REFUND;
+}
 function thiefSuccess(act){
   if(!act||typeof act.succ!=='number') return 1;
   const lvl=levelFromXp((state.xp&&state.xp.thieving)||0);
   const over=Math.max(0,lvl-(act.lvl||1));
   let c=act.succ + over*0.004
       + treeRank('thieving','th_success')*0.012
+      + treeRank('thieving','th_caught')*0.008      // Slippery (0.9.124.45: its old condition could never happen)
       + (treeRank('thieving','th_gm_success')*0.02);
   return Math.max(0.05, Math.min(THIEF_SUCC_CAP, c));
 }
@@ -22150,6 +22198,7 @@ function mods(skill){
              : skill==='foraging'   ?(r('fo_master3')>0?1.5:1)
              : skill==='cooking'    ?(r('co_gm_2x_xp')>0?1.5:1)
              : skill==='firemaking' ?(r('fm_master3')>0?1.5:1)
+             : skill==='thieving'   ?(r('th_gm_2x_xp')>0?1.5:1)   // Fast Talker; Second Pocket is loot only
              : (r(p+'_master3')>0?2:1);
 
   return {
@@ -22206,8 +22255,8 @@ function mods(skill){
                :skill==='cooking'?(r(p+'_sell')*0.015 + r('co_gm_sell')*0.015)
                :skill==='firemaking'?(r(p+'_sell')*0.04 + r(p+'_gm_sell')*0.04)
                :r(p+'_sell')*0.05 + r(p+'_gm_sell')*0.06
-                 + (skill==='foraging'&&r('fo_master2')>0?1.0:0)) // Bountiful Earth: +100% (doubles)
-               + gb.sell,                                // guild titles
+                 + (skill==='foraging'&&r('fo_master2')>0?1.0:0)), // Bountiful Earth: +100% (doubles)
+                                                         // guild sale perks: see gdSellBonus
     master1: r(p+'_master1')>0,
     master2: r(p+'_master2')>0,
     master3: r(p+'_master3')>0,
@@ -22331,7 +22380,8 @@ function gpPerAction(act,skill){
     const cm=1+treeRank('thieving','th_coins')*0.03
               +(treeRank('thieving','th_master1')>0?0.20:0)
               +earnedGoldBonus();
-    gp+=act.coins*cm*(typeof thiefSuccess==='function'?thiefSuccess(act):1);
+    const _s=(typeof thiefSuccess==='function'?thiefSuccess(act):1);
+    gp+=act.coins*cm*_s*(1+(treeRank('thieving','th_master3')>0?0.10:0));   // + Second Pocket
   }
   // Agility coin reward — already receives a coinMult at runtime; replicate it here for display
   if(IS_AGILITY_SKILL[skill]&&act.coins){
@@ -22341,7 +22391,7 @@ function gpPerAction(act,skill){
   }
   for(const [id,q] of Object.entries(act.out)){
     if(!ITEMS[id]||!ITEMS[id].sell) continue;
-    let sv=effectiveSellValue(ITEMS[id].sell,m.extraSell+globalSellBonus());
+    let sv=effectiveSellValue(ITEMS[id].sell,m.extraSell+globalSellBonus()+gdSellBonus());
     let avgQty=q;
     if(IS_G){
       avgQty+=q*m.double; // expected double bonus
@@ -22367,6 +22417,7 @@ function gpPerAction(act,skill){
         if(m.cr_dupe)     avgQty+=q*0.05;      // 5% chance free duplicate piece
         if(m.cr_flawless) avgQty+=q*0.30;      // 15% chance +2 bonus pieces → +0.30 expected
       }
+      if(skill==='fletching'){ const fb=fletchOutBonus(id); avgQty=(avgQty+fb.add)*fb.mult; }
     }
     gp+=avgQty*sv;
   }
@@ -22421,6 +22472,7 @@ function ratesFor(act,skill){
         if(m.cr_dupe)     avgQty+=mainQ*0.05;      // 5% chance free duplicate piece
         if(m.cr_flawless) avgQty+=mainQ*0.30;      // 15% chance +2 bonus pieces
       }
+      if(skill==='fletching'){ const fb=fletchOutBonus(mainId); avgQty=(avgQty+fb.add)*fb.mult; }
     }
     rph=Math.round(avgQty*actsPerHour);
     const it=ITEMS[mainId];
@@ -23789,6 +23841,8 @@ function completeAction(act,skillKey,times){
       if(m.cr_dupe){ const dup=binom(times,0.05); if(dup>0) qty+=dup*q; }
       // Flawless Forge (cr_gm_cape): 15% chance per craft for +2 bonus pieces (per crafted piece type)
       if(m.cr_flawless){ const ff=binom(times,0.15); if(ff>0) qty+=ff*2*q; }
+      // Splitter, Quiverfull and the Fletcher's Cape (0.9.124.45)
+      if(skillKey==='fletching'){ const fb=fletchOutBonus(id); qty=(qty+fb.add*times)*fb.mult; }
       }
     }
 
@@ -23857,22 +23911,29 @@ function completeAction(act,skillKey,times){
      of silently stalling. */
   if(skillKey==='thieving'&&act.succ!=null){
     const hits=binom(times, thiefSuccess(act));
-    if(hits>0){
+    /* Second Pocket (0.9.124.45): 10% of attempts get an extra steal, rolled for
+       success like any other. Loot only: XP, quests and mastery all count `times`,
+       so the extra steal adds none of them. It used to double Thieving XP instead,
+       through mods()'s generic _master3 fallback, while promising something else. */
+    const extra=treeRank('thieving','th_master3')>0?binom(binom(times,0.10),thiefSuccess(act)):0;
+    const got=hits+extra;
+    _thiefFails=times-hits;   // Untouchable gives time back per failure (see the tick)
+    if(got>0){
       const coinMult=1 + treeRank('thieving','th_coins')*0.03
                        + (treeRank('thieving','th_master1')>0?0.20:0)
                        + earnedGoldBonus();   // Coin Purse (#141)
-      const coins=Math.round((act.coins||0)*hits*coinMult);
+      const coins=Math.round((act.coins||0)*got*coinMult);
       if(coins>0){ state.coins+=coins; showCoinPop(coins); }
       const L=act.loot;
       if(L&&L.pool){
-        const lifted=binom(hits, thiefGoodsChance(act));   // shared with the card's odds (#115)
+        const lifted=binom(got, thiefGoodsChance(act));   // shared with the card's odds (#115)
         for(let i=0;i<lifted;i++){
           const id=thiefPoolPick(L.pool);
           if(id) grantItem(id,1);
         }
       }
     }
-    /* Failures cost the attempt and nothing else — no coins, no goods. The action
+    /* Failures cost the attempt and nothing else, no coins, no goods. The action
        keeps running, which is the whole reason this skill is shippable in an idle
        game. */
     state.thiefTries=(state.thiefTries||0)+times;
@@ -24316,6 +24377,9 @@ function tick(){
       const hits=binom(done, scP);
       if(hits>0) state.actionStart-=hits*ms*0.25;
     }
+    // Untouchable (thieving capstone): each failed steal gives back half its time.
+    if(skill==='thieving'&&_thiefFails>0&&thiefCapeOn()) state.actionStart-=_thiefFails*ms*TH_CAPE_REFUND;
+    _thiefFails=0;
   }
   saveGame();
   renderTick();
@@ -24561,7 +24625,7 @@ function grantOffline(){
     const ms=actMs(act,skill);
     // Shortcutter can't roll per-lap across an offline block, so it lands as its
     // expected value: chance × 10% off each lap. Same long-run rate as the live tick.
-    const scEV=skill==='agility'?(1-Math.min(1,treeRank('agility','ag_shortcut')*0.04)*0.25):1;
+    const scEV=(skill==='agility'?(1-Math.min(1,treeRank('agility','ag_shortcut')*0.04)*0.25):1)*thiefTimeEV(act,skill);
     const effectiveMs=ms*scEV/Math.max(0.01,_slotRate); // slower while offline
     const cycles=Math.floor(_stanceAway/effectiveMs);
     if(cycles<=0) continue;
@@ -25820,25 +25884,35 @@ const GUILDS=[
       bring it, and half of what its board asks for is crafted rather than stolen, so
       "Fence 30 Dragon Ring" claimed you had stolen a ring you smithed yourself. */
    titles:['Runner','Lookout','Dealer','Broker','Shadowbroker','Master of the Nightmarket'],
-   perks:[null,{sell:0.04},{speed:0.04},{sell:0.08},{xp:0.06},{sell:0.14}],
+   /* `sell` is gold from everything the store buys from you, except stolen goods,
+      which have their own price ladder here (gdSellBonus, hotSellMult). Titles add
+      up, so these are the steps: 10% at the top. (0.9.124.45; the perk read nothing
+      before, and said +14% for a sum of 26%.) */
+   perks:[null,{sell:0.03},{speed:0.04},{sell:0.03},{xp:0.06},{sell:0.04}],
    perkTxt:['You can take Nightmarket quests. They buy stolen goods.',
-            '+4% gold from every sale. Better prices for stolen goods.',
+            '+3% gold from everything you sell. Better prices for stolen goods.',
             '+4% Thieving speed',
-            '+8% gold from every sale. Better prices for stolen goods.',
+            '+3% more gold from everything you sell. Better prices for stolen goods.',
             '+6% Thieving XP',
-            '+14% gold from every sale. Full price for stolen goods.']},
+            '+4% more gold from everything you sell. Full price for stolen goods.']},
 
   {id:'legion', name:'The Iron Legion', sub:'Warriors', combat:true, skills:[], req:{attack:15},
    titles:['Recruit','Legionary','Vanguard','Centurion','Champion','Legate'],
-   perks:[null,{drop:0.03},{cdmg:0.02},{drop:0.06},{cdmg:0.04},{drop:0.10}],
+   /* Wired 0.9.124.45 (gdCombatBonus had no readers). Titles add up: at Legate every
+      drop chance is x1.12 and melee damage +5%. Drop chance is a multiplier, never
+      added to the base rate, the same as every other drop bonus. */
+   perks:[null,{drop:0.03},{cdmg:0.02},{drop:0.04},{cdmg:0.03},{drop:0.05}],
    perkTxt:['You can take Legion quests','+3% monster drop chance','+2% melee damage',
-            '+6% monster drop chance','+4% melee damage','+10% monster drop chance']},
+            '+4% more monster drop chance','+3% more melee damage','+5% more monster drop chance']},
 
   {id:'quiethand', name:'The Quiet Hand', sub:'Assassins', combat:true, skills:[], req:{attack:35},
    titles:['Whisper','Cutpurse','Shade','Silencer','Nightblade','The Quiet Hand'],
-   perks:[null,{crit:0.02},{rare:0.02},{crit:0.04},{rare:0.04},{crit:0.07}],
-   perkTxt:['You can take Quiet Hand quests','+2% critical hit chance','+2% rare monster chance',
-            '+4% critical hit chance','+4% rare monster chance','+7% critical hit chance']},
+   /* Wired 0.9.124.45. Titles add up: +7% crit chance, and rare monsters 35% more
+      often. Rare spawns scale their own chance, so "+2%" added to a 0.4% base would
+      have been six times the rate at Lv1 and nothing at Lv90's 2.5%. */
+   perks:[null,{crit:0.02},{rare:0.15},{crit:0.02},{rare:0.20},{crit:0.03}],
+   perkTxt:['You can take Quiet Hand quests','+2% critical hit chance','Rare monsters show up 15% more often',
+            '+2% more critical hit chance','Rare monsters show up 20% more often','+3% more critical hit chance']},
 ];
 const GD_BY={}; for(const g of GUILDS) GD_BY[g.id]=g;
 
@@ -25938,7 +26012,7 @@ function gdJoin(id){
    Summed across every title you have reached, so a Reeve keeps what a Tenant had.
    mods() and the combat maths read this; nothing else needs to know guilds exist. */
 function gdBonus(skill){
-  const out={speed:0,xp:0,dbl:0,yield:0,sell:0};
+  const out={speed:0,xp:0,dbl:0,yield:0};
   for(const g of GUILDS){
     if(!g.skills.length || g.skills.indexOf(skill)<0) continue;
     const n=gdTitleNum(g.id);
@@ -25949,7 +26023,29 @@ function gdBonus(skill){
   }
   return out;
 }
-/* Combat guilds pay out globally rather than per skill. */
+/* Gold from everything the store buys from you. It sat in mods('thieving').extraSell,
+   which no sale ever read, because thieving makes nothing you can sell. */
+function gdSellBonus(){
+  let s=0;
+  for(const g of GUILDS){
+    const n=gdTitleNum(g.id);
+    for(let i=1;i<n;i++){ const p=g.perks[i]; if(p&&p.sell) s+=p.sell; }
+  }
+  return s;
+}
+/* What every title you hold adds up to, in one line under the title list. */
+const GD_PERK_WORD={speed:'% speed',xp:'% XP',dbl:'% chance of a double',yield:'% crop yield',
+  sell:'% gold from everything you sell',drop:'% monster drop chance',cdmg:'% melee damage',crit:'% critical hit chance'};
+function gdPerkTotalsTxt(g){
+  const n=gdTitleNum(g.id), sum={};
+  for(let i=1;i<n;i++){ const p=g.perks[i]; if(p) for(const k in p) sum[k]=(sum[k]||0)+p[k]; }
+  const parts=Object.keys(sum).map(function(k){
+    const v=Math.round(sum[k]*1000)/10;
+    return k==='rare'?'rare monsters '+v+'% more often':'+'+v+(GD_PERK_WORD[k]||'% '+k);
+  });
+  return parts.length?'Your titles give '+parts.join(', ')+'.':'';
+}
+/* Combat guilds give their perks everywhere rather than per skill. */
 function gdCombatBonus(){
   const out={drop:0,cdmg:0,crit:0,rare:0};
   for(const g of GUILDS){
@@ -26927,6 +27023,8 @@ function _gdGuildPage(id){
       +'<div class="v">'+(have?'&#10003;':now?pct+'%':'locked')+'</div>'));
   }
   right.appendChild(list);
+  const _tot=gdPerkTotalsTxt(g);
+  if(_tot) right.appendChild(_gdEl('gd-tot',_tot));
 
   /* ── the counter, for a guild that buys ── */
   if(g.buysAnything){
@@ -27982,8 +28080,7 @@ function ftNodeState(skill,node,ctx){
    the card from promising what the game does not do. Delete an id the moment its
    effect lands. (Found on tickets #111 and #114: the text was fixed first, and then
    there turned out to be nothing behind it.) */
-const TREE_UNWIRED={fl_split:1,fl_acc:1,fl_quiver:1,fl_dmg:1,fl_wind:1,fl_barb:1,fl_cape:1,
-                    th_caught:1,th_gm_2x_xp:1,th_gm_cape:1};
+const TREE_UNWIRED={};   // all ten wired in 0.9.124.45
 
 /* The docked strip — the only place in the panel set at reading size. */
 function ftDockHTML(skill,node,ctx){
@@ -28637,7 +28734,9 @@ function renderStats(){
   const totalSpd=+(lvlSpd+treeSpd+gearSpd+crossSpd+potionSpd).toFixed(1);
 
   const treeXpPct=+((skill==='woodcutting'?r(p+'_xp')*5:skill==='firemaking'?r(p+'_xp')*1.5:r(p+'_xp')*3)+(r(p+'_gm_xp')*(skill==='firemaking'?2:4))).toFixed(1);
-  const master3Xp=skill==='firemaking'?(r(p+'_master3')?50:0):(r(p+'_master3')?100:0);
+  const master3Xp=skill==='firemaking'?(r(p+'_master3')?50:0)
+    :skill==='thieving'?(r('th_gm_2x_xp')?50:0)
+    :(r(p+'_master3')?100:0);
   const jewXp=+(jewelryBonus('xpBoost')*100).toFixed(1);
   /* Divide XP_SCALE back out. This row reads "1.00x" for a fresh character and its
      tooltip itemises "Base 1.00x" plus the player's bonuses; leaving the global
@@ -28651,7 +28750,7 @@ function renderStats(){
 
   const treeSellPct=+((r(p+'_sell')*5)+(r(p+'_gm_sell')*6)).toFixed(1);
   const jewGp=+(jewelryBonus('gpBoost')*100).toFixed(1);
-  const totalSell=+((m.extraSell+globalSellBonus())*100).toFixed(0);
+  const totalSell=+((m.extraSell+globalSellBonus()+gdSellBonus())*100).toFixed(0);
 
   // Farming has no regular acts — use a special path
   const hasFarmingSpecial=skill==='farming';
@@ -31696,7 +31795,7 @@ function rollDrops(monId, isRare){
      rare-monster rule — an additive bonus here would turn a 0.1% voidheart into a
      near-certainty and wreck the whole tier-gating scheme. */
   const _cm=(typeof cmastBonuses==='function')?cmastBonuses():null;
-  const _rare = _cm?(_cm.rareDrop||0):0;
+  const _rare = (_cm?(_cm.rareDrop||0):0) + ((typeof gdCombatBonus==='function')?gdCombatBonus().drop:0);   // + Iron Legion
   const _dbl  = _cm?(_cm.doubleDrop||0):0;
   const _troph= _cm?(_cm.trophyGuarantee||0):0;
   for(const d of tbl){
@@ -31786,10 +31885,11 @@ function rollRare(mon){
   /* Bloodhound (slayer, Lv 35). Proportional and capped like every other rare
      multiplier in the game — never additive, so it cannot turn a 0.4% spawn into a
      common one. */
-  if(mon && typeof slayerOnTask==='function' && slayerOnTask(mon.id)){
-    const bh=slayerPerkLevel('bloodhound');
-    if(bh>0) ch=Math.min(0.85, ch*(1+bh*0.30));
-  }
+  let _mul=0;
+  if(mon && typeof slayerOnTask==='function' && slayerOnTask(mon.id)) _mul+=slayerPerkLevel('bloodhound')*0.30;
+  /* The Quiet Hand's titles, on every fight rather than only on a slayer task. */
+  if(mon && !mon.boss && typeof gdCombatBonus==='function') _mul+=gdCombatBonus().rare;
+  if(_mul>0) ch=Math.min(0.85, ch*(1+_mul));
   return Math.random()<ch;
 }
 /* Returns a shallow-cloned monster object with rare scaling applied, or the
@@ -32399,19 +32499,22 @@ function hasPet(petId){ return !!(state && state.pets && state.pets[petId]); }
         r=>(r*6)+'% of spent ammunition recovered after a fight', r=>'+6% to '+(r*6)+'%'),
       N('fl_split','Splitter',ic.split,6,12,
         r=>'+'+r+' extra shaft from every log', r=>'+1 shaft to +'+r),
+      /* The four combat nodes are small on purpose (0.9.124.45). Ranged sits at
+         100-102% of melee like for like (_dpsboard.js) and nothing on the melee side
+         of the skilling trees answers them, so together they add about 5%. */
       N('fl_acc','Keen Heads',ic.aim,8,20,
-        r=>'+'+r+'% ranged accuracy', r=>'+1% to +'+r+'%'),
+        r=>'+'+fmtRank(r*FL_ACC_RANK*100)+'% ranged accuracy', r=>'+'+fmtRank(FL_ACC_RANK*100)+'% to +'+fmtRank(r*FL_ACC_RANK*100)+'%'),
       N('fl_quiver','Quiverfull',ic.quiver,6,20,
-        r=>'+'+(r*25)+' quiver capacity', r=>'+25 to +'+(r*25)),
+        r=>'+'+r+' arrows or bolts from every batch', r=>'+1 to +'+r),
       N('fl_dmg','Practised Draw',ic.draw,8,30,
-        r=>'+'+r+'% ranged damage', r=>'+1% to +'+r+'%'),
+        r=>'+'+fmtRank(r*FL_DMG_RANK*100)+'% ranged damage', r=>'+'+fmtRank(FL_DMG_RANK*100)+'% to +'+fmtRank(r*FL_DMG_RANK*100)+'%'),
       N('fl_wind','Windcutter',ic.wind,5,45,
-        r=>(r*2)+'% chance a shot cannot miss', r=>'+2% to '+(r*2)+'%'),
+        r=>fmtRank(r*FL_WIND_RANK*100)+'% chance a shot cannot miss', r=>'+'+fmtRank(FL_WIND_RANK*100)+'% to '+fmtRank(r*FL_WIND_RANK*100)+'%'),
       N('fl_bolts','Master Fletcher',ic.bolt,1,55,
         r=>r?'Ammunition recovery applies to bolts too':'Recovery covers bolts as well as arrows',
         ()=>'Recovery covers bolts'),
       N('fl_barb','Barbed',ic.barb,7,60,   // 7: the tree sums to exactly 98
-        r=>(r*1.5)+'% chance a landed shot bleeds', r=>'+1.5% to '+(r*1.5)+'%'),
+        r=>fmtRank(r*FL_BARB_RANK*100)+'% chance a landed shot bleeds', r=>'+'+fmtRank(FL_BARB_RANK*100)+'% to '+fmtRank(r*FL_BARB_RANK*100)+'%'),
       N('fl_gm_speed','Swift Bench',ic.speed,5,75,
         r=>'Reduces task time by '+(r*1.8).toFixed(1)+'% (grandmaster)', r=>'+1.8% faster to '+(r*1.8).toFixed(1)+'%'),
       N('fl_gm_xp','Woodsong',ic.xp,5,75,   // said 4%; the grandmaster XP term pays 3% a rank
@@ -32422,8 +32525,11 @@ function hasPet(petId){ return !!(state && state.pets && state.pets[petId]); }
         r=>r?'5% of shots spend no ammunition':'5% of shots spend nothing',
         ()=>'5% of shots are free'),
       N('fl_cape','Fletcher’s Cape',ic.cape,1,99,
-        r=>r?'The capstone':'The capstone', ()=>'Capstone', {reqCape:true}),
+        r=>'Double arrows and bolts from every batch', ()=>'Double arrows and bolts', {reqCape:true}),
     ];
+    /* The painted node art is applied by a loop that runs before this tree exists,
+       so all sixteen Fletching nodes showed their line icons. Apply it here too. */
+    try{ for(const _n of TREES.fletching) if(typeof NODE_ART!=='undefined'&&NODE_ART[_n.id]) _n.icon=NODE_ART[_n.id]; }catch(e){}
   }
 })();
 
@@ -35644,7 +35750,9 @@ function showItemTooltip(itemId, x, y, note){
     for(const wid in ITEMS){
       const w=ITEMS[wid];
       if(!w||!w.ranged||!w.cgear||!ammoFitsWeapon(wid,itemId)) continue;
-      if(!_lightest||(w.ctier||1)<(ITEMS[_lightest].ctier||1)) _lightest=wid;
+      const _t=w.ctier||1, _lt=_lightest?(ITEMS[_lightest].ctier||1):99;
+      // on a tie, name the one you can make over a rare drop
+      if(_t<_lt||(_t===_lt&&!producingSkillOf(_lightest)&&producingSkillOf(wid))) _lightest=wid;
     }
     html+=`<div class="tt-sub">+${it.ammoStr||0} strength to every shot</div>`;
     if(_lightest){
@@ -37266,7 +37374,7 @@ function offlinePreviewSlot(slot, ms, rate){
   const act=getAct(slot.skill,slot.actId); if(!act) return null;
   const st=offlineStance();
   const m=mods(slot.skill);
-  const scEV=slot.skill==='agility'?(1-Math.min(1,treeRank('agility','ag_shortcut')*0.04)*0.25):1;
+  const scEV=(slot.skill==='agility'?(1-Math.min(1,treeRank('agility','ag_shortcut')*0.04)*0.25):1)*thiefTimeEV(act,slot.skill);
   const effMs=actMs(act,slot.skill)*scEV/Math.max(0.01,rate);
   let cycles=Math.floor(ms/effMs);
   /* Inputs. canAfford() is the game's own answer, coal savings and Living Forge
@@ -39080,7 +39188,9 @@ function combatTick(){
        defence; it is the ranged answer to the armour a melee build shreds. */
     const _fxIdEarly=(typeof eqCombatWeapon==='function')?eqCombatWeapon():((state.combatEquipped&&state.combatEquipped.weapon)||'');
     const _pf=_fxIdEarly&&ITEMS[_fxIdEarly]&&ITEMS[_fxIdEarly].wfx&&ITEMS[_fxIdEarly].wfx.pierce;
-    const _pierced=!!(_pf&&Math.random()<(_pf.chance||0));
+    // Windcutter (fl_wind) is the same sure shot as Pierce, on a small chance.
+    const _pierced=!!(_pf&&Math.random()<(_pf.chance||0))
+      || Math.random()<flWindChance();
     const hitChance=_pierced?0.97:Math.max(0.03, Math.min(0.97, combat.youAcc/(combat.youAcc+_effDef)));
     let youDmg = (Math.random()<hitChance)
       ? Math.max(1, Math.round(combat.youMaxHit*(COMBAT_P.HIT_MIN+(1-COMBAT_P.HIT_MIN)*Math.random())))
@@ -39233,6 +39343,19 @@ function combatTick(){
         const _sc=Math.min(_sn.cap||8, ((combat.foeStatus.sunder&&combat.foeStatus.sunder.stacks)||0)+1);
         combat.foeStatus.sunder={stacks:_sc, per:_sn.per||0.04};
         if(_sc===1) cmbLog(`\u{1FA93} The fault opens \u2014 every blow on the ${mon.name} now lands harder.`,'status');
+      }
+      /* Barbed (fl_barb): a landed shot can open a bleed, through the same
+         foeStatus.poison channel as Bleeder and the weapon procs. */
+      if(youDmg>0&&Math.random()<flBarbChance()){
+        if(!combat.foeStatus) combat.foeStatus={};
+        const _bb=combat.foeStatus.poison;
+        combat.foeStatus.poison={
+          stacks:Math.min(POISON_MAX_STACKS,(_bb?_bb.stacks:0)+1),
+          tickDmg:Math.max(1,Math.round(combat.youMaxHit*POISON_TICK_MULT)),
+          until:now+POISON_DUR_MS,
+          last:_bb?_bb.last:now
+        };
+        if(!_bb) cmbLog(`🩸 Your barbed shot opens a bleeding wound on the ${mon.name}!`,'status');
       }
       // ── Weapon on-hit effects (1.0.60) — poison / stun procs ─────────────
       // The equipped weapon may carry a `wfx` proc. Poison stacks a bleed;
