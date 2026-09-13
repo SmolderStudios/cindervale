@@ -233,13 +233,12 @@ setTimeout(() => {
     const devGate=ev(`(function(){
         var p=document.getElementById('devPanel'); if(!p) return 'no devPanel';
         p.classList.add('hidden');
-        // Drive the documented gesture: five clicks on the inventory sell-mode "All"
-        // chip. It is a button.inv-sort created by renderInventory, so render first —
-        // querying before that silently found nothing and made this half vacuous.
+        // Drive the documented gesture: five clicks on the satchel's "All" category
+        // chip (it moved there from the old sell-mode row with the 0.9.124.41 grid).
+        // Render first: querying before that found nothing and made this half vacuous.
         state=defaultState(); normalizeState();
         renderInventory();
-        var chip=Array.prototype.slice.call(document.querySelectorAll('button.inv-sort'))
-                   .filter(function(b){ return b.textContent.trim()==='All'; })[0];
+        var chip=document.querySelector('#inventory .bag-cat[data-cat="all"]');
         var opened=false;
         if(chip){ for(var i=0;i<6;i++) chip.click(); opened=!p.classList.contains('hidden'); }
         var togOpened=false;
@@ -248,7 +247,7 @@ setTimeout(() => {
         return {isDemo:IS_DEMO, chipFound:!!chip, openedByGesture:opened, openedByToggle:togOpened};
       })()`);
     ok('dev panel stays shut in the demo build',
-       devGate && devGate.isDemo===true && devGate.openedByGesture===false && devGate.openedByToggle===false,
+       devGate && devGate.isDemo===true && devGate.chipFound===true && devGate.openedByGesture===false && devGate.openedByToggle===false,
        JSON.stringify(devGate));
     /* Storage access. Wrapping the two functions that had bitten us was not enough —
        it shipped twice (getDeviceId in v0.9.84, then cursorEnabled, which took the
@@ -764,27 +763,27 @@ setTimeout(() => {
       state.xp.attack=XP_CUM[50]; state.xp.defence=XP_CUM[50];
       state.items={bronze_chest:3}; state.coins=0;
       equipBodyItem('bronze_chest','chest','combat');
-      rightTab='satchel'; invCat='all'; invSearch=''; invPage=0;`;
-    const findRow=`(function(){
-      return [...document.querySelectorAll('#inventory .inv-item')].find(function(r){
-        var n=r.querySelector('.inv-name'); return n&&/Bronze Chest/i.test(n.textContent); });
+      rightTab='satchel'; invCat='all'; invSearch=''; state.invPrefs.cat='all';`;
+    /* Since the 0.9.124.41 grid the buttons live in the dock under the tiles, so a
+       test picks the tile first, exactly as a player does. */
+    const findRow=`(function(){ _bagSel=null; renderInventory();
+      var t=document.querySelector('#inventory .bag-tile[data-id="bronze_chest"]');
+      if(!t) return null; t.click(); return document.querySelector('#inventory .bag-dock');
     })()`;
 
     ev(SET);
     ok('worn copy is reserved', ev('reservedForEquip("bronze_chest")')===1);
     ok('sellableQty holds one back', ev('sellableQty("bronze_chest")')===2);
 
-    // The row button, not just the helper — the bug lived in the click handler.
-    ev(`invSellMode='all'; invSellCustom=0; renderInventory();`);
-    const clicked=ev(`(function(){ var r=${findRow}; if(!r) return 'no row';
-      var b=r.querySelector('.sell'); if(!b) return 'no button'; b.click(); return 'ok'; })()`);
+    // The dock button, not just the helper — the bug lived in the click handler.
+    const clicked=ev(`(function(){ var r=${findRow}; if(!r) return 'no tile';
+      var b=r.querySelector('.sell[data-n="all"]'); if(!b) return 'no button'; b.click(); return 'ok'; })()`);
     const sold=ev('[state.items.bronze_chest||0, state.combatEquipped.chest||null, state.coins]');
     ok('Sell All leaves the worn copy on your back',
        clicked==='ok'&&sold[0]===1&&sold[1]==='bronze_chest', clicked+' '+JSON.stringify(sold));
     ok('Sell All pays for 2, not 3', sold[2]===2*ev('effectiveItemSell("bronze_chest")'), JSON.stringify(sold));
 
     // Down to just the worn one: the button must refuse and say why.
-    ev('renderInventory();');
     /* `explained` was originally just the .inv-eq "Worn" badge. Since v0.9.108 a
        satchel row for equipped combat gear carries a green Remove button instead
        — the two together ellipsised "Bronze Helm" into "Bronze ...", so they are
@@ -802,8 +801,9 @@ setTimeout(() => {
        lone.qty===1&&lone.eq==='bronze_chest', JSON.stringify(lone));
 
     // Fixed-quantity modes clamp too, not just All.
-    ev(`state.items.bronze_chest=4; invSellMode=5; invSellCustom=0; renderInventory();`);
-    ev(`(function(){ var r=${findRow}; if(r) r.querySelector('.sell').click(); })()`);
+    ev(`state.items.bronze_chest=4;`);
+    ev(`(function(){ var r=${findRow}; if(!r) return;
+      r.querySelector('.inv-qtybox').value='5'; r.querySelector('[data-bag="sellx"]').click(); })()`);
     ok('Sell 5 of 4 (1 worn) sells 3', ev('state.items.bronze_chest')===1,
        'left='+ev('state.items.bronze_chest'));
 
@@ -1102,17 +1102,23 @@ setTimeout(() => {
        and the search input's own handler calls back into that render to
        re-filter, so the field being typed into was destroyed on every keystroke
        and focus fell to <body>. The player had to re-click between letters. */
+    /* Since the 0.9.124.41 grid the search box is part of a skeleton that is built
+       once, so it cannot be destroyed under the caret. What still has to be true is
+       that typing re-filters: that is the guard against "just skip the render". */
     const srch = ev(`(()=>{
-      rightTab='satchel'; renderRightPanel();
+      rightTab='satchel'; state.items={pine_log:5,oak_log:3,bronze_bar:2}; state.invPrefs.cat='all'; renderRightPanel();
       const s=document.querySelector('.inv-search'); if(!s) return {err:'no search box'};
       s.focus(); s.value='pin'; s.setSelectionRange(3,3);
       s.dispatchEvent(new Event('input',{bubbles:true}));
       const a=document.querySelector('.inv-search');
-      return {rebuilt:a!==s, focused:document.activeElement===a, caret:a?a.selectionStart:-1};
+      const shown=[].map.call(document.querySelectorAll('#inventory .bag-tile'),function(t){ return t.getAttribute('data-id'); });
+      const out={focused:document.activeElement===a, caret:a?a.selectionStart:-1, shown:shown.join(',')};
+      s.value=''; s.dispatchEvent(new Event('input',{bubbles:true}));
+      return out;
     })()`);
     ok('satchel search survives a keystroke', srch.focused === true, JSON.stringify(srch));
     ok('satchel search keeps its caret', srch.caret === 3, 'caret=' + srch.caret);
-    ok('the panel really is still rebuilt', srch.rebuilt === true);   // guards a lazy "just skip the render" fix
+    ok('and the grid really re-filters as you type', srch.shown === 'pine_log', srch.shown);
 
     const csr = ev(`(()=>{
       viewTab='comp'; renderCenter();
@@ -1372,10 +1378,14 @@ setTimeout(() => {
     /* A second entry point into equipBodyItem. The risk is that it becomes a
        BYPASS of the rules the gear panel enforces — the level gate and the
        two-handed/shield conflict — none of which throw when skipped. */
-    ev(`mmAtMenu=false; state=defaultState(); normalizeState(); rightTab='satchel'; invCat='all'; invSearch='';`);
-    const eqBtn = nm => `(function(){ for(var r of document.querySelectorAll('.inv-item')){
-      var n=r.querySelector('.inv-name'), b=r.querySelector('.inv-equip');
-      if(n&&b&&n.textContent.indexOf(${JSON.stringify(nm)})===0) return b; } return null; })()`;
+    ev(`mmAtMenu=false; state=defaultState(); normalizeState(); rightTab='satchel'; invCat='all'; invSearch=''; state.invPrefs.cat='all';`);
+    /* The Equip button lives in the dock since the 0.9.124.41 grid: pick the tile
+       by name, then read the dock, the way a player does. */
+    const eqBtn = nm => `(function(){ _bagSel=null; renderInventory();
+      for(var t of document.querySelectorAll('#inventory .bag-tile')){
+        var n=t.querySelector('.inv-name');
+        if(n&&n.textContent.indexOf(${JSON.stringify(nm)})===0){ t.click();
+          return document.querySelector('#inventory .bag-dock .inv-equip'); } } return null; })()`;
 
     ev(`state.items={bronze_helm:1}; state.combatEquipped={}; state.skillingEquipped={}; state.combatXp.defence=0; renderInventory();`);
     ev(eqBtn('Bronze Helm') + '.click()');
@@ -1408,10 +1418,10 @@ setTimeout(() => {
       ev(`state.items={bronze_shield:1}; state.items['${twoH}']=1;
           state.combatEquipped={shield:'bronze_shield'};
           state.combatXp.attack=XP_CUM[99]; state.combatXp.defence=XP_CUM[99]; renderInventory();`);
-      // Matched by name here rather than via eqBtn(), since the id is dynamic.
-      ev(`(function(){ for(var r of document.querySelectorAll('.inv-item')){
-        var n=r.querySelector('.inv-name'), b=r.querySelector('.inv-equip');
-        if(n&&b&&n.textContent.indexOf(ITEMS['${twoH}'].name)===0){ b.click(); return; } } })()`);
+      // Picked by id here rather than via eqBtn(), since the id is dynamic.
+      ev(`(function(){ _bagSel=null; renderInventory();
+        var t=document.querySelector('#inventory .bag-tile[data-id="${twoH}"]'); if(!t) return; t.click();
+        var b=document.querySelector('#inventory .bag-dock .inv-equip'); if(b) b.click(); })()`);
       ok('a 2H equipped from the satchel still drops the shield',
          ev('state.combatEquipped.shield===undefined') === true && ev('state.combatEquipped.weapon') === twoH,
          JSON.stringify(ev('state.combatEquipped')));
@@ -1427,10 +1437,13 @@ setTimeout(() => {
        "Bronze Helm" to "Bronze ...". They must stay mutually exclusive. */
     ev(`state.items={bronze_helm:1,bronze_chest:1,iron_helm:1,bronze_sword:1,bronze_shield:1};
         state.combatEquipped={helmet:'bronze_helm'}; state.combatXp.defence=XP_CUM[12]; renderInventory();`);
-    const both = ev(`(function(){ for(var r of document.querySelectorAll('.inv-item')){
-      var b=r.querySelector('.inv-equip');
-      if(b&&b.textContent==='Remove'&&r.querySelector('.inv-eq')) return true; } return false; })()`);
-    ok('WORN badge and Remove never share a row', both === false);
+    const both = ev(`(function(){ var ids=[].map.call(document.querySelectorAll('#inventory .bag-tile'),function(t){ return t.getAttribute('data-id'); });
+      var seenRemove=false, clash=false;
+      ids.forEach(function(id){ _bagSel=null; bagSelect(id);
+        var d=document.querySelector('#inventory .bag-dock'), b=d.querySelector('.inv-equip');
+        if(b&&b.textContent==='Remove'){ seenRemove=true; if(d.querySelector('.inv-eq')) clash=true; } });
+      return {clash:clash, seenRemove:seenRemove}; })()`);
+    ok('WORN badge and Remove never share a dock', both.clash === false && both.seenRemove === true, JSON.stringify(both));
   }
 
   section('Modal CSS registration (v0.9.121)');
@@ -7195,6 +7208,69 @@ setTimeout(() => {
       return bad;
     })()`);
     ok('every unbuilt tree node is badged, and a working one is not', soon.length === 0, soon.join(', '));
+  }
+
+  section('The satchel grid (0.9.124.41)');
+  {
+    /* The satchel re-renders on every completed action. The tiles must be KEPT and
+       only their numbers updated: rebuilding every painted icon per swing is the
+       cost this design exists to avoid, and nothing would throw if it crept back. */
+    const reuse = ev(`(function(){
+      state=defaultState(); normalizeState(); rightTab='satchel'; invSearch=''; state.invPrefs.cat='all'; state.invPrefs.sort='category';
+      var ids=Object.keys(ITEMS).filter(function(id){ return !ITEMS[id].tool&&!ITEMS[id].skillGear&&!isSeedId(id); }).slice(0,60);
+      state.items={}; ids.forEach(function(id,i){ state.items[id]=i+2; });
+      _bagSel=null; renderInventory();
+      var id=ids[5], t1=document.querySelector('#inventory .bag-tile[data-id="'+id+'"]'), img1=t1&&t1.querySelector('.bag-ic').firstElementChild;
+      state.items[id]=12345; renderInventory();
+      var t2=document.querySelector('#inventory .bag-tile[data-id="'+id+'"]'), img2=t2&&t2.querySelector('.bag-ic').firstElementChild;
+      return {tiles:document.querySelectorAll('#inventory .bag-tile').length, owned:ids.length, same:t1===t2, sameImg:img1===img2,
+              q:t2?t2.querySelector('.bag-q').textContent:'', pager:!!document.querySelector('#inventory .inv-sort[disabled]')};
+    })()`);
+    ok('every item shows, with no pages', reuse.tiles === reuse.owned, JSON.stringify(reuse));
+    ok('a repaint keeps the tile and its icon, and only the number changes',
+       reuse.same === true && reuse.sameImg === true && reuse.q === '12.3k', JSON.stringify(reuse));
+
+    /* 158 items had no chip at all under the old row. Every bucket needs a chip. */
+    const homes = ev(`(function(){
+      state=defaultState(); normalizeState(); rightTab='satchel'; invSearch=''; state.invPrefs.sort='category';
+      var ids=Object.keys(ITEMS).filter(function(id){ return !ITEMS[id].tool&&!ITEMS[id].skillGear&&!isSeedId(id); });
+      state.items={}; ids.forEach(function(id){ state.items[id]=1; });
+      var total=0, chips=[].slice.call(document.querySelectorAll('#inventory .bag-cat')).length;
+      BAG_CHIPS.forEach(function(c){ if(c.key==='all') return;
+        state.invPrefs.cat=c.key; renderInventory(); total+=document.querySelectorAll('#inventory .bag-tile').length; });
+      state.invPrefs.cat='fish'; renderInventory();
+      return {items:ids.length, inChips:total, oldSave:invCat};
+    })()`);
+    ok('every item in the game has a chip that shows it', homes.inChips === homes.items, JSON.stringify(homes));
+    ok('a chip saved before the grid still opens', homes.oldSave === 'food', homes.oldSave);
+
+    const grp = ev(`(function(){
+      state=defaultState(); normalizeState(); rightTab='satchel'; invSearch=''; state.invPrefs.cat='all';
+      state.items={bronze_sword:1, pine_log:9, cooked_trout:4};
+      state.invPrefs.sort='category'; renderInventory(); var a=document.querySelectorAll('#inventory .bag-grp').length;
+      state.invPrefs.sort='name'; renderInventory(); var b=document.querySelectorAll('#inventory .bag-grp').length;
+      state.invPrefs.sort='category';
+      return {category:a, az:b};
+    })()`);
+    ok('Category sort draws a heading per kind, A-Z draws none', grp.category === 3 && grp.az === 0, JSON.stringify(grp));
+
+    const dock = ev(`(function(){
+      state=defaultState(); normalizeState(); rightTab='satchel'; invSearch=''; state.invPrefs.cat='all';
+      var pot=Object.keys(ITEMS).find(function(id){ var p=ITEMS[id].potion; return p&&p.dur&&p.xp; });
+      state.items={pine_log:40}; state.items[pot]=3; state.effects=[];
+      _bagSel=null; renderInventory();
+      var hint=!!document.querySelector('#inventory .bag-dock .bag-dock-hint');
+      document.querySelector('#inventory .bag-tile[data-id="'+pot+'"]').click();
+      var d=document.querySelector('#inventory .bag-dock');
+      var use=d.querySelector('[data-bag="use"]'), sell1=d.querySelector('[data-bag="sell"][data-n="1"]');
+      var before=state.items[pot]; if(use) use.click(); var afterUse=state.items[pot];
+      document.querySelector('#inventory .bag-tile[data-id="pine_log"]').click();
+      var coins=state.coins; d.querySelector('[data-bag="sell"][data-n="1"]').click();
+      return {hint:hint, use:!!use, sell1:!!sell1, drank:before-afterUse, sold:state.items.pine_log===39&&state.coins>coins};
+    })()`);
+    ok('the dock asks you to pick something until you do', dock.hint === true, JSON.stringify(dock));
+    ok('a potion in the dock can be drunk and sold from it', dock.use === true && dock.sell1 === true && dock.drank === 1, JSON.stringify(dock));
+    ok('and Sell 1 sells one and pays', dock.sold === true, JSON.stringify(dock));
   }
 
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));
