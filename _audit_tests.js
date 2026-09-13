@@ -7417,15 +7417,15 @@ setTimeout(() => {
       rightTab='gear'; _gearFilter='combat'; _gearInteractAt=0; renderRightPanel();
       var box=document.getElementById('gearView');
       var nums=[].map.call(box.querySelectorAll('.eq-sgrid b'),function(b){ return b.textContent; });
-      var r={combatCells:box.querySelectorAll('.eq-cell:not(.blank)').length, nums:nums.join('|')};
+      var r={combatCells:box.querySelectorAll('.dl-sq').length, nums:nums.join('|')};
       state.gear=['eclipse_axe','swift_boots','leather_boots']; state.skillingEquipped.axe='eclipse_axe'; state.skillingEquipped.shoes='swift_boots';
       selectedSkill='woodcutting'; state.action=null; _gearFilter='skilling'; _gearInteractAt=0; renderGear();
       r.speed=box.querySelector('.eq-sgrid b').textContent;
-      r.cells=[].map.call(box.querySelectorAll('.eq-cell:not(.blank)'),function(c){ return c.title.split(':')[0]; }).join(',');
+      r.cells=[].map.call(box.querySelectorAll('.dl-sq'),function(c){ return c.getAttribute('data-slot'); }).join(',');
       var shoe=[].find.call(box.querySelectorAll('.eq-tool'),function(t){ return /Running Shoes/.test(t.textContent); });
       r.shoeCard=shoe?shoe.querySelector('.nm').textContent:'';
       state.skillingEquipped.weapon='bronze_sword'; renderGear();
-      r.legacyRow=!![].find.call(box.querySelectorAll('.eq-cell'),function(c){ return /^Weapon/.test(c.title); });
+      r.legacyRow=!!box.querySelector('.dl-sq[data-slot="weapon"]');
       delete state.skillingEquipped.weapon;
       shoe.click();
       r.toolSell=/Sell/.test(document.getElementById('gearSlotBody').textContent);
@@ -7435,7 +7435,7 @@ setTimeout(() => {
     })()`);
     ok('the combat doll has all twelve slots and real numbers under it', gear.combatCells === 12 && gear.nums.split('|').length === 4 && !/\?|NaN|undefined/.test(gear.nums), JSON.stringify(gear));
     ok('the skilling side shows what the gear gives the skill', gear.speed === '+20%', JSON.stringify(gear));
-    ok('the skilling doll has no weapon, off-hand or quiver square', (gear.cells||"").split(',').length === 9 && !/Weapon|Shield|Off|Quiver/.test(gear.cells), gear.cells);
+    ok('the skilling doll has no weapon, off-hand or quiver square', (gear.cells||"").split(',').length === 9 && !/weapon|shield|quiver/.test(gear.cells), gear.cells);
     ok('unless an old loadout still holds one, so it can come off', gear.legacyRow === true, JSON.stringify(gear));
     ok('the Running Shoes card shows the agility tool you wear', gear.shoeCard === 'Swift Boots', gear.shoeCard);
     ok('a tool picker never offers to sell a tool', gear.toolRows === true && gear.toolSell === false, JSON.stringify(gear));
@@ -7447,12 +7447,12 @@ setTimeout(() => {
              combatWeapon:_presetCandidates('weapon','combat').join()};
       openPresetEditor('melee','combat');
       r.clearHidden=document.getElementById('presetEditorClear').style.display==='none';
-      r.combatSquares=document.querySelectorAll('#presetEditorDoll .eq-cell:not(.blank)').length;
+      r.combatSquares=document.querySelectorAll('#presetEditorDoll .dl-sq').length;
       document.getElementById('presetEditorModal').classList.add('hidden');
       state.gearPresets.mining={helmet:'wc_hat'};
       openPresetEditor('mining','skilling');
       r.clearShown=document.getElementById('presetEditorClear').style.display==='';
-      r.skillSquares=document.querySelectorAll('#presetEditorDoll .eq-cell:not(.blank)').length;
+      r.skillSquares=document.querySelectorAll('#presetEditorDoll .dl-sq').length;
       document.getElementById('presetEditorClear').click();
       r.cleared=!state.gearPresets.mining;
       return r;
@@ -7510,6 +7510,52 @@ setTimeout(() => {
     })()`);
     ok('only the open chip prints its count; the rest carry it in their tip',
        chips.counts === 1 && chips.open === '3' && /Ores & Bars: 2/.test(chips.tips) && /Logs: 1/.test(chips.tips), JSON.stringify(chips));
+  }
+
+  section('Skill presets hold their own skill, and the OSRS doll (0.9.124.44)');
+  {
+    /* The Woodcutting preset offered the whole Agility set, and a skill cape for
+       any skill. A skill's preset takes that skill's pieces and general gear only. */
+    const pf = ev(`(function(){
+      state=defaultState(); normalizeState();
+      state.skillingGear={wc_hat:1, ag_hat:1, wc_chest:1};
+      state.items={emerald_ring:1, bronze_helm:1};
+      state.gear=['cape_woodcutting','cape_agility'];
+      var r={helm:_presetCandidates('helmet','skilling','woodcutting').join(),
+             cape:_presetCandidates('cape','skilling','woodcutting').join(),
+             ring:_presetCandidates('ring_l','skilling','agility').join(),
+             combatHelm:_presetCandidates('helmet','combat','melee').join()};
+      state.skillingEquipped.helmet='ag_hat'; state.skillingEquipped.chest='wc_chest'; state.skillingEquipped.ring_l='emerald_ring';
+      var said=''; var t0=toast; toast=function(m){ said=m; };
+      saveGearPreset('woodcutting'); toast=t0;
+      r.saved=JSON.stringify(state.gearPresets.woodcutting); r.said=said;
+      state.gearPresets.mining={helmet:'ag_hat', chest:'wc_chest', ring_r:'emerald_ring'};
+      normalizeState();
+      r.scrubbed=JSON.stringify(state.gearPresets.mining);
+      return r;
+    })()`);
+    ok("a skill's preset offers that skill's set pieces and not another skill's", pf.helm === 'wc_hat', JSON.stringify(pf));
+    ok('and only its own skill cape', pf.cape === 'cape_woodcutting', JSON.stringify(pf));
+    ok('general gear still fits every preset, and combat loadouts are untouched', pf.ring === 'emerald_ring' && pf.combatHelm === 'bronze_helm', JSON.stringify(pf));
+    ok('saving leaves out pieces made for another skill, and says so',
+       pf.saved === '{"chest":"wc_chest","ring_l":"emerald_ring"}' && /Left out 1 piece/.test(pf.said), JSON.stringify(pf));
+    ok('a saved preset holding another skill\'s pieces is cleaned on load', pf.scrubbed === '{"ring_r":"emerald_ring"}', pf.scrubbed);
+
+    const doll = ev(`(function(){
+      state=defaultState(); normalizeState(); rightTab='gear'; _gearInteractAt=0;
+      _gearFilter='combat'; renderRightPanel();
+      var box=document.getElementById('gearView');
+      var segs=function(){ var p=box.querySelector('.dl-lines path'); return p?(p.getAttribute('d').match(/M/g)||[]).length:0; };
+      var r={combat:box.querySelectorAll('.dl-sq').length, combatLines:segs(),
+             emptyOutline:!!box.querySelector('.dl-sq.empty[data-slot="helmet"] svg'),
+             names:box.querySelectorAll('.dl-sq .nm, .dl-sq .sl').length};
+      _gearFilter='skilling'; _gearInteractAt=0; renderGear();
+      r.skilling=box.querySelectorAll('.dl-sq').length; r.skillingLines=segs();
+      return r;
+    })()`);
+    ok('the combat doll is twelve squares joined by eleven lines', doll.combat === 12 && doll.combatLines === 11, JSON.stringify(doll));
+    ok('an empty slot shows its outline instead of a word, and no square prints a name', doll.emptyOutline === true && doll.names === 0, JSON.stringify(doll));
+    ok('the skilling doll is nine squares joined by eight lines', doll.skilling === 9 && doll.skillingLines === 8, JSON.stringify(doll));
   }
 
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));
