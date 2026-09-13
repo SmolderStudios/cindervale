@@ -7114,6 +7114,89 @@ setTimeout(() => {
        offk.kills > 0 && offk.logged === offk.kills && offk.quest === offk.kills, JSON.stringify(offk));
   }
 
+  section('Gold, auto-eat and the tree nodes that do nothing (0.9.124.40)');
+  {
+    /* #141. The Coin Purse says "+5% gold from every source" and only ever reached
+       sale prices. Steals, laps and offline kills must all move with it. */
+    const purse = ev(`(function(){
+      function run(owned){
+        state=defaultState(); normalizeState();
+        state.xp.thieving=XP_CUM[99]; state.xp.agility=XP_CUM[99]; state.charms=owned?['coin_purse']:[];
+        var orig=Math.random; Math.random=function(){ return 0.0001; };
+        try{
+          state.coins=0; completeAction(getAct('thieving','th1'),'thieving',100); var th=state.coins;
+          state.coins=0; completeAction(SKILLS.agility.acts[0],'agility',100); var ag=state.coins;
+          return {th:th, ag:ag};
+        } finally { Math.random=orig; }
+      }
+      return {without:run(false), with:run(true)};
+    })()`);
+    ok('the Coin Purse raises gold from steals and laps, not only sales (#141)',
+       purse.with.th > purse.without.th && purse.with.ag > purse.without.ag, JSON.stringify(purse));
+    const kills = ev(`(function(){
+      function run(owned){
+        state=defaultState(); normalizeState();
+        ['attack','strength','defence','hitpoints'].forEach(function(k){ state.combatXp[k]=XP_CUM[40]; });
+        refreshCombatStats(); state.charms=owned?['coin_purse']:[];
+        var f=null; for(var id in ITEMS){ var it=ITEMS[id]; if(it&&it.potion&&it.potion.heal&&!it.potion.dur){ f=id; break; } }
+        state.items={}; if(f) state.items[f]=500;
+        combat.monId='rat'; if(state.hints) state.hints.combat_unarmed=1;
+        engageCombat(); saveGame(); stopCombatTimer(); combat.active=false;
+        var oc=offlineCombatResolve(2*3600000, offlineMods());
+        return oc?{kills:oc.kills, per:oc.coins/Math.max(1,oc.kills)}:{kills:0,per:0};
+      }
+      return {without:run(false), with:run(true)};
+    })()`);
+    ok('and from kills', kills.with.per > kills.without.per, JSON.stringify(kills));
+
+    /* #132. One bite per foe swing could never catch up with a hit bigger than the food. */
+    const trip = ev(`(function(){
+      state=defaultState(); normalizeState();
+      state.items={cooked_minnow:400};
+      state.autoHeal={enabled:true,thresholdPct:50,itemId:''};
+      combat.active=true; combat.youMaxHp=600; combat.youHp=120; combat.regens=[];
+      var logged=0, orig=cmbLog; cmbLog=function(){ logged++; };
+      var bites; try{ bites=autoEatTrip(); } finally { cmbLog=orig; }
+      var r={bites:bites, hp:combat.youHp, eaten:400-state.items.cooked_minnow, logged:logged};
+      combat.youHp=560; r.full=autoEatTrip();
+      state.autoHeal.enabled=false; combat.youHp=100; r.off=autoEatTrip();
+      combat.active=false; return r;
+    })()`);
+    ok('auto-eat eats back over the line in one go, not one bite a swing (#132)',
+       trip.bites >= 2 && trip.hp > 300 && trip.hp - 120 === trip.eaten * 25 && trip.logged === 1, JSON.stringify(trip));
+    ok('and does nothing above the line or when switched off', trip.full === 0 && trip.off === 0, JSON.stringify(trip));
+
+    /* Bulk Fletcher and Woodsong stated numbers the game did not pay. */
+    const nums = ev(`(function(){
+      state=defaultState(); normalizeState(); state.xp.fletching=XP_CUM[99];
+      var d=TREES.fletching.find(function(n){ return n.id==='fl_double'; });
+      var g=TREES.fletching.find(function(n){ return n.id==='fl_gm_xp'; });
+      state.tree.fletching={}; var base=mods('fletching');
+      state.tree.fletching={fl_double:d.max}; var dm=mods('fletching');
+      state.tree.fletching={fl_gm_xp:g.max}; var gm=mods('fletching');
+      return {dSays:parseFloat(d.desc(d.max)), dPays:Math.round((dm.extraBar-base.extraBar)*1000)/10,
+              gSays:parseFloat(String(g.desc(g.max)).replace('+','')), gPays:Math.round((gm.xpMult/base.xpMult-1)*1000)/10};
+    })()`);
+    ok('Bulk Fletcher says the double-batch chance it pays', nums.dSays === nums.dPays, JSON.stringify(nums));
+    ok('and Woodsong the XP it pays', Math.abs(nums.gSays - nums.gPays) < 1.5, JSON.stringify(nums));
+
+    /* A node with nothing behind it must say so, and the list must name real nodes. */
+    const soon = ev(`(function(){
+      state=defaultState(); normalizeState();
+      var bad=[], box=document.createElement('div'), ctx={avail:98,spent:98,lvl:99,allBasesMaxed:true,baseLeft:0};
+      Object.keys(TREE_UNWIRED).forEach(function(id){
+        var sk=id.indexOf('fl_')===0?'fletching':'thieving', n=(TREES[sk]||[]).find(function(x){ return x.id===id; });
+        if(!n){ bad.push(id+' is not a node'); return; }
+        box.innerHTML=ftDockHTML(sk,n,ctx);
+        if(!box.querySelector('.ft-row.soon')) bad.push(id+' has no badge');
+      });
+      box.innerHTML=ftDockHTML('fletching',TREES.fletching.find(function(x){ return x.id==='fl_xp'; }),ctx);
+      if(box.querySelector('.ft-row.soon')) bad.push('fl_xp is wired and badged');
+      return bad;
+    })()`);
+    ok('every unbuilt tree node is badged, and a working one is not', soon.length === 0, soon.join(', '));
+  }
+
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));
   process.exit(fail ? 1 : 0);
 }, 2500);
