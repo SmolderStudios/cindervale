@@ -8256,7 +8256,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.124.37">v0.9.124</div>
+  <div class="mm-ver" data-build="0.9.124.38">v0.9.124</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -40133,9 +40133,13 @@ function buildAscensionHTML(){
   return `<div class="asc-panel">
     <div class="asc-head"><span class="asc-t">Ascension</span>
       <span class="asc-bank">${iconHTML('sunderstone')} ${stones.toLocaleString()} &nbsp; ${iconHTML('spirecore')} ${cores.toLocaleString()}</span></div>
-    <div class="asc-sub">Spend <b>Sunderstone</b> to raise a piece of combat gear you are wearing, and <b>Spire Cores</b> as well from rank 7. Each rank adds <b>6% to that item's own attack, strength and defence</b>. Ranks stack across everything you have equipped too: every one adds max health, crit, lifesteal and <b>damage reduction</b>, and the damage reduction is what gets you deeper into the Spire. <b>How high a piece goes depends on the raid it came from</b>: Barrow ★5, Emberforge ★7, Abyssal ★9, Empyrean ★10.${(function(){const dr=(typeof ascensionDR==='function')?ascensionDR():0;return dr>0?` <b style="color:#a8d264">Currently ${(dr*100).toFixed(1)}% less damage taken.</b>`:'';})()}</div>
+    <div class="asc-sub">Upgrade the raid gear you are wearing.<br>
+      Costs <b>Sunderstone</b>, plus <b>Spire Cores</b> from rank 7.<br>
+      Each rank gives that piece <b>+6% attack, strength and defence</b>.<br>
+      Every rank you are wearing also adds max health, crit, lifesteal and <b>damage reduction</b>.<br>
+      Max rank by raid: Barrow ★5, Emberforge ★7, Abyssal ★9, Empyrean ★10.${(function(){const dr=(typeof ascensionDR==='function')?ascensionDR():0;return dr>0?` <b style="color:#a8d264">Currently ${(dr*100).toFixed(1)}% less damage taken.</b>`:'';})()}</div>
     ${uniq.length?`<div class="asc-list">${rows}</div>`
-      :'<div class="asc-empty">Wear raid-tier gear (T7 and above) and it shows up here to raise. Crafted and shop gear cannot be raised.</div>'}
+      :'<div class="asc-empty">Only raid gear (T7 and above) can be upgraded. Equip a piece to see it here.</div>'}
     ${buildSalvageHTML()}
   </div>`;
 }
@@ -40162,7 +40166,9 @@ function buildSalvageHTML(){
     <div class="asc-head" style="margin-top:14px;padding-top:12px;border-top:1px solid #2a2013">
       <span class="asc-t" style="font-size:calc(15px*var(--tscale))">Salvage</span>
       <span class="asc-bank">${iconHTML('sunderstone')} ${total.toLocaleString()} in the satchel</span></div>
-    <div class="asc-sub">Break down raid-tier gear you are not wearing and get <b>Sunderstone</b> for it. Every raid tier is 30 to 40% stronger than the last, so anything a newer raid replaced is worth breaking. An ascended piece hands back half the Sunderstone you spent on it. Gear you are wearing is never listed.</div>
+    <div class="asc-sub">Break down raid gear you are not wearing for <b>Sunderstone</b>.<br>
+      An upgraded piece gives back half of what you spent on it.<br>
+      Gear you are wearing is never listed.</div>
     <div class="asc-list">${cells}</div>
     ${rows.length>shown.length?`<div class="asc-empty" style="margin-top:7px">${rows.length-shown.length} more in the satchel.</div>`:''}
   </div>`;
