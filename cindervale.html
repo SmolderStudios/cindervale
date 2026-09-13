@@ -51,7 +51,7 @@
    [CSS-38]   FORGE RAIL — SKILL TREE
    [CSS-44]   COOKING — hearth + heal-first cards
    [CSS-45]   GUILDS — picture cards + one guild in two columns
-   [CSS-46]   RIGHT BAR — satchel grid + dock, sticky full-height bar
+   [CSS-46]   RIGHT BAR and the SATCHEL SCREEN (tabs, slots, item card)
    ════════════════════════════════════════════════════════════════════════════════ */
 /* ════════ [CSS-01] ROOT · RESET · TYPOGRAPHY ════════════════════════════════════ */
 /* Crimson Pro, inlined 0.9.21. This used to be an @import from Google Fonts.
@@ -7349,125 +7349,166 @@ body:not(.is-demo) .demo-only{display:none !important}
   .so-ehead{display:none}
   .so-erow{grid-template-columns:1fr}
 }
-/* ════════ [CSS-46] RIGHT BAR — satchel grid + dock (0.9.124.41) ═════════════════
-   The bar is 320 to 360px wide (it takes spare width, see .layout) and runs the
-   height of the window: sticky, with the active tab
-   scrolling inside it, so the satchel's dock stays in view while the page scrolls.
-   Its height is set from JS (sizeRightBar) because under the root zoom 100vh does
-   not fill the window: at zoom 0.853 it draws 622px of a 730px window. */
+/* ════════ [CSS-46] RIGHT BAR + THE SATCHEL SCREEN (0.9.124.47) ═════════════════
+   The right bar holds Gear, Alerts and Presets. It is 320 to 360px wide (it takes
+   spare width, see .layout) and runs the height of the window: sticky, with the
+   active tab scrolling inside it. Its height is set from JS (sizeRightBar) because
+   under the root zoom 100vh does not fill the window: at zoom 0.853 it draws 622px
+   of a 730px window.
+
+   The satchel has its own screen over the middle and right columns, the same
+   height, with the bag and the item card scrolling on their own. */
 #rightPanel{position:sticky;top:14px;display:flex;flex-direction:column;height:var(--rb-h,auto)}
 #rightPanel>.rp-tab-strip{flex:none}
-#satchelView{flex:1;min-height:0;display:flex;flex-direction:column}
 #gearView,#notifsView,#presetsView{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding-right:2px}
 #gearView::-webkit-scrollbar,#notifsView::-webkit-scrollbar,#presetsView::-webkit-scrollbar{width:7px}
 #gearView::-webkit-scrollbar-thumb,#notifsView::-webkit-scrollbar-thumb,#presetsView::-webkit-scrollbar-thumb{background:rgba(199,155,78,.3);border-radius:4px}
+
+#invScreen{grid-column:2/-1;position:sticky;top:14px;height:var(--rb-h,auto);display:flex;flex-direction:column;min-height:0}
+.inv-head{flex:none;display:flex;align-items:center;gap:14px;margin:0 2px 10px}
+.inv-back{height:32px;padding:0 13px;border-radius:7px;border:1px solid rgba(214,170,96,.35);background:#2a1c0c;
+  color:#f0dfb8;font-size:calc(13px*var(--tscale));font-family:inherit;cursor:var(--cur-pointer)}
+.inv-back:hover{border-color:rgba(240,199,114,.7);filter:brightness(1.1)}
+.inv-title{font-family:'Cinzel',serif;font-size:calc(16px*var(--tscale));letter-spacing:.14em;text-transform:uppercase;color:var(--gold-hi)}
+.inv-note{margin-left:auto;font-size:calc(12px*var(--tscale));color:#8a7657;text-align:right}
+.inv-grid{flex:1;min-height:0;display:grid;grid-template-columns:240px minmax(0,1fr);gap:14px}
+.inv-gear{min-height:0;overflow-y:auto;padding:10px;border-radius:10px;background:rgba(0,0,0,.18);
+  box-shadow:inset 0 1px 0 rgba(214,170,96,.08)}
+.inv-gear .dl-doll{margin:12px auto 4px}
+.inv-gear .eq-sgrid{grid-template-columns:1fr 1fr;row-gap:8px}
+#inventory.bag{min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:14px}
+.inv-main{min-height:0;display:flex;flex-direction:column}
+.inv-side{min-height:0;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;gap:10px;padding-right:2px}
+.inv-side::-webkit-scrollbar{width:7px}
+.inv-side::-webkit-scrollbar-thumb{background:rgba(199,155,78,.3);border-radius:4px}
 @media(max-width:900px){
   #rightPanel{position:static;height:auto}
+  #invScreen{grid-column:1;position:static;height:auto}
+  .inv-grid,#inventory.bag{grid-template-columns:1fr}
   #inventory.bag .bag-scroll{max-height:520px}
 }
 
-#inventory.bag{flex:1;min-height:0;display:flex;flex-direction:column}
-.bag-top{flex:none;display:flex;flex-direction:column;gap:6px;margin-bottom:5px}
+.bag-top{flex:none;display:flex;flex-direction:column;gap:8px;margin-bottom:8px}
 .bag-row{display:flex;gap:6px;align-items:center}
-#inventory .bag-search{flex:1;min-width:0;height:30px;padding:0 10px;border-radius:7px;background:#100b06;
+#inventory .bag-search{flex:1;min-width:0;height:32px;padding:0 11px;border-radius:7px;background:#100b06;
   border:1px solid rgba(214,170,96,.18);box-shadow:inset 0 2px 4px rgba(0,0,0,.8);
   color:var(--text);font-size:calc(13px*var(--tscale));font-family:inherit}
 #inventory .bag-search:focus{border-color:rgba(240,199,114,.5);outline:none}
 #inventory .bag-search::placeholder{color:#7d6a4c}
-#inventory .bag-pill{height:30px;padding:0 10px;border-radius:7px;white-space:nowrap;border:0;
+#inventory .bag-pill{height:32px;padding:0 11px;border-radius:7px;white-space:nowrap;border:0;
   background:linear-gradient(178deg,var(--lit-top),var(--lit-bot) 78%);
   box-shadow:inset 0 1px 0 var(--rim),inset 0 -1px 0 var(--under),0 2px 5px rgba(0,0,0,.4);
-  color:#e0c68e;font-size:calc(12px*var(--tscale));cursor:var(--cur-pointer)}
+  color:#e0c68e;font-size:calc(12.5px*var(--tscale));cursor:var(--cur-pointer)}
 #inventory .bag-pill:hover{filter:brightness(1.12)}
-.bag-cats{display:flex;flex-wrap:wrap;gap:3px}
-.bag-cat{display:inline-flex;align-items:center;gap:3px;height:23px;padding:0 6px 0 4px;border-radius:12px;
-  background:rgba(0,0,0,.28);border:1px solid rgba(214,170,96,.14);color:#c9b48c;font-family:inherit;
-  font-size:calc(11px*var(--tscale));cursor:var(--cur-pointer);white-space:nowrap}
-.bag-cat:hover{border-color:rgba(214,170,96,.4);color:#e6d3ab}
-.bag-cat .ev-icon{width:14px;height:14px}
-.bag-cat i{font-style:normal;font-family:var(--num);font-size:calc(10px*var(--tscale));color:#8a7657}
-.bag-cat.on{background:linear-gradient(178deg,#4a3316,#2e1f0d);border-color:rgba(240,199,114,.55);color:var(--gold-hi)}
-.bag-cat.on i{color:#e0b870}
-#inventory .bag-cap{display:flex;align-items:center;gap:7px;margin:0;padding:0;background:none;border:0;box-shadow:none;
-  font-family:var(--num);font-size:calc(11.5px*var(--tscale));color:#a8916a}
+
+/* tabs, like a bank's: the first item's picture is the tab's face */
+.bag-tabs{display:flex;flex-wrap:wrap;gap:4px;padding-bottom:6px;border-bottom:1px solid rgba(214,170,96,.16)}
+.bag-tab{position:relative;display:inline-flex;align-items:center;gap:6px;height:40px;min-width:40px;padding:0 10px 0 7px;
+  border-radius:8px 8px 4px 4px;border:0;background:rgba(0,0,0,.3);box-shadow:inset 0 0 0 1px rgba(214,170,96,.16);
+  color:#c9b48c;font-family:inherit;font-size:calc(13px*var(--tscale));cursor:var(--cur-pointer);white-space:nowrap}
+.bag-tab .ev-icon{width:26px;height:26px}
+.bag-tab i{font-style:normal;font-family:var(--num);font-size:calc(10.5px*var(--tscale));color:#8a7657}
+.bag-tab:hover{box-shadow:inset 0 0 0 1px rgba(214,170,96,.45);color:#e6d3ab}
+.bag-tab.on{background:linear-gradient(178deg,#4a3316,#2e1f0d);box-shadow:inset 0 0 0 1px rgba(240,199,114,.65);color:var(--gold-hi)}
+.bag-tab.on i{color:#e0b870}
+.bag-tab.add{justify-content:center;padding:0;width:40px;font-size:22px;line-height:1;color:#e0a955}
+.bag-tab.drop-on{background:#1f2a12;box-shadow:inset 0 0 0 2px var(--green);color:#cfe6a8}
+.bag-tab-dot{width:14px;height:14px;border-radius:50%;border:1px dashed rgba(214,170,96,.45)}
+.bag-tab-nm{max-width:110px;overflow:hidden;text-overflow:ellipsis}
+.bag-tabbar{display:flex;gap:6px;align-items:center}
+.bag-tabbar:empty{display:none}
+.bag-tabname{flex:1;min-width:0;height:30px;padding:0 10px;border-radius:7px;background:#100b06;
+  border:1px solid rgba(214,170,96,.18);color:var(--text);font-family:inherit;font-size:calc(13px*var(--tscale))}
+.bag-tabname:focus{border-color:rgba(240,199,114,.5);outline:none}
+
+#inventory .bag-cap{display:flex;align-items:center;gap:8px;margin:0;padding:0;background:none;border:0;box-shadow:none;
+  font-family:var(--num);font-size:calc(12px*var(--tscale));color:#a8916a}
 .bag-cap b{color:var(--text);font-weight:600}
 .bag-capbar{flex:1;height:6px;border-radius:3px;background:#100b06;box-shadow:inset 0 1px 2px rgba(0,0,0,.9);overflow:hidden}
 .bag-capbar i{display:block;height:100%}
-#inventory .bag-goshop{display:block;margin:2px 0 0;padding:0;background:none;border:0;color:#e0a955;font-family:inherit;
-  font-size:calc(11px*var(--tscale));cursor:var(--cur-pointer);text-align:left}
+#inventory .bag-goshop{display:block;margin:3px 0 0;padding:0;background:none;border:0;color:#e0a955;font-family:inherit;
+  font-size:calc(11.5px*var(--tscale));cursor:var(--cur-pointer);text-align:left}
 #inventory .bag-goshop:hover{color:var(--gold-hi)}
 #inventory .bag-goshop .ev-icon{width:13px;height:13px;vertical-align:-2px}
 
-.bag-scroll{flex:1;min-height:140px;overflow-y:auto;overflow-x:hidden;padding:0 6px 4px 0;margin-right:-6px}
+.bag-scroll{flex:1;min-height:140px;overflow-y:auto;overflow-x:hidden;padding:2px 6px 4px 2px;margin-right:-6px}
 .bag-scroll::-webkit-scrollbar{width:7px}
 .bag-scroll::-webkit-scrollbar-thumb{background:rgba(199,155,78,.3);border-radius:4px}
-.bag-grp{display:flex;align-items:center;gap:8px;margin:9px 2px 5px;font-size:calc(10px*var(--tscale));
+.bag-grp{display:flex;align-items:center;gap:8px;margin:14px 2px 8px;font-size:calc(10.5px*var(--tscale));
   letter-spacing:.14em;text-transform:uppercase;color:#a8916a}
 .bag-grp:first-child{margin-top:2px}
 .bag-grp::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(214,170,96,.25),transparent)}
 .bag-grp i{font-style:normal;font-family:var(--num);color:#7d6a4c;letter-spacing:0}
-.bag-tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
-#inventory .bag-tile{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;
-  padding:8px 3px 5px;border-radius:8px;border:0;min-width:0;cursor:var(--cur-pointer);font-family:inherit;
-  background:linear-gradient(178deg,var(--lit-top),var(--lit-bot) 78%);
-  box-shadow:inset 0 1px 0 var(--rim),inset 0 -1px 0 var(--under),0 3px 8px rgba(0,0,0,.45)}
-#inventory .bag-tile:hover{filter:brightness(1.14)}
-#inventory .bag-tile .bag-ic{display:grid;place-items:center;width:36px;height:36px}
-#inventory .bag-tile .bag-ic .ev-icon{width:34px;height:34px}
-#inventory .bag-tile .bag-q{position:absolute;top:3px;right:5px;font-family:var(--num);font-size:calc(11px*var(--tscale));
-  color:var(--gold-hi);text-shadow:0 1px 2px #000,0 0 6px #000;pointer-events:none}
-#inventory .bag-tile .bag-tn{flex:none;width:100%;font-size:calc(10.5px*var(--tscale));line-height:1.15;color:#e6d3ab;text-align:center;
-  white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.3em}
+.bag-grp.tabhead .ev-icon{width:18px;height:18px}
+
+/* slots with a name under them */
+.bag-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:10px 8px}
+#inventory .bag-tile{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;
+  padding:0;border:0;min-width:0;background:none;cursor:var(--cur-pointer);font-family:inherit}
+#inventory .bag-tile .bag-ic{width:100%;aspect-ratio:1;display:grid;place-items:center;border-radius:7px;
+  background:radial-gradient(circle at 50% 40%,#2c1f11,#140d07 74%);
+  box-shadow:inset 0 2px 5px rgba(0,0,0,.85),0 0 0 1px rgba(214,170,96,.22)}
+#inventory .bag-tile .bag-ic .ev-icon{width:74%;height:74%}
+#inventory .bag-tile:hover .bag-ic{box-shadow:inset 0 2px 5px rgba(0,0,0,.85),0 0 0 1px rgba(240,199,114,.75)}
+#inventory .bag-tile.sel .bag-ic{box-shadow:inset 0 2px 5px rgba(0,0,0,.85),0 0 0 2px var(--gold-hi),0 0 12px rgba(240,199,114,.25)}
+#inventory .bag-tile.drop-on .bag-ic{box-shadow:inset 0 2px 5px rgba(0,0,0,.85),0 0 0 2px var(--green)}
+#inventory .bag-tile.dragging{opacity:.35}
+#inventory .bag-tile .bag-q{position:absolute;top:3px;left:6px;font-family:var(--num);font-size:calc(12px*var(--tscale));
+  color:#ffe45a;text-shadow:1px 1px 0 #000,0 0 3px #000;pointer-events:none}
+#inventory .bag-tile .bag-tn{flex:none;width:100%;font-size:calc(11.5px*var(--tscale));line-height:1.2;color:#c9b48c;text-align:center;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #inventory .bag-tile.rare .bag-tn{color:var(--gold-hi)}
-#inventory .bag-tile .bag-wt{display:none;position:absolute;top:4px;left:5px;font-size:calc(8px*var(--tscale));
+#inventory .bag-tile .bag-wt{display:none;position:absolute;bottom:22px;right:6px;font-size:calc(8.5px*var(--tscale));
   letter-spacing:.08em;text-transform:uppercase;color:#9bc55a;pointer-events:none}
 #inventory .bag-tile.worn .bag-wt{display:block}
-#inventory .bag-tile.sel{box-shadow:inset 0 1px 0 var(--rim),0 0 0 2px var(--gold-hi),0 0 14px rgba(240,199,114,.3)}
-.bag-empty{padding:18px 4px;text-align:center}
+.bag-empty{padding:28px 4px;text-align:center;color:#8a7657}
 
-.bag-dock{flex:none;margin-top:6px;padding:8px 10px;border-radius:10px;
+/* the item card, down the right side */
+.bag-dock{flex:none;padding:12px 14px;border-radius:10px;
   background:linear-gradient(178deg,#3a2912,#221709 80%);
   box-shadow:inset 0 1px 0 rgba(240,199,114,.25),inset 0 -1px 0 var(--under),0 6px 16px rgba(0,0,0,.55)}
-.bag-dock.empty{padding:7px 10px;background:rgba(0,0,0,.22);box-shadow:inset 0 1px 0 rgba(214,170,96,.08)}
-.bag-dock-hint{font-size:calc(11.5px*var(--tscale));color:#9c8865;text-align:center}
-.dk-top{display:flex;align-items:center;gap:9px}
-.dk-ic{width:44px;height:44px;flex:none;display:grid;place-items:center;border-radius:8px;background:#100b06;
+.bag-dock.empty{padding:22px 14px;background:rgba(0,0,0,.22);box-shadow:inset 0 1px 0 rgba(214,170,96,.08)}
+.bag-dock-hint{font-size:calc(12.5px*var(--tscale));color:#9c8865;text-align:center}
+.dk-top{display:flex;align-items:center;gap:10px}
+.dk-ic{width:56px;height:56px;flex:none;display:grid;place-items:center;border-radius:8px;background:#100b06;
   box-shadow:inset 0 2px 5px rgba(0,0,0,.9),inset 0 -1px 0 rgba(214,170,96,.1)}
-.dk-ic .ev-icon{width:36px;height:36px}
+.dk-ic .ev-icon{width:46px;height:46px}
 .dk-tt{min-width:0}
-.dk-nm{font-family:'Cinzel',serif;font-size:calc(14px*var(--tscale));color:var(--gold-hi);font-weight:600;line-height:1.15}
+.dk-nm{font-family:'Cinzel',serif;font-size:calc(15px*var(--tscale));color:var(--gold-hi);font-weight:600;line-height:1.15}
 .dk-nm i{font-style:normal;color:var(--ember);font-size:.8em}
-.dk-sub{font-size:calc(11px*var(--tscale));color:#a8916a;margin-top:1px}
-.dk-q{margin-left:auto;flex:none;text-align:right;font-family:var(--num);font-size:calc(16px*var(--tscale));color:var(--text);white-space:nowrap}
+.dk-sub{font-size:calc(11.5px*var(--tscale));color:#a8916a;margin-top:2px}
+.dk-q{margin-left:auto;flex:none;text-align:right;font-family:var(--num);font-size:calc(17px*var(--tscale));color:var(--text);white-space:nowrap}
 .dk-q small{display:block;font-size:calc(10px*var(--tscale));letter-spacing:.08em;color:#8a7657;text-transform:uppercase}
-.dk-info{display:flex;flex-wrap:wrap;gap:4px;margin:7px 0 0}
-.dk-chip{font-size:calc(11px*var(--tscale));padding:1px 7px;border-radius:10px;background:rgba(0,0,0,.3);
+.dk-info{display:flex;flex-wrap:wrap;gap:5px;margin:9px 0 0}
+.dk-chip{font-size:calc(11.5px*var(--tscale));padding:2px 8px;border-radius:10px;background:rgba(0,0,0,.3);
   border:1px solid rgba(214,170,96,.14);color:#d6c29a;display:inline-flex;align-items:center;gap:4px;line-height:1.4}
 .dk-chip .ev-icon{width:13px;height:13px}
 .dk-chip.good{color:#b9dd84;border-color:rgba(155,197,90,.35)}
 .dk-chip.bad{color:#e89a7e;border-color:rgba(208,110,80,.35)}
-.bag-dock>div[style]{margin-top:7px!important}
-.dk-btns{display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-top:8px}
-.bag-btn{height:28px;padding:0 10px;border-radius:6px;border:1px solid rgba(214,170,96,.35);background:#2a1c0c;
-  color:#f0dfb8;font-size:calc(12px*var(--tscale));cursor:var(--cur-pointer);white-space:nowrap;font-family:inherit}
+.bag-dock>div[style]{margin-top:8px!important}
+.dk-btns{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.dk-tabs{display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid rgba(214,170,96,.14)}
+.dk-tabs .lb{font-size:calc(10.5px*var(--tscale));letter-spacing:.12em;text-transform:uppercase;color:#8a7657;margin-right:2px}
+.dk-tabs .bag-btn{height:26px;padding:0 9px;font-size:calc(12px*var(--tscale))}
+.bag-btn{height:30px;padding:0 11px;border-radius:6px;border:1px solid rgba(214,170,96,.35);background:#2a1c0c;
+  color:#f0dfb8;font-size:calc(12.5px*var(--tscale));cursor:var(--cur-pointer);white-space:nowrap;font-family:inherit}
 .bag-btn:hover:not(:disabled){border-color:rgba(240,199,114,.7);filter:brightness(1.1)}
 .bag-btn.gold{border-color:rgba(240,199,114,.6);background:linear-gradient(178deg,#5a3e18,#3a270e);color:var(--gold-hi)}
 .bag-btn.on{border-color:rgba(155,197,90,.5);background:#1f2a12;color:#cfe6a8}
 .bag-btn:disabled{opacity:.4;cursor:var(--cur-na)}
 .dk-amt{display:inline-flex;align-items:center;border-radius:6px;overflow:hidden;box-shadow:0 0 0 1px rgba(214,170,96,.35)}
-.dk-amt input{width:52px;height:28px;border:0;background:#100b06;color:var(--text);padding:0 8px;
+.dk-amt input{width:56px;height:30px;border:0;background:#100b06;color:var(--text);padding:0 8px;
   font-family:var(--num);font-size:calc(12.5px*var(--tscale))}
 .dk-amt input:focus{outline:none;background:#171008}
 .dk-amt .bag-btn{border:0;border-radius:0}
 
-/* Recent drops: chips under the dock rather than seven full rows, which would eat
-   the grid now that the bar has a fixed height. */
-#satchelView .drops-feed-label{flex:none;margin:6px 0 3px;padding-top:5px;font-size:calc(10.5px*var(--tscale))}
-#satchelView .item-drops-feed{flex:none;margin-top:0;flex-direction:row;flex-wrap:wrap;gap:4px;max-height:52px;overflow:hidden}
-#satchelView .item-drop-row{padding:2px 8px;gap:5px;font-size:calc(12px*var(--tscale));border-radius:12px}
-#satchelView .item-drop-row .id-icon{font-size:calc(15px*var(--tscale))}
-#satchelView .item-drop-row .id-name{font-size:calc(12px*var(--tscale))}
-#satchelView .item-drop-row .id-qty{font-size:calc(12px*var(--tscale));margin-left:2px}
+/* Recent drops, as chips under the card */
+.inv-side .drops-feed-label{flex:none;margin:2px 2px 0;font-size:calc(10.5px*var(--tscale))}
+.inv-side .item-drops-feed{flex:none;margin-top:0;flex-direction:row;flex-wrap:wrap;gap:5px}
+.inv-side .item-drop-row{padding:3px 9px;gap:5px;font-size:calc(12px*var(--tscale));border-radius:12px}
+.inv-side .item-drop-row .id-icon{font-size:calc(16px*var(--tscale))}
+.inv-side .item-drop-row .id-name{font-size:calc(12px*var(--tscale))}
+.inv-side .item-drop-row .id-qty{font-size:calc(12px*var(--tscale));margin-left:2px}
 /* ── Presets tab (loadouts) and the Gear tab (0.9.124.42) ── */
 .lo-seg{display:flex;border-radius:8px;overflow:hidden;box-shadow:0 0 0 1px rgba(214,170,96,.25);margin:0 0 8px}
 .lo-seg button{flex:1;height:30px;border:0;background:rgba(0,0,0,.28);color:#bfa981;font-family:'Cinzel',serif;
@@ -8520,7 +8561,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.124.46">v0.9.124</div>
+  <div class="mm-ver" data-build="0.9.124.47">v0.9.124</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -8904,6 +8945,7 @@ body:not(.is-demo) .demo-only{display:none !important}
   </div>
   <div class="hdr-sep"></div>
   <div class="hdr-nav trk">
+    <button class="hdr-menu-btn" id="tabBag"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 9h14l-1.3 11H6.3z"/><path d="M9 9V7a3 3 0 0 1 6 0v2"/></svg><span>Satchel</span></button>
     <button class="hdr-menu-btn" id="tabShop"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M3 7v1a3 3 0 0 0 6 0a3 3 0 0 0 6 0a3 3 0 0 0 6 0v-1l-2-4H5z"/><path d="M5 21v-10"/><path d="M19 21v-10"/><path d="M9 21v-4a2 2 0 0 1 4 0v4"/></svg><span>Shop</span></button>
     <button class="hdr-menu-btn" id="tabMastery"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6"/><path d="M10 3v6l-4 8a1 1 0 0 0 1 1.4h10a1 1 0 0 0 1-1.4l-4-8V3"/><path d="M6.5 14h11"/></svg><span>Mastery</span></button>
     <button class="hdr-menu-btn" id="tabComp"><svg class="nav-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 19a9 9 0 0 1 9 0a9 9 0 0 1 9 0"/><path d="M3 6a9 9 0 0 1 9 0a9 9 0 0 1 9 0"/><path d="M3 6v13"/><path d="M12 6v13"/><path d="M21 6v13"/></svg><span>Collection Log</span></button>
@@ -8983,19 +9025,28 @@ body:not(.is-demo) .demo-only{display:none !important}
 
   <div class="panel sail-panel" id="sailPanel" style="display:none"></div>
 
+  <!-- The satchel's own screen (0.9.124.47): covers the middle and right columns. -->
+  <div class="panel inv-screen" id="invScreen" style="display:none">
+    <div class="inv-head">
+      <button type="button" class="inv-back" id="invBack">← Back</button>
+      <span class="inv-title">Satchel</span>
+      <span class="inv-note">Drag an item onto a tab to move it there, or onto + to give it a tab of its own.</span>
+    </div>
+    <div class="inv-grid">
+      <section class="inv-gear" id="invGear"></section>
+      <div id="inventory"></div>
+    </div>
+    <div id="dropsFeedLabel" class="drops-feed-label" style="display:none">Recent drops</div>
+    <div id="itemDropsFeed" class="item-drops-feed"></div>
+  </div>
+
   <div class="panel" id="rightPanel">
     <div class="tabs rp-tab-strip trk" style="margin-bottom:8px;flex-wrap:wrap">
-      <button class="tab on" id="tabSatchel">Satchel</button>
-      <button class="tab" id="tabGear">Gear</button>
+      <button class="tab on" id="tabGear">Gear</button>
       <button class="tab" id="tabNotifs">Alerts</button>
       <button class="tab" id="tabPresets">Presets</button>
     </div>
-    <div id="satchelView">
-      <div id="inventory"></div>
-      <div id="dropsFeedLabel" class="drops-feed-label" style="display:none">Recent Drops</div>
-      <div id="itemDropsFeed" class="item-drops-feed"></div>
-    </div>
-    <div id="gearView" style="display:none"></div>
+    <div id="gearView"></div>
     <div id="notifsView" style="display:none"></div>
     <div id="presetsView" style="display:none"></div>
   </div>
@@ -19573,7 +19624,24 @@ function normalizeState(){
      own view rather than inheriting whatever the last slot was on. */
   if(!state.invPrefs || typeof state.invPrefs!=='object') state.invPrefs={};
   if(typeof state.invPrefs.sort!=='string') state.invPrefs.sort='category';
-  if(typeof state.invPrefs.cat !=='string') state.invPrefs.cat ='all';
+  /* Tabs you make replaced the kind chips (0.9.124.47): `cat` is gone, `tab` is
+     the open one. */
+  delete state.invPrefs.cat;
+  if(typeof state.invPrefs.tab!=='string') state.invPrefs.tab='all';
+  /* The tabs. Each id lives in at most one tab (the first keeps it), a tab keeps
+     ids you have run out of so they come back to it, and there are at most nine. */
+  if(!Array.isArray(state.bagTabs)) state.bagTabs=[];
+  {
+    const seen={}, kept=[];
+    for(const t of state.bagTabs){
+      if(!t||typeof t!=='object'||typeof t.id!=='string'||!/^t\d+$/.test(t.id)||kept.some(k=>k.id===t.id)) continue;
+      const items=(Array.isArray(t.items)?t.items:[]).filter(id=>typeof id==='string'&&ITEMS[id]&&!seen[id]&&(seen[id]=1));
+      kept.push({id:t.id, name:typeof t.name==='string'?t.name.slice(0,20):'', items:items});
+      if(kept.length>=9) break;   // BAG_TAB_MAX, which is declared further down the file
+    }
+    state.bagTabs=kept;
+    if(state.invPrefs.tab!=='all'&&!kept.some(t=>t.id===state.invPrefs.tab)) state.invPrefs.tab='all';
+  }
 
   // Auto-buff config default (1.0.30).
   if(!state.autoBuff||typeof state.autoBuff!=='object') state.autoBuff={enabled:false,itemId:''};
@@ -25035,6 +25103,7 @@ function renderSkillList(){
         </div>`
       :`<div class="xph-idle">Resting</div>`}`;
     btn.addEventListener('click',()=>{
+      if(invOpen){ invOpen=false; updateModePanels(); renderRightPanel(); }
       selectedSkill=key; viewTab='acts';
       // If stats tab was showing, switch back to the skills list view
       if($('statsViewLeft')&&$('statsViewLeft').style.display!=='none'){
@@ -28309,7 +28378,7 @@ const SHOP_CATS=[
   {key:'supplies', label:'Supplies',    icon:'oak_log',    kind:'stock',
    sub:'Materials by the bundle, at a markup. Priced off what they sell for, so there is no arbitrage.'},
   {key:'storage',  label:'Satchel',     icon:'foraging_pouch',kind:'satchel',
-   sub:'Room to carry it all. The expansion that used to hide inside the satchel panel.'},
+   sub:'Room to carry it all.'},
 ];
 function shopCatFor(item){
   if(item.slot==='cape') return 'capes';
@@ -29517,7 +29586,7 @@ function sellShopItem(id){
    instead of picking that seed to plant. Runtime only — it should never survive a
    reload and leave someone one click from selling a stack they meant to sow. */
 let _fmSellSeeds=false;
-let invSearch='', invSort='category', invCat='all', invSellMode='x';
+let invSearch='', invSort='category', invSellMode='x';
 let invSellCustom=0;
 let _devSellTaps=0, _devSellLast=0; // secret dev trigger: click the "All" chip 5× within 3s
 /* The satchel scrolls now. These two stay declared for anything outside that still
@@ -29525,44 +29594,157 @@ let _devSellTaps=0, _devSellLast=0; // secret dev trigger: click the "All" chip 
 let invPage=0;
 const INV_PAGE_SIZE=10;
 
-/* ════ THE SATCHEL AS A GRID (0.9.124.41) ═══════════════════════════════════════
-   "its way too compact ... the satchel is getting too tight to read most of the
-   stuff, maybe a grid style with icons?" The old panel was 300px of rows paged ten
-   at a time: a gear name got 56px, a full satchel was 34 pages, and price, stats and
-   what you were wearing lived only in a hover card. The bar is 400px now, items are
-   picture tiles grouped by kind, and clicking one opens a dock underneath with its
-   details and every button. Jordan picked this from mockups over a card list.
+/* ════ THE SATCHEL SCREEN, WITH TABS YOU MAKE (0.9.124.47) ══════════════════════
+   Jordan, 2026-09-13: take the satchel out of the right bar "so we have plenty of
+   room", and make it "more tabs style like osrs, instead of organizing by item
+   type, its tabs so you can make/add your own tabs and organize how you want it".
+   From mockups: the screen covers the middle and right columns and keeps the skill
+   list; names stay under every slot. The right bar keeps Gear, Alerts and Presets.
+
+   - All holds everything. Once you have tabs it shows each tab's items first, in
+     the order you left them, then everything else in the sort pill's order.
+   - Up to nine tabs. Drag an item onto + to make one, onto a tab to move it there,
+     onto an item in a tab to put it in front of that one, or onto All to take it
+     out of its tab. The item card has the same moves as buttons, for anyone who
+     does not drag.
+   - A tab remembers an item you have run out of, so it goes back to its tab when
+     you get more.
+
+   History: a 300px list (to 0.9.124.40), then a grid in a 400px right bar
+   (0.9.124.41), which pushed the middle column down on most windows (0.9.124.43).
 
    It rebuilds on every completed action, so the skeleton is built once and tiles are
    kept by id: only their numbers change. 333 painted icons rebuilt per swing would
    be about 1.5 MB of markup each time. */
 const BAG_BUCKET_LABEL={gear:'Combat Gear',jewelry:'Jewelry',ores:'Ores',bars:'Bars',logs:'Logs',fire:'Fire',
   fish:'Ingredients',cooked:'Food',potions:'Potions',forage:'Plants',farm:'Farm',gems:'Gems',sea:'Sea',misc:'Other'};
-const BAG_CHIPS=[
-  {key:'all',     label:'All'},
-  {key:'gear',    label:'Gear',        icon:'bronze_sword',  buckets:['gear']},
-  {key:'jewelry', label:'Jewelry',     icon:'sapphire_ring', buckets:['jewelry']},
-  {key:'ores',    label:'Ores & Bars', icon:'bronze_bar',    buckets:['ores','bars']},
-  {key:'logs',    label:'Logs',        icon:'pine_log',      buckets:['logs']},
-  {key:'food',    label:'Food',        icon:'cooked_trout',  buckets:['fish','cooked']},
-  {key:'potions', label:'Potions',     icon:'ui_potion',     buckets:['potions']},
-  {key:'plants',  label:'Plants',      icon:'dewleaf',       buckets:['forage','farm']},
-  {key:'gems',    label:'Gems',        icon:'sapphire',      buckets:['gems']},
-  {key:'sea',     label:'Sea',         icon:'ui_anchor',     buckets:['sea']},
-  /* The old chip row had no home at all for 'misc': 158 items (every monster drop,
-     hides, fletching parts, raid materials) were reachable only under All. */
-  {key:'other',   label:'Other',       icon:'ui_scroll',     buckets:['misc','fire']},
-];
-/* A save from before the grid kept a bucket name as its chip. */
-const BAG_OLD_CAT={fish:'food',cooked:'food',bars:'ores',forage:'plants',farm:'plants',fire:'other',misc:'other'};
-const BAG_SORT_LABEL={category:'Category',name:'A–Z',qty:'Amount',value:'Value'};
+const BAG_SORT_LABEL={category:'Type',name:'A–Z',qty:'Amount',value:'Value'};
 const BAG_SLOT_LABEL={helmet:'Head',chest:'Chest',legs:'Legs',gloves:'Hands',boots:'Feet',weapon:'Weapon',
   shield:'Off-hand',cape:'Cape',amulet:'Neck',ring_l:'Ring',ring_r:'Ring',quiver:'Quiver'};
+const BAG_TAB_MAX=9;
 
-let _bagSel=null;            // the item in the dock
+let _bagSel=null;            // the item in the card
 const _bagTiles=new Map();   // id -> {el, sig}
 let _bagOrderKey='';
 let _bagDockSig='';
+let invTab='all';            // the open tab: 'all' or a tab id
+let _bagDrag=null;           // the id being dragged
+let _bagCatFn=null, _bagCatOrder=null;   // set by renderInventory, read by bagSortTab
+
+/* ── tabs ─────────────────────────────────────────────────────────────────────── */
+function bagTabs(){
+  if(!Array.isArray(state.bagTabs)) state.bagTabs=[];
+  return state.bagTabs;
+}
+function bagTabOf(id){
+  const t=bagTabs().find(function(x){ return x.items.indexOf(id)>=0; });
+  return t?t.id:null;
+}
+function bagTabLabel(t){
+  if(t.name) return t.name;
+  return 'Tab '+(bagTabs().indexOf(t)+1);
+}
+function _bagEsc(s){ return String(s).replace(/[&<>"]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+/* Move an item to a tab id, to 'all' (out of every tab), or to 'new' (a tab of its
+   own). `before` is an item already in that tab to put it in front of. */
+function bagMoveItem(id, to, before){
+  if(!id||!ITEMS[id]) return false;
+  const tabs=bagTabs();
+  if(to==='new'&&tabs.length>=BAG_TAB_MAX){ toast('That is all '+BAG_TAB_MAX+' tabs. Delete one to make another.'); return false; }
+  if(to!=='all'&&to!=='new'&&!tabs.some(function(t){ return t.id===to; })) return false;
+  tabs.forEach(function(t){ t.items=t.items.filter(function(x){ return x!==id; }); });
+  if(to==='new'){
+    let n=1; while(tabs.some(function(t){ return t.id==='t'+n; })) n++;
+    tabs.push({id:'t'+n, name:'', items:[id]});
+  } else if(to!=='all'){
+    const t=tabs.find(function(x){ return x.id===to; });
+    const i=before?t.items.indexOf(before):-1;
+    if(i>=0) t.items.splice(i,0,id); else t.items.push(id);
+  }
+  saveGame(); renderInventory();
+  return true;
+}
+function bagNewTab(){
+  const tabs=bagTabs();
+  if(tabs.length>=BAG_TAB_MAX){ toast('That is all '+BAG_TAB_MAX+' tabs. Delete one to make another.'); return null; }
+  let n=1; while(tabs.some(function(t){ return t.id==='t'+n; })) n++;
+  const t={id:'t'+n, name:'', items:[]};
+  tabs.push(t);
+  return t;
+}
+function bagRenameTab(tid, name){
+  const t=bagTabs().find(function(x){ return x.id===tid; }); if(!t) return;
+  t.name=String(name||'').replace(/\s+/g,' ').trim().slice(0,20);
+  saveGame(); renderInventory();
+}
+function bagDeleteTab(tid){
+  state.bagTabs=bagTabs().filter(function(x){ return x.id!==tid; });
+  if(invTab===tid){ invTab='all'; if(state.invPrefs) state.invPrefs.tab='all'; }
+  saveGame(); renderInventory();
+}
+/* One press: the tab's items by type, then name. It does not stay sorted; it is
+   your order again the moment you drag something. */
+function bagSortTab(tid){
+  const t=bagTabs().find(function(x){ return x.id===tid; }); if(!t) return;
+  const cat=_bagCatFn||function(){ return 'misc'; }, order=_bagCatOrder||[];
+  t.items.sort(function(a,b){
+    const ia=ITEMS[a], ib=ITEMS[b]; if(!ia||!ib) return ia?-1:ib?1:0;
+    const ca=order.indexOf(cat(a)), cb=order.indexOf(cat(b));
+    return ca!==cb?ca-cb:ia.name.localeCompare(ib.name);
+  });
+  saveGame(); renderInventory();
+}
+function _bagTabRowHTML(id){
+  const tabs=bagTabs(), cur=bagTabOf(id);
+  let h='<div class="dk-tabs"><span class="lb">Tab</span>';
+  tabs.forEach(function(t){
+    h+='<button type="button" class="bag-btn'+(t.id===cur?' on':'')+'" data-bag="moveto" data-tab="'+t.id+'"'+(t.id===cur?' disabled':'')+'>'+_bagEsc(bagTabLabel(t))+'</button>';
+  });
+  if(tabs.length<BAG_TAB_MAX) h+='<button type="button" class="bag-btn" data-bag="moveto" data-tab="new">+ New tab</button>';
+  if(cur) h+='<button type="button" class="bag-btn" data-bag="moveto" data-tab="all">Out of tab</button>';
+  return h+'</div>';
+}
+
+/* ── the screen ───────────────────────────────────────────────────────────────── */
+let invOpen=false, _invWhere='';
+function _invWhereNow(){
+  return viewTab+'|'+selectedSkill+'|'+(combatMode?1:0)+'|'+((typeof sailMode!=='undefined'&&sailMode)?1:0);
+}
+function openInventory(){
+  leaveFullPanels();
+  invOpen=true; _invWhere=_invWhereNow();
+  updateModePanels();
+  if(typeof sizeRightBar==='function') sizeRightBar(true);
+  _invGearKey=''; renderInvGear(); renderInventory();
+}
+function closeInventory(){
+  if(!invOpen) return;
+  invOpen=false; _bagDrag=null;
+  if(typeof hideTooltip==='function') hideTooltip();
+  updateModePanels(); renderRightPanel(); renderCenter();
+}
+/* The gear column: the same doll and numbers as the Gear tab, since the right bar
+   is covered while the satchel is open. */
+let _invGearKey='';
+function renderInvGear(){
+  const box=$('invGear'); if(!box) return;
+  const lo=_gearFilter==='combat'?state.combatEquipped:state.skillingEquipped;
+  const key=_gearFilter+'|'+JSON.stringify(lo||{})+'|'+JSON.stringify(state.combatXp||{})+'|'
+    +((state.action&&state.action.skill)||'')+'|'+selectedSkill;
+  if(key===_invGearKey&&box.firstChild) return;
+  _invGearKey=key;
+  box.innerHTML='';
+  const seg=document.createElement('div'); seg.className='lo-seg';
+  seg.innerHTML='<button type="button" class="'+(_gearFilter==='combat'?'on':'')+'" data-gf="combat">Combat</button>'
+    +'<button type="button" class="'+(_gearFilter==='skilling'?'on':'')+'" data-gf="skilling">Skilling</button>';
+  seg.querySelectorAll('[data-gf]').forEach(function(b){
+    b.addEventListener('click',function(){ _gearFilter=b.getAttribute('data-gf'); _invGearKey=''; renderInvGear(); });
+  });
+  box.appendChild(seg);
+  box.appendChild(gearDollEl(54,26,10));
+  const st=document.createElement('div'); st.innerHTML=_gearStatsHTML();
+  if(st.firstChild) box.appendChild(st.firstChild);
+}
 
 function bagFmtQty(q){
   if(q<10000) return q.toLocaleString();
@@ -29580,6 +29762,7 @@ function _bagTile(id){
   /* The hover card is on the whole tile, not only its picture, and opens above the
      pointer: below, it covered the dock and its Sell buttons (0.9.124.43). */
   el.setAttribute('data-item',id); el.setAttribute('data-ttup','1');
+  el.setAttribute('draggable','true');   // onto a tab, onto +, or onto another item
   el.innerHTML='<span class="bag-wt">Worn</span><span class="bag-ic">'+iconHTML(id)+'</span>'
     +'<span class="bag-q"></span><span class="bag-tn inv-name">'+it.name+'</span>';
   t={el:el,sig:''}; _bagTiles.set(id,t);
@@ -29709,27 +29892,31 @@ function _bagDockHTML(id,cat){
 
 function renderInventory(){
   const box=$('inventory'); if(!box) return;
-  /* state.invPrefs is the source of truth; these two are this render's cache of it.
+  /* state.invPrefs is the source of truth; these are this render's cache of it.
      Read every time rather than once at load, so switching save slot switches view. */
   if(state.invPrefs){
     if(typeof state.invPrefs.sort==='string') invSort=state.invPrefs.sort;
-    if(typeof state.invPrefs.cat ==='string') invCat =state.invPrefs.cat;
+    if(typeof state.invPrefs.tab ==='string') invTab =state.invPrefs.tab;
   }
-  if(BAG_OLD_CAT[invCat]) invCat=BAG_OLD_CAT[invCat];
-  if(!BAG_CHIPS.some(c=>c.key===invCat)) invCat='all';
   if(!BAG_SORT_LABEL[invSort]) invSort='category';
+  if(invTab!=='all'&&!bagTabs().some(function(t){ return t.id===invTab; })) invTab='all';
 
   /* The skeleton is built once. The search box in particular must survive: it
      re-renders on every keystroke and the game repaints on every action, and a
      rebuilt input loses focus between letters (v0.9.106). */
   if(!box.querySelector('.bag-top')){
     box.className='bag';
-    box.innerHTML='<div class="bag-top">'
+    box.innerHTML='<section class="inv-main"><div class="bag-top">'
+      +'<div class="bag-tabs"></div>'
       +'<div class="bag-row"><input type="text" class="inv-search bag-search" autocomplete="off" spellcheck="false">'
       +'<button type="button" class="inv-sort on bag-pill" title="Sort order. Left-click: next, right-click: previous"></button></div>'
-      +'<div class="bag-cats"></div><div class="bag-capwrap"></div></div>'
-      +'<div class="bag-scroll"><div class="bag-body"></div></div>'
-      +'<div class="bag-dock"></div>';
+      +'<div class="bag-tabbar"></div></div>'
+      +'<div class="bag-scroll"><div class="bag-body"></div></div></section>'
+      +'<aside class="inv-side"><div class="bag-capwrap"></div><div class="bag-dock"></div></aside>';
+    /* The drops feed is written to by id from the moment the game boots, so it lives
+       in the page and moves in here rather than being made here. */
+    const side=box.querySelector('.inv-side');
+    ['dropsFeedLabel','itemDropsFeed'].forEach(function(fid){ const el=$(fid); if(el) side.appendChild(el); });
     const srch=box.querySelector('.inv-search');
     srch.addEventListener('input',()=>{ invSearch=srch.value; box.querySelector('.bag-scroll').scrollTop=0; renderInventory(); });
     const sortBtn=box.querySelector('.inv-sort');
@@ -29750,6 +29937,9 @@ function renderInventory(){
         const b=box.querySelector('.bag-dock [data-bag="sellx"]'); if(b) b.click();
       }
     });
+    box.addEventListener('change',e=>{
+      if(e.target.classList&&e.target.classList.contains('bag-tabname')) bagRenameTab(invTab,e.target.value);
+    });
     box.addEventListener('click',e=>{
       const el=e.target.closest?e.target.closest('[data-bag]'):null;
       if(!el||!box.contains(el)||el.disabled) return;
@@ -29760,8 +29950,8 @@ function renderInventory(){
         bagSelect(tid===_bagSel?null:tid);
         return;
       }
-      if(act==='cat'){
-        const key=el.getAttribute('data-cat');
+      if(act==='tab'){
+        const key=el.getAttribute('data-tab');
         if(key==='all'){
           const _now=Date.now();
           if(_now-_devSellLast>3000) _devSellTaps=0;
@@ -29770,13 +29960,24 @@ function renderInventory(){
              unlimited gold and every item, none of it through addSkillXp. */
           if(_devSellTaps>=5&&!IS_DEMO){ _devSellTaps=0; $('devPanel').classList.toggle('hidden'); if(!$('devPanel').classList.contains('hidden')){ renderDevSteam(); _auditPing('Dev/cheat panel opened', null, 'devopen'); } }
         }
-        invCat=key; if(state.invPrefs) state.invPrefs.cat=key; saveGame();
+        if(key==='new'){
+          /* With an item picked, + gives it a tab of its own; with nothing picked it
+             opens an empty tab to drag things into. */
+          if(_bagSel&&ITEMS[_bagSel]){ bagMoveItem(_bagSel,'new'); return; }
+          const t=bagNewTab(); if(!t) return;
+          invTab=t.id;
+        } else invTab=key;
+        if(state.invPrefs) state.invPrefs.tab=invTab;
+        saveGame();
         box.querySelector('.bag-scroll').scrollTop=0;
         renderInventory();
         return;
       }
-      if(act==='goshop'){ gotoShopCat('storage'); return; }
+      if(act==='tabsort'){ bagSortTab(invTab); return; }
+      if(act==='tabdel'){ bagDeleteTab(invTab); return; }
+      if(act==='goshop'){ closeInventory(); gotoShopCat('storage'); return; }
       const id=_bagSel; if(!id||!ITEMS[id]) return;
+      if(act==='moveto'){ bagMoveItem(id, el.getAttribute('data-tab')); return; }
       if(act==='sell'){ const n=el.getAttribute('data-n'); bagSell(id, n==='all'?Infinity:(parseInt(n,10)||0)); return; }
       if(act==='sellx'){
         const inp=box.querySelector('.bag-dock .inv-qtybox');
@@ -29787,6 +29988,37 @@ function renderInventory(){
       if(act==='equip'){ equipBodyItem(id,ITEMS[id].cslot,'combat'); return; }
       if(act==='remove'){ unequipBodyItem(ITEMS[id].cslot,'combat'); return; }
       if(act==='use'){ usePotion(id); renderRightPanel(); return; }
+    });
+    /* Drag an item onto a tab, onto +, or onto another item. */
+    const clearDrag=()=>box.querySelectorAll('.dragging,.drop-on').forEach(x=>x.classList.remove('dragging','drop-on'));
+    box.addEventListener('dragstart',e=>{
+      const t=e.target.closest?e.target.closest('.bag-tile'):null; if(!t) return;
+      _bagDrag=t.getAttribute('data-id');
+      try{ e.dataTransfer.effectAllowed='move'; e.dataTransfer.setData('text/plain',_bagDrag); }catch(_){}
+      t.classList.add('dragging');
+      if(typeof hideTooltip==='function') hideTooltip();
+    });
+    box.addEventListener('dragend',()=>{ _bagDrag=null; clearDrag(); });
+    box.addEventListener('dragover',e=>{
+      if(!_bagDrag) return;
+      const tgt=e.target.closest?(e.target.closest('.bag-tab')||e.target.closest('.bag-tile')):null;
+      if(!tgt) return;
+      e.preventDefault();
+      try{ e.dataTransfer.dropEffect='move'; }catch(_){}
+      if(!tgt.classList.contains('drop-on')){ box.querySelectorAll('.drop-on').forEach(x=>x.classList.remove('drop-on')); tgt.classList.add('drop-on'); }
+    });
+    box.addEventListener('drop',e=>{
+      if(!_bagDrag) return;
+      const id=_bagDrag; _bagDrag=null; clearDrag();
+      const tab=e.target.closest?e.target.closest('.bag-tab'):null;
+      if(tab){ e.preventDefault(); bagMoveItem(id, tab.getAttribute('data-tab')); return; }
+      const tile=e.target.closest?e.target.closest('.bag-tile'):null;
+      if(!tile) return;
+      e.preventDefault();
+      const before=tile.getAttribute('data-id'); if(before===id) return;
+      const grid=tile.closest('.bag-tiles'), where=grid?grid.getAttribute('data-tab'):'';
+      if(where&&where!=='loose') bagMoveItem(id, where, before);   // into that tab, in front of it
+      else if(bagTabOf(id)) bagMoveItem(id,'all');                  // among the loose items: out of its tab
     });
   }
 
@@ -29832,16 +30064,15 @@ function renderInventory(){
     if(['birds_nest','ember_resin','shadow_crystal'].includes(id)) return 'logs';
     return 'misc';
   }
-  /* The order groups appear in under Category. Every bucket itemCat() can return
-     must be here, or indexOf gives -1 and that bucket sorts to the front. */
+  /* The order kinds appear in under Type. Every bucket itemCat() can return must be
+     here, or indexOf gives -1 and that bucket sorts to the front. */
   const catOrder=['gear','jewelry','ores','bars','logs','fire','fish','cooked','potions','forage','farm','gems','sea','misc'];
+  _bagCatFn=itemCat; _bagCatOrder=catOrder;
 
   const catOf={}; for(const id of owned) catOf[id]=itemCat(id);
-  const chip=BAG_CHIPS.find(c=>c.key===invCat)||BAG_CHIPS[0];
   const qs=invSearch.trim().toLowerCase();
-  const list=owned.filter(id=>(!chip.buckets||chip.buckets.indexOf(catOf[id])>=0)
-    &&(!qs||ITEMS[id].name.toLowerCase().indexOf(qs)>=0));
-  list.sort((a,b)=>{
+  const match=id=>!qs||ITEMS[id].name.toLowerCase().indexOf(qs)>=0;
+  const sortFn=(a,b)=>{
     if(invSort==='category'){
       const ca=catOrder.indexOf(catOf[a]), cb=catOrder.indexOf(catOf[b]);
       if(ca!==cb) return ca-cb;
@@ -29851,31 +30082,69 @@ function renderInventory(){
     if(invSort==='qty') return (state.items[b]||0)-(state.items[a]||0);
     if(invSort==='value') return effectiveItemSell(b)-effectiveItemSell(a);
     return 0;
-  });
+  };
+  const tabs=bagTabs();
+  const ownedSet=new Set(owned), inTab=new Set();
+  tabs.forEach(t=>t.items.forEach(id=>inTab.add(id)));
 
-  // header
+  /* What the grid shows, as sections: [{tab, label, face, ids}] */
+  const sections=[];
+  if(invTab==='all'){
+    tabs.forEach(t=>{
+      const ids=t.items.filter(id=>ownedSet.has(id)&&match(id));
+      if(ids.length) sections.push({tab:t.id, label:bagTabLabel(t), face:t.items.find(id=>ownedSet.has(id)), ids:ids});
+    });
+    const loose=owned.filter(id=>!inTab.has(id)&&match(id)).sort(sortFn);
+    if(loose.length){
+      if(tabs.length) sections.push({tab:'loose', label:'Not in a tab', ids:loose});
+      else if(invSort==='category'){
+        let cur=null;
+        loose.forEach(id=>{ if(catOf[id]!==cur){ cur=catOf[id]; sections.push({tab:'loose', label:BAG_BUCKET_LABEL[cur]||'Other', ids:[]}); } sections[sections.length-1].ids.push(id); });
+      } else sections.push({tab:'loose', label:'', ids:loose});
+    }
+  } else {
+    const t=tabs.find(x=>x.id===invTab);
+    const ids=t.items.filter(id=>ownedSet.has(id)&&match(id));
+    if(ids.length) sections.push({tab:t.id, label:'', ids:ids});
+  }
+  const shown=[]; sections.forEach(s=>s.ids.forEach(id=>shown.push(id)));
+
+  // header: search, sort
   const srch=box.querySelector('.inv-search');
   if(srch.value!==invSearch) srch.value=invSearch;
-  srch.placeholder='Search '+owned.length.toLocaleString()+' item'+(owned.length===1?'':'s');
+  srch.placeholder=invTab==='all'?'Search '+owned.length.toLocaleString()+' item'+(owned.length===1?'':'s'):'Search this tab';
   const sortBtn=box.querySelector('.inv-sort');
   const sortTxt='↕ '+BAG_SORT_LABEL[invSort];
   if(sortBtn.textContent!==sortTxt) sortBtn.textContent=sortTxt;
+  /* Sorting is for what is not in a tab: a tab keeps the order you gave it. */
+  sortBtn.style.display=invTab==='all'?'':'none';
 
-  const counts=BAG_CHIPS.map(c=>c.buckets?owned.filter(id=>c.buckets.indexOf(catOf[id])>=0).length:owned.length);
-  const cats=box.querySelector('.bag-cats');
-  const catKey=invCat+'|'+counts.join(',');
-  if(cats.getAttribute('data-key')!==catKey){
-    cats.setAttribute('data-key',catKey);
-    cats.innerHTML=BAG_CHIPS.map((c,i)=>{
-      if(c.buckets&&!counts[i]&&c.key!==invCat) return '';
-      /* Only the open chip prints its count (0.9.124.43): eleven counts cost a whole
-         row of chips in a 320px bar. The others carry it in their tip. */
-      const on=c.key===invCat, n=counts[i].toLocaleString();
-      return '<button type="button" class="bag-cat'+(on?' on':'')+'" data-bag="cat" data-cat="'+c.key+'" title="'+c.label+': '+n+'">'
-        +(c.icon?iconHTML(c.icon):'')+c.label+(on?' <i>'+n+'</i>':'')+'</button>';
-    }).join('');
+  // tabs
+  const tabsEl=box.querySelector('.bag-tabs');
+  const counts=tabs.map(t=>t.items.filter(id=>ownedSet.has(id)).length);
+  const tabKey=invTab+'|'+owned.length+'|'+tabs.map((t,i)=>t.id+':'+t.name+':'+counts[i]+':'+(t.items.find(id=>ownedSet.has(id))||'')).join(',');
+  if(tabsEl.getAttribute('data-key')!==tabKey){
+    tabsEl.setAttribute('data-key',tabKey);
+    tabsEl.innerHTML='<button type="button" class="bag-tab'+(invTab==='all'?' on':'')+'" data-bag="tab" data-tab="all" title="Everything in your satchel">All <i>'+owned.length.toLocaleString()+'</i></button>'
+      +tabs.map((t,i)=>{
+        const face=t.items.find(id=>ownedSet.has(id));
+        return '<button type="button" class="bag-tab'+(invTab===t.id?' on':'')+(face?'':' bare')+'" data-bag="tab" data-tab="'+t.id+'" title="'+_bagEsc(bagTabLabel(t))+'">'
+          +(face?iconHTML(face):'<span class="bag-tab-dot"></span>')
+          +(t.name?'<span class="bag-tab-nm">'+_bagEsc(t.name)+'</span>':'')+'<i>'+counts[i]+'</i></button>';
+      }).join('')
+      +(tabs.length<BAG_TAB_MAX?'<button type="button" class="bag-tab add" data-bag="tab" data-tab="new" title="Drag an item here to give it a tab of its own">+</button>':'');
+  }
+  // the open tab's own controls: its name, a sort, and delete
+  const bar=box.querySelector('.bag-tabbar');
+  if(bar.getAttribute('data-tab')!==invTab){
+    bar.setAttribute('data-tab',invTab);
+    const t=tabs.find(x=>x.id===invTab);
+    bar.innerHTML=!t?'':'<input type="text" class="bag-tabname" maxlength="20" placeholder="Name this tab" value="'+_bagEsc(t.name||'')+'">'
+      +'<button type="button" class="bag-btn" data-bag="tabsort" title="Puts this tab in order by type, once">Sort by type</button>'
+      +'<button type="button" class="bag-btn" data-bag="tabdel" title="Its items go back to All">Delete tab</button>';
   }
 
+  // capacity
   const cap=satchelCap(), used=satchelUsed();
   const pct=Math.min(100,Math.round(used/cap*100));
   const bought=state.satchelUpgrades||0, atMax=bought>=SATCHEL_MAX_EXPANSIONS;
@@ -29895,37 +30164,28 @@ function renderInventory(){
 
   // grid
   const body=box.querySelector('.bag-body');
-  const grouped=invSort==='category';
-  const orderKey=invSort+'|'+invCat+'|'+qs+'|'+list.join(',');
+  const orderKey=invSort+'|'+invTab+'|'+qs+'|'+sections.map(s=>s.tab+':'+s.label+':'+s.ids.join(',')).join('/');
   if(orderKey!==_bagOrderKey){
     _bagOrderKey=orderKey;
     const frag=document.createDocumentFragment();
-    if(!list.length){
+    if(!sections.length){
       const emp=document.createElement('div'); emp.className='inv-empty bag-empty';
-      emp.textContent=owned.length?'Nothing matches.':'Your satchel is empty.';
+      emp.textContent=invTab!=='all'&&!qs?'This tab is empty. Drag items onto it, or pick one and use its Tab buttons.'
+        :owned.length?'Nothing matches.':'Your satchel is empty.';
       frag.appendChild(emp);
-    } else if(grouped){
-      const inBucket={}; for(const id of list) inBucket[catOf[id]]=(inBucket[catOf[id]]||0)+1;
-      let cur=null, grid=null;
-      for(const id of list){
-        if(catOf[id]!==cur){
-          cur=catOf[id];
-          const h=document.createElement('div'); h.className='bag-grp';
-          h.innerHTML=(BAG_BUCKET_LABEL[cur]||'Other')+' <i>'+inBucket[cur]+'</i>';
-          frag.appendChild(h);
-          grid=document.createElement('div'); grid.className='bag-tiles';
-          frag.appendChild(grid);
-        }
-        grid.appendChild(_bagTile(id).el);
+    } else sections.forEach(s=>{
+      if(s.label){
+        const h=document.createElement('div'); h.className='bag-grp'+(s.face?' tabhead':'');
+        h.innerHTML=(s.face?iconHTML(s.face):'')+_bagEsc(s.label)+' <i>'+s.ids.length+'</i>';
+        frag.appendChild(h);
       }
-    } else {
-      const grid=document.createElement('div'); grid.className='bag-tiles';
-      for(const id of list) grid.appendChild(_bagTile(id).el);
+      const grid=document.createElement('div'); grid.className='bag-tiles'; grid.setAttribute('data-tab',s.tab);
+      s.ids.forEach(id=>grid.appendChild(_bagTile(id).el));
       frag.appendChild(grid);
-    }
+    });
     body.replaceChildren(frag);
   }
-  for(const id of list){
+  for(const id of shown){
     const t=_bagTile(id), q=state.items[id]||0, worn=reservedForEquip(id)>0, sel=_bagSel===id;
     const sig=q+'|'+(worn?1:0)+'|'+(sel?1:0);
     if(t.sig===sig) continue;
@@ -29935,7 +30195,7 @@ function renderInventory(){
     t.el.classList.toggle('sel',sel);
   }
 
-  // dock
+  // the item card
   const dock=box.querySelector('.bag-dock');
   if(_bagSel&&!((state.items[_bagSel]||0)>0&&ITEMS[_bagSel])){ _bagSel=null; }
   const qb=dock.querySelector('.inv-qtybox');
@@ -29944,26 +30204,26 @@ function renderInventory(){
     if(_bagDockSig!=='none'){
       _bagDockSig='none';
       dock.classList.add('empty');
-      dock.innerHTML='<div class="bag-dock-hint">Click an item to equip, use or sell it.</div>';
+      dock.innerHTML='<div class="bag-dock-hint">Click an item to see it here, with its buttons.</div>';
     }
   } else {
     const id=_bagSel;
     const ce=state.combatEquipped||{};
     const sig=[id,state.items[id],reservedForEquip(id),sellableQty(id),ce[ITEMS[id].cslot]||'',
-      JSON.stringify(state.combatXp||{}),(state.effects||[]).length].join('|');
+      JSON.stringify(state.combatXp||{}),(state.effects||[]).length,bagTabOf(id)||'',tabs.map(t=>t.id+t.name).join(',')].join('|');
     if(typing){
       // keep the half-typed amount; only the count can change under it
       const qe=dock.querySelector('.dk-q'); if(qe&&qe.firstChild) qe.firstChild.textContent=(state.items[id]||0).toLocaleString();
     } else if(sig!==_bagDockSig||(ITEMS[id].potion&&ITEMS[id].potion.dur)){
       _bagDockSig=sig;
       dock.classList.remove('empty');
-      dock.innerHTML=_bagDockHTML(id,catOf[id]);
+      dock.innerHTML=_bagDockHTML(id,catOf[id])+_bagTabRowHTML(id);
     }
   }
 }
 
-/* Right panel tab state */
-let rightTab='satchel';
+/* Right panel tab state. The satchel left it for its own screen (0.9.124.47). */
+let rightTab='gear';
 
 /* ════════ COMBAT (leveled scaffold) ═════════════════════════════════════════
    combatMode  — the Combat tab is open (left+center panels swapped for the arena)
@@ -34553,12 +34813,14 @@ function sizeRightBar(force){
   document.documentElement.style.setProperty('--rb-h',Math.max(480,h)+'px');
 }
 function renderRightPanel(){
+  /* While the satchel screen is open the right bar is covered, and every caller
+     that refreshes the right bar after an item changes means the satchel. */
+  if(invOpen){ renderInvGear(); renderInventory(); updateNotifBadge(); return; }
   sizeRightBar();
-  $('tabSatchel').classList.toggle('on',rightTab==='satchel');
+  if(rightTab!=='gear'&&rightTab!=='notifs'&&rightTab!=='presets') rightTab='gear';
   $('tabGear').classList.toggle('on',rightTab==='gear');
   $('tabNotifs').classList.toggle('on',rightTab==='notifs');
   $('tabPresets').classList.toggle('on',rightTab==='presets');
-  $('satchelView').style.display=rightTab==='satchel'?'':'none';
   $('gearView').style.display=rightTab==='gear'?'':'none';
   $('notifsView').style.display=rightTab==='notifs'?'':'none';
   $('presetsView').style.display=rightTab==='presets'?'':'none';
@@ -34569,7 +34831,6 @@ function renderRightPanel(){
     // highlighted until the user hovers it (parallels the Compendium behavior).
     renderNotifications();
   }
-  else { renderInventory(); }
   updateNotifBadge();
 }
 
@@ -34710,32 +34971,9 @@ function _gearStatsHTML(){
     +'<div>'+pct(dbl)+'<span>Double</span></div><div>'+pct(sell)+'<span>Sell value</span></div></div></div>';
 }
 
-function renderGear(){
-  // Two-layer guard: skip rebuild if a select inside the gear panel is focused,
-  // OR if the user interacted with any gear select in the last 3 seconds.
-  var _gaf=document.activeElement;
-  if(_gaf&&_gaf.tagName==='SELECT'&&$('gearView')&&$('gearView').contains(_gaf)) return;
-  if(Date.now()-_gearInteractAt<3000) return;
-  const box=$('gearView');
-  const keep=box.scrollTop;
-  box.innerHTML='';
-
-  // ── Combat / Skilling switch: scopes the doll, the picker and the sections below ──
-  var filterRow=document.createElement('div');
-  filterRow.className='lo-seg';
-  filterRow.innerHTML=
-     '<button type="button" class="'+(_gearFilter==='combat'?'on':'')+'" data-gf="combat">Combat</button>'
-    +'<button type="button" class="'+(_gearFilter==='skilling'?'on':'')+'" data-gf="skilling">Skilling</button>';
-  filterRow.querySelectorAll('[data-gf]').forEach(function(b){
-    b.addEventListener('click',function(){
-      _gearFilter=b.getAttribute('data-gf');
-      _gearInteractAt=0; // bypass the 3s focus guard for this user-driven switch
-      box.scrollTop=0;
-      renderGear();
-    });
-  });
-  box.appendChild(filterRow);
-
+/* The paper doll for whichever loadout _gearFilter names. The Gear tab and the
+   satchel screen both draw it (0.9.124.47). */
+function gearDollEl(sq,cg,rg){
   /* The doll (see buildDoll) is a fixed 3-wide layout, so a new BODY_SLOTS entry
      does NOT appear here on its own. A skilling loadout can still hold a weapon
      from before the loadouts split (v1.0.46); its square shows until that comes
@@ -34743,7 +34981,7 @@ function renderGear(){
   var dollLoadout=_gearFilter==='combat' ? state.combatEquipped : state.skillingEquipped;
   var dollLayout=DOLL_LAYOUT_PE_COMBAT.map(function(r){ return r.map(function(s){
     return (_gearFilter!=='combat'&&DOLL_COMBAT_ONLY[s]&&!dollLoadout[s])?null:s; }); });
-  const dollGrid=buildDoll(dollLayout,function(slotKey){
+  return buildDoll(dollLayout,function(slotKey){
     var def=BODY_SLOTS.find(function(s){return s.slot===slotKey;});
     var equippedId=dollLoadout[slotKey];
     var equippedDef=equippedId?getBodyItemDef(equippedId):null;
@@ -34781,8 +35019,37 @@ function renderGear(){
       cell.addEventListener('mouseleave',hideGearTip);
     }
     return cell;
-  },56,30,10);
-  box.appendChild(dollGrid);
+  },sq,cg,rg);
+
+}
+
+function renderGear(){
+  // Two-layer guard: skip rebuild if a select inside the gear panel is focused,
+  // OR if the user interacted with any gear select in the last 3 seconds.
+  var _gaf=document.activeElement;
+  if(_gaf&&_gaf.tagName==='SELECT'&&$('gearView')&&$('gearView').contains(_gaf)) return;
+  if(Date.now()-_gearInteractAt<3000) return;
+  const box=$('gearView');
+  const keep=box.scrollTop;
+  box.innerHTML='';
+
+  // ── Combat / Skilling switch: scopes the doll, the picker and the sections below ──
+  var filterRow=document.createElement('div');
+  filterRow.className='lo-seg';
+  filterRow.innerHTML=
+     '<button type="button" class="'+(_gearFilter==='combat'?'on':'')+'" data-gf="combat">Combat</button>'
+    +'<button type="button" class="'+(_gearFilter==='skilling'?'on':'')+'" data-gf="skilling">Skilling</button>';
+  filterRow.querySelectorAll('[data-gf]').forEach(function(b){
+    b.addEventListener('click',function(){
+      _gearFilter=b.getAttribute('data-gf');
+      _gearInteractAt=0; // bypass the 3s focus guard for this user-driven switch
+      box.scrollTop=0;
+      renderGear();
+    });
+  });
+  box.appendChild(filterRow);
+
+  box.appendChild(gearDollEl(56,30,10));
 
   const stats=document.createElement('div');
   stats.innerHTML=_gearStatsHTML();
@@ -36920,6 +37187,9 @@ function renderXpDetail(){
 
 
 function renderCenter(){
+  /* Picking a skill, a page or a mode while the satchel is open means leaving it;
+     every one of those paths changes one of these, whichever code did it. */
+  if(invOpen&&_invWhereNow()!==_invWhere){ invOpen=false; updateModePanels(); renderRightPanel(); }
   renderXpDetail();
   renderEffectsBar();
   const sk=SKILLS[selectedSkill];
@@ -38803,8 +39073,13 @@ function cmbLog(text,cls){
 function updateModePanels(){
   const on=combatMode;
   const sl=(typeof sailMode!=='undefined')&&sailMode;
+  const inv=invOpen&&!on&&!sl;
   $('leftPanel').style.display   = (on||sl)?'none':'';
-  $('centerPanel').style.display = (on||sl)?'none':'';
+  $('centerPanel').style.display = (on||sl||inv)?'none':'';
+  $('rightPanel').style.display  = inv?'none':'';
+  const ivs=$('invScreen'); if(ivs) ivs.style.display=inv?'':'none';
+  const bagBtn=$('tabBag'); if(bagBtn) bagBtn.classList.toggle('on',inv);
+  if(inv){ ['tabShop','tabMastery','tabComp','tabAch','tabGuild'].forEach(id=>{ const b=$(id); if(b) b.classList.remove('on'); }); }
   $('combatPanel').style.display = on?'':'none';
   const slPanel=$('sailPanel'); if(slPanel) slPanel.style.display = sl?'':'none';
   const slBtn=$('tabSail'); if(slBtn) slBtn.classList.toggle('on', sl);
@@ -38817,7 +39092,7 @@ function updateModePanels(){
   }
   if(on){ ['tabShop','tabMastery','tabComp'].forEach(id=>{ const b=$(id); if(b) b.classList.remove('on'); }); }
 }
-function enterCombat(){ refreshCombatStats(); combatMode=true; if(typeof sailMode!=='undefined') sailMode=false; updateModePanels(); renderCombat(); }
+function enterCombat(){ refreshCombatStats(); combatMode=true; invOpen=false; if(typeof sailMode!=='undefined') sailMode=false; updateModePanels(); renderCombat(); }
 function closeCombatPanel(){
   // Hide combat panel and restore the skilling view — DO NOT touch fight state.
   // If a fight is in progress it keeps ticking; the Combat tab pulses to signal it.
@@ -46006,7 +46281,7 @@ function sailTickUI(){
 }
 
 function enterSailing(){
-  sailMode=true; combatMode=false;
+  sailMode=true; combatMode=false; invOpen=false;
   _slViewInit=false;              // fit the chart to whatever the window is now
   updateModePanels(); renderSail();
 }
@@ -47044,7 +47319,7 @@ async function resetCharacter(){
   state=defaultState();
   state.charName=keepName;
   normalizeState();
-  selectedSkill='woodcutting'; viewTab='acts'; rightTab='satchel';
+  selectedSkill='woodcutting'; viewTab='acts'; rightTab='gear'; invOpen=false;
   renderAll(); saveGame();
   toast('Save reset. Starting fresh!');
 }
@@ -47059,7 +47334,13 @@ async function resetCharacter(){
 document.querySelectorAll('#railGroups .rg').forEach(b=>{
   b.addEventListener('click',()=>setRailGroup(b.dataset.rg));
 });
-$('tabSatchel').addEventListener('click',()=>{ rightTab='satchel'; _gearSetsOpen=false; renderRightPanel(); });
+$('tabBag').addEventListener('click',()=>{ if(invOpen) closeInventory(); else openInventory(); });
+$('invBack').addEventListener('click',()=>closeInventory());
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Escape'||!invOpen) return;
+  if(document.querySelector('.modal-back:not(.hidden)')) return;   // a dialog closes first
+  closeInventory();
+});
 $('tabGear').addEventListener('click',()=>{ rightTab='gear'; renderRightPanel(); });
 $('tabNotifs').addEventListener('click',()=>{ rightTab='notifs'; _gearSetsOpen=false; renderRightPanel(); });
 $('tabPresets').addEventListener('click',()=>{ rightTab='presets'; _gearSetsOpen=false; renderRightPanel(); });
@@ -47080,7 +47361,7 @@ $('tabSail').addEventListener('click',()=>{
   $('tabCombat').classList.remove('on');
 });
 $('tabSkills').addEventListener('click',()=>{
-  closeCombatPanel(); closeSailPanel();
+  closeCombatPanel(); closeSailPanel(); closeInventory();
   $('skillListWrap').style.display='';
   $('statsViewLeft').style.display='none';
   $('tabSkills').classList.add('on');
@@ -47089,7 +47370,7 @@ $('tabSkills').addEventListener('click',()=>{
   $('mainLayout').classList.remove('stats-expanded');
 });
 $('tabStatsLeft').addEventListener('click',()=>{
-  closeCombatPanel(); closeSailPanel();
+  closeCombatPanel(); closeSailPanel(); closeInventory();
   $('skillListWrap').style.display='none';
   $('statsViewLeft').style.display='';
   $('tabSkills').classList.remove('on');
@@ -47104,6 +47385,7 @@ $('tabStatsLeft').addEventListener('click',()=>{
    header — Shop, Mastery, Collection Log, Achievements — did nothing at all, and
    the panel's own Leave button was the only way back to the game. */
 function leaveFullPanels(){
+  closeInventory();
   closeCombatPanel();
   if(typeof closeSailPanel==='function') closeSailPanel();
 }
@@ -47510,7 +47792,7 @@ function mmFinishStart(slot,isNew){
   $('emberMenu').classList.add('mm-hidden');
   $('charSelect').classList.add('mm-hidden');
   $('mmDestiny').classList.add('mm-hidden');
-  selectedSkill='woodcutting'; viewTab='acts'; rightTab='satchel';
+  selectedSkill='woodcutting'; viewTab='acts'; rightTab='gear'; invOpen=false;
   if(!isNew){ grantOffline(); try{ resumeCombatSession(); }catch(e){} }
   _coinsBaseline = state.coins||0;   // baseline AFTER offline is applied, so honest offline gold never trips the spike watch
   renderAll();
@@ -47732,7 +48014,7 @@ const HINTS={
   },
   satchel_pressure:{
     title:'Your satchel is nearly full',
-    body:"A slot holds one item type, not one item. 900 logs take up the same single slot as 1 log.\n\nWhen every slot is full, whatever you are running stops. Sell what you do not need, or buy more slots from the bar at the top of the satchel.",
+    body:"A slot holds one item type, not one item. 900 logs take up the same single slot as 1 log.\n\nWhen every slot is full, whatever you are running stops. Sell what you do not need, or buy more slots in the Shop.",
   },
 
   /* ── Crafting (0.9.107) ───────────────────────────────────────────────────
@@ -47812,7 +48094,7 @@ const TUTORIAL_STEPS=[
   {sel:null, title:'Welcome to Cindervale', text:"A quick tour of the basics — it takes about 20 seconds. You can skip anytime.", place:'center'},
   {sel:'#leftPanel', title:'Your skills', text:"Your 12 skills live here. Click one to open it — then pick an activity to train.", place:'right'},
   {sel:'#activityGrid .act', title:'Start training', text:"Click an activity to begin. It runs on its own, so you keep earning XP and loot even while you're away.", place:'right'},
-  {sel:'#rightPanel', title:'Your satchel', text:"Everything you gather, cook or craft lands here in your Satchel.", place:'left'},
+  {sel:'#tabBag', title:'Your satchel', text:"Everything you gather, cook or craft lands in your Satchel. Open it here.", place:'bottom'},
   {sel:'#tabCombat', title:'Combat', text:"When you're ready to fight, jump into Combat — clear zones, bosses and raids for powerful gear.", place:'bottom'},
   {sel:null, title:"You're all set!", text:"Level your skills, gear up, and dive into combat. Have fun, adventurer!", place:'center'},
 ];

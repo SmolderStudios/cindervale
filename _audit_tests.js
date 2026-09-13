@@ -233,12 +233,12 @@ setTimeout(() => {
     const devGate=ev(`(function(){
         var p=document.getElementById('devPanel'); if(!p) return 'no devPanel';
         p.classList.add('hidden');
-        // Drive the documented gesture: five clicks on the satchel's "All" category
-        // chip (it moved there from the old sell-mode row with the 0.9.124.41 grid).
+        // Drive the documented gesture: five clicks on the satchel's All tab (a chip
+        // from the 0.9.124.41 grid, a tab since the 0.9.124.47 tabs).
         // Render first: querying before that found nothing and made this half vacuous.
         state=defaultState(); normalizeState();
         renderInventory();
-        var chip=document.querySelector('#inventory .bag-cat[data-cat="all"]');
+        var chip=document.querySelector('#inventory .bag-tab[data-tab="all"]');
         var opened=false;
         if(chip){ for(var i=0;i<6;i++) chip.click(); opened=!p.classList.contains('hidden'); }
         var togOpened=false;
@@ -6566,24 +6566,26 @@ setTimeout(() => {
        dropRow.acts > 0 && dropRow.chips >= dropRow.acts, dropRow.acts+' acts / '+dropRow.chips+' chips');
 
     /* ── the satchel remembers how you left it (Jordan, 0.9.124.3) ───────────
-       invSort/invCat were module-level lets, so every load put the panel back on
-       Category / All. state.invPrefs is the store now; these assert a written
-       preference survives normalizeState and is what the next render reads. */
+       invSort was a module-level let, so every load put the panel back on its
+       default. state.invPrefs is the store now; these assert a written preference
+       survives normalizeState and is what the next render reads. The open tab is
+       kept the same way since tabs replaced the kind chips (0.9.124.47). */
     const invPref = JSON.parse(ev(`(function(){
       state=defaultState(); normalizeState();
-      var d={sort:state.invPrefs.sort, cat:state.invPrefs.cat};
-      state.invPrefs.sort='value'; state.invPrefs.cat='gear';
+      var d={sort:state.invPrefs.sort, tab:state.invPrefs.tab};
+      state.bagTabs=[{id:'t1',name:'Ores',items:['iron_ore']}];
+      state.invPrefs.sort='value'; state.invPrefs.tab='t1';
       normalizeState();                       // must not stomp a set preference
-      var kept={sort:state.invPrefs.sort, cat:state.invPrefs.cat};
+      var kept={sort:state.invPrefs.sort, tab:state.invPrefs.tab};
       renderInventory();                      // the render reads state, not the let
-      return JSON.stringify({def:d, kept:kept, live:{sort:invSort, cat:invCat}});
+      return JSON.stringify({def:d, kept:kept, live:{sort:invSort, tab:invTab}});
     })()`));
-    ok('a fresh satchel defaults to Category / All',
-       invPref.def.sort==='category' && invPref.def.cat==='all', JSON.stringify(invPref.def));
-    ok('and a chosen sort survives a reload (does not revert to Category)',
-       invPref.kept.sort==='value' && invPref.kept.cat==='gear', JSON.stringify(invPref.kept));
-    ok('and the panel renders the remembered one',
-       invPref.live.sort==='value' && invPref.live.cat==='gear', JSON.stringify(invPref.live));
+    ok('a fresh satchel defaults to Type sort on the All tab',
+       invPref.def.sort==='category' && invPref.def.tab==='all', JSON.stringify(invPref.def));
+    ok('and a chosen sort and tab survive a reload',
+       invPref.kept.sort==='value' && invPref.kept.tab==='t1', JSON.stringify(invPref.kept));
+    ok('and the panel renders the remembered ones',
+       invPref.live.sort==='value' && invPref.live.tab==='t1', JSON.stringify(invPref.live));
 
     /* ── #104 · presets read A-Z ──────────────────────────────────────────────
        "Can we get a sorting list for the presets or get them a-z by default?"
@@ -7219,7 +7221,7 @@ setTimeout(() => {
        only their numbers updated: rebuilding every painted icon per swing is the
        cost this design exists to avoid, and nothing would throw if it crept back. */
     const reuse = ev(`(function(){
-      state=defaultState(); normalizeState(); rightTab='satchel'; invSearch=''; state.invPrefs.cat='all'; state.invPrefs.sort='category';
+      state=defaultState(); normalizeState(); invSearch=''; state.invPrefs.tab='all'; state.invPrefs.sort='category';
       var ids=Object.keys(ITEMS).filter(function(id){ return !ITEMS[id].tool&&!ITEMS[id].skillGear&&!isSeedId(id); }).slice(0,60);
       state.items={}; ids.forEach(function(id,i){ state.items[id]=i+2; });
       _bagSel=null; renderInventory();
@@ -7233,32 +7235,33 @@ setTimeout(() => {
     ok('a repaint keeps the tile and its icon, and only the number changes',
        reuse.same === true && reuse.sameImg === true && reuse.q === '12.3k', JSON.stringify(reuse));
 
-    /* 158 items had no chip at all under the old row. Every bucket needs a chip. */
+    /* 158 items had no chip at all under the old row. With tabs, All is the home:
+       every item in the game shows there, and a kind chip saved by an older build
+       just opens All. */
     const homes = ev(`(function(){
-      state=defaultState(); normalizeState(); rightTab='satchel'; invSearch=''; state.invPrefs.sort='category';
+      state=defaultState(); normalizeState(); invSearch=''; state.invPrefs.sort='category';
       var ids=Object.keys(ITEMS).filter(function(id){ return !ITEMS[id].tool&&!ITEMS[id].skillGear&&!isSeedId(id); });
       state.items={}; ids.forEach(function(id){ state.items[id]=1; });
-      var total=0, chips=[].slice.call(document.querySelectorAll('#inventory .bag-cat')).length;
-      BAG_CHIPS.forEach(function(c){ if(c.key==='all') return;
-        state.invPrefs.cat=c.key; renderInventory(); total+=document.querySelectorAll('#inventory .bag-tile').length; });
-      state.invPrefs.cat='fish'; renderInventory();
-      return {items:ids.length, inChips:total, oldSave:invCat};
+      state.invPrefs.tab='all'; renderInventory();
+      var shown=document.querySelectorAll('#inventory .bag-tile').length;
+      state.invPrefs={sort:'category', cat:'fish'}; normalizeState(); renderInventory();
+      return {items:ids.length, shown:shown, oldSave:invTab, catGone:!('cat' in state.invPrefs)};
     })()`);
-    ok('every item in the game has a chip that shows it', homes.inChips === homes.items, JSON.stringify(homes));
-    ok('a chip saved before the grid still opens', homes.oldSave === 'food', homes.oldSave);
+    ok('every item in the game shows under All', homes.shown === homes.items, JSON.stringify(homes));
+    ok('a kind chip saved before the tabs just opens All', homes.oldSave === 'all' && homes.catGone === true, JSON.stringify(homes));
 
     const grp = ev(`(function(){
-      state=defaultState(); normalizeState(); rightTab='satchel'; invSearch=''; state.invPrefs.cat='all';
+      state=defaultState(); normalizeState(); invSearch=''; state.invPrefs.tab='all';
       state.items={bronze_sword:1, pine_log:9, cooked_trout:4};
       state.invPrefs.sort='category'; renderInventory(); var a=document.querySelectorAll('#inventory .bag-grp').length;
       state.invPrefs.sort='name'; renderInventory(); var b=document.querySelectorAll('#inventory .bag-grp').length;
       state.invPrefs.sort='category';
       return {category:a, az:b};
     })()`);
-    ok('Category sort draws a heading per kind, A-Z draws none', grp.category === 3 && grp.az === 0, JSON.stringify(grp));
+    ok('Type sort draws a heading per kind, A-Z draws none', grp.category === 3 && grp.az === 0, JSON.stringify(grp));
 
     const dock = ev(`(function(){
-      state=defaultState(); normalizeState(); rightTab='satchel'; invSearch=''; state.invPrefs.cat='all';
+      state=defaultState(); normalizeState(); invSearch=''; state.invPrefs.tab='all';
       var pot=Object.keys(ITEMS).find(function(id){ var p=ITEMS[id].potion; return p&&p.dur&&p.xp; });
       state.items={pine_log:40}; state.items[pot]=3; state.effects=[];
       _bagSel=null; renderInventory();
@@ -7485,8 +7488,8 @@ setTimeout(() => {
     /* The card was on the picture only (data-item sat on .bag-ic), so most of a tile
        showed nothing; and it opened below the pointer, over the dock's Sell buttons. */
     const hov = ev(`(function(){
-      state=defaultState(); normalizeState(); rightTab='satchel'; invSearch=''; state.invPrefs.cat='all'; state.invPrefs.sort='category';
-      state.items={iron_ore:5, pine_log:3}; _bagSel=null; renderRightPanel();
+      state=defaultState(); normalizeState(); invSearch=''; state.invPrefs.tab='all'; state.invPrefs.sort='category';
+      state.items={iron_ore:5, pine_log:3}; _bagSel=null; renderInventory();
       var z=parseFloat(getComputedStyle(document.documentElement).zoom)||1, tt=ttEl();
       tt.style.top=''; tt.style.display='none';   // nothing left over from an earlier hover
       var tn=document.querySelector('#inventory .bag-tile[data-id="iron_ore"] .bag-tn');
@@ -7504,15 +7507,117 @@ setTimeout(() => {
     ok('and the card opens above the pointer, clear of the dock', hov.name === 'block' && hov.tileTop < hov.tileCy, JSON.stringify(hov));
     ok('every other item hover still opens below', hov.plainTop > hov.plainCy, JSON.stringify(hov));
 
-    const chips = ev(`(function(){
-      state=defaultState(); normalizeState(); rightTab='satchel'; invSearch=''; state.invPrefs.cat='all';
-      state.items={iron_ore:5, copper_ore:2, pine_log:3}; _bagSel=null; renderRightPanel();
-      var c=document.querySelectorAll('#inventory .bag-cat');
-      return {counts:document.querySelectorAll('#inventory .bag-cat i').length, open:(document.querySelector('#inventory .bag-cat.on i')||{}).textContent,
-        tips:[].map.call(c,function(x){ return x.title; }).join('|')};
+    /* The kind chips this checked were replaced by tabs you make in 0.9.124.47; the
+       tabs are checked in that section. */
+  }
+
+  section('The satchel screen and tabs you make (0.9.124.47)');
+  {
+    /* Jordan: the satchel out of the right bar and "more tabs style like osrs ...
+       tabs so you can make/add your own tabs and organize how you want it". */
+    const scr = ev(`(function(){
+      state=defaultState(); normalizeState(); state.items={iron_ore:5}; _gearFilter='combat';
+      closeInventory(); leaveFullPanels(); viewTab='acts'; selectedSkill='mining'; renderAll();
+      var vis=function(id){ return document.getElementById(id).style.display!=='none'; };
+      var r={rightTabs:[].map.call(document.querySelectorAll('#rightPanel .rp-tab-strip .tab'),function(b){ return b.textContent.trim(); }).join(',')};
+      rightTab='satchel'; renderRightPanel(); r.fallback=rightTab;
+      document.getElementById('tabBag').click();
+      r.open={inv:vis('invScreen'), center:vis('centerPanel'), right:vis('rightPanel'), left:vis('leftPanel'), btn:document.getElementById('tabBag').classList.contains('on'),
+        doll:document.querySelectorAll('#invGear .dl-sq').length, tiles:document.querySelectorAll('#inventory .bag-tile').length};
+      document.getElementById('invBack').click();
+      r.back={inv:vis('invScreen'), center:vis('centerPanel'), right:vis('rightPanel')};
+      openInventory(); selectedSkill='woodcutting'; renderCenter(); r.skillClosed=!invOpen&&vis('centerPanel');
+      /* Escape waits for an open dialog to close first; the boot left the offline one up. */
+      document.querySelectorAll('.modal-back').forEach(function(m){ m.classList.add('hidden'); });
+      openInventory(); document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true})); r.escClosed=!invOpen;
+      openInventory(); enterCombat(); r.combatClosed=!invOpen&&!vis('invScreen'); exitCombat();
+      openInventory(); document.getElementById('tabShop').click(); r.shopClosed=!invOpen&&viewTab==='shop'; viewTab='acts';
+      return r;
     })()`);
-    ok('only the open chip prints its count; the rest carry it in their tip',
-       chips.counts === 1 && chips.open === '3' && /Ores & Bars: 2/.test(chips.tips) && /Logs: 1/.test(chips.tips), JSON.stringify(chips));
+    ok('the right bar keeps Gear, Alerts and Presets, and no Satchel', scr.rightTabs === 'Gear,Alerts,Presets' && scr.fallback === 'gear', JSON.stringify(scr));
+    ok('the Satchel button opens the screen over the middle and right, skill list kept',
+       scr.open.inv && !scr.open.center && !scr.open.right && scr.open.left && scr.open.btn && scr.open.tiles === 1, JSON.stringify(scr.open));
+    ok('with the gear doll beside the bag', scr.open.doll === 12, JSON.stringify(scr.open));
+    ok('Back puts everything back', !scr.back.inv && scr.back.center && scr.back.right, JSON.stringify(scr.back));
+    ok('picking a skill, Escape, Combat or another page all close it',
+       scr.skillClosed && scr.escClosed && scr.combatClosed && scr.shopClosed, JSON.stringify(scr));
+
+    const tabs = ev(`(function(){
+      state=defaultState(); normalizeState(); invSearch=''; _bagSel=null; state.invPrefs.sort='category';
+      state.items={iron_ore:5, coal:9, pine_log:3, bronze_bar:2, cooked_trout:4}; state.invPrefs.tab='all';
+      renderInventory();
+      var ids=function(sel){ return [].map.call(document.querySelectorAll(sel),function(t){ return t.getAttribute('data-id'); }).join(','); };
+      var heads=function(){ return [].map.call(document.querySelectorAll('#inventory .bag-grp'),function(h){ return h.textContent.replace(/[0-9]+$/,'').trim(); }).join('|'); };
+      var r={};
+      bagMoveItem('coal','new'); bagMoveItem('iron_ore','t1');
+      r.tabsMade=JSON.stringify(state.bagTabs);
+      renderInventory(); r.allOrder=ids('#inventory .bag-tile'); r.allHeads=heads();
+      document.querySelector('#inventory .bag-tab[data-tab="t1"]').click();
+      r.inTab=ids('#inventory .bag-tile'); r.sortHidden=document.querySelector('#inventory .inv-sort').style.display==='none';
+      bagMoveItem('pine_log','t1','coal'); r.before=state.bagTabs[0].items.join(',');
+      var nm=document.querySelector('#inventory .bag-tabname'); nm.value='  Mining   stuff '; nm.dispatchEvent(new Event('change',{bubbles:true}));
+      r.name=state.bagTabs[0].name; r.face=!!document.querySelector('#inventory .bag-tab[data-tab="t1"] .ev-icon');
+      bagSortTab('t1'); r.sorted=state.bagTabs[0].items.join(',');
+      invSearch='ore'; renderInventory(); r.search=ids('#inventory .bag-tile'); invSearch=''; renderInventory();
+      state.items.iron_ore=0; renderInventory(); r.goneShown=ids('#inventory .bag-tile'); r.goneKept=state.bagTabs[0].items.indexOf('iron_ore')>=0;
+      grantItem('iron_ore',2); renderInventory(); r.back=ids('#inventory .bag-tile');
+      bagMoveItem('pine_log','all'); r.out=state.bagTabs[0].items.indexOf('pine_log')<0;
+      bagDeleteTab('t1'); r.deleted=state.bagTabs.length===0&&invTab==='all'; renderInventory(); r.allAfter=document.querySelectorAll('#inventory .bag-tile').length;
+      for(var i=0;i<10;i++) bagNewTab(); renderInventory(); r.cap=state.bagTabs.length; r.plus=!!document.querySelector('#inventory .bag-tab.add');
+      state.bagTabs=[]; state.invPrefs.tab='all';
+      return r;
+    })()`);
+    ok('an item dragged onto + gets a tab of its own, and another joins it', tabs.tabsMade === '[{"id":"t1","name":"","items":["coal","iron_ore"]}]', tabs.tabsMade);
+    ok('All shows the tab first, in your order, then everything else', /^coal,iron_ore,/.test(tabs.allOrder) && /^Tab 1\|Not in a tab$/.test(tabs.allHeads), tabs.allOrder + ' / ' + tabs.allHeads);
+    ok('opening a tab shows only its items, and the sort pill hides there', tabs.inTab === 'coal,iron_ore' && tabs.sortHidden === true, JSON.stringify(tabs));
+    ok('dropping onto an item puts it in front of that item', tabs.before === 'pine_log,coal,iron_ore', tabs.before);
+    ok('a tab can be named, and wears its first item as its face', tabs.name === 'Mining stuff' && tabs.face === true, JSON.stringify(tabs));
+    ok('Sort by type orders the tab once', tabs.sorted === 'coal,iron_ore,pine_log', tabs.sorted);
+    ok('search works inside a tab', tabs.search === 'iron_ore', tabs.search);
+    ok('an item you run out of keeps its place in the tab and comes back to it',
+       tabs.goneShown === 'coal,pine_log' && tabs.goneKept === true && tabs.back === 'coal,iron_ore,pine_log', JSON.stringify(tabs));
+    ok('taking an item out, and deleting a tab, send items back to All', tabs.out === true && tabs.deleted === true && tabs.allAfter === 5, JSON.stringify(tabs));
+    ok('there are at most nine tabs, and + goes away at nine', tabs.cap === 9 && tabs.plus === false, JSON.stringify(tabs));
+
+    /* Dragging, as a player does it, and the same moves from the item card. */
+    const drag = ev(`(function(){
+      state=defaultState(); normalizeState(); invSearch=''; _bagSel=null; state.bagTabs=[]; state.invPrefs.tab='all';
+      state.items={iron_ore:5, coal:9, pine_log:3}; renderInventory();
+      var ev=function(el,type){ el.dispatchEvent(new Event(type,{bubbles:true,cancelable:true})); };
+      var tile=function(id){ return document.querySelector('#inventory .bag-tile[data-id="'+id+'"]'); };
+      var r={draggable:tile('coal').getAttribute('draggable')};
+      ev(tile('coal'),'dragstart'); ev(document.querySelector('#inventory .bag-tab.add'),'drop');
+      r.plus=JSON.stringify(state.bagTabs.map(function(t){ return t.items; }));
+      renderInventory();
+      ev(tile('pine_log'),'dragstart'); ev(tile('coal'),'drop');
+      r.onItem=state.bagTabs[0].items.join(',');
+      renderInventory();
+      ev(tile('pine_log'),'dragstart'); ev(document.querySelector('#inventory .bag-tab[data-tab="all"]'),'drop');
+      r.toAll=state.bagTabs[0].items.join(',');
+      tile('iron_ore').click();
+      var nb=[].find.call(document.querySelectorAll('#inventory .bag-dock .dk-tabs .bag-btn'),function(b){ return /New tab/.test(b.textContent); });
+      if(nb) nb.click(); r.cardNew=state.bagTabs.length===2&&state.bagTabs[1].items[0]==='iron_ore';
+      var t1=[].find.call(document.querySelectorAll('#inventory .bag-dock .dk-tabs .bag-btn'),function(b){ return b.getAttribute('data-tab')==='t1'; });
+      if(t1) t1.click(); r.cardMove=state.bagTabs[0].items.indexOf('iron_ore')>=0;
+      state.bagTabs=[]; state.invPrefs.tab='all';
+      return r;
+    })()`);
+    ok('tiles can be dragged; onto + makes a tab', drag.draggable === 'true' && drag.plus === '[["coal"]]', JSON.stringify(drag));
+    ok('onto an item in a tab puts it there, in front', drag.onItem === 'pine_log,coal', JSON.stringify(drag));
+    ok('onto All takes it out of its tab', drag.toAll === 'coal', JSON.stringify(drag));
+    ok('and the item card can do the same without dragging', drag.cardNew === true && drag.cardMove === true, JSON.stringify(drag));
+
+    const norm = ev(`(function(){
+      state=defaultState();
+      state.bagTabs=[{id:'t1',name:'A',items:['coal','coal','nope_item']},{id:'t1',name:'dupe',items:[]},{id:'x',items:['pine_log']},
+        {id:'t2',name:'B',items:['coal','pine_log']},null];
+      for(var i=3;i<14;i++) state.bagTabs.push({id:'t'+i,name:'',items:[]});
+      state.invPrefs={sort:'value',tab:'t99'};
+      normalizeState();
+      return {tabs:state.bagTabs.length, first:JSON.stringify(state.bagTabs[0]), second:JSON.stringify(state.bagTabs[1]), tab:state.invPrefs.tab};
+    })()`);
+    ok('a saved tab list is cleaned on load: no repeats, no unknown items, nine at most',
+       norm.tabs === 9 && norm.first === '{"id":"t1","name":"A","items":["coal"]}' && norm.second === '{"id":"t2","name":"B","items":["pine_log"]}' && norm.tab === 'all', JSON.stringify(norm));
   }
 
   section('Skill presets hold their own skill, and the OSRS doll (0.9.124.44)');
