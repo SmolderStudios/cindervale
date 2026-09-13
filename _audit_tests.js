@@ -6066,9 +6066,10 @@ setTimeout(() => {
        ck.untagged===0 && ck.dishUntagged===0,
        'chips '+ck.untagged+', dishes '+ck.dishUntagged);
     /* The heal column carried the runs label whenever the chips were hidden. The
-       chips are never hidden now, so it is the heal and nothing else. */
-    ok('the heal column is the heal and nothing else',
-       ck.heroText.replace(/\s+/g,'')==='25HP', JSON.stringify(ck.heroText));
+       chips are never hidden now, so it is the heal, plus the level the dish needs
+       (ticket #123, the only card in the game that never said it), and never runs. */
+    ok('the heal column is the heal and the level, never the runs',
+       ck.heroText.replace(/\s+/g,'')==='25HPLv1' && !/run/i.test(ck.heroText), JSON.stringify(ck.heroText));
     }
 
     ok('every gem tier offers a combat enchant', em.gaps.length===0, 'bare: '+em.gaps.join(', '));
@@ -6834,6 +6835,283 @@ setTimeout(() => {
     })()`);
     ok('every data-tip on the combat page can actually be reached by a rule',
        tipOrphans === '', tipOrphans || 'none orphaned');
+  }
+
+  section('The Radcliff batch, tickets 110 to 143 (0.9.124.39)');
+  {
+    /* #111 #114 #119. next(r) is written "+step to total", so a rank-0 node read
+       "+3% to 3%" and never named its stat. Every multi-rank node at rank 0 must say
+       desc(1), open or locked, and no row may repeat one number on both sides. */
+    const firstRank = ev(`(function(){
+      state=defaultState(); normalizeState();
+      var bad=[], box=document.createElement('div'), want=document.createElement('div');
+      var same=function(t){ var p=String(t).split(/ *→ *| +to +/); if(p.length<2) return false;
+        var a=(p[0].match(/[0-9]+(?:[.][0-9]+)?/)||[])[0], b=(p[1].match(/[0-9]+(?:[.][0-9]+)?/)||[])[0];
+        return a!=null&&b!=null&&+a===+b; };
+      var open={avail:98,spent:98,lvl:99,allBasesMaxed:true,baseLeft:0};
+      var shut={avail:0,spent:0,lvl:1,allBasesMaxed:false,baseLeft:98};
+      for(var s in TREES) TREES[s].forEach(function(n){
+        want.innerHTML=String(n.max>1?n.desc(1):n.next(1));
+        [open,shut].forEach(function(ctx){
+          state.tree[s]={};
+          box.innerHTML=ftDockHTML(s,n,ctx);
+          [].forEach.call(box.querySelectorAll('.ft-row:not(.lock) span'),function(e){
+            if(same(e.textContent)) bad.push(s+'/'+n.id+' "'+e.textContent+'"'); });
+          if(box.textContent.indexOf(want.textContent)<0)
+            bad.push(s+'/'+n.id+(ctx===shut?' locked':'')+' never says "'+want.textContent+'"');
+        });
+      });
+      return bad;
+    })()`);
+    ok('a rank-0 tree node says what its first rank gives (#111 #114 #119)',
+       firstRank.length === 0, firstRank.slice(0, 5).join(' | '));
+    const offTree = ev(`(function(){
+      state=defaultState(); normalizeState(); state.tree._offline={};
+      var body=document.createElement('div'); buildTree(body,function(){});
+      var bad=[], rows=body.querySelectorAll('.ofp-node');
+      [].forEach.call(rows,function(row){ var t=(row.querySelector('.nd')||{}).textContent||'';
+        var p=t.split(/ *→ *| +to +/);
+        if(p.length>1){ var a=(p[0].match(/[0-9]+(?:[.][0-9]+)?/)||[])[0], b=(p[1].match(/[0-9]+(?:[.][0-9]+)?/)||[])[0];
+          if(a!=null&&b!=null&&+a===+b) bad.push(t); } });
+      return {rows:rows.length, bad:bad};
+    })()`);
+    ok('and so does the offline tree', offTree.rows > 0 && offTree.bad.length === 0,
+       offTree.rows + ' rows, ' + offTree.bad.slice(0, 3).join(' | '));
+
+    /* #128. The fishing and mining second bars are hand copies of completeAction and
+       only the woodcutting one (#95) had the guild hook. */
+    const bars = ev(`(function(){
+      state=defaultState(); normalizeState();
+      var out={};
+      [['fishing',completeFishDoubleAction],['mining',completeDoubleAction]].forEach(function(p){
+        var sk=p[0]; state.xp[sk]=XP_CUM[99]; state.gd={};
+        var gid=null; for(var k in GD_BY) if((GD_BY[k].skills||[]).indexOf(sk)>=0){ gid=k; break; }
+        gdJoin(gid);
+        var act=SKILLS[sk].acts[0];
+        state.gd[gid].q=[{kind:'do',skill:sk,act:act.id,need:50,have:0,size:'small'}];
+        p[1](act,6);
+        out[sk]=state.gd[gid].q[0].have;
+      });
+      return out;
+    })()`);
+    ok('the fishing and mining second bars count toward a guild quest (#128)',
+       bars.fishing === 6 && bars.mining === 6, JSON.stringify(bars));
+    const reset = ev(`(function(){
+      state=defaultState(); normalizeState();
+      var old=Date.now()-8*3600000;
+      state.fishDoubleAct={actId:'fi1',start:old}; state.mineDoubleAct={actId:'mi1',start:old};
+      state.wcDoubleAct={actId:'wc1',start:old}; state.lastSeen=old;
+      try{ grantOffline(); }catch(e){ return 'THREW '+e.message; }
+      return [state.fishDoubleAct.start,state.mineDoubleAct.start,state.wcDoubleAct.start].every(function(s){ return Date.now()-s<60000; });
+    })()`);
+    ok('and a relaunch restarts them rather than paying the whole gap live', reset === true, String(reset));
+
+    /* #133 #134. A do quest counts actions, and the name has to say so. Refused
+       actions must not count at all. */
+    const names = ev(`(function(){
+      state=defaultState(); normalizeState();
+      for(var sk in SKILLS) state.xp[sk]=XP_CUM[99];
+      state.gd={}; GUILDS.forEach(function(g){ gdJoin(g.id); });
+      var bad=[], n=0;
+      for(var d=0; d<40; d++) GUILDS.forEach(function(g){ if(g.combat) return;
+        gdRollQuests(g.id,true);
+        state.gd[g.id].q.forEach(function(q){ if(q.kind!=='do'||q.skill==='farming') return; n++;   // "Tend N patches" counts tends, and says so
+          if(!/ times$/.test(q.name)) bad.push(q.name); }); });
+      return {n:n, bad:bad};
+    })()`);
+    ok('every do quest is worded in actions, "N times" (#133 #134)',
+       names.n > 50 && names.bad.length === 0, names.n + ' quests, ' + names.bad.slice(0, 4).join(' | '));
+    const refused = ev(`(function(){
+      state=defaultState(); normalizeState();
+      state.xp.smithing=XP_CUM[99]; state.xp.cooking=XP_CUM[99]; state.xp.fishing=XP_CUM[99];
+      state.gd={}; gdJoin('emberforge'); gdJoin('deepwater');
+      var sm=getAct('smithing','sm2'), co=SKILLS.cooking.acts[0];
+      state.gd.emberforge.q=[{kind:'do',skill:'smithing',act:'sm2',need:100,have:0,size:'long'}];
+      state.gd.deepwater.q=[{kind:'do',skill:'cooking',act:co.id,need:100,have:0,size:'long'}];
+      state.items={iron_ore:1};
+      var made=completeAction(sm,'smithing',50);
+      if(typeof fireIsLit==='function' && fireIsLit()) return 'fire lit in a fresh save';
+      state.items[Object.keys(co.inp||{})[0]]=50;
+      completeAction(co,'cooking',20);
+      return {made:made, smith:state.gd.emberforge.q[0].have, cook:state.gd.deepwater.q[0].have};
+    })()`);
+    ok('a quest counts what an action actually made, not what was asked of it',
+       refused.made === 1 && refused.smith === 1 && refused.cook === 0, JSON.stringify(refused));
+
+    /* #135. A trophy drops once per boss, so nothing made from one can be a quest,
+       and a board that already holds one is repaired without the skip. */
+    const once = ev(`(function(){
+      state=defaultState(); normalizeState();
+      state.xp.jeweler=XP_CUM[99]; state.gd={}; gdJoin('facet');
+      var S=gdOnceItems(), trophies=0;
+      for(var mid in MONSTER_DROPS) (MONSTER_DROPS[mid]||[]).forEach(function(d){ if(d.once&&S[d.id]) trophies++; });
+      var leaked=gdBestActs('jeweler').filter(function(a){ return Object.keys(a.inp||{}).some(function(i){ return S[i]; }); }).map(function(a){ return a.id; });
+      var bad=0;
+      for(var d=0; d<150; d++){ gdRollQuests('facet',true); state.gd.facet.q.forEach(function(q){ if(gdQuestImpossible(q)) bad++; }); }
+      state.gd.facet.q=[{kind:'do',skill:'jeweler',act:'jw_tj_alpha',name:'x',need:25,have:0,size:'standard',done:false}];
+      state.gd.facet.day=gdDayIndex();
+      gdRefreshDue();
+      return {trophies:trophies, leaked:leaked, bad:bad, repaired:state.gd.facet.q[0].act!=='jw_tj_alpha', skipped:state.gd.facet.skipped||0};
+    })()`);
+    ok('no quest can be rolled for a trophy piece (#135)',
+       once.trophies >= 9 && once.leaked.length === 0 && once.bad === 0, JSON.stringify(once));
+    ok('and a board already holding one is fixed without using the skip',
+       once.repaired === true && once.skipped === 0, JSON.stringify(once));
+
+    /* #131. A one-time activity can never rank, so it has no mastery bar and no
+       place in the Mastery Log. */
+    const mst = ev(`(function(){
+      state=defaultState(); normalizeState(); state.xp.jeweler=XP_CUM[99]; selectedSkill='jeweler';
+      var tj=getAct('jeweler','jw_tj_alpha');
+      var btn=buildActBtn(tj,tj.lvl,99,mods('jeweler'),0,0);
+      var ring=getAct('jeweler',SKILLS.jeweler.acts.find(function(a){ return a.cat==='ring'; }).id);
+      var rbtn=buildActBtn(ring,ring.lvl,99,mods('jeweler'),0,0);
+      var all=0, kept=0; for(var s in SKILLS){ all+=SKILLS[s].acts.length; kept+=masteryActs(SKILLS[s]).length; }
+      return {trophyRow:!!btn.querySelector('.mastery-row'), ringRow:!!rbtn.querySelector('.mastery-row'),
+              trophyInLog:masteryActs(SKILLS.jeweler).some(function(a){ return a.cat==='trophy'; }), all:all, kept:kept};
+    })()`);
+    ok('a trophy piece has no mastery bar, a ring still does (#131)',
+       mst.trophyRow === false && mst.ringRow === true, JSON.stringify(mst));
+    ok('and one-time activities are out of the Mastery Log',
+       mst.trophyInLog === false && mst.kept < mst.all, JSON.stringify(mst));
+
+    /* #136 #137. A gem says what it does, in the tooltip and in the swap picker. */
+    const gem = ev(`(function(){
+      state=defaultState(); normalizeState();
+      state.items={sapphire_ring:1, warren_signet:1};
+      state.sockets={sapphire_ring:{slots:1,gems:['sanguine_flaw']}};
+      var tip=document.createElement('div'); tip.innerHTML=socketStatusBlock('sapphire_ring');
+      var pick=document.createElement('div'); pick.innerHTML=getBodyItemDesc('sapphire_ring');
+      var sig=document.createElement('div'); sig.innerHTML=getBodyItemDesc('warren_signet');
+      return {tip:tip.textContent, pick:pick.textContent, sig:sig.textContent};
+    })()`);
+    ok('a socketed piece says what its gem does in the tooltip (#136)',
+       /Flawless Sanguine/.test(gem.tip) && /\+8% Attack/.test(gem.tip), gem.tip);
+    ok('and in the swap picker (#137)', /\+8% Attack/.test(gem.pick), gem.pick);
+    ok('and trophy jewellery reads its bonus, not its id and "Unenchanted"',
+       !/warren_signet|nenchanted/.test(gem.sig) && /Gold/.test(gem.sig), gem.sig);
+
+    /* #130. What you wear is not in the satchel's count; a spare copy still is. */
+    const worn = ev(`(function(){
+      state=defaultState(); normalizeState();
+      state.items={bronze_helm:1, iron_helm:2, copper_ore:5};
+      state.combatEquipped=Object.assign({},state.combatEquipped||{},{helmet:'bronze_helm'});
+      var a=satchelUsed();
+      state.combatEquipped.helmet='iron_helm';
+      return {wearBronze:a, wearIron:satchelUsed()};
+    })()`);
+    ok('worn gear takes no satchel slot, a spare copy does (#130)',
+       worn.wearBronze === 2 && worn.wearIron === 3, JSON.stringify(worn));
+
+    /* #129. Armour names its class and what it costs an archer; leather is light. */
+    const arm = ev(`(function(){
+      var heavy=document.createElement('div'); heavy.innerHTML=combatGearStatBlock('starsteel_chest');
+      var light=document.createElement('div'); light.innerHTML=combatGearStatBlock('emberhide_vest');
+      return {heavy:heavy.textContent, light:light.textContent,
+              leather:['cinderweave_cowl','emberhide_vest','riftshadow_cowl','voidheart_shroud'].filter(function(id){ return !ITEMS[id].light; })};
+    })()`);
+    ok('heavy armour says what it costs ranged accuracy (#129)',
+       /Heavy armour/.test(arm.heavy) && /-32\.4% ranged accuracy/.test(arm.heavy), arm.heavy);
+    ok('and the raid leather pieces are light', /Light armour/.test(arm.light) && arm.leather.length === 0,
+       JSON.stringify(arm.leather));
+
+    /* #113 #122. Every act that makes more than one thing says how many. */
+    const makes = ev(`(function(){
+      state=defaultState(); normalizeState(); for(var s in SKILLS) state.xp[s]=XP_CUM[99];
+      var bad=[], n=0;
+      for(var sk in SKILLS){ selectedSkill=sk; (SKILLS[sk].acts||[]).forEach(function(a){
+        var ids=Object.keys(a.out||{}).filter(function(i){ return ITEMS[i]; });
+        if(!ids.length||(ids.length===1&&(a.out[ids[0]]||1)<=1)) return;
+        n++;
+        var b; try{ b=buildActBtn(a,a.lvl,99,mods(sk),0,0); }catch(e){ bad.push(a.id+' threw'); return; }
+        var row=b.querySelector('.makes');
+        ids.forEach(function(i){ if(!row||row.textContent.indexOf('×'+a.out[i])<0||!row.querySelector('[data-item="'+i+'"]')) bad.push(a.id+'/'+i); });
+      }); }
+      return {n:n, bad:bad};
+    })()`);
+    ok('every act that makes more than one of something shows the count (#113 #122)',
+       makes.n >= 50 && makes.bad.length === 0, makes.n + ' acts, ' + makes.bad.slice(0, 5).join(', '));
+
+    /* #115. A stall shows what it can give, at the odds the roll uses. */
+    const steal = ev(`(function(){
+      state=defaultState(); normalizeState(); state.xp.thieving=XP_CUM[50]; state.xp.farming=XP_CUM[20];
+      selectedSkill='thieving';
+      var act=getAct('thieving','th3'), b=buildActBtn(act,act.lvl,50,mods('thieving'),0,0);
+      var chips=b.querySelectorAll('.drops .drop[data-item]'), open=thiefPoolOpen('seed');
+      var w=thiefPoolWeights(open.length), W=w.reduce(function(x,y){return x+y;},0);
+      return {label:(b.querySelector('.drops .dl')||{}).textContent, chips:chips.length, open:open.length,
+              shut:!!b.querySelector('.drops .drop.shut'), first:(chips[0]||{}).getAttribute&&chips[0].getAttribute('data-item'),
+              sum:+(thiefSuccess(act)*thiefGoodsChance(act)).toFixed(4), w0:+(w[0]/W).toFixed(4)};
+    })()`);
+    ok('a thieving card lists what it can steal (#115)',
+       steal.label === 'can steal' && steal.chips === Math.min(8, steal.open) && steal.shut === true && steal.first === 'wildberry_seed',
+       JSON.stringify(steal));
+
+    /* #139. A seed says what it grows into. */
+    const seed = ev(`(function(){ state=defaultState(); normalizeState();
+      showItemTooltip('ancient_seed',10,10,''); var t=(document.getElementById('itemTooltip')||{}).textContent||''; hideTooltip(); return t; })()`);
+    ok('a seed card says what it grows into (#139)', /Grows into/.test(seed) && /Voidbloom/.test(seed), seed.slice(0, 160));
+
+    /* #120. Bows gate on Ranged, and an arrow says what can fire it. */
+    const rng = ev(`(function(){ state=defaultState(); normalizeState();
+      var bow=null; for(var id in ITEMS){ if(ITEMS[id].ranged&&ITEMS[id].cgear){ bow=id; break; } }
+      showItemTooltip('starfall_arrow',10,10,''); var t=(document.getElementById('itemTooltip')||{}).textContent||''; hideTooltip();
+      return {stat:combatGearReq(bow).stat, melee:combatGearReq('bronze_sword').stat, tip:t}; })()`);
+    ok('a bow asks for Ranged, a sword for Attack', rng.stat === 'ranged' && rng.melee === 'attack', JSON.stringify([rng.stat, rng.melee]));
+    ok('and an arrow card says what fires it (#120)', /Fired by .+ \(needs [0-9]+ Ranged\)/.test(rng.tip), rng.tip.slice(0, 200));
+
+    /* #121 #124 #125. Smithing has tabs, bucklers have their own, ammo is gear. */
+    const tabs = ev(`(function(){ state=defaultState(); normalizeState();
+      var noCat=SKILLS.smithing.acts.filter(function(a){ return !a.cat; }).length;
+      var cats={}; SKILLS.smithing.acts.forEach(function(a){ cats[a.cat]=1; });
+      var bk=SKILLS.crafting.acts.filter(function(a){ return /^cr_buckler_/.test(a.id); });
+      var tiers=bk.map(function(a){ return tierIndexForAct(SKILLS.crafting,a); });
+      state.items={bronze_arrow:40, bronze_helm:1}; rightTab='satchel'; invSearch=''; invPage=0;
+      state.invPrefs=Object.assign({},state.invPrefs||{},{cat:'gear'});   // renderInventory reads the chip from here
+      renderInventory();
+      var box=document.getElementById('inventory')||document.body;
+      return {noCat:noCat, cats:Object.keys(cats).sort().join(','), bucklers:bk.every(function(a){ return a.subcat==='buckler'; }),
+              maxTier:Math.max.apply(null,tiers), arrowInGear:!!box.querySelector('[data-item="bronze_arrow"]'), comp:itemCompCat('bronze_arrow')};
+    })()`);
+    ok('smithing splits into Bars and heads, with nothing left out (#121)',
+       tabs.noCat === 0 && tabs.cats === 'bars,heads', JSON.stringify(tabs));
+    ok('bucklers are their own line, numbered T1 to T10 (#124)',
+       tabs.bucklers === true && tabs.maxTier === 10, JSON.stringify(tabs));
+    ok('arrows and bolts show under the satchel\'s Combat Gear chip (#125)',
+       tabs.arrowInGear === true, JSON.stringify(tabs));
+    ok('and file with combat gear in the compendium', tabs.comp === 'crafted_gear', JSON.stringify(tabs));
+
+    /* #116 #118. The food tooltips draw in the floating card, which the scroll box
+       cannot clip and a dimmed button cannot paint under. */
+    const food = ev(`(function(){
+      state=defaultState(); normalizeState(); state.combatXp={};
+      ['attack','strength','defence','hitpoints'].forEach(function(k){ state.combatXp[k]=XP_CUM[40]; });
+      refreshCombatStats(); state.items={cooked_trout:40, marrow_broth:5};
+      if(state.hints) state.hints.combat_unarmed=1;
+      state.zone='rat_warrens'; combat.monId='rat'; state.cmbView='fight'; combatMode=true;
+      engageCombat(); renderCombat(); stopCombatTimer();
+      var box=document.querySelector('.cvfood-scroll');
+      var r={found:!!box, tip:box?box.querySelectorAll('[data-tip]').length:-1, rtip:box?box.querySelectorAll('[data-rtip]').length:-1};
+      combat.active=false; return r;
+    })()`);
+    ok('the Food & Potions tooltips cannot be clipped or painted under (#116 #118)',
+       food.found && food.tip === 0 && food.rtip >= 2, JSON.stringify(food));
+
+    /* Offline kills were written to state.monsterKills, which does not exist. */
+    const offk = ev(`(function(){
+      state=defaultState(); normalizeState();
+      ['attack','strength','defence','hitpoints'].forEach(function(k){ state.combatXp[k]=XP_CUM[40]; });
+      refreshCombatStats();
+      var f=null; for(var id in ITEMS){ var it=ITEMS[id]; if(it&&it.potion&&it.potion.heal&&!it.potion.dur){ f=id; break; } }
+      state.items={}; if(f) state.items[f]=500;
+      combat.monId='rat'; if(state.hints) state.hints.combat_unarmed=1;
+      state.gd={}; gdJoin('legion'); state.gd.legion.q=[{kind:'kill',target:'rat',need:100000,have:0,size:'long',done:false}];
+      engageCombat(); saveGame(); stopCombatTimer(); combat.active=false;
+      var oc=offlineCombatResolve(2*3600000, offlineMods());
+      return {kills:oc?oc.kills:0, logged:(state.monKills&&state.monKills.rat)||0, quest:state.gd.legion.q[0].have};
+    })()`);
+    ok('offline kills reach the Monster Log and a guild kill quest',
+       offk.kills > 0 && offk.logged === offk.kills && offk.quest === offk.kills, JSON.stringify(offk));
   }
 
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));
