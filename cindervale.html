@@ -4021,83 +4021,92 @@ body:not(.is-demo) .demo-only{display:none !important}
    fight, and cropping its middle band into the row is what makes a raid you have
    never run still look like somewhere. That is also why the lair prompts put the
    landmark in the middle third: this crop and the arena both depend on it. */
-.raid-list{display:flex;flex-direction:column;gap:12px}
+/* A GRID, not a stack (0.9.124.37). Five full width rows ran most of a screen
+   before the Ascension panel even started. Three across at the common panel width
+   puts the whole ladder on one screen, and the card keeps the splash treatment:
+   its own lair behind it, its own boss standing in it.
+
+   The blurb comes off the face here. At a third of the width it either clamps and
+   cuts mid sentence, which is the thing that was wrong with the old card, or it
+   sets the height of every card in the row. The lair and the boss carry the
+   atmosphere instead, and the facts stay. */
+.raid-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(390px,1fr));gap:12px}
 .raid-card{
   --ra:var(--raid-accent,#4a9a8a);
   --ra-ink:color-mix(in srgb,var(--ra) 62%,#fff4e2);
   --ra-dim:color-mix(in srgb,var(--ra) 38%,#3d2c1d);
   --wash:.68;
-  position:relative;display:grid;grid-template-columns:minmax(0,1fr) calc(300px*var(--tscale));
-  min-height:calc(188px*var(--tscale));border-radius:12px;overflow:hidden;
+  position:relative;display:block;min-height:calc(208px*var(--tscale));
+  border-radius:12px;overflow:hidden;
   border:1px solid var(--ra-dim);background-color:#0c0806;
   box-shadow:inset 0 1px 0 var(--rim),0 4px 14px rgba(0,0,0,.5);
   transition:border-color .18s,box-shadow .18s}
 .rc-lair{position:absolute;inset:0;z-index:0;background-image:var(--lair,none);
   background-size:cover;background-position:center 42%;opacity:var(--wash);
   transition:opacity .25s,transform .5s}
-/* The scrim is what lets type sit on a photograph. Left third near solid, right
-   third open so the lair still reads behind the boss. */
+/* The scrim is what lets type sit on a photograph: near solid at the left where
+   the text is, open at the right so the lair still reads behind the boss. */
 .rc-scrim{position:absolute;inset:0;z-index:1;
-  background:linear-gradient(92deg,#0b0705 0%,rgba(11,7,5,.92) 34%,rgba(11,7,5,.35) 68%,rgba(11,7,5,.55) 100%),
-             linear-gradient(180deg,color-mix(in srgb,var(--ra) 13%,transparent),transparent 40%,rgba(0,0,0,.45))}
+  background:linear-gradient(92deg,#0b0705 0%,rgba(11,7,5,.9) 40%,rgba(11,7,5,.3) 74%,rgba(11,7,5,.5) 100%),
+             linear-gradient(180deg,color-mix(in srgb,var(--ra) 14%,transparent),transparent 42%,rgba(0,0,0,.5))}
 .raid-card:hover{border-color:color-mix(in srgb,var(--ra) 72%,#3d2c1d);
   box-shadow:inset 0 1px 0 var(--rim),0 6px 22px rgba(0,0,0,.6),
              0 0 26px color-mix(in srgb,var(--ra) 16%,transparent)}
-.raid-card:hover .rc-lair{opacity:calc(var(--wash) + .16);transform:scale(1.035)}
-/* Locked drains the lair and the ink but keeps the hue in the trim, so five locked
-   raids still read as five different places you have not earned yet. */
+.raid-card:hover .rc-lair{opacity:calc(var(--wash) + .14);transform:scale(1.04)}
 .raid-card.locked{--wash:.18;--ra-ink:#9e885f;opacity:.9}
 
-.rc-txt{padding:16px 20px;position:relative;z-index:3;display:flex;flex-direction:column;gap:6px}
-.rc-meta{font-family:var(--num);font-size:calc(10.5px*var(--tscale));letter-spacing:1.3px;
+.rc-txt{position:relative;z-index:3;display:flex;flex-direction:column;gap:5px;
+  padding:14px 16px;max-width:70%;min-height:calc(208px*var(--tscale))}
+.rc-meta{font-family:var(--num);font-size:calc(10px*var(--tscale));letter-spacing:1.2px;
   text-transform:uppercase;color:#a28f6d;text-shadow:0 1px 6px #000}
-.rc-name{font-family:'Cinzel',serif;font-weight:600;font-size:calc(24px*var(--tscale));
-  margin:0;letter-spacing:.5px;color:var(--ra-ink);
+.rc-name{font-family:'Cinzel',serif;font-weight:600;font-size:calc(21px*var(--tscale));
+  margin:0;letter-spacing:.4px;line-height:1.15;color:var(--ra-ink);
   text-shadow:0 2px 14px #000,0 0 22px color-mix(in srgb,var(--ra) 34%,transparent)}
-.rc-bl{font-style:italic;font-size:calc(14px*var(--tscale));color:#d6c5a4;max-width:52ch;
-  margin:0;text-shadow:0 1px 8px #000;line-height:1.45}
-.rc-ends{font-size:calc(13px*var(--tscale));color:#a28f6d;text-shadow:0 1px 6px #000}
+.rc-ends{font-size:calc(13px*var(--tscale));color:#c2ae8c;text-shadow:0 1px 7px #000;line-height:1.4}
 .rc-ends b{font-family:var(--num);font-weight:400;font-size:calc(12px*var(--tscale));color:var(--ra-ink)}
-.rc-act{margin-top:auto;display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding-top:4px}
-.rc-route{display:inline-flex;gap:5px;align-items:center;flex-wrap:wrap}
-.rd-dot{width:10px;height:10px;border-radius:50%;
+.rc-rec{font-family:var(--num);font-size:calc(11px*var(--tscale));color:#a28f6d;
+  text-shadow:0 1px 6px #000;line-height:1.4}
+.rc-rec b{font-weight:400}
+.rc-act{margin-top:auto;display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding-top:6px}
+.rc-route{display:inline-flex;gap:4px;align-items:center;flex-wrap:wrap}
+.rd-dot{width:9px;height:9px;border-radius:50%;
   background:color-mix(in srgb,var(--ra) 44%,#241b12);
   border:1px solid color-mix(in srgb,var(--ra) 62%,#3d2c1d);
   box-shadow:0 1px 4px #000;display:inline-flex;align-items:center;justify-content:center;
-  line-height:1;font-size:calc(8px*var(--tscale));color:#120c07;cursor:var(--cur-help)}
-/* Gold SQUARE means mini and red DISC means boss, on all five rows. Shape as well
-   as colour, so the language survives the gold accented Empyrean row. */
-.rd-dot.mini{width:12px;height:12px;border-radius:3px;background:#c9a24a;border-color:#f0d59a}
-.rd-dot.boss{width:14px;height:14px;border-radius:50%;background:#c44a45;border-color:#ffb0aa;
-  font-size:calc(9px*var(--tscale))}
-.rc-none{font-family:'Crimson Pro',Georgia,serif;font-style:italic;color:#a28f6d;
-  font-size:calc(12px*var(--tscale));text-shadow:0 1px 6px #000}
-.rc-art{position:relative;z-index:2}
-.rc-art .fig{position:absolute;right:-2px;bottom:calc(-10px*var(--tscale));
-  font-size:calc(238px*var(--tscale));line-height:0;
-  filter:drop-shadow(0 10px 26px rgba(0,0,0,.9))
-         drop-shadow(0 0 22px color-mix(in srgb,var(--ra) 26%,transparent));
+  line-height:1;font-size:calc(7px*var(--tscale));color:#120c07;cursor:var(--cur-help)}
+/* Gold SQUARE means mini and red DISC means boss, on every card. Shape as well as
+   colour, so the language survives the gold accented Empyrean card. */
+.rd-dot.mini{width:11px;height:11px;border-radius:3px;background:#c9a24a;border-color:#f0d59a}
+.rd-dot.boss{width:13px;height:13px;border-radius:50%;background:#c44a45;border-color:#ffb0aa;
+  font-size:calc(8px*var(--tscale))}
+/* The boss stands in the corner of his own lair, clipped by the card. */
+.rc-art{position:absolute;right:0;bottom:0;z-index:2;pointer-events:none;
+  font-size:calc(158px*var(--tscale));line-height:0}
+.rc-art .ev-icon{width:1em;height:1em;object-fit:contain;
+  filter:drop-shadow(0 8px 20px rgba(0,0,0,.9))
+         drop-shadow(0 0 18px color-mix(in srgb,var(--ra) 26%,transparent));
   transition:transform .3s}
-.rc-art .fig .ev-icon{width:1em;height:1em;object-fit:contain}
-.raid-card:hover .rc-art .fig{transform:scale(1.05) translateY(-4px)}
-.raid-card.locked .rc-art .fig{filter:grayscale(.75) brightness(.55)}
-.rc-hold{display:inline-flex;align-items:center;gap:10px;flex-wrap:wrap;
-  font-family:var(--num);font-size:calc(12px*var(--tscale));color:#cbb894;text-shadow:0 1px 6px #000}
-.rc-rank{width:calc(32px*var(--tscale));height:calc(32px*var(--tscale));
-  display:inline-flex;align-items:center;justify-content:center;border-radius:7px;
-  font-family:'Cinzel',serif;font-size:calc(16px*var(--tscale));line-height:1;
+.raid-card:hover .rc-art .ev-icon{transform:scale(1.05) translateY(-4px)}
+.raid-card.locked .rc-art .ev-icon{filter:grayscale(.75) brightness(.55)}
+.rc-hold{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;
+  font-family:var(--num);font-size:calc(11.5px*var(--tscale));color:#cbb894;text-shadow:0 1px 6px #000}
+.rc-rank{width:calc(28px*var(--tscale));height:calc(28px*var(--tscale));
+  display:inline-flex;align-items:center;justify-content:center;border-radius:6px;
+  font-family:'Cinzel',serif;font-size:calc(14px*var(--tscale));line-height:1;
   color:var(--tc,#ffe27a);border:1px solid var(--tc,#ffe27a);
   background:color-mix(in srgb,var(--tc,#ffe27a) 14%,#120c07);
   box-shadow:0 0 12px color-mix(in srgb,var(--tc,#ffe27a) 22%,transparent)}
-.rc-gap{display:flex;flex-direction:column;gap:4px;min-width:calc(112px*var(--tscale))}
-.rc-gap i{font-style:normal;font-family:var(--num);font-size:calc(10.5px*var(--tscale));
+.rc-gap{display:flex;flex-direction:column;gap:3px;min-width:calc(104px*var(--tscale))}
+.rc-gap i{font-style:normal;font-family:var(--num);font-size:calc(10px*var(--tscale));
   color:#c0aa84;text-shadow:0 1px 6px #000}
 .rc-bar{height:4px;border-radius:3px;background:rgba(0,0,0,.6);overflow:hidden}
 .rc-bar span{display:block;height:100%;background:linear-gradient(90deg,#8a6a2a,var(--trim))}
+.rc-none{font-family:'Crimson Pro',Georgia,serif;font-style:italic;color:#a28f6d;
+  font-size:calc(11.5px*var(--tscale));text-shadow:0 1px 6px #000}
 
-.raid-enter{display:inline-flex;align-items:center;gap:7px;
-  font-family:'Cinzel',serif;font-size:calc(15px*var(--tscale));letter-spacing:1px;
-  padding:9px 24px;border-radius:7px;white-space:nowrap;cursor:var(--cur-pointer);
+.raid-enter{display:inline-flex;align-items:center;gap:6px;
+  font-family:'Cinzel',serif;font-size:calc(14px*var(--tscale));letter-spacing:.8px;
+  padding:8px 18px;border-radius:7px;white-space:nowrap;cursor:var(--cur-pointer);
   color:color-mix(in srgb,var(--ra) 26%,#ffeecb);
   background:linear-gradient(180deg,color-mix(in srgb,var(--ra) 40%,#1a120b),
                                     color-mix(in srgb,var(--ra) 18%,#0b0705));
@@ -4110,16 +4119,9 @@ body:not(.is-demo) .demo-only{display:none !important}
 .raid-enter:disabled{opacity:.45;cursor:default;filter:saturate(.4)}
 /* MUST stay after :disabled, equal specificity so later wins. The lock button is
    also [disabled], and without this the one element carrying the level requirement
-   is the hardest thing on the row to read. */
+   is the hardest thing on the card to read. */
 .raid-enter.locked{opacity:1;filter:none;cursor:default;color:#f0b184;
   background:linear-gradient(180deg,#2a1a0e,#160d07);border-color:#8a4a1e}
-@media(max-width:900px){
-  .raid-card{grid-template-columns:minmax(0,1fr)}
-  .rc-art{height:calc(150px*var(--tscale))}
-  .rc-art .fig{right:50%;transform:translateX(50%);font-size:calc(190px*var(--tscale))}
-  .raid-card:hover .rc-art .fig{transform:translateX(50%) scale(1.04)}
-  .rc-scrim{background:linear-gradient(180deg,rgba(11,7,5,.88),rgba(11,7,5,.6) 60%,rgba(11,7,5,.9))}
-}
 /* Result box — horizontal: big rank letter, then a 2-line body (title/time + loot). */
 .raid-result{border-radius:9px;padding:10px 14px;font-size:calc(12.5px*var(--tscale))}
 .raid-result.fail{background:linear-gradient(180deg,#241416,#180d0e);border:1px solid #5a2c2c;color:#e0b0aa}
@@ -8254,7 +8256,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.124.36">v0.9.124</div>
+  <div class="mm-ver" data-build="0.9.124.37">v0.9.124</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -39896,15 +39898,15 @@ function buildRaidsPanelHTML(){
     const nMini=r.stages.filter(s=>s.miniBoss).length;
     const dots=r.stages.map(s=>`<span class="rd-dot${s.raidBoss?' boss':s.miniBoss?' mini':''}" data-rtip="${esc(s.name)}&#10;Level ${s.lvl} · ${s.hp.toLocaleString()} HP${s.raidBoss?'&#10;Final boss. Clear this or the run gives nothing.':s.miniBoss?'&#10;Mini-boss. It telegraphs, and the cast has an answer.':''}${s.raidfx?'&#10;'+esc(s.raidfx.name)+(s.raidfx.desc?': '+esc(s.raidfx.desc):''):''}">${s.raidBoss?'★':s.miniBoss?'◆':''}</span>`).join('');
     const tierCol=best?((r.ratingTiers.find(t=>t.key===best.rating)||{}).col||'#ccc'):'#ccc';
-    /* The final boss and his portrait. Both were facts that existed only inside a
-       dot tooltip, and the boss is the most useful thing to know about a raid you
-       have not run yet. */
+    /* The final boss, which until the splash pass was a fact that existed only
+       inside a dot tooltip and is the most useful thing to know about a raid you
+       have not run. */
     const bs=r.stages.find(s=>s.raidBoss)||{};
     const lair=(typeof ZONE_BG!=='undefined')?ZONE_BG[r.id]:null;
     const lvl=(typeof combatLevel==='function')?combatLevel():0;
     const rec=best
-      ? `Best <b style="color:${tierCol}">${best.rating}</b> at <b>${_fmtRaidTime(best.timeMs)}</b>${clears?`, cleared ${clears} times`:''}.`
-      : 'Not yet cleared.';
+      ? `Best <b style="color:${tierCol}">${best.rating}</b> at ${_fmtRaidTime(best.timeMs)}${clears?`, cleared ${clears}×`:''}`
+      : `Not yet cleared. <b>${_raidClock(r.ratingTiers[0].maxMs)}</b> for an S rank`;
     const hold=unlocked
       ? (best?`<span class="rc-rank" style="--tc:${tierCol}">${best.rating}</span>`:'')
       : `<span class="rc-gap"><i>Combat ${lvl} / ${r.unlockLvl}</i>
@@ -39912,11 +39914,12 @@ function buildRaidsPanelHTML(){
     return `<div class="raid-card${unlocked?'':' locked'}"
         style="--raid-accent:${r.accent}${lair?`;--lair:url(${lair})`:''}">
       <div class="rc-lair"></div><div class="rc-scrim"></div>
+      <div class="rc-art">${iconHTML(bs.id||r.icon)}</div>
       <div class="rc-txt">
-        <div class="rc-meta">${n} stage gauntlet · Combat Lv ${r.unlockLvl}</div>
+        <div class="rc-meta">${n} stages · Combat Lv ${r.unlockLvl}</div>
         <h3 class="rc-name">${r.name}</h3>
-        <p class="rc-bl">${r.blurb}</p>
-        <div class="rc-ends">${bs.name?`Ends with <b>${esc(bs.name)}</b>. `:''}${rec} Clear inside <b>${_raidClock(r.ratingTiers[0].maxMs)}</b> for an S rank.</div>
+        ${bs.name?`<div class="rc-ends">Ends with <b>${esc(bs.name)}</b></div>`:''}
+        <div class="rc-rec">${rec}</div>
         <div class="rc-act">
           ${unlocked
             ? `<button class="raid-enter" data-raid="${r.id}"${(active||inRaid)?' disabled':''}>${iconHTML('ui_swords')} ${inRaid?'In progress':'Enter'}</button>`
@@ -39925,7 +39928,6 @@ function buildRaidsPanelHTML(){
           <span class="rc-hold">${hold}</span>
         </div>
       </div>
-      <div class="rc-art"><span class="fig">${iconHTML(bs.id||r.icon)}</span></div>
     </div>`;
   }).join('');
   let resultBox='';
@@ -40079,20 +40081,19 @@ function buildSpireCardHTML(r, active, inRaid){
   return `<div class="raid-card${unlocked?'':' locked'}"
       style="--raid-accent:${r.accent}${lair?`;--lair:url(${lair})`:''}">
     <div class="rc-lair"></div><div class="rc-scrim"></div>
+    <div class="rc-art">${iconHTML('stairwraith')}</div>
     <div class="rc-txt">
       <div class="rc-meta">Endless climb · Combat Lv ${r.unlockLvl}</div>
       <h3 class="rc-name">${r.name}</h3>
-      <p class="rc-bl">${r.blurb}</p>
-      <div class="rc-ends">${bestLine}. Every floor drops loot, every fifth is a landing, and it ends when you fall.</div>
+      <div class="rc-ends">${bestLine}</div>
+      <div class="rc-rec">${chips||'<span class="rc-none">No affixes today</span>'}</div>
       <div class="rc-act">
         ${unlocked
           ? `<button class="raid-enter" data-raid="${r.id}"${(active||inRaid)?' disabled':''}>${iconHTML('ui_swords')} ${inRaid?'In progress':'Climb'}</button>`
           : `<button class="raid-enter locked" disabled>${iconHTML('ui_lock')} Combat Lv ${r.unlockLvl}</button>`}
-        <span class="spr-fxrow">${chips||'<span class="rc-none">No affixes today</span>'}</span>
         <span class="rc-hold">${hold}</span>
       </div>
     </div>
-    <div class="rc-art"><span class="fig">${iconHTML('stairwraith')}</span></div>
   </div>`;
 }/* ── Ascension panel (0.9.124.11) ─────────────────────────────────────────────
    Lives under the raid list rather than in the Gear tab on purpose: the Spire is
