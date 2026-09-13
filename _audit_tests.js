@@ -5037,14 +5037,17 @@ setTimeout(() => {
         if(!g.skills.length) return;                       // combat guilds pay globally
         var sk=g.skills[0];
         var keys={}; g.perks.forEach(function(pk){ for(var k in (pk||{})) keys[k]=1; });
-        state.gd={}; var base=mods(sk);
+        /* sell is checked where a sale actually happens (0.9.124.45): it sat in
+           mods('thieving').extraSell, which this test read, and no sale reads that. */
+        var sellItem=Object.keys(ITEMS).filter(function(i){ return !ITEMS[i].hot&&ITEMS[i].sell>=1000; })[0];
+        state.gd={}; var base=mods(sk), baseSell=effectiveItemSell(sellItem);
         state.gd[g.id]={rep:99999999,q:[],day:-1,skipped:0};
-        var full=mods(sk);
+        var full=mods(sk), fullSell=effectiveItemSell(sellItem);
         Object.keys(keys).forEach(function(k){
           checked++;
           var moved = (k==='speed') ? full.speed>base.speed
                     : (k==='xp')    ? full.xpMult>base.xpMult
-                    : (k==='sell')  ? full.extraSell>base.extraSell
+                    : (k==='sell')  ? fullSell>baseSell
                     : (k==='dbl'||k==='yield') ? (full.double>base.double||full.extraBar>base.extraBar)
                     : null;
           if(moved===false) dead.push(g.id+'.'+k);
@@ -7556,6 +7559,144 @@ setTimeout(() => {
     ok('the combat doll is twelve squares joined by eleven lines', doll.combat === 12 && doll.combatLines === 11, JSON.stringify(doll));
     ok('an empty slot shows its outline instead of a word, and no square prints a name', doll.emptyOutline === true && doll.names === 0, JSON.stringify(doll));
     ok('the skilling doll is nine squares joined by eight lines', doll.skilling === 9 && doll.skillingLines === 8, JSON.stringify(doll));
+  }
+
+  section('Iron Legion, Quiet Hand, the Nightmarket and Sunderbolts (0.9.124.45)');
+  {
+    /* gdCombatBonus summed the two combat guilds' perks and nothing read it, and the
+       Nightmarket's sale perk went where no sale looks. Each is checked at the place
+       the number has to land. */
+    const cg = ev(`(function(){
+      state=defaultState(); normalizeState();
+      for(var k in state.combatXp) state.combatXp[k]=XP_CUM[99];
+      state.items={bronze_sword:1, oak_shortbow:1, bronze_arrow:500};
+      state.combatEquipped={weapon:'bronze_sword'};
+      var R0=Math.random, r={};
+      var mon=MONSTERS.find(function(m){ return m.zone==='goblin_cave'&&!m.boss; });
+      var row=MONSTER_DROPS[mon.id].find(function(d){ return d.chance<0.5; });
+      var dropsAt=function(){ Math.random=function(){ return row.chance*1.06; }; var n=rollDrops(mon.id,false).length; Math.random=R0; return n; };
+      var rareAt=function(){ var p=rareSpawnChance(mon); Math.random=function(){ return p*1.2; }; var v=rollRare(mon); Math.random=R0; return v; };
+      state.gd={};
+      var b0=combatBonusesAll(); r.drops0=dropsAt(); r.rare0=rareAt(); r.show0=effDropChance(0.1,true);
+      state.gd={legion:{rep:99999999,q:[],day:-1,skipped:0}, quiethand:{rep:99999999,q:[],day:-1,skipped:0}};
+      var b1=combatBonusesAll(); r.drops1=dropsAt(); r.rare1=rareAt(); r.show1=effDropChance(0.1,true);
+      r.melee=Math.round((b1.atkBoost-b0.atkBoost)*1000)/1000; r.crit=Math.round((b1.critChance-b0.critChance)*1000)/1000;
+      state.combatEquipped={weapon:'oak_shortbow', quiver:'bronze_arrow'};
+      r.bowMelee=Math.round((combatBonusesAll().atkBoost-b0.atkBoost)*1000)/1000;
+      state.gd={};
+      return r;
+    })()`);
+    ok('Iron Legion titles raise monster drop chance, as a multiplier', cg.drops1 > cg.drops0 && Math.abs(cg.show1 / cg.show0 - 1.12) < 1e-9, JSON.stringify(cg));
+    ok('and melee damage, but not with a bow', cg.melee === 0.05 && cg.bowMelee === 0, JSON.stringify(cg));
+    ok('Quiet Hand titles raise crit chance and rare monsters show up more', cg.crit === 0.07 && cg.rare0 === false && cg.rare1 === true, JSON.stringify(cg));
+
+    const nm = ev(`(function(){
+      state=defaultState(); normalizeState();
+      var item=Object.keys(ITEMS).filter(function(i){ return !ITEMS[i].hot&&ITEMS[i].sell>=1000; })[0];
+      var hot='crown_shard', r={};
+      state.gd={}; r.s0=effectiveItemSell(item); r.h0=effectiveItemSell(hot);
+      state.gd={night:{rep:99999999,q:[],day:-1,skipped:0}};
+      r.s6=effectiveItemSell(item); r.h6=effectiveItemSell(hot); r.counter=nightmarketSell(hot); r.base=ITEMS[hot].sell;
+      state.gd={night:{rep:GD_REP[4],q:[],day:-1,skipped:0}}; r.t5=nightmarketSell(hot);
+      var g=GD_BY.night; state.gd={night:{rep:99999999,q:[],day:-1,skipped:0}}; r.tot=gdPerkTotalsTxt(g);
+      state.gd={};
+      return r;
+    })()`);
+    ok('Nightmarket titles give 10% more gold for everything you sell', Math.abs(nm.s6 / nm.s0 - 1.10) < 0.002, JSON.stringify(nm));
+    ok('but never touch the store price of stolen goods', typeof nm.h0 === 'number' && nm.h6 === nm.h0, JSON.stringify(nm));
+    ok('and full price for stolen goods arrives at the title that says so', nm.counter === nm.base && nm.t5 < nm.base, JSON.stringify(nm));
+    ok('the guild page adds the titles up', /^Your titles give \+10% gold from everything you sell, \+4% speed, \+6% XP\.$/.test(nm.tot), nm.tot);
+
+    /* Nothing checked that every piece of ammunition could be fired by something.
+       Sunderbolts could not, from the day they were added. */
+    const unfired = ev(`(function(){
+      return Object.keys(ITEMS).filter(function(q){ var a=ITEMS[q]; return a.ammo&&!a.ranged; })
+        .filter(function(q){ return !Object.keys(ITEMS).some(function(w){ return ITEMS[w].ranged&&ITEMS[w].cgear&&ammoFitsWeapon(w,q); }); });
+    })()`);
+    ok('every arrow and bolt in the game has a weapon that fires it', unfired.length === 0, unfired.join(','));
+  }
+
+  section('The ten tree nodes that did nothing, wired and balanced (0.9.124.45)');
+  {
+    /* A bonus term that became undefined turned every skill's extraSell into NaN,
+       and effectiveSellValue reads NaN as "no bonus": every item quietly sold at
+       base while nothing threw. Caught while wiring the Nightmarket. */
+    const nan = ev(`Object.keys(SKILLS).filter(function(k){ var v=mods(k).extraSell; return typeof v!=='number'||!isFinite(v); })`);
+    ok("every skill's sale bonus is a real number", nan.length === 0, nan.join(','));
+    ok('no tree node is badged as not working any more', ev(`Object.keys(TREE_UNWIRED).length`) === 0);
+
+    const th = ev(`(function(){
+      var R0=Math.random, r={};
+      var act=SKILLS.thieving.acts.find(function(a){ return a.succ!=null&&a.coins>0; });
+      var run=function(tree){
+        state=defaultState(); normalizeState(); state.xp.thieving=0;   // under the demo cap, so XP lands
+        state.tree.thieving=tree; var c0=state.coins, x0=state.xp.thieving;
+        Math.random=function(){ return 0; };
+        completeAction(act,'thieving',10);
+        Math.random=R0;
+        return {coins:state.coins-c0, xp:Math.round(state.xp.thieving-x0)};
+      };
+      r.none=run({}); r.pocket=run({th_master3:1}); r.talker=run({th_gm_2x_xp:1});
+      var hard=SKILLS.thieving.acts.filter(function(a){ return a.succ!=null; }).sort(function(a,b){ return a.succ-b.succ; })[0];
+      state.xp.thieving=0; state.tree.thieving={}; var s0=thiefSuccess(hard);
+      state.tree.thieving={th_caught:10}; r.slip=Math.round((thiefSuccess(hard)-s0)*1000)/1000;
+      state.tree.thieving={th_gm_cape:1}; state.gear=['cape_thieving'];
+      Math.random=function(){ return 0.999; }; completeAction(act,'thieving',7); Math.random=R0;
+      r.fails=_thiefFails; _thiefFails=0;
+      r.ev=thiefTimeEV(act,'thieving'); r.evExpect=1-(1-thiefSuccess(act))*0.5;
+      state.gear=[]; r.evNoCape=thiefTimeEV(act,'thieving');
+      state.tree.thieving={}; var g0=gpPerAction(act,'thieving');
+      state.tree.thieving={th_master3:1}; r.gpPocket=Math.round(gpPerAction(act,'thieving')/g0*1000)/1000;
+      return r;
+    })()`);
+    ok('Second Pocket: an extra steal gives loot, and no XP', Math.abs(th.pocket.coins - 2 * th.none.coins) <= 1 && th.pocket.xp === th.none.xp, JSON.stringify(th));
+    ok('Fast Talker is Thieving XP x1.5 (Second Pocket used to double it by accident)', Math.abs(th.talker.xp / th.none.xp - 1.5) < 0.01, JSON.stringify(th));
+    ok('Slippery adds 0.8% success a rank', th.slip === 0.08, JSON.stringify(th));
+    ok('Untouchable gives back half the time of a failed steal, with the cape', th.fails === 7 && Math.abs(th.ev - th.evExpect) < 1e-9 && th.ev < 1 && th.evNoCape === 1, JSON.stringify(th));
+    ok('and the coins per hour count Second Pocket', th.gpPocket === 1.1, JSON.stringify(th));
+
+    const fl = ev(`(function(){
+      var R0=Math.random, r={};
+      var shaft=SKILLS.fletching.acts.find(function(a){ return /^fl_sh_/.test(a.id); });
+      var arrow=SKILLS.fletching.acts.find(function(a){ return a.cat==='arrows'; });
+      var make=function(act,tree,cape){
+        state=defaultState(); normalizeState(); state.xp.fletching=XP_CUM[99];
+        state.tree.fletching=tree; if(cape) state.gear=['cape_fletching'];
+        state.items={}; for(var k in act.inp) state.items[k]=act.inp[k]*5;
+        Math.random=function(){ return 0.999; };   // no double batch, nothing saved
+        completeAction(act,'fletching',5);
+        Math.random=R0;
+        var id=Object.keys(act.out)[0];
+        return {got:state.items[id]||0, rph:ratesFor(act,'fletching').rph};
+      };
+      r.shaft0=make(shaft,{}); r.shaft6=make(shaft,{fl_split:6});
+      r.arrow0=make(arrow,{}); r.arrow6=make(arrow,{fl_quiver:6}); r.cape=make(arrow,{fl_cape:1},true);
+      r.perShaft=shaft.out.wood_shaft; r.perArrow=arrow.out[Object.keys(arrow.out)[0]];
+      return r;
+    })()`);
+    ok('Splitter: +1 shaft a rank from every log', fl.shaft6.got === fl.shaft0.got + 6 * 5, JSON.stringify(fl));
+    ok('Quiverfull: +1 arrow or bolt a rank on every batch, and the /hr number agrees',
+       fl.arrow6.got === fl.arrow0.got + 6 * 5 && Math.abs(fl.arrow6.rph / fl.arrow0.rph - (fl.perArrow + 6) / fl.perArrow) < 0.02, JSON.stringify(fl));
+    ok("the Fletcher's Cape doubles arrows and bolts", fl.cape.got === fl.arrow0.got * 2, JSON.stringify(fl));
+
+    const rc = ev(`(function(){
+      state=defaultState(); normalizeState();
+      for(var k in state.combatXp) state.combatXp[k]=XP_CUM[99];
+      state.items={ancient_shortbow:1, starsteel_arrow:999, starsteel_sword:1};
+      var at=function(bow,tree){
+        state.tree.fletching=tree;
+        state.combatEquipped=bow?{weapon:'ancient_shortbow',quiver:'starsteel_arrow'}:{weapon:'starsteel_sword'};
+        return {acc:playerAccuracy(), hit:playerMaxHit(), wind:flWindChance(), barb:flBarbChance()};
+      };
+      var full={fl_acc:8,fl_dmg:8,fl_wind:5,fl_barb:7};
+      var nodes=TREES.fletching.filter(function(n){ return full[n.id]; }).map(function(n){ return n.desc(full[n.id]); });
+      return {bow0:at(true,{}), bow1:at(true,full), sw0:at(false,{}), sw1:at(false,full), text:nodes.join(' | ')};
+    })()`);
+    ok('Keen Heads and Practised Draw raise a bow\'s accuracy and damage by what they say',
+       Math.abs(rc.bow1.acc / rc.bow0.acc - 1.032) < 0.004 && Math.abs(rc.bow1.hit / rc.bow0.hit - 1.016) < 0.004
+       && /\+3\.2% ranged accuracy/.test(rc.text) && /\+1\.6% ranged damage/.test(rc.text), JSON.stringify(rc));
+    ok('Windcutter and Barbed roll on a bow at 1% and 1.4%', rc.bow1.wind === 0.01 && Math.abs(rc.bow1.barb - 0.014) < 1e-9, JSON.stringify(rc));
+    ok('and none of the four touches a sword', rc.sw1.acc === rc.sw0.acc && rc.sw1.hit === rc.sw0.hit && rc.sw1.wind === 0 && rc.sw1.barb === 0, JSON.stringify(rc));
   }
 
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));

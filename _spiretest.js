@@ -190,10 +190,10 @@ setTimeout(()=>{
        ev("ammoFitsWeapon('ancient_longbow','starfall_arrow')===true"),
        'one tier of headroom, or Starfall arrows would have nothing to fire them');
     ok('but not the Spire arrow', ev("ammoFitsWeapon('ancient_longbow','sundershaft')===false"));
-    /* The crafted T8 crossbow was reaching the Spire's own bolts without ever
-       entering the Spire, while the T7 bow was correctly shut out. */
-    ok('and the crafted crossbow cannot reach the Spire bolt',
-       ev("ammoFitsWeapon('starfall_crossbow','sunderbolt')===false && ammoFitsWeapon('starfall_crossbow','starfall_bolt')===true"));
+    /* Sunderbolts were unfireable: tier 11 bolts and no crossbow above tier 8.
+       Since 0.9.124.44 the top crossbows fire them, and only the top ones. */
+    ok('the best crossbows fire the Spire bolt',
+       ev("ammoFitsWeapon('starfall_crossbow','sunderbolt')===true && ammoFitsWeapon('ashlock_crossbow','sunderbolt')===true && ammoFitsWeapon('starfall_crossbow','starfall_bolt')===true"));
     ok('only the two raid bows draw a Sundershaft',
        ev("ammoFitsWeapon('sunpiercer','sundershaft')===true && ammoFitsWeapon('plummet','sundershaft')===true"));
     ok('and a bow still refuses a bolt outright',
@@ -514,8 +514,8 @@ setTimeout(()=>{
     ok('no bow outside the Spire draws a Sundershaft',
        ev("Object.keys(ITEMS).filter(id=>ITEMS[id].ranged&&ITEMS[id].ctier<10)"+
           ".every(id=>ammoFitsWeapon(id,'sundershaft')===false)"));
-    ok('and no crossbow outside it draws a Sunderbolt',
-       ev("Object.keys(ITEMS).filter(id=>ITEMS[id].ranged&&ITEMS[id].ammo==='bolt'&&ITEMS[id].ctier<10)"+
+    ok('and no crossbow below the top tier draws a Sunderbolt',
+       ev("Object.keys(ITEMS).filter(id=>ITEMS[id].ranged&&ITEMS[id].ammo==='bolt'&&ITEMS[id].ctier<8)"+
           ".every(id=>ammoFitsWeapon(id,'sunderbolt')===false)"));
     ok('but the new weapons still take everything craftable',
        ev("ammoFitsWeapon('sunpiercer','starfall_arrow')===true && ammoFitsWeapon('ashlock_crossbow','starfall_bolt')===true"));

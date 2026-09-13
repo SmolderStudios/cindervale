@@ -68,10 +68,13 @@ setTimeout(() => {
       markFull:  spend(['mark','ranged','magic','mr','kb','rm']),
     };
 
-    function setup(weapon, extra, cls, cmast){
+    function setup(weapon, extra, cls, cmast, fl){
       state.cmast=cmast||{};
       state.charClass=cls||null;
       state.items={}; state.tree={};
+      /* fl: the Fletching tree maxed too, which is where a ranged player's four
+         combat nodes live (0.9.124.45). Melee has nothing like it to add. */
+      if(fl) state.tree.fletching=maxTree('fletching');
       state.combatXp={attack:XP_CUM[LV],strength:XP_CUM[LV],defence:XP_CUM[LV],
                       hitpoints:XP_CUM[99],ranged:XP_CUM[LV]};
       state.combatEquipped={};
@@ -93,8 +96,14 @@ setTimeout(() => {
     function dps(){
       var acc=playerAccuracy(), hit=playerMaxHit(), swing=playerSwingMs();
       var p=Math.max(0.03, Math.min(0.97, acc/(acc+FOE_DEF)));
+      // Windcutter: a small chance the shot is a sure one, like Pierce
+      var w=usingRanged()?treeRank('fletching','fl_wind')*FL_WIND_RANK:0;
+      p=w*0.97+(1-w)*p;
       var avg=hit*(COMBAT_P.HIT_MIN+1)/2;
       var base=(p*avg)/(swing/1000);
+      // Barbed: a bleed ticks 10% of max hit every 2s for 10s after a proc
+      var bb=usingRanged()?treeRank('fletching','fl_barb')*FL_BARB_RANK:0, dot=0;
+      if(bb>0){ var rate=(p/(swing/1000))*bb; var up=1-Math.exp(-rate*POISON_DUR_MS/1000); dot=up*hit*POISON_TICK_MULT/(POISON_TICK_MS/1000); }
       // average the damage procs across the HP curve of one kill
       var m=0, n=0;
       for(var f=0.95; f>0.02; f-=0.05){ m+=cmastDamageMult({}, f, 1); n++; }
@@ -106,7 +115,7 @@ setTimeout(() => {
       var extra=1;
       if(state.cmast['m_t5_m']>0) extra+=0.08;
       if(cm.volley>0 && usingRanged()) extra+=cm.volley;
-      return base*procAvg*critMul*extra;
+      return base*procAvg*critMul*extra+dot;
     }
 
     var BUILDS=[
@@ -127,9 +136,10 @@ setTimeout(() => {
         setup(wep,extra,cls,SPEND.bare);      var bare=dps();
         setup(wep,extra,cls,SPEND[col]);      var off=dps();
         setup(wep,extra,cls,SPEND[col+'Full']); var full=dps();
+        setup(wep,extra,cls,SPEND[col+'Full'],col==='mark'); var fullFl=dps();
         setup(wep,extra,cls,SPEND[col+'Full']);
         rows.push({build:name, cls:cls||'none', col:col,
-          bare:+bare.toFixed(1), off:+off.toFixed(1), full:+full.toFixed(1),
+          bare:+bare.toFixed(1), off:+off.toFixed(1), full:+full.toFixed(1), fullFl:+fullFl.toFixed(1),
           hit:playerMaxHit(), acc:playerAccuracy(), swing:playerSwingMs()});
       });
     });
@@ -251,10 +261,11 @@ setTimeout(() => {
     const mine=r.rows.filter(x=>x.cls===cls);
     for(const x of mine.filter(v=>v.col==='mark')){
       const m=mine.find(v=>v.build===PAIR[x.build]);
-      const p=x.full/m.full*100;
+      const p=x.full/m.full*100, pf=x.fullFl/m.full*100;
       console.log(`     ${pad(cls,10)} ${pad(x.build,17)} vs ${pad(m.build,8)} `
-        + `${rp(x.full,6)} vs ${rp(m.full,6)}   ${rp(p.toFixed(0)+'%',5)}`);
+        + `${rp(x.full,6)} vs ${rp(m.full,6)}   ${rp(p.toFixed(0)+'%',5)}   with Fletching tree ${rp(pf.toFixed(0)+'%',5)}`);
       if(p<92||p>108) bad.push(`${x.build} (${cls}) at ${p.toFixed(0)}% of ${m.build}`);
+      if(pf<92||pf>108) bad.push(`${x.build} (${cls}) with the Fletching tree at ${pf.toFixed(0)}% of ${m.build}`);
     }
   }
   console.log('');
