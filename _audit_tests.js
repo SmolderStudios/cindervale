@@ -7620,6 +7620,184 @@ setTimeout(() => {
        norm.tabs === 9 && norm.first === '{"id":"t1","name":"A","items":["coal"]}' && norm.second === '{"id":"t2","name":"B","items":["pine_log"]}' && norm.tab === 'all', JSON.stringify(norm));
   }
 
+  section('Renaming and arranging satchel tabs, and skills in your own order (0.9.124.48)');
+  {
+    /* Jordan: "can we rename tabs and stuff?" A name box that looked like the search
+       box and only saved on Enter was there, but nobody found it. */
+    const nm = ev(`(function(){
+      state=defaultState(); normalizeState(); invSearch=''; _bagSel=null; state.bagTabs=[]; state.invPrefs.tab='all';
+      state.items={iron_ore:5, coal:9, pine_log:3, bronze_bar:2};
+      document.querySelectorAll('.modal-back').forEach(function(m){ m.classList.add('hidden'); });
+      closeInventory(); leaveFullPanels(); viewTab='acts'; renderAll(); openInventory();
+      bagMoveItem('coal','new'); bagMoveItem('iron_ore','new');
+      var chip=function(id){ return document.querySelector('#inventory .bag-tab[data-tab="'+id+'"]'); };
+      var box=function(){ return document.querySelector('#inventory .bag-tabname'); };
+      var r={draggable:chip('t1').getAttribute('draggable'), allDrag:chip('all').getAttribute('draggable')};
+      r.barFirst=!!document.querySelector('#inventory .bag-top > .bag-tabs + .bag-tabbar');
+      chip('t2').dispatchEvent(new MouseEvent('dblclick',{bubbles:true}));
+      r.dblOpen=invTab; r.dblFocus=document.activeElement===box();
+      box().blur(); chip('all').click();
+      chip('t1').dispatchEvent(new MouseEvent('click',{bubbles:true,detail:1}));
+      r.oneClickFocus=document.activeElement===box();
+      chip('t1').dispatchEvent(new MouseEvent('click',{bubbles:true,detail:2}));
+      var inp=box(); r.twoClickFocus=invTab==='t1'&&document.activeElement===inp;
+      inp.value='Ores'; inp.dispatchEvent(new Event('input',{bubbles:true}));
+      r.live=state.bagTabs[0].name; r.chipLive=chip('t1').textContent.indexOf('Ores')>=0;
+      state.items.copper_ore=4; renderAll(); renderInventory();
+      r.sameBox=box()===inp&&document.activeElement===inp;
+      inp.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true}));
+      r.escName=state.bagTabs[0].name; r.escOpen=invOpen; r.escBlur=document.activeElement!==inp; r.escBox=inp.value;
+      inp.focus(); inp.value='Ores and coal'; inp.dispatchEvent(new Event('input',{bubbles:true}));
+      inp.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true,cancelable:true}));
+      r.enterName=state.bagTabs[0].name; r.enterBlur=document.activeElement!==inp;
+      _bagSel=null; chip('new').click();
+      r.plusOpen=invTab; r.plusFocus=document.activeElement===box();
+      box().blur(); bagDeleteTab('t3');
+      chip('t1').click(); bagMoveItem('pine_log','t1');
+      r.faceFirst=chip('t1').getAttribute('data-face');
+      /* Clicked on the caret inside the button, where a real pointer lands: a repaint
+         of the button used to detach it and the outside-click check shut the picker. */
+      document.querySelector('#inventory .bag-facebtn .bag-caret').click();
+      var pick=document.querySelector('#inventory .bag-pick');
+      r.pickShown=!pick.hidden;
+      r.pickIds=[].map.call(pick.querySelectorAll('.bag-pick-ic'),function(b){ return b.getAttribute('data-id'); }).join(',');
+      pick.querySelector('.bag-pick-ic[data-id="pine_log"]').click();
+      r.picked=state.bagTabs[0].icon; r.facePicked=chip('t1').getAttribute('data-face'); r.pickClosed=document.querySelector('#inventory .bag-pick').hidden;
+      state.items.pine_log=0; renderInventory(); r.faceKept=chip('t1').getAttribute('data-face');
+      state.items.pine_log=3; renderInventory();
+      document.querySelector('#inventory .bag-facebtn .bag-caret').click();
+      document.querySelector('#inventory .bag-pick .bag-pick-auto').click();
+      r.autoBack=!('icon' in state.bagTabs[0])&&chip('t1').getAttribute('data-face')==='coal';
+      document.querySelector('#inventory .bag-facebtn .bag-caret').click(); r.reopened=!document.querySelector('#inventory .bag-pick').hidden;
+      document.body.click(); r.outsideClosed=document.querySelector('#inventory .bag-pick').hidden;
+      closeInventory();
+      return r;
+    })()`);
+    ok('the open tab bar sits right under the tabs, and custom tabs can be dragged (All cannot)',
+       nm.barFirst === true && nm.draggable === 'true' && nm.allDrag === null, JSON.stringify(nm));
+    ok('double-clicking a tab opens it with its name ready to type', nm.dblOpen === 't2' && nm.dblFocus === true, JSON.stringify(nm));
+    ok('one click only opens a tab; the second click of a double-click renames it', nm.oneClickFocus === false && nm.twoClickFocus === true, JSON.stringify(nm));
+    ok('the tab renames as you type, and the box keeps focus through repaints and new items',
+       nm.live === 'Ores' && nm.chipLive === true && nm.sameBox === true, JSON.stringify(nm));
+    ok('Escape puts the old name back and leaves the satchel open', nm.escName === '' && nm.escBox === '' && nm.escOpen === true && nm.escBlur === true, JSON.stringify(nm));
+    ok('Enter keeps the name', nm.enterName === 'Ores and coal' && nm.enterBlur === true, JSON.stringify(nm));
+    ok('+ with nothing picked opens a new tab with its name box ready', nm.plusOpen === 't3' && nm.plusFocus === true, JSON.stringify(nm));
+    ok('the picture button lists the items in the tab and sets its picture',
+       nm.faceFirst === 'coal' && nm.pickShown === true && nm.pickIds === 'coal,pine_log' && nm.picked === 'pine_log' && nm.facePicked === 'pine_log' && nm.pickClosed === true, JSON.stringify(nm));
+    ok('a picked picture stays when you run out of that item; First item goes back', nm.faceKept === 'pine_log' && nm.autoBack === true, JSON.stringify(nm));
+    ok('a click outside closes the picture picker', nm.reopened === true && nm.outsideClosed === true, JSON.stringify(nm));
+
+    const mv = ev(`(function(){
+      state=defaultState(); normalizeState(); invSearch=''; _bagSel=null;
+      state.items={iron_ore:5, coal:9, pine_log:3, bronze_bar:2};
+      state.bagTabs=[{id:'t1',name:'A',items:['coal']},{id:'t2',name:'B',items:['iron_ore']},{id:'t3',name:'C',items:['pine_log']}];
+      var names=function(){ return state.bagTabs.map(function(t){ return t.name; }).join(''); };
+      var chip=function(id){ return document.querySelector('#inventory .bag-tab[data-tab="'+id+'"]'); };
+      var arrow=function(d){ return document.querySelector('#inventory .bag-mv[data-dir="'+d+'"]'); };
+      var ev=function(el,type){ var e=new Event(type,{bubbles:true,cancelable:true}); el.dispatchEvent(e); return e; };
+      var r={};
+      invTab='t1'; state.invPrefs.tab='t1'; renderInventory();
+      r.leftOff=arrow(-1).disabled; arrow(1).click(); r.right1=names(); arrow(1).click(); r.right2=names(); r.rightOff=arrow(1).disabled;
+      arrow(-1).click(); r.left1=names();
+      state.bagTabs=[{id:'t1',name:'A',items:['coal']},{id:'t2',name:'B',items:['iron_ore']},{id:'t3',name:'C',items:['pine_log']}];
+      invTab='all'; state.invPrefs.tab='all'; renderInventory();
+      ev(chip('t1'),'dragstart');
+      var held=chip('t1'); state.items.copper_ore=2; renderInventory(); r.held=held.isConnected;
+      var ov=ev(chip('t3'),'dragover'); r.lineRight=ov.defaultPrevented&&chip('t3').classList.contains('tab-drop-r');
+      r.selfNo=!ev(chip('t1'),'dragover').defaultPrevented;
+      ev(chip('t3'),'drop'); r.ontoRight=names();
+      ev(chip('t1'),'dragstart'); ev(chip('t2'),'dragover'); r.lineLeft=chip('t2').classList.contains('tab-drop-l'); ev(chip('t2'),'drop'); r.ontoLeft=names();
+      ev(chip('t3'),'dragstart'); ev(chip('all'),'drop'); r.ontoAll=names();
+      ev(chip('t3'),'dragstart'); ev(chip('new'),'drop'); r.ontoPlus=names();
+      ev(chip('t2'),'dragstart'); ev(chip('t2'),'dragend'); r.cancel=names()+(_bagTabDrag===null?'':'!');
+      ev(document.querySelector('#inventory .bag-tile[data-id="bronze_bar"]'),'dragstart'); ev(chip('t2'),'drop');
+      r.itemStill=state.bagTabs.find(function(t){ return t.id==='t2'; }).items.indexOf('bronze_bar')>=0;
+      state.bagTabs=[]; state.invPrefs.tab='all'; invTab='all';
+      return r;
+    })()`);
+    ok('the arrows move the open tab and stop at the ends',
+       mv.leftOff === true && mv.right1 === 'BAC' && mv.right2 === 'BCA' && mv.rightOff === true && mv.left1 === 'BAC', JSON.stringify(mv));
+    ok('the tab row holds still while a tab is dragged', mv.held === true, JSON.stringify(mv));
+    ok('a tab dropped on one further right lands after it, and the line shows that side',
+       mv.lineRight === true && mv.selfNo === true && mv.ontoRight === 'BCA', JSON.stringify(mv));
+    ok('a tab dropped on one further left lands before it', mv.lineLeft === true && mv.ontoLeft === 'ABC', JSON.stringify(mv));
+    ok('onto All makes a tab first, onto + makes it last', mv.ontoAll === 'CAB' && mv.ontoPlus === 'ABC', JSON.stringify(mv));
+    ok('a tab drag let go elsewhere moves nothing, and items still drop into tabs', mv.cancel === 'ABC' && mv.itemStill === true, JSON.stringify(mv));
+
+    const nIcon = ev(`(function(){
+      state=defaultState();
+      state.bagTabs=[{id:'t1',name:'A',items:['coal'],icon:'coal'},{id:'t2',name:'B',items:['pine_log'],icon:'nope_item'},{id:'t3',name:'C',items:[],icon:5}];
+      normalizeState();
+      var r=state.bagTabs.map(function(t){ return t.icon===undefined?'-':t.icon; }).join(',');
+      state.bagTabs=[];
+      return r;
+    })()`);
+    ok('a chosen tab picture survives a reload, and a bad one is dropped', nIcon === 'coal,-,-', nIcon);
+
+    /* "also let us drag and move the skills on the left, so we can freely organize
+       them as well" */
+    const sk = ev(`(function(){
+      state=defaultState(); normalizeState(); state.action=null; _railGroup='all'; _skDrag=null;
+      lsDel(SKILL_ORDER_KEY); setSkillSort('az');
+      var rows=function(){ return [].map.call(document.querySelectorAll('#skillList .skill-row[data-skill]'),function(b){ return b.getAttribute('data-skill'); }); };
+      var row=function(k){ return document.querySelector('#skillList .skill-row[data-skill="'+k+'"]'); };
+      var ev=function(el,type){ var e=new Event(type,{bubbles:true,cancelable:true}); el.dispatchEvent(e); return e; };
+      var same=function(a,b){ return JSON.stringify(a)===JSON.stringify(b); };
+      var r={option:(document.querySelector('#skillSort option[value="custom"]')||{}).textContent};
+      var az=rows(); r.n=az.length; r.draggable=row(az[0]).getAttribute('draggable');
+      r.offDrag=document.querySelector('#skillList .skill-row.offline-skill').getAttribute('draggable');
+      var a=az[4], b=az[1];
+      ev(row(a),'dragstart');
+      var held=row(a); renderSkillList(); r.held=held.isConnected&&held.classList.contains('sk-dragging');
+      var ov=ev(row(b),'dragover'); r.lineAbove=ov.defaultPrevented&&row(b).classList.contains('sk-drop-above');
+      r.selfNo=!ev(row(a),'dragover').defaultPrevented;
+      ev(row(b),'drop');
+      var want=az.slice(); want.splice(4,1); want.splice(1,0,a);
+      r.up=same(rows(),want); r.mode=skillSort(); r.select=document.getElementById('skillSort').value; r.saved=same(skillOrderSaved(),want);
+      var now=rows(), c=now[0], d=now[3];
+      ev(row(c),'dragstart'); ev(row(d),'dragover'); r.lineBelow=row(d).classList.contains('sk-drop-below'); ev(row(d),'drop');
+      var want2=now.slice(); want2.splice(0,1); want2.splice(3,0,c);
+      r.down=same(rows(),want2);
+      var e1=rows()[0]; ev(row(e1),'dragstart'); ev(document.querySelector('#skillList .skill-row.offline-skill'),'drop');
+      r.last=rows()[rows().length-1]===e1;
+      var mine=rows(); setSkillSort('level'); r.levelDiffers=!same(rows(),mine); setSkillSort('custom'); r.kept=same(rows(),mine);
+      setRailGroup('gather'); var g=rows();
+      ev(row(g[g.length-1]),'dragstart'); ev(row(g[0]),'drop');
+      r.filtered=rows()[0]===g[g.length-1]; setRailGroup('all'); r.filteredAll=rows().length===az.length;
+      var before=rows(); ev(row(before[2]),'dragstart'); ev(row(before[2]),'dragend');
+      r.letGo=same(rows(),before)&&_skDrag===null&&!document.querySelector('#skillList .sk-dragging');
+      row(before[1]).click(); r.clickSelects=selectedSkill===before[1];
+      state.action={skill:'mining',actId:SKILLS.mining.acts[0].id};
+      lsDel(SKILL_ORDER_KEY); setSkillSort('active');
+      var seen=rows(); ev(row(seen[5]),'dragstart'); ev(row(seen[2]),'drop');
+      var want3=seen.slice(); var m=want3.splice(5,1)[0]; want3.splice(2,0,m);
+      r.fromSeen=seen[0]==='mining'&&same(rows(),want3);
+      state.action=null;
+      lsSet(SKILL_ORDER_KEY,'{not json');
+      r.junk=same(skillOrder(),Object.keys(SKILLS).sort(function(x,y){ return SKILLS[x].name.localeCompare(SKILLS[y].name); }));
+      lsSet(SKILL_ORDER_KEY,JSON.stringify(['mining','nope','mining',5]));
+      var o=skillOrder(); r.partial=o[0]==='mining'&&o.length===az.length&&o.indexOf('nope')<0&&o.lastIndexOf('mining')===0;
+      lsDel(SKILL_ORDER_KEY); setSkillSort('custom'); r.hint=!!document.querySelector('#skillList .sk-order-hint');
+      lsSet(SKILL_ORDER_KEY,JSON.stringify(az)); renderSkillList(); r.hintGone=!document.querySelector('#skillList .sk-order-hint');
+      lsDel(SKILL_ORDER_KEY); lsDel(SKILL_SORT_KEY); document.getElementById('skillSort').value='active'; renderSkillList();
+      return r;
+    })()`);
+    ok('Sort has Your order, every skill row can be dragged, Offline cannot',
+       sk.option === 'Your order' && sk.n > 10 && sk.draggable === 'true' && sk.offDrag === null, JSON.stringify(sk));
+    ok('the rail holds still while a skill is dragged', sk.held === true, JSON.stringify(sk));
+    ok('a skill dropped on one further up lands above it, and the line shows there',
+       sk.lineAbove === true && sk.selfNo === true && sk.up === true, JSON.stringify(sk));
+    ok('dropping switches Sort to Your order and saves it', sk.mode === 'custom' && sk.select === 'custom' && sk.saved === true, JSON.stringify(sk));
+    ok('a skill dropped on one further down lands below it', sk.lineBelow === true && sk.down === true, JSON.stringify(sk));
+    ok('onto Offline puts a skill last', sk.last === true, JSON.stringify(sk));
+    ok('Your order comes back after trying another sort', sk.levelDiffers === true && sk.kept === true, JSON.stringify(sk));
+    ok('moving inside Gather keeps the whole order', sk.filtered === true && sk.filteredAll === true, JSON.stringify(sk));
+    ok('a drag let go off the list moves nothing, and a click still picks the skill', sk.letGo === true && sk.clickSelects === true, JSON.stringify(sk));
+    ok('dragging in another sort starts from the order on screen', sk.fromSeen === true, JSON.stringify(sk));
+    ok('a broken or partial saved order falls back, new skills go last', sk.junk === true && sk.partial === true, JSON.stringify(sk));
+    ok('Your order with nothing saved says to drag, and stops once there is an order', sk.hint === true && sk.hintGone === true, JSON.stringify(sk));
+  }
+
   section('Skill presets hold their own skill, and the OSRS doll (0.9.124.44)');
   {
     /* The Woodcutting preset offered the whole Agility set, and a skill cape for
