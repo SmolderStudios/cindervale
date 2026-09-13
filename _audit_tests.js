@@ -7273,6 +7273,197 @@ setTimeout(() => {
     ok('and Sell 1 sells one and pays', dock.sold === true, JSON.stringify(dock));
   }
 
+  section('Gear tab, presets and combat loadouts (0.9.124.42)');
+  {
+    /* The agility tools were slot 'boots', the body boots' key in the same loadout,
+       so the tool and Runner's Shoes always took each other off. Nothing threw:
+       agility just ran at 0% tool speed, or the set lost a piece. */
+    const tools = ev(`(function(){
+      var ag=SHOP.filter(function(s){ return s.skill==='agility'&&s.slot!=='cape'; });
+      var body={}; BODY_SLOTS.forEach(function(b){ body[b.slot]=1; });
+      return {n:ag.length, slots:ag.map(function(s){ return s.slot; }).filter(function(v,i,a){ return a.indexOf(v)===i; }).join(),
+        tools:ag.every(function(s){ return s.tool===true&&ITEMS[s.id]&&ITEMS[s.id].tool===true; }),
+        clash:SHOP.filter(function(s){ return s.tool&&body[s.slot]; }).map(function(s){ return s.id; })};
+    })()`);
+    ok('every agility tool is in the shoes slot, and is still a tool', tools.n === 6 && tools.slots === 'shoes' && tools.tools === true, JSON.stringify(tools));
+    ok('no tool shares its key with a body slot', tools.clash.length === 0, tools.clash.join(','));
+
+    const both = ev(`(function(){
+      state=defaultState(); normalizeState();
+      state.skillingGear={ag_boots:1}; state.skillingEquipped.boots='ag_boots';
+      state.coins=1e12; state.xp.agility=XP_CUM[30];
+      buyShop('leather_boots');
+      var a={boots:state.skillingEquipped.boots, shoes:state.skillingEquipped.shoes, speed:gearBonus('agility','speed')};
+      state=defaultState(); normalizeState();
+      grantItem('iron_runners',1);
+      a.craftedToGear=state.gear.indexOf('iron_runners')>=0; a.craftedInBag=state.items.iron_runners||0;
+      return a;
+    })()`);
+    ok("buying an agility tool keeps Runner's Shoes on, and the tool counts",
+       both.boots === 'ag_boots' && both.shoes === 'leather_boots' && both.speed === 0.04, JSON.stringify(both));
+    ok('a crafted agility tool still goes to your gear, not the satchel', both.craftedToGear === true && both.craftedInBag === 0, JSON.stringify(both));
+
+    const mig = ev(`(function(){
+      state=defaultState();
+      state.gear=['leather_boots','wind_treads','bronze_axe','eclipse_axe'];
+      state.skillingEquipped={boots:'wind_treads',axe:'eclipse_axe'}; state.equipped=state.skillingEquipped;
+      state.combatEquipped={boots:'wind_treads'}; state._equipSplitV1=true;
+      state.gearPresets={agility:{boots:'swift_boots',axe:'bronze_axe',helmet:'ag_hat'}, junk:[1]};
+      state.combatPresets={melee:{weapon:'bronze_sword',axe:'bronze_axe'}, junk:'x'};
+      delete state.presetAuto;
+      normalizeState();
+      var r={se:JSON.stringify(state.skillingEquipped), ce:JSON.stringify(state.combatEquipped), gp:JSON.stringify(state.gearPresets),
+        cp:JSON.stringify(state.combatPresets), auto:state.presetAuto};
+      /* someone who wore Runner's Shoes had the tool off: once, the best one goes on */
+      state=defaultState();
+      state.gear=['leather_boots','wind_treads','swift_boots']; state.skillingGear={ag_boots:1};
+      state.skillingEquipped={boots:'ag_boots'}; state.equipped=state.skillingEquipped; state._equipSplitV1=true;
+      delete state._shoesV1;
+      normalizeState();
+      r.putOn=state.skillingEquipped.shoes; r.keptBoots=state.skillingEquipped.boots;
+      delete state.skillingEquipped.shoes; normalizeState();
+      r.takenOffStaysOff=state.skillingEquipped.shoes===undefined;
+      return r;
+    })()`);
+    ok('an old save moves the worn agility tool into shoes', mig.se === '{"axe":"eclipse_axe","shoes":"wind_treads"}', mig.se);
+    ok('and drops it from the combat loadout, where it did nothing', mig.ce === '{}', mig.ce);
+    ok('saved presets lose tools and anything that is not body gear', mig.gp === '{"agility":{"helmet":"ag_hat"}}' && mig.cp === '{"melee":{"weapon":"bronze_sword"}}', mig.gp + ' ' + mig.cp);
+    ok('auto-equip starts off', mig.auto === false, String(mig.auto));
+    ok("Runner's Shoes wearers get their best agility tool back, once",
+       mig.putOn === 'wind_treads' && mig.keptBoots === 'ag_boots' && mig.takenOffStaysOff === true, JSON.stringify(mig));
+
+    /* A preset copied the whole loadout, tools included, so one saved with a Bronze
+       Axe put it back over an Eclipse Axe every time. */
+    const keep = ev(`(function(){
+      state=defaultState(); normalizeState();
+      state.gear=['bronze_axe','eclipse_axe']; state.skillingGear={wc_hat:1};
+      state.skillingEquipped.axe='eclipse_axe';
+      state.gearPresets.woodcutting={axe:'bronze_axe',helmet:'wc_hat'};
+      equipGearPreset('woodcutting',true);
+      var r={axe:state.skillingEquipped.axe, helmet:state.skillingEquipped.helmet};
+      saveGearPreset('woodcutting');
+      r.saved=JSON.stringify(state.gearPresets.woodcutting);
+      return r;
+    })()`);
+    ok('equipping a preset never swaps your tools', keep.axe === 'eclipse_axe' && keep.helmet === 'wc_hat', JSON.stringify(keep));
+    ok('and saving one stores body gear only', keep.saved === '{"helmet":"wc_hat"}', keep.saved);
+
+    const combat = ev(`(function(){
+      state=defaultState(); normalizeState();
+      for(var k in state.combatXp) state.combatXp[k]=XP_CUM[99];
+      state.items={bronze_sword:1,bronze_shield:1,bronze_helm:1,grave_cleaver:1};
+      state.combatEquipped.weapon='bronze_sword'; state.combatEquipped.shield='bronze_shield'; state.combatEquipped.helmet='bronze_helm';
+      saveCombatPreset('melee');
+      state.combatEquipped={weapon:'grave_cleaver'};
+      var before=presetStatus('combat','melee').worn;
+      equipCombatPreset('melee',true);
+      var r={before:before, back:JSON.stringify(state.combatEquipped), worn:presetStatus('combat','melee').worn};
+      state.combatPresets.ranged={weapon:'grave_cleaver',shield:'bronze_shield'};
+      equipCombatPreset('ranged',true);
+      r.twoHand=JSON.stringify(state.combatEquipped);
+      for(var k2 in state.combatXp) state.combatXp[k2]=0;
+      state.combatEquipped={};
+      state.combatPresets.ranged={weapon:'grave_cleaver',helmet:'mithril_helm',shield:'bronze_shield'};
+      var st=presetStatus('combat','ranged');
+      equipCombatPreset('ranged',true);
+      r.locked=st.locked; r.missing=st.missing; r.low=JSON.stringify(state.combatEquipped);
+      return r;
+    })()`);
+    ok('a combat loadout saves and swaps the whole setup back', combat.before === false && combat.back === '{"weapon":"bronze_sword","shield":"bronze_shield","helmet":"bronze_helm"}' && combat.worn === true, JSON.stringify(combat));
+    ok('a two-hander in a loadout leaves no shield', combat.twoHand === '{"weapon":"grave_cleaver"}', combat.twoHand);
+    ok('a piece you cannot wear yet is skipped, and the card counts it', combat.locked === 1 && combat.missing === 1 && combat.low === '{"shield":"bronze_shield"}', JSON.stringify(combat));
+
+    const auto = ev(`(function(){
+      state=defaultState(); normalizeState(); toast=function(){};
+      state.skillingGear={wc_hat:1}; state.gearPresets.woodcutting={helmet:'wc_hat'};
+      setAction('woodcutting','wc1');
+      var off=state.skillingEquipped.helmet||null;
+      state.action=null; state.presetAuto=true;
+      setAction('woodcutting','wc1');
+      var on=state.skillingEquipped.helmet||null;
+      return {off:off, on:on, again:presetAutoApply('woodcutting')};
+    })()`);
+    ok('starting a skill leaves your gear alone while auto-equip is off', auto.off === null, JSON.stringify(auto));
+    ok('and puts the preset on when it is on, once', auto.on === 'wc_hat' && auto.again === false, JSON.stringify(auto));
+
+    const tab = ev(`(function(){
+      state=defaultState(); normalizeState();
+      for(var k in state.combatXp) state.combatXp[k]=XP_CUM[99];
+      state.items={bronze_sword:1,iron_sword:1};
+      state.combatPresets={melee:{weapon:'bronze_sword'}}; state.combatEquipped={weapon:'iron_sword'};
+      rightTab='presets'; _loScope='combat'; _loArm=null; renderRightPanel();
+      var box=document.getElementById('presetsView'), q=function(s){ return box.querySelector(s); };
+      var r={cards:box.querySelectorAll('.lo-card').length, soon:box.querySelectorAll('.lo-card.off').length};
+      q('[data-lo="save"][data-key="melee"]').click();
+      r.firstClick=state.combatPresets.melee.weapon; r.asks=q('[data-lo="save"][data-key="melee"]').textContent;
+      q('[data-lo="save"][data-key="melee"]').click();
+      r.secondClick=state.combatPresets.melee.weapon;
+      state.combatEquipped={}; renderPresets();
+      q('[data-lo="equip"][data-key="melee"]').click();
+      r.equipped=state.combatEquipped.weapon; r.status=q('.lo-card.active .lo-st')?q('.lo-card.active .lo-st').textContent:'';
+      q('[data-lo="scope"][data-v="skilling"]').click();
+      r.skillCards=box.querySelectorAll('.lo-card').length; r.skills=Object.keys(SKILLS).length;
+      q('[data-lo="auto"]').click(); r.autoOn=state.presetAuto; state.presetAuto=false;
+      return r;
+    })()`);
+    ok('the combat half has Melee, Ranged, and Magic marked soon', tab.cards === 3 && tab.soon === 1, JSON.stringify(tab));
+    ok('saving over a loadout you are not wearing asks first', tab.firstClick === 'bronze_sword' && tab.asks === 'Replace it?' && tab.secondClick === 'iron_sword', JSON.stringify(tab));
+    ok("a card's Equip puts the loadout on and the card says so", tab.equipped === 'iron_sword' && tab.status === 'Worn now', JSON.stringify(tab));
+    ok('the skilling half has a card per skill and the auto-equip switch works', tab.skillCards === tab.skills && tab.autoOn === true, JSON.stringify(tab));
+
+    const gear = ev(`(function(){
+      state=defaultState(); normalizeState();
+      state.items={bronze_sword:1}; state.combatEquipped.weapon='bronze_sword';
+      rightTab='gear'; _gearFilter='combat'; _gearInteractAt=0; renderRightPanel();
+      var box=document.getElementById('gearView');
+      var nums=[].map.call(box.querySelectorAll('.eq-sgrid b'),function(b){ return b.textContent; });
+      var r={combatCells:box.querySelectorAll('.eq-cell:not(.blank)').length, nums:nums.join('|')};
+      state.gear=['eclipse_axe','swift_boots','leather_boots']; state.skillingEquipped.axe='eclipse_axe'; state.skillingEquipped.shoes='swift_boots';
+      selectedSkill='woodcutting'; state.action=null; _gearFilter='skilling'; _gearInteractAt=0; renderGear();
+      r.speed=box.querySelector('.eq-sgrid b').textContent;
+      r.cells=[].map.call(box.querySelectorAll('.eq-cell:not(.blank)'),function(c){ return c.title.split(':')[0]; }).join(',');
+      var shoe=[].find.call(box.querySelectorAll('.eq-tool'),function(t){ return /Running Shoes/.test(t.textContent); });
+      r.shoeCard=shoe?shoe.querySelector('.nm').textContent:'';
+      state.skillingEquipped.weapon='bronze_sword'; renderGear();
+      r.legacyRow=!![].find.call(box.querySelectorAll('.eq-cell'),function(c){ return /^Weapon/.test(c.title); });
+      delete state.skillingEquipped.weapon;
+      shoe.click();
+      r.toolSell=/Sell/.test(document.getElementById('gearSlotBody').textContent);
+      r.toolRows=document.getElementById('gearSlotBody').textContent.indexOf('Leather Boots')>=0;
+      document.getElementById('gearSlotModal').classList.add('hidden');
+      return r;
+    })()`);
+    ok('the combat doll has all twelve slots and real numbers under it', gear.combatCells === 12 && gear.nums.split('|').length === 4 && !/\?|NaN|undefined/.test(gear.nums), JSON.stringify(gear));
+    ok('the skilling side shows what the gear gives the skill', gear.speed === '+20%', JSON.stringify(gear));
+    ok('the skilling doll has no weapon, off-hand or quiver square', (gear.cells||"").split(',').length === 9 && !/Weapon|Shield|Off|Quiver/.test(gear.cells), gear.cells);
+    ok('unless an old loadout still holds one, so it can come off', gear.legacyRow === true, JSON.stringify(gear));
+    ok('the Running Shoes card shows the agility tool you wear', gear.shoeCard === 'Swift Boots', gear.shoeCard);
+    ok('a tool picker never offers to sell a tool', gear.toolRows === true && gear.toolSell === false, JSON.stringify(gear));
+
+    const pick = ev(`(function(){
+      state=defaultState(); normalizeState();
+      state.items={bronze_helm:1,bronze_sword:1}; state.skillingGear={wc_hat:1}; state.gear=['bronze_axe'];
+      var r={skillHelm:_presetCandidates('helmet','skilling').join(), combatHelm:_presetCandidates('helmet','combat').join(),
+             combatWeapon:_presetCandidates('weapon','combat').join()};
+      openPresetEditor('melee','combat');
+      r.clearHidden=document.getElementById('presetEditorClear').style.display==='none';
+      r.combatSquares=document.querySelectorAll('#presetEditorDoll .eq-cell:not(.blank)').length;
+      document.getElementById('presetEditorModal').classList.add('hidden');
+      state.gearPresets.mining={helmet:'wc_hat'};
+      openPresetEditor('mining','skilling');
+      r.clearShown=document.getElementById('presetEditorClear').style.display==='';
+      r.skillSquares=document.querySelectorAll('#presetEditorDoll .eq-cell:not(.blank)').length;
+      document.getElementById('presetEditorClear').click();
+      r.cleared=!state.gearPresets.mining;
+      return r;
+    })()`);
+    ok('a skilling preset offers skilling pieces, a combat one offers combat pieces',
+       pick.skillHelm === 'wc_hat' && pick.combatHelm === 'bronze_helm' && pick.combatWeapon === 'bronze_sword', JSON.stringify(pick));
+    ok('the editor has a Clear that only shows once something is saved, and it clears',
+       pick.clearHidden === true && pick.clearShown === true && pick.cleared === true, JSON.stringify(pick));
+    ok('the editor doll matches the Gear tab: twelve combat squares, nine skilling', pick.combatSquares === 12 && pick.skillSquares === 9, JSON.stringify(pick));
+  }
+
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));
   process.exit(fail ? 1 : 0);
 }, 2500);
