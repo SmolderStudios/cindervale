@@ -7954,6 +7954,30 @@ setTimeout(() => {
     ok('the fight screen\'s zone button says Change zone, not a second back arrow', inner.zoneBtn === true, JSON.stringify(inner));
   }
 
+  section('Combat\'s tabs beside its name (0.9.124.50)');
+  {
+    /* Jordan: "move these tabs beside combat so we can save some room". Arena,
+       Mastery, Slayer, Pets and Log were a row of their own under the page bar. */
+    const ct = ev(`(function(){
+      state=defaultState(); normalizeState();
+      document.querySelectorAll('.modal-back').forEach(function(m){ m.classList.add('hidden'); });
+      closeInventory(); leaveFullPanels(); selectedSkill='smithing'; viewTab='acts'; renderAll();
+      enterCombat();
+      var panel=document.getElementById('combatPanel'), bar=panel.querySelector('.pg-bar');
+      var r={inBar:!!(bar&&bar.querySelector('.cmb-subtabs')), ownRow:[].filter.call(panel.children,function(c){ return c.classList.contains('cmb-subtabs'); }).length,
+        order:bar?[].map.call(bar.children,function(c){ return c.className.split(' ')[0]; }).join(','):'',
+        tabs:[].map.call(panel.querySelectorAll('.pg-bar .cmb-subtab'),function(b){ return b.getAttribute('data-sub'); }).join(',')};
+      var m=panel.querySelector('.pg-bar .cmb-subtab[data-sub="pets"]'); if(m) m.click();
+      r.clicked=(document.querySelector('#combatPanel .pg-bar .cmb-subtab.on')||{getAttribute:function(){ return ''; }}).getAttribute('data-sub');
+      var a=document.querySelector('#combatPanel .pg-bar .cmb-subtab[data-sub="arena"]'); if(a) a.click();
+      closeCombatPanel();
+      return r;
+    })()`);
+    ok('Combat\'s tabs sit in its page bar, after Back and the name, not in a row of their own',
+       ct.inBar === true && ct.ownRow === 0 && ct.order === 'pg-back,pg-title,cmb-subtabs' && ct.tabs === 'arena,mastery,slayer,pets,log', JSON.stringify(ct));
+    ok('and they still switch the page', ct.clicked === 'pets', JSON.stringify(ct));
+  }
+
   section('Skill presets hold their own skill, and the OSRS doll (0.9.124.44)');
   {
     /* The Woodcutting preset offered the whole Agility set, and a skill cape for
