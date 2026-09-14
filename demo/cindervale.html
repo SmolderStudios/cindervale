@@ -8644,7 +8644,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.124.50">v0.9.124</div>
+  <div class="mm-ver" data-build="0.9.124.51">v0.9.124</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -29785,8 +29785,9 @@ const INV_PAGE_SIZE=10;
    From mockups: the screen covers the middle and right columns and keeps the skill
    list; names stay under every slot. The right bar keeps Gear, Alerts and Presets.
 
-   - All holds everything. Once you have tabs it shows each tab's items first, in
-     the order you left them, then everything else in the sort pill's order.
+   - All holds everything. Once you have tabs it shows what is not in a tab first,
+     in the sort pill's order, then each tab's items in the order you left them
+     (tabs came first until 0.9.124.51, so every new tab pushed the rest down).
    - Up to nine tabs. Drag an item onto + to make one, onto a tab to move it there,
      onto an item in a tab to put it in front of that one, or onto All to take it
      out of its tab. The item card has the same moves as buttons, for anyone who
@@ -30401,10 +30402,10 @@ function renderInventory(){
   /* What the grid shows, as sections: [{tab, label, face, ids}] */
   const sections=[];
   if(invTab==='all'){
-    tabs.forEach(t=>{
-      const ids=t.items.filter(id=>ownedSet.has(id)&&match(id));
-      if(ids.length) sections.push({tab:t.id, label:bagTabLabel(t), face:bagTabFace(t,ownedSet), ids:ids});
-    });
+    /* What is not in a tab comes first, then each tab in tab order, so a new tab is
+       added at the bottom instead of pushing everything else down (0.9.124.51).
+       Jordan: "make sure the main tab, is the one on top of every other tab, so new
+       tabs dont add on top of the main tab, it goes below it". */
     const loose=owned.filter(id=>!inTab.has(id)&&match(id)).sort(sortFn);
     if(loose.length){
       if(tabs.length) sections.push({tab:'loose', label:'Not in a tab', ids:loose});
@@ -30413,6 +30414,10 @@ function renderInventory(){
         loose.forEach(id=>{ if(catOf[id]!==cur){ cur=catOf[id]; sections.push({tab:'loose', label:BAG_BUCKET_LABEL[cur]||'Other', ids:[]}); } sections[sections.length-1].ids.push(id); });
       } else sections.push({tab:'loose', label:'', ids:loose});
     }
+    tabs.forEach(t=>{
+      const ids=t.items.filter(id=>ownedSet.has(id)&&match(id));
+      if(ids.length) sections.push({tab:t.id, label:bagTabLabel(t), face:bagTabFace(t,ownedSet), ids:ids});
+    });
   } else {
     const t=tabs.find(x=>x.id===invTab);
     const ids=t.items.filter(id=>ownedSet.has(id)&&match(id));
