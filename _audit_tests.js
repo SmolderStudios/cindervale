@@ -8032,15 +8032,17 @@ setTimeout(() => {
       r.title=document.getElementById('gearSlotTitle').textContent+'/'+document.getElementById('gearSlotScope').textContent;
       r.worn=(m.querySelector('.gsp-row.worn')||{getAttribute:function(){ return ''; }}).getAttribute('data-id');
       r.remove=!!m.querySelector('.gsp-row.worn [data-gsp="off"]');
-      var rows=[].slice.call(m.querySelectorAll('.gsp-list .gsp-row'));
+      /* the options became a grid of cards in 0.9.124.53; what a card needs is in its hover card */
+      var rows=[].slice.call(m.querySelectorAll('.gsp-grid .gsp-card'));
       r.order=rows.map(function(x){ return x.getAttribute('data-id')+(x.classList.contains('locked')?'!':''); }).join(',');
       var last=rows[rows.length-1];
-      r.lockedBtn=last?last.querySelector('.gsp-act button').textContent+'|'+last.querySelector('.gsp-act button').disabled:'';
-      r.lockedReq=last&&last.querySelector('.gsp-req')?last.querySelector('.gsp-req').textContent:'';
-      var rn=m.querySelector('.gsp-row[data-id="runite_helm"]');
-      r.delta=rn?[].map.call(rn.querySelectorAll('.gsp-delta b'),function(b){ return b.className+':'+b.textContent; }).join(','):'';
-      r.stats=rn?rn.querySelector('.gsp-stats').textContent:'';
-      r.equipBtns=m.querySelectorAll('.gsp-list [data-equip]').length;
+      r.lockedBtn=last?last.querySelector('button').textContent+'|'+last.querySelector('button').disabled:'';
+      if(last) last.dispatchEvent(new MouseEvent('mouseenter',{clientX:40,clientY:40}));
+      r.lockedReq=document.getElementById('gearHoverTip').textContent; hideGearTip();
+      var rn=m.querySelector('.gsp-card[data-id="runite_helm"]');
+      r.delta=rn?[].map.call(rn.querySelectorAll('.gsp-cdl b'),function(b){ return b.className+':'+b.textContent; }).join(','):'';
+      r.stats=rn?rn.querySelector('.gsp-cst').textContent:'';
+      r.equipBtns=m.querySelectorAll('.gsp-grid [data-equip]').length;
       if(rn) rn.click();
       r.rowEquip={helmet:state.combatEquipped.helmet, closed:m.classList.contains('hidden')};
       openGearSlotModal('helmet',hd,state.combatEquipped.helmet); document.getElementById('gearSlotClose').click(); r.xClosed=m.classList.contains('hidden');
@@ -8053,7 +8055,7 @@ setTimeout(() => {
       closeGearSlotModal();
       var rd=BODY_SLOTS.find(function(s){ return s.slot==='ring_l'; });
       openGearSlotModal('ring_l',rd,null);
-      r.ringOpts=[].map.call(m.querySelectorAll('.gsp-list .gsp-row'),function(x){ return x.getAttribute('data-id'); }).join(',');
+      r.ringOpts=[].map.call(m.querySelectorAll('.gsp-grid .gsp-card'),function(x){ return x.getAttribute('data-id'); }).join(',');
       r.ringFoot=!!m.querySelector('.gsp-foot button');
       closeGearSlotModal();
       return r;
@@ -8112,6 +8114,72 @@ setTimeout(() => {
        dd.ringLit === 'ring_l,ring_r' && dd.ring1 === 'emerald_ring' && dd.ring2 === 'ruby_ring', JSON.stringify(dd));
     ok('gear you lack the level for rings red and is not worn', dd.lock === true && dd.lockKept === 'runite_helm', JSON.stringify(dd));
     ok('letting go clears the doll, and coal lights nothing and is not taken', dd.cleared === true && dd.ore?.lit === '' && dd.ore?.arming === false && dd.ore?.over === false, JSON.stringify(dd));
+  }
+
+  section('Gear picker cards with hover stats, and marks for enchants and sockets (0.9.124.53)');
+  {
+    /* Jordan: "maybe have it grids when selecting equiptment and have hover stats for
+       it, we need to make sure that our enchants and sockets etc differ so its not
+       conufsing which one is what if we have mulitple like one with enchants and one
+       with socketse tc". Enchants and sockets are kept per item, so the marks go
+       wherever a piece is shown. */
+    const gm = ev(`(function(){
+      state=defaultState(); normalizeState(); invSearch=''; _bagSel=null; state.bagTabs=[]; state.invPrefs.tab='all';
+      document.querySelectorAll('.modal-back').forEach(function(m){ m.classList.add('hidden'); });
+      state.items={runite_helm:1, cobalt_helm:1, emerald_ring:1, ruby_ring:1, sapphire_ring:1};
+      state.combatXp.defence=XP_CUM[70];
+      state.sockets={runite_helm:{slots:1,gems:['sanguine_flaw']}, ruby_ring:{slots:1,gems:[null]}};
+      state.enchantments={emerald_ring:'manatarms_ii'};
+      state.combatEquipped={}; refreshCombatStats();
+      _gearFilter='combat';
+      var r={};
+      var m=document.getElementById('gearSlotModal');
+      var hd=BODY_SLOTS.find(function(s){ return s.slot==='helmet'; }), rd=BODY_SLOTS.find(function(s){ return s.slot==='ring_l'; });
+      var card=function(id){ return m.querySelector('.gsp-grid .gsp-card[data-id="'+id+'"]'); };
+      openGearSlotModal('helmet',hd,null);
+      r.grid=!!m.querySelector('.gsp-grid')&&!m.querySelector('.gsp-list');
+      r.cardParts=!!card('runite_helm')&&['.gsp-cic','.gsp-cnm','.gsp-cst','button'].every(function(sel){ return !!card('runite_helm').querySelector(sel); });
+      r.helmMarks={runite:!!(card('runite_helm')&&card('runite_helm').querySelector('.gm-pip.lit')), cobalt:!!(card('cobalt_helm')&&card('cobalt_helm').querySelector('.gm'))};
+      var tip=document.getElementById('gearHoverTip');
+      card('runite_helm').dispatchEvent(new MouseEvent('mouseenter',{clientX:50,clientY:50}));
+      r.hover={shown:tip.style.display==='block', text:tip.textContent};
+      card('runite_helm').dispatchEvent(new MouseEvent('mouseleave',{}));
+      r.hoverGone=tip.style.display==='none';
+      var z=function(sel){ var v=0; [].forEach.call(document.styleSheets,function(sh){ [].forEach.call(sh.cssRules||[],function(ru){ if(ru.selectorText===sel&&ru.style&&ru.style.zIndex) v=parseInt(ru.style.zIndex,10); }); }); return v; };
+      r.tipOnTop=z('#gearHoverTip')>z('.modal-back');
+      closeGearSlotModal();
+      openGearSlotModal('ring_l',rd,null);
+      r.rings={emerald:!!(card('emerald_ring')&&card('emerald_ring').querySelector('.gm-ench')),
+        ruby:!!(card('ruby_ring')&&card('ruby_ring').querySelector('.gm-pip')&&!card('ruby_ring').querySelector('.gm-pip.lit')&&!card('ruby_ring').querySelector('.gm-ench')),
+        sapphire:!!(card('sapphire_ring')&&!card('sapphire_ring').querySelector('.gm')),
+        bareLine:card('sapphire_ring')?card('sapphire_ring').querySelector('.gsp-cst').textContent:''};
+      if(card('emerald_ring')) card('emerald_ring').click();
+      openGearSlotModal('ring_l',rd,state.combatEquipped.ring_l);
+      r.wornWords=(m.querySelector('.gsp-row.worn .gsp-extras')||{}).textContent;
+      closeGearSlotModal();
+      closeInventory(); leaveFullPanels(); viewTab='acts'; renderAll(); openInventory();
+      var tile=function(id){ return document.querySelector('#inventory .bag-tile[data-id="'+id+'"]'); };
+      r.tiles={runite:!!tile('runite_helm').querySelector('.gm-pip.lit'), emerald:!!tile('emerald_ring').querySelector('.gm-ench'), sapphire:!tile('sapphire_ring').querySelector('.gm')};
+      bagSelect('runite_helm');
+      r.dock=(document.querySelector('#inventory .bag-dock .dk-gx')||{}).textContent;
+      bagSelect(null);
+      state.combatEquipped.helmet='runite_helm'; refreshCombatStats(); _invGearKey=''; renderInvGear();
+      r.doll=!!document.querySelector('#invGear .dl-sq[data-slot="helmet"] .gm-pip.lit');
+      state.sockets.ruby_ring.gems=['azure_flaw']; renderInventory();
+      r.tileUpdates=!!tile('ruby_ring').querySelector('.gm-pip.lit');
+      closeInventory();
+      return r;
+    })()`);
+    ok('the options are a grid of cards with a picture, name, stats and a button', gm.grid === true && gm.cardParts === true, JSON.stringify(gm));
+    ok('hovering a card shows its full stats above the picker, and leaving hides it',
+       gm.hover?.shown === true && /Flawless Sanguine/.test(gm.hover?.text||'') && gm.hoverGone === true && gm.tipOnTop === true, JSON.stringify(gm.hover) + ' top:' + gm.tipOnTop);
+    ok('a socketed helm shows a lit pip and a plain one shows nothing', gm.helmMarks?.runite === true && gm.helmMarks?.cobalt === false, JSON.stringify(gm));
+    ok('an enchanted ring shows a spark, an empty socket a dark pip, a bare ring nothing and says Not enchanted',
+       gm.rings?.emerald === true && gm.rings?.ruby === true && gm.rings?.sapphire === true && gm.rings?.bareLine === 'Not enchanted', JSON.stringify(gm.rings));
+    ok('what you wear names its enchant in words', /Man-at-Arms/.test(gm.wornWords||''), JSON.stringify(gm));
+    ok('satchel tiles wear the same marks, and a gem added later shows up',
+       gm.tiles?.runite === true && gm.tiles?.emerald === true && gm.tiles?.sapphire === true && gm.tileUpdates === true, JSON.stringify(gm.tiles) + ' ' + gm.tileUpdates);
+    ok('the item card names the gems, and the doll square shows the pip', /Flawless Sanguine/.test(gm.dock||'') && gm.doll === true, JSON.stringify(gm));
   }
 
   section('Skill presets hold their own skill, and the OSRS doll (0.9.124.44)');
