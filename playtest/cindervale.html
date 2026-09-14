@@ -7670,6 +7670,72 @@ body:not(.is-demo) .demo-only{display:none !important}
 .dl-sq.set{box-shadow:inset 0 2px 5px rgba(0,0,0,.85),0 0 0 1.5px rgba(224,118,47,.7),0 2px 6px rgba(0,0,0,.5)}
 .dl-sq.miss{box-shadow:inset 0 2px 5px rgba(0,0,0,.85),0 0 0 1.5px rgba(208,72,72,.8)}
 .dl-sq.miss>.ev-icon{opacity:.4;filter:grayscale(1)}
+/* Dragging gear from the bag onto the satchel's doll (0.9.124.52): the squares it
+   fits ring green, the rest fade, the one under the pointer lifts, and one you do
+   not have the level for rings red. */
+#invGear.dl-arming .dl-sq{transition:opacity .12s,box-shadow .12s,transform .12s}
+#invGear.dl-arming .dl-sq:not(.dl-can){opacity:.38}
+#invGear .dl-sq.dl-can{box-shadow:inset 0 2px 5px rgba(0,0,0,.85),0 0 0 2px rgba(143,212,106,.6),0 0 12px rgba(143,212,106,.2)}
+#invGear .dl-sq.dl-can.dl-over{box-shadow:inset 0 2px 5px rgba(0,0,0,.85),0 0 0 2px #8fd46a,0 0 18px rgba(143,212,106,.5);transform:scale(1.07)}
+#invGear .dl-sq.dl-can.dl-lock{box-shadow:inset 0 2px 5px rgba(0,0,0,.85),0 0 0 2px rgba(224,122,106,.7)}
+
+/* ════════ [CSS-47] THE GEAR SLOT PICKER (0.9.124.52) ═══════════════════════════
+   What you wear on top, your options best first below it, the shop link at the
+   foot. The list scrolls on its own so the header and what you wear stay put. */
+.modal.gsp{max-width:600px;padding:0;display:flex;flex-direction:column;max-height:calc(100vh - 40px);overflow:hidden;
+  background:linear-gradient(180deg,#24190d,#19110a);border-color:rgba(214,170,96,.45)}
+.gsp-head{flex:none;display:flex;align-items:center;gap:12px;padding:14px 16px 12px;border-bottom:1px solid rgba(214,170,96,.16)}
+.gsp-slotic{flex:none;width:42px;height:42px;border-radius:9px;display:grid;place-items:center;background:#110b06;
+  box-shadow:inset 0 2px 5px rgba(0,0,0,.9),0 0 0 1px rgba(214,170,96,.2)}
+.gsp-slotic>*{width:70%;height:70%}
+.gsp-ht{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.modal.gsp h3{margin:0;font-family:'Cinzel',serif;font-variant:normal;text-transform:uppercase;letter-spacing:.12em;
+  font-size:calc(17px*var(--tscale));color:var(--gold-hi)}
+.gsp-scope{font-size:calc(10.5px*var(--tscale));letter-spacing:.14em;text-transform:uppercase;color:#8a7657}
+.gsp-x{flex:none;width:34px;height:34px;border:0;border-radius:8px;background:rgba(0,0,0,.3);color:#c9b48c;font-size:15px;
+  cursor:var(--cur-pointer);box-shadow:inset 0 0 0 1px rgba(214,170,96,.22)}
+.gsp-x:hover{color:var(--gold-hi);box-shadow:inset 0 0 0 1px rgba(240,199,114,.6)}
+#gearSlotModal #gearSlotBody{max-height:none;overflow:hidden;flex:1;min-height:0;display:flex;flex-direction:column;padding:4px 16px 16px}
+.gsp-sec{flex:none;display:flex;align-items:center;gap:8px;margin:12px 2px 7px;font-size:calc(10.5px*var(--tscale));
+  letter-spacing:.14em;text-transform:uppercase;color:#8a7657}
+.gsp-sec::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(214,170,96,.25),transparent)}
+.gsp-sec i{font-style:normal;font-family:var(--num);color:#c9a86a;letter-spacing:0}
+.gsp-list{flex:1 1 auto;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding:2px 5px 2px 1px}
+.gsp-list::-webkit-scrollbar{width:7px}
+.gsp-list::-webkit-scrollbar-thumb{background:rgba(199,155,78,.3);border-radius:4px}
+.gsp-row{flex:none;display:grid;grid-template-columns:52px minmax(0,1fr) auto;align-items:center;gap:12px;padding:8px 10px 8px 8px;border-radius:9px;
+  background:linear-gradient(178deg,rgba(58,41,18,.55),rgba(30,21,10,.55));
+  box-shadow:inset 0 1px 0 rgba(214,170,96,.1),0 0 0 1px rgba(214,170,96,.13);cursor:var(--cur-pointer)}
+.gsp-row:hover{box-shadow:inset 0 1px 0 rgba(214,170,96,.16),0 0 0 1px rgba(240,199,114,.5)}
+.gsp-row.worn{cursor:default;background:linear-gradient(178deg,rgba(92,64,25,.6),rgba(46,31,12,.6));
+  box-shadow:inset 0 1px 0 rgba(255,220,150,.18),0 0 0 1px rgba(240,199,114,.55)}
+.gsp-row.locked{cursor:default}
+.gsp-row.locked:hover{box-shadow:inset 0 1px 0 rgba(214,170,96,.1),0 0 0 1px rgba(214,170,96,.13)}
+.gsp-row.locked .gsp-ic,.gsp-row.locked .gsp-nm,.gsp-row.locked .gsp-stats{opacity:.55}
+.gsp-ic{width:52px;height:52px;border-radius:8px;display:grid;place-items:center;
+  background:radial-gradient(110% 110% at 50% 10%,#221507,#0d0704);box-shadow:inset 0 2px 5px rgba(0,0,0,.85)}
+.gsp-ic .ev-icon{width:40px;height:40px}
+.gsp-main{min-width:0;display:flex;flex-direction:column;gap:4px}
+.gsp-nm{display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px;font-size:calc(14.5px*var(--tscale));color:#f0dfb8;line-height:1.2}
+.gsp-row.worn .gsp-nm{color:var(--gold-hi)}
+.gsp-tag{font-size:calc(10.5px*var(--tscale));letter-spacing:.04em;color:#e0a955;border:1px solid rgba(224,169,85,.35);border-radius:10px;padding:1px 7px}
+.gsp-stats{display:flex;flex-wrap:wrap;gap:3px 10px;font-family:var(--num);font-size:calc(12px*var(--tscale));color:#d6c196}
+.gsp-desc{font-family:'Crimson Pro',Georgia,'Times New Roman',serif;color:#9c8864;font-size:calc(12px*var(--tscale));display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.gsp-req{font-size:calc(12px*var(--tscale));color:#e88a78}
+.gsp-delta{display:flex;flex-wrap:wrap;align-items:center;gap:2px 9px;font-family:var(--num);font-size:calc(11.5px*var(--tscale))}
+.gsp-delta .k{font-family:inherit;color:#7d6a4c;font-size:calc(10px*var(--tscale));letter-spacing:.1em;text-transform:uppercase}
+.gsp-delta b{font-weight:600}
+.gsp-delta .up{color:#8fd46a}
+.gsp-delta .down{color:#e88a78}
+.gsp-delta .same{color:#8a7657;font-weight:400}
+.gsp-act{display:flex;flex-direction:column;align-items:stretch;gap:5px}
+.gsp-act .bag-btn{min-width:92px;height:34px}
+.gsp-sell{border:0;background:none;padding:0;color:#9c8864;font-family:inherit;font-size:calc(11.5px*var(--tscale));cursor:var(--cur-pointer)}
+.gsp-sell:hover{color:var(--gold-hi)}
+.gsp-sell .ev-icon{width:12px;height:12px;vertical-align:-2px}
+.gsp-none{flex:none;padding:10px 4px;font-size:calc(13px*var(--tscale));color:#8a7657;font-style:italic}
+.gsp-foot{flex:none;display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px;padding-top:12px;
+  border-top:1px solid rgba(214,170,96,.14);font-size:calc(12.5px*var(--tscale));color:#9c8864}
 .dl-sq .sg-prog{top:-7px;right:-10px;font-size:calc(10px*var(--tscale))}
 .dl-sq .eq-x{top:-7px;right:-7px}
 .dl-names{display:flex;flex-wrap:wrap;justify-content:center;gap:4px;margin-top:4px}
@@ -8644,7 +8710,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.124.51">v0.9.124</div>
+  <div class="mm-ver" data-build="0.9.124.52">v0.9.124</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -9119,7 +9185,7 @@ body:not(.is-demo) .demo-only{display:none !important}
 
   <!-- The satchel's own screen (0.9.124.47): covers the middle and right columns. -->
   <div class="panel inv-screen" id="invScreen" style="display:none">
-    <div class="pg-bar inv-head" data-note="Drag items onto a tab or onto +. Double-click a tab to rename it, drag tabs to move them."></div>
+    <div class="pg-bar inv-head" data-note="Drag gear onto the doll to wear it, and items onto a tab or onto +. Double-click a tab to rename it."></div>
     <div class="inv-grid">
       <section class="inv-gear" id="invGear"></section>
       <div id="inventory"></div>
@@ -9273,12 +9339,13 @@ body:not(.is-demo) .demo-only{display:none !important}
 
 <!-- Gear slot modal -->
 <div id="gearSlotModal" class="modal-back hidden">
-  <div class="modal" style="max-width:380px">
-    <h3 id="gearSlotTitle">Slot</h3>
-    <div id="gearSlotBody" style="margin-bottom:14px"></div>
-    <div class="mrow">
-      <button class="m-btn" onclick="$('gearSlotModal').classList.add('hidden')">Close</button>
+  <div class="modal gsp" role="dialog" aria-labelledby="gearSlotTitle">
+    <div class="gsp-head">
+      <span class="gsp-slotic" id="gearSlotIcon"></span>
+      <div class="gsp-ht"><h3 id="gearSlotTitle">Slot</h3><span class="gsp-scope" id="gearSlotScope"></span></div>
+      <button type="button" class="gsp-x" id="gearSlotClose" title="Close (Esc)">✕</button>
     </div>
+    <div id="gearSlotBody"></div>
   </div>
 </div>
 
@@ -29966,7 +30033,72 @@ function renderInvGear(){
   box.appendChild(gearDollEl(54,26,10));
   const st=document.createElement('div'); st.innerHTML=_gearStatsHTML();
   if(st.firstChild) box.appendChild(st.firstChild);
+  if(_bagDrag) bagDollArm(_bagDrag);   // rebuilt mid-drag (a kill in a background fight): keep the lit squares
 }
+
+/* Drag gear from the bag onto the doll to wear it (0.9.124.52). Jordan: "can we
+   drag and drop equipment into the gear in the satchel?" The squares an item fits
+   light up while it is dragged; drop it on one of them, or anywhere on the doll's
+   column and it goes to its own slot (a ring to an empty hand first). Combat gear
+   picked up while the doll shows Skilling switches the doll to Combat, or nothing
+   would light. The level rule is equipBodyItem's, same as the Equip button. */
+function bagDollScope(){ return _gearFilter==='combat'?'combat':'skilling'; }
+function bagDollSlotsFor(id, scope){
+  if(!id||!ITEMS[id]||(state.items[id]||0)<=0||!gearFitsScope(id,scope)) return [];
+  return getItemSlots(id).filter(function(s){ return BODY_SLOTS.some(function(b){ return b.slot===s; }); });
+}
+function bagDollTarget(id, cell){
+  const scope=bagDollScope(), slots=bagDollSlotsFor(id,scope);
+  if(!slots.length) return null;
+  const s=cell&&cell.getAttribute('data-slot');
+  if(s&&slots.indexOf(s)>=0) return s;
+  const lo=_loadoutFor(scope);
+  return slots.find(function(x){ return !lo[x]; })||slots[0];
+}
+function bagDollArm(id){
+  const g=$('invGear'); if(!g||!invOpen||!id||!ITEMS[id]) return;
+  const it=ITEMS[id];
+  if(_gearFilter!=='combat'&&(it.cgear||(it.ammo&&!it.ranged))&&bagDollSlotsFor(id,'combat').length){
+    _gearFilter='combat'; _invGearKey=''; renderInvGear();
+  }
+  const slots=bagDollSlotsFor(id,bagDollScope());
+  g.classList.toggle('dl-arming',slots.length>0);
+  g.querySelectorAll('.dl-sq[data-slot]').forEach(function(c){
+    const ok=slots.indexOf(c.getAttribute('data-slot'))>=0;
+    c.classList.toggle('dl-can',ok);
+    c.classList.toggle('dl-lock',ok&&!meetsCombatReq(id));
+  });
+}
+function bagDollDisarm(){
+  const g=$('invGear'); if(!g) return;
+  g.classList.remove('dl-arming');
+  g.querySelectorAll('.dl-can,.dl-lock,.dl-over').forEach(function(c){ c.classList.remove('dl-can','dl-lock','dl-over'); });
+}
+(function(){
+  const g=$('invGear'); if(!g) return;
+  g.addEventListener('dragover',function(e){
+    if(!_bagDrag) return;
+    const cell=e.target.closest?e.target.closest('.dl-sq[data-slot]'):null;
+    const slot=bagDollTarget(_bagDrag,cell); if(!slot) return;
+    e.preventDefault();
+    try{ e.dataTransfer.dropEffect='move'; }catch(_){}
+    g.querySelectorAll('.dl-over').forEach(function(c){ if(c.getAttribute('data-slot')!==slot) c.classList.remove('dl-over'); });
+    const t=g.querySelector('.dl-sq[data-slot="'+slot+'"]'); if(t) t.classList.add('dl-over');
+  });
+  g.addEventListener('dragleave',function(e){
+    if(!e.relatedTarget||!g.contains(e.relatedTarget)) g.querySelectorAll('.dl-over').forEach(function(c){ c.classList.remove('dl-over'); });
+  });
+  g.addEventListener('drop',function(e){
+    if(!_bagDrag) return;
+    const id=_bagDrag, cell=e.target.closest?e.target.closest('.dl-sq[data-slot]'):null;
+    const slot=bagDollTarget(id,cell);
+    if(!slot) return;
+    e.preventDefault();
+    _bagDrag=null; bagDollDisarm();
+    const inv=$('inventory'); if(inv) inv.querySelectorAll('.dragging,.drop-on').forEach(function(x){ x.classList.remove('dragging','drop-on'); });
+    equipBodyItem(id,slot,bagDollScope());
+  });
+})();
 
 function bagFmtQty(q){
   if(q<10000) return q.toLocaleString();
@@ -30284,10 +30416,11 @@ function renderInventory(){
       try{ e.dataTransfer.effectAllowed='move'; e.dataTransfer.setData('text/plain',_bagDrag); }catch(_){}
       t.classList.add('dragging');
       if(typeof hideTooltip==='function') hideTooltip();
+      bagDollArm(_bagDrag);   // light the doll squares it can go in
     });
     box.addEventListener('dragend',()=>{
       const wasTab=!!_bagTabDrag;
-      _bagDrag=null; _bagTabDrag=null; clearDrag();
+      _bagDrag=null; _bagTabDrag=null; clearDrag(); bagDollDisarm();
       if(wasTab) renderInventory();   // the tab row waited for the drag to finish
     });
     box.addEventListener('dragover',e=>{
@@ -30321,7 +30454,7 @@ function renderInventory(){
         return;
       }
       if(!_bagDrag) return;
-      const id=_bagDrag; _bagDrag=null; clearDrag();
+      const id=_bagDrag; _bagDrag=null; clearDrag(); bagDollDisarm();
       const tab=e.target.closest?e.target.closest('.bag-tab'):null;
       if(tab){ e.preventDefault(); bagMoveItem(id, tab.getAttribute('data-tab')); return; }
       const tile=e.target.closest?e.target.closest('.bag-tile'):null;
@@ -35635,271 +35768,233 @@ function renderGear(){
   box.scrollTop=keep;
 }
 
-function openGearSlotModal(slotKey,def,currentId){
-  var modal=$('gearSlotModal');
-  $('gearSlotTitle').textContent=def.label;
-  var body=$('gearSlotBody');
-  body.innerHTML='';
+/* ════ the gear slot picker (redone 0.9.124.52) ══════════════════════════════
+   Jordan: "the menu for selecting gear in a slot is really bad right now too, can
+   we fix that make it easier to read and use, make it tidy". It was a 380px column
+   of tall text rows with 22px icons; the level an item needs showed nowhere until
+   Equip refused; options came in whatever order the loops found them; and the
+   doll's hover card stayed up over it.
 
-  // Helper: build a row for an item with appropriate action buttons
-  function buildItemRow(itemId,isEquipped){
-    var d=getBodyItemDef(itemId);
-    if(!d) return null;
-    var shopItem=SHOP.find(function(i){return i.id===itemId;});
-    var isShopItem=!!shopItem;
-    // Is this item equipped in some OTHER slot? (multi-slot items like rings)
-    // Resolve the loadout being edited from the current filter — combat tab
-    // edits the combat loadout, skilling tab edits the skilling loadout. The
-    // two are fully independent so a swap here doesn't touch the other side.
-    var modalLoadout=_gearFilter==='combat'?state.combatEquipped:state.skillingEquipped;
-    var modalScope=_gearFilter==='combat'?'combat':'skilling';
-    var equippedElsewhere=null, wornElsewhere=0;
-    if(!isEquipped){
-      for(var eSlot in modalLoadout){
-        if(modalLoadout[eSlot]===itemId&&eSlot!==slotKey){
-          if(!equippedElsewhere) equippedElsewhere=eSlot;
-          wornElsewhere++;
-        }
-      }
-    }
-    /* (0.9.122.2) Owning a spare turns "Move here" into a genuine second equip.
-       Without this the picker looked broken to anyone who crafted a matched pair:
-       the only offer was to shuffle the ring they were already wearing. */
-    var _copies=ownedCopies(itemId);
-    var haveSpare=wornElsewhere>0&&_copies>wornElsewhere;
-    // Pretty label for the other slot
-    var otherSlotLabel=equippedElsewhere?(BODY_SLOTS.find(function(b){return b.slot===equippedElsewhere;})||{label:equippedElsewhere}).label:'';
+   Now: what you wear at the top, your options under it best first (anything you
+   cannot wear yet goes last and says what it needs), each with its stats, what it
+   changes against what you wear, and one button. Clicking a row equips it too. The
+   shop or crafting link is at the foot. Esc, the X, or a click outside closes it.
 
-    var row=document.createElement('div');
-    row.style.cssText='display:flex;align-items:center;gap:10px;padding:10px;'
-      +'background:'+(isEquipped?'var(--raised-s)':'var(--raised)')+';'
-      +'border:1px solid '+(isEquipped?'var(--trim)':equippedElsewhere?'var(--ember)':'var(--trim-d)')+';'
-      +'border-radius:5px;margin-bottom:6px';
-    var label='';
-    if(isEquipped) label=' <span style="font-size:calc(12px*var(--tscale));color:var(--ember)">● Equipped</span>';
-    else if(equippedElsewhere) label=' <span style="font-size:calc(12px*var(--tscale));color:var(--ember)">● In '+otherSlotLabel
-      +(haveSpare?' · '+_copies+' owned':'')+'</span>';
-    // Stat delta vs the item currently equipped in this slot. Only for the
-    // alternatives — the equipped row has nothing to compare against itself.
-    var deltaHTML=(!isEquipped && typeof gearDeltaHTML==='function')?gearDeltaHTML(itemId,currentId):'';
-    row.innerHTML='<span style="font-size:calc(22px*var(--tscale))">'+iconHTML(itemId)+'</span>'
-      +'<div style="flex:1"><div style="font-size:calc(14px*var(--tscale));color:'+(isEquipped?'var(--trim)':'var(--text)')+';margin-bottom:2px">'
-      +d.name+label+'</div>'
-      +'<div style="font-size:calc(13px*var(--tscale));color:var(--muted)">'+(d.desc||'No bonus')+'</div>'
-      +deltaHTML+'</div>';
-
-    var btnWrap=document.createElement('div');
-    btnWrap.style.cssText='display:flex;flex-direction:column;gap:4px;flex-shrink:0';
-
-    if(isEquipped){
-      var unBtn=document.createElement('button');
-      unBtn.className='m-btn';
-      unBtn.style.cssText='font-size:calc(13px*var(--tscale));padding:5px 10px';
-      unBtn.textContent='Unequip';
-      unBtn.addEventListener('click',function(){
-        unequipBodyItem(slotKey,modalScope);
-        modal.classList.add('hidden');
-      });
-      btnWrap.appendChild(unBtn);
-    } else {
-      var eqBtn=document.createElement('button');
-      eqBtn.className='m-btn primary';
-      eqBtn.style.cssText='font-size:calc(13px*var(--tscale));padding:5px 10px';
-      eqBtn.textContent=(equippedElsewhere&&!haveSpare)?'Move here':'Equip';
-      if(haveSpare) eqBtn.title='You own '+_copies+' — wear a second one here';
-      eqBtn.addEventListener('click',function(){
-        equipBodyItem(itemId,slotKey,modalScope);
-        modal.classList.add('hidden');
-      });
-      btnWrap.appendChild(eqBtn);
-    }
-
-    // Sell button, only for shop items NOT equipped anywhere (refunds 50%). Never on
-    // a tool: sellShopItem refuses those, so the button offered a price and said no.
-    if(isShopItem&&!shopItem.tool&&!isEquipped&&!equippedElsewhere){
-      var sellBtn=document.createElement('button');
-      sellBtn.className='m-btn';
-      sellBtn.style.cssText='font-size:calc(12px*var(--tscale));padding:4px 8px;color:var(--muted);border-color:var(--trim-d)';
-      var refund=Math.floor(shopItem.cost*0.5);
-      sellBtn.innerHTML='Sell &middot; '+iconHTML('ui_coin')+refund.toLocaleString()+'g';
-      sellBtn.title='Sell back for 50% refund';
-      sellBtn.addEventListener('click',function(ev){
-        ev.stopPropagation();
-        sellShopItem(itemId);
-        // Re-open modal to refresh the list
-        modal.classList.add('hidden');
-        setTimeout(function(){openGearSlotModal(slotKey,def,state.equipped[slotKey]);},50);
-      });
-      btnWrap.appendChild(sellBtn);
-    }
-
-    row.appendChild(btnWrap);
-    return row;
-  }
-
-  // Currently equipped item first (if any). The equipped item is shown
-  // regardless of the active filter so the user always sees what they're wearing
-  // even if it doesn't match (e.g. they have a Lumberjack's Hat in the Helmet
-  // slot and switch to the Combat filter).
-  if(currentId){
-    var curRow=buildItemRow(currentId,true);
-    if(curRow) body.appendChild(curRow);
-  }
-
-  /* Filter helper for the alternatives list. _gearFilter scopes what shows up:
-       - 'combat'   : hides items flagged skillGear (Lumberjack's Hat etc.) and
-                      hides skill tools (axes, picks). Combat gear, jewelry, capes
-                      and skillcapes still show.
-       - 'skilling' : hides items flagged cgear (Bronze Helm etc.). Skilling gear,
-                      jewelry, capes and skill tools all show.
-     Jewelry/capes appear in both modes — they don't fit neatly into either bucket. */
-  function passesGearFilter(id){
-    var it=ITEMS[id];
-    if(_gearFilter==='combat'){
-      if(it&&it.skillGear) return false;
-      // Skill tools (shop items with a tool slot like 'axe', 'pick'): hide in combat
-      var shop=SHOP.find(function(s){return s.id===id;});
-      if(shop&&['axe','pick','rod','pouch','tongs','pan','mortar','tinder','lens','trowel','shoes','picks'].indexOf(shop.slot)>=0) return false;
-      return true;
-    }
-    if(_gearFilter==='skilling'){
-      /* Ammunition is combat kit, same as cgear. Without it here the skilling
-         loadout's quiver square would offer arrows, which nothing on that side
-         of the tab can use. */
-      if(it&&(it.cgear||it.ammo)) return false;
-      return true;
-    }
+   Which items are offered did not change: gearSlotOptions keeps the loops and the
+   fixes they carry (ammunition, crafted gear, a spare ring, only the best tool). */
+function gearFitsScope(id, scope){
+  var it=ITEMS[id];
+  if(scope==='combat'){
+    if(it&&it.skillGear) return false;
+    // skill tools (shop items with a tool slot like 'axe', 'pick') stay out of combat
+    var shop=SHOP.find(function(s){return s.id===id;});
+    if(shop&&['axe','pick','rod','pouch','tongs','pan','mortar','tinder','lens','trowel','shoes','picks'].indexOf(shop.slot)>=0) return false;
     return true;
   }
-
-  // Build list of available alternatives in this slot
+  if(scope==='skilling'){
+    /* Ammunition is combat kit, same as cgear. Without it here the skilling
+       loadout's quiver square would offer arrows, which nothing on that side
+       of the tab can use. */
+    if(it&&(it.cgear||it.ammo)) return false;
+    return true;
+  }
+  return true;
+}
+/* Everything you own that could go in this slot of this loadout, apart from currentId. */
+function gearSlotOptions(slotKey, scope, currentId){
   var available=[];
-  // Satchel-based body items (jewelry) + skilling gear pieces — any item whose valid slots include this slotKey
+  var passes=function(id){ return gearFitsScope(id,scope); };
+  // jewelry and skilling set pieces: any item whose slots include this one
   for(var iid in ITEM_BODY_SLOTS){
-    if(!itemFitsSlot(iid,slotKey)) continue;
-    if(!passesGearFilter(iid)) continue;
-    const inSatchel=(state.items[iid]||0)>0;
-    const inSkillingGear=!!(state.skillingGear&&state.skillingGear[iid]);
+    if(!itemFitsSlot(iid,slotKey)||!passes(iid)) continue;
+    var inSatchel=(state.items[iid]||0)>0;
+    var inSkillingGear=!!(state.skillingGear&&state.skillingGear[iid]);
     if((inSatchel||inSkillingGear)&&iid!==currentId&&available.indexOf(iid)<0) available.push(iid);
   }
-  // (1.0.90 fix) Satchel COMBAT gear (cgear: crafted armour/weapons + raid drops) — these
-  // are NOT in ITEM_BODY_SLOTS, so without this loop raid/crafted gear never appeared in
-  // the Gear doll (only in the combat gear strip). Surface them by their cslot. The combat
-  // filter keeps cgear; the skilling filter hides it (see passesGearFilter), so no clutter.
+  /* (1.0.90 fix) Crafted armour, weapons and raid drops are NOT in ITEM_BODY_SLOTS,
+     so without this they never appeared in the doll's picker. */
   for(var cid in state.items){
     if((state.items[cid]||0)<=0) continue;
     var cit=ITEMS[cid];
-    if(!cit||!cit.cgear) continue;
-    if(cid===currentId||!passesGearFilter(cid)) continue;
+    if(!cit||!cit.cgear||cid===currentId||!passes(cid)) continue;
     if(itemFitsSlot(cid,slotKey)&&available.indexOf(cid)<0) available.push(cid);
   }
-  /* Ammunition, for the same reason and by the same route. Arrows and bolts are
-     not in ITEM_BODY_SLOTS and are not cgear, so neither loop above sees them:
-     the quiver square opened a picker with nothing in it, which is why the slot
-     looked broken even after itemFitsSlot started saying yes. */
+  /* Ammunition, for the same reason: arrows and bolts are in neither list above,
+     and the quiver square opened a picker with nothing in it. */
   for(var aid in state.items){
     if((state.items[aid]||0)<=0) continue;
     var ait=ITEMS[aid];
-    if(!ait||!ait.ammo||ait.ranged) continue;
-    if(aid===currentId||!passesGearFilter(aid)) continue;
+    if(!ait||!ait.ammo||ait.ranged||aid===currentId||!passes(aid)) continue;
     if(itemFitsSlot(aid,slotKey)&&available.indexOf(aid)<0) available.push(aid);
   }
-  // Owned shop items (state.gear) matching this slot — check both their direct slot AND
-  // any extra slots declared in ITEM_BODY_SLOTS (e.g. shop rings fit either hand)
+  // owned shop items, by their own slot or an extra one (shop rings fit either hand)
   for(var si=0;si<SHOP.length;si++){
     var shopItem=SHOP[si];
-    if(!state.gear.includes(shopItem.id)) continue;
-    if(shopItem.id===currentId) continue;
-    if(!passesGearFilter(shopItem.id)) continue;
-    var fitsDirect=shopItem.slot===slotKey;
-    var fitsExtra=itemFitsSlot(shopItem.id,slotKey);
-    if((fitsDirect||fitsExtra)&&available.indexOf(shopItem.id)<0){
-      available.push(shopItem.id);
-    }
+    if(!state.gear.includes(shopItem.id)||shopItem.id===currentId||!passes(shopItem.id)) continue;
+    if((shopItem.slot===slotKey||itemFitsSlot(shopItem.id,slotKey))&&available.indexOf(shopItem.id)<0) available.push(shopItem.id);
   }
-  // Also: items already equipped in a DIFFERENT compatible slot can be moved here.
-  // Show them so the user can swap rings between hands without unequipping first.
-  // Reads from the loadout being edited so combat-doll rings don't surface skilling
-  // rings as "elsewhere".
-  var modalLoadoutForList=_gearFilter==='combat'?state.combatEquipped:state.skillingEquipped;
-  for(var eSlot in modalLoadoutForList){
-    var eId=modalLoadoutForList[eSlot];
-    if(!eId||eSlot===slotKey||eId===currentId) continue;
-    if(!passesGearFilter(eId)) continue;
-    if(itemFitsSlot(eId,slotKey)&&available.indexOf(eId)<0){
-      available.push(eId);
-    }
+  // worn in another slot of this loadout, so rings can swap hands without a detour
+  var lo=_loadoutFor(scope);
+  for(var eSlot in lo){
+    var eId=lo[eSlot];
+    if(!eId||eSlot===slotKey||eId===currentId||!passes(eId)) continue;
+    if(itemFitsSlot(eId,slotKey)&&available.indexOf(eId)<0) available.push(eId);
   }
-
-  // Tool slots: only surface the highest-tier tool the player owns for this slot —
-  // no point listing a Bronze Pick once an Eclipse Pick is owned. Non-tool slots
-  // are untouched. The currently-equipped tool is shown separately (it's excluded
-  // from `available` via currentId), so it never needs to appear in this list.
+  /* Tool slots: only the best tool you own. No point listing a Bronze Pick once an
+     Eclipse Pick is owned. */
   var toolAlts=available.filter(function(id){ return ITEMS[id]&&ITEMS[id].tool; });
   if(toolAlts.length>1){
     var toolTier=function(id){ var sh=SHOP.find(function(s){return s.id===id;}); return (sh&&sh.tier)||0; };
     var bestTool=toolAlts.reduce(function(a,b){ return toolTier(b)>toolTier(a)?b:a; });
     available=available.filter(function(id){ return !(ITEMS[id]&&ITEMS[id].tool)||id===bestTool; });
   }
+  return available;
+}
+var _GSP_ORDER=['atk','str','def','crit','dodge','aspd','%speed','%xpBoost','%skillXp','%gpBoost',
+  '%doubleYield','%preserve','%atkBoost','%critChance','%lifesteal','%hpBoost','%defBoost'];
+function _gspKeys(obj){
+  return Object.keys(obj).sort(function(a,b){ var ia=_GSP_ORDER.indexOf(a), ib=_GSP_ORDER.indexOf(b); return (ia<0?99:ia)-(ib<0?99:ib); });
+}
+function _gspFmt(key,val){
+  var pct=_gearStatIsPct(key), shown=pct?Math.round(val*1000)/10:Math.round(val*100)/100;
+  return (val>0?'+':'')+shown+(pct?'%':'')+' '+(_GEAR_STAT_LABEL[key]||key.replace('%',''));
+}
+/* Best first: flat stats count as they are, percentages per point. */
+function _gspScore(id){
+  var v=_gearStatVec(id), s=0;
+  for(var k in v) s+=_gearStatIsPct(k)?v[k]*100:v[k];
+  var it=ITEMS[id]; if(it&&it.ctier) s+=it.ctier*0.001;   // a tie goes to the higher tier
+  return s;
+}
+function _gspLocked(id){ var r=combatGearReq(id); return !!(r&&cmbLvl(r.stat)<r.level); }
+function _gspStats(id){
+  var v=_gearStatVec(id), ks=_gspKeys(v).filter(function(k){ return Math.abs(v[k])>1e-9; });
+  if(ks.length) return ks.map(function(k){ return '<span class="gsp-st">'+_gspFmt(k,v[k])+'</span>'; }).join('');
+  var d=getBodyItemDef(id);
+  return '<span class="gsp-desc">'+((d&&d.desc)||'No bonus')+'</span>';
+}
+function _gspDelta(id,curId){
+  if(!curId||curId===id) return '';
+  var A=_gearStatVec(id), B=_gearStatVec(curId), keys={};
+  for(var a in A) keys[a]=1;
+  for(var b in B) keys[b]=1;
+  var parts=_gspKeys(keys).map(function(k){
+    var d=(A[k]||0)-(B[k]||0);
+    return Math.abs(d)<1e-9?'':'<b class="'+(d>0?'up':'down')+'">'+_gspFmt(k,d)+'</b>';
+  }).filter(Boolean);
+  return '<div class="gsp-delta"><span class="k">vs worn</span>'+(parts.length?parts.join(''):'<b class="same">same stats</b>')+'</div>';
+}
+function closeGearSlotModal(){ var m=$('gearSlotModal'); if(m) m.classList.add('hidden'); }
+function openGearSlotModal(slotKey,def,currentId){
+  if(typeof hideGearTip==='function') hideGearTip();   // the doll's hover card stayed up over the picker
+  var modal=$('gearSlotModal'), body=$('gearSlotBody');
+  var scope=_gearFilter==='combat'?'combat':'skilling';
+  var lo=_loadoutFor(scope);
+  var bodyDef=BODY_SLOTS.find(function(b){return b.slot===slotKey;});
+  $('gearSlotTitle').textContent=def.label;
+  $('gearSlotScope').textContent=scope==='combat'?'Combat gear':'Skilling gear';
+  $('gearSlotIcon').innerHTML=(bodyDef&&bodyDef.empty)||def.empty||'';
+  modal.setAttribute('data-slot',slotKey);
+  body.innerHTML='';
+  var statName=function(s){ return COMBAT_STAT_NAME[s]||s; };
 
-  // Source deep-link button — tool slots route to Crafting (v1.0.47+); jewelry
-  // and cape slots still route to Shop. Body slots like helmet/chest have no
-  // direct source link (they come from Crafting's other categories already).
-  const shopHasSlot=SHOP.some(function(it){
-    if(it.tool) return false;
-    return it.slot===slotKey||itemFitsSlot(it.id,slotKey);
+  function row(itemId, worn){
+    var d=getBodyItemDef(itemId); if(!d) return null;
+    var shopItem=SHOP.find(function(i){return i.id===itemId;});
+    // worn in another slot of this loadout (rings); owning a spare makes it a second equip
+    var elsewhere=null, wornElsewhere=0;
+    if(!worn){ for(var s in lo){ if(lo[s]===itemId&&s!==slotKey){ if(!elsewhere) elsewhere=s; wornElsewhere++; } } }
+    var copies=ownedCopies(itemId), spare=wornElsewhere>0&&copies>wornElsewhere;
+    var req=combatGearReq(itemId), locked=!worn&&_gspLocked(itemId);
+    var tag='';
+    if(elsewhere){
+      var ol=(BODY_SLOTS.find(function(b){return b.slot===elsewhere;})||{label:elsewhere}).label;
+      tag='<span class="gsp-tag">'+(spare?copies+' owned, one in '+ol:'In '+ol)+'</span>';
+    }
+    var el=document.createElement('div');
+    el.className='gsp-row'+(worn?' worn':'')+(locked?' locked':'')+(elsewhere?' elsewhere':'');
+    el.setAttribute('data-id',itemId);
+    el.innerHTML='<span class="gsp-ic">'+iconHTML(itemId)+'</span>'
+      +'<div class="gsp-main"><div class="gsp-nm">'+d.name+tag+'</div>'
+      +'<div class="gsp-stats">'+_gspStats(itemId)+'</div>'
+      +(locked?'<div class="gsp-req">Needs '+req.level+' '+statName(req.stat)+', you have '+cmbLvl(req.stat)+'</div>':'')
+      +(worn?'':_gspDelta(itemId,currentId))+'</div>';
+    var act=document.createElement('div'); act.className='gsp-act';
+    if(worn){
+      act.innerHTML='<button type="button" class="bag-btn" data-gsp="off" title="Take it off">Remove</button>';
+      act.firstChild.addEventListener('click',function(e){ e.stopPropagation(); unequipBodyItem(slotKey,scope); closeGearSlotModal(); });
+    } else if(locked){
+      act.innerHTML='<button type="button" class="bag-btn" disabled title="Needs '+req.level+' '+statName(req.stat)+'">Lv '+req.level+'</button>';
+    } else {
+      act.innerHTML='<button type="button" class="bag-btn gold" data-gsp="on" data-equip="'+itemId+'"'
+        +(spare?' title="You own '+copies+', wear a second one here"':'')+'>'+((elsewhere&&!spare)?'Move here':'Equip')+'</button>';
+      var wear=function(e){ if(e) e.stopPropagation(); equipBodyItem(itemId,slotKey,scope); closeGearSlotModal(); };
+      act.firstChild.addEventListener('click',wear);
+      el.addEventListener('click',function(){ wear(); });
+    }
+    /* Sell, only for shop gear worn nowhere. Never a tool: sellShopItem refuses those,
+       so the button offered a price and then said no. */
+    if(shopItem&&!shopItem.tool&&!worn&&!elsewhere){
+      var sb=document.createElement('button'); sb.type='button'; sb.className='gsp-sell';
+      sb.innerHTML='Sell for '+iconHTML('ui_coin')+Math.floor(shopItem.cost*0.5).toLocaleString()+'g';
+      sb.title='Half what it cost';
+      sb.addEventListener('click',function(e){ e.stopPropagation(); sellShopItem(itemId); openGearSlotModal(slotKey,def,_loadoutFor(scope)[slotKey]); });
+      act.appendChild(sb);
+    }
+    el.appendChild(act);
+    return el;
+  }
+  var sec=function(label, count){
+    var h=document.createElement('div'); h.className='gsp-sec';
+    h.innerHTML='<span>'+label+'</span>'+(count?'<i>'+count+'</i>':'');
+    return h;
+  };
+  var none=function(text){ var n=document.createElement('div'); n.className='gsp-none'; n.textContent=text; return n; };
+
+  body.appendChild(sec('Wearing'));
+  var cur=currentId?row(currentId,true):null;
+  body.appendChild(cur||none('Nothing in this slot.'));
+
+  var opts=gearSlotOptions(slotKey,scope,currentId);
+  opts.sort(function(a,b){
+    var la=_gspLocked(a), lb=_gspLocked(b);
+    if(la!==lb) return la?1:-1;
+    if(la) return combatGearReq(a).level-combatGearReq(b).level;
+    var diff=_gspScore(b)-_gspScore(a);
+    if(Math.abs(diff)>1e-9) return diff;
+    return String((getBodyItemDef(a)||{}).name||a).localeCompare(String((getBodyItemDef(b)||{}).name||b));
   });
-  const toolHasSlot=craftingHasSlot(slotKey);
-  if(shopHasSlot){
-    var shopRow=document.createElement('div');
-    shopRow.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;margin-top:8px;border-top:1px solid var(--trim-d)';
-    shopRow.innerHTML='<span style="font-size:calc(13px*var(--tscale));color:var(--muted)">Buy more in the Shop</span>';
-    var goShopBtn=document.createElement('button');
-    goShopBtn.className='m-btn';
-    goShopBtn.style.cssText='font-size:calc(13px*var(--tscale));padding:5px 12px';
-    goShopBtn.textContent='Go to Shop →';
-    goShopBtn.addEventListener('click',function(){
-      modal.classList.add('hidden');
-      gotoShopSlot(slotKey);
-    });
-    shopRow.appendChild(goShopBtn);
-    body.appendChild(shopRow);
-  } else if(toolHasSlot){
-    var craftRow=document.createElement('div');
-    craftRow.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;margin-top:8px;border-top:1px solid var(--trim-d)';
-    craftRow.innerHTML='<span style="font-size:calc(13px*var(--tscale));color:var(--muted)">Forge tools in Crafting</span>';
-    var goCraftBtn=document.createElement('button');
-    goCraftBtn.className='m-btn';
-    goCraftBtn.style.cssText='font-size:calc(13px*var(--tscale));padding:5px 12px';
-    goCraftBtn.textContent='Craft in Crafting →';
-    goCraftBtn.addEventListener('click',function(){
-      modal.classList.add('hidden');
-      gotoCraftToolsSlot(slotKey);
-    });
-    craftRow.appendChild(goCraftBtn);
-    body.appendChild(craftRow);
-  }
+  body.appendChild(sec('Your options', opts.length));
+  if(opts.length){
+    var list=document.createElement('div'); list.className='gsp-list';
+    opts.forEach(function(id){ var r=row(id,false); if(r) list.appendChild(r); });
+    body.appendChild(list);
+  } else body.appendChild(none(currentId?'Nothing else you own fits this slot.':'Nothing you own fits this slot yet.'));
 
-  if(available.length===0){
-    if(!currentId){
-      var empty=document.createElement('p');
-      empty.style.cssText='font-size:calc(14px*var(--tscale));color:var(--muted);padding:8px 0;font-style:italic';
-      empty.textContent='Nothing you own fits this slot yet.';
-      body.appendChild(empty);
-    }
-  } else {
-    var divider=document.createElement('div');
-    divider.style.cssText='font-size:calc(12px*var(--tscale));color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin:10px 0 6px;border-top:1px solid var(--trim-d);padding-top:8px';
-    divider.textContent='Available — '+available.length+' option'+(available.length===1?'':'s');
-    body.appendChild(divider);
-    for(var ai=0;ai<available.length;ai++){
-      var altRow=buildItemRow(available[ai],false);
-      if(altRow) body.appendChild(altRow);
-    }
+  /* Where to get more: tool slots go to Crafting (1.0.47), jewelry and capes to the
+     Shop. Armour and weapons have no one place, so no link. */
+  var shopHasSlot=SHOP.some(function(it){ return !it.tool&&(it.slot===slotKey||itemFitsSlot(it.id,slotKey)); });
+  var toolHasSlot=!shopHasSlot&&craftingHasSlot(slotKey);
+  if(shopHasSlot||toolHasSlot){
+    var foot=document.createElement('div'); foot.className='gsp-foot';
+    foot.innerHTML='<span>'+(shopHasSlot?'Buy more in the Shop':'Forge tools in Crafting')+'</span>'
+      +'<button type="button" class="bag-btn">'+(shopHasSlot?'Go to Shop →':'Craft in Crafting →')+'</button>';
+    foot.querySelector('button').addEventListener('click',function(){
+      closeGearSlotModal();
+      if(shopHasSlot) gotoShopSlot(slotKey); else gotoCraftToolsSlot(slotKey);
+    });
+    body.appendChild(foot);
   }
-
   modal.classList.remove('hidden');
 }
+(function(){
+  var m=$('gearSlotModal'); if(!m) return;
+  var x=$('gearSlotClose'); if(x) x.addEventListener('click',closeGearSlotModal);
+  m.addEventListener('click',function(e){ if(e.target===m) closeGearSlotModal(); });
+  window.addEventListener('keydown',function(e){
+    if(e.key==='Escape'&&!m.classList.contains('hidden')){ e.preventDefault(); closeGearSlotModal(); }
+  });
+})();
 
 
 /* ════════ [JS-23] TOOLTIP SYSTEM ════════════════════════════════════════════════ */
