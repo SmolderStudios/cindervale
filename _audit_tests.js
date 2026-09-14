@@ -7576,7 +7576,8 @@ setTimeout(() => {
       return r;
     })()`);
     ok('an item dragged onto + gets a tab of its own, and another joins it', tabs.tabsMade === '[{"id":"t1","name":"","items":["coal","iron_ore"]}]', tabs.tabsMade);
-    ok('All shows the tab first, in your order, then everything else', /^coal,iron_ore,/.test(tabs.allOrder) && /^Tab 1\|Not in a tab$/.test(tabs.allHeads), tabs.allOrder + ' / ' + tabs.allHeads);
+    /* Order flipped in 0.9.124.51: what is not in a tab first, then the tabs. */
+    ok('All shows what is not in a tab first, then the tab in your order', /,coal,iron_ore$/.test(tabs.allOrder) && tabs.allHeads === 'Not in a tab|Tab 1', tabs.allOrder + ' / ' + tabs.allHeads);
     ok('opening a tab shows only its items, and the sort pill hides there', tabs.inTab === 'coal,iron_ore' && tabs.sortHidden === true, JSON.stringify(tabs));
     ok('dropping onto an item puts it in front of that item', tabs.before === 'pine_log,coal,iron_ore', tabs.before);
     ok('a tab can be named, and wears its first item as its face', tabs.name === 'Mining stuff' && tabs.face === true, JSON.stringify(tabs));
@@ -7976,6 +7977,39 @@ setTimeout(() => {
     ok('Combat\'s tabs sit in its page bar, after Back and the name, not in a row of their own',
        ct.inBar === true && ct.ownRow === 0 && ct.order === 'pg-back,pg-title,cmb-subtabs' && ct.tabs === 'arena,mastery,slayer,pets,log', JSON.stringify(ct));
     ok('and they still switch the page', ct.clicked === 'pets', JSON.stringify(ct));
+  }
+
+  section('New satchel tabs go below, not above (0.9.124.51)');
+  {
+    /* Jordan: "make sure the main tab, is the one on top of every other tab, so new
+       tabs dont add on top of the main tab, it goes below it". All used to list every
+       tab's items first, so each new tab pushed the rest of the satchel down. */
+    const nt = ev(`(function(){
+      state=defaultState(); normalizeState(); invSearch=''; _bagSel=null; state.bagTabs=[]; state.invPrefs.tab='all'; state.invPrefs.sort='name';
+      state.items={iron_ore:5, coal:9, pine_log:3, bronze_bar:2, cooked_trout:4, oak_log:6};
+      renderInventory();
+      var ids=function(){ return [].map.call(document.querySelectorAll('#inventory .bag-tile'),function(t){ return t.getAttribute('data-id'); }); };
+      var heads=function(){ return [].map.call(document.querySelectorAll('#inventory .bag-grp'),function(h){ return h.textContent.replace(/[0-9]+$/,'').trim(); }).join('|'); };
+      var r={};
+      r.firstBefore=ids()[0];
+      bagMoveItem('pine_log','new'); renderInventory();
+      r.one={first:ids()[0], heads:heads(), last:ids().slice(-1)[0]};
+      bagMoveItem('iron_ore','new'); bagRenameTab('t2','Ores'); renderInventory();
+      r.two={first:ids()[0], heads:heads(), order:ids().join(',')};
+      /* the first grid is the one not in a tab, so dropping onto it still takes an item out */
+      var grids=document.querySelectorAll('#inventory .bag-tiles');
+      r.firstGrid=grids[0]&&grids[0].getAttribute('data-tab');
+      /* with everything in tabs there is nothing above them */
+      ['bronze_bar','coal','cooked_trout','oak_log'].forEach(function(id){ bagMoveItem(id,'t1'); });
+      renderInventory(); r.allTabbed=heads();
+      state.bagTabs=[]; state.invPrefs.tab='all'; state.invPrefs.sort='category'; renderInventory();
+      return r;
+    })()`);
+    ok('making a tab adds it below what is not in a tab; the top of All stays put',
+       nt.firstBefore === 'bronze_bar' && nt.one.first === 'bronze_bar' && nt.one.heads === 'Not in a tab|Tab 1' && nt.one.last === 'pine_log', JSON.stringify(nt));
+    ok('a second tab goes below the first', nt.two.first === 'bronze_bar' && nt.two.heads === 'Not in a tab|Tab 1|Ores' && /,pine_log,iron_ore$/.test(nt.two.order), JSON.stringify(nt));
+    ok('the first grid is the not-in-a-tab one, and with nothing loose the tabs start at the top',
+       nt.firstGrid === 'loose' && nt.allTabbed === 'Tab 1|Ores', JSON.stringify(nt));
   }
 
   section('Skill presets hold their own skill, and the OSRS doll (0.9.124.44)');
