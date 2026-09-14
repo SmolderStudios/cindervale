@@ -8012,6 +8012,108 @@ setTimeout(() => {
        nt.firstGrid === 'loose' && nt.allTabbed === 'Tab 1|Ores', JSON.stringify(nt));
   }
 
+  section('Gear dragged onto the doll, and a tidier slot picker (0.9.124.52)');
+  {
+    /* Jordan: "can we drag and drop equipment into the gear in the satchel? the menu
+       for selecting gear in a slot is really bad right now too, can we fix that make
+       it easier to read and use, make it tidy". */
+    const gp = ev(`(function(){
+      state=defaultState(); normalizeState();
+      document.querySelectorAll('.modal-back').forEach(function(m){ m.classList.add('hidden'); });
+      state.items={bronze_helm:1, iron_helm:1, runite_helm:1, void_helm:1, mithril_helm:1, emerald_ring:1, coal:5};
+      state.combatXp.defence=XP_CUM[60]; state.combatEquipped={helmet:'mithril_helm'}; refreshCombatStats();
+      _gearFilter='combat';
+      var hd=BODY_SLOTS.find(function(s){ return s.slot==='helmet'; });
+      var r={def:cmbLvl('defence')};
+      showGearTip('<b>card</b>',10,10);
+      openGearSlotModal('helmet',hd,'mithril_helm');
+      var m=document.getElementById('gearSlotModal');
+      r.open=!m.classList.contains('hidden'); r.tipHidden=document.getElementById('gearHoverTip').style.display==='none';
+      r.title=document.getElementById('gearSlotTitle').textContent+'/'+document.getElementById('gearSlotScope').textContent;
+      r.worn=(m.querySelector('.gsp-row.worn')||{getAttribute:function(){ return ''; }}).getAttribute('data-id');
+      r.remove=!!m.querySelector('.gsp-row.worn [data-gsp="off"]');
+      var rows=[].slice.call(m.querySelectorAll('.gsp-list .gsp-row'));
+      r.order=rows.map(function(x){ return x.getAttribute('data-id')+(x.classList.contains('locked')?'!':''); }).join(',');
+      var last=rows[rows.length-1];
+      r.lockedBtn=last?last.querySelector('.gsp-act button').textContent+'|'+last.querySelector('.gsp-act button').disabled:'';
+      r.lockedReq=last&&last.querySelector('.gsp-req')?last.querySelector('.gsp-req').textContent:'';
+      var rn=m.querySelector('.gsp-row[data-id="runite_helm"]');
+      r.delta=rn?[].map.call(rn.querySelectorAll('.gsp-delta b'),function(b){ return b.className+':'+b.textContent; }).join(','):'';
+      r.stats=rn?rn.querySelector('.gsp-stats').textContent:'';
+      r.equipBtns=m.querySelectorAll('.gsp-list [data-equip]').length;
+      if(rn) rn.click();
+      r.rowEquip={helmet:state.combatEquipped.helmet, closed:m.classList.contains('hidden')};
+      openGearSlotModal('helmet',hd,state.combatEquipped.helmet); document.getElementById('gearSlotClose').click(); r.xClosed=m.classList.contains('hidden');
+      openGearSlotModal('helmet',hd,state.combatEquipped.helmet);
+      document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true})); r.escClosed=m.classList.contains('hidden');
+      openGearSlotModal('helmet',hd,state.combatEquipped.helmet); m.dispatchEvent(new MouseEvent('click',{bubbles:true})); r.backdropClosed=m.classList.contains('hidden');
+      openGearSlotModal('helmet',hd,state.combatEquipped.helmet);
+      m.querySelector('.gsp-row.worn [data-gsp="off"]').click(); r.removed=!state.combatEquipped.helmet&&m.classList.contains('hidden');
+      openGearSlotModal('helmet',hd,null); r.emptyWorn=(m.querySelector('.gsp-none')||{}).textContent;
+      closeGearSlotModal();
+      var rd=BODY_SLOTS.find(function(s){ return s.slot==='ring_l'; });
+      openGearSlotModal('ring_l',rd,null);
+      r.ringOpts=[].map.call(m.querySelectorAll('.gsp-list .gsp-row'),function(x){ return x.getAttribute('data-id'); }).join(',');
+      r.ringFoot=!!m.querySelector('.gsp-foot button');
+      closeGearSlotModal();
+      return r;
+    })()`);
+    ok('the picker opens with its slot and loadout named, and puts away the doll\'s hover card',
+       gp.open === true && gp.tipHidden === true && gp.title === 'Helmet/Combat gear', JSON.stringify(gp));
+    ok('what you wear is on top with Remove', gp.worn === 'mithril_helm' && gp.remove === true, JSON.stringify(gp));
+    ok('options come best first, and one you cannot wear yet goes last and says what it needs',
+       gp.order === 'runite_helm,iron_helm,bronze_helm,void_helm!' && gp.lockedBtn === 'Lv 90|true' && /Needs 90 Defence, you have 60/.test(gp.lockedReq), JSON.stringify(gp));
+    ok('each option shows its stats and what it changes against what you wear',
+       gp.stats === '+19 Def' && gp.delta === 'up:+9 Def' && gp.equipBtns === 3, JSON.stringify(gp));
+    ok('clicking a row wears it and closes the picker', gp.rowEquip?.helmet === 'runite_helm' && gp.rowEquip?.closed === true, JSON.stringify(gp.rowEquip));
+    ok('the X, Esc and a click outside all close it; Remove takes it off',
+       gp.xClosed === true && gp.escClosed === true && gp.backdropClosed === true && gp.removed === true, JSON.stringify(gp));
+    ok('an empty slot says so, and a ring slot offers rings and a way to the Shop, never coal',
+       gp.emptyWorn === 'Nothing in this slot.' && gp.ringOpts === 'emerald_ring' && gp.ringFoot === true, JSON.stringify(gp));
+
+    const dd = ev(`(function(){
+      state=defaultState(); normalizeState(); invSearch=''; _bagSel=null; state.bagTabs=[]; state.invPrefs.tab='all';
+      document.querySelectorAll('.modal-back').forEach(function(m){ m.classList.add('hidden'); });
+      state.items={runite_helm:1, void_helm:1, emerald_ring:1, ruby_ring:1, coal:5};
+      state.combatXp.defence=XP_CUM[60]; state.combatEquipped={}; refreshCombatStats();
+      closeInventory(); leaveFullPanels(); viewTab='acts'; renderAll();
+      _gearFilter='skilling'; openInventory();
+      var g=document.getElementById('invGear');
+      var tile=function(id){ return document.querySelector('#inventory .bag-tile[data-id="'+id+'"]'); };
+      var sq=function(s){ return g.querySelector('.dl-sq[data-slot="'+s+'"]'); };
+      var fire=function(el,type){ var e=new Event(type,{bubbles:true,cancelable:true}); el.dispatchEvent(e); return e.defaultPrevented; };
+      var lit=function(){ return [].map.call(g.querySelectorAll('.dl-can'),function(c){ return c.getAttribute('data-slot'); }).join(','); };
+      var r={};
+      fire(tile('runite_helm'),'dragstart');
+      r.pick={filter:_gearFilter, arming:g.classList.contains('dl-arming'), lit:lit()};
+      r.over=fire(sq('helmet'),'dragover')&&sq('helmet').classList.contains('dl-over');
+      r.overWrong=fire(sq('boots'),'dragover')&&sq('helmet').classList.contains('dl-over')&&!sq('boots').classList.contains('dl-over');
+      fire(sq('helmet'),'drop');
+      r.dropped={helmet:state.combatEquipped.helmet, arming:g.classList.contains('dl-arming'), lit:lit()};
+      fire(tile('emerald_ring'),'dragstart'); r.ringLit=lit();
+      fire(g.querySelector('.eq-sgrid')||g,'drop'); r.ring1=state.combatEquipped.ring_l||'';
+      fire(tile('ruby_ring'),'dragstart'); fire(g.querySelector('.eq-sgrid')||g,'drop'); r.ring2=state.combatEquipped.ring_r||'';
+      fire(tile('void_helm'),'dragstart');
+      r.lock=sq('helmet').classList.contains('dl-lock');
+      fire(sq('helmet'),'drop'); r.lockKept=state.combatEquipped.helmet;
+      fire(tile('void_helm'),'dragend'); r.cleared=!g.querySelector('.dl-can,.dl-lock,.dl-over')&&!g.classList.contains('dl-arming');
+      fire(tile('coal'),'dragstart');
+      r.ore={lit:lit(), arming:g.classList.contains('dl-arming'), over:fire(sq('helmet'),'dragover')};
+      fire(tile('coal'),'dragend');
+      closeInventory();
+      return r;
+    })()`);
+    ok('picking up combat gear lights its square, and switches a Skilling doll to Combat',
+       dd.pick?.filter === 'combat' && dd.pick?.arming === true && dd.pick?.lit === 'helmet', JSON.stringify(dd));
+    ok('over its square the drop is taken and the square lifts; anywhere on the doll still points at its own slot',
+       dd.over === true && dd.overWrong === true, JSON.stringify(dd));
+    ok('dropping it on the doll wears it, and the lights go out', dd.dropped?.helmet === 'runite_helm' && dd.dropped?.arming === false && dd.dropped?.lit === '', JSON.stringify(dd));
+    ok('a ring lights both hands; dropped on the doll\'s stats it goes to an empty hand, then the other',
+       dd.ringLit === 'ring_l,ring_r' && dd.ring1 === 'emerald_ring' && dd.ring2 === 'ruby_ring', JSON.stringify(dd));
+    ok('gear you lack the level for rings red and is not worn', dd.lock === true && dd.lockKept === 'runite_helm', JSON.stringify(dd));
+    ok('letting go clears the doll, and coal lights nothing and is not taken', dd.cleared === true && dd.ore?.lit === '' && dd.ore?.arming === false && dd.ore?.over === false, JSON.stringify(dd));
+  }
+
   section('Skill presets hold their own skill, and the OSRS doll (0.9.124.44)');
   {
     /* The Woodcutting preset offered the whole Agility set, and a skill cape for
