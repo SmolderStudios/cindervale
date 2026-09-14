@@ -8755,7 +8755,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.124.54">v0.9.124</div>
+  <div class="mm-ver" data-build="0.9.124.55">v0.9.124</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -10937,7 +10937,9 @@ const COMBAT_GEAR_STATS={
            'combat' (attack/defence/HP etc. — consumed by Combat, future)
    skill:  for cat:'skill' enchants, the skill key the bonus is locked to.
    Skilling bonus keys: speed, xpBoost, gpBoost, doubleYield.
-   Combat  bonus keys: atkBoost, hpBoost, defBoost, critChance, lifesteal. */
+   Combat  bonus keys: atkBoost, hpBoost, defBoost, critChance, lifesteal.
+   Both loadouts:      goldFind (cat:'gold'), gold you EARN rather than sell for. It
+                       counts on the doll wearing it, read by earnedGoldBonus(). */
 const ENCHANTS={
   // ── Tier 1 · Sapphire ──
   swift_i:     {name:'Swift I',       tier:1, gem:'sapphire', cat:'global', bonus:{speed:0.03},           desc:'+3% action speed, all skills'},
@@ -10997,6 +10999,15 @@ const ENCHANTS={
   gatherer_vi: {name:'Gatherer VI',   tier:6, gem:'dragon',   cat:'global', bonus:{doubleYield:0.22},     desc:'+22% chance to double resources'},
   dragonhide:  {name:'Dragonhide',    tier:6, gem:'dragon',   cat:'combat', bonus:{defBoost:0.18,hpBoost:0.12}, desc:'Combat: +18% Defence · +12% Max HP'},
   dragonfury:  {name:'Dragonfury',    tier:6, gem:'dragon',   cat:'combat', bonus:{atkBoost:0.16,critChance:0.08}, desc:'Combat: +16% Attack · +8% crit chance'},
+  /* Windfall (0.9.124.55, ticket #140: "We need a more money enchant for late game gold
+     grind"). Not "Plunder", which is already a Combat Mastery node (g_t4_r). Fortune
+     and Void Greed only ever raised sale prices. Windfall raises the gold you earn, on
+     whichever doll wears it: kills, raids and Spire floors on the combat loadout,
+     steals and laps on the skilling one. Late gems only. Sized under the Fortune rung
+     beside it, because earned gold is the bigger pool, and single stat on purpose: a
+     slot of Windfall is a slot of Attack or Speed you are not wearing, so it is worth
+     most once you already kill or steal faster than you need. */
+  windfall_i:  {name:'Windfall I',    tier:6, gem:'dragon',   cat:'gold',   bonus:{goldFind:0.20}, desc:'+20% gold from kills, raids, steals and laps'},
 
   // ── Tier 7 · Bloodstone ── the WARRIOR gem: light global ladder + signature combat enchants
   swift_bs:    {name:'Swift VII',     tier:7, gem:'bloodstone', cat:'global', bonus:{speed:0.26},         desc:'+26% action speed, all skills'},
@@ -11006,11 +11017,13 @@ const ENCHANTS={
   bulwark:     {name:'Bulwark',       tier:7, gem:'bloodstone', cat:'combat', bonus:{defBoost:0.25,hpBoost:0.20},  desc:'Combat: +25% Defence · +20% Max HP'},
   bloodthirst: {name:'Bloodthirst',   tier:7, gem:'bloodstone', cat:'combat', bonus:{lifesteal:0.15,atkBoost:0.10},desc:'Combat: +15% lifesteal · +10% Attack'},
   executioner: {name:'Executioner',   tier:7, gem:'bloodstone', cat:'combat', bonus:{critChance:0.18,atkBoost:0.12},desc:'Combat: +18% crit chance · +12% Attack'},
+  windfall_ii:  {name:'Windfall II',    tier:7, gem:'bloodstone', cat:'gold', bonus:{goldFind:0.25},  desc:'+25% gold from kills, raids, steals and laps'},
 
   // ── Tier 8 · Void ──
   void_surge:  {name:'Void Surge',    tier:8, gem:'void',     cat:'global', bonus:{speed:0.30,xpBoost:0.15},      desc:'+30% action speed · +15% XP, all skills'},
   void_greed:  {name:'Void Greed',    tier:8, gem:'void',     cat:'global', bonus:{gpBoost:0.45,doubleYield:0.20},desc:'+45% sell value · +20% double resources'},
   void_hunger: {name:'Void Hunger',   tier:8, gem:'void',     cat:'combat', bonus:{atkBoost:0.12,lifesteal:0.20,critChance:0.10}, desc:'Combat: +12% Attack · +20% lifesteal · +10% crit'},
+  windfall_iii: {name:'Windfall III',   tier:8, gem:'void',     cat:'gold',   bonus:{goldFind:0.30}, desc:'+30% gold from kills, raids, steals and laps'},
 };
 
 /* Set bonuses — triggered when ring+amulet of same gem tier are both enchanted
@@ -11112,9 +11125,9 @@ const ENCHANTS_BY_GEM={
   ruby:    ['swift_iii','fortune_iii','scholar_iii','gatherer_iii','soldier_iii'],
   diamond: ['swift_iv','fortune_iv','scholar_iv','hoarder_iv','knight_iv'],
   amethyst:['swift_am','fortune_am','scholar_am','gatherer_am','duelist_am','uq_wc','uq_mi','uq_fi','uq_fo','uq_sm','uq_co','uq_al','uq_fm','uq_ag','uq_jw','uq_fa','uq_cr'],
-  dragon:  ['swift_v','fortune_v','scholar_v','gatherer_vi','dragonhide','dragonfury'],
-  bloodstone:['swift_bs','fortune_bs','scholar_bs','warlord','bulwark','bloodthirst','executioner'],
-  void:    ['void_surge','void_greed','void_hunger'],
+  dragon:  ['swift_v','fortune_v','scholar_v','gatherer_vi','dragonhide','dragonfury','windfall_i'],
+  bloodstone:['swift_bs','fortune_bs','scholar_bs','warlord','bulwark','bloodthirst','executioner','windfall_ii'],
+  void:    ['void_surge','void_greed','void_hunger','windfall_iii'],
 };
 
 /* Enchanting material costs per tier (1=sapphire … 8=void) */
@@ -11135,8 +11148,8 @@ const ENCHANT_COST_BY_TIER={
    where skill-unique enchants are skipped. Only skilling keys are returned;
    combat keys live in combatEnchantBonuses(). */
 function enchantBonuses(skill){
-  var SKILL_KEYS={speed:0,xpBoost:0,gpBoost:0,doubleYield:0};
-  var total={speed:0,xpBoost:0,gpBoost:0,doubleYield:0};
+  var SKILL_KEYS={speed:0,xpBoost:0,gpBoost:0,doubleYield:0,goldFind:0};
+  var total={speed:0,xpBoost:0,gpBoost:0,doubleYield:0,goldFind:0};
   // Only EQUIPPED jewelry contributes — enchants are stored per ITEM ID
   for(var slot in state.equipped){
     var enchId=state.enchantments[state.equipped[slot]];
@@ -11161,8 +11174,8 @@ function enchantBonuses(skill){
 /* Combat enchantment bonuses from equipped+enchanted jewelry. Defined now so combat
    jewelry can be crafted/enchanted/tested; the Combat tab will read this when built. */
 function combatEnchantBonuses(){
-  var CK={atkBoost:0,hpBoost:0,defBoost:0,critChance:0,lifesteal:0};
-  var total={atkBoost:0,hpBoost:0,defBoost:0,critChance:0,lifesteal:0};
+  var CK={atkBoost:0,hpBoost:0,defBoost:0,critChance:0,lifesteal:0,goldFind:0};
+  var total={atkBoost:0,hpBoost:0,defBoost:0,critChance:0,lifesteal:0,goldFind:0};
   // Combat enchant bonuses read from the COMBAT loadout only.
   var ce=state.combatEquipped||{};
   for(var slot in ce){
@@ -14784,7 +14797,10 @@ function _gearStatVec(itemId){
 /* Clean names only — the value already gets a trailing % for percentage stats,
    so a label like 'Crit%' would render "+5% Crit%". */
 var _GEAR_STAT_LABEL={atk:'Atk',str:'Str',def:'Def',crit:'Crit',dodge:'Dodge',aspd:'Atk Spd',
-  '%speed':'Speed','%xpBoost':'XP','%skillXp':'Skill XP','%gpBoost':'Gold','%doubleYield':'2× Yield',
+  /* %gpBoost is sale value everywhere it comes from (Fortune, Moon Amulet, trophy
+     "gold from sales"), and %goldFind is Windfall's gold you earn, so the two can no
+     longer share the one word. (0.9.124.55) */
+  '%speed':'Speed','%xpBoost':'XP','%skillXp':'Skill XP','%gpBoost':'Sell','%goldFind':'Gold','%doubleYield':'2× Yield',
   '%preserve':'Preserve','%atkBoost':'Atk','%critChance':'Crit','%lifesteal':'Lifesteal',
   '%hpBoost':'HP','%defBoost':'Def'};
 function _gearStatIsPct(key){ return key.charAt(0)==='%'||key==='crit'||key==='dodge'||key==='aspd'; }
@@ -14820,7 +14836,7 @@ function gearDeltaHTML(candidateId, equippedId){
   var A=_gearStatVec(candidateId), B=_gearStatVec(equippedId);
   var keys={}; for(var k in A) keys[k]=1; for(var k2 in B) keys[k2]=1;
   // Stable, readable order: flat combat stats first, then percentages.
-  var order=['atk','str','def','crit','dodge','aspd','%speed','%xpBoost','%skillXp','%gpBoost',
+  var order=['atk','str','def','crit','dodge','aspd','%speed','%xpBoost','%skillXp','%gpBoost','%goldFind',
     '%doubleYield','%preserve','%atkBoost','%critChance','%lifesteal','%hpBoost','%defBoost'];
   var seen=Object.keys(keys).sort(function(a,b){
     var ia=order.indexOf(a), ib=order.indexOf(b);
@@ -15163,7 +15179,9 @@ function jewelryEnchantBlock(itemId){
   if(enchId && ENCHANTS[enchId]){
     var ench=ENCHANTS[enchId];
     html+='<div style="font-size:calc(13px*var(--tscale));color:#fbd24e;margin-bottom:3px">✦ Enchanted: <b>'+ench.name+'</b></div>'
-       +  '<div style="font-size:calc(13px*var(--tscale));color:#ead9b5;line-height:1.5">'+ench.desc+'</div>';
+       +  '<div style="font-size:calc(13px*var(--tscale));color:#ead9b5;line-height:1.5">'+ench.desc+'</div>'
+       /* Windfall counts on the doll wearing it (0.9.124.55). */
+       +  (ench.cat==='gold'?'<div style="font-size:calc(12px*var(--tscale));color:var(--muted);line-height:1.45">Worn for combat: kills and raids. Worn for skilling: steals and laps.</div>':'');
   } else {
     html+='<div style="font-size:calc(12px*var(--tscale));color:var(--muted);font-style:italic">Not enchanted. Add an enchantment in the Enchanting tab.</div>';
   }
@@ -21254,8 +21272,15 @@ function globalSellBonus(){
    "+5% gold from every source" and, as a gpBoost charm, only ever reached sale
    prices, so a thief or a runner who paid 50,000g for it got nothing. Charm gold now
    also reaches steals, laps and kills. Sales keep globalSellBonus(), which already
-   carries it, so nothing counts twice. */
-function earnedGoldBonus(){ return charmBonus('gpBoost'); }
+   carries it, so nothing counts twice.
+   Windfall (0.9.124.55, #140) rides the same hook, read off the doll the gold comes
+   from: pass 'combat' for kills, raids and Spire floors; anything else reads the
+   skilling doll, for steals and laps. It never touches a sale. */
+function earnedGoldBonus(where){
+  var ench=0;
+  try{ var eb=(where==='combat')?combatEnchantBonuses():enchantBonuses(); ench=(eb&&eb.goldFind)||0; }catch(e){}
+  return charmBonus('gpBoost')+ench;
+}
 
 /* Effective sell value of any item, including all global bonuses (jewelry/enchant/potion)
    and the producing skill's sell perk. Used by the satchel, tooltips, and compendium so the
@@ -22688,14 +22713,14 @@ function gpPerAction(act,skill){
   if(skill==='thieving'&&act.coins){
     const cm=1+treeRank('thieving','th_coins')*0.03
               +(treeRank('thieving','th_master1')>0?0.20:0)
-              +earnedGoldBonus();
+              +earnedGoldBonus('skill');
     const _s=(typeof thiefSuccess==='function'?thiefSuccess(act):1);
     gp+=act.coins*cm*_s*(1+(treeRank('thieving','th_master3')>0?0.10:0));   // + Second Pocket
   }
   // Agility coin reward — already receives a coinMult at runtime; replicate it here for display
   if(IS_AGILITY_SKILL[skill]&&act.coins){
     const p=SK_PFX[skill];
-    const coinMult=1+(treeRank(skill,p+'_coins')*0.03)+(treeRank(skill,p+'_master1')>0?0.25:0)+(treeRank(skill,p+'_master3')>0?0.25:0)+(treeRank(skill,'ag_gm_coins')*0.06)+(treeRank(skill,'ag_gm_coins2')>0?0.75:0)+earnedGoldBonus();
+    const coinMult=1+(treeRank(skill,p+'_coins')*0.03)+(treeRank(skill,p+'_master1')>0?0.25:0)+(treeRank(skill,p+'_master3')>0?0.25:0)+(treeRank(skill,'ag_gm_coins')*0.06)+(treeRank(skill,'ag_gm_coins2')>0?0.75:0)+earnedGoldBonus('skill');
     gp+=act.coins*coinMult; // act.coins is already SILVER (matches item-sell silver)
   }
   for(const [id,q] of Object.entries(act.out)){
@@ -24230,7 +24255,7 @@ function completeAction(act,skillKey,times){
     if(got>0){
       const coinMult=1 + treeRank('thieving','th_coins')*0.03
                        + (treeRank('thieving','th_master1')>0?0.20:0)
-                       + earnedGoldBonus();   // Coin Purse (#141)
+                       + earnedGoldBonus('skill');   // Coin Purse (#141), Windfall on the skilling doll (#140)
       const coins=Math.round((act.coins||0)*got*coinMult);
       if(coins>0){ state.coins+=coins; showCoinPop(coins); }
       const L=act.loot;
@@ -24253,7 +24278,7 @@ function completeAction(act,skillKey,times){
   let agBonusLaps=0;
   if(IS_AGILITY_SKILL[skillKey]&&act.coins){
     const p=SK_PFX[skillKey];
-    const coinMult=1+(treeRank(skillKey,p+'_coins')*0.03)+(treeRank(skillKey,p+'_master1')>0?0.25:0)+(treeRank(skillKey,p+'_master3')>0?0.25:0)+(treeRank(skillKey,'ag_gm_coins')*0.06)+(treeRank(skillKey,'ag_gm_coins2')>0?0.75:0)+earnedGoldBonus();
+    const coinMult=1+(treeRank(skillKey,p+'_coins')*0.03)+(treeRank(skillKey,p+'_master1')>0?0.25:0)+(treeRank(skillKey,p+'_master3')>0?0.25:0)+(treeRank(skillKey,'ag_gm_coins')*0.06)+(treeRank(skillKey,'ag_gm_coins2')>0?0.75:0)+earnedGoldBonus('skill');
     // Runner's High (Lv99): 20% chance per lap to instantly collect a second lap's rewards.
     if(m.ag_bonusLap) agBonusLaps=binom(times,0.20);
     const coinsGained=Math.round((act.coins||0)*(times+agBonusLaps)*coinMult); // already SILVER
@@ -24819,7 +24844,7 @@ function offlineCombatResolve(awayMs, om){
     xpGained+=grantCombatXp(style,xpMain)||0;
     xpGained+=grantCombatXp('hitpoints',xpHp)||0;
   }
-  const coins=Math.round(mon.coins*kills*(1+earnedGoldBonus()));   // Coin Purse (#141)
+  const coins=Math.round(mon.coins*kills*(1+earnedGoldBonus('combat')));   // Coin Purse (#141), Windfall (#140)
   state.coins=(state.coins||0)+coins*SILVER_PER_GOLD;
 
   const items={};
@@ -25720,7 +25745,7 @@ function buildActBtn(act,reqLvl,lvl,m,bestXph,bestRph){
   let coinDisplay='';
   if(IS_AGILITY_SKILL[selectedSkill]&&act.coins){
     const p=SK_PFX[selectedSkill];
-    const coinMult=1+(treeRank(selectedSkill,p+'_coins')*0.03)+(treeRank(selectedSkill,p+'_master1')>0?0.25:0)+(treeRank(selectedSkill,p+'_master3')>0?0.25:0)+(treeRank(selectedSkill,'ag_gm_coins')*0.06)+(treeRank(selectedSkill,'ag_gm_coins2')>0?0.75:0)+earnedGoldBonus();
+    const coinMult=1+(treeRank(selectedSkill,p+'_coins')*0.03)+(treeRank(selectedSkill,p+'_master1')>0?0.25:0)+(treeRank(selectedSkill,p+'_master3')>0?0.25:0)+(treeRank(selectedSkill,'ag_gm_coins')*0.06)+(treeRank(selectedSkill,'ag_gm_coins2')>0?0.75:0)+earnedGoldBonus('skill');
     const effCoins=Math.round(act.coins*coinMult);
     coinDisplay=`${fmtCoins(effCoins,true)} per lap`;
   }
@@ -34072,8 +34097,10 @@ function grantRaidRewards(raid, timeMs){
   const res={ raidId:raid.id, timeMs, rating:rt.key, ratingCol:rt.col, gold:0, mats:[], gear:[] };
   // Gold — flat by rank (multiplied for the character drop dial's flavour? no —
   // gold is a fixed rank payout so the rating stays the headline reward).
-  state.coins += rt.gold * SILVER_PER_GOLD;
-  res.gold=rt.gold;
+  /* The rank sets the base; the gold bonuses a kill takes apply on top: the Coin Purse
+     ("every source") and Windfall on the combat doll (0.9.124.55, #140). */
+  res.gold=Math.round(rt.gold*(1+earnedGoldBonus('combat')));
+  state.coins += res.gold * SILVER_PER_GOLD;
   // Materials — rt.mats random picks from the pool, aggregated.
   const pool=raid.matPool||RAID_MAT_POOL;
   const agg={};
@@ -34134,7 +34161,9 @@ function spireGearChance(floor){
 function spireFloorLoot(floor){
   const res={gold:0, mats:[]};
   const sc=spireScale(floor);
-  res.gold=Math.round(900*Math.pow(1.055,floor-1));
+  /* Same gold bonuses as a kill: Coin Purse and combat-doll Windfall (0.9.124.55). The
+     Monster Log's Spire table keeps showing the base. */
+  res.gold=Math.round(900*Math.pow(1.055,floor-1)*(1+earnedGoldBonus('combat')));
   state.coins += res.gold*SILVER_PER_GOLD;
   if(!state.discovered) state.discovered={};
   const give=(id,q)=>{ const got=grantItem(id,q); if(got>0){ state.discovered[id]=1; res.mats.push({id,qty:got}); } };
@@ -35524,6 +35553,8 @@ function _gearStatsHTML(){
       if(b.lifesteal)  chips.push('+'+pc(b.lifesteal)+'% lifesteal');
       if(b.dodge)      chips.push('+'+pc(b.dodge)+'% dodge');
       if(b.aspd)       chips.push('+'+pc(b.aspd)+'% attack speed');
+      const gf=combatEnchantBonuses().goldFind||0;   // Windfall on the combat doll (0.9.124.55)
+      if(gf)           chips.push('+'+pc(gf)+'% gold from kills');
     }catch(e){}
     let heavy=0;
     try{ heavy=Math.round((1-Math.max(RANGED_PLATE_FLOOR,1-heavyArmourDef()*RANGED_PLATE_PER_DEF))*100); }catch(e){}
@@ -35539,17 +35570,20 @@ function _gearStatsHTML(){
      adds, less the tree and potions, which are not on the doll. */
   let sk=(state.action&&SKILLS[state.action.skill])?state.action.skill:(SKILLS[selectedSkill]?selectedSkill:'woodcutting');
   const pct=v=>{ const n=Math.round(v*1000)/10; return n?'<b>'+(n>0?'+':'')+n+'%</b>':'<b class="z">0%</b>'; };
-  let speed=0,xp=0,dbl=0,sell=0;
+  let speed=0,xp=0,dbl=0,sell=0,gold=0;
   try{
     const eb=enchantBonuses(sk), sb=socketBonuses(sk);
     speed=gearBonus(sk,'speed')+(eb.speed||0)+(sb.speed||0);
     xp=gearSkillXp(sk)+jewelryBonus('xpBoost')+(eb.xpBoost||0)+(sb.xpBoost||0)+skillingSetBonus(sk);
     dbl=gearBonus(sk,'doubleYield')+jewelryBonus('doubleYield')+(eb.doubleYield||0)+(sb.doubleYield||0);
     sell=jewelryBonus('gpBoost')+(eb.gpBoost||0)+(sb.gpBoost||0);
+    gold=eb.goldFind||0;   // Windfall on the skilling doll (0.9.124.55)
   }catch(e){}
   return '<div class="eq-stats"><div class="eq-for">'+iconHTML(sk)+'What you wear gives '+SKILLS[sk].name+'</div><div class="eq-sgrid">'
     +'<div>'+pct(speed)+'<span>Speed</span></div><div>'+pct(xp)+'<span>XP</span></div>'
-    +'<div>'+pct(dbl)+'<span>Double</span></div><div>'+pct(sell)+'<span>Sell value</span></div></div></div>';
+    +'<div>'+pct(dbl)+'<span>Double</span></div><div>'+pct(sell)+'<span>Sell value</span></div></div>'
+    +(gold?'<div class="eq-bon"><span class="dk-chip good">+'+Math.round(gold*1000)/10+'% gold from steals and laps</span></div>':'')
+    +'</div>';
 }
 
 /* The paper doll for whichever loadout _gearFilter names. The Gear tab and the
@@ -35940,7 +35974,7 @@ function gearSlotOptions(slotKey, scope, currentId){
   }
   return available;
 }
-var _GSP_ORDER=['atk','str','def','crit','dodge','aspd','%speed','%xpBoost','%skillXp','%gpBoost',
+var _GSP_ORDER=['atk','str','def','crit','dodge','aspd','%speed','%xpBoost','%skillXp','%gpBoost','%goldFind',
   '%doubleYield','%preserve','%atkBoost','%critChance','%lifesteal','%hpBoost','%defBoost'];
 function _gspKeys(obj){
   return Object.keys(obj).sort(function(a,b){ var ia=_GSP_ORDER.indexOf(a), ib=_GSP_ORDER.indexOf(b); return (ia<0?99:ia)-(ib<0?99:ib); });
@@ -38616,7 +38650,7 @@ const EW_GEMC={sapphire:'#4a86c8',emerald:'#3fa860',ruby:'#c8434a',diamond:'#8fd
 const EW_GEM_ORDER=['sapphire','emerald','ruby','diamond','amethyst','dragon','bloodstone','void'];
 const EW_SLOT_LABEL={ring_l:'Ring · Left',ring_r:'Ring · Right',amulet:'Neck'};
 const EW_BONUS_LABEL={speed:'Speed',xpBoost:'XP',gpBoost:'Sell',doubleYield:'Double',
-  atkBoost:'Attack',defBoost:'Defence',hpBoost:'Max HP',critChance:'Crit',lifesteal:'Lifesteal'};
+  atkBoost:'Attack',defBoost:'Defence',hpBoost:'Max HP',critChance:'Crit',lifesteal:'Lifesteal',goldFind:'Gold'};
 
 function _ewEl(cls,html){ var d=document.createElement('div'); if(cls)d.className=cls;
   if(html!=null)d.innerHTML=html; return d; }
@@ -38894,8 +38928,12 @@ function _ewTotals(){
   var sk={}, cb={};
   try{ sk=enchantBonuses(); }catch(e){ sk={}; }
   try{ cb=combatEnchantBonuses(); }catch(e){ cb={}; }
-  var cells=[['Speed',sk.speed],['XP',sk.xpBoost],['Sell',sk.gpBoost],['Double',sk.doubleYield],
-             ['Attack',cb.atkBoost],['Defence',cb.defBoost],['Max HP',cb.hpBoost]];
+  var cells=[['Speed',sk.speed],['XP',sk.xpBoost],['Sell',sk.gpBoost],['Double',sk.doubleYield]];
+  /* Windfall counts on the doll wearing it, so it gets a cell per doll, and only once
+     one is worn: most players never own a late gem. (0.9.124.55) */
+  if(sk.goldFind) cells.push(['Gold · skilling',sk.goldFind]);
+  cells.push(['Attack',cb.atkBoost],['Defence',cb.defBoost],['Max HP',cb.hpBoost]);
+  if(cb.goldFind) cells.push(['Gold · combat',cb.goldFind]);
   var w=_ewEl('ew-tot');
   cells.forEach(function(c){
     var v=c[1]||0;
@@ -38955,6 +38993,7 @@ function _ewOptions(itemId,redraw){
   var globals=f.list.filter(function(e){return (ENCHANTS[e].cat||'global')==='global';});
   var combats=f.list.filter(function(e){return ENCHANTS[e].cat==='combat';});
   var focus  =f.list.filter(function(e){return ENCHANTS[e].cat==='skill';});
+  var golds  =f.list.filter(function(e){return ENCHANTS[e].cat==='gold';});
   if(globals.length){
     frag.appendChild(_ewLab('Global — every skill'));
     var g=_ewEl('ew-opts two');
@@ -38966,6 +39005,14 @@ function _ewOptions(itemId,redraw){
     var c=_ewEl('ew-opts two');
     combats.forEach(function(e){ c.appendChild(_ewEnchCard(e,itemId,f.cost,canAfford,redraw)); });
     frag.appendChild(c);
+  }
+  /* Windfall (0.9.124.55). Its own row, because it is the one enchant that counts on
+     either doll, and the header says which gold each doll gets. */
+  if(golds.length){
+    frag.appendChild(_ewLab('Gold',1,'combat loadout: kills and raids · skilling loadout: steals and laps'));
+    var gl=_ewEl('ew-opts two');
+    golds.forEach(function(e){ gl.appendChild(_ewEnchCard(e,itemId,f.cost,canAfford,redraw)); });
+    frag.appendChild(gl);
   }
   if(focus.length){
     var b=ENCHANTS[focus[0]].bonus||{};
@@ -39017,8 +39064,8 @@ function renderEnchanting(){
      cards below agreed with the wrong half (ticket #49 / OneFlame). The two
      loadouts pay different bonus keys, so both have to be on screen. */
   stack.appendChild(_ewLab('What You Are Wearing'));
-  [['combat','Combat loadout','Attack \u00b7 Defence \u00b7 Max HP \u00b7 Crit \u00b7 Lifesteal'],
-   ['skilling','Skilling loadout','Speed \u00b7 XP \u00b7 Sell value \u00b7 Double']].forEach(function(sc){
+  [['combat','Combat loadout','Attack \u00b7 Defence \u00b7 Max HP \u00b7 Crit \u00b7 Lifesteal \u00b7 Gold from kills'],
+   ['skilling','Skilling loadout','Speed \u00b7 XP \u00b7 Sell value \u00b7 Double \u00b7 Gold from steals and laps']].forEach(function(sc){
     const map=(sc[0]==='combat'?state.combatEquipped:state.skillingEquipped)||{};
     stack.appendChild(_ewEl('ew-sublab','<b>'+sc[1]+'</b><span>'+sc[2]+'</span>'));
     const slots=_ewEl('ew-slots');
@@ -40348,7 +40395,7 @@ function combatTick(){
       const wasRare=combat.rare;
       // Combat Mastery gold nodes (Spoils of War / War Banner) — always-on gold multiplier. (1.0.101)
       const _cmGp=((typeof cmastBonuses==='function')?(cmastBonuses().gpMult||0):0)
-                  +earnedGoldBonus();   // Coin Purse, "every source" (#141); consolation below reads it too
+                  +earnedGoldBonus('combat');   // Coin Purse, "every source" (#141), and Windfall (#140); consolation below reads it too
       // Bloody Tithe (slayer, Lv 35) — only on the monster the bounty names.
       const _tithe=slayerOnTask(baseMon.id)?slayerPerkLevel('tithe')*0.15:0;
       state.coins+=Math.round(mon.coins*SILVER_PER_GOLD*(1+_cmGp+_tithe));
