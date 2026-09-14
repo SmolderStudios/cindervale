@@ -636,7 +636,7 @@ setTimeout(()=>{
     ok('and a deep landing still carries Spire Weight, not its raid boss\u2019s curse',
        ev("(function(){for(const f of [20,30,40,50,60,70]){const m=spireFloor(f,true);"+
           "const nat=SPIRE_NATIVE_BY_ID[m.id];"+
-          "if(!nat && !(m.raidfx&&/Spire Weight/.test(m.raidfx.name))) return 'floor '+f;} return true;})()")===true);
+          "if(!nat && !(m.raidfx&&/Spire Curse/.test(m.raidfx.name))) return 'floor '+f;} return true;})()")===true);
     ok('and a native\u2019s own curse replaces Spire Weight rather than stacking',
        ev("(function(){for(let i=14;i<=80;i++){const m=spireFloor(i,true);"+
           "const nat=SPIRE_NATIVE_BY_ID[m.id]; if(nat&&nat.raidfx&&m.raidfx.name!==nat.raidfx.name) return 'floor '+i;}"+

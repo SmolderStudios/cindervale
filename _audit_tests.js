@@ -2694,7 +2694,7 @@ setTimeout(() => {
       sailBuildConsortHull(5);
       return m; })()`);
     ok('refusing a hull above the flagship names the one you need',
-       /never outranks/.test(refuse) && refuse.indexOf(JSON.parse(ev('JSON.stringify(SAIL_HULLS[5].n)'))) >= 0, refuse);
+       /better hull than your own ship/.test(refuse) && refuse.indexOf(JSON.parse(ev('JSON.stringify(SAIL_HULLS[5].n)'))) >= 0, refuse);
   }
 
   section('Matched jewelry & the auto-eat readout (0.9.122.2)');
@@ -8323,6 +8323,36 @@ setTimeout(() => {
        && /\+30%Gold . skilling/.test(pu.tots || '') && /\+30%Gold . combat/.test(pu.tots || ''), JSON.stringify(pu));
     ok("the Gear tab card and the ring's tooltip say it too", pu.c === true && pu.s === true && pu.tip === true, JSON.stringify(pu));
     ok('and the picker line calls it Gold, while sale value reads Sell', /Gold/.test(pu.cmp || '') && !/Sell/.test(pu.cmp || ''), pu.cmp);
+  }
+
+  section('Plain wording in the Spire, raids and combat (0.9.124.56)');
+  {
+    /* Jordan, on the Spire modifiers: "guard 35% harder??? wtf does that mean", "STOP USING
+       SWINGS, its attacks", "spire weight???? wtf is weight", "blows land 18% heavier??",
+       "wtf is a stretch for a floor", "just be normal". Then: fix any text in game that
+       is not worded plainly. The mechanics text now says what happens. */
+    const pw = ev(`(function(){
+      var bits=[];
+      SPIRE_FOE_AFFIXES.concat(SPIRE_BOON_AFFIXES).forEach(function(a){ bits.push(a.desc); });
+      RAID_ABILS.forEach(function(a){ bits.push(a.desc); });
+      RAIDS.forEach(function(r){ (r.stages||[]).forEach(function(s){
+        if(s.raidfx) bits.push(s.raidfx.desc); if(s.bossfx&&s.bossfx.desc) bits.push(s.bossfx.desc); }); });
+      SPIRE_NATIVES.forEach(function(x){ if(x.raidfx) bits.push(x.raidfx.desc); if(x.bossfx&&x.bossfx.desc) bits.push(x.bossfx.desc); });
+      var c=spireCurse(20); bits.push(c.name, c.desc);
+      var html='';
+      try{ html+=buildSpireLogBody(getRaid(SPR_ID)); }catch(e){ html+='ERR '+e.message; }
+      try{ html+=buildRaidsPanelHTML(); }catch(e){ html+='ERR '+e.message; }
+      /* "The Landing" is a Spire monster's name, not the old word for a boss floor. */
+      var all=(bits.join(' | ')+' | '+html.replace(/<[^>]+>/g,' ')).replace(/The Landing/g,'');
+      var bad=all.match(/\\b(swing|swings|swinging|blows?|guard|stretch|landings?|telegraphs?|affix(es)?|knits?|clinging)\\b|Spire Weight|\\u2014/gi)||[];
+      return {bad:bad.filter(function(v,i,a){ return a.indexOf(v)===i; }).join(','), err:/ERR /.test(html)?html.slice(html.indexOf('ERR'),html.indexOf('ERR')+120):'', curse:c.name,
+        frenzied:SPIRE_FOE_AFFIXES.find(function(a){ return a.id==='frenzied'; }).desc,
+        ironhided:SPIRE_FOE_AFFIXES.find(function(a){ return a.id==='ironhided'; }).desc};
+    })()`);
+    ok('Spire and raid text has no swings, blows, guard, landings, stretches, telegraphs, affixes or Spire Weight', pw.bad === '' && !pw.err, pw.err || pw.bad);
+    ok('the modifiers say it straight: enemies attack faster, enemies have more Defence',
+       pw.frenzied === 'Enemies attack 18% faster.' && pw.ironhided === 'Enemies have 35% more Defence.', pw.frenzied + ' / ' + pw.ironhided);
+    ok('the curse that stacks every 10 floors is the Spire Curse', /^Spire Curse/.test(pw.curse || ''), pw.curse);
   }
 
   section('Skill presets hold their own skill, and the OSRS doll (0.9.124.44)');
