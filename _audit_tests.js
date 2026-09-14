@@ -8213,6 +8213,118 @@ setTimeout(() => {
     ok('the cleaned jewelry icons are still painted art', wd.art === '', wd.art);
   }
 
+  section('Windfall, a gold enchant for the late gems (0.9.124.55, #140)');
+  {
+    /* Ticket #140: "We need a more money enchant for late game gold grind." Fortune and
+       Void Greed only raise sale prices. Windfall raises the gold you earn, on the doll
+       that wears it: kills, raids and Spire floors on combat, steals and laps on skilling. */
+    const pd = ev(`(function(){
+      var r={};
+      r.data=['windfall_i','windfall_ii','windfall_iii'].map(function(id){ var e=ENCHANTS[id];
+        return e?[e.gem,e.tier,e.cat,e.bonus.goldFind,ENCHANTS_BY_GEM[e.gem].indexOf(id)>=0].join(':'):'missing'; }).join(' ');
+      state=defaultState(); normalizeState(); state.charms=[];
+      var sell0=globalSellBonus();
+      state.items.dragon_ring=2; state.enchantments.dragon_ring='windfall_i';
+      state.combatEquipped.ring_l='dragon_ring';
+      r.combatDoll=[earnedGoldBonus('combat'), earnedGoldBonus('skill')];
+      state.combatEquipped.ring_r='dragon_ring';
+      r.pair=earnedGoldBonus('combat');
+      state.combatEquipped.ring_l=null; state.combatEquipped.ring_r=null;
+      state.skillingEquipped.ring_l='dragon_ring';
+      r.skillDoll=[earnedGoldBonus('combat'), earnedGoldBonus('skill')];
+      r.sellSame=globalSellBonus()===sell0;
+      state.charms=['coin_purse'];
+      r.withPurse=earnedGoldBonus('skill');
+      return r;
+    })()`);
+    ok('three Windfall enchants on the dragon, bloodstone and void gems, at 20, 25 and 30%',
+       pd.data === 'dragon:6:gold:0.2:true bloodstone:7:gold:0.25:true void:8:gold:0.3:true', pd.data);
+    ok('it counts on the doll wearing it: combat gold from the combat doll, skilling gold from the skilling doll',
+       pd.combatDoll?.[0] === 0.2 && pd.combatDoll?.[1] === 0 && pd.skillDoll?.[0] === 0 && pd.skillDoll?.[1] === 0.2, JSON.stringify(pd));
+    ok('a matched pair of rings counts twice, like every other enchant, and adds to the Coin Purse',
+       Math.abs(pd.pair - 0.4) < 1e-9 && Math.abs(pd.withPurse - 0.25) < 1e-9, JSON.stringify(pd));
+    ok('and it never touches a sale price', pd.sellSame === true);
+
+    const ps = ev(`(function(){
+      function run(where){
+        state=defaultState(); normalizeState();
+        state.xp.thieving=XP_CUM[99]; state.xp.agility=XP_CUM[99]; state.charms=[];
+        state.items.void_ring=1; state.enchantments.void_ring='windfall_iii';
+        if(where==='skill') state.skillingEquipped.ring_l='void_ring';
+        if(where==='combat') state.combatEquipped.ring_l='void_ring';
+        var orig=Math.random; Math.random=function(){ return 0.0001; };
+        try{
+          state.coins=0; completeAction(getAct('thieving','th1'),'thieving',100); var th=state.coins;
+          state.coins=0; completeAction(SKILLS.agility.acts[0],'agility',100); var ag=state.coins;
+          return {th:th, ag:ag};
+        } finally { Math.random=orig; }
+      }
+      return {none:run(''), skill:run('skill'), combat:run('combat')};
+    })()`);
+    ok('Windfall III on the skilling doll: +30% gold from steals and laps',
+       Math.abs(ps.skill.th / ps.none.th - 1.30) < 0.03 && Math.abs(ps.skill.ag / ps.none.ag - 1.30) < 0.03, JSON.stringify(ps));
+    ok('the same ring on the combat doll leaves steals and laps alone', ps.combat.th === ps.none.th && ps.combat.ag === ps.none.ag, JSON.stringify(ps));
+
+    const pk = ev(`(function(){
+      function setup(worn){
+        state=defaultState(); normalizeState(); state.charms=[];
+        ['attack','strength','defence','hitpoints'].forEach(function(k){ state.combatXp[k]=XP_CUM[40]; });
+        state.items={bloodstone_ring:1}; state.enchantments.bloodstone_ring='windfall_ii';
+        if(worn) state.combatEquipped.ring_l='bloodstone_ring';
+        refreshCombatStats();
+        var f=null; for(var id in ITEMS){ var it=ITEMS[id]; if(it&&it.potion&&it.potion.heal&&!it.potion.dur){ f=id; break; } }
+        if(f) state.items[f]=500;
+        combat.monId='rat'; if(state.hints) state.hints.combat_unarmed=1;
+      }
+      function offline(worn){
+        setup(worn); engageCombat(); saveGame(); stopCombatTimer(); combat.active=false;
+        var oc=offlineCombatResolve(2*3600000, offlineMods());
+        return oc&&oc.kills?oc.coins/oc.kills:0;
+      }
+      function live(worn){
+        setup(worn);
+        /* 0.0001 lands the blow and rolls a drop, so no scavenged gold: its Math.ceil
+           on a rat's 3g would blur the ratio being checked. */
+        var orig=Math.random; Math.random=function(){ return 0.0001; };
+        try{
+          engageCombat(); stopCombatTimer(); combat.rare=false;
+          combat.active=true; combat.foeHp=1; combat.youSwingStart=0; combat.foeSwingStart=Date.now();
+          var before=state.coins; combatTick(); return {got:state.coins-before};
+        } finally { Math.random=orig; stopCombatTimer(); combat.active=false; }
+      }
+      function raid(worn){ setup(worn); state.coins=0; var res=grantRaidRewards(RAIDS[0], 1); return res.gold; }
+      function spire(worn){ setup(worn); state.coins=0; var res=spireFloorLoot(20); return res.gold; }
+      return {off:[offline(false),offline(true)], live:[live(false),live(true)], raid:[raid(false),raid(true)], spire:[spire(false),spire(true)]};
+    })()`);
+    ok('Windfall II on the combat doll: +25% gold from kills, live and offline',
+       pk.live?.[0]?.got > 0 && Math.abs(pk.live[1].got / pk.live[0].got - 1.25) < 0.03
+       && Math.abs(pk.off[1] / pk.off[0] - 1.25) < 0.03, JSON.stringify(pk));
+    ok('and from a raid clear and a Spire floor', Math.abs(pk.raid[1] / pk.raid[0] - 1.25) < 0.01 && Math.abs(pk.spire[1] / pk.spire[0] - 1.25) < 0.01, JSON.stringify(pk));
+
+    const pu = JSON.parse(ev(`(function(){
+      try{
+        state=defaultState(); normalizeState(); state.charms=[];
+        state.items.dragon_ring=1; state.items.void_ring=1; state.enchantments.void_ring='windfall_iii';
+        state.combatEquipped.ring_l='void_ring'; state.skillingEquipped.ring_r='void_ring';
+        _enchantSel='dragon_ring'; viewTab='enchant'; renderEnchanting();
+        var txt=function(sel){ return [...document.querySelectorAll('#enchantView '+sel)].map(function(e){ return e.textContent; }).join(' | '); };
+        var r={labs:txt('.ew-lab'), names:txt('.ew-ench .en'), subs:txt('.ew-sublab'), tots:txt('.ew-tot .t')};
+        _gearFilter='combat'; r.c=/\\+30% gold from kills/.test(_gearStatsHTML());
+        _gearFilter='skilling'; state.action=null; selectedSkill='thieving'; r.s=/\\+30% gold from steals and laps/.test(_gearStatsHTML());
+        r.tip=/Worn for combat: kills and raids/.test(jewelryEnchantBlock('void_ring'));
+        r.cmp=_gspStatLine('void_ring');
+        return JSON.stringify(r);
+      }catch(e){ return JSON.stringify({err:String(e&&e.message||e)}); }
+    })()`));
+    ok('the enchanting screen has a Gold row for a dragon piece, with Windfall I in it',
+       !pu.err && /Gold/.test(pu.labs || '') && /kills and raids/.test(pu.labs || '') && /Windfall I\b/.test(pu.names || ''), pu.err || JSON.stringify(pu));
+    ok('both loadouts say what gold they give, and the totals show each doll once Windfall is worn',
+       /Gold from kills/.test(pu.subs || '') && /Gold from steals and laps/.test(pu.subs || '')
+       && /\+30%Gold . skilling/.test(pu.tots || '') && /\+30%Gold . combat/.test(pu.tots || ''), JSON.stringify(pu));
+    ok("the Gear tab card and the ring's tooltip say it too", pu.c === true && pu.s === true && pu.tip === true, JSON.stringify(pu));
+    ok('and the picker line calls it Gold, while sale value reads Sell', /Gold/.test(pu.cmp || '') && !/Sell/.test(pu.cmp || ''), pu.cmp);
+  }
+
   section('Skill presets hold their own skill, and the OSRS doll (0.9.124.44)');
   {
     /* The Woodcutting preset offered the whole Agility set, and a skill cape for
