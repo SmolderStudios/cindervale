@@ -247,7 +247,9 @@ header h1 .flame{color:var(--ember)}
    page's name. Back goes to wherever you were before. It replaces "← Skilling" on
    Combat, "Leave to" on Sailing, the satchel's own Back, and nothing at all on Shop,
    Guilds, Mastery, the Collection Log and Achievements. */
-.pg-bar{flex:none;display:flex;align-items:center;gap:14px;margin:0 0 12px;padding:0 0 11px;border-bottom:1px solid rgba(214,170,96,.16)}
+.pg-bar{flex:none;display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin:0 0 12px;padding:0 0 11px;border-bottom:1px solid rgba(214,170,96,.16)}
+/* a page's own tabs can sit in its bar, after the name (Combat, 0.9.124.50) */
+.pg-bar .cmb-subtabs{margin:0;padding:0 0 0 14px;border:0;border-left:1px solid rgba(214,170,96,.16);flex-wrap:wrap;align-items:center}
 .pg-back{flex:none;height:34px;padding:0 10px 0 11px;border-radius:8px;border:0;display:inline-flex;align-items:center;gap:8px;cursor:var(--cur-pointer);
   background:linear-gradient(180deg,#3a2912,#22170a);box-shadow:inset 0 1px 0 var(--rim),inset 0 -1px 0 var(--under),0 2px 5px rgba(0,0,0,.45);
   color:#f0dfb8;font-family:inherit;font-size:calc(13px*var(--tscale));font-weight:600;letter-spacing:.05em;white-space:nowrap}
@@ -8642,7 +8644,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.124.49">v0.9.124</div>
+  <div class="mm-ver" data-build="0.9.124.50">v0.9.124</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -42315,9 +42317,10 @@ ${combat.raid?buildRaidProgressHTML():''}
   if(_rtipEl&&panel.contains(_rtipEl)){ _rtipEl=null; hideTooltip(); }
   if(_ttHoverEl&&panel.contains(_ttHoverEl)){ _ttHoverEl=null; hideTooltip(); }
 
+  /* The sub-tabs ride in the page bar beside the title (0.9.124.50). Jordan: "move
+     these tabs beside combat so we can save some room"; they were a second row. */
   panel.innerHTML=`
-    <div class="pg-bar">${pageBarHTML('combat')}</div>
-    ${subTabsHTML}
+    <div class="pg-bar">${pageBarHTML('combat')}${subTabsHTML}</div>
     ${subTab==='mastery' ? buildCmastViewHTML() : ''}
     ${subTab==='pets' ? buildPetsViewHTML() : ''}
     ${subTab==='log' ? buildMonLogHTML() : ''}
