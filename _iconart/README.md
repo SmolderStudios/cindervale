@@ -40,6 +40,16 @@ node inject.js                  # splice into cindervale.html (idempotent)
 node inject.js --remove         # take it back out
 ```
 
+**Jewelry (0.9.124.54).** The jewellery sheet's backdrop carried a soft ground shadow,
+so key.js left a pale rim and a cream blob on every ring and pendant, and its enclosed
+white-hole rule cut the white faces out of the diamonds. After key.js, run
+`node defringe_jewel.js` (reads `cut_prejewelfix/`, the untouched cuts, and writes
+`cutfix/`), copy `cutfix/` over `cut/`, then `node pack.js --picks _iconart/picks.json
+--out pack54.json` and `node splice54.js _iconart/pack54.json`, which swaps ONLY those
+ids into the live block and fails if any other entry changes. Do not re-inject the
+whole block with inject.js: this machine's Chrome encodes every icon to different
+bytes (gate54.js: 0 of 873 identical, +0.37 MB).
+
 ## How the swap works
 
 `iconHTML(id)` returns `ICONS[id]` verbatim at every render site, so replacing an

@@ -8182,6 +8182,37 @@ setTimeout(() => {
     ok('the item card names the gems, and the doll square shows the pip', /Flawless Sanguine/.test(gm.dock||'') && gm.doll === true, JSON.stringify(gm));
   }
 
+  section('Ticket #144 wording, and jewelry art without white rims (0.9.124.54)');
+  {
+    /* Ticket #144 (Radcliff): "The description for the last thieving skill is a
+       unclear. Not sure how time can be refunded." Jordan: "there u go again with
+       weird wording". Then: "fix the jewelry with the weird white spots/outline" and
+       "the diamond has missing colors since it was the white". */
+    const wd = ev(`(function(){
+      var node=function(sk,id){ return TREES[sk].find(function(n){ return n.id===id; }); };
+      var u=node('thieving','th_gm_cape'), f=node('firemaking','fm_gm_cape');
+      var r={untouch:[u.desc(0),u.desc(1),u.next(0)].join(' | '),
+        phoenix:[f.desc(0),f.desc(1),f.next(0),PASSIVE_TIPS.fm_gm_cape].join(' | '),
+        thrift:CMAST_BY_ID.k_t2_r.desc};
+      var bad=[], odd=/refund|gives back|give back|reborn from the ashes/i;
+      Object.keys(TREES).forEach(function(sk){ (TREES[sk]||[]).forEach(function(n){
+        [0,1].forEach(function(rk){ ['desc','next'].forEach(function(k){
+          var v=typeof n[k]==='function'?n[k](rk):n[k]; if(odd.test(String(v||''))) bad.push(sk+'.'+n.id); }); }); }); });
+      Object.keys(PASSIVE_TIPS).forEach(function(k){ if(odd.test(String(PASSIVE_TIPS[k]))) bad.push('tip.'+k); });
+      CMAST_NODES.forEach(function(n){ if(odd.test(n.desc||'')) bad.push('cmast.'+n.id); });
+      r.bad=bad.filter(function(v,i,a){ return a.indexOf(v)===i; }).join(',');
+      r.art=['diamond_ring','diamond_amulet','diamond_pendant','sapphire_ring','warren_signet','soulbound_amulet','tidebound_ring','alpha_fang_ring']
+        .filter(function(id){ return !/art-item/.test(ICONS[id]||''); }).join(',');
+      return r;
+    })()`);
+    ok('Untouchable says failed steals only take half as long', /Failed steals only take half as long/.test(wd.untouch||'') && !/gives back|refund/i.test(wd.untouch||''), wd.untouch);
+    ok('Phoenix Rebirth says the log comes back, without "refunded" or "reborn from the ashes"',
+       /comes back/.test(wd.phoenix||'') && !/refund|reborn from the ashes/i.test(wd.phoenix||''), wd.phoenix);
+    ok('Fletcher\'s Thrift says a shot keeps its arrow', /keeps its arrow/.test(wd.thrift||''), wd.thrift);
+    ok('no skill tree node, node tip or combat mastery node talks about refunds or giving time back', wd.bad === '', wd.bad);
+    ok('the cleaned jewelry icons are still painted art', wd.art === '', wd.art);
+  }
+
   section('Skill presets hold their own skill, and the OSRS doll (0.9.124.44)');
   {
     /* The Woodcutting preset offered the whole Agility set, and a skill cape for
