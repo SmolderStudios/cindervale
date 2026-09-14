@@ -3440,7 +3440,8 @@ body:not(.is-demo) .demo-only{display:none !important}
 /* ════════ [CSS-28] GEAR HOVER TOOLTIP ═══════════════════════════════════════════ */
 /* Gear hover tooltip (skilling gear + tool bonuses) */
 #gearHoverTip{
-  position:fixed;z-index:400;pointer-events:none;display:none;
+  /* above dialogs: the gear slot picker shows it for its cards (0.9.124.53) */
+  position:fixed;z-index:10060;pointer-events:none;display:none;
   background:#1c110a;border:1px solid var(--trim);border-radius:6px;
   padding:9px 12px;font-size:calc(13px*var(--tscale));color:var(--text);line-height:1.65;
   min-width:200px;max-width:270px;box-shadow:var(--sh-3);
@@ -7679,10 +7680,29 @@ body:not(.is-demo) .demo-only{display:none !important}
 #invGear .dl-sq.dl-can.dl-over{box-shadow:inset 0 2px 5px rgba(0,0,0,.85),0 0 0 2px #8fd46a,0 0 18px rgba(143,212,106,.5);transform:scale(1.07)}
 #invGear .dl-sq.dl-can.dl-lock{box-shadow:inset 0 2px 5px rgba(0,0,0,.85),0 0 0 2px rgba(224,122,106,.7)}
 
+/* Gear marks (0.9.124.53): a spark in the enchant's gem colour, a pip per drilled
+   socket (lit in its gem's colour, dark when empty). gearMarksHTML makes them; each
+   place sets where they sit. In words they are .gx-en and .gx-so (gearExtrasHTML). */
+.gm{display:inline-flex;align-items:center;gap:3px;line-height:1;pointer-events:none}
+.gm-ench{font-style:normal;font-size:calc(12px*var(--tscale));color:var(--gc,#e0a955);text-shadow:0 0 5px var(--gc,#e0a955),0 1px 1px #000}
+.gm-pips{display:inline-flex;gap:2px}
+.gm-pip{width:7px;height:7px;border-radius:50%;background:#0d0905;box-shadow:inset 0 1px 2px rgba(0,0,0,.95),0 0 0 1px rgba(214,170,96,.45)}
+.gm-pip.lit{background:radial-gradient(circle at 35% 30%,var(--pc-hi,#fff),var(--pc,#888) 65%);box-shadow:0 0 4px var(--pc,#888),0 0 0 1px rgba(0,0,0,.5)}
+.gsp-cic>.gm,.gsp-ic>.gm{position:absolute;top:4px;right:4px;z-index:2}
+.dl-sq>.gm{position:absolute;top:3px;left:3px;z-index:2}
+#inventory .bag-tile .bag-gm{position:absolute;top:6px;right:8px;z-index:2;pointer-events:none}
+.gx-en{color:var(--gc,#e0a955)}
+.gx-so{color:var(--pc,#c9a86a)}
+.gx-so::before{content:'';display:inline-block;width:7px;height:7px;margin-right:4px;border-radius:50%;vertical-align:1px;
+  background:var(--pc,#c9a86a);box-shadow:0 0 4px var(--pc,#c9a86a)}
+.gx-so.empty{color:#8a7657}
+.gx-so.empty::before{background:#0d0905;box-shadow:inset 0 1px 2px #000,0 0 0 1px rgba(214,170,96,.45)}
+.dk-gx{display:inline-flex;flex-wrap:wrap;gap:3px 10px}
+
 /* ════════ [CSS-47] THE GEAR SLOT PICKER (0.9.124.52) ═══════════════════════════
    What you wear on top, your options best first below it, the shop link at the
    foot. The list scrolls on its own so the header and what you wear stay put. */
-.modal.gsp{max-width:600px;padding:0;display:flex;flex-direction:column;max-height:calc(100vh - 40px);overflow:hidden;
+.modal.gsp{max-width:664px;padding:0;display:flex;flex-direction:column;max-height:calc(100vh - 40px);overflow:hidden;
   background:linear-gradient(180deg,#24190d,#19110a);border-color:rgba(214,170,96,.45)}
 .gsp-head{flex:none;display:flex;align-items:center;gap:12px;padding:14px 16px 12px;border-bottom:1px solid rgba(214,170,96,.16)}
 .gsp-slotic{flex:none;width:42px;height:42px;border-radius:9px;display:grid;place-items:center;background:#110b06;
@@ -7700,28 +7720,53 @@ body:not(.is-demo) .demo-only{display:none !important}
   letter-spacing:.14em;text-transform:uppercase;color:#8a7657}
 .gsp-sec::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(214,170,96,.25),transparent)}
 .gsp-sec i{font-style:normal;font-family:var(--num);color:#c9a86a;letter-spacing:0}
-.gsp-list{flex:1 1 auto;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding:2px 5px 2px 1px}
-.gsp-list::-webkit-scrollbar{width:7px}
-.gsp-list::-webkit-scrollbar-thumb{background:rgba(199,155,78,.3);border-radius:4px}
+.gsp-grid{flex:1 1 auto;min-height:0;overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));
+  gap:8px;align-content:start;padding:2px 5px 4px 1px}
+.gsp-grid::-webkit-scrollbar{width:7px}
+.gsp-grid::-webkit-scrollbar-thumb{background:rgba(199,155,78,.3);border-radius:4px}
+/* an option card (0.9.124.53): picture, name, stats, the change against what you wear, a button */
+.gsp-card{position:relative;min-width:0;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 8px 8px;border-radius:10px;
+  text-align:center;background:linear-gradient(178deg,rgba(58,41,18,.55),rgba(30,21,10,.55));
+  box-shadow:inset 0 1px 0 rgba(214,170,96,.1),0 0 0 1px rgba(214,170,96,.13);cursor:var(--cur-pointer)}
+.gsp-card:hover{box-shadow:inset 0 1px 0 rgba(214,170,96,.16),0 0 0 1px rgba(240,199,114,.55)}
+.gsp-card.locked{cursor:default}
+.gsp-card.locked:hover{box-shadow:inset 0 1px 0 rgba(214,170,96,.1),0 0 0 1px rgba(214,170,96,.22)}
+.gsp-cic{position:relative;flex:none;width:66px;height:66px;border-radius:9px;display:grid;place-items:center;
+  background:radial-gradient(110% 110% at 50% 10%,#221507,#0d0704);box-shadow:inset 0 2px 5px rgba(0,0,0,.85)}
+.gsp-cic>.ev-icon{width:50px;height:50px}
+.gsp-card.locked .gsp-cic>.ev-icon{opacity:.45;filter:grayscale(.6)}
+.gsp-card.locked .gsp-cnm,.gsp-card.locked .gsp-cst{opacity:.55}
+.gsp-clk{position:absolute;bottom:3px;right:4px;display:grid;place-items:center}
+.gsp-clk .ev-icon{width:14px;height:14px}
+.gsp-cwt{position:absolute;bottom:3px;left:0;right:0;font-size:calc(8.5px*var(--tscale));letter-spacing:.12em;text-transform:uppercase;
+  color:#8fd46a;text-shadow:0 1px 2px #000}
+.gsp-cnm{width:100%;min-height:2.3em;font-size:calc(13px*var(--tscale));color:#f0dfb8;line-height:1.15;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.gsp-cst,.gsp-cdl{width:100%;font-family:var(--num);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gsp-cst{font-size:calc(11.5px*var(--tscale));color:#d6c196}
+.gsp-cdl{font-size:calc(11px*var(--tscale))}
+.gsp-cdl b{font-weight:600}
+.gsp-cdl .up{color:#8fd46a}
+.gsp-cdl .down{color:#e88a78}
+.gsp-cdl .same{color:#8a7657;font-weight:400}
+.gsp-card .bag-btn{width:100%;height:30px;margin-top:3px}
+.gsp-extras{display:flex;flex-wrap:wrap;gap:3px 12px;font-size:calc(12.5px*var(--tscale))}
+#gearHoverTip .gsp-delta{margin-top:6px;padding-top:6px;border-top:1px solid #3a2a18}
+.gsp-tipl{margin-top:4px}
 .gsp-row{flex:none;display:grid;grid-template-columns:52px minmax(0,1fr) auto;align-items:center;gap:12px;padding:8px 10px 8px 8px;border-radius:9px;
   background:linear-gradient(178deg,rgba(58,41,18,.55),rgba(30,21,10,.55));
   box-shadow:inset 0 1px 0 rgba(214,170,96,.1),0 0 0 1px rgba(214,170,96,.13);cursor:var(--cur-pointer)}
 .gsp-row:hover{box-shadow:inset 0 1px 0 rgba(214,170,96,.16),0 0 0 1px rgba(240,199,114,.5)}
 .gsp-row.worn{cursor:default;background:linear-gradient(178deg,rgba(92,64,25,.6),rgba(46,31,12,.6));
   box-shadow:inset 0 1px 0 rgba(255,220,150,.18),0 0 0 1px rgba(240,199,114,.55)}
-.gsp-row.locked{cursor:default}
-.gsp-row.locked:hover{box-shadow:inset 0 1px 0 rgba(214,170,96,.1),0 0 0 1px rgba(214,170,96,.13)}
-.gsp-row.locked .gsp-ic,.gsp-row.locked .gsp-nm,.gsp-row.locked .gsp-stats{opacity:.55}
-.gsp-ic{width:52px;height:52px;border-radius:8px;display:grid;place-items:center;
+.gsp-ic{position:relative;width:52px;height:52px;border-radius:8px;display:grid;place-items:center;
   background:radial-gradient(110% 110% at 50% 10%,#221507,#0d0704);box-shadow:inset 0 2px 5px rgba(0,0,0,.85)}
 .gsp-ic .ev-icon{width:40px;height:40px}
 .gsp-main{min-width:0;display:flex;flex-direction:column;gap:4px}
 .gsp-nm{display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px;font-size:calc(14.5px*var(--tscale));color:#f0dfb8;line-height:1.2}
 .gsp-row.worn .gsp-nm{color:var(--gold-hi)}
-.gsp-tag{font-size:calc(10.5px*var(--tscale));letter-spacing:.04em;color:#e0a955;border:1px solid rgba(224,169,85,.35);border-radius:10px;padding:1px 7px}
 .gsp-stats{display:flex;flex-wrap:wrap;gap:3px 10px;font-family:var(--num);font-size:calc(12px*var(--tscale));color:#d6c196}
 .gsp-desc{font-family:'Crimson Pro',Georgia,'Times New Roman',serif;color:#9c8864;font-size:calc(12px*var(--tscale));display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.gsp-req{font-size:calc(12px*var(--tscale));color:#e88a78}
 .gsp-delta{display:flex;flex-wrap:wrap;align-items:center;gap:2px 9px;font-family:var(--num);font-size:calc(11.5px*var(--tscale))}
 .gsp-delta .k{font-family:inherit;color:#7d6a4c;font-size:calc(10px*var(--tscale));letter-spacing:.1em;text-transform:uppercase}
 .gsp-delta b{font-weight:600}
@@ -8710,7 +8755,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.124.52">v0.9.124</div>
+  <div class="mm-ver" data-build="0.9.124.53">v0.9.124</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -14986,6 +15031,44 @@ function socketStatusBlock(itemId){
   });
   return '<div class="tt-sub" style="color:var(--ember);margin-bottom:0">'+iconHTML('ui_gem')+' Sockets '+filled+'/'+cur+'</div>'
     +'<div class="tt-sub" style="line-height:1.5">'+lines.join('<br>')+'</div>';
+}
+/* Marks that tell one piece of gear from another at a glance (0.9.124.53). Jordan:
+   "we need to make sure that our enchants and sockets etc differ so its not
+   confusing which one is what". A spark in the enchant's gem colour, and a pip per
+   drilled socket, lit in its gem's colour or dark when empty. Enchants and sockets
+   are kept per item, so every copy of an item wears the same marks. Used on the
+   slot picker's cards, satchel tiles, the doll and the item card; the hover card
+   has the words. '' for a piece with neither. */
+function gearMarksHTML(id){
+  if(!id||!ITEMS[id]) return '';
+  var h='';
+  var en=state.enchantments&&state.enchantments[id], ed=en&&ENCHANTS[en];
+  if(ed) h+='<i class="gm-ench" style="--gc:'+(EW_GEMC[ed.gem]||'#e0a955')+'">✦</i>';
+  var sd=state.sockets&&state.sockets[id];
+  if(sd&&sd.slots>0){
+    var p='';
+    for(var i=0;i<sd.slots;i++){
+      var g=sd.gems&&sd.gems[i]&&SOCKET_GEMS[sd.gems[i]], c=g&&SO_LINE[g.color];
+      p+=c?'<i class="gm-pip lit" style="--pc:'+c.hex+';--pc-hi:'+c.hi+'"></i>':'<i class="gm-pip"></i>';
+    }
+    h+='<span class="gm-pips">'+p+'</span>';
+  }
+  return h?'<span class="gm">'+h+'</span>':'';
+}
+/* The same, in words, for places with room: "✦ Squire", "Flawless Sanguine", "Empty socket". */
+function gearExtrasHTML(id){
+  if(!id||!ITEMS[id]) return '';
+  var out=[];
+  var en=state.enchantments&&state.enchantments[id], ed=en&&ENCHANTS[en];
+  if(ed) out.push('<span class="gx-en" style="--gc:'+(EW_GEMC[ed.gem]||'#e0a955')+'">✦ '+ed.name+'</span>');
+  var sd=state.sockets&&state.sockets[id];
+  if(sd&&sd.slots>0){
+    for(var i=0;i<sd.slots;i++){
+      var g=sd.gems&&sd.gems[i]&&SOCKET_GEMS[sd.gems[i]], c=g&&SO_LINE[g.color];
+      out.push(c?'<span class="gx-so" style="--pc:'+c.hex+'">'+g.name+'</span>':'<span class="gx-so empty">Empty socket</span>');
+    }
+  }
+  return out.join('');
 }
 /* Trophy and sea jewellery bonus names, shared by the tooltip and the swap picker. */
 var JBONUS_LABEL={atkBoost:['Melee damage','#d04848'],hpBoost:['Max HP','#7fd07f'],defBoost:['Defence','#5478c8'],
@@ -30118,7 +30201,7 @@ function _bagTile(id){
   el.setAttribute('data-item',id); el.setAttribute('data-ttup','1');
   el.setAttribute('draggable','true');   // onto a tab, onto +, or onto another item
   el.innerHTML='<span class="bag-wt">Worn</span><span class="bag-ic">'+iconHTML(id)+'</span>'
-    +'<span class="bag-q"></span><span class="bag-tn inv-name">'+it.name+'</span>';
+    +'<span class="bag-q"></span><span class="bag-gm"></span><span class="bag-tn inv-name">'+it.name+'</span>';
   t={el:el,sig:''}; _bagTiles.set(id,t);
   return t;
 }
@@ -30189,6 +30272,9 @@ function _bagDockHTML(id,cat){
   } else if(ITEMS[id].ammo&&!it.ranged){
     chips.push('<span class="dk-chip">+'+(it.ammoStr||0)+' strength a shot</span>');
   }
+  // its enchant and gems by name, the same marks as the tile in words (0.9.124.53)
+  const gx=gearExtrasHTML(id);
+  if(gx) chips.push('<span class="dk-chip dk-gx">'+gx+'</span>');
   if(worn&&!wornHere){
     const where=Object.values(ce).indexOf(id)>=0?'combat':(Object.values(se).indexOf(id)>=0?'skilling':'');
     chips.push('<span class="dk-chip good inv-eq">Worn'+(where?' on your '+where+' gear':'')+'</span>');
@@ -30678,10 +30764,13 @@ function renderInventory(){
   }
   for(const id of shown){
     const t=_bagTile(id), q=state.items[id]||0, worn=reservedForEquip(id)>0, sel=_bagSel===id;
-    const sig=q+'|'+(worn?1:0)+'|'+(sel?1:0);
+    // an enchant spark and socket pips, so two rings or two helms can be told apart (0.9.124.53)
+    const gm=maxSocketsFor(id)>0?gearMarksHTML(id):'';
+    const sig=q+'|'+(worn?1:0)+'|'+(sel?1:0)+'|'+gm;
     if(t.sig===sig) continue;
     t.sig=sig;
     t.el.querySelector('.bag-q').textContent=q>1?bagFmtQty(q):'';
+    const gmEl=t.el.querySelector('.bag-gm'); if(gmEl&&gmEl.innerHTML!==gm) gmEl.innerHTML=gm;
     t.el.classList.toggle('worn',worn);
     t.el.classList.toggle('sel',sel);
   }
@@ -35481,7 +35570,7 @@ function gearDollEl(sq,cg,rg){
     var cell=document.createElement('div');
     cell.className='dl-sq'+(filled?'':' empty')+(isSkillingGear?' set':'');
     cell.title=def.label+(filled?': '+equippedDef.name:': empty, click to equip');
-    cell.innerHTML=filled?iconHTML(equippedId):(def.empty||'');
+    cell.innerHTML=filled?iconHTML(equippedId)+gearMarksHTML(equippedId):(def.empty||'');
     // X/4 badge for skilling set pieces, only while viewing the skilling loadout
     if(isSkillingGear && _gearFilter==='skilling'){
       var sgSetDef=SKILLING_SETS[ITEMS[equippedId].gearSkill];
@@ -35884,9 +35973,49 @@ function _gspDelta(id,curId){
   }).filter(Boolean);
   return '<div class="gsp-delta"><span class="k">vs worn</span>'+(parts.length?parts.join(''):'<b class="same">same stats</b>')+'</div>';
 }
-function closeGearSlotModal(){ var m=$('gearSlotModal'); if(m) m.classList.add('hidden'); }
+function closeGearSlotModal(){
+  var m=$('gearSlotModal'); if(m) m.classList.add('hidden');
+  if(typeof hideGearTip==='function') hideGearTip();
+}
+/* The picker's options are a grid of cards (0.9.124.53). Jordan: "maybe have it
+   grids when selecting equiptment and have hover stats for it". A card has the
+   picture, the name, a line of stats, what it changes against what you wear, and
+   its button; hovering shows the full card the doll shows, plus where else it is
+   worn, what it needs and the full comparison. */
+function _gspTip(itemId, currentId, elsewhereLabel){
+  var it=ITEMS[itemId];
+  var h=(it&&it.skillGear)?skillingGearTipHtml(itemId):shopItemTipHtml(itemId);
+  if(elsewhereLabel) h+='<div class="gsp-tipl" style="color:#e0a955">Worn in '+elsewhereLabel+'</div>';
+  var req=combatGearReq(itemId);
+  if(req&&cmbLvl(req.stat)<req.level)
+    h+='<div class="gsp-tipl" style="color:#e88a78">Needs '+req.level+' '+(COMBAT_STAT_NAME[req.stat]||req.stat)+', you have '+cmbLvl(req.stat)+'</div>';
+  return h+_gspDelta(itemId,currentId);
+}
+function _gspHover(el, html){
+  el.addEventListener('mouseenter',function(e){ showGearTip(html(),e.clientX,e.clientY); });
+  el.addEventListener('mousemove',function(e){ showGearTip(_gtEl().innerHTML,e.clientX,e.clientY); });
+  el.addEventListener('mouseleave',hideGearTip);
+}
+/* A card's one line of stats, or what a bare gem ring is waiting for. */
+function _gspStatLine(id){
+  var v=_gearStatVec(id), ks=_gspKeys(v).filter(function(k){ return Math.abs(v[k])>1e-9; });
+  if(ks.length) return ks.map(function(k){ return _gspFmt(k,v[k]); }).join(' ');
+  if(JEWELRY_GEM_TIER[id]&&!(state.enchantments&&state.enchantments[id])) return 'Not enchanted';
+  return 'No bonus';
+}
+function _gspDeltaLine(id,curId){
+  if(!curId||curId===id) return '';
+  var A=_gearStatVec(id), B=_gearStatVec(curId), keys={};
+  for(var a in A) keys[a]=1;
+  for(var b in B) keys[b]=1;
+  var parts=_gspKeys(keys).map(function(k){
+    var d=(A[k]||0)-(B[k]||0);
+    return Math.abs(d)<1e-9?'':'<b class="'+(d>0?'up':'down')+'">'+_gspFmt(k,d)+'</b>';
+  }).filter(Boolean);
+  return parts.length?parts.join(' '):'<b class="same">same as worn</b>';
+}
 function openGearSlotModal(slotKey,def,currentId){
-  if(typeof hideGearTip==='function') hideGearTip();   // the doll's hover card stayed up over the picker
+  hideGearTip();   // the doll's hover card stayed up over the picker
   var modal=$('gearSlotModal'), body=$('gearSlotBody');
   var scope=_gearFilter==='combat'?'combat':'skilling';
   var lo=_loadoutFor(scope);
@@ -35896,52 +36025,59 @@ function openGearSlotModal(slotKey,def,currentId){
   $('gearSlotIcon').innerHTML=(bodyDef&&bodyDef.empty)||def.empty||'';
   modal.setAttribute('data-slot',slotKey);
   body.innerHTML='';
-  var statName=function(s){ return COMBAT_STAT_NAME[s]||s; };
 
-  function row(itemId, worn){
+  /* What you wear: a full-width row, with its enchant and gems in words. */
+  function wornRow(itemId){
+    var d=getBodyItemDef(itemId); if(!d) return null;
+    var extras=gearExtrasHTML(itemId);
+    var el=document.createElement('div');
+    el.className='gsp-row worn'; el.setAttribute('data-id',itemId);
+    el.innerHTML='<span class="gsp-ic">'+iconHTML(itemId)+gearMarksHTML(itemId)+'</span>'
+      +'<div class="gsp-main"><div class="gsp-nm">'+d.name+'</div>'
+      +'<div class="gsp-stats">'+_gspStats(itemId)+'</div>'
+      +(extras?'<div class="gsp-extras">'+extras+'</div>':'')+'</div>'
+      +'<div class="gsp-act"><button type="button" class="bag-btn" data-gsp="off" title="Take it off">Remove</button></div>';
+    el.querySelector('[data-gsp="off"]').addEventListener('click',function(e){ e.stopPropagation(); unequipBodyItem(slotKey,scope); closeGearSlotModal(); });
+    _gspHover(el,function(){ return _gspTip(itemId,null,''); });
+    return el;
+  }
+  /* An option: a card. */
+  function card(itemId){
     var d=getBodyItemDef(itemId); if(!d) return null;
     var shopItem=SHOP.find(function(i){return i.id===itemId;});
     // worn in another slot of this loadout (rings); owning a spare makes it a second equip
     var elsewhere=null, wornElsewhere=0;
-    if(!worn){ for(var s in lo){ if(lo[s]===itemId&&s!==slotKey){ if(!elsewhere) elsewhere=s; wornElsewhere++; } } }
+    for(var s in lo){ if(lo[s]===itemId&&s!==slotKey){ if(!elsewhere) elsewhere=s; wornElsewhere++; } }
     var copies=ownedCopies(itemId), spare=wornElsewhere>0&&copies>wornElsewhere;
-    var req=combatGearReq(itemId), locked=!worn&&_gspLocked(itemId);
-    var tag='';
-    if(elsewhere){
-      var ol=(BODY_SLOTS.find(function(b){return b.slot===elsewhere;})||{label:elsewhere}).label;
-      tag='<span class="gsp-tag">'+(spare?copies+' owned, one in '+ol:'In '+ol)+'</span>';
-    }
+    var ol=elsewhere?(BODY_SLOTS.find(function(b){return b.slot===elsewhere;})||{label:elsewhere}).label:'';
+    var req=combatGearReq(itemId), locked=_gspLocked(itemId);
+    var dl=_gspDeltaLine(itemId,currentId);
     var el=document.createElement('div');
-    el.className='gsp-row'+(worn?' worn':'')+(locked?' locked':'')+(elsewhere?' elsewhere':'');
+    el.className='gsp-card'+(locked?' locked':'')+(elsewhere?' elsewhere':'');
     el.setAttribute('data-id',itemId);
-    el.innerHTML='<span class="gsp-ic">'+iconHTML(itemId)+'</span>'
-      +'<div class="gsp-main"><div class="gsp-nm">'+d.name+tag+'</div>'
-      +'<div class="gsp-stats">'+_gspStats(itemId)+'</div>'
-      +(locked?'<div class="gsp-req">Needs '+req.level+' '+statName(req.stat)+', you have '+cmbLvl(req.stat)+'</div>':'')
-      +(worn?'':_gspDelta(itemId,currentId))+'</div>';
-    var act=document.createElement('div'); act.className='gsp-act';
-    if(worn){
-      act.innerHTML='<button type="button" class="bag-btn" data-gsp="off" title="Take it off">Remove</button>';
-      act.firstChild.addEventListener('click',function(e){ e.stopPropagation(); unequipBodyItem(slotKey,scope); closeGearSlotModal(); });
-    } else if(locked){
-      act.innerHTML='<button type="button" class="bag-btn" disabled title="Needs '+req.level+' '+statName(req.stat)+'">Lv '+req.level+'</button>';
-    } else {
-      act.innerHTML='<button type="button" class="bag-btn gold" data-gsp="on" data-equip="'+itemId+'"'
-        +(spare?' title="You own '+copies+', wear a second one here"':'')+'>'+((elsewhere&&!spare)?'Move here':'Equip')+'</button>';
+    el.innerHTML='<span class="gsp-cic">'+iconHTML(itemId)+gearMarksHTML(itemId)
+        +(elsewhere?'<span class="gsp-cwt">'+(spare?copies+' owned':'Worn')+'</span>':'')
+        +(locked?'<span class="gsp-clk">'+iconHTML('ui_lock')+'</span>':'')+'</span>'
+      +'<span class="gsp-cnm">'+d.name+'</span>'
+      +'<span class="gsp-cst">'+_gspStatLine(itemId)+'</span>'
+      +(dl?'<span class="gsp-cdl">'+dl+'</span>':'')
+      +(locked
+        ?'<button type="button" class="bag-btn" disabled>Lv '+req.level+'</button>'
+        :'<button type="button" class="bag-btn gold" data-gsp="on" data-equip="'+itemId+'">'+((elsewhere&&!spare)?'Move here':'Equip')+'</button>');
+    if(!locked){
       var wear=function(e){ if(e) e.stopPropagation(); equipBodyItem(itemId,slotKey,scope); closeGearSlotModal(); };
-      act.firstChild.addEventListener('click',wear);
+      el.querySelector('[data-gsp="on"]').addEventListener('click',wear);
       el.addEventListener('click',function(){ wear(); });
     }
     /* Sell, only for shop gear worn nowhere. Never a tool: sellShopItem refuses those,
        so the button offered a price and then said no. */
-    if(shopItem&&!shopItem.tool&&!worn&&!elsewhere){
+    if(shopItem&&!shopItem.tool&&!elsewhere){
       var sb=document.createElement('button'); sb.type='button'; sb.className='gsp-sell';
       sb.innerHTML='Sell for '+iconHTML('ui_coin')+Math.floor(shopItem.cost*0.5).toLocaleString()+'g';
-      sb.title='Half what it cost';
       sb.addEventListener('click',function(e){ e.stopPropagation(); sellShopItem(itemId); openGearSlotModal(slotKey,def,_loadoutFor(scope)[slotKey]); });
-      act.appendChild(sb);
+      el.appendChild(sb);
     }
-    el.appendChild(act);
+    _gspHover(el,function(){ return _gspTip(itemId,currentId,ol); });
     return el;
   }
   var sec=function(label, count){
@@ -35952,7 +36088,7 @@ function openGearSlotModal(slotKey,def,currentId){
   var none=function(text){ var n=document.createElement('div'); n.className='gsp-none'; n.textContent=text; return n; };
 
   body.appendChild(sec('Wearing'));
-  var cur=currentId?row(currentId,true):null;
+  var cur=currentId?wornRow(currentId):null;
   body.appendChild(cur||none('Nothing in this slot.'));
 
   var opts=gearSlotOptions(slotKey,scope,currentId);
@@ -35966,9 +36102,9 @@ function openGearSlotModal(slotKey,def,currentId){
   });
   body.appendChild(sec('Your options', opts.length));
   if(opts.length){
-    var list=document.createElement('div'); list.className='gsp-list';
-    opts.forEach(function(id){ var r=row(id,false); if(r) list.appendChild(r); });
-    body.appendChild(list);
+    var grid=document.createElement('div'); grid.className='gsp-grid';
+    opts.forEach(function(id){ var c=card(id); if(c) grid.appendChild(c); });
+    body.appendChild(grid);
   } else body.appendChild(none(currentId?'Nothing else you own fits this slot.':'Nothing you own fits this slot yet.'));
 
   /* Where to get more: tool slots go to Crafting (1.0.47), jewelry and capes to the
