@@ -7529,7 +7529,15 @@ setTimeout(() => {
       openInventory(); selectedSkill='woodcutting'; renderCenter(); r.skillClosed=!invOpen&&vis('centerPanel');
       /* Escape waits for an open dialog to close first; the boot left the offline one up. */
       document.querySelectorAll('.modal-back').forEach(function(m){ m.classList.add('hidden'); });
+      /* Esc does nothing at the main menu (0.9.124.49), and this harness never leaves
+         it, so the key is pressed as if in the game and the flag put straight back. */
+      var _mm=mmAtMenu; mmAtMenu=false;
+      /* Earlier tests can leave the demo's buy prompt up, or a box focused. Esc
+         closes a prompt first and leaves a box first, so clear both. */
+      ['demoBuyModal','gameMenuModal'].forEach(function(id){ var m=document.getElementById(id); if(m) m.classList.add('mm-hidden'); });
+      if(document.activeElement&&document.activeElement.blur) document.activeElement.blur();
       openInventory(); document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true})); r.escClosed=!invOpen;
+      mmAtMenu=_mm;
       openInventory(); enterCombat(); r.combatClosed=!invOpen&&!vis('invScreen'); exitCombat();
       openInventory(); document.getElementById('tabShop').click(); r.shopClosed=!invOpen&&viewTab==='shop'; viewTab='acts';
       return r;
@@ -7796,6 +7804,154 @@ setTimeout(() => {
     ok('dragging in another sort starts from the order on screen', sk.fromSeen === true, JSON.stringify(sk));
     ok('a broken or partial saved order falls back, new skills go last', sk.junk === true && sk.partial === true, JSON.stringify(sk));
     ok('Your order with nothing saved says to drag, and stops once there is an order', sk.hint === true && sk.hintGone === true, JSON.stringify(sk));
+  }
+
+  section('The top bar tiles, and one Back on every page (0.9.124.49)');
+  {
+    /* Jordan: "redo the tabs at the top, instead of just one long line and no
+       distinction between clicks, since satchel is a huge part, we also need to fix
+       the combat/sailing clicks and combat, the going back a page is just so
+       inconsistent between everything there". Picked the stone tiles from three
+       mockups. Before: "← Skilling" on Combat, "Leave to" on Sailing, Back on the
+       satchel, nothing on five pages, and Combat's Back left no tab lit. */
+    const bar = ev(`(function(){
+      state=defaultState(); normalizeState(); state.items={iron_ore:5, coal:3};
+      document.querySelectorAll('.modal-back').forEach(function(m){ m.classList.add('hidden'); });
+      closeInventory(); leaveFullPanels(); selectedSkill='smithing'; viewTab='acts'; renderAll();
+      var r={};
+      var nav=document.getElementById('hdrNav');
+      r.inHeader=!!nav&&!!nav.closest('header');
+      r.groups=[].map.call(nav.children,function(g){ return g.hasAttribute('data-place')?g.getAttribute('data-place'):[].map.call(g.querySelectorAll('[data-place]'),function(b){ return b.getAttribute('data-place'); }).join('+'); }).join(' | ');
+      r.strip=[].map.call(document.querySelectorAll('#leftPanel .tabs .tab'),function(b){ return b.textContent.trim(); }).join(',');
+      r.titles=document.getElementById('tabComp').title+'/'+document.getElementById('tabAch').title;
+      var vis=function(id){ var e=document.getElementById(id); return !!e&&e.style.display!=='none'; };
+      var lit=function(){ return [].map.call(document.querySelectorAll('#hdrNav [data-place].on'),function(b){ return b.getAttribute('data-place'); }).join(','); };
+      var shownBar=function(){
+        var bars=[].filter.call(document.querySelectorAll('.pg-bar'),function(b){ var p=b.closest('.panel'); return p&&p.style.display!=='none'&&b.style.display!=='none'; });
+        return bars.map(function(b){ return (b.querySelector('[data-nav="back"]')?'back:':'')+b.querySelector('.pg-title').textContent.trim(); }).join(',');
+      };
+      r.places={};
+      ['bag','shop','guild','mastery','comp','ach','combat','sail','skills'].forEach(function(k){
+        document.querySelector('#hdrNav [data-place="'+k+'"]').click();
+        r.places[k]={at:navPlace().k, lit:lit(), bar:shownBar(), skillHead:vis('panelTitleRow')&&vis('xpDetail')&&vis('skillTabs')};
+      });
+      state.combatXp=state.combatXp||{};
+      enterCombat(); document.querySelector('#combatPanel [data-nav="back"]').click();
+      r.combatBackLit=lit();
+      navBagTile(); r.bagTile=document.getElementById('navBagN').textContent; r.bagWant=satchelUsed()+' / '+satchelCap()+' slots';
+      r.bagBar=document.getElementById('navBagBar').style.width;
+      return r;
+    })()`);
+    ok('the tiles are in the header in their groups, Combat and Sailing left the left strip',
+       bar.inHeader === true && bar.groups === 'skills+combat+sail | bag | shop+guild | mastery+comp+ach' && bar.strip === 'Skills,Stats', JSON.stringify(bar));
+    ok('the short tiles keep their full names on hover', bar.titles === 'Collection Log/Achievements', bar.titles);
+    const want = {bag:'Satchel', shop:'Shop', guild:'Guilds', mastery:'Mastery', comp:'Collection Log', ach:'Achievements', combat:'Combat', sail:'Sailing'};
+    const bad = Object.keys(want).filter(k => { const p = bar.places?.[k]; return !p || p.at !== k || p.lit !== k || p.bar !== 'back:' + want[k]; });
+    ok('every tile opens its place, lights only itself, and that page has Back and its name', bad.length === 0, bad.join(',') + ' ' + JSON.stringify(bar.places));
+    ok('Skills lights Skills and has no page bar; pages hide the skill header',
+       bar.places?.skills?.lit === 'skills' && bar.places?.skills?.bar === '' && bar.places?.skills?.skillHead === true
+       && ['shop','guild','mastery','comp','ach'].every(k => bar.places?.[k]?.skillHead === false), JSON.stringify(bar.places));
+    ok('Combat\'s Back leaves a tile lit (it left none)', bar.combatBackLit === 'skills', bar.combatBackLit);
+    ok('the satchel tile shows how full it is', bar.bagTile === bar.bagWant && /%$/.test(bar.bagBar), JSON.stringify(bar));
+
+    const back = ev(`(function(){
+      state=defaultState(); normalizeState(); state.items={iron_ore:5};
+      document.querySelectorAll('.modal-back').forEach(function(m){ m.classList.add('hidden'); });
+      closeInventory(); leaveFullPanels(); selectedSkill='smithing'; viewTab='tree'; renderAll();
+      _navStack=[]; _navLast=null; navCommit();
+      var tile=function(k){ document.querySelector('#hdrNav [data-place="'+k+'"]').click(); };
+      var at=function(){ var p=navPlace(); return p.k+(p.k==='skills'?':'+p.skill+':'+p.view:''); };
+      var r={};
+      tile('shop'); tile('combat');
+      document.querySelector('#combatPanel [data-nav="back"]').click(); r.back1=at();
+      document.querySelector('#pageBar [data-nav="back"]').click(); r.back2=at();
+      tile('sail'); tile('sail'); r.litAgain=at();
+      tile('guild'); tile('bag'); document.getElementById('invBack').click(); r.bagBack=at();
+      /* one click can pass through a place on the way: opening the satchel from
+         Combat closes Combat first. Only where the move ends is noted. */
+      _navStack=[]; _navLast=null; enterCombat(); navCommit();
+      openInventory(); navCommit(); r.stack=_navStack.map(function(p){ return p.k; }).join(',');
+      navBack(); r.halfStep=at();
+      navBack(); r.thenBack=at();
+      /* a fight keeps running when you leave Combat */
+      enterCombat(); combat.active=true; navBack(); r.fight={open:combatMode, active:combat.active, pulse:document.getElementById('tabCombat').classList.contains('fight-active')};
+      combat.active=false; updateModePanels();
+      /* the list never holds the place you are on, and stays short */
+      _navStack=[]; _navLast=null; navCommit();
+      for(var i=0;i<6;i++) ['shop','guild','mastery','comp','ach','bag','combat','sail'].forEach(tile);
+      r.cap=_navStack.length; r.noHere=_navStack.every(function(p){ return p.k!==navPlace().k; });
+      r.noRepeats=_navStack.map(function(p){ return p.k; }).filter(function(k,i,a){ return a.indexOf(k)!==i; }).length;
+      leaveFullPanels(); viewTab='acts'; renderCenter();
+      /* the left strip only switches the left column, and leaves a page open */
+      openInventory(); document.getElementById('tabStatsLeft').click(); r.statsKeepsBag=invOpen;
+      document.getElementById('tabSkills').click(); r.skillsKeepsBag=invOpen; closeInventory();
+      return r;
+    })()`);
+    ok('Back goes to the page you came from, then to the skill and view you left',
+       back.back1 === 'shop' && back.back2 === 'skills:smithing:tree', JSON.stringify(back));
+    ok('clicking the lit tile again is Back, and the satchel\'s Back is the same Back',
+       back.litAgain === 'skills:smithing:tree' && back.bagBack === 'guild', JSON.stringify(back));
+    ok('a place passed through inside one click is not noted: Back from the satchel returns to Combat',
+       back.stack === 'combat' && back.halfStep === 'combat' && /^skills/.test(back.thenBack), JSON.stringify(back));
+    ok('Back out of Combat leaves a fight running, and the Combat tile pulses',
+       back.fight?.open === false && back.fight?.active === true && back.fight?.pulse === true, JSON.stringify(back.fight));
+    ok('Back\'s list never holds the page you are on, never repeats, and keeps 12 at most',
+       back.cap <= 12 && back.noHere === true && back.noRepeats === 0, JSON.stringify(back));
+    ok('Skills and Stats in the left strip leave the satchel open', back.statsKeepsBag === true && back.skillsKeepsBag === true, JSON.stringify(back));
+
+    const esc = ev(`(function(){
+      state=defaultState(); normalizeState(); state.items={iron_ore:5};
+      document.querySelectorAll('.modal-back').forEach(function(m){ m.classList.add('hidden'); });
+      closeInventory(); leaveFullPanels(); selectedSkill='smithing'; viewTab='acts'; renderAll();
+      _navStack=[]; _navLast=null; navCommit();
+      ['demoBuyModal','gameMenuModal'].forEach(function(id){ var m=document.getElementById(id); if(m) m.classList.add('mm-hidden'); });
+      if(document.activeElement&&document.activeElement.blur) document.activeElement.blur();
+      var _mm=mmAtMenu; mmAtMenu=false;
+      var key=function(){ var e=new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true}); document.dispatchEvent(e); return e.defaultPrevented; };
+      var tile=function(k){ document.querySelector('#hdrNav [data-place="'+k+'"]').click(); };
+      var r={};
+      tile('shop'); r.pageTaken=key(); r.page=navPlace().k;
+      r.skillsTaken=key(); r.skills=navPlace().k;
+      tile('bag'); var s=document.querySelector('#inventory .bag-search'); s.focus();
+      key(); r.typing={at:navPlace().k, blurred:document.activeElement!==s};
+      key(); r.afterTyping=navPlace().k;
+      tile('mastery'); showConfirm('Test','Body'); key(); r.dialog=navPlace().k;
+      document.getElementById('confirmModal').classList.add('hidden');
+      mmAtMenu=true; key(); r.menu=navPlace().k; mmAtMenu=false;
+      key(); r.after=navPlace().k;
+      mmAtMenu=_mm;
+      return r;
+    })()`);
+    ok('Esc is Back on a page, and does nothing on Skills', esc.pageTaken === true && esc.page === 'skills' && esc.skillsTaken === false && esc.skills === 'skills', JSON.stringify(esc));
+    ok('Esc while typing only leaves the box; the next Esc is Back', esc.typing?.at === 'bag' && esc.typing?.blurred === true && esc.afterTyping === 'skills', JSON.stringify(esc));
+    ok('a dialog, or the main menu, takes Esc first', esc.dialog === 'mastery' && esc.menu === 'mastery' && esc.after === 'skills', JSON.stringify(esc));
+
+    const inner = ev(`(function(){
+      state=defaultState(); normalizeState();
+      document.querySelectorAll('.modal-back').forEach(function(m){ m.classList.add('hidden'); });
+      closeInventory(); leaveFullPanels(); selectedSkill='smithing'; viewTab='acts'; renderAll();
+      _navStack=[]; _navLast=null; navCommit();
+      var g=GUILDS[0];
+      state.gd[g.id]={rep:0,q:[],rolled:0,day:-1,skipped:0,bought:{}};
+      document.getElementById('tabGuild').click();
+      var r={listTitle:document.querySelector('#pageBar .pg-title').textContent.trim(), listHeading:!!document.querySelector('#guildView .gd-h1')};
+      _gdOpen=g.id; renderGuilds();
+      r.crumb=(document.querySelector('#pageBar .pg-crumb')||{}).textContent; r.want=g.name;
+      r.innerBack=!!document.querySelector('#guildView .gd-back');
+      navBack(); r.step1={open:_gdOpen, at:navPlace().k, crumb:!!document.querySelector('#pageBar .pg-crumb')};
+      navBack(); r.step2=navPlace().k;
+      state.cmbView='fight';
+      var fb=cgFightBarHTML(getMonster(monstersInZone(state.zone)[0].id));
+      r.zoneBtn=/Change zone/.test(fb)&&!/&larr;|←/.test(fb);
+      state.cmbView='guide';
+      return r;
+    })()`);
+    ok('Guilds says its name once, in the page bar', inner.listTitle === 'Guilds' && inner.listHeading === false, JSON.stringify(inner));
+    ok('a guild\'s own page reads Guilds, then its name, with no second Back inside',
+       inner.crumb === inner.want && inner.innerBack === false, JSON.stringify(inner));
+    ok('Back steps out to the guild list first, then leaves Guilds',
+       inner.step1?.open === null && inner.step1?.at === 'guild' && inner.step1?.crumb === false && inner.step2 === 'skills', JSON.stringify(inner));
+    ok('the fight screen\'s zone button says Change zone, not a second back arrow', inner.zoneBtn === true, JSON.stringify(inner));
   }
 
   section('Skill presets hold their own skill, and the OSRS doll (0.9.124.44)');
