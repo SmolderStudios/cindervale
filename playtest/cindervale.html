@@ -8755,7 +8755,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.124.56">v0.9.124</div>
+  <div class="mm-ver" data-build="0.9.124.57">v0.9.124</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -16734,7 +16734,11 @@ const TREES = {
     {id:'jw_sell',  name:'Master Jeweler', icon:'💰',max:10,req:25, desc:r=>`Sell value of jewelry +${r*5}%`,  next:r=>`+5% sell → ${r*5}%`},
     {id:'jw_master1',name:'Heirloom',      icon:'👑',max:1, req:20, desc:r=>r?'Chance to produce both ring AND amulet from one cut':'Both ring and amulet per cut (5% chance)',next:()=>'5% chance: produce ring AND amulet'},
     {id:'jw_master2',name:'Gem Mastery',   icon:'💎',max:1, req:40, desc:r=>r?'Each cut produces 2 jewelry items':'Double jewelry output',next:()=>'2× jewelry output'},
-    {id:'jw_master3',name:'Gem Hoarder',  icon:'💜',max:1, req:60, desc:r=>r?'All gem dust outputs doubled — every cut produces 2× gem dust':'2× gem dust from all jewelry cuts',next:()=>'Double gem dust from every jewelry cut'},
+    /* (0.9.124.57) The text promised 2× gem dust from the first commit, and nothing ever
+       doubled gem dust. What the node does is the generic master3 term in mods(): 2×
+       Jeweler XP, the same as Starsteel Mastery and Apex Forge. The text now says that.
+       jwVoidUnlockLevel() also names this node, but nothing calls it. */
+    {id:'jw_master3',name:'Gem Hoarder',  icon:'💜',max:1, req:60, desc:r=>r?'2× Jeweler XP from every action':'Double all Jeweler XP permanently',next:()=>'2× Jeweler XP permanently'},
     {id:'jw_gm_speed',name:'Grand Lapidary',icon:'💎',max:9,req:75,desc:r=>`Reduces task time by ${(r*1.8).toFixed(1)}% (grandmaster)`, next:r=>`+1.8% faster → ${(r*1.8).toFixed(1)}%`},
     {id:'jw_gm_xp',   name:'Gem Scholar',  icon:'📜',max:10, req:80, desc:r=>`+${r*3}% Jeweler XP (grandmaster)`,  next:r=>`+3% XP → ${r*3}%`},
     {id:'jw_gm_sell', name:'Void Merchant',icon:'💰',max:10,req:85, desc:r=>`Jewelry sell value +${r*6}%`,        next:r=>`+6% sell → ${r*6}%`},
@@ -17036,7 +17040,7 @@ const PASSIVE_TIPS={
   jw_sell:      'Raises sell value of all jewelry. At max (10): +50%.',
   jw_master1:   '5% chance each cut produces both a ring AND an amulet of that gem type.',
   jw_master2:   'Every cut produces 2 jewelry items instead of 1 as the base.',
-  jw_master3:   'Permanently doubles all Jeweler XP.\nAlso doubles the output of every cut except refining.',
+  jw_master3:   'Permanently doubles all Jeweler XP.',
   jw_gm_speed:  'Grandmaster bonus (Lv 75). +1.8% cut speed per rank, up to +16.2% at max 9 ranks.',
   jw_gm_xp:     'Grandmaster bonus (Lv 80). +3% Jeweler XP per rank, up to +30% at max 10 ranks.',
   jw_gm_sell:   'Grandmaster bonus (Lv 85). +6% jewelry sell value per rank.',
@@ -22743,19 +22747,32 @@ function gpPerAction(act,skill){
         if(m.mi_vbreak) avgQty+=0.2;      // Veinbreaker
       }
     }else{
-      avgQty+=q*m.extraBar; // expected bonus bar
-      // Generic master2 doubles output for smithing/cooking/jeweler — but NOT crafting (cr_master2 is combat-stat potency)
-      if(m.master2 && skill!=='crafting') avgQty=q*2;
-      // Crafting capstones — expected bonus pieces from Heirloom Forge and Flawless Forge
-      if(skill==='crafting'){
-        if(m.cr_dupe)     avgQty+=q*0.05;      // 5% chance free duplicate piece
-        if(m.cr_flawless) avgQty+=q*0.30;      // 15% chance +2 bonus pieces → +0.30 expected
-      }
-      if(skill==='fletching'){ const fb=fletchOutBonus(id); avgQty=(avgQty+fb.add)*fb.mult; }
+      avgQty=processOutAvg(act,skill,id,q,m);
     }
     gp+=avgQty*sv;
   }
   return gp;
+}
+
+/* Expected output of ONE processing action (smithing, cooking, alchemy, jeweler,
+   firemaking, crafting, fletching), for the /hr and gold numbers. It mirrors the
+   processing branch of completeAction step for step, so a card cannot run a different
+   rule from the craft (0.9.124.57). Before this, gpPerAction let master2 wipe the extra
+   chances and ratesFor ignored master2 altogether: Grand Forge showed 1 bar per smelt
+   while the forge made 2, and Twin Cauldron, Grand Elixir, Flawless Cut and Dust
+   Collector were in neither. */
+function processOutAvg(act,skill,id,q,m){
+  if(ITEMS[id]&&ITEMS[id].tool) return q;                          // tool crafts never multiply
+  let avg=q+q*Math.min(1,m.extraBar);                              // bonus bar chances (binom caps at one a craft)
+  if(m.al_twin) avg+=q;                                            // Twin Cauldron
+  if(m.master2 && act.cat!=='refine' && skill!=='crafting') avg+=q; // master2: base output doubled
+  if(m.jw_flawless && act.cat!=='refine') avg+=0.15*2;             // Flawless Cut
+  if(m.jw_dust>0 && id==='gem_dust') avg+=m.jw_dust;               // Dust Collector
+  if(m.al_triple) avg=q*3;                                         // Grand Elixir replaces the above
+  if(m.cr_dupe) avg+=q*0.05;                                       // Heirloom Forge
+  if(m.cr_flawless) avg+=q*0.15*2;                                 // Flawless Forge
+  if(skill==='fletching'){ const fb=fletchOutBonus(id); avg=(avg+fb.add)*fb.mult; }
+  return avg;
 }
 
 /* XP/hr and GP/hr for a specific activity at current level/passives */
@@ -22800,13 +22817,7 @@ function ratesFor(act,skill){
         if(m.master3) avgQty+=0.50;       // Verdant Gift: 50% chance +1
       }
     } else {
-      avgQty=mainQ*(1+m.extraBar);
-      // Crafting capstones — expected bonus pieces from Heirloom Forge and Flawless Forge
-      if(skill==='crafting'){
-        if(m.cr_dupe)     avgQty+=mainQ*0.05;      // 5% chance free duplicate piece
-        if(m.cr_flawless) avgQty+=mainQ*0.30;      // 15% chance +2 bonus pieces
-      }
-      if(skill==='fletching'){ const fb=fletchOutBonus(mainId); avgQty=(avgQty+fb.add)*fb.mult; }
+      avgQty=processOutAvg(act,skill,mainId,mainQ,m);
     }
     rph=Math.round(avgQty*actsPerHour);
     const it=ITEMS[mainId];
@@ -24160,9 +24171,14 @@ function completeAction(act,skillKey,times){
       const extraBar=binom(times,m.extraBar);
       qty+=q*extraBar;
       if(m.al_twin) qty+=q*times;  // Twin Cauldron: +1 guaranteed potion per brew (stacks with Double Brew)
-      // Generic master2 → 2× output (smithing/cooking/jeweler crafts).
-      // EXCLUDED: gem refining (jeweler 'refine' acts) and crafting (cr_master2 grants combat-stat potency, not extra pieces).
-      if(m.master2 && act.cat!=='refine' && skillKey!=='crafting') qty=q*2*times;
+      /* Generic master2 (Grand Forge, Gem Mastery, Phoenix Ash): the BASE output doubles and
+         the extra-output chances rolled above still add on top, the same rule Farming's
+         master2 already follows. It used to ASSIGN qty=q*2*times, which threw away every
+         bonus bar, second item and gear, enchant, gem or potion double the moment the node
+         was owned: Grand Forge cancelled Twin Pour, whose tip says they stack. (0.9.124.57)
+         EXCLUDED: gem refining (jeweler 'refine' acts) and crafting (cr_master2 grants
+         combat-stat potency, not extra pieces). processOutAvg mirrors this for the /hr. */
+      if(m.master2 && act.cat!=='refine' && skillKey!=='crafting') qty+=q*times;
       // Flawless Cut (Lv99): 15% chance per jewelry cut for +2 bonus pieces (jewelry crafts only)
       if(m.jw_flawless && act.cat!=='refine'){ const fc=binom(times,0.15); if(fc>0) qty+=fc*2; }
       // Dust Collector (jw_dust): chance for bonus gem dust on a refine. 15 points
