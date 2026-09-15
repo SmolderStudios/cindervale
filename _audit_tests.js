@@ -8889,6 +8889,109 @@ setTimeout(() => {
     ok('the empty item card tells you about right-click', /Right-click one to sell it, lock it or keep a placeholder/.test(nl.hint), nl.hint);
   }
 
+  section('Ranged has somewhere to be read, and a feather to fletch with (0.9.125.4)');
+  {
+    /* A player: "i have 1 ranged with 30 points in marksman, how do you train ranged at
+       lvl 1?" and "where do we even see our ranged level? I cant find it anywhere, its
+       not even on the stats page". It was on neither: the stats page listed four combat
+       stats, and the combat rail only swaps its Training buttons over to Ranged while a
+       bow is actually in hand. Feathers had no shop either, though the Fletching notes
+       say one stocks them, so the first bow sat behind a Lv 11 monster drop. */
+    const rv = ev(`(function(){
+      state=defaultState(); normalizeState(); mmAtMenu=false;
+      document.querySelectorAll('.modal-back').forEach(function(m){ m.classList.add('hidden'); });
+      state.combatXp.ranged=XP_CUM[24];
+      var r={lvl:cmbLvl('ranged')};
+      viewTab='skills'; selectedSkill='woodcutting'; renderAll(); renderStats();
+      var txt=function(){ return document.getElementById('statsViewLeft').textContent.replace(/\\s+/g,' '); };
+      r.statsNoBow=txt().indexOf('Ranged 24')>=0;
+      r.accPlain=txt().indexOf('Accuracy (Ranged)')<0;
+      state.items={pine_shortbow:1,bronze_arrow:20};
+      equipBodyItem('pine_shortbow','weapon','combat'); equipBodyItem('bronze_arrow','quiver','combat');
+      renderStats();
+      r.usingRanged=usingRanged();
+      r.accRanged=txt().indexOf('Accuracy (Ranged)')>=0;
+      r.hitRanged=txt().indexOf('Max Hit (Ranged + arrow)')>=0;
+      r.accBaseShown=txt().indexOf(String(Math.round(24*COMBAT_P.ACC_LVL))+' + ')>=0;
+      unequipBodyItem('weapon','combat'); unequipBodyItem('quiver','combat');
+      return r;
+    })()`);
+    ok('the stats page lists the Ranged level beside the other four',
+       rv.lvl === 24 && rv.statsNoBow === true && rv.accPlain === true, JSON.stringify(rv));
+    ok('and with a bow held, accuracy and max hit say they come from Ranged, base included',
+       rv.usingRanged === true && rv.accRanged === true && rv.hitRanged === true && rv.accBaseShown === true, JSON.stringify(rv));
+
+    const rail = ev(`(function(){
+      state=defaultState(); normalizeState(); mmAtMenu=false;
+      state.combatXp.ranged=XP_CUM[24];
+      combatMode=true; state.cmbSubTab='arena'; state.cmbView='fight';
+      selectZone('rat_warrens'); selectMonster('rat'); renderCombat();
+      var pill=function(){ return document.querySelector('.cst-ranged'); };
+      var labels=function(){ return [].map.call(document.querySelectorAll('.cstyle-btns .cmb-style'),function(b){ return b.textContent.trim(); }).join('|'); };
+      var r={noBow:{shown:!!pill(), text:pill()?pill().textContent.replace(/\\s+/g,' ').trim():'', labels:labels()}};
+      state.items={pine_shortbow:1,bronze_arrow:20};
+      equipBodyItem('pine_shortbow','weapon','combat'); equipBodyItem('bronze_arrow','quiver','combat');
+      renderCombat();
+      r.withBow={shown:!!pill(), labels:labels()};
+      state.cmbView='guide'; combatMode=false; unequipBodyItem('weapon','combat'); unequipBodyItem('quiver','combat');
+      return r;
+    })()`);
+    ok('the fight rail shows the Ranged level when no bow is held, and says what to do',
+       rail.noBow.shown === true && /Ranged24/.test(rail.noBow.text) && /equip a bow/.test(rail.noBow.text)
+       && rail.noBow.labels === 'Attack1|Strength1|Defence1', JSON.stringify(rail.noBow));
+    ok('and with a bow the buttons read Ranged, so that line does not repeat them',
+       rail.withBow.shown === false && rail.withBow.labels === 'Accurate24|Rapid24|Longrange24', JSON.stringify(rail.withBow));
+
+    const fx = ev(`(function(){
+      state=defaultState(); normalizeState(); mmAtMenu=false;
+      for(var k in state.combatXp) state.combatXp[k]=XP_CUM[30];
+      state.combatXp.ranged=0; state.hints=state.hints||{}; state.hints.combat_unarmed=1;
+      state.items={pine_shortbow:1, iron_arrow:400};
+      equipBodyItem('pine_shortbow','weapon','combat'); equipBodyItem('iron_arrow','quiver','combat');
+      var r={fitsOneTierUp:ammoFitsWeapon('pine_shortbow','iron_arrow'), fitsTwoUp:ammoFitsWeapon('pine_shortbow','steel_arrow'), stat:combatXpStat()};
+      selectZone('rat_warrens'); selectMonster('rat'); refreshCombatStats();
+      var atk0=cmbXp('attack');
+      var fake=Date.now(), D=Date.now; Date.now=function(){ return fake; };
+      try{ engageCombat(); for(var i=0;i<2400;i++){ fake+=250; combatTick(); if(!combat.active) break; } }finally{ Date.now=D; }
+      r.rangedXp=cmbXp('ranged'); r.attackUnchanged=cmbXp('attack')===atk0; r.arrowsSpent=400-(state.items.iron_arrow||0);
+      combat.active=false;
+      return r;
+    })()`);
+    ok('a Ranged 1 archer with a level 1 bow does train Ranged, and only Ranged',
+       fx.stat === 'ranged' && fx.rangedXp > 0 && fx.attackUnchanged === true && fx.arrowsSpent > 0, JSON.stringify(fx));
+    ok('and a level 1 bow fires the arrows the early zones drop (one tier up), not two',
+       fx.fitsOneTierUp === true && fx.fitsTwoUp === false, JSON.stringify(fx));
+
+    const sup = ev(`(function(){
+      state=defaultState(); normalizeState();
+      var s=SUPPLIES.find(function(x){ return x.id==='sup_feather'; });
+      if(!s) return {missing:true};
+      var r={qty:s.qty, skill:s.req.skill, lvl:s.req.lvl, mix:JSON.stringify(supplyMixFor(s)), cost:supplyCost(s),
+             each:effectiveItemSell('feather')};
+      state.coins=r.cost*SILVER_PER_GOLD; state.items={};
+      buySupply('sup_feather');
+      r.got=state.items.feather||0; r.spent=state.coins===0;
+      r.aboveSellBack=r.cost > 100*effectiveItemSell('feather');
+      return r;
+    })()`);
+    ok('the shop stocks feathers by the hundred, which the Fletching notes always claimed',
+       sup.missing !== true && sup.qty === 100 && sup.skill === 'fletching' && sup.lvl === 1
+       && sup.mix === '[{"id":"feather","n":100}]' && sup.got === 100 && sup.spent === true, JSON.stringify(sup));
+    ok('and a bundle costs more than selling it back, so it cannot be flipped for profit',
+       sup.aboveSellBack === true && sup.cost === Math.round(100 * sup.each * 2), JSON.stringify(sup));
+
+    const nz2 = ev(`(function(){
+      state=defaultState(); delete state.combatXp.ranged; normalizeState();
+      var r={added:state.combatXp.ranged===0};
+      state=defaultState(); state.combatXp.ranged='nope'; normalizeState(); r.repaired=state.combatXp.ranged===0;
+      state=defaultState(); state.combatXp.ranged=-5; normalizeState(); r.negative=state.combatXp.ranged===0;
+      state=defaultState(); state.combatXp.ranged=XP_CUM[40]; normalizeState(); r.kept=cmbLvl('ranged')===40;
+      return r;
+    })()`);
+    ok('a save from before Ranged existed, or with a corrupt Ranged track, is repaired on load',
+       nz2.added === true && nz2.repaired === true && nz2.negative === true && nz2.kept === true, JSON.stringify(nz2));
+  }
+
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));
   process.exit(fail ? 1 : 0);
 }, 2500);

@@ -750,6 +750,7 @@ header h1 .flame{color:var(--ember)}
 .cvarena-foe[data-tip],
 .cg-swap button[data-tip],
 .cvh-cmb[data-tip],
+.cst-ranged[data-tip],
 .cmb-slot[data-tip]{position:relative}
 .cmb-stat[data-tip]:hover::after,
 .cd-stat[data-tip]:hover::after,
@@ -767,6 +768,7 @@ header h1 .flame{color:var(--ember)}
 .cvarena-foe[data-tip]:hover::after,
 .cg-swap button[data-tip]:hover::after,
 .cvh-cmb[data-tip]:hover::after,
+.cst-ranged[data-tip]:hover::after,
 .cmb-slot[data-tip]:hover::after{
   content:attr(data-tip);
   position:absolute;
@@ -8085,6 +8087,15 @@ body:not(.is-demo) .demo-only{display:none !important}
 .cvstage .cvarena-bars{gap:7px}
 .cvrail .cmb-log{max-height:calc(132px*var(--tscale));overflow:hidden;background:transparent;border:0;padding:0}
 .cvrail .cstyle-btns{display:flex;flex-wrap:wrap;gap:5px}
+/* The Ranged level, shown under the Training buttons whenever a bow is NOT in hand
+   (0.9.125.4). With one held the three buttons read Ranged themselves, so this would
+   only repeat them. */
+.cst-ranged{display:flex;align-items:center;gap:6px;margin-top:6px;padding:4px 7px;border-radius:5px;
+  background:rgba(0,0,0,.25);box-shadow:inset 0 0 0 1px rgba(214,170,96,.16);font-size:calc(11.5px*var(--tscale));color:#a8916a}
+.cst-ranged .ev-icon{width:15px;height:15px;flex:none}
+.cst-ranged .cr-nm{color:var(--trim)}
+.cst-ranged .cr-lv{font-family:var(--num);color:var(--text)}
+.cst-ranged .cr-note{margin-left:auto;font-style:normal;color:#7d6a4c}
 .cvrail .cmb-style{padding:5px 9px;font-size:calc(11.5px*var(--tscale))}
 /* ── training-button level progress (0.9.122.2) ─────────────────────────────────
    The level number was already on the button; this is the run-up to the next
@@ -8803,7 +8814,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.125.3">v0.9.125</div>
+  <div class="mm-ver" data-build="0.9.125.4">v0.9.125</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -19273,6 +19284,12 @@ const SUPPLIES=[
    desc:'Cuttings tied in bunches \u2014 mostly common herbs, with rarer ones as your Foraging level rises.'},
   {id:'sup_bars',   name:'Crate of Bars',     grants:'bar',   qty:50,  mult:3.0, req:{skill:'smithing',lvl:1},
    desc:'Mixed billets from the guild furnace. Mostly plain metal, with some better bars mixed in.'},
+  /* Feathers (0.9.125.4). The Fletching notes said a shop stocked them and none ever
+     did, so the only feathers in the game came off four monsters (the lowest is Lv 11)
+     and a 0.3% bird's nest. An arrow needs one each and a bow burns about 1,770 an
+     hour, which made the first bow the wall rather than the reward. */
+  {id:'sup_feather',name:'Bundle of Feathers', grants:'feather',qty:100, mult:2.0, req:{skill:'fletching',lvl:1},
+   desc:'Barred flight feathers, tied in hundreds. One goes on every arrow.'},
 ];
 
 /* Which item a supply hands over depends on the player's level in its skill, so one
@@ -19283,6 +19300,7 @@ const SUPPLIES=[
    automatically and a tier removed disappears. */
 function supplyTiersFor(sup){
   if(sup.grants==='coal') return ITEMS.coal?[{id:'coal', lvl:1}]:[];
+  if(sup.grants==='feather') return ITEMS.feather?[{id:'feather', lvl:1}]:[];   // one item, like coal
   const sk=sup.req.skill;
   const lvl=levelFromXp((state.xp&&state.xp[sk])||0);
   const acts=(SKILLS[sk]&&SKILLS[sk].acts)||[];
@@ -20238,7 +20256,10 @@ function normalizeState(){
   }
   // Combat stats: ensure {attack,strength,defence,hitpoints} all present as numbers
   if(!state.combatXp||typeof state.combatXp!=='object'||Array.isArray(state.combatXp)) state.combatXp={};
-  for(const k of ['attack','strength','defence','hitpoints']){
+  /* 'ranged' belongs in this list since 0.9.124 shipped it (0.9.125.4). A save from
+     before then has no key at all, and a corrupt one would have kept a string or a
+     negative number forever, which reads as a Ranged level of 1 with no way to fix it. */
+  for(const k of ['attack','strength','defence','ranged','hitpoints']){
     if(typeof state.combatXp[k]!=='number'||state.combatXp[k]<0) state.combatXp[k]=0;
   }
   // Hitpoints starts at level 10 — bring any older save up to that floor.
@@ -29192,8 +29213,16 @@ function renderStats(){
   // Matches the in-combat sidebar formulas exactly so numbers don't disagree.
   const cs=combatStats();
   const aLvl=cmbLvl('attack'), sLvl=cmbLvl('strength'), dLvl=cmbLvl('defence'), hLvl=cmbLvl('hitpoints');
-  const accBase=Math.round(aLvl*COMBAT_P.ACC_LVL), accTot=playerAccuracy(), accGear=accTot-accBase;
-  const hitBase=Math.round(sLvl*COMBAT_P.HIT_LVL), hitTot=playerMaxHit(), hitGear=hitTot-hitBase;
+  /* Ranged had nowhere to be read (0.9.125.4). This page listed four stats, and the
+     combat panel only swaps its Training buttons over to Ranged while a bow is
+     actually in hand, so a player who had not equipped one could not find the level
+     at all. With a bow held, accuracy and max hit come off Ranged rather than
+     Attack and Strength, so the base half of each breakdown follows the same rule or
+     it reads "2 + 83" for an archer. */
+  const rLvl=cmbLvl('ranged');
+  const bow=(typeof usingRanged==='function')&&usingRanged();
+  const accBase=Math.round((bow?rLvl:aLvl)*COMBAT_P.ACC_LVL), accTot=playerAccuracy(), accGear=accTot-accBase;
+  const hitBase=Math.round(bow?rLvl*RANGED_HIT_LVL:sLvl*COMBAT_P.HIT_LVL), hitTot=playerMaxHit(), hitGear=hitTot-hitBase;
   const defBase=Math.round(dLvl*COMBAT_P.DEF_LVL), defTot=playerDefence(), defGear=defTot-defBase;
   const hpBase=Math.round(hLvl*COMBAT_P.HP_LVL), hpTot=maxHpFromStats(), hpGear=hpTot-hpBase;
   const swingMs=playerSwingMs();
@@ -29225,12 +29254,14 @@ function renderStats(){
    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:3px 12px;font-size:calc(13px*var(--tscale));margin-bottom:8px;padding-bottom:8px;border-bottom:1px dashed var(--trim-d)">'
    +  '<div><span style="color:var(--muted)">'+iconHTML('ui_swords')+' Attack</span> <b style="color:var(--text);float:right">'+aLvl+'</b></div>'
    +  '<div><span style="color:var(--muted)">'+iconHTML('ui_muscle')+' Strength</span> <b style="color:var(--text);float:right">'+sLvl+'</b></div>'
+   +  '<div title="Bows and crossbows train Ranged. It does the work of Attack and Strength together."><span style="color:var(--muted)">'
+   +    iconHTML('ranged')+' Ranged</span> <b style="color:'+(bow?'var(--ember)':'var(--text)')+';float:right">'+rLvl+'</b></div>'
    +  '<div><span style="color:var(--muted)">'+iconHTML('ui_shield')+' Defence</span> <b style="color:var(--text);float:right">'+dLvl+'</b></div>'
    +  '<div><span style="color:var(--muted)">'+iconHTML('ui_heart')+' Hitpoints</span> <b style="color:var(--text);float:right">'+hLvl+'</b></div>'
    +'</div>'
     // Derived stats — base + gear = total
-   +breakRow('Accuracy',  accBase, accGear, accTot)
-   +breakRow('Max Hit',   hitBase, hitGear, hitTot)
+   +breakRow('Accuracy'+(bow?' (Ranged)':''),  accBase, accGear, accTot)
+   +breakRow('Max Hit'+(bow?' (Ranged + arrow)':''),   hitBase, hitGear, hitTot)
    +breakRow('Defence',   defBase, defGear, defTot)
    +breakRow('Max HP',    hpBase,  hpGear,  hpTot)
    +'<div style="display:flex;justify-content:space-between;align-items:baseline;gap:6px;font-size:calc(13px*var(--tscale));padding:3px 0">'
@@ -42913,6 +42944,9 @@ ${combat.raid?buildRaidProgressHTML():''}
           <div class="cstyle-btns">
             ${['attack','strength','defence'].map(styleBtnHTML).join('')}
           </div>
+          ${(typeof usingRanged==='function'&&usingRanged())?'':`<div class="cst-ranged" data-tip="Ranged · Lv ${cmbLvl('ranged')}&#10;&#10;Hold a bow or crossbow and all three buttons train Ranged instead of the stat they name.">
+            ${iconHTML('ranged')}<span class="cr-nm">Ranged</span><b class="cr-lv">${cmbLvl('ranged')}</b><i class="cr-note">equip a bow to train it</i>
+          </div>`}
         </div>
         <div class="cvglass">
           <h4>Food &amp; potions</h4>
