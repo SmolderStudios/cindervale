@@ -7533,6 +7533,17 @@ body:not(.is-demo) .demo-only{display:none !important}
   background:radial-gradient(circle at 50% 40%,#2c1f11,#140d07 74%);
   box-shadow:inset 0 2px 5px rgba(0,0,0,.85),0 0 0 1px rgba(214,170,96,.22)}
 #inventory .bag-tile .bag-ic .ev-icon{width:74%;height:74%}
+/* a placeholder (0.9.125.3): the slot is kept, faded, with a dashed edge and 0 */
+#inventory .bag-tile.hold .bag-ic{background:rgba(0,0,0,.28);outline:1px dashed rgba(214,170,96,.32);outline-offset:-5px}
+#inventory .bag-tile.hold .bag-ic .ev-icon{opacity:.3;filter:grayscale(.75)}
+#inventory .bag-tile.hold .bag-q{color:#9c8865}
+#inventory .bag-tile.hold .bag-tn{color:#7d6a4c}
+/* locked: a padlock in the picture's bottom left (the Worn tag has the right) */
+#inventory .bag-tile .bag-lk{display:none;position:absolute;bottom:23px;left:5px;width:15px;height:15px;pointer-events:none;
+  filter:drop-shadow(0 1px 1px #000) drop-shadow(0 0 2px #000)}
+#inventory .bag-tile .bag-lk .ev-icon{width:15px;height:15px;display:block}
+#inventory .bag-tile.locked .bag-lk{display:block}
+#inventory .bag-tile.menu-on .bag-ic{box-shadow:inset 0 2px 5px rgba(0,0,0,.85),0 0 0 2px rgba(240,199,114,.8)}
 #inventory .bag-tile:hover .bag-ic{box-shadow:inset 0 2px 5px rgba(0,0,0,.85),0 0 0 1px rgba(240,199,114,.75)}
 #inventory .bag-tile.sel .bag-ic{box-shadow:inset 0 2px 5px rgba(0,0,0,.85),0 0 0 2px var(--gold-hi),0 0 12px rgba(240,199,114,.25)}
 #inventory .bag-tile.drop-on .bag-ic{box-shadow:inset 0 2px 5px rgba(0,0,0,.85),0 0 0 2px var(--green)}
@@ -7554,6 +7565,28 @@ body:not(.is-demo) .demo-only{display:none !important}
   letter-spacing:.08em;text-transform:uppercase;color:#9bc55a;pointer-events:none}
 #inventory .bag-tile.worn .bag-wt{display:block}
 .bag-empty{padding:28px 4px;text-align:center;color:#8a7657}
+
+/* the right-click menu on a satchel item (0.9.125.3): chunky rows, not a tiny list */
+.bag-menu{position:fixed;left:0;top:0;z-index:10040;min-width:236px;max-width:320px;padding:6px;border-radius:10px;
+  background:linear-gradient(180deg,#221709,#170f07);box-shadow:inset 0 0 0 1px rgba(214,170,96,.4),0 14px 32px rgba(0,0,0,.78);
+  color:var(--text);font-size:calc(13px*var(--tscale))}
+.bag-menu[hidden]{display:none}
+.bm-head{display:flex;align-items:center;gap:8px;padding:4px 8px 8px;margin-bottom:4px;border-bottom:1px solid rgba(214,170,96,.18)}
+.bm-head .ev-icon{flex:none;width:28px;height:28px}
+.bm-nm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'Cinzel',serif;
+  font-size:calc(14px*var(--tscale));color:var(--gold-hi)}
+.bm-head i{margin-left:auto;padding-left:10px;flex:none;font-style:normal;font-size:calc(12px*var(--tscale));color:#a8916a}
+.bm-row{display:flex;align-items:center;gap:10px;width:100%;min-height:36px;padding:0 10px;border:0;border-radius:7px;
+  background:transparent;color:#ecd9ae;font-family:inherit;font-size:calc(13px*var(--tscale));text-align:left;cursor:var(--cur-pointer)}
+.bm-row:hover:not(:disabled){background:linear-gradient(178deg,#4a3316,#2e1f0d);box-shadow:inset 0 0 0 1px rgba(240,199,114,.4);color:var(--gold-hi)}
+.bm-row:disabled{color:#806d50;cursor:var(--cur-na)}
+.bm-ic{flex:none;width:20px;height:20px;display:grid;place-items:center}
+.bm-ic .ev-icon{width:18px;height:18px}
+.bm-lb{flex:1;white-space:nowrap;padding-right:14px}
+.bm-v{flex:none;display:inline-flex;align-items:center;gap:3px;font-size:calc(12px*var(--tscale));color:#9c8865;white-space:nowrap}
+.bm-v .ev-icon{width:13px;height:13px}
+.bm-row:disabled .bm-ic{opacity:.6}
+.bm-sep{height:1px;margin:4px 8px;background:rgba(214,170,96,.14)}
 
 /* the item card, down the right side */
 .bag-dock{flex:none;padding:12px 14px;border-radius:10px;
@@ -7582,6 +7615,13 @@ body:not(.is-demo) .demo-only{display:none !important}
 .dk-tabs{display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid rgba(214,170,96,.14)}
 .dk-tabs .lb{font-size:calc(10.5px*var(--tscale));letter-spacing:.12em;text-transform:uppercase;color:#8a7657;margin-right:2px}
 .dk-tabs .bag-btn{height:26px;padding:0 9px;font-size:calc(12px*var(--tscale))}
+/* Lock and Placeholder in the item card (0.9.125.3), laid out like the Tab row */
+.dk-keep{display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin-top:8px}
+.dk-keep .lb{font-size:calc(10.5px*var(--tscale));letter-spacing:.12em;text-transform:uppercase;color:#8a7657;margin-right:2px}
+.dk-keep .bag-btn{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;font-size:calc(12px*var(--tscale))}
+.dk-keep .bag-btn .ev-icon,.bag-btn.sell .ev-icon{width:13px;height:13px}
+.bm-ph{display:inline-block;flex:none;width:13px;height:13px;border-radius:3px;border:1px dashed rgba(240,199,114,.65)}
+.bag-caph{margin-top:3px;font-size:calc(11px*var(--tscale));color:#8a7657}
 .bag-btn{height:30px;padding:0 11px;border-radius:6px;border:1px solid rgba(214,170,96,.35);background:#2a1c0c;
   color:#f0dfb8;font-size:calc(12.5px*var(--tscale));cursor:var(--cur-pointer);white-space:nowrap;font-family:inherit}
 .bag-btn:hover:not(:disabled){border-color:rgba(240,199,114,.7);filter:brightness(1.1)}
@@ -8763,7 +8803,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.125.2">v0.9.125</div>
+  <div class="mm-ver" data-build="0.9.125.3">v0.9.125</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -19921,6 +19961,14 @@ function normalizeState(){
     state.bagOrder=(Array.isArray(state.bagOrder)?state.bagOrder:[])
       .filter(id=>typeof id==='string'&&ITEMS[id]&&!tabbed[id]&&!seen[id]&&(seen[id]=1));
   }
+  /* Locked items and placeholders, set from the satchel's right-click menu
+     (0.9.125.3). Only things that live in the satchel: tools and skilling gear
+     never do. */
+  for(const k of ['bagLocked','bagHolds']){
+    const seen={};
+    state[k]=(Array.isArray(state[k])?state[k]:[])
+      .filter(id=>typeof id==='string'&&ITEMS[id]&&!ITEMS[id].tool&&!ITEMS[id].skillGear&&!seen[id]&&(seen[id]=1));
+  }
 
   // Auto-buff config default (1.0.30).
   if(!state.autoBuff||typeof state.autoBuff!=='object') state.autoBuff={enabled:false,itemId:''};
@@ -20417,8 +20465,25 @@ function satchelUsed(){
   return Object.keys(state.items).filter(id=>{
     const q=state.items[id]||0;
     return ITEMS[id]&&q>0&&id!==qv&&q>(worn[id]||0);
-  }).length;
+  }).length+bagHoldsWaiting().length;
 }
+/* Placeholders (0.9.125.3). Jordan picked the OSRS rule: an item you have run out of
+   keeps its slot while its placeholder is set, so it can always come back in, even to
+   a full satchel. Each one waiting like that counts as a used slot. */
+function bagHolds(){
+  if(!Array.isArray(state.bagHolds)) state.bagHolds=[];
+  return state.bagHolds;
+}
+function bagHeld(id){ return !!id&&Array.isArray(state.bagHolds)&&state.bagHolds.indexOf(id)>=0; }
+function bagHoldsWaiting(){
+  return Array.isArray(state.bagHolds)?state.bagHolds.filter(id=>ITEMS[id]&&!((state.items[id]||0)>0)):[];
+}
+/* A locked item cannot be sold, from anywhere. Skills still use it. */
+function bagLocks(){
+  if(!Array.isArray(state.bagLocked)) state.bagLocked=[];
+  return state.bagLocked;
+}
+function bagLocked(id){ return !!id&&Array.isArray(state.bagLocked)&&state.bagLocked.indexOf(id)>=0; }
 
 /* ════ SEED VAULT (0.9.122.17) ═══════════════════════════════════════════════
    Seeds used to live in the satchel, where the eighteen plantable crops ate
@@ -20498,7 +20563,7 @@ function isCookIngredient(id){ if(!_cookSets) _cookSetsInit(); return _cookSets.
 
 function canAddToSatchel(id){
   // Check if there's room OR the item already has a stack (just adding qty, not a new slot)
-  if((state.items[id]||0)>0) return true; // already a slot for it
+  if((state.items[id]||0)>0||bagHeld(id)) return true; // already a slot for it (a placeholder holds one)
   return satchelUsed()<satchelCap();
 }
 
@@ -24003,7 +24068,8 @@ function completeAction(act,skillKey,times){
     const _cap=satchelCap(), _used=satchelUsed();
     if(_used>=_cap){
       // Only block if at least one output item doesn't already have a stack (would need a new slot)
-      const needsNewSlot=Object.keys(act.out).some(id=>(state.items[id]||0)===0&&!(ITEMS[id]&&ITEMS[id].tool));
+      // a placeholder already holds a slot for its item (0.9.125.3)
+      const needsNewSlot=Object.keys(act.out).some(id=>(state.items[id]||0)===0&&!bagHeld(id)&&!(ITEMS[id]&&ITEMS[id].tool));
       if(needsNewSlot){
         state.action=null;
         toast('🎒 Satchel full — action stopped. Sell or store items to make room.');
@@ -27493,7 +27559,9 @@ function _gdGuildPage(id){
     const hot=Object.keys(ITEMS).filter(function(i){
       return ITEMS[i].hot && (state.items[i]||0)>0; })
       .sort(function(a,b){ return nightmarketSell(b)-nightmarketSell(a); });
-    const total=hot.reduce(function(t,i){ return t+nightmarketSell(i)*(state.items[i]||0); },0);
+    // what you locked in the satchel stays out of the lot (0.9.125.3)
+    const lot=hot.filter(function(i){ return !bagLocked(i); });
+    const total=lot.reduce(function(t,i){ return t+nightmarketSell(i)*(state.items[i]||0); },0);
     /* The multiplier is the whole reason to rank up, so say it rather than leaving
        the player to compare two numbers in two panels. */
     const mult=Math.round(hotSellMult()*100);
@@ -27514,19 +27582,22 @@ function _gdGuildPage(id){
           +'<span class="nm">'+ITEMS[iid].name+'<i>'+have.toLocaleString()+' held</i></span>'
           +'<span class="pr"><b>'+fmtCoins(each,true)+'</b>'
           +(each>store?'<i>store '+fmtCoins(store,true)+'</i>':'')+'</span>'
-          +'<button class="gd-btn pri">Sell</button>';
-        card.querySelector('.gd-btn').addEventListener('click',function(){
+          +(bagLocked(iid)?'<button class="gd-btn" disabled title="Locked in your satchel. Unlock it there to sell it.">Locked</button>'
+            :'<button class="gd-btn pri">Sell</button>');
+        const sb=card.querySelector('.gd-btn:not([disabled])');
+        if(sb) sb.addEventListener('click',function(){
           openSellModal(iid, each, have);
         });
         grid.appendChild(card);
       });
       right.appendChild(grid);
       const all=_gdEl('gd-sellall');
-      all.innerHTML='<span>'+hot.length+' kind'+(hot.length===1?'':'s')+' held</span>'
-        +'<button class="gd-btn pri">Sell the lot for '+fmtCoins(total,true)+'</button>';
+      const nLocked=hot.length-lot.length;
+      all.innerHTML='<span>'+hot.length+' kind'+(hot.length===1?'':'s')+' held'+(nLocked?', '+nLocked+' locked':'')+'</span>'
+        +'<button class="gd-btn pri"'+(lot.length?'':' disabled')+'>Sell the lot for '+fmtCoins(total,true)+'</button>';
       all.querySelector('.gd-btn').addEventListener('click',function(){
         let got=0, n2=0;
-        hot.forEach(function(iid){
+        lot.forEach(function(iid){
           const q=state.items[iid]||0; if(q<=0) return;
           const each=nightmarketSell(iid);
           bagTake(iid,q); releaseIfGone(iid);
@@ -30089,7 +30160,8 @@ function _bagSortFn(mode, catOf){
 function bagLooseSeq(){
   const mode=bagSortMode(), tabbed=new Set();
   bagTabs().forEach(function(t){ t.items.forEach(function(x){ tabbed.add(x); }); });
-  const own=Object.keys(state.items).filter(function(x){ return (state.items[x]||0)>0&&ITEMS[x]&&!tabbed.has(x); });
+  const own=Object.keys(state.items).filter(function(x){ return (state.items[x]||0)>0&&ITEMS[x]&&!tabbed.has(x); })
+    .concat(bagHoldsWaiting().filter(function(x){ return !tabbed.has(x); }));   // placeholders take spots too
   if(mode!=='custom') return own.sort(_bagSortFn(mode));
   const kept=bagOrder().filter(function(x){ return ITEMS[x]&&!tabbed.has(x); }), known=new Set(kept);
   return kept.concat(own.filter(function(x){ return !known.has(x); }).sort(_bagSortFn('category')));
@@ -30223,6 +30295,146 @@ function _bagTabRowHTML(id){
   return h+'</div>';
 }
 
+/* ── lock, placeholder and the right-click menu (0.9.125.3) ─────────────────────────
+   Jordan: "Can we possibly add right click in the satchel ui to sell as well? or
+   right click to lock item or something? like placeholders to add etc".
+   - Lock: it cannot be sold from anywhere (the card, this menu, the sell dialog, the
+     Nightmarket's Sell the lot). Skills still use it.
+   - Placeholder: when you run out, its tile stays, faded at 0, in its spot, and
+     keeps its satchel slot so it can always come back in (bagHolds, satchelUsed).
+   The item card has both as buttons, for anyone who does not right-click. */
+function bagToggleLock(id){
+  if(!id||!ITEMS[id]) return false;
+  const l=bagLocks(), i=l.indexOf(id);
+  if(i>=0) l.splice(i,1); else l.push(id);
+  saveGame(); renderInventory();
+  return true;
+}
+/* Set on an item you have. Taken off one you have run out of, it frees the slot. */
+function bagToggleHold(id){
+  if(!id||!ITEMS[id]) return false;
+  const h=bagHolds(), i=h.indexOf(id);
+  if(i>=0) h.splice(i,1);
+  else if((state.items[id]||0)>0) h.push(id);
+  else return false;
+  saveGame(); renderInventory();
+  if(typeof navBagTile==='function') navBagTile();
+  return true;
+}
+function _bagKeepRowHTML(id){
+  const lk=bagLocked(id), hd=bagHeld(id), q=state.items[id]||0;
+  return '<div class="dk-keep"><span class="lb">Keep</span>'
+    +'<button type="button" class="bag-btn'+(lk?' on':'')+'" data-bag="lock" title="'
+      +(lk?'Unlock it so it can be sold again':'Lock it so it cannot be sold. Skills still use it.')+'">'
+      +iconHTML('ui_lock')+(lk?'Locked':'Lock')+'</button>'
+    +'<button type="button" class="bag-btn'+(hd?' on':'')+'" data-bag="hold" title="'
+      +(hd?(q>0?'Take the placeholder off':'Take the placeholder off and free its slot')
+          :'When you run out, keep its spot and its slot until you get more')+'">'
+      +'<span class="bm-ph"></span>'+(hd?'Placeholder on':'Placeholder')+'</button>'
+    +'</div>';
+}
+
+let _bagMenu=null;   // {id, el} while the menu is open
+function bagMenuClose(){
+  if(!_bagMenu) return;
+  _bagMenu.el.hidden=true;
+  const t=_bagTiles.get(_bagMenu.id); if(t) t.el.classList.remove('menu-on');
+  _bagMenu=null;
+}
+function _bagMenuEl(){
+  let m=$('bagMenu');
+  if(m) return m;
+  m=document.createElement('div'); m.id='bagMenu'; m.className='bag-menu'; m.hidden=true;
+  m.setAttribute('role','menu');
+  document.body.appendChild(m);
+  m.addEventListener('contextmenu',function(e){ e.preventDefault(); });
+  m.addEventListener('click',function(e){
+    const b=e.target.closest?e.target.closest('[data-bm]'):null;
+    if(!b||b.disabled||!_bagMenu) return;
+    bagMenuAct(_bagMenu.id, b.getAttribute('data-bm'));
+  });
+  // a press anywhere else closes it, and so do Escape and the window changing
+  document.addEventListener('mousedown',function(e){ if(_bagMenu&&!m.contains(e.target)) bagMenuClose(); },true);
+  document.addEventListener('keydown',function(e){
+    if(!_bagMenu||e.key!=='Escape') return;
+    e.preventDefault(); e.stopPropagation();   // not Back: the satchel stays open
+    bagMenuClose();
+  },true);
+  window.addEventListener('resize',bagMenuClose);
+  window.addEventListener('blur',bagMenuClose);
+  return m;
+}
+function _bagMenuHTML(id){
+  const it=ITEMS[id], q=state.items[id]||0, lk=bagLocked(id), hd=bagHeld(id);
+  const row=function(act,ic,lb,v,dis,title){
+    return '<button type="button" class="bm-row"'+(act?' data-bm="'+act+'"':'')+(dis?' disabled':'')
+      +(title?' title="'+_bagEsc(title)+'"':'')+'><span class="bm-ic">'+ic+'</span><span class="bm-lb">'+lb+'</span>'
+      +(v?'<span class="bm-v">'+v+'</span>':'')+'</button>';
+  };
+  const sep='<div class="bm-sep"></div>', coin=iconHTML('ui_coin'), lock=iconHTML('ui_lock');
+  let h='<div class="bm-head">'+iconHTML(id)+'<span class="bm-nm">'+_bagEsc(it.name)+'</span>'
+    +'<i>'+(q>0?'×'+q.toLocaleString():'placeholder')+'</i></div>';
+  if(q>0){
+    const sv=effectiveItemSell(id), cap=sellableQty(id);
+    let sells='';
+    if(sv>0){
+      if(lk) sells=row('',lock,'Locked, so it can\'t be sold','',true);
+      else if(cap<=0) sells=row('',coin,'Sell','take it off first',true);
+      else {
+        sells=row('sell1',coin,'Sell 1',fmtCoins(sv,true));
+        if(cap>1) sells+=row('sellall',coin,'Sell all '+cap.toLocaleString(),fmtCoins(sv*cap,true))
+                      +row('sellx',coin,'Sell an amount…','');
+      }
+    }
+    let uses='';
+    if(it.cgear&&it.cslot){
+      const ce=state.combatEquipped||{}, req=combatGearReq(id);
+      if(ce[it.cslot]===id) uses=row('remove',iconHTML(id),'Take off','');
+      else if(req&&cmbLvl(req.stat)<req.level) uses=row('',iconHTML(id),'Equip','needs '+req.level+' '+(COMBAT_STAT_NAME[req.stat]||req.stat),true);
+      else uses=row('equip',iconHTML(id),'Equip','');
+    }
+    if(it.potion&&it.potion.dur){ const u=_potionUseState(id); uses+=row('use',iconHTML(id),u.label,'',u.disabled,u.title); }
+    h+=sells+(sells&&uses?sep:'')+uses;
+    if(sells||uses) h+=sep;
+  }
+  h+=row('lock',lock,lk?'Unlock':'Lock',lk?'can be sold again':'can\'t be sold');
+  h+=hd?row('hold','<span class="bm-ph"></span>','Remove placeholder',q>0?'':'frees its slot')
+       :row('hold','<span class="bm-ph"></span>','Keep a placeholder','holds its slot');
+  return h;
+}
+/* Opens at the pointer and stays inside the window. The page is zoomed, so the
+   pointer is divided by the zoom before it is used as a position (as sailTipMove). */
+function bagMenuOpen(id, x, y){
+  if(!id||!ITEMS[id]) return false;
+  const m=_bagMenuEl();
+  bagMenuClose();
+  if(typeof hideTooltip==='function') hideTooltip();
+  m.innerHTML=_bagMenuHTML(id);
+  m.hidden=false;
+  _bagMenu={id:id, el:m};
+  const t=_bagTiles.get(id); if(t) t.el.classList.add('menu-on');
+  const z=_rootZoom(), w=m.offsetWidth, h=m.offsetHeight;
+  const vw=window.innerWidth/z, vh=window.innerHeight/z;
+  let left=(x||0)/z, top=(y||0)/z;
+  if(left+w>vw-8) left=Math.max(8,left-w);
+  if(top+h>vh-8) top=Math.max(8,vh-8-h);
+  m.style.left=Math.round(left)+'px'; m.style.top=Math.round(top)+'px';
+  return true;
+}
+function bagMenuAct(id, act){
+  bagMenuClose();
+  if(!id||!ITEMS[id]) return;
+  const it=ITEMS[id];
+  if(act==='sell1') bagSell(id,1);
+  else if(act==='sellall') bagSell(id,Infinity);
+  else if(act==='sellx') openSellModal(id,effectiveItemSell(id),sellableQty(id));
+  else if(act==='equip') equipBodyItem(id,it.cslot,'combat');
+  else if(act==='remove') unequipBodyItem(it.cslot,'combat');
+  else if(act==='use'){ usePotion(id); renderRightPanel(); }
+  else if(act==='lock') bagToggleLock(id);
+  else if(act==='hold') bagToggleHold(id);
+}
+
 /* ── the screen ───────────────────────────────────────────────────────────────── */
 let invOpen=false, _invWhere='';
 function _invWhereNow(){
@@ -30238,6 +30450,7 @@ function openInventory(){
 function closeInventory(){
   if(!invOpen) return;
   invOpen=false; _bagDrag=null; _bagTabDrag=null; _bagPickOpen=false;
+  bagMenuClose();
   if(typeof hideTooltip==='function') hideTooltip();
   updateModePanels(); renderRightPanel(); renderCenter();
 }
@@ -30347,7 +30560,8 @@ function _bagTile(id){
   el.setAttribute('data-item',id); el.setAttribute('data-ttup','1');
   el.setAttribute('draggable','true');   // onto a tab, onto +, or onto another item
   el.innerHTML='<span class="bag-wt">Worn</span><span class="bag-ic">'+iconHTML(id)+'</span>'
-    +'<span class="bag-q"></span><span class="bag-gm"></span><span class="bag-tn inv-name">'+it.name+'</span>';
+    +'<span class="bag-q"></span><span class="bag-gm"></span><span class="bag-lk">'+iconHTML('ui_lock')+'</span>'
+    +'<span class="bag-tn inv-name">'+it.name+'</span>';
   t={el:el,sig:''}; _bagTiles.set(id,t);
   return t;
 }
@@ -30357,6 +30571,7 @@ function bagSelect(id){
   renderInventory();
 }
 function bagSell(id,want){
+  if(bagLocked(id)){ toast('That is locked. Unlock it to sell it.'); return; }
   const cap=sellableQty(id);
   if(cap<=0){ toast('Take it off first. That is the one you are wearing.'); renderRightPanel(); return; }
   const qty=Math.min(want,cap);
@@ -30445,18 +30660,21 @@ function _bagDockHTML(id,cat){
   if(uses.length) chips.push('<span class="dk-chip">Used in '+uses.slice(0,3).map(u=>u.skName).join(', ')+(uses.length>3?' +'+(uses.length-3):'')+'</span>');
 
   const btns=[];
-  if(it.potion&&it.potion.dur){
+  // a placeholder (none left) has nothing to drink, wear or sell (0.9.125.3)
+  if(q>0&&it.potion&&it.potion.dur){
     const u=_potionUseState(id);
     btns.push('<button type="button" class="bag-btn gold" data-bag="use"'+(u.disabled?' disabled':'')+' title="'+u.title+'">'+u.label+'</button>');
   }
-  if(it.cgear&&it.cslot){
+  if(q>0&&it.cgear&&it.cslot){
     const req=combatGearReq(id);
     if(wornHere) btns.push('<button type="button" class="bag-btn inv-equip on" data-bag="remove" title="Take it off">Remove</button>');
     else if(req&&cmbLvl(req.stat)<req.level) btns.push('<button type="button" class="bag-btn inv-equip" disabled title="Needs '+req.level+' '+(COMBAT_STAT_NAME[req.stat]||req.stat)+'">Lv '+req.level+'</button>');
     else btns.push('<button type="button" class="bag-btn gold inv-equip" data-bag="equip">Equip</button>');
   }
-  if(sv>0){
-    if(sellable<=0){
+  if(sv>0&&q>0){
+    if(bagLocked(id)){
+      btns.push('<button type="button" class="bag-btn sell" disabled title="It is locked. Unlock it to sell it.">'+iconHTML('ui_lock')+' Sell</button>');
+    } else if(sellable<=0){
       btns.push('<button type="button" class="bag-btn sell" disabled title="You are wearing it. Take it off to sell it.">Sell</button>');
     } else {
       btns.push('<button type="button" class="bag-btn sell" data-bag="sell" data-n="1">Sell 1</button>');
@@ -30467,12 +30685,13 @@ function _bagDockHTML(id,cat){
       }
     }
   }
-  const qtyLine=q.toLocaleString()+(worn?'<small>'+(worn>=q?'worn':worn+' worn')+'</small>':'<small>in bag</small>');
+  const qtyLine=q<=0?'0<small>placeholder</small>'
+    :q.toLocaleString()+(worn?'<small>'+(worn>=q?'worn':worn+' worn')+'</small>':'<small>in bag</small>');
   return '<div class="dk-top"><span class="dk-ic" data-item="'+id+'">'+iconHTML(id)+'</span>'
     +'<div class="dk-tt"><div class="dk-nm">'+it.name+(it.rare?' <i>✦</i>':'')+'</div><div class="dk-sub">'+sub+'</div></div>'
     +'<div class="dk-q">'+qtyLine+'</div></div>'
     +(chips.length?'<div class="dk-info">'+chips.join('')+'</div>':'')
-    +(it.cgear?hoverGearDelta(id):'')
+    +(it.cgear&&q>0?hoverGearDelta(id):'')
     +(btns.length?'<div class="dk-btns">'+btns.join('')+'</div>':'');
 }
 
@@ -30518,6 +30737,14 @@ function renderInventory(){
     };
     sortBtn.addEventListener('click',()=>stepSort(1));
     sortBtn.addEventListener('contextmenu',e=>{ e.preventDefault(); stepSort(-1); });
+    // right-click an item for its menu (0.9.125.3); scrolling the bag shuts it
+    box.addEventListener('contextmenu',e=>{
+      const t=e.target.closest?e.target.closest('.bag-tile'):null;
+      if(!t||!box.contains(t)) return;
+      e.preventDefault();
+      bagMenuOpen(t.getAttribute('data-id'), e.clientX, e.clientY);
+    });
+    box.querySelector('.bag-scroll').addEventListener('scroll',()=>bagMenuClose());
     const isName=el=>!!(el&&el.classList&&el.classList.contains('bag-tabname'));
     box.addEventListener('keydown',e=>{
       if(e.key==='Enter'&&e.target.classList&&e.target.classList.contains('inv-qtybox')){
@@ -30619,6 +30846,8 @@ function renderInventory(){
       if(act==='equip'){ equipBodyItem(id,ITEMS[id].cslot,'combat'); return; }
       if(act==='remove'){ unequipBodyItem(ITEMS[id].cslot,'combat'); return; }
       if(act==='use'){ usePotion(id); renderRightPanel(); return; }
+      if(act==='lock'){ bagToggleLock(id); return; }
+      if(act==='hold'){ bagToggleHold(id); return; }
     });
     /* Drag an item onto a tab, onto +, or onto another item to take its spot
        (bagDropSpot). Drag a tab onto another tab to put it there: it lands after one
@@ -30648,7 +30877,7 @@ function renderInventory(){
       _bagTabDrag=null; _bagSpot=null;
       _bagDrag=t.getAttribute('data-id'); _bagDragT=Date.now();
       try{ e.dataTransfer.effectAllowed='move'; e.dataTransfer.setData('text/plain',_bagDrag); }catch(_){}
-      t.classList.add('dragging');
+      t.classList.add('dragging'); bagMenuClose();
       if(typeof hideTooltip==='function') hideTooltip();
       bagDollArm(_bagDrag);   // light the doll squares it can go in
     });
@@ -30754,12 +30983,16 @@ function renderInventory(){
   const catOrder=['gear','jewelry','ores','bars','logs','fire','fish','cooked','potions','forage','farm','gems','sea','misc'];
   _bagCatFn=itemCat; _bagCatOrder=catOrder;
 
-  const catOf={}; for(const id of owned) catOf[id]=itemCat(id);
+  /* What the grid shows: what you have, and the placeholders of what you ran out of
+     (0.9.125.3). Counts and tab pictures stay on what you have. */
+  const waiting=bagHoldsWaiting();
+  const visible=owned.concat(waiting);
+  const catOf={}; for(const id of visible) catOf[id]=itemCat(id);
   const qs=invSearch.trim().toLowerCase();
   const match=id=>!qs||ITEMS[id].name.toLowerCase().indexOf(qs)>=0;
   const sortFn=_bagSortFn(invSort, id=>catOf[id]);
   const tabs=bagTabs();
-  const ownedSet=new Set(owned), inTab=new Set();
+  const ownedSet=new Set(owned), visSet=new Set(visible), inTab=new Set();
   tabs.forEach(t=>t.items.forEach(id=>inTab.add(id)));
 
   /* What the grid shows, as sections: [{tab, label, face, ids}] */
@@ -30769,7 +31002,7 @@ function renderInventory(){
        added at the bottom instead of pushing everything else down (0.9.124.51).
        Jordan: "make sure the main tab, is the one on top of every other tab, so new
        tabs dont add on top of the main tab, it goes below it". */
-    const loose=owned.filter(id=>!inTab.has(id)&&match(id)).sort(sortFn);
+    const loose=visible.filter(id=>!inTab.has(id)&&match(id)).sort(sortFn);
     if(loose.length){
       if(tabs.length) sections.push({tab:'loose', label:'Not in a tab', ids:loose});
       else if(invSort==='category'){
@@ -30778,12 +31011,12 @@ function renderInventory(){
       } else sections.push({tab:'loose', label:'', ids:loose});
     }
     tabs.forEach(t=>{
-      const ids=t.items.filter(id=>ownedSet.has(id)&&match(id));
+      const ids=t.items.filter(id=>visSet.has(id)&&match(id));
       if(ids.length) sections.push({tab:t.id, label:bagTabLabel(t), face:bagTabFace(t,ownedSet), ids:ids});
     });
   } else {
     const t=tabs.find(x=>x.id===invTab);
-    const ids=t.items.filter(id=>ownedSet.has(id)&&match(id));
+    const ids=t.items.filter(id=>visSet.has(id)&&match(id));
     if(ids.length) sections.push({tab:t.id, label:'', ids:ids});
   }
   const shown=[]; sections.forEach(s=>s.ids.forEach(id=>shown.push(id)));
@@ -30869,7 +31102,7 @@ function renderInventory(){
   const cap=satchelCap(), used=satchelUsed();
   const pct=Math.min(100,Math.round(used/cap*100));
   const bought=state.satchelUpgrades||0, atMax=bought>=SATCHEL_MAX_EXPANSIONS;
-  const capKey=used+'|'+cap+'|'+bought;
+  const capKey=used+'|'+cap+'|'+bought+'|'+waiting.length;
   const capwrap=box.querySelector('.bag-capwrap');
   if(capwrap.getAttribute('data-key')!==capKey){
     capwrap.setAttribute('data-key',capKey);
@@ -30879,6 +31112,7 @@ function renderInventory(){
     capwrap.innerHTML='<div class="sat-cap bag-cap"><span class="bag-capn"><b>'+used+'</b> / '+cap+' slots</span>'
       +'<span class="bag-capbar"><i style="width:'+pct+'%;background:'+barColor+'"></i></span>'
       +'<span class="bag-cappct">'+pct+'% full</span></div>'
+      +(waiting.length?'<div class="bag-caph">'+waiting.length+' slot'+(waiting.length===1?' is':'s are')+' held by placeholders</div>':'')
       +(atMax?'':'<button type="button" class="sat-goshop bag-goshop" data-bag="goshop">+'+SATCHEL_SLOT_STEP
         +' slots for '+iconHTML('ui_coin')+' '+satchelTierCost(bought).toLocaleString()+'g in the Shop →</button>');
   }
@@ -30896,7 +31130,7 @@ function renderInventory(){
     if(!sections.length){
       const emp=document.createElement('div'); emp.className='inv-empty bag-empty';
       emp.textContent=invTab!=='all'&&!qs?'This tab is empty. Drag items onto it, or pick one and use its Tab buttons.'
-        :owned.length?'Nothing matches.':'Your satchel is empty.';
+        :visible.length?'Nothing matches.':'Your satchel is empty.';
       frag.appendChild(emp);
     } else sections.forEach(s=>{
       if(s.label){
@@ -30914,38 +31148,42 @@ function renderInventory(){
     const t=_bagTile(id), q=state.items[id]||0, worn=reservedForEquip(id)>0, sel=_bagSel===id;
     // an enchant spark and socket pips, so two rings or two helms can be told apart (0.9.124.53)
     const gm=maxSocketsFor(id)>0?gearMarksHTML(id):'';
-    const sig=q+'|'+(worn?1:0)+'|'+(sel?1:0)+'|'+gm;
+    const lk=bagLocked(id), hold=q<=0;   // hold: a placeholder, faded at 0 (0.9.125.3)
+    const sig=q+'|'+(worn?1:0)+'|'+(sel?1:0)+'|'+gm+'|'+(lk?1:0);
     if(t.sig===sig) continue;
     t.sig=sig;
-    t.el.querySelector('.bag-q').textContent=q>1?bagFmtQty(q):'';
+    t.el.querySelector('.bag-q').textContent=q>1?bagFmtQty(q):hold?'0':'';
     const gmEl=t.el.querySelector('.bag-gm'); if(gmEl&&gmEl.innerHTML!==gm) gmEl.innerHTML=gm;
     t.el.classList.toggle('worn',worn);
     t.el.classList.toggle('sel',sel);
+    t.el.classList.toggle('locked',lk);
+    t.el.classList.toggle('hold',hold);
   }
 
   // the item card
   const dock=box.querySelector('.bag-dock');
-  if(_bagSel&&!((state.items[_bagSel]||0)>0&&ITEMS[_bagSel])){ _bagSel=null; }
+  if(_bagSel&&!(((state.items[_bagSel]||0)>0||bagHeld(_bagSel))&&ITEMS[_bagSel])){ _bagSel=null; }
   const qb=dock.querySelector('.inv-qtybox');
   const typing=!!qb&&document.activeElement===qb;
   if(!_bagSel){
     if(_bagDockSig!=='none'){
       _bagDockSig='none';
       dock.classList.add('empty');
-      dock.innerHTML='<div class="bag-dock-hint">Click an item to see it here, with its buttons. Drag an item onto another to put it in that spot.</div>';
+      dock.innerHTML='<div class="bag-dock-hint">Click an item to see it here, with its buttons. Drag an item onto another to put it in that spot. Right-click one to sell it, lock it or keep a placeholder.</div>';
     }
   } else {
     const id=_bagSel;
     const ce=state.combatEquipped||{};
     const sig=[id,state.items[id],reservedForEquip(id),sellableQty(id),ce[ITEMS[id].cslot]||'',
-      JSON.stringify(state.combatXp||{}),(state.effects||[]).length,bagTabOf(id)||'',tabs.map(t=>t.id+t.name).join(',')].join('|');
+      JSON.stringify(state.combatXp||{}),(state.effects||[]).length,bagTabOf(id)||'',tabs.map(t=>t.id+t.name).join(','),
+      bagLocked(id)?1:0,bagHeld(id)?1:0].join('|');
     if(typing){
       // keep the half-typed amount; only the count can change under it
       const qe=dock.querySelector('.dk-q'); if(qe&&qe.firstChild) qe.firstChild.textContent=(state.items[id]||0).toLocaleString();
     } else if(sig!==_bagDockSig||(ITEMS[id].potion&&ITEMS[id].potion.dur)){
       _bagDockSig=sig;
       dock.classList.remove('empty');
-      dock.innerHTML=_bagDockHTML(id,catOf[id])+_bagTabRowHTML(id);
+      dock.innerHTML=_bagDockHTML(id,catOf[id])+_bagTabRowHTML(id)+_bagKeepRowHTML(id);
     }
   }
 }
@@ -35478,6 +35716,7 @@ function _wireGearSelInteraction(sel){
 /* Sell X modal helpers */
 function openSellModal(id, sv, maxQty){
   const it=ITEMS[id];
+  if(bagLocked(id)){ toast('That is locked. Unlock it to sell it.'); return; }   // 0.9.125.3
   /* Selling the last copy runs releaseIfGone → reclaimSocketsFor, which hands the
      gems back but deletes the sockets outright — thousands of gold in drilling,
      silently. Enchants survive a sale, so the two systems disagree and the wrong
@@ -35513,8 +35752,8 @@ function openSellModal(id, sv, maxQty){
   $('sellModal').classList.remove('hidden');
   $('sellConfirmBtn').onclick=()=>{
     // Re-clamp on confirm: the dialog can sit open while the player equips this
-    // very item from the gear panel.
-    const qty=Math.min(readQty(),sellableQty(id));
+    // very item from the gear panel, or locks it from the satchel.
+    const qty=bagLocked(id)?0:Math.min(readQty(),sellableQty(id));
     if(qty<=0){ $('sellModal').classList.add('hidden'); return; }
     bagTake(id,qty);
     // Sold the last one — take it off the paper doll, then pop any socketed gems
@@ -37077,8 +37316,8 @@ function grantItem(id, qty){
     if(it.cgear && typeof combatGearReq==='function' && !meetsCombatReq(id)) showHint('craft_gear_req');
     if(typeof JEWELRY_GEM_TIER!=='undefined' && JEWELRY_GEM_TIER[id] && selectedSkill!=='jeweler') showHint('jeweler_tabs');
   }catch(e){}
-  // If the item already has a slot, always add qty
-  if((state.items[id]||0)>0){
+  // If the item already has a slot, always add qty. A placeholder is a slot kept for it (0.9.125.3).
+  if((state.items[id]||0)>0||bagHeld(id)){
     state.items[id]=(state.items[id]||0)+qty;
     markDiscovered(id);
     if(it.rare) logNotification('rare', id, `Found ${qty>1?qty+'\u00d7 ':''}${it.name}`);
