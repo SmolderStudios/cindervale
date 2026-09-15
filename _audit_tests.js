@@ -8741,6 +8741,154 @@ setTimeout(() => {
        nz.css === true && /Drag an item onto another/.test(nz.hint), JSON.stringify(nz));
   }
 
+  section('Right-click menu, locked items and placeholders in the satchel (0.9.125.3)');
+  {
+    /* Jordan: "Can we possibly add right click in the satchel ui to sell as well? or
+       right click to lock item or something? like placeholders to add etc". For
+       placeholders he chose the OSRS rule: one keeps its item's slot while it waits,
+       so the item can always come back in. */
+    const rc = ev(`(function(){
+      state=defaultState(); normalizeState(); invSearch=''; _bagSel=null; state.bagTabs=[]; state.invPrefs.tab='all'; state.invPrefs.sort='category';
+      document.querySelectorAll('.modal-back').forEach(function(m){ m.classList.add('hidden'); });
+      state.items={coal:9, iron_ore:5, bronze_bar:4}; state.coins=0;
+      closeInventory(); leaveFullPanels(); viewTab='acts'; renderAll(); openInventory();
+      var tile=function(id){ return document.querySelector('#inventory .bag-tile[data-id="'+id+'"]'); };
+      var none={hidden:true, querySelectorAll:function(){ return []; }, querySelector:function(){ return {click:function(){}, textContent:''}; }};
+      var menu=function(){ return document.getElementById('bagMenu')||none; };
+      var rows=function(){ return [].map.call(menu().querySelectorAll('.bm-row'),function(b){ return (b.getAttribute('data-bm')||'-')+(b.disabled?'!':''); }).join(','); };
+      var pick=function(act){ return menu().querySelector('.bm-row[data-bm="'+act+'"]'); };
+      var right=function(id){ var e=new MouseEvent('contextmenu',{bubbles:true,cancelable:true,clientX:200,clientY:200}); tile(id).querySelector('.bag-ic').dispatchEvent(e); return e.defaultPrevented; };
+      var r={};
+      r.prevented=right('coal');
+      r.open=menu()!==none&&!menu().hidden; r.rows=rows(); r.head=menu().querySelector('.bm-head').textContent; r.ring=tile('coal').classList.contains('menu-on');
+      var price=effectiveItemSell('coal');
+      pick('sell1').click();
+      r.sold1={coal:state.items.coal, paid:state.coins===price, closed:menu().hidden, ring:tile('coal').classList.contains('menu-on')};
+      right('coal'); var escWasOpen=!menu().hidden; document.body.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true}));
+      r.esc={was:escWasOpen, closed:menu().hidden, satchel:invOpen};
+      right('coal'); document.querySelector('#inventory .bag-search').dispatchEvent(new MouseEvent('mousedown',{bubbles:true}));
+      r.outside=menu().hidden;
+      right('coal'); pick('lock').click();
+      r.locked={list:(state.bagLocked||[]).join(','), badge:tile('coal').classList.contains('locked')&&!!tile('coal').querySelector('.bag-lk .ev-icon')};
+      right('coal'); r.lockedRows=rows(); if(typeof bagMenuClose==='function') bagMenuClose();
+      var coins0=state.coins; bagSell('coal',Infinity); r.sellRefused=state.items.coal===8&&state.coins===coins0;
+      openSellModal('coal',price,8); r.dialogRefused=document.getElementById('sellModal').classList.contains('hidden');
+      document.getElementById('sellModal').classList.add('hidden');
+      if(tile('coal')) tile('coal').click();
+      r.cardSell=[].filter.call(document.querySelectorAll('#inventory .bag-dock .bag-btn.sell'),function(b){ return !b.disabled; }).length;
+      r.cardLockOn=!!document.querySelector('#inventory .bag-dock .dk-keep [data-bag="lock"].on');
+      var lockBtn=document.querySelector('#inventory .bag-dock .dk-keep [data-bag="lock"]'); if(lockBtn) lockBtn.click();
+      r.unlocked=(state.bagLocked||[]).length===0&&!!tile('coal')&&!tile('coal').classList.contains('locked');
+      r.cardSellBack=[].filter.call(document.querySelectorAll('#inventory .bag-dock .bag-btn.sell'),function(b){ return !b.disabled; }).length;
+      bagSelect(null);
+      return r;
+    })()`);
+    ok('right-clicking an item opens its menu instead of the browser\'s, and rings the item',
+       rc.prevented === true && rc.open === true && rc.ring === true && /Coal/.test(rc.head), JSON.stringify(rc));
+    ok('the menu sells 1, all, or an amount, and has Lock and Placeholder',
+       rc.rows === 'sell1,sellall,sellx,lock,hold', rc.rows);
+    ok('Sell 1 from the menu sells one, pays for it and closes the menu',
+       rc.sold1.coal === 8 && rc.sold1.paid === true && rc.sold1.closed === true && rc.sold1.ring === false, JSON.stringify(rc.sold1));
+    ok('Escape closes the menu and leaves the satchel open, and so does a press anywhere else',
+       rc.esc.was === true && rc.esc.closed === true && rc.esc.satchel === true && rc.outside === true, JSON.stringify(rc));
+    ok('Lock puts a padlock on the item, and its menu offers no selling',
+       rc.locked.list === 'coal' && rc.locked.badge === true && rc.lockedRows === '-!,lock,hold', JSON.stringify(rc));
+    ok('a locked item cannot be sold from the card, Sell all or the sell dialog',
+       rc.sellRefused === true && rc.dialogRefused === true && rc.cardSell === 0 && rc.cardLockOn === true, JSON.stringify(rc));
+    ok('the card\'s Lock button unlocks it, and selling comes back', rc.unlocked === true && rc.cardSellBack > 0, JSON.stringify(rc));
+
+    const ph = ev(`(function(){
+      state=defaultState(); normalizeState(); invSearch=''; _bagSel=null; state.bagTabs=[]; state.invPrefs.tab='all'; state.invPrefs.sort='category';
+      state.items={coal:9, iron_ore:5, bronze_bar:4}; state.coins=0;
+      renderInventory();
+      var tile=function(id){ return document.querySelector('#inventory .bag-tile[data-id="'+id+'"]'); };
+      var ids=function(){ return [].map.call(document.querySelectorAll('#inventory .bag-tile'),function(t){ return t.getAttribute('data-id'); }).join(','); };
+      var none={hidden:true, querySelectorAll:function(){ return []; }, querySelector:function(){ return {click:function(){}, textContent:''}; }};
+      var menu=function(){ return document.getElementById('bagMenu')||none; };
+      var right=function(id){ var t=tile(id); if(t) t.dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,cancelable:true,clientX:100,clientY:100})); };
+      var r={};
+      var used0=satchelUsed(), order0=ids();
+      right('coal'); menu().querySelector('.bm-row[data-bm="hold"]').click();
+      r.set=(state.bagHolds||[]).join(',');
+      bagSell('coal',Infinity); renderInventory();
+      var ct=tile('coal');
+      r.after={order:ids()===order0, hold:!!ct&&ct.classList.contains('hold'), zero:ct?ct.querySelector('.bag-q').textContent:'', used:satchelUsed()===used0};
+      r.capNote=(document.querySelector('#inventory .bag-caph')||{}).textContent||'';
+      right('coal');
+      r.phRows=[].map.call(menu().querySelectorAll('.bm-row'),function(b){ return b.getAttribute('data-bm'); }).join(',');
+      r.phHead=menu().querySelector('.bm-head i').textContent; if(typeof bagMenuClose==='function') bagMenuClose();
+      if(tile('coal')) tile('coal').click();
+      r.card={q:(document.querySelector('#inventory .bag-dock .dk-q')||{}).textContent||'', sell:document.querySelectorAll('#inventory .bag-dock .bag-btn.sell').length,
+        holdOn:!!document.querySelector('#inventory .bag-dock .dk-keep [data-bag="hold"].on')};
+      bagSelect(null);
+      var fill=Object.keys(ITEMS).filter(function(id){ return !ITEMS[id].tool&&!ITEMS[id].skillGear&&!isSeedId(id)&&!(id in state.items)&&id!=='copper_ore'&&id!=='coal'; });
+      for(var i=0;satchelUsed()<satchelCap();i++) state.items[fill[i]]=1;
+      r.full=satchelUsed()===satchelCap();
+      r.back=grantItem('coal',4); r.refused=grantItem('copper_ore',1);
+      delete state.items.coal;
+      state.xp.mining=XP_CUM[99]; state.action={skill:'mining',actId:'mi4'};
+      var R0=Math.random; Math.random=function(){ return 0.999; };
+      try{ completeAction(getAct('mining','mi4'),'mining',1); }finally{ Math.random=R0; }
+      r.mined={coal:state.items.coal||0, running:!!state.action};
+      delete state.items.coal; var usedHeld=satchelUsed();
+      if(typeof bagToggleHold==='function') bagToggleHold('coal'); renderInventory();
+      r.freed={used:satchelUsed()===usedHeld-1, gone:!tile('coal')};
+      state.items={}; renderInventory();
+      return r;
+    })()`);
+    ok('Keep a placeholder, then sell every one: the tile stays in its spot, faded at 0',
+       ph.set === 'coal' && ph.after.order === true && ph.after.hold === true && ph.after.zero === '0', JSON.stringify(ph));
+    ok('and it still holds its slot, which the satchel says', ph.after.used === true && /1 slot is held by placeholders/.test(ph.capNote), JSON.stringify(ph));
+    ok('right-clicking a placeholder offers only Lock and Remove placeholder',
+       ph.phRows === 'lock,hold' && ph.phHead === 'placeholder', JSON.stringify(ph));
+    ok('its card shows 0 with no Sell, and the Placeholder button lit',
+       /^0/.test(ph.card.q) && ph.card.sell === 0 && ph.card.holdOn === true, JSON.stringify(ph.card));
+    ok('a full satchel still takes it back, and turns a new item away',
+       ph.full === true && ph.back === 4 && ph.refused === 0, JSON.stringify(ph));
+    ok('a skill making it keeps going with the satchel full', ph.mined.coal > 0 && ph.mined.running === true, JSON.stringify(ph.mined));
+    ok('taking the placeholder off an item you ran out of frees the slot and the tile goes',
+       ph.freed.used === true && ph.freed.gone === true, JSON.stringify(ph.freed));
+
+    const nm = ev(`(function(){
+      state=defaultState(); normalizeState();
+      state.xp.thieving=XP_CUM[40]; state.gd={night:{rep:120,q:[],day:-1,skipped:0}};
+      state.items={cut_purse:3, silver_plate:2}; state.coins=0; state.bagLocked=['silver_plate'];
+      var page=_gdGuildPage('night'); document.body.appendChild(page);
+      var r={};
+      r.cards=[].map.call(page.querySelectorAll('.gd-sellcard'),function(c){ var b=c.querySelector('.gd-btn'); return b.textContent+(b.disabled?'!':''); }).join(',');
+      r.label=(page.querySelector('.gd-sellall span')||{}).textContent||'';
+      var all=page.querySelector('.gd-sellall .gd-btn'); if(all) all.click();
+      r.after={purse:state.items.cut_purse||0, plate:state.items.silver_plate||0, paid:state.coins>0};
+      page.remove(); state.items={}; state.bagLocked=[];
+      return r;
+    })()`);
+    ok('the Nightmarket leaves a locked item out of Sell the lot, and says it is locked',
+       nm.after.purse === 0 && nm.after.plate === 2 && nm.after.paid === true && /Locked!/.test(nm.cards) && /1 locked/.test(nm.label), JSON.stringify(nm));
+
+    const nl = ev(`(function(){
+      state=defaultState();
+      state.bagLocked=['coal','coal','nope_item',5,null,'iron_ore'];
+      state.bagHolds='junk';
+      normalizeState();
+      var r={locked:(state.bagLocked||[]).join(','), holds:Array.isArray(state.bagHolds)&&(state.bagHolds||[]).length===0};
+      var tool=Object.keys(ITEMS).find(function(id){ return ITEMS[id].tool; });
+      state.bagHolds=[tool,'coal']; normalizeState(); r.noTool=(state.bagHolds||[]).join(',');
+      state=defaultState(); normalizeState(); r.fresh=(state.bagLocked||[]).length===0&&(state.bagHolds||[]).length===0;
+      state.bagHolds=['coal']; r.noHoldNoItem=typeof bagToggleHold==='function'&&bagToggleHold('iron_ore')===false&&(state.bagHolds||[]).join(',')==='coal';
+      var sel=[]; [].forEach.call(document.styleSheets,function(sh){ [].forEach.call(sh.cssRules||[],function(ru){ if(ru.selectorText) sel.push(ru.selectorText); }); });
+      r.css=['.bag-menu','.bag-tile.hold .bag-ic','.bag-tile.locked .bag-lk','.dk-keep'].every(function(s){ return sel.some(function(x){ return x.indexOf(s)>=0; }); });
+      state.items={coal:2}; _bagSel=null; _bagDockSig=''; renderInventory();
+      r.hint=(document.querySelector('#inventory .bag-dock-hint')||{}).textContent||'';
+      state.bagHolds=[];
+      return r;
+    })()`);
+    ok('saved locks and placeholders are cleaned on load: no repeats, unknown items or tools',
+       nl.locked === 'coal,iron_ore' && nl.holds === true && nl.noTool === 'coal' && nl.fresh === true, JSON.stringify(nl));
+    ok('a placeholder can only be set on an item you have, and the new pieces have CSS',
+       nl.noHoldNoItem === true && nl.css === true, JSON.stringify(nl));
+    ok('the empty item card tells you about right-click', /Right-click one to sell it, lock it or keep a placeholder/.test(nl.hint), nl.hint);
+  }
+
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));
   process.exit(fail ? 1 : 0);
 }, 2500);
