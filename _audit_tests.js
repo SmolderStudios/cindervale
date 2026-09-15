@@ -8355,6 +8355,53 @@ setTimeout(() => {
     ok('the curse that stacks every 10 floors is the Spire Curse', /^Spire Curse/.test(pw.curse || ''), pw.curse);
   }
 
+  section('Pinnacle double output stacks with the extra-output chances, and Gem Hoarder says what it does (0.9.124.57)');
+  {
+    /* completeAction ASSIGNED qty=q*2*times for a processing skill's master2, so Grand
+       Forge threw away Twin Pour, Phoenix Ash threw away Full Burn and Gem Mastery threw
+       away every gem, enchant and potion double. The base doubles now and the chances add
+       on top, as Farming's master2 already did. The /hr numbers used to disagree too:
+       gpPerAction wiped the chances and ratesFor ignored master2 altogether. */
+    const po = ev(`(function(){
+      function craft(skill, pick, tree, setup, rnd){
+        state=defaultState(); normalizeState();
+        state.xp[skill]=XP_CUM[99]; state.tree[skill]=tree;
+        if(setup) setup();
+        var act=SKILLS[skill].acts.find(pick);
+        for(var k in act.inp) state.items[k]=act.inp[k]*400;
+        var id=Object.keys(act.out)[0]; state.items[id]=0;
+        var R0=Math.random; Math.random=function(){ return rnd; };
+        try{ completeAction(act,skill,10); } finally { Math.random=R0; }
+        var r=ratesFor(act,skill);
+        return {act:act.id, got:state.items[id], shown:Math.round(r.rph/r.actsPerHour*100)/100};
+      }
+      function hoard(){ state.items.diamond_ring=1; state.enchantments.diamond_ring='hoarder_iv'; state.skillingEquipped.ring_l='diamond_ring'; }
+      var smelt=function(a){ return /^Smelt/.test(a.name) && a.out && Object.keys(a.out).length===1; };
+      var ring=function(a){ return a.cat!=='refine' && a.out && a.out.diamond_ring; };
+      var burn=function(a){ return a.out && a.out.ash; };
+      return {
+        forge:     craft('smithing', smelt, {sm_master2:1, sm_double:15}, null, 0),
+        forgeAvg:  craft('smithing', smelt, {sm_master2:1, sm_double:15}, null, 0.999),
+        gem:       craft('jeweler', ring, {jw_master2:1}, hoard, 0),
+        phoenix:   craft('firemaking', burn, {fm_master2:1, fm_yield:12}, null, 0),
+        refine:    craft('jeweler', function(a){ return a.id==='jw_ref2'; }, {jw_master2:1}, null, 0.999),
+        grandForgeShown: craft('smithing', smelt, {sm_master2:1}, null, 0.999).shown,
+        hoarderDesc: [TREES.jeweler.find(function(n){ return n.id==='jw_master3'; }).desc(0), TREES.jeweler.find(function(n){ return n.id==='jw_master3'; }).desc(1), PASSIVE_TIPS.jw_master3].join(' | '),
+        hoarderXp: (function(){ state=defaultState(); normalizeState(); state.tree.jeweler={}; var a=mods('jeweler').xpMult;
+                     state.tree.jeweler={jw_master3:1}; return Math.round(mods('jeweler').xpMult/a*100)/100; })()
+      };
+    })()`);
+    ok('Grand Forge plus a Twin Pour that lands: 3 bars a smelt, not a flat 2', po.forge?.got === 30, JSON.stringify(po.forge));
+    ok('Phoenix Ash plus Full Burn: the bonus ash is kept', po.phoenix?.got === 30, JSON.stringify(po.phoenix));
+    ok('Gem Mastery plus a Hoarder enchant double: 3 rings a cut', po.gem?.got === 30, JSON.stringify(po.gem));
+    ok('with no bonus rolled it is still exactly double, and refining is still not doubled',
+       po.forgeAvg?.got === 20 && po.refine?.got === 10, JSON.stringify([po.forgeAvg, po.refine]));
+    ok('the /hr number agrees with the forge: 2.6 bars a smelt at max Twin Pour, 2 with Grand Forge alone',
+       po.forge?.shown === 2.6 && po.grandForgeShown === 2, JSON.stringify([po.forge?.shown, po.grandForgeShown]));
+    ok('Gem Hoarder says 2x Jeweler XP, which is what it does, and no longer promises gem dust',
+       /Jeweler XP/.test(po.hoarderDesc || '') && !/gem dust|output/i.test(po.hoarderDesc || '') && po.hoarderXp === 2, po.hoarderDesc + ' | xp x' + po.hoarderXp);
+  }
+
   section('Skill presets hold their own skill, and the OSRS doll (0.9.124.44)');
   {
     /* The Woodcutting preset offered the whole Agility set, and a skill cape for
