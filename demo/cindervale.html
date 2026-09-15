@@ -7537,6 +7537,14 @@ body:not(.is-demo) .demo-only{display:none !important}
 #inventory .bag-tile.sel .bag-ic{box-shadow:inset 0 2px 5px rgba(0,0,0,.85),0 0 0 2px var(--gold-hi),0 0 12px rgba(240,199,114,.25)}
 #inventory .bag-tile.drop-on .bag-ic{box-shadow:inset 0 2px 5px rgba(0,0,0,.85),0 0 0 2px var(--green)}
 #inventory .bag-tile.dragging{opacity:.35}
+/* the spot a dragged item will take (0.9.125.2): a gold line on that side of the item
+   it is over, as tabs and skills show it. Spans the picture, not the name. */
+#inventory .bag-tile.drop-l::before,#inventory .bag-tile.drop-r::before{content:'';position:absolute;top:0;
+  bottom:calc(13.8px*var(--tscale) + 4px);width:3px;border-radius:2px;background:var(--gold-hi);
+  box-shadow:0 0 7px rgba(240,199,114,.75);pointer-events:none;z-index:3}
+#inventory .bag-tile.drop-l::before{left:-2px}
+#inventory .bag-tile.drop-r::before{right:-2px}
+#inventory .bag-tile.drop-l .bag-ic,#inventory .bag-tile.drop-r .bag-ic{box-shadow:inset 0 2px 5px rgba(0,0,0,.85),0 0 0 1px rgba(240,199,114,.5)}
 #inventory .bag-tile .bag-q{position:absolute;top:3px;left:6px;font-family:var(--num);font-size:calc(12px*var(--tscale));
   color:#ffe45a;text-shadow:1px 1px 0 #000,0 0 3px #000;pointer-events:none}
 #inventory .bag-tile .bag-tn{flex:none;width:100%;font-size:calc(11.5px*var(--tscale));line-height:1.2;color:#c9b48c;text-align:center;
@@ -8755,7 +8763,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.125.1">v0.9.125</div>
+  <div class="mm-ver" data-build="0.9.125.2">v0.9.125</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -19904,6 +19912,15 @@ function normalizeState(){
     state.bagTabs=kept;
     if(state.invPrefs.tab!=='all'&&!kept.some(t=>t.id===state.invPrefs.tab)) state.invPrefs.tab='all';
   }
+  /* The order you dragged what is not in a tab into (0.9.125.2). Ids you have run
+     out of stay, so an item comes back to its place; an id is in this list or in a
+     tab, never both. */
+  {
+    const tabbed={}, seen={};
+    state.bagTabs.forEach(t=>t.items.forEach(id=>{ tabbed[id]=1; }));
+    state.bagOrder=(Array.isArray(state.bagOrder)?state.bagOrder:[])
+      .filter(id=>typeof id==='string'&&ITEMS[id]&&!tabbed[id]&&!seen[id]&&(seen[id]=1));
+  }
 
   // Auto-buff config default (1.0.30).
   if(!state.autoBuff||typeof state.autoBuff!=='object') state.autoBuff={enabled:false,itemId:''};
@@ -29990,6 +30007,9 @@ const INV_PAGE_SIZE=10;
      its picture (pick any item in it), its name (renames as you type), arrows to
      move it, Sort by type and Delete. Double-click a tab to rename it, drag a tab
      onto another to move it.
+   - Your order (0.9.125.2). Jordan: "so they arent locked to one slot". Drag an item
+     onto another and it takes that spot, in a tab or out of one; what is not in a
+     tab switches to Your order, starting from the order on screen.
 
    History: a 300px list (to 0.9.124.40), then a grid in a 400px right bar
    (0.9.124.41), which pushed the middle column down on most windows (0.9.124.43).
@@ -29999,7 +30019,7 @@ const INV_PAGE_SIZE=10;
    be about 1.5 MB of markup each time. */
 const BAG_BUCKET_LABEL={gear:'Combat Gear',jewelry:'Jewelry',ores:'Ores',bars:'Bars',logs:'Logs',fire:'Fire',
   fish:'Ingredients',cooked:'Food',potions:'Potions',forage:'Plants',farm:'Farm',gems:'Gems',sea:'Sea',misc:'Other'};
-const BAG_SORT_LABEL={category:'Type',name:'A–Z',qty:'Amount',value:'Value'};
+const BAG_SORT_LABEL={category:'Type',name:'A–Z',qty:'Amount',value:'Value',custom:'Your order'};
 const BAG_SLOT_LABEL={helmet:'Head',chest:'Chest',legs:'Legs',gloves:'Hands',boots:'Feet',weapon:'Weapon',
   shield:'Off-hand',cape:'Cape',amulet:'Neck',ring_l:'Ring',ring_r:'Ring',quiver:'Quiver'};
 const BAG_TAB_MAX=9;
@@ -30010,6 +30030,8 @@ let _bagOrderKey='';
 let _bagDockSig='';
 let invTab='all';            // the open tab: 'all' or a tab id
 let _bagDrag=null;           // the id being dragged
+let _bagDragT=0;             // when that drag started; the grid holds still for it
+let _bagSpot=null;           // where it goes if let go now (bagDropSpot)
 let _bagTabDrag=null;        // {id, t}: a tab being dragged to a new place
 let _bagPickOpen=false;      // the open tab's picture picker
 let _bagNameWas=null;        // the name before this edit, for Escape
@@ -30029,24 +30051,106 @@ function bagTabLabel(t){
   return 'Tab '+(bagTabs().indexOf(t)+1);
 }
 function _bagEsc(s){ return String(s).replace(/[&<>"]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+function bagOrder(){
+  if(!Array.isArray(state.bagOrder)) state.bagOrder=[];
+  return state.bagOrder;
+}
+/* The sort All uses for what is not in a tab: the saved one, as renderInventory reads it. */
+function bagSortMode(){
+  const s=state.invPrefs&&typeof state.invPrefs.sort==='string'?state.invPrefs.sort:invSort;
+  return BAG_SORT_LABEL[s]?s:'category';
+}
+/* How All orders what is not in a tab. `catOf` is the render's type lookup; without
+   it the types are worked out here. Your order puts the ids it has in its places and
+   anything it has not met yet (new loot) after them, by type. */
+function _bagSortFn(mode, catOf){
+  const order=_bagCatOrder||[], memo={};
+  const cat=catOf||function(id){ return id in memo?memo[id]:(memo[id]=_bagCatFn?_bagCatFn(id):'misc'); };
+  const pos=new Map();
+  if(mode==='custom') bagOrder().forEach(function(id,i){ pos.set(id,i); });
+  return function(a,b){
+    if(mode==='custom'){
+      const pa=pos.has(a)?pos.get(a):Infinity, pb=pos.has(b)?pos.get(b):Infinity;
+      if(pa!==pb) return pa<pb?-1:1;
+    }
+    if(mode==='category'||mode==='custom'){
+      const ca=order.indexOf(cat(a)), cb=order.indexOf(cat(b));
+      if(ca!==cb) return ca-cb;
+      return ITEMS[a].name.localeCompare(ITEMS[b].name);
+    }
+    if(mode==='name') return ITEMS[a].name.localeCompare(ITEMS[b].name);
+    if(mode==='qty') return (state.items[b]||0)-(state.items[a]||0);
+    if(mode==='value') return effectiveItemSell(b)-effectiveItemSell(a);
+    return 0;
+  };
+}
+/* Every id not in a tab, in the order All shows them: the list an item moves within.
+   In Your order it keeps the ids you have run out of, so they hold their places. */
+function bagLooseSeq(){
+  const mode=bagSortMode(), tabbed=new Set();
+  bagTabs().forEach(function(t){ t.items.forEach(function(x){ tabbed.add(x); }); });
+  const own=Object.keys(state.items).filter(function(x){ return (state.items[x]||0)>0&&ITEMS[x]&&!tabbed.has(x); });
+  if(mode!=='custom') return own.sort(_bagSortFn(mode));
+  const kept=bagOrder().filter(function(x){ return ITEMS[x]&&!tabbed.has(x); }), known=new Set(kept);
+  return kept.concat(own.filter(function(x){ return !known.has(x); }).sort(_bagSortFn('category')));
+}
 /* Move an item to a tab id, to 'all' (out of every tab), or to 'new' (a tab of its
-   own). `before` is an item already in that tab to put it in front of. */
-function bagMoveItem(id, to, before){
-  if(!id||!ITEMS[id]) return false;
+   own). `target` is an item already there to put it next to: in front of it, or
+   after it when `after` is set.
+   Next to an item that is not in a tab (0.9.125.2), Jordan: "can we make it so we
+   can organize the items in our satchel like drag them and move them around in the
+   satchel? so they arent locked to one slot basically". That turns on Your order,
+   starting from the order on screen, so in any other sort only this item changes
+   place, the same as the skill list. */
+function bagMoveItem(id, to, target, after){
+  if(!id||!ITEMS[id]||target===id) return false;
   const tabs=bagTabs();
   if(to==='new'&&tabs.length>=BAG_TAB_MAX){ toast('That is all '+BAG_TAB_MAX+' tabs. Delete one to make another.'); return false; }
   if(to!=='all'&&to!=='new'&&!tabs.some(function(t){ return t.id===to; })) return false;
+  // read the loose order before anything moves: the item may be coming out of a tab
+  const place=to==='all'&&!!target&&!!ITEMS[target]&&!bagTabOf(target);
+  const seq=place?bagLooseSeq().filter(function(x){ return x!==id; }):null;
   tabs.forEach(function(t){ t.items=t.items.filter(function(x){ return x!==id; }); });
+  const putIn=function(list){
+    let i=target?list.indexOf(target):-1;
+    if(i<0) i=list.length; else if(after) i++;
+    list.splice(i,0,id);
+  };
   if(to==='new'){
     let n=1; while(tabs.some(function(t){ return t.id==='t'+n; })) n++;
     tabs.push({id:'t'+n, name:'', items:[id]});
   } else if(to!=='all'){
-    const t=tabs.find(function(x){ return x.id===to; });
-    const i=before?t.items.indexOf(before):-1;
-    if(i>=0) t.items.splice(i,0,id); else t.items.push(id);
+    putIn(tabs.find(function(x){ return x.id===to; }).items);
+  }
+  if(place){
+    putIn(seq);
+    state.bagOrder=seq;
+    invSort='custom'; if(state.invPrefs) state.invPrefs.sort='custom';
+  } else if(to!=='all'){
+    state.bagOrder=bagOrder().filter(function(x){ return x!==id; });   // a tab holds it now
   }
   saveGame(); renderInventory();
   return true;
+}
+/* Where a dragged item goes if it is let go over `el` (0.9.125.2): {grid, tile, to,
+   target, after}, or null. Onto an item it takes that item's spot. In the same list,
+   coming from in front of it, that means after it, otherwise in front of it, and the
+   gold line is drawn on that side. Over the gap between two items the last line
+   stays, so letting go there does what it showed. */
+function bagDropSpot(id, el){
+  const grid=id&&el&&el.closest?el.closest('#inventory .bag-tiles'):null;
+  if(!grid) return null;
+  const tile=el.closest('.bag-tile');
+  if(!tile) return _bagSpot&&_bagSpot.grid===grid?_bagSpot:null;
+  const target=tile.getAttribute('data-id'), where=grid.getAttribute('data-tab')||'';
+  if(!target||target===id) return null;
+  const to=where==='loose'?'all':where;
+  if(to!=='all'&&!bagTabs().some(function(t){ return t.id===to; })) return null;
+  const src=_bagTiles.get(id), srcEl=src&&src.el;
+  const srcGrid=srcEl&&srcEl.isConnected?srcEl.closest('.bag-tiles'):null;
+  const same=!!srcGrid&&srcGrid.getAttribute('data-tab')===where;
+  const after=same&&!!(srcEl.compareDocumentPosition(tile)&Node.DOCUMENT_POSITION_FOLLOWING);
+  return {grid:grid, tile:tile, to:to, target:target, after:after};
 }
 function bagNewTab(){
   const tabs=bagTabs();
@@ -30404,7 +30508,7 @@ function renderInventory(){
     const sortBtn=box.querySelector('.inv-sort');
     /* Step the sort mode by +/-1 with wraparound. Right-click walks backward so
        overshooting the mode you wanted costs one click instead of three. */
-    const sortCycle=['category','name','qty','value'];
+    const sortCycle=['category','name','qty','value','custom'];
     const stepSort=dir=>{
       const i=Math.max(0,sortCycle.indexOf(invSort));
       invSort=sortCycle[(i+dir+sortCycle.length)%sortCycle.length];
@@ -30516,10 +30620,12 @@ function renderInventory(){
       if(act==='remove'){ unequipBodyItem(ITEMS[id].cslot,'combat'); return; }
       if(act==='use'){ usePotion(id); renderRightPanel(); return; }
     });
-    /* Drag an item onto a tab, onto +, or onto another item. Drag a tab onto another
-       tab to put it there: it lands after one further right, before one further
-       left. Onto All makes it first, onto + makes it last. */
-    const clearDrag=()=>box.querySelectorAll('.dragging,.drop-on,.tab-drop-l,.tab-drop-r').forEach(x=>x.classList.remove('dragging','drop-on','tab-drop-l','tab-drop-r'));
+    /* Drag an item onto a tab, onto +, or onto another item to take its spot
+       (bagDropSpot). Drag a tab onto another tab to put it there: it lands after one
+       further right, before one further left. Onto All makes it first, onto + makes
+       it last. */
+    const clearDrag=()=>box.querySelectorAll('.dragging,.drop-on,.drop-l,.drop-r,.tab-drop-l,.tab-drop-r').forEach(x=>x.classList.remove('dragging','drop-on','drop-l','drop-r','tab-drop-l','tab-drop-r'));
+    const clearMarks=()=>box.querySelectorAll('.drop-on,.drop-l,.drop-r').forEach(x=>x.classList.remove('drop-on','drop-l','drop-r'));
     const tabDropSpot=tgt=>{
       const tabs=bagTabs(), key=tgt.getAttribute('data-tab');
       const from=tabs.findIndex(t=>t.id===_bagTabDrag.id);
@@ -30539,17 +30645,21 @@ function renderInventory(){
         return;
       }
       const t=e.target.closest?e.target.closest('.bag-tile'):null; if(!t) return;
-      _bagTabDrag=null;
-      _bagDrag=t.getAttribute('data-id');
+      _bagTabDrag=null; _bagSpot=null;
+      _bagDrag=t.getAttribute('data-id'); _bagDragT=Date.now();
       try{ e.dataTransfer.effectAllowed='move'; e.dataTransfer.setData('text/plain',_bagDrag); }catch(_){}
       t.classList.add('dragging');
       if(typeof hideTooltip==='function') hideTooltip();
       bagDollArm(_bagDrag);   // light the doll squares it can go in
     });
     box.addEventListener('dragend',()=>{
-      const wasTab=!!_bagTabDrag;
-      _bagDrag=null; _bagTabDrag=null; clearDrag(); bagDollDisarm();
-      if(wasTab) renderInventory();   // the tab row waited for the drag to finish
+      const held=!!(_bagTabDrag||_bagDrag);
+      _bagDrag=null; _bagTabDrag=null; _bagSpot=null; clearDrag(); bagDollDisarm();
+      if(held) renderInventory();   // the tab row and the grid waited for the drag to finish
+    });
+    // off the satchel (onto the doll, say): no line left behind in the grid
+    document.addEventListener('dragover',e=>{
+      if(_bagDrag&&!box.contains(e.target)){ _bagSpot=null; clearMarks(); }
     });
     box.addEventListener('dragover',e=>{
       if(_bagTabDrag){
@@ -30566,11 +30676,15 @@ function renderInventory(){
         return;
       }
       if(!_bagDrag) return;
-      const tgt=e.target.closest?(e.target.closest('.bag-tab')||e.target.closest('.bag-tile')):null;
-      if(!tgt) return;
+      const tab=e.target.closest?e.target.closest('.bag-tab'):null;
+      const spot=tab?null:bagDropSpot(_bagDrag, e.target);
+      _bagSpot=spot;
+      const mark=tab||(spot&&spot.tile);
+      if(!mark){ clearMarks(); return; }
       e.preventDefault();
       try{ e.dataTransfer.dropEffect='move'; }catch(_){}
-      if(!tgt.classList.contains('drop-on')){ box.querySelectorAll('.drop-on').forEach(x=>x.classList.remove('drop-on')); tgt.classList.add('drop-on'); }
+      const cls=tab?'drop-on':spot.after?'drop-r':'drop-l';
+      if(!mark.classList.contains(cls)){ clearMarks(); mark.classList.add(cls); }
     });
     box.addEventListener('drop',e=>{
       if(_bagTabDrag){
@@ -30582,16 +30696,14 @@ function renderInventory(){
         return;
       }
       if(!_bagDrag) return;
-      const id=_bagDrag; _bagDrag=null; clearDrag(); bagDollDisarm();
+      const id=_bagDrag;
       const tab=e.target.closest?e.target.closest('.bag-tab'):null;
-      if(tab){ e.preventDefault(); bagMoveItem(id, tab.getAttribute('data-tab')); return; }
-      const tile=e.target.closest?e.target.closest('.bag-tile'):null;
-      if(!tile) return;
-      e.preventDefault();
-      const before=tile.getAttribute('data-id'); if(before===id) return;
-      const grid=tile.closest('.bag-tiles'), where=grid?grid.getAttribute('data-tab'):'';
-      if(where&&where!=='loose') bagMoveItem(id, where, before);   // into that tab, in front of it
-      else if(bagTabOf(id)) bagMoveItem(id,'all');                  // among the loose items: out of its tab
+      const spot=tab?null:bagDropSpot(id, e.target);   // before _bagSpot is cleared: a gap uses it
+      _bagDrag=null; _bagSpot=null; clearDrag(); bagDollDisarm();
+      if(tab||spot) e.preventDefault();
+      const moved=tab?bagMoveItem(id, tab.getAttribute('data-tab'))
+        :spot?bagMoveItem(id, spot.to, spot.target, spot.after):false;
+      if(!moved) renderInventory();   // it stayed put: catch up on the grid the drag held back
     });
   }
 
@@ -30645,17 +30757,7 @@ function renderInventory(){
   const catOf={}; for(const id of owned) catOf[id]=itemCat(id);
   const qs=invSearch.trim().toLowerCase();
   const match=id=>!qs||ITEMS[id].name.toLowerCase().indexOf(qs)>=0;
-  const sortFn=(a,b)=>{
-    if(invSort==='category'){
-      const ca=catOrder.indexOf(catOf[a]), cb=catOrder.indexOf(catOf[b]);
-      if(ca!==cb) return ca-cb;
-      return ITEMS[a].name.localeCompare(ITEMS[b].name);
-    }
-    if(invSort==='name') return ITEMS[a].name.localeCompare(ITEMS[b].name);
-    if(invSort==='qty') return (state.items[b]||0)-(state.items[a]||0);
-    if(invSort==='value') return effectiveItemSell(b)-effectiveItemSell(a);
-    return 0;
-  };
+  const sortFn=_bagSortFn(invSort, id=>catOf[id]);
   const tabs=bagTabs();
   const ownedSet=new Set(owned), inTab=new Set();
   tabs.forEach(t=>t.items.forEach(id=>inTab.add(id)));
@@ -30784,7 +30886,11 @@ function renderInventory(){
   // grid
   const body=box.querySelector('.bag-body');
   const orderKey=invSort+'|'+invTab+'|'+qs+'|'+sections.map(s=>s.tab+':'+s.label+':'+s.ids.join(',')).join('/');
-  if(orderKey!==_bagOrderKey){
+  /* Not while an item is dragged (0.9.125.2): new loot would shift the spots under
+     the pointer and move the line away from where it was let go. Drop and dragend
+     repaint. */
+  const itemDragging=!!(_bagDrag&&Date.now()-_bagDragT<60000);
+  if(orderKey!==_bagOrderKey&&!itemDragging){
     _bagOrderKey=orderKey;
     const frag=document.createDocumentFragment();
     if(!sections.length){
@@ -30826,7 +30932,7 @@ function renderInventory(){
     if(_bagDockSig!=='none'){
       _bagDockSig='none';
       dock.classList.add('empty');
-      dock.innerHTML='<div class="bag-dock-hint">Click an item to see it here, with its buttons.</div>';
+      dock.innerHTML='<div class="bag-dock-hint">Click an item to see it here, with its buttons. Drag an item onto another to put it in that spot.</div>';
     }
   } else {
     const id=_bagSel;
