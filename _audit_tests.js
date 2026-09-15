@@ -1275,7 +1275,8 @@ setTimeout(() => {
     })()`);
     ok('left-click still advances the sort', sort.seq[0] === 'name', JSON.stringify(sort.seq));
     ok('right-click steps the sort backward', sort.seq[1] === 'category');
-    ok('right-click wraps past the head', sort.seq[2] === 'value');
+    // Your order (0.9.125.2) sits at the end of the cycle, so wrapping backward reaches it first
+    ok('right-click wraps past the head', sort.seq[2] === 'custom', JSON.stringify(sort.seq));
     ok('the browser context menu is suppressed', sort.prevented === true);
     ok('the tooltip documents right-click', /right-click/i.test(sort.title || ''), sort.title);
 
@@ -8584,6 +8585,160 @@ setTimeout(() => {
        && /\+3\.2% ranged accuracy/.test(rc.text) && /\+1\.6% ranged damage/.test(rc.text), JSON.stringify(rc));
     ok('Windcutter and Barbed roll on a bow at 1% and 1.4%', rc.bow1.wind === 0.01 && Math.abs(rc.bow1.barb - 0.014) < 1e-9, JSON.stringify(rc));
     ok('and none of the four touches a sword', rc.sw1.acc === rc.sw0.acc && rc.sw1.hit === rc.sw0.hit && rc.sw1.wind === 0 && rc.sw1.barb === 0, JSON.stringify(rc));
+  }
+
+  section('Satchel items dragged into your own order (0.9.125.2)');
+  {
+    /* Jordan: "can we make it so we can organize the items in our satchel like drag
+       them and move them around in the satchel? so they arent locked to one slot".
+       What was not in a tab was always sorted, so an item dropped among those went
+       nowhere, and inside a tab an item dropped on the one after it stayed where it
+       was. Neither threw. */
+    const yo = ev(`(function(){
+      state=defaultState(); normalizeState(); invSearch=''; _bagSel=null; state.bagTabs=[]; state.invPrefs.tab='all'; state.invPrefs.sort='name';
+      document.querySelectorAll('.modal-back').forEach(function(m){ m.classList.add('hidden'); });
+      state.items={bronze_bar:2, coal:9, cooked_trout:4, iron_ore:5, oak_log:6, pine_log:3};
+      closeInventory(); leaveFullPanels(); viewTab='acts'; renderAll(); openInventory();
+      var ids=function(){ return [].map.call(document.querySelectorAll('#inventory .bag-tile'),function(t){ return t.getAttribute('data-id'); }); };
+      var tile=function(id){ return document.querySelector('#inventory .bag-tile[data-id="'+id+'"]'); };
+      var fire=function(el,type){ var e=new Event(type,{bubbles:true,cancelable:true}); el.dispatchEvent(e); return e.defaultPrevented; };
+      var r={};
+      var s=ids(); r.start=s.join(',');
+      fire(tile(s[0]),'dragstart');
+      r.overNext=fire(tile(s[1]),'dragover'); r.lineRight=tile(s[1]).classList.contains('drop-r')&&!tile(s[1]).classList.contains('drop-l');
+      fire(tile(s[1]),'drop');
+      r.next=ids().join(','); r.wantNext=[s[1],s[0],s[2],s[3],s[4],s[5]].join(',');
+      r.mode=state.invPrefs.sort; r.pill=document.querySelector('#inventory .inv-sort').textContent; r.saved=(state.bagOrder||[]).join(',');
+      fire(tile(s[4]),'dragstart'); fire(tile(s[0]),'dragover'); r.lineLeft=tile(s[0]).classList.contains('drop-l');
+      fire(tile(s[0]),'drop');
+      r.back=ids().join(','); r.wantBack=[s[1],s[4],s[0],s[2],s[3],s[5]].join(',');
+      fire(tile(s[1]),'dragstart'); fire(tile(s[5]),'drop');
+      r.last=ids().join(','); r.wantLast=[s[4],s[0],s[2],s[3],s[5],s[1]].join(',');
+      var b=ids();
+      fire(tile(b[3]),'dragstart'); fire(tile(b[0]),'dragover');
+      var grid=tile(b[0]).closest('.bag-tiles');
+      r.gapTaken=fire(grid,'dragover'); r.gapLine=tile(b[0]).classList.contains('drop-l');
+      fire(grid,'drop');
+      r.gap=ids().join(','); r.wantGap=[b[3],b[0],b[1],b[2],b[4],b[5]].join(',');
+      r.lineGone=!document.querySelector('#inventory .drop-l,#inventory .drop-r');
+      var was=ids().join(',');
+      fire(tile(b[3]),'dragstart'); r.selfNo=!fire(tile(b[3]),'dragover'); fire(tile(b[3]),'drop');
+      r.self=ids().join(',')===was;
+      return r;
+    })()`);
+    ok('an item dropped on the one after it takes that spot (it used to stay put)',
+       yo.next === yo.wantNext && yo.overNext === true && yo.lineRight === true, JSON.stringify(yo));
+    ok('dropping one among the rest turns on Your order, and the sort button says so',
+       yo.mode === 'custom' && yo.pill === '↕ Your order' && yo.saved === yo.wantNext, JSON.stringify(yo));
+    ok('dropped on one nearer the front it goes in front of it, with the line on that side',
+       yo.back === yo.wantBack && yo.lineLeft === true, JSON.stringify(yo));
+    ok('dropped on the last item from in front of it, it goes last', yo.last === yo.wantLast, JSON.stringify(yo));
+    ok('over the gap between items the line stays, and letting go there does what it showed',
+       yo.gapTaken === true && yo.gapLine === true && yo.gap === yo.wantGap && yo.lineGone === true, JSON.stringify(yo));
+    ok('an item dropped on itself goes nowhere', yo.selfNo === true && yo.self === true, JSON.stringify(yo));
+
+    const seed = ev(`(function(){
+      state=defaultState(); normalizeState(); invSearch=''; _bagSel=null; state.bagTabs=[]; state.invPrefs.tab='all';
+      state.items={bronze_bar:2, coal:9, cooked_trout:4, iron_ore:5, oak_log:6, pine_log:3};
+      state.bagOrder=['pine_log','coal'];   // an older arrangement, from before the sort was changed
+      state.invPrefs.sort='qty'; renderInventory();
+      var ids=function(){ return [].map.call(document.querySelectorAll('#inventory .bag-tile'),function(t){ return t.getAttribute('data-id'); }); };
+      var tile=function(id){ return document.querySelector('#inventory .bag-tile[data-id="'+id+'"]'); };
+      var fire=function(el,type){ var e=new Event(type,{bubbles:true,cancelable:true}); el.dispatchEvent(e); return e.defaultPrevented; };
+      var byName=function(a,b){ return ITEMS[a].name.localeCompare(ITEMS[b].name); };
+      var r={};
+      var q=ids(); r.qty=q.join(',');
+      fire(tile(q[5]),'dragstart'); fire(tile(q[0]),'drop');
+      r.moved=ids().join(','); r.want=[q[5],q[0],q[1],q[2],q[3],q[4]].join(','); r.mode=state.invPrefs.sort;
+      var saved=JSON.parse(JSON.stringify(state)); state=defaultState(); Object.assign(state,saved); normalizeState();
+      renderInventory(); r.loaded=ids().join(','); r.loadedMode=invSort;
+      state.items.coal=0; renderInventory(); r.gone=ids().join(','); r.wantGone=r.want.split(',').filter(function(x){ return x!=='coal'; }).join(',');
+      grantItem('coal',3); renderInventory(); r.back=ids().join(',');
+      grantItem('copper_ore',2); renderInventory(); r.loot=ids().slice(-1)[0];
+      var full=ids();
+      invSearch='log'; renderInventory(); var shown=ids(); r.searchShown=shown.join(',');
+      var want=full.filter(function(x){ return x!==shown[0]; }); want.splice(want.indexOf(shown[1])+1,0,shown[0]); r.wantSearch=want.join(',');
+      fire(tile(shown[0]),'dragstart'); fire(tile(shown[1]),'drop');
+      invSearch=''; renderInventory(); r.afterSearch=ids().join(',');
+      state.invPrefs.sort='name'; renderInventory(); r.nameAgain=ids().join(','); r.wantName=ids().slice().sort(byName).join(',');
+      state.invPrefs.sort='custom'; renderInventory(); r.customAgain=ids().join(',');
+      state.invPrefs.sort='category'; state.bagOrder=[]; renderInventory();
+      return r;
+    })()`);
+    ok('from another sort only the dragged item moves, and an older arrangement is replaced',
+       seed.moved === seed.want && seed.mode === 'custom', JSON.stringify(seed));
+    ok('Your order survives a save and load', seed.loaded === seed.want && seed.loadedMode === 'custom', JSON.stringify(seed));
+    ok('an item you run out of keeps its spot for when it comes back', seed.gone === seed.wantGone && seed.back === seed.want, JSON.stringify(seed));
+    ok('new loot goes after your order', seed.loot === 'copper_ore', JSON.stringify(seed));
+    ok('with a search on, an item moves among everything, next to the one it was dropped on',
+       seed.searchShown.split(',').length === 2 && seed.afterSearch === seed.wantSearch, JSON.stringify(seed));
+    ok('A-Z still sorts, and Your order is waiting when you come back to it',
+       seed.nameAgain === seed.wantName && seed.customAgain === seed.afterSearch, JSON.stringify(seed));
+
+    const tb = ev(`(function(){
+      state=defaultState(); normalizeState(); invSearch=''; _bagSel=null; state.bagTabs=[]; state.invPrefs.tab='all'; state.invPrefs.sort='category';
+      state.items={bronze_bar:2, coal:9, cooked_trout:4, iron_ore:5, oak_log:6, pine_log:3};
+      renderInventory();
+      var tile=function(id){ return document.querySelector('#inventory .bag-tile[data-id="'+id+'"]'); };
+      var loose=function(){ return [].map.call(document.querySelectorAll('#inventory .bag-tiles[data-tab="loose"] .bag-tile'),function(t){ return t.getAttribute('data-id'); }); };
+      var fire=function(el,type){ var e=new Event(type,{bubbles:true,cancelable:true}); el.dispatchEvent(e); return e.defaultPrevented; };
+      var r={};
+      bagMoveItem('coal','new'); bagMoveItem('iron_ore','t1'); bagMoveItem('pine_log','t1');
+      invTab='t1'; state.invPrefs.tab='t1'; renderInventory();
+      r.tab0=state.bagTabs[0].items.join(',');
+      fire(tile('coal'),'dragstart'); fire(tile('iron_ore'),'dragover'); r.tabLine=tile('iron_ore').classList.contains('drop-r'); fire(tile('iron_ore'),'drop');
+      r.tabNext=state.bagTabs[0].items.join(',');
+      fire(tile('pine_log'),'dragstart'); fire(tile('iron_ore'),'drop');
+      r.tabFront=state.bagTabs[0].items.join(','); r.tabSortKept=state.invPrefs.sort;
+      invTab='all'; state.invPrefs.tab='all'; renderInventory();
+      var l=loose();
+      fire(tile('iron_ore'),'dragstart'); fire(tile(l[1]),'dragover'); r.crossLine=tile(l[1]).classList.contains('drop-l'); fire(tile(l[1]),'drop');
+      r.outOfTab=state.bagTabs[0].items.indexOf('iron_ore')<0;
+      r.looseNow=loose().join(','); r.wantLoose=[l[0],'iron_ore'].concat(l.slice(1)).join(','); r.crossMode=state.invPrefs.sort;
+      fire(tile('iron_ore'),'dragstart'); fire(tile('coal'),'drop');
+      r.intoTab=state.bagTabs[0].items.join(','); r.orderDropped=(state.bagOrder||[]).indexOf('iron_ore')<0;
+      fire(tile('bronze_bar'),'dragstart');
+      state.items.copper_ore=2; renderInventory(); r.heldOut=!tile('copper_ore');
+      fire(tile('bronze_bar'),'dragend'); r.caughtUp=!!tile('copper_ore')&&_bagDrag===null;
+      state.bagTabs=[]; state.bagOrder=[]; state.invPrefs.tab='all'; invTab='all'; state.invPrefs.sort='category'; renderInventory();
+      return r;
+    })()`);
+    ok('inside a tab, dropped on the next item it takes that spot (it used to go back where it was)',
+       tb.tab0 === 'coal,iron_ore,pine_log' && tb.tabNext === 'iron_ore,coal,pine_log' && tb.tabLine === true, JSON.stringify(tb));
+    ok('and dropped on one nearer the front it goes in front, without touching the sort',
+       tb.tabFront === 'pine_log,iron_ore,coal' && tb.tabSortKept === 'category', JSON.stringify(tb));
+    ok('a tab item dropped among the loose ones leaves its tab and takes that spot',
+       tb.outOfTab === true && tb.looseNow === tb.wantLoose && tb.crossLine === true && tb.crossMode === 'custom', JSON.stringify(tb));
+    ok('dropped back into a tab it goes in front of that item, and Your order lets go of it',
+       tb.intoTab === 'pine_log,iron_ore,coal' && tb.orderDropped === true, JSON.stringify(tb));
+    ok('the grid holds still while an item is dragged, and catches up when it is let go',
+       tb.heldOut === true && tb.caughtUp === true, JSON.stringify(tb));
+
+    const nz = ev(`(function(){
+      state=defaultState();
+      state.bagTabs=[{id:'t1',name:'A',items:['coal']}];
+      state.bagOrder=['pine_log','pine_log','nope_item',7,'coal','iron_ore',null];
+      normalizeState();
+      var r={cleaned:state.bagOrder.join(',')};
+      state=defaultState(); state.bagOrder='junk'; normalizeState(); r.junk=Array.isArray(state.bagOrder)&&state.bagOrder.length===0;
+      state=defaultState(); normalizeState(); r.fresh=Array.isArray(state.bagOrder)&&state.bagOrder.length===0;
+      state.items={coal:3}; state.invPrefs.sort='value'; invTab='all'; invSearch=''; renderInventory();
+      var pill=document.querySelector('#inventory .inv-sort'); pill.click();
+      r.cycle=invSort+'|'+pill.textContent;
+      pill.click(); r.wrap=invSort;
+      var sel=[]; [].forEach.call(document.styleSheets,function(sh){ [].forEach.call(sh.cssRules||[],function(ru){ if(ru.selectorText) sel.push(ru.selectorText); }); });
+      r.css=sel.some(function(x){ return x.indexOf('.bag-tile.drop-l::before')>=0; })&&sel.some(function(x){ return x.indexOf('.bag-tile.drop-r::before')>=0; });
+      _bagSel=null; renderInventory();
+      r.hint=(document.querySelector('#inventory .bag-dock-hint')||{}).textContent||'';
+      state.invPrefs.sort='category';
+      return r;
+    })()`);
+    ok('a saved order is cleaned on load: no repeats, no unknown items, nothing a tab holds',
+       nz.cleaned === 'pine_log,iron_ore' && nz.junk === true && nz.fresh === true, JSON.stringify(nz));
+    ok('the sort button steps from Value to Your order, then round to Type',
+       nz.cycle === 'custom|↕ Your order' && nz.wrap === 'category', JSON.stringify(nz));
+    ok('the line has CSS to draw it, and the empty item card says items can be dragged',
+       nz.css === true && /Drag an item onto another/.test(nz.hint), JSON.stringify(nz));
   }
 
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));
