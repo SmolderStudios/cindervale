@@ -8838,7 +8838,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.125.8">v0.9.125</div>
+  <div class="mm-ver" data-build="0.9.125.9">v0.9.125</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -36907,10 +36907,55 @@ function buildSourceMap(){
   }
   // Best rate first, so the five-source cap shows the drop you'd actually farm.
   for(const id in map) map[id].sort((a,b)=>(b.chance||0)-(a.chance||0));
+  /* The Sundered Spire (0.9.125.9, ticket #160). Spire floors are not acts, not
+     monsters and not a raid table, so everything the tower pays out read as "Source
+     unknown": the stone, the cores, both kinds of ammunition and the four Spire
+     uniques. Chances are raw, the way spireFloorLoot rolls them. The gear line quotes
+     floor 50 because the odds climb with depth (SPR_GEAR_BASE x SPR_GEAR_STEP^floor)
+     and a single number for "a landing" would be wrong at every other depth. */
+  if(typeof SPIRE_GEAR!=='undefined'){
+    let spIc=''; try{ spIc=iconHTML('sundered_spire'); }catch(e){}
+    const spRaid=(typeof getRaid==='function'&&typeof SPR_ID!=='undefined')?getRaid(SPR_ID):null;
+    const spLvl=(spRaid&&spRaid.unlockLvl)||null;
+    const spire=(name,chance)=>({actName:name, skIcon:spIc, skName:'The Sundered Spire',
+                                 skKey:'spire', chance:chance, reqLvl:spLvl, rare:false, combat:true});
+    addSource('sunderstone', spire('Every floor you clear',1));
+    if(typeof SPR_BOSS_EVERY!=='undefined'){
+      addSource('spirecore',   spire('Landings from floor 15 down',1));
+      addSource('sundershaft', spire('Every landing, in bulk',1));
+      addSource('sunderbolt',  spire('Every landing, in bulk',1));
+    }
+    if(typeof spireGearChance==='function'){
+      const at50=spireGearChance(50);
+      for(const gid of SPIRE_GEAR) addSource(gid, spire('Landings, deeper is likelier (at floor 50)', at50));
+    }
+  }
+  /* The shop. A shop-only item had no entry anywhere else, so the log said "Source
+     unknown" about a thing you can walk in and buy. The Thieving Cape is what
+     surfaced it; every skill cape is bought the same way (#160). */
+  if(typeof SHOP!=='undefined'){
+    let shIc=''; try{ shIc=iconHTML('ui_coin'); }catch(e){}
+    for(const row of SHOP){
+      if(!row||!row.id||!ITEMS[row.id]) continue;
+      addSource(row.id,{actName:'Buy for '+(row.cost||0).toLocaleString()+'g', skIcon:shIc,
+                        skName:'The Shop', skKey:'shop', chance:1, reqLvl:row.reqLvl||null, rare:false});
+    }
+  }
+  /* A keepsake is handed to you once and cannot be farmed, so the log says that rather
+     than sending anyone hunting for a drop (#160). */
+  if(ITEMS.radcliff_tally) addSource('radcliff_tally',{actName:'Given once, never found',
+    skIcon:iconHTML('ui_scroll'), skName:'A keepsake', skKey:'gift', chance:1, reqLvl:null, rare:false});
   return map;
 }
 let _sourceMap=null;
 function sourceMap(){ if(!_sourceMap) _sourceMap=buildSourceMap(); return _sourceMap; }
+/* Retired ids (0.9.125.9, ticket #160). They are still in ITEMS, but nothing in the
+   game can drop or make them any more: the Barrow five-piece set became four uniques
+   in 1.0.83 and the helm, gauntlets and sabatons were left behind with no table to
+   roll off. The Collection Log listed three drops that do not exist, which is exactly
+   the "random drop that may not even be there" Radcliff went looking for. They still
+   show for anyone who owns one from before. */
+const RETIRED_ITEMS={barrow_helm:1, barrow_gloves:1, barrow_boots:1};
 
 /* Map: itemId -> [{skKey, actName}] for items USED AS INPUTS in actions.
    Tells the user "this is used in: X" alongside where it comes from. */
@@ -37857,6 +37902,10 @@ function renderCompendium(){
     // A specific category — rares ALSO appear here in their natural category
     allItems=Object.keys(ITEMS).filter(id=>itemCompCat(id)===compCat&&passesSearch(id));
   }
+
+  /* A retired id stays listed for anyone who owns one and disappears for everyone
+     else, so the log stops sending people after a drop that is not there (#160). */
+  allItems=allItems.filter(id=>!RETIRED_ITEMS[id]||(state.discovered&&state.discovered[id]));
 
   // Order: normal items first by unlock tier (low→high), rares pushed to the end.
   const COMP_CAT_ORDER=COMP_CATEGORIES.map(c=>c.id);
