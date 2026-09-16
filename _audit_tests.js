@@ -4077,9 +4077,11 @@ setTimeout(() => {
     /* Five more slots from minute one, and a higher ceiling. */
     ok('a fresh satchel starts at 33 slots',
        ev(`(function(){ state=defaultState(); normalizeState(); return satchelCap(); })()`)===33);
-    ok('and the ceiling is 333',
+    /* 333 until 0.9.125.8, when the ladder was lengthened to 57 steps; see the
+       satchel-curve section for the pricing that came with it. */
+    ok('and the ceiling is 603',
        ev(`(function(){ state=defaultState(); normalizeState();
-         state.satchelUpgrades=SATCHEL_MAX_EXPANSIONS; return satchelCap(); })()`)===333);
+         state.satchelUpgrades=SATCHEL_MAX_EXPANSIONS; return satchelCap(); })()`)===603);
     }
 
     /* ── every weapon says what weight class it is (ticket #53) ──────────────
@@ -9205,6 +9207,49 @@ setTimeout(() => {
        fb.lifted === true && fb.directChild === true && fb.arenaAfter === true && fb.tips > 0, JSON.stringify(fb));
     ok('and those tooltips open leftward, away from the panel edge that used to clip them',
        fb.opensLeftward === true, JSON.stringify(fb));
+  }
+
+  section('Satchel slots: a slower curve, a 603 ceiling (0.9.125.8)');
+  {
+    /* Off ticket #157, "Do we unlock enough slots in our inventory to keep one of every
+       item?" — 688 ids live in the satchel and the ceiling was 333, so no. Jordan: "Lets
+       lower the curve of the gold cost for satchel slots, and increase the cap higher to
+       like 600, so it still gets expensive but scaling slower so its easier to get more
+       slots earlier." The total is deliberately about what it was; what moved is where
+       the money sits. */
+    const sat = ev(`(function(){
+      state=defaultState(); normalizeState();
+      var r={base:SATCHEL_BASE, step:SATCHEL_SLOT_STEP, buys:SATCHEL_MAX_EXPANSIONS};
+      r.ceiling=SATCHEL_BASE+SATCHEL_SLOT_STEP*SATCHEL_MAX_EXPANSIONS;
+      state.satchelUpgrades=SATCHEL_MAX_EXPANSIONS; r.capMaxed=satchelCap();
+      state.satchelUpgrades=9999; r.capClamped=satchelCap();
+      state.slayer.pockets=8; r.capPockets=satchelCap(); state.slayer.pockets=0;
+      state.satchelUpgrades=0;
+      var costs=[]; for(var n=0;n<SATCHEL_MAX_EXPANSIONS;n++) costs.push(satchelTierCost(n));
+      r.first=costs.slice(0,6).join(',');
+      r.last=costs.slice(-3).join(',');
+      r.total=costs.reduce(function(a,b){ return a+b; },0);
+      r.rises=costs.every(function(c,i){ return i===0||c>costs[i-1]; });
+      r.round=costs.every(function(c){ return c===Math.round(c)&&c>0; });
+      var cum=function(slots){ var b=(slots-SATCHEL_BASE)/SATCHEL_SLOT_STEP, t=0; for(var i=0;i<b;i++) t+=costs[i]; return t; };
+      r.to103=cum(103); r.to203=cum(203); r.to333=cum(333);
+      r.topTenShare=costs.slice(-10).reduce(function(a,b){ return a+b; },0)/r.total;
+      /* what a player with the old maxed satchel sees next */
+      state.satchelUpgrades=30; r.oldMaxCap=satchelCap(); r.nextAfterOldMax=satchelTierCost(30);
+      state.satchelUpgrades=0;
+      return r;
+    })()`);
+    ok('the satchel buys its way to 603 slots, 611 with Deeper Pockets',
+       sat.ceiling === 603 && sat.capMaxed === 603 && sat.capPockets === 611, JSON.stringify(sat));
+    ok('and buying past the last expansion cannot inflate the cap', sat.capClamped === 603, JSON.stringify(sat));
+    ok('every step costs more than the one before it, from 120g to 10M',
+       sat.rises === true && sat.round === true && sat.first === '120,150,180,220,270,330' && sat.last === '6900000,8400000,10000000', JSON.stringify(sat));
+    ok('the middle of the ladder stopped being a wall: 200 slots for 16,350, the old 333 ceiling for 233,850',
+       sat.to103 === 1680 && sat.to203 === 16350 && sat.to333 === 233850, JSON.stringify(sat));
+    ok('while the sink is the same size as before, with 87% of it in the last hundred slots',
+       sat.total === 56037850 && sat.topTenShare > 0.8, JSON.stringify(sat));
+    ok('a save that had bought all 30 keeps them and simply has more to buy',
+       sat.oldMaxCap === 333 && sat.nextAfterOldMax === 53000, JSON.stringify(sat));
   }
 
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));

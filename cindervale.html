@@ -8838,7 +8838,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.125.7">v0.9.125</div>
+  <div class="mm-ver" data-build="0.9.125.8">v0.9.125</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -20476,11 +20476,32 @@ let viewTab='acts';
    268. The COST curve is still untouched — 30 expansions at 150g x 1.5^n — so this
    changes what a purchase buys, never what it costs. Landing alongside the seed
    vault, which takes another 18 ids out of the satchel entirely. */
+/* (0.9.125.8) Jordan: "Lets lower the curve of the gold cost for satchel slots, and
+   increase the cap higher to like 600, so it still gets expensive but scaling slower
+   so its easier to get more slots earlier." Off ticket #157, which asked whether the
+   satchel can ever hold one of everything: there are 688 ids that live in it and the
+   old ceiling was 333, so it could not come close.
+
+   57 expansions of 10 now, so 33 + 570 = 603, and the ratio drops 1.5 -> 1.225 off a
+   120g first step. The TOTAL is deliberately about what it was — 56.0M against the old
+   57.5M — so the satchel is still one of the game's few real gold sinks. What changed
+   is where that money sits: nearly all of it is in the last hundred slots.
+
+     slots     now          before
+     100       1,270        3,080
+     200       13,250       196,580
+     333       233,850      57,545,580   (the whole old ladder)
+     450       2,197,850    not reachable
+     603       56,037,850   not reachable
+
+   The last five expansions are 4.6M, 5.6M, 6.9M, 8.4M and 10M, so the top is still a
+   chase; it is the middle that stopped being a wall. Nothing is clawed back: purchases
+   already made stay bought, and only the steps ahead of a player are repriced. */
 const SATCHEL_BASE=33;
 const SATCHEL_SLOT_STEP=10;
-const SATCHEL_MAX_EXPANSIONS=30;       // 33 + 30x10 = 333 slots
+const SATCHEL_MAX_EXPANSIONS=57;       // 33 + 57x10 = 603 slots
 function satchelTierCost(n){           // n = 0-indexed expansion number → gold cost
-  const raw=150*Math.pow(1.5,n);
+  const raw=120*Math.pow(1.225,n);
   const mag=Math.pow(10,Math.max(1,Math.floor(Math.log10(raw))-1));
   return Math.round(raw/mag)*mag;
 }
