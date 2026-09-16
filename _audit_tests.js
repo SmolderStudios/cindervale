@@ -8992,6 +8992,108 @@ setTimeout(() => {
        nz2.added === true && nz2.repaired === true && nz2.negative === true && nz2.kept === true, JSON.stringify(nz2));
   }
 
+  section('Slayer: masters you can change, and Auto-continue that fires (0.9.125.5)');
+  {
+    /* A player: "I still can't take the exxpert slayer tasks, and always being assigned
+       novice tasks", "the auto-continue isn't working either", "oh holy shit... I had to
+       block the monster... now I can". Two defects, neither of which threw:
+       1) the deferred auto-continue read the FINISHED bounty (kept in state so the panel
+          can show Claim) as "the player already took one" and returned every time, so it
+          never fired once since it shipped in 0.9.121.11;
+       2) every master button was disabled while a bounty was active OR complete, and the
+          only free way on was Claim, which re-took from the SAME master. Skip (5 pts) and
+          Block (12 pts) were the only ways off Novice, which is what he paid. */
+    const sl = ev(`(function(){
+      state=defaultState(); normalizeState();
+      for(var k in state.combatXp) state.combatXp[k]=XP_CUM[99];
+      state.hints=state.hints||{}; state.hints.combat_unarmed=1;   // no unarmed guard in the way
+      state.slayer.xp=XP_CUM[60];            // Expert (35) unlocked, Slayer General (75) not
+      state.slayer.points=100; state.slayer.auto=true; state.slayer.masterSel='novice';
+      var mon=MONSTERS.find(function(m){ return !m.boss&&m.lvl<=40; });
+      var r={lvl:slayerLevel()};
+      /* Run the kill with the deferred assign made synchronous, and count engages. */
+      var fire=function(){
+        var eng=0, E=window.engageCombat, RT=window.setTimeout;
+        window.engageCombat=function(){ eng++; return E.apply(this,arguments); };
+        window.setTimeout=function(fn){ try{ fn(); }catch(e){} return 0; };
+        try{ onSlayerKill(mon); } finally { window.setTimeout=RT; window.engageCombat=E; }
+        return eng;
+      };
+      combat.active=false; combat.raid=null; combat.monId=mon.id;
+      var first={monId:mon.id, need:1, done:0, master:'novice'};
+      state.slayer.task=first;
+      fire();
+      r.took=!!(state.slayer.task&&state.slayer.task!==first&&state.slayer.task.done===0);
+      r.master1=(state.slayer.task||{}).master;
+      state.slayer.task={monId:mon.id, need:9, done:3, master:'novice'};
+      r.picked=(typeof slayerChooseMaster==='function')&&slayerChooseMaster('expert');
+      r.sel=state.slayer.masterSel;
+      r.bountyKept=JSON.stringify(state.slayer.task)==='{"monId":"'+mon.id+'","need":9,"done":3,"master":"novice"}';
+      state.slayer.task={monId:mon.id, need:1, done:0, master:'novice'};
+      combat.active=true; combat.raid=null; combat.monId=mon.id;
+      r.eng=fire();
+      r.master2=(state.slayer.task||{}).master;
+      r.moved=!!(state.slayer.task&&combat.monId===state.slayer.task.monId&&combat.monId!==mon.id);
+      state.slayer.task={monId:mon.id, need:1, done:0, master:'novice'};
+      combat.active=true; combat.monId=mon.id; combat.raid={id:'test',stage:0,n:3};
+      r.raidEng=fire();
+      r.raidKept=combat.monId===mon.id&&!!combat.raid;
+      r.raidTook=!!(state.slayer.task&&state.slayer.task.done===0);
+      combat.raid=null; combat.active=false;
+      state.slayer.auto=false;
+      var done={monId:mon.id, need:1, done:0, master:'novice'};
+      state.slayer.task=done; fire();
+      r.waits=state.slayer.task===done&&done.done>=done.need;
+      return r;
+    })()`);
+    ok('Auto-continue takes the next bounty when one is finished (it never fired at all before)',
+       sl.took === true && sl.master1 === 'novice', JSON.stringify(sl));
+    ok('picking another master mid-bounty is free and leaves the bounty you are on alone',
+       sl.picked === true && sl.sel === 'expert' && sl.bountyKept === true, JSON.stringify(sl));
+    ok('and Auto-continue then uses the master you picked, and moves the arena onto the new target',
+       sl.master2 === 'expert' && sl.moved === true && sl.eng === 1, JSON.stringify(sl));
+    ok('Auto-continue never drops a raid run to chase a bounty',
+       sl.raidEng === 0 && sl.raidKept === true && sl.raidTook === true, JSON.stringify(sl));
+    ok('with Auto-continue off the finished bounty stays put for Claim', sl.waits === true, JSON.stringify(sl));
+
+    const slui = ev(`(function(){
+      state=defaultState(); normalizeState();
+      for(var k in state.combatXp) state.combatXp[k]=XP_CUM[99];
+      state.slayer.xp=XP_CUM[60]; state.slayer.points=100; state.slayer.auto=false; state.slayer.masterSel='novice';
+      var mon=MONSTERS.find(function(m){ return !m.boss&&m.lvl<=40; });
+      var btns=function(){
+        var d=new DOMParser().parseFromString(buildSlayerHTML(),'text/html');
+        return [].map.call(d.querySelectorAll('.sly-mrow [data-sl-newtask],.sly-mrow [data-sl-pick]'),function(b){
+          var k=b.getAttribute('data-sl-newtask')?'take:'+b.getAttribute('data-sl-newtask'):'pick:'+b.getAttribute('data-sl-pick');
+          return k+(b.disabled?'!':'');
+        }).join(' ');
+      };
+      var claim=function(){
+        var d=new DOMParser().parseFromString(buildSlayerHTML(),'text/html');
+        var b=d.querySelector('.sly-go.claim');
+        return b?b.getAttribute('data-sl-newtask')+' ['+b.textContent.replace(/[\s]+/g,' ').trim()+']':'none';
+      };
+      var r={};
+      state.slayer.task=null; r.none=btns();
+      state.slayer.task={monId:mon.id, need:9, done:3, master:'novice'}; r.active=btns();
+      if(typeof slayerChooseMaster==='function') slayerChooseMaster('expert'); r.activePicked=btns();
+      state.slayer.task={monId:mon.id, need:9, done:9, master:'novice'}; r.complete=btns(); r.claim=claim();
+      r.lockedPick=(typeof slayerChooseMaster==='function')&&slayerChooseMaster('master')===false&&state.slayer.masterSel==='expert';
+      r.fallback=(typeof slayerMasterKeyFor==='function')?slayerMasterKeyFor('master'):'none';
+      state.slayer.masterSel='nonsense'; normalizeState(); r.cleaned=state.slayer.masterSel;
+      state.slayer.task=null; state.slayer.masterSel='novice';
+      return r;
+    })()`);
+    ok('with no bounty every master you have unlocked offers one', slui.none === 'take:novice take:expert', slui.none);
+    ok('while a bounty runs the masters become the choice of where the NEXT one comes from',
+       slui.active === 'pick:novice! pick:expert' && slui.activePicked === 'pick:novice pick:expert!', JSON.stringify(slui));
+    ok('when a bounty is finished it can be claimed from any master, not just the one that set it',
+       slui.complete === 'take:novice take:expert' && slui.claim === 'expert [Claim & take an Expert bounty]', JSON.stringify(slui));
+    ok('a master above your Slayer level is refused, and the best one you can use stands in',
+       slui.lockedPick === true && slui.fallback === 'expert', JSON.stringify(slui));
+    ok('a saved master that is not a master is cleaned on load', slui.cleaned === 'novice', JSON.stringify(slui));
+  }
+
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));
   process.exit(fail ? 1 : 0);
 }, 2500);

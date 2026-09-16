@@ -4381,6 +4381,7 @@ body:not(.is-demo) .demo-only{display:none !important}
 .slay-btn.primary{background:linear-gradient(180deg,#3a1e1a,#241010);border-color:#c05149;color:#f0d0c8}
 .slay-btn.primary:hover:not(:disabled){filter:brightness(1.22)}
 .slay-btn:disabled{opacity:.45;cursor:default}
+.slay-btn.on,.slay-btn.on:disabled{background:#1f2a12;border-color:rgba(155,197,90,.5);color:#cfe6a8;opacity:1}
 .slay-btn.tiny{padding:1px 8px;font-size:calc(11px*var(--tscale));font-family:var(--num)}
 
 /* ════ Slayer panel — "Contract Ledger" layout (0.9.24) ════════════════════════
@@ -8814,7 +8815,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.125.4">v0.9.125</div>
+  <div class="mm-ver" data-build="0.9.125.5">v0.9.125</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -20339,7 +20340,8 @@ function normalizeState(){
   if(typeof state.slayer.points!=='number'||state.slayer.points<0) state.slayer.points=0;
   if(typeof state.slayer.tasksDone!=='number'||state.slayer.tasksDone<0) state.slayer.tasksDone=0;
   if(typeof state.slayer.streak!=='number'||state.slayer.streak<0) state.slayer.streak=0;
-  if(typeof state.slayer.masterSel!=='string') state.slayer.masterSel='novice';
+  if(typeof state.slayer.masterSel!=='string'
+     ||(typeof SLAYER_MASTERS!=='undefined'&&!SLAYER_MASTERS.some(m=>m.key===state.slayer.masterSel))) state.slayer.masterSel='novice';
   if(!state.slayer.perks||typeof state.slayer.perks!=='object'||Array.isArray(state.slayer.perks)) state.slayer.perks={};
   if(!state.slayer.blocked||typeof state.slayer.blocked!=='object'||Array.isArray(state.slayer.blocked)) state.slayer.blocked={};
   // task: {monId,need,done,master} or null — drop it if the monster no longer exists.
@@ -35563,6 +35565,28 @@ function assignSlayerTask(masterKey){
   if(typeof toast==='function') toast(`🗡 New bounty: kill ${need} ${mon.name}.`);
   saveGame(); if(combatMode&&typeof renderCombat==='function') renderCombat();
 }
+/* The master the next bounty comes from: what you picked, unless your Slayer level
+   no longer allows it, in which case the best one you can use (0.9.125.5). */
+function slayerMasterKeyFor(key){
+  const m=slayerMasterFor(key);
+  if(slayerLevel()>=m.minLvl) return m.key;
+  const ok=SLAYER_MASTERS.filter(x=>slayerLevel()>=x.minLvl);
+  return (ok[ok.length-1]||SLAYER_MASTERS[0]).key;
+}
+/* Pick the master your NEXT bounty comes from while one is running (0.9.125.5). A
+   player reported being "always being assigned novice tasks": every master button
+   was disabled while a bounty was active OR complete, and the only free way on was
+   Claim, which re-took from the SAME master. The ways out cost 5 or 12 points, which
+   is what he ended up paying. Picking the next master costs nothing and leaves the
+   running bounty alone. */
+function slayerChooseMaster(key){
+  const m=slayerMasterFor(key);
+  if(slayerLevel()<m.minLvl){ toast(`\u{1F512} Requires Slayer Lv ${m.minLvl}.`); return false; }
+  state.slayer.masterSel=m.key;
+  toast(`Next bounty: ${m.name}.`);
+  saveGame(); if(combatMode&&typeof renderCombat==='function') renderCombat();
+  return true;
+}
 function slayerSkipTask(){
   if(!state.slayer.task) return;
   if(state.slayer.points<SLAYER_SKIP_COST){ toast(`You need ${SLAYER_SKIP_COST} Slayer Points to skip a bounty.`); return; }
@@ -35673,12 +35697,31 @@ function onSlayerKill(baseMon){
        rewrites state.slayer.task, and slayerGoToTask refuses while combat.active,
        which is still true here. */
     if(state.slayer.auto){
-      const mk=t.master;
+      /* The master you picked, not the one that set this bounty (0.9.125.5), so
+         Auto-continue can move you up a master without paying to skip. */
+      const mk=slayerMasterKeyFor(state.slayer.masterSel||t.master);
       setTimeout(()=>{
         try{
-          if(state.slayer.task) return;              // player took one themselves
+          /* `state.slayer.task` is STILL the finished bounty here: it is kept so the
+             panel can show Claim. The old guard read that as "the player already took
+             one" and returned, so Auto-continue never once fired (0.9.125.5). Compare
+             identity: only a DIFFERENT task means they beat us to it. */
+          if(state.slayer.task&&state.slayer.task!==t) return;
           assignSlayerTask(mk);
-          if(state.slayer.task && !combat.active) slayerGoToTask();
+          const nt=state.slayer.task;
+          if(!nt||nt===t) return;
+          const nmon=getMonster(nt.monId);
+          if(!nmon||combat.raid) return;               // never touch a raid run
+          if(!combat.active){ slayerGoToTask(); return; }
+          if(combat.monId===nmon.id) return;           // already stood in front of it
+          /* Mid-grind the arena has already respawned the foe we just killed, so the
+             fight in progress is a fresh one we have not swung at and dropping it
+             costs nothing. Without this, Auto-continue took the new bounty and left
+             you hitting the old target, which is the other half of what the player
+             meant by "the auto-continue isn't working" (0.9.125.5). */
+          stopCombatTimer(); combat.active=false; combat.rare=false;
+          slayerGoToTask();
+          if(typeof engageCombat==='function') engageCombat();
         }catch(e){}
       },0);
     }
@@ -41879,6 +41922,11 @@ function buildSlayerHTML(){
   const lo=XP_CUM[lvl]||0, hi=lvl<MAX_LEVEL?(XP_CUM[lvl+1]||lo):lo;
   const pct=lvl>=MAX_LEVEL?100:Math.floor(100*(xp-lo)/Math.max(1,(hi-lo)));
   const t=S.task, active=!!(t&&t.done<t.need), complete=!!(t&&t.done>=t.need);
+  /* The master your NEXT bounty comes from. Claim and Auto-continue both read this,
+     so picking a different master mid-bounty is what moves you up (0.9.125.5). */
+  const nextKey=slayerMasterKeyFor(S.masterSel||(t&&t.master)||'novice');
+  const nextName=slayerMasterFor(nextKey).name.replace(/ Slayer Master$/,'').replace(/^Slayer /,'');
+  const nextArt=/^[aeiou]/i.test(nextName)?'an':'a';
 
   // ── hero: the one thing you act on ───────────────────────────────────────────
   let hero, acts='';
@@ -41898,7 +41946,7 @@ function buildSlayerHTML(){
       </div></div>`;
     acts=`<div class="sly-acts">
       ${complete
-        ? `<button class="sly-go claim" data-sl-newtask="${t.master}">${iconHTML('ui_coin')} Claim &amp; take next bounty</button>`
+        ? `<button class="sly-go claim" data-sl-newtask="${nextKey}">${iconHTML('ui_coin')} Claim &amp; take ${nextArt} ${nextName} bounty</button>`
         : `<button class="sly-go" data-sl-goto="1">${iconHTML('ui_swords')} Go to task</button>`}
       <button class="slay-btn" data-sl-skip="1" ${active&&pts>=SLAYER_SKIP_COST?'':'disabled'}>Skip · ${SLAYER_SKIP_COST} pts</button>
       <button class="slay-btn" data-sl-block="1" ${active&&pts>=SLAYER_BLOCK_COST?'':'disabled'}>Block · ${SLAYER_BLOCK_COST} pts</button>
@@ -41922,10 +41970,16 @@ function buildSlayerHTML(){
 
   // ── master rows ──────────────────────────────────────────────────────────────
   const masters=SLAYER_MASTERS.map(m=>{
-    const locked=lvl<m.minLvl;
+    const locked=lvl<m.minLvl, sel=m.key===nextKey;
+    /* Every row used to read "Bounty active" and be disabled from the moment you had
+       a bounty, complete or not, which left Claim (same master) as the only free way
+       on. Now: no bounty, take one from any master; bounty finished, claim it from
+       any master; bounty running, pick where the next one comes from (0.9.125.5). */
     const btn=locked
       ? `<button class="slay-btn" disabled>${iconHTML('ui_lock')} Lv ${m.minLvl}</button>`
-      : `<button class="slay-btn ${active||complete?'':'primary'}" data-sl-newtask="${m.key}" ${active||complete?'disabled':''}>${active||complete?'Bounty active':'Get bounty'}</button>`;
+      : active
+        ? `<button class="slay-btn${sel?' on':''}" data-sl-pick="${m.key}"${sel?' disabled':''} title="${sel?'Your next bounty comes from here.':'Your next bounty comes from this master. The one you are on now is not touched.'}">${sel?'Next bounty':'Pick for next'}</button>`
+        : `<button class="slay-btn ${sel?'primary':''}" data-sl-newtask="${m.key}">${complete?'Claim &amp; take':'Get bounty'}</button>`;
     const art=(typeof SLAYER_MASTER_ART!=='undefined')&&SLAYER_MASTER_ART[m.key];
     return `<div class="sly-mrow${locked?' locked':''}${art?' hasart':''}">
       ${art?`<span class="sly-mart" style="background-image:url(${art})"></span>`
@@ -43244,6 +43298,7 @@ ${combat.raid?buildRaidProgressHTML():''}
 
   // ── Slayer tab wiring (1.0.73) ───────────────────────────────────────────────
   panel.querySelectorAll('[data-sl-newtask]').forEach(b=>{ if(b.disabled) return; b.addEventListener('click',()=>assignSlayerTask(b.getAttribute('data-sl-newtask'))); });
+  panel.querySelectorAll('[data-sl-pick]').forEach(b=>{ if(b.disabled) return; b.addEventListener('click',()=>slayerChooseMaster(b.getAttribute('data-sl-pick'))); });
   panel.querySelectorAll('[data-sl-goto]').forEach(b=>{ if(b.disabled) return; b.addEventListener('click',slayerGoToTask); });
   panel.querySelectorAll('[data-sl-skip]').forEach(b=>{ if(b.disabled) return; b.addEventListener('click',slayerSkipTask); });
   panel.querySelectorAll('[data-sl-block]').forEach(b=>b.addEventListener('click',slayerBlockCurrent));
@@ -43255,7 +43310,7 @@ ${combat.raid?buildRaidProgressHTML():''}
   panel.querySelectorAll('[data-sl-auto]').forEach(b=>{
     b.addEventListener('change',()=>{
       state.slayer.auto=!!b.checked;
-      toast(b.checked?'Auto-continue on. A new bounty is taken as soon as you finish one.':'Auto-continue off.');
+      toast(b.checked?('Auto-continue on. As soon as you finish one, a new bounty is taken from the '+slayerMasterFor(slayerMasterKeyFor(state.slayer.masterSel)).name+'.'):'Auto-continue off.');
       saveGame();
     });
   });
