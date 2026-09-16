@@ -9252,6 +9252,57 @@ setTimeout(() => {
        sat.oldMaxCap === 333 && sat.nextAfterOldMax === 53000, JSON.stringify(sat));
   }
 
+  section('Every item says where it comes from (0.9.125.9, ticket #160)');
+  {
+    /* Radcliff: "There are still some things in the collection log that say
+       undiscovered, source unknown. It would be nice to have the tips that are on
+       other undiscovered items. No fun running every task and every combat area just
+       looking for a random drop that may not even be there." Thirteen ids had no
+       source: the whole Sundered Spire payout, the shop-only Thieving Cape, a
+       keepsake, and three pieces of a set that was retired in 1.0.83 and can no
+       longer drop at all. */
+    const src = ev(`(function(){
+      var sm=sourceMap();
+      var miss=Object.keys(ITEMS).filter(function(id){ return !(sm[id]&&sm[id].length); });
+      var r={missing:miss.slice(0,12).join(','), n:miss.length};
+      r.allRetired=miss.every(function(id){ return !!RETIRED_ITEMS[id]; });
+      var line=function(id){ var a=(sm[id]||[])[0]; return a?a.skName+'|'+a.actName:'NONE'; };
+      r.stone=line('sunderstone'); r.core=line('spirecore'); r.shaft=line('sundershaft');
+      r.gear=line(SPIRE_GEAR[0]); r.gearChance=((sm[SPIRE_GEAR[0]]||[])[0]||{}).chance;
+      r.cape=line('cape_thieving'); r.tally=line('radcliff_tally');
+      r.everyShopItem=SHOP.every(function(row){ return !ITEMS[row.id]||(sm[row.id]&&sm[row.id].length); });
+      return r;
+    })()`);
+    ok('nothing in the game is left without a source except the three retired pieces',
+       src.n === 3 && src.allRetired === true, JSON.stringify(src));
+    ok('the Spire says what it pays and when',
+       /Sundered Spire/.test(src.stone) && /Every floor/.test(src.stone)
+       && /Sundered Spire/.test(src.core) && /floor 15/.test(src.core)
+       && /Sundered Spire/.test(src.shaft) && /landing/i.test(src.shaft), JSON.stringify(src));
+    ok('and its four uniques quote a real depth-scaled chance',
+       /Sundered Spire/.test(src.gear) && src.gearChance > 0 && src.gearChance < 1, JSON.stringify(src));
+    ok('a cape you can only buy says so, and every shop item has a line',
+       /The Shop/.test(src.cape) && /100,000g/.test(src.cape) && src.everyShopItem === true, JSON.stringify(src));
+    ok('and a keepsake says it is given, not found', /keepsake/i.test(src.tally) && /Given once/.test(src.tally), JSON.stringify(src));
+
+    const ret = ev(`(function(){
+      state=defaultState(); normalizeState();
+      var names=function(){ return [].map.call(document.querySelectorAll('#compView .comp-tile'),function(c){
+        return (c.textContent||'').replace(/[\s]+/g,' ').trim(); }).join(' / '); };
+      compCat='crafted_gear'; compPage=0; compSearch='Barrow';
+      state.discovered={}; renderCompendium();
+      var unowned=document.querySelectorAll('#compView .comp-tile').length;
+      state.discovered={barrow_helm:1}; renderCompendium();
+      var owned=names();
+      compSearch=''; state.discovered={}; compCat='all'; renderCompendium();
+      return {unowned:unowned, ownedShows:/Barrow Warden/.test(owned), ownedCount:owned.split(' / ').length};
+    })()`);
+    ok('the Collection Log stops listing a retired piece nobody can get any more',
+       ret.unowned === 4, JSON.stringify(ret));
+    ok('but still shows one to a player who already owns it',
+       ret.ownedShows === true && ret.ownedCount === 5, JSON.stringify(ret));
+  }
+
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));
   process.exit(fail ? 1 : 0);
 }, 2500);
