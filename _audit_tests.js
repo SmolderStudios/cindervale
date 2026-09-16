@@ -9092,6 +9092,33 @@ setTimeout(() => {
     ok('a master above your Slayer level is refused, and the best one you can use stands in',
        slui.lockedPick === true && slui.fallback === 'expert', JSON.stringify(slui));
     ok('a saved master that is not a master is cleaned on load', slui.cleaned === 'novice', JSON.stringify(slui));
+    /* Jordan: "can we add the background of hte zone for the slayer monster just to
+       make it more aesthetic" (0.9.125.6). The bounty card paints the same plate the
+       arena stands in front of, and a zone without one keeps the plain card. */
+    const zbg = ev(`(function(){
+      state=defaultState(); normalizeState(); state.slayer.xp=XP_CUM[40];
+      var hasArt=function(m){ return !m.boss&&typeof ZONE_BG!=='undefined'&&!!ZONE_BG[m.zone]; };
+      var mon=MONSTERS.find(hasArt);
+      state.slayer.task={monId:mon.id, need:5, done:1, master:'novice'};
+      var d=new DOMParser().parseFromString(buildSlayerHTML(),'text/html');
+      var img=d.querySelector('.sly-hero.has-bg .sly-bg');
+      var r={zone:mon.zone, has:!!img, src:img?String(img.getAttribute('src')).slice(0,11):'', behind:!!(img&&img.nextElementSibling&&img.nextElementSibling.className==='sly-mon')};
+      var bare=MONSTERS.find(function(m){ return !m.boss&&!hasArt(m); });
+      if(bare){
+        state.slayer.task={monId:bare.id, need:5, done:1, master:'novice'};
+        var d2=new DOMParser().parseFromString(buildSlayerHTML(),'text/html');
+        r.plain=!d2.querySelector('.sly-bg')&&!d2.querySelector('.sly-hero.has-bg');
+      } else r.plain='every zone has a plate';
+      state.slayer.task=null;
+      var sel=[]; [].forEach.call(document.styleSheets,function(sh){ [].forEach.call(sh.cssRules||[],function(ru){ if(ru.selectorText) sel.push(ru.selectorText); }); });
+      r.css=sel.some(function(x){ return x.indexOf('.sly-hero.has-bg::after')>=0; })&&sel.some(function(x){ return x.indexOf('.sly-bg')>=0; });
+      return r;
+    })()`);
+    ok('the bounty card is painted with the zone its target lives in',
+       zbg.has === true && zbg.src === 'data:image/' && zbg.behind === true && zbg.css === true, JSON.stringify(zbg));
+    ok('and a zone with no plate keeps the plain card',
+       zbg.plain === true || zbg.plain === 'every zone has a plate', JSON.stringify(zbg));
+
   }
 
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));
