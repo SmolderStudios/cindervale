@@ -3096,6 +3096,11 @@ body:not(.is-demo) .demo-only{display:none !important}
   padding:7px 12px;border-top:1px solid #2e2113;background:#150f07}
 #itemTooltip .nt-foot .tt-sell{margin:0;padding:0;border-top:0}
 #itemTooltip .nt-hint{font-size:calc(11px*var(--tscale));color:#6e552c;white-space:nowrap}
+/* One recipe a line, with how many it takes (#154). */
+#itemTooltip .nt-use{display:flex;align-items:baseline;justify-content:space-between;gap:12px;
+  font-size:calc(12.5px*var(--tscale));color:#d8c6a6;line-height:1.5}
+#itemTooltip .nt-use .nu-n{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#itemTooltip .nt-use .nu-q{flex:none;font-family:var(--num);font-size:calc(11px*var(--tscale));color:#8a7455}
 #itemTooltip .nt-more{font-size:calc(11.5px*var(--tscale));color:#a08a64;line-height:1.5}
 #itemTooltip .nt-more b{color:#c79b4e}
 #itemTooltip .nt-flav{font-size:calc(12px*var(--tscale));color:#8a7455;font-style:italic;line-height:1.45}
@@ -8023,6 +8028,15 @@ body:not(.is-demo) .demo-only{display:none !important}
 .cg-back:disabled{opacity:.45;cursor:default}
 .cg-where{font-family:'Crimson Pro',Georgia,serif;font-size:calc(17px*var(--tscale));color:#ffe9c4}
 .cg-where s{text-decoration:none;color:#7a6551}
+/* Ticket #156, "The tooltips that pop up for the creatures in the change zone bar are
+   behind the combat window". #combatPanel gives every direct child
+   `position:relative;z-index:1`, which makes each one its own stacking context, so the
+   bar's tooltip (z-index 500) could only ever paint inside the bar, and the arena, a
+   later sibling at the same z-index, covered it. Lift the bar above its siblings.
+   The tooltips also hang off the RIGHT end of the bar, where `left:0` ran them into
+   #combatPanel's overflow:hidden, so they open leftward from the button instead. */
+#combatPanel > .cg-fbar{z-index:6}
+.cg-swap button[data-tip]:hover::after{left:auto;right:0}
 .cg-swap{display:flex;gap:6px;margin-left:auto;flex-wrap:wrap}
 .cg-swap button{width:42px;height:42px;border-radius:9px;border:1px solid var(--trim-d,#3d2c1d);
   background:#150f0a;cursor:pointer;display:grid;place-items:center;font-size:calc(30px*var(--tscale))}
@@ -8824,7 +8838,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.125.6">v0.9.125</div>
+  <div class="mm-ver" data-build="0.9.125.7">v0.9.125</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -35901,7 +35915,22 @@ function updateNotifBadge(){
 }
 
 let notifFilter='all';
+/* Ticket #151, Radcliff: "Alerts keep resetting to top after an action is completed.
+   Can we stop that?" The list is rebuilt from scratch on every render (the right bar
+   repaints when anything changes), which drops the scroll position, and new alerts are
+   unshifted onto the FRONT, so even holding the old scrollTop would slide the row you
+   were reading down by the height of whatever arrived. Hold the offset AND add back
+   however much taller the list got above you. The filter buttons and Clear ask for the
+   top, since there the top is the answer. */
+let _notifToTop=false;
 function renderNotifications(){
+  const box=$('notifsView'); if(!box) return;
+  const _top=box.scrollTop, _h=box.scrollHeight;
+  _renderNotifRows();
+  if(_notifToTop || _top<=0){ _notifToTop=false; box.scrollTop=0; return; }
+  box.scrollTop=_top+Math.max(0, box.scrollHeight-_h);
+}
+function _renderNotifRows(){
   const box=$('notifsView'); box.innerHTML='';
 
   // Filter row
@@ -35912,7 +35941,7 @@ function renderNotifications(){
     const b=document.createElement('button');
     b.className='notif-filter'+(notifFilter===val?' on':'');
     b.textContent=label;
-    b.addEventListener('click',()=>{ notifFilter=val; renderNotifications(); });
+    b.addEventListener('click',()=>{ notifFilter=val; _notifToTop=true; renderNotifications(); });
     filterRow.appendChild(b);
   }
   box.appendChild(filterRow);
@@ -35925,7 +35954,7 @@ function renderNotifications(){
     clearBtn.style.cssText='margin-bottom:8px;font-size:calc(13px*var(--tscale))';
     clearBtn.textContent='Clear all alerts';
     clearBtn.addEventListener('click',()=>{
-      state.notifications=[]; saveGame(); renderNotifications(); updateNotifBadge();
+      state.notifications=[]; saveGame(); _notifToTop=true; renderNotifications(); updateNotifBadge();
     });
     box.appendChild(clearBtn);
   }
@@ -36977,6 +37006,28 @@ function buildUsageMap(){
 }
 let _usageMap=null;
 function usageMap(){ if(!_usageMap) _usageMap=buildUsageMap(); return _usageMap; }
+/* Ticket #154, Radcliff: "it would be nice if we could get the specific uses of stuff
+   listed in the tooltip instead of just the general skill. Then we can tell if we need
+   to save some for more than one recipe." usageMap() keeps one row per SKILL on
+   purpose (the chips at rest), so the recipes need their own map: every act that eats
+   this item, with how many it takes, cheapest level first. */
+let _recipeUses=null;
+function recipeUsesFor(id){
+  if(!_recipeUses){
+    _recipeUses={};
+    for(const [skKey,sk] of Object.entries(SKILLS)){
+      for(const act of (sk.acts||[])){
+        if(!act.inp) continue;
+        for(const iid in act.inp){
+          (_recipeUses[iid]=_recipeUses[iid]||[]).push({skKey:skKey, skName:sk.name, skIcon:sk.icon,
+            act:act.name||act.id, qty:act.inp[iid], lvl:act.lvl||1});
+        }
+      }
+    }
+    for(const iid in _recipeUses) _recipeUses[iid].sort((a,b)=>(a.lvl-b.lvl)||a.act.localeCompare(b.act));
+  }
+  return _recipeUses[id]||[];
+}
 
 /* ════ [JS-23b] item tooltip show / hide ═════════════════════════════════════════ */
 /* ── where an item comes from (ticket #63) ────────────────────────────────────
@@ -37225,13 +37276,26 @@ function showItemTooltip(itemId, x, y, note){
 
   /* Used in - three chips at rest, all of them on Shift. A material feeding a
      dozen recipes used to push the price off the bottom of the card. */
+  const _recs=usages.length?recipeUsesFor(itemId):[];
   if(usages.length){
-    const _u=_ttExpanded?usages:usages.slice(0,3);
-    html+=`<div class="nt-sec"><div class="nt-lbl">Used in</div><div>`;
-    for(const u of _u)
-      html+=`<span class="nt-chip" style="background:#5a8fcb1e;border:1px solid #5a8fcb55;color:#cfe0f5" title="${u.skName}">${_icoUniq(u.skIcon)} ${u.skName}</span>`;
-    if(!_ttExpanded && usages.length>3) html+=`<span class="nt-hint">+${usages.length-3}</span>`;
-    html+=`</div></div>`;
+    /* Shift names the recipes and how many each one takes, so you can tell whether a
+       stack is spoken for twice over (#154). At rest it stays the skill chips. */
+    if(_ttExpanded && _recs.length){
+      const _show=_recs.slice(0,12);
+      html+=`<div class="nt-sec"><div class="nt-lbl">Used in</div>`;
+      for(const u of _show)
+        html+=`<div class="nt-use"><span class="nu-n">${_icoUniq(u.skIcon)} ${escapeHTML(u.act)}</span>`
+           +`<span class="nu-q">${u.qty} each</span></div>`;
+      if(_recs.length>_show.length) html+=`<div class="nt-hint">+${_recs.length-_show.length} more</div>`;
+      html+=`</div>`;
+    } else {
+      const _u=_ttExpanded?usages:usages.slice(0,3);
+      html+=`<div class="nt-sec"><div class="nt-lbl">Used in</div><div>`;
+      for(const u of _u)
+        html+=`<span class="nt-chip" style="background:#5a8fcb1e;border:1px solid #5a8fcb55;color:#cfe0f5" title="${u.skName}">${_icoUniq(u.skIcon)} ${u.skName}</span>`;
+      if(!_ttExpanded && usages.length>3) html+=`<span class="nt-hint">+${usages.length-3}</span>`;
+      html+=`</div></div>`;
+    }
   }
 
   /* FOOTER - price, and the key that opens everything held back. */
@@ -37243,7 +37307,7 @@ function showItemTooltip(itemId, x, y, note){
       : `<span class="tt-sell">Sells for ${fmtCoins(it.sell,true)}</span>`;
   }
   /* Only offer the key when holding it would actually change what is on screen. */
-  const _hasMore=!!(it.desc || sources.length>1 || usages.length>3
+  const _hasMore=!!(it.desc || sources.length>1 || usages.length>3 || _recs.length
     || (it.cgear && it.cslot==='weapon' && (it.dmgType || it.twoHanded)));
   if(_sell || _hasMore)
     html+=`<div class="nt-foot">${_sell||'<span></span>'}`
