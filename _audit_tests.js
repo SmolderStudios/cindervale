@@ -9121,6 +9121,92 @@ setTimeout(() => {
 
   }
 
+  section('Radcliff batch: alerts hold their place, tooltips name recipes and clear the arena (0.9.125.7)');
+  {
+    /* #151 "Alerts keep resetting to top after an action is completed. Can we stop
+       that?" The right bar repaints on every finished action and the list is rebuilt
+       from scratch, and new alerts are unshifted onto the FRONT, so the row you were
+       reading slid down even when the scroll was held. */
+    const nf = ev(`(function(){
+      state=defaultState(); normalizeState(); state.notifications=[];
+      rightTab='notifs'; notifFilter='all';
+      for(var i=0;i<30;i++) logNotification('rare','x','Alert '+i);
+      renderNotifications();
+      var box=document.getElementById('notifsView'), r={};
+      box.scrollTop=120; renderNotifications();
+      r.kept=box.scrollTop;
+      logNotification('rare','x','one more arrives');      // re-renders through the wrapper
+      r.keptAfterNew=box.scrollTop;
+      var f=document.querySelector('#notifsView .notif-filter');
+      if(f) f.click();
+      r.filterTop=box.scrollTop;
+      box.scrollTop=70;
+      var clr=document.querySelector('#notifsView .sell-all');
+      if(clr) clr.click();
+      r.clearTop=box.scrollTop; r.cleared=(state.notifications||[]).length===0;
+      rightTab='gear';
+      return r;
+    })()`);
+    ok('the alerts list keeps its place when the panel repaints, and when a new alert lands (#151)',
+       nf.kept === 120 && nf.keptAfterNew === 120, JSON.stringify(nf));
+    ok('and picking a filter or clearing still takes you to the top',
+       nf.filterTop === 0 && nf.clearTop === 0 && nf.cleared === true, JSON.stringify(nf));
+
+    /* #154 "it would be nice if we could get the specific uses of stuff listed in the
+       tooltip instead of just the general skill. Then we can tell if we need to save
+       some for more than one recipe." */
+    const tt = ev(`(function(){
+      state=defaultState(); normalizeState();
+      var id=Object.keys(ITEMS).find(function(x){ return recipeUsesFor(x).length>1&&(usageMap()[x]||[]).length; });
+      var recs=recipeUsesFor(id), first=recs[0], r={id:id, n:recs.length, first:first.act, qty:first.qty};
+      r.sorted=recs.every(function(u,i){ return i===0||recs[i-1].lvl<=u.lvl; });
+      _ttExpanded=false; showItemTooltip(id,10,10);
+      var h1=document.getElementById('itemTooltip').innerHTML;
+      _ttExpanded=true; showItemTooltip(id,10,10);
+      var h2=document.getElementById('itemTooltip').innerHTML;
+      _ttExpanded=false; hideTooltip();
+      r.restChips=h1.indexOf('nt-use')<0&&h1.indexOf('nt-chip')>=0;
+      r.shiftRows=h2.indexOf('nt-use')>=0&&h2.indexOf(escapeHTML(first.act))>=0&&h2.indexOf(first.qty+' each')>=0;
+      r.offersShift=h1.indexOf('for details')>=0;
+      var none=Object.keys(ITEMS).find(function(x){ return !recipeUsesFor(x).length; });
+      r.noneEmpty=none?recipeUsesFor(none).length===0:'every item is used';
+      return r;
+    })()`);
+    ok('an item card names the recipes that eat it, and how many each takes, on Shift (#154)',
+       tt.shiftRows === true && tt.n > 1 && tt.sorted === true, JSON.stringify(tt));
+    ok('at rest it is still the skill chips, and the card says there is more to see',
+       tt.restChips === true && tt.offersShift === true, JSON.stringify(tt));
+
+    /* #156 "The tooltips that pop up for the creatures in the change zone bar are behind
+       the combat window." #combatPanel gives every direct child its own stacking context
+       (position:relative;z-index:1), so the bar's tooltip could only paint inside the bar
+       and the arena, a later sibling, covered it. */
+    const fb = ev(`(function(){
+      var rules={};
+      [].forEach.call(document.styleSheets,function(sh){ [].forEach.call(sh.cssRules||[],function(ru){
+        if(ru.selectorText) rules[ru.selectorText]=(ru.style&&ru.style.cssText)||''; }); });
+      var find=function(frag){ var k=Object.keys(rules).find(function(x){ return x.indexOf(frag)>=0; }); return k?rules[k]:''; };
+      var r={lift:find('#combatPanel > .cg-fbar'), anchor:rules['.cg-swap button[data-tip]:hover::after']||''};
+      r.lifted=r.lift.indexOf('z-index: 6')>=0;
+      r.opensLeftward=r.anchor.indexOf('right: 0')>=0&&r.anchor.indexOf('left: auto')>=0;
+      state=defaultState(); normalizeState();
+      for(var k in state.combatXp) state.combatXp[k]=XP_CUM[30];
+      state.items={bronze_sword:1}; state.combatEquipped={weapon:'bronze_sword'};
+      combatMode=true; state.cmbView='fight'; state.cmbSubTab='arena'; combat.raid=null; combat.monId='rat';
+      renderCombat();
+      var bar=document.querySelector('#combatPanel > .cg-fbar');
+      r.directChild=!!bar;                                   // the rule keys off exactly this
+      r.tips=bar?bar.querySelectorAll('.cg-swap button[data-tip]').length:0;
+      r.arenaAfter=!!(bar&&bar.nextElementSibling&&String(bar.nextElementSibling.className).indexOf('cvstage')>=0);
+      combatMode=false; state.cmbView='guide';
+      return r;
+    })()`);
+    ok('the fight bar sits above the arena, so its creature tooltips are not painted over (#156)',
+       fb.lifted === true && fb.directChild === true && fb.arenaAfter === true && fb.tips > 0, JSON.stringify(fb));
+    ok('and those tooltips open leftward, away from the panel edge that used to clip them',
+       fb.opensLeftward === true, JSON.stringify(fb));
+  }
+
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));
   process.exit(fail ? 1 : 0);
 }, 2500);
