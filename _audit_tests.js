@@ -3301,7 +3301,7 @@ setTimeout(() => {
        painted fish read as "no icon at all". */
     const cov = ev(`(function(){var svg=[],art=0,none=[];
       for(var id in ITEMS){var h='';try{h=iconHTML(id)||'';}catch(e){}
-      h=h.replace(/^<span class="gilded">/,'').replace(/<\\/span>$/,'');
+      h=h.replace(/^<span class="[^"]*gilded[^"]*">/,'').replace(/<\\/span>$/,'');
       if(h.indexOf('<img')===0) art++; else if(h.indexOf('<svg')>=0) svg.push(id); else none.push(id);}
       return {art:art,svg:svg,none:none};})()`);
     /* An explicit list, not a count. `cane_rod` and `master_bellows` are deliberate —
@@ -5496,7 +5496,7 @@ setTimeout(() => {
       return JSON.stringify(out);
     })()`));
     ok('a prized icon is its own fish, gilded',
-       /^<span class="gilded">/.test(icons.gilded) && icons.gilded.indexOf('<img') > 0,
+       /^<span class="ev-icon gilded">/.test(icons.gilded) && icons.gilded.indexOf('<img') > 0,
        icons.gilded.slice(0, 60));
     ok('and it is the PAINTED fish, not the pre-art SVG',
        icons.gilded.indexOf('<svg') < 0 && icons.base.indexOf('<img') === 0,
@@ -9301,6 +9301,99 @@ setTimeout(() => {
        ret.unowned === 4, JSON.stringify(ret));
     ok('but still shows one to a player who already owns it',
        ret.ownedShows === true && ret.ownedCount === 5, JSON.stringify(ret));
+  }
+
+  section('Radcliff #163, #165, #168 (0.9.126.2)');
+  {
+    /* #165: "the prized fish variants icons where small in the big boxes now. The
+       cooked dishes from that variant is also tiny." The gild is a WRAPPER around the
+       base fish and every big box sizes its picture with a rule naming .ev-icon, so
+       none of them reached the wrapper and it fell back to 1em: measured at 14px in a
+       58px satchel tile, against 58px for a plain item. */
+    const gild = ev(`(function(){
+      var id=Object.keys(ITEMS).find(function(x){ return ITEMS[x].prizedOf; });
+      var h=iconHTML(id), r={id:id, base:ITEMS[id].prizedOf};
+      r.wrapperIsIcon=/class="ev-icon gilded"/.test(h);
+      r.holdsBase=h.indexOf('gilded')>=0&&h.length>40;
+      var rules={};
+      [].forEach.call(document.styleSheets,function(sh){ [].forEach.call(sh.cssRules||[],function(ru){
+        if(ru.selectorText) rules[ru.selectorText]=(ru.style&&ru.style.cssText)||''; }); });
+      var find=function(sel){ var k=Object.keys(rules).find(function(x){ return x.indexOf(sel)>=0; }); return k?rules[k]:''; };
+      var gks=Object.keys(rules).filter(function(x){ return x.indexOf('gilded')>=0&&x.indexOf('.ev-icon')>=0; });
+      r.gildRules=gks.join(' | ');
+      r.hasInnerRule=gks.indexOf('.gilded>.ev-icon')>=0;
+      r.cooked=/class="ev-icon gilded"/.test(iconHTML('prized_tuna'));
+      return r;
+    })()`);
+    /* The inner rule needs !important, because the container rules that now reach the
+       wrapper also match the fish inside it and carry an id. jsdom's CSS parser drops
+       !important declarations, so the rule is read from the source rather than from
+       cssRules; Chrome measured it at 58px in a 58px tile, against 14px before. */
+    const gildRule = /\.gilded>\.ev-icon\{width:100%!important;height:100%!important/.test(html);
+    ok('a prized catch is sized by the box it sits in, like every other picture (#165)',
+       gild.wrapperIsIcon === true && gild.hasInnerRule === true && gildRule === true,
+       JSON.stringify(gild) + ' rule=' + gildRule);
+    ok('and so is the cooked dish made from one', gild.cooked === true, JSON.stringify(gild));
+
+    /* #163: "Combat Log cut off in raid window." The rail is anchored inside a
+       fixed-height stage and a raid adds widgets above the log, so the column ran past
+       the stage and .cvstage's overflow:hidden sliced the log. */
+    const rail = ev(`(function(){
+      var rules={};
+      [].forEach.call(document.styleSheets,function(sh){ [].forEach.call(sh.cssRules||[],function(ru){
+        if(ru.selectorText) rules[ru.selectorText]=(ru.style&&ru.style.cssText)||''; }); });
+      var find=function(sel){ var k=Object.keys(rules).find(function(x){ return x.indexOf(sel)>=0; }); return k?rules[k]:''; };
+      var r={};
+      r.railBounded=/max-height/.test(find('.cvrail{')||rules['.cvrail']||'');
+      r.logGives=/flex/.test(find('.cvrail .cmb-log'));
+      var gkeys=Object.keys(rules).filter(function(x){ return x.indexOf('.cvrail')>=0&&x.indexOf('.cvglass')>=0; });
+      r.glassKeys=gkeys.join(' | ');
+      r.boxCanShrink=gkeys.some(function(k){ return /min-height/.test(rules[k]); });
+      return r;
+    })()`);
+    ok('the arena rail is bound to the stage and the log is the part that gives (#163)',
+       rail.railBounded === true && rail.logGives === true && rail.boxCanShrink === true, JSON.stringify(rail));
+
+    /* #163 again: "if you mouse over a creature you are fighting in the arena tab the
+       cursor changes to a pointer with a question mark. Is that suppose to link to the
+       entry in the log? If not, can it?" */
+    const jump = ev(`(function(){
+      state=defaultState(); normalizeState();
+      for(var k in state.combatXp) state.combatXp[k]=XP_CUM[40];
+      state.items={bronze_sword:1}; state.combatEquipped={weapon:'bronze_sword'};
+      combatMode=true; state.cmbView='fight'; state.cmbSubTab='arena'; combat.raid=null; combat.monId='rat';
+      renderCombat();
+      var foe=document.querySelector('#combatPanel .cvarena-foe[data-mlogjump]');
+      var r={present:!!foe, id:foe?foe.getAttribute('data-mlogjump'):'', tip:foe?(foe.getAttribute('data-tip')||''):''};
+      if(foe){ foe.click(); r.tab=state.cmbSubTab; r.sel=state.monLogSel; r.zone=state.monLogZone; }
+      state.cmbSubTab='arena'; combatMode=false; state.cmbView='guide';
+      return r;
+    })()`);
+    ok('the creature you are fighting opens its own Monster Log entry (#163)',
+       jump.present === true && jump.id === 'rat' && jump.tab === 'log' && jump.sel === 'rat' && jump.zone === 'rat_warrens', JSON.stringify(jump));
+    ok('and its card says the click does something', /Monster Log/.test(jump.tip), jump.tip.slice(-60));
+
+    /* #168: "According to the search bar in the satchel, I have 286 items to search.
+       The max of my satchel right now is 283." Both numbers were right: a stack the
+       loadouts are already wearing spends no slot, and neither does the quiver. */
+    const cnt = ev(`(function(){
+      state=defaultState(); normalizeState(); invSearch=''; _bagSel=null;
+      state.bagTabs=[]; state.bagHolds=[]; state.bagLocked=[]; state.invPrefs.tab='all';
+      state.items={coal:9, iron_ore:5, runite_helm:1, runite_sword:1, bronze_arrow:400};
+      state.combatXp.defence=XP_CUM[99]; state.combatXp.attack=XP_CUM[99];
+      state.combatEquipped={helmet:'runite_helm', weapon:'runite_sword', quiver:'bronze_arrow'};
+      renderInventory();
+      var box=document.getElementById('inventory');
+      var cap=box.querySelector('.bag-capwrap').textContent.replace(/[\s]+/g,' ');
+      var owned=Object.keys(state.items).filter(function(i){ return (state.items[i]||0)>0; }).length;
+      return {owned:owned, used:satchelUsed(), cap:cap,
+        search:box.querySelector('.inv-search').placeholder,
+        explained:/worn or in your quiver/.test(cap)};
+    })()`);
+    ok('the satchel says why it can hold more stacks than it has slots (#168)',
+       cnt.owned === 5 && cnt.used === 2 && cnt.explained === true, JSON.stringify(cnt));
+    ok('and the search box still counts everything you can search',
+       cnt.search === 'Search 5 items', JSON.stringify(cnt));
   }
 
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));

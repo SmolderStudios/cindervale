@@ -8071,8 +8071,14 @@ body:not(.is-demo) .demo-only{display:none !important}
 .cvstage-nm .s{font-size:calc(10.5px*var(--tscale));letter-spacing:2.8px;text-transform:uppercase;
   margin-top:3px;color:color-mix(in srgb,var(--zone-accent,#c79b4e) 74%,#8a7550)}
 
+/* Ticket #163, "Combat Log cut off in raid window". The rail is a fixed column
+   anchored inside a fixed-height stage, and a raid adds widgets above the log, so the
+   column grew past the stage's bottom edge and .cvstage's overflow:hidden sliced the
+   log in half. Bound the rail to the stage it sits in and let the LOG be the part
+   that gives: it already scrolls, so shrinking it costs nothing. */
 .cvrail{position:absolute;top:calc(86px*var(--tscale));z-index:3;width:calc(226px*var(--tscale));
-  display:flex;flex-direction:column;gap:calc(8px*var(--tscale))}
+  display:flex;flex-direction:column;gap:calc(8px*var(--tscale));
+  max-height:calc(100% - (86px*var(--tscale)) - (14px*var(--tscale)))}
 .cvrail.l{left:calc(16px*var(--tscale))} .cvrail.r{right:calc(16px*var(--tscale))}
 .cvglass{background:rgba(13,8,4,.72);backdrop-filter:blur(10px);border:1px solid rgba(199,155,78,.2);
   border-radius:9px;padding:calc(9px*var(--tscale)) calc(10px*var(--tscale))}
@@ -8231,7 +8237,11 @@ body:not(.is-demo) .demo-only{display:none !important}
 
 /* ── combat log: bigger type, and it scrolls instead of overflowing ──────── */
 .cvrail .cmb-log{max-height:calc(150px*var(--tscale));overflow-y:auto;overflow-x:hidden;
+  flex:1 1 auto;min-height:calc(58px*var(--tscale));
   scrollbar-width:thin;scrollbar-color:rgba(199,155,78,.4) transparent}
+/* Its own glass panel has to be allowed to shrink too, or the log inside it cannot. */
+.cvrail .cvglass{min-height:0}
+.cvrail .cvglass.cvlogbox{display:flex;flex-direction:column;flex:1 1 auto;min-height:0}
 .cvrail .cmb-log .ln{font-size:calc(12.5px*var(--tscale));line-height:1.4}
 .cvrail .cmb-log::-webkit-scrollbar{width:6px}
 .cvrail .cmb-log::-webkit-scrollbar-thumb{background:rgba(199,155,78,.35);border-radius:3px}
@@ -8300,6 +8310,10 @@ body:not(.is-demo) .demo-only{display:none !important}
    Also: .ev-icon forces width:1em AND height:1em, so a wide creature was being
    letterboxed inside a square by object-fit. Width auto keeps its real aspect. */
 .cvstage .cvarena-foe{width:fit-content;line-height:1}
+/* Ticket #163: "if you mouse over a creature you are fighting in the arena tab the
+   cursor changes to a pointer with a question mark. Is that suppose to link to the
+   entry in the log? If not, can it?" It does now, so it points like a link. */
+.cvstage .cvarena-foe[data-mlogjump]{cursor:var(--cur-pointer)}
 .cvstage .cvarena-art{display:block;line-height:0}
 .cvstage .cvarena-art .ev-icon.art-mon{width:1em;height:1em;object-fit:contain}
 .cvstage .cvarena-art svg{width:1em;height:1em}
@@ -8777,7 +8791,10 @@ body:not(.is-demo) .demo-only{display:none !important}
    what say "this one is special" at 20px, where a colour shift alone would not. */
 .gilded{position:relative;display:inline-flex;align-items:center;justify-content:center;
   line-height:0;width:1em;height:1em;vertical-align:middle}
-.gilded .ev-icon{width:100%;height:100%;
+/* !important because the container rules that now reach the wrapper (see iconHTML)
+   also match this inner icon and are more specific: "#inventory .bag-tile .bag-ic
+   .ev-icon" would otherwise make the fish 74% of a 74% box (#165). */
+.gilded>.ev-icon{width:100%!important;height:100%!important;
   filter:saturate(1.35) brightness(1.14) contrast(1.06)
          drop-shadow(0 0 1.5px rgba(255,206,110,.85)) drop-shadow(0 0 4px rgba(224,170,60,.4))}
 /* The halo is tuned for 20px, which is where these are actually read. Its opacity
@@ -8838,7 +8855,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.126.1">v0.9.126</div>
+  <div class="mm-ver" data-build="0.9.126.2">v0.9.126</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -14386,7 +14403,14 @@ function iconHTML(id){
 
      Painted art still wins if it ever lands: ICONS.prized_* is checked above. */
   if(ITEMS[id] && ITEMS[id].prizedOf){
-    return '<span class="gilded">'+iconHTML(ITEMS[id].prizedOf)+'</span>';
+    /* Ticket #165, Radcliff: "the prized fish variants icons where small in the big
+       boxes now. The cooked dishes from that variant is also tiny." The gild is a
+       WRAPPER around the base fish, and every big box in the game sizes its picture
+       with a rule that names .ev-icon (the satchel tile's 74%, the item card's 46px,
+       the compendium's 64px). The wrapper did not carry that class, so none of those
+       rules reached it and it fell back to 1em: 14px in a 58px box. It carries the
+       class now, and the fish inside it fills the wrapper. */
+    return '<span class="ev-icon gilded">'+iconHTML(ITEMS[id].prizedOf)+'</span>';
   }
   /* PLACEHOLDER art (0.9.122.31). Thieving shipped seventeen items and a pet before
      their sheets were drawn, so each borrows the closest existing painting. Resolved
@@ -31179,7 +31203,14 @@ function renderInventory(){
   const cap=satchelCap(), used=satchelUsed();
   const pct=Math.min(100,Math.round(used/cap*100));
   const bought=state.satchelUpgrades||0, atMax=bought>=SATCHEL_MAX_EXPANSIONS;
-  const capKey=used+'|'+cap+'|'+bought+'|'+waiting.length;
+  /* Ticket #168, Radcliff: "According to the search bar in the satchel, I have 286
+     items to search. The max of my satchel right now is 283." Both numbers were
+     right and they count different things: the search box counts every stack you can
+     search, while a slot is only spent by a stack the loadouts are not already
+     wearing, and the quiver's arrows never spend one (#130). Say so, rather than
+     leaving two numbers that look like they should match. */
+  const freeRiders=Math.max(0, owned.length-(used-waiting.length));
+  const capKey=used+'|'+cap+'|'+bought+'|'+waiting.length+'|'+freeRiders;
   const capwrap=box.querySelector('.bag-capwrap');
   if(capwrap.getAttribute('data-key')!==capKey){
     capwrap.setAttribute('data-key',capKey);
@@ -31190,6 +31221,7 @@ function renderInventory(){
       +'<span class="bag-capbar"><i style="width:'+pct+'%;background:'+barColor+'"></i></span>'
       +'<span class="bag-cappct">'+pct+'% full</span></div>'
       +(waiting.length?'<div class="bag-caph">'+waiting.length+' slot'+(waiting.length===1?' is':'s are')+' held by placeholders</div>':'')
+      +(freeRiders?'<div class="bag-caph">'+freeRiders+(freeRiders===1?' stack is worn or in your quiver, so it takes':' stacks are worn or in your quiver, so they take')+' no slot</div>':'')
       +(atMax?'':'<button type="button" class="sat-goshop bag-goshop" data-bag="goshop">+'+SATCHEL_SLOT_STEP
         +' slots for '+iconHTML('ui_coin')+' '+satchelTierCost(bought).toLocaleString()+'g in the Shop →</button>');
   }
@@ -43104,7 +43136,7 @@ ${combat.raid?buildRaidProgressHTML():''}
       <div class="cvstage-floor"></div>
       ${combat.raid?buildRaidRibbonHTML():''}
       ${combat.raid?buildRaidRingHTML():''}
-      <div class="cvarena-foe" data-tip="${mon.name} \u00b7 Level ${baseMon.lvl}&#10;&#10;Attack ${mon.atk}&#10;Max Hit ${mon.str}&#10;Defence ${mon.def}&#10;Speed ${(mon.swingMs/1000).toFixed(2)}s&#10;Health ${mon.hp}">
+      <div class="cvarena-foe" data-mlogjump="${baseMon.id}" data-tip="${mon.name} \u00b7 Level ${baseMon.lvl}&#10;&#10;Attack ${mon.atk}&#10;Max Hit ${mon.str}&#10;Defence ${mon.def}&#10;Speed ${(mon.swingMs/1000).toFixed(2)}s&#10;Health ${mon.hp}&#10;&#10;Click to read its Monster Log entry">
         <div class="cvarena-art">${iconHTML(baseMon.id)}</div>
       </div>
       <div class="cvsplats" id="cmbSplats"></div>
@@ -43154,7 +43186,7 @@ ${combat.raid?buildRaidProgressHTML():''}
           <h4>Food &amp; potions</h4>
           <div class="cvfood-scroll"><div class="cmb-foodmenu">${healPickHTML}${buffPickHTML}</div></div>
         </div>
-        <div class="cvglass">
+        <div class="cvglass cvlogbox">
           <h4>Combat log</h4>
           <div class="cmb-log" id="cmbLog">${combat.log.map(l=>`<div class="ln ${l.c}">${l.t}</div>`).join('')||'<div class="ln sys">The arena is quiet\u2026</div>'}</div>
         </div>
@@ -43491,6 +43523,19 @@ ${combat.raid?buildRaidProgressHTML():''}
       state.monLogZone=zid;
       const first=monstersInZone(zid)[0];
       if(first) state.monLogSel=first.id;
+      saveGame();
+      renderCombat();
+    });
+  });
+  /* Click the creature you are fighting to read its Log entry (#163). Mid-raid this
+     is safe: the fight runs on its own timer and the sub-tab does not touch it. */
+  panel.querySelectorAll('[data-mlogjump]').forEach(el=>{
+    el.addEventListener('click',()=>{
+      const mid=el.getAttribute('data-mlogjump'), m=getMonster(mid);
+      if(!m) return;
+      if(m.zone) state.monLogZone=m.zone;
+      state.monLogSel=mid;
+      state.cmbSubTab='log';
       saveGame();
       renderCombat();
     });
