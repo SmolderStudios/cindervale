@@ -8855,7 +8855,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.126.5">v0.9.126</div>
+  <div class="mm-ver" data-build="0.9.126.6">v0.9.126</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -11904,10 +11904,14 @@ const SKILLS={
   farming:{name:'Farming',icon:'🌾',acts:[]}, // Farming uses patch system — see renderFarming
 
   cooking:{name:'Cooking',icon:'🍳',acts:[
-    // ONE ladder, sorted by level (1.0.50) — fish and monster-part heal foods
-    // interleave. Array order drives both display order and the T{n} tier badge
-    // (tierIndexForAct uses array position), so a Lv-8 recipe must never sit
-    // after a Lv-90 one or it renders as "T10" at the bottom of the list.
+    /* THREE ladders, not one, and array order no longer decides anything.
+       This block used to say "array order drives both display order and the T{n}
+       tier badge, so a Lv-8 recipe must never sit after a Lv-90 one" — which was
+       true, was the bug, and is the sort of rule that gets a defect rebuilt from
+       its own documentation. Since the 1.0 audit famOf() splits cooking on the
+       output id (cooked_* is the fish line, prized_* the prized line, everything
+       else the monster-part line) and sortAllActs() orders the array afterwards.
+       Add a recipe wherever it reads best; it will be sorted and tiered for you. */
     {id:'co1',  name:'Cook minnow',         lvl:1, ms:4200, xp:38,  spdMult:0.500, minMs:720,  inp:{raw_minnow:1},               out:{cooked_minnow:1}},
     {id:'co_mb',name:'Boil Marrow Broth',   lvl:4, ms:4400, xp:42,  spdMult:0.510, minMs:740,  inp:{gnawed_bone:3},              out:{marrow_broth:1}},
     {id:'co_rs',name:'Grill Ratmeat Skewer',lvl:8, ms:4800, xp:55,  spdMult:0.530, minMs:800,  inp:{rat_tail:3,gnawed_bone:1},   out:{ratmeat_skewer:1}},
