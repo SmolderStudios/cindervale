@@ -3492,7 +3492,7 @@ setTimeout(() => {
             const a=(SKILLS[q.skill].acts||[]).find(x=>x.id===q.act);
             if(!a){ out.push(g.id+': missing act '+q.act); }
             else {
-              if(lvl<((a.id==='co8')?highFishUnlockLevel():(a.lvl||1))) out.push(g.id+': act above level');
+              if(lvl<(a.lvl||1)) out.push(g.id+': act above level');
               ids=ids.concat(Object.keys(a.out||{}));
             }
           }
@@ -4225,7 +4225,7 @@ setTimeout(() => {
                 if(!q.act) return;                      // farming's tend quest names none
                 var a=(SKILLS[q.skill].acts||[]).find(function(x){ return x.id===q.act; });
                 if(!a){ note('do', g.id+': act '+q.act+' does not exist'); return; }
-                var lv=(a.id==='co8')?highFishUnlockLevel():(a.lvl||1);
+                var lv=(a.lvl||1);
                 if(levelFromXp(state.xp[q.skill]||0)<lv) note('do', g.id+': '+q.act+' is above level');
                 Object.keys(a.out||{}).forEach(function(id){
                   if(ITEMS[id]&&(ITEMS[id].tool||ITEMS[id].skillGear))
@@ -9666,6 +9666,78 @@ setTimeout(() => {
     })()`);
     ok('the open guild board has a live progress tick (#187)',
        live.missing === false && live.tagged === true && live.called === true, JSON.stringify(live));
+  }
+
+  section('Ladder coherence: raids, slayer zones, and the bounty payout (1.0 audit)');
+  {
+    /* Every raid unlocks at the level its own loot needs. The Empyrean Throne
+       opened at 97 while all 15 of its gearDrops are ctier 10 (gate 99), so for
+       two combat levels the top raid dropped nothing you could equip. The comment
+       on the Sunken Barrow states this as the rule; nothing enforced it. */
+    const raids = ev(`(function(){
+      var bad=[];
+      for(var r of RAIDS){
+        if(!r.gearDrops||!r.gearDrops.length) continue;
+        var need=0;
+        for(var g of r.gearDrops){
+          var it=ITEMS[g.id]; if(!it||it.ctier==null) continue;
+          var lv=COMBAT_GEAR_REQ[it.ctier]||0; if(lv>need) need=lv;
+        }
+        if(need&&r.unlockLvl<need) bad.push(r.id+' opens at '+r.unlockLvl+' but its loot needs '+need);
+      }
+      return bad;
+    })()`);
+    ok('no raid opens before its own loot can be worn',
+       raids.length === 0, raids.length ? raids.join(' | ') : 'all raids matched');
+
+    /* slayerEligible filtered on monster level only, and its upper bound is
+       combatLevel+5. Every zone unlocks a few levels below its weakest monster,
+       so the headroom always reached past the gate and handed out bounties in
+       zones the player could not walk into. */
+    const slay = ev(`(function(){
+      state=defaultState(); normalizeState();
+      var bad=0, noTask=0, sample='';
+      for(var cl=3; cl<=99; cl++){
+        state.combatXp.attack=XP_CUM[cl]; state.combatXp.strength=XP_CUM[cl];
+        state.combatXp.defence=XP_CUM[cl]; state.combatXp.hitpoints=XP_CUM[cl];
+        var any=0;
+        for(var M of SLAYER_MASTERS){
+          var pool=[]; try{ pool=slayerEligible(M); }catch(e){}
+          any+=pool.length;
+          for(var m of pool){
+            var z=ZONES.find(function(x){return x.id===m.zone;});
+            if(!z||!zoneUnlocked(z)){ bad++; if(!sample) sample='cl'+cl+' -> '+m.id+' in '+m.zone; }
+          }
+        }
+        if(!any) noTask++;
+      }
+      return {bad:bad, noTask:noTask, sample:sample};
+    })()`);
+    ok('slayer never assigns a bounty in a zone you cannot enter',
+       slay.bad === 0, slay.bad ? slay.bad + ' cases, e.g. ' + slay.sample : 'checked combat 3-99');
+    ok('and every combat level still has a bounty available',
+       slay.noTask === 0, slay.noTask ? slay.noTask + ' levels with no task' : 'none left empty');
+
+    /* #191. The card used to print master.pts, which ignored Quartermaster and
+       the streak, so it understated what the bounty actually paid. */
+    const pay = ev(`(function(){
+      state=defaultState(); normalizeState();
+      var M=SLAYER_MASTERS[0];
+      state.slayer.streak=0; var base=slayerTaskPoints(M);
+      state.slayer.streak=10; var streaked=slayerTaskPoints(M);
+      return {base:base, streaked:streaked, raw:M.pts};
+    })()`);
+    ok('the bounty payout shown includes the streak, not just the base (#191)',
+       pay.base === pay.raw && pay.streaked > pay.base, JSON.stringify(pay));
+
+    /* #200. A skip that cannot find a replacement must not burn the day's skip. */
+    const skip = ev(`(function(){
+      var src=${JSON.stringify(html)};
+      return {guards:/your skip is still available/.test(src),
+              comparesItems:/const avoid=ids\\(q\\)/.test(src)};
+    })()`);
+    ok('a guild skip avoids the item it replaced, and is not spent on a failed reroll (#200)',
+       skip.guards === true && skip.comparesItems === true, JSON.stringify(skip));
   }
 
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));

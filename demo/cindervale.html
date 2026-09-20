@@ -8855,7 +8855,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.126.6">v0.9.126</div>
+  <div class="mm-ver" data-build="0.9.126.7">v0.9.126</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -11930,7 +11930,13 @@ const SKILLS={
     {id:'co5',  name:'Cook salmon',         lvl:50,ms:10500,xp:227, spdMult:0.693, minMs:1470, inp:{raw_salmon:1},               out:{cooked_salmon:1}},
     {id:'co_ts',name:'Stew Troll Meat',     lvl:60,ms:12800,xp:331, spdMult:0.735, minMs:1680, inp:{troll_meat:2,troll_blood:1}, out:{troll_stew:1}},
     {id:'co6',  name:'Cook swordfish',      lvl:62,ms:12800,xp:331, spdMult:0.735, minMs:1680, inp:{raw_swordfish:1},            out:{cooked_swordfish:1}},
-    {id:'co8',  name:'Cook void eel',       lvl:62,ms:18800,xp:655, spdMult:0.790, minMs:2220, inp:{raw_voideel:1},              out:{cooked_voideel:1}},
+    /* lvl 62 -> 75 (1.0 audit). Every other field on this row is the level-90
+       tier's tuning — ms 18800, xp 655, spdMult 0.790, minMs 2220, byte-identical
+       to Roast Demon Flesh at Lv 86 — its ingredient is a Fishing 90 catch, and
+       its prized twin needs Cooking 90. The base fish ladder read 1,15,25,38,50,
+       62,75,62, so this was a typo paying Lv-90 rates at Lv 62. Jordan's call was
+       75 rather than 90: it sits with shark instead of jumping to the top. */
+    {id:'co8',  name:'Cook void eel',       lvl:75,ms:18800,xp:655, spdMult:0.790, minMs:2220, inp:{raw_voideel:1},              out:{cooked_voideel:1}},
     {id:'co_dr',name:'Sear Drake Flank',    lvl:72,ms:15300,xp:466, spdMult:0.765, minMs:1920, inp:{drake_meat:2,cinder_gland:1},out:{drake_roast:1}},
     {id:'co7',  name:'Cook shark',          lvl:75,ms:15300,xp:466, spdMult:0.765, minMs:1920, inp:{raw_shark:1},                out:{cooked_shark:1}},
     {id:'co_ir',name:'Roast Demon Flesh',   lvl:86,ms:18800,xp:655, spdMult:0.790, minMs:2220, inp:{demon_meat:2,brimstone:1},   out:{infernal_roast:1}},
@@ -19374,7 +19380,7 @@ function supplyTiersFor(sup){
   const acts=(SKILLS[sk]&&SKILLS[sk].acts)||[];
   const seen={}, out=[];
   for(const a of acts){
-    const need=(a.id==='co8'&&typeof highFishUnlockLevel==='function')?highFishUnlockLevel():(a.lvl||1);
+    const need=(a.lvl||1);
     if(need>lvl) continue;
     for(const id in (a.out||{})){
       const it=ITEMS[id]; if(!it||!it.sell||seen[id]) continue;
@@ -23085,9 +23091,12 @@ function moonpetalUnlockLevel(){
   // fo_master2 (req lv40) gives a modest 10-level discount
   return treeRank('foraging','fo_master2')>0?70:80;
 }
-function highFishUnlockLevel(){
-  return 62; // void eel requires level 62 — no early unlock perk anymore
-}
+/* highFishUnlockLevel was removed in the 1.0 audit. It returned a flat 62 and its
+   own comment said "no early unlock perk anymore", so it was a special case that
+   did nothing but hold a second copy of co8's level. Six call sites read it, which
+   meant moving Cook void eel to Lv 75 silently left half the game gating it at 62
+   — _audit_tests.js caught that as a Deepwater supply order nobody could fill.
+   Every one of those sites reads act.lvl now, so there is one number, not two. */
 
 /* ════════ [JS-18] BINOM HELPER — drop-chance math ═══════════════════════════════ */
 /* =================================================================
@@ -26913,7 +26922,7 @@ function gdBestActs(skill){
   const sk=SKILLS[skill]; if(!sk||!sk.acts) return [];
   const lvl=levelFromXp(state.xp[skill]||0);
   return sk.acts.filter(a=>{
-    const need=(a.id==='co8')?highFishUnlockLevel():(a.lvl||1);
+    const need=(a.lvl||1);
     return lvl>=need && !gdOneTimeAct(a);
   });
 }
@@ -27499,10 +27508,39 @@ function gdSkip(id,idx){
      not change. Rare when the pool was every item in the game; not rare now the
      Nightmarket draws from twelve stolen goods. Compare against the whole board,
      this row included. */
+  /* Ticket #200: "I skipped a task in the deepwater company to supply x amount of
+     void eel and got a quest to supply 3 different dishes but void eel was still
+     one of those dishes." The name check above passes cleanly there — "supply void
+     eel" and "supply 3 dishes" are different strings — but the thing the player was
+     trying to get away from came straight back inside the new order. Compare the
+     ITEMS a quest asks for, not just its title.
+
+     Kept as a preference rather than a hard rule: a small guild's pool can be
+     narrow enough that nothing avoids the item, and refusing to reroll at all
+     would be worse than a partial overlap. Twelve tries look for a clean one, then
+     it settles for any quest that is merely not a duplicate. */
+  const ids=q0=>{
+    const s=new Set();
+    if(q0){
+      if(q0.target) s.add(q0.target);
+      if(q0.items) for(const k in q0.items) s.add(k);
+    }
+    return s;
+  };
+  const avoid=ids(q);
+  let clean=null, fallback=null;
   for(let tries=0;tries<12;tries++){
     const nq=gdRollOne(g,q.size);
-    if(nq && !r.q.some(o=>o.name===nq.name)){ r.q[idx]=nq; break; }
+    if(!nq || r.q.some((o,oi)=>oi!==idx&&o.name===nq.name) || nq.name===q.name) continue;
+    if(!fallback) fallback=nq;
+    let hit=false; for(const id of ids(nq)) if(avoid.has(id)){ hit=true; break; }
+    if(!hit){ clean=nq; break; }
   }
+  const pick=clean||fallback;
+  /* Only spend the skip if the board actually moved. Before this, twelve failed
+     tries burned the day's one skip and left the same quest sitting there. */
+  if(!pick){ toast('Nothing else to offer right now — your skip is still available.'); return; }
+  r.q[idx]=pick;
   r.skipped++;
   renderAll(); saveGame();
 }
@@ -28258,7 +28296,7 @@ function renderCooking(){
 
   const showing=_ckTab==='prized'?prized:dishes;
   for(const act of showing){
-    const reqLvl=act.id==='co8'?highFishUnlockLevel():act.lvl;
+    const reqLvl=act.lvl;
     grid.appendChild(ckCard(act,reqLvl,lvl,m));
   }
   /* Every prized recipe is listed whether or not you hold the catch — on its own
@@ -28686,7 +28724,6 @@ function renderActivities(){
   for(const act of sk.acts){
     let reqLvl=act.lvl;
     if(act.id==='fo7') reqLvl=moonpetalUnlockLevel();
-    if(act.id==='co8') reqLvl=highFishUnlockLevel();
     if(act.id==='ag8') reqLvl=agGauntletUnlockLevel();
     if(lvl>=reqLvl) unlocked.push({act,reqLvl,rates:ratesFor(act,selectedSkill)});
   }
@@ -28738,7 +28775,6 @@ function renderActivities(){
   for(const act of _cb.acts){
     let reqLvl=act.lvl;
     if(act.id==='fo7') reqLvl=moonpetalUnlockLevel();
-    if(act.id==='co8') reqLvl=highFishUnlockLevel();
     if(act.id==='ag8') reqLvl=agGauntletUnlockLevel();
     // ── Alchemy tab filter (1.0.63) ─────────────────────────────────────
     // Skilling vs combat brews live in the same acts[] array but render
@@ -34400,7 +34436,12 @@ const RAIDS=[
   },
   {
     id:'empyrean_throne', name:'The Empyrean Throne', icon:'empyrean_throne',
-    accent:'#ffcf5a', unlockLvl:97,
+    /* 97 -> 99 (1.0 audit). Every other raid's unlockLvl equals the
+       COMBAT_GEAR_REQ level of its own loot tier, and the comment on the Sunken
+       Barrow states that as the rule and says it was a fix for this exact defect.
+       All 15 of this raid's gearDrops are ctier 10, which gates at 99, so for two
+       full combat levels the top raid dropped nothing the player could equip. */
+    accent:'#ffcf5a', unlockLvl:99,
     blurb:"Climb out of the void and you do not find more darkness. You find a wound of blinding light. On a throne of dead suns slumbers Aureon, the first god, still dreaming the world. Everything between the stair and the dais burns to keep him asleep.",
     // 8 stages · ~26,650 total HP on one bar · the true capstone gauntlet (Lv99 / T10).
     stages:[
@@ -35881,10 +35922,36 @@ function slayerEligible(master){
   // `cl-45` floor made the window empty for high-level players → "no task"). Keeps
   // at least an ~8-level window within the master's band.
   const lo=Math.max(master.band[0], Math.min(cl-40, hi-8));
-  const pool=MONSTERS.filter(m=>!m.boss && m.lvl>=lo && m.lvl<=hi && !slayerBlocked(m.id));
+  const pool=MONSTERS.filter(m=>!m.boss && m.lvl>=lo && m.lvl<=hi && !slayerBlocked(m.id) && slayerZoneOpen(m));
   // Absolute fallback: if somehow empty, offer anything in-band you can fight.
-  if(!pool.length) return MONSTERS.filter(m=>!m.boss && m.lvl>=master.band[0] && m.lvl<=hi && !slayerBlocked(m.id));
+  if(!pool.length) return MONSTERS.filter(m=>!m.boss && m.lvl>=master.band[0] && m.lvl<=hi && !slayerBlocked(m.id) && slayerZoneOpen(m));
   return pool;
+}
+/* Can the player actually walk into this thing's zone? (1.0 audit)
+
+   slayerEligible filtered on monster LEVEL only, and the hi bound is
+   min(band, combatLevel+5). Every zone's unlockLvl sits a few levels BELOW its
+   first monster — thornwood opens at 5 and its weakest is a level 6 boar,
+   skeleton_crypt opens at 18 and its weakest is level 18 — so the +5 headroom
+   always reached past the gate and handed out bounties in zones the player could
+   not enter. The task was then uncompletable until they levelled into the zone.
+
+   A monster whose zone is not in ZONES at all (raid rosters, and the Aerie while
+   AERIE_LIVE is off) is excluded too: those are not places you travel to. */
+/* What finishing the current bounty pays, before Slayer's Fortune rolls its
+   double. Ticket #191 asked for this on the task card; it lives here rather than
+   in the renderer so the number the card promises and the number the award pays
+   cannot drift. The completed card already printed master.pts, which was the bare
+   base and ignored both Quartermaster and the streak. */
+function slayerTaskPoints(master){
+  if(!master) return 0;
+  const streakMul=Math.min(0.5, ((state.slayer&&state.slayer.streak)||0)*0.05);
+  return master.pts + slayerPerkLevel('quartermaster') + Math.round(master.pts*streakMul);
+}
+function slayerZoneOpen(m){
+  if(!m||!m.zone) return true;                 // zoneless monsters are not gated
+  const z=(typeof ZONES!=='undefined')&&ZONES.find(x=>x.id===m.zone);
+  return z?zoneUnlocked(z):false;
 }
 /* Soft assignment weight (1.0.80) — nudges bounties toward monsters near your
    Combat level without ever excluding lower ones. Near-level ≈ 1.0; every level
@@ -36033,8 +36100,7 @@ function onSlayerKill(baseMon){
        points now do too. Measured before the change: Novice paid 101 slayer XP per
        point, the General 2,896, which is why a Lv32 player could bank 2,350 points
        against a 558 point shop. */
-    const streakMul=Math.min(0.5, (state.slayer.streak||0)*0.05);
-    let pts=master.pts + slayerPerkLevel('quartermaster') + Math.round(master.pts*streakMul);
+    let pts=slayerTaskPoints(master);
     // Slayer's Fortune (slayer, Lv 75)
     const fo=slayerPerkLevel('fortune');
     const doubled=fo>0 && Math.random()<fo*0.12;
@@ -42399,8 +42465,8 @@ function buildSlayerHTML(){
         <div class="sly-eyebrow">${complete?'✓ Bounty complete':'Current bounty'} · ${master.name}</div>
         <div class="sly-title">${complete?`${mon.name} — ${t.need} slain`:`Slay ${mon.name}`}</div>
         <div class="sly-meta">${complete
-          ? `Reward: <b style="color:#ffd24a">+${master.pts} Slayer Points</b>`
-          : `Lv ${mon.lvl} · ${getZone(mon.zone).name} · ${left} kill${left===1?'':'s'} remaining`}</div>
+          ? `Reward: <b style="color:#ffd24a">+${slayerTaskPoints(master)} Slayer Points</b>`
+          : `Lv ${mon.lvl} · ${getZone(mon.zone).name} · ${left} kill${left===1?'':'s'} remaining · pays <b style="color:#ffd24a">${slayerTaskPoints(master)} pts</b>`}</div>
         <div class="sly-barhd"><span>${complete?'complete':'progress'}</span><b>${done} / ${t.need}</b></div>
         <div class="sly-bar${complete?' done':''}"><i style="width:${p}%"></i></div>
       </div></div>`;
