@@ -7545,7 +7545,7 @@ setTimeout(() => {
       openInventory(); document.getElementById('tabShop').click(); r.shopClosed=!invOpen&&viewTab==='shop'; viewTab='acts';
       return r;
     })()`);
-    ok('the right bar keeps Gear, Alerts and Presets, and no Satchel', scr.rightTabs === 'Gear,Alerts,Presets' && scr.fallback === 'gear', JSON.stringify(scr));
+    ok('the right bar keeps Gear, Alerts, Presets and Drops, and no Satchel', scr.rightTabs === 'Gear,Alerts,Presets,Drops' && scr.fallback === 'gear', JSON.stringify(scr));
     ok('the Satchel button opens the screen over the middle and right, skill list kept',
        scr.open.inv && !scr.open.center && !scr.open.right && scr.open.left && scr.open.btn && scr.open.tiles === 1, JSON.stringify(scr.open));
     ok('with the gear doll beside the bag', scr.open.doll === 12, JSON.stringify(scr.open));
@@ -9785,6 +9785,58 @@ setTimeout(() => {
     ok('a bossless hunting ground has a roster that can be completed',
        hunt.skip === true || (hunt.bossless === true && hunt.roster > 0 && hunt.every === true),
        JSON.stringify(hunt));
+  }
+
+  section('The offline Grandmaster tier is reachable (#196)');
+  {
+    /* Gates counted points SPENT, and the four tiers below Grandmaster absorb 55
+       while the tree only ever grants 49. Spending in the obvious order put a
+       player at the gate with it satisfied and nothing left to spend: the tier
+       showed, tooltips and all, and refused every click. Gates count EARNED now. */
+    const off = ev(`(function(){
+      var T=OFFLINE_TREE;
+      var cost=T.reduce(function(t,n){return t+n.max;},0);
+      var maxPts=OFFLINE_MAX_LEVEL-1;
+      var below=T.filter(function(n){return n.tier!=='Grandmaster';}).reduce(function(t,n){return t+n.max;},0);
+      var gm=T.filter(function(n){return n.tier==='Grandmaster';});
+      state=defaultState(); normalizeState();
+      state.offlineXp=OFFLINE_XP_CUM[OFFLINE_MAX_LEVEL];
+      var earned=offlineEarnedPoints();
+      return {cost:cost, maxPts:maxPts, below:below, gmReq:gm[0].req, gmCost:gm.reduce(function(t,n){return t+n.max;},0),
+              earned:earned, everyGateReachable:T.every(function(n){ return (n.req||0)<=maxPts; }),
+              gatesOnEarned:/const locked=\\(node\\.req&&earned<node\\.req\\)/.test(${JSON.stringify(html)})};
+    })()`);
+    ok('every offline tier gate can be reached with the points the game grants',
+       off.everyGateReachable === true && off.gmReq <= off.maxPts, JSON.stringify(off));
+    ok('and the gates count points earned, not points already spent',
+       off.gatesOnEarned === true,
+       'below Grandmaster costs ' + off.below + ', the tree grants ' + off.maxPts
+       + ' — spending freely used to lock the tier out');
+  }
+
+  section('Recent drops are back on the right panel (#195)');
+  {
+    const dr = ev(`(function(){
+      state=defaultState(); normalizeState();
+      _dropLog.length=0;            // earlier sections in this same boot log drops
+      rightTab='drops'; renderRightPanel();
+      var empty=/Nothing yet/.test(document.getElementById('dropsView').innerHTML);
+      showItemPop('copper_ore',3); showItemPop('copper_ore',2); showItemPop('iron_ore',1);
+      renderDrops();
+      var h=document.getElementById('dropsView').innerHTML;
+      return {empty:empty, rows:(h.match(/item-drop-row/g)||[]).length,
+              merged:/\\+5/.test(h), iron:/Iron Ore/.test(h),
+              hoverable:/data-item="copper_ore"/.test(h),
+              gearHidden:document.getElementById('gearView').style.display==='none',
+              // the Satchel's own feed must still work; both read the same events
+              satchelFeed:!!document.getElementById('itemDropsFeed')};
+    })()`);
+    ok('the Drops tab lists what just dropped, merging a stream into one row',
+       dr.rows === 2 && dr.merged === true && dr.iron === true, JSON.stringify(dr));
+    ok('it has an empty state, hides the other views, and keeps the satchel feed',
+       dr.empty === true && dr.gearHidden === true && dr.satchelFeed === true, JSON.stringify(dr));
+    ok('and its rows hover into the shared item card',
+       dr.hoverable === true, JSON.stringify(dr.hoverable));
   }
 
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));

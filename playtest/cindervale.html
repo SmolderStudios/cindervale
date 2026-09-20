@@ -3335,6 +3335,13 @@ body:not(.is-demo) .demo-only{display:none !important}
 .item-drop-row .id-icon{font-size:calc(17px*var(--tscale));line-height:1;flex-shrink:0}
 .item-drop-row .id-name{font-size:calc(14px*var(--tscale));color:var(--trim)}
 .item-drop-row .id-qty{font-family:var(--num);color:#ffe066;font-size:calc(14px*var(--tscale));font-weight:bold;margin-left:auto}
+/* Drops tab on the right panel (#195). Scrolls on its own so a long session does
+   not push the panel past the viewport, and the timestamp sits between the name
+   and the amount so the column of numbers still lines up. */
+.drops-panel{display:flex;flex-direction:column;gap:3px;max-height:calc(100vh - 210px);overflow-y:auto;padding-right:2px}
+.drops-panel .item-drop-row{cursor:var(--cur-help)}
+.item-drop-row .id-when{font-family:var(--num);font-size:calc(11px*var(--tscale));color:#7d6f60;margin-left:auto;padding-right:8px}
+.item-drop-row .id-when + .id-qty{margin-left:0}
 .item-drop-row.rare{
   border-color:#ffd70066;
   background:linear-gradient(180deg,#241e0c,#160f06);
@@ -8857,7 +8864,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.126.8">v0.9.126</div>
+  <div class="mm-ver" data-build="0.9.126.9">v0.9.126</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -9346,10 +9353,12 @@ body:not(.is-demo) .demo-only{display:none !important}
       <button class="tab on" id="tabGear">Gear</button>
       <button class="tab" id="tabNotifs">Alerts</button>
       <button class="tab" id="tabPresets">Presets</button>
+      <button class="tab" id="tabDrops">Drops</button>
     </div>
     <div id="gearView"></div>
     <div id="notifsView" style="display:none"></div>
     <div id="presetsView" style="display:none"></div>
+    <div id="dropsView" style="display:none"></div>
   </div>
 </div>
 
@@ -20895,9 +20904,32 @@ const _itemDropMax=7; // max rows shown in the drops feed
 const _itemDropMergeMs=1500; // window to merge same-item gains
 const _itemDropState={}; // id -> { el, qty, born }
 
+/* Ticket #195: "Could we get a tab with the gear, alerts and presets tabs to put
+   the recent drops back on the right side of the screen. I do miss that."
+
+   The feed itself is a single element that lives in the Satchel screen's side
+   rail, so it cannot also be on the right panel. This is the data behind it,
+   kept independently: a rolling list the Drops tab renders from. Same merge
+   window as the feed, so a stream of one item reads as one growing row rather
+   than fifty. Deliberately NOT saved — it is a view of this session, and
+   persisting it would put fifty rows of churn in every save. */
+const DROP_LOG_MAX=60;
+const _dropLog=[];   // newest first: {id, qty, at, rare}
+function logDrop(id, qty){
+  if(!id||!qty||qty<=0) return;
+  const it=ITEMS[id]; if(!it) return;
+  const now=Date.now();
+  const top=_dropLog[0];
+  if(top && top.id===id && (now-top.at)<_itemDropMergeMs){ top.qty+=qty; top.at=now; }
+  else _dropLog.unshift({id, qty, at:now, rare:!!it.rare});
+  if(_dropLog.length>DROP_LOG_MAX) _dropLog.length=DROP_LOG_MAX;
+  if(typeof rightTab!=='undefined' && rightTab==='drops' && typeof renderDrops==='function') renderDrops();
+}
+
 function showItemPop(id, qty){
   if(!id||!qty||qty<=0) return;
   const it=ITEMS[id]; if(!it) return;
+  logDrop(id,qty);                 // #195 — feeds the right-panel Drops tab
   const container=$('itemDropsFeed'); if(!container) return;
   const now=Date.now();
   const isRare=!!it.rare;
@@ -36308,21 +36340,52 @@ function renderRightPanel(){
      that refreshes the right bar after an item changes means the satchel. */
   if(invOpen){ renderInvGear(); renderInventory(); updateNotifBadge(); return; }
   sizeRightBar();
-  if(rightTab!=='gear'&&rightTab!=='notifs'&&rightTab!=='presets') rightTab='gear';
+  if(rightTab!=='gear'&&rightTab!=='notifs'&&rightTab!=='presets'&&rightTab!=='drops') rightTab='gear';
   $('tabGear').classList.toggle('on',rightTab==='gear');
   $('tabNotifs').classList.toggle('on',rightTab==='notifs');
   $('tabPresets').classList.toggle('on',rightTab==='presets');
+  $('tabDrops').classList.toggle('on',rightTab==='drops');
   $('gearView').style.display=rightTab==='gear'?'':'none';
   $('notifsView').style.display=rightTab==='notifs'?'':'none';
   $('presetsView').style.display=rightTab==='presets'?'':'none';
+  $('dropsView').style.display=rightTab==='drops'?'':'none';
   if(rightTab==='gear') renderGear();
   else if(rightTab==='presets') renderPresets();
+  else if(rightTab==='drops') renderDrops();
   else if(rightTab==='notifs'){
     // Opening the tab no longer mass-marks alerts as seen — each row stays
     // highlighted until the user hovers it (parallels the Compendium behavior).
     renderNotifications();
   }
   updateNotifBadge();
+}
+
+/* Recent drops, on the right panel (#195). The Satchel's own side rail keeps its
+   live feed; this reads the same events out of _dropLog so both can exist. Rows
+   carry data-item so the shared satchel card answers "where else does this come
+   from" on hover, which the old corner feed never did. */
+function renderDrops(){
+  const box=$('dropsView'); if(!box) return;
+  if(!_dropLog.length){
+    box.innerHTML='<div class="gd-none">Nothing yet. Anything you gather, craft or'
+      +' loot turns up here as it lands.</div>';
+    return;
+  }
+  const now=Date.now();
+  const ago=ms=>ms<60000?'just now'
+    :ms<3600000?Math.floor(ms/60000)+'m ago'
+    :Math.floor(ms/3600000)+'h ago';
+  box.innerHTML='<div class="drops-panel">'
+    +_dropLog.map(d=>{
+      const it=ITEMS[d.id]; if(!it) return '';
+      return '<div class="item-drop-row'+(d.rare?' rare':'')+'" data-item="'+d.id+'">'
+        +'<span class="id-icon">'+iconHTML(d.id)+'</span>'
+        +'<span class="id-name">'+it.name+'</span>'
+        +'<span class="id-when">'+ago(now-d.at)+'</span>'
+        +'<span class="id-qty">+'+d.qty.toLocaleString()+'</span>'
+        +'</div>';
+    }).join('')
+    +'</div>';
 }
 
 /* Update the unread-count badge on the Alerts tab */
@@ -39560,9 +39623,27 @@ function _ofpThread(i, cfg, stance, redraw){
 function buildTree(body, redraw){
   const avail=offlineAvailPoints();
   const spent=offlineSpentPoints();
+  /* Ticket #196: "There are no tooltips for any of the grandmaster stuff in
+     offline tree and I can't put points into any of the perks there."
+
+     The tooltips were always there. What was not there were POINTS. Tiers gated
+     on points SPENT, and the four tiers below Grandmaster can absorb 55 while the
+     whole tree only ever grants 49 (one a level to the level-50 cap). So a player
+     who spent as they earned arrived at the Grandmaster gate having spent 34,
+     satisfying it exactly, and holding nothing to spend — the tier sat unlocked,
+     tooltips and all, and refused every click. Refunding was the only way through
+     and nothing said so.
+
+     Gates count points EARNED now. No power changes and no build choice is lost:
+     the tree still only ever hands out 49 and still cannot hold all 69, so where
+     they go is still the decision. What is gone is the trap where spending them
+     in the obvious order locks you out of the last tier. */
+  const earned=offlineEarnedPoints();
   const hd=_ofpEl('div','ofp-treehd');
   hd.innerHTML='<span class="sp"><b>'+avail+'</b> to spend · <b>'+spent+'</b> spent · '
-    +'one point a level, '+(OFFLINE_MAX_LEVEL-1)+' in all</span>';
+    +'one point a level, '+(OFFLINE_MAX_LEVEL-1)+' in all'
+    +' · the whole board costs '+OFFLINE_TREE.reduce(function(t,n){return t+n.max;},0)
+    +', so it is a choice</span>';
   const rs=_ofpEl('button','ofp-respec','Refund every point');
   rs.addEventListener('click',()=>{ state.tree._offline={}; saveGame(); renderSkillList(); redraw(); });
   hd.appendChild(rs);
@@ -39574,7 +39655,7 @@ function buildTree(body, redraw){
   for(const node of OFFLINE_TREE){
     if(node.tier!==tier){
       tier=node.tier;
-      body.appendChild(_ofpEl('div','ofp-lab',tier+(node.req?' · '+node.req+' points spent':'')));
+      body.appendChild(_ofpEl('div','ofp-lab',tier+(node.req?' · '+node.req+' points earned':'')));
       grid=_ofpEl('div','ofp-nodes');
       body.appendChild(grid);
     }
@@ -39586,7 +39667,7 @@ function buildTree(body, redraw){
        Night Forager stance at all. */
     const needsId=node.needs, needsNode=needsId&&OFFLINE_TREE.find(n=>n.id===needsId);
     const needsUnmet=!!(needsId&&offlineTreeRank(needsId)<=0);
-    const locked=(node.req&&spent<node.req)||needsUnmet;
+    const locked=(node.req&&earned<node.req)||needsUnmet;
     const row=_ofpEl('div','ofp-node'+(maxed?' maxed':'')+(locked?' lock':'')+(node.gm?' gm':''));
     if(node.tip) row.setAttribute('data-tip',node.tip);
     row.innerHTML='<span class="ni"><span class="nn">'+node.name
@@ -39595,7 +39676,7 @@ function buildTree(body, redraw){
          two lines. */
       +(node.stance?'<span class="ofp-stancetag">STANCE</span>':'')+'</span>'
       +(needsUnmet?'<span class="nreq">Needs '+(needsNode?needsNode.name:needsId)+' first</span>'
-        :(locked?'<span class="nreq">Needs '+node.req+' points spent first</span>':''))
+        :(locked?'<span class="nreq">Needs '+node.req+' points earned first</span>':''))
       +'<span class="nd">'+(maxed?node.desc(rank)
         :(rank>0?node.desc(rank)+' · next: '+node.next(rank+1)
                 :'Next: '+(node.max>1?node.desc(1):node.next(1))))+'</span></span>'
@@ -49154,6 +49235,7 @@ window.addEventListener('keydown',navEscKey);
 })();
 $('tabGear').addEventListener('click',()=>{ rightTab='gear'; renderRightPanel(); });
 $('tabNotifs').addEventListener('click',()=>{ rightTab='notifs'; _gearSetsOpen=false; renderRightPanel(); });
+$('tabDrops').addEventListener('click',()=>{ rightTab='drops'; _gearSetsOpen=false; renderRightPanel(); });
 $('tabPresets').addEventListener('click',()=>{ rightTab='presets'; _gearSetsOpen=false; renderRightPanel(); });
 /* Combat and Sailing live in the top bar now (0.9.124.49); they were in this strip,
    which disappeared with the rest of the left column the moment either opened. A
