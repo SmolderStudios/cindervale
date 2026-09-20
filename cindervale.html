@@ -8855,7 +8855,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.126.4">v0.9.126</div>
+  <div class="mm-ver" data-build="0.9.126.5">v0.9.126</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -20086,6 +20086,15 @@ function normalizeState(){
   // Backfill for saves made before buyShop marked purchases discovered.
   if(Array.isArray(state.gear)&&state.discovered)
     for(const gid of state.gear) if(ITEMS[gid]) state.discovered[gid]=1;
+  /* Ticket #194 ("Grave Iron isn't in the collection log"). The line above has
+     always backfilled state.gear, but never state.items — so anything sitting in
+     the satchel that was granted before its own grant site learned to set
+     discovered stayed missing from the log permanently, with no way to fix it
+     short of dropping the stack and finding another. Holding an item IS having
+     discovered it, so every stack seeds the flag. Cheap: it runs once a load over
+     the satchel's own keys, and it only ever ADDS. */
+  if(state.items&&state.discovered)
+    for(const iid in state.items) if(state.items[iid]>0&&ITEMS[iid]) state.discovered[iid]=1;
   if(!state.trophies||typeof state.trophies!=='object'||Array.isArray(state.trophies)){
     state.trophies={};
     try{
@@ -26059,14 +26068,29 @@ function buildActBtn(act,reqLvl,lvl,m,bestXph,bestRph){
   const toolOwned = !isActive && Object.keys(act.out||{}).some(function(id){
     return ITEMS[id]&&ITEMS[id].tool && Array.isArray(state.gear) && state.gear.indexOf(id)>=0;
   });
+  /* Ticket #192: "Void Rod; Eclipse Pick, Satchel, Hearth, Tinder, Treads, Lens
+     ... don't stay checked off after the next level tool is made." They were doing
+     exactly what they were told to: every T6 Everflame recipe CONSUMES its T5
+     predecessor, so the Eclipse tool leaves state.gear and its card goes back to
+     looking unmade. Re-crafting it would be pure waste, since the thing that ate
+     it is strictly better.
+
+     The upgrade chain is already in the data — each Everflame SHOP row carries
+     req:'eclipse_*' — so a tool counts as superseded when the player owns the
+     tool that requires it. Treated as owned from here down: ticked, dimmed, not
+     clickable. */
+  const toolSuper = !isActive && !toolOwned && Object.keys(act.out||{}).some(function(id){
+    if(!ITEMS[id]||!ITEMS[id].tool||!Array.isArray(state.gear)) return false;
+    return SHOP.some(s=>s.req===id&&s.slot&&state.gear.indexOf(s.id)>=0);
+  });
 
   const btn=document.createElement('button');
-  const nonInteractive=locked||depleted||toolOwned;
+  const nonInteractive=locked||depleted||toolOwned||toolSuper;
   // Use a `.dis` class instead of the native `disabled` attribute (1.0.88): a disabled
   // <button> blocks pointer events across its whole subtree, which killed the hover
   // tooltips on the material chips. Clicks are already gated below (listener only added
   // when interactive), so nothing becomes clickable that shouldn't be.
-  btn.className='act'+(isActive?' active':'')+(depleted||toolOwned?' depleted':'')+(nonInteractive?' dis':'');
+  btn.className='act'+(isActive?' active':'')+(depleted||toolOwned||toolSuper?' depleted':'')+(nonInteractive?' dis':'');
   if(nonInteractive) btn.setAttribute('aria-disabled','true');
 
   // Tier stripe color (left-edge accent) + small "T{n} · Lv X" tier badge.
@@ -26152,6 +26176,7 @@ function buildActBtn(act,reqLvl,lvl,m,bestXph,bestRph){
 
   const metaState = locked?`Unlocks at Lv ${reqLvl}`
                  : toolOwned?`✓ Already owned`
+                 : toolSuper?`✓ Upgraded · this one forged the next tool`
                  : (fireOut&&!isActive)?`⚠ Fire is out`
                  : dupeJewel?`⚠ Owned — a 2nd shares its enchant`
                  : metaExtra||'';
@@ -26194,15 +26219,15 @@ function buildActBtn(act,reqLvl,lvl,m,bestXph,bestRph){
       </div>
       ${heroHtml}
       ${metaText?`<span class="meta${dupeJewel?' warn':''}">${metaText}</span>`:''}
-      ${locked||depleted||toolOwned?'':statsHtml}
+      ${locked||depleted||toolOwned||toolSuper?'':statsHtml}
       ${/* Locked recipes used to hide their materials entirely, so you could not
             see what an upcoming craft needed until you already had the level —
             no way to stockpile ahead of it. Show the chips either way; the
             .needs-locked wrapper dims them so a locked card still reads as
             locked, and the have/need counts stay live and accurate. */''}
-      ${toolOwned?'':(locked?`<div class="needs-locked">${makesHtml(act)}</div>`:makesHtml(act))}
-      ${toolOwned?'':(locked?`<div class="needs-locked">${needsHtml(act,m)}</div>`:needsHtml(act,m))}
-      ${toolOwned?'':(locked?`<div class="needs-locked">${dropsHtml(act,selectedSkill,m)||thiefLootHtml(act)}</div>`:(dropsHtml(act,selectedSkill,m)||thiefLootHtml(act)))}
+      ${toolOwned||toolSuper?'':(locked?`<div class="needs-locked">${makesHtml(act)}</div>`:makesHtml(act))}
+      ${toolOwned||toolSuper?'':(locked?`<div class="needs-locked">${needsHtml(act,m)}</div>`:needsHtml(act,m))}
+      ${toolOwned||toolSuper?'':(locked?`<div class="needs-locked">${dropsHtml(act,selectedSkill,m)||thiefLootHtml(act)}</div>`:(dropsHtml(act,selectedSkill,m)||thiefLootHtml(act)))}
       ${masteryHtml}
       ${runningHtml}
     </div>`;
@@ -26220,7 +26245,7 @@ function buildActBtn(act,reqLvl,lvl,m,bestXph,bestRph){
     +(dupeJewel?'\n\nYou already own one. A second ring can be worn in your other hand, but'
        +' enchants and sockets are shared by all your copies, so a spare'
        +' cannot have a different enchant.':'');
-  if(!locked&&!depleted&&!toolOwned) btn.addEventListener('click',()=>setAction(selectedSkill,act.id));
+  if(!locked&&!depleted&&!toolOwned&&!toolSuper) btn.addEventListener('click',()=>setAction(selectedSkill,act.id));
   return btn;
 }
 
@@ -27276,6 +27301,60 @@ function gdCountdownTick(){
   const txt=gdResetInText(state.gd[_gdOpen]);
   if(el.textContent!==txt) el.textContent=txt;
 }
+/* Ticket #187. Keeps an open quest board's numbers live without rebuilding it.
+   Covers every quest kind, not just kills: a supply order's held count goes stale
+   the same way when the items arrive while you are looking at the board. Reads
+   the same gdHeld/gdReady the renderer does, so the two cannot disagree. */
+function gdProgressTick(){
+  if(!_gdOpen||!state.gd||!state.gd[_gdOpen]) return;
+  const rows=document.querySelectorAll('.gd-q[data-gdq]');
+  if(!rows.length) return;
+  const r=state.gd[_gdOpen], g=GD_BY[_gdOpen];
+  for(const row of rows){
+    const q=r.q[+row.getAttribute('data-gdq')]; if(!q) continue;
+    const held=gdHeld(q), ready=gdReady(q);
+    const pct=Math.min(100,Math.round(held/Math.max(1,q.need)*100));
+    const isCoin=(q.kind==='coin');
+    const takes=(q.kind==='deliver'||q.kind==='supply'||isCoin);
+    const amt=isCoin?(v=>fmtCoins(v,false,false)):fmtK;
+    const spans=row.querySelectorAll('.gd-qp .l span');
+    if(spans[0]){
+      const txt=(takes?'you hold ':'')+amt(held)+' of '+amt(q.need);
+      if(spans[0].textContent!==txt)
+        spans[0].innerHTML=(takes?'you hold <b>'+amt(held)+'</b> of '+amt(q.need)
+                                 :'<b>'+amt(held)+'</b> of '+amt(q.need));
+    }
+    if(spans[1]&&spans[1].textContent!==pct+'%') spans[1].textContent=pct+'%';
+    const bar=row.querySelector('.gd-bar i');
+    if(bar&&bar.style.width!==pct+'%') bar.style.width=pct+'%';
+    // Supply orders carry a chip per line; those go stale too.
+    if(q.kind==='supply'&&q.items){
+      const chips=row.querySelectorAll('.gd-qi span');
+      let ci=0;
+      for(const iid in q.items){
+        const chip=chips[ci++]; if(!chip) continue;
+        const hv=(state.items[iid]||0), nd=q.items[iid];
+        const b=chip.querySelector('b'), want=fmtK(Math.min(hv,nd))+'/'+fmtK(nd);
+        if(b&&b.textContent!==want) b.textContent=want;
+        const on=hv>=nd; if(chip.classList.contains('ok')!==on) chip.classList.toggle('ok',on);
+      }
+    }
+    /* The button says "Not yet" / "Need N more" until it is claimable, so it has
+       to move with the bar or the board looks finished and refuses the click. */
+    const b=row.querySelector('.gd-btn');
+    if(b&&!q.done){
+      let label,off;
+      if(takes&&ready){ label='Hand in'; off=false; }
+      else if(takes){ label='Need '+amt(q.need-held)+' more'; off=true; }
+      else if(ready){ label='Claim'; off=false; }
+      else { label='Not yet'; off=true; }
+      if(b.textContent!==label) b.textContent=label;
+      if(b.disabled!==off) b.disabled=off;
+      b.classList.toggle('pri',!off); b.classList.toggle('off',off);
+      if(row.classList.contains('ready')!==(ready&&!q.done)) row.classList.toggle('ready',ready&&!q.done);
+    }
+  }
+}
 /* Called from tick() — a day passing swaps every guild's board. */
 function gdRefreshDue(){
   if(!state||!state.gd) return false;
@@ -27739,6 +27818,14 @@ function _gdGuildPage(id){
     const takes=(q.kind==='deliver'||q.kind==='supply'||isCoin);
     const amt=isCoin?function(v){ return fmtCoins(v,false,false); }:fmtK;
     const row=_gdEl('gd-q'+(q.done?' done':'')+(ready&&!q.done?' ready':''));
+    /* Ticket #187: "the count of kills for guild quest does not increase if you are
+       looking at the guild page while fighting". gdOnKill bumps q.have and nothing
+       repainted, so the row sat stale until some other event rebuilt the panel —
+       which is why alt-tabbing away and back "fixed" it. gdProgressTick() finds the
+       row by this index and updates the three live bits in place. Deliberately NOT
+       a renderGuilds() call: see the comment on gdCountdownTick, a full rebuild
+       eats the shop's scroll position and whatever button is mid-hover. */
+    row.setAttribute('data-gdq',String(i));
     let btn,cls;
     if(q.done){ btn='Claimed'; cls=' off'; }
     else if(takes&&ready){ btn='Hand in'; cls=' pri'; }
@@ -43953,6 +44040,7 @@ function animate(){
 
   // ---- Guild quest-board countdown (ticket #41) ----
   if(viewTab==='guild' && typeof gdCountdownTick==='function') gdCountdownTick();
+  if(viewTab==='guild' && typeof gdProgressTick==='function') gdProgressTick();   // #187
 
   // ---- Solo action progress + live xpDetail updates ----
   if(state.action){

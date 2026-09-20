@@ -9613,6 +9613,61 @@ setTimeout(() => {
        bua.length === 0, bua.length ? bua.slice(0, 3).join(' | ') : '26 skill/level pairs checked');
   }
 
+  /* ── Radcliff's 0.9.126.2 batch ────────────────────────────────────────────
+     Three reports that all reduce to "the screen disagrees with the save". */
+  section("Player batch #187 / #192 / #194 (0.9.126.2)");
+  {
+    /* #194: "Grave Iron isn't in the collection log." An item can only appear
+       once state.discovered holds it, and normalizeState backfilled state.gear
+       but never state.items -- so anything granted before its own grant site
+       learned to set the flag stayed invisible for good. Holding it is finding it. */
+    const disc = ev(`(function(){
+      state=defaultState(); normalizeState();
+      state.items={grave_iron:3, barrow_dust:1}; state.discovered={};
+      normalizeState();
+      return {iron:!!state.discovered.grave_iron, dust:!!state.discovered.barrow_dust,
+              // an empty stack must NOT count as discovered
+              empty:(function(){ state.items={wraithcloth:0}; state.discovered={};
+                                 normalizeState(); return !!state.discovered.wraithcloth; })()};
+    })()`);
+    ok('anything in the satchel counts as discovered (#194)',
+       disc.iron === true && disc.dust === true && disc.empty === false, JSON.stringify(disc));
+
+    /* #192: every T6 Everflame recipe eats its T5 predecessor, so the Eclipse
+       card went back to looking unmade and invited a pointless re-craft. */
+    const sup = ev(`(function(){
+      state=defaultState(); normalizeState(); selectedSkill='crafting';
+      var pairs=SHOP.filter(function(s){return s.tier===6&&s.req;}).map(function(s){return [s.req,s.id];});
+      state.gear=pairs.map(function(p){return p[1];});
+      var upgraded=0;
+      for(var p of pairs){
+        var act=SKILLS.crafting.acts.find(function(a){return a.out&&a.out[p[0]];});
+        if(!act) continue;
+        var el=buildActBtn(act, act.lvl, 99, mods('crafting'), 0, 0);
+        if(/depleted/.test(el.className) && /Upgraded/.test(el.textContent||'')) upgraded++;
+      }
+      // owning neither must leave the card alone
+      state.gear=[];
+      var act2=SKILLS.crafting.acts.find(function(a){return a.out&&a.out.eclipse_axe;});
+      var el2=buildActBtn(act2, act2.lvl, 99, mods('crafting'), 0, 0);
+      return {pairs:pairs.length, upgraded:upgraded, freshSaysUpgraded:/Upgraded/.test(el2.textContent||'')};
+    })()`);
+    ok('a tool consumed to forge its successor still reads as made (#192)',
+       sup.pairs === 12 && sup.upgraded === 12 && sup.freshSaysUpgraded === false, JSON.stringify(sup));
+
+    /* #187: the guild board's counts went stale while you fought, because
+       gdOnKill bumped q.have and nothing repainted until some other event
+       rebuilt the panel. gdProgressTick updates it in place. */
+    const live = ev(`(function(){
+      if(typeof gdProgressTick!=='function') return {missing:true};
+      return {missing:false,
+              tagged:/data-gdq/.test(${JSON.stringify(html)}.slice(0)) ,
+              called:/gdProgressTick\\(\\)/.test(${JSON.stringify(html)})};
+    })()`);
+    ok('the open guild board has a live progress tick (#187)',
+       live.missing === false && live.tagged === true && live.called === true, JSON.stringify(live));
+  }
+
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));
   process.exit(fail ? 1 : 0);
 }, 2500);
