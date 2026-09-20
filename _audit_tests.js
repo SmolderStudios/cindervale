@@ -8391,7 +8391,20 @@ setTimeout(() => {
         grandForgeShown: craft('smithing', smelt, {sm_master2:1}, null, 0.999).shown,
         hoarderDesc: [TREES.jeweler.find(function(n){ return n.id==='jw_master3'; }).desc(0), TREES.jeweler.find(function(n){ return n.id==='jw_master3'; }).desc(1), PASSIVE_TIPS.jw_master3].join(' | '),
         hoarderXp: (function(){ state=defaultState(); normalizeState(); state.tree.jeweler={}; var a=mods('jeweler').xpMult;
-                     state.tree.jeweler={jw_master3:1}; return Math.round(mods('jeweler').xpMult/a*100)/100; })()
+                     state.tree.jeweler={jw_master3:1}; return Math.round(mods('jeweler').xpMult/a*100)/100; })(),
+        /* Gem dust actually granted by one refine, with and without the node. Measured
+           through completeAction rather than read off mods(), because the whole defect
+           this replaces was a node whose declared effect never reached an output. */
+        hoarderDust: (function(){
+          function dust(tree){
+            state=defaultState(); normalizeState();
+            state.xp.jeweler=XP_CUM[99]; state.tree.jeweler=tree; state.items={emerald:100};
+            var act=SKILLS.jeweler.acts.find(function(a){ return a.id==='jw_ref2'; });
+            completeAction(act,'jeweler',10);
+            return state.items.gem_dust||0;
+          }
+          return {off:dust({}), on:dust({jw_master3:1})};
+        })()
       };
     })()`);
     ok('Grand Forge plus a Twin Pour that lands: 3 bars a smelt, not a flat 2', po.forge?.got === 30, JSON.stringify(po.forge));
@@ -8401,8 +8414,16 @@ setTimeout(() => {
        po.forgeAvg?.got === 20 && po.refine?.got === 10, JSON.stringify([po.forgeAvg, po.refine]));
     ok('the /hr number agrees with the forge: 2.6 bars a smelt at max Twin Pour, 2 with Grand Forge alone',
        po.forge?.shown === 2.6 && po.grandForgeShown === 2, JSON.stringify([po.forge?.shown, po.grandForgeShown]));
-    ok('Gem Hoarder says 2x Jeweler XP, which is what it does, and no longer promises gem dust',
-       /Jeweler XP/.test(po.hoarderDesc || '') && !/gem dust|output/i.test(po.hoarderDesc || '') && po.hoarderXp === 2, po.hoarderDesc + ' | xp x' + po.hoarderXp);
+    /* Reversed at the 1.0 audit. 0.9.124.57 made the TEXT match the accidental 2x XP;
+       this asserts the other resolution, which is the one the node was named for:
+       gem dust really doubles, and the XP multiplier is gone. Both halves matter --
+       asserting the text alone is what let the original defect sit for so long. */
+    ok('Gem Hoarder doubles gem dust and no longer promises XP',
+       /gem dust/i.test(po.hoarderDesc || '') && !/Jeweler XP/.test(po.hoarderDesc || '') && po.hoarderXp === 1,
+       po.hoarderDesc + ' | xp x' + po.hoarderXp);
+    ok('and the dust it grants really is doubled, measured through completeAction',
+       po.hoarderDust?.on === po.hoarderDust?.off * 2 && po.hoarderDust?.off > 0,
+       JSON.stringify(po.hoarderDust));
   }
 
   section('Skill presets hold their own skill, and the OSRS doll (0.9.124.44)');
@@ -9394,6 +9415,109 @@ setTimeout(() => {
        cnt.owned === 5 && cnt.used === 2 && cnt.explained === true, JSON.stringify(cnt));
     ok('and the search box still counts everything you can search',
        cnt.search === 'Search 5 items', JSON.stringify(cnt));
+  }
+
+  /* ── The 1.0 ladder audit ──────────────────────────────────────────────────
+     Four defects that shipped for months and never threw. Every one of them was
+     a promise the data made and the code did not keep, which is precisely the
+     class _validate.js cannot see. */
+  section('The 1.0 ladder audit: unique ids, and three bonuses that were wired to nothing');
+  {
+    /* Act ids must be unique per skill. al_m13 and al_m14 were each declared
+       TWICE in SKILLS.alchemy.acts, and getAct is sk.acts.find(a=>a.id===actId),
+       so the Lv 80 Hellfire Draught and the Lv 88 Void Insight resolved to the
+       Lv 14 and Lv 60 recipes four lines above them. Both cards rendered and
+       neither could ever run. dupKeys elsewhere in this file cannot catch it: it
+       brace-matches top-level consts and only counts keys at depth 1, so a
+       repeated `id:` inside an array element is structurally invisible to it. */
+    const ids = ev(`(function(){
+      var dups=[], total=0;
+      for(var k in SKILLS){ var seen={};
+        for(var a of (SKILLS[k].acts||[])){ total++;
+          if(seen[a.id]) dups.push(k+':'+a.id+' ("'+seen[a.id]+'" vs "'+a.name+'")');
+          else seen[a.id]=a.name; } }
+      return {dups:dups, total:total};
+    })()`);
+    ok('no skill declares the same act id twice',
+       ids.dups.length === 0, ids.dups.length ? ids.dups.join(' | ') : ids.total + ' acts checked');
+
+    /* Every act id the render layer special-cases must exist, or the override is
+       dead weight that reads as live gating. 'al12' and 'fa8' both sat here. */
+    const refs = ev(`(function(){
+      var live={}; for(var k in SKILLS) for(var a of (SKILLS[k].acts||[])) live[a.id]=1;
+      return ${JSON.stringify([...html.matchAll(/act\.id\s*===\s*'([a-z0-9_]+)'/g)].map(m => m[1]).filter((v, i, s) => s.indexOf(v) === i))}
+        .filter(function(id){ return !live[id]; });
+    })()`);
+    ok('every act id the renderers special-case actually exists',
+       refs.length === 0, refs.length ? 'dead: ' + refs.join(', ') : 'all resolve');
+
+    /* Everflame Lockpicks: "+8% double goods". doubleYield lands in m.extraBar for
+       a non-gathering skill, but extraBar was only ever read inside the act.out
+       loop and every thieving act declares out:{} -- so the term reached nothing
+       while the stat panel printed it. Math.random is pinned to 0 so every binom
+       roll lands, which makes the tooled run exactly double rather than noisy. */
+    const lp = ev(`(function(){
+      var R=Math.random;
+      function goods(equip){
+        state=defaultState(); normalizeState();
+        state.xp.thieving=XP_CUM[99]; state.coins=0;
+        if(equip){ state.gear=[{id:'everflame_lockpicks',tool:true}];
+                   state.equipped={picks:'everflame_lockpicks'}; }
+        var act=SKILLS.thieving.acts.find(function(a){ return a.loot&&a.loot.pool; });
+        Math.random=function(){ return 0; };
+        try { completeAction(act,'thieving',40); }
+        finally { Math.random=R; }
+        var n=0; for(var i in state.items) n+=state.items[i]||0;
+        return n;
+      }
+      var off=goods(false), on=goods(true);
+      return {off:off, on:on, extraBar:(function(){
+        state=defaultState(); normalizeState();
+        state.gear=[{id:'everflame_lockpicks',tool:true}]; state.equipped={picks:'everflame_lockpicks'};
+        return mods('thieving').extraBar; })()};
+    })()`);
+    ok('Everflame Lockpicks really does lift double goods',
+       lp.extraBar > 0 && lp.off > 0 && lp.on === lp.off * 2, JSON.stringify(lp));
+
+    /* Everflame Trowel: "8% to keep the seed". m.preserve is read by
+       completeAction, and farming never reaches completeAction because
+       SKILLS.farming.acts is empty. Ancient Bloom returns a seed 10% of the time
+       on its own; Math.random is pinned between 0.10 and 0.18 so the seed comes
+       back only when the trowel's 8% is actually being added. */
+    const tw = ev(`(function(){
+      var R=Math.random;
+      function kept(equip){
+        state=defaultState(); normalizeState();
+        state.xp.farming=XP_CUM[99];
+        if(equip){ state.gear=[{id:'everflame_trowel',tool:true}];
+                   state.equipped={trowel:'everflame_trowel'}; }
+        var before=seedQty('ancient_seed');
+        state.patches={};
+        state.patches['p1']={seedId:'ancient_seed', plantedAt:1, growMs:1, tendedMs:0, lastTended:0};
+        Math.random=function(){ return 0.14; };
+        try { harvestPatch('p1',true); } finally { Math.random=R; }
+        return seedQty('ancient_seed')-before;
+      }
+      return {off:kept(false), on:kept(true)};
+    })()`);
+    ok('Everflame Trowel really does keep the seed',
+       tw.off === 0 && tw.on === 1, JSON.stringify(tw));
+
+    /* Eternal Garden's second half: "unlocks Ancient Bloom at Lv 70". Its only
+       callers tested act.id==='fa8', which farming has never had. */
+    const eg = ev(`(function(){
+      var crop=CROPS.find(function(c){ return c.id==='ancient_seed'; });
+      state=defaultState(); normalizeState(); state.tree.farming={};
+      var off=cropReqLvl(crop);
+      state.tree.farming={fa_master3:1};
+      var on=cropReqLvl(crop);
+      // and it must actually let you plant at 70, not merely report 70
+      state.xp.farming=XP_CUM[70]; state.seeds={ancient_seed:1}; state.patches={};
+      var planted=plantPatch('p1','ancient_seed',true);
+      return {off:off, on:on, declared:crop.lvl, planted:planted};
+    })()`);
+    ok('Eternal Garden really does open Ancient Bloom ten levels early',
+       eg.declared === 80 && eg.off === 80 && eg.on === 70 && eg.planted === true, JSON.stringify(eg));
   }
 
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));
