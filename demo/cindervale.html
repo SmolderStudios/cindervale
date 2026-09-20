@@ -8855,7 +8855,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.126.3">v0.9.126</div>
+  <div class="mm-ver" data-build="0.9.126.5">v0.9.126</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -20086,6 +20086,15 @@ function normalizeState(){
   // Backfill for saves made before buyShop marked purchases discovered.
   if(Array.isArray(state.gear)&&state.discovered)
     for(const gid of state.gear) if(ITEMS[gid]) state.discovered[gid]=1;
+  /* Ticket #194 ("Grave Iron isn't in the collection log"). The line above has
+     always backfilled state.gear, but never state.items — so anything sitting in
+     the satchel that was granted before its own grant site learned to set
+     discovered stayed missing from the log permanently, with no way to fix it
+     short of dropping the stack and finding another. Holding an item IS having
+     discovered it, so every stack seeds the flag. Cheap: it runs once a load over
+     the satchel's own keys, and it only ever ADDS. */
+  if(state.items&&state.discovered)
+    for(const iid in state.items) if(state.items[iid]>0&&ITEMS[iid]) state.discovered[iid]=1;
   if(!state.trophies||typeof state.trophies!=='object'||Array.isArray(state.trophies)){
     state.trophies={};
     try{
@@ -21128,8 +21137,17 @@ const OFFLINE_TREE=[
     desc:r=>r?'Divided runs a third skill':'Divided gains a third slot',
     next:()=>'Divided: 3 skills instead of 2',
     tip:'Divided runs three skills instead of two. The shared rate does not change, so each skill gets a smaller share of it.'},
+  /* 2% -> 1.5% a rank at the 1.0 audit, and the two are worth the same.
+     This node's tip has always promised "a share of the XP its BEST unlocked
+     action would earn", but the code took the last entry in the acts array
+     instead, which at Lv 99 meant a Lv 1 flax gather for foraging and a tanning
+     recipe for crafting. Correcting it raised the basis, summed across all
+     thirteen skills, by a measured 1.33x. 1.5/2 = 0.75 hands that back, so a
+     maxed Restless Mind pays within a third of a percent of what it paid before
+     while the number it quotes is finally true. */
   {id:'of_multi',  name:'Restless Mind', max:10,req:14, tier:'Deeper still',
-    desc:r=>`XP for your other skills +${r*2}% while away`, next:r=>`+2% → ${r*2}%`,
+    desc:r=>`XP for your other skills +${(r*1.5).toFixed(1).replace(/\.0$/,'')}% while away`,
+    next:r=>`+1.5% → ${(r*1.5).toFixed(1).replace(/\.0$/,'')}%`,
     tip:'Every skill you are NOT training gets a share of the XP its best unlocked action would earn at your offline rate. XP only, no items.'},
   /* ── Tier 4 · masters (req 24) ── */
   {id:'of_master1',name:'Lucid Dreamer', max:1, req:24, tier:'Masters',
@@ -21182,7 +21200,7 @@ function offlineMods(){
   if(r('of_master2')>0) capHours = Math.max(capHours, 48);
   if(r('of_gm_cap')>0)  capHours = Math.max(capHours, 72);
   const xpRate    = OFFLINE_XP_RATE * (1 + r('of_xp')*0.08 + r('of_gm_xp')*0.12) * XP_SCALE;
-  const allSkillXp= r('of_multi')*0.02;
+  const allSkillXp= r('of_multi')*0.015;   // 0.02 before the 1.0 audit; see the node
   const lootBonus = r('of_loot')*0.08;
   /* One budget, shared. Phantom Worker used to raise it to 180%, which sailed
      straight past OFFLINE_ACTIVE_CAP and so bought a maxed account nothing at all:
@@ -25285,7 +25303,7 @@ function grantOffline(){
       const _acts=SKILLS[sk].acts;
       if(!_acts||!_acts.length) continue;                 // farming has no acts
       const _lvl=levelFromXp(state.xp[sk]||0);
-      const _best=[..._acts].reverse().find(a=>a.lvl<=_lvl)||_acts[0];
+      const _best=bestUnlockedAct(sk,_lvl)||_acts[0];
       const _ms=actMs(_best,sk);
       if(!(_ms>0)) continue;
       const _xph=(_best.xp*(3600000/_ms))*mods(sk).xpMult*om.rate;
@@ -25881,40 +25899,151 @@ function needsHtml(act,m){
   return `<div class="needs">${chips}${runs}</div>`;
 }
 
-/* Tier helpers — used by buildActBtn (1.0.88 iconic-card layout) for the
-   left-edge stripe color and the small "T{n} · Lv X" badge in the card head.
-   Tier index is the 1-based position in skill.acts (1=T1, 7=T7). Stripe color
-   is a fixed cross-skill ramp: warm → neutral → hot → cool → shadow → pinnacle. */
+/* ── Tier helpers ────────────────────────────────────────────────────────────
+   Used by buildActBtn for the left-edge stripe colour, the "T{n} · Lv X" badge
+   and the pip strip.
+
+   UNTIL THE 1.0 AUDIT, A TIER WAS AN ARRAY POSITION. Do not put that back.
+   tierIndexForAct used to return the act's index within its cat+subcat group,
+   falling back to its index in the flat array. Three things were wrong with it:
+
+     * It made declaration order load-bearing, so the arrays could not be sorted
+       into level order without silently renumbering every badge in the game.
+       22 recipes were visibly out of order because of it, worst of all the whole
+       T6 Everflame tool block sitting inside the T5 Eclipse block.
+     * cat/subcat is a DISPLAY bucket, not a ladder. All 72 skilling tools share
+       cat:'tool' with no subcat, so they numbered T1..T72 and 63 of them painted
+       the same clamped grey. Alchemy has no cat at all, so all 46 acts were one
+       ladder. Fletching's bows/short held carve and string interleaved.
+     * 173 of the 542 acts are pushed at runtime, so the literal could not be
+       read as the source of truth anyway.
+
+   A tier is now derived from what an act IS, never from where it sits. famOf()
+   answers "which ladder is this a rung of" from the act's own output, and the
+   tier is its rank among the DISTINCT levels in that ladder. Two acts at the
+   same level share a rung on purpose: copper and tin are both T1 Mining, and an
+   alternate route to a potion is not an extra rung.
+
+   Measured on the shipped data: 542 acts resolve into 75 families, zero level
+   inversions survive the sort, zero acts change tier when every array is
+   shuffled, and cards past the 10-colour ramp fall from 151 to 19.
+   _audit_tests.js asserts all four, so this cannot rot back. */
 const TIER_STRIPE_COLORS=['#a86c3b','#7a5028','#5a5a5a','#b85838','#5a8aa0','#5a3a6a','#c79b4e','#b8a050','#8a8a4a','#4a4a4a'];
-/* [UI-PREVIEW] How many tiers does this skill actually have? Memoised — buildActBtn
-   runs once per card and this would otherwise be O(acts²) per render. */
-const _tierCountMemo={};
-function tierCountForSkill(key){
-  if(_tierCountMemo[key]!=null) return _tierCountMemo[key];
-  const sk=SKILLS[key]; let mx=0;
-  if(sk&&sk.acts) for(const a of sk.acts){ const t=tierIndexForAct(sk,a)||0; if(t>mx) mx=t; }
-  return (_tierCountMemo[key]=mx);
+
+/* Which ladder is this act a rung of? Derived, so nothing has to be hand-typed
+   and kept in sync — but act.fam is honoured first as an escape hatch for any
+   future recipe the chain guesses wrong. */
+function famOf(skillKey,act){
+  if(act.fam) return act.fam;
+  const out=Object.keys(act.out||{})[0]||null;
+  /* Cooking has no cat and no shared naming, but its outputs do: the fish line
+     is cooked_*, the prized line is prized_*, and everything left is the
+     monster-part line. Three real ladders out of what looked like 31 rungs. */
+  if(skillKey==='cooking'){
+    if(out&&/^prized_/.test(out)) return 'co:prized';
+    if(out&&/^cooked_/.test(out)) return 'co:fish';
+    return 'co:game';
+  }
+  // Skilling tools: one ladder per tool SLOT, which is 12 ladders of 6 rather
+  // than one of 72. crToolSkillFor resolves the same thing via SHOP.
+  if(out&&ITEMS[out]&&ITEMS[out].tool){
+    const row=SHOP.find(s=>s.id===out);
+    if(row&&row.slot) return 'tool:'+row.slot;
+  }
+  // Alchemy: ALCH_LADDER already declares the ladders, and every alternate route
+  // to one potion keys off the same output, so they land on the same rung.
+  if(skillKey==='alchemy') return 'al:'+((out&&ALCH_LADDER_OF[out])?ALCH_LADDER_OF[out].L.key:(out||act.id));
+  /* Fletching: carve, string and assemble are STAGES of one product and sit in
+     the same subcat, which is why bows/short read as a 14-rung ladder. The id
+     prefix is the stage (fl_cv_ / fl_st_ / fl_cx_ / fl_cs_ / fl_sh_ / fl_ar_). */
+  if(skillKey==='fletching'){
+    const stage=(act.id.match(/^fl_([a-z]+)_/)||[])[1]||'x';
+    return 'fl:'+stage+'/'+(act.cat||'_')+'/'+(act.subcat||'_');
+  }
+  return skillKey+':'+(act.cat||'_')+'/'+(act.subcat||'_');
+}
+
+/* Keyed on the act OBJECT, never on act.id — ids are not unique across skills
+   and the whole defect class this replaces began with two that collided. */
+let _actTier=new Map(), _famMax={};
+function buildActTierIndex(){
+  _actTier=new Map(); _famMax={};
+  const byFam={};
+  for(const k in SKILLS) for(const a of (SKILLS[k].acts||[])) (byFam[famOf(k,a)]=byFam[famOf(k,a)]||[]).push(a);
+  for(const f in byFam){
+    const lv=[...new Set(byFam[f].map(a=>a.lvl))].sort((x,y)=>x-y);
+    _famMax[f]=lv.length;
+    for(const a of byFam[f]) _actTier.set(a,{fam:f,tier:lv.indexOf(a.lvl)+1});
+  }
 }
 function tierStripeColor(tierIdx){
   return TIER_STRIPE_COLORS[Math.min(Math.max(0,tierIdx-1),TIER_STRIPE_COLORS.length-1)];
 }
+// Signature kept as (sk,act) so the six call sites did not have to churn; sk is
+// no longer read, because the answer no longer depends on the array.
 function tierIndexForAct(sk,act){
-  if(!sk||!sk.acts) return 1;
-  // For category-grouped skills (crafting/jeweler), tier is the position WITHIN
-  // the same category — so helms show T1-T7, not T1/T8/T15/… (which would happen
-  // if we used indexOf on the flat interleaved acts array). Skills without
-  // categories use the full-array position.
-  if(act&&act.cat){
-    let n=0;
-    for(const a of sk.acts){
-      // Count within the same cat AND same subcat group so parallel lines
-      // (weapon sword/dagger/hammer; armour plate/leather) each number T1-T7
-      // independently instead of interleaving into T1-T21.
-      if(a.cat===act.cat && (a.subcat||null)===(act.subcat||null)){ n++; if(a===act) return n; }
-    }
+  const v=act&&_actTier.get(act);
+  return v?v.tier:1;
+}
+/* How many rungs in THIS act's ladder. Replaces tierCountForSkill, which took
+   the per-SKILL maximum — so crafting's 72-deep tool bucket blanked the pips on
+   all 174 other crafting cards, and the pip tooltip read "Tier {per-group} of
+   {per-skill}" and contradicted itself. No memo, because _famMax is rebuilt
+   whenever the arrays are, which is the invalidation path the old one lacked. */
+function tierCountForAct(act){
+  const v=act&&_actTier.get(act);
+  return v?(_famMax[v.fam]||1):1;
+}
+
+/* The best action a player has actually unlocked in a skill, by XP rate.
+
+   Two sites used to answer this with `[...acts].reverse().find(a=>a.lvl<=lvl)`,
+   which is the LAST ARRAY ENTRY at or below your level. That was never the best
+   one, and sorting the arrays does not make it so: the comparator groups by
+   category first (it has to, or the tab bars move), so the last entry is the last
+   category's top rung. Measured at Lv 99 before this landed, the old expression
+   picked a Lv 1 flax gather for foraging and a tanning recipe for crafting, 6.7x
+   and 22.4x below the real best.
+
+   Answered by rate rather than by level because the two disagree: Recast a
+   cracked bell (Lv 45) out-earns every smithing recipe up to Lv 90. */
+function bestUnlockedAct(skillKey,lvl){
+  const acts=(SKILLS[skillKey]&&SKILLS[skillKey].acts)||[];
+  let best=null,bestXph=-1;
+  for(const a of acts){
+    if(a.lvl>lvl) continue;
+    let xph=0;
+    try{ const ms=actMs(a,skillKey); if(ms>0) xph=a.xp*(3600000/ms); }catch(e){ xph=0; }
+    if(xph>bestXph){ bestXph=xph; best=a; }
   }
-  const i=sk.acts.indexOf(act);
-  return i>=0?i+1:1;
+  return best;
+}
+
+/* Sort every acts array into the order a player reads it.
+
+   The comparator is NOT a plain level sort. _actCatBar and renderCrafting build
+   their tab lists from the order categories FIRST APPEAR in the array, so a
+   global level sort silently reshuffles the Crafting and Fletching tab bars.
+   First-appearance order is captured before sorting and used as the outer key,
+   which keeps the tabs exactly where they are and sorts only within them.
+
+   Sorts in place. SKILLS.fletching.acts is aliased by `const F` at its generator
+   and every push below it writes through that alias, so reassigning .acts would
+   orphan it silently. */
+function sortAllActs(){
+  for(const k in SKILLS){
+    const acts=SKILLS[k].acts; if(!acts||acts.length<2) continue;
+    const catOrd={},subOrd={};
+    for(const a of acts){
+      const c=a.cat||'_'; if(catOrd[c]==null) catOrd[c]=Object.keys(catOrd).length;
+      const s=c+'/'+(a.subcat||'_'); if(subOrd[s]==null) subOrd[s]=Object.keys(subOrd).length;
+    }
+    acts.sort((a,b)=>
+      catOrd[a.cat||'_']-catOrd[b.cat||'_']
+      || subOrd[(a.cat||'_')+'/'+(a.subcat||'_')]-subOrd[(b.cat||'_')+'/'+(b.subcat||'_')]
+      || a.lvl-b.lvl
+      || (a.id<b.id?-1:a.id>b.id?1:0));
+  }
 }
 
 /* Build a single activity button element — 1.0.88 iconic flex-row layout:
@@ -25939,14 +26068,29 @@ function buildActBtn(act,reqLvl,lvl,m,bestXph,bestRph){
   const toolOwned = !isActive && Object.keys(act.out||{}).some(function(id){
     return ITEMS[id]&&ITEMS[id].tool && Array.isArray(state.gear) && state.gear.indexOf(id)>=0;
   });
+  /* Ticket #192: "Void Rod; Eclipse Pick, Satchel, Hearth, Tinder, Treads, Lens
+     ... don't stay checked off after the next level tool is made." They were doing
+     exactly what they were told to: every T6 Everflame recipe CONSUMES its T5
+     predecessor, so the Eclipse tool leaves state.gear and its card goes back to
+     looking unmade. Re-crafting it would be pure waste, since the thing that ate
+     it is strictly better.
+
+     The upgrade chain is already in the data — each Everflame SHOP row carries
+     req:'eclipse_*' — so a tool counts as superseded when the player owns the
+     tool that requires it. Treated as owned from here down: ticked, dimmed, not
+     clickable. */
+  const toolSuper = !isActive && !toolOwned && Object.keys(act.out||{}).some(function(id){
+    if(!ITEMS[id]||!ITEMS[id].tool||!Array.isArray(state.gear)) return false;
+    return SHOP.some(s=>s.req===id&&s.slot&&state.gear.indexOf(s.id)>=0);
+  });
 
   const btn=document.createElement('button');
-  const nonInteractive=locked||depleted||toolOwned;
+  const nonInteractive=locked||depleted||toolOwned||toolSuper;
   // Use a `.dis` class instead of the native `disabled` attribute (1.0.88): a disabled
   // <button> blocks pointer events across its whole subtree, which killed the hover
   // tooltips on the material chips. Clicks are already gated below (listener only added
   // when interactive), so nothing becomes clickable that shouldn't be.
-  btn.className='act'+(isActive?' active':'')+(depleted||toolOwned?' depleted':'')+(nonInteractive?' dis':'');
+  btn.className='act'+(isActive?' active':'')+(depleted||toolOwned||toolSuper?' depleted':'')+(nonInteractive?' dis':'');
   if(nonInteractive) btn.setAttribute('aria-disabled','true');
 
   // Tier stripe color (left-edge accent) + small "T{n} · Lv X" tier badge.
@@ -26032,6 +26176,7 @@ function buildActBtn(act,reqLvl,lvl,m,bestXph,bestRph){
 
   const metaState = locked?`Unlocks at Lv ${reqLvl}`
                  : toolOwned?`✓ Already owned`
+                 : toolSuper?`✓ Upgraded · this one forged the next tool`
                  : (fireOut&&!isActive)?`⚠ Fire is out`
                  : dupeJewel?`⚠ Owned — a 2nd shares its enchant`
                  : metaExtra||'';
@@ -26047,9 +26192,10 @@ function buildActBtn(act,reqLvl,lvl,m,bestXph,bestRph){
          ${(act.inp||selectedSkill==='cooking')&&effectiveRuns!==Infinity?`<span class="runs-left">${effectiveRuns} run${effectiveRuns===1?'':'s'} left · ~${fmtDuration(effectiveRuns*ms)}${selectedSkill==='cooking'&&fuelLeft<runsLeft?' (fuel)':''}</span>`:''}
        </div>`:'';
 
-  /* [UI-PREVIEW] Tier as forged pips instead of a "T4 ·" array index. Pip count is the
-     real number of tiers in this skill (memoised per skill), so the strip means something. */
-  const pipTotal=tierCountForSkill(selectedSkill);
+  /* Tier as forged pips. The count is the number of rungs in THIS act's own
+     ladder, not in the whole skill — a Runite Helm reads "Tier 6 of 7" against
+     the other helms, not against all 246 crafting recipes. */
+  const pipTotal=tierCountForAct(act);
   const pipsHtml=(!isAlchSingleton&&pipTotal>1&&pipTotal<=12)
     ?`<span class="act-pips" title="Tier ${tierIdx} of ${pipTotal}">${
         Array.from({length:pipTotal},(_,i)=>`<i${i<tierIdx?' class="on"':''}></i>`).join('')
@@ -26073,15 +26219,15 @@ function buildActBtn(act,reqLvl,lvl,m,bestXph,bestRph){
       </div>
       ${heroHtml}
       ${metaText?`<span class="meta${dupeJewel?' warn':''}">${metaText}</span>`:''}
-      ${locked||depleted||toolOwned?'':statsHtml}
+      ${locked||depleted||toolOwned||toolSuper?'':statsHtml}
       ${/* Locked recipes used to hide their materials entirely, so you could not
             see what an upcoming craft needed until you already had the level —
             no way to stockpile ahead of it. Show the chips either way; the
             .needs-locked wrapper dims them so a locked card still reads as
             locked, and the have/need counts stay live and accurate. */''}
-      ${toolOwned?'':(locked?`<div class="needs-locked">${makesHtml(act)}</div>`:makesHtml(act))}
-      ${toolOwned?'':(locked?`<div class="needs-locked">${needsHtml(act,m)}</div>`:needsHtml(act,m))}
-      ${toolOwned?'':(locked?`<div class="needs-locked">${dropsHtml(act,selectedSkill,m)||thiefLootHtml(act)}</div>`:(dropsHtml(act,selectedSkill,m)||thiefLootHtml(act)))}
+      ${toolOwned||toolSuper?'':(locked?`<div class="needs-locked">${makesHtml(act)}</div>`:makesHtml(act))}
+      ${toolOwned||toolSuper?'':(locked?`<div class="needs-locked">${needsHtml(act,m)}</div>`:needsHtml(act,m))}
+      ${toolOwned||toolSuper?'':(locked?`<div class="needs-locked">${dropsHtml(act,selectedSkill,m)||thiefLootHtml(act)}</div>`:(dropsHtml(act,selectedSkill,m)||thiefLootHtml(act)))}
       ${masteryHtml}
       ${runningHtml}
     </div>`;
@@ -26099,7 +26245,7 @@ function buildActBtn(act,reqLvl,lvl,m,bestXph,bestRph){
     +(dupeJewel?'\n\nYou already own one. A second ring can be worn in your other hand, but'
        +' enchants and sockets are shared by all your copies, so a spare'
        +' cannot have a different enchant.':'');
-  if(!locked&&!depleted&&!toolOwned) btn.addEventListener('click',()=>setAction(selectedSkill,act.id));
+  if(!locked&&!depleted&&!toolOwned&&!toolSuper) btn.addEventListener('click',()=>setAction(selectedSkill,act.id));
   return btn;
 }
 
@@ -27155,6 +27301,60 @@ function gdCountdownTick(){
   const txt=gdResetInText(state.gd[_gdOpen]);
   if(el.textContent!==txt) el.textContent=txt;
 }
+/* Ticket #187. Keeps an open quest board's numbers live without rebuilding it.
+   Covers every quest kind, not just kills: a supply order's held count goes stale
+   the same way when the items arrive while you are looking at the board. Reads
+   the same gdHeld/gdReady the renderer does, so the two cannot disagree. */
+function gdProgressTick(){
+  if(!_gdOpen||!state.gd||!state.gd[_gdOpen]) return;
+  const rows=document.querySelectorAll('.gd-q[data-gdq]');
+  if(!rows.length) return;
+  const r=state.gd[_gdOpen], g=GD_BY[_gdOpen];
+  for(const row of rows){
+    const q=r.q[+row.getAttribute('data-gdq')]; if(!q) continue;
+    const held=gdHeld(q), ready=gdReady(q);
+    const pct=Math.min(100,Math.round(held/Math.max(1,q.need)*100));
+    const isCoin=(q.kind==='coin');
+    const takes=(q.kind==='deliver'||q.kind==='supply'||isCoin);
+    const amt=isCoin?(v=>fmtCoins(v,false,false)):fmtK;
+    const spans=row.querySelectorAll('.gd-qp .l span');
+    if(spans[0]){
+      const txt=(takes?'you hold ':'')+amt(held)+' of '+amt(q.need);
+      if(spans[0].textContent!==txt)
+        spans[0].innerHTML=(takes?'you hold <b>'+amt(held)+'</b> of '+amt(q.need)
+                                 :'<b>'+amt(held)+'</b> of '+amt(q.need));
+    }
+    if(spans[1]&&spans[1].textContent!==pct+'%') spans[1].textContent=pct+'%';
+    const bar=row.querySelector('.gd-bar i');
+    if(bar&&bar.style.width!==pct+'%') bar.style.width=pct+'%';
+    // Supply orders carry a chip per line; those go stale too.
+    if(q.kind==='supply'&&q.items){
+      const chips=row.querySelectorAll('.gd-qi span');
+      let ci=0;
+      for(const iid in q.items){
+        const chip=chips[ci++]; if(!chip) continue;
+        const hv=(state.items[iid]||0), nd=q.items[iid];
+        const b=chip.querySelector('b'), want=fmtK(Math.min(hv,nd))+'/'+fmtK(nd);
+        if(b&&b.textContent!==want) b.textContent=want;
+        const on=hv>=nd; if(chip.classList.contains('ok')!==on) chip.classList.toggle('ok',on);
+      }
+    }
+    /* The button says "Not yet" / "Need N more" until it is claimable, so it has
+       to move with the bar or the board looks finished and refuses the click. */
+    const b=row.querySelector('.gd-btn');
+    if(b&&!q.done){
+      let label,off;
+      if(takes&&ready){ label='Hand in'; off=false; }
+      else if(takes){ label='Need '+amt(q.need-held)+' more'; off=true; }
+      else if(ready){ label='Claim'; off=false; }
+      else { label='Not yet'; off=true; }
+      if(b.textContent!==label) b.textContent=label;
+      if(b.disabled!==off) b.disabled=off;
+      b.classList.toggle('pri',!off); b.classList.toggle('off',off);
+      if(row.classList.contains('ready')!==(ready&&!q.done)) row.classList.toggle('ready',ready&&!q.done);
+    }
+  }
+}
 /* Called from tick() — a day passing swaps every guild's board. */
 function gdRefreshDue(){
   if(!state||!state.gd) return false;
@@ -27618,6 +27818,14 @@ function _gdGuildPage(id){
     const takes=(q.kind==='deliver'||q.kind==='supply'||isCoin);
     const amt=isCoin?function(v){ return fmtCoins(v,false,false); }:fmtK;
     const row=_gdEl('gd-q'+(q.done?' done':'')+(ready&&!q.done?' ready':''));
+    /* Ticket #187: "the count of kills for guild quest does not increase if you are
+       looking at the guild page while fighting". gdOnKill bumps q.have and nothing
+       repainted, so the row sat stale until some other event rebuilt the panel —
+       which is why alt-tabbing away and back "fixed" it. gdProgressTick() finds the
+       row by this index and updates the three live bits in place. Deliberately NOT
+       a renderGuilds() call: see the comment on gdCountdownTick, a full rebuild
+       eats the shop's scroll position and whatever button is mid-hover. */
+    row.setAttribute('data-gdq',String(i));
     let btn,cls;
     if(q.done){ btn='Claimed'; cls=' off'; }
     else if(takes&&ready){ btn='Hand in'; cls=' pri'; }
@@ -27868,7 +28076,7 @@ function ckCard(act, reqLvl, lvl, m){
   const showMats=!!mats;
 
   const tierIdx=tierIndexForAct(SKILLS.cooking,act);
-  const pipTot=tierCountForSkill('cooking');
+  const pipTot=tierCountForAct(act);   // per-ladder: fish 8, prized 8, game 15
   const pips=(pipTot>1&&pipTot<=20)
     ? `<span class="act-pips" title="Tier ${tierIdx} of ${pipTot}">`
       +Array.from({length:pipTot},(_,i)=>`<i${i<tierIdx?' class="on"':''}></i>`).join('')+'</span>'
@@ -29463,7 +29671,7 @@ function renderStats(){
     `:'';
 
   if(hasActs){
-    const lastUnlocked=[...sk.acts].reverse().find(a=>lvl>=a.lvl)||sk.acts[0];
+    const lastUnlocked=bestUnlockedAct(skill,lvl)||sk.acts[0];
     if(lastUnlocked){
       const baseMs=lastUnlocked.ms;
       const effMs=actMs(lastUnlocked,skill);
@@ -33992,6 +34200,24 @@ function hasPet(petId){ return !!(state && state.pets && state.pets[petId]); }
     try{ for(const _n of TREES.fletching) if(typeof NODE_ART!=='undefined'&&NODE_ART[_n.id]) _n.icon=NODE_ART[_n.id]; }catch(e){}
   }
 })();
+
+/* ════ ACT LADDERS ══════════════════════════════════════════════════════════════
+   THE LAST LINE THAT MAY TOUCH AN acts ARRAY IS ABOVE THIS POINT.
+
+   173 of the game's 542 skill actions are pushed at runtime from 23 sites spread
+   through the data section (tannery, leather, the hunt kit, generated plate,
+   bucklers, flax, fowl, the whole of Fletching, the smithing arrowhead rows, and
+   the three Aerie plumes inside the AERIE_LIVE block just above). Sorting the
+   literal alone would therefore fix nothing, which is why this runs here instead:
+   after every push, before anything renders.
+
+   Order matters between these two calls only in that both must precede the first
+   render. buildActTierIndex keys on the act OBJECT, so it is rebuilt after the
+   sort as well to stay honest if a future site ever appends below this line;
+   _audit_tests.js scans the source and fails if one ever does. */
+buildActTierIndex();
+sortAllActs();
+buildActTierIndex();
 
 /* ════ RAIDS (1.0.66) ═══════════════════════════════════════════════════════════
    A raid is a no-retreat gauntlet: fight every stage back-to-back on ONE health
@@ -43814,6 +44040,7 @@ function animate(){
 
   // ---- Guild quest-board countdown (ticket #41) ----
   if(viewTab==='guild' && typeof gdCountdownTick==='function') gdCountdownTick();
+  if(viewTab==='guild' && typeof gdProgressTick==='function') gdProgressTick();   // #187
 
   // ---- Solo action progress + live xpDetail updates ----
   if(state.action){
