@@ -9520,6 +9520,99 @@ setTimeout(() => {
        eg.declared === 80 && eg.off === 80 && eg.on === 70 && eg.planted === true, JSON.stringify(eg));
   }
 
+  /* ── Act order is no longer load-bearing ───────────────────────────────────
+     Until the 1.0 audit a tier was an array index, so declaration order decided
+     what badge every card wore and the arrays could not be sorted. These five
+     assertions are what stop that coming back. All of them fail silently in the
+     game, which is why none of the other three harnesses can see them. */
+  section('Act ladders are derived, not positional (1.0 audit)');
+  {
+    // 1. Every rendered group ascends by level. This is the defect the player saw.
+    const ord = ev(`(function(){
+      var bad=[], groups=0;
+      for(var k in SKILLS){ var acts=SKILLS[k].acts||[]; if(!acts.length) continue;
+        var g={};
+        for(var a of acts){ var key=(a.cat||'_')+'/'+(a.subcat||'_'); (g[key]=g[key]||[]).push(a); }
+        for(var key in g){ groups++; var arr=g[key];
+          for(var i=1;i<arr.length;i++) if(arr[i].lvl<arr[i-1].lvl)
+            bad.push(k+' '+key+': '+arr[i-1].id+'(L'+arr[i-1].lvl+') then '+arr[i].id+'(L'+arr[i].lvl+')'); } }
+      return {bad:bad, groups:groups};
+    })()`);
+    ok('every rendered group of actions ascends by level',
+       ord.bad.length === 0, ord.bad.length ? ord.bad.slice(0, 4).join(' | ') : ord.groups + ' groups checked');
+
+    /* 2. Shuffle invariance. THIS is the assertion that proves order is dead: if
+       any tier still came from a position, shuffling would move it. Keyed on the
+       act object, because ids are not unique across skills. */
+    const shuf = ev(`(function(){
+      var before=new Map();
+      for(var k in SKILLS) for(var a of (SKILLS[k].acts||[])) before.set(a, famOf(k,a)+'#'+tierIndexForAct(null,a));
+      var saved={};
+      for(var k in SKILLS){ var arr=SKILLS[k].acts; if(!arr) continue; saved[k]=arr.slice();
+        var src=arr.slice(), out=[];
+        while(src.length){ out.push(src.pop()); if(src.length) out.push(src.shift()); }
+        arr.length=0; for(var x of out) arr.push(x); }
+      buildActTierIndex();
+      var moved=0;
+      for(var k in SKILLS) for(var a of (SKILLS[k].acts||[]))
+        if(before.get(a)!==famOf(k,a)+'#'+tierIndexForAct(null,a)) moved++;
+      for(var k in saved){ var arr=SKILLS[k].acts; arr.length=0; for(var x of saved[k]) arr.push(x); }
+      buildActTierIndex();
+      return {moved:moved, total:before.size};
+    })()`);
+    ok('no act changes tier when every acts array is shuffled',
+       shuf.moved === 0, shuf.moved + ' of ' + shuf.total + ' moved');
+
+    /* 3. Nothing may append to an acts array below the point where the index is
+       built, or those acts render untiered and unsorted with no error at all.
+       Source scan, in the same spirit as the two already in this file. */
+    const anchor = (() => {
+      const build = html.indexOf('\nbuildActTierIndex();');
+      const after = html.slice(build + 1);
+      const late = [...after.matchAll(/\.acts\.(push|splice|unshift)\(|^\s*F\.push\(/gm)].map(m => m[0]);
+      return { found: build > 0, late: late.length, sample: late.slice(0, 3) };
+    })();
+    ok('no acts array is mutated below the point the ladder index is built',
+       anchor.found && anchor.late === 0,
+       anchor.found ? (anchor.late ? anchor.late + ' late writes: ' + anchor.sample.join(', ') : 'clean') : 'anchor call not found');
+
+    /* 4. The tool ladders, which is where this was worst: 72 recipes in one
+       cat:'tool' bucket numbered T1..T72, and 11 of the 12 skill tabs listed the
+       Lv 95 Everflame tool above the Lv 68 Eclipse one it upgrades from. */
+    const tools = ev(`(function(){
+      var acts=SKILLS.crafting.acts.filter(function(a){return a.cat==='tool';});
+      var by={}; for(var a of acts){ var s=crToolSkillFor(a.id)||'?'; (by[s]=by[s]||[]).push(a); }
+      var bad=[], fams={};
+      for(var s in by){ var lv=by[s].map(function(a){return a.lvl;});
+        for(var i=1;i<lv.length;i++) if(lv[i]<lv[i-1]) bad.push(s+' '+lv.join(','));
+        for(var a of by[s]) fams[famOf('crafting',a)]=1; }
+      return {tabs:Object.keys(by).length, bad:bad, fams:Object.keys(fams).length, total:acts.length};
+    })()`);
+    ok('all twelve tool ladders read low to high, in twelve families not one',
+       tools.bad.length === 0 && tools.tabs === 12 && tools.fams === 12,
+       JSON.stringify({tabs: tools.tabs, families: tools.fams, tools: tools.total, bad: tools.bad}));
+
+    /* 5. The offline trickle and the "Best action time" row both used to take the
+       LAST array entry at or below your level. Sorting did not fix that -- the
+       comparator groups by category first, so the last entry is the last
+       category's top rung, which at Lv 99 was a tanning recipe worth 1/22nd of
+       the real best. Assert the helper genuinely maximises. */
+    const bua = ev(`(function(){
+      var wrong=[];
+      [50,99].forEach(function(LVL){
+        for(var k in SKILLS){ var acts=SKILLS[k].acts||[]; if(!acts.length) continue;
+          var un=acts.filter(function(a){return a.lvl<=LVL;}); if(!un.length) continue;
+          var rate=function(a){ try{ return ratesFor(a,k).xph||0; }catch(e){ return 0; } };
+          var truth=un.reduce(function(b,a){ return rate(a)>rate(b)?a:b; }, un[0]);
+          var got=bestUnlockedAct(k,LVL);
+          if(!got||rate(got)<rate(truth)) wrong.push('Lv'+LVL+' '+k+': got '+(got&&got.id)+' want '+truth.id);
+        } });
+      return wrong;
+    })()`);
+    ok('bestUnlockedAct really returns the best unlocked action, not the last one',
+       bua.length === 0, bua.length ? bua.slice(0, 3).join(' | ') : '26 skill/level pairs checked');
+  }
+
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));
   process.exit(fail ? 1 : 0);
 }, 2500);

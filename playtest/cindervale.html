@@ -8855,7 +8855,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.126.2">v0.9.126</div>
+  <div class="mm-ver" data-build="0.9.126.3">v0.9.126</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -11773,8 +11773,15 @@ const SKILLS={
     {id:'al_m13',name:'Grind Honed Edge I (bone)',  lvl:14,ms:11000,xp:92, spdMult:0.630,minMs:1804, inp:{bone_charm:3},                     out:{honed_edge_1:1}},
     {id:'al_m14',name:'Temper Ironhide II (scale)',lvl:60,ms:20000,xp:560,spdMult:0.740,minMs:3200, inp:{wyrmscale:3},                      out:{ironhide_2:1}},
     {id:'al_m12',name:'Grind Honed Edge II (drake)',lvl:62,ms:22000,xp:620,spdMult:0.745,minMs:3380,inp:{dragon_fang:3,cinder_gland:2},       out:{honed_edge_2:1}},
-    {id:'al_m13',name:'Brew Hellfire Draught',     lvl:80,ms:31000,xp:980,spdMult:0.775,minMs:4960, inp:{brimstone:2,void_cinder:2},         out:{heal_draught_4:1}},
-    {id:'al_m14',name:'Distill Void Insight',      lvl:88,ms:19500,xp:594,spdMult:0.790,minMs:5200, inp:{void_cinder:3},                     out:{wisdom_iii:1}},
+    /* al_m15/al_m16, not al_m13/al_m14. These two shipped with ids that were already
+       taken by the Lv 14 bone grind and the Lv 60 wyrmscale temper four lines above.
+       getAct is sk.acts.find(a=>a.id===actId) and state.action stores only the id, so
+       the first declaration always won: both cards rendered, and clicking either one
+       started the low-level recipe instead. Neither of these was ever runnable, which
+       is why renaming THESE two (rather than the originals) costs nobody any mastery
+       or any in-flight action. _audit_tests.js now asserts act ids are unique. */
+    {id:'al_m15',name:'Brew Hellfire Draught',     lvl:80,ms:31000,xp:980,spdMult:0.775,minMs:4960, inp:{brimstone:2,void_cinder:2},         out:{heal_draught_4:1}},
+    {id:'al_m16',name:'Distill Void Insight',      lvl:88,ms:19500,xp:594,spdMult:0.790,minMs:5200, inp:{void_cinder:3},                     out:{wisdom_iii:1}},
   ]},
   firemaking:{name:'Firemaking',icon:'🔥',acts:[
     {id:'fm1',name:'Burn pine logs',     lvl:1, ms:3800, xp:43,  spdMult:0.500,minMs:645,  inp:{pine_log:1},      out:{ash:1}},
@@ -16841,11 +16848,16 @@ const TREES = {
     {id:'jw_sell',  name:'Master Jeweler', icon:'💰',max:10,req:25, desc:r=>`Sell value of jewelry +${r*5}%`,  next:r=>`+5% sell → ${r*5}%`},
     {id:'jw_master1',name:'Heirloom',      icon:'👑',max:1, req:20, desc:r=>r?'Chance to produce both ring AND amulet from one cut':'Both ring and amulet per cut (5% chance)',next:()=>'5% chance: produce ring AND amulet'},
     {id:'jw_master2',name:'Gem Mastery',   icon:'💎',max:1, req:40, desc:r=>r?'Each cut produces 2 jewelry items':'Double jewelry output',next:()=>'2× jewelry output'},
-    /* (0.9.124.57) The text promised 2× gem dust from the first commit, and nothing ever
-       doubled gem dust. What the node does is the generic master3 term in mods(): 2×
-       Jeweler XP, the same as Starsteel Mastery and Apex Forge. The text now says that.
+    /* The text promised 2× gem dust from the first commit and nothing ever doubled it:
+       the node fell through to the generic master3 term in mods() and quietly paid 2×
+       Jeweler XP instead. 0.9.124.57 settled that by rewriting the TEXT to match the XP.
+       The 1.0 audit settled it the other way, which is what the name always wanted:
+       jeweler is now excluded from the xp2x fallback and mods().jw_dust2x doubles gem
+       dust at the two output sites. Same call as Second Pocket (th_master3), which also
+       gave an accidental XP double and became loot-only.
+       Anyone who already owned this node LOSES the 2× XP. That was a deliberate choice.
        jwVoidUnlockLevel() also names this node, but nothing calls it. */
-    {id:'jw_master3',name:'Gem Hoarder',  icon:'💜',max:1, req:60, desc:r=>r?'2× Jeweler XP from every action':'Double all Jeweler XP permanently',next:()=>'2× Jeweler XP permanently'},
+    {id:'jw_master3',name:'Gem Hoarder',  icon:'💜',max:1, req:60, desc:r=>r?'Every cut gives twice as much gem dust':'Double the gem dust from every cut',next:()=>'2× gem dust from every cut'},
     {id:'jw_gm_speed',name:'Grand Lapidary',icon:'💎',max:9,req:75,desc:r=>`Reduces task time by ${(r*1.8).toFixed(1)}% (grandmaster)`, next:r=>`+1.8% faster → ${(r*1.8).toFixed(1)}%`},
     {id:'jw_gm_xp',   name:'Gem Scholar',  icon:'📜',max:10, req:80, desc:r=>`+${r*3}% Jeweler XP (grandmaster)`,  next:r=>`+3% XP → ${r*3}%`},
     {id:'jw_gm_sell', name:'Void Merchant',icon:'💰',max:10,req:85, desc:r=>`Jewelry sell value +${r*6}%`,        next:r=>`+6% sell → ${r*6}%`},
@@ -17147,7 +17159,7 @@ const PASSIVE_TIPS={
   jw_sell:      'Raises sell value of all jewelry. At max (10): +50%.',
   jw_master1:   '5% chance each cut produces both a ring AND an amulet of that gem type.',
   jw_master2:   'Every cut produces 2 jewelry items instead of 1 as the base.',
-  jw_master3:   'Permanently doubles all Jeweler XP.',
+  jw_master3:   'Every gem you cut gives twice as much Gem Dust.\nStacks on top of Dust Collector, so the bonus dust is doubled too.\nGem Dust pays for socket drilling, the Gem Exchange and high-tier enchants.',
   jw_gm_speed:  'Grandmaster bonus (Lv 75). +1.8% cut speed per rank, up to +16.2% at max 9 ranks.',
   jw_gm_xp:     'Grandmaster bonus (Lv 80). +3% Jeweler XP per rank, up to +30% at max 10 ranks.',
   jw_gm_sell:   'Grandmaster bonus (Lv 85). +6% jewelry sell value per rank.',
@@ -17288,7 +17300,7 @@ function plantPatch(patchId, seedId, silent){
   if(ps&&!patchReady(ps)){if(!silent)toast('Something is already growing here — wait for it to finish.');return false;}
   var crop=getCrop(seedId);
   if(!crop){if(!silent)toast('Unknown seed.');return false;}
-  if(farmingLvl()<crop.lvl){if(!silent)toast('Need Farming level '+crop.lvl+' to plant this.');return false;}
+  if(farmingLvl()<cropReqLvl(crop)){if(!silent)toast('Need Farming level '+cropReqLvl(crop)+' to plant this.');return false;}
   var qty=seedQty(seedId);
   if(qty<1){if(!silent)toast('No '+crop.name+' seeds in the vault.');return false;}
   if(!state.patches) state.patches={};
@@ -17383,9 +17395,13 @@ function harvestPatch(patchId, silent){
     }
   }
 
-  // Seed return — master3 (Eternal Garden) = 100%; otherwise base + fa_seed bonus
+  /* Seed return — master3 (Eternal Garden) = 100%; otherwise base + fa_seed + tool.
+     m.preserve is the trowel line's "chance to keep the seed". It was dead until the
+     1.0 audit: preserve is otherwise only read by completeAction, and farming never
+     reaches completeAction because SKILLS.farming.acts is empty, so the Everflame
+     Trowel's advertised 8% did nothing at all while the stat panel printed it. */
   var alwaysReturn=m.master3; // only master3 grants guaranteed seed return
-  var returnChance=alwaysReturn?1:(crop.seedReturn+(treeRank('farming','fa_seed')||0)*0.05);
+  var returnChance=alwaysReturn?1:(crop.seedReturn+(treeRank('farming','fa_seed')||0)*0.05+(m.preserve||0));
   if(Math.random()<returnChance){
     addSeed(ps.seedId,1);
     markDiscovered(ps.seedId);
@@ -17494,14 +17510,14 @@ function tickFarmer(){
          seed chosen planted nothing, ever. The Auto branch below already used
          seedQty, which is why "Auto (best owned)" worked and a chosen seed did not.
          Same defect as the Plant All button in #88. */
-      if(cc&&lvl>=cc.lvl&&seedQty(chosen)>0) return chosen;
+      if(cc&&lvl>=cropReqLvl(cc)&&seedQty(chosen)>0) return chosen;
       return null; // chosen seed unavailable — plant nothing rather than the wrong crop
     }
     // Auto mode — highest-tier seed currently owned & plantable
     var best=null,bestLvl=-1;
     for(var ci=0;ci<CROPS.length;ci++){
       var c=CROPS[ci];
-      if(lvl>=c.lvl&&seedQty(c.id)>0&&c.lvl>bestLvl){ best=c.id; bestLvl=c.lvl; }
+      if(lvl>=cropReqLvl(c)&&seedQty(c.id)>0&&c.lvl>bestLvl){ best=c.id; bestLvl=c.lvl; }
     }
     return best;
   }
@@ -17537,7 +17553,7 @@ function tickFarmer(){
         var rseed=farmerPickSeed();
         if(rseed){
           var rcrop=getCrop(rseed);
-          if(rcrop&&farmingLvl()>=rcrop.lvl){
+          if(rcrop&&farmingLvl()>=cropReqLvl(rcrop)){
             if(plantPatch(pid,rseed,true)) replanted++;
           }
         }
@@ -17897,7 +17913,7 @@ function buildFarmerPanel(){
    button on the panel uses, not just Plant All. */
 function fmSelectedSeed(){
   var lvl=farmingLvl();
-  var owned=CROPS.filter(function(c){ return lvl>=c.lvl&&seedQty(c.id)>0; });
+  var owned=CROPS.filter(function(c){ return lvl>=cropReqLvl(c)&&seedQty(c.id)>0; });
   if(!owned.length) return null;
   var want=state.farmSeed;
   for(var i=0;i<owned.length;i++){ if(owned[i].id===want) return owned[i]; }
@@ -17952,7 +17968,7 @@ function renderFarming(){
      Sell toggle here is that path coming back: while it is on, clicking a seed
      opens the ordinary sell dialog instead of choosing it to plant, so nothing
      about selling behaves differently, it just lives where the seeds do. */
-  var owned=CROPS.filter(function(c){ return lvl>=c.lvl&&seedQty(c.id)>0; })
+  var owned=CROPS.filter(function(c){ return lvl>=cropReqLvl(c)&&seedQty(c.id)>0; })
                  .sort(function(a,b){ return b.lvl-a.lvl; });
   var sel=fmSelectedSeed();
   var seedTotal=0;
@@ -22710,6 +22726,12 @@ function mods(skill){
              : skill==='cooking'    ?(r('co_gm_2x_xp')>0?1.5:1)
              : skill==='firemaking' ?(r('fm_master3')>0?1.5:1)
              : skill==='thieving'   ?(r('th_gm_2x_xp')>0?1.5:1)   // Fast Talker; Second Pocket is loot only
+             /* Jeweler is out of the generic ×2 fallback for the same reason Thieving
+                is. Gem Hoarder (jw_master3) is named for gem dust and was designed as
+                a gem-dust node; it only ever doubled XP because it fell through to the
+                line below. It now does what it says (see jw_dust2x) and pays no XP
+                multiplier, which is the same call that was made for Second Pocket. */
+             : skill==='jeweler'    ?1
              : (r(p+'_master3')>0?2:1);
 
   return {
@@ -22772,6 +22794,11 @@ function mods(skill){
     master2: r(p+'_master2')>0,
     master3: r(p+'_master3')>0,
     jw_dust: skill==='jeweler'?r('jw_dust')*0.05:0,   // Dust Collector — bonus gem dust per cut
+    /* Gem Hoarder (jw_master3) — doubles gem dust from every cut, applied AFTER Dust
+       Collector so the two stack the way the tooltips read. This is what the node was
+       always named for; until the 1.0 audit it silently paid ×2 Jeweler XP instead
+       via the generic master3 fallback in xp2x above. */
+    jw_dust2x: skill==='jeweler'&&r('jw_master3')>0,
     wc_burnChance: skill==='woodcutting'?Math.min(0.10,r('wc_master1')*0.02):0,
     coalSave: skill==='smithing'&&r('sm_master1')>0?1:0,
     wc_kin:    skill==='woodcutting'?r('wc_kin'):0,
@@ -22941,6 +22968,7 @@ function processOutAvg(act,skill,id,q,m){
   if(m.master2 && act.cat!=='refine' && skill!=='crafting') avg+=q; // master2: base output doubled
   if(m.jw_flawless && act.cat!=='refine') avg+=0.15*2;             // Flawless Cut
   if(m.jw_dust>0 && id==='gem_dust') avg+=m.jw_dust;               // Dust Collector
+  if(m.jw_dust2x && id==='gem_dust') avg*=2;                       // Gem Hoarder — mirrors completeAction
   if(m.al_triple) avg=q*3;                                         // Grand Elixir replaces the above
   if(m.cr_dupe) avg+=q*0.05;                                       // Heirloom Forge
   if(m.cr_flawless) avg+=q*0.15*2;                                 // Flawless Forge
@@ -23011,9 +23039,26 @@ function faAncientUnlockLevel(){
   // With Eternal Garden (req lv70), Ancient Bloom unlocks at 70 instead of 80
   return treeRank('farming','fa_master3')>0?70:80;
 }
-function voidElixirUnlockLevel(){
-  return 88; // Void Elixir requires level 88 — no early-unlock perk
+/* The level a crop actually needs, which is crop.lvl for everything except Ancient
+   Bloom. Eternal Garden has always advertised "unlocks Ancient Bloom 10 levels early"
+   and never delivered it: the only callers of faAncientUnlockLevel tested for an act
+   id ('fa8') that does not exist, because farming runs on the patch system and
+   SKILLS.farming.acts is empty. Every place that gates a crop goes through here now,
+   so the node's text and its behaviour cannot drift apart again. (1.0 audit) */
+function cropReqLvl(crop){
+  if(!crop) return 1;
+  return crop.id==='ancient_seed' ? faAncientUnlockLevel() : (crop.lvl||1);
 }
+/* voidElixirUnlockLevel was removed in the 1.0 audit. It returned a flat 88 with no
+   perk branch, and its only two callers tested for an act id ('al12') that no longer
+   exists in SKILLS.alchemy.acts — so it could not fire even before alchemy grew its
+   own renderer and renderActivities started returning early for it.
+
+   faAncientUnlockLevel below is the opposite case and is deliberately KEPT: it encodes
+   a real perk (Eternal Garden drops Ancient Bloom from Lv 80 to Lv 70), but its only
+   callers tested for 'fa8', and SKILLS.farming.acts is empty because farming runs on
+   the patch system. The perk's other half (guaranteed seed return) IS wired, at
+   harvestPatch's alwaysReturn. The early-unlock half has never applied to anything. */
 function moonpetalUnlockLevel(){
   // fo_master2 (req lv40) gives a modest 10-level discount
   return treeRank('foraging','fo_master2')>0?70:80;
@@ -24359,6 +24404,9 @@ function completeAction(act,skillKey,times){
       // of the Jeweler tree bought nothing at all before this — gem_dust gates
       // socket drilling and the Gem Exchange, so the node matters.
       if(m.jw_dust>0 && id==='gem_dust'){ const dd=binom(times,m.jw_dust); if(dd>0) qty+=dd; }
+      // Gem Hoarder (jw_master3): doubles gem dust, applied last so it doubles the
+      // Dust Collector bonus too. processOutAvg mirrors this for the /hr preview.
+      if(m.jw_dust2x && id==='gem_dust') qty*=2;
       // Grand Elixir (Lv99): every brew yields ×3 potions (deterministic; supersedes Double/Twin)
       if(m.al_triple) qty=q*times*3;
       // Heirloom Forge (cr_master1): 5% chance per craft for a free duplicate piece
@@ -24451,7 +24499,13 @@ function completeAction(act,skillKey,times){
       const L=act.loot;
       if(L&&L.pool){
         const lifted=binom(got, thiefGoodsChance(act));   // shared with the card's odds (#115)
-        for(let i=0;i<lifted;i++){
+        /* Tool "double goods" (1.0 audit). m.extraBar is where a non-gathering skill's
+           doubleYield lands, but every thieving act declares out:{} and extraBar is
+           only ever read inside the act.out loop — so the Everflame Lockpicks' +8%
+           was wired to nothing at all while the stat panel printed it as live.
+           Rolled per lifted item, so it scales with the steal rather than the tick. */
+        const doubled=(m.extraBar>0)?binom(lifted, Math.min(1,m.extraBar)):0;
+        for(let i=0;i<lifted+doubled;i++){
           const id=thiefPoolPick(L.pool);
           if(id) grantItem(id,1);
         }
@@ -28421,9 +28475,7 @@ function renderActivities(){
     let reqLvl=act.lvl;
     if(act.id==='fo7') reqLvl=moonpetalUnlockLevel();
     if(act.id==='co8') reqLvl=highFishUnlockLevel();
-    if(act.id==='al12') reqLvl=voidElixirUnlockLevel();
     if(act.id==='ag8') reqLvl=agGauntletUnlockLevel();
-    if(act.id==='fa8') reqLvl=faAncientUnlockLevel();
     if(lvl>=reqLvl) unlocked.push({act,reqLvl,rates:ratesFor(act,selectedSkill)});
   }
   const bestXph=unlocked.length?Math.max(...unlocked.map(u=>u.rates.xph)):0;
@@ -28475,9 +28527,7 @@ function renderActivities(){
     let reqLvl=act.lvl;
     if(act.id==='fo7') reqLvl=moonpetalUnlockLevel();
     if(act.id==='co8') reqLvl=highFishUnlockLevel();
-    if(act.id==='al12') reqLvl=voidElixirUnlockLevel();
     if(act.id==='ag8') reqLvl=agGauntletUnlockLevel();
-    if(act.id==='fa8') reqLvl=faAncientUnlockLevel();
     // ── Alchemy tab filter (1.0.63) ─────────────────────────────────────
     // Skilling vs combat brews live in the same acts[] array but render
     // under separate tabs. Skilling = bonuses on speed/xp/gp/doubleChance;
