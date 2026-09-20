@@ -6863,10 +6863,12 @@ body:not(.is-demo) .demo-only{display:none !important}
 .cveat-mark{position:absolute;top:0;bottom:0;width:2px;margin-left:-1px;border-radius:1px;
   background:#eef3d4;box-shadow:0 0 0 1px rgba(0,0,0,.75);opacity:.9;pointer-events:none}
 .cveat-mark.risk{background:#ffb35c}
-/* The creature is centred in a stage that clips, so its card is centred too and
-   drops below the feet where there is room, rather than off its own left edge. */
-.cvarena-foe[data-tip]:hover::after{left:50%;transform:translateX(-50%);
-  top:calc(100% + 10px);text-align:center}
+/* The creature's card is data-rtip now, not data-tip (ticket #188). The CSS
+   tooltip that used to live here dropped it "below the feet where there is room"
+   — there is no room: the creature sits at the bottom of .cvarena-band, which is
+   overflow:hidden, so the player saw the top edge of the box and the tops of a
+   few letters and nothing else. data-rtip renders through the shared floating
+   card, which is not a descendant of the clip and needs no rule per surface. */
 .cveat[data-tip]:hover::after{top:auto;bottom:calc(100% + 6px);left:auto;right:0;
   min-width:0;max-width:280px;font-size:calc(13px*var(--tscale))}
 
@@ -8855,7 +8857,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.126.7">v0.9.126</div>
+  <div class="mm-ver" data-build="0.9.126.8">v0.9.126</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -32006,6 +32008,13 @@ const CMAST_ICON_SVG={
    only (30). When the Ranged/Magic trees return this grows automatically, and
    shard banking (grantCmastPoints) re-derives against the larger cap. */
 const CMAST_CAP=CMAST_NODES.reduce((s,n)=>s+n.max,0);
+/* The Spire rungs that pay a Mastery Point, in ascending order. Part of closing
+   the gap between what the board COSTS (CMAST_CAP, 132) and what a player could
+   ever earn, which was 120: 98 combat levels, 4 milestones, 9 boss first-kills
+   and 9 zone clears. The missing twelve are 3 bossless hunting grounds, 4 raid
+   first-clears and these 5 floors. _audit_tests.js asserts the arithmetic, so a
+   new node or a new zone cannot quietly reopen the gap. */
+const CMAST_SPIRE_FLOORS=[10,20,30,40,50];
 /* Nodes whose `effect` keys are not read by cmastBonuses() or the combat tick.
    Their ranks persist and the UI badges them NOT YET ACTIVE, so a player can see
    what they are buying.
@@ -34917,6 +34926,12 @@ function grantRaidRewards(raid, timeMs){
   }
   // Clears + best rating/time.
   if(!state.raidClears) state.raidClears={};
+  /* First clear of each raid pays a Mastery Point (1.0 audit). Raid bosses route
+     through here and return before the ordinary boss-kill grant, so the hardest
+     content in the game was worth nothing on the mastery board. Four raids carry
+     loot, so this is four points of the twelve CMAST_CAP was short. */
+  if(!state.raidClears[raid.id] && typeof grantCmastPoints==='function')
+    grantCmastPoints(1,`First clear: ${raid.name}`);
   state.raidClears[raid.id]=(state.raidClears[raid.id]||0)+1;
   if(!state.raidBest) state.raidBest={};
   const prev=state.raidBest[raid.id];
@@ -35002,9 +35017,18 @@ function handleSpireFloorClear(baseMon){
     if(typeof logNotification==='function') logNotification('rare','\u2605','Spire floor '+floor+': '+nm+'.');
   }
   if(!state.spireBest||floor>state.spireBest){
+    const wasBest=state.spireBest||0;
     state.spireBest=floor;
     cmbLog('\u2605 Floor '+floor+': new highest floor.','rare-win');
     if(typeof toast==='function') toast('\u2605 Spire floor '+floor+'!');
+    /* Spire depth pays Mastery Points (1.0 audit, Jordan's ask). The Spire is
+       endless, so these are milestones rather than a per-floor drip: five rungs,
+       the last of which sits about where _spiretest puts the wall for a fully
+       ascended best-in-slot run. Awarded once each, on the run that first passes
+       them, and safe to cross several in one climb. */
+    if(typeof grantCmastPoints==='function')
+      for(const f of CMAST_SPIRE_FLOORS)
+        if(wasBest<f && floor>=f) grantCmastPoints(1,`Spire floor ${f}`);
   }
   momAdd(MOM_PER_STAGE);
   combat.raid.floor=floor+1;
@@ -41372,6 +41396,20 @@ function combatTick(){
           grantCmastPoints(1,`Zone cleared: ${z?z.name:baseMon.zone}`);
         }
       }
+      /* Hunting grounds have no boss, so the block above could never fire for
+         them and three of the twelve zones were worth nothing on the mastery
+         board. That is half of why CMAST_CAP (132) sat above what anyone could
+         earn (120). A bossless zone clears when you have killed one of every
+         creature in it, which is the same commitment a boss kill represents. */
+      if(!baseMon.boss && !state.cmastZoneClears[baseMon.zone]){
+        const roster=MONSTERS.filter(m=>m.zone===baseMon.zone);
+        if(roster.length && !roster.some(m=>m.boss)
+           && roster.every(m=>(state.monKills&&state.monKills[m.id])>0)){
+          state.cmastZoneClears[baseMon.zone]=true;
+          const z=getZone(baseMon.zone);
+          grantCmastPoints(1,`Zone cleared: ${z?z.name:baseMon.zone}`);
+        }
+      }
       // ── Roll drops & log them in the combat ticker ──
       // wasRare boosts each drop's chance by RARE_DROP_MUL (capped) — see rollDrops.
       const drops=rollDrops(baseMon.id, wasRare);
@@ -43482,7 +43520,7 @@ ${combat.raid?buildRaidProgressHTML():''}
       <div class="cvstage-floor"></div>
       ${combat.raid?buildRaidRibbonHTML():''}
       ${combat.raid?buildRaidRingHTML():''}
-      <div class="cvarena-foe" data-mlogjump="${baseMon.id}" data-tip="${mon.name} \u00b7 Level ${baseMon.lvl}&#10;&#10;Attack ${mon.atk}&#10;Max Hit ${mon.str}&#10;Defence ${mon.def}&#10;Speed ${(mon.swingMs/1000).toFixed(2)}s&#10;Health ${mon.hp}&#10;&#10;Click to read its Monster Log entry">
+      <div class="cvarena-foe" data-mlogjump="${baseMon.id}" data-rtip="${mon.name} \u00b7 Level ${baseMon.lvl}&#10;&#10;Attack ${mon.atk}&#10;Max Hit ${mon.str}&#10;Defence ${mon.def}&#10;Speed ${(mon.swingMs/1000).toFixed(2)}s&#10;Health ${mon.hp}&#10;&#10;Click to read its Monster Log entry">
         <div class="cvarena-art">${iconHTML(baseMon.id)}</div>
       </div>
       <div class="cvsplats" id="cmbSplats"></div>

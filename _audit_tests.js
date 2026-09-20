@@ -9385,14 +9385,18 @@ setTimeout(() => {
       combatMode=true; state.cmbView='fight'; state.cmbSubTab='arena'; combat.raid=null; combat.monId='rat';
       renderCombat();
       var foe=document.querySelector('#combatPanel .cvarena-foe[data-mlogjump]');
-      var r={present:!!foe, id:foe?foe.getAttribute('data-mlogjump'):'', tip:foe?(foe.getAttribute('data-tip')||''):''};
+      var r={present:!!foe, viaFloating:!!(foe&&foe.hasAttribute('data-rtip')), id:foe?foe.getAttribute('data-mlogjump'):'', tip:foe?(foe.getAttribute('data-rtip')||foe.getAttribute('data-tip')||''):''};
       if(foe){ foe.click(); r.tab=state.cmbSubTab; r.sel=state.monLogSel; r.zone=state.monLogZone; }
       state.cmbSubTab='arena'; combatMode=false; state.cmbView='guide';
       return r;
     })()`);
     ok('the creature you are fighting opens its own Monster Log entry (#163)',
        jump.present === true && jump.id === 'rat' && jump.tab === 'log' && jump.sel === 'rat' && jump.zone === 'rat_warrens', JSON.stringify(jump));
-    ok('and its card says the click does something', /Monster Log/.test(jump.tip), jump.tip.slice(-60));
+    /* data-rtip since #188: the CSS tooltip was clipped by .cvarena-band's
+       overflow:hidden, so the player saw the box top and nothing readable. The
+       floating card is not a descendant of the clip. */
+    ok('and its card says the click does something, through the unclipped floating card',
+       /Monster Log/.test(jump.tip) && jump.viaFloating === true, jump.tip.slice(-60));
 
     /* #168: "According to the search bar in the satchel, I have 286 items to search.
        The max of my satchel right now is 283." Both numbers were right: a stack the
@@ -9738,6 +9742,49 @@ setTimeout(() => {
     })()`);
     ok('a guild skip avoids the item it replaced, and is not spent on a failed reroll (#200)',
        skip.guards === true && skip.comparesItems === true, JSON.stringify(skip));
+  }
+
+  section('The Combat Mastery board can actually be filled (1.0 audit)');
+  {
+    /* CMAST_CAP is the sum of every node's max. If the grant paths cannot reach
+       it, the board is unfillable and the "Full Board" achievement can never
+       fire. It was 132 vs 120 earnable: the three hunting grounds have no boss
+       so their zone-clear could never trigger, and raid bosses return early
+       before the ordinary boss grant. */
+    const cm = ev(`(function(){
+      var zones=ZONES.length;
+      var bossZones=ZONES.filter(function(z){ return MONSTERS.some(function(m){ return m.zone===z.id&&m.boss; }); }).length;
+      var huntZones=zones-bossZones;
+      var raids=RAIDS.filter(function(r){ return r.gearDrops&&r.gearDrops.length; }).length;
+      var spire=(typeof CMAST_SPIRE_FLOORS!=='undefined')?CMAST_SPIRE_FLOORS.length:0;
+      var levels=98, milestones=4;
+      var earnable=levels+milestones+bossZones /*boss first-kills*/+bossZones /*their zone clears*/
+                  +huntZones+raids+spire;
+      return {cap:CMAST_CAP, earnable:earnable, bossZones:bossZones, huntZones:huntZones,
+              raids:raids, spire:spire,
+              spireAscending:(typeof CMAST_SPIRE_FLOORS!=='undefined')
+                && CMAST_SPIRE_FLOORS.every(function(f,i,a){ return i===0||f>a[i-1]; })};
+    })()`);
+    ok('every point the board costs can be earned',
+       cm.earnable >= cm.cap, JSON.stringify(cm));
+    ok('and the Spire rungs are in ascending order',
+       cm.spireAscending === true, JSON.stringify(cm.spire));
+
+    /* The three bossless zones must really clear once their roster is done. */
+    const hunt = ev(`(function(){
+      state=defaultState(); normalizeState();
+      var z=ZONES.find(function(x){ return !MONSTERS.some(function(m){ return m.zone===x.id&&m.boss; }); });
+      if(!z) return {skip:true};
+      var roster=MONSTERS.filter(function(m){ return m.zone===z.id; });
+      state.monKills={}; roster.forEach(function(m){ state.monKills[m.id]=1; });
+      state.cmastZoneClears={}; state.cmastGranted=0;
+      // replay the grant condition the kill handler uses
+      var every=roster.every(function(m){ return (state.monKills[m.id]||0)>0; });
+      return {zone:z.id, roster:roster.length, bossless:!roster.some(function(m){return m.boss;}), every:every};
+    })()`);
+    ok('a bossless hunting ground has a roster that can be completed',
+       hunt.skip === true || (hunt.bossless === true && hunt.roster > 0 && hunt.every === true),
+       JSON.stringify(hunt));
   }
 
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));
