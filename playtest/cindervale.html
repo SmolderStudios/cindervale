@@ -8864,7 +8864,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.126.9">v0.9.126</div>
+  <div class="mm-ver" data-build="0.9.126.10">v0.9.126</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -11258,6 +11258,168 @@ const ENCHANT_COST_BY_TIER={
    to their own skill. Called with no skill for skill-agnostic uses (e.g. sell value),
    where skill-unique enchants are skipped. Only skilling keys are returned;
    combat keys live in combatEnchantBonuses(). */
+/* ════ [JS-02b] ITEM VARIANTS — one enchanted piece, one identity ═══════════════
+
+   THE PROBLEM THIS SOLVES. Everything that customises a piece of gear keys on
+   its item ID: state.enchantments[id], state.sockets[id], state.asc[id]. Gear
+   stacks by id too, so three Runite Helms are state.items.runite_helm=3 and
+   whatever you enchant or socket applies to all three at once. That was
+   tolerable while enchanting touched only jewelry. Rolled enchants make two
+   copies of one item genuinely different, and "which of my helms is the good
+   one" has no answer when they are the same id.
+
+   THE ANSWER. Enchanting a piece SPLITS it off its stack into its own id, e.g.
+   runite_helm~3, which is registered on ITEMS as a shallow copy of the base plus
+   a new name. Every system in the game already keys on id — the satchel,
+   sockets, ascension, equip slots, presets, sell — so a variant id is simply
+   another id to all of them, and the 555 ITEMS[id] lookups in this file need no
+   changes at all.
+
+   NON-ENUMERABLE, ON PURPOSE. Variants are defined on ITEMS (and the stat and
+   icon tables) with enumerable:false. ITEMS[vid] finds them; `for(k in ITEMS)`
+   and Object.keys(ITEMS) never do. So the compendium, the drop tables, the
+   source map and every validator keep seeing exactly the catalogue they always
+   saw, and the collectible is still the base item. The satchel renders from
+   state.items, not ITEMS, which is why variants still show up there.
+
+   PER-PIECE DATA TRAVELS WITH THE PHYSICAL COPY. Sockets and ascension rank
+   MOVE to the variant when the enchanted copy is the worn one or the only one,
+   and stay on the base when you enchant a spare. They are never copied: a copy
+   would put one socketed gem into two helms, and unsocketing both would print a
+   second gem. Loadouts and presets that the base stack can no longer back
+   follow the variant, so enchanting your only helm never leaves a preset naming
+   an item you no longer own.
+
+   Enchanting is one-way. You can reroll a variant forever, but it does not
+   merge back into a plain stack; nothing about an enchant makes a piece worse. */
+const VARIANT_SEP='~';
+const _regVariants=new Set();   // ids currently defined on ITEMS, for clean-up on a character switch
+
+function isVariantId(id){ return typeof id==='string' && id.indexOf(VARIANT_SEP)>0; }
+function variantBase(id){
+  if(!isVariantId(id)) return id;
+  const v=state&&state.variants&&state.variants[id];
+  return (v&&v.base)||id.slice(0,id.indexOf(VARIANT_SEP));
+}
+/* Can this item carry rolled enchants at all? Combat gear, skilling set pieces and
+   jewelry. Never tools (one-time unlocks) and never anything that stacks as a
+   consumable. Answered off the BASE so a variant is always enchantable again. */
+function isEnchantable(id){
+  const b=variantBase(id), it=ITEMS[b];
+  if(!it) return false;
+  if(it.tool) return false;
+  return !!(it.cgear || it.skillGear || (typeof JEWELRY_GEM_TIER!=='undefined' && JEWELRY_GEM_TIER[b]));
+}
+function _defineHidden(obj,key,val){
+  Object.defineProperty(obj,key,{value:val,enumerable:false,configurable:true,writable:true});
+}
+function _newVariantId(base){
+  state.variantSeq=(state.variantSeq||0)+1;
+  let vid=base+VARIANT_SEP+state.variantSeq.toString(36);
+  while(Object.prototype.hasOwnProperty.call(ITEMS,vid) && !_regVariants.has(vid)){
+    state.variantSeq++; vid=base+VARIANT_SEP+state.variantSeq.toString(36);
+  }
+  return vid;
+}
+/* What a variant is called in the satchel. Two enchanted copies of one helm must
+   read differently at a glance, so the name carries the enchant's leading line.
+   The quality percentage lives on the card and the tile, not in the name — the
+   name would otherwise change on every reroll and scramble the satchel's sort. */
+function variantName(vid){
+  const v=state.variants&&state.variants[vid];
+  const b=v&&ITEMS[v.base];
+  if(!b) return vid;
+  const lead=v.lines&&v.lines[0];
+  const word=lead&&typeof ENCH_STAT!=='undefined'&&ENCH_STAT[lead.k]?ENCH_STAT[lead.k].word:null;
+  return word?b.name+' of '+word:b.name+' (enchanted)';
+}
+function registerVariant(vid){
+  const v=state.variants&&state.variants[vid]; if(!v) return false;
+  const b=ITEMS[v.base]; if(!b) return false;
+  // A shallow copy, not Object.create: some sites spread or Object.assign an item,
+  // and a prototype-inherited field would silently vanish from the copy.
+  const it=Object.assign({},b,{_variant:true,_base:v.base});
+  it.name=variantName(vid);
+  _defineHidden(ITEMS,vid,it);
+  if(typeof COMBAT_GEAR_STATS!=='undefined' && COMBAT_GEAR_STATS[v.base]) _defineHidden(COMBAT_GEAR_STATS,vid,COMBAT_GEAR_STATS[v.base]);
+  if(typeof ICON_ALIAS!=='undefined') _defineHidden(ICON_ALIAS,vid,v.base);
+  _regVariants.add(vid);
+  return true;
+}
+/* Called from normalizeState on every load. Clears the previous character's
+   variants first, because ITEMS is shared across save slots and a variant from
+   slot 1 must not resolve in slot 2. */
+function registerAllVariants(){
+  for(const vid of _regVariants){
+    delete ITEMS[vid];
+    if(typeof COMBAT_GEAR_STATS!=='undefined') delete COMBAT_GEAR_STATS[vid];
+    if(typeof ICON_ALIAS!=='undefined') delete ICON_ALIAS[vid];
+  }
+  _regVariants.clear();
+  if(!state||!state.variants) return;
+  for(const vid in state.variants) registerVariant(vid);
+}
+// Where does this id's ownership live? Tools are excluded: they are not enchantable.
+function _ownShape(id){
+  if(state.items&&(state.items[id]||0)>0) return 'items';
+  if(state.skillingGear&&state.skillingGear[id]) return 'skilling';
+  return null;
+}
+/* Split one physical copy of `base` into a fresh variant id.
+
+   opts.worn = {map, slot} names the loadout slot the player enchanted from, when
+   they enchanted the piece they are wearing rather than a spare in the satchel. */
+function splitToVariant(base, opts){
+  opts=opts||{};
+  if(isVariantId(base)) return base;               // already its own piece
+  if(!isEnchantable(base)) return null;
+  const shape=_ownShape(base); if(!shape) return null;
+  if(!state.variants) state.variants={};
+  const onlyCopy=ownedCopies(base)<=1;
+  const vid=_newVariantId(base);
+  state.variants[vid]={base:base, lines:[], sp:null};
+
+  if(shape==='items'){
+    state.items[base]-=1;
+    if(state.items[base]<=0) delete state.items[base];
+    state.items[vid]=1;
+  } else {
+    delete state.skillingGear[base];
+    state.skillingGear[vid]=true;
+  }
+  // Move, never copy — see the header on why a copied socket prints a gem.
+  if(onlyCopy||opts.worn){
+    if(state.sockets&&state.sockets[base]){ state.sockets[vid]=state.sockets[base]; delete state.sockets[base]; }
+    if(state.asc&&state.asc[base]){ state.asc[vid]=state.asc[base]; delete state.asc[base]; }
+  }
+  if(!state.discovered) state.discovered={};
+  state.discovered[base]=1;
+  registerVariant(vid);
+  _variantReconcile(base, vid, opts.worn);
+  return vid;
+}
+/* Repoint references the base stack can no longer back.
+
+   Within ONE loadout or preset, a slot naming `base` must be backed by a copy;
+   across loadouts it need not be, because combat and skilling naming the same
+   id is one physical item saved in two places. Splitting removes exactly one
+   copy, so in any one map at most one slot can lose its backing. */
+function _variantReconcile(base, vid, worn){
+  if(worn&&worn.map&&worn.map[worn.slot]===base) worn.map[worn.slot]=vid;
+  const maps=[state.equipped,state.combatEquipped,state.skillingEquipped];
+  for(const k in (state.gearPresets||{})) maps.push(state.gearPresets[k]);
+  for(const k in (state.combatPresets||{})) maps.push(state.combatPresets[k]);
+  const have=ownedCopies(base);
+  for(const m of maps){
+    if(!m||typeof m!=='object') continue;
+    const naming=Object.keys(m).filter(s=>m[s]===base);
+    if(naming.length>have){
+      // Prefer a slot that does not already name the new variant elsewhere in this map.
+      if(!Object.keys(m).some(s=>m[s]===vid)) m[naming[naming.length-1]]=vid;
+    }
+  }
+}
+
 function enchantBonuses(skill){
   var SKILL_KEYS={speed:0,xpBoost:0,gpBoost:0,doubleYield:0,goldFind:0};
   var total={speed:0,xpBoost:0,gpBoost:0,doubleYield:0,goldFind:0};
@@ -20329,6 +20491,20 @@ function normalizeState(){
   }
   // Skilling gear — separate from satchel
   if(!state.skillingGear||typeof state.skillingGear!=='object'||Array.isArray(state.skillingGear)) state.skillingGear={};
+  /* Item variants (1.0 enchant rework) — see [JS-02b]. A variant whose base item
+     no longer exists is dropped rather than left pointing at nothing; one with no
+     owned copy anywhere is dropped too, so a sold or salvaged piece does not
+     leave its definition behind forever. */
+  if(!state.variants||typeof state.variants!=='object'||Array.isArray(state.variants)) state.variants={};
+  if(typeof state.variantSeq!=='number'||!isFinite(state.variantSeq)||state.variantSeq<0) state.variantSeq=0;
+  for(const _vid in state.variants){
+    const _v=state.variants[_vid];
+    if(!_v||typeof _v!=='object'||!ITEMS[_v.base]){ delete state.variants[_vid]; continue; }
+    if(!Array.isArray(_v.lines)) _v.lines=[];
+    const _held=(state.items&&(state.items[_vid]||0)>0)||(state.skillingGear&&state.skillingGear[_vid]);
+    if(!_held){ delete state.variants[_vid]; continue; }
+  }
+  if(typeof registerAllVariants==='function') registerAllVariants();
   // Migration: move any skillGear items that ended up in state.items into state.skillingGear
   for(const id in state.items){
     if(ITEMS[id]&&ITEMS[id].skillGear&&(state.items[id]||0)>0){

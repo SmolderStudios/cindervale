@@ -9839,6 +9839,127 @@ setTimeout(() => {
        dr.hoverable === true, JSON.stringify(dr.hoverable));
   }
 
+  /* ── Item variants ([JS-02b]) ─────────────────────────────────────────────
+     A save-model change: enchanting splits one physical piece off its stack into
+     its own id. Every one of these fails SILENTLY in the game — a duplicated gem,
+     a preset pointing at nothing, an enchanted helm that vanishes on reload — so
+     none of the other harnesses would ever notice. */
+  section('Item variants: one enchanted piece, one identity (enchant rework)');
+  {
+    const V = ev(`(function(){
+      var R={};
+      function fresh(){ state=defaultState(); normalizeState();
+        state.combatXp.defence=XP_CUM[99]; state.combatXp.attack=XP_CUM[99]; }
+      function gems(){ var n=0; for(var k in (state.sockets||{})){ var g=state.sockets[k].gems||[]; for(var x of g) if(x) n++; } return n; }
+
+      // 1. the only copy: it IS the physical item, so everything moves with it
+      fresh();
+      state.items={runite_helm:1};
+      state.sockets={runite_helm:{slots:1,gems:['sanguine_flaw']}};
+      state.asc={runite_helm:3};
+      state.combatEquipped={helmet:'runite_helm'};
+      state.combatPresets={a:{helmet:'runite_helm'}};
+      var g0=gems();
+      var v1=splitToVariant('runite_helm');
+      R.only={vid:v1, baseLeft:state.items.runite_helm||0, vidHeld:state.items[v1]||0,
+        socketsMoved:!!(state.sockets[v1]&&!state.sockets.runite_helm),
+        ascMoved:state.asc[v1]===3&&!state.asc.runite_helm,
+        wornFollows:state.combatEquipped.helmet===v1,
+        presetFollows:state.combatPresets.a.helmet===v1,
+        gemsConserved:gems()===g0};
+
+      // 2. a spare out of three, not worn: the stack keeps its sockets and rank
+      fresh();
+      state.items={runite_helm:3};
+      state.sockets={runite_helm:{slots:1,gems:['sanguine_flaw']}};
+      state.asc={runite_helm:2};
+      var g1=gems();
+      var v2=splitToVariant('runite_helm');
+      R.spare={base:state.items.runite_helm, vid:state.items[v2],
+        socketsStayed:!!state.sockets.runite_helm&&!state.sockets[v2],
+        ascStayed:state.asc.runite_helm===2&&!state.asc[v2],
+        gemsConserved:gems()===g1};
+
+      // 3. the WORN copy out of three moves the data and repoints only that slot
+      fresh();
+      state.items={runite_helm:3};
+      state.sockets={runite_helm:{slots:1,gems:['sanguine_flaw']}};
+      state.combatEquipped={helmet:'runite_helm'};
+      var v3=splitToVariant('runite_helm',{worn:{map:state.combatEquipped,slot:'helmet'}});
+      R.worn={slot:state.combatEquipped.helmet===v3, sockets:!!state.sockets[v3], base:state.items.runite_helm};
+
+      // 4. skilling set pieces are a one-of collection, not a stack
+      fresh();
+      var sg=Object.keys(ITEMS).find(function(k){ return ITEMS[k]&&ITEMS[k].skillGear; });
+      state.skillingGear={}; state.skillingGear[sg]=true;
+      var v4=splitToVariant(sg);
+      R.skilling={base:!!state.skillingGear[sg], vid:!!state.skillingGear[v4], inItems:!!state.items[v4]};
+
+      // 5. invisible to every loop over the catalogue, visible to every lookup
+      R.hidden={lookup:!!ITEMS[v1]||!!ITEMS[v4], inKeys:Object.keys(ITEMS).indexOf(v4)>=0,
+        inForIn:(function(){ for(var k in ITEMS) if(k===v4) return true; return false; })(),
+        inherits:!!(ITEMS[v4]&&ITEMS[v4].skillGear), baseName:ITEMS[sg].name, vidName:ITEMS[v4].name};
+
+      // 6. not enchantable: tools and consumables
+      var tool=Object.keys(ITEMS).find(function(k){ return ITEMS[k]&&ITEMS[k].tool; });
+      R.enchantable={helm:isEnchantable('runite_helm'), tool:isEnchantable(tool),
+        ore:isEnchantable('copper_ore'), ring:isEnchantable('void_ring'), variant:isEnchantable(v4)};
+      return R;
+    })()`);
+    ok('enchanting your only helm moves its sockets, rank, worn slot and preset with it',
+       V.only.baseLeft === 0 && V.only.vidHeld === 1 && V.only.socketsMoved && V.only.ascMoved
+       && V.only.wornFollows && V.only.presetFollows, JSON.stringify(V.only));
+    ok('and never duplicates a socketed gem',
+       V.only.gemsConserved === true && V.spare.gemsConserved === true, JSON.stringify([V.only.gemsConserved, V.spare.gemsConserved]));
+    ok('enchanting a spare leaves the stack its sockets and ascension rank',
+       V.spare.base === 2 && V.spare.vid === 1 && V.spare.socketsStayed && V.spare.ascStayed, JSON.stringify(V.spare));
+    ok('enchanting the worn copy of three repoints that slot and takes the sockets',
+       V.worn.slot === true && V.worn.sockets === true && V.worn.base === 2, JSON.stringify(V.worn));
+    ok('a skilling set piece splits inside the one-of collection, not into the satchel',
+       V.skilling.base === false && V.skilling.vid === true && V.skilling.inItems === false, JSON.stringify(V.skilling));
+    ok('a variant resolves on lookup but never appears in a loop over the catalogue',
+       V.hidden.lookup === true && V.hidden.inKeys === false && V.hidden.inForIn === false && V.hidden.inherits === true,
+       JSON.stringify(V.hidden));
+    ok('only gear and jewelry can be enchanted, never tools or materials',
+       V.enchantable.helm === true && V.enchantable.ring === true && V.enchantable.variant === true
+       && V.enchantable.tool === false && V.enchantable.ore === false, JSON.stringify(V.enchantable));
+
+    /* A save round-trip. The variant must come back owned, registered and worn,
+       and a different save slot must not be able to see it. */
+    const RT = ev(`(function(){
+      state=defaultState(); normalizeState();
+      state.items={runite_helm:1}; state.combatEquipped={helmet:'runite_helm'};
+      var vid=splitToVariant('runite_helm');
+      state.variants[vid].lines=[{k:'defBoost',v:0.05,q:0.5,lock:false}];
+      var saved=JSON.parse(JSON.stringify(state));
+      // a different character, with no variants, loads in between
+      state=defaultState(); normalizeState();
+      var leaked=!!ITEMS[vid];
+      // then the original comes back
+      state=saved; normalizeState();
+      return {leaked:leaked, back:!!ITEMS[vid], owned:state.items[vid]===1,
+              worn:state.combatEquipped.helmet===vid, lines:(state.variants[vid]||{}).lines,
+              name:ITEMS[vid]&&ITEMS[vid].name};
+    })()`);
+    ok('an enchanted piece survives a save and reload, still worn',
+       RT.back === true && RT.owned === true && RT.worn === true && RT.lines && RT.lines.length === 1, JSON.stringify(RT));
+    ok('and does not leak into a different character save slot',
+       RT.leaked === false, JSON.stringify({leaked: RT.leaked}));
+
+    /* A sold, salvaged or otherwise gone piece must not leave its definition in
+       the save forever. */
+    const OR = ev(`(function(){
+      state=defaultState(); normalizeState();
+      state.items={runite_helm:1};
+      var vid=splitToVariant('runite_helm');
+      delete state.items[vid];
+      normalizeState();
+      return {defLeft:!!state.variants[vid], resolves:!!ITEMS[vid]};
+    })()`);
+    ok('a piece you no longer own does not leave its variant behind',
+       OR.defLeft === false && OR.resolves === false, JSON.stringify(OR));
+  }
+
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));
   process.exit(fail ? 1 : 0);
 }, 2500);
