@@ -3650,11 +3650,23 @@ setTimeout(() => {
         const paid=combatEnchantBonuses().atkBoost;
         const nowLive=_enchantSetActive(PENDANT_SETS.sapphire,_ewSetMap('pendant'),'pendant');
         const oldTest=_enchantSetActive(PENDANT_SETS.sapphire,state.equipped,'pendant');
+        /* The rolled-enchant bench (enchant rework) has no three-tile jewelry strip;
+           it lists every worn piece under its Worn filter with a badge naming the
+           doll. #49 was never about the strip — it was that a ring worn only on
+           the COMBAT side read as unworn. So assert exactly that, on these three
+           pieces, rather than a tile count the new layout does not have. */
+        _enFilter='worn'; _enchantSel=null;
         viewTab='enchant'; renderEnchanting();
-        const named=[...document.querySelectorAll('#enchantView .ew-slot .nm')].map(e=>e.textContent);
+        const cards=[...document.querySelectorAll('#enchantView .en-piece')];
+        const want={sapphire_ring:'Sapphire Ring',sapphire_pendant:'Sapphire Pendant',sapphire_amulet:'Sapphire Amulet'};
+        let listed=0, dolled=0;
+        for(const id in want){
+          const nm=(ITEMS[id]&&ITEMS[id].name)||want[id];
+          const c=cards.find(x=>(x.querySelector('.en-pn')||{}).textContent&&x.querySelector('.en-pn').textContent.indexOf(nm)===0);
+          if(c){ listed++; if(/Combat|Skilling|Both/.test((c.querySelector('.en-ps')||{}).textContent||'')) dolled++; }
+        }
         return JSON.stringify({paid:paid,nowLive:nowLive,oldTest:oldTest,
-          tiles:document.querySelectorAll('#enchantView .ew-slot').length,
-          worn:named.filter(n=>n!=='empty').length,
+          tiles:listed, worn:dolled,
           badge:_ewWornBadge('sapphire_ring')});
       }catch(e){ return JSON.stringify({err:String(e&&e.message||e)}); }
     })()`));
@@ -3662,8 +3674,8 @@ setTimeout(() => {
     ok('a combat-doll pair really does pay out', ench.paid>0, '+'+Math.round(ench.paid*100)+'% atk');
     ok('and the old skilling-only test called it dead \u2014 the bug', ench.oldTest===false);
     ok('the Sapphire Fang card now agrees with the bonus (ticket #49)', ench.nowLive===true);
-    ok('both loadouts are on screen', ench.tiles===6, ench.tiles+' tiles');
-    ok('and the worn pieces are named, not blank', ench.worn===3);
+    ok('jewelry worn on either doll is listed as worn (#49)', ench.tiles===3, ench.tiles+' of 3 listed');
+    ok('and each one names the doll it is worn on', ench.worn===3, ench.worn+' of 3 badged');
     ok('the rail badge names the doll a piece is worn on', /Combat/.test(ench.badge||''), ench.badge);
 
     // ── every guild shop row is named, priced and actually does something ──
@@ -4317,7 +4329,7 @@ setTimeout(() => {
       def:ENCHANTS.manatarms_ii&&ENCHANTS.manatarms_ii.bonus.defBoost,
       listed:ENCHANTS_BY_GEM.emerald.indexOf('manatarms_ii')>=0,
       tier:ENCHANTS.manatarms_ii&&ENCHANTS.manatarms_ii.tier,
-      priced:!!_ewCostFor('emerald_ring').cost
+      priced:Object.keys(enchApplyCost('emerald_ring')||{}).length>0
     })`));
     section('Somewhere to sell what you stole (0.9.122.42)');
     {
@@ -8311,7 +8323,11 @@ setTimeout(() => {
         state.combatEquipped.ring_l='void_ring'; state.skillingEquipped.ring_r='void_ring';
         _enchantSel='dragon_ring'; viewTab='enchant'; renderEnchanting();
         var txt=function(sel){ return [...document.querySelectorAll('#enchantView '+sel)].map(function(e){ return e.textContent; }).join(' | '); };
-        var r={labs:txt('.ew-lab'), names:txt('.ew-ench .en'), subs:txt('.ew-sublab'), tots:txt('.ew-tot .t')};
+        /* Rolled-enchant bench: nothing is chosen from a menu any more, so there is
+           no "Windfall I" row. What #140 needs is that gold find is AVAILABLE on a
+           dragon piece and that the bench says which gold each doll pays. The
+           can-roll chips and the gold note are where the new bench says both. */
+        var r={labs:txt('.en-note'), names:txt('.en-canchip b'), subs:txt('.en-note'), tots:txt('.ew-tot .t')};
         _gearFilter='combat'; r.c=/\\+30% gold from kills/.test(_gearStatsHTML());
         _gearFilter='skilling'; state.action=null; selectedSkill='thieving'; r.s=/\\+30% gold from steals and laps/.test(_gearStatsHTML());
         r.tip=/Worn for combat: kills and raids/.test(jewelryEnchantBlock('void_ring'));
@@ -8319,10 +8335,10 @@ setTimeout(() => {
         return JSON.stringify(r);
       }catch(e){ return JSON.stringify({err:String(e&&e.message||e)}); }
     })()`));
-    ok('the enchanting screen has a Gold row for a dragon piece, with Windfall I in it',
-       !pu.err && /Gold/.test(pu.labs || '') && /kills and raids/.test(pu.labs || '') && /Windfall I\b/.test(pu.names || ''), pu.err || JSON.stringify(pu));
-    ok('both loadouts say what gold they give, and the totals show each doll once Windfall is worn',
-       /Gold from kills/.test(pu.subs || '') && /Gold from steals and laps/.test(pu.subs || '')
+    ok('a dragon piece can roll gold found, and the bench says it is from kills and raids',
+       !pu.err && /Gold found/.test(pu.names || '') && /kills and raids/.test(pu.labs || ''), pu.err || JSON.stringify(pu));
+    ok('both dolls say what gold they give, and the totals show each doll once Windfall is worn',
+       /kills and raids/.test(pu.subs || '') && /steals and laps/.test(pu.subs || '')
        && /\+30%Gold . skilling/.test(pu.tots || '') && /\+30%Gold . combat/.test(pu.tots || ''), JSON.stringify(pu));
     ok("the Gear tab card and the ring's tooltip say it too", pu.c === true && pu.s === true && pu.tip === true, JSON.stringify(pu));
     ok('and the picker line calls it Gold, while sale value reads Sell', /Gold/.test(pu.cmp || '') && !/Sell/.test(pu.cmp || ''), pu.cmp);
@@ -10079,6 +10095,75 @@ setTimeout(() => {
     })()`);
     ok('no stat stacks past +20% from gear enchants alone',
        CEIL.length === 0, CEIL.length ? CEIL.join(', ') : 'every stat within the ceiling');
+  }
+
+  section('Jewelry moves to rolled enchants without losing anything (enchant rework)');
+  {
+    /* The migration runs on every existing save the first time it loads. It was
+       proven power-neutral against HEAD by booting both files on one legacy save;
+       these pin the invariants that proof depends on, so a later edit cannot
+       quietly start taking something away from players. */
+    const M = ev(`(function(){
+      state=defaultState(); normalizeState();
+      state.items={void_ring:2, void_amulet:1, amethyst_ring:1, bloodstone_pendant:1};
+      state.enchantments={void_ring:'void_surge', void_amulet:'void_greed',
+                          amethyst_ring:'uq_wc', bloodstone_pendant:'void_hunger'};
+      state.skillingEquipped={ring_l:'void_ring', ring_r:'amethyst_ring', amulet:'void_amulet'};
+      state.equipped=state.skillingEquipped;
+      state.combatEquipped={ring_l:'void_ring', amulet:'bloodstone_pendant'};
+      state.enchMigrated=false;
+      normalizeState();
+      function linesOf(base){ return Object.keys(state.variants).filter(function(k){return state.variants[k].base===base;})
+        .map(function(k){return state.variants[k].lines;}); }
+      var ring=linesOf('void_ring'), uq=linesOf('amethyst_ring')[0], vh=linesOf('bloodstone_pendant')[0];
+      var r0={}; (ring[0]||[]).forEach(function(l){ r0[l.k]=l.v; });
+      var before=JSON.stringify({v:state.variants, i:state.items, s:state.skillingEquipped, c:state.combatEquipped});
+      normalizeState();                                  // a second load must change nothing
+      var after=JSON.stringify({v:state.variants, i:state.items, s:state.skillingEquipped, c:state.combatEquipped});
+      return {
+        ringCopies:ring.length, ringLines:r0,
+        uniqueScoped:!!(uq&&uq.every(function(l){return l.sk==='woodcutting';})),
+        threeStat:vh?vh.length:0,
+        legacyEmpty:Object.keys(state.enchantments).length===0, flagged:state.enchMigrated===true,
+        idempotent:before===after,
+        wcSpeed:enchantBonuses('woodcutting').speed, fiSpeed:enchantBonuses('fishing').speed,
+        combatAtk:combatEnchantBonuses().atkBoost, combatSteal:combatEnchantBonuses().lifesteal
+      };
+    })()`);
+    ok('every enchanted copy becomes its own piece, carrying the exact old numbers',
+       M.ringCopies === 2 && M.ringLines.speed === 0.3 && M.ringLines.xpBoost === 0.15, JSON.stringify({copies: M.ringCopies, lines: M.ringLines}));
+    ok('a skill-unique enchant stays locked to its own skill',
+       M.uniqueScoped === true && Math.abs((M.wcSpeed - M.fiSpeed) - 0.25) < 1e-9,
+       'woodcutting ' + M.wcSpeed + ' vs fishing ' + M.fiSpeed);
+    ok('a three-stat enchant keeps all three stats until it is rerolled',
+       M.threeStat === 3 && M.combatAtk > 0 && M.combatSteal > 0, JSON.stringify({lines: M.threeStat, atk: M.combatAtk, steal: M.combatSteal}));
+    ok('the migration runs exactly once and empties the old per-id table',
+       M.legacyEmpty === true && M.flagged === true && M.idempotent === true, JSON.stringify({empty: M.legacyEmpty, flagged: M.flagged, idempotent: M.idempotent}));
+
+    /* Identity: an enchanted piece must still BE its base item to every system
+       that asks "is this item X". Each of these would otherwise fail silently —
+       a set that stops paying, a pendant that stops being a pendant. */
+    const I = ev(`(function(){
+      state=defaultState(); normalizeState();
+      state.items={void_jewel:1, sapphire_ring:1, sapphire_amulet:1};
+      var vj=splitToVariant('void_jewel'); state.variants[vj].lines=[{k:'atkBoost',v:0.1,q:0.5,lock:false}];
+      var sr=splitToVariant('sapphire_ring'); state.variants[sr].lines=[{k:'speed',v:0.03,q:0.5,lock:false}];
+      var sa=splitToVariant('sapphire_amulet'); state.variants[sa].lines=[{k:'speed',v:0.03,q:0.5,lock:false}];
+      state.skillingEquipped={ring_l:sr, amulet:sa}; state.equipped=state.skillingEquipped;
+      var setOn=_enchantSetActive(ENCHANT_SETS.sapphire, state.equipped, 'amulet');
+      state.skillingGear={wc_hat:true};
+      var hat=splitToVariant('wc_hat'); state.equipped.helmet=hat;
+      return {pendant:_jwType(vj), gem:JEWELRY_GEM_TIER[sr], slots:JSON.stringify(ITEM_BODY_SLOTS[sr]),
+              setOn:setOn, setPiece:skillingSetBonus('woodcutting')};
+    })()`);
+    ok('an enchanted Void Jewel is still a pendant',
+       I.pendant === 'pendant', JSON.stringify(I.pendant));
+    ok('an enchanted ring still knows its gem and which slots it fits',
+       I.gem === 'sapphire' && I.slots === '["ring_l","ring_r"]', JSON.stringify({gem: I.gem, slots: I.slots}));
+    ok('a matching ring and amulet still switch their set bonus on after enchanting',
+       I.setOn === true, JSON.stringify(I.setOn));
+    ok('an enchanted skilling set piece still counts toward its set',
+       I.setPiece > 0, 'set bonus ' + I.setPiece);
   }
 
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));

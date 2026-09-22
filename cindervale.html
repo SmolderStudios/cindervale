@@ -7183,6 +7183,101 @@ body:not(.is-demo) .demo-only{display:none !important}
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ew-empty{font-size:calc(13.5px*var(--tscale));color:var(--muted);font-style:italic;padding:12px 0}
 
+/* ── Rolled enchant bench (enchant rework) ──────────────────────────────────────
+   en- namespace: ew- belongs to the panel chrome kept from 0.9.122.2 (totals, set
+   cards, material chips), and the bare .q/.lock/.bar class names are taken
+   elsewhere in the file. Same lit-surface recipe as everything above.
+
+   Quality reads as colour at a glance, because the whole loop is "is this line
+   good yet": q1 under 40%, q2 40-69, q3 70-89, q4 90 and up. */
+#enchantView{ --en-q1:#7a6a4a; --en-q2:#d8c49a; --en-q3:#a8cf60; --en-q4:#f0c772; --en-uq:#f0a860; }
+.en-two{display:grid;grid-template-columns:minmax(230px,.85fr) minmax(320px,1.6fr);gap:14px;align-items:start}
+.en-col{display:flex;flex-direction:column;gap:10px;min-width:0}
+.en-filters{display:flex;flex-wrap:wrap;gap:6px}
+.en-filter{font-family:var(--num);font-size:calc(11.5px*var(--tscale));letter-spacing:.04em;color:#c8b48a;
+  padding:6px 11px;border:0;border-radius:7px;background:var(--ew-card);box-shadow:var(--ew-sh);cursor:var(--cur-pointer)}
+.en-filter small{color:#7a6a4a;margin-left:2px}
+.en-filter:hover{box-shadow:var(--ew-sh-hi)}
+.en-filter.on{color:var(--gold-hi);box-shadow:var(--ew-sh-hi),0 0 0 1px var(--ember)}
+.en-filter.empty{opacity:.4;cursor:var(--cur-na)}
+.en-rail{display:grid;gap:var(--ew-gap);max-height:clamp(260px,56vh,600px);overflow-y:auto;padding:2px 4px 2px 2px}
+.en-rail::-webkit-scrollbar{width:8px}
+.en-rail::-webkit-scrollbar-thumb{background:#4a3a20;border-radius:4px}
+.en-piece{display:flex;align-items:center;gap:10px;padding:9px 11px;border:0;border-radius:8px;text-align:left;
+  background:var(--ew-card);box-shadow:var(--ew-sh);cursor:var(--cur-pointer);color:inherit;position:relative;
+  transition:transform .12s, box-shadow .12s}
+.en-piece:hover{transform:translateY(-1px);box-shadow:var(--ew-sh-hi)}
+.en-piece.sel{box-shadow:var(--ew-sh-hi),0 0 0 1px var(--ember)}
+.en-piece.sel .en-pn{color:var(--gold-hi)}
+.en-pi{flex:none;width:36px;height:36px;border-radius:7px;background:#100b06;box-shadow:var(--ew-well);
+  display:flex;align-items:center;justify-content:center}
+.en-pi .ev-icon{width:28px;height:28px}
+.en-pb{flex:1;min-width:0;display:flex;flex-direction:column}
+.en-pn{font-family:'Cinzel',serif;font-size:calc(13px*var(--tscale));color:#e8d7b0;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.en-pn small{color:#7a6a4a;font-size:.8em}
+.en-ps{font-family:var(--num);font-size:calc(10.5px*var(--tscale));color:#8a7a5a;margin-top:1px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.en-q{flex:none;font-family:var(--num);font-size:calc(13px*var(--tscale));font-variant-numeric:tabular-nums;
+  padding:3px 7px;border-radius:6px;background:#100b06;box-shadow:var(--ew-well)}
+.en-q.none{font-size:calc(10px*var(--tscale));color:#6e6046;font-style:italic;background:none;box-shadow:none;padding:0}
+.en-q.q1{color:var(--en-q1)} .en-q.q2{color:var(--en-q2)} .en-q.q3{color:var(--en-q3)}
+.en-q.q4{color:var(--en-q4);text-shadow:0 0 8px rgba(240,199,114,.45)}
+.en-q.big{font-size:calc(20px*var(--tscale));padding:5px 11px}
+
+.en-bench{display:flex;flex-direction:column;gap:11px;padding:14px;border-radius:10px;
+  background:var(--ew-card);box-shadow:var(--ew-sh)}
+.en-head{display:flex;align-items:center;gap:12px}
+.en-hi{flex:none;width:56px;height:56px;border-radius:9px;background:#100b06;box-shadow:var(--ew-well);
+  display:flex;align-items:center;justify-content:center}
+.en-hi .ev-icon{width:44px;height:44px}
+.en-hb{flex:1;min-width:0;display:flex;flex-direction:column}
+.en-hn{font-family:'Cinzel',serif;font-size:calc(17px*var(--tscale));color:var(--gold-hi);line-height:1.2}
+.en-hs{font-family:var(--num);font-size:calc(11px*var(--tscale));color:#9a8a68;margin-top:3px}
+.en-uq{color:var(--en-uq);font-weight:normal}
+.en-note{font-size:calc(12.5px*var(--tscale));color:#c8b48a;line-height:1.5;padding:8px 11px;border-radius:7px;
+  background:#120c07;box-shadow:var(--ew-well)}
+.en-lines{display:flex;flex-direction:column;gap:7px}
+.en-line{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;background:#120c07;box-shadow:var(--ew-well)}
+.en-line.uq{box-shadow:var(--ew-well),inset 3px 0 0 var(--en-uq)}
+.en-line.locked{box-shadow:var(--ew-well),0 0 0 1px rgba(214,138,52,.55)}
+.en-lock{flex:none;width:34px;height:34px;border:0;border-radius:7px;cursor:var(--cur-pointer);
+  background:var(--ew-card);box-shadow:var(--ew-sh);display:flex;align-items:center;justify-content:center}
+.en-lock .ev-icon{width:20px;height:20px;opacity:.28;filter:grayscale(1);transition:opacity .12s}
+.en-lock:hover .ev-icon{opacity:.6}
+.en-lock.on{box-shadow:var(--ew-sh-hi),0 0 0 1px var(--ember)}
+.en-lock.on .ev-icon{opacity:1;filter:none}
+.en-lock:focus-visible{outline:2px solid var(--ember);outline-offset:2px}
+.en-lb{flex:1;min-width:0;display:grid;grid-template-columns:1fr auto;grid-template-areas:"ll lv" "bar lq" "lr lr";
+  column-gap:10px;row-gap:3px;align-items:center}
+.en-ll{grid-area:ll;font-size:calc(13.5px*var(--tscale));color:#e8d7b0}
+.en-ll small{color:#8a7a5a;font-size:.82em}
+.en-lv{grid-area:lv;font-family:var(--num);font-size:calc(16px*var(--tscale));color:var(--gold-hi);font-variant-numeric:tabular-nums}
+.en-bar{grid-area:bar;height:7px;border-radius:4px;background:#0a0704;box-shadow:inset 0 1px 2px rgba(0,0,0,.9);overflow:hidden}
+.en-bar i{display:block;height:100%;border-radius:4px;background:var(--en-q2)}
+.en-bar i.q1{background:var(--en-q1)} .en-bar i.q3{background:var(--en-q3)}
+.en-bar i.q4{background:linear-gradient(90deg,#c89a3a,var(--en-q4));box-shadow:0 0 6px rgba(240,199,114,.5)}
+.en-lq{grid-area:lq;font-family:var(--num);font-size:calc(11.5px*var(--tscale));font-variant-numeric:tabular-nums;min-width:34px;text-align:right}
+.en-lq.q1{color:var(--en-q1)} .en-lq.q2{color:var(--en-q2)} .en-lq.q3{color:var(--en-q3)} .en-lq.q4{color:var(--en-q4)}
+.en-lr{grid-area:lr;font-family:var(--num);font-size:calc(10px*var(--tscale));color:#6e6046}
+.en-can{display:flex;flex-direction:column;gap:7px}
+.en-canlab{font-size:calc(12.5px*var(--tscale));color:#c8b48a}
+.en-canchips{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:6px}
+.en-canchip{display:flex;flex-direction:column;padding:7px 10px;border-radius:7px;background:#120c07;box-shadow:var(--ew-well)}
+.en-canchip b{font-weight:normal;font-size:calc(12.5px*var(--tscale));color:#e8d7b0}
+.en-canchip span{font-family:var(--num);font-size:calc(11px*var(--tscale));color:#9a8a68;margin-top:1px}
+.en-act{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding-top:4px}
+.en-mats{display:flex;flex-wrap:wrap;gap:6px;flex:1;min-width:0}
+.en-go{flex:none;font-family:'Cinzel',serif;font-size:calc(14px*var(--tscale));letter-spacing:.04em;color:#1a0f04;
+  padding:10px 20px;border:0;border-radius:8px;cursor:var(--cur-pointer);
+  background:linear-gradient(180deg,#f0c772,#c8872e);box-shadow:inset 0 1px 0 rgba(255,240,200,.6),0 3px 10px rgba(0,0,0,.5)}
+.en-go:hover{filter:brightness(1.08)}
+.en-go.off{background:linear-gradient(180deg,#4a3a24,#2e2416);color:#7a6a4a;cursor:var(--cur-na);filter:none}
+.en-go:focus-visible{outline:2px solid var(--gold-hi);outline-offset:2px}
+.en-odds{font-size:calc(11.5px*var(--tscale));color:#8a7a5a;line-height:1.5}
+.gx-en.uq{color:var(--en-uq,#f0a860)}
+@media (max-width:900px){ .en-two{grid-template-columns:1fr} .en-rail{max-height:clamp(200px,34vh,360px)} }
+
 /* ════════ [CSS-36] SOCKET PANEL (0.9.128) ═══════════════════════════════════════
    Rebuilt on the enchant panel's spine so the two benches read as one thing. What
    the old panel got wrong: gear was picked from a <select>, every empty socket held
@@ -8864,7 +8959,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.126.11">v0.9.126</div>
+  <div class="mm-ver" data-build="0.9.127.1">v0.9.127</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -11183,6 +11278,9 @@ const JEWELRY_GEM_TIER={
    combat offence (PENDANT_SETS). */
 function _jwType(id){
   if(!id) return null;
+  // Read the base: moon_amulet, void_jewel and ember_ring are matched by EXACT id
+  // below, so an enchanted void_jewel~3 would otherwise stop being a pendant.
+  if(typeof variantBase==='function') id=variantBase(id);
   if(id.indexOf('_amulet')>=0||id==='moon_amulet') return 'amulet';
   if(id.indexOf('_pendant')>=0||id==='void_jewel')  return 'pendant';
   if(id.indexOf('_ring')>=0||id==='ember_ring')     return 'ring';
@@ -11221,7 +11319,11 @@ function _enchantSetActive(setDef, loadout, neckType){
       var eq=loadout[sl];
       if(!eq) return false;
       if(JEWELRY_GEM_TIER[eq]!==setDef.gemMatch) return false;
-      if(!state.enchantments[eq]) return false;
+      // Enchanted under the old per-id system OR carrying rolled lines ([JS-02c]).
+      // Checking only state.enchantments would switch every set off the moment
+      // jewelry migrates to rolled enchants.
+      var _vl=state.variants&&state.variants[eq];
+      if(!state.enchantments[eq] && !(_vl&&_vl.lines&&_vl.lines.length)) return false;
       if(sl==='amulet' && neckType && _jwType(eq)!==neckType) return false;
       used[sl]=1;
       return true;
@@ -11343,6 +11445,12 @@ function registerVariant(vid){
   _defineHidden(ITEMS,vid,it);
   if(typeof COMBAT_GEAR_STATS!=='undefined' && COMBAT_GEAR_STATS[v.base]) _defineHidden(COMBAT_GEAR_STATS,vid,COMBAT_GEAR_STATS[v.base]);
   if(typeof ICON_ALIAS!=='undefined') _defineHidden(ICON_ALIAS,vid,v.base);
+  /* Jewelry is identified by these two tables, both keyed on the base id: which
+     gem a piece is (28 lookups, including every set-bonus check) and which slot it
+     fits (the equip picker). Without these a migrated ring would equip nowhere
+     and count toward no set. */
+  if(typeof JEWELRY_GEM_TIER!=='undefined' && JEWELRY_GEM_TIER[v.base]) _defineHidden(JEWELRY_GEM_TIER,vid,JEWELRY_GEM_TIER[v.base]);
+  if(typeof ITEM_BODY_SLOTS!=='undefined' && ITEM_BODY_SLOTS[v.base]) _defineHidden(ITEM_BODY_SLOTS,vid,ITEM_BODY_SLOTS[v.base]);
   _regVariants.add(vid);
   return true;
 }
@@ -11354,6 +11462,8 @@ function registerAllVariants(){
     delete ITEMS[vid];
     if(typeof COMBAT_GEAR_STATS!=='undefined') delete COMBAT_GEAR_STATS[vid];
     if(typeof ICON_ALIAS!=='undefined') delete ICON_ALIAS[vid];
+    if(typeof JEWELRY_GEM_TIER!=='undefined') delete JEWELRY_GEM_TIER[vid];
+    if(typeof ITEM_BODY_SLOTS!=='undefined') delete ITEM_BODY_SLOTS[vid];
   }
   _regVariants.clear();
   if(!state||!state.variants) return;
@@ -11586,7 +11696,7 @@ function toggleEnchLock(vid,idx){
   const v=state.variants&&state.variants[vid]; if(!v||!v.lines[idx]) return false;
   const L=v.lines[idx];
   if(!L.lock&&enchLockCount(vid)>=enchMaxLocks(vid)){
-    if(typeof toast==='function') toast('Leave at least one line free to reroll.');
+    if(typeof toast==='function') toast('You have to leave one enchant unlocked.');
     return false;
   }
   L.lock=!L.lock;
@@ -11648,13 +11758,21 @@ function enchQuality(vid){
 /* Sum every rolled line on the pieces in one loadout, for the keys that loadout
    counts. Kept separate from the legacy per-id enchant summation below so the two
    can coexist while jewelry migrates across. */
-function enchLineBonuses(loadout,keys){
+function enchLineBonuses(loadout,keys,skill){
   const out={}; for(const k of keys) out[k]=0;
   if(!loadout||!state.variants) return out;
   for(const slot in loadout){
     const v=state.variants[loadout[slot]];
     if(!v||!v.lines) continue;
-    for(const L of v.lines) if(L&&L.k in out) out[L.k]+=L.v||0;
+    for(const L of v.lines){
+      if(!L||!(L.k in out)) continue;
+      // L.sk: a line that only pays while training one skill. New rolls never set
+      // it; it exists so a migrated skill-unique enchant (Woodsong, Deepvein...)
+      // keeps paying only for its own skill instead of turning into a global buff.
+      if(L.sk && skill && L.sk!==skill) continue;
+      if(L.sk && !skill) continue;
+      out[L.k]+=L.v||0;
+    }
   }
   return out;
 }
@@ -11683,7 +11801,7 @@ function enchantBonuses(skill){
   /* Rolled lines on worn pieces ([JS-02c]). rareFind and prized are not in the
      legacy SKILL_KEYS — no old enchant ever carried them — so they are added here
      and read by skillDropChance through mods().encRare / mods().encPrized. */
-  var rl=enchLineBonuses(state.equipped,['speed','xpBoost','gpBoost','doubleYield','goldFind','rareFind','prized']);
+  var rl=enchLineBonuses(state.equipped,['speed','xpBoost','gpBoost','doubleYield','goldFind','rareFind','prized'],skill);
   for(var rk in rl) total[rk]=(total[rk]||0)+rl[rk];
   return total;
 }
@@ -15228,7 +15346,9 @@ function skillingSetBonus(skill){
   for(var pi=0;pi<def.pieces.length;pi++){
     var pid=def.pieces[pi];
     var it=ITEMS[pid]; if(!it) continue;
-    if(state.equipped[it.gearSlot]===pid) equipped++;
+    // variantBase: an enchanted Lumberjack's Hat is wc_hat~3, and it is still the
+    // Lumberjack's Hat as far as the set is concerned.
+    if(variantBase(state.equipped[it.gearSlot])===pid) equipped++;
   }
   if(equipped===0) return 0;
   return equipped*0.03 + (equipped===4?def.setXp:0);
@@ -15336,6 +15456,11 @@ function _gearStatVec(itemId){
     if(gd&&gd.bonus){ for(var gk in gd.bonus){ if(gd.bonus[gk]) out['%'+gk]=(out['%'+gk]||0)+gd.bonus[gk]; } } } }
   var en=state.enchantments&&state.enchantments[itemId], ed=en&&ENCHANTS[en];
   if(ed&&ed.bonus&&!ed.skill){ for(var ek in ed.bonus){ if(ed.bonus[ek]) out['%'+ek]=(out['%'+ek]||0)+ed.bonus[ek]; } }
+  // Rolled lines ([JS-02c]). A line scoped to one skill is left out for the same
+  // reason a skill-unique enchant is above: it does not apply to the slot as a whole.
+  var vv=state.variants&&state.variants[itemId];
+  if(vv&&vv.lines){ for(var li=0;li<vv.lines.length;li++){ var L=vv.lines[li];
+    if(!L||L.sk||!L.v) continue; out['%'+L.k]=(out['%'+L.k]||0)+L.v; } }
   return out;
 }
 /* Clean names only — the value already gets a trailing % for percentage stats,
@@ -15346,7 +15471,7 @@ var _GEAR_STAT_LABEL={atk:'Atk',str:'Str',def:'Def',crit:'Crit',dodge:'Dodge',as
      longer share the one word. (0.9.124.55) */
   '%speed':'Speed','%xpBoost':'XP','%skillXp':'Skill XP','%gpBoost':'Sell','%goldFind':'Gold','%doubleYield':'2× Yield',
   '%preserve':'Preserve','%atkBoost':'Atk','%critChance':'Crit','%lifesteal':'Lifesteal',
-  '%hpBoost':'HP','%defBoost':'Def'};
+  '%hpBoost':'HP','%defBoost':'Def','%rareFind':'Rare find','%prized':'Prized catch'};
 function _gearStatIsPct(key){ return key.charAt(0)==='%'||key==='crit'||key==='dodge'||key==='aspd'; }
 /* Resolve what's worn in a hovered item's slot and return the comparison line,
    or '' if it isn't slotted gear or nothing is equipped to compare against.
@@ -15604,6 +15729,8 @@ function gearMarksHTML(id){
   var h='';
   var en=state.enchantments&&state.enchantments[id], ed=en&&ENCHANTS[en];
   if(ed) h+='<i class="gm-ench" style="--gc:'+(EW_GEMC[ed.gem]||'#e0a955')+'">✦</i>';
+  else if(typeof pieceEnchanted==='function'&&pieceEnchanted(id))
+    h+='<i class="gm-ench" style="--gc:'+(EW_GEMC[JEWELRY_GEM_TIER[id]]||'#e0a955')+'">✦</i>';
   var sd=state.sockets&&state.sockets[id];
   if(sd&&sd.slots>0){
     var p='';
@@ -15621,6 +15748,15 @@ function gearExtrasHTML(id){
   var out=[];
   var en=state.enchantments&&state.enchantments[id], ed=en&&ENCHANTS[en];
   if(ed) out.push('<span class="gx-en" style="--gc:'+(EW_GEMC[ed.gem]||'#e0a955')+'">✦ '+ed.name+'</span>');
+  var vx=state.variants&&state.variants[id];
+  if(vx&&vx.lines&&typeof ENCH_STAT!=='undefined'){
+    var gcx=EW_GEMC[JEWELRY_GEM_TIER[id]]||'#e0a955';
+    vx.lines.forEach(function(L){
+      var S=ENCH_STAT[L.k]; if(!S) return;
+      out.push('<span class="gx-en'+(L.u?' uq':'')+'" style="--gc:'+gcx+'">✦ +'+_enPct(L.v)+' '+S.label
+        +' <small>'+Math.round((L.q||0)*100)+'%</small></span>');
+    });
+  }
   var sd=state.sockets&&state.sockets[id];
   if(sd&&sd.slots>0){
     for(var i=0;i<sd.slots;i++){
@@ -15696,10 +15832,10 @@ function jewelryEnchantBlock(itemId){
     var n=0;
     if(['ring_l','ring_r'].some(function(sl){
       var eq=map[sl];
-      return eq && JEWELRY_GEM_TIER[eq]===gem && _jwType(eq)==='ring' && state.enchantments[eq];
+      return eq && JEWELRY_GEM_TIER[eq]===gem && _jwType(eq)==='ring' && pieceEnchanted(eq);
     })) n++;
     var neck=map.amulet;
-    if(neck && JEWELRY_GEM_TIER[neck]===gem && _jwType(neck)===kind && state.enchantments[neck]) n++;
+    if(neck && JEWELRY_GEM_TIER[neck]===gem && _jwType(neck)===kind && pieceEnchanted(neck)) n++;
     return n;
   };
   var _bar=function(n,txt){
@@ -15720,6 +15856,21 @@ function jewelryEnchantBlock(itemId){
   }
 
   var enchId=(state&&state.enchantments)?state.enchantments[itemId]:null;
+  /* Rolled lines ([JS-02c]): one row per line, with its quality, so the card
+     answers "how good is this piece" without opening the bench. */
+  var _tv=state&&state.variants&&state.variants[itemId];
+  if(!enchId && _tv && _tv.lines && _tv.lines.length && typeof ENCH_STAT!=='undefined'){
+    html+='<div style="font-size:calc(13px*var(--tscale));color:#fbd24e;margin-bottom:3px">✦ Enchanted · '
+      +Math.round(enchQuality(itemId)*100)+'% overall</div>';
+    _tv.lines.forEach(function(L){
+      var S=ENCH_STAT[L.k]; if(!S) return;
+      html+='<div style="font-size:calc(13px*var(--tscale));color:#ead9b5;line-height:1.5">+'+_enPct(L.v)+' '+S.label
+        +(L.u?' <span style="color:#f0c060">(Unique)</span>':'')
+        +(L.sk&&SKILLS[L.sk]?' <span style="color:var(--muted)">('+SKILLS[L.sk].name+' only)</span>':'')
+        +' <span style="color:var(--muted)">'+Math.round((L.q||0)*100)+'%</span>'
+        +(L.lock?' <span style="color:var(--muted)">locked</span>':'')+'</div>';
+    });
+  }
   if(enchId && ENCHANTS[enchId]){
     var ench=ENCHANTS[enchId];
     html+='<div style="font-size:calc(13px*var(--tscale));color:#fbd24e;margin-bottom:3px">✦ Enchanted: <b>'+ench.name+'</b></div>'
@@ -18943,9 +19094,15 @@ function _bodyItemDescBase(id){
     bloodstone_ring:'Bloodstone ring', bloodstone_pendant:'Bloodstone pendant', bloodstone_amulet:'Bloodstone amulet',
     void_ring:'Void ring',          void_amulet:'Void amulet',         void_jewel:'Void pendant',
   };
-  var bname=base[id]||id;
+  var bname=base[variantBase(id)]||(ITEMS[id]&&ITEMS[id].name)||id;
   if(ench && ENCHANTS[ench]){
     return bname+' · ✦ <b style="color:#fbd24e">'+ENCHANTS[ench].name+'</b> · '+ENCHANTS[ench].desc;
+  }
+  var _vl=state.variants&&state.variants[id];
+  if(_vl&&_vl.lines&&_vl.lines.length){
+    return bname+' · ✦ '+_vl.lines.map(function(L){
+      var S=ENCH_STAT[L.k]; return S?'+'+_enPct(L.v)+' '+S.label:'';
+    }).filter(Boolean).join(', ');
   }
   return bname+' · not enchanted (visit the Enchanting tab)';
 }
@@ -20752,6 +20909,42 @@ function normalizeState(){
     if(!_held){ delete state.variants[_vid]; continue; }
   }
   if(typeof registerAllVariants==='function') registerAllVariants();
+  /* Jewelry moves to rolled enchants (enchant rework). Runs once per save.
+
+     Under the old system an enchant bound to the item ID, so EVERY copy you owned
+     was enchanted and every worn copy paid out. To keep both power and appearance
+     identical, every owned copy becomes its own variant carrying exactly the old
+     numbers as lines. Nothing is re-rolled: a player keeps precisely what they
+     paid for, and the reroll loop is theirs to use when they choose.
+
+     Skill-unique enchants (Woodsong and the other eleven) keep their skill on the
+     line, so +25% speed for Woodcutting does not quietly become +25% speed for
+     everything. An old enchant with three stats keeps all three until it is
+     rerolled; the first reroll brings it to the standard two, and the bench says so. */
+  if(!state.enchMigrated && typeof splitToVariant==='function'){
+    const legacy=state.enchantments||{};
+    for(const id in legacy){
+      const E=ENCHANTS[legacy[id]];
+      if(!E||!E.bonus||!isEnchantable(id)) continue;
+      let n=ownedCopies(id);
+      while(n-- > 0){
+        const vid=splitToVariant(id); if(!vid) break;
+        const lines=[];
+        for(const k in E.bonus){
+          if(!ENCH_STAT[k]) continue;
+          const v=E.bonus[k], r=enchRange(k,vid,1);
+          const q=r[1]>r[0]?Math.max(0,Math.min(1,(v-r[0])/(r[1]-r[0]))):0.5;
+          const L={k:k, v:v, q:+q.toFixed(3), lock:false, legacy:1};
+          if(E.skill) L.sk=E.skill;
+          lines.push(L);
+        }
+        state.variants[vid].lines=lines;
+        registerVariant(vid);
+      }
+    }
+    state.enchantments={};
+    state.enchMigrated=true;
+  }
   // Migration: move any skillGear items that ended up in state.items into state.skillingGear
   for(const id in state.items){
     if(ITEMS[id]&&ITEMS[id].skillGear&&(state.items[id]||0)>0){
@@ -37427,7 +37620,7 @@ function _gspHover(el, html){
 function _gspStatLine(id){
   var v=_gearStatVec(id), ks=_gspKeys(v).filter(function(k){ return Math.abs(v[k])>1e-9; });
   if(ks.length) return ks.map(function(k){ return _gspFmt(k,v[k]); }).join(' ');
-  if(JEWELRY_GEM_TIER[id]&&!(state.enchantments&&state.enchantments[id])) return 'Not enchanted';
+  if(JEWELRY_GEM_TIER[id]&&!pieceEnchanted(id)) return 'Not enchanted';
   return 'No bonus';
 }
 function _gspDeltaLine(id,curId){
@@ -39521,7 +39714,7 @@ const ACHIEVEMENTS=[
   {id:'first_pet',    cat:'collection', icon:'first_pet',  name:'Companion',    desc:'Find your first familiar.',                    check:()=>_achPets()>=1},
   {id:'beastfriend',  cat:'collection', icon:'beastfriend',  name:'Beastfriend',  desc:'Find a familiar in every zone.',               check:()=>_achPets()>=Object.keys(PETS).length},
   {id:'first_socket', cat:'collection', icon:'first_socket',  name:'Jeweller',     desc:'Socket a gem into a piece of gear.',            check:()=>Object.values(state.sockets||{}).some(s=>s&&Array.isArray(s.gems)&&s.gems.some(g=>!!g))},
-  {id:'enchanter',    cat:'collection', icon:'enchanter', name:'Enchanter',    desc:'Enchant a piece of gear.',                      check:()=>Object.keys(state.enchantments||{}).length>=1},
+  {id:'enchanter',    cat:'collection', icon:'enchanter', name:'Enchanter',    desc:'Enchant a piece of gear.',                      check:()=>Object.keys(state.enchantments||{}).length>=1||Object.keys(state.variants||{}).some(function(k){ return state.variants[k].lines&&state.variants[k].lines.length; })},
   {id:'archivist',    cat:'collection', icon:'archivist', name:'Archivist',    desc:'Discover 100 different items.',                 check:()=>_achDiscovered()>=100},
   {id:'voidtouched',  cat:'collection', icon:'voidtouched',  name:'Voidtouched',  desc:'Obtain a Voidheart.',                          check:()=>((state.items||{}).voidheart||0)>=1||!!(state.discovered||{}).voidheart},
   // Hidden: shown as "???" until earned. Replaced 'Culling' (100 kills), which
@@ -40157,6 +40350,13 @@ function _ewOwned(){
   for(var id in JEWELRY_GEM_TIER){
     if((state.items[id]||0)>0 || anyLoadoutHas(id)) out.push(id);
   }
+  /* Enchanted jewelry lives under its own variant id, and variants are defined
+     non-enumerable on JEWELRY_GEM_TIER, so the loop above can never see one. The
+     set cards are built from this list: without these, a player whose jewelry is
+     all enchanted would see no set cards at all. */
+  for(var vid in (state.items||{})){
+    if(isVariantId(vid) && (state.items[vid]||0)>0 && JEWELRY_GEM_TIER[vid] && out.indexOf(vid)<0) out.push(vid);
+  }
   var TY={ring:0,amulet:1,pendant:2,other:3};
   out.sort(function(a,b){
     var d=TY[_jwType(a)]-TY[_jwType(b)];
@@ -40186,19 +40386,7 @@ function _ewWornBadge(id){
   return '';
 }
 /* Reagent cost for a piece — driven by its gem's tier, same table the old panel used. */
-function _ewCostFor(itemId){
-  var gem=JEWELRY_GEM_TIER[itemId];
-  var list=ENCHANTS_BY_GEM[gem]||[];
-  var tier=list.length?ENCHANTS[list[0]].tier:1;
-  return {cost:ENCHANT_COST_BY_TIER[tier]||ENCHANT_COST_BY_TIER[1], list:list, gem:gem};
-}
 /* The single biggest number in a bonus object — what the player is shopping for. */
-function _ewHeadline(bonus){
-  var best=null;
-  for(var k in bonus){ if(best===null||bonus[k]>bonus[best]) best=k; }
-  if(best===null) return {v:'',l:''};
-  return {v:'+'+Math.round(bonus[best]*100)+'%', l:EW_BONUS_LABEL[best]||best};
-}
 function _ewMatChip(mid,need){
   var have=state.items[mid]||0;
   var s=document.createElement('span');
@@ -40209,72 +40397,10 @@ function _ewMatChip(mid,need){
 }
 
 /* ── collection card ─────────────────────────────────────────────────────────── */
-function _ewPieceCard(id,redraw){
-  var gem=JEWELRY_GEM_TIER[id], ench=state.enchantments[id], ed=ench?ENCHANTS[ench]:null;
-  var badge=_ewWornBadge(id), copies=Math.max(state.items[id]||0, badge?1:0);
-  var b=document.createElement('button');
-  b.className='ew-piece'+(_enchantSel===id?' sel':'');
-  b.style.setProperty('--gc',EW_GEMC[gem]||'#6a5533');
-  b.innerHTML=iconHTML(id)
-    +'<span class="pi"><span class="pn">'+(ITEMS[id]?ITEMS[id].name:id)
-    +(copies>1?' <small>x'+copies+'</small>':'')+'</span>'
-    +'<span class="ps'+(ed?' on':'')+'">'+(ed?'✦ '+ed.name:'unenchanted')+'</span></span>'
-    +(badge?'<span class="ew-worn">'+badge+'</span>':'')
-    +'<span class="ew-dot'+(ed?' on':'')+'"></span>';
-  b.addEventListener('click',function(){ _enchantSel=id; hideTooltip(); redraw(); });
-  return b;
-}
 
 /* ── one enchant option ──────────────────────────────────────────────────────── */
-function _ewApply(itemId,eid,cost,redraw){
-  for(var m in cost){
-    if((state.items[m]||0)<cost[m]){ toast('Not enough '+((ITEMS[m]&&ITEMS[m].name)||m)+'.'); return; }
-  }
-  for(var m2 in cost) state.items[m2]=(state.items[m2]||0)-cost[m2];
-  state.enchantments[itemId]=eid;
-  saveGame(); redraw(); renderGear();
-  toast('✦ Enchanted with '+ENCHANTS[eid].name+'!');
-}
-function _ewRemove(itemId,redraw){
-  delete state.enchantments[itemId];
-  saveGame(); redraw(); renderGear();
-  toast('Enchantment removed.');
-}
-function _ewEnchCard(eid,itemId,cost,canAfford,redraw){
-  var en=ENCHANTS[eid], active=state.enchantments[itemId]===eid;
-  var h=_ewHeadline(en.bonus||{});
-  var row=_ewEl('ew-ench'+(active?' on':''));
-  row.innerHTML='<span class="ew-num">'+h.v+'<small>'+h.l+'</small></span>'
-    +'<span class="eh"><span class="en">'+(active?'✦ ':'')+en.name+'</span>'
-    +'<span class="ed">'+en.desc+'</span></span>';
-  var btn=document.createElement('button');
-  btn.className='ew-apply'+(active?' rm':(canAfford?'':' off'));
-  btn.textContent=active?'Remove':(canAfford?'Apply':'Short');
-  if(active||canAfford){
-    btn.addEventListener('click',function(){
-      if(active) _ewRemove(itemId,redraw); else _ewApply(itemId,eid,cost,redraw);
-    });
-  }
-  row.appendChild(btn);
-  return row;
-}
 /* Skill-focus cards. Every one of these carries identical numbers, so the shared
    bonus is stated once on the header and the card is just the skill it locks to. */
-function _ewFocusCard(eid,itemId,cost,canAfford,redraw){
-  var en=ENCHANTS[eid], active=state.enchantments[itemId]===eid;
-  var sk=SKILLS[en.skill];
-  var b=document.createElement('button');
-  b.className='ew-fc'+(active?' on':(canAfford?'':' off'));
-  b.innerHTML=iconHTML(en.skill)
-    +'<span class="fi"><span class="fn">'+en.name+'</span>'
-    +'<span class="fs">'+(sk?sk.name:en.skill)+(active?' · bound':'')+'</span></span>';
-  if(active||canAfford){
-    b.addEventListener('click',function(){
-      if(active) _ewRemove(itemId,redraw); else _ewApply(itemId,eid,cost,redraw);
-    });
-  }
-  return b;
-}
 
 /* Which piece is satisfying (or could satisfy) one leg of a set, and what is still
    wrong with it. A leg needs an item of the right gem AND the right type, WORN, and
@@ -40293,8 +40419,14 @@ function _ewLegState(gem,want,map){
       if((state.items[id]||0)>0||anyLoadoutHas(id)){ ownedUnworn=id; break; }
     }
   }
+  if(!worn&&!ownedUnworn){
+    for(var vid in (state.items||{})){
+      if(!isVariantId(vid)||(state.items[vid]||0)<=0) continue;
+      if(JEWELRY_GEM_TIER[vid]===gem&&_jwType(vid)===want){ ownedUnworn=vid; break; }
+    }
+  }
   var piece=worn||ownedUnworn;
-  var ench=piece?state.enchantments[piece]:null;
+  var ench=piece&&pieceEnchanted(piece)?(state.enchantments[piece]||'rolled'):null;
   return {
     piece:piece, worn:!!worn, ench:ench,
     ok:!!(worn&&ench),
@@ -40366,7 +40498,7 @@ function _ewSetCard(def,gem,kind){
     var got=false;
     for(var s in map){
       var eq=map[s];
-      if(!eq||JEWELRY_GEM_TIER[eq]!==gem||!state.enchantments[eq]) continue;
+      if(!eq||JEWELRY_GEM_TIER[eq]!==gem||!pieceEnchanted(eq)) continue;
       if(_jwType(eq)===want){ got=true; break; }
     }
     var nm=want==='ring'?'Ring':want==='pendant'?'Pendant':'Amulet';
@@ -40428,6 +40560,12 @@ function _ewTotals(){
   if(sk.goldFind) cells.push(['Gold · skilling',sk.goldFind]);
   cells.push(['Attack',cb.atkBoost],['Defence',cb.defBoost],['Max HP',cb.hpBoost]);
   if(cb.goldFind) cells.push(['Gold · combat',cb.goldFind]);
+  /* Rolled enchants added four stats this panel never had. Shown only once you
+     have some, so a player without them does not get four permanent zero cells. */
+  if(cb.critChance) cells.push(['Crit chance',cb.critChance]);
+  if(cb.lifesteal)  cells.push(['Lifesteal',cb.lifesteal]);
+  if(sk.rareFind)   cells.push(['Rare finds',sk.rareFind]);
+  if(sk.prized)     cells.push(['Prized catch',sk.prized]);
   var w=_ewEl('ew-tot');
   cells.forEach(function(c){
     var v=c[1]||0;
@@ -40437,196 +40575,239 @@ function _ewTotals(){
 }
 
 /* ── the piece on the bench ──────────────────────────────────────────────────── */
-function _ewHero(itemId){
-  var gem=JEWELRY_GEM_TIER[itemId], ench=state.enchantments[itemId], ed=ench?ENCHANTS[ench]:null;
-  /* Both dolls, and it says which. A ring worn only on the combat side used to read
-     "in the satchel, not worn" here, which is how a player ends up convinced an
-     enchant is doing nothing (ticket #49). */
-  var w=_ewWornIn(itemId), anyWorn=w.combat.length||w.skilling.length;
-  var copies=Math.max(state.items[itemId]||0, anyWorn?1:0);
-  var where=function(list,lab){
-    if(!list.length) return '';
-    return lab+' '+(list.length>1?'both ring hands':(EW_SLOT_LABEL[list[0]]||list[0]).toLowerCase());
-  };
-  var wornTxt=!anyWorn ? 'in the satchel, not worn'
-    : 'worn \u00b7 '+[where(w.combat,'combat'),where(w.skilling,'skilling')].filter(Boolean).join(' \u00b7 ');
-  var h=_ewEl('ew-hero'); h.style.setProperty('--gc',EW_GEMC[gem]||'#6a5533');
-  h.innerHTML='<div class="hr"><div class="well">'+iconHTML(itemId)+'</div>'
-    +'<div style="flex:1;min-width:0"><h4>'+(ITEMS[itemId]?ITEMS[itemId].name:itemId)+'</h4>'
-    +'<div class="sub">'+wornTxt
-    +(copies>1?' · '+copies+' owned':'')+'</div>'
-    +'<div class="cur">'+(ed?'✦ '+ed.name+' — '+ed.desc
-        :'<span class="no">no enchant</span>')+'</div>'
-    +'</div></div>';
-  /* Spare copies (0.9.122, corrected 0.9.122.2). This used to read "only one can be
-     worn at a time", which was true of the old equip rule and is not any more — a
-     matched pair goes on both hands. What is still true is that the enchant binds
-     to the ITEM ID, so the pair shares one enchant: worth saying, because that is
-     the thing a player stockpiling duplicates is usually hoping to beat. */
-  if(copies>1){
-    var isRing=(_jwType(itemId)==='ring');
-    h.appendChild(_ewEl('ew-dupe','You own <b>'+copies+'</b> of these. '
-      +(isRing?'You can wear two at once, one on <b class="k">each ring hand</b>, and the bonus counts twice. '
-             :'You only have one neck slot, so you can only wear one. ')
-      +'The enchant is on the item, so all your copies have the same one — a spare cannot '
-      +'hold a different enchant. To run two different enchants at once, wear a '
-      +'<b class="k">different gem</b> in your other ring slot.'));
-  }
-  var f=_ewCostFor(itemId);
-  var cost=_ewEl('ew-cost','<span class="cl">Cost per enchant</span>');
-  Object.keys(f.cost).forEach(function(m){ cost.appendChild(_ewMatChip(m,f.cost[m])); });
-  h.appendChild(cost);
-  return h;
-}
 
 /* ── the enchant list for the open piece ─────────────────────────────────────── */
-function _ewOptions(itemId,redraw){
-  var f=_ewCostFor(itemId);
-  var canAfford=Object.keys(f.cost).every(function(m){return (state.items[m]||0)>=f.cost[m];});
-  var frag=document.createDocumentFragment();
-  var globals=f.list.filter(function(e){return (ENCHANTS[e].cat||'global')==='global';});
-  var combats=f.list.filter(function(e){return ENCHANTS[e].cat==='combat';});
-  var focus  =f.list.filter(function(e){return ENCHANTS[e].cat==='skill';});
-  var golds  =f.list.filter(function(e){return ENCHANTS[e].cat==='gold';});
-  if(globals.length){
-    frag.appendChild(_ewLab('Global — every skill'));
-    var g=_ewEl('ew-opts two');
-    globals.forEach(function(e){ g.appendChild(_ewEnchCard(e,itemId,f.cost,canAfford,redraw)); });
-    frag.appendChild(g);
+
+/* ════ enchant bench (enchant rework) ═══════════════════════════════════════════
+   Every enchantable piece you own, not only jewelry: armour, weapons, shields,
+   skilling set pieces and rings and necks. Left: the pieces, filtered. Right: the
+   one you picked, its lines, and the single thing you can do to it.
+
+   The old bench was a menu of named enchants you chose between. There is nothing
+   to choose now: an enchant is two rolled lines from the piece's pool, and the
+   decision the player makes is which lines to LOCK before rerolling the rest. So
+   the right-hand panel is the lines, their quality, and their locks. */
+var _enFilter='worn';
+const EN_POOL_LABEL={armour:'Chest and legs', headhands:'Helmet and gloves', feetback:'Boots and cape',
+                     weapon:'Weapon', shield:'Shield', jewelry:'Jewelry'};
+const EN_FILTERS=[['worn','Worn'],['combat','Combat'],['skilling','Skilling'],['jewelry','Jewelry'],['all','All']];
+
+/* Is this piece enchanted, under either system. Every site that used to test
+   state.enchantments[id] alone goes through here, or it reads "not enchanted" for
+   every piece the moment jewelry migrates. */
+function pieceEnchanted(id){
+  if(!id) return false;
+  if(state.enchantments&&state.enchantments[id]) return true;
+  const v=state.variants&&state.variants[id];
+  return !!(v&&v.lines&&v.lines.length);
+}
+function _enKind(id){
+  const b=variantBase(id), it=ITEMS[b];
+  if(JEWELRY_GEM_TIER[b]) return 'jewelry';
+  if(it&&it.skillGear) return 'skilling';
+  return 'combat';
+}
+function _enPieces(){
+  const ids={};
+  for(const id in (state.items||{})) if((state.items[id]||0)>0&&isEnchantable(id)) ids[id]=1;
+  for(const id in (state.skillingGear||{})) if(state.skillingGear[id]&&isEnchantable(id)) ids[id]=1;
+  [state.combatEquipped,state.skillingEquipped].forEach(function(m){
+    for(const s in (m||{})) if(m[s]&&isEnchantable(m[s])) ids[m[s]]=1;
+  });
+  return Object.keys(ids).filter(function(id){ return !!ITEMS[id]; }).sort(function(a,b){
+    const wa=anyLoadoutHas(a)?0:1, wb=anyLoadoutHas(b)?0:1; if(wa!==wb) return wa-wb;
+    const ea=pieceEnchanted(a)?0:1, eb=pieceEnchanted(b)?0:1; if(ea!==eb) return ea-eb;
+    const ta=enchTierOf(a), tb=enchTierOf(b); if(ta!==tb) return tb-ta;
+    return String(ITEMS[a].name).localeCompare(String(ITEMS[b].name));
+  });
+}
+function _enQClass(q){ return q>=0.9?'q4':q>=0.7?'q3':q>=0.4?'q2':'q1'; }
+function _enPct(v){ v=v||0; return (v*100).toFixed(v<0.1?1:0)+'%'; }
+/* Which loadout slot the player is enchanting from, when the piece is worn. A
+   piece worn in both loadouts is one physical item, so either slot will do: the
+   split repoints the other one because the stack can no longer back it. */
+function _enWornRef(id){
+  const S=state.skillingEquipped||{}, C=state.combatEquipped||{};
+  for(const s in S) if(S[s]===id) return {map:S,slot:s};
+  for(const s in C) if(C[s]===id) return {map:C,slot:s};
+  return null;
+}
+function _enPieceCard(id,redraw){
+  const it=ITEMS[id]; if(!it) return null;
+  const on=pieceEnchanted(id), q=on?enchQuality(id):0;
+  const b=document.createElement('button');
+  b.className='en-piece'+(_enchantSel===id?' sel':'')+(on?' on':'');
+  const cnt=state.items[id]||0, badge=_ewWornBadge(id);
+  b.innerHTML='<span class="en-pi">'+iconHTML(id)+'</span>'
+    +'<span class="en-pb"><span class="en-pn">'+it.name+(cnt>1?' <small>x'+cnt+'</small>':'')+'</span>'
+    +'<span class="en-ps">Tier '+enchTierOf(id)+(badge?' · '+badge:'')+'</span></span>'
+    +(on?'<span class="en-q '+_enQClass(q)+'">'+Math.round(q*100)+'%</span>'
+        :'<span class="en-q none">Not enchanted</span>');
+  b.addEventListener('click',function(){ _enchantSel=id; hideTooltip(); redraw(); });
+  return b;
+}
+function _enBench(id,redraw){
+  const wrap=_ewEl('en-bench');
+  const it=ITEMS[id], P=enchPoolFor(id);
+  if(!it||!P){ wrap.appendChild(_ewEl('ew-empty','That piece cannot be enchanted.')); return wrap; }
+  const v=state.variants&&state.variants[id];
+  const lines=(v&&v.lines)||[];
+  const on=lines.length>0, uq=isUniqueGear(id), badge=_ewWornBadge(id);
+  const q=on?enchQuality(id):0;
+
+  wrap.appendChild(_ewEl('en-head',
+    '<span class="en-hi">'+iconHTML(id)+'</span>'
+    +'<span class="en-hb"><span class="en-hn">'+it.name+'</span>'
+    +'<span class="en-hs">Tier '+enchTierOf(id)+' · '+EN_POOL_LABEL[P.pool]
+    +(uq?' · <b class="en-uq">Unique</b>':'')+(badge?' · '+badge:'')+'</span></span>'
+    +(on?'<span class="en-q big '+_enQClass(q)+'">'+Math.round(q*100)+'%</span>':'')));
+
+  /* Enchanting a stack takes ONE piece off it. Say so, or a player with three
+     helms thinks all three just got the enchant, which is the old behaviour. */
+  const cnt=state.items[id]||0;
+  if(!on&&cnt>1) wrap.appendChild(_ewEl('en-note',
+    'You have '+cnt+' of these. Enchanting takes '+(anyLoadoutHas(id)?'the one you are wearing':'one')
+    +' and makes it its own piece; the other '+(cnt-1)+' stay as they are.'));
+
+  if(on){
+    // First time a player opens a piece they could reroll: say what a reroll costs them.
+    try{ showHint('enchant_replace'); }catch(e){}
+    const box=_ewEl('en-lines');
+    lines.forEach(function(L,i){
+      const S=ENCH_STAT[L.k]||{label:L.k};
+      const r=enchRange(L.k,id,L.u?ENCH_UNIQUE_MULT:1);
+      const lq=L.q||0;
+      const row=_ewEl('en-line'+(L.u?' uq':'')+(L.lock?' locked':''));
+      const lk=document.createElement('button');
+      lk.className='en-lock'+(L.lock?' on':'');
+      lk.innerHTML=iconHTML('ui_lock');
+      lk.setAttribute('aria-pressed',L.lock?'true':'false');
+      lk.setAttribute('aria-label',L.lock?'Unlock':'Lock');
+      lk.setAttribute('data-rtip',L.lock?'Locked\nThis enchant will not change when you reroll.'
+                                        :'Lock\nKeep this enchant when you reroll.');
+      lk.addEventListener('click',function(){ if(toggleEnchLock(id,i)) redraw(); });
+      row.appendChild(lk);
+      row.appendChild(_ewEl('en-lb',
+        '<span class="en-ll">'+S.label
+          +(L.u?' <b class="en-uq">Unique</b>':'')
+          +(L.sk&&SKILLS[L.sk]?' <small>'+SKILLS[L.sk].name+' only</small>':'')+'</span>'
+        +'<span class="en-lv">+'+_enPct(L.v)+'</span>'
+        +'<span class="en-lr">'+_enPct(r[0])+' to '+_enPct(r[1])+'</span>'
+        +'<span class="en-bar"><i class="'+_enQClass(lq)+'" style="width:'+Math.round(lq*100)+'%"></i></span>'
+        +'<span class="en-lq '+_enQClass(lq)+'">'+Math.round(lq*100)+'%</span>'));
+      box.appendChild(row);
+    });
+    wrap.appendChild(box);
+    const normal=lines.filter(function(l){return !l.u;});
+    if(normal.length>ENCH_LINES&&normal.some(function(l){return l.legacy;}))
+      wrap.appendChild(_ewEl('en-note','This piece still carries the enchant it had before enchanting changed. '
+        +'Rerolling it gives it two enchants like everything else.'));
+  } else {
+    const can=_ewEl('en-can');
+    can.appendChild(_ewEl('en-canlab','Rolls two of these'+(uq?', plus one Unique enchant at double strength':'')));
+    const chips=_ewEl('en-canchips');
+    P.keys.forEach(function(k){
+      const r=enchRange(k,id,1);
+      chips.appendChild(_ewEl('en-canchip','<b>'+ENCH_STAT[k].label+'</b><span>'+_enPct(r[0])+' to '+_enPct(r[1])+'</span>'));
+    });
+    can.appendChild(chips);
+    wrap.appendChild(can);
   }
-  if(combats.length){
-    frag.appendChild(_ewLab('Combat',1));
-    var c=_ewEl('ew-opts two');
-    combats.forEach(function(e){ c.appendChild(_ewEnchCard(e,itemId,f.cost,canAfford,redraw)); });
-    frag.appendChild(c);
+
+  /* Ticket #140. Gold found pays on whichever doll the piece is worn on, and it is
+     a different gold on each: the old bench said so in its loadout strip, and
+     players had been confused about it before that. Said here wherever gold found
+     can roll or already has. */
+  if(P.keys.indexOf('goldFind')>=0||lines.some(function(l){return l.k==='goldFind';}))
+    wrap.appendChild(_ewEl('en-note','Gold found counts on the doll the piece is worn on: '
+      +'<b>kills and raids</b> when worn for combat, <b>steals and laps</b> when worn for skilling.'));
+
+  const cost=on?enchRerollCost(id):enchApplyCost(id);
+  const short=enchShortOf(cost);
+  const act=_ewEl('en-act');
+  const mats=_ewEl('en-mats');
+  for(const m in cost) mats.appendChild(_ewMatChip(m,cost[m]));
+  act.appendChild(mats);
+  const free=lines.filter(function(l){return !l.lock;}).length;
+  const go=document.createElement('button');
+  go.className='en-go'+(short?' off':'');
+  go.textContent=!on?'Enchant'
+    :'Reroll';
+  if(short){
+    go.disabled=true;
+    go.setAttribute('data-rtip','Not enough '+((ITEMS[short]&&ITEMS[short].name)||short)+'\nYou need more to do this.');
   }
-  /* Windfall (0.9.124.55). Its own row, because it is the one enchant that counts on
-     either doll, and the header says which gold each doll gets. */
-  if(golds.length){
-    frag.appendChild(_ewLab('Gold',1,'combat loadout: kills and raids · skilling loadout: steals and laps'));
-    var gl=_ewEl('ew-opts two');
-    golds.forEach(function(e){ gl.appendChild(_ewEnchCard(e,itemId,f.cost,canAfford,redraw)); });
-    frag.appendChild(gl);
-  }
-  if(focus.length){
-    var b=ENCHANTS[focus[0]].bonus||{};
-    frag.appendChild(_ewLab('Skill Focus — one skill only',1,
-      '+'+Math.round((b.speed||0)*100)+'% speed · +'+Math.round((b.xpBoost||0)*100)+'% XP'));
-    var fx=_ewEl('ew-focus');
-    focus.forEach(function(e){ fx.appendChild(_ewFocusCard(e,itemId,f.cost,canAfford,redraw)); });
-    frag.appendChild(fx);
-  }
-  return frag;
+  go.addEventListener('click',function(){
+    const vid=enchantPiece(id,{worn:_enWornRef(id)});
+    if(vid){ _enchantSel=vid; try{ renderGear(); }catch(e){} redraw(); }
+  });
+  act.appendChild(go);
+  wrap.appendChild(act);
+  wrap.appendChild(_ewEl('en-odds', on
+    ?'Locked enchants do not change when you reroll. Locking makes rerolls cost more.'
+    :'Each enchant rolls a random value in its range.'));
+  return wrap;
 }
 
 function renderEnchanting(){
   const box=$('enchantView'); if(!box) return;
   box.innerHTML='';
-
   const intro=document.createElement('div');
   intro.className='skill-intro';
-  /* Four lines of hedged prose became three plain facts (0.9.122.7). The neck-slot
-     rule and the "a pair of rings cannot stand in for the neck" caveat both came
-     out: the Set Bonuses row directly below already prints the Ring/Amulet and
-     Ring/Pendant chips for every set, which states the same rule as data. */
-  intro.innerHTML='<b>Enchanting</b> — one enchant per piece, active while it\'s worn. '
-    +'Enchant one and every copy you own has it too. '
-    +'Ring + <span class="k">amulet</span> = skilling set bonus. '
-    +'Ring + <span class="k">pendant</span> = combat set bonus.';
+  intro.innerHTML='<b>Enchanting</b> adds two random enchants to a piece, three on unique and raid gear. '
+    +'Reroll for better numbers. Lock an enchant to keep it. '
+    +'A matching ring and <span class="k">amulet</span> make a skilling set; ring and <span class="k">pendant</span>, a combat set.';
   box.appendChild(intro);
 
-  const pieces=_ewOwned();
-  if(!pieces.length){
-    box.appendChild(_ewEl('ew-empty','No jewelry yet. Craft rings, amulets or pendants in the '
-      +'Jeweler — you can enchant them straight from your satchel.'));
+  const all=_enPieces();
+  if(!all.length){
+    box.appendChild(_ewEl('ew-empty','Nothing to enchant yet. Armour, weapons, shields, skilling set pieces '
+      +'and jewelry can all be enchanted.'));
     return;
   }
-  if(!_enchantSel || pieces.indexOf(_enchantSel)<0) _enchantSel=pieces[0];
   const redraw=function(){ renderEnchanting(); };
-
-  /* Every non-active row still reads "Apply", and clicking one charges the FULL tier
-     cost again and discards the enchant it replaces — no confirm, no refund. Warn
-     while they are looking at the menu, not after they have paid. */
-  if(state.enchantments[_enchantSel]){ try{ showHint('enchant_replace'); }catch(e){} }
+  const byF={
+    worn:all.filter(function(id){return anyLoadoutHas(id);}),
+    combat:all.filter(function(id){return _enKind(id)==='combat';}),
+    skilling:all.filter(function(id){return _enKind(id)==='skilling';}),
+    jewelry:all.filter(function(id){return _enKind(id)==='jewelry';}),
+    all:all
+  };
+  if(!byF[_enFilter]||!byF[_enFilter].length) _enFilter=byF.worn.length?'worn':'all';
+  const list=byF[_enFilter];
+  if(!_enchantSel||all.indexOf(_enchantSel)<0) _enchantSel=list[0];
 
   const stack=_ewEl('ew-stack');
-
-  /* ── what you are wearing ──
-     Both dolls, each complete. This strip used to draw state.equipped alone — the
-     skilling loadout — so a player who keeps their rings and pendant on the combat
-     side saw three tiles reading "empty" for jewellery they had on, and the set
-     cards below agreed with the wrong half (ticket #49 / OneFlame). The two
-     loadouts pay different bonus keys, so both have to be on screen. */
-  stack.appendChild(_ewLab('What You Are Wearing'));
-  [['combat','Combat loadout','Attack \u00b7 Defence \u00b7 Max HP \u00b7 Crit \u00b7 Lifesteal \u00b7 Gold from kills'],
-   ['skilling','Skilling loadout','Speed \u00b7 XP \u00b7 Sell value \u00b7 Double \u00b7 Gold from steals and laps']].forEach(function(sc){
-    const map=(sc[0]==='combat'?state.combatEquipped:state.skillingEquipped)||{};
-    stack.appendChild(_ewEl('ew-sublab','<b>'+sc[1]+'</b><span>'+sc[2]+'</span>'));
-    const slots=_ewEl('ew-slots');
-    ['ring_l','ring_r','amulet'].forEach(function(sl){
-      const id=map[sl];
-      const ench=id?state.enchantments[id]:null, ed=ench?ENCHANTS[ench]:null;
-      const c=_ewEl('ew-slot'+(id?'':' empty')+(id&&id===_enchantSel?' sel':''));
-      c.style.setProperty('--gc', id?(EW_GEMC[JEWELRY_GEM_TIER[id]]||'rgba(214,138,52,.5)')
-                                   :'rgba(214,138,52,.3)');
-      /* The neck tile says which KIND is on, not just the item name — a pendant and
-         an amulet share the slot and drive different sets, and that difference is
-         the whole of ticket #49. */
-      const ty=id?_jwType(id):null;
-      const lab=EW_SLOT_LABEL[sl]+(sl==='amulet'&&ty?' \u00b7 '+ty:'');
-      c.innerHTML='<div class="well">'+(id?iconHTML(id):iconHTML('ui_gem'))+'</div>'
-        +'<div class="si"><div class="sl">'+lab+'</div>'
-        +'<div class="nm">'+(id?(ITEMS[id]?ITEMS[id].name:id):'empty')+'</div>'
-        +'<div class="ec '+(ed?'on':'off')+'">'+(ed?'✦ '+ed.name:(id?'unenchanted':'—'))+'</div></div>';
-      if(id) c.addEventListener('click',function(){ _enchantSel=id; hideTooltip(); redraw(); });
-      slots.appendChild(c);
+  const two=_ewEl('en-two');
+  const c1=_ewEl('en-col en-left'), c2=_ewEl('en-col');
+  const fr=_ewEl('en-filters');
+  EN_FILTERS.forEach(function(f){
+    const n=byF[f[0]].length;
+    const c=document.createElement('button');
+    c.className='en-filter'+(_enFilter===f[0]?' on':'')+(n?'':' empty');
+    c.innerHTML=f[1]+' <small>'+n+'</small>';
+    if(n) c.addEventListener('click',function(){
+      _enFilter=f[0];
+      if(byF[f[0]].indexOf(_enchantSel)<0) _enchantSel=byF[f[0]][0];
+      redraw();
     });
-    stack.appendChild(slots);
+    fr.appendChild(c);
   });
-
-  // ── what it totals ── (nothing in the game showed this before)
-  stack.appendChild(_ewLab('What It All Adds Up To',1));
-  stack.appendChild(_ewTotals());
-
-  // ── set bonuses ──
-  stack.appendChild(_ewLab('Set Bonuses',1));
-  stack.appendChild(_ewSetsRow());
-
-  // ── the bench: collection rail | the piece + its enchants ──
-  const two=_ewEl('ew-two');
-  const c1=_ewEl('ew-col'), c2=_ewEl('ew-col');
-  c1.appendChild(_ewLab('Your Jewelry',0,pieces.length));
-  const railWrap=_ewEl('ew-railwrap');
-  const rail=_ewEl('ew-rail');
-  pieces.forEach(function(id){ rail.appendChild(_ewPieceCard(id,redraw)); });
-  railWrap.appendChild(rail);
-  c1.appendChild(railWrap);
-  c2.appendChild(_ewHero(_enchantSel));
-  c2.appendChild(_ewOptions(_enchantSel,redraw));
+  c1.appendChild(fr);
+  const rail=_ewEl('en-rail');
+  list.forEach(function(id){ const c=_enPieceCard(id,redraw); if(c) rail.appendChild(c); });
+  c1.appendChild(rail);
+  c2.appendChild(_enBench(_enchantSel,redraw));
   two.appendChild(c1); two.appendChild(c2);
   stack.appendChild(two);
+  stack.appendChild(_ewLab('What It All Adds Up To',1));
+  stack.appendChild(_ewTotals());
+  stack.appendChild(_ewLab('Set Bonuses',1));
+  stack.appendChild(_ewSetsRow());
   box.appendChild(stack);
-
-  /* The bottom fade says "more below". It has to go once the rail is scrolled to the
-     end, or a fully-scrolled list looks like it is still hiding something — and it
-     must not show at all when nothing is clipped. Measured after layout. */
-  const syncFade=function(){
-    const clipped=rail.scrollHeight>rail.clientHeight+2;
-    const atEnd=rail.scrollTop+rail.clientHeight>=rail.scrollHeight-2;
-    railWrap.classList.toggle('nofade', !clipped||atEnd);
-  };
-  rail.addEventListener('scroll',syncFade);
-  syncFade();
-  /* clientHeight is 0 until the panel is actually laid out (the view is display:none
-     on first paint), so re-check on the next frame. */
-  requestAnimationFrame(syncFade);
-  /* Keep the open piece in view when the panel redraws after an Apply. */
-  const selCard=rail.querySelector('.ew-piece.sel');
-  if(selCard&&rail.scrollHeight>rail.clientHeight+2){
-    const top=selCard.offsetTop-rail.clientHeight/2+selCard.offsetHeight/2;
-    rail.scrollTop=Math.max(0,top);
-    syncFade();
-  }
+  /* Keep the chosen piece in view after a redraw. */
+  const sel=rail.querySelector('.en-piece.sel');
+  if(sel&&rail.scrollHeight>rail.clientHeight+2) rail.scrollTop=Math.max(0,sel.offsetTop-rail.clientHeight/2);
 }
 
 /* ════ [JS-25] SOCKETING UI ══════════════════════════════════════════════════════
@@ -50360,8 +50541,8 @@ const HINTS={
   },
   enchant_replace:{
     guard:true,
-    title:'Changing an enchant costs full price',
-    body:"A piece holds one enchant. Applying a different one charges the full material cost again and the old enchant is gone.\n\nRemove refunds nothing either. High-tier reagents take a long time to gather, so pick carefully the first time.",
+    title:'Rerolling replaces your enchants',
+    body:"Rerolling replaces every enchant you have not locked. There is no undo.\n\nLock the ones you want to keep first. Locking makes rerolls cost more.",
   },
   socket_skilling_gem:{
     guard:true,
