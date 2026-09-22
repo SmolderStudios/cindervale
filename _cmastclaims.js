@@ -49,7 +49,7 @@ setTimeout(() => {
     function snap(){
       var b=cmastBonuses(), all=combatBonusesAll();
       return {
-        combatXpMult:b.combatXpMult, atkBoost:b.atkBoost, critChance:all.critChance,
+        combatXpMult:b.combatXpMult, atkBoost:b.atkBoost, rangedStr:b.rangedStr, critChance:all.critChance,
         critDmg:b.critDmg, aspd:all.aspd, maxHpFlat:b.maxHpFlat, dmgReduce:b.dmgReduce,
         lifesteal:b.lifesteal, gpMult:b.gpMult, rareDrop:b.rareDrop,
         doubleDrop:b.doubleDrop, consolation:b.consolation,
@@ -77,12 +77,13 @@ setTimeout(() => {
       ['m_t5_r', DAGGER,null, 'critDmg',      0.15, 'dagger crits +15%'],
 
       ['k_t1',   BOW,  null, 'combatXpMult',  0.16, '+4% combat XP x4'],
-      ['k_t2_l', BOW,  null, 'atkBoost',      0.10, '+2% ranged damage x5'],
+      /* Ranged damage, not Attack, since 0.9.127.2: a bow's damage channel. */
+      ['k_t2_l', BOW,  null, 'rangedStr',     0.10, '+2% ranged damage x5'],
       ['k_t2_r', BOW,  null, 'ammoSave',      0.20, '4% refunded x5'],
       ['k_t3_l', BOW,  null, 'armourPen',     0.10, 'ignore 10% armour'],
       ['k_t3_r', BOW,  null, 'aspd',          0.05, '+5% attack speed, bow'],
-      ['k_t4_l', XBOW, null, 'atkBoost',      0.10, '+2% crossbow damage x5'],
-      ['k_t4_l', BOW,  null, 'atkBoost',      0.05, 'and +1% with a bow x5'],
+      ['k_t4_l', XBOW, null, 'rangedStr',     0.10, '+2% crossbow damage x5'],
+      ['k_t4_l', BOW,  null, 'rangedStr',     0.05, 'and +1% with a bow x5'],
       ['k_t4_r', BOW,  null, 'critChance',    0.10, '+2% crit chance x5'],
       ['k_t5_l', BOW,  null, 'volley',        0.08, '8% free second arrow'],
       ['k_t5_m', BOW,  null, 'pinning',       1,    'crits slow the target'],
@@ -104,18 +105,21 @@ setTimeout(() => {
       ['g_t5_l', SWORD, null, 'rareDrop',     0.03, '+3% rare drops'],
       ['g_t5_m', SWORD, null, 'combatXpMult', 0.10, '+10% combat XP'],
       ['g_t5_m', SWORD, null, 'gpMult',       0.10, '+10% combat gold'],
-      ['g_cap',  SWORD, null, 'atkBoost',     0.05, '+5% Attack'],
+      ['g_cap',  SWORD, null, 'atkBoost',     0.05, '+5% damage (sword)'],
+      ['g_cap',  BOW,   null, 'rangedStr',    0.05, '+5% damage (bow)'],
       ['g_cap',  SWORD, null, 'defBoost',     0.05, '+5% Defence'],
       ['g_cap',  SWORD, null, 'hpBoost',      0.05, '+5% max HP'],
 
       ['mr_t3',  SWORD, null, 'atkBoost',     0.09, '+3% any weapon x3 (sword)'],
-      ['mr_t3',  BOW,   null, 'atkBoost',     0.09, '+3% any weapon x3 (bow)'],
+      ['mr_t3',  BOW,   null, 'rangedStr',    0.09, '+3% any weapon x3 (bow)'],
       ['kb_t3',  SWORD, null, 'critChance',   0.03, '+1% crit x3'],
       ['kb_t3',  SWORD, null, 'dmgReduce',    0.03, '+1% mitigation x3'],
-      ['kb_t4',  SWORD, null, 'atkBoost',     0.06, '+6% damage'],
+      ['kb_t4',  SWORD, null, 'atkBoost',     0.06, '+6% damage (sword)'],
+      ['kb_t4',  BOW,   null, 'rangedStr',    0.06, '+6% damage (bow)'],
       ['kb_t4',  SWORD, null, 'maxHpFlat',    4,    '+4 max HP'],
       ['rm_t3',  SWORD, null, 'critChance',   0.03, '+1% crit x3'],
-      ['rm_t4',  SWORD, null, 'atkBoost',     0.05, '+5% damage'],
+      ['rm_t4',  SWORD, null, 'atkBoost',     0.05, '+5% damage (sword)'],
+      ['rm_t4',  BOW,   null, 'rangedStr',    0.05, '+5% damage (bow)'],
       ['rm_t4',  SWORD, null, 'dmgReduce',    0.05, '+5% mitigation'],
     ];
 

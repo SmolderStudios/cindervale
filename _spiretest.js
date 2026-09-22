@@ -933,6 +933,40 @@ setTimeout(()=>{
        'lethality '+wall+' vs time '+wallTime);
     ok('and it still is for an ascended one', wallA<=timeA+2,
        'lethality '+wallA+' vs time '+timeA);
+
+    /* The same questions for an archer (0.9.127.2). A bow's damage stopped reading
+       Attack and melee Strength and moved to Ranged Strength; the band and the
+       binding constraint must hold for that build too, not only for the sword the
+       numbers above were tuned on. Same armour slots as the melee loadout above:
+       the best bow and arrow, and the Empyrean's leather set. */
+    const wallFor=(eq)=>{
+      ev("state.asc={}; state.items.sundershaft=1e6; state.combatEquipped="+eq+"; refreshCombatStats();");
+      const r={acc:+ev('playerAccuracy()'), hit:+ev('playerMaxHit()'), def:+ev('playerDefence()'),
+               sw:+ev('playerSwingMs()'), hp:+ev('maxHpFromStats()')};
+      ev("for(const id of Object.values(state.combatEquipped)) if(id&&ascCap(id)>0) state.asc[id]=ascCap(id); refreshCombatStats();");
+      const a={acc:+ev('playerAccuracy()'), hit:+ev('playerMaxHit()'), def:+ev('playerDefence()'),
+               sw:+ev('playerSwingMs()'), hp:+ev('maxHpFromStats()'), dr:+ev('ascensionDR()')};
+      const walls=(s,dr)=>{ let kill=0, time=0; const d=(s.hit*0.65)*(1000/s.sw);
+        for(let f=1;f<=200&&!(kill&&time);f++){
+          const m=JSON.parse(ev('JSON.stringify(spireFloor('+f+',true))'));
+          const hc=Math.max(0.03,Math.min(0.97, s.acc/(s.acc+m.def)));
+          const foeDps=(m.str*0.65)*Math.max(0.03,Math.min(0.97, m.atk/(m.atk+s.def)))*(1000/(m.swingMs||2400));
+          if(!time && m.hp/(d*hc)>240) time=f;
+          if(!kill && foeDps*(1-dr)*8 > s.hp*2.2) kill=f;
+        }
+        return {kill:kill||999, time:time||999}; };
+      return {base:r, asc:a, w0:walls(r,0), w1:walls(a,a.dr)};
+    };
+    const arch=wallFor("{weapon:'plummet',quiver:'sundershaft',helm:'sunweave_helm',chest:'sunweave_chest',legs:'sunweave_legs',boots:'sunweave_boots'}");
+    console.log('       archer Lv99 (Plummet, Sundershaft, Sunweave): acc '+arch.base.acc+' · max hit '+arch.base.hit+
+                ' · lethality wall '+arch.w0.kill+', four-minute wall '+arch.w0.time);
+    console.log('       archer fully ascended: acc '+arch.asc.acc+' · max hit '+arch.asc.hit+
+                ' · lethality wall '+arch.w1.kill+', four-minute wall '+arch.w1.time);
+    const archWall=Math.min(arch.w0.kill, arch.w0.time);
+    ok('an archer\'s wall lands in the same band', archWall>=25 && archWall<=65, 'wall near floor '+archWall);
+    ok('and lethality binds an archer too, base and ascended',
+       arch.w0.kill<=arch.w0.time && arch.w1.kill<=arch.w1.time+2,
+       'base '+arch.w0.kill+' vs '+arch.w0.time+', ascended '+arch.w1.kill+' vs '+arch.w1.time);
   }
 
   console.log('\n'+(fail? fail+' FAILED, '+pass+' passed'

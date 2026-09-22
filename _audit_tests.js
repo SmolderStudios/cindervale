@@ -6746,7 +6746,7 @@ setTimeout(() => {
     })()`));
     ok('the quiver picker offers ammunition', qp.offered >= 3, qp.offered + ' rows');
     ok('and ammunition describes itself rather than borrowing the jewellery text',
-       /strength from (bows|crossbows)/.test(qp.desc), JSON.stringify(qp.desc));
+       /Ranged Strength from (bows|crossbows)/.test(qp.desc), JSON.stringify(qp.desc));
     ok('the combat gear strip has a quiver tile', qp.stripHasQuiver === true);
 
     /* Widening the window used to magnify the whole interface, because the root
@@ -7019,8 +7019,8 @@ setTimeout(() => {
       return {tip:tip.textContent, pick:pick.textContent, sig:sig.textContent};
     })()`);
     ok('a socketed piece says what its gem does in the tooltip (#136)',
-       /Flawless Sanguine/.test(gem.tip) && /\+8% Attack/.test(gem.tip), gem.tip);
-    ok('and in the swap picker (#137)', /\+8% Attack/.test(gem.pick), gem.pick);
+       /Flawless Sanguine/.test(gem.tip) && /\+8% damage/.test(gem.tip), gem.tip);
+    ok('and in the swap picker (#137)', /\+8% damage/.test(gem.pick), gem.pick);
     ok('and trophy jewellery reads its bonus, not its id and "Unenchanted"',
        !/warren_signet|nenchanted/.test(gem.sig) && /Gold/.test(gem.sig), gem.sig);
 
@@ -8950,7 +8950,7 @@ setTimeout(() => {
       renderStats();
       r.usingRanged=usingRanged();
       r.accRanged=txt().indexOf('Accuracy (Ranged)')>=0;
-      r.hitRanged=txt().indexOf('Max Hit (Ranged + arrow)')>=0;
+      r.hitRanged=txt().indexOf('Max Hit (Ranged)')>=0;
       r.accBaseShown=txt().indexOf(String(Math.round(24*COMBAT_P.ACC_LVL))+' + ')>=0;
       unequipBodyItem('weapon','combat'); unequipBodyItem('quiver','combat');
       return r;
@@ -10081,14 +10081,19 @@ setTimeout(() => {
        stack it. This fails if any future retune lets one stat, stacked on every
        slot that can roll it at average quality, pass what one big jewelry enchant
        already gives. Prized catch is exempt: one slot, and it is the point. */
+    /* An archer's weapon slot rolls from the bow pool, not the weapon pool
+       (0.9.127.2), so every combat stat is stacked both ways and the worse of the
+       two is what has to stay under the ceiling. Ranged damage is in the list: it
+       is the bow's Attack and gets exactly the same budget. */
     const CEIL = ev(`(function(){
       var MEANQ=0.4, bad=[];
       var cs={helmet:'headhands',gloves:'headhands',chest:'armour',legs:'armour',boots:'feetback',cape:'feetback',weapon:'weapon',shield:'shield'};
+      var csBow={helmet:'headhands',gloves:'headhands',chest:'armour',legs:'armour',boots:'feetback',cape:'feetback',weapon:'bow',shield:'shield'};
       var ss={helmet:'headhands',chest:'armour',legs:'armour',boots:'feetback'};
       function stack(k,slots,pool,tier){ var n=0; for(var s in slots) if(ENCH_POOL[slots[s]][pool].indexOf(k)>=0) n++;
         return ENCH_STAT[k].gear*tier*(0.8+0.45*MEANQ)*n; }
-      ['atkBoost','defBoost','hpBoost','critChance','lifesteal','goldFind'].forEach(function(k){
-        var x=stack(k,cs,'combat',11); if(x>0.20) bad.push(k+' +'+(x*100).toFixed(1)+'%'); });
+      ['atkBoost','rangedStr','defBoost','hpBoost','critChance','lifesteal','goldFind','accBoost','critDmg','combatXp'].forEach(function(k){
+        var x=Math.max(stack(k,cs,'combat',11),stack(k,csBow,'combat',11)); if(x>0.20) bad.push(k+' +'+(x*100).toFixed(1)+'%'); });
       ['speed','xpBoost','gpBoost','doubleYield','rareFind'].forEach(function(k){
         var x=stack(k,ss,'skilling',ENCH_SKILLGEAR_TIER); if(x>0.20) bad.push(k+' +'+(x*100).toFixed(1)+'%'); });
       return bad;
@@ -10164,6 +10169,245 @@ setTimeout(() => {
        I.setOn === true, JSON.stringify(I.setOn));
     ok('an enchanted skilling set piece still counts toward its set',
        I.setPiece > 0, 'set bonus ' + I.setPiece);
+  }
+
+  section('Ranged Strength: a bow has its own damage stat (0.9.127.2)');
+  {
+    /* Before this, a bow's max hit read melee Strength and Attack %, so a Sanguine
+       gem labelled Attack, an Attack line on a helmet or a Strength skull quietly
+       raised your arrows. None of that throws when it regresses, so every half of
+       the split is pinned here: what must NOT reach a bow, what must, and the save
+       migration that moved Attack lines already rolled on bows. */
+    const R = ev(`(function(){
+      var out={};
+      function reset(){
+        state=defaultState(); normalizeState();
+        ['attack','strength','defence','hitpoints','ranged'].forEach(function(k){ state.combatXp[k]=XP_CUM[99]; });
+        state.items={ancient_longbow:1, starfall_arrow:1e5, starsteel_sword:1, emberwyrm_eye:1, demonlord_skull:1,
+                     runite_helm:1, void_ring:1, void_gloves:1, stonewright_gauntlets:1};
+        state.cmast={}; state.sockets={}; state.variants={}; state.effects=[];
+      }
+      function bow(extra){ var ce={weapon:'ancient_longbow', quiver:'starfall_arrow'}; for(var k in (extra||{})) ce[k]=extra[k]; state.combatEquipped=ce; refreshCombatStats(); }
+      function sword(extra){ var ce={weapon:'starsteel_sword'}; for(var k in (extra||{})) ce[k]=extra[k]; state.combatEquipped=ce; refreshCombatStats(); }
+      function line(id,k,v){ var vid=splitToVariant(id); state.variants[vid].lines=[{k:k,v:v,q:0.5,lock:false}]; registerVariant(vid); return vid; }
+
+      /* 1. Melee Attack and melee Strength gear, all of it at once: an Attack line
+         on a helmet, an Attack line on a ring, a trophy ring that says melee
+         damage, a Strength skull. None of it may move a bow's max hit. */
+      reset();
+      bow(); out.bare=playerMaxHit(); out.bareAcc=playerAccuracy();
+      var helm=line('runite_helm','atkBoost',0.05), ring=line('void_ring','atkBoost',0.15);
+      bow({helmet:helm, ring_l:ring, ring_r:'emberwyrm_eye'});
+      out.meleeGearHit=playerMaxHit(); out.meleeGearAtk=combatBonusesAll().atkBoost;
+      bow({helmet:'demonlord_skull', ring_l:ring, ring_r:'emberwyrm_eye'});
+      out.skullHit=playerMaxHit(); out.skullStr=combatStats().str;
+      // the same gear on a sword really is live, so the bow result is not vacuous
+      sword(); var s0=playerMaxHit();
+      sword({helmet:helm, ring_l:ring, ring_r:'emberwyrm_eye'}); out.swordGain=playerMaxHit()-s0;
+
+      /* 2. What must reach a bow. */
+      reset();
+      bow(); var b0=playerMaxHit();
+      var bv=line('ancient_longbow','rangedStr',0.10);
+      state.combatEquipped={weapon:bv, quiver:'starfall_arrow'}; refreshCombatStats();
+      out.lineRatio=playerMaxHit()/b0;
+      out.lineOnSword=(function(){ reset(); sword(); var a=playerMaxHit();
+        var sv=line('runite_helm','rangedStr',0.10); sword({helmet:sv}); return playerMaxHit()-a; })();
+      reset(); bow(); var g0=playerMaxHit();
+      bow({gloves:'void_gloves'}); out.bracerGain=playerMaxHit()-g0; out.bracerRstr=combatStats().rstr;
+      sword(); var g1=playerMaxHit(); sword({gloves:'void_gloves'}); out.bracerOnSword=playerMaxHit()-g1;
+      // Draw Weight feeds Ranged damage, not Attack
+      reset(); bow(); state.cmast={k_t1:1,k_t2_l:5}; refreshCombatStats();
+      var cb=combatBonusesAll(); out.drawRanged=cb.rangedStr; out.drawAtk=cb.atkBoost;
+      // Sanguine and Stonewright follow the weapon in your hand
+      reset(); state.items.runite_helm=1; state.sockets={runite_helm:{slots:1,gems:['sanguine_flaw']}};
+      bow({helmet:'runite_helm'}); var cbB=combatBonusesAll();
+      sword({helmet:'runite_helm'}); var cbS=combatBonusesAll();
+      out.gemBow={rng:cbB.rangedStr, atk:cbB.atkBoost}; out.gemSword={rng:cbS.rangedStr, atk:cbS.atkBoost};
+
+      /* 3. The migration. An old save: a bow and a Plummet carrying Attack lines, one
+         of them locked, one the unique line, and a ring carrying one too. */
+      reset();
+      state.items.plummet=1; state.items.sundershaft=1e5;
+      var lb=splitToVariant('ancient_longbow');
+      state.variants[lb].lines=[{k:'atkBoost',v:0.05,q:0.5,lock:true},{k:'critChance',v:0.03,q:0.4,lock:false}];
+      var pl=splitToVariant('plummet');
+      state.variants[pl].lines=[{k:'critChance',v:0.05,q:0.4,lock:false},{k:'lifesteal',v:0.04,q:0.3,lock:false},{k:'atkBoost',v:0.1,q:0.6,lock:false,u:true}];
+      var rg=splitToVariant('void_ring'); state.variants[rg].lines=[{k:'atkBoost',v:0.15,q:0.5,lock:false}];
+      state.combatEquipped={weapon:lb, quiver:'starfall_arrow'};
+      state.rstrMigrated=false; normalizeState();
+      state.combatEquipped={weapon:lb, quiver:'starfall_arrow'}; refreshCombatStats();
+      out.migLongbow={hit:playerMaxHit(), acc:playerAccuracy(), lines:state.variants[lb].lines, name:ITEMS[lb].name};
+      state.combatEquipped={weapon:pl, quiver:'sundershaft'}; refreshCombatStats();
+      out.migPlummet={hit:playerMaxHit(), acc:playerAccuracy(), lines:state.variants[pl].lines};
+      out.migRing=state.variants[rg].lines;
+      out.flag=state.rstrMigrated===true;
+      var snap=JSON.stringify(state.variants); normalizeState(); out.idem=JSON.stringify(state.variants)===snap;
+
+      /* 4. Rolls: a bow never rolls Attack, a sword never rolls Ranged damage. */
+      reset(); state.items.arcane_dust=1e8; state.items.rune_fragment=1e8; state.items.mana_essence=1e8; state.items.gem_dust=1e8; state.items.void_cinder=1e8;
+      var bowAtk=0, swordRng=0, bowRng=0;
+      for(var i=0;i<60;i++){
+        state.items.ancient_longbow=1; var v1=enchantPiece('ancient_longbow');
+        state.variants[v1].lines.forEach(function(l){ if(l.k==='atkBoost') bowAtk++; if(l.k==='rangedStr') bowRng++; });
+        delete state.items[v1]; delete state.variants[v1];
+        state.items.starsteel_sword=1; var v2=enchantPiece('starsteel_sword');
+        state.variants[v2].lines.forEach(function(l){ if(l.k==='rangedStr') swordRng++; });
+        delete state.items[v2]; delete state.variants[v2];
+      }
+      out.rolls={bowAtk:bowAtk, bowRng:bowRng, swordRng:swordRng,
+                 plummetUnique:enchUniquePoolFor('plummet'), swordUnique:enchUniquePoolFor('dawnbreaker'),
+                 helmUnique:enchUniquePoolFor('sunweave_helm')};
+
+      /* 5. Data the split depends on. */
+      var capesMissing=[], bowsWithStr=[];
+      for(var id in COMBAT_GEAR_STATS){ var it=ITEMS[id], s=COMBAT_GEAR_STATS[id];
+        if(it&&it.cslot==='cape'&&(s.str||0)>0&&s.rstr!==s.str) capesMissing.push(id);
+        if(it&&it.ranged&&(s.str||0)>0) bowsWithStr.push(id); }
+      out.data={capesMissing:capesMissing, bowsWithStr:bowsWithStr,
+                plummet:COMBAT_GEAR_STATS.plummet.rstr, sunpiercer:COMBAT_GEAR_STATS.sunpiercer.rstr,
+                plummetUb:JSON.stringify(ITEMS.plummet.ubonus)};
+
+      /* 6. It is said out loud: the card, the stat's own description, the ammo. */
+      var card=document.createElement('div'); card.innerHTML=combatGearStatBlock('plummet');
+      var arrow=document.createElement('div'); arrow.innerHTML=getBodyItemDesc('starfall_arrow');
+      out.copy={card:card.textContent, desc:COMBAT_STATS.ranged.desc, arrow:arrow.textContent};
+      return out;
+    })()`);
+
+    ok('melee Attack gear gives a bow zero damage: Attack lines, a melee trophy ring',
+       R.meleeGearHit === R.bare && R.meleeGearAtk > 0.2, 'bare ' + R.bare + ' vs ' + R.meleeGearHit + ' with +' + Math.round(R.meleeGearAtk * 100) + '% Attack worn');
+    ok('and melee Strength gives it none either',
+       R.skullHit === R.bare && R.skullStr >= 5, 'bare ' + R.bare + ' vs ' + R.skullHit + ' with +' + R.skullStr + ' Strength worn');
+    ok('while the same gear really does raise a sword (the bow test is not vacuous)',
+       R.swordGain > 0, '+' + R.swordGain + ' max hit on a sword');
+    ok('a Ranged damage line reaches a bow\'s max hit',
+       Math.abs(R.lineRatio - 1.10) < 0.01, 'x' + R.lineRatio.toFixed(3) + ' for a +10% line');
+    ok('and does nothing for a sword',
+       R.lineOnSword === 0, '+' + R.lineOnSword);
+    ok('Ranged Strength on leather bracers reaches a bow at 5 max hit a point, before multipliers',
+       R.bracerRstr === 2 && R.bracerGain >= 10, '+' + R.bracerGain + ' from ' + R.bracerRstr + ' Ranged Strength');
+    ok('and the bracers give a sword no damage',
+       R.bracerOnSword === 0, '+' + R.bracerOnSword);
+    ok('Draw Weight feeds Ranged damage, not Attack',
+       Math.abs(R.drawRanged - 0.10) < 1e-9 && R.drawAtk === 0, JSON.stringify({rangedStr: R.drawRanged, atkBoost: R.drawAtk}));
+    ok('a Sanguine gem is damage for whichever weapon you hold',
+       R.gemBow.rng === 0.08 && R.gemBow.atk === 0 && R.gemSword.atk === 0.08 && R.gemSword.rng === 0,
+       JSON.stringify({bow: R.gemBow, sword: R.gemSword}));
+
+    /* The migration, proved against the build before it: 0.9.127.1 put this exact
+       longbow at 325 max hit / 296 accuracy and this Plummet at 670 / 501, both
+       measured with the old Attack lines on them. If ranged is retuned on purpose,
+       remeasure these on the build before the retune. */
+    ok('an Attack line on a bow moves to Ranged damage at the same value, quality and lock',
+       R.migLongbow.lines[0].k === 'rangedStr' && R.migLongbow.lines[0].v === 0.05 && R.migLongbow.lines[0].q === 0.5
+       && R.migLongbow.lines[0].lock === true && R.migLongbow.lines[1].k === 'critChance',
+       JSON.stringify(R.migLongbow.lines));
+    ok('and the unique line moves too',
+       R.migPlummet.lines[2].k === 'rangedStr' && R.migPlummet.lines[2].u === true && R.migPlummet.lines[2].v === 0.1,
+       JSON.stringify(R.migPlummet.lines));
+    ok('the bow enchant migration is power-neutral: same max hit and accuracy as 0.9.127.1',
+       R.migLongbow.hit === 325 && R.migLongbow.acc === 296 && R.migPlummet.hit === 670 && R.migPlummet.acc === 501,
+       'longbow ' + R.migLongbow.hit + '/' + R.migLongbow.acc + ', Plummet ' + R.migPlummet.hit + '/' + R.migPlummet.acc);
+    ok('a ring keeps its Attack line: only bows move',
+       R.migRing[0].k === 'atkBoost', JSON.stringify(R.migRing));
+    ok('the migrated bow is renamed after its new leading line',
+       /of the Hawk$/.test(R.migLongbow.name), R.migLongbow.name);
+    ok('the migration runs once and a second load changes nothing',
+       R.flag === true && R.idem === true, JSON.stringify({flag: R.flag, idempotent: R.idem}));
+
+    ok('a bow never rolls Attack and a sword never rolls Ranged damage',
+       R.rolls.bowAtk === 0 && R.rolls.swordRng === 0 && R.rolls.bowRng > 0, JSON.stringify(R.rolls));
+    ok('the unique line follows the piece: Ranged damage on a bow, Attack on a sword, either on armour',
+       R.rolls.plummetUnique.indexOf('rangedStr') >= 0 && R.rolls.plummetUnique.indexOf('atkBoost') < 0
+       && R.rolls.swordUnique.indexOf('atkBoost') >= 0 && R.rolls.swordUnique.indexOf('rangedStr') < 0
+       && R.rolls.helmUnique.indexOf('atkBoost') >= 0 && R.rolls.helmUnique.indexOf('rangedStr') >= 0,
+       JSON.stringify({plummet: R.rolls.plummetUnique, sword: R.rolls.swordUnique, helm: R.rolls.helmUnique}));
+
+    ok('every cape with Strength carries the same Ranged Strength',
+       R.data.capesMissing.length === 0, R.data.capesMissing.join(', ') || 'all capes');
+    ok('no bow carries melee Strength any more, and the raid bows kept their numbers as Ranged Strength',
+       R.data.bowsWithStr.length === 0 && R.data.plummet === 34 && R.data.sunpiercer === 30 && /rangedStr/.test(R.data.plummetUb),
+       JSON.stringify(R.data));
+
+    ok('a bow\'s card shows its Ranged Strength',
+       /\+34 Ranged Str/.test(R.copy.card), R.copy.card.slice(0, 120));
+    ok('the Ranged stat says what Ranged Strength and Ranged damage do',
+       /Ranged Strength/.test(R.copy.desc) && /Ranged damage %/.test(R.copy.desc), R.copy.desc.slice(0, 90));
+    ok('an arrow calls its number Ranged Strength',
+       /Ranged Strength/.test(R.copy.arrow), R.copy.arrow);
+
+    /* Three enchant stats added in the same build: Accuracy, Critical damage and
+       Combat XP. A new line that rolls but reaches nothing is invisible until a
+       player notices their number never moved, so each is followed all the way to
+       what the game uses: the accuracy figure, a real crit through combatTick, and
+       the XP a hit actually grants. */
+    const N = ev(`(function(){
+      var out={};
+      function reset(){
+        state=defaultState(); normalizeState();
+        ['attack','strength','defence','hitpoints','ranged'].forEach(function(k){ state.combatXp[k]=XP_CUM[99]; });
+        state.items={starsteel_sword:1, runite_helm:1, runite_boots:1};
+        state.cmast={}; state.sockets={}; state.variants={}; state.effects=[];
+        combat.active=false; combat.raid=null;
+      }
+      function lines(id,ls){ var vid=splitToVariant(id); state.variants[vid].lines=ls; registerVariant(vid); return vid; }
+      // Accuracy on a helmet
+      reset(); state.combatEquipped={weapon:'starsteel_sword'}; refreshCombatStats(); var a0=playerAccuracy();
+      var h=lines('runite_helm',[{k:'accBoost',v:0.08,q:0.5,lock:false}]);
+      state.combatEquipped={weapon:'starsteel_sword', helmet:h}; refreshCombatStats();
+      out.acc={before:a0, after:playerAccuracy(), chan:combatBonusesAll().accBoost};
+      // Critical damage on the sword, through a real forced crit
+      function hitOnce(ls){
+        reset(); var w=lines('starsteel_sword',ls);
+        state.combatEquipped={weapon:w}; refreshCombatStats();
+        combat.foeStatus={}; combat.monId=MONSTERS[0].id; combat.active=true;
+        combat.foeHp=1e9; combat.foeMaxHp=1e9; combat.youHp=combat.youMaxHp;
+        var R0=Math.random; Math.random=function(){ return 0; };
+        try{ combat.youSwingStart=0; combat.foeSwingStart=Date.now(); combatTick(); }
+        finally{ Math.random=R0; }
+        var d=1e9-combat.foeHp; combat.active=false; return {dmg:d, hit:playerMaxHit(), cd:combatBonusesAll().critDmg};
+      }
+      out.crit0=hitOnce([{k:'critChance',v:0.05,q:0.5,lock:false}]);
+      out.crit1=hitOnce([{k:'critChance',v:0.05,q:0.5,lock:false},{k:'critDmg',v:0.10,q:0.5,lock:false}]);
+      // Combat XP on boots
+      function xpFrom(ls){
+        reset(); state.combatXp.defence=0;
+        if(ls){ var b=lines('runite_boots',ls); state.combatEquipped={boots:b}; } else state.combatEquipped={};
+        grantCombatXp('defence',40); return state.combatXp.defence;
+      }
+      out.xp0=xpFrom(null); out.xp1=xpFrom([{k:'combatXp',v:0.10,q:0.5,lock:false}]);
+      out.pools={head:enchPoolFor('runite_helm').keys, weapon:enchPoolFor('starsteel_sword').keys,
+                 bow:enchPoolFor('ancient_longbow').keys, feet:enchPoolFor('runite_boots').keys};
+      return out;
+    })()`);
+    ok('an Accuracy line raises accuracy by its own size',
+       Math.abs(N.acc.chan - 0.08) < 1e-9 && Math.abs(N.acc.after / N.acc.before - 1.08) < 0.01,
+       N.acc.before + ' -> ' + N.acc.after);
+    ok('a Critical damage line makes a real crit hit harder, through combatTick',
+       N.crit0.dmg > 0 && Math.abs(N.crit1.dmg / N.crit0.dmg - 2.10 / 2.00) < 0.01 && Math.abs(N.crit1.cd - 0.10) < 1e-9,
+       'crit ' + N.crit0.dmg + ' -> ' + N.crit1.dmg);
+    ok('a Combat XP line on boots raises the XP a hit grants',
+       N.xp0 > 0 && Math.abs(N.xp1 / N.xp0 - 1.10) < 0.05, N.xp0 + ' -> ' + N.xp1);
+    /* The bow pool shipped without a label and the bench printed "Tier 11 ·
+       undefined · Unique" for every bow. Any pool the bench can show needs one. */
+    /* An enchanted piece is a variant id no drop table names, so its card said
+       "Source unknown" even for a helmet anyone can craft. */
+    const vtip = ev(`(function(){
+      state=defaultState(); normalizeState(); state.items={runite_helm:1};
+      var v=splitToVariant('runite_helm'); state.variants[v].lines=[{k:'atkBoost',v:0.05,q:0.5,lock:false}]; registerVariant(v);
+      showItemTooltip(v,10,10); var t=document.getElementById('itemTooltip'); var s=t?t.textContent:'';
+      if(t) t.style.display='none'; return s;
+    })()`);
+    ok('an enchanted piece\'s card says where its base comes from',
+       !/Source unknown/.test(vtip) && /source/i.test(vtip), vtip.slice(0, 120));
+    const unlabelled = ev(`Object.keys(ENCH_POOL).filter(function(k){ return !EN_POOL_LABEL[k]; })`);
+    ok('every enchant pool has a name on the bench',
+       unlabelled.length === 0, unlabelled.join(', ') || 'all named');
+    ok('and each rolls where it was put: accuracy on head and hands, crit damage on weapons, combat XP on boots and capes',
+       N.pools.head.indexOf('accBoost') >= 0 && N.pools.weapon.indexOf('critDmg') >= 0 && N.pools.bow.indexOf('critDmg') >= 0
+       && N.pools.feet.indexOf('combatXp') >= 0 && N.pools.weapon.indexOf('accBoost') < 0,
+       JSON.stringify(N.pools));
   }
 
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));

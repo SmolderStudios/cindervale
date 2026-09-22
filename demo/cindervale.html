@@ -8959,7 +8959,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.127.1">v0.9.127</div>
+  <div class="mm-ver" data-build="0.9.127.2">v0.9.127</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -10376,16 +10376,16 @@ const ITEMS={
   // sustained idle fights), and FEAST (smaller instant heal + a short combat buff).
   // potion.regen = total HP, potion.regenDur = seconds. potion.buff = {str/def/atk,dur}.
   marrow_broth:    {name:'Marrow Broth',    icon:'🍲',sell:40,  potion:{regen:40, regenDur:6}, desc:'Bones boiled down to a rich, restorative broth. Mends you slowly — 40 HP over 6s.'},
-  ratmeat_skewer:  {name:'Ratmeat Skewer',  icon:'🍢',sell:70,  potion:{heal:45, buff:{str:1,dur:30}}, desc:'Charred warren-rat on a splinter of bone. Restores 45 HP and fires you up — +1 Strength for 30s.'},
+  ratmeat_skewer:  {name:'Ratmeat Skewer',  icon:'🍢',sell:70,  potion:{heal:45, buff:{str:1,dur:30}}, desc:'Charred warren-rat on a splinter of bone. Restores 45 HP and fires you up: +1 Strength, melee or ranged, for 30s.'},
   silk_poultice:   {name:'Silk Poultice',   icon:'🩹',sell:90,  potion:{heal:75}, desc:'A wound-dressing of spider-silk and crushed venom sac — knits cuts closed fast. Instant 75 HP.'},
   goblin_jerky:    {name:'Goblin Jerky',    icon:'🥓',sell:120, potion:{heal:70}, desc:'Strips of cured hide smoked over a goblin fire. Tough, salty, and filling. Instant 70 HP.'},
   // ─── Monster-drop foods, mid→endgame tiers (1.0.7, reworked 1.0.21) ─────────
   bone_stew:       {name:'Bone Marrow Stew', icon:'🍲',sell:180, potion:{regen:150, regenDur:8}, desc:'Ancient bones simmered grey. Grim fare that knits you back together — 150 HP over 8s.'},
   wolf_jerky:      {name:'Wolf Jerky',       icon:'🥓',sell:280, potion:{heal:200}, desc:'Smoke-cured strips of dire-wolf. Chewy, fatty, warming. Instant 200 HP.'},
-  ogre_roast:      {name:'Ogre Roast',       icon:'🍖',sell:420, potion:{heal:240, buff:{str:2,dur:60}}, desc:'A slab of ogre haunch roasted over coals. Restores 240 HP and bolsters you — +2 Strength for 60s.'},
+  ogre_roast:      {name:'Ogre Roast',       icon:'🍖',sell:420, potion:{heal:240, buff:{str:2,dur:60}}, desc:'A slab of ogre haunch roasted over coals. Restores 240 HP and bolsters you: +2 Strength, melee or ranged, for 60s.'},
   troll_stew:      {name:'Troll Stew',       icon:'🍲',sell:640, potion:{regen:430, regenDur:8}, desc:'Troll meat and regenerative blood, stewed thick. You feel the wounds closing — 430 HP over 8s.'},
   drake_roast:     {name:'Drake Roast',      icon:'🍖',sell:950, potion:{heal:560}, desc:'Seared drake flank, still faintly smoking. Rich enough to mend deep wounds. Instant 560 HP.'},
-  infernal_roast:  {name:'Infernal Roast',   icon:'🍖',sell:1500,potion:{heal:620, buff:{str:3,def:3,dur:90}}, desc:'Demon-flesh roasted in brimstone. Restores 620 HP and steels you — +3 Strength & +3 Defence for 90s.'},
+  infernal_roast:  {name:'Infernal Roast',   icon:'🍖',sell:1500,potion:{heal:620, buff:{str:3,def:3,dur:90}}, desc:'Demon-flesh roasted in brimstone. Restores 620 HP and steels you: +3 Strength, melee or ranged, and +3 Defence for 90s.'},
   // Rare drops
   birds_nest:      {name:"Bird's Nest",       icon:'🪹',sell:990,  rare:true},
   ancient_seed:    {name:'Ancient Seed',       icon:'🌱',sell:825,  rare:true},
@@ -10523,7 +10523,7 @@ const ITEMS={
   warlord_aegis:   {name:"Warlord's Aegis", icon:'📿',sell:40000, trophyJewel:true, jslot:'amulet', jbonus:{defBoost:0.08,hpBoost:0.05},    desc:'Ogre Warlord trophy. +8% Defence and +5% max HP.'},
   mountain_locket: {name:'Mountain Locket',  icon:'📿',sell:60000, trophyJewel:true, jslot:'amulet', jbonus:{hpBoost:0.12},                  desc:'Troll King trophy. +12% max HP.'},
   emberwyrm_eye:   {name:'Emberwyrm Eye',   icon:'💍',sell:88000, trophyJewel:true, jslot:'ring',   jbonus:{atkBoost:0.07,critChance:0.03}, desc:'Emberwyrm trophy. +7% melee damage and +3% crit.'},
-  sanctum_signet:  {name:'Sanctum Signet',  icon:'💍',sell:130000,trophyJewel:true, jslot:'ring',   jbonus:{atkBoost:0.06,lifesteal:0.04,critChance:0.03}, desc:'Demon Lord trophy. +6% damage, +4% lifesteal, +3% crit.'},
+  sanctum_signet:  {name:'Sanctum Signet',  icon:'💍',sell:130000,trophyJewel:true, jslot:'ring',   jbonus:{atkBoost:0.06,lifesteal:0.04,critChance:0.03}, desc:'Demon Lord trophy. +6% melee damage, +4% lifesteal, +3% crit.'},
   /* ── Sea jewellery (0.9.70) ────────────────────────────────────────────────
      The last five sea materials that had no recipe, plus the plain Pearl, which
      has been a fishing rare with no use since fishing shipped. These reuse the
@@ -10542,7 +10542,7 @@ const ITEMS={
   drowned_locket:  {name:'Drowned Locket',  icon:'📿',sell:22000, trophyJewel:true, jslot:'amulet', jbonus:{gpBoost:0.09},                    sea:1, desc:"Reworked from lockets off the wrecks. The Emberwatch jewellers do not ask whose faces these were. +9% gold from sales."},
   tidebound_ring:  {name:'Tidebound Ring',  icon:'💍',sell:68000, trophyJewel:true, jslot:'ring',   jbonus:{critChance:0.03,hpBoost:0.05},    sea:1, desc:'The pearl still moves if you hold it long enough. +3% crit and +5% max HP.'},
   abyssal_pendant: {name:'Abyssal Pendant', icon:'📿',sell:96000, trophyJewel:true, jslot:'amulet', jbonus:{lifesteal:0.05,atkBoost:0.04},    sea:1, desc:'Black pearl in starfall metal. It takes something back from whatever you hit. +5% lifesteal, +4% melee damage.'},
-  drowned_jewel:   {name:"Drowned King's Jewel", icon:'👑',sell:210000, trophyJewel:true, jslot:'amulet', jbonus:{atkBoost:0.07,defBoost:0.07,hpBoost:0.07}, sea:1, desc:'Five fragments of one circlet, reassembled around a stone nobody has named. +7% damage, Defence and max HP.'},
+  drowned_jewel:   {name:"Drowned King's Jewel", icon:'👑',sell:210000, trophyJewel:true, jslot:'amulet', jbonus:{atkBoost:0.07,defBoost:0.07,hpBoost:0.07}, sea:1, desc:'Five fragments of one circlet, reassembled around a stone nobody has named. +7% melee damage, Defence and max HP.'},
   gem_dust:        {name:'Gem Dust',            icon:'✨',sell:55, desc:'Glittering powder from cutting gems (Jeweler) or Gem Rocks (Mining Lv 40). Fuels socket drilling, gem crafting and high-tier enchants.'},
   // Farming outputs — seeds and produce
   wildberry_seed:{name:'Wildberry Seed',icon:'🌱',sell:33},
@@ -10766,7 +10766,7 @@ const ITEMS={
   bone_plate_cuirass:{name:'Bone Plate Cuirass', icon:'🦺', sell:4400, cgear:true, ctier:4, cslot:'chest', desc:"A breastplate of riveted rib-plates and ancient bone, lashed to a mithril frame. Heavy as guilt; turns blades that would gut a knight."},
   pack_leader_vest:  {name:'Pack Leader Vest',   icon:'🦺', sell:8200, cgear:true, ctier:5, cslot:'chest', desc:"A scarred vest of pack-leader pelts bound with cobalt rivets. The howling horn at the throat makes a low, mournful sound when you breathe."},
   // ─── Socket Gems ─── (5 colors × 3 tiers — chipped / polished / flawless)
-  // Mapping: sanguine=combat ATK, verdant=combat HP, azure=combat DEF,
+  // Mapping: sanguine=combat damage (any weapon), verdant=combat HP, azure=combat DEF,
   //          topaz=SKILLING gpBoost, onyx=SKILLING speed/xpBoost.
   // Two sources: crafted from gem_dust at the Gem Exchange (Socket tab), OR dropped
   // by slain foes (tier scales with monster level — see rollSocketGemDrop).
@@ -11254,8 +11254,8 @@ const ENCHANT_SETS={
     bonus:{speed:0.18,xpBoost:0.22,gpBoost:0.22,doubleYield:0.12},
     desc:'Dragon Ring + Dragon Amulet both enchanted: +18% speed, +22% XP, +22% sell value, +12% chance to double resources'},
   bloodstone:{name:'Warband',    slots:['ring_l','amulet'], gemMatch:'bloodstone',
-    bonus:{atkBoost:0.18,hpBoost:0.15,defBoost:0.15,speed:0.10},
-    desc:'Bloodstone Ring + Bloodstone Amulet both enchanted: +18% Attack, +15% Max HP, +15% Defence (combat), +10% speed'},
+    bonus:{dmgBoost:0.18,hpBoost:0.15,defBoost:0.15,speed:0.10},
+    desc:'Bloodstone Ring + Bloodstone Amulet both enchanted: +18% damage, +15% Max HP, +15% Defence (combat), +10% speed'},
   void:    {name:'Void Set',     slots:['ring_l','amulet'], gemMatch:'void',
     bonus:{speed:0.28,xpBoost:0.35,gpBoost:0.35,doubleYield:0.20},
     desc:'Void Ring + Void Amulet both enchanted: +28% speed, +35% XP, +35% sell value, +20% chance to double resources'},
@@ -11288,16 +11288,17 @@ function _jwType(id){
 }
 /* Pendant sets — ring + PENDANT of the same gem, both enchanted → OFFENCE (atk / lifesteal
    / crit). The combat counterpart to the amulet's skilling sets; the neck holds one or the
-   other. Bonuses flow through combatEnchantBonuses (atkBoost/lifesteal/critChance). */
+   other. Bonuses flow through combatEnchantBonuses (dmgBoost/lifesteal/critChance); the
+   damage goes to whichever weapon you hold (0.9.127.2), since there is no ranged set. */
 const PENDANT_SETS={
-  sapphire:  {name:'Sapphire Fang',   slots:['ring_l','amulet'], gemMatch:'sapphire',  bonus:{atkBoost:0.03,lifesteal:0.02},              desc:'Sapphire Ring + Sapphire Pendant both enchanted: +3% Attack, +2% lifesteal'},
-  emerald:   {name:'Emerald Fang',    slots:['ring_l','amulet'], gemMatch:'emerald',   bonus:{atkBoost:0.05,lifesteal:0.03},              desc:'Emerald Ring + Emerald Pendant both enchanted: +5% Attack, +3% lifesteal'},
-  ruby:      {name:'Ruby Fang',       slots:['ring_l','amulet'], gemMatch:'ruby',      bonus:{atkBoost:0.07,lifesteal:0.04,critChance:0.02}, desc:'Ruby Ring + Ruby Pendant both enchanted: +7% Attack, +4% lifesteal, +2% crit'},
-  diamond:   {name:'Diamond Fang',    slots:['ring_l','amulet'], gemMatch:'diamond',   bonus:{atkBoost:0.09,lifesteal:0.05,critChance:0.03}, desc:'Diamond Ring + Diamond Pendant both enchanted: +9% Attack, +5% lifesteal, +3% crit'},
-  amethyst:  {name:"Reaver's Fang",   slots:['ring_l','amulet'], gemMatch:'amethyst',  bonus:{atkBoost:0.11,lifesteal:0.06,critChance:0.04}, desc:'Amethyst Ring + Amethyst Pendant both enchanted: +11% Attack, +6% lifesteal, +4% crit'},
-  dragon:    {name:'Dragon Fang',     slots:['ring_l','amulet'], gemMatch:'dragon',    bonus:{atkBoost:0.14,lifesteal:0.07,critChance:0.05}, desc:'Dragon Ring + Dragon Pendant both enchanted: +14% Attack, +7% lifesteal, +5% crit'},
-  bloodstone:{name:'Bloodfang',       slots:['ring_l','amulet'], gemMatch:'bloodstone',bonus:{atkBoost:0.17,lifesteal:0.09,critChance:0.06}, desc:'Bloodstone Ring + Bloodstone Pendant both enchanted: +17% Attack, +9% lifesteal, +6% crit'},
-  void:      {name:'Void Fang',       slots:['ring_l','amulet'], gemMatch:'void',      bonus:{atkBoost:0.22,lifesteal:0.12,critChance:0.08}, desc:'Void Ring + Void Pendant both enchanted: +22% Attack, +12% lifesteal, +8% crit'},
+  sapphire:  {name:'Sapphire Fang',   slots:['ring_l','amulet'], gemMatch:'sapphire',  bonus:{dmgBoost:0.03,lifesteal:0.02},              desc:'Sapphire Ring + Sapphire Pendant both enchanted: +3% damage, +2% lifesteal'},
+  emerald:   {name:'Emerald Fang',    slots:['ring_l','amulet'], gemMatch:'emerald',   bonus:{dmgBoost:0.05,lifesteal:0.03},              desc:'Emerald Ring + Emerald Pendant both enchanted: +5% damage, +3% lifesteal'},
+  ruby:      {name:'Ruby Fang',       slots:['ring_l','amulet'], gemMatch:'ruby',      bonus:{dmgBoost:0.07,lifesteal:0.04,critChance:0.02}, desc:'Ruby Ring + Ruby Pendant both enchanted: +7% damage, +4% lifesteal, +2% crit'},
+  diamond:   {name:'Diamond Fang',    slots:['ring_l','amulet'], gemMatch:'diamond',   bonus:{dmgBoost:0.09,lifesteal:0.05,critChance:0.03}, desc:'Diamond Ring + Diamond Pendant both enchanted: +9% damage, +5% lifesteal, +3% crit'},
+  amethyst:  {name:"Reaver's Fang",   slots:['ring_l','amulet'], gemMatch:'amethyst',  bonus:{dmgBoost:0.11,lifesteal:0.06,critChance:0.04}, desc:'Amethyst Ring + Amethyst Pendant both enchanted: +11% damage, +6% lifesteal, +4% crit'},
+  dragon:    {name:'Dragon Fang',     slots:['ring_l','amulet'], gemMatch:'dragon',    bonus:{dmgBoost:0.14,lifesteal:0.07,critChance:0.05}, desc:'Dragon Ring + Dragon Pendant both enchanted: +14% damage, +7% lifesteal, +5% crit'},
+  bloodstone:{name:'Bloodfang',       slots:['ring_l','amulet'], gemMatch:'bloodstone',bonus:{dmgBoost:0.17,lifesteal:0.09,critChance:0.06}, desc:'Bloodstone Ring + Bloodstone Pendant both enchanted: +17% damage, +9% lifesteal, +6% crit'},
+  void:      {name:'Void Fang',       slots:['ring_l','amulet'], gemMatch:'void',      bonus:{dmgBoost:0.22,lifesteal:0.12,critChance:0.08}, desc:'Void Ring + Void Pendant both enchanted: +22% damage, +12% lifesteal, +8% crit'},
 };
 /* Is a set active in `loadout`? For the neck (amulet) slot, the equipped item's TYPE must
    match `neckType` — so amulet sets need an amulet on the neck, pendant sets need a pendant. */
@@ -11565,6 +11566,18 @@ function _variantReconcile(base, vid, worn){
 const ENCH_STAT={
   // Combat — summed by combatEnchantBonuses()
   atkBoost:   {label:'Attack',                     word:'Might',     scope:'combat',   gear:0.005,  jewel:0.020},
+  /* Ranged damage (0.9.127.2) is the bow's Attack: the same size on purpose, so a
+     bow's old Attack line moved across at exactly its old value and quality, and an
+     archer rerolling a ring gets the same numbers a swordsman does. */
+  rangedStr:  {label:'Ranged damage',              word:'the Hawk',  scope:'combat',   gear:0.005,  jewel:0.020},
+  /* Three more to roll (0.9.127.2), each feeding a channel combat already had:
+     accBoost is Point Blank's accuracy, critDmg is what Rending Blows and Deadeye
+     add to a crit, combatXp is the Veteran nodes' multiplier. Accuracy is larger
+     per point than Attack because it saturates (hit chance is acc/(acc+def)) and
+     buys no damage. Each sits under the stacked ceiling like everything else. */
+  accBoost:   {label:'Accuracy',                   word:'Aim',       scope:'combat',   gear:0.008,  jewel:0.030},
+  critDmg:    {label:'Critical damage',            word:'Carnage',   scope:'combat',   gear:0.010,  jewel:0.040},
+  combatXp:   {label:'Combat XP',                  word:'Valour',    scope:'combat',   gear:0.006,  jewel:0.030},
   defBoost:   {label:'Defence',                    word:'Warding',   scope:'combat',   gear:0.005,  jewel:0.024},
   hpBoost:    {label:'Max health',                 word:'Vigour',    scope:'combat',   gear:0.0033, jewel:0.020},
   critChance: {label:'Critical hit chance',        word:'Precision', scope:'combat',   gear:0.003,  jewel:0.016},
@@ -11584,18 +11597,31 @@ const ENCH_STAT={
    piece from the skilling column, and jewelry (worn in both loadouts) from both.
    A stat tied to one skill only enters the pool for that skill's own pieces, so a
    woodcutting hat cannot roll prized catch chance. */
+/* `ranged` on a pool means it is the one a bow or crossbow rolls from in place of
+   the ordinary weapon pool (0.9.127.2): a bow rolls Ranged damage where a sword
+   rolls Attack. Head and hands, jewelry and the unique line offer both, because
+   archers and swordsmen wear the same helmets and rings. */
 const ENCH_POOL={
   armour:   {slots:['chest','legs'],           combat:['defBoost','hpBoost','lifesteal'],    skilling:['doubleYield','xpBoost','rareFind']},
-  headhands:{slots:['helmet','gloves'],        combat:['atkBoost','critChance','goldFind'],  skilling:['speed','rareFind','prized']},
-  feetback: {slots:['boots','cape'],           combat:['lifesteal','hpBoost','goldFind'],    skilling:['speed','gpBoost','xpBoost']},
-  weapon:   {slots:['weapon'],                 combat:['atkBoost','critChance','lifesteal'], skilling:[]},
+  headhands:{slots:['helmet','gloves'],        combat:['atkBoost','rangedStr','accBoost','critChance','goldFind'],  skilling:['speed','rareFind','prized']},
+  feetback: {slots:['boots','cape'],           combat:['lifesteal','hpBoost','goldFind','combatXp'],    skilling:['speed','gpBoost','xpBoost']},
+  weapon:   {slots:['weapon'],                 combat:['atkBoost','critChance','critDmg','lifesteal'], skilling:[]},
+  bow:      {slots:['weapon'], ranged:true,    combat:['rangedStr','critChance','critDmg','lifesteal'], skilling:[]},
   shield:   {slots:['shield'],                 combat:['defBoost','hpBoost','lifesteal'],    skilling:[]},
   jewelry:  {slots:['ring_l','ring_r','amulet'],
-             combat:['atkBoost','defBoost','hpBoost','critChance','lifesteal','goldFind'],
+             combat:['atkBoost','rangedStr','defBoost','hpBoost','critChance','lifesteal','goldFind'],
              skilling:['speed','xpBoost','gpBoost','doubleYield']},
 };
 const ENCH_LINES=2;                 // lines every enchantable piece carries
 const ENCH_UNIQUE_POOL=['atkBoost','critChance','lifesteal','hpBoost'];
+/* The unique line's pool, per piece. A bow's is Ranged damage instead of Attack, a
+   sword's stays Attack, and everything else (armour, shields, capes) can roll
+   either, because a raid helm is worn with a bow as often as with a blade. */
+function enchUniquePoolFor(id){
+  const it=ITEMS[variantBase(id)]||{};
+  if(it.cslot==='weapon') return it.ranged ? ['rangedStr','critChance','lifesteal','hpBoost'] : ENCH_UNIQUE_POOL;
+  return ['atkBoost','rangedStr','critChance','lifesteal','hpBoost'];
+}
 const ENCH_UNIQUE_MULT=2;           // the unique line rolls at twice a normal line's size
 const ENCH_SKILLGEAR_TIER=8;        // skilling set pieces have no tier of their own
 const ENCH_Q_SKEW=1.5;              // q = rand^skew: a 90%+ line is about 1 roll in 15
@@ -11623,6 +11649,7 @@ function enchPoolFor(id){
   for(const pk in ENCH_POOL){
     const P=ENCH_POOL[pk];
     if(P.slots.indexOf(slot)<0) continue;
+    if(!!P.ranged !== !!it.ranged) continue;       // a bow takes the bow pool, a sword the weapon pool
     let keys=kind==='both'?P.combat.concat(P.skilling):(kind==='combat'?P.combat:P.skilling);
     keys=keys.filter(k=>ENCH_STAT[k]&&(!ENCH_STAT[k].skill||it.gearSkill===ENCH_STAT[k].skill));
     return keys.length?{pool:pk, kind:kind, keys:keys}:null;
@@ -11684,7 +11711,7 @@ function enchRollLines(id,keepLocked){
     if(keepLocked&&oldUnique&&oldUnique.lock) lines.push(oldUnique);
     else {
       const used=lines.filter(Boolean).map(l=>l.k);
-      const k=_enchPick(ENCH_UNIQUE_POOL,used), q=_enchQ();
+      const k=_enchPick(enchUniquePoolFor(id),used), q=_enchQ();
       lines.push({k:k, v:enchValueAt(k,id,q,ENCH_UNIQUE_MULT), q:+q.toFixed(3), lock:false, u:true});
     }
   }
@@ -11809,8 +11836,10 @@ function enchantBonuses(skill){
 /* Combat enchantment bonuses from equipped+enchanted jewelry. Defined now so combat
    jewelry can be crafted/enchanted/tested; the Combat tab will read this when built. */
 function combatEnchantBonuses(){
-  var CK={atkBoost:0,hpBoost:0,defBoost:0,critChance:0,lifesteal:0,goldFind:0};
-  var total={atkBoost:0,hpBoost:0,defBoost:0,critChance:0,lifesteal:0,goldFind:0};
+  // rangedStr is a bow's damage line; dmgBoost is a set's "damage with any weapon",
+  // which combatBonusesAll hands to whichever channel the held weapon reads.
+  var CK={atkBoost:0,rangedStr:0,dmgBoost:0,hpBoost:0,defBoost:0,critChance:0,lifesteal:0,goldFind:0,accBoost:0,critDmg:0,combatXp:0};
+  var total={atkBoost:0,rangedStr:0,dmgBoost:0,hpBoost:0,defBoost:0,critChance:0,lifesteal:0,goldFind:0,accBoost:0,critDmg:0,combatXp:0};
   // Combat enchant bonuses read from the COMBAT loadout only.
   var ce=state.combatEquipped||{};
   for(var slot in ce){
@@ -11825,7 +11854,7 @@ function combatEnchantBonuses(){
   for(var pk in PENDANT_SETS){ var pd=PENDANT_SETS[pk];
     if(_enchantSetActive(pd, ce, 'pendant')){ for(var bk2 in pd.bonus){ if(bk2 in CK) total[bk2]+=pd.bonus[bk2]; } } }
   // Rolled lines on worn pieces, including the unique line on drops and raid gear.
-  var rl=enchLineBonuses(ce,['atkBoost','hpBoost','defBoost','critChance','lifesteal','goldFind']);
+  var rl=enchLineBonuses(ce,['atkBoost','rangedStr','hpBoost','defBoost','critChance','lifesteal','goldFind','accBoost','critDmg','combatXp']);
   for(var rk in rl) total[rk]+=rl[rk];
   return total;
 }
@@ -11848,7 +11877,7 @@ function _ewSetMap(kind){
    — it mixes speed with Attack/Defence/Max HP — and the tooltip has to say so
    rather than quietly reporting half a set. */
 function _ewSetSpansBoth(def){
-  var CK={atkBoost:1,hpBoost:1,defBoost:1,critChance:1,lifesteal:1};
+  var CK={atkBoost:1,rangedStr:1,dmgBoost:1,hpBoost:1,defBoost:1,critChance:1,lifesteal:1};
   var SK={speed:1,xpBoost:1,gpBoost:1,doubleYield:1};
   var c=false,k=false;
   for(var b in def.bonus){ if(CK[b])c=true; if(SK[b])k=true; }
@@ -11891,10 +11920,13 @@ const SOCKET_DRILL_COSTS=[
    so the math composes cleanly. Skilling keys go through socketBonuses(skill);
    combat keys go through combatSocketBonuses() (wired when combat is built). */
 const SOCKET_GEMS={
-  // Sanguine — combat ATK
-  sanguine_chip:   {name:'Chipped Sanguine',  color:'sanguine', tier:1, bonus:{atkBoost:0.02}, desc:'+2% Attack'},
-  sanguine_polish: {name:'Polished Sanguine', color:'sanguine', tier:2, bonus:{atkBoost:0.04}, desc:'+4% Attack'},
-  sanguine_flaw:   {name:'Flawless Sanguine', color:'sanguine', tier:3, bonus:{atkBoost:0.08}, desc:'+8% Attack'},
+  /* Sanguine: damage with whatever you hold (0.9.127.2). It was Attack %, which a
+     bow read as damage too. There is no ranged gem to move an archer onto, so rather
+     than leave every archer's sockets empty the gem feeds the held weapon's channel:
+     Attack % with a sword, Ranged damage % with a bow. */
+  sanguine_chip:   {name:'Chipped Sanguine',  color:'sanguine', tier:1, bonus:{dmgBoost:0.02}, desc:'+2% damage'},
+  sanguine_polish: {name:'Polished Sanguine', color:'sanguine', tier:2, bonus:{dmgBoost:0.04}, desc:'+4% damage'},
+  sanguine_flaw:   {name:'Flawless Sanguine', color:'sanguine', tier:3, bonus:{dmgBoost:0.08}, desc:'+8% damage'},
   // Verdant — combat HP
   verdant_chip:    {name:'Chipped Verdant',   color:'verdant',  tier:1, bonus:{hpBoost:0.02},  desc:'+2% Max HP'},
   verdant_polish:  {name:'Polished Verdant',  color:'verdant',  tier:2, bonus:{hpBoost:0.04},  desc:'+4% Max HP'},
@@ -12141,8 +12173,8 @@ function socketBonuses(skill){
 
 /* Total COMBAT socket bonuses. Will be consumed by combat math once combat unlocks. */
 function combatSocketBonuses(){
-  var CK={atkBoost:0,hpBoost:0,defBoost:0,critChance:0,lifesteal:0};
-  var total={atkBoost:0,hpBoost:0,defBoost:0,critChance:0,lifesteal:0};
+  var CK={atkBoost:0,rangedStr:0,dmgBoost:0,hpBoost:0,defBoost:0,critChance:0,lifesteal:0};
+  var total={atkBoost:0,rangedStr:0,dmgBoost:0,hpBoost:0,defBoost:0,critChance:0,lifesteal:0};
   // Combat socket bonuses read from the COMBAT loadout only.
   var ce=state&&state.combatEquipped;
   if(!state.sockets||!ce) return total;
@@ -15465,12 +15497,13 @@ function _gearStatVec(itemId){
 }
 /* Clean names only — the value already gets a trailing % for percentage stats,
    so a label like 'Crit%' would render "+5% Crit%". */
-var _GEAR_STAT_LABEL={atk:'Atk',str:'Str',def:'Def',crit:'Crit',dodge:'Dodge',aspd:'Atk Spd',
+var _GEAR_STAT_LABEL={atk:'Atk',str:'Str',rstr:'Ranged Str',def:'Def',crit:'Crit',dodge:'Dodge',aspd:'Atk Spd',
   /* %gpBoost is sale value everywhere it comes from (Fortune, Moon Amulet, trophy
      "gold from sales"), and %goldFind is Windfall's gold you earn, so the two can no
      longer share the one word. (0.9.124.55) */
   '%speed':'Speed','%xpBoost':'XP','%skillXp':'Skill XP','%gpBoost':'Sell','%goldFind':'Gold','%doubleYield':'2× Yield',
-  '%preserve':'Preserve','%atkBoost':'Atk','%critChance':'Crit','%lifesteal':'Lifesteal',
+  '%preserve':'Preserve','%atkBoost':'Atk','%rangedStr':'Ranged dmg','%dmgBoost':'Damage','%critChance':'Crit','%lifesteal':'Lifesteal',
+  '%accBoost':'Accuracy','%critDmg':'Crit dmg','%combatXp':'Combat XP',
   '%hpBoost':'HP','%defBoost':'Def','%rareFind':'Rare find','%prized':'Prized catch'};
 function _gearStatIsPct(key){ return key.charAt(0)==='%'||key==='crit'||key==='dodge'||key==='aspd'; }
 /* Resolve what's worn in a hovered item's slot and return the comparison line,
@@ -15505,8 +15538,8 @@ function gearDeltaHTML(candidateId, equippedId){
   var A=_gearStatVec(candidateId), B=_gearStatVec(equippedId);
   var keys={}; for(var k in A) keys[k]=1; for(var k2 in B) keys[k2]=1;
   // Stable, readable order: flat combat stats first, then percentages.
-  var order=['atk','str','def','crit','dodge','aspd','%speed','%xpBoost','%skillXp','%gpBoost','%goldFind',
-    '%doubleYield','%preserve','%atkBoost','%critChance','%lifesteal','%hpBoost','%defBoost'];
+  var order=['atk','str','rstr','def','crit','dodge','aspd','%speed','%xpBoost','%skillXp','%gpBoost','%goldFind',
+    '%doubleYield','%preserve','%atkBoost','%rangedStr','%dmgBoost','%accBoost','%critChance','%critDmg','%lifesteal','%hpBoost','%defBoost','%combatXp'];
   var seen=Object.keys(keys).sort(function(a,b){
     var ia=order.indexOf(a), ib=order.indexOf(b);
     return (ia<0?99:ia)-(ib<0?99:ib);
@@ -15540,6 +15573,8 @@ function combatGearStatBlock(itemId){
   if(s.atk) parts.push('<span style="color:#d04848"><span style="display:inline-block;font-size:calc(14px*var(--tscale));line-height:1;vertical-align:-2px;margin-right:2px">'+iconHTML('attack')+'</span>+'+s.atk+' Atk</span>');
   if(s.str) parts.push('<span style="color:#e0762f"><span style="display:inline-block;font-size:calc(14px*var(--tscale));line-height:1;vertical-align:-2px;margin-right:2px">'+iconHTML('strength')+'</span>+'+s.str+' Str</span>');
   if(s.def) parts.push('<span style="color:#5478c8"><span style="display:inline-block;font-size:calc(14px*var(--tscale));line-height:1;vertical-align:-2px;margin-right:2px">'+iconHTML('defence')+'</span>+'+s.def+' Def</span>');
+  // Ranged Strength (0.9.127.2): a bow's damage, as Str is a sword's.
+  if(s.rstr) parts.push('<span style="color:#a8c86a"><span style="display:inline-block;font-size:calc(14px*var(--tscale));line-height:1;vertical-align:-2px;margin-right:2px">'+iconHTML('ranged')+'</span>+'+s.rstr+' Ranged Str</span>');
   // Leather secondary perks — crit / dodge / attack-speed (fractions → %).
   if(s.crit)  parts.push('<span style="color:#ffd24a">'+iconHTML('ui_spark')+' +'+Math.round(s.crit*100)+'% Crit</span>');
   if(s.dodge) parts.push('<span style="color:#7fd8c8">'+iconHTML('ui_wind')+' +'+Math.round(s.dodge*100)+'% Dodge</span>');
@@ -15614,6 +15649,15 @@ function combatGearStatBlock(itemId){
     else if(_wc==='standard') chips.push(_chip('#d6aa60','ui_sword','Standard'));
   }
   if(it.twoHanded) chips.push(_chip('#c9a86a','ui_swords','Two-handed'));
+  /* A bow's own damage and speed (0.9.127.2). Every longbow and crossbow has always
+     hit harder than a shortbow, and every shortbow has always been faster, and no
+     card said so: the only number on a bow was its Attack. */
+  if(it.cslot==='weapon' && it.ranged){
+    var _dm=Math.round(((it.dmgMult||1)-1)*100), _sp=Math.round((1-(it.swingMult||1))*100);
+    if(_dm>0) chips.push(_chip('#a8c86a','ranged','+'+_dm+'% damage'));
+    if(_sp>0) chips.push(_chip('#9be89b','ui_bolt',_sp+'% faster attacks'));
+    else if(_sp<0) chips.push(_chip('#e0762f','ui_bolt',(-_sp)+'% slower attacks'));
+  }
   /* Ticket #129. With a bow or crossbow, every point of Defence on armour that is
      not light costs 0.6% ranged accuracy, down to a floor (rangedArmourMult). Nothing
      on screen said so, or said which pieces were light. Each armour piece now names
@@ -15767,7 +15811,7 @@ function gearExtrasHTML(id){
   return out.join('');
 }
 /* Trophy and sea jewellery bonus names, shared by the tooltip and the swap picker. */
-var JBONUS_LABEL={atkBoost:['Melee damage','#d04848'],hpBoost:['Max HP','#7fd07f'],defBoost:['Defence','#5478c8'],
+var JBONUS_LABEL={atkBoost:['Melee damage','#d04848'],rangedStr:['Ranged damage','#a8c86a'],dmgBoost:['Damage','#d04848'],hpBoost:['Max HP','#7fd07f'],defBoost:['Defence','#5478c8'],
   critChance:['Crit chance','#ffd24a'],lifesteal:['Lifesteal','#e07a6a'],gpBoost:['Gold from sales','#f0c060'],
   xpBoost:['All skill XP','#7fd8c8']};
 function trophyJewelBlock(itemId){
@@ -18296,7 +18340,7 @@ function alchEffectText(potionId){
   if(p.gp) bits.push('+'+Math.round(p.gp*100)+'% sell');
   if(p.doubleChance) bits.push('+'+Math.round(p.doubleChance*100)+'% double');
   if(p.atk) bits.push('+'+p.atk+' Attack');
-  if(p.str) bits.push('+'+p.str+' Strength');
+  if(p.str) bits.push('+'+p.str+' Strength, melee or ranged');
   if(p.def) bits.push('+'+p.def+' Defence');
   if(p.heal) bits.push('heals '+p.heal);
   if(p.regen) bits.push(p.regen+' HP over '+(p.regenDur||0)+'s');
@@ -19051,6 +19095,7 @@ function _bodyItemDescBase(id){
     var parts=[];
     if(s.atk) parts.push('+'+s.atk+' Atk');
     if(s.str) parts.push('+'+s.str+' Str');
+    if(s.rstr) parts.push('+'+s.rstr+' Ranged Str');
     if(s.def) parts.push('+'+s.def+' Def');
     return parts.length?parts.join(' · '):'No combat stats';
   }
@@ -19065,7 +19110,7 @@ function _bodyItemDescBase(id){
     var _w=(typeof eqCombatWeapon==='function')?eqCombatWeapon():'';
     var _bad=(_w&&ITEMS[_w]&&ITEMS[_w].ranged&&ITEMS[_w].ammo===it.ammo&&!ammoFitsWeapon(_w,id));
     return (_bad?('Too high a tier for your '+ITEMS[_w].name+' · '):'')
-      +'+'+(it.ammoStr||0)+' strength from '+_fires
+      +'+'+(it.ammoStr||0)+' Ranged Strength from '+_fires
       +(_n?(' · '+_n.toLocaleString()+' in the satchel'):'');
   }
   /* Trophy and sea jewellery carry a fixed bonus and cannot be enchanted, and the
@@ -20945,6 +20990,27 @@ function normalizeState(){
     state.enchantments={};
     state.enchMigrated=true;
   }
+  /* Bows roll Ranged damage, not Attack (0.9.127.2). Runs once per save.
+
+     Attack % stopped reaching a bow's max hit in this build, so an Attack line
+     already rolled on a bow would have gone quietly dead. It moves across instead:
+     same value, same quality, same lock, and the unique line too. Ranged damage is
+     the same size as Attack and counts toward a bow's accuracy the way Attack did,
+     so the archer's accuracy and max hit are exactly what they were.
+
+     Only bows and crossbows. A ring or a helmet is worn with a sword as often as
+     with a bow, so an Attack line on one stays Attack; the reroll is the player's.
+     The variant is re-registered so its name follows ("Plummet of the Hawk"). */
+  if(!state.rstrMigrated){
+    for(const _vid in (state.variants||{})){
+      const _v=state.variants[_vid], _b=_v&&ITEMS[_v.base];
+      if(!_b||!_b.ranged||!Array.isArray(_v.lines)) continue;
+      let _moved=false;
+      for(const L of _v.lines){ if(L&&L.k==='atkBoost'){ L.k='rangedStr'; _moved=true; } }
+      if(_moved && typeof registerVariant==='function') registerVariant(_vid);
+    }
+    state.rstrMigrated=true;
+  }
   // Migration: move any skillGear items that ended up in state.items into state.skillingGear
   for(const id in state.items){
     if(ITEMS[id]&&ITEMS[id].skillGear&&(state.items[id]||0)>0){
@@ -22329,7 +22395,7 @@ function activeCombatSets(){
 }
 /* Aggregate bonus from every full set worn. */
 function combatSetBonus(){
-  const b={atkBoost:0,hpBoost:0,defBoost:0,critChance:0,lifesteal:0};
+  const b={atkBoost:0,rangedStr:0,dmgBoost:0,hpBoost:0,defBoost:0,critChance:0,lifesteal:0};
   for(const k of activeCombatSets()){
     const bn=COMBAT_SETS[k].bonus||{};
     for(const key in bn) b[key]=(b[key]||0)+bn[key];
@@ -22341,7 +22407,7 @@ function combatSetBonus(){
    the set/enchant/socket pipeline (atkBoost/hpBoost/defBoost/critChance/lifesteal) and
    flow through combatBonusesAll like everything else. */
 function combatUniqueBonuses(){
-  const b={atkBoost:0,hpBoost:0,defBoost:0,critChance:0,lifesteal:0};
+  const b={atkBoost:0,rangedStr:0,dmgBoost:0,hpBoost:0,defBoost:0,critChance:0,lifesteal:0};
   const ce=state&&state.combatEquipped; if(!ce) return b;
   for(const itemId of Object.values(ce)){
     const it=ITEMS[itemId]; const ub=it&&it.ubonus; if(!ub) continue;
@@ -22362,7 +22428,7 @@ function combatUniqueBonuses(){
    This comment previously also listed Savage Edge, Executioner, Berserker, Stonewall
    and Warlord, which were wired in 1.0.104 — keep it in step with CMAST_UNWIRED. */
 function cmastBonuses(){
-  const b={atkBoost:0,hpBoost:0,defBoost:0,critChance:0,lifesteal:0,aspd:0,
+  const b={atkBoost:0,rangedStr:0,hpBoost:0,defBoost:0,critChance:0,lifesteal:0,aspd:0,
            maxHpFlat:0,dmgReduce:0,combatXpMult:0,gpMult:0,
            /* (0.9.130) channels added when the last unwired nodes landed */
            rareDrop:0,doubleDrop:0,critDmg:0,consolation:0,trophyGuarantee:0,
@@ -22371,21 +22437,23 @@ function cmastBonuses(){
               routed through it silently doubles as a damage buff. */
            accBoost:0,ammoSave:0,armourPen:0,volley:0,ammoRefundOnMiss:0,pinning:0};
   if(!state||!state.cmast) return b;
+  /* THE WEAPON GATE. Two damage channels since 0.9.127.2: atkBoost for melee and
+     rangedStr for a bow or crossbow. Before that there was only atkBoost, which
+     both playerMaxHit branches read, so every Attack % in the game raised your
+     arrows too. A melee node feeds atkBoost, a Marksman node feeds rangedStr, and
+     the any-weapon nodes (Skirmisher, Vanguard, Champion, Conqueror) feed whichever
+     one the weapon in your hand uses. `_dk` is that channel. */
+  const _rng = (typeof usingRanged==='function') && usingRanged();
+  const _dk = _rng ? 'rangedStr' : 'atkBoost';
   // effect-key → channel (only always-on scalars; conditional/proc keys ignored here)
   for(const id in state.cmast){
     const rank=state.cmast[id]||0; if(rank<=0) continue;
     const node=(typeof CMAST_BY_ID!=='undefined')&&CMAST_BY_ID[id]; if(!node) continue;
     const ef=node.effect;
     if(ef){
-      /* THE WEAPON GATE. atkBoost is the one damage channel and both playerMaxHit
-         branches read it, so before Marksman existed "+3% melee damage" was also
-         buffing every bow in the game. A melee node must not pay a bow and a
-         Marksman node must not pay a sword; anyDmg is the bridge channel that
-         deliberately pays both. */
-      const _rng = (typeof usingRanged==='function') && usingRanged();
       if(ef.meleeDmg && !_rng) b.atkBoost += ef.meleeDmg*rank;
-      if(ef.rangedDmg && _rng) b.atkBoost += ef.rangedDmg*rank;
-      if(ef.anyDmg)            b.atkBoost += ef.anyDmg*rank;
+      if(ef.rangedDmg && _rng) b.rangedStr += ef.rangedDmg*rank;
+      if(ef.anyDmg)            b[_dk] += ef.anyDmg*rank;
       if(ef.rangedCrit && _rng) b.critChance += ef.rangedCrit*rank;
       if(ef.ammoSave)          b.ammoSave += ef.ammoSave*rank;
       if(ef.xbowDmg && _rng){
@@ -22394,7 +22462,7 @@ function cmastBonuses(){
            away and finished 12 points behind a crossbow on the same column. */
         const _xw=(typeof eqCombatWeapon==='function')?eqCombatWeapon():'';
         const _isX=!!(_xw && ITEMS[_xw] && ITEMS[_xw].ammo==='bolt');
-        b.atkBoost += ef.xbowDmg*rank*(_isX?2:1);
+        b.rangedStr += ef.xbowDmg*rank*(_isX?2:1);
       }
       if(ef.critChance) b.critChance   += ef.critChance*rank;
       if(ef.maxHp)      b.maxHpFlat     += ef.maxHp*rank;
@@ -22407,7 +22475,7 @@ function cmastBonuses(){
       if(ef.doubleDrop) b.doubleDrop    += ef.doubleDrop*rank;  // Plunder
     }
     // Flat always-on unique/capstone effects (by id)
-    if(id==='g_cap'){ b.atkBoost+=0.05; b.defBoost+=0.05; b.hpBoost+=0.05; }        // Conqueror
+    if(id==='g_cap'){ b[_dk]+=0.05; b.defBoost+=0.05; b.hpBoost+=0.05; }            // Conqueror
     if(id==='g_t5_m'){ b.combatXpMult+=0.10; b.gpMult+=0.10; }                       // War Banner
     if(id==='r_t5_r' && typeof eqCombatShield==='function' && eqCombatShield()){ b.dmgReduce+=0.10; } // Shield Wall
     if(id==='m_t3_r'){ b.critDmg+=0.20; }                                            // Rending Blows
@@ -22430,11 +22498,11 @@ function cmastBonuses(){
     if(id==='k_t5_m'){ b.pinning=1; }                                                // Pinning Shot
     if(id==='k_t5_r'){ b.ammoRefundOnMiss=1; }                                        // Quiver Master
     if(id==='k_cap' && typeof usingRanged==='function' && usingRanged()){ b.critDmg+=0.25; } // Deadeye
-    if(id==='kb_t4'){ b.atkBoost+=0.06; b.maxHpFlat+=4; }                             // Vanguard
+    if(id==='kb_t4'){ b[_dk]+=0.06; b.maxHpFlat+=4; }                                 // Vanguard
     if(id==='g_t5_l'){ b.rareDrop+=0.03; }                                           // Headhunter
     if(id==='g_t3_r'){ b.consolation+=0.25; }                                        // Scavenger
     if(id==='g_t3_l'){ b.trophyGuarantee=1; }                                        // Trophy Hunter
-    if(id==='rm_t4'){ b.atkBoost+=0.05; b.dmgReduce+=0.05; }                          // Champion
+    if(id==='rm_t4'){ b[_dk]+=0.05; b.dmgReduce+=0.05; }                              // Champion
     /* Undying — a conditional that belongs in the always-on DR channel because that
        is the only place the combat tick reads damage reduction from. `combat` is a
        module-level object that exists outside a fight too, hence the guard. */
@@ -22523,13 +22591,27 @@ function combatBonusesAll(){
   const ce=(state&&state.combatEquipped)||{};
   const tj={
     atkBoost:  jewelryInnateBonus(ce,'atkBoost'),
+    rangedStr: jewelryInnateBonus(ce,'rangedStr'),
     hpBoost:   jewelryInnateBonus(ce,'hpBoost'),
     defBoost:  jewelryInnateBonus(ce,'defBoost'),
     critChance:jewelryInnateBonus(ce,'critChance'),
     lifesteal: jewelryInnateBonus(ce,'lifesteal'),
   };
+  /* Two damage channels (0.9.127.2). atkBoost is Attack %: melee damage, and
+     accuracy for every weapon. rangedStr is Ranged damage %: a bow's damage and
+     its accuracy, the way Attack % is both for a sword. Nothing labelled Attack
+     reaches a bow's max hit any more.
+
+     dmgBoost is "damage with any weapon": Sanguine gems and the jewelry sets,
+     which have no ranged twin, so they feed whichever channel the weapon in your
+     hand reads rather than leaving an archer's sockets dead. */
+  const rng=(typeof usingRanged==='function')&&usingRanged();
+  const anyDmg=(e.dmgBoost||0) + (s.dmgBoost||0) + (st.dmgBoost||0) + (u.dmgBoost||0) + (tj.dmgBoost||0);
   return {
-    atkBoost:  (e.atkBoost||0)  + (s.atkBoost||0) + (st.atkBoost||0) + (u.atkBoost||0) + (asc.atkBoost||0) + cm.atkBoost + tj.atkBoost + gdMelee,
+    atkBoost:  (e.atkBoost||0)  + (s.atkBoost||0) + (st.atkBoost||0) + (u.atkBoost||0) + (asc.atkBoost||0) + cm.atkBoost + tj.atkBoost + gdMelee
+               + (rng?0:anyDmg),
+    rangedStr: (e.rangedStr||0) + (s.rangedStr||0) + (st.rangedStr||0) + (u.rangedStr||0) + (cm.rangedStr||0) + tj.rangedStr
+               + (rng?anyDmg:0),
     hpBoost:   (e.hpBoost||0)   + (s.hpBoost||0)  + (st.hpBoost||0)  + (u.hpBoost||0)  + (asc.hpBoost||0) + cm.hpBoost + tj.hpBoost,
     defBoost:  (e.defBoost||0)  + (s.defBoost||0) + (st.defBoost||0) + (u.defBoost||0) + (asc.defBoost||0) + cm.defBoost + tj.defBoost,
     // Leather crit stacks on top of enchant/socket/set/unique crit — all flow through
@@ -22541,12 +22623,22 @@ function combatBonusesAll(){
     /* Anything cmastBonuses computes has to be RE-LISTED here or it never leaves
        the function. Point Blank read as a dead node for exactly that reason. */
     accBoost:  (cm.accBoost||0) + ((typeof spireBoon==='function')?spireBoon('accBoost'):0)
-               + ((typeof usingRanged==='function'&&usingRanged())?treeRank('fletching','fl_acc')*FL_ACC_RANK:0),   // Keen Heads
+               + ((typeof usingRanged==='function'&&usingRanged())?treeRank('fletching','fl_acc')*FL_ACC_RANK:0)   // Keen Heads
+               + (e.accBoost||0),                                                                                 // Accuracy lines
+    /* Crit damage and combat XP, the Mastery board's plus rolled enchant lines
+       (0.9.127.2). The crit roll in combatTick and grantCombatXp read these. */
+    critDmg:   (cm.critDmg||0) + (e.critDmg||0),
+    combatXpMult:(cm.combatXpMult||0) + (e.combatXp||0),
   };
 }
 
 function combatStats(){
-  let atk=0, str=0, def=0;
+  /* rstr is Ranged Strength (0.9.127.2): what a bow's max hit reads, where melee
+     reads str. It used to be the same number, so a helmet's Strength or a sword
+     slot's worth of melee gear quietly raised your arrows too. The arrow's own
+     strength is added in playerMaxHit, not here, because it only counts while
+     that arrow is loaded. */
+  let atk=0, str=0, def=0, rstr=0;
   // Combat stats are sourced from the COMBAT loadout only — the player's
   // skilling loadout is fully independent and doesn't bleed into combat math.
   const ce=state&&state.combatEquipped;
@@ -22557,6 +22649,7 @@ function combatStats(){
       atk += cs.atk||0;
       str += cs.str||0;
       def += cs.def||0;
+      rstr += cs.rstr||0;
     }
   }
   // Mastersmith — +10% from worn crafted gear when the perk is owned.
@@ -22566,6 +22659,7 @@ function combatStats(){
       atk = Math.round(atk*1.1);
       str = Math.round(str*1.1);
       def = Math.round(def*1.1);
+      rstr = Math.round(rstr*1.1);
     }
   }catch(e){}
   // Active combat buff potions add on top of gear (atk/str/def from Honed
@@ -22575,10 +22669,15 @@ function combatStats(){
   atk += pot.atk;
   str += pot.str;
   def += pot.def;
+  /* Strength from a potion or a food counts as Ranged Strength too. There is no
+     ranged potion or ranged food yet, and auto-eat feeds an archer the same roasts
+     it feeds a swordsman, so taking this away would have been a quiet nerf rather
+     than a re-plumb. The Ranged stat's description says so. */
+  rstr += pot.str;
   // Class ↔ armour synergy (1.0.70) — a small Attack/Defence bonus for wearing the
   // armour your class favours (rogue/berserker→leather atk, guardian→plate def).
   try{ const cab=classArmorStatBonus(); atk+=cab.atk; def+=cab.def; }catch(e){}
-  return {atk, str, def};
+  return {atk, str, def, rstr};
 }
 
 /* Per-piece combat gear contribution list, for the click-expand sidebar panel.
@@ -22596,13 +22695,13 @@ function combatGearBreakdown(){
     if(!itemId||seen[itemId]) return;
     const stats=gearStats(itemId);
     if(!stats) return;
-    if(!(stats.atk||stats.str||stats.def)) return;
+    if(!(stats.atk||stats.str||stats.def||stats.rstr)) return;
     seen[itemId]=true;
     const it=ITEMS[itemId];
     out.push({
       id:itemId,
       name:it?it.name:itemId,
-      atk:stats.atk||0, str:stats.str||0, def:stats.def||0
+      atk:stats.atk||0, str:stats.str||0, def:stats.def||0, rstr:stats.rstr||0
     });
   };
   for(const slot of order) pushPiece(ce[slot]);
@@ -22627,6 +22726,7 @@ function openGearModal(){
       const parts=[];
       if(g.atk) parts.push(`<span class="gdm-stat gdm-atk">+${g.atk} Attack</span>`);
       if(g.str) parts.push(`<span class="gdm-stat gdm-str">+${g.str} Strength</span>`);
+      if(g.rstr) parts.push(`<span class="gdm-stat gdm-str">+${g.rstr} Ranged Strength</span>`);
       if(g.def) parts.push(`<span class="gdm-stat gdm-def">+${g.def} Defence</span>`);
       return `<div class="gdm-row">
         <span class="gdm-ic">${iconHTML(g.id)}</span>
@@ -22643,6 +22743,7 @@ function openGearModal(){
       <div class="gdm-tot-title">Totals after bonuses</div>
       <div class="gdm-tot-row"><span>Attack</span><b>+${cs.atk}</b></div>
       <div class="gdm-tot-row"><span>Strength</span><b>+${cs.str}</b></div>
+      ${cs.rstr?`<div class="gdm-tot-row"><span>Ranged Strength</span><b>+${cs.rstr}</b></div>`:''}
       <div class="gdm-tot-row"><span>Defence</span><b>+${cs.def}</b></div>
     </div>`;
   }
@@ -22668,7 +22769,13 @@ const COMBAT_STATS={
   /* Ranged does the work of BOTH attack and strength when a bow or crossbow is
      held, which is why one ranged level is worth less than one attack level plus
      one strength level. See RANGED_HIT_LVL. */
-  ranged:    {name:'Ranged',    icon:'🏹', desc:'Accuracy AND damage, for bows and crossbows only.\nEach Ranged level adds +1.5 accuracy and +1.35 max hit; the arrow or bolt in your quiver adds +5 max hit per point of its strength.\nOne level here does the job of an Attack level and a Strength level, so it is worth less than either. Every shot spends ammunition.'},
+  /* A getter, because one sentence depends on RANGED_ACC_FROM_ATTACK and a copy of
+     that answer in a string would drift the day the switch is flipped. */
+  ranged:    {name:'Ranged',    icon:'🏹', get desc(){ return 'Accuracy AND damage, for bows and crossbows only.\nEach Ranged level adds +1.5 accuracy and +1.35 max hit.\n'
+    +'Each point of Ranged Strength adds +5 max hit. Most of it comes from the arrow or bolt in your quiver; some bows, bracers, gauntlets, bucklers and capes add more, and so does Strength from potions and food.\n'
+    +'Ranged damage % raises your max hit and accuracy with a bow, the way Attack % does with a sword.'
+    +((typeof RANGED_ACC_FROM_ATTACK!=='undefined'&&RANGED_ACC_FROM_ATTACK)?' Attack % still raises your accuracy with a bow, but not your damage.':' Attack % does nothing for a bow.')+'\n'
+    +'One level here does the job of an Attack level and a Strength level, so it is worth less than either. Every shot spends ammunition.'; }},
   hitpoints: {name:'Hitpoints', icon:'❤️', desc:'Your health pool. Reach 0 and you retreat.\nMax HP = Hitpoints level × 10 + ½ × gear def (Lv 10 = 100, Lv 99 = 990).\nGains XP from every point of damage you deal, and a share of every kill.\nStarts at level 10.'},
 };
 
@@ -22859,13 +22966,24 @@ function combatXpStat(){
   return (state.combatStyle==='strength'||state.combatStyle==='defence')?state.combatStyle:'attack';
 }
 
+/* Does Attack % still raise accuracy with a bow? (0.9.127.2)
+
+   Yes, for now. Ranged damage left Attack in 0.9.127.2, but accuracy was asked as a
+   separate question, and keeping it is the change that moves nothing: every
+   archer's accuracy is exactly what it was the day before, because everything that
+   moved from Attack % to Ranged damage % still counts toward it. Set this to false
+   and Attack % stops reaching a bow at all. The Attack printed on a bow or a piece
+   of leather is its accuracy and counts either way. */
+const RANGED_ACC_FROM_ATTACK = true;
+
 /* Player accuracy: (attack lvl ×1.5 + gear atk ×3.5) × (1+atkBoost) × class.
-   With a bow or crossbow the ranged level stands in for attack, and heavy armour
-   costs you. */
+   With a bow or crossbow the ranged level stands in for attack, Ranged damage %
+   raises it the way Attack % does for a sword, and heavy armour costs you. */
 function playerAccuracy(){
   const cs=combatStats();
   const b=combatBonusesAll();
-  const lvl=usingRanged()?cmbLvl('ranged'):cmbLvl('attack');
+  const rng=usingRanged();
+  const lvl=rng?cmbLvl('ranged'):cmbLvl('attack');
   /* accBoost is Point Blank and nothing else today. It is deliberately NOT folded
      into atkBoost: that channel is also read by playerMaxHit, so an accuracy node
      routed through it would silently be a damage node as well. */
@@ -22873,18 +22991,23 @@ function playerAccuracy(){
      bonus channels so it cannot leak into anything that reads atkBoost. */
   const _rs=(typeof rangedStyle==='function')?rangedStyle():null;
   const _rsa=_rs?_rs.acc:1;
+  const pct = rng
+    ? (RANGED_ACC_FROM_ATTACK?(b.atkBoost||0):0) + (b.rangedStr||0) + (b.accBoost||0)
+    : (b.atkBoost||0) + (b.accBoost||0);
   return Math.round((lvl*COMBAT_P.ACC_LVL + cs.atk*COMBAT_P.ACC_GEAR)
-    * (1 + (b.atkBoost||0) + (b.accBoost||0)) * classAccuracyMult() * rangedArmourMult() * _rsa);
+    * (1 + pct) * classAccuracyMult() * rangedArmourMult() * _rsa);
 }
 
-/* Player max hit: (strength lvl ×1.6 + gear str ×5.0) × (1+atkBoost) × class. */
+/* Player max hit: (strength lvl ×1.6 + gear str ×5.0) × (1+atkBoost) × class.
+   With a bow: (ranged lvl ×1.35 + Ranged Strength ×5.0) × (1+Ranged damage %). */
 function playerMaxHit(){
   const cs=combatStats();
   const b=combatBonusesAll();
   const bonusStr=(typeof shieldHpStrBonus==='function')?shieldHpStrBonus():0;   // Aegis HP-scaled shield-bash
-  /* A bow carries no strength of its own; the AMMUNITION does. A bow that also
-     carried strength would stack with the arrow and put ranged over melee before
-     the level coefficient was even considered. */
+  /* Ranged Strength (0.9.127.2) is the bow's own damage stat. The arrow carries most
+     of it; the raid bows, some leather and capes carry the rest. Melee Strength and
+     Attack % no longer reach this line at all. They used to, which is how a helmet's
+     Strength or a Sanguine gem labelled Attack ended up raising your arrows. */
   if(usingRanged()){
     /* dmgMult is the weapon driving the shot harder, and it exists because accuracy
        could not do the job. Hit chance is acc/(acc+def), which saturates: the
@@ -22892,8 +23015,8 @@ function playerMaxHit(){
        shortbow's 15% speed, and _rangedsim.js measured both it and the crossbow at
        80-90% of melee. Damage does not saturate. */
     const _wm=(ITEMS[eqCombatWeapon()]||{}).dmgMult||1;
-    return Math.max(1, Math.round((cmbLvl('ranged')*RANGED_HIT_LVL + (cs.str+ammoStr())*COMBAT_P.HIT_GEAR)
-      * _wm * (1 + (b.atkBoost||0)) * classMaxHitMult()
+    return Math.max(1, Math.round((cmbLvl('ranged')*RANGED_HIT_LVL + ((cs.rstr||0)+ammoStr())*COMBAT_P.HIT_GEAR)
+      * _wm * (1 + (b.rangedStr||0)) * classMaxHitMult()
       * (1 + treeRank('fletching','fl_dmg')*FL_DMG_RANK)));   // Practised Draw: damage only, not accuracy
   }
   return Math.max(1, Math.round((cmbLvl('strength')*COMBAT_P.HIT_LVL + (cs.str+bonusStr)*COMBAT_P.HIT_GEAR) * (1 + (b.atkBoost||0)) * classMaxHitMult()));
@@ -30289,7 +30412,14 @@ function renderStats(){
    +'</div>'
     // Derived stats — base + gear = total
    +breakRow('Accuracy'+(bow?' (Ranged)':''),  accBase, accGear, accTot)
-   +breakRow('Max Hit'+(bow?' (Ranged + arrow)':''),   hitBase, hitGear, hitTot)
+   +breakRow('Max Hit'+(bow?' (Ranged)':''),   hitBase, hitGear, hitTot)
+   /* Ranged Strength (0.9.127.2): the arrow's and the gear's, so an archer can see
+      where their hit comes from the way a swordsman sees Strength. */
+   +(bow?('<div title="The arrow in your quiver, plus your gear" style="display:flex;justify-content:space-between;align-items:baseline;gap:6px;font-size:calc(13px*var(--tscale));padding:3px 0">'
+     +  '<span style="color:var(--muted)">Ranged Strength</span>'
+     +  '<span style="font-family:var(--num)">'+((cs.rstr||0)>0?'<span style="color:var(--muted);font-size:calc(12px*var(--tscale))">'+ammoStr()+' + '+cs.rstr+' = </span>':'')
+     +    '<b style="color:var(--ember)">'+(ammoStr()+(cs.rstr||0))+'</b></span>'
+     +'</div>'):'')
    +breakRow('Defence',   defBase, defGear, defTot)
    +breakRow('Max HP',    hpBase,  hpGear,  hpTot)
    +'<div style="display:flex;justify-content:space-between;align-items:baseline;gap:6px;font-size:calc(13px*var(--tscale));padding:3px 0">'
@@ -30928,7 +31058,7 @@ function buildSpireLogBody(raid){
       <thead><tr><th>Piece</th><th>Slot</th><th>Stats</th>${[10,25,40,55,70].map(f=>`<th>F${f}</th>`).join('')}</tr></thead>
       <tbody>${SPIRE_GEAR.map(id=>{
         const it=ITEMS[id]||{}, cs=COMBAT_GEAR_STATS[id]||{};
-        const st=(cs.atk+(cs.str||0))>cs.def?`atk ${cs.atk} str ${cs.str}`:`def ${cs.def}${cs.atk?' atk '+cs.atk:''}`;
+        const st=(cs.atk+(cs.str||0)+(cs.rstr||0))>cs.def?(`atk ${cs.atk} `+(cs.rstr?`ranged str ${cs.rstr}`:`str ${cs.str}`)):`def ${cs.def}${cs.atk?' atk '+cs.atk:''}`;
         const have=(state.items&&state.items[id])>0;
         return `<tr class="${have?'mls-done':''}">
           <td class="mls-f" style="font-weight:400">${iconHTML(id)} ${it.name||id}</td>
@@ -31679,7 +31809,7 @@ function _bagDockHTML(id,cat){
     if({helmet:1,chest:1,legs:1,gloves:1,boots:1}[it.cslot]) sub+=' · '+(it.light?'Light':'Heavy');
     const s=gearStats(id)||{};
     const st=[];
-    if(s.atk) st.push('+'+s.atk+' Atk'); if(s.str) st.push('+'+s.str+' Str'); if(s.def) st.push('+'+s.def+' Def');
+    if(s.atk) st.push('+'+s.atk+' Atk'); if(s.str) st.push('+'+s.str+' Str'); if(s.rstr) st.push('+'+s.rstr+' Ranged Str'); if(s.def) st.push('+'+s.def+' Def');
     if(s.crit) st.push('+'+Math.round(s.crit*100)+'% Crit'); if(s.dodge) st.push('+'+Math.round(s.dodge*100)+'% Dodge');
     if(s.aspd) st.push('+'+Math.round(s.aspd*100)+'% Atk Speed');
     if(st.length) chips.push('<span class="dk-chip">'+st.join(' · ')+'</span>');
@@ -31690,7 +31820,7 @@ function _bagDockHTML(id,cat){
         +(met?'':' (you have '+cmbLvl(req.stat)+')')+'</span>');
     }
   } else if(ITEMS[id].ammo&&!it.ranged){
-    chips.push('<span class="dk-chip">+'+(it.ammoStr||0)+' strength a shot</span>');
+    chips.push('<span class="dk-chip">+'+(it.ammoStr||0)+' Ranged Strength a shot</span>');
   }
   // its enchant and gems by name, the same marks as the tile in words (0.9.124.53)
   const gx=gearExtrasHTML(id);
@@ -32530,7 +32660,7 @@ const CMAST_NODES=[
   {id:'g_t5_l', tree:'magic', tier:5, branch:'l', max:1, name:'Headhunter', desc:'+3% rare drop chance everywhere.', prereq:['g_t4_l:3'], unique:true},
   {id:'g_t5_m', tree:'magic', tier:5, branch:'m', max:1, name:'War Banner', desc:'+10% combat XP and +10% combat gold.', prereq:['g_t4_l:3','g_t4_r:3'], unique:true, powerful:true},
   {id:'g_t5_r', tree:'magic', tier:5, branch:'r', max:1, name:'Giant Slayer', desc:'+20% damage against bosses.', prereq:['g_t4_r:3'], unique:true},
-  {id:'g_cap', tree:'magic', tier:6, branch:'c', max:1, name:'Conqueror', desc:'+5% Attack, Strength and Defence.', prereq:['g_t5_m:1'], capstone:true},
+  {id:'g_cap', tree:'magic', tier:6, branch:'c', max:1, name:'Conqueror', desc:'+5% damage with any weapon, and +5% Defence.', prereq:['g_t5_m:1'], capstone:true},
 
   // ───────── MARKSMAN — ranged offence (30 pts) ─────────
   /* Ranged did not need its own board. Onslaught is the only column that ever
@@ -33491,7 +33621,7 @@ const HUNT_SECONDARY={
   // ── Cooking: insert by level, because array order drives the T{n} tier badge ──
   ITEMS.boar_roast   ={name:'Spit-roast Boar', icon:'🍖', sell:150,  potion:{heal:95},  desc:'A young boar turned over thicket coals until the skin cracks. Instant 95 HP.'};
   ITEMS.elk_haunch   ={name:'Smoked Elk Haunch', icon:'🍖', sell:520, potion:{heal:265, buff:{def:2,dur:60}}, desc:'Elk shoulder hung a night in birch smoke. Restores 265 HP and gives +2 Defence for 60s.'};
-  ITEMS.rhino_steak  ={name:'Seared Rhino Steak', icon:'🍖', sell:1800, potion:{heal:700, buff:{str:3,dur:90}}, desc:'A hand-thick cut off the steppe\'s heaviest animal, seared on a hot stone. Restores 700 HP and gives +3 Strength for 90s.'};
+  ITEMS.rhino_steak  ={name:'Seared Rhino Steak', icon:'🍖', sell:1800, potion:{heal:700, buff:{str:3,dur:90}}, desc:'A hand-thick cut off the steppe\'s heaviest animal, seared on a hot stone. Restores 700 HP and gives +3 Strength, melee or ranged, for 90s.'};
   /* Their own icons, NOT an alias of ogre_roast / drake_roast / infernal_roast.
      Aliasing copies whatever ICONS holds at THIS point in the file, which is the
      old SVG — the painted-art block at the bottom then repaints the original and
@@ -33627,7 +33757,7 @@ const HUNT_KIT=[
   const pal=LEATHER_PAL.wraith;
   // [id, name, generator, slot, def, atk, sell, ubonus, effectText]
   const U=[
-    ['wraithbound_cowl','Wraithbound Cowl',  _lHelmSVG, 'helmet', 18, 8, 22000, {critChance:0.045,atkBoost:0.03}, '+4.5% crit, +3% Attack'],
+    ['wraithbound_cowl','Wraithbound Cowl',  _lHelmSVG, 'helmet', 18, 8, 22000, {critChance:0.045,dmgBoost:0.03}, '+4.5% crit, +3% damage'],
     ['graveshroud_vest','Grave-Shroud Vest', _lChestSVG,'chest',  28,12, 26000, {lifesteal:0.05,critChance:0.035},'+5% lifesteal, +3.5% crit'],
   ];
   U.forEach(function(u){
@@ -33651,7 +33781,7 @@ const HUNT_KIT=[
   const U=[
     ['emberforged_aegis',  'Emberforged Aegis',  _chestSVG, PLATE, 'chest',  70, 3, 40000, {lifesteal:0.08,hpBoost:0.08},  '+8% lifesteal, +8% max HP'],
     ['emberforged_greaves','Emberforged Greaves',_legsSVG,  PLATE, 'legs',   52, 2, 32000, {defBoost:0.06,hpBoost:0.05},   '+6% Defence, +5% max HP'],
-    ['cinderweave_cowl',   'Cinderweave Cowl',   _lHelmSVG, HIDE,  'helmet', 22,11, 26000, {critChance:0.05,atkBoost:0.03},'+5% crit, +3% Attack'],
+    ['cinderweave_cowl',   'Cinderweave Cowl',   _lHelmSVG, HIDE,  'helmet', 22,11, 26000, {critChance:0.05,dmgBoost:0.03},'+5% crit, +3% damage'],
     ['emberhide_vest',     'Emberhide Vest',     _lChestSVG,HIDE,  'chest',  34,14, 30000, {lifesteal:0.06,critChance:0.04},'+6% lifesteal, +4% crit'],
   ];
   U.forEach(function(u){
@@ -33677,7 +33807,7 @@ const HUNT_KIT=[
   const U=[
     ['abyssal_aegis',    'Abyssal Aegis',    _chestSVG, PLATE, 'chest',  90, 4, 90000, {lifesteal:0.10,hpBoost:0.10},  '+10% lifesteal, +10% max HP · cheats death once per fight', true],
     ['voidforged_greaves','Voidforged Greaves',_legsSVG, PLATE, 'legs',   68, 3, 62000, {defBoost:0.08,hpBoost:0.06},   '+8% Defence, +6% max HP', false],
-    ['riftshadow_cowl',  'Riftshadow Cowl',  _lHelmSVG, HIDE,  'helmet', 30,14, 52000, {critChance:0.06,atkBoost:0.05},'+6% crit, +5% Attack', false],
+    ['riftshadow_cowl',  'Riftshadow Cowl',  _lHelmSVG, HIDE,  'helmet', 30,14, 52000, {critChance:0.06,dmgBoost:0.05},'+6% crit, +5% damage', false],
     ['voidheart_shroud', 'Voidheart Shroud', _lChestSVG,HIDE,  'chest',  44,18, 58000, {lifesteal:0.07,critChance:0.05},'+7% lifesteal, +5% crit', false],
   ];
   U.forEach(function(u){
@@ -33721,7 +33851,8 @@ const HUNT_KIT=[
   W('aegis_of_dawn','Aegis of Dawn','🛡️',95000,'shield','',{atk:0,str:0,def:100},
     {ubonus:{hpBoost:0.08,defBoost:0.05}, hpBlock:{per:120,cap:0.08}, hpStr:{per:50,cap:20}}, "A shield beaten from a single sheet of dawnsteel — blows break on it like night on morning. <b>+8% max HP, +5% Defence</b>, and it <b>gets stronger with your max HP</b>: bonus block <i>and</i> bonus Strength both scale with your max HP (up to +8% block and +20 Str). The more max HP you have, the harder you hit. The definitive tank shield.");
   ICONS.aegis_of_dawn=_shieldSVG(PLATE);
-  W('sunpiercer','Sunpiercer','🏹',120000,'weapon','ranged',{atk:76,str:30,def:0},
+  // Ranged Strength, not Strength (0.9.127.2): the 30 only ever went to the arrow's damage.
+  W('sunpiercer','Sunpiercer','🏹',120000,'weapon','ranged',{atk:76,str:0,rstr:30,def:0},
     {ranged:true, ammo:'arrow', twoHanded:true, wclass:'light',
      swingMult:1.00, dmgMult:1.13, reqRanged:99, wfx:{burn:{mult:0.16}}},
     "A recurve of god-gold strung with a thread of light; it looses shafts of pure dawn. <b>A true bow</b>, and its shafts of held sunrise leave the wound <b>burning</b>. It uses your Ranged level, takes both hands so you cannot carry a shield, and every shot uses an arrow. Requires <b>Ranged 99</b>.");
@@ -33764,8 +33895,10 @@ const HUNT_KIT=[
     desc:'Full set: +10% max HP, +6% Defence and +6% lifesteal — the Dawnbroken God bleeds his light back into you.' };
   COMBAT_SETS.sunweave={ name:'Sunweave',
     pieces:['sunweave_helm','sunweave_chest','sunweave_legs','sunweave_boots'],
-    bonus:{critChance:0.10, atkBoost:0.08},
-    desc:'Full set: +10% crit chance and +8% Attack — you move like light off water.' };
+    /* +8% damage with any weapon, not Attack (0.9.127.2). Leather is the rogue's and
+       the archer's, so the set gives whichever of the two you are. */
+    bonus:{critChance:0.10, dmgBoost:0.08},
+    desc:'Full set: +10% crit chance and +8% damage with any weapon. You move like light off water.' };
 })();
 
 /* ── Ranged procs, and the T9 bows (0.9.124.22) ───────────────────────────────
@@ -33832,10 +33965,10 @@ const HUNT_KIT=[
   const P={light:'#ffe0f4', mid:'#c96a9a', dark:'#7a3560', edge:'#2a0e22'};
   ITEMS.sundershaft={name:'Sundershaft', icon:'\u{1F3F9}', sell:520, rare:true,
     ammo:'arrow', ammoStr:38, ammoTier:11,
-    desc:'A shaft of Spire stone drawn out fine enough to fly, fletched with something that was never a bird. Adds <b>38 strength</b> to every shot from a bow. It cannot be made with Fletching and only comes from the Spire.'};
+    desc:'A shaft of Spire stone drawn out fine enough to fly, fletched with something that was never a bird. Adds <b>38 Ranged Strength</b> to every shot from a bow. It cannot be made with Fletching and only comes from the Spire.'};
   ITEMS.sunderbolt={name:'Sunderbolt', icon:'\u{1F3F9}', sell:660, rare:true,
     ammo:'bolt', ammoStr:44, ammoTier:11,
-    desc:'The same stone, cut short and heavy for a prod. Adds <b>44 strength</b> to every shot from a crossbow. Only the Spire has them.'};
+    desc:'The same stone, cut short and heavy for a prod. Adds <b>44 Ranged Strength</b> to every shot from a crossbow. Only the Spire has them.'};
   ICONS.sundershaft=(typeof _ammoSVGspire==='function')?_ammoSVGspire(P):
     '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="sdsh" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="'+P.light+'"/><stop offset="1" stop-color="'+P.dark+'"/></linearGradient></defs><path d="M30 54 L30 16 L34 16 L34 54 Z" fill="url(#sdsh)" stroke="'+P.edge+'" stroke-width="1"/><path d="M32 4 L42 22 L32 18 L22 22 Z" fill="url(#sdsh)" stroke="'+P.edge+'" stroke-width="1.2" stroke-linejoin="round"/><path d="M30 44 L22 52 L30 50 Z M34 44 L42 52 L34 50 Z" fill="'+P.mid+'" stroke="'+P.edge+'" stroke-width="0.8"/></svg>';
   ICONS.sunderbolt='<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="sdbo" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="'+P.light+'"/><stop offset="1" stop-color="'+P.dark+'"/></linearGradient></defs><path d="M28 50 L28 22 L36 22 L36 50 Z" fill="url(#sdbo)" stroke="'+P.edge+'" stroke-width="1"/><path d="M32 6 L41 24 L23 24 Z" fill="url(#sdbo)" stroke="'+P.edge+'" stroke-width="1.2" stroke-linejoin="round"/><path d="M28 46 L20 56 L32 52 L44 56 L36 46 Z" fill="'+P.mid+'" stroke="'+P.edge+'" stroke-width="0.9" stroke-linejoin="round"/></svg>';
@@ -33872,18 +34005,20 @@ const HUNT_KIT=[
     {ubonus:{defBoost:0.07, hpBoost:0.06}, blockMom:4},
     "A slab of load-bearing stone that held a floor up for an age and never once gave. <b>+7% Defence, +6% max HP</b>, and every hit it blocks gives <b>+4 Momentum</b> in a raid. It is the only shield that does. Nothing in the game has more Defence.");
   ICONS.faultward=_shieldSVG(PLATE);
-  S('plummet','Plummet','\u{1F3F9}',205000,'weapon','ranged',{atk:80,str:34,def:0},
-    {ubonus:{atkBoost:0.07, critChance:0.05}, wfx:{pierce:{chance:0.22}},
+  // Ranged Strength and Ranged damage, not Strength and Attack (0.9.127.2). Same numbers.
+  S('plummet','Plummet','\u{1F3F9}',205000,'weapon','ranged',{atk:80,str:0,rstr:34,def:0},
+    {ubonus:{rangedStr:0.07, critChance:0.05}, wfx:{pierce:{chance:0.22}},
      ranged:true, ammo:'arrow', twoHanded:true, wclass:'light',
      swingMult:1.00, dmgMult:1.16, reqRanged:99},
-    "A longbow strung on a plumb-line taken from the Spire's ruin — it finds true down, and everything it looses arrives like the tower did. <b>22% of shots pierce</b> — they ignore the target's Defence entirely. Also <b>+7% Attack, +5% crit.</b> Uses your Ranged level, takes both hands, and every shot uses an arrow. Requires <b>Ranged 99</b>. The best bow in Cindervale.");
+    "A longbow strung on a plumb-line taken from the Spire's ruin. It finds true down, and everything it looses arrives like the tower did. <b>22% of shots pierce</b>: they ignore the target's Defence entirely. Also <b>+7% Ranged damage, +5% crit.</b> Uses your Ranged level, takes both hands, and every shot uses an arrow. Requires <b>Ranged 99</b>. The best bow in Cindervale.");
   ICONS.plummet=_bowSVGwpn(WPN);
   /* The one piece that is not just a bigger number. Gloves have never had an
      identity in this game, and Momentum-per-hit is the only bonus in the game that
      makes the raid system itself run faster. */
   S('stonewright_gauntlets','Stonewright Gauntlets','\u{1F9E4}',160000,'gloves','',{atk:16,str:0,def:32},
-    {ubonus:{atkBoost:0.04}, momGain:3, light:true},
-    "The gauntlets of whoever built the Spire, still gripping. The stone in them remembers holding a floor up and carries its own weight, so unlike plate, they do not lower your ranged accuracy. Every hit you land in a raid adds <b>+3 extra Momentum</b> on top of the usual seven, and they give <b>+4% Attack</b>. The first gloves any raid has ever dropped, and the best pair for <i>every</i> build, melee or ranged.");
+    /* dmgBoost (0.9.127.2): built for every build, so its +4% follows the weapon. */
+    {ubonus:{dmgBoost:0.04}, momGain:3, light:true},
+    "The gauntlets of whoever built the Spire, still gripping. The stone in them remembers holding a floor up and carries its own weight, so unlike plate, they do not lower your ranged accuracy. Every hit you land in a raid adds <b>+3 extra Momentum</b> on top of the usual seven, and they give <b>+4% damage</b> with any weapon. The first gloves any raid has ever dropped, and the best pair for <i>every</i> build, melee or ranged.");
   ICONS.stonewright_gauntlets=_glovesSVG(PLATE);
 })();
 
@@ -34515,9 +34650,9 @@ function hasPet(petId){ return !!(state && state.pets && state.pets[petId]); }
     ITEMS[tip]={name:a.n+' Bolt Tip', icon:'🔻', sell:Math.round(a.sell*0.7),
       desc:'A squat '+a.n.toLowerCase()+' bodkin, heavier than an arrowhead and made twelve to a bar. Bolts trade flight for weight.'};
     ITEMS[arrow]={name:a.n+' Arrow', icon:'🏹', sell:a.sell, ammo:'arrow', ammoStr:a.str, ammoTier:ct,
-      desc:'Shaft, feather and '+a.n.toLowerCase()+' head. Adds '+a.str+' strength to every shot from a bow. Used up when fired, though the Fletching tree can recover some.'};
+      desc:'Shaft, feather and '+a.n.toLowerCase()+' head. Adds '+a.str+' Ranged Strength to every shot from a bow. Used up when fired, though the Fletching tree can recover some.'};
     ITEMS[bolt]={name:a.n+' Bolt', icon:'🏹', sell:Math.round(a.sell*1.3), ammo:'bolt', ammoStr:Math.round(a.str*1.15), ammoTier:ct,
-      desc:'A short heavy quarrel tipped in '+a.n.toLowerCase()+'. Adds '+Math.round(a.str*1.15)+' strength to every shot from a crossbow, which is slower to fire.'};
+      desc:'A short heavy quarrel tipped in '+a.n.toLowerCase()+'. Adds '+Math.round(a.str*1.15)+' Ranged Strength to every shot from a crossbow, which is slower to fire.'};
     ICONS[head]=headSVG(p,false); ICONS[tip]=headSVG(p,true);
     ICONS[arrow]=ammoSVG(p,false); ICONS[bolt]=ammoSVG(p,true);
   });
@@ -34577,6 +34712,29 @@ function hasPet(petId){ return !!(state && state.pets && state.pets[petId]); }
         if(ITEMS[id]) ITEMS[id].light=true;
       });
     });
+  }
+
+  /* ── Ranged Strength on armour (0.9.127.2) ─────────────────────────────────────
+     Every number a player can wear for a bow's damage, in one place. Small on
+     purpose: one point is 5 max hit, which is 2-4% of an archer's hit from the
+     middle tiers up, and this re-plumb was not meant to be a buff. The arrow still
+     carries most of it, and a bow's own raid stats sit on the bows themselves.
+
+       leather bracers   the archer's piece, from Trollhide up
+       Rogue Bucklers    the other light line, from Cobalt up; a crossbow can carry one
+       Stonewright       the Spire's gloves, built for every build
+       capes             a cape's Strength counts for a bow too, as it always did
+
+     Nothing below Trollhide or Cobalt carries any: at those tiers a single point
+     is 5-20% of a shot, and early ranged is already level with melee. */
+  const RSTR_BRACERS ={troll:1, drake:1, demon:2, wraith:2, ember:2, void:2};
+  const RSTR_BUCKLERS={cobalt:1, runite:1, starsteel:1, moltensteel:2, voidsteel:2, dawnsteel:2};
+  for(const k in RSTR_BRACERS){  const s=COMBAT_GEAR_STATS[k+'_gloves'];  if(s) s.rstr=RSTR_BRACERS[k]; }
+  for(const k in RSTR_BUCKLERS){ const s=COMBAT_GEAR_STATS[k+'_buckler']; if(s) s.rstr=RSTR_BUCKLERS[k]; }
+  if(COMBAT_GEAR_STATS.stonewright_gauntlets) COMBAT_GEAR_STATS.stonewright_gauntlets.rstr=2;
+  for(const id in COMBAT_GEAR_STATS){
+    const it=ITEMS[id], s=COMBAT_GEAR_STATS[id];
+    if(it&&it.cslot==='cape'&&(s.str||0)>0&&!s.rstr) s.rstr=s.str;
   }
 
   window.RANGED_AMMO=AMMO; window.RANGED_WOODS=WOODS;
@@ -35803,10 +35961,14 @@ function gearStats(id){
   const r=(typeof ascRank==='function')?ascRank(id):0;
   if(r<=0) return base;
   const m=1+ASC_STAT_PER_RANK*r;
-  return Object.assign({},base,{
+  const out=Object.assign({},base,{
     atk:Math.round((base.atk||0)*m),
     str:Math.round((base.str||0)*m),
     def:Math.round((base.def||0)*m)});
+  // Ranged Strength rises with the rest (0.9.127.2). Only set when the piece has
+  // it, so a sword's card never grows a "+0 Ranged Str".
+  if(base.rstr) out.rstr=Math.round(base.rstr*m);
+  return out;
 }
 
 /* ── Salvage (0.9.124.12) ─────────────────────────────────────────────────────
@@ -37132,9 +37294,14 @@ function _gearStatsHTML(){
       const b=combatBonusesAll();
       const pc=v=>Math.round(v*1000)/10;
       if(b.atkBoost)   chips.push('+'+pc(b.atkBoost)+'% Attack');
+      if(b.rangedStr)  chips.push('+'+pc(b.rangedStr)+'% Ranged damage');
+      // The flat half of a bow's damage, arrow and gear together (0.9.127.2).
+      if(typeof usingRanged==='function'&&usingRanged()) chips.push('+'+(ammoStr()+(combatStats().rstr||0))+' Ranged Strength');
       if(b.defBoost)   chips.push('+'+pc(b.defBoost)+'% Defence');
       if(b.hpBoost)    chips.push('+'+pc(b.hpBoost)+'% Max HP');
       if(b.critChance) chips.push('+'+pc(b.critChance)+'% crit');
+      if(b.critDmg)    chips.push('+'+pc(b.critDmg)+'% crit damage');
+      if(b.accBoost)   chips.push('+'+pc(b.accBoost)+'% accuracy');
       if(b.lifesteal)  chips.push('+'+pc(b.lifesteal)+'% lifesteal');
       if(b.dodge)      chips.push('+'+pc(b.dodge)+'% dodge');
       if(b.aspd)       chips.push('+'+pc(b.aspd)+'% attack speed');
@@ -37559,8 +37726,8 @@ function gearSlotOptions(slotKey, scope, currentId){
   }
   return available;
 }
-var _GSP_ORDER=['atk','str','def','crit','dodge','aspd','%speed','%xpBoost','%skillXp','%gpBoost','%goldFind',
-  '%doubleYield','%preserve','%atkBoost','%critChance','%lifesteal','%hpBoost','%defBoost'];
+var _GSP_ORDER=['atk','str','rstr','def','crit','dodge','aspd','%speed','%xpBoost','%skillXp','%gpBoost','%goldFind',
+  '%doubleYield','%preserve','%atkBoost','%rangedStr','%dmgBoost','%accBoost','%critChance','%critDmg','%lifesteal','%hpBoost','%defBoost','%combatXp'];
 function _gspKeys(obj){
   return Object.keys(obj).sort(function(a,b){ var ia=_GSP_ORDER.indexOf(a), ib=_GSP_ORDER.indexOf(b); return (ia<0?99:ia)-(ib<0?99:ib); });
 }
@@ -38259,8 +38426,11 @@ function showItemTooltip(itemId, x, y, note){
   const it=ITEMS[itemId]; if(!it) return;
   _ttLast={id:itemId, x:x, y:y, note:note};
   const tt=ttEl(); if(!tt) return;
-  const sources=sourceMap()[itemId]||[];
-  const usages=usageMap()[itemId]||[];
+  /* An enchanted piece is a variant id ("plummet~1") that no drop table or recipe
+     names, so its card said "Source unknown". It comes from where its base does. */
+  const _srcId=(typeof variantBase==='function')?variantBase(itemId):itemId;
+  const sources=sourceMap()[_srcId]||[];
+  const usages=usageMap()[_srcId]||[];
   const isRare=!!it.rare;
 
   /* HEADER BAND (0.9.124) - the name, and one line saying what this is. The tier
@@ -38270,7 +38440,8 @@ function showItemTooltip(itemId, x, y, note){
   if(it.cgear){
     const _tn={1:'Bronze',2:'Iron',3:'Steel',4:'Mithril',5:'Cobalt',6:'Runite',7:'Starsteel',8:'Void'};
     const _sl={helmet:'Helmet',chest:'Chest',legs:'Legs',gloves:'Gloves',boots:'Boots',weapon:'Weapon',shield:'Shield',cape:'Cape'};
-    _meta.push(it.light?'Leather':(_tn[it.ctier]||('Tier '+it.ctier)));
+    // A tier with no metal name used to print "Tier 11 · Tier 11"; the number alone is enough.
+    if(it.light) _meta.push('Leather'); else if(_tn[it.ctier]) _meta.push(_tn[it.ctier]);
     if(it.ctier) _meta.push('Tier '+it.ctier);
     _meta.push(_sl[it.cslot]||it.cslot);
   } else if(it.ammo){ _meta.push('Ammunition'); _meta.push(it.ammo==='bolt'?'Crossbows':'Bows'); }
@@ -38373,7 +38544,7 @@ function showItemTooltip(itemId, x, y, note){
       // on a tie, name the one you can make over a rare drop
       if(_t<_lt||(_t===_lt&&!producingSkillOf(_lightest)&&producingSkillOf(wid))) _lightest=wid;
     }
-    html+=`<div class="tt-sub">+${it.ammoStr||0} strength to every shot</div>`;
+    html+=`<div class="tt-sub">+${it.ammoStr||0} Ranged Strength to every shot</div>`;
     if(_lightest){
       const _rq=combatGearReq(_lightest);
       html+=`<div class="tt-sub">Fired by ${ITEMS[_lightest].name} or better`
@@ -40337,7 +40508,8 @@ const EW_GEMC={sapphire:'#4a86c8',emerald:'#3fa860',ruby:'#c8434a',diamond:'#8fd
 const EW_GEM_ORDER=['sapphire','emerald','ruby','diamond','amethyst','dragon','bloodstone','void'];
 const EW_SLOT_LABEL={ring_l:'Ring · Left',ring_r:'Ring · Right',amulet:'Neck'};
 const EW_BONUS_LABEL={speed:'Speed',xpBoost:'XP',gpBoost:'Sell',doubleYield:'Double',
-  atkBoost:'Attack',defBoost:'Defence',hpBoost:'Max HP',critChance:'Crit',lifesteal:'Lifesteal',goldFind:'Gold'};
+  atkBoost:'Attack',rangedStr:'Ranged damage',dmgBoost:'Damage',defBoost:'Defence',hpBoost:'Max HP',critChance:'Crit',lifesteal:'Lifesteal',goldFind:'Gold',
+  accBoost:'Accuracy',critDmg:'Crit damage',combatXp:'Combat XP'};
 
 function _ewEl(cls,html){ var d=document.createElement('div'); if(cls)d.className=cls;
   if(html!=null)d.innerHTML=html; return d; }
@@ -40559,6 +40731,13 @@ function _ewTotals(){
      one is worn: most players never own a late gem. (0.9.124.55) */
   if(sk.goldFind) cells.push(['Gold · skilling',sk.goldFind]);
   cells.push(['Attack',cb.atkBoost],['Defence',cb.defBoost],['Max HP',cb.hpBoost]);
+  /* Ranged damage lines and the jewelry sets' any-weapon damage (0.9.127.2). Only
+     once you have some, like the four below. */
+  if(cb.rangedStr) cells.push(['Ranged damage',cb.rangedStr]);
+  if(cb.dmgBoost)  cells.push(['Damage, any weapon',cb.dmgBoost]);
+  if(cb.accBoost)  cells.push(['Accuracy',cb.accBoost]);
+  if(cb.critDmg)   cells.push(['Crit damage',cb.critDmg]);
+  if(cb.combatXp)  cells.push(['Combat XP',cb.combatXp]);
   if(cb.goldFind) cells.push(['Gold · combat',cb.goldFind]);
   /* Rolled enchants added four stats this panel never had. Shown only once you
      have some, so a player without them does not get four permanent zero cells. */
@@ -40589,7 +40768,7 @@ function _ewTotals(){
    the right-hand panel is the lines, their quality, and their locks. */
 var _enFilter='worn';
 const EN_POOL_LABEL={armour:'Chest and legs', headhands:'Helmet and gloves', feetback:'Boots and cape',
-                     weapon:'Weapon', shield:'Shield', jewelry:'Jewelry'};
+                     weapon:'Weapon', bow:'Bow or crossbow', shield:'Shield', jewelry:'Jewelry'};
 const EN_FILTERS=[['worn','Worn'],['combat','Combat'],['skilling','Skilling'],['jewelry','Jewelry'],['all','All']];
 
 /* Is this piece enchanted, under either system. Every site that used to test
@@ -40876,7 +41055,7 @@ function _soGemLive(itemId,gemId){
    bottom of the page, which is the last thing you read and the first thing you
    forget. Every card carries its own colour and effect now. */
 const SO_LINE={
-  sanguine:{label:'Sanguine',hex:'#d44a4a',hi:'#ff9c8e',stat:'Attack',    kind:'combat'},
+  sanguine:{label:'Sanguine',hex:'#d44a4a',hi:'#ff9c8e',stat:'Damage',    kind:'combat'},
   verdant: {label:'Verdant', hex:'#5fb056',hi:'#b6f0a0',stat:'Max HP',    kind:'combat'},
   azure:   {label:'Azure',   hex:'#5a8fd8',hi:'#a9cdff',stat:'Defence',   kind:'combat'},
   topaz:   {label:'Topaz',   hex:'#e0b440',hi:'#ffe79b',stat:'Sell Value',kind:'skilling'},
@@ -41113,7 +41292,8 @@ function _soWornStrip(redraw){
    the game does another. */
 function _soTotals(){
   const cb=combatSocketBonuses(), sb=socketBonuses();
-  const rows=[['atk',cb.atkBoost,'Attack','sanguine'],['hp',cb.hpBoost,'Max HP','verdant'],
+  // Sanguine is damage with any weapon since 0.9.127.2, not Attack.
+  const rows=[['dmg',cb.dmgBoost,'Damage','sanguine'],['hp',cb.hpBoost,'Max HP','verdant'],
               ['def',cb.defBoost,'Defence','azure'],['gp',sb.gpBoost,'Sell Value','topaz'],
               ['sp',sb.speed,'Speed','onyx'],['xp',sb.xpBoost,'Skill XP','onyx']];
   const grid=_soEl('so-tot');
@@ -41124,7 +41304,7 @@ function _soTotals(){
   }).join('');
   const wrap=_soEl();
   wrap.appendChild(grid);
-  wrap.appendChild(_soEl('so-totnote','<b>Attack · Max HP · Defence</b> come from gems in your '
+  wrap.appendChild(_soEl('so-totnote','<b>Damage · Max HP · Defence</b> come from gems in your '
     +'worn <b>combat</b> gear. <b>Sell Value · Speed · Skill XP</b> come from gems in your worn '
     +'<b>skilling</b> gear. Gems in gear you are not wearing do nothing.'));
   return wrap;
@@ -41888,7 +42068,9 @@ function combatTick(){
            dagger) both arrive through cmastBonuses().critDmg and multiply the crit
            rather than the raw hit — which is what "+% critical damage" has to mean. */
         const _cm=(typeof cmastBonuses==='function')?cmastBonuses():null;
-        youDmg=Math.max(1,Math.round(youDmg*(2+(_cm?(_cm.critDmg||0):0))));
+        /* cb.critDmg is the board's crit damage plus Critical damage enchant lines
+           (0.9.127.2); it used to read the board alone. */
+        youDmg=Math.max(1,Math.round(youDmg*(2+((cb&&cb.critDmg)||(_cm?(_cm.critDmg||0):0)))));
         /* Pinning Shot rides the crit, so it needs the crit branch. Base is stored
            the first time so a refresh cannot compound the slow on itself. */
         if(_cm && _cm.pinning>0 && typeof usingRanged==='function' && usingRanged()){
@@ -42373,7 +42555,10 @@ function grantCombatXp(stat,amount){
   // Character-type global XP dial (hardcore 0.75× / accelerated 2×) applies to combat too.
   amount=amount*charTypeXpMult();
   // Combat Mastery XP nodes (Iron Discipline/Veteran/War Banner) — always-on multiplier. (1.0.101)
-  if(typeof cmastBonuses==='function'){ const _xm=cmastBonuses().combatXpMult||0; if(_xm>0) amount*=(1+_xm); }
+  // Combat XP enchant lines on boots and capes (0.9.127.2) add into the same multiplier.
+  { const _xm=((typeof cmastBonuses==='function')?(cmastBonuses().combatXpMult||0):0)
+            +((typeof combatEnchantBonuses==='function')?(combatEnchantBonuses().combatXp||0):0);
+    if(_xm>0) amount*=(1+_xm); }
   amount*=XP_SCALE;                       // global XP faucet (0.9.121.8)
   amount=Math.max(1, Math.round(amount));
   if(!state.combatXp) state.combatXp={attack:0,strength:0,defence:0,ranged:0,hitpoints:0};
@@ -42719,6 +42904,7 @@ function gearRowStatLine(itemId){
     const parts=[];
     if(cs.atk) parts.push(`+${cs.atk} atk`);
     if(cs.str) parts.push(`+${cs.str} str`);
+    if(cs.rstr) parts.push(`+${cs.rstr} ranged str`);
     if(cs.def) parts.push(`+${cs.def} def`);
     return parts.join(' · ')||'no stats';
   }
@@ -43020,7 +43206,10 @@ function _cmastCrestsHTML(){
 function _cmastTotalsHTML(){
   const b=cmastBonuses();
   const rows=[
-    ['+'+Math.round((b.atkBoost||0)*100)+'%','Damage','melee',b.atkBoost],
+    /* Two damage channels since 0.9.127.2, read for the weapon in your hand: the
+       any-weapon nodes land in whichever one it uses. */
+    ['+'+Math.round((b.atkBoost||0)*100)+'%','Melee Dmg','melee',b.atkBoost],
+    ['+'+Math.round((b.rangedStr||0)*100)+'%','Ranged Dmg','mark',b.rangedStr],
     ['+'+Math.round((b.critChance||0)*100)+'%','Crit','melee',b.critChance],
     ['+'+Math.round((b.critDmg||0)*100)+'%','Crit Dmg','melee',b.critDmg],
     ['+'+Math.round((b.aspd||0)*100)+'%','Atk Speed','melee',b.aspd],
@@ -43638,9 +43827,12 @@ function buildAscensionHTML(){
     const b=COMBAT_GEAR_STATS[id]||{}, now=gearStats(id)||{};
     const nxt=maxed?null:{atk:Math.round((b.atk||0)*(1+ASC_STAT_PER_RANK*(r+1))),
                           str:Math.round((b.str||0)*(1+ASC_STAT_PER_RANK*(r+1))),
+                          rstr:Math.round((b.rstr||0)*(1+ASC_STAT_PER_RANK*(r+1))),
                           def:Math.round((b.def||0)*(1+ASC_STAT_PER_RANK*(r+1)))};
-    const statTxt=['atk','str','def'].filter(k=>(b[k]||0)>0)
-      .map(k=>(maxed||nxt[k]===(now[k]||0))?`${k} ${now[k]||0}`:`${k} ${now[k]||0}→<b>${nxt[k]}</b>`).join(' · ');
+    // Ranged Strength rises with a rank too (0.9.127.2), so a bow says what it gains.
+    const _asl={atk:'atk',str:'str',rstr:'ranged str',def:'def'};
+    const statTxt=['atk','str','rstr','def'].filter(k=>(b[k]||0)>0)
+      .map(k=>(maxed||nxt[k]===(now[k]||0))?`${_asl[k]} ${now[k]||0}`:`${_asl[k]} ${now[k]||0}→<b>${nxt[k]}</b>`).join(' · ');
     const costTxt=maxed
       ? `<span class="asc-max">Max ★${cap}</span>`
       : `${iconHTML('sunderstone')} <b class="${stones>=c.sunderstone?'':'short'}">${c.sunderstone.toLocaleString()}</b>`
@@ -43658,7 +43850,7 @@ function buildAscensionHTML(){
       <span class="asc-bank">${iconHTML('sunderstone')} ${stones.toLocaleString()} &nbsp; ${iconHTML('spirecore')} ${cores.toLocaleString()}</span></div>
     <div class="asc-sub">Upgrade the raid gear you are wearing.<br>
       Costs <b>Sunderstone</b>, plus <b>Spire Cores</b> from rank 7.<br>
-      Each rank gives that piece <b>+6% attack, strength and defence</b>.<br>
+      Each rank gives that piece <b>+6% attack, strength, ranged strength and defence</b>.<br>
       Every rank you are wearing also adds max health, crit, lifesteal and <b>damage reduction</b>.<br>
       Max rank by raid: Barrow ★5, Emberforge ★7, Abyssal ★9, Empyrean ★10.${(function(){const dr=(typeof ascensionDR==='function')?ascensionDR():0;return dr>0?` <b style="color:#a8d264">Currently ${(dr*100).toFixed(1)}% less damage taken.</b>`:'';})()}</div>
     ${uniq.length?`<div class="asc-list">${rows}</div>`
@@ -43935,6 +44127,8 @@ function renderCombat(){
   // Derived rows show "lvl-base + gear-bonus = total" so the gear contribution is explicit.
   // Gear never raises the skill level itself — only the derived combat stat.
   const aLvl=cmbLvl('attack'), sLvl=cmbLvl('strength'), dLvl=cmbLvl('defence'), hLvl=cmbLvl('hitpoints');
+  // With a bow the tooltips name Ranged and Ranged Strength, not Attack and Strength.
+  const _rngTip=(typeof usingRanged==='function')&&usingRanged();
   const accBase=Math.round(aLvl*COMBAT_P.ACC_LVL), accGear=playerAccuracy()-accBase;
   const hitBase=Math.round(sLvl*COMBAT_P.HIT_LVL), hitGear=playerMaxHit()-hitBase;
   const defBase=Math.round(dLvl*COMBAT_P.DEF_LVL), defGear=playerDefence()-defBase;
@@ -44228,8 +44422,8 @@ ${combat.raid?buildRaidProgressHTML():''}
         <div class="cvglass">
           <h4>Your stats<span class="cvh-cmb" data-tip="Your overall Combat level.">Cmb ${combatLevel()}</span></h4>
           <div class="cvsg">
-            <div class="cvst2${(accBase+accGear)>mon.def?' up':''}" data-tip="ACCURACY: how often your attacks hit.&#10;&#10;Compared against the enemy&#39;s Defence.&#10;Attack lvl ${aLvl}&#10;Enemy Defence: ${mon.def}"><b>${accBase+accGear}</b><i>Accuracy</i></div>
-            <div class="cvst2${(hitBase+hitGear)>mon.str?' up':''}" data-tip="MAX HIT: the most damage one of your hits can do.&#10;&#10;Strength lvl ${sLvl}&#10;Enemy max hit: ${mon.str}"><b>${hitBase+hitGear}</b><i>Max hit</i></div>
+            <div class="cvst2${(accBase+accGear)>mon.def?' up':''}" data-tip="ACCURACY: how often your attacks hit.&#10;&#10;Compared against the enemy&#39;s Defence.&#10;${_rngTip?'Ranged lvl '+cmbLvl('ranged'):'Attack lvl '+aLvl}&#10;Enemy Defence: ${mon.def}"><b>${accBase+accGear}</b><i>Accuracy</i></div>
+            <div class="cvst2${(hitBase+hitGear)>mon.str?' up':''}" data-tip="MAX HIT: the most damage one of your hits can do.&#10;&#10;${_rngTip?'Ranged lvl '+cmbLvl('ranged')+'&#10;Ranged Strength '+(ammoStr()+(cs.rstr||0)):'Strength lvl '+sLvl}&#10;Enemy max hit: ${mon.str}"><b>${hitBase+hitGear}</b><i>Max hit</i></div>
             <div class="cvst2${(defBase+defGear)>mon.atk?' up':''}" data-tip="DEFENCE: makes enemies miss you more often.&#10;&#10;Defence lvl ${dLvl}&#10;Enemy Attack: ${mon.atk}"><b>${defBase+defGear}</b><i>Defence</i></div>
             <div class="cvst2${yourSwing<mon.swingMs?' up':''}" data-tip="ATTACK SPEED: seconds between your attacks.&#10;&#10;Lower is faster.&#10;Agility lvl ${agiLvl}&#10;Enemy attack speed: ${(mon.swingMs/1000).toFixed(2)}s"><b>${speedDisplay}</b><i>Speed</i></div>
           </div>
