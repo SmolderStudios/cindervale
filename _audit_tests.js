@@ -9960,6 +9960,127 @@ setTimeout(() => {
        OR.defLeft === false && OR.resolves === false, JSON.stringify(OR));
   }
 
+  section('Rolled enchants: two lines, a lock, and a ceiling ([JS-02c])');
+  {
+    const E = ev(`(function(){
+      var R={};
+      function fresh(){ state=defaultState(); normalizeState();
+        ['attack','strength','defence','hitpoints','ranged'].forEach(function(s){ state.combatXp[s]=XP_CUM[99]; });
+        state.items={arcane_dust:1e8,rune_fragment:1e8,mana_essence:1e8,gem_dust:1e8,void_cinder:1e8}; }
+
+      // Every stat named in a pool exists, and every pool can hold two DIFFERENT lines.
+      var missing=[], thin=[];
+      for(var pk in ENCH_POOL){ var P=ENCH_POOL[pk];
+        P.combat.concat(P.skilling).forEach(function(k){ if(!ENCH_STAT[k]) missing.push(pk+':'+k); });
+        if(P.combat.length && P.combat.length<ENCH_LINES) thin.push(pk+' combat');
+        if(P.skilling.length && P.skilling.length<ENCH_LINES) thin.push(pk+' skilling'); }
+      R.pools={missing:missing, thin:thin};
+
+      // 400 fresh rolls across every kind of piece: no duplicate stat, every value in range.
+      var dup=0, oor=0, n=0;
+      var sample=['runite_helm','runite_chest','runite_sword','ancient_longbow','runite_shield','runite_cape','barrow_blade','fi_hat','void_ring','void_amulet'];
+      fresh();
+      for(var t=0;t<40;t++) sample.forEach(function(id){
+        if(!ITEMS[id]) return;
+        if(ITEMS[id].skillGear){ state.skillingGear={}; state.skillingGear[id]=true; }
+        else state.items[id]=1;
+        var vid=enchantPiece(id); if(!vid) return; n++;
+        var ls=state.variants[vid].lines, seen={};
+        ls.filter(function(l){return !l.u;}).forEach(function(l){ if(seen[l.k]) dup++; seen[l.k]=1; });
+        ls.forEach(function(l){ var r=enchRange(l.k,vid,l.u?ENCH_UNIQUE_MULT:1);
+          if(l.v<r[0]-1e-6||l.v>r[1]+1e-6) oor++; });
+        delete state.items[vid]; delete state.skillingGear[vid]; delete state.variants[vid];
+      });
+      R.rolls={pieces:n, duplicateStats:dup, outOfRange:oor};
+
+      // Lock: the locked line survives a reroll exactly, and you can never lock them all.
+      fresh(); state.items.barrow_blade=1;
+      var v=enchantPiece('barrow_blade');
+      toggleEnchLock(v,0);
+      var kept=JSON.stringify(state.variants[v].lines[0]), survived=0;
+      for(var i=0;i<25;i++){ enchantPiece(v); if(JSON.stringify(state.variants[v].lines[0])===kept) survived++; }
+      state.variants[v].lines.forEach(function(l,i){ if(!l.lock) toggleEnchLock(v,i); });
+      R.lock={survived:survived, of:25, locked:enchLockCount(v), lines:state.variants[v].lines.length};
+
+      // The unique line: exactly on the gear nothing crafts.
+      fresh(); state.items.runite_helm=1; state.items.barrow_blade=1;
+      var plain=enchantPiece('runite_helm'), raid=enchantPiece('barrow_blade');
+      R.unique={plainLines:state.variants[plain].lines.length, plainHasU:state.variants[plain].lines.some(function(l){return l.u;}),
+                raidLines:state.variants[raid].lines.length, raidHasU:state.variants[raid].lines.some(function(l){return l.u;})};
+
+      // A stat tied to one skill never reaches another skill's pieces.
+      R.skillLock={fishing:(enchPoolFor('fi_hat')||{keys:[]}).keys.indexOf('prized')>=0,
+                   woodcutting:(enchPoolFor('wc_hat')||{keys:[]}).keys.indexOf('prized')>=0};
+
+      // Cost climbs with what you protect.
+      fresh(); state.items.void_ring=1;
+      var r=enchantPiece('void_ring'), vv=state.variants[r];
+      vv.lines.forEach(function(l){l.lock=false;});
+      var c0=enchRerollCost(r).arcane_dust;
+      vv.lines[0].lock=true; vv.lines[0].q=0.5; var c50=enchRerollCost(r).arcane_dust;
+      vv.lines[0].q=0.9; var c90=enchRerollCost(r).arcane_dust;
+      R.cost={free:c0, lock50:c50, lock90:c90};
+
+      // Not enough materials: nothing splits and nothing is spent.
+      fresh(); state.items={runite_helm:1, arcane_dust:1};
+      var before=JSON.stringify(state.items);
+      var none=enchantPiece('runite_helm');
+      R.broke={returned:none, untouched:JSON.stringify(state.items)===before, variants:Object.keys(state.variants).length};
+
+      // The lines really reach the numbers combat and skilling read.
+      fresh(); state.items.runite_helm=1;
+      var h=enchantPiece('runite_helm'); state.variants[h].lines=[{k:'atkBoost',v:0.05,q:0.5,lock:false},{k:'critChance',v:0.02,q:0.5,lock:false}];
+      state.combatEquipped={helmet:h};
+      var cb=combatEnchantBonuses();
+      state.skillingGear={fi_hat:true}; var f=enchantPiece('fi_hat');
+      state.variants[f].lines=[{k:'prized',v:0.2,q:0.5,lock:false},{k:'speed',v:0.04,q:0.5,lock:false}];
+      state.equipped.helmet=f;
+      var m=mods('fishing');
+      R.flow={atk:cb.atkBoost, crit:cb.critChance, prized:m.encPrized,
+              prizedChance:skillDropChance('fishing',{id:'prized_raw_shark',chance:0.01},m)};
+      return R;
+    })()`);
+    ok('every stat in a pool exists, and every pool can hold two different lines',
+       E.pools.missing.length === 0 && E.pools.thin.length === 0, JSON.stringify(E.pools));
+    ok('no piece ever rolls the same stat twice, and every value lands inside its range',
+       E.rolls.pieces > 300 && E.rolls.duplicateStats === 0 && E.rolls.outOfRange === 0, JSON.stringify(E.rolls));
+    ok('a locked line survives every reroll untouched',
+       E.lock.survived === E.lock.of, E.lock.survived + ' of ' + E.lock.of);
+    ok('and at least one line always stays free to reroll',
+       E.lock.locked === E.lock.lines - 1, JSON.stringify(E.lock));
+    ok('unique drops and raid gear roll a third line, crafted gear does not',
+       E.unique.plainLines === 2 && E.unique.plainHasU === false && E.unique.raidLines === 3 && E.unique.raidHasU === true,
+       JSON.stringify(E.unique));
+    ok('prized catch chance only rolls on fishing pieces',
+       E.skillLock.fishing === true && E.skillLock.woodcutting === false, JSON.stringify(E.skillLock));
+    ok('a reroll costs more the more you lock and the better the locked line is',
+       E.cost.free < E.cost.lock50 && E.cost.lock50 < E.cost.lock90, JSON.stringify(E.cost));
+    ok('without the materials, nothing is split and nothing is spent',
+       E.broke.returned === null && E.broke.untouched === true && E.broke.variants === 0, JSON.stringify(E.broke));
+    ok('rolled lines reach combat stats, skilling stats and the prized-catch roll',
+       E.flow.atk === 0.05 && E.flow.crit === 0.02 && E.flow.prized === 0.2 && Math.abs(E.flow.prizedChance - 0.012) < 1e-9,
+       JSON.stringify(E.flow));
+
+    /* The power ceiling. Several slots can roll the same stat, so a player will
+       stack it. This fails if any future retune lets one stat, stacked on every
+       slot that can roll it at average quality, pass what one big jewelry enchant
+       already gives. Prized catch is exempt: one slot, and it is the point. */
+    const CEIL = ev(`(function(){
+      var MEANQ=0.4, bad=[];
+      var cs={helmet:'headhands',gloves:'headhands',chest:'armour',legs:'armour',boots:'feetback',cape:'feetback',weapon:'weapon',shield:'shield'};
+      var ss={helmet:'headhands',chest:'armour',legs:'armour',boots:'feetback'};
+      function stack(k,slots,pool,tier){ var n=0; for(var s in slots) if(ENCH_POOL[slots[s]][pool].indexOf(k)>=0) n++;
+        return ENCH_STAT[k].gear*tier*(0.8+0.45*MEANQ)*n; }
+      ['atkBoost','defBoost','hpBoost','critChance','lifesteal','goldFind'].forEach(function(k){
+        var x=stack(k,cs,'combat',11); if(x>0.20) bad.push(k+' +'+(x*100).toFixed(1)+'%'); });
+      ['speed','xpBoost','gpBoost','doubleYield','rareFind'].forEach(function(k){
+        var x=stack(k,ss,'skilling',ENCH_SKILLGEAR_TIER); if(x>0.20) bad.push(k+' +'+(x*100).toFixed(1)+'%'); });
+      return bad;
+    })()`);
+    ok('no stat stacks past +20% from gear enchants alone',
+       CEIL.length === 0, CEIL.length ? CEIL.join(', ') : 'every stat within the ceiling');
+  }
+
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));
   process.exit(fail ? 1 : 0);
 }, 2500);

@@ -8864,7 +8864,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.126.10">v0.9.126</div>
+  <div class="mm-ver" data-build="0.9.126.11">v0.9.126</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -11420,6 +11420,245 @@ function _variantReconcile(base, vid, worn){
   }
 }
 
+/* ════ [JS-02c] ROLLED ENCHANTS ═════════════════════════════════════════════════
+
+   Every enchantable piece carries TWO rolled lines, drawn from its slot's pool.
+   Unique drops and raid gear roll a third, stronger line on top. Each line is a
+   stat and a value; the value lands somewhere in a range, and how far up that
+   range it landed is its quality. Two lines is the point: one rolls 90%, the
+   other rolls 40%, and you reroll to chase both.
+
+   You may LOCK a line so the next reroll keeps it, and reroll only the rest. At
+   least one line always stays free — a piece with every line locked would have
+   nothing to reroll. Locking is what makes the loop a decision rather than a
+   click, and it is also what the cost curve is priced against: the more you are
+   protecting and the better it already is, the more a reroll costs. The first
+   few rerolls are cheap because they almost always help; chasing the last few
+   percent on a line you have locked at 90% is where the materials go. */
+
+/* The stats, and how big each gets. `gear` is the step per combat-gear tier
+   (ctier 1-11; skilling set pieces count as ENCH_SKILLGEAR_TIER). `jewel` is the
+   step per gem tier (1-8) — jewelry has always carried the big numbers, and it
+   keeps them. A line rolls between 0.8x and 1.25x of step x tier.
+
+   This table IS the balance. Every number a player can roll derives from it, so
+   retuning the whole system is editing these two columns.
+
+   The gear column was set by the STACKED ceiling, not by one line: several slots
+   can roll the same stat, and a player will stack it. Each value was chosen so a
+   stat stacked on every slot that can roll it, at average quality, lands at or
+   under what one big jewelry enchant already gives (Warlord, Bulwark: +20-25%).
+   Measured at tier 11 combat / tier 8 skilling: Attack and Defence +16%, health
+   +18%, lifesteal +15%, gold found +16%, crit +10%; skilling XP +8%, rare find
+   +16%, speed and double-resource +8%. Prized catch is one slot (a fishing
+   helmet) and is allowed +24%, because it is the whole reason that stat exists. */
+const ENCH_STAT={
+  // Combat — summed by combatEnchantBonuses()
+  atkBoost:   {label:'Attack',                     word:'Might',     scope:'combat',   gear:0.005,  jewel:0.020},
+  defBoost:   {label:'Defence',                    word:'Warding',   scope:'combat',   gear:0.005,  jewel:0.024},
+  hpBoost:    {label:'Max health',                 word:'Vigour',    scope:'combat',   gear:0.0033, jewel:0.020},
+  critChance: {label:'Critical hit chance',        word:'Precision', scope:'combat',   gear:0.003,  jewel:0.016},
+  lifesteal:  {label:'Lifesteal',                  word:'Leeching',  scope:'combat',   gear:0.0023, jewel:0.016},
+  goldFind:   {label:'Gold found',                 word:'Fortune',   scope:'both',     gear:0.0037, jewel:0.030},
+  // Skilling — summed by enchantBonuses()
+  speed:      {label:'Action speed',               word:'Swiftness', scope:'skilling', gear:0.005,  jewel:0.030},
+  xpBoost:    {label:'XP',                         word:'Learning',  scope:'skilling', gear:0.0033, jewel:0.038},
+  gpBoost:    {label:'Sell value',                 word:'Trade',     scope:'skilling', gear:0.010,  jewel:0.045},
+  doubleYield:{label:'Chance to double resources', word:'Plenty',    scope:'skilling', gear:0.005,  jewel:0.022},
+  rareFind:   {label:'Rare find chance',           word:'Luck',      scope:'skilling', gear:0.007,  jewel:0.040},
+  prized:     {label:'Prized catch chance',        word:'the Deep',  scope:'skilling', gear:0.030,  jewel:0.060, skill:'fishing'},
+};
+/* Which stats a slot can roll. Pools are shared between slots on purpose, to keep
+   the system learnable: body armour shares one, head and hands share one, feet
+   and back share one. A combat piece rolls from the combat column, a skilling set
+   piece from the skilling column, and jewelry (worn in both loadouts) from both.
+   A stat tied to one skill only enters the pool for that skill's own pieces, so a
+   woodcutting hat cannot roll prized catch chance. */
+const ENCH_POOL={
+  armour:   {slots:['chest','legs'],           combat:['defBoost','hpBoost','lifesteal'],    skilling:['doubleYield','xpBoost','rareFind']},
+  headhands:{slots:['helmet','gloves'],        combat:['atkBoost','critChance','goldFind'],  skilling:['speed','rareFind','prized']},
+  feetback: {slots:['boots','cape'],           combat:['lifesteal','hpBoost','goldFind'],    skilling:['speed','gpBoost','xpBoost']},
+  weapon:   {slots:['weapon'],                 combat:['atkBoost','critChance','lifesteal'], skilling:[]},
+  shield:   {slots:['shield'],                 combat:['defBoost','hpBoost','lifesteal'],    skilling:[]},
+  jewelry:  {slots:['ring_l','ring_r','amulet'],
+             combat:['atkBoost','defBoost','hpBoost','critChance','lifesteal','goldFind'],
+             skilling:['speed','xpBoost','gpBoost','doubleYield']},
+};
+const ENCH_LINES=2;                 // lines every enchantable piece carries
+const ENCH_UNIQUE_POOL=['atkBoost','critChance','lifesteal','hpBoost'];
+const ENCH_UNIQUE_MULT=2;           // the unique line rolls at twice a normal line's size
+const ENCH_SKILLGEAR_TIER=8;        // skilling set pieces have no tier of their own
+const ENCH_Q_SKEW=1.5;              // q = rand^skew: a 90%+ line is about 1 roll in 15
+
+function _enchJewelGem(b){ return (typeof JEWELRY_GEM_TIER!=='undefined')?JEWELRY_GEM_TIER[b]:null; }
+function enchTierOf(id){
+  const b=variantBase(id), it=ITEMS[b]; if(!it) return 1;
+  const gem=_enchJewelGem(b);
+  if(gem) return Math.max(1,(typeof EW_GEM_ORDER!=='undefined'?EW_GEM_ORDER.indexOf(gem):-1)+1);
+  if(it.cgear) return it.ctier||1;
+  if(it.skillGear) return ENCH_SKILLGEAR_TIER;
+  return 1;
+}
+/* Which pool a piece rolls from, and which stats are in it for THIS piece. */
+function enchPoolFor(id){
+  const b=variantBase(id), it=ITEMS[b]; if(!it||it.tool) return null;
+  let slot, kind;
+  if(_enchJewelGem(b)){
+    const bs=(typeof ITEM_BODY_SLOTS!=='undefined'&&ITEM_BODY_SLOTS[b])||[];
+    slot=bs.indexOf('amulet')>=0?'amulet':'ring_l'; kind='both';
+  }
+  else if(it.skillGear){ slot=it.gearSlot; kind='skilling'; }
+  else if(it.cgear){ slot=it.cslot; kind='combat'; }
+  else return null;
+  for(const pk in ENCH_POOL){
+    const P=ENCH_POOL[pk];
+    if(P.slots.indexOf(slot)<0) continue;
+    let keys=kind==='both'?P.combat.concat(P.skilling):(kind==='combat'?P.combat:P.skilling);
+    keys=keys.filter(k=>ENCH_STAT[k]&&(!ENCH_STAT[k].skill||it.gearSkill===ENCH_STAT[k].skill));
+    return keys.length?{pool:pk, kind:kind, keys:keys}:null;
+  }
+  return null;
+}
+/* Unique drops and raid gear: combat gear that nothing in the game crafts. That
+   is exactly the 84 pieces that only drop — 44 raid pieces and 40 zone uniques. */
+let _enchCrafted=null;
+function isUniqueGear(id){
+  const b=variantBase(id), it=ITEMS[b];
+  if(!it||!it.cgear) return false;
+  if(!_enchCrafted){
+    _enchCrafted=new Set();
+    for(const k in SKILLS) for(const a of (SKILLS[k].acts||[])) for(const o in (a.out||{})) _enchCrafted.add(o);
+  }
+  return !_enchCrafted.has(b);
+}
+function enchRange(key,id,mult){
+  const S=ENCH_STAT[key]; if(!S) return [0,0];
+  const step=_enchJewelGem(variantBase(id))?S.jewel:S.gear;
+  const ref=step*enchTierOf(id)*(mult||1);
+  return [ref*0.8, ref*1.25];
+}
+function enchValueAt(key,id,q,mult){
+  const r=enchRange(key,id,mult);
+  // Rounded for a tidy save, then clamped: rounding to four places can nudge a
+  // value at the very edge of its range a hair outside it, and a line that reads
+  // "above perfect" is a bug the player would notice.
+  const v=+(r[0]+(r[1]-r[0])*q).toFixed(4);
+  return Math.min(r[1],Math.max(r[0],v));
+}
+function _enchQ(){ return Math.pow(Math.random(),ENCH_Q_SKEW); }
+function _enchPick(keys,exclude){
+  const left=keys.filter(k=>exclude.indexOf(k)<0);
+  const from=left.length?left:keys;
+  return from.length?from[Math.floor(Math.random()*from.length)]:null;
+}
+/* Roll a piece's lines. With keepLocked, a locked line survives untouched and the
+   free lines reroll to stats DIFFERENT from what was kept, so a lock can never
+   leave two lines of the same stat. */
+function enchRollLines(id,keepLocked){
+  const P=enchPoolFor(id); if(!P) return [];
+  const old=(state.variants&&state.variants[id]&&state.variants[id].lines)||[];
+  const oldNormal=old.filter(l=>l&&!l.u), oldUnique=old.find(l=>l&&l.u);
+  const lines=[];
+  for(let i=0;i<ENCH_LINES;i++){
+    const prev=oldNormal[i];
+    lines.push(keepLocked&&prev&&prev.lock?prev:null);
+  }
+  for(let i=0;i<lines.length;i++){
+    if(lines[i]) continue;
+    const used=lines.filter(Boolean).map(l=>l.k);
+    const k=_enchPick(P.keys,used); if(!k) continue;
+    const q=_enchQ();
+    lines[i]={k:k, v:enchValueAt(k,id,q,1), q:+q.toFixed(3), lock:false};
+  }
+  if(isUniqueGear(id)){
+    if(keepLocked&&oldUnique&&oldUnique.lock) lines.push(oldUnique);
+    else {
+      const used=lines.filter(Boolean).map(l=>l.k);
+      const k=_enchPick(ENCH_UNIQUE_POOL,used), q=_enchQ();
+      lines.push({k:k, v:enchValueAt(k,id,q,ENCH_UNIQUE_MULT), q:+q.toFixed(3), lock:false, u:true});
+    }
+  }
+  return lines.filter(Boolean);
+}
+function enchLockCount(vid){ const v=state.variants&&state.variants[vid]; return v?v.lines.filter(l=>l.lock).length:0; }
+function enchMaxLocks(vid){ const v=state.variants&&state.variants[vid]; return v?Math.max(0,v.lines.length-1):0; }
+function toggleEnchLock(vid,idx){
+  const v=state.variants&&state.variants[vid]; if(!v||!v.lines[idx]) return false;
+  const L=v.lines[idx];
+  if(!L.lock&&enchLockCount(vid)>=enchMaxLocks(vid)){
+    if(typeof toast==='function') toast('Leave at least one line free to reroll.');
+    return false;
+  }
+  L.lock=!L.lock;
+  saveGame();
+  return true;
+}
+/* What it costs. Applying uses the existing tier table. A reroll starts at 40% of
+   that and climbs with what you are protecting: each lock adds 150%, and the best
+   locked line's quality adds up to 400% more on a curve, so holding a 90% line
+   while fishing for a second costs about 10x a free reroll. */
+function enchCostTier(id){
+  const b=variantBase(id), it=ITEMS[b];
+  if(_enchJewelGem(b)) return enchTierOf(id);
+  if(it&&it.cgear) return Math.max(1,Math.min(8,Math.round((it.ctier||1)*0.75)));
+  return 6;
+}
+function enchApplyCost(id){
+  return Object.assign({},ENCHANT_COST_BY_TIER[enchCostTier(id)]||ENCHANT_COST_BY_TIER[1]);
+}
+function enchRerollCost(vid){
+  const base=enchApplyCost(vid), v=state.variants&&state.variants[vid];
+  const locked=v?v.lines.filter(l=>l.lock):[];
+  const topQ=locked.reduce((m,l)=>Math.max(m,l.q||0),0);
+  const mult=0.4*(1+1.5*locked.length)*(1+4*topQ*topQ);
+  const out={};
+  for(const m in base) out[m]=Math.max(1,Math.ceil(base[m]*mult));
+  return out;
+}
+function enchShortOf(cost){ for(const m in cost) if((state.items[m]||0)<cost[m]) return m; return null; }
+function enchSpend(cost){
+  for(const m in cost){ state.items[m]=(state.items[m]||0)-cost[m]; if(state.items[m]<=0) delete state.items[m]; }
+}
+/* Enchant or reroll a piece. A plain piece splits off its stack first; a piece
+   that is already its own variant rerolls in place, keeping locked lines. */
+function enchantPiece(id,opts){
+  opts=opts||{};
+  if(!isEnchantable(id)){ if(typeof toast==='function') toast('That cannot be enchanted.'); return null; }
+  const rolled=isVariantId(id)&&state.variants&&state.variants[id]&&state.variants[id].lines.length>0;
+  const cost=rolled?enchRerollCost(id):enchApplyCost(id);
+  const short=enchShortOf(cost);
+  if(short){ if(typeof toast==='function') toast('Not enough '+((ITEMS[short]&&ITEMS[short].name)||short)+'.'); return null; }
+  const vid=isVariantId(id)?id:splitToVariant(id,{worn:opts.worn});
+  if(!vid){ if(typeof toast==='function') toast('You do not have that piece.'); return null; }
+  enchSpend(cost);
+  state.variants[vid].lines=enchRollLines(vid,rolled);
+  registerVariant(vid);                         // the name follows the leading line
+  if(typeof refreshCombatStats==='function') try{ refreshCombatStats(); }catch(e){}
+  saveGame();
+  return vid;
+}
+/* The overall quality of a piece: the mean of its lines, which is what the tile
+   badge shows. A 90/40 piece reads 65%, which is honest about how far from done
+   it is. */
+function enchQuality(vid){
+  const v=state.variants&&state.variants[vid];
+  if(!v||!v.lines.length) return 0;
+  return v.lines.reduce((s,l)=>s+(l.q||0),0)/v.lines.length;
+}
+/* Sum every rolled line on the pieces in one loadout, for the keys that loadout
+   counts. Kept separate from the legacy per-id enchant summation below so the two
+   can coexist while jewelry migrates across. */
+function enchLineBonuses(loadout,keys){
+  const out={}; for(const k of keys) out[k]=0;
+  if(!loadout||!state.variants) return out;
+  for(const slot in loadout){
+    const v=state.variants[loadout[slot]];
+    if(!v||!v.lines) continue;
+    for(const L of v.lines) if(L&&L.k in out) out[L.k]+=L.v||0;
+  }
+  return out;
+}
+
 function enchantBonuses(skill){
   var SKILL_KEYS={speed:0,xpBoost:0,gpBoost:0,doubleYield:0,goldFind:0};
   var total={speed:0,xpBoost:0,gpBoost:0,doubleYield:0,goldFind:0};
@@ -11441,6 +11680,11 @@ function enchantBonuses(skill){
       for(var bk in setDef.bonus){ if(bk in SKILL_KEYS) total[bk]+=setDef.bonus[bk]; }
     }
   }
+  /* Rolled lines on worn pieces ([JS-02c]). rareFind and prized are not in the
+     legacy SKILL_KEYS — no old enchant ever carried them — so they are added here
+     and read by skillDropChance through mods().encRare / mods().encPrized. */
+  var rl=enchLineBonuses(state.equipped,['speed','xpBoost','gpBoost','doubleYield','goldFind','rareFind','prized']);
+  for(var rk in rl) total[rk]=(total[rk]||0)+rl[rk];
   return total;
 }
 
@@ -11462,6 +11706,9 @@ function combatEnchantBonuses(){
     if(_enchantSetActive(sd, ce, 'amulet')){ for(var bk in sd.bonus){ if(bk in CK) total[bk]+=sd.bonus[bk]; } } }
   for(var pk in PENDANT_SETS){ var pd=PENDANT_SETS[pk];
     if(_enchantSetActive(pd, ce, 'pendant')){ for(var bk2 in pd.bonus){ if(bk2 in CK) total[bk2]+=pd.bonus[bk2]; } } }
+  // Rolled lines on worn pieces, including the unique line on drops and raid gear.
+  var rl=enchLineBonuses(ce,['atkBoost','hpBoost','defBoost','critChance','lifesteal','goldFind']);
+  for(var rk in rl) total[rk]+=rl[rk];
   return total;
 }
 
@@ -22792,8 +23039,15 @@ function thiefSuccess(act){
 function skillDropChance(skillKey, drop, m){
   let c=effDropChance(drop.chance);
   const dropId=drop.id;
-  if(skillKey==='fishing' && ITEMS[dropId] && ITEMS[dropId].prizedOf){
+  const isPrized=!!(ITEMS[dropId]&&ITEMS[dropId].prizedOf);
+  /* Rare find chance, from a rolled enchant line ([JS-02c]). Multiplicative, like
+     every other drop booster here, and deliberately NOT applied to prized catches
+     — those have their own line — so one stat cannot double-dip the other. */
+  if(!isPrized && m && m.encRare>0) c*=(1+m.encRare);
+  if(skillKey==='fishing' && isPrized){
     if(m && m.master1) c*=LUCKY_LURE_MULT;
+    // Prized catch chance, from a rolled enchant line on a fishing piece.
+    if(m && m.encPrized>0) c*=(1+m.encPrized);
     /* Ticket #101 (0.9.124.2). Lucky Lure was the ONLY thing in the game that
        moved this number, and a prized catch is what a guild quest asks for and
        what a quest timer runs out on: "if you don't have them on hand, it could
@@ -23031,6 +23285,9 @@ function mods(skill){
     master1: r(p+'_master1')>0,
     master2: r(p+'_master2')>0,
     master3: r(p+'_master3')>0,
+    // Rolled enchant lines that act on drops, not on rates ([JS-02c]).
+    encRare:   eb.rareFind||0,
+    encPrized: eb.prized||0,
     jw_dust: skill==='jeweler'?r('jw_dust')*0.05:0,   // Dust Collector — bonus gem dust per cut
     /* Gem Hoarder (jw_master3) — doubles gem dust from every cut, applied AFTER Dust
        Collector so the two stack the way the tooltips read. This is what the node was
