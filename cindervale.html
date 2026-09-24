@@ -8959,7 +8959,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.127.2">v0.9.127</div>
+  <div class="mm-ver" data-build="0.9.127.3">v0.9.127</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -10367,8 +10367,12 @@ const ITEMS={
   ironhide_2:    {name:'Ironhide Potion II',    icon:'🛡️',sell:5500, potion:{def:4,dur:180}},
   berserker_1:   {name:"Berserker's Brew I",    icon:'💪',sell:1700, potion:{str:2,dur:120}},
   berserker_2:   {name:"Berserker's Brew II",   icon:'💪',sell:7700, potion:{str:4,dur:180}},
-  // Triple combat brew — slot-competing pinnacle, all three stats at once.
-  warriors_brew: {name:"Warrior's Triple Brew", icon:'🏺',sell:17600,rare:true,potion:{atk:3,str:3,def:3,dur:300}},
+  /* The archer's brew (0.9.127.3). Strength brews are melee again, so a bow has one
+     of its own: Ranged Strength, at the same size and duration as Berserker's. */
+  hawkeye_draught_1:{name:'Hawkeye Draught I',  icon:'🏹',sell:1700, potion:{rstr:2,dur:120}},
+  hawkeye_draught_2:{name:'Hawkeye Draught II', icon:'🏹',sell:7700, potion:{rstr:4,dur:180}},
+  // Triple combat brew — slot-competing pinnacle, every damage stat at once.
+  warriors_brew: {name:"Warrior's Triple Brew", icon:'🏺',sell:17600,rare:true,potion:{atk:3,str:3,rstr:3,def:3,dur:300}},
   // ─── Monster-drop consumables (1.0.6) — heal in combat like draughts. Cooked
   // from beast parts / bound from silk; tier-local early-game sustain. ─────────
   // Monster-drop foods come in three flavours (1.0.21): INSTANT (burst heal, like
@@ -10376,16 +10380,16 @@ const ITEMS={
   // sustained idle fights), and FEAST (smaller instant heal + a short combat buff).
   // potion.regen = total HP, potion.regenDur = seconds. potion.buff = {str/def/atk,dur}.
   marrow_broth:    {name:'Marrow Broth',    icon:'🍲',sell:40,  potion:{regen:40, regenDur:6}, desc:'Bones boiled down to a rich, restorative broth. Mends you slowly — 40 HP over 6s.'},
-  ratmeat_skewer:  {name:'Ratmeat Skewer',  icon:'🍢',sell:70,  potion:{heal:45, buff:{str:1,dur:30}}, desc:'Charred warren-rat on a splinter of bone. Restores 45 HP and fires you up: +1 Strength, melee or ranged, for 30s.'},
+  ratmeat_skewer:  {name:'Ratmeat Skewer',  icon:'🍢',sell:70,  potion:{heal:45, buff:{str:1,dur:30}}, desc:'Charred warren-rat on a splinter of bone. Restores 45 HP and fires you up: +1 Strength for 30s.'},
   silk_poultice:   {name:'Silk Poultice',   icon:'🩹',sell:90,  potion:{heal:75}, desc:'A wound-dressing of spider-silk and crushed venom sac — knits cuts closed fast. Instant 75 HP.'},
   goblin_jerky:    {name:'Goblin Jerky',    icon:'🥓',sell:120, potion:{heal:70}, desc:'Strips of cured hide smoked over a goblin fire. Tough, salty, and filling. Instant 70 HP.'},
   // ─── Monster-drop foods, mid→endgame tiers (1.0.7, reworked 1.0.21) ─────────
   bone_stew:       {name:'Bone Marrow Stew', icon:'🍲',sell:180, potion:{regen:150, regenDur:8}, desc:'Ancient bones simmered grey. Grim fare that knits you back together — 150 HP over 8s.'},
   wolf_jerky:      {name:'Wolf Jerky',       icon:'🥓',sell:280, potion:{heal:200}, desc:'Smoke-cured strips of dire-wolf. Chewy, fatty, warming. Instant 200 HP.'},
-  ogre_roast:      {name:'Ogre Roast',       icon:'🍖',sell:420, potion:{heal:240, buff:{str:2,dur:60}}, desc:'A slab of ogre haunch roasted over coals. Restores 240 HP and bolsters you: +2 Strength, melee or ranged, for 60s.'},
+  ogre_roast:      {name:'Ogre Roast',       icon:'🍖',sell:420, potion:{heal:240, buff:{str:2,dur:60}}, desc:'A slab of ogre haunch roasted over coals. Restores 240 HP and bolsters you: +2 Strength for 60s.'},
   troll_stew:      {name:'Troll Stew',       icon:'🍲',sell:640, potion:{regen:430, regenDur:8}, desc:'Troll meat and regenerative blood, stewed thick. You feel the wounds closing — 430 HP over 8s.'},
   drake_roast:     {name:'Drake Roast',      icon:'🍖',sell:950, potion:{heal:560}, desc:'Seared drake flank, still faintly smoking. Rich enough to mend deep wounds. Instant 560 HP.'},
-  infernal_roast:  {name:'Infernal Roast',   icon:'🍖',sell:1500,potion:{heal:620, buff:{str:3,def:3,dur:90}}, desc:'Demon-flesh roasted in brimstone. Restores 620 HP and steels you: +3 Strength, melee or ranged, and +3 Defence for 90s.'},
+  infernal_roast:  {name:'Infernal Roast',   icon:'🍖',sell:1500,potion:{heal:620, buff:{str:3,def:3,dur:90}}, desc:'Demon-flesh roasted in brimstone. Restores 620 HP and steels you: +3 Strength and +3 Defence for 90s.'},
   // Rare drops
   birds_nest:      {name:"Bird's Nest",       icon:'🪹',sell:990,  rare:true},
   ancient_seed:    {name:'Ancient Seed',       icon:'🌱',sell:825,  rare:true},
@@ -10765,9 +10769,9 @@ const ITEMS={
   warband_armor:     {name:'Warband Hide Armour', icon:'🦺', sell:2200, cgear:true, ctier:3, cslot:'chest', desc:"Goblin warrior plate — boiled hide reinforced with crude iron studs and bone charms. The tribal markings still glisten with old paint."},
   bone_plate_cuirass:{name:'Bone Plate Cuirass', icon:'🦺', sell:4400, cgear:true, ctier:4, cslot:'chest', desc:"A breastplate of riveted rib-plates and ancient bone, lashed to a mithril frame. Heavy as guilt; turns blades that would gut a knight."},
   pack_leader_vest:  {name:'Pack Leader Vest',   icon:'🦺', sell:8200, cgear:true, ctier:5, cslot:'chest', desc:"A scarred vest of pack-leader pelts bound with cobalt rivets. The howling horn at the throat makes a low, mournful sound when you breathe."},
-  // ─── Socket Gems ─── (5 colors × 3 tiers — chipped / polished / flawless)
-  // Mapping: sanguine=combat damage (any weapon), verdant=combat HP, azure=combat DEF,
-  //          topaz=SKILLING gpBoost, onyx=SKILLING speed/xpBoost.
+  // ─── Socket Gems ─── (6 colors x 3 tiers: chipped / polished / flawless)
+  // Mapping: sanguine=melee Attack, hawkseye=Ranged damage, verdant=combat HP,
+  //          azure=combat DEF, topaz=SKILLING gpBoost, onyx=SKILLING speed/xpBoost.
   // Two sources: crafted from gem_dust at the Gem Exchange (Socket tab), OR dropped
   // by slain foes (tier scales with monster level — see rollSocketGemDrop).
   sanguine_chip:    {name:'Chipped Sanguine',  icon:'🔴',sell:200,  rare:true, socketGem:true},
@@ -10785,6 +10789,11 @@ const ITEMS={
   onyx_chip:        {name:'Chipped Onyx',      icon:'⚫',sell:200,  rare:true, socketGem:true},
   onyx_polish:      {name:'Polished Onyx',     icon:'⚫',sell:800,  rare:true, socketGem:true},
   onyx_flaw:        {name:'Flawless Onyx',     icon:'⚫',sell:3200, rare:true, socketGem:true},
+  /* Hawkseye (0.9.127.3) is the archer's gem. Sanguine went back to Attack in the
+     same build, so a bow has a gem of its own rather than borrowing a melee one. */
+  hawkseye_chip:    {name:'Chipped Hawkseye',  icon:'🟢',sell:200,  rare:true, socketGem:true},
+  hawkseye_polish:  {name:'Polished Hawkseye', icon:'🟢',sell:800,  rare:true, socketGem:true},
+  hawkseye_flaw:    {name:'Flawless Hawkseye', icon:'🟢',sell:3200, rare:true, socketGem:true},
   // ─── Combat drops · Rat Warrens ─── misc materials (reserved for future crafting/alchemy uses)
   rat_tail:         {name:'Rat Tail',          icon:'〰️',sell:6,    desc:'Tough sinewy tail. Crafters and alchemists may want these later.'},
   gnawed_bone:      {name:'Gnawed Bone',       icon:'🦴',sell:10,   desc:'A small bone worried smooth by rodent teeth.'},
@@ -11920,13 +11929,16 @@ const SOCKET_DRILL_COSTS=[
    so the math composes cleanly. Skilling keys go through socketBonuses(skill);
    combat keys go through combatSocketBonuses() (wired when combat is built). */
 const SOCKET_GEMS={
-  /* Sanguine: damage with whatever you hold (0.9.127.2). It was Attack %, which a
-     bow read as damage too. There is no ranged gem to move an archer onto, so rather
-     than leave every archer's sockets empty the gem feeds the held weapon's channel:
-     Attack % with a sword, Ranged damage % with a bow. */
-  sanguine_chip:   {name:'Chipped Sanguine',  color:'sanguine', tier:1, bonus:{dmgBoost:0.02}, desc:'+2% damage'},
-  sanguine_polish: {name:'Polished Sanguine', color:'sanguine', tier:2, bonus:{dmgBoost:0.04}, desc:'+4% damage'},
-  sanguine_flaw:   {name:'Flawless Sanguine', color:'sanguine', tier:3, bonus:{dmgBoost:0.08}, desc:'+8% damage'},
+  /* Sanguine is Attack again (0.9.127.3). It briefly fed whichever weapon you held,
+     because 0.9.127.2 took Attack % off bow damage and there was no ranged gem to
+     move an archer onto. Hawkseye is that gem, so the two are separate stones now. */
+  sanguine_chip:   {name:'Chipped Sanguine',  color:'sanguine', tier:1, bonus:{atkBoost:0.02}, desc:'+2% Attack'},
+  sanguine_polish: {name:'Polished Sanguine', color:'sanguine', tier:2, bonus:{atkBoost:0.04}, desc:'+4% Attack'},
+  sanguine_flaw:   {name:'Flawless Sanguine', color:'sanguine', tier:3, bonus:{atkBoost:0.08}, desc:'+8% Attack'},
+  // Hawkseye - Ranged damage, the bow's answer to Sanguine
+  hawkseye_chip:   {name:'Chipped Hawkseye',  color:'hawkseye', tier:1, bonus:{rangedStr:0.02}, desc:'+2% Ranged damage'},
+  hawkseye_polish: {name:'Polished Hawkseye', color:'hawkseye', tier:2, bonus:{rangedStr:0.04}, desc:'+4% Ranged damage'},
+  hawkseye_flaw:   {name:'Flawless Hawkseye', color:'hawkseye', tier:3, bonus:{rangedStr:0.08}, desc:'+8% Ranged damage'},
   // Verdant — combat HP
   verdant_chip:    {name:'Chipped Verdant',   color:'verdant',  tier:1, bonus:{hpBoost:0.02},  desc:'+2% Max HP'},
   verdant_polish:  {name:'Polished Verdant',  color:'verdant',  tier:2, bonus:{hpBoost:0.04},  desc:'+4% Max HP'},
@@ -12326,6 +12338,10 @@ const SKILLS={
     {id:'al_c4', name:'Brew Honed Edge Potion II', lvl:62,ms:22000,xp:620, spdMult:0.745,minMs:3380, inp:{witchhazel:3,ashbloom:1},          out:{honed_edge_2:1}},
     {id:'al_c5', name:'Brew Ironhide Potion II',   lvl:70,ms:25000,xp:780, spdMult:0.760,minMs:3900, inp:{frostcrocus:3,voidbloom:1},        out:{ironhide_2:1}},
     {id:'al_c6', name:"Brew Berserker's Brew II",  lvl:78,ms:28500,xp:920, spdMult:0.770,minMs:4485, inp:{nightshade:3,ashbloom:1},          out:{berserker_2:1}},
+    /* The archer's pair (0.9.127.3), priced and levelled beside Berserker's Brew,
+       which is the melee stat they replace. Sunroot is the bright-eye herb. */
+    {id:'al_c8', name:'Brew Hawkeye Draught I',   lvl:45,ms:17000,xp:350, spdMult:0.715,minMs:2730, inp:{sunroot:3},                       out:{hawkeye_draught_1:1}},
+    {id:'al_c9', name:'Brew Hawkeye Draught II',  lvl:78,ms:28500,xp:920, spdMult:0.770,minMs:4485, inp:{sunroot:3,ashbloom:1},            out:{hawkeye_draught_2:1}},
     {id:'al_c7', name:"Brew Warrior's Triple Brew",lvl:90,ms:38000,xp:1640,spdMult:0.790,minMs:5440, inp:{witchhazel:2,frostcrocus:2,nightshade:2}, out:{warriors_brew:1}},
     // ─── Monster-part brews (1.0.6) — alternate sources for combat buffs + a heal ───
     {id:'al_m1', name:'Grind Honed Edge I (fang)', lvl:6, ms:10200,xp:72, spdMult:0.610,minMs:1755, inp:{rat_fang:3,goblin_tooth:2},         out:{honed_edge_1:1}},
@@ -12889,6 +12905,12 @@ const HEAL_PAL   ={pre:'hl',glow:'#e85850',bright:'#ff9088',mid:'#d8484e',dark:'
 const HONED_PAL  ={pre:'he',glow:'#fbd24e',bright:'#fff8b0',mid:'#e0a830',dark:'#a06818',deep:'#3a2008',ribbon:['#fff5c0','#7a4818']};
 const IRON_PAL   ={pre:'ih',glow:'#7ac8e8',bright:'#d8f0fa',mid:'#5878b8',dark:'#284878',deep:'#0a1a3a',ribbon:['#bce8f8','#1a3858']};
 const BERSERK_PAL={pre:'br',glow:'#8a48b8',bright:'#c8a8e0',mid:'#6028a0',dark:'#3a0858',deep:'#180428',ribbon:['#c8a8e0','#3a0858']};
+/* Hawkeye Draught (0.9.127.3) - teal, with a loosed arrow in the glass. */
+const HAWKEYE_MOTIFS={
+  m1:`<path d="M25 49 L40 34" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity="0.9"/><path d="M40 34 L33.5 34.5 M40 34 L39.5 40.5" stroke="#fff" stroke-width="1.4" stroke-linecap="round" opacity="0.9"/><path d="M25 49 L21 47 M25 49 L27 53" stroke="#fff" stroke-width="1.2" stroke-linecap="round" opacity="0.7"/>`,
+  m2:`<path d="M22 52 L42 32" stroke="#fff" stroke-width="1.9" stroke-linecap="round" opacity="0.92"/><path d="M42 32 L34 33 M42 32 L41 40" stroke="#fff" stroke-width="1.7" stroke-linecap="round" opacity="0.92"/><path d="M22 52 L17 50 M22 52 L24 57 M26 48 L21 46 M26 48 L28 53" stroke="#fff" stroke-width="1.3" stroke-linecap="round" opacity="0.72"/><circle cx="33" cy="42" r="1.2" fill="#fff" opacity="0.9"/>`,
+};
+const HAWKEYE_PAL={pre:'hk',glow:'#3ec8a8',bright:'#bdf6e6',mid:'#2fae94',dark:'#0f5a4c',deep:'#04211c',ribbon:['#bdf6e6','#0f5a4c']};
 const TRIPLE_PAL ={pre:'wb',glow:'#fbd24e',bright:'#fff8d4',mid:'#e0a830',dark:'#902028',deep:'#1a0810',ribbon:['#fff8d4','#902028']};
 
 /* Gem & jewelry generators — shared silhouettes, palette per tier.
@@ -12960,6 +12982,7 @@ const SG_VERDANT ={light:'#7ae068',mid:'#3a9838',dark:'#0a3810',edge:'#04140a',a
 const SG_AZURE   ={light:'#78b8f0',mid:'#3868c8',dark:'#0a2858',edge:'#040e1c',accent:'#c8e0f8',glow:'#5a8fd8'};
 const SG_TOPAZ   ={light:'#f8d048',mid:'#e0a020',dark:'#5a3008',edge:'#1a0e02',accent:'#fff0a8',glow:'#e0b440'};
 const SG_ONYX    ={light:'#888090',mid:'#3a3848',dark:'#0a0810',edge:'#040408',accent:'#d8d0e0',glow:'#6868a0'};
+const SG_HAWKSEYE={light:'#78e8d0',mid:'#20a890',dark:'#053a34',edge:'#021412',accent:'#c8fff0',glow:'#3ec8a8'};
 
 /* Socket gem generator — tier:1 chipped (rough fragment), 2 polished (clean cut),
    3 flawless (brilliant cut with glow halo + sparkles). All use the same palette keys
@@ -14143,6 +14166,8 @@ const ICONS = {
   heal_draught_2: _potionT1({...HEAL_PAL,    motif1:HEAL_MOTIFS.m2}),
   heal_draught_3: _potionT2({...HEAL_PAL,    motif2:HEAL_MOTIFS.m2}),
   heal_draught_4: _potionT3({...HEAL_PAL,    motif3:HEAL_MOTIFS.m3}),
+  hawkeye_draught_1: _potionT1({...HAWKEYE_PAL, motif1:HAWKEYE_MOTIFS.m1}),
+  hawkeye_draught_2: _potionT2({...HAWKEYE_PAL, motif2:HAWKEYE_MOTIFS.m2}),
   honed_edge_1:   _potionT1({...HONED_PAL,   motif1:HONED_MOTIFS.m1}),
   honed_edge_2:   _potionT2({...HONED_PAL,   motif2:HONED_MOTIFS.m2}),
   ironhide_1:     _potionT1({...IRON_PAL,    motif1:IRON_MOTIFS.m1}),
@@ -14257,6 +14282,9 @@ const ICONS = {
   void_jewel:         _pendantSVG(_jwPal(GP_VOID,JB_VOIDMETAL)),
 
   /* ─── Socket gems (15) — 5 colors × 3 tiers (chipped/polished/flawless) ─── */
+  hawkseye_chip:    _socketGemSVG(SG_HAWKSEYE,1),
+  hawkseye_polish:  _socketGemSVG(SG_HAWKSEYE,2),
+  hawkseye_flaw:    _socketGemSVG(SG_HAWKSEYE,3),
   sanguine_chip:    _socketGemSVG(SG_SANGUINE,1),
   sanguine_polish:  _socketGemSVG(SG_SANGUINE,2),
   sanguine_flaw:    _socketGemSVG(SG_SANGUINE,3),
@@ -18287,6 +18315,7 @@ const ALCH_LADDER=[
   {key:'honed',     name:'Honed Edge',      tiers:['honed_edge_1','honed_edge_2'],   labels:['I','II']},
   {key:'ironhide',  name:'Ironhide',        tiers:['ironhide_1','ironhide_2'],       labels:['I','II']},
   {key:'berserk',   name:"Berserker's Brew", tiers:['berserker_1','berserker_2'],     labels:['I','II']},
+  {key:'hawkeye',   name:'Hawkeye Draught',  tiers:['hawkeye_draught_1','hawkeye_draught_2'], labels:['I','II']},
 ];
 /* potion item id → {ladder, tier index} */
 const ALCH_LADDER_OF={};
@@ -18326,7 +18355,7 @@ function alchPotions(){
    keep dividing the list exactly where they always did. */
 function alchIsCombat(potionId){
   const p=ITEMS[potionId]&&ITEMS[potionId].potion;
-  return !!(p&&(p.heal||p.atk||p.str||p.def||p.regen));
+  return !!(p&&(p.heal||p.atk||p.str||p.rstr||p.def||p.regen));
 }
 /* What the potion DOES, which the panel has never printed. Reads the same
    `potion` block combat and skilling actually consume, so it cannot drift. */
@@ -18340,7 +18369,8 @@ function alchEffectText(potionId){
   if(p.gp) bits.push('+'+Math.round(p.gp*100)+'% sell');
   if(p.doubleChance) bits.push('+'+Math.round(p.doubleChance*100)+'% double');
   if(p.atk) bits.push('+'+p.atk+' Attack');
-  if(p.str) bits.push('+'+p.str+' Strength, melee or ranged');
+  if(p.str) bits.push('+'+p.str+' Strength');
+  if(p.rstr) bits.push('+'+p.rstr+' Ranged Strength');
   if(p.def) bits.push('+'+p.def+' Defence');
   if(p.heal) bits.push('heals '+p.heal);
   if(p.regen) bits.push(p.regen+' HP over '+(p.regenDur||0)+'s');
@@ -20587,7 +20617,7 @@ function normalizeState(){
   state.effects=state.effects.filter(e=>e&&typeof e==='object'&&typeof e.expires==='number');
   // Migrate old multi-object stacks: merge same-variant effects into one object with _stacks
   (()=>{
-    const BK=['speed','xp','gp','doubleChance','atk','str','def'];
+    const BK=['speed','xp','gp','doubleChance','atk','str','rstr','def'];
     const sigOf=e=>BK.map(k=>+(e[k]||0).toFixed(4)).join(',');
     const now=Date.now();
     const merged={};
@@ -22295,13 +22325,14 @@ function hasSkillCape(skill){ const id=SKILL_CAPE[skill]; return !!id && Array.i
    added on top of gear (so a +2 Atk potion acts like temporary gear atk).
    Heal potions are instant and never appear in state.effects. */
 function activePotionCombatStats(){
-  const out={atk:0,str:0,def:0};
+  const out={atk:0,str:0,rstr:0,def:0};
   if(!Array.isArray(state.effects)) return out;
   const now=Date.now();
   for(const e of state.effects){
     if(!e||e.expires<=now) continue;
     if(e.atk) out.atk+=e.atk;
     if(e.str) out.str+=e.str;
+    if(e.rstr) out.rstr+=e.rstr;   // Hawkeye Draught, and the Triple Brew
     if(e.def) out.def+=e.def;
   }
   return out;
@@ -22669,11 +22700,10 @@ function combatStats(){
   atk += pot.atk;
   str += pot.str;
   def += pot.def;
-  /* Strength from a potion or a food counts as Ranged Strength too. There is no
-     ranged potion or ranged food yet, and auto-eat feeds an archer the same roasts
-     it feeds a swordsman, so taking this away would have been a quiet nerf rather
-     than a re-plumb. The Ranged stat's description says so. */
-  rstr += pot.str;
+  /* The Hawkeye Draught is the archer's brew (0.9.127.3). Until it existed, Strength
+     from a potion or a food counted for bows too, because taking it away with nothing
+     to replace it would have been a quiet nerf. Strength is melee again now. */
+  rstr += pot.rstr;
   // Class ↔ armour synergy (1.0.70) — a small Attack/Defence bonus for wearing the
   // armour your class favours (rogue/berserker→leather atk, guardian→plate def).
   try{ const cab=classArmorStatBonus(); atk+=cab.atk; def+=cab.def; }catch(e){}
@@ -22772,7 +22802,7 @@ const COMBAT_STATS={
   /* A getter, because one sentence depends on RANGED_ACC_FROM_ATTACK and a copy of
      that answer in a string would drift the day the switch is flipped. */
   ranged:    {name:'Ranged',    icon:'🏹', get desc(){ return 'Accuracy AND damage, for bows and crossbows only.\nEach Ranged level adds +1.5 accuracy and +1.35 max hit.\n'
-    +'Each point of Ranged Strength adds +5 max hit. Most of it comes from the arrow or bolt in your quiver; some bows, bracers, gauntlets, bucklers and capes add more, and so does Strength from potions and food.\n'
+    +'Each point of Ranged Strength adds +5 max hit. Most of it comes from the arrow or bolt in your quiver; some bows, bracers, gauntlets, bucklers and capes add more, and a Hawkeye Draught adds more still.\n'
     +'Ranged damage % raises your max hit and accuracy with a bow, the way Attack % does with a sword.'
     +((typeof RANGED_ACC_FROM_ATTACK!=='undefined'&&RANGED_ACC_FROM_ATTACK)?' Attack % still raises your accuracy with a bow, but not your damage.':' Attack % does nothing for a bow.')+'\n'
     +'One level here does the job of an Attack level and a Strength level, so it is worth less than either. Every shot spends ammunition.'; }},
@@ -24057,7 +24087,7 @@ function useHealPotion(itemId){
   // Buff foods (1.0.21) carry potion.buff — they're worth eating even at full HP
   // for the combat buff, so only pure heals reject on overheal.
   const buff=it.potion.buff;
-  const hasBuff=!!(buff&&(buff.atk||buff.str||buff.def));
+  const hasBuff=!!(buff&&(buff.atk||buff.str||buff.rstr||buff.def));
   const missing=(combat.youMaxHp||0)-(combat.youHp||0);
   if(missing<=0&&!hasBuff){
     toast(`${it.icon} ${it.name} — HP already full.`);
@@ -24090,11 +24120,11 @@ function useHealPotion(itemId){
       ex.expires=Math.min(now+dur*MAX_STACKS, Math.max(ex.expires,now)+dur);
       ex._stacks=Math.min(MAX_STACKS, Math.max(1, Math.round((ex.expires-now)/dur)));
     } else {
-      state.effects.push({atk:buff.atk||0,str:buff.str||0,def:buff.def||0,expires:now+dur,name:it.name,food:true,_itemId:itemId,_stacks:1});
+      state.effects.push({atk:buff.atk||0,str:buff.str||0,rstr:buff.rstr||0,def:buff.def||0,expires:now+dur,name:it.name,food:true,_itemId:itemId,_stacks:1});
     }
     if(typeof refreshCombatStats==='function') refreshCombatStats();
     if(typeof cmbLog==='function'){
-      const tag=[buff.atk?`+${buff.atk} Atk`:'',buff.str?`+${buff.str} Str`:'',buff.def?`+${buff.def} Def`:''].filter(Boolean).join(', ');
+      const tag=[buff.atk?`+${buff.atk} Atk`:'',buff.str?`+${buff.str} Str`:'',buff.rstr?`+${buff.rstr} Ranged Str`:'',buff.def?`+${buff.def} Def`:''].filter(Boolean).join(', ');
       cmbLog(`${it.icon} ${it.name} — ${tag} for ${buff.dur||30}s.`,'sys');
     }
   }
@@ -24310,7 +24340,7 @@ function combatBuffItems(){
   for(const id in ITEMS){
     const it=ITEMS[id]; if(!it||!it.potion||!it.potion.dur) continue;
     const p=it.potion;
-    const total=(p.atk||0)+(p.str||0)+(p.def||0);
+    const total=(p.atk||0)+(p.str||0)+(p.rstr||0)+(p.def||0);
     if(total<=0) continue;
     const cnt=(state.items&&state.items[id])||0;
     if(cnt>0) out.push({id,it,total});
@@ -24360,7 +24390,7 @@ function autoApplyBuffs(){
   if(only) list=list.filter(b=>b.id===only);   // "only one in use" — keep just the picked brew up
   for(const b of list){
     if(!(state.items[b.id]>0)) continue;
-    const types=['atk','str','def'].filter(t=>b.it.potion[t]);
+    const types=['atk','str','rstr','def'].filter(t=>b.it.potion[t]);
     const own=state.effects.find(e=>e.expires>now&&e._itemId===b.id);
     if(own){
       if((own.expires-now)>REFRESH_AT) continue;       // still healthy → leave it
@@ -24396,7 +24426,7 @@ function usePotion(itemId,silent){
   // atk/str/def buff potions go through the same duration / conflict /
   // refresh pipeline as skilling potions. The combat tick reads their flat
   // contribution via activePotionCombatStats() → combatStats().
-  const BONUS_TYPES=['speed','xp','gp','doubleChance','atk','str','def'];
+  const BONUS_TYPES=['speed','xp','gp','doubleChance','atk','str','rstr','def'];
   // Conflicts are judged ONLY on the potion's intended bonus types (from its definition).
   // Incidental bonuses — like the Alchemist's Insight +XP touch on a speed potion — never block or
   // get blocked by other potions. This is why a Wisdom potion no longer overrides Swiftness.
@@ -24412,6 +24442,7 @@ function usePotion(itemId,silent){
   // so playerAccuracy/MaxHit/Defence math stays whole-number-clean.
   if(it.potion.atk) effect.atk=Math.max(1,Math.round(it.potion.atk*powMult));
   if(it.potion.str) effect.str=Math.max(1,Math.round(it.potion.str*powMult));
+  if(it.potion.rstr) effect.rstr=Math.max(1,Math.round(it.potion.rstr*powMult));   // Hawkeye Draught
   if(it.potion.def) effect.def=Math.max(1,Math.round(it.potion.def*powMult));
   const hasMaster1Xp=it.potion.speed&&!it.potion.xp&&treeRank('alchemy','al_master_swift')>0;
   if(hasMaster1Xp) effect.xp=0.03; // incidental Alchemist's Insight XP — flat, not concentrated
@@ -24437,7 +24468,7 @@ function usePotion(itemId,silent){
     state.items[itemId]--;
     renderEffectsBar(); renderRightPanel();
     if(!silent) toast(`${it.icon} ${it.name} refreshed — ${fmtTime(existing.expires-now)} left (×${existing._stacks})`);
-    if((existing.atk||existing.str||existing.def)&&typeof refreshCombatStats==='function') refreshCombatStats();
+    if((existing.atk||existing.str||existing.rstr||existing.def)&&typeof refreshCombatStats==='function') refreshCombatStats();
     saveGame();
     return;
   }
@@ -24449,9 +24480,9 @@ function usePotion(itemId,silent){
     const rivals=state.effects.filter(e=>e.expires>now&&(e[type]||0)>0&&e._itemId!==itemId);
     for(const old of rivals){
       if((old[type]||0)>(effect[type]||0)){
-        const statLabel={speed:'speed',xp:'XP',gp:'gold',doubleChance:'yield',atk:'attack',str:'strength',def:'defence'}[type]||type;
-        // Flat stat buffs (atk/str/def) are integer adds; the rest are % multipliers
-        const isFlat=(type==='atk'||type==='str'||type==='def');
+        const statLabel={speed:'speed',xp:'XP',gp:'gold',doubleChance:'yield',atk:'attack',str:'strength',rstr:'ranged strength',def:'defence'}[type]||type;
+        // Flat stat buffs (atk/str/rstr/def) are integer adds; the rest are % multipliers
+        const isFlat=(type==='atk'||type==='str'||type==='rstr'||type==='def');
         const fmt=v=>isFlat?('+'+Math.round(v||0)):('+'+Math.round((v||0)*100)+'%');
         const oldIt=ITEMS[old._itemId];
         if(!silent) toast(`${it.icon} ${it.name} blocked — ${oldIt?oldIt.name:'Active potion'} already gives a stronger ${statLabel} boost (${fmt(old[type])} vs ${fmt(effect[type])}).`);
@@ -24465,7 +24496,7 @@ function usePotion(itemId,silent){
      ended as {4,0,0} with BOTH consumed — 9 stat points down to 4 — and a +4 Str
      brew on top of six Infernal Roasts destroyed +18 Str and +18 Def outright.
      Zero the beaten stats instead, and only drop the effect once nothing is left. */
-  const ALL_BONUS_KEYS=['speed','xp','gp','doubleChance','atk','str','def'];
+  const ALL_BONUS_KEYS=['speed','xp','gp','doubleChance','atk','str','rstr','def'];
   state.effects=state.effects.filter(e=>{
     if(e.expires<=now) return false;
     if(e._itemId===itemId) return true;
@@ -24486,12 +24517,13 @@ function usePotion(itemId,silent){
   if(it.potion.doubleChance) parts.push(`+${Math.round(it.potion.doubleChance*100)}% Yield`);
   if(effect.atk) parts.push(`+${effect.atk} Atk`);
   if(effect.str) parts.push(`+${effect.str} Str`);
+  if(effect.rstr) parts.push(`+${effect.rstr} Ranged Str`);
   if(effect.def) parts.push(`+${effect.def} Def`);
   if(hasMaster1Xp) parts.push(`+3% XP Gain (Alchemist's Insight)`);
   if(!silent) toast(`${it.icon} ${it.name} used! ${parts.join(' · ')} · ${fmtTime(addedDur)} remaining`);
   // Combat buff potions feed combatStats() → refresh the cached combat numbers
   // so a mid-fight buff immediately changes hit chance / max hit / defence.
-  if((effect.atk||effect.str||effect.def)&&typeof refreshCombatStats==='function'){
+  if((effect.atk||effect.str||effect.rstr||effect.def)&&typeof refreshCombatStats==='function'){
     refreshCombatStats();
   }
   saveGame();
@@ -31776,19 +31808,19 @@ function bagSell(id,want){
    applies, read ahead so the button can say so instead of failing into a toast. */
 function _potionUseState(id){
   const it=ITEMS[id];
-  const BONUS_TYPES=['speed','xp','gp','doubleChance','atk','str','def'];
+  const BONUS_TYPES=['speed','xp','gp','doubleChance','atk','str','rstr','def'];
   const now=Date.now(), powMult=potionPowerMult();
   const added=it.potion.dur*1000*potionDurMult(), MAX=3;
   const eff={};
   for(const k of ['speed','xp','gp','doubleChance']) if(it.potion[k]) eff[k]=it.potion[k]*powMult;
-  for(const k of ['atk','str','def']) if(it.potion[k]) eff[k]=Math.max(1,Math.round(it.potion[k]*powMult));
+  for(const k of ['atk','str','rstr','def']) if(it.potion[k]) eff[k]=Math.max(1,Math.round(it.potion[k]*powMult));
   const same=(state.effects||[]).find(e=>e.expires>now&&e._itemId===id);
   if(same&&Math.max(0,same.expires-now)>=added*MAX-1500)
     return {disabled:true,label:'Use',title:'Max duration ('+fmtTime(Math.max(0,same.expires-now))+' left)'};
   for(const type of BONUS_TYPES.filter(k=>it.potion[k])){
     for(const old of (state.effects||[]).filter(e=>e.expires>now&&(e[type]||0)>0&&e._itemId!==id)){
       if((old[type]||0)>(eff[type]||0)){
-        const lbl={speed:'speed',xp:'XP',gp:'gold',doubleChance:'yield',atk:'attack',str:'strength',def:'defence'}[type]||type;
+        const lbl={speed:'speed',xp:'XP',gp:'gold',doubleChance:'yield',atk:'attack',str:'strength',rstr:'ranged strength',def:'defence'}[type]||type;
         return {disabled:true,label:'Use',title:'Stronger '+lbl+' potion active ('+fmtTime(Math.max(0,old.expires-now))+' left)'};
       }
     }
@@ -31837,7 +31869,7 @@ function _bagDockHTML(id,cat){
     if(p.xp) parts.push('+'+Math.round(p.xp*100)+'% XP');
     if(p.gp) parts.push('+'+Math.round(p.gp*100)+'% sell value');
     if(p.doubleChance) parts.push('+'+Math.round(p.doubleChance*100)+'% bonus yield');
-    if(p.atk) parts.push('+'+p.atk+' Atk'); if(p.str) parts.push('+'+p.str+' Str'); if(p.def) parts.push('+'+p.def+' Def');
+    if(p.atk) parts.push('+'+p.atk+' Atk'); if(p.str) parts.push('+'+p.str+' Str'); if(p.rstr) parts.push('+'+p.rstr+' Ranged Str'); if(p.def) parts.push('+'+p.def+' Def');
     if(p.buff){ const b=p.buff, bt=[b.atk?'+'+b.atk+' Atk':'',b.str?'+'+b.str+' Str':'',b.def?'+'+b.def+' Def':''].filter(Boolean).join(' '); if(bt) parts.push(bt+' for '+(b.dur||30)+'s'); }
     if(parts.length) chips.push('<span class="dk-chip">'+parts.join(' · ')+(p.dur?' · '+fmtTime(p.dur*1000):'')+'</span>');
   }
@@ -33621,7 +33653,7 @@ const HUNT_SECONDARY={
   // ── Cooking: insert by level, because array order drives the T{n} tier badge ──
   ITEMS.boar_roast   ={name:'Spit-roast Boar', icon:'🍖', sell:150,  potion:{heal:95},  desc:'A young boar turned over thicket coals until the skin cracks. Instant 95 HP.'};
   ITEMS.elk_haunch   ={name:'Smoked Elk Haunch', icon:'🍖', sell:520, potion:{heal:265, buff:{def:2,dur:60}}, desc:'Elk shoulder hung a night in birch smoke. Restores 265 HP and gives +2 Defence for 60s.'};
-  ITEMS.rhino_steak  ={name:'Seared Rhino Steak', icon:'🍖', sell:1800, potion:{heal:700, buff:{str:3,dur:90}}, desc:'A hand-thick cut off the steppe\'s heaviest animal, seared on a hot stone. Restores 700 HP and gives +3 Strength, melee or ranged, for 90s.'};
+  ITEMS.rhino_steak  ={name:'Seared Rhino Steak', icon:'🍖', sell:1800, potion:{heal:700, buff:{str:3,dur:90}}, desc:'A hand-thick cut off the steppe\'s heaviest animal, seared on a hot stone. Restores 700 HP and gives +3 Strength for 90s.'};
   /* Their own icons, NOT an alias of ogre_roast / drake_roast / infernal_roast.
      Aliasing copies whatever ICONS holds at THIS point in the file, which is the
      old SVG — the painted-art block at the bottom then repaints the original and
@@ -34287,7 +34319,7 @@ function rollDrops(monId, isRare){
    level (bosses bump +1); combat colors (sanguine/verdant/azure) drop a bit more
    often than skilling colors (topaz/onyx). The gem_dust Gem Exchange stays the
    beginner / guaranteed path — this is the "earn them from combat" supplement. */
-const SGEM_COLORS_COMBAT=['sanguine','verdant','azure'];
+const SGEM_COLORS_COMBAT=['sanguine','hawkseye','verdant','azure'];
 const SGEM_COLORS_SKILL=['topaz','onyx'];
 const SGEM_TIER_SUFFIX={1:'chip',2:'polish',3:'flaw'};
 function rollSocketGemDrop(mon, wasRare){
@@ -38500,6 +38532,7 @@ function showItemTooltip(itemId, x, y, note){
     if(it.potion.doubleChance) parts.push(`+${Math.round(it.potion.doubleChance*100)}% bonus yield`);
     if(it.potion.atk)  parts.push(`+${it.potion.atk} Atk`);
     if(it.potion.str)  parts.push(`+${it.potion.str} Str`);
+    if(it.potion.rstr) parts.push(`+${it.potion.rstr} Ranged Str`);
     if(it.potion.def)  parts.push(`+${it.potion.def} Def`);
     if(it.potion.heal) parts.push(`Restores ${it.potion.heal} HP (combat only)`);
     if(it.potion.regen) parts.push(`Regenerates ${it.potion.regen} HP over ${it.potion.regenDur||6}s (combat only)`);
@@ -41055,13 +41088,14 @@ function _soGemLive(itemId,gemId){
    bottom of the page, which is the last thing you read and the first thing you
    forget. Every card carries its own colour and effect now. */
 const SO_LINE={
-  sanguine:{label:'Sanguine',hex:'#d44a4a',hi:'#ff9c8e',stat:'Damage',    kind:'combat'},
+  sanguine:{label:'Sanguine',hex:'#d44a4a',hi:'#ff9c8e',stat:'Attack',    kind:'combat'},
+  hawkseye:{label:'Hawkseye',hex:'#3ec8a8',hi:'#a8f0e0',stat:'Ranged damage', kind:'combat'},
   verdant: {label:'Verdant', hex:'#5fb056',hi:'#b6f0a0',stat:'Max HP',    kind:'combat'},
   azure:   {label:'Azure',   hex:'#5a8fd8',hi:'#a9cdff',stat:'Defence',   kind:'combat'},
   topaz:   {label:'Topaz',   hex:'#e0b440',hi:'#ffe79b',stat:'Sell Value',kind:'skilling'},
   onyx:    {label:'Onyx',    hex:'#9a9a9a',hi:'#e2e2e2',stat:'Speed & XP',kind:'skilling'},
 };
-const SO_ORDER=['sanguine','verdant','azure','topaz','onyx'];
+const SO_ORDER=['sanguine','hawkseye','verdant','azure','topaz','onyx'];
 const SO_TIER={1:'Chipped',2:'Polished',3:'Flawless'};
 const SO_SLOTLAB={helmet:'Head',chest:'Chest',legs:'Legs',boots:'Boots',
                   ring_l:'L Ring',ring_r:'R Ring',amulet:'Neck'};
@@ -41292,8 +41326,9 @@ function _soWornStrip(redraw){
    the game does another. */
 function _soTotals(){
   const cb=combatSocketBonuses(), sb=socketBonuses();
-  // Sanguine is damage with any weapon since 0.9.127.2, not Attack.
-  const rows=[['dmg',cb.dmgBoost,'Damage','sanguine'],['hp',cb.hpBoost,'Max HP','verdant'],
+  // Sanguine is Attack, Hawkseye is Ranged damage (0.9.127.3).
+  const rows=[['atk',cb.atkBoost,'Attack','sanguine'],['rng',cb.rangedStr,'Ranged Dmg','hawkseye'],
+              ['hp',cb.hpBoost,'Max HP','verdant'],
               ['def',cb.defBoost,'Defence','azure'],['gp',sb.gpBoost,'Sell Value','topaz'],
               ['sp',sb.speed,'Speed','onyx'],['xp',sb.xpBoost,'Skill XP','onyx']];
   const grid=_soEl('so-tot');
@@ -41304,7 +41339,7 @@ function _soTotals(){
   }).join('');
   const wrap=_soEl();
   wrap.appendChild(grid);
-  wrap.appendChild(_soEl('so-totnote','<b>Damage · Max HP · Defence</b> come from gems in your '
+  wrap.appendChild(_soEl('so-totnote','<b>Attack · Ranged damage · Max HP · Defence</b> come from gems in your '
     +'worn <b>combat</b> gear. <b>Sell Value · Speed · Skill XP</b> come from gems in your worn '
     +'<b>skilling</b> gear. Gems in gear you are not wearing do nothing.'));
   return wrap;
@@ -44373,7 +44408,7 @@ function renderCombat(){
     const buffs=combatBuffItems();          // owned buff potions, strongest total first
     if(!buffs.length) return '';
     const ab=state.autoBuff||{enabled:false,itemId:''};
-    const shortOf=it=>{const p=it.potion||{};return [p.atk?'+'+p.atk+' Atk':'',p.str?'+'+p.str+' Str':'',p.def?'+'+p.def+' Def':''].filter(Boolean).join(' / ');};
+    const shortOf=it=>{const p=it.potion||{};return [p.atk?'+'+p.atk+' Atk':'',p.str?'+'+p.str+' Str':'',p.rstr?'+'+p.rstr+' Ranged Str':'',p.def?'+'+p.def+' Def':''].filter(Boolean).join(' / ');};
     const tintOf=it=>{const p=it.potion||{};const n=(p.atk?1:0)+(p.str?1:0)+(p.def?1:0);return n>1?'buff-triple':p.atk?'buff-atk':p.str?'buff-str':p.def?'buff-def':'';};
     const buffIco=b=>`<button class="fm-icon ${tintOf(b.it)} cmb-pot-btn" data-buff="${b.id}" data-rtip="${_fmEsc(b.it.name)}&#10;${_fmEsc(shortOf(b.it))}&#10;${(state.items[b.id]||0)} in satchel"${active?'':' disabled'}><span class="fm-ic">${iconHTML(b.id)}</span><span class="ct">${(state.items[b.id]||0)}</span></button>`;
     const icons=buffs.map(buffIco).join('');

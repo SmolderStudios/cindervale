@@ -3363,7 +3363,12 @@ setTimeout(() => {
        off the three sheets in _iconart/sheets/spire_*.png. Kept as a list so the
        next batch of generator-drawn items has somewhere to wait. */
     const SPIRE_PENDING = [];
-    const SVG_OK = new Set(['radcliff_tally'].concat(RANGED_PENDING, SPIRE_PENDING));
+    /* The archer's gem and brew (0.9.127.3). Jordan approved the generated art to ship
+       while the painted sheet is made, same standing as the two batches above: PENDING,
+       and they come off this list the day the painted icons are injected. */
+    const HAWK_PENDING = ['hawkseye_chip','hawkseye_polish','hawkseye_flaw',
+                          'hawkeye_draught_1','hawkeye_draught_2'];
+    const SVG_OK = new Set(['radcliff_tally'].concat(RANGED_PENDING, SPIRE_PENDING, HAWK_PENDING));
 
     const unexpected = cov.svg.filter(id => !SVG_OK.has(id));
     ok('only known-exempt items are still on SVG, and none is iconless',
@@ -7019,8 +7024,8 @@ setTimeout(() => {
       return {tip:tip.textContent, pick:pick.textContent, sig:sig.textContent};
     })()`);
     ok('a socketed piece says what its gem does in the tooltip (#136)',
-       /Flawless Sanguine/.test(gem.tip) && /\+8% damage/.test(gem.tip), gem.tip);
-    ok('and in the swap picker (#137)', /\+8% damage/.test(gem.pick), gem.pick);
+       /Flawless Sanguine/.test(gem.tip) && /\+8% Attack/.test(gem.tip), gem.tip);
+    ok('and in the swap picker (#137)', /\+8% Attack/.test(gem.pick), gem.pick);
     ok('and trophy jewellery reads its bonus, not its id and "Unenchanted"',
        !/warren_signet|nenchanted/.test(gem.sig) && /Gold/.test(gem.sig), gem.sig);
 
@@ -10291,9 +10296,8 @@ setTimeout(() => {
        R.bracerOnSword === 0, '+' + R.bracerOnSword);
     ok('Draw Weight feeds Ranged damage, not Attack',
        Math.abs(R.drawRanged - 0.10) < 1e-9 && R.drawAtk === 0, JSON.stringify({rangedStr: R.drawRanged, atkBoost: R.drawAtk}));
-    ok('a Sanguine gem is damage for whichever weapon you hold',
-       R.gemBow.rng === 0.08 && R.gemBow.atk === 0 && R.gemSword.atk === 0.08 && R.gemSword.rng === 0,
-       JSON.stringify({bow: R.gemBow, sword: R.gemSword}));
+    ok('a Sanguine gem is Attack, so it adds nothing to a bow\'s damage',
+       R.gemSword.atk === 0.08 && R.gemBow.rng === 0, JSON.stringify({bow: R.gemBow, sword: R.gemSword}));
 
     /* The migration, proved against the build before it: 0.9.127.1 put this exact
        longbow at 325 max hit / 296 accuracy and this Plummet at 670 / 501, both
@@ -10408,6 +10412,98 @@ setTimeout(() => {
        N.pools.head.indexOf('accBoost') >= 0 && N.pools.weapon.indexOf('critDmg') >= 0 && N.pools.bow.indexOf('critDmg') >= 0
        && N.pools.feet.indexOf('combatXp') >= 0 && N.pools.weapon.indexOf('accBoost') < 0,
        JSON.stringify(N.pools));
+  }
+
+  section('The archer gets a gem and a brew of their own (0.9.127.3)');
+  {
+    /* 0.9.127.2 took Attack % off bow damage but left two crutches, because an
+       archer had nothing else to socket or drink: Sanguine fed whichever weapon you
+       held, and Strength from a potion or a food counted for bows. Hawkseye and the
+       Hawkeye Draught are the replacements, so both crutches came out. Each half is
+       pinned here: the new things work, and the old ones are melee again. */
+    const G = ev(`(function(){
+      var out={};
+      function reset(){
+        state=defaultState(); normalizeState();
+        ['attack','strength','defence','hitpoints','ranged'].forEach(function(k){ state.combatXp[k]=XP_CUM[99]; });
+        state.items={ancient_longbow:1, starfall_arrow:1e5, starsteel_sword:1, runite_helm:1, void_helm:1,
+                     hawkeye_draught_1:5, hawkeye_draught_2:5, berserker_2:5, warriors_brew:5,
+                     hawkseye_flaw:3, sanguine_flaw:3};
+        state.cmast={}; state.sockets={}; state.variants={}; state.effects=[];
+        combat.active=false; combat.raid=null;
+      }
+      function bow(extra){ var ce={weapon:'ancient_longbow', quiver:'starfall_arrow'}; for(var k in (extra||{})) ce[k]=extra[k]; state.combatEquipped=ce; refreshCombatStats(); }
+      function sword(extra){ var ce={weapon:'starsteel_sword'}; for(var k in (extra||{})) ce[k]=extra[k]; state.combatEquipped=ce; refreshCombatStats(); }
+      function gem(id){ state.sockets={runite_helm:{slots:1,gems:[id]}}; }
+
+      // the gem, both ways round
+      reset(); bow(); var b0=playerMaxHit(), a0=playerAccuracy();
+      gem('hawkseye_flaw'); bow({helmet:'runite_helm'});
+      out.hawkBow={hit:playerMaxHit(), was:b0};
+      reset(); sword(); var s0=playerMaxHit();
+      gem('hawkseye_flaw'); sword({helmet:'runite_helm'});
+      out.hawkSword={hit:playerMaxHit(), was:s0};
+      /* A LIGHT helmet for the accuracy half: plate costs an archer more accuracy
+         than the gem buys, so a runite helm would read as the gem doing nothing. */
+      reset(); bow(); gem('void_helm'); state.sockets={void_helm:{slots:1,gems:['sanguine_flaw']}};
+      state.items.void_helm=1; bow({helmet:'void_helm'});
+      out.sangBow={hit:playerMaxHit(), was:b0, acc:playerAccuracy(), accWas:a0};
+      reset(); sword(); gem('sanguine_flaw'); sword({helmet:'runite_helm'});
+      out.sangSword={hit:playerMaxHit(), was:s0};
+
+      // the brew, both ways round
+      function drink(id){ state.effects=[]; usePotion(id,true); refreshCombatStats(); }
+      reset(); bow(); drink('hawkeye_draught_2'); out.brewBow={hit:playerMaxHit(), was:b0};
+      reset(); sword(); drink('hawkeye_draught_2'); out.brewSword={hit:playerMaxHit(), was:s0};
+      reset(); bow(); drink('berserker_2'); out.strBow={hit:playerMaxHit(), was:b0};
+      reset(); sword(); drink('berserker_2'); out.strSword={hit:playerMaxHit(), was:s0};
+      reset(); bow(); drink('warriors_brew'); out.tripleBow={hit:playerMaxHit(), was:b0};
+      // a stronger brew of the same stat still blocks the weaker one
+      reset(); bow(); state.effects=[]; usePotion('hawkeye_draught_2',true);
+      var before=state.items.hawkeye_draught_1; usePotion('hawkeye_draught_1',true);
+      out.blocked=(state.items.hawkeye_draught_1===before);
+
+      // data: every colour is whole, named, orderable and droppable
+      var colours={}; for(var id in SOCKET_GEMS) colours[SOCKET_GEMS[id].color]=(colours[SOCKET_GEMS[id].color]||0)+1;
+      out.colours=colours;
+      out.unnamed=Object.keys(colours).filter(function(c){ return !SO_LINE[c] || SO_ORDER.indexOf(c)<0; });
+      out.drops=SGEM_COLORS_COMBAT.indexOf('hawkseye')>=0;
+      out.recipes=SKILLS.alchemy.acts.filter(function(a){ return a.out&&(a.out.hawkeye_draught_1||a.out.hawkeye_draught_2); }).map(function(a){ return a.id+':'+a.lvl; });
+      out.ladder=ALCH_LADDER.some(function(L){ return L.key==='hawkeye'; });
+      out.triple=JSON.stringify(ITEMS.warriors_brew.potion);
+      out.inBuffList=combatBuffItems?true:false;
+      state.items.hawkeye_draught_2=3; state.effects=[];
+      out.offered=(typeof combatBuffItems==='function') && combatBuffItems().some(function(b){ return b.id==='hawkeye_draught_2'; });
+      return out;
+    })()`);
+    const ratio = o => o.hit / o.was;
+    ok('a Hawkseye gem raises a bow\'s max hit by its own size',
+       Math.abs(ratio(G.hawkBow) - 1.08) < 0.01, G.hawkBow.was + ' -> ' + G.hawkBow.hit);
+    ok('and does nothing for a sword',
+       G.hawkSword.hit === G.hawkSword.was, G.hawkSword.was + ' -> ' + G.hawkSword.hit);
+    ok('a Sanguine gem raises a sword and not a bow',
+       Math.abs(ratio(G.sangSword) - 1.08) < 0.01 && G.sangBow.hit === G.sangBow.was,
+       'sword ' + G.sangSword.was + ' -> ' + G.sangSword.hit + ', bow ' + G.sangBow.was + ' -> ' + G.sangBow.hit);
+    ok('though Attack still buys a bow accuracy, so the gem is not simply dead',
+       G.sangBow.acc > G.sangBow.accWas, G.sangBow.accWas + ' -> ' + G.sangBow.acc);
+    ok('a Hawkeye Draught raises a bow\'s max hit',
+       ratio(G.brewBow) > 1.02, G.brewBow.was + ' -> ' + G.brewBow.hit);
+    ok('and nothing for a sword',
+       G.brewSword.hit === G.brewSword.was, G.brewSword.was + ' -> ' + G.brewSword.hit);
+    ok('Strength brews are melee again: a sword gains, a bow does not',
+       ratio(G.strSword) > 1.02 && G.strBow.hit === G.strBow.was,
+       'sword ' + G.strSword.was + ' -> ' + G.strSword.hit + ', bow ' + G.strBow.was + ' -> ' + G.strBow.hit);
+    ok('the Triple Brew still covers every weapon',
+       ratio(G.tripleBow) > 1.01 && /rstr/.test(G.triple), G.triple);
+    ok('the ranged brew joins the potion conflict rules rather than stacking',
+       G.blocked === true, 'the weaker draught was refused while the stronger one is up');
+    ok('every gem colour has three tiers, a name and a place in the order',
+       Object.keys(G.colours).length === 6 && Object.values(G.colours).every(n => n === 3) && G.unnamed.length === 0,
+       JSON.stringify(G.colours) + (G.unnamed.length ? ' unnamed: ' + G.unnamed.join(',') : ''));
+    ok('Hawkseye drops from kills like the other combat gems', G.drops === true);
+    ok('and the draught is brewable at two levels, with a ladder in the alchemy panel',
+       G.recipes.length >= 2 && G.ladder === true, G.recipes.join(', '));
+    ok('the draught shows up in the combat buff picker', G.offered === true);
   }
 
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));

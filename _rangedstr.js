@@ -106,8 +106,12 @@ setTimeout(() => {
         });
       }
       if(o.sockets){
+        /* The best damage gem for THIS build: Hawkseye for a bow where the build has
+           it (0.9.127.3), Sanguine for a sword, and Sanguine for both on the builds
+           before the split, where it fed whichever weapon you held. */
+        var gem=o.gem||((ranged&&SOCKET_GEMS.hawkseye_flaw)?'hawkseye_flaw':'sanguine_flaw');
         for(var s3 in ce){ var id3=ce[s3]; var n=maxSocketsFor(variantBase(id3));
-          if(n>0) state.sockets[id3]={slots:n, gems:Array(n).fill(o.gem||'sanguine_flaw')}; }
+          if(n>0) state.sockets[id3]={slots:n, gems:Array(n).fill(gem)}; }
       }
       if(o.asc){ for(var s4 in ce){ var id4=ce[s4]; var c=ascCap(variantBase(id4)); if(c>0) state.asc[id4]=c; } }
       if(o.cmast) spend(o.cmast); else state.cmast={};
