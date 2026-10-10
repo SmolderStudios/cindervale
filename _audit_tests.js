@@ -226,6 +226,24 @@ setTimeout(() => {
       return {granted:g, delta:(state.xp.farming||0)-before};})()`);
     ok('addSkillXp is the funnel and returns the granted amount', funnel.granted===funnel.delta, JSON.stringify(funnel));
 
+    /* Magic and Runecrafting (0.9.127.4) are two new XP pools. This suite runs as
+       the demo, so ask both funnels for far more than the cap holds: the combat one
+       with a wand in hand, the skill one through the act itself. The buy prompt's
+       once-a-session flag is put back, so nothing below sees it already spent. */
+    const mageCap=ev(`(function(){
+      var shown=_demoCapShown, modal=document.getElementById('demoBuyModal'), hid=modal?modal.classList.contains('mm-hidden'):true;
+      state=defaultState(); normalizeState();
+      state.items={pine_wand:1,ash_rune:500,runestone:5000,ash:5000}; state.combatEquipped={weapon:'pine_wand',quiver:'ash_rune'};
+      refreshCombatStats();
+      grantCombatXp('magic',5e7);
+      var act=getAct('runecrafting','rn_r_ash'); for(var i=0;i<60;i++) completeAction(act,'runecrafting',10);
+      var r={demo:IS_DEMO, cap:DEMO_LEVEL_CAP, magic:cmbLvl('magic'), rc:levelFromXp(state.xp.runecrafting||0),
+             frost:elementUnlocked('frost')};
+      _demoCapShown=shown; if(modal&&hid) modal.classList.add('mm-hidden');
+      state=defaultState(); normalizeState(); refreshCombatStats(); return r;})()`);
+    ok('Magic and Runecrafting stop at the demo level cap', mageCap.demo===true&&mageCap.magic===mageCap.cap&&mageCap.rc===mageCap.cap&&mageCap.frost===false,
+       JSON.stringify(mageCap));
+
     // Behavioural: fire the real gesture and the real toggle handler with IS_DEMO
     // forced true, and require the panel to stay hidden. Source greps here were
     // whitespace-literal — they broke on reformatted-but-correct code and passed on
@@ -1801,7 +1819,7 @@ setTimeout(() => {
 
          Raised again to 13.5 MB with Magic (0.9.127.4), which Jordan decided in
          the build brief: the file was 73 KB short of 12 MB before a line of it
-         was written, and the core of Magic is about 90 KB of code and drawn icons.
+         was written, and the core of Magic is 107 KB of code and drawn icons.
          The reasoning below stands.
 
          The ceiling stays, raised to 12 MB, because it is still worth failing on.

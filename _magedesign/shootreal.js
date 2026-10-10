@@ -246,6 +246,49 @@ function SCENES_IN_PAGE() {
       info.acts = SKILLS.runecrafting.acts.length;
       info.cats = (function () { var c = {}; SKILLS.runecrafting.acts.forEach(function (a) { c[a.cat] = (c[a.cat] || 0) + 1; }); return c; })();
     }
+    /* The icon contact sheet: every new icon as the game holds it, off ICONS and the
+       tree, at the three sizes the game draws them (an item card, a satchel tile,
+       the skill rail). */
+    if (scene === 'sheet') {
+      var old = document.getElementById('mageSheet'); if (old) old.remove();
+      var isR = function (id) { return isRune(id); };
+      var runes = Object.keys(ITEMS).filter(isR).sort(function (a, b) { return ITEMS[a].ammoTier - ITEMS[b].ammoTier; });
+      var byTier = function (a, b) { return ITEMS[a].ctier - ITEMS[b].ctier; };
+      var wands = Object.keys(ITEMS).filter(function (id) { return ITEMS[id].magic && ITEMS[id].mfam === 'wand' && !ITEMS[id]._variant; }).sort(byTier);
+      var staves = Object.keys(ITEMS).filter(function (id) { return ITEMS[id].magic && ITEMS[id].mfam === 'staff' && !ITEMS[id]._variant; }).sort(byTier);
+      var cell = function (name, svg, note) {
+        return '<div class="c"><div class="b"><div class="s1">' + svg + '</div><div class="s2">' + svg + '</div><div class="s3">' + svg + '</div></div><span>' + name + '</span>' + (note ? '<i>' + note + '</i>' : '') + '</div>';
+      };
+      var item = function (id) { return cell(ITEMS[id] ? ITEMS[id].name : id, iconHTML(id)); };
+      var sec = function (title, sub, cells) { return '<h2>' + title + '<small>' + sub + '</small></h2><div class="row">' + cells.join('') + '</div>'; };
+      var h = '<h1>Magic and Runecrafting: generated icons, build ' + document.querySelector('.mm-ver').getAttribute('data-build') + '</h1>'
+        + '<p>Every icon below is what the game file holds today, drawn by the game. They stand in until the painted sheets land. Each is shown at 76, 34 and 18 px.</p>';
+      h += sec('Runestone and runes', 'one stone, a glow for each grade', ['runestone'].concat(runes).map(item));
+      h += sec('Wands', 'one silhouette, seven woods', wands.map(item));
+      h += sec('Staves', 'one silhouette, seven woods', staves.map(item));
+      h += sec('Cloth', 'one bolt, seven cloths', CLOTH_TIERS.map(function (c) { return item(c.key); }));
+      ['hood', 'robe', 'leggings', 'wraps', 'slippers'].forEach(function (p) {
+        h += sec('Robes: ' + p, 'one silhouette, seven cloths', CLOTH_TIERS.map(function (c) { return item(c.key + '_' + p); }));
+      });
+      h += sec('Skill, cape and elements', 'the rail icon, the Runecrafting Cape, and the four marks on the spell bar',
+        [cell('Runecrafting', iconHTML('runecrafting')), cell('Runecrafting Cape', iconHTML('cape_runecrafting'))].concat(MAGIC_ELEMENTS.map(function (e) { return cell(e.n, iconHTML('el_' + e.k)); })));
+      h += sec('Tree plates', 'the sixteen Runecrafting nodes', TREES.runecrafting.map(function (n) { return cell(n.name, n.icon, String(n.desc(n.max))); }));
+      var d0 = document.createElement('div'); d0.id = 'mageSheet'; d0.innerHTML = h;
+      var st = document.createElement('style');
+      st.textContent = '#mageSheet{position:absolute;left:0;top:0;z-index:99999;width:1560px;box-sizing:border-box;background:#120c07;color:#d9c8a4;font:13px/1.35 Georgia,serif;padding:22px 24px 30px}'
+        + '#mageSheet h1{font:600 20px Georgia;color:#e8d8b0;margin:0 0 4px}#mageSheet p{margin:0 0 6px;color:#a8946c}'
+        + '#mageSheet h2{font:600 13px Georgia;letter-spacing:2px;text-transform:uppercase;color:#c79b4e;margin:20px 0 8px;border-bottom:1px solid #3a2a18;padding-bottom:4px}'
+        + '#mageSheet h2 small{font:italic 12px Georgia;letter-spacing:0;text-transform:none;color:#8a7654;margin-left:12px}'
+        + '#mageSheet .row{display:flex;flex-wrap:wrap;gap:10px}'
+        + '#mageSheet .c{background:#1d140c;border:1px solid #3a2a18;border-radius:6px;padding:9px 9px 7px;display:flex;flex-direction:column;align-items:center;gap:4px;width:152px;box-sizing:border-box}'
+        + '#mageSheet .b{display:flex;align-items:flex-end;gap:9px;height:78px}'
+        + '#mageSheet .ev-icon{display:block}#mageSheet .s1 .ev-icon{width:76px;height:76px}#mageSheet .s2 .ev-icon{width:34px;height:34px}#mageSheet .s3 .ev-icon{width:18px;height:18px}'
+        + '#mageSheet .c span{font-size:12px;color:#d9c8a4;text-align:center}#mageSheet .c i{font-size:10.5px;color:#8a7654;text-align:center;font-style:normal;line-height:1.25}';
+      d0.appendChild(st);
+      document.body.appendChild(d0);
+      window.scrollTo(0, 0);
+      info.height = Math.ceil(d0.getBoundingClientRect().height); info.icons = d0.querySelectorAll('.c').length;
+    }
     if (scene === 'stats') { selectedSkill = 'mining'; viewTab = 'stats'; try { renderAll(); } catch (e) { info.err = String(e); } }
     return info;
   };
@@ -275,6 +318,7 @@ const SCENES = {
   skill:    { full: true },
   tree:     { full: true },
   stats:    { full: true },
+  sheet:    { sel: '#mageSheet', tall: true },
   full:     { full: true }
 };
 
@@ -303,6 +347,8 @@ const SCENES = {
     let info;
     try { info = await p.evaluate(s => window.__mage(s), id); } catch (e) { console.log('  ! ' + id + ': ' + e.message); continue; }
     await new Promise(r => setTimeout(r, 450));
+    /* the contact sheet is taller than a screen: grow the viewport to fit it, and put it back after */
+    if (S.tall && info && info.height) await p.setViewport({ width: 1920, height: info.height + 20, deviceScaleFactor: 1 });
     const file = path.join(OUT, id + '.png');
     let clip = null;
     if (!S.full) {
@@ -316,10 +362,11 @@ const SCENES = {
       }, S.sel, !!S.tip);
     }
     if (clip && clip.width > 10 && clip.height > 10) {
-      clip.width = Math.min(clip.width, 1920 - clip.x); clip.height = Math.min(clip.height, 2400);
+      clip.width = Math.min(clip.width, 1920 - clip.x); clip.height = Math.min(clip.height, S.tall ? 6000 : 2400);
       await p.screenshot({ path: file, clip });
     } else { await p.screenshot({ path: file }); }
     meta[id] = { clip, info };
+    if (S.tall) { await p.evaluate(() => { const e = document.getElementById('mageSheet'); if (e) e.remove(); }); await p.setViewport({ width: 1920, height: 1080, deviceScaleFactor: 1 }); }
     console.log(id.padEnd(10), clip ? `${clip.width}x${clip.height}` : 'full', info ? JSON.stringify(info).slice(0, 260) : '');
   }
   fs.writeFileSync(metaFile, JSON.stringify(meta, null, 1));

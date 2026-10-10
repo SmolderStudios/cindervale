@@ -686,7 +686,12 @@ function PAGE() {
       arm('ancient_staff', 'starfall_rune', 1000, 'surge'); state.tree.runecrafting = { rn_save: 10 };
       Math.random = function () { return 0.4; }; cast();
       o.kept = 1000 - (state.items.starfall_rune || 0);
-      /* a miss stays a miss: 0 damage, and no element effect, against a monster weak to Fire */
+      /* a miss stays a miss: 0 damage, and no element effect, against a monster weak to Fire.
+         Every roll here is 0.99, so the crit roll fails too. That matters: the shared
+         tick still rolls a crit on a miss, and max(1, round(0 x 2)) is 1, so a miss
+         that rolls a crit does 1 damage for every weapon in the game, spells included.
+         It is an old fault in code Magic shares with melee and bows, flagged on its
+         own and deliberately NOT pinned here, so the fix does not have to fight this. */
       arm('ancient_staff', 'starfall_rune', 1000, 'surge');
       var seq = [0.99, 0.99, 0.99, 0.99, 0.99, 0.99, 0.99, 0.99], si = 0;
       Math.random = function () { return seq[si++ % seq.length]; };
@@ -1038,6 +1043,132 @@ function PAGE() {
     return { best: out, batches: batches, acts: acts };
   }
 
+  /* ── the goal, end to end ──
+     Every table above arms a character by writing its state. These two do not:
+     they press the act cards the skill panel builds, let the game's own tick do
+     the work, dress through the equip path a satchel click takes, and press the
+     spell bar. If a level, a material or a slot is wrong anywhere on the way from
+     the quarry to the first kill, this is where it shows. */
+  function journey() {
+    var o = { steps: [], refused: [] };
+    var keep = { toast: window.toast, random: Math.random, menu: mmAtMenu, skill: selectedSkill, tab: viewTab };
+    window.toast = function (t) { t = String(t); if (!/level \d+!|equipped\./.test(t)) o.refused.push(t); };
+    var rng = function (a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; var t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; };
+    var lvlOf = function (skill) { return levelFromXp(state.xp[skill] || 0); };
+    /* press the act's card as the panel builds it, then let tick() run it n times */
+    function work(skill, id, n) {
+      selectedSkill = skill; viewTab = 'acts';
+      var act = getAct(skill, id), before = lvlOf(skill);
+      var btn = buildActBtn(act, act.lvl, before, mods(skill), 0, 0);
+      state.action = null; btn.click();
+      var started = !!(state.action && state.action.skill === skill && state.action.actId === id), done = 0, guard = 0;
+      while (started && done < n && state.action && guard++ < 600) {
+        state.actionStart = Date.now() - actMs(act, skill) - 1;
+        var x0 = state.xp[skill]; tick(); if (state.xp[skill] > x0) done++;
+      }
+      state.action = null;
+      o.steps.push({ what: act.name, skill: skill, needs: act.lvl, at: before, started: started, done: done });
+      return started && done === n;
+    }
+    try {
+      Math.random = rng(7);
+      state = defaultState(); normalizeState();
+      mmAtMenu = false; combatMode = false; combat.raid = null; combat.active = false; combat.log = [];
+      o.start = { magic: cmbLvl('magic'), rc: lvlOf('runecrafting'), items: Object.keys(state.items).filter(function (k) { return state.items[k] > 0; }).length, worn: Object.keys(state.combatEquipped).length };
+      var pine = SKILLS.woodcutting.acts.filter(function (a) { return a.out && a.out.pine_log; })[0].id;
+      /* stone, wood, ash and flax: all four open at level 1 */
+      o.gather = [work('mining', 'mi_rs', 6), work('woodcutting', pine, 10), work('firemaking', 'fm1', 6), work('foraging', 'fo_flax', 18)];
+      o.gatherAt = o.steps.map(function (s) { return s.at; });
+      /* the bench */
+      o.carve = work('runecrafting', 'rn_r_ash', 6); o.runes = state.items.ash_rune || 0;
+      o.wand = work('runecrafting', 'rn_wand_pine', 1); o.runesAfterWand = state.items.ash_rune || 0;
+      o.linen = work('runecrafting', 'rn_loom_linen', 6);
+      o.hood = work('runecrafting', 'rn_rb_linen_hood', 1);
+      /* the robe is Runecrafting 4: its card does nothing before then, and works at 4 */
+      o.robeEarly = [lvlOf('runecrafting'), work('runecrafting', 'rn_rb_linen_robe', 1)];
+      var guard = 0;
+      while (lvlOf('runecrafting') < 4 && guard++ < 12) { work('mining', 'mi_rs', 4); work('woodcutting', pine, 4); work('firemaking', 'fm1', 4); work('runecrafting', 'rn_r_ash', 4); }
+      o.robe = [lvlOf('runecrafting'), work('runecrafting', 'rn_rb_linen_robe', 1)];
+      o.made = ['pine_wand', 'linen_hood', 'linen_robe'].map(function (k) { return state.items[k] || 0; });
+      /* dress, through the path a satchel click takes */
+      equipBodyItem('pine_wand', 'weapon', 'combat'); equipBodyItem('ash_rune', 'quiver', 'combat');
+      equipBodyItem('linen_robe', 'chest', 'combat'); equipBodyItem('linen_hood', 'helmet', 'combat');
+      o.worn = ['weapon', 'quiver', 'chest', 'helmet'].map(function (s) { return state.combatEquipped[s] || ''; });
+      /* the fight: the zone and the monster a new character is offered, the bar, the kill */
+      enterCombat(); state.cmbSubTab = 'arena'; state.cmbView = 'fight';
+      selectZone('rat_warrens'); selectMonster('rat');
+      engageCombat(); stopCombatTimer();
+      o.engaged = !!combat.active;
+      var flat = function (b) { return [b.getAttribute('data-spell') || b.getAttribute('data-el'), b.disabled, b.textContent.replace(/\s+/g, ' ').trim(), b.getAttribute('title') || '']; };
+      o.bar = [].map.call(document.querySelectorAll('#cmbSpellBar button'), flat);
+      var press = function (sel) { var b = document.querySelector('#cmbSpellBar ' + sel); if (b) b.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, button: 0 })); };
+      press('[data-el="fire"]'); press('[data-spell="bolt"]');
+      o.spell = spellName();
+      var mon = getMonster(combat.monId);
+      o.numbers = { mon: mon.name, hit: playerMaxHit(), foeHp: combat.foeHp, hp: combat.youMaxHp };
+      var kills = function () { return (state.monKills && state.monKills[mon.id]) || 0; };
+      var k0 = kills(), r0 = state.items.ash_rune || 0, m0 = state.combatXp.magic || 0, casts = 0;
+      while (combat.active && kills() === k0 && casts < 400) {
+        combat.youSwingStart = Date.now() - combat.youSwingMs - 1; combat.foeSwingStart = Date.now() - combat.foeSwingMs - 1;
+        combatTick(); casts++;
+      }
+      o.fight = { casts: casts, kills: kills() - k0, spent: r0 - (state.items.ash_rune || 0), alive: combat.youHp > 0, magicXp: (state.combatXp.magic || 0) - m0 };
+      o.said = combat.log.map(function (l) { return l.t; }).filter(function (t) { return /^Fire Bolt (hits|crits) /.test(t); })[0] || '';
+    } catch (e) { o.err = String(e && e.stack || e).slice(0, 400); }
+    finally {
+      Math.random = keep.random; window.toast = keep.toast; try { stopCombatTimer(); } catch (e) {}
+      combat.active = false; combat.raid = null; combatMode = false; mmAtMenu = keep.menu; selectedSkill = keep.skill; viewTab = keep.tab;
+      state = defaultState(); normalizeState();
+    }
+    return o;
+  }
+  /* a level 99 mage in Wyrmsilk, in the hardest raid and on the Spire */
+  function veteran() {
+    var o = { refused: [] };
+    var keep = { toast: window.toast, random: Math.random, menu: mmAtMenu };
+    window.toast = function (t) { t = String(t); if (!/equipped\./.test(t)) o.refused.push(t); };
+    function run(raidId) {
+      state = defaultState(); normalizeState();
+      mmAtMenu = false; combatMode = false; combat.raid = null; combat.active = false; combat.log = [];
+      ['magic', 'defence', 'hitpoints'].forEach(function (k) { state.combatXp[k] = XP_CUM[99]; });
+      state.items = { ancient_staff: 1, starfall_rune: 4000 };
+      var set = 'wyrmsilk', slot = ['helmet', 'chest', 'legs', 'gloves', 'boots'];
+      RB.forEach(function (p) { state.items[set + '_' + p] = 1; });
+      equipBodyItem('ancient_staff', 'weapon', 'combat'); equipBodyItem('starfall_rune', 'quiver', 'combat');
+      RB.forEach(function (p, i) { equipBodyItem(set + '_' + p, slot[i], 'combat'); });
+      var r = { worn: Object.keys(state.combatEquipped).length, cl: combatLevel() };
+      enterCombat(); startRaid(raidId); stopCombatTimer();
+      var mon = getMonster(combat.monId);
+      r.inRaid = !!(combat.raid && combat.active); r.foe = mon.name; r.weak = mon.weakEl || ''; r.resist = mon.resistEl || '';
+      var press = function (sel) { var b = document.querySelector('#cmbSpellBar ' + sel); if (b) b.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, button: 0 })); };
+      r.buttons = document.querySelectorAll('#cmbSpellBar button').length;
+      press('[data-el="storm"]'); press('[data-spell="surge"]');
+      r.spell = spellName(); r.hit = combat.youMaxHit;
+      /* dice at 0.2: the cast lands, does 60% of its max hit, and nothing else rolls in */
+      Math.random = function () { return 0.2; };
+      var r0 = state.items.starfall_rune, hp0 = combat.foeHp;
+      combat.foeSwingStart = Date.now() + 1e9; combat.youSwingStart = Date.now() - combat.youSwingMs - 1; combatTick();
+      Math.random = keep.random;
+      r.spent = r0 - state.items.starfall_rune; r.dealt = hp0 - combat.foeHp;
+      r.want = Math.max(1, Math.round(Math.round(r.hit * (COMBAT_P.HIT_MIN + 0.2 * (1 - COMBAT_P.HIT_MIN))) * elementMult(mon, 'storm')));
+      r.said = combat.log.map(function (l) { return l.t; }).filter(function (t) { return /^Storm Surge /.test(t); })[0] || '';
+      r.still = !!(combat.raid && combat.active);
+      stopCombatTimer(); combat.active = false; combat.raid = null;
+      return r;
+    }
+    try {
+      var hardest = RAIDS.filter(function (r) { return !r.endless; }).sort(function (a, b) { return b.unlockLvl - a.unlockLvl; })[0];
+      var spire = RAIDS.filter(function (r) { return r.endless; })[0];
+      o.raidName = hardest.name; o.raid = run(hardest.id);
+      o.spireName = spire.name; o.spire = run(spire.id);
+    } catch (e) { o.err = String(e && e.stack || e).slice(0, 400); }
+    finally {
+      Math.random = keep.random; window.toast = keep.toast; try { stopCombatTimer(); } catch (e) {}
+      combat.active = false; combat.raid = null; combatMode = false; mmAtMenu = keep.menu; state = defaultState(); normalizeState();
+    }
+    return o;
+  }
+
   function consts() {
     return { HIT_MIN: COMBAT_P.HIT_MIN, BURN_CHANCE: BURN_CHANCE, BURN_DUR_MS: BURN_DUR_MS, BURN_TICK_MS: BURN_TICK_MS, XP_SCALE: XP_SCALE,
       WEAK: ELEMENT_WEAK_MULT, RESIST: ELEMENT_RESIST_MULT,
@@ -1049,7 +1180,8 @@ function PAGE() {
   }
 
   window.SIM = { levelCheck: levelCheck, saves: saves, consts: consts, parity: parity, ladder: ladder, dressed: dressed, economy: economy, skillXp: skillXp,
-    reagents: reagents, structure: structure, nodes: nodes, spells: spells, spellSizes: spellSizes, castRates: castRates, casting: casting, bar: bar, gold: gold, elements: elements, elTables: elTables, elementFx: elementFx, fighters: fighters, robes: robes };
+    reagents: reagents, structure: structure, nodes: nodes, spells: spells, spellSizes: spellSizes, castRates: castRates, casting: casting, bar: bar, gold: gold, elements: elements, elTables: elTables, elementFx: elementFx, fighters: fighters, robes: robes,
+    journey: journey, veteran: veteran };
 }
 
 setTimeout(() => {
@@ -1485,6 +1617,32 @@ setTimeout(() => {
   const dear = R.gold.acts.filter(a => a.sells > a.inputs * 3);
   check(R.gold.acts.length === 64 && dear.length === 0, 'and nothing else the skill makes does either: wands, staves, cloth, robes', dear.map(a => a.name).join(', ') || 'dearest against its inputs: ' + R.gold.acts.slice().sort((a, b) => b.sells / b.inputs - a.sells / a.inputs)[0].name);
   check(R.gold.best.runecrafting.gph <= Math.max(...others), 'Runecrafting is not the best gold in the game', R.gold.best.runecrafting.act + ', ' + Math.round(R.gold.best.runecrafting.gph / 100).toLocaleString() + 'g an hour against a median of ' + Math.round(median / 100).toLocaleString() + 'g');
+
+  /* 12. the goal, end to end */
+  console.log('\n12. THE GOAL  ·  a new character from the quarry to its first kill, and a level 99 one in a raid');
+  const JN = J('SIM.journey()');
+  if (JN.err) console.log('   ' + JN.err);
+  for (const s of JN.steps.slice(0, 9)) console.log(`   ${padr(s.what, 20)} ${padr(s.skill, 13)} needs ${pad(s.needs, 2)}, pressed at ${pad(s.at, 2)}: ${s.started ? 'ran ' + s.done + ' time' + (s.done === 1 ? '' : 's') : 'the card is locked'}`);
+  check(!JN.err && JN.start.magic === 1 && JN.start.rc === 1 && JN.start.items === 0 && JN.start.worn === 0, 'a new character starts at Magic 1 and Runecrafting 1, with nothing');
+  check(JN.gather.every(Boolean) && JN.gatherAt.slice(0, 4).every(l => l === 1), 'it can quarry runestone, chop pine, burn it to ash and gather flax, all at level 1');
+  check(JN.carve && JN.runes === 240, 'and carve Ash Runes at the bench, 40 to a batch', JN.runes + ' runes from 6 batches');
+  check(JN.wand && JN.runesAfterWand === 200, 'bind a Pine Wand, which spends 40 of them');
+  check(JN.linen && JN.hood, 'weave Linen, and sew a Linen Hood');
+  check(JN.robeEarly[0] < 4 && JN.robeEarly[1] === false && JN.robe[0] === 4 && JN.robe[1] === true, 'the Linen Robe waits for Runecrafting 4: its card does nothing before then, and works at 4', 'pressed at ' + JN.robeEarly[0] + ', then at ' + JN.robe[0]);
+  check(JN.made.join() === '1,1,1' && JN.worn.join() === 'pine_wand,ash_rune,linen_robe,linen_hood' && JN.refused.length === 0, 'the wand goes in the hand, the runes in the quiver and the robe on, and nothing is refused', JN.refused.join(' | '));
+  const jb = k => JN.bar.filter(b => b[0] === k)[0] || [];
+  check(JN.engaged && JN.bar.length === 4 + NEL && jb('bolt')[1] === false && jb('fire')[1] === false, 'the spell bar is there, with Bolt and Fire ready');
+  check(['blast', 'wave', 'surge'].every(k => jb(k)[1] === true && / needs .* Runes or better\./.test(jb(k)[3])), 'the three bigger spells are grey and name the rune they wait for', ['blast', 'wave', 'surge'].map(k => jb(k)[3]).join(' '));
+  check(C.elements.slice(1).every(e => jb(e.k)[1] === true && new RegExp('Magic ' + e.lvl).test(jb(e.k)[2])), 'Frost, Storm and Shadow are grey and say the Magic level they open at', C.elements.slice(1).map(e => jb(e.k)[2]).join(', '));
+  check(JN.spell === 'Fire Bolt' && JN.fight.kills === 1 && JN.fight.alive && JN.fight.spent > 0 && JN.fight.spent <= JN.fight.casts && JN.fight.magicXp > 0 && /^Fire Bolt /.test(JN.said),
+    'it presses Fire Bolt and kills a rat', `${JN.numbers.mon}, ${JN.numbers.foeHp} health: ${JN.fight.casts} casts, ${JN.fight.spent} runes, max hit ${JN.numbers.hit}`);
+  const VT = J('SIM.veteran()');
+  if (VT.err) console.log('   ' + VT.err);
+  for (const [name, v] of [[VT.raidName, VT.raid], [VT.spireName, VT.spire]]) {
+    if (!v) { check(false, 'a level 99 mage casts Storm Surge in ' + name); continue; }
+    check(v.cl === 99 && v.worn === 7 && v.inRaid && v.buttons === 4 + NEL && v.spell === 'Storm Surge' && v.spent === 4 && v.dealt === v.want && v.said === `Storm Surge hits the ${v.foe} for ${v.dealt}.` && v.still && VT.refused.length === 0,
+      'a level 99 mage in Wyrmsilk casts Storm Surge in ' + name + ': 4 runes, and the run goes on', v.said + (v.weak === 'storm' ? ' (weak to Storm)' : v.resist === 'storm' ? ' (resists Storm)' : ''));
+  }
 
   console.log(`\n${fails ? fails + ' CHECK' + (fails > 1 ? 'S' : '') + ' FAILED' : 'PASS'}: ${fails ? fails + ' of ' : 'all '}${checks} Magic checks\n`);
   process.exit(fails ? 1 : 0);
