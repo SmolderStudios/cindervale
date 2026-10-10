@@ -751,6 +751,7 @@ header h1 .flame{color:var(--ember)}
 .cg-swap button[data-tip],
 .cvh-cmb[data-tip],
 .cst-ranged[data-tip],
+.cst-magic[data-tip],
 .cmb-slot[data-tip]{position:relative}
 .cmb-stat[data-tip]:hover::after,
 .cd-stat[data-tip]:hover::after,
@@ -769,6 +770,7 @@ header h1 .flame{color:var(--ember)}
 .cg-swap button[data-tip]:hover::after,
 .cvh-cmb[data-tip]:hover::after,
 .cst-ranged[data-tip]:hover::after,
+.cst-magic[data-tip]:hover::after,
 .cmb-slot[data-tip]:hover::after{
   content:attr(data-tip);
   position:absolute;
@@ -8224,12 +8226,14 @@ body:not(.is-demo) .demo-only{display:none !important}
 /* The Ranged level, shown under the Training buttons whenever a bow is NOT in hand
    (0.9.125.4). With one held the three buttons read Ranged themselves, so this would
    only repeat them. */
-.cst-ranged{display:flex;align-items:center;gap:6px;margin-top:6px;padding:4px 7px;border-radius:5px;
+/* .cst-magic is the same line for Magic (0.9.127.4), shown whenever a staff or a
+   wand is NOT in hand. Its own class, so "the Ranged line" still means one thing. */
+.cst-ranged,.cst-magic{display:flex;align-items:center;gap:6px;margin-top:6px;padding:4px 7px;border-radius:5px;
   background:rgba(0,0,0,.25);box-shadow:inset 0 0 0 1px rgba(214,170,96,.16);font-size:calc(11.5px*var(--tscale));color:#a8916a}
-.cst-ranged .ev-icon{width:15px;height:15px;flex:none}
-.cst-ranged .cr-nm{color:var(--trim)}
-.cst-ranged .cr-lv{font-family:var(--num);color:var(--text)}
-.cst-ranged .cr-note{margin-left:auto;font-style:normal;color:#7d6a4c}
+.cst-ranged .ev-icon,.cst-magic .ev-icon{width:15px;height:15px;flex:none}
+.cst-ranged .cr-nm,.cst-magic .cr-nm{color:var(--trim)}
+.cst-ranged .cr-lv,.cst-magic .cr-lv{font-family:var(--num);color:var(--text)}
+.cst-ranged .cr-note,.cst-magic .cr-note{margin-left:auto;font-style:normal;color:#7d6a4c}
 .cvrail .cmb-style{padding:5px 9px;font-size:calc(11.5px*var(--tscale))}
 /* ── training-button level progress (0.9.122.2) ─────────────────────────────────
    The level number was already on the button; this is the run-up to the next
@@ -8358,6 +8362,51 @@ body:not(.is-demo) .demo-only{display:none !important}
 .cvrail .cvfood-scroll::-webkit-scrollbar{width:6px}
 .cvrail .cvfood-scroll::-webkit-scrollbar-thumb{background:rgba(199,155,78,.35);border-radius:3px}
 .cvrail .cvfood-scroll::-webkit-scrollbar-track{background:transparent}
+
+/* ── MAGIC: the spell bar, the ammunition readout, the Magic line (0.9.127.4) ──
+   The bar sits under your own health bar and not in the right-hand rail: that rail
+   is full, and in a raid it also carries Momentum and the three abilities. Eight
+   buttons, four sizes then four elements, and each is a real target: at 1920 by
+   1080 a size button is 65 by 46 px and an element button 84 by 46. They act on
+   pointerdown (the delegated listener beside renderCombat), because #combatPanel
+   is rebuilt on every kill and a click that straddles one loses its target. */
+.cvspell{display:flex;gap:calc(5px*var(--tscale));margin-top:calc(2px*var(--tscale));align-items:stretch}
+.cvspell .cvspell-b{min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+  padding:calc(4px*var(--tscale)) 4px;min-height:calc(40px*var(--tscale));line-height:1.15;font-size:calc(12.5px*var(--tscale));cursor:pointer}
+.cvspell .cvspell-b.csz{flex:0.85 1 0}
+.cvspell .cvspell-b.cel{flex:1.15 1 0}
+.cvspell .cvspell-b small{display:flex;align-items:center;gap:3px;font-size:calc(10.5px*var(--tscale));color:#8d7a5a;white-space:nowrap}
+.cvspell .cvspell-b small .ev-icon{width:calc(10px*var(--tscale));height:calc(10px*var(--tscale))}
+.cvspell .cvspell-b small.weak{color:#a8d79f}
+.cvspell .cvspell-b small.res{color:#e09a8f}
+.cvspell .cvspell-b.sel small:not(.weak):not(.res){color:#e9d9b8}
+.cvspell .cvspell-b.cel.sel{border-color:var(--el);box-shadow:inset 0 0 0 1px var(--el);color:#fff;background:rgba(40,28,62,.75)}
+.cvspell .cel-top{display:flex;align-items:center;gap:5px}
+.cvspell .cel-top .ev-icon{width:calc(14px*var(--tscale));height:calc(14px*var(--tscale));flex:none}
+.cvspell .cvspell-b:disabled{opacity:.42;cursor:default}
+.cvspell-sep{flex:0 0 1px;background:rgba(199,155,78,.25);margin:3px 2px}
+/* The bar adds a row to the glass under the monster. Most of it comes back out of
+   the padding, so the glass does not climb over the monster's feet. */
+.cvstage-bottom .cvarena-bars:has(.cvspell){padding-top:calc(8px*var(--tscale));padding-bottom:calc(9px*var(--tscale))}
+.cvstage-bottom .cvarena-bars:has(.cvspell) .cvhp{margin-bottom:calc(3px*var(--tscale))}
+/* The rail lets every panel shrink so the log can. With the Magic line added under
+   Training that would squeeze all of them, so only the log gives way, and it stops
+   at its own minimum. When potions push the rail past the bottom, Food and potions
+   scrolls, as a long food list already does. */
+.cvrail.r > .cvglass:not(.cvlogbox),.cvrail.r > .cmb-engage-btn{flex-shrink:0}
+.cvrail.r > .cvglass.cvfoodbox{display:flex;flex-direction:column;flex:0 1 auto;min-height:calc(104px*var(--tscale))}
+.cvrail.r > .cvglass.cvfoodbox > .cvfood-scroll{flex:1 1 auto;min-height:0}
+.cvrail.r > .cvglass.cvlogbox{flex:1 1000 auto;min-height:calc(97px*var(--tscale))}
+/* With a staff or a wand all three style buttons read the same Magic level, so it
+   is said once, in the heading, and the buttons share one line. */
+.cvglass.cvmage .cstyle-btns{flex-wrap:nowrap}
+.cvglass.cvmage .cstyle-btns .cmb-style{flex:1 1 0;min-width:0;text-align:center;padding-left:0;padding-right:0}
+.cvglass.cvmage .cstyle-btns .cst-lv{display:none}
+/* What is loaded and how long it lasts, on your own health bar. Runes and arrows. */
+.cvammo{margin-left:6px}
+.cvammo .ev-icon{width:calc(13px*var(--tscale));height:calc(13px*var(--tscale))}
+/* A cast's damage number takes the colour of its element. */
+.cvsplat.el-fire{color:#ff9a4a}
 
 /* ── hit splats: a contained column over the foe, not the whole stage ─────
    Every offset is written out; do NOT reintroduce `inset-inline:auto` here. It is
@@ -10985,6 +11034,42 @@ const ITEMS={
   abyssal_pearl:  {name:'Abyssal Pearl',       icon:'⚫',sell:58000,sea:1, rare:true, desc:"Black, and it gives nothing back. Hold it to a lamp and the lamp seems dimmer."},
   starfall_cinder:{name:'Starfall Cinder',     icon:'✨',sell:96000,sea:1, rare:true, desc:"Something came down out of the sky into deep water a very long time ago, and it is still warm."},
   crown_fragment: {name:'Crown Fragment',      icon:'👑',sell:180000,sea:1,rare:true, desc:"One piece of a circlet that was worn by whatever the Sunken Crown was built for. There are others down there."},
+
+  /* ── MAGIC (0.9.127.4) ───────────────────────────────────────────────────────
+     Runestone is quarried in Mining and carved in Runecrafting. A rune is what a
+     cast spends, the way an arrow is what a shot spends: `runePow` is the Magic
+     Power its biggest spell gets, and its class is how big that spell is (1 Bolt,
+     2 Blast, 3 Wave, 4 Surge), read off `ammoTier` by runeClass(). A rune is known
+     by `ammo:'rune'` and never by its name: Drakeforged Rune is a raid material
+     and ends in _rune too.
+
+     A rune sells for next to nothing on purpose. One batch is 40 to 160 runes from
+     a stone or three and one piece of fuel, so at an arrow's price a batch would
+     sell for 16 to 119 times what went into it. Arrows are priced at what goes
+     into them, and so are these. */
+  runestone:      {name:'Runestone', icon:'\u{1FAA8}', sell:6, desc:'A soft grey stone that takes a mark and holds heat. Quarried with a pick. Runecrafting carves it into runes.'},
+  ash_rune:       {name:'Ash Rune', icon:'\u{1F52E}', sell:1, ammo:'rune', runePow:2, ammoTier:1, desc:'Runestone, carved and baked hard. It can power a Bolt. Used up when you cast.'},
+  soot_rune:      {name:'Soot Rune', icon:'\u{1F52E}', sell:1, ammo:'rune', runePow:3, ammoTier:2, desc:'Runestone, carved and baked hard. It can power a Bolt. Used up when you cast.'},
+  char_rune:      {name:'Char Rune', icon:'\u{1F52E}', sell:1, ammo:'rune', runePow:5, ammoTier:3, desc:'Runestone, carved and baked hard. It can power a Blast and any smaller spell. Used up when you cast.'},
+  cinder_rune:    {name:'Cinder Rune', icon:'\u{1F52E}', sell:1, ammo:'rune', runePow:8, ammoTier:4, desc:'Runestone, carved and baked hard. It can power a Blast and any smaller spell. Used up when you cast.'},
+  kiln_rune:      {name:'Kiln Rune', icon:'\u{1F52E}', sell:2, ammo:'rune', runePow:11, ammoTier:5, desc:'Runestone, carved and baked hard. It can power a Blast and any smaller spell. Used up when you cast.'},
+  forge_rune:     {name:'Forge Rune', icon:'\u{1F52E}', sell:2, ammo:'rune', runePow:15, ammoTier:6, desc:'Runestone, carved and baked hard. It can power a Wave and any smaller spell. Used up when you cast.'},
+  crucible_rune:  {name:'Crucible Rune', icon:'\u{1F52E}', sell:2, ammo:'rune', runePow:20, ammoTier:7, desc:'Runestone, carved and baked hard. It can power a Wave and any smaller spell. Used up when you cast.'},
+  starfall_rune:  {name:'Starfall Rune', icon:'\u{1F52E}', sell:2, ammo:'rune', runePow:28, ammoTier:8, desc:'Runestone, carved and baked hard. It can power a Surge and any smaller spell. Used up when you cast.'},
+  pine_wand:      {name:'Pine Wand', icon:'\u{1FA84}', sell:60, cgear:true, ctier:1, cslot:'weapon', dmgType:'magic', magic:true, ammo:'rune', mfam:'wand', wclass:'light', swingMult:0.87, dmgMult:1, desc:'Quick to cast. One hand only, so a buckler or a shield still fits. Every cast spends runes.'},
+  oak_wand:       {name:'Oak Wand', icon:'\u{1FA84}', sell:141, cgear:true, ctier:2, cslot:'weapon', dmgType:'magic', magic:true, ammo:'rune', mfam:'wand', wclass:'light', swingMult:0.87, dmgMult:1, desc:'Quick to cast. One hand only, so a buckler or a shield still fits. Every cast spends runes.'},
+  ironbark_wand:  {name:'Ironbark Wand', icon:'\u{1FA84}', sell:331, cgear:true, ctier:3, cslot:'weapon', dmgType:'magic', magic:true, ammo:'rune', mfam:'wand', wclass:'light', swingMult:0.87, dmgMult:1, desc:'Quick to cast. One hand only, so a buckler or a shield still fits. Every cast spends runes.'},
+  ember_wand:     {name:'Emberwood Wand', icon:'\u{1FA84}', sell:779, cgear:true, ctier:4, cslot:'weapon', dmgType:'magic', magic:true, ammo:'rune', mfam:'wand', wclass:'light', swingMult:0.87, dmgMult:1, desc:'Quick to cast. One hand only, so a buckler or a shield still fits. Every cast spends runes.'},
+  frost_wand:     {name:'Frostwood Wand', icon:'\u{1FA84}', sell:1830, cgear:true, ctier:5, cslot:'weapon', dmgType:'magic', magic:true, ammo:'rune', mfam:'wand', wclass:'light', swingMult:0.87, dmgMult:1, desc:'Quick to cast. One hand only, so a buckler or a shield still fits. Every cast spends runes.'},
+  shadow_wand:    {name:'Shadowwood Wand', icon:'\u{1FA84}', sell:4300, cgear:true, ctier:6, cslot:'weapon', dmgType:'magic', magic:true, ammo:'rune', mfam:'wand', wclass:'light', swingMult:0.87, dmgMult:1, desc:'Quick to cast. One hand only, so a buckler or a shield still fits. Every cast spends runes.'},
+  ancient_wand:   {name:'Ancient Wand', icon:'\u{1FA84}', sell:10106, cgear:true, ctier:7, cslot:'weapon', dmgType:'magic', magic:true, ammo:'rune', mfam:'wand', wclass:'light', swingMult:0.87, dmgMult:1, desc:'Quick to cast. One hand only, so a buckler or a shield still fits. Every cast spends runes.'},
+  pine_staff:     {name:'Pine Staff', icon:'\u{1FA84}', sell:60, cgear:true, ctier:1, cslot:'weapon', dmgType:'magic', magic:true, ammo:'rune', mfam:'staff', wclass:'heavy', swingMult:1.25, dmgMult:1.44, twoHanded:true, desc:'Slow to cast and hits hard. Takes both hands, so you cannot carry a shield. Every cast spends runes.'},
+  oak_staff:      {name:'Oak Staff', icon:'\u{1FA84}', sell:141, cgear:true, ctier:2, cslot:'weapon', dmgType:'magic', magic:true, ammo:'rune', mfam:'staff', wclass:'heavy', swingMult:1.25, dmgMult:1.44, twoHanded:true, desc:'Slow to cast and hits hard. Takes both hands, so you cannot carry a shield. Every cast spends runes.'},
+  ironbark_staff: {name:'Ironbark Staff', icon:'\u{1FA84}', sell:331, cgear:true, ctier:3, cslot:'weapon', dmgType:'magic', magic:true, ammo:'rune', mfam:'staff', wclass:'heavy', swingMult:1.25, dmgMult:1.44, twoHanded:true, desc:'Slow to cast and hits hard. Takes both hands, so you cannot carry a shield. Every cast spends runes.'},
+  ember_staff:    {name:'Emberwood Staff', icon:'\u{1FA84}', sell:779, cgear:true, ctier:4, cslot:'weapon', dmgType:'magic', magic:true, ammo:'rune', mfam:'staff', wclass:'heavy', swingMult:1.25, dmgMult:1.44, twoHanded:true, desc:'Slow to cast and hits hard. Takes both hands, so you cannot carry a shield. Every cast spends runes.'},
+  frost_staff:    {name:'Frostwood Staff', icon:'\u{1FA84}', sell:1830, cgear:true, ctier:5, cslot:'weapon', dmgType:'magic', magic:true, ammo:'rune', mfam:'staff', wclass:'heavy', swingMult:1.25, dmgMult:1.44, twoHanded:true, desc:'Slow to cast and hits hard. Takes both hands, so you cannot carry a shield. Every cast spends runes.'},
+  shadow_staff:   {name:'Shadowwood Staff', icon:'\u{1FA84}', sell:4300, cgear:true, ctier:6, cslot:'weapon', dmgType:'magic', magic:true, ammo:'rune', mfam:'staff', wclass:'heavy', swingMult:1.25, dmgMult:1.44, twoHanded:true, desc:'Slow to cast and hits hard. Takes both hands, so you cannot carry a shield. Every cast spends runes.'},
+  ancient_staff:  {name:'Ancient Staff', icon:'\u{1FA84}', sell:10106, cgear:true, ctier:7, cslot:'weapon', dmgType:'magic', magic:true, ammo:'rune', mfam:'staff', wclass:'heavy', swingMult:1.25, dmgMult:1.44, twoHanded:true, desc:'Slow to cast and hits hard. Takes both hands, so you cannot carry a shield. Every cast spends runes.'},
 };
 
 /* ════════ COMBAT GEAR STATS ════════════════════════════════════════════════════
@@ -11134,6 +11219,25 @@ const COMBAT_GEAR_STATS={
   voidcleaver:       {atk:92,str:85,def:0},   // T9 2H slash greatsword — budget 177, marquee; Rift Echo cleave; no shield
   voidedge:          {atk:68,str:64,def:0},   // T9 slash sword — budget 132, balanced; the standard 1H for sword-and-board (voidrend is stab/light); fills Abyssal's missing 1H standard (1.0.87)
   riftcrusher:       {atk:58,str:74,def:0},   // T9 crush hammer — budget 132, str-slant; stun proc; fills Abyssal's missing 1H crush type (1.0.87)
+  /* Wands and staves (0.9.127.4). Attack is the sword's at the same tier, so a
+     spell is exactly as accurate as a blade or a shortbow. They carry no Magic
+     Power: the rune carries the damage, as the arrow does for a bow. A staff gives
+     up a hand and gets its own crit for it, because a wand is a light weapon and
+     already crits like a dagger. */
+  pine_wand:      {atk:3,str:0,def:0},
+  oak_wand:       {atk:5,str:0,def:0},
+  ironbark_wand:  {atk:8,str:0,def:0},
+  ember_wand:     {atk:12,str:0,def:0},
+  frost_wand:     {atk:17,str:0,def:0},
+  shadow_wand:    {atk:23,str:0,def:0},
+  ancient_wand:   {atk:30,str:0,def:0},
+  pine_staff:     {atk:3,str:0,def:0,crit:0.064},
+  oak_staff:      {atk:5,str:0,def:0,crit:0.068},
+  ironbark_staff: {atk:8,str:0,def:0,crit:0.072},
+  ember_staff:    {atk:12,str:0,def:0,crit:0.076},
+  frost_staff:    {atk:17,str:0,def:0,crit:0.08},
+  shadow_staff:   {atk:23,str:0,def:0,crit:0.084},
+  ancient_staff:  {atk:30,str:0,def:0,crit:0.088},
 };
 
 /* ---- skills ---- */
@@ -11579,6 +11683,8 @@ const ENCH_STAT={
      bow's old Attack line moved across at exactly its old value and quality, and an
      archer rerolling a ring gets the same numbers a swordsman does. */
   rangedStr:  {label:'Ranged damage',              word:'the Hawk',  scope:'combat',   gear:0.005,  jewel:0.020},
+  /* Magic damage (0.9.127.4) is the staff's, at the same size as the other two. */
+  magicDmg:   {label:'Magic damage',               word:'the Seer',  scope:'combat',   gear:0.005,  jewel:0.020},
   /* Three more to roll (0.9.127.2), each feeding a channel combat already had:
      accBoost is Point Blank's accuracy, critDmg is what Rending Blows and Deadeye
      add to a crit, combatXp is the Veteran nodes' multiplier. Accuracy is larger
@@ -11612,13 +11718,16 @@ const ENCH_STAT={
    archers and swordsmen wear the same helmets and rings. */
 const ENCH_POOL={
   armour:   {slots:['chest','legs'],           combat:['defBoost','hpBoost','lifesteal'],    skilling:['doubleYield','xpBoost','rareFind']},
-  headhands:{slots:['helmet','gloves'],        combat:['atkBoost','rangedStr','accBoost','critChance','goldFind'],  skilling:['speed','rareFind','prized']},
+  headhands:{slots:['helmet','gloves'],        combat:['atkBoost','rangedStr','magicDmg','accBoost','critChance','goldFind'],  skilling:['speed','rareFind','prized']},
   feetback: {slots:['boots','cape'],           combat:['lifesteal','hpBoost','goldFind','combatXp'],    skilling:['speed','gpBoost','xpBoost']},
   weapon:   {slots:['weapon'],                 combat:['atkBoost','critChance','critDmg','lifesteal'], skilling:[]},
   bow:      {slots:['weapon'], ranged:true,    combat:['rangedStr','critChance','critDmg','lifesteal'], skilling:[]},
+  /* `magic` is the same idea for a staff or a wand (0.9.127.4): it rolls Magic
+     damage where a sword rolls Attack, so a staff can never roll Attack. */
+  staff:    {slots:['weapon'], magic:true,     combat:['magicDmg','critChance','critDmg','lifesteal'], skilling:[]},
   shield:   {slots:['shield'],                 combat:['defBoost','hpBoost','lifesteal'],    skilling:[]},
   jewelry:  {slots:['ring_l','ring_r','amulet'],
-             combat:['atkBoost','rangedStr','defBoost','hpBoost','critChance','lifesteal','goldFind'],
+             combat:['atkBoost','rangedStr','magicDmg','defBoost','hpBoost','critChance','lifesteal','goldFind'],
              skilling:['speed','xpBoost','gpBoost','doubleYield']},
 };
 const ENCH_LINES=2;                 // lines every enchantable piece carries
@@ -11628,8 +11737,9 @@ const ENCH_UNIQUE_POOL=['atkBoost','critChance','lifesteal','hpBoost'];
    either, because a raid helm is worn with a bow as often as with a blade. */
 function enchUniquePoolFor(id){
   const it=ITEMS[variantBase(id)]||{};
-  if(it.cslot==='weapon') return it.ranged ? ['rangedStr','critChance','lifesteal','hpBoost'] : ENCH_UNIQUE_POOL;
-  return ['atkBoost','rangedStr','critChance','lifesteal','hpBoost'];
+  if(it.cslot==='weapon') return it.magic ? ['magicDmg','critChance','lifesteal','hpBoost']
+    : it.ranged ? ['rangedStr','critChance','lifesteal','hpBoost'] : ENCH_UNIQUE_POOL;
+  return ['atkBoost','rangedStr','magicDmg','critChance','lifesteal','hpBoost'];
 }
 const ENCH_UNIQUE_MULT=2;           // the unique line rolls at twice a normal line's size
 const ENCH_SKILLGEAR_TIER=8;        // skilling set pieces have no tier of their own
@@ -11659,6 +11769,7 @@ function enchPoolFor(id){
     const P=ENCH_POOL[pk];
     if(P.slots.indexOf(slot)<0) continue;
     if(!!P.ranged !== !!it.ranged) continue;       // a bow takes the bow pool, a sword the weapon pool
+    if(!!P.magic !== !!it.magic) continue;         // and a staff or a wand the staff pool
     let keys=kind==='both'?P.combat.concat(P.skilling):(kind==='combat'?P.combat:P.skilling);
     keys=keys.filter(k=>ENCH_STAT[k]&&(!ENCH_STAT[k].skill||it.gearSkill===ENCH_STAT[k].skill));
     return keys.length?{pool:pk, kind:kind, keys:keys}:null;
@@ -11847,8 +11958,10 @@ function enchantBonuses(skill){
 function combatEnchantBonuses(){
   // rangedStr is a bow's damage line; dmgBoost is a set's "damage with any weapon",
   // which combatBonusesAll hands to whichever channel the held weapon reads.
-  var CK={atkBoost:0,rangedStr:0,dmgBoost:0,hpBoost:0,defBoost:0,critChance:0,lifesteal:0,goldFind:0,accBoost:0,critDmg:0,combatXp:0};
-  var total={atkBoost:0,rangedStr:0,dmgBoost:0,hpBoost:0,defBoost:0,critChance:0,lifesteal:0,goldFind:0,accBoost:0,critDmg:0,combatXp:0};
+  /* Three key lists in this function, and each one drops a stat it does not name
+     without a word. magicDmg is in all three (0.9.127.4). */
+  var CK={atkBoost:0,rangedStr:0,magicDmg:0,dmgBoost:0,hpBoost:0,defBoost:0,critChance:0,lifesteal:0,goldFind:0,accBoost:0,critDmg:0,combatXp:0};
+  var total={atkBoost:0,rangedStr:0,magicDmg:0,dmgBoost:0,hpBoost:0,defBoost:0,critChance:0,lifesteal:0,goldFind:0,accBoost:0,critDmg:0,combatXp:0};
   // Combat enchant bonuses read from the COMBAT loadout only.
   var ce=state.combatEquipped||{};
   for(var slot in ce){
@@ -11863,7 +11976,7 @@ function combatEnchantBonuses(){
   for(var pk in PENDANT_SETS){ var pd=PENDANT_SETS[pk];
     if(_enchantSetActive(pd, ce, 'pendant')){ for(var bk2 in pd.bonus){ if(bk2 in CK) total[bk2]+=pd.bonus[bk2]; } } }
   // Rolled lines on worn pieces, including the unique line on drops and raid gear.
-  var rl=enchLineBonuses(ce,['atkBoost','rangedStr','hpBoost','defBoost','critChance','lifesteal','goldFind','accBoost','critDmg','combatXp']);
+  var rl=enchLineBonuses(ce,['atkBoost','rangedStr','magicDmg','hpBoost','defBoost','critChance','lifesteal','goldFind','accBoost','critDmg','combatXp']);
   for(var rk in rl) total[rk]+=rl[rk];
   return total;
 }
@@ -12234,6 +12347,9 @@ const SKILLS={
     {id:'wc7',name:'Chop ancient oak',   lvl:90,ms:15400,xp:780, spdMult:0.765, minMs:10000,out:{ancient_log:1}},
   ]},
   mining:{name:'Mining',icon:'⛏️',acts:[
+    /* Quarried, not smelted. 36 xp against copper's 44 on the same clock, so you
+       quarry for the stone and never for the XP, the rule flax follows. */
+    {id:'mi_rs',name:'Quarry runestone',  lvl:1, ms:5600, xp:36,  spdMult:0.5, minMs:4000, out:{runestone:1}},
     {id:'mi1',name:'Mine copper',      lvl:1, ms:5600, xp:44,  spdMult:0.500, minMs:4000, out:{copper_ore:1}},
     {id:'mi2',name:'Mine tin',         lvl:1, ms:5600, xp:44,  spdMult:0.500, minMs:4000, out:{tin_ore:1}},
     {id:'mi3',name:'Mine iron',        lvl:15,ms:6400, xp:77,  spdMult:0.594, minMs:4500, out:{iron_ore:1}},
@@ -12488,6 +12604,39 @@ const SKILLS={
     {id:'jw_sea_crown', name:"Drowned King's Jewel",cat:'sea',lvl:96,ms:30000,xp:2900,spdMult:0.79,minMs:4800,inp:{crown_fragment:3,starfall_bar:2,cut_void:2}, out:{drowned_jewel:1}},
   ]},
   farming:{name:'Farming',icon:'🌾',acts:[]}, // Farming uses patch system — see renderFarming
+  /* Runecrafting (0.9.127.4), the fifteenth skill. It is HERE, in the literal, and
+     not added by the Magic block further down the way Fletching is added by the
+     Ranged one: three passes over SKILLS run at parse time and seed the XP an hour
+     buffers, and a skill that arrives after them shows a frozen XP an hour.
+
+     Runes run all day, so they are the slow XP. Wands and staves are the XP acts,
+     as bows are in Fletching. A batch is 40 runes for each rune the grade's biggest
+     spell spends, so one full-size cast costs the same work at every grade. The
+     two spdMult values written as sums are the doubles the formula gives. */
+  runecrafting:{name:'Runecrafting',icon:'\u{1F52E}',acts:[
+    {id:'rn_r_ash',name:'Carve Ash Runes',cat:'runes',lvl:1,ms:4200,xp:40,spdMult:0.52,minMs:800,inp:{runestone:1,ash:1},out:{ash_rune:40}},
+    {id:'rn_r_soot',name:'Carve Soot Runes',cat:'runes',lvl:12,ms:4720,xp:98,spdMult:0.558,minMs:910,inp:{runestone:1,ash:2},out:{soot_rune:40}},
+    {id:'rn_r_char',name:'Carve Char Runes',cat:'runes',lvl:25,ms:5240,xp:156,spdMult:0.596,minMs:1020,inp:{runestone:1,charcoal:1},out:{char_rune:80}},
+    {id:'rn_r_cinder',name:'Carve Cinder Runes',cat:'runes',lvl:38,ms:5760,xp:214,spdMult:0.634,minMs:1130,inp:{runestone:2,charcoal:1},out:{cinder_rune:80}},
+    {id:'rn_r_kiln',name:'Carve Kiln Runes',cat:'runes',lvl:52,ms:6280,xp:272,spdMult:0.672,minMs:1240,inp:{runestone:2,ember_dust:1},out:{kiln_rune:80}},
+    {id:'rn_r_forge',name:'Carve Forge Runes',cat:'runes',lvl:64,ms:6800,xp:330,spdMult:0.71,minMs:1350,inp:{runestone:2,ember_dust:1},out:{forge_rune:120}},
+    {id:'rn_r_crucible',name:'Carve Crucible Runes',cat:'runes',lvl:76,ms:7320,xp:388,spdMult:0.748,minMs:1460,inp:{runestone:2,ember_dust:1},out:{crucible_rune:120}},
+    {id:'rn_r_starfall',name:'Carve Starfall Runes',cat:'runes',lvl:88,ms:7840,xp:446,spdMult:0.786,minMs:1570,inp:{runestone:3,ember_dust:1},out:{starfall_rune:160}},
+    {id:'rn_wand_pine',name:'Bind a Pine Wand',cat:'wands',lvl:1,ms:7000,xp:120,spdMult:0.55,minMs:1500,inp:{pine_log:2,ash_rune:40},out:{pine_wand:1}},
+    {id:'rn_staff_pine',name:'Bind a Pine Staff',cat:'staves',lvl:5,ms:7000,xp:150,spdMult:0.55,minMs:1500,inp:{pine_log:4,ash_rune:80},out:{pine_staff:1}},
+    {id:'rn_wand_oak',name:'Bind an Oak Wand',cat:'wands',lvl:12,ms:7900,xp:280,spdMult:0.55+0.04,minMs:1680,inp:{oak_log:2,soot_rune:40},out:{oak_wand:1}},
+    {id:'rn_staff_oak',name:'Bind an Oak Staff',cat:'staves',lvl:16,ms:7900,xp:340,spdMult:0.55+0.04,minMs:1680,inp:{oak_log:4,soot_rune:80},out:{oak_staff:1}},
+    {id:'rn_wand_ironbark',name:'Bind an Ironbark Wand',cat:'wands',lvl:26,ms:8800,xp:440,spdMult:0.63,minMs:1860,inp:{ironbark_log:2,char_rune:80,arcane_dust:4},out:{ironbark_wand:1}},
+    {id:'rn_staff_ironbark',name:'Bind an Ironbark Staff',cat:'staves',lvl:30,ms:8800,xp:530,spdMult:0.63,minMs:1860,inp:{ironbark_log:4,char_rune:160,arcane_dust:4},out:{ironbark_staff:1}},
+    {id:'rn_wand_ember',name:'Bind an Emberwood Wand',cat:'wands',lvl:40,ms:9700,xp:600,spdMult:0.67,minMs:2040,inp:{ember_log:2,cinder_rune:80,arcane_dust:8},out:{ember_wand:1}},
+    {id:'rn_staff_ember',name:'Bind an Emberwood Staff',cat:'staves',lvl:44,ms:9700,xp:720,spdMult:0.67,minMs:2040,inp:{ember_log:4,cinder_rune:160,arcane_dust:8},out:{ember_staff:1}},
+    {id:'rn_wand_frost',name:'Bind a Frostwood Wand',cat:'wands',lvl:54,ms:10600,xp:760,spdMult:0.55+4*0.04,minMs:2220,inp:{frost_log:2,kiln_rune:80,arcane_dust:12},out:{frost_wand:1}},
+    {id:'rn_staff_frost',name:'Bind a Frostwood Staff',cat:'staves',lvl:58,ms:10600,xp:910,spdMult:0.55+4*0.04,minMs:2220,inp:{frost_log:4,kiln_rune:160,arcane_dust:12},out:{frost_staff:1}},
+    {id:'rn_wand_shadow',name:'Bind a Shadowwood Wand',cat:'wands',lvl:66,ms:11500,xp:920,spdMult:0.75,minMs:2400,inp:{shadow_log:2,forge_rune:120,arcane_dust:16},out:{shadow_wand:1}},
+    {id:'rn_staff_shadow',name:'Bind a Shadowwood Staff',cat:'staves',lvl:70,ms:11500,xp:1100,spdMult:0.75,minMs:2400,inp:{shadow_log:4,forge_rune:240,arcane_dust:16},out:{shadow_staff:1}},
+    {id:'rn_wand_ancient',name:'Bind an Ancient Wand',cat:'wands',lvl:78,ms:12400,xp:1080,spdMult:0.79,minMs:2580,inp:{ancient_log:2,crucible_rune:120,arcane_dust:20},out:{ancient_wand:1}},
+    {id:'rn_staff_ancient',name:'Bind an Ancient Staff',cat:'staves',lvl:82,ms:12400,xp:1290,spdMult:0.79,minMs:2580,inp:{ancient_log:4,crucible_rune:240,arcane_dust:20},out:{ancient_staff:1}},
+  ]},
 
   cooking:{name:'Cooking',icon:'🍳',acts:[
     /* THREE ladders, not one, and array order no longer decides anything.
@@ -13997,6 +14146,394 @@ function _seaScaleSVG(p){
 const _COIN_GOLD_SRC="data:image/webp;base64,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";
 const _COIN_SILVER_SRC="data:image/webp;base64,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";
 
+/* ════ [JS-ICONS-MAGE] Magic and Runecrafting (0.9.127.4) ══════════════════════
+   One silhouette for each family and a palette for each tier, the rule the bows
+   and the leather follow. This is generated art, standing in until the painted
+   sheets land: every item id here waits on MAGE_PENDING in _audit_tests.js.
+
+   Item icons carry gradient ids, which is safe because iconHTML() stamps each
+   rendered copy with its own suffix. The tree icons at the end carry none: the
+   Forge Rail draws a node icon without passing it through there. */
+let _mgIco=0;
+function _mgDefs(p){
+  const n=++_mgIco, g='mgi'+n+'g', s='mgi'+n+'s';
+  return {g:g, s:s, m:'<defs>'
+    +(p.glow?'<radialGradient id="'+g+'" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="'+p.glow+'" stop-opacity="0.55"/>'
+      +'<stop offset="1" stop-color="'+p.glow+'" stop-opacity="0"/></radialGradient>':'')
+    +'<linearGradient id="'+s+'" x1="0.15" y1="0" x2="0.85" y2="1"><stop offset="0" stop-color="'+p.l+'"/>'
+    +'<stop offset="0.5" stop-color="'+p.m+'"/><stop offset="1" stop-color="'+p.d+'"/></linearGradient></defs>'};
+}
+function _mgSpark(p){
+  return p.spark?'<path d="M11 10 L12.3 14.7 L17 16 L12.3 17.3 L11 22 L9.7 17.3 L5 16 L9.7 14.7 Z" fill="#fff" opacity="0.9"/>'
+    +'<path d="M53 42 L54 45 L57 46 L54 47 L53 50 L52 47 L49 46 L52 45 Z" fill="#fff" opacity="0.75"/>'
+    +'<circle cx="51" cy="11" r="1.3" fill="#fff" opacity="0.7"/>':'';
+}
+const _MG_STONE={l:'#7a7268',m:'#4a443d',d:'#211e1a'};
+const _MG_GLYPH='M26 18 V46 M26 20 L39 28.5 L26 37 L39 46';
+
+/* Runes: one stone, a glow for each grade. The ladder is named for how hot the
+   stone was baked, so the glyph runs from cold ash to white heat. */
+const RUNE_PAL={
+  ash:     {l:'#f4efe4',m:'#cfc8b8',d:'#8f887a'},
+  soot:    {l:'#c3ccd6',m:'#7f8a96',d:'#434b55'},
+  char:    {l:'#e6ad72',m:'#b9743a',d:'#5e3414',glow:'#b9743a'},
+  cinder:  {l:'#ffa066',m:'#e2542a',d:'#7a1e0c',glow:'#e2542a'},
+  kiln:    {l:'#ffcf80',m:'#f08a24',d:'#8a3d08',glow:'#f08a24'},
+  forge:   {l:'#fff4b8',m:'#ffc93c',d:'#a06a08',glow:'#ffc93c'},
+  crucible:{l:'#ffffff',m:'#fff0c2',d:'#d99a4a',glow:'#ffe2a6'},
+  starfall:{l:'#ffffff',m:'#d6ebff',d:'#6f9ad6',glow:'#9fc8ff',spark:1},
+};
+function _runeSVG(p){
+  const d=_mgDefs(p), st=_mgDefs(_MG_STONE);
+  return '<svg class="ev-icon" viewBox="0 0 64 64">'+d.m+st.m
+    +'<ellipse cx="32" cy="58" rx="16" ry="2.8" fill="#000" opacity="0.35"/>'
+    +(p.glow?'<circle cx="32" cy="32" r="30" fill="url(#'+d.g+')"/>':'')
+    +'<path d="M21 7 Q32 3 43 7 L51 21 L49 49 Q32 60 15 49 L13 21 Z" fill="url(#'+st.s+')" stroke="#0f0d0b" stroke-width="1.6" stroke-linejoin="round"/>'
+    +'<path d="M21 7 Q32 3 43 7 L46.5 13 Q32 8.5 17.5 13 Z" fill="#a8a094" opacity="0.5"/>'
+    +'<path d="M15.5 24 L18.5 13 M47.5 47 L49 31" stroke="#938b80" stroke-width="1" opacity="0.5" stroke-linecap="round"/>'
+    +'<path d="'+_MG_GLYPH+'" fill="none" stroke="#0b0908" stroke-width="7.4" stroke-linecap="round" stroke-linejoin="round"/>'
+    +'<path d="'+_MG_GLYPH+'" fill="none" stroke="url(#'+d.s+')" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>'
+    +'<path d="'+_MG_GLYPH+'" fill="none" stroke="'+p.l+'" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>'
+    +_mgSpark(p)+'</svg>';
+}
+/* Runestone: the quarried blank, before anything is cut into it. */
+function _runestoneSVG(){
+  const st=_mgDefs({l:'#aaa295',m:'#6b645b',d:'#322e29'});
+  return '<svg class="ev-icon" viewBox="0 0 64 64">'+st.m
+    +'<ellipse cx="32" cy="57" rx="21" ry="3" fill="#000" opacity="0.35"/>'
+    +'<path d="M9 45 L16 21 L35 9 L55 24 L51 48 L27 56 Z" fill="url(#'+st.s+')" stroke="#14110e" stroke-width="1.6" stroke-linejoin="round"/>'
+    +'<path d="M16 21 L35 9 L39 26 L22 33 Z" fill="#cfc7b9" opacity="0.5"/>'
+    +'<path d="M39 26 L55 24 L51 48 L36 44 Z" fill="#1f1c19" opacity="0.4"/>'
+    +'<path d="M16 21 L22 33 L9 45 M22 33 L39 26 L35 9 M39 26 L36 44 L51 48 M36 44 L27 56" fill="none" stroke="#14110e" stroke-width="0.9" opacity="0.55" stroke-linejoin="round"/>'
+    +'<path d="M25 41 L31 38 M28 47 L34 44" stroke="#ded6c8" stroke-width="1.2" opacity="0.5" stroke-linecap="round"/></svg>';
+}
+
+/* Wands and staves follow the wood ladder, as bows do. `tip` is the stone set in
+   the end: plain runestone on pine, and the wood's own glow from emberwood up. */
+const MAGE_WOOD_PAL={
+  pine:    {l:'#c9a36a',m:'#8a6236',d:'#3f2b14', tip:{l:'#f1ece0',m:'#b9b1a2',d:'#6a6358'}},
+  oak:     {l:'#b07f44',m:'#71491f',d:'#2f1d0b', tip:{l:'#e4ecf4',m:'#9fb0c2',d:'#4c5a6a',glow:'#9fb0c2'}},
+  ironbark:{l:'#a39d8c',m:'#5f5a4c',d:'#2b281f', tip:{l:'#f2eaff',m:'#b9a4f0',d:'#5a44a8',glow:'#b9a4f0'}},
+  ember:   {l:'#d9773f',m:'#96351d',d:'#3d1108', tip:{l:'#ffe6b0',m:'#ff9a3c',d:'#a03408',glow:'#ff8a3a'}},
+  frost:   {l:'#b4d8e8',m:'#5c8ba4',d:'#1e3242', tip:{l:'#f4fcff',m:'#9fd8f0',d:'#3a7fa0',glow:'#8fd0e6'}},
+  shadow:  {l:'#8576a0',m:'#463a5c',d:'#1c1528', tip:{l:'#ecd2ff',m:'#a060d8',d:'#3c1466',glow:'#9a5ad0'}},
+  ancient: {l:'#a4b278',m:'#5e6b38',d:'#232a12', tip:{l:'#fcffdc',m:'#c8e070',d:'#6a7f20',glow:'#c8e070',spark:1}},
+};
+function _wandSVG(p){
+  const w=_mgDefs(p), t=_mgDefs(p.tip);
+  return '<svg class="ev-icon" viewBox="0 0 64 64">'+w.m+t.m
+    +'<ellipse cx="29" cy="58" rx="13" ry="2.4" fill="#000" opacity="0.3"/>'
+    +(p.tip.glow?'<circle cx="47" cy="15" r="16" fill="url(#'+t.g+')"/>':'')
+    +'<path d="M11.5 50 L18.5 56.5 L45.5 21.5 L41 17.5 Z" fill="url(#'+w.s+')" stroke="#150e06" stroke-width="1.4" stroke-linejoin="round"/>'
+    +'<path d="M14.5 49.5 L41.5 19.5" stroke="'+p.l+'" stroke-width="1.3" opacity="0.55" stroke-linecap="round"/>'
+    +'<path d="M18 42.5 L25 48.5 M21.5 38 L28.5 44" stroke="#1a1208" stroke-width="3.6" stroke-linecap="round"/>'
+    +'<path d="M18 42.5 L25 48.5 M21.5 38 L28.5 44" stroke="#d2b272" stroke-width="1.6" stroke-linecap="round"/>'
+    +'<circle cx="14.2" cy="54" r="4.4" fill="url(#'+w.s+')" stroke="#150e06" stroke-width="1.3"/>'
+    +'<circle cx="13.2" cy="52.8" r="1.3" fill="'+p.l+'" opacity="0.7"/>'
+    +'<g transform="rotate(38 47 15)"><path d="M47 3 L52.5 15 L47 27 L41.5 15 Z" fill="url(#'+t.s+')" stroke="#130f1c" stroke-width="1.3" stroke-linejoin="round"/>'
+    +'<path d="M47 3 L49 15 L47 27 L45.4 15 Z" fill="#fff" opacity="0.4"/></g>'
+    +_mgSpark(p.tip)+'</svg>';
+}
+function _staffSVG(p){
+  const w=_mgDefs(p), t=_mgDefs(p.tip), st=_mgDefs(_MG_STONE);
+  return '<svg class="ev-icon" viewBox="0 0 64 64">'+w.m+t.m+st.m
+    +'<ellipse cx="22" cy="59.5" rx="12" ry="2.4" fill="#000" opacity="0.3"/>'
+    +(p.tip.glow?'<circle cx="42" cy="14" r="18" fill="url(#'+t.g+')"/>':'')
+    +'<path d="M13.5 58 L20.5 61 L40.5 25.5 L34.5 22.5 Z" fill="url(#'+w.s+')" stroke="#150e06" stroke-width="1.4" stroke-linejoin="round"/>'
+    +'<path d="M16.5 57.5 L36.5 24.5" stroke="'+p.l+'" stroke-width="1.3" opacity="0.55" stroke-linecap="round"/>'
+    +'<path d="M35 25 Q25 13 36.5 4" fill="none" stroke="#150e06" stroke-width="7.4" stroke-linecap="round"/>'
+    +'<path d="M40.5 27 Q56 24.5 52.5 9" fill="none" stroke="#150e06" stroke-width="7.4" stroke-linecap="round"/>'
+    +'<path d="M35 25 Q25 13 36.5 4" fill="none" stroke="url(#'+w.s+')" stroke-width="4.6" stroke-linecap="round"/>'
+    +'<path d="M40.5 27 Q56 24.5 52.5 9" fill="none" stroke="url(#'+w.s+')" stroke-width="4.6" stroke-linecap="round"/>'
+    +'<circle cx="42" cy="14" r="8.2" fill="url(#'+st.s+')" stroke="#0f0d0b" stroke-width="1.4"/>'
+    +'<circle cx="42" cy="14" r="5.2" fill="url(#'+t.s+')"/>'
+    +'<circle cx="40.2" cy="12.2" r="1.8" fill="#fff" opacity="0.75"/>'
+    +'<path d="M29.8 33.5 L36.8 37 M27 38.6 L34 42.1" stroke="#1a1208" stroke-width="3.6" stroke-linecap="round"/>'
+    +'<path d="M29.8 33.5 L36.8 37 M27 38.6 L34 42.1" stroke="#d2b272" stroke-width="1.6" stroke-linecap="round"/>'
+    +_mgSpark(p.tip)+'</svg>';
+}
+
+/* Cloth: a bolt for each tier, and the five robe pieces cut from it. Soft folds
+   and a woven trim, with no stitching or rivets, so it reads as neither leather
+   nor plate. Palette: {l, m, d, trim, glow?}. */
+const CLOTH_PAL={
+  linen:     {l:'#f2e9d2',m:'#cdbf9d',d:'#857756',trim:'#a8894a'},
+  spidersilk:{l:'#f6f8f4',m:'#c5cec6',d:'#737f77',trim:'#7fb09c'},
+  gravecloth:{l:'#bcb3c8',m:'#7a7088',d:'#342e40',trim:'#9be0a0'},
+  rimeweave: {l:'#eef8fd',m:'#a8cfe0',d:'#44748e',trim:'#ffffff',glow:'#8fd0e6'},
+  seercloth: {l:'#8b97e6',m:'#4350a8',d:'#171d52',trim:'#ffd24a'},
+  stoneweave:{l:'#c2baab',m:'#7d766a',d:'#35312b',trim:'#5fd0a8'},
+  wyrmsilk:  {l:'#f07c52',m:'#a8301c',d:'#430d07',trim:'#ffcf5a',glow:'#e0762f'},
+};
+function _clothRune(p,cx,cy,r){
+  return '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="'+p.trim+'" stroke="#120d0a" stroke-width="0.8"/>'
+    +'<circle cx="'+(cx-r*0.3)+'" cy="'+(cy-r*0.3)+'" r="'+(r*0.35)+'" fill="#fff" opacity="0.7"/>';
+}
+function _clothSVG(p){
+  const d=_mgDefs(p);
+  return '<svg class="ev-icon" viewBox="0 0 64 64">'+d.m
+    +'<ellipse cx="32" cy="56" rx="22" ry="3" fill="#000" opacity="0.32"/>'
+    +(p.glow?'<circle cx="32" cy="34" r="30" fill="url(#'+d.g+')"/>':'')
+    +'<path d="M14 22 Q32 14 50 22 L52 46 Q32 54 12 46 Z" fill="url(#'+d.s+')" stroke="#15100b" stroke-width="1.4" stroke-linejoin="round"/>'
+    +'<path d="M14 22 Q32 14 50 22 L50.6 29 Q32 21 13.4 29 Z" fill="'+p.l+'" opacity="0.6"/>'
+    +'<path d="M12 46 Q32 54 52 46 L51.5 40 Q32 48 12.5 40 Z" fill="'+p.d+'" opacity="0.55"/>'
+    +'<ellipse cx="50.5" cy="34" rx="6" ry="12.2" fill="'+p.m+'" stroke="#15100b" stroke-width="1.3"/>'
+    +'<path d="M50.5 26 Q54.5 34 50.5 42 Q47 34 50.5 26 Z" fill="'+p.d+'"/>'
+    +'<ellipse cx="50.5" cy="34" rx="1.6" ry="3.4" fill="'+p.l+'" opacity="0.8"/>'
+    +'<path d="M14 22 L8 30 L11 50 L20 55 L24 49.5 L12 46 Z" fill="'+p.m+'" stroke="#15100b" stroke-width="1.3" stroke-linejoin="round"/>'
+    +'<path d="M9.5 31 L12.5 49.5 M14.5 51.5 L21.5 53" stroke="'+p.l+'" stroke-width="1" opacity="0.6" stroke-linecap="round"/>'
+    +'<path d="M20 27 Q32 21 44 26.5 M20 34 Q32 28 44 33.5 M20 41 Q32 35 44 40.5" fill="none" stroke="'+p.trim+'" stroke-width="1.5" opacity="0.85" stroke-linecap="round"/></svg>';
+}
+function _rHoodSVG(p){
+  const d=_mgDefs(p);
+  return '<svg class="ev-icon" viewBox="0 0 64 64">'+d.m
+    +'<ellipse cx="32" cy="57.5" rx="17" ry="2.6" fill="#000" opacity="0.32"/>'
+    +(p.glow?'<circle cx="32" cy="32" r="30" fill="url(#'+d.g+')"/>':'')
+    +'<path d="M32 5 Q51 9 53 33 L50 51 Q41 57 32 57 Q23 57 14 51 L11 33 Q13 9 32 5 Z" fill="url(#'+d.s+')" stroke="#15100b" stroke-width="1.5" stroke-linejoin="round"/>'
+    +'<path d="M32 5 Q19 9 15 30 L18 22 Q24 11 32 9 Z" fill="'+p.l+'" opacity="0.55"/>'
+    +'<path d="M32 19 Q45 21 44 37 Q41 50 32 50 Q23 50 20 37 Q19 21 32 19 Z" fill="#0e0a10" stroke="'+p.trim+'" stroke-width="2.2" stroke-linejoin="round"/>'
+    +'<path d="M24 31 Q32 26 40 31" fill="none" stroke="'+p.d+'" stroke-width="1.2" opacity="0.7"/>'
+    +'<path d="M14 51 Q20 45 22 38 M50 51 Q44 45 42 38" fill="none" stroke="'+p.d+'" stroke-width="1.3" opacity="0.7" stroke-linecap="round"/>'
+    +'<path d="M27 6.5 Q32 2 35 8" fill="none" stroke="'+p.d+'" stroke-width="1.4" stroke-linecap="round"/>'
+    +_clothRune(p,32,53,3)+'</svg>';
+}
+function _rRobeSVG(p){
+  const d=_mgDefs(p);
+  return '<svg class="ev-icon" viewBox="0 0 64 64">'+d.m
+    +'<ellipse cx="32" cy="59" rx="20" ry="2.6" fill="#000" opacity="0.32"/>'
+    +(p.glow?'<circle cx="32" cy="34" r="30" fill="url(#'+d.g+')"/>':'')
+    +'<path d="M22 9 L6 31 L13 39 L21 28 Z" fill="'+p.m+'" stroke="#15100b" stroke-width="1.4" stroke-linejoin="round"/>'
+    +'<path d="M42 9 L58 31 L51 39 L43 28 Z" fill="'+p.d+'" stroke="#15100b" stroke-width="1.4" stroke-linejoin="round"/>'
+    +'<path d="M7.5 31.5 L13 37.5 M56.5 31.5 L51 37.5" stroke="'+p.trim+'" stroke-width="2" stroke-linecap="round"/>'
+    +'<path d="M22 8 L42 8 L47 24 L48.5 58 L15.5 58 L17 24 Z" fill="url(#'+d.s+')" stroke="#15100b" stroke-width="1.5" stroke-linejoin="round"/>'
+    +'<path d="M22 8 L32 8 L29 58 L15.5 58 L17 24 Z" fill="'+p.l+'" opacity="0.35"/>'
+    +'<path d="M26 8 L32 19 L38 8" fill="#0e0a10" stroke="'+p.trim+'" stroke-width="1.8" stroke-linejoin="round"/>'
+    +'<path d="M32 19 L32 58" stroke="'+p.d+'" stroke-width="1.4" opacity="0.75"/>'
+    +'<path d="M17 31 L47 31 L47.3 36 L16.8 36 Z" fill="'+p.d+'" stroke="#15100b" stroke-width="0.9"/>'
+    +'<path d="M17.2 33.5 L47 33.5" stroke="'+p.trim+'" stroke-width="1.5"/>'
+    +'<path d="M16 53 L48.2 53" stroke="'+p.trim+'" stroke-width="2" opacity="0.9"/>'
+    +'<path d="M22 40 L21 52 M42 40 L43 52 M27 41 L26.5 52" stroke="'+p.d+'" stroke-width="1" opacity="0.5" stroke-linecap="round"/>'
+    +_clothRune(p,32,33.5,3.2)+'</svg>';
+}
+function _rLeggingsSVG(p){
+  const d=_mgDefs(p);
+  return '<svg class="ev-icon" viewBox="0 0 64 64">'+d.m
+    +'<ellipse cx="32" cy="59" rx="19" ry="2.6" fill="#000" opacity="0.32"/>'
+    +(p.glow?'<circle cx="32" cy="34" r="30" fill="url(#'+d.g+')"/>':'')
+    +'<path d="M14 15 L50 15 L52 34 L50 57 L35 57 L32 30 L29 57 L14 57 L12 34 Z" fill="url(#'+d.s+')" stroke="#15100b" stroke-width="1.5" stroke-linejoin="round"/>'
+    +'<path d="M14 15 L24 15 L21 57 L14 57 L12 34 Z" fill="'+p.l+'" opacity="0.35"/>'
+    +'<path d="M12.5 8 L51.5 8 L51 16 L13 16 Z" fill="'+p.d+'" stroke="#15100b" stroke-width="1.3" stroke-linejoin="round"/>'
+    +'<path d="M13 12 L51 12" stroke="'+p.trim+'" stroke-width="1.8"/>'
+    +'<path d="M14 51 L29.4 51 M34.6 51 L50 51" stroke="'+p.trim+'" stroke-width="2.2"/>'
+    +'<path d="M20 22 L18 48 M26 24 L25.5 48 M44 22 L46 48 M38 24 L38.5 48" stroke="'+p.d+'" stroke-width="1" opacity="0.55" stroke-linecap="round"/>'
+    +_clothRune(p,32,12,3)+'</svg>';
+}
+function _rWrapsSVG(p){
+  const d=_mgDefs(p);
+  const hand=function(flip){
+    return '<g'+(flip?' transform="translate(64 0) scale(-1 1)"':'')+'>'
+      +'<path d="M9 17 L25 13 L28 30 L25 52 Q17 56 10 52 L7 33 Z" fill="url(#'+d.s+')" stroke="#15100b" stroke-width="1.4" stroke-linejoin="round"/>'
+      +'<path d="M9 17 L16 15.3 L14.5 53 Q11.5 52.8 10 52 L7 33 Z" fill="'+p.l+'" opacity="'+(flip?'0.15':'0.4')+'"/>'
+      +'<path d="M8 23 L26.3 19.5 M7.4 30 L27.6 26.4 M7.6 37 L27 33.6 M8.6 44 L26 41" stroke="'+p.d+'" stroke-width="1.3" opacity="0.75" stroke-linecap="round"/>'
+      +'<path d="M7.6 14.5 L26 10.5 L26.8 15.5 L8.4 19.5 Z" fill="'+p.d+'" stroke="#15100b" stroke-width="1"/>'
+      +'<path d="M8.2 17 L26.3 13" stroke="'+p.trim+'" stroke-width="1.6"/>'
+      +'<path d="M11 49 L24.6 47" stroke="'+p.trim+'" stroke-width="1.8" stroke-linecap="round"/></g>';
+  };
+  return '<svg class="ev-icon" viewBox="0 0 64 64">'+d.m
+    +'<ellipse cx="32" cy="57.5" rx="22" ry="2.6" fill="#000" opacity="0.32"/>'
+    +(p.glow?'<circle cx="32" cy="34" r="30" fill="url(#'+d.g+')"/>':'')
+    +hand(false)+hand(true)+'</svg>';
+}
+function _rSlippersSVG(p){
+  const d=_mgDefs(p);
+  const shoe=function(dx,dy,dim){
+    return '<g transform="translate('+dx+' '+dy+')">'
+      +'<path d="M4 20 Q4 9 15 9 L23 12 Q33 15 39 22 Q44 22 45 16 Q49 21 45 27 Q41 31 33 31 L8 31 Q3 30 4 20 Z" fill="url(#'+d.s+')" stroke="#15100b" stroke-width="1.4" stroke-linejoin="round"/>'
+      +(dim?'':'<path d="M4 20 Q4 9 15 9 L19 10.5 Q10 13 9 24 L8 31 Q3 30 4 20 Z" fill="'+p.l+'" opacity="0.4"/>')
+      +'<path d="M7 14 Q14 6 24 12.5 Q17 18 8 16.5 Z" fill="#0e0a10" stroke="'+p.trim+'" stroke-width="1.7" stroke-linejoin="round"/>'
+      +'<path d="M6.5 28.5 L37 28.5" stroke="'+p.d+'" stroke-width="1.6" opacity="0.8" stroke-linecap="round"/>'
+      +'<circle cx="29" cy="20" r="2.4" fill="'+p.trim+'" stroke="#120d0a" stroke-width="0.7"/></g>';
+  };
+  return '<svg class="ev-icon" viewBox="0 0 64 64">'+d.m
+    +'<ellipse cx="32" cy="56" rx="24" ry="2.8" fill="#000" opacity="0.32"/>'
+    +(p.glow?'<circle cx="32" cy="36" r="30" fill="url(#'+d.g+')"/>':'')
+    +shoe(14,4,true)+shoe(4,23,false)+'</svg>';
+}
+const _ROBE_GEN={hood:_rHoodSVG, robe:_rRobeSVG, leggings:_rLeggingsSVG, wraps:_rWrapsSVG, slippers:_rSlippersSVG};
+
+/* The Runecrafting skill icon: a struck stone and the chisel that cut it. Heavy
+   and dark, because the rail draws it at twenty pixels. */
+function _runecraftSVG(){
+  const st=_mgDefs({l:'#857c70',m:'#4d463e',d:'#1c1916'}), g=_mgDefs({l:'#f0e8ff',m:'#b9a4f0',d:'#5a44a8',glow:'#a58cf0'});
+  const fe=_mgDefs({l:'#e6ebf0',m:'#98a1ab',d:'#454b52'});
+  return '<svg class="ev-icon" viewBox="0 0 64 64">'+st.m+g.m+fe.m
+    +'<ellipse cx="30" cy="59" rx="20" ry="2.8" fill="#000" opacity="0.4"/>'
+    +'<circle cx="28" cy="34" r="27" fill="url(#'+g.g+')"/>'
+    +'<path d="M14 9 Q28 3 42 9 L49 24 L46 52 Q28 62 10 52 L7 24 Z" fill="url(#'+st.s+')" stroke="#0c0a09" stroke-width="2" stroke-linejoin="round"/>'
+    +'<path d="M14 9 Q28 3 42 9 L45 15 Q28 9.5 11 15 Z" fill="#b0a89b" opacity="0.5"/>'
+    +'<path d="M21 20 V49 M21 22 L35 31 L21 40 L35 49" fill="none" stroke="#0a0807" stroke-width="8.4" stroke-linecap="round" stroke-linejoin="round"/>'
+    +'<path d="M21 20 V49 M21 22 L35 31 L21 40 L35 49" fill="none" stroke="url(#'+g.s+')" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/>'
+    +'<path d="M21 20 V49 M21 22 L35 31 L21 40 L35 49" fill="none" stroke="#fff" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>'
+    +'<path d="M42.5 33.5 L58 14 L62 17.5 L47.5 37.5 Z" fill="url(#'+fe.s+')" stroke="#0c0a09" stroke-width="1.5" stroke-linejoin="round"/>'
+    +'<path d="M39 41 L42.5 33.5 L47.5 37.5 Z" fill="#f4f7fa" stroke="#0c0a09" stroke-width="1.3" stroke-linejoin="round"/>'
+    +'<path d="M55.5 12 L60.5 7.5 L64 11 L62.5 16 Z" fill="#8a5a2b" stroke="#0c0a09" stroke-width="1.3" stroke-linejoin="round"/>'
+    +'<path d="M36 44 L33 47 M39 46.5 L38 50 M34.5 41 L31 41.5" stroke="#ffe9a8" stroke-width="1.6" stroke-linecap="round"/></svg>';
+}
+/* The Runecrafting cape, until it is painted: the combat cape's silhouette in the
+   skill's violet, with a rune on the back. */
+function _runeCapeSVG(){
+  const d=_mgDefs({l:'#a892e0',m:'#6a52b0',d:'#2c2058',glow:'#8f7bd0'}), g=_mgDefs({l:'#fff6d0',m:'#ffd24a',d:'#b07a10'});
+  return '<svg class="ev-icon" viewBox="0 0 64 64">'+d.m+g.m
+    +'<ellipse cx="32" cy="58.5" rx="19" ry="2.6" fill="#000" opacity="0.32"/>'
+    +'<circle cx="32" cy="34" r="30" fill="url(#'+d.g+')"/>'
+    +'<path d="M16 13 L24 9 L40 9 L48 13 L53 56 L41 54 L32 58 L23 54 L11 56 Z" fill="url(#'+d.s+')" stroke="#120c26" stroke-width="1.5" stroke-linejoin="round"/>'
+    +'<path d="M16 13 L24 9 L32 11 L32 58 L23 54 L11 56 Z" fill="#c8b8f4" opacity="0.28"/>'
+    +'<path d="M20 20 L23 52 M44 20 L41 52" stroke="#2c2058" stroke-width="1" opacity="0.6"/>'
+    +'<path d="M22 9 L28 14 L36 14 L42 9 L42 16 L22 16 Z" fill="#2c2058" stroke="#120c26" stroke-width="1" stroke-linejoin="round"/>'
+    +'<circle cx="32" cy="18.5" r="3" fill="url(#'+g.s+')" stroke="#120c26" stroke-width="0.8"/>'
+    +'<path d="M28 27 V47 M28 29 L37 35 L28 41 L37 47" fill="none" stroke="#120c26" stroke-width="5.4" stroke-linecap="round" stroke-linejoin="round"/>'
+    +'<path d="M28 27 V47 M28 29 L37 35 L28 41 L37 47" fill="none" stroke="url(#'+g.s+')" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>'
+    +'<path d="M12.5 51 L52.5 51" stroke="#ffd24a" stroke-width="1.6" opacity="0.85"/></svg>';
+}
+
+/* The four elements. Drawn bold, because the spell bar shows them at fourteen
+   pixels beside the element's name. */
+function _elementSVG(k){
+  if(k==='fire'){
+    const a=_mgDefs({l:'#fff3c4',m:'#ff9a3c',d:'#b3200c',glow:'#ff7a2a'}), b=_mgDefs({l:'#ffffff',m:'#ffe08a',d:'#ff9a3c'});
+    return '<svg class="ev-icon" viewBox="0 0 64 64">'+a.m+b.m+'<circle cx="32" cy="36" r="29" fill="url(#'+a.g+')"/>'
+      +'<path d="M33 3 Q24 16 20 27 Q12 41 21 53 Q26 60 32 60 Q39 60 44 53 Q52 42 45 29 Q43 36 39 37 Q43 20 33 3 Z" fill="url(#'+a.s+')" stroke="#5c1206" stroke-width="1.6" stroke-linejoin="round"/>'
+      +'<path d="M32 27 Q26 37 26 45 Q26 55 32 56 Q39 55 38 45 Q37 40 34 38 Q35 32 32 27 Z" fill="url(#'+b.s+')"/></svg>';
+  }
+  if(k==='frost'){
+    const a=_mgDefs({l:'#ffffff',m:'#b6e4f6',d:'#4f9cc0',glow:'#8fd0e6'});
+    const arm='M32 5 V59 M32 13 L25 6.5 M32 13 L39 6.5 M32 51 L25 57.5 M32 51 L39 57.5 M32 22 L26 17 M32 22 L38 17 M32 42 L26 47 M32 42 L38 47';
+    return '<svg class="ev-icon" viewBox="0 0 64 64">'+a.m+'<circle cx="32" cy="32" r="30" fill="url(#'+a.g+')"/>'
+      +[0,60,120].map(function(r){ return '<path d="'+arm+'" transform="rotate('+r+' 32 32)" fill="none" stroke="#16384a" stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/>'; }).join('')
+      +[0,60,120].map(function(r){ return '<path d="'+arm+'" transform="rotate('+r+' 32 32)" fill="none" stroke="url(#'+a.s+')" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>'; }).join('')
+      +'<path d="M32 25 L38 32 L32 39 L26 32 Z" fill="#ffffff" stroke="#16384a" stroke-width="1.2" stroke-linejoin="round"/></svg>';
+  }
+  if(k==='storm'){
+    const a=_mgDefs({l:'#ffffff',m:'#d2c2ff',d:'#7a58d8',glow:'#b9a4f0'});
+    return '<svg class="ev-icon" viewBox="0 0 64 64">'+a.m+'<circle cx="32" cy="32" r="30" fill="url(#'+a.g+')"/>'
+      +'<path d="M40 3 L13 35 H28 L21 61 L52 26 H36 Z" fill="url(#'+a.s+')" stroke="#2a1a5e" stroke-width="1.8" stroke-linejoin="round"/>'
+      +'<path d="M38 8 L20 31 H30" fill="none" stroke="#fff" stroke-width="1.6" opacity="0.75" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  }
+  const a=_mgDefs({l:'#e2c2ff',m:'#9a5ad0',d:'#3a1066',glow:'#9a5ad0'});
+  return '<svg class="ev-icon" viewBox="0 0 64 64">'+a.m+'<circle cx="32" cy="32" r="30" fill="url(#'+a.g+')"/>'
+    +'<path d="M43 6 A27 27 0 1 0 58 42 A21 21 0 1 1 43 6 Z" fill="url(#'+a.s+')" stroke="#1c0834" stroke-width="1.8" stroke-linejoin="round"/>'
+    +'<path d="M37 10 A23 23 0 0 0 20 50" fill="none" stroke="#fff" stroke-width="1.5" opacity="0.45" stroke-linecap="round"/>'
+    +'<circle cx="45" cy="30" r="6" fill="#16092a" stroke="#c9a0ff" stroke-width="1.6"/><circle cx="43.4" cy="28.4" r="1.6" fill="#e9d8ff"/></svg>';
+}
+
+/* The sixteen Runecrafting tree plates. Flat fills and no ids: see the note at the
+   top of this block. One small shared palette, so the board reads as one skill. */
+const RN_TREE_ICONS=(function(){
+  const ST={l:'#9a9184',m:'#5d564d',d:'#26221e'}, AR={l:'#efe6ff',m:'#b9a4f0',d:'#5a44a8'},
+        EM={l:'#ffe2a0',m:'#f08a24',d:'#8a2e0c'}, WD={l:'#c9a36a',m:'#8a6236',d:'#3a2610'}, FE={l:'#e6ebf0',m:'#98a1ab',d:'#3c4249'};
+  const w=b=>'<svg class="ev-icon" viewBox="0 0 64 64">'+b+'</svg>';
+  const stone=(d,extra)=>'<path d="'+d+'" fill="'+ST.m+'" stroke="'+ST.d+'" stroke-width="1.8" stroke-linejoin="round"'+(extra||'')+'/>';
+  const glyph=(d,wd)=>'<path d="'+d+'" fill="none" stroke="'+ST.d+'" stroke-width="'+(wd+3)+'" stroke-linecap="round" stroke-linejoin="round"/>'
+    +'<path d="'+d+'" fill="none" stroke="'+AR.m+'" stroke-width="'+wd+'" stroke-linecap="round" stroke-linejoin="round"/>'
+    +'<path d="'+d+'" fill="none" stroke="'+AR.l+'" stroke-width="'+(wd*0.3)+'" stroke-linecap="round" stroke-linejoin="round"/>';
+  const TAB='M20 8 Q32 4 44 8 L50 22 L48 50 Q32 59 16 50 L14 22 Z', RUNE='M27 20 V45 M27 22 L38 29 L27 36 L38 45';
+  return {
+    rn_speed: w(stone('M8 38 L30 30 L44 40 L40 56 L14 58 Z')
+      +'<path d="M30 30 L44 40 L36 44 L20 36 Z" fill="'+ST.l+'" opacity="0.5"/>'
+      +'<path d="M26 40 L36 22 L41 25 L32 43 Z" fill="'+FE.m+'" stroke="'+FE.d+'" stroke-width="1.5" stroke-linejoin="round"/>'
+      +'<path d="M26 40 L32 43 L27 47 Z" fill="'+FE.l+'" stroke="'+FE.d+'" stroke-width="1.2" stroke-linejoin="round"/>'
+      +'<path d="M36 22 L45 6 L52 10 L41 25 Z" fill="'+WD.m+'" stroke="'+WD.d+'" stroke-width="1.5" stroke-linejoin="round"/>'
+      +'<path d="M44 9 L49 12" stroke="'+WD.l+'" stroke-width="1.4" stroke-linecap="round"/>'
+      +'<path d="M8 12 H22 M4 20 H16 M10 28 H18" stroke="'+AR.m+'" stroke-width="2.6" stroke-linecap="round"/>'
+      +'<path d="M22 49 L17 53 M29 51 L28 57" stroke="'+EM.l+'" stroke-width="2" stroke-linecap="round"/>'),
+    rn_xp: w('<path d="M12 12 Q12 7 17 7 L47 7 Q52 7 52 12 L52 50 Q52 57 45 57 L19 57 Q12 57 12 50 Z" fill="#e2d4ae" stroke="#5a4520" stroke-width="1.8" stroke-linejoin="round"/>'
+      +'<path d="M12 12 Q12 7 17 7 L47 7 Q52 7 52 12 L52 15 L12 15 Z" fill="#c7b384"/>'
+      +'<path d="M12 50 Q12 57 19 57 L45 57 Q52 57 52 50 L52 47 L12 47 Z" fill="#b39d6c"/>'
+      +'<path d="M20 23 V39 M20 24 L27 28 L20 32 M32 23 L32 39 M32 31 L39 23 M32 31 L39 39 M45 23 V39 M42 27 L48 35" fill="none" stroke="'+AR.d+'" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>'
+      +'<path d="M18 11 H46 M18 52 H46" stroke="#5a4520" stroke-width="1.2" opacity="0.5" stroke-linecap="round"/>'),
+    rn_double: w(stone('M11 20 Q20 16 29 20 L33 30 L31 50 Q20 56 9 50 L7 30 Z')
+      +glyph('M17 28 V46 M17 30 L25 35 L17 40 L25 46',2.6)
+      +stone('M36 12 Q45 8 54 12 L58 22 L56 42 Q45 48 34 42 L32 22 Z')
+      +'<path d="M36 12 Q45 8 54 12 L56 16 Q45 12 34 16 Z" fill="'+ST.l+'" opacity="0.5"/>'
+      +glyph('M42 20 V38 M42 22 L50 27 L42 32 L50 38',2.6)),
+    rn_save: w('<path d="M32 6 A26 26 0 1 1 9 44" fill="none" stroke="'+ST.d+'" stroke-width="7.4" stroke-linecap="round"/>'
+      +'<path d="M32 6 A26 26 0 1 1 9 44" fill="none" stroke="'+EM.m+'" stroke-width="4" stroke-linecap="round"/>'
+      +'<path d="M3 34 L9 46 L20 40 Z" fill="'+EM.m+'" stroke="'+ST.d+'" stroke-width="1.6" stroke-linejoin="round"/>'
+      +stone('M24 18 Q32 15 40 18 L44 27 L43 44 Q32 50 21 44 L20 27 Z')
+      +glyph('M28 24 V42 M28 26 L36 31 L28 36 L36 42',2.6)),
+    rn_batch: w(stone('M8 14 L56 14 L56 50 L8 50 Z')
+      +'<path d="M8 14 L56 14 L56 19 L8 19 Z" fill="'+ST.l+'" opacity="0.5"/>'
+      +'<path d="M24 14 V50 M40 14 V50 M8 32 H56" stroke="'+ST.d+'" stroke-width="2.4"/>'
+      +[[16,23],[32,23],[48,23],[16,41],[32,41],[48,41]].map(function(c){ return '<path d="M'+(c[0]-3)+' '+(c[1]-5)+' V'+(c[1]+5)+' M'+(c[0]-3)+' '+(c[1]-4)+' L'+(c[0]+4)+' '+c[1]+' L'+(c[0]-3)+' '+(c[1]+4)+'" fill="none" stroke="'+AR.m+'" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>'; }).join('')),
+    rn_acc: w('<circle cx="32" cy="32" r="24" fill="'+ST.m+'" stroke="'+ST.d+'" stroke-width="2"/>'
+      +'<circle cx="32" cy="32" r="16" fill="'+ST.d+'" stroke="'+AR.m+'" stroke-width="2.4"/>'
+      +'<circle cx="32" cy="32" r="7" fill="'+AR.d+'" stroke="'+AR.l+'" stroke-width="1.8"/>'
+      +'<circle cx="32" cy="32" r="2.4" fill="#fff"/>'
+      +'<path d="M32 2 V14 M32 50 V62 M2 32 H14 M50 32 H62" stroke="'+AR.l+'" stroke-width="3.2" stroke-linecap="round"/>'),
+    rn_thrift: w(stone('M10 30 L22 14 L42 12 L54 26 L50 48 L28 54 L12 46 Z')
+      +'<path d="M22 14 L42 12 L44 26 L26 30 Z" fill="'+ST.l+'" opacity="0.5"/>'
+      +'<path d="M26 30 L44 26 L50 48 L28 54 Z" fill="'+ST.d+'" opacity="0.35"/>'
+      +'<path d="M46 40 A16 16 0 1 1 46 24" fill="none" stroke="#12300a" stroke-width="7" stroke-linecap="round"/>'
+      +'<path d="M46 40 A16 16 0 1 1 46 24" fill="none" stroke="#9be89b" stroke-width="3.6" stroke-linecap="round"/>'
+      +'<path d="M40 16 L49 24 L38 28 Z" fill="#9be89b" stroke="#12300a" stroke-width="1.4" stroke-linejoin="round"/>'),
+    rn_dmg: w(stone(TAB)
+      +'<path d="M20 8 Q32 4 44 8 L46.5 13 Q32 8.5 17.5 13 Z" fill="'+ST.l+'" opacity="0.5"/>'
+      +'<path d="M30 12 L22 30 L32 34 L26 54 L44 28 L34 25 L40 12 Z" fill="#150906" stroke="'+ST.d+'" stroke-width="1.2" stroke-linejoin="round"/>'
+      +'<path d="M32 15 L26 29 L35 32.5 L30 46 L40 30 L31 27 L36 15 Z" fill="'+EM.m+'"/>'
+      +'<path d="M33 19 L29.5 28 L36 30.5 L33 39" fill="none" stroke="'+EM.l+'" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>'),
+    rn_sure: w('<path d="M4 32 Q32 4 60 32 Q32 60 4 32 Z" fill="#f1ece0" stroke="'+ST.d+'" stroke-width="2.2" stroke-linejoin="round"/>'
+      +'<circle cx="32" cy="32" r="13.5" fill="'+AR.m+'" stroke="'+AR.d+'" stroke-width="2"/>'
+      +'<circle cx="32" cy="32" r="8" fill="#170d33"/>'
+      +'<path d="M30 27 V37 M30 28 L35 31 L30 34" fill="none" stroke="'+AR.l+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>'
+      +'<path d="M12 22 Q32 6 52 22" fill="none" stroke="'+ST.d+'" stroke-width="2.6" stroke-linecap="round" opacity="0.7"/>'
+      +'<circle cx="26" cy="26" r="2.2" fill="#fff" opacity="0.85"/>'),
+    rn_bind: w('<path d="M12 56 L18 60 L50 12 L45 8 Z" fill="'+WD.m+'" stroke="'+WD.d+'" stroke-width="1.8" stroke-linejoin="round"/>'
+      +'<path d="M15 55 L46 11" stroke="'+WD.l+'" stroke-width="1.6" opacity="0.6" stroke-linecap="round"/>'
+      +'<ellipse cx="25" cy="42" rx="12" ry="5.4" transform="rotate(-56 25 42)" fill="none" stroke="'+ST.d+'" stroke-width="7"/>'
+      +'<ellipse cx="25" cy="42" rx="12" ry="5.4" transform="rotate(-56 25 42)" fill="none" stroke="'+AR.m+'" stroke-width="3.6"/>'
+      +'<ellipse cx="37" cy="25" rx="12" ry="5.4" transform="rotate(-56 37 25)" fill="none" stroke="'+ST.d+'" stroke-width="7"/>'
+      +'<ellipse cx="37" cy="25" rx="12" ry="5.4" transform="rotate(-56 37 25)" fill="none" stroke="'+AR.l+'" stroke-width="3.6"/>'
+      +'<path d="M12 56 L18 60 L28 45 L22 41 Z" fill="'+WD.m+'" stroke="'+WD.d+'" stroke-width="1.8" stroke-linejoin="round"/>'
+      +'<path d="M34 23 L40 27 L50 12 L45 8 Z" fill="'+WD.m+'" stroke="'+WD.d+'" stroke-width="1.8" stroke-linejoin="round"/>'),
+    rn_brand: w('<path d="M40 6 L46 10 L30 34 L24 30 Z" fill="'+FE.m+'" stroke="'+FE.d+'" stroke-width="1.8" stroke-linejoin="round"/>'
+      +'<path d="M46 2 L56 9 L50 16 L40 9 Z" fill="'+WD.m+'" stroke="'+WD.d+'" stroke-width="1.8" stroke-linejoin="round"/>'
+      +'<circle cx="22" cy="42" r="19" fill="'+EM.m+'" opacity="0.35"/>'
+      +'<circle cx="22" cy="42" r="14.5" fill="'+EM.d+'" stroke="'+ST.d+'" stroke-width="2"/>'
+      +'<circle cx="22" cy="42" r="10.5" fill="none" stroke="'+EM.m+'" stroke-width="2.2"/>'
+      +'<path d="M19 35 V49 M19 36.5 L26 40.5 L19 44.5 L26 49" fill="none" stroke="'+EM.l+'" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>'),
+    rn_gm_speed: w('<path d="M8 56 L8 34 Q8 10 32 10 Q56 10 56 34 L56 56 Z" fill="'+ST.m+'" stroke="'+ST.d+'" stroke-width="2" stroke-linejoin="round"/>'
+      +'<path d="M8 34 Q8 10 32 10 Q44 10 50 18 Q40 14 30 16 Q14 20 12 40 Z" fill="'+ST.l+'" opacity="0.45"/>'
+      +'<path d="M18 56 L18 40 Q18 28 32 28 Q46 28 46 40 L46 56 Z" fill="#160a05" stroke="'+ST.d+'" stroke-width="1.6" stroke-linejoin="round"/>'
+      +'<path d="M32 32 Q25 41 25 47 Q25 54 32 55 Q39 54 39 47 Q39 43 36 40 Q36 36 32 32 Z" fill="'+EM.m+'" stroke="'+EM.d+'" stroke-width="1.3" stroke-linejoin="round"/>'
+      +'<path d="M32 42 Q29 46 29 49 Q29 53 32 53 Q35 53 35 49 Q35 46 32 42 Z" fill="'+EM.l+'"/>'
+      +'<path d="M26 4 Q24 8 28 9 M36 2 Q34 6 38 8" fill="none" stroke="'+ST.l+'" stroke-width="2.2" stroke-linecap="round"/>'
+      +'<path d="M4 58 H60" stroke="'+ST.d+'" stroke-width="3" stroke-linecap="round"/>'),
+    rn_gm_xp: w(stone('M22 60 L18 26 Q20 6 32 4 Q44 6 46 26 L42 60 Z')
+      +'<path d="M22 60 L18 26 Q20 6 32 4 Q26 12 26 28 L28 60 Z" fill="'+ST.l+'" opacity="0.45"/>'
+      +'<path d="M32 30 Q39 30 39 24 Q39 17 32 17 Q23 17 23 26 Q23 37 34 37 Q43 37 43 28" fill="none" stroke="'+ST.d+'" stroke-width="5.2" stroke-linecap="round"/>'
+      +'<path d="M32 30 Q39 30 39 24 Q39 17 32 17 Q23 17 23 26 Q23 37 34 37 Q43 37 43 28" fill="none" stroke="'+AR.m+'" stroke-width="2.4" stroke-linecap="round"/>'
+      +'<path d="M27 46 H37 M29 52 H35" stroke="'+AR.m+'" stroke-width="2.4" stroke-linecap="round"/>'
+      +'<path d="M8 14 L9.6 18.4 L14 20 L9.6 21.6 L8 26 L6.4 21.6 L2 20 L6.4 18.4 Z M56 34 L57.3 37.7 L61 39 L57.3 40.3 L56 44 L54.7 40.3 L51 39 L54.7 37.7 Z" fill="'+AR.l+'"/>'),
+    rn_gm_save: w('<circle cx="32" cy="32" r="27" fill="none" stroke="'+ST.d+'" stroke-width="6.4"/>'
+      +'<circle cx="32" cy="32" r="27" fill="none" stroke="'+EM.m+'" stroke-width="3.2"/>'
+      +'<circle cx="32" cy="32" r="20" fill="none" stroke="'+ST.d+'" stroke-width="5.4"/>'
+      +'<circle cx="32" cy="32" r="20" fill="none" stroke="'+EM.l+'" stroke-width="2.4"/>'
+      +stone('M25 20 Q32 17.5 39 20 L42.5 28 L41.5 42 Q32 47 22.5 42 L21.5 28 Z')
+      +glyph('M28.5 25 V40 M28.5 26.5 L35.5 31 L28.5 35.5 L35.5 40',2.4)),
+    rn_endless: w('<path d="M32 32 C24 16 6 18 6 32 C6 46 24 48 32 32 C40 16 58 18 58 32 C58 46 40 48 32 32 Z" fill="none" stroke="'+ST.d+'" stroke-width="10" stroke-linejoin="round"/>'
+      +'<path d="M32 32 C24 16 6 18 6 32 C6 46 24 48 32 32 C40 16 58 18 58 32 C58 46 40 48 32 32 Z" fill="none" stroke="'+AR.m+'" stroke-width="5.4" stroke-linejoin="round"/>'
+      +'<path d="M11 28 C13 22 21 22 25 26 M39 26 C43 22 51 22 53 28" fill="none" stroke="'+AR.l+'" stroke-width="1.8" stroke-linecap="round"/>'
+      +'<path d="M32 22 L40 32 L32 42 L24 32 Z" fill="'+ST.m+'" stroke="'+ST.d+'" stroke-width="1.8" stroke-linejoin="round"/>'
+      +'<path d="M30.5 27 V37 M30.5 28 L35 31 L30.5 34" fill="none" stroke="'+AR.l+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>'),
+    rn_cape: w('<path d="M16 12 L24 8 L40 8 L48 12 L53 56 L41 54 L32 58 L23 54 L11 56 Z" fill="'+AR.d+'" stroke="#170d33" stroke-width="2" stroke-linejoin="round"/>'
+      +'<path d="M16 12 L24 8 L32 10 L32 58 L23 54 L11 56 Z" fill="'+AR.m+'" opacity="0.55"/>'
+      +'<path d="M22 8 L28 13 L36 13 L42 8 L42 15 L22 15 Z" fill="#170d33"/>'
+      +'<circle cx="32" cy="18" r="3.2" fill="'+EM.l+'" stroke="#170d33" stroke-width="1"/>'
+      +'<path d="M28 27 V47 M28 29 L37 35 L28 41 L37 47" fill="none" stroke="#170d33" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>'
+      +'<path d="M28 27 V47 M28 29 L37 35 L28 41 L37 47" fill="none" stroke="'+EM.l+'" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>'
+      +'<path d="M12.5 51 L52.5 51" stroke="'+EM.l+'" stroke-width="1.8"/>'),
+  };
+})();
 const ICONS = {
   /* ==SLAYER-PERK-ICONS-START== */
   /* Generated art, replacing the hand-drawn SVGs that were here.
@@ -14958,6 +15495,18 @@ const ICONS = {
   chart_crown: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="cg3_p" x1="0" y1="0" x2="0.3" y2="1"><stop offset="0" stop-color="#cfe0e8"/><stop offset="0.5" stop-color="#8fa8b8"/><stop offset="1" stop-color="#4e6879"/></linearGradient><radialGradient id="cg3_g" cx="0.5" cy="0.5" r="0.6"><stop offset="0" stop-color="#8fd0e6" stop-opacity="0.4"/><stop offset="1" stop-color="#8fd0e6" stop-opacity="0"/></radialGradient></defs><circle cx="32" cy="32" r="26" fill="url(#cg3_g)"/><ellipse cx="32" cy="57" rx="19" ry="2.6" fill="#000" opacity="0.4"/><path d="M8 12l16 4 16-4 16 4v40l-16-4-16 4-16-4z" fill="url(#cg3_p)" stroke="#2d4250" stroke-width="0.9"/><path d="M24 16v40M40 12v40" stroke="#2d4250" stroke-width="0.8" opacity="0.5"/><path d="M13 24q7-4 13 1t12-3" stroke="#3d566a" stroke-width="1.1" fill="none" opacity="0.75"/><path d="M13 42q8-3 14 2t13-2" stroke="#3d566a" stroke-width="1.1" fill="none" opacity="0.55"/><path d="M22 34l3-8 4 5 3-7 3 7 4-5 3 8z" fill="#dfb03c"/><path d="M22 34h20v3H22z" fill="#a67f22"/><path d="M26 44l5 5M31 44l-5 5" stroke="#a8412c" stroke-width="2.4" stroke-linecap="round"/></svg>',
   chart_voidmaw: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="cg4_p" x1="0" y1="0" x2="0.3" y2="1"><stop offset="0" stop-color="#b9a4cc"/><stop offset="0.5" stop-color="#6d5586"/><stop offset="1" stop-color="#33224a"/></linearGradient><radialGradient id="cg4_g" cx="0.5" cy="0.62" r="0.55"><stop offset="0" stop-color="#0a0410"/><stop offset="0.6" stop-color="#3a1858" stop-opacity="0.7"/><stop offset="1" stop-color="#8848c8" stop-opacity="0"/></radialGradient></defs><circle cx="32" cy="36" r="26" fill="url(#cg4_g)"/><ellipse cx="32" cy="57" rx="19" ry="2.6" fill="#000" opacity="0.45"/><path d="M8 12l16 4 16-4 16 4v40l-16-4-16 4-16-4z" fill="url(#cg4_p)" stroke="#1e1030" stroke-width="0.9"/><path d="M24 16v40M40 12v40" stroke="#1e1030" stroke-width="0.8" opacity="0.5"/><path d="M13 22q7-4 13 1t12-3" stroke="#2a1840" stroke-width="1.1" fill="none" opacity="0.7"/><ellipse cx="32" cy="38" rx="11" ry="9" fill="#0a0410"/><ellipse cx="32" cy="36" rx="8" ry="6" fill="none" stroke="#a86fd8" stroke-width="1" opacity="0.6"/><ellipse cx="32" cy="34" rx="5" ry="3.6" fill="none" stroke="#a86fd8" stroke-width="0.9" opacity="0.45"/><ellipse cx="32" cy="32" rx="2.6" ry="1.8" fill="none" stroke="#c79fe0" stroke-width="0.8" opacity="0.35"/><circle cx="20" cy="26" r="1.1" fill="#c79fe0" opacity="0.7"/><circle cx="45" cy="46" r="0.9" fill="#c79fe0" opacity="0.6"/></svg>',
   trove_odd: '<svg class="ev-icon" viewBox="0 0 64 64"><defs><linearGradient id="tv5_m" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c9a55e"/><stop offset="0.5" stop-color="#8a6a2e"/><stop offset="1" stop-color="#41300f"/></linearGradient><radialGradient id="tv5_f" cx="0.5" cy="0.6" r="0.55"><stop offset="0" stop-color="#fffdf0"/><stop offset="0.35" stop-color="#ffe08a"/><stop offset="0.75" stop-color="#e0762f"/><stop offset="1" stop-color="#8a3a10" stop-opacity="0.35"/></radialGradient><radialGradient id="tv5_h" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#ffd98a" stop-opacity="0.7"/><stop offset="1" stop-color="#ffd98a" stop-opacity="0"/></radialGradient></defs><circle cx="32" cy="34" r="27" fill="url(#tv5_h)"/><ellipse cx="32" cy="59" rx="12" ry="2.6" fill="#000" opacity="0.42"/><path d="M28 4 Q32 1 36 4" stroke="url(#tv5_m)" stroke-width="2.4" fill="none" stroke-linecap="round"/><path d="M32 4 L32 10" stroke="url(#tv5_m)" stroke-width="2.4" stroke-linecap="round"/><path d="M20 12 L44 12 L42 17 L22 17 Z" fill="url(#tv5_m)"/><path d="M22 17 L42 17 L45 46 L19 46 Z" fill="#2a2116" opacity="0.55"/><path d="M24 19 L40 19 L42.5 44 L21.5 44 Z" fill="url(#tv5_f)"/><path d="M32 24 Q27 31 27 37 Q27 42 32 42 Q37 42 37 37 Q37 31 32 24 Z" fill="#fffdf0" opacity="0.95"/><path d="M22 17 L21.5 44 M42 17 L42.5 44 M24 19 L40 19" stroke="url(#tv5_m)" stroke-width="2" fill="none"/><path d="M19 46 L45 46 L46 52 L18 52 Z" fill="url(#tv5_m)"/><path d="M19 46 L45 46 L45.2 47.6 L18.8 47.6 Z" fill="#f0d894" opacity="0.6"/><path d="M24 52 L40 52 L38 58 L26 58 Z" fill="#6d5734"/><circle cx="26" cy="14" r="1" fill="#fff" opacity="0.6"/></svg>',
+  /* Magic and Runecrafting (0.9.127.4). Generated, and waiting on painted sheets:
+     see [JS-ICONS-MAGE] above and MAGE_PENDING in _audit_tests.js. */
+  runestone: _runestoneSVG(),
+  ash_rune: _runeSVG(RUNE_PAL.ash), soot_rune: _runeSVG(RUNE_PAL.soot), char_rune: _runeSVG(RUNE_PAL.char), cinder_rune: _runeSVG(RUNE_PAL.cinder),
+  kiln_rune: _runeSVG(RUNE_PAL.kiln), forge_rune: _runeSVG(RUNE_PAL.forge), crucible_rune: _runeSVG(RUNE_PAL.crucible), starfall_rune: _runeSVG(RUNE_PAL.starfall),
+  pine_wand: _wandSVG(MAGE_WOOD_PAL.pine), oak_wand: _wandSVG(MAGE_WOOD_PAL.oak), ironbark_wand: _wandSVG(MAGE_WOOD_PAL.ironbark), ember_wand: _wandSVG(MAGE_WOOD_PAL.ember),
+  frost_wand: _wandSVG(MAGE_WOOD_PAL.frost), shadow_wand: _wandSVG(MAGE_WOOD_PAL.shadow), ancient_wand: _wandSVG(MAGE_WOOD_PAL.ancient),
+  pine_staff: _staffSVG(MAGE_WOOD_PAL.pine), oak_staff: _staffSVG(MAGE_WOOD_PAL.oak), ironbark_staff: _staffSVG(MAGE_WOOD_PAL.ironbark), ember_staff: _staffSVG(MAGE_WOOD_PAL.ember),
+  frost_staff: _staffSVG(MAGE_WOOD_PAL.frost), shadow_staff: _staffSVG(MAGE_WOOD_PAL.shadow), ancient_staff: _staffSVG(MAGE_WOOD_PAL.ancient),
+  runecrafting: _runecraftSVG(),
+  cape_runecrafting: _runeCapeSVG(),
+  el_fire: _elementSVG('fire'),
 };
 /* The five charms are painted art (0.9.122.29); _charmSVG and the loop that
    merged its output into ICONS went with them. */
@@ -15525,15 +16074,15 @@ function _gearStatVec(itemId){
 }
 /* Clean names only — the value already gets a trailing % for percentage stats,
    so a label like 'Crit%' would render "+5% Crit%". */
-var _GEAR_STAT_LABEL={atk:'Atk',str:'Str',rstr:'Ranged Str',def:'Def',crit:'Crit',dodge:'Dodge',aspd:'Atk Spd',
+var _GEAR_STAT_LABEL={atk:'Atk',str:'Str',rstr:'Ranged Str',mpow:'Magic Power',def:'Def',crit:'Crit',dodge:'Dodge',aspd:'Atk Spd',runeSave:'Rune saving',
   /* %gpBoost is sale value everywhere it comes from (Fortune, Moon Amulet, trophy
      "gold from sales"), and %goldFind is Windfall's gold you earn, so the two can no
      longer share the one word. (0.9.124.55) */
   '%speed':'Speed','%xpBoost':'XP','%skillXp':'Skill XP','%gpBoost':'Sell','%goldFind':'Gold','%doubleYield':'2× Yield',
-  '%preserve':'Preserve','%atkBoost':'Atk','%rangedStr':'Ranged dmg','%dmgBoost':'Damage','%critChance':'Crit','%lifesteal':'Lifesteal',
+  '%preserve':'Preserve','%atkBoost':'Atk','%rangedStr':'Ranged dmg','%magicDmg':'Magic dmg','%dmgBoost':'Damage','%critChance':'Crit','%lifesteal':'Lifesteal',
   '%accBoost':'Accuracy','%critDmg':'Crit dmg','%combatXp':'Combat XP',
   '%hpBoost':'HP','%defBoost':'Def','%rareFind':'Rare find','%prized':'Prized catch'};
-function _gearStatIsPct(key){ return key.charAt(0)==='%'||key==='crit'||key==='dodge'||key==='aspd'; }
+function _gearStatIsPct(key){ return key.charAt(0)==='%'||key==='crit'||key==='dodge'||key==='aspd'||key==='runeSave'; }
 /* Resolve what's worn in a hovered item's slot and return the comparison line,
    or '' if it isn't slotted gear or nothing is equipped to compare against.
    Multi-slot items (rings fit two slots): compares against whichever of its
@@ -15566,8 +16115,8 @@ function gearDeltaHTML(candidateId, equippedId){
   var A=_gearStatVec(candidateId), B=_gearStatVec(equippedId);
   var keys={}; for(var k in A) keys[k]=1; for(var k2 in B) keys[k2]=1;
   // Stable, readable order: flat combat stats first, then percentages.
-  var order=['atk','str','rstr','def','crit','dodge','aspd','%speed','%xpBoost','%skillXp','%gpBoost','%goldFind',
-    '%doubleYield','%preserve','%atkBoost','%rangedStr','%dmgBoost','%accBoost','%critChance','%critDmg','%lifesteal','%hpBoost','%defBoost','%combatXp'];
+  var order=['atk','str','rstr','mpow','def','crit','dodge','aspd','runeSave','%speed','%xpBoost','%skillXp','%gpBoost','%goldFind',
+    '%doubleYield','%preserve','%atkBoost','%rangedStr','%magicDmg','%dmgBoost','%accBoost','%critChance','%critDmg','%lifesteal','%hpBoost','%defBoost','%combatXp'];
   var seen=Object.keys(keys).sort(function(a,b){
     var ia=order.indexOf(a), ib=order.indexOf(b);
     return (ia<0?99:ia)-(ib<0?99:ib);
@@ -15603,6 +16152,9 @@ function combatGearStatBlock(itemId){
   if(s.def) parts.push('<span style="color:#5478c8"><span style="display:inline-block;font-size:calc(14px*var(--tscale));line-height:1;vertical-align:-2px;margin-right:2px">'+iconHTML('defence')+'</span>+'+s.def+' Def</span>');
   // Ranged Strength (0.9.127.2): a bow's damage, as Str is a sword's.
   if(s.rstr) parts.push('<span style="color:#a8c86a"><span style="display:inline-block;font-size:calc(14px*var(--tscale));line-height:1;vertical-align:-2px;margin-right:2px">'+iconHTML('ranged')+'</span>+'+s.rstr+' Ranged Str</span>');
+  // Magic Power (0.9.127.4): a spell's damage, and the chance a cast keeps its runes.
+  if(s.mpow) parts.push('<span style="color:#b9a4f0"><span style="display:inline-block;font-size:calc(14px*var(--tscale));line-height:1;vertical-align:-2px;margin-right:2px">'+iconHTML('magic')+'</span>+'+s.mpow+' Magic Power</span>');
+  if(s.runeSave) parts.push('<span style="color:#b9a4f0">'+(Math.round(s.runeSave*1000)/10)+'% of casts keep their runes</span>');
   // Leather secondary perks — crit / dodge / attack-speed (fractions → %).
   if(s.crit)  parts.push('<span style="color:#ffd24a">'+iconHTML('ui_spark')+' +'+Math.round(s.crit*100)+'% Crit</span>');
   if(s.dodge) parts.push('<span style="color:#7fd8c8">'+iconHTML('ui_wind')+' +'+Math.round(s.dodge*100)+'% Dodge</span>');
@@ -15680,9 +16232,10 @@ function combatGearStatBlock(itemId){
   /* A bow's own damage and speed (0.9.127.2). Every longbow and crossbow has always
      hit harder than a shortbow, and every shortbow has always been faster, and no
      card said so: the only number on a bow was its Attack. */
-  if(it.cslot==='weapon' && it.ranged){
+  /* A staff hits harder and a wand casts faster, and their cards say so too. */
+  if(it.cslot==='weapon' && (it.ranged||it.magic)){
     var _dm=Math.round(((it.dmgMult||1)-1)*100), _sp=Math.round((1-(it.swingMult||1))*100);
-    if(_dm>0) chips.push(_chip('#a8c86a','ranged','+'+_dm+'% damage'));
+    if(_dm>0) chips.push(_chip(it.magic?'#b9a4f0':'#a8c86a',it.magic?'magic':'ranged','+'+_dm+'% damage'));
     if(_sp>0) chips.push(_chip('#9be89b','ui_bolt',_sp+'% faster attacks'));
     else if(_sp<0) chips.push(_chip('#e0762f','ui_bolt',(-_sp)+'% slower attacks'));
   }
@@ -15721,7 +16274,10 @@ function gearProseHTML(itemId){
   var out=[];
   if(it.cslot==='weapon' && it.dmgType && DMG_TYPES[it.dmgType]){
     var dt=DMG_TYPES[it.dmgType];
-    out.push('<b>'+dt.n+'</b> — deals 15% more damage to foes that are weak to it, and 15% less to foes that resist it.');
+    /* A spell's matchup is its element, so the Magic line says that. */
+    out.push(it.magic
+      ? '<b>Magic</b>: a spell does 15% more damage to a monster that is weak to its element, and 15% less to one that resists it. You pick the element on the spell bar.'
+      : '<b>'+dt.n+'</b> — deals 15% more damage to foes that are weak to it, and 15% less to foes that resist it.');
   }
   if(it.cslot==='weapon' && typeof weaponClass==='function'){
     var wc=weaponClass(itemId);
@@ -17553,6 +18109,49 @@ const TREES = {
     {id:'cr_gm_cape', name:'Flawless Forge',icon:CR_TREE_ICONS.cr_gm_cape,max:1,req:99,reqPts:97,reqCape:true,
       desc:r=>r?'15% chance per craft for a flawless result: +2 bonus pieces of the same crafted item':'15% chance per craft: +2 bonus pieces',
       next:()=>'15% chance for +2 bonus pieces · requires the Crafting Cape'},
+  ],
+
+  /* Runecrafting (0.9.127.4). 98 points in sixteen nodes, on the gates Fletching
+     uses, so it sits on the Forge Rail with no layout work. The eleven base nodes
+     take 81 points, which is level 82, so the grandmaster nodes are open by the
+     time the base is full. Six nodes are the generic ones mods() already pays
+     (speed, XP, double, thrift and the two grandmaster ones). The other ten are
+     Magic's own, and every one of them changes a number: _magesim.js checks. */
+  runecrafting:[
+    N('rn_speed','Steady Chisel',RN_TREE_ICONS.rn_speed,12,0,
+      r=>'Reduces task time by '+(r*1.3).toFixed(1)+'%', r=>'+1.3% faster to '+(r*1.3).toFixed(1)+'%'),
+    N('rn_xp','Old Script',RN_TREE_ICONS.rn_xp,10,0,
+      r=>'+'+(r*3)+'% Runecrafting XP', r=>'+3% to '+(r*3)+'%'),
+    N('rn_double','Twin Batch',RN_TREE_ICONS.rn_double,8,0,
+      r=>(r*4)+'% chance of a double batch', r=>'+4% to '+(r*4)+'%'),
+    N('rn_save','Lasting Mark',RN_TREE_ICONS.rn_save,10,12,
+      r=>(r*5)+'% of casts keep their runes', r=>'+5% to '+(r*5)+'%'),
+    N('rn_batch','Close Cutting',RN_TREE_ICONS.rn_batch,6,12,
+      r=>'+'+(r*4)+'% runes from every batch', r=>'+4% to +'+(r*4)+'%'),
+    N('rn_acc','True Lines',RN_TREE_ICONS.rn_acc,8,20,
+      r=>'+'+fmtRank(r*RN_ACC_RANK*100)+'% magic accuracy', r=>'+'+fmtRank(RN_ACC_RANK*100)+'% to +'+fmtRank(r*RN_ACC_RANK*100)+'%'),
+    N('rn_thrift','Spare Stone',RN_TREE_ICONS.rn_thrift,6,20,
+      r=>(r*2)+'% chance a task keeps its materials', r=>'+2% to '+(r*2)+'%'),
+    N('rn_dmg','Deep Cut',RN_TREE_ICONS.rn_dmg,8,30,
+      r=>'+'+fmtRank(r*RN_DMG_RANK*100)+'% Magic damage', r=>'+'+fmtRank(RN_DMG_RANK*100)+'% to +'+fmtRank(r*RN_DMG_RANK*100)+'%'),
+    N('rn_sure','Clear Sight',RN_TREE_ICONS.rn_sure,5,45,
+      r=>fmtRank(r*RN_SURE_RANK*100)+'% chance a cast cannot miss', r=>'+'+fmtRank(RN_SURE_RANK*100)+'% to '+fmtRank(r*RN_SURE_RANK*100)+'%'),
+    N('rn_bind','Bound Twice',RN_TREE_ICONS.rn_bind,1,55,
+      r=>'Half the runes come back when you bind a staff or a wand', ()=>'Half the runes come back'),
+    /* Says which effects, because it is true of those two only: Storm's sure cast
+       has Clear Sight, and Shadow heals on every hit already. */
+    N('rn_brand','Branded',RN_TREE_ICONS.rn_brand,7,60,   // 7: the tree sums to exactly 98
+      r=>'+'+fmtRank(r*RN_BRAND_RANK*100)+'% chance a Fire hit burns', r=>'+'+fmtRank(RN_BRAND_RANK*100)+'% to +'+fmtRank(r*RN_BRAND_RANK*100)+'%'),
+    N('rn_gm_speed','Swift Kiln',RN_TREE_ICONS.rn_gm_speed,5,75,
+      r=>'Reduces task time by '+(r*1.8).toFixed(1)+'% (grandmaster)', r=>'+1.8% faster to '+(r*1.8).toFixed(1)+'%'),
+    N('rn_gm_xp','Stone Memory',RN_TREE_ICONS.rn_gm_xp,5,75,
+      r=>'+'+(r*3)+'% Runecrafting XP', r=>'+3% to '+(r*3)+'%'),
+    N('rn_gm_save','Deep Mark',RN_TREE_ICONS.rn_gm_save,5,80,
+      r=>'+'+(r*4)+'% of casts keep their runes', r=>'+4% to '+(r*4)+'%'),
+    N('rn_endless','Endless Rune',RN_TREE_ICONS.rn_endless,1,90,
+      r=>'5% of casts spend nothing', ()=>'5% of casts are free'),
+    N('rn_cape','Runecrafter’s Cape',RN_TREE_ICONS.rn_cape,1,99,
+      r=>'Double runes from every batch', ()=>'Double runes', {reqCape:true}),
   ]
 };
 
@@ -19020,6 +19619,7 @@ const ITEM_BODY_SLOTS={
   // Crafting cape
   cape_crafting:['cape'],
   cape_fletching:['cape'],
+  cape_runecrafting:['cape'],
   // ─── Crafted combat gear ─── (atk/str/def stats live in COMBAT_GEAR_STATS) ───
   bronze_helm:['helmet'],   bronze_chest:['chest'],   bronze_legs:['legs'],   bronze_gloves:['gloves'],   bronze_boots:['boots'],   bronze_sword:['weapon'],   bronze_shield:['shield'],
   iron_helm:['helmet'],     iron_chest:['chest'],     iron_legs:['legs'],     iron_gloves:['gloves'],     iron_boots:['boots'],     iron_sword:['weapon'],     iron_shield:['shield'],
@@ -19070,7 +19670,7 @@ function getItemSlots(id){
        The cgear line above catches bows first today, so this is belt and braces —
        but a weapon defined without cgear would otherwise become quiver-equippable,
        and that is a silent one nobody would find. */
-    if(it&&it.ammo&&!it.ranged) return ['quiver'];
+    if(it&&it.ammo&&!it.ranged&&!it.magic) return ['quiver'];   // a staff carries `ammo` too: the rune it casts
     return [];
   }
   return Array.isArray(s)?s:[s];
@@ -19132,15 +19732,18 @@ function _bodyItemDescBase(id){
   /* Ammunition. Without this it fell through to the jewellery branch below and
      the quiver picker read "starsteel_arrow — Unenchanted (visit Enchanting tab)",
      which is three kinds of wrong at once. Says what it adds and what fires it. */
-  if(it&&it.ammo&&!it.ranged){
+  if(it&&it.ammo&&!it.ranged&&!it.magic){
+    /* A rune says the biggest spell it powers and what that spell gets. */
+    var _isRune=isRune(id);
     var _fires=(it.ammo==='bolt')?'crossbows':'bows';
     var _n=(state&&state.items&&state.items[id])||0;
     /* Say it here, not in the arena. A quiver that silently refuses to fire once
        the fight starts reads as a broken game rather than as a rule. */
     var _w=(typeof eqCombatWeapon==='function')?eqCombatWeapon():'';
-    var _bad=(_w&&ITEMS[_w]&&ITEMS[_w].ranged&&ITEMS[_w].ammo===it.ammo&&!ammoFitsWeapon(_w,id));
+    var _bad=(_w&&ITEMS[_w]&&(ITEMS[_w].ranged||ITEMS[_w].magic)&&ITEMS[_w].ammo===it.ammo&&!ammoFitsWeapon(_w,id));
     return (_bad?('Too high a tier for your '+ITEMS[_w].name+' · '):'')
-      +'+'+(it.ammoStr||0)+' Ranged Strength from '+_fires
+      +(_isRune?(SPELL_SIZES[runeClassOf(id)-1].n+': +'+(it.runePow||0)+' Magic Power, from a staff or a wand')
+               :('+'+(it.ammoStr||0)+' Ranged Strength from '+_fires))
       +(_n?(' · '+_n.toLocaleString()+' in the satchel'):'');
   }
   /* Trophy and sea jewellery carry a fixed bonus and cannot be enchanted, and the
@@ -19308,7 +19911,7 @@ const COMBAT_PRESET_SLOTS=['weapon','shield','quiver','helmet','cape','amulet','
 const COMBAT_LOADOUTS=[
   {key:'melee',  label:'Melee',  icon:'ui_swords', sub:'Blade and shield'},
   {key:'ranged', label:'Ranged', icon:'fletching', sub:'Bow or crossbow, and a quiver'},
-  {key:'magic',  label:'Magic',  icon:'ui_spark',  sub:'Comes with the Magic update', soon:true},
+  {key:'magic',  label:'Magic',  icon:'magic',     sub:'Staff or wand, and runes'},
 ];
 let _loScope='skilling';   // which half of the Presets tab is open
 
@@ -19924,6 +20527,8 @@ const SHOP=[
      spent. SKILL_CAPE had no fletching key either, which is what kept it silent. */
   {id:'cape_fletching',  name:'Fletching Cape',  icon:'\ud83c\udff9',slot:'cape',skill:'fletching',  tier:5,cost:100000,bonus:{speed:0.05,skillXp:0.05},desc:'+5% fletch speed \u00b7 +5% Fletching XP', reqLvl:99},
 
+  /* Runecrafting (0.9.127.4) ships with its cape, so rn_cape can be bought. */
+  {id:'cape_runecrafting',name:'Runecrafting Cape',icon:'🔮',slot:'cape',skill:'runecrafting',tier:5,cost:100000,bonus:{speed:0.05,skillXp:0.05},desc:'+5% carve speed · +5% Runecrafting XP', reqLvl:99},
   /* ── JEWELRY LADDER (0.9.122.20) ──────────────────────────────────────────────
      Was two items thirty levels apart. `skills:[...]` is the multi-skill form of
      `skill` — gearBonus/gearSkillXp read both — so a ring can serve a supply chain
@@ -22318,12 +22923,12 @@ function effectiveItemSell(id){
 }
 
 /* Skill key → tree node prefix (matches TREES node ids) */
-const SK_PFX={thieving:'th',woodcutting:'wc',mining:'mi',fishing:'fi',foraging:'fo',smithing:'sm',cooking:'co',alchemy:'al',firemaking:'fm',agility:'ag',jeweler:'jw',farming:'fa',crafting:'cr',fletching:'fl'};
+const SK_PFX={thieving:'th',woodcutting:'wc',mining:'mi',fishing:'fi',foraging:'fo',smithing:'sm',cooking:'co',alchemy:'al',firemaking:'fm',agility:'ag',jeweler:'jw',farming:'fa',crafting:'cr',fletching:'fl',runecrafting:'rn'};
 
 /* Skill capes — the item id the upcoming shop update will sell for each skill.
    A level-99 capstone (reqCape:true) can only be allocated while you OWN the matching cape.
    These ids are placeholders the shop update should add to SHOP (granted into state.gear on purchase). */
-const SKILL_CAPE={thieving:'cape_thieving',woodcutting:'cape_woodcutting',mining:'cape_mining',fishing:'cape_fishing',foraging:'cape_foraging',smithing:'cape_smithing',cooking:'cape_cooking',alchemy:'cape_alchemy',firemaking:'cape_firemaking',agility:'cape_agility',jeweler:'cape_jeweler',farming:'cape_farming',crafting:'cape_crafting',fletching:'cape_fletching'};
+const SKILL_CAPE={thieving:'cape_thieving',woodcutting:'cape_woodcutting',mining:'cape_mining',fishing:'cape_fishing',foraging:'cape_foraging',smithing:'cape_smithing',cooking:'cape_cooking',alchemy:'cape_alchemy',firemaking:'cape_firemaking',agility:'cape_agility',jeweler:'cape_jeweler',farming:'cape_farming',crafting:'cape_crafting',fletching:'cape_fletching',runecrafting:'cape_runecrafting'};
 function hasSkillCape(skill){ const id=SKILL_CAPE[skill]; return !!id && Array.isArray(state.gear) && state.gear.includes(id); }
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -22677,7 +23282,8 @@ function combatBonusesAll(){
        the function. Point Blank read as a dead node for exactly that reason. */
     accBoost:  (cm.accBoost||0) + ((typeof spireBoon==='function')?spireBoon('accBoost'):0)
                + ((typeof usingRanged==='function'&&usingRanged())?treeRank('fletching','fl_acc')*FL_ACC_RANK:0)   // Keen Heads
-               + (e.accBoost||0),                                                                                 // Accuracy lines
+               + (e.accBoost||0)                                                                                  // Accuracy lines
+               + (mag?treeRank('runecrafting','rn_acc')*RN_ACC_RANK:0),                                           // True Lines
     /* Crit damage and combat XP, the Mastery board's plus rolled enchant lines
        (0.9.127.2). The crit roll in combatTick and grantCombatXp read these. */
     critDmg:   (cm.critDmg||0) + (e.critDmg||0),
@@ -22962,6 +23568,9 @@ function heavyArmourDef(){
 const AMMO_TIER_HEADROOM=1;
 /* Fletching tree, per rank (0.9.124.45). See the note on the nodes for why small. */
 const FL_ACC_RANK=0.004, FL_DMG_RANK=0.002, FL_WIND_RANK=0.002, FL_BARB_RANK=0.002;
+/* Runecrafting tree, per rank (0.9.127.4). The first three are Fletching's numbers
+   on purpose: the two trees answer each other node for node. */
+const RN_ACC_RANK=0.004, RN_DMG_RANK=0.002, RN_SURE_RANK=0.002, RN_BRAND_RANK=0.01;
 function fmtRank(v){ return String(Math.round(v*100)/100); }
 /* Windcutter's sure-shot and Barbed's bleed chance: bows and crossbows only. */
 function flWindChance(){ return (typeof usingRanged==='function'&&usingRanged())?treeRank('fletching','fl_wind')*FL_WIND_RANK:0; }
@@ -22969,6 +23578,16 @@ function flBarbChance(){ return (typeof usingRanged==='function'&&usingRanged())
 /* Splitter adds shafts per log, Quiverfull adds arrows or bolts per batch, and the
    Fletcher's Cape doubles arrows and bolts. One function, so the batch and the /hr
    numbers cannot disagree. */
+/* Close Cutting adds runes to a batch and the Runecrafter's Cape doubles it. Runes
+   only: neither node says anything about a second wand. One function, so the batch
+   and the /hr numbers cannot disagree. */
+function runeOutBonus(id){
+  const rune=isRune(id);
+  return {
+    pct:  rune?treeRank('runecrafting','rn_batch')*0.04:0,
+    mult: (rune&&treeRank('runecrafting','rn_cape')>0&&hasSkillCape('runecrafting'))?2:1,
+  };
+}
 function fletchOutBonus(id){
   const it=ITEMS[id]||{}, ammo=!!(it.ammo&&!it.ranged);
   return {
@@ -22978,7 +23597,8 @@ function fletchOutBonus(id){
 }
 function ammoMaxTier(wid){
   const w=ITEMS[wid];
-  return (w&&w.ranged)?((w.ctier||1)+AMMO_TIER_HEADROOM):0;
+  /* A staff or a wand draws runes by the same rule (0.9.127.4): its own tier plus one. */
+  return (w&&(w.ranged||w.magic))?((w.ctier||1)+AMMO_TIER_HEADROOM):0;
 }
 /* The best weapons of a kind fire the best ammunition of that kind (0.9.124.44).
    Sunderbolts are tier 11 and no crossbow is above tier 8, so under the plain rule
@@ -22989,13 +23609,15 @@ let _ammoTopTier=null;
 function ammoKindTopTier(kind){
   if(!_ammoTopTier){
     _ammoTopTier={};
-    for(const id in ITEMS){ const w=ITEMS[id]; if(w&&w.ranged&&w.ammo) _ammoTopTier[w.ammo]=Math.max(_ammoTopTier[w.ammo]||0,w.ctier||1); }
+    for(const id in ITEMS){ const w=ITEMS[id]; if(w&&(w.ranged||w.magic)&&w.ammo) _ammoTopTier[w.ammo]=Math.max(_ammoTopTier[w.ammo]||0,w.ctier||1); }
   }
   return _ammoTopTier[kind]||0;
 }
 function ammoFitsWeapon(wid,qid){
   const w=ITEMS[wid], q=ITEMS[qid];
-  if(!w||!q||!w.ranged||!q.ammo) return false;
+  /* Runes carry an ammunition kind of their own, so a bow will not take them and
+     a staff will not take arrows: the kind check below does both. */
+  if(!w||!q||!(w.ranged||w.magic)||!q.ammo) return false;
   if(q.ammo!==w.ammo) return false;
   const need=Math.min(q.ammoTier||1, ammoKindTopTier(q.ammo)+AMMO_TIER_HEADROOM);
   return need <= ammoMaxTier(wid);
@@ -23011,6 +23633,9 @@ function ammoStr(){
   const a=readyAmmo();
   return a?(ITEMS[a].ammoStr||0):0;
 }
+/* "Kiln Runes", "Bronze Arrows": what the stop messages call a stack. The item is
+   named in the singular, and "You are out of Kiln Rune." is what that printed. */
+function ammoPlural(id){ const n=(ITEMS[id]&&ITEMS[id].name)||'ammunition'; return /s$/.test(n)||n==='ammunition'?n:n+'s'; }
 /* Which stat a kill's XP goes to. It was this exact ternary copy-pasted into five
    places, so a sixth would have missed ranged in silence. */
 /* Ranged styles, keyed by the SAME three slots melee uses, so state.combatStyle
@@ -23089,6 +23714,86 @@ const SPELL_SIZES=[
   {k:'wave',  n:'Wave',  runes:3, m:2.0},
   {k:'surge', n:'Surge', runes:4, m:2.6},
 ];
+/* The biggest spell a rune powers, 1 to 4, from its grade:
+     Ash, Soot  |  Char, Cinder, Kiln  |  Forge, Crucible  |  Starfall and above
+   The rune decides, not a level: load a better rune and the next size is there. */
+function runeClass(t){ return t<=2?1 : t<=5?2 : t<=7?3 : 4; }
+/* A rune, as opposed to the staff that casts it. Both carry ammo:'rune', the way a
+   bow and its arrow both carry ammo:'arrow', so the kind alone does not say which. */
+function isRune(id){ const it=id&&ITEMS[id]; return !!(it&&it.ammo==='rune'&&!it.magic); }
+function runeClassOf(id){ return isRune(id)?runeClass(ITEMS[id].ammoTier||1):1; }
+/* What a cast gets from the rune. The biggest spell a rune powers gets all of its
+   Magic Power, which is the strength of the arrow of the same tier, so Magic is
+   pegged to the ladder _rangedsim.js already tuned. A smaller spell gets
+   power x m(size) / m(biggest), rounded. The steps in `m` are gentle enough that
+   a better rune is never worse at the same spell. */
+function spellPower(pow,cls,size){
+  return size>=cls ? pow : Math.round(pow*SPELL_SIZES[size-1].m/SPELL_SIZES[cls-1].m);
+}
+/* The size being cast, 1 to 4. state.combatSpell is the size asked for. What is
+   cast is that, or the biggest the loaded rune powers, whichever is smaller, so a
+   mage who never touches the spell bar casts at full strength. */
+function spellSize(){
+  const a=readyAmmo(); if(!a) return 1;
+  let want=0;
+  SPELL_SIZES.forEach(function(s,i){ if(s.k===(state&&state.combatSpell)) want=i+1; });
+  return Math.max(1, Math.min(want||SPELL_SIZES.length, runeClassOf(a)));
+}
+function spellName(){ return ELEMENT_BY[spellElement()].n+' '+SPELL_SIZES[spellSize()-1].n; }
+/* Magic Power the loaded rune gives this cast. Nothing loaded is 0. */
+function runePow(){
+  const a=readyAmmo();
+  return a ? spellPower(ITEMS[a].runePow||0, runeClassOf(a), spellSize()) : 0;
+}
+/* Chance a cast keeps its runes, from every source, under the ceiling arrow
+   recovery already has. One roll a cast: it keeps every rune the spell would have
+   spent, or none. Paid as a chance not to spend, the way arrows are, so nothing is
+   owed when you retreat or close the game. */
+const RUNE_SAVE_CAP=0.85;
+function runeSaveRate(){
+  let r = treeRank('runecrafting','rn_save')*0.05
+        + treeRank('runecrafting','rn_gm_save')*0.04
+        + (treeRank('runecrafting','rn_endless')>0?0.05:0);
+  const ce=(state&&state.combatEquipped)||{};
+  for(const s in ce){ const g=gearStats(ce[s]); if(g&&g.runeSave) r+=g.runeSave; }
+  return Math.min(RUNE_SAVE_CAP, r);
+}
+/* Chance this cast cannot miss: the element's own, and Clear Sight from the tree. */
+function mageSureChance(){
+  const e=ELEMENT_BY[spellElement()];
+  const st=(e&&e.rider.pierce)||0, tr=treeRank('runecrafting','rn_sure')*RN_SURE_RANK;
+  return 1-(1-st)*(1-tr);
+}
+/* +15% against a monster weak to the element, -15% against one that resists it. */
+function elementMult(mon,el){
+  if(!mon) return 1; el=el||spellElement();
+  return mon.weakEl===el ? ELEMENT_WEAK_MULT : (mon.resistEl===el ? ELEMENT_RESIST_MULT : 1);
+}
+/* What the element does when a cast lands. Every branch writes to a status the
+   fight already runs, so there is nothing new to tick and nothing new to clear.
+   Branded raises the chance of the two that are rolled, the burn and the chill. */
+function mageOnHit(mon,dmg,now){
+  const e=ELEMENT_BY[spellElement()]; if(!e) return;
+  const more=treeRank('runecrafting','rn_brand')*RN_BRAND_RANK;
+  if(!combat.foeStatus) combat.foeStatus={};
+  if(e.rider.burn && Math.random()<Math.min(1,BURN_CHANCE+more)){
+    const fresh=!combat.foeStatus.burn;
+    combat.foeStatus.burn={
+      tickDmg:Math.max(1,Math.round(combat.youMaxHit*e.rider.burn)),
+      until:now+BURN_DUR_MS,
+      last:combat.foeStatus.burn?combat.foeStatus.burn.last:now
+    };
+    if(fresh) cmbLog('The '+mon.name+' catches fire.','hit');
+  }
+  if(e.rider.chill && Math.random()<Math.min(1,e.rider.chill.chance+more)){
+    const base=(combat.foeStatus.pin&&combat.foeStatus.pin.base)||combat.foeSwingMs;
+    if(!combat.foeStatus.pin) cmbLog('The '+mon.name+' is chilled. It attacks '+Math.round(e.rider.chill.slow*100)+'% slower.','status');
+    combat.foeStatus.pin={base:base, until:now+e.rider.chill.ms, slow:e.rider.chill.slow};
+  }
+  if(e.rider.leech && combat.youHp<combat.youMaxHp){
+    combat.youHp=Math.min(combat.youMaxHp, combat.youHp+Math.max(1,Math.floor(dmg*e.rider.leech)));
+  }
+}
 
 /* Which stat's LEVEL a style button should show. Melee trains what it says;
    every ranged style trains Ranged and every Magic style trains Magic. */
@@ -23166,8 +23871,9 @@ function playerMaxHit(){
      potions or food. */
   if(usingMagic()){
     const _wm=(ITEMS[eqCombatWeapon()]||{}).dmgMult||1;
-    return Math.max(1, Math.round((cmbLvl('magic')*MAGIC_HIT_LVL + (cs.mpow||0)*COMBAT_P.HIT_GEAR)
-      * _wm * (1 + (b.magicDmg||0)) * classMaxHitMult()));
+    return Math.max(1, Math.round((cmbLvl('magic')*MAGIC_HIT_LVL + ((cs.mpow||0)+runePow())*COMBAT_P.HIT_GEAR)
+      * _wm * (1 + (b.magicDmg||0)) * classMaxHitMult()
+      * (1 + treeRank('runecrafting','rn_dmg')*RN_DMG_RANK)));   // Deep Cut: damage only, not accuracy
   }
   return Math.max(1, Math.round((cmbLvl('strength')*COMBAT_P.HIT_LVL + (cs.str+bonusStr)*COMBAT_P.HIT_GEAR) * (1 + (b.atkBoost||0)) * classMaxHitMult()));
 }
@@ -23937,6 +24643,7 @@ function processOutAvg(act,skill,id,q,m){
   if(m.cr_dupe) avg+=q*0.05;                                       // Heirloom Forge
   if(m.cr_flawless) avg+=q*0.15*2;                                 // Flawless Forge
   if(skill==='fletching'){ const fb=fletchOutBonus(id); avg=(avg+fb.add)*fb.mult; }
+  if(skill==='runecrafting'){ const rb=runeOutBonus(id); avg=avg*(1+rb.pct)*rb.mult; }   // Close Cutting, the cape
   return avg;
 }
 
@@ -25205,6 +25912,15 @@ function completeAction(act,skillKey,times){
       state.items[id]=(state.items[id]||0)-cost*paid;
       if(state.items[id]<0) state.items[id]=0;
     }
+    /* Bound Twice (rn_bind): binding a staff or a wand gives back half the runes
+       it took. Given back after the spend, so you still need the whole batch. */
+    if(skillKey==='runecrafting' && (act.cat==='wands'||act.cat==='staves') && paid>0 && treeRank('runecrafting','rn_bind')>0){
+      for(const [id,q] of Object.entries(act.inp)){
+        if(!isRune(id)) continue;
+        const back=Math.floor(q*paid/2);
+        if(back>0){ state.items[id]=(state.items[id]||0)+back; showItemPop(id, back); }
+      }
+    }
   }
 
   /* Guild quests count what you were going to do anyway. Bails immediately when no
@@ -25384,6 +26100,14 @@ function completeAction(act,skillKey,times){
       if(m.cr_flawless){ const ff=binom(times,0.15); if(ff>0) qty+=ff*2*q; }
       // Splitter, Quiverfull and the Fletcher's Cape (0.9.124.45)
       if(skillKey==='fletching'){ const fb=fletchOutBonus(id); qty=(qty+fb.add*times)*fb.mult; }
+      /* Close Cutting and the Runecrafter's Cape (0.9.127.4). The part of a rune
+         that Close Cutting leaves over is rolled, so 4% of a batch of 40 is one
+         rune and a six in ten chance of a second, and the card's /hr is exact. */
+      if(skillKey==='runecrafting'){
+        const rb=runeOutBonus(id);
+        if(rb.pct>0){ const ex=qty*rb.pct, whole=Math.floor(ex); qty+=whole+(Math.random()<(ex-whole)?1:0); }
+        qty*=rb.mult;
+      }
       }
     }
 
@@ -26475,7 +27199,7 @@ function resetXphTracker(skill){
    up somewhere instead of vanishing. */
 const RAIL_GROUP={
   woodcutting:'gather', mining:'gather', fishing:'gather', foraging:'gather', farming:'gather',
-  smithing:'produce', cooking:'produce', alchemy:'produce', crafting:'produce', fletching:'produce',
+  smithing:'produce', cooking:'produce', alchemy:'produce', crafting:'produce', fletching:'produce', runecrafting:'produce',
   jeweler:'produce', firemaking:'produce',
   agility:'support', thieving:'support',
 };
@@ -30528,8 +31252,12 @@ function renderStats(){
      it reads "2 + 83" for an archer. */
   const rLvl=cmbLvl('ranged');
   const bow=(typeof usingRanged==='function')&&usingRanged();
-  const accBase=Math.round((bow?rLvl:aLvl)*COMBAT_P.ACC_LVL), accTot=playerAccuracy(), accGear=accTot-accBase;
-  const hitBase=Math.round(bow?rLvl*RANGED_HIT_LVL:sLvl*COMBAT_P.HIT_LVL), hitTot=playerMaxHit(), hitGear=hitTot-hitBase;
+  /* And Magic (0.9.127.4), on the same terms: with a staff or a wand held the base
+     half of accuracy and max hit comes off the Magic level. */
+  const mLvl=cmbLvl('magic');
+  const mag=usingMagic();
+  const accBase=Math.round((mag?mLvl:bow?rLvl:aLvl)*COMBAT_P.ACC_LVL), accTot=playerAccuracy(), accGear=accTot-accBase;
+  const hitBase=Math.round(mag?mLvl*MAGIC_HIT_LVL:bow?rLvl*RANGED_HIT_LVL:sLvl*COMBAT_P.HIT_LVL), hitTot=playerMaxHit(), hitGear=hitTot-hitBase;
   const defBase=Math.round(dLvl*COMBAT_P.DEF_LVL), defTot=playerDefence(), defGear=defTot-defBase;
   const hpBase=Math.round(hLvl*COMBAT_P.HP_LVL), hpTot=maxHpFromStats(), hpGear=hpTot-hpBase;
   const swingMs=playerSwingMs();
@@ -30563,12 +31291,20 @@ function renderStats(){
    +  '<div><span style="color:var(--muted)">'+iconHTML('ui_muscle')+' Strength</span> <b style="color:var(--text);float:right">'+sLvl+'</b></div>'
    +  '<div title="Bows and crossbows train Ranged. It does the work of Attack and Strength together."><span style="color:var(--muted)">'
    +    iconHTML('ranged')+' Ranged</span> <b style="color:'+(bow?'var(--ember)':'var(--text)')+';float:right">'+rLvl+'</b></div>'
+   +  '<div title="Staves and wands train Magic. It does the work of Attack and Strength together."><span style="color:var(--muted)">'
+   +    iconHTML('magic')+' Magic</span> <b style="color:'+(mag?'var(--ember)':'var(--text)')+';float:right">'+mLvl+'</b></div>'
    +  '<div><span style="color:var(--muted)">'+iconHTML('ui_shield')+' Defence</span> <b style="color:var(--text);float:right">'+dLvl+'</b></div>'
    +  '<div><span style="color:var(--muted)">'+iconHTML('ui_heart')+' Hitpoints</span> <b style="color:var(--text);float:right">'+hLvl+'</b></div>'
    +'</div>'
     // Derived stats — base + gear = total
-   +breakRow('Accuracy'+(bow?' (Ranged)':''),  accBase, accGear, accTot)
-   +breakRow('Max Hit'+(bow?' (Ranged)':''),   hitBase, hitGear, hitTot)
+   +breakRow('Accuracy'+(mag?' (Magic)':bow?' (Ranged)':''),  accBase, accGear, accTot)
+   +breakRow('Max Hit'+(mag?' (Magic)':bow?' (Ranged)':''),   hitBase, hitGear, hitTot)
+   /* Magic Power: the rune's, at the size being cast, plus the gear's. */
+   +(mag?('<div title="The rune you have loaded, at the size you are casting, plus your gear" style="display:flex;justify-content:space-between;align-items:baseline;gap:6px;font-size:calc(13px*var(--tscale));padding:3px 0">'
+     +  '<span style="color:var(--muted)">Magic Power</span>'
+     +  '<span style="font-family:var(--num)">'+((cs.mpow||0)>0?'<span style="color:var(--muted);font-size:calc(12px*var(--tscale))">'+runePow()+' + '+cs.mpow+' = </span>':'')
+     +    '<b style="color:var(--ember)">'+(runePow()+(cs.mpow||0))+'</b></span>'
+     +'</div>'):'')
    /* Ranged Strength (0.9.127.2): the arrow's and the gear's, so an archer can see
       where their hit comes from the way a swordsman sees Strength. */
    +(bow?('<div title="The arrow in your quiver, plus your gear" style="display:flex;justify-content:space-between;align-items:baseline;gap:6px;font-size:calc(13px*var(--tscale));padding:3px 0">'
@@ -31975,8 +32711,10 @@ function _bagDockHTML(id,cat){
       chips.push('<span class="dk-chip '+(met?'good':'bad')+'">'+(met?'✓ ':'')+'Needs '+req.level+' '+(COMBAT_STAT_NAME[req.stat]||req.stat)
         +(met?'':' (you have '+cmbLvl(req.stat)+')')+'</span>');
     }
-  } else if(ITEMS[id].ammo&&!it.ranged){
-    chips.push('<span class="dk-chip">+'+(it.ammoStr||0)+' Ranged Strength a shot</span>');
+  } else if(ITEMS[id].ammo&&!it.ranged&&!it.magic){
+    chips.push(isRune(id)
+      ? '<span class="dk-chip">'+SPELL_SIZES[runeClassOf(id)-1].n+': +'+(it.runePow||0)+' Magic Power a cast</span>'
+      : '<span class="dk-chip">+'+(it.ammoStr||0)+' Ranged Strength a shot</span>');
   }
   // its enchant and gems by name, the same marks as the tile in words (0.9.124.53)
   const gx=gearExtrasHTML(id);
@@ -32302,7 +33040,7 @@ function renderInventory(){
     if(isCookedFood(id)) return 'cooked';
     if(ITEMS[id]&&ITEMS[id].potion) return 'potions';
     if(id.endsWith('_log')||id==='ancient_log') return 'logs';
-    if(id.endsWith('_ore')||id==='coal') return 'ores';
+    if(id.endsWith('_ore')||id==='coal'||id==='runestone') return 'ores';   // runestone is quarried with a pick
     // Raw Ingredients — raw fish plus everything else a cooking recipe eats.
     if(id.startsWith('raw_')||isCookIngredient(id)) return 'fish';
     if(id.endsWith('_bar')) return 'bars';
@@ -37453,6 +38191,12 @@ function _gearStatsHTML(){
       const pc=v=>Math.round(v*1000)/10;
       if(b.atkBoost)   chips.push('+'+pc(b.atkBoost)+'% Attack');
       if(b.rangedStr)  chips.push('+'+pc(b.rangedStr)+'% Ranged damage');
+      if(b.magicDmg)   chips.push('+'+pc(b.magicDmg)+'% Magic damage');
+      // The flat half of a spell's damage, rune and gear together, and what a cast keeps.
+      if(usingMagic()){
+        chips.push('+'+(runePow()+(combatStats().mpow||0))+' Magic Power');
+        const _rsv=runeSaveRate(); if(_rsv>0) chips.push(pc(_rsv)+'% of casts keep their runes');
+      }
       // The flat half of a bow's damage, arrow and gear together (0.9.127.2).
       if(typeof usingRanged==='function'&&usingRanged()) chips.push('+'+(ammoStr()+(combatStats().rstr||0))+' Ranged Strength');
       if(b.defBoost)   chips.push('+'+pc(b.defBoost)+'% Defence');
@@ -37858,7 +38602,7 @@ function gearSlotOptions(slotKey, scope, currentId){
   for(var aid in state.items){
     if((state.items[aid]||0)<=0) continue;
     var ait=ITEMS[aid];
-    if(!ait||!ait.ammo||ait.ranged||aid===currentId||!passes(aid)) continue;
+    if(!ait||!ait.ammo||ait.ranged||ait.magic||aid===currentId||!passes(aid)) continue;
     if(itemFitsSlot(aid,slotKey)&&available.indexOf(aid)<0) available.push(aid);
   }
   // owned shop items, by their own slot or an extra one (shop rings fit either hand)
@@ -37884,8 +38628,8 @@ function gearSlotOptions(slotKey, scope, currentId){
   }
   return available;
 }
-var _GSP_ORDER=['atk','str','rstr','def','crit','dodge','aspd','%speed','%xpBoost','%skillXp','%gpBoost','%goldFind',
-  '%doubleYield','%preserve','%atkBoost','%rangedStr','%dmgBoost','%accBoost','%critChance','%critDmg','%lifesteal','%hpBoost','%defBoost','%combatXp'];
+var _GSP_ORDER=['atk','str','rstr','mpow','def','crit','dodge','aspd','runeSave','%speed','%xpBoost','%skillXp','%gpBoost','%goldFind',
+  '%doubleYield','%preserve','%atkBoost','%rangedStr','%magicDmg','%dmgBoost','%accBoost','%critChance','%critDmg','%lifesteal','%hpBoost','%defBoost','%combatXp'];
 function _gspKeys(obj){
   return Object.keys(obj).sort(function(a,b){ var ia=_GSP_ORDER.indexOf(a), ib=_GSP_ORDER.indexOf(b); return (ia<0?99:ia)-(ib<0?99:ib); });
 }
@@ -38602,7 +39346,7 @@ function showItemTooltip(itemId, x, y, note){
     if(it.light) _meta.push('Leather'); else if(_tn[it.ctier]) _meta.push(_tn[it.ctier]);
     if(it.ctier) _meta.push('Tier '+it.ctier);
     _meta.push(_sl[it.cslot]||it.cslot);
-  } else if(it.ammo){ _meta.push('Ammunition'); _meta.push(it.ammo==='bolt'?'Crossbows':'Bows'); }
+  } else if(it.ammo){ _meta.push(it.ammo==='rune'?'Rune':'Ammunition'); _meta.push(it.ammo==='rune'?'Staves and wands':(it.ammo==='bolt'?'Crossbows':'Bows')); }
   /* Food is `potion:{heal:n}` in the data, so the potion test has to come SECOND
      or every cooked dish introduces itself as a potion. */
   else if(it.potion && (it.potion.heal||it.potion.regen) && !it.potion.dur) _meta.push('Food');
@@ -38694,29 +39438,38 @@ function showItemTooltip(itemId, x, y, note){
      said that Starfall Arrows need a bow able to draw them, or what that bow asks
      of you. It gives its strength, the lightest weapon that fires it with that
      weapon's requirement, and whether the weapon you hold can. */
-  if(it.ammo && !it.ranged){
+  /* !it.magic: a staff carries `ammo` too, naming the rune it casts, and must not
+     be shown the ammunition block. A rune lists the spells it powers, biggest
+     first, with what each spends and gets. */
+  if(it.ammo && !it.ranged && !it.magic){
+    const _rn=isRune(itemId);
     let _lightest=null;
     for(const wid in ITEMS){
       const w=ITEMS[wid];
-      if(!w||!w.ranged||!w.cgear||!ammoFitsWeapon(wid,itemId)) continue;
+      if(!w||!(w.ranged||w.magic)||!w.cgear||!ammoFitsWeapon(wid,itemId)) continue;
       const _t=w.ctier||1, _lt=_lightest?(ITEMS[_lightest].ctier||1):99;
       // on a tie, name the one you can make over a rare drop
       if(_t<_lt||(_t===_lt&&!producingSkillOf(_lightest)&&producingSkillOf(wid))) _lightest=wid;
     }
-    html+=`<div class="tt-sub">+${it.ammoStr||0} Ranged Strength to every shot</div>`;
+    if(_rn){
+      const _cls=runeClassOf(itemId);
+      for(let _n=_cls;_n>=1;_n--) html+=`<div class="tt-sub">${SPELL_SIZES[_n-1].n}: ${runesACast(_n)}, +${spellPower(it.runePow||0,_cls,_n)} Magic Power</div>`;
+    } else {
+      html+=`<div class="tt-sub">+${it.ammoStr||0} Ranged Strength to every shot</div>`;
+    }
     if(_lightest){
       const _rq=combatGearReq(_lightest);
-      html+=`<div class="tt-sub">Fired by ${ITEMS[_lightest].name} or better`
+      html+=`<div class="tt-sub">${_rn?'Cast by':'Fired by'} ${ITEMS[_lightest].name} or better`
         +(_rq?` (needs ${_rq.level} ${COMBAT_STAT_NAME[_rq.stat]||_rq.stat})`:'')+`</div>`;
     } else {
-      html+=`<div class="tt-sub" style="color:var(--muted)">No weapon can fire this</div>`;
+      html+=`<div class="tt-sub" style="color:var(--muted)">No weapon can ${_rn?'cast':'fire'} this</div>`;
     }
     const _held=(typeof eqCombatWeapon==='function')?eqCombatWeapon():'';
     const _hw=_held&&ITEMS[_held];
-    if(_hw&&_hw.ranged&&_hw.ammo===it.ammo){
+    if(_hw&&(_hw.ranged||_hw.magic)&&_hw.ammo===it.ammo){
       const _fits=ammoFitsWeapon(_held,itemId);
       html+=`<div class="tt-sub" style="color:${_fits?'#7da33f':'#d04848'}">`
-        +(_fits?`✓ Your ${_hw.name} can fire it`:`Too high a tier for your ${_hw.name}`)+`</div>`;
+        +(_fits?`✓ Your ${_hw.name} can ${_rn?'cast':'fire'} it`:`Too high a tier for your ${_hw.name}`)+`</div>`;
     }
   }
   // Item flavor / info text — many items (esp. enchanting materials) explain
@@ -39141,7 +39894,7 @@ function itemCompCat(id){
   if(isCookedFood(id)) return 'cooked';
   if(it.potion) return 'potions';
   if(id.endsWith('_log')||id==='ancient_log') return 'logs';
-  if(id.endsWith('_ore')||id==='coal') return 'ores';
+  if(id.endsWith('_ore')||id==='coal'||id==='runestone') return 'ores';   // runestone is quarried with a pick
   // Raw Ingredients — raw fish plus everything else a cooking recipe eats.
   if(id.startsWith('raw_')||isCookIngredient(id)) return 'fish';
   if(id.endsWith('_bar')) return 'bars';
@@ -39662,6 +40415,7 @@ const SKILL_ACCENT={
   crafting:   '#b08050',  // leather
   agility:    '#5a8fcb',  // sky
   fletching:  '#a8813f',  // bowstave
+  runecrafting:'#8f7bd0', // rune light
 };
 
 function renderXpDetail(){
@@ -40667,7 +41421,7 @@ const EW_GEMC={sapphire:'#4a86c8',emerald:'#3fa860',ruby:'#c8434a',diamond:'#8fd
 const EW_GEM_ORDER=['sapphire','emerald','ruby','diamond','amethyst','dragon','bloodstone','void'];
 const EW_SLOT_LABEL={ring_l:'Ring · Left',ring_r:'Ring · Right',amulet:'Neck'};
 const EW_BONUS_LABEL={speed:'Speed',xpBoost:'XP',gpBoost:'Sell',doubleYield:'Double',
-  atkBoost:'Attack',rangedStr:'Ranged damage',dmgBoost:'Damage',defBoost:'Defence',hpBoost:'Max HP',critChance:'Crit',lifesteal:'Lifesteal',goldFind:'Gold',
+  atkBoost:'Attack',rangedStr:'Ranged damage',magicDmg:'Magic damage',dmgBoost:'Damage',defBoost:'Defence',hpBoost:'Max HP',critChance:'Crit',lifesteal:'Lifesteal',goldFind:'Gold',
   accBoost:'Accuracy',critDmg:'Crit damage',combatXp:'Combat XP'};
 
 function _ewEl(cls,html){ var d=document.createElement('div'); if(cls)d.className=cls;
@@ -40893,6 +41647,7 @@ function _ewTotals(){
   /* Ranged damage lines and the jewelry sets' any-weapon damage (0.9.127.2). Only
      once you have some, like the four below. */
   if(cb.rangedStr) cells.push(['Ranged damage',cb.rangedStr]);
+  if(cb.magicDmg)  cells.push(['Magic damage',cb.magicDmg]);
   if(cb.dmgBoost)  cells.push(['Damage, any weapon',cb.dmgBoost]);
   if(cb.accBoost)  cells.push(['Accuracy',cb.accBoost]);
   if(cb.critDmg)   cells.push(['Crit damage',cb.critDmg]);
@@ -40927,7 +41682,7 @@ function _ewTotals(){
    the right-hand panel is the lines, their quality, and their locks. */
 var _enFilter='worn';
 const EN_POOL_LABEL={armour:'Chest and legs', headhands:'Helmet and gloves', feetback:'Boots and cape',
-                     weapon:'Weapon', bow:'Bow or crossbow', shield:'Shield', jewelry:'Jewelry'};
+                     weapon:'Weapon', bow:'Bow or crossbow', staff:'Staff or wand', shield:'Shield', jewelry:'Jewelry'};
 const EN_FILTERS=[['worn','Worn'],['combat','Combat'],['skilling','Skilling'],['jewelry','Jewelry'],['all','All']];
 
 /* Is this piece enchanted, under either system. Every site that used to test
@@ -42135,19 +42890,24 @@ function combatTick(){
        refunded when the fight ends. Same expected number of arrows, no per-fight
        bookkeeping, and it cannot desync if you retreat, die, close the game
        mid-swing, or get pulled into the next raid stage. */
-    let _spentAmmo='';
-    if(usingRanged()){
+    let _spentAmmo='', _spentN=1;
+    /* A cast costs runes (0.9.127.4), through the block a shot costs an arrow in.
+       `_mg` is read once here and used by every Magic line below. */
+    const _mg=usingMagic();
+    if(usingRanged()||_mg){
       const _am=readyAmmo();
       if(!_am){
         const _q=eqQuiver(), _w=eqCombatWeapon();
         stopCombatTimer(); combat.active=false;
         if(typeof refreshCombatTabIndicator==='function') refreshCombatTabIndicator();
-        const _why = !_q ? 'Your quiver is empty.'
+        const _vb=_mg?'cast':'fire';
+        const _why = !_q ? (_mg?'You have no runes loaded.':'Your quiver is empty.')
           : (ITEMS[_q]&&ITEMS[_w]&&ITEMS[_q].ammo!==ITEMS[_w].ammo)
-            ? 'A '+ITEMS[_w].name+' does not fire '+ITEMS[_q].name+'.'
+            ? 'Your '+ITEMS[_w].name+' does not '+_vb+' '+ammoPlural(_q)+'.'
             : (ITEMS[_q]&&ITEMS[_w]&&!ammoFitsWeapon(_w,_q))
-              ? 'A '+ITEMS[_w].name+' cannot fire '+ITEMS[_q].name+'. Use lower-tier ammo or a better bow.'
-              : 'You are out of '+((ITEMS[_q]&&ITEMS[_q].name)||'ammunition')+'.';
+              ? 'Your '+ITEMS[_w].name+' cannot '+_vb+' '+ammoPlural(_q)+'. '
+                +(_mg?'Load a lower rune, or hold a better staff or wand.':'Use lower-tier ammo or a better bow.')
+              : 'You are out of '+ammoPlural(_q)+'.';
         cmbLog('\u2716 '+_why+' The fight stops.','miss');
         if(typeof toast==='function') toast(_why);
         renderCombat();
@@ -42163,8 +42923,14 @@ function combatTick(){
       { const _cmS=(typeof cmastBonuses==='function')?cmastBonuses():null;
         if(_cmS && _cmS.ammoSave>0) _rate += _cmS.ammoSave; }
       if(ITEMS[_am].ammo==='bolt' && treeRank('fletching','fl_bolts')<1) _rate=0;
+      /* Runes have their own sources and their own function. Nothing from the
+         Fletching tree or the Marksman column saves a rune. */
+      if(_mg) _rate=runeSaveRate();
       if(Math.random() >= Math.min(0.85,_rate)){
-        state.items[_am]=(state.items[_am]||0)-1;
+        /* A spell spends as many runes as its size. The last cast of a stack
+           spends what is left. */
+        _spentN=_mg?Math.min(spellSize(),state.items[_am]||0):1;
+        state.items[_am]=(state.items[_am]||0)-_spentN;
         if(state.items[_am]<=0) delete state.items[_am];
         /* Quiver Master hands it back if the shot misses. The spend has to stay
            here — readyAmmo() is what proves you had one to fire — so the refund
@@ -42190,8 +42956,10 @@ function combatTick(){
     const _fxIdEarly=(typeof eqCombatWeapon==='function')?eqCombatWeapon():((state.combatEquipped&&state.combatEquipped.weapon)||'');
     const _pf=_fxIdEarly&&ITEMS[_fxIdEarly]&&ITEMS[_fxIdEarly].wfx&&ITEMS[_fxIdEarly].wfx.pierce;
     // Windcutter (fl_wind) is the same sure shot as Pierce, on a small chance.
+    /* And a cast: Storm's own chance, and Clear Sight (rn_sure). */
     const _pierced=!!(_pf&&Math.random()<(_pf.chance||0))
-      || Math.random()<flWindChance();
+      || Math.random()<flWindChance()
+      || (_mg && Math.random()<mageSureChance());
     const hitChance=_pierced?0.97:Math.max(0.03, Math.min(0.97, combat.youAcc/(combat.youAcc+_effDef)));
     let youDmg = (Math.random()<hitChance)
       ? Math.max(1, Math.round(combat.youMaxHit*(COMBAT_P.HIT_MIN+(1-COMBAT_P.HIT_MIN)*Math.random())))
@@ -42201,7 +42969,9 @@ function combatTick(){
       /* Quiver Master — the arrow that missed goes back in the quiver. */
       if(_spentAmmo){
         const _qm=(typeof cmastBonuses==='function')?cmastBonuses():null;
-        if(_qm && _qm.ammoRefundOnMiss) state.items[_spentAmmo]=(state.items[_spentAmmo]||0)+1;
+        /* Arrows and bolts only. Quiver Master is a Marksman node, and a rune that
+           missed is spent. */
+        if(_qm && _qm.ammoRefundOnMiss && !_mg) state.items[_spentAmmo]=(state.items[_spentAmmo]||0)+1;
       }
     }
     let didCrit=false;
@@ -42212,7 +42982,12 @@ function combatTick(){
       // if the player has no weapon equipped (bare hands = no type bonus).
       const _wepId=(typeof eqCombatWeapon==='function')?eqCombatWeapon():((state.combatEquipped&&state.combatEquipped.weapon)||'');
       const _wepType=(_wepId&&ITEMS[_wepId]&&ITEMS[_wepId].dmgType)||null;
-      if(_wepType){
+      /* A spell's matchup is its element, not the weapon's damage type, on the
+         same line and for the same 15%. Only a cast that landed: a miss stays 0. */
+      if(_mg){
+        if(youDmg>0){ const _em=elementMult(mon); if(_em!==1) youDmg=Math.max(1,Math.round(youDmg*_em)); }
+      }
+      else if(_wepType){
         if(mon.weakTo===_wepType){ youDmg=Math.max(1, Math.round(youDmg*1.15)); }
         else if(mon.resistTo===_wepType){ youDmg=Math.max(1, Math.round(youDmg*0.85)); }
       }
@@ -42296,8 +43071,11 @@ function combatTick(){
       if(combat.cast) combat.cast.acc=(combat.cast.acc||0)+youDmg+_cleaveDmg;
     }
     if(youDmg>0){
-      cmbLog(`You ${didCrit?'<span style="color:#ffd700">crit</span> ':''}hit the ${mon.name} for ${youDmg}.`,'hit');
-      cmbSplat(youDmg,didCrit?'crit':'hit');
+      /* A cast names its spell, and its number takes the element's colour. */
+      cmbLog(_mg?(spellName()+' '+(didCrit?'<span style="color:#ffd700">crits</span>':'hits')+' the '+mon.name+' for '+youDmg+'.')
+                :`You ${didCrit?'<span style="color:#ffd700">crit</span> ':''}hit the ${mon.name} for ${youDmg}.`,'hit');
+      cmbSplat(youDmg,(didCrit?'crit':'hit')+(_mg?' el-'+spellElement():''));
+      if(_mg) mageOnHit(mon,youDmg,now);
       if(_cleaveDmg>0){ cmbLog(`🪓 Reaping Arc cleaves again for ${_cleaveDmg}!`,'hit'); setTimeout(function(){cmbSplat(_cleaveDmg,'cleave');},150); }
       // Per-damage XP factor ÷10 vs old scale — damage numbers are ~10× bigger now.
       grantCombatXp(style,(youDmg+_cleaveDmg)*0.4);
@@ -42400,7 +43178,7 @@ function combatTick(){
         }
       }
     } else {
-      cmbLog(`You miss the ${mon.name}.`,'miss');
+      cmbLog(_mg?(spellName()+' misses the '+mon.name+'.'):`You miss the ${mon.name}.`,'miss');
     }
 
     // Foe down? Award kill XP and respawn for idle farming.
@@ -42578,7 +43356,7 @@ function combatTick(){
     const _pin=combat.foeStatus&&combat.foeStatus.pin;
     if(_pin){
       if(now>=_pin.until){ delete combat.foeStatus.pin; combat.foeSwingMs=_pin.base; }
-      else combat.foeSwingMs=Math.round(_pin.base*1.15);
+      else combat.foeSwingMs=Math.round(_pin.base*(1+(_pin.slow||0.15)));   // Pinning Shot is 15%; a chill carries its own
     }
   }
 
@@ -42866,6 +43644,11 @@ function updateCombatBars(){
     const em=$('cmbEatMark');
     if(em){ em.style.left=(cue.state==='off'?-99:cue.pct)+'%'; em.classList.toggle('risk',cue.state==='risk'); }
   }
+  /* The ammunition line (0.9.127.4), kept honest between kills the same way. The
+     panel only rebuilds on a kill, so a long fight or a raid stage would otherwise
+     show the count it started with. Rebuilt only when what it says has changed. */
+  const ac=$('cmbAmmoChip');
+  if(ac && ac.getAttribute('data-sig')!==ammoChipSig()) ac.outerHTML=ammoChipHTML();
   // Live raid timer (1.0.66) — updated in-place so the run clock ticks without a
   // full panel re-render.
   if(combat.raid){ const rt=$('raidTimer'); if(rt) rt.textContent=_fmtRaidTime(Date.now()-combat.raid.startMs); rxSyncHud(); }
@@ -43372,6 +44155,9 @@ function _cmastTotalsHTML(){
        any-weapon nodes land in whichever one it uses. */
     ['+'+Math.round((b.atkBoost||0)*100)+'%','Melee Dmg','melee',b.atkBoost],
     ['+'+Math.round((b.rangedStr||0)*100)+'%','Ranged Dmg','mark',b.rangedStr],
+    /* Only with a staff or a wand in hand, which is when the any-weapon nodes
+       land in this channel. Without one it would be a cell that is always 0. */
+    ...((typeof usingMagic==='function'&&usingMagic())?[['+'+Math.round((b.magicDmg||0)*100)+'%','Magic Dmg','magic',b.magicDmg]]:[]),
     ['+'+Math.round((b.critChance||0)*100)+'%','Crit','melee',b.critChance],
     ['+'+Math.round((b.critDmg||0)*100)+'%','Crit Dmg','melee',b.critDmg],
     ['+'+Math.round((b.aspd||0)*100)+'%','Atk Speed','melee',b.aspd],
@@ -44218,6 +45004,157 @@ document.addEventListener('scroll',function(e){
   if(t&&t.classList&&t.classList.contains('cvfood-scroll')&&t.clientHeight) _cvFoodTop=t.scrollTop;
 },true);
 
+/* ════ THE SPELL BAR (0.9.127.4) ═════════════════════════════════════════════════
+   Eight buttons under your own health bar while a staff or a wand is held: Bolt,
+   Blast, Wave, Surge, then the elements. One press changes the spell, with the
+   fight still running, in a raid and on the Spire too. It applies from the next
+   cast. Nothing is disengaged, there is no menu and nothing hides behind a hover.
+
+   A size the loaded rune cannot power is grey and names the rune it is waiting
+   for. An element says what it does to the monster in front of you: weak +15%,
+   resists -15%, or else what the element is for. One above your Magic level is grey
+   and says the level. */
+function runesACast(n){ return n+(n===1?' rune':' runes')+' a cast'; }
+/* The lowest rune that powers each size, for the line a greyed button gives. */
+let _spellFirstRune=null;
+function spellFirstRune(n){
+  if(!_spellFirstRune){
+    _spellFirstRune={};
+    Object.keys(ITEMS).filter(isRune).sort((a,b)=>(ITEMS[a].ammoTier||1)-(ITEMS[b].ammoTier||1)).forEach(id=>{
+      for(let s=1;s<=runeClassOf(id);s++) if(!_spellFirstRune[s]) _spellFirstRune[s]=id;
+    });
+  }
+  return _spellFirstRune[n]||'';
+}
+function spellBarHTML(mon){
+  if(!usingMagic()) return '';
+  const cur=spellElement();
+  const a=readyAmmo(), cls=a?runeClassOf(a):0, size=a?spellSize():0, rune=a?ITEMS[a]:null;
+  let h='<div class="cvspell" id="cmbSpellBar">';
+  SPELL_SIZES.forEach(function(s,i){
+    const n=i+1, can=n<=cls, need=(ITEMS[spellFirstRune(n)]||{}).name||'Rune';
+    const tip=can ? (ELEMENT_BY[cur].n+' '+s.n+': '+runesACast(n)+', +'+spellPower(rune.runePow||0,cls,n)+' Magic Power from '+rune.name+'s.')
+      : (a ? (s.n+' needs '+need+'s or better.') : 'Load runes to cast.');
+    h+='<button class="cmb-style cvspell-b csz'+(n===size?' sel':'')+'" data-spell="'+s.k+'" title="'+mmEsc(tip)+'"'+(can?'':' disabled')+'>'
+      +'<span class="cst-nm">'+s.n+'</span><small>'+(can?(n+(n===1?' rune':' runes')):(iconHTML('ui_lock')+need.replace(/ Rune$/,'')))+'</small></button>';
+  });
+  h+='<i class="cvspell-sep"></i>';
+  MAGIC_ELEMENTS.forEach(function(e){
+    const open=elementUnlocked(e.k);
+    const weak=!!(mon&&mon.weakEl===e.k), res=!!(mon&&mon.resistEl===e.k);
+    const tag=!open ? '<small>'+iconHTML('ui_lock')+'Magic '+e.lvl+'</small>'
+      : weak ? '<small class="weak">weak +15%</small>'
+      : res ? '<small class="res">resists -15%</small>' : '<small>'+e.word+'</small>';
+    const tip=e.n+': '+e.line+(!open ? ' Unlocks at Magic '+e.lvl+'.'
+      : weak ? ' '+mon.name+' is weak to it: +15% damage.'
+      : res ? ' '+mon.name+' resists it: -15% damage.' : '');
+    h+='<button class="cmb-style cvspell-b cel'+(cur===e.k?' sel':'')+'" data-el="'+e.k+'" title="'+mmEsc(tip)+'" style="--el:'+e.col+'"'+(open?'':' disabled')+'>'
+      +'<span class="cel-top">'+iconHTML('el_'+e.k)+'<span class="cst-nm">'+e.n+'</span></span>'+tag+'</button>';
+  });
+  return h+'</div>';
+}
+/* Chance a shot keeps its arrow or bolt, for the readout below. It mirrors the
+   block in combatTick that rolls it, which is left as it is: _audit_tests.js pins
+   that source. _magesim.js drives the tick to check the two agree. */
+function arrowSaveRate(am){
+  let r = treeRank('fletching','fl_salvage')*0.06
+        + treeRank('fletching','fl_gm_salv')*0.04
+        + (treeRank('fletching','fl_endless')>0?0.05:0);
+  const cm=cmastBonuses(); if(cm && cm.ammoSave>0) r+=cm.ammoSave;
+  if(am&&ITEMS[am]&&ITEMS[am].ammo==='bolt' && treeRank('fletching','fl_bolts')<1) r=0;
+  return Math.min(0.85, r);
+}
+/* Minutes the loaded stack lasts at this attack speed, at the size being cast,
+   counting the casts and shots that keep their ammunition. */
+function ammoMinutesLeft(){
+  const q=eqQuiver(); if(!q) return 0;
+  const mag=usingMagic();
+  const perHr=(3600000/playerSwingMs())*(mag?spellSize():1)*(1-(mag?runeSaveRate():arrowSaveRate(q)));
+  return perHr>0 ? (state.items[q]||0)/perHr*60 : 0;
+}
+/* The line on your health bar: the spell, what is left, and how long it lasts.
+   Amber under ten minutes. An archer gets the same line for arrows and bolts, and
+   had none before: the first sign of an empty quiver was the fight stopping. */
+function ammoChipSig(){
+  const mag=usingMagic(), q=eqQuiver();
+  return [q, q?(state.items[q]||0):0, !!readyAmmo(), Math.round(ammoMinutesLeft()), mag?spellName():''].join('|');
+}
+function ammoChipHTML(){
+  const mag=usingMagic();
+  if(!(mag||usingRanged())) return '';
+  const q=eqQuiver(), n=q?(state.items[q]||0):0, ok=!!readyAmmo(), mins=ammoMinutesLeft();
+  const st=!ok?'nofood':(mins<10?'risk':'safe');
+  const t=mins>=60?(Math.floor(mins/60)+'h '+Math.round(mins%60)+'m'):(Math.round(mins)+' min');
+  const word=mag?'runes':'shots';
+  return '<span class="cveat cvammo '+st+'" id="cmbAmmoChip" data-sig="'+mmEsc(ammoChipSig())+'" data-tip="'+mmEsc(q?ammoPlural(q):'Nothing loaded')
+    +(ok?'&#10;Enough for about '+t+' at this speed.':(q?'&#10;Your '+mmEsc((ITEMS[eqCombatWeapon()]||{}).name||'weapon')+' cannot use them.':''))+'">'
+    +(q?iconHTML(q):'')+(ok?((mag?spellName()+' · ':'')+'<b>'+n.toLocaleString()+'</b> '+word+' · about '+t):'no '+word)+'</span>';
+}
+/* One press. `kind` is 'size' or 'el'. Refused, with nothing changed, for a size
+   the loaded rune cannot power and for an element the Magic level has not opened:
+   the same two cases the bar greys. refreshCombatStats() is safe mid-fight, because
+   it keeps your health where it is. */
+function pickSpell(kind,k){
+  if(!usingMagic()) return false;
+  if(kind==='size'){
+    const i=SPELL_SIZES.findIndex(s=>s.k===k), a=readyAmmo();
+    if(i<0||!a||i+1>runeClassOf(a)) return false;
+    if(spellSize()===i+1 && state.combatSpell===k) return false;
+    state.combatSpell=k;
+  }else{
+    if(!ELEMENT_BY[k]||!elementUnlocked(k)||spellElement()===k) return false;
+    state.combatElement=k;
+  }
+  refreshCombatStats();
+  cmbLog(kind==='size' ? (spellName()+': '+runesACast(spellSize())+'.') : (ELEMENT_BY[k].n+': '+ELEMENT_BY[k].line), 'sys');
+  if(combatMode) renderCombat();
+  updateCombatBars();
+  if(typeof saveGame==='function') saveGame();
+  return true;
+}
+function _spellBarTarget(e){
+  const z=(e.target&&e.target.closest)?e.target.closest('#cmbSpellBar [data-spell], #cmbSpellBar [data-el]'):null;
+  return (z&&!z.disabled)?z:null;
+}
+function _spellBarPress(z){
+  if(z.hasAttribute('data-spell')) pickSpell('size',z.getAttribute('data-spell'));
+  else pickSpell('el',z.getAttribute('data-el'));
+}
+/* On the PRESS, and from the document. #combatPanel replaces its innerHTML on every
+   kill, so a listener on a button is gone within seconds, and a click whose press
+   and release straddle a kill never fires at all. */
+document.addEventListener('pointerdown',function(e){
+  if(e.button) return;                      // the primary button, a touch or a pen
+  const z=_spellBarTarget(e); if(z) _spellBarPress(z);
+});
+/* Enter or Space on a focused button arrives as a click with no press behind it. */
+document.addEventListener('click',function(e){
+  if(e.detail!==0) return;
+  const z=_spellBarTarget(e); if(z) _spellBarPress(z);
+});
+/* 1 to 4 pick the size and Shift with 1 to 4 the element, read off the physical
+   key so a layout that needs Shift for a digit works the same. Only with the fight
+   screen open and a staff or a wand in hand, and never from a text field.
+
+   In a live raid 1, 2 and 3 are already Rally, Ruin and Brace, and they stay that:
+   there the plain digits are left alone and only Shift, for the element, is taken. */
+window.addEventListener('keydown',function(e){
+  if(e.ctrlKey||e.metaKey||e.altKey||e.repeat) return;
+  const m=/^(?:Digit|Numpad)([1-4])$/.exec(e.code||''); if(!m) return;
+  if(typeof combat==='undefined'||!combatMode||!usingMagic()) return;
+  if(state.cmbSubTab&&state.cmbSubTab!=='arena') return;
+  if(!(combat.active||combat.raid||state.cmbView==='fight')) return;
+  const t=e.target;
+  if(t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'||t.tagName==='SELECT'||t.isContentEditable)) return;
+  const i=+m[1]-1;
+  if(e.shiftKey){
+    const el=MAGIC_ELEMENTS[i]; if(!el) return;
+    e.preventDefault(); pickSpell('el',el.k);
+  }else{
+    if(combat.raid&&combat.active) return;
+    e.preventDefault(); pickSpell('size',SPELL_SIZES[i].k);
+  }
+});
 function renderCombat(){
   const panel=$('combatPanel');
   if(!panel) return;
@@ -44260,10 +45197,14 @@ function renderCombat(){
        named after. */
     const rs=(typeof RANGED_STYLES!=='undefined' && typeof usingRanged==='function' && usingRanged())
       ? RANGED_STYLES[k] : null;
-    const statKey=rs?'ranged':k;
+    /* And with a staff or a wand they are Focused / Swift / Warded, on Magic. */
+    const _ms=usingMagic()?MAGIC_STYLES[k]:null;
+    const statKey=_ms?'magic':(rs?'ranged':k);
     const c=COMBAT_STATS[statKey], pr=cmbLvlProgress(statKey);
-    const label=rs?rs.name:c.name;
-    const tip=(rs
+    const label=_ms?_ms.name:(rs?rs.name:c.name);
+    const tip=(_ms
+        ? `${_ms.name}: ${_ms.blurb}\nMagic Lv ${pr.lvl}`
+        : rs
         ? `${rs.name} — ${rs.blurb}\nRanged Lv ${pr.lvl}`
         : `Train ${c.name} — Lv ${pr.lvl}`)
       +(pr.max?' (max)':` · ${pr.pct}% to ${pr.lvl+1} · ${pr.need.toLocaleString()} xp to go`);
@@ -44291,6 +45232,8 @@ function renderCombat(){
   const aLvl=cmbLvl('attack'), sLvl=cmbLvl('strength'), dLvl=cmbLvl('defence'), hLvl=cmbLvl('hitpoints');
   // With a bow the tooltips name Ranged and Ranged Strength, not Attack and Strength.
   const _rngTip=(typeof usingRanged==='function')&&usingRanged();
+  // And with a staff or a wand, Magic and Magic Power.
+  const _magTip=usingMagic();
   const accBase=Math.round(aLvl*COMBAT_P.ACC_LVL), accGear=playerAccuracy()-accBase;
   const hitBase=Math.round(sLvl*COMBAT_P.HIT_LVL), hitGear=playerMaxHit()-hitBase;
   const defBase=Math.round(dLvl*COMBAT_P.DEF_LVL), defGear=playerDefence()-defBase;
@@ -44348,8 +45291,8 @@ function renderCombat(){
         ${baseStatPill('strength')}
         ${baseStatPill('defence')}
         ${baseStatPill('hitpoints')}
-        ${baseStatPill('magic',true)}
-        ${baseStatPill('ranged',true)}
+        ${baseStatPill('magic')}
+        ${baseStatPill('ranged')}
       </div>
     </div>`;
 
@@ -44584,8 +45527,8 @@ ${combat.raid?buildRaidProgressHTML():''}
         <div class="cvglass">
           <h4>Your stats<span class="cvh-cmb" data-tip="Your overall Combat level.">Cmb ${combatLevel()}</span></h4>
           <div class="cvsg">
-            <div class="cvst2${(accBase+accGear)>mon.def?' up':''}" data-tip="ACCURACY: how often your attacks hit.&#10;&#10;Compared against the enemy&#39;s Defence.&#10;${_rngTip?'Ranged lvl '+cmbLvl('ranged'):'Attack lvl '+aLvl}&#10;Enemy Defence: ${mon.def}"><b>${accBase+accGear}</b><i>Accuracy</i></div>
-            <div class="cvst2${(hitBase+hitGear)>mon.str?' up':''}" data-tip="MAX HIT: the most damage one of your hits can do.&#10;&#10;${_rngTip?'Ranged lvl '+cmbLvl('ranged')+'&#10;Ranged Strength '+(ammoStr()+(cs.rstr||0)):'Strength lvl '+sLvl}&#10;Enemy max hit: ${mon.str}"><b>${hitBase+hitGear}</b><i>Max hit</i></div>
+            <div class="cvst2${(accBase+accGear)>mon.def?' up':''}" data-tip="ACCURACY: how often your attacks hit.&#10;&#10;Compared against the enemy&#39;s Defence.&#10;${_magTip?'Magic lvl '+cmbLvl('magic'):_rngTip?'Ranged lvl '+cmbLvl('ranged'):'Attack lvl '+aLvl}&#10;Enemy Defence: ${mon.def}"><b>${accBase+accGear}</b><i>Accuracy</i></div>
+            <div class="cvst2${(hitBase+hitGear)>mon.str?' up':''}" data-tip="MAX HIT: the most damage one of your hits can do.&#10;&#10;${_magTip?'Magic lvl '+cmbLvl('magic')+'&#10;Magic Power '+(runePow()+(cs.mpow||0)):_rngTip?'Ranged lvl '+cmbLvl('ranged')+'&#10;Ranged Strength '+(ammoStr()+(cs.rstr||0)):'Strength lvl '+sLvl}&#10;Enemy max hit: ${mon.str}"><b>${hitBase+hitGear}</b><i>Max hit</i></div>
             <div class="cvst2${(defBase+defGear)>mon.atk?' up':''}" data-tip="DEFENCE: makes enemies miss you more often.&#10;&#10;Defence lvl ${dLvl}&#10;Enemy Attack: ${mon.atk}"><b>${defBase+defGear}</b><i>Defence</i></div>
             <div class="cvst2${yourSwing<mon.swingMs?' up':''}" data-tip="ATTACK SPEED: seconds between your attacks.&#10;&#10;Lower is faster.&#10;Agility lvl ${agiLvl}&#10;Enemy attack speed: ${(mon.swingMs/1000).toFixed(2)}s"><b>${speedDisplay}</b><i>Speed</i></div>
           </div>
@@ -44608,16 +45551,18 @@ ${combat.raid?buildRaidProgressHTML():''}
       <div class="cvrail r">
         ${active?`<button class="cmb-engage-btn flee" id="cmbFlee"><span class="ceb-ic">\u2715</span>Disengage</button>`:`<button class="cmb-engage-btn engage" id="cmbEngage"><span class="ceb-ic">${iconHTML('ui_swords')}</span>Engage <b>${mon.name}</b></button>`}
         ${combat.raid?buildRaidMomentumHTML():''}
-        <div class="cvglass">
-          <h4>Training</h4>
+        <div class="cvglass${usingMagic()?' cvmage':''}">
+          <h4>Training${usingMagic()?`<span class="cvh-cmb" data-tip="Your Magic level. All three styles train it.">Magic ${cmbLvl('magic')}</span>`:''}</h4>
           <div class="cstyle-btns">
             ${['attack','strength','defence'].map(styleBtnHTML).join('')}
           </div>
-          ${(typeof usingRanged==='function'&&usingRanged())?'':`<div class="cst-ranged" data-tip="Ranged · Lv ${cmbLvl('ranged')}&#10;&#10;Hold a bow or crossbow and all three buttons train Ranged instead of the stat they name.">
+          ${(usingRanged()||usingMagic())?'':`<div class="cst-ranged" data-tip="Ranged · Lv ${cmbLvl('ranged')}&#10;&#10;Hold a bow or crossbow and all three buttons train Ranged instead of the stat they name.">
             ${iconHTML('ranged')}<span class="cr-nm">Ranged</span><b class="cr-lv">${cmbLvl('ranged')}</b><i class="cr-note">equip a bow to train it</i>
+          </div>`}${usingMagic()?'':`<div class="cst-magic" data-tip="Magic · Lv ${cmbLvl('magic')}&#10;&#10;Hold a staff or a wand and all three buttons train Magic instead of the stat they name.">
+            ${iconHTML('magic')}<span class="cr-nm">Magic</span><b class="cr-lv">${cmbLvl('magic')}</b><i class="cr-note">equip a staff to train it</i>
           </div>`}
         </div>
-        <div class="cvglass">
+        <div class="cvglass cvfoodbox">
           <h4>Food &amp; potions</h4>
           <div class="cvfood-scroll"><div class="cmb-foodmenu">${healPickHTML}${buffPickHTML}</div></div>
         </div>
@@ -44638,13 +45583,14 @@ ${combat.raid?buildRaidProgressHTML():''}
               <div class="cmb-status" id="cmbFoeStatus">${statusIconsHTML('foe')}</div>
             </div>
             <div class="cvhp you">
-              <div class="lab"><span class="who">${mmEsc(state.charName||'You')}</span>
+              <div class="lab"><span class="who">${mmEsc(state.charName||'You')}</span>${ammoChipHTML()}
                 <span class="cveat ${eatCue.state}" id="cmbEatCue" data-tip="${mmEsc(autoEatCueTip(eatCue,mon.name))}">${iconHTML('ui_food')}<b id="cmbEatNum">${eatCue.state==='off'?'off':eatCue.at}</b></span>
                 <span class="num" id="cmbYouHpText">${active?combat.youHp:combat.youMaxHp}<s> / ${combat.youMaxHp}</s></span></div>
               <div class="cvtrack" id="cmbYouBar"><i style="width:${youPct}%"></i><span class="cveat-mark${eatCue.state==='risk'?' risk':''}" id="cmbEatMark" style="left:${eatCue.state==='off'?-99:eatCue.pct}%"></span></div>
               <div class="cvswing you"><i id="cmbYouSwing" style="width:0%"></i></div>
               <div class="cmb-status" id="cmbYouStatus">${statusIconsHTML('you')}</div>
             </div>
+            ${spellBarHTML(mon)}
           </div>
         </div>
       </div>
@@ -44747,7 +45693,9 @@ ${combat.raid?buildRaidProgressHTML():''}
   panel.querySelectorAll('.cmb-mon').forEach(t=>{
     t.addEventListener('mouseenter', ()=>_clampTip(t, '.cmb-mon-tip'));
   });
-  panel.querySelectorAll('.cmb-style').forEach(b=>{
+  /* [data-style]: the spell bar's buttons wear .cmb-style for its look and are not
+     style buttons. Without the attribute test a press on one set the style to null. */
+  panel.querySelectorAll('.cmb-style[data-style]').forEach(b=>{
     b.addEventListener('click',()=>{
       if(combat.active) return;
       state.combatStyle=b.getAttribute('data-style');

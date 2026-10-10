@@ -1774,6 +1774,10 @@ setTimeout(() => {
            PENDING, not rejected: the tree renders correctly, it is just not painted
            like the other thirteen. Drop this skip when the art lands. */
         if(s==='fletching') continue;
+        /* Runecrafting (0.9.127.4) ships on drawn plates, RN_TREE_ICONS, until its
+           sixteen nodes get a sheet. PENDING, on the same terms: drop this skip
+           when the art lands. */
+        if(s==='runecrafting') continue;
         if(!NODE_ART[n.id]) miss.push(s+'/'+n.id);
         else if(!/^<img /.test(String(n.icon))) notimg.push(s+'/'+n.id);
       }
@@ -1795,13 +1799,18 @@ setTimeout(() => {
          resets on every chunk, with a 120s absolute deadline, so a slow but
          progressing download completes.
 
+         Raised again to 13.5 MB with Magic (0.9.127.4), which Jordan decided in
+         the build brief: the file was 73 KB short of 12 MB before a line of it
+         was written, and the core of Magic is about 90 KB of code and drawn icons.
+         The reasoning below stands.
+
          The ceiling stays, raised to 12 MB, because it is still worth failing on.
          A wrapper this size is a real download for anyone on a poor line, and an
          accidental doubling (an un-shrunk art pass, a stray base64 blob) should
          stop a commit rather than ship. Raise it again only alongside a wrapper
          change, never to get a build out. */
       const mb = fs.statSync(path.join(ROOT, process.env.CV_FILE || 'cindervale.html')).size / 1048576;
-      ok('file stays under the 12 MB wrapper-fetch ceiling', mb < 12, mb.toFixed(2) + ' MB');
+      ok('file stays under the 13.5 MB wrapper-fetch ceiling', mb < 13.5, mb.toFixed(2) + ' MB');
     }
 
     /* Hit splats (v0.9.137). `inset-inline` is the logical shorthand for left/right, so
@@ -3368,7 +3377,20 @@ setTimeout(() => {
        and they come off this list the day the painted icons are injected. */
     const HAWK_PENDING = ['hawkseye_chip','hawkseye_polish','hawkseye_flaw',
                           'hawkeye_draught_1','hawkeye_draught_2'];
-    const SVG_OK = new Set(['radcliff_tally'].concat(RANGED_PENDING, SPIRE_PENDING, HAWK_PENDING));
+    /* Magic and Runecrafting (0.9.127.4) ship on generated SVG, [JS-ICONS-MAGE], for
+       the reason the Ranged batch did: a sheet run cannot happen in the same pass
+       that adds the items. Built from what the items ARE (a rune, a staff or a
+       wand, cloth) rather than typed out, so it cannot cover an id that was never
+       part of this. PENDING, not rejected: do NOT add these to KEEP_SVG. The sheet
+       prompts are in _iconart/PROMPTS-magic.md. */
+    const MAGE_PENDING = JSON.parse(ev(`(function(){
+      if(typeof isRune!=='function') return '[]';
+      var out=['runestone'];
+      for(var id in ITEMS){ var it=ITEMS[id]; if(isRune(id)||it.magic||it.cloth) out.push(id); }
+      if(typeof CLOTH_TIERS!=='undefined') CLOTH_TIERS.forEach(function(c){ out.push(c.key); });
+      return JSON.stringify(out);
+    })()`));
+    const SVG_OK = new Set(['radcliff_tally'].concat(RANGED_PENDING, SPIRE_PENDING, HAWK_PENDING, MAGE_PENDING));
 
     const unexpected = cov.svg.filter(id => !SVG_OK.has(id));
     ok('only known-exempt items are still on SVG, and none is iconless',
@@ -4672,7 +4694,9 @@ setTimeout(() => {
        should appear here and fail — that is the whole point of writing them out. */
     /* birds_nest left this list in 0.9.124: Fletching strips it for eight feathers,
        so it is no longer an item nothing in the game wants. */
-    const SELL_ONLY = ['abyssal_scale','barrow_dust','charcoal','cut_purse',
+    /* charcoal left it in 0.9.127.4: Char and Cinder Runes are baked with it, its
+       first use since Firemaking started making it. */
+    const SELL_ONLY = ['abyssal_scale','barrow_dust','cut_purse',
       'drakeforged_rune','ember_resin','energy_crystal','goblin_ear','golden_spore',
       'jewelled_dagger','pocket_watch','riftshard','runed_bone','sealed_letter',
       'signet_ring','silver_plate','splintered_club','stamina_shard','void_essence',
@@ -5782,7 +5806,10 @@ setTimeout(() => {
        ART_EXEMPT is an explicit list, not a count — an id that stops needing the
        exemption and stays here is dead weight, and an id that appears WITHOUT being
        added is the thing this guards. */
-    const ART_EXEMPT = new Set(['ember_ring', 'moon_amulet']);
+    /* 'Runecrafting Cape' (0.9.127.4) is PENDING: the skill shipped with its cape so
+       its capstone could be bought, and the cape is on generated art until the
+       Magic sheets land. Delete it from here when they do. */
+    const ART_EXEMPT = new Set(['ember_ring', 'moon_amulet', 'Runecrafting Cape']);
     const painted = JSON.parse(ev(`(function(){
       state=defaultState(); normalizeState();
       for(var k in state.xp) state.xp[k]=XP_CUM[99];
@@ -5804,7 +5831,7 @@ setTimeout(() => {
     })()`));
     const NAME_TO_ID = {'Ember Ring': 'ember_ring', 'Moon Amulet': 'moon_amulet'};
     const unpainted = painted.bad.filter(n => !ART_EXEMPT.has(NAME_TO_ID[n] || n));
-    ok(painted.seen + ' shop cards, and only the known two are still on generated art',
+    ok(painted.seen + ' shop cards, and only the known exemptions are still on generated art',
        unpainted.length === 0, 'unpainted: ' + unpainted.join(', '));
     ok('and no card prints a raw unicode escape',
        shop.badEscape.length===0, shop.badEscape.join(', '));
@@ -6331,7 +6358,8 @@ setTimeout(() => {
       for(var id in ITEMS){
         var it=ITEMS[id];
         if(!it.ammo) continue;
-        if(it.ranged){ if(itemFitsSlot(id,'quiver')) bad.push(id+' (a weapon!)'); continue; }
+        /* a staff or a wand carries an ammo field too, naming the rune it casts (0.9.127.4) */
+        if(it.ranged||it.magic){ if(itemFitsSlot(id,'quiver')) bad.push(id+' (a weapon!)'); continue; }
         if(!itemFitsSlot(id,'quiver')) bad.push(id);
       }
       // and it has to go in through the real equip path, not just fit
@@ -7432,7 +7460,8 @@ setTimeout(() => {
       q('[data-lo="auto"]').click(); r.autoOn=state.presetAuto; state.presetAuto=false;
       return r;
     })()`);
-    ok('the combat half has Melee, Ranged, and Magic marked soon', tab.cards === 3 && tab.soon === 1, JSON.stringify(tab));
+    /* Magic stopped being "soon" in 0.9.127.4. All three are real loadouts now. */
+    ok('the combat half has Melee, Ranged and Magic, and none is marked soon', tab.cards === 3 && tab.soon === 0, JSON.stringify(tab));
     ok('saving over a loadout you are not wearing asks first', tab.firstClick === 'bronze_sword' && tab.asks === 'Replace it?' && tab.secondClick === 'iron_sword', JSON.stringify(tab));
     ok("a card's Equip puts the loadout on and the card says so", tab.equipped === 'iron_sword' && tab.status === 'Worn now', JSON.stringify(tab));
     ok('the skilling half has a card per skill and the auto-equip switch works', tab.skillCards === tab.skills && tab.autoOn === true, JSON.stringify(tab));
@@ -8542,10 +8571,11 @@ setTimeout(() => {
     /* Nothing checked that every piece of ammunition could be fired by something.
        Sunderbolts could not, from the day they were added. */
     const unfired = ev(`(function(){
-      return Object.keys(ITEMS).filter(function(q){ var a=ITEMS[q]; return a.ammo&&!a.ranged; })
-        .filter(function(q){ return !Object.keys(ITEMS).some(function(w){ return ITEMS[w].ranged&&ITEMS[w].cgear&&ammoFitsWeapon(w,q); }); });
+      /* Runes joined in 0.9.127.4: a staff or a wand is the weapon that takes them. */
+      return Object.keys(ITEMS).filter(function(q){ var a=ITEMS[q]; return a.ammo&&!a.ranged&&!a.magic; })
+        .filter(function(q){ return !Object.keys(ITEMS).some(function(w){ return (ITEMS[w].ranged||ITEMS[w].magic)&&ITEMS[w].cgear&&ammoFitsWeapon(w,q); }); });
     })()`);
-    ok('every arrow and bolt in the game has a weapon that fires it', unfired.length === 0, unfired.join(','));
+    ok('every arrow, bolt and rune in the game has a weapon that fires or casts it', unfired.length === 0, unfired.join(','));
   }
 
   section('The ten tree nodes that did nothing, wired and balanced (0.9.124.45)');

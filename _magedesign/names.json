@@ -1,0 +1,4020 @@
+{
+ "item": {
+  "pine_log": "Pine Log",
+  "oak_log": "Oak Log",
+  "ironbark_log": "Ironbark Log",
+  "ember_log": "Emberwood Log",
+  "frost_log": "Frostwood Log",
+  "shadow_log": "Shadowwood Log",
+  "ancient_log": "Ancient Log",
+  "copper_ore": "Copper Ore",
+  "tin_ore": "Tin Ore",
+  "iron_ore": "Iron Ore",
+  "coal": "Coal",
+  "gold_ore": "Gold Ore",
+  "mithril_ore": "Mithril Ore",
+  "silver_ore": "Silver Ore",
+  "cobalt_ore": "Cobalt Ore",
+  "runite_ore": "Runite Ore",
+  "starsteel_ore": "Starsteel Ore",
+  "raw_minnow": "Raw Minnow",
+  "raw_sardine": "Raw Sardine",
+  "raw_trout": "Raw Trout",
+  "raw_tuna": "Raw Tuna",
+  "raw_salmon": "Raw Salmon",
+  "raw_swordfish": "Raw Swordfish",
+  "raw_shark": "Raw Shark",
+  "raw_voideel": "Raw Void Eel",
+  "prized_raw_minnow": "Prized Raw Minnow",
+  "prized_raw_sardine": "Prized Raw Sardine",
+  "prized_raw_trout": "Prized Raw Trout",
+  "prized_raw_tuna": "Prized Raw Tuna",
+  "prized_raw_salmon": "Prized Raw Salmon",
+  "prized_raw_swordfish": "Prized Raw Swordfish",
+  "prized_raw_shark": "Prized Raw Shark",
+  "prized_raw_voideel": "Prized Raw Void Eel",
+  "prized_minnow": "Prized Minnow",
+  "prized_sardine": "Prized Sardine",
+  "prized_trout": "Prized Trout",
+  "prized_tuna": "Prized Tuna",
+  "prized_salmon": "Prized Salmon",
+  "prized_swordfish": "Prized Swordfish",
+  "prized_shark": "Prized Shark",
+  "prized_voideel": "Prized Void Eel",
+  "cooked_minnow": "Cooked Minnow",
+  "cooked_sardine": "Cooked Sardine",
+  "cooked_trout": "Cooked Trout",
+  "cooked_tuna": "Cooked Tuna",
+  "cooked_salmon": "Cooked Salmon",
+  "cooked_swordfish": "Cooked Swordfish",
+  "cooked_shark": "Cooked Shark",
+  "cooked_voideel": "Cooked Void Eel",
+  "ships_biscuit": "Ship's Biscuit",
+  "salt_cod": "Salt Cod",
+  "bronze_bar": "Bronze Bar",
+  "iron_bar": "Iron Bar",
+  "steel_bar": "Steel Bar",
+  "gold_bar": "Gold Bar",
+  "silver_bar": "Silver Bar",
+  "mithril_bar": "Mithril Bar",
+  "cobalt_bar": "Cobalt Bar",
+  "runite_bar": "Runite Bar",
+  "starsteel_bar": "Starsteel Bar",
+  "starfall_bar": "Starfall Bar",
+  "swiftness_i": "Swiftness Potion I",
+  "swiftness_iii": "Swiftness Potion III",
+  "wisdom_i": "Wisdom Potion I",
+  "wisdom_iii": "Wisdom Potion III",
+  "bountiful_i": "Bountiful Potion I",
+  "bountiful_iii": "Bountiful Potion III",
+  "vitality": "Vitality Elixir",
+  "heal_draught_1": "Lesser Healing Draught",
+  "heal_draught_2": "Healing Draught",
+  "heal_draught_3": "Greater Healing Draught",
+  "heal_draught_4": "Master Healing Elixir",
+  "honed_edge_1": "Honed Edge Potion I",
+  "honed_edge_2": "Honed Edge Potion II",
+  "ironhide_1": "Ironhide Potion I",
+  "ironhide_2": "Ironhide Potion II",
+  "berserker_1": "Berserker's Brew I",
+  "berserker_2": "Berserker's Brew II",
+  "hawkeye_draught_1": "Hawkeye Draught I",
+  "hawkeye_draught_2": "Hawkeye Draught II",
+  "warriors_brew": "Warrior's Triple Brew",
+  "marrow_broth": "Marrow Broth",
+  "ratmeat_skewer": "Ratmeat Skewer",
+  "silk_poultice": "Silk Poultice",
+  "goblin_jerky": "Goblin Jerky",
+  "bone_stew": "Bone Marrow Stew",
+  "wolf_jerky": "Wolf Jerky",
+  "ogre_roast": "Ogre Roast",
+  "troll_stew": "Troll Stew",
+  "drake_roast": "Drake Roast",
+  "infernal_roast": "Infernal Roast",
+  "birds_nest": "Bird's Nest",
+  "ancient_seed": "Ancient Seed",
+  "ember_resin": "Ember Resin",
+  "shadow_crystal": "Shadow Crystal",
+  "sapphire": "Sapphire",
+  "emerald": "Emerald",
+  "ruby": "Ruby",
+  "diamond": "Diamond",
+  "amethyst": "Amethyst",
+  "dragon_gem": "Dragon Gem",
+  "bloodstone": "Bloodstone",
+  "void_crystal": "Void Crystal",
+  "void_shard": "Void Shard",
+  "cut_sapphire": "Cut Sapphire",
+  "cut_emerald": "Cut Emerald",
+  "cut_ruby": "Cut Ruby",
+  "cut_diamond": "Cut Diamond",
+  "cut_amethyst": "Cut Amethyst",
+  "cut_dragon": "Cut Dragon Gem",
+  "cut_bloodstone": "Cut Bloodstone",
+  "cut_void": "Cut Void Crystal",
+  "pearl": "Pearl",
+  "cut_purse": "Cut Purse",
+  "silver_plate": "Silver Plate",
+  "signet_ring": "Signet Ring",
+  "sealed_letter": "Sealed Letter",
+  "pocket_watch": "Pocket Watch",
+  "jewelled_dagger": "Jewelled Dagger",
+  "silver_censer": "Silver Censer",
+  "smuggler_ledger": "Smuggler's Ledger",
+  "heirloom_locket": "Heirloom Locket",
+  "officers_sabre": "Officer's Sabre",
+  "bankers_seal": "Banker's Seal",
+  "crown_shard": "Shard of a Crown",
+  "bronze_lockpicks": "Bronze Lockpicks",
+  "iron_lockpicks": "Iron Lockpicks",
+  "steel_lockpicks": "Steel Lockpicks",
+  "cobalt_lockpicks": "Cobalt Lockpicks",
+  "eclipse_lockpicks": "Eclipse Lockpicks",
+  "everflame_lockpicks": "Everflame Lockpicks",
+  "th_hat": "Thief's Hood",
+  "th_chest": "Thief's Jerkin",
+  "th_legs": "Thief's Trousers",
+  "th_boots": "Thief's Boots",
+  "cape_thieving": "Thieving Cape",
+  "abyssal_scale": "Abyssal Scale",
+  "golden_spore": "Golden Spore",
+  "void_essence": "Void Essence",
+  "arcane_dust": "Arcane Dust",
+  "mana_essence": "Mana Essence",
+  "rune_fragment": "Rune Fragment",
+  "philosophers_drop": "Philosopher's Drop",
+  "ash": "Ash",
+  "charcoal": "Charcoal",
+  "ember_dust": "Ember Dust",
+  "energy_crystal": "Energy Crystal",
+  "stamina_shard": "Stamina Shard",
+  "beast_sinew": "Beast Sinew",
+  "shade_ember": "Shade Ember",
+  "voidheart": "Voidheart",
+  "sapphire_ring": "Sapphire Ring",
+  "emerald_ring": "Emerald Ring",
+  "ruby_ring": "Ruby Ring",
+  "diamond_ring": "Diamond Ring",
+  "amethyst_ring": "Amethyst Ring",
+  "dragon_ring": "Dragon Ring",
+  "bloodstone_ring": "Bloodstone Ring",
+  "void_ring": "Void Ring",
+  "sapphire_amulet": "Sapphire Amulet",
+  "emerald_amulet": "Emerald Amulet",
+  "ruby_amulet": "Ruby Amulet",
+  "diamond_amulet": "Diamond Amulet",
+  "amethyst_amulet": "Amethyst Amulet",
+  "dragon_amulet": "Dragon Amulet",
+  "bloodstone_amulet": "Bloodstone Amulet",
+  "void_amulet": "Void Amulet",
+  "sapphire_pendant": "Sapphire Pendant",
+  "emerald_pendant": "Emerald Pendant",
+  "ruby_pendant": "Ruby Pendant",
+  "diamond_pendant": "Diamond Pendant",
+  "amethyst_pendant": "Amethyst Pendant",
+  "dragon_pendant": "Dragon Pendant",
+  "bloodstone_pendant": "Bloodstone Pendant",
+  "void_jewel": "Void Pendant",
+  "warren_signet": "Warren Signet",
+  "silkweave_band": "Silkweave Band",
+  "warband_torc": "Warband Torc",
+  "soulbound_amulet": "Soulbound Amulet",
+  "alpha_fang_ring": "Alpha Fang Ring",
+  "warlord_aegis": "Warlord's Aegis",
+  "mountain_locket": "Mountain Locket",
+  "emberwyrm_eye": "Emberwyrm Eye",
+  "sanctum_signet": "Sanctum Signet",
+  "pearl_band": "Pearl Band",
+  "drowned_locket": "Drowned Locket",
+  "tidebound_ring": "Tidebound Ring",
+  "abyssal_pendant": "Abyssal Pendant",
+  "drowned_jewel": "Drowned King's Jewel",
+  "gem_dust": "Gem Dust",
+  "wildberry_seed": "Wildberry Seed",
+  "bloodcap_seed": "Bloodcap Seed",
+  "herb_seed": "Herb Seed",
+  "witchhazel_seed": "Witchhazel Seed",
+  "sunroot_seed": "Sunroot Seed",
+  "frostcrocus_seed": "Frostcrocus Seed",
+  "moonflower_seed": "Nightbloom Seed",
+  "nightshade_seed": "Nightshade Seed",
+  "ashbloom_seed": "Ashbloom Seed",
+  "voidbloom_seed": "Voidbloom Seed",
+  "tearmoss_seed": "Tearmoss Seed",
+  "thornvine_seed": "Thornvine Seed",
+  "dewleaf_seed": "Dewleaf Seed",
+  "emberbloom_seed": "Emberbloom Seed",
+  "starfern_seed": "Starfern Seed",
+  "moonpetal_seed": "Moonpetal Seed",
+  "voidmoss_seed": "Riftmoss Seed",
+  "wild_herb": "Wild Herb",
+  "garden_root": "Garden Root",
+  "sunbloom": "Dawnbloom",
+  "moonflower": "Nightbloom",
+  "voidbloom": "Voidbloom",
+  "wildberries": "Wildberries",
+  "bloodcap": "Bloodcap",
+  "thornvine": "Thornvine",
+  "witchhazel": "Witchhazel",
+  "dewleaf": "Dewleaf",
+  "frostcrocus": "Frostcrocus",
+  "emberbloom": "Emberbloom",
+  "nightshade": "Nightshade",
+  "sunroot": "Sunroot",
+  "ashbloom": "Ashbloom",
+  "starfern": "Starfern",
+  "tearmoss": "Tearmoss",
+  "moonpetal": "Moonpetal",
+  "voidmoss": "Riftmoss",
+  "wc_hat": "Lumberjack's Hat",
+  "wc_chest": "Lumberjack's Jacket",
+  "wc_legs": "Lumberjack's Trews",
+  "wc_boots": "Lumberjack's Boots",
+  "mi_hat": "Prospector's Helm",
+  "mi_chest": "Prospector's Vest",
+  "mi_legs": "Prospector's Trousers",
+  "mi_boots": "Prospector's Boots",
+  "fi_hat": "Angler's Hat",
+  "fi_chest": "Angler's Jacket",
+  "fi_legs": "Angler's Waders",
+  "fi_boots": "Angler's Boots",
+  "fo_hat": "Herbalist's Cap",
+  "fo_chest": "Herbalist's Tunic",
+  "fo_legs": "Herbalist's Leggings",
+  "fo_boots": "Herbalist's Boots",
+  "sm_hat": "Blacksmith's Helm",
+  "sm_chest": "Blacksmith's Apron",
+  "sm_legs": "Blacksmith's Chaps",
+  "sm_boots": "Blacksmith's Boots",
+  "co_hat": "Chef's Hat",
+  "co_chest": "Chef's Jacket",
+  "co_legs": "Chef's Trousers",
+  "co_boots": "Chef's Clogs",
+  "al_hat": "Alchemist's Hood",
+  "al_chest": "Alchemist's Robe",
+  "al_legs": "Alchemist's Trousers",
+  "al_boots": "Alchemist's Boots",
+  "fm_hat": "Pyromancer's Hood",
+  "fm_chest": "Pyromancer's Robe",
+  "fm_legs": "Pyromancer's Trousers",
+  "fm_boots": "Pyromancer's Boots",
+  "ag_hat": "Runner's Cap",
+  "ag_chest": "Runner's Shirt",
+  "ag_legs": "Runner's Shorts",
+  "ag_boots": "Runner's Shoes",
+  "jw_hat": "Lapidary's Loupe",
+  "jw_chest": "Lapidary's Apron",
+  "jw_legs": "Lapidary's Trousers",
+  "jw_boots": "Lapidary's Shoes",
+  "fa_hat": "Cultivator's Hat",
+  "fa_chest": "Cultivator's Smock",
+  "fa_legs": "Cultivator's Breeches",
+  "fa_boots": "Cultivator's Clogs",
+  "cr_hat": "Forgemaster's Goggles",
+  "cr_chest": "Forgemaster's Apron",
+  "cr_legs": "Forgemaster's Trousers",
+  "cr_boots": "Forgemaster's Boots",
+  "bronze_helm": "Bronze Helm",
+  "bronze_chest": "Bronze Chest",
+  "bronze_legs": "Bronze Legs",
+  "bronze_gloves": "Bronze Gloves",
+  "bronze_boots": "Bronze Boots",
+  "bronze_sword": "Bronze Sword",
+  "bronze_shield": "Bronze Shield",
+  "iron_helm": "Iron Helm",
+  "iron_chest": "Iron Chest",
+  "iron_legs": "Iron Legs",
+  "iron_gloves": "Iron Gloves",
+  "iron_boots": "Iron Boots",
+  "iron_sword": "Iron Sword",
+  "iron_shield": "Iron Shield",
+  "steel_helm": "Steel Helm",
+  "steel_chest": "Steel Chest",
+  "steel_legs": "Steel Legs",
+  "steel_gloves": "Steel Gloves",
+  "steel_boots": "Steel Boots",
+  "steel_sword": "Steel Sword",
+  "steel_shield": "Steel Shield",
+  "mithril_helm": "Mithril Helm",
+  "mithril_chest": "Mithril Chest",
+  "mithril_legs": "Mithril Legs",
+  "mithril_gloves": "Mithril Gloves",
+  "mithril_boots": "Mithril Boots",
+  "mithril_sword": "Mithril Sword",
+  "mithril_shield": "Mithril Shield",
+  "cobalt_helm": "Cobalt Helm",
+  "cobalt_chest": "Cobalt Chest",
+  "cobalt_legs": "Cobalt Legs",
+  "cobalt_gloves": "Cobalt Gloves",
+  "cobalt_boots": "Cobalt Boots",
+  "cobalt_sword": "Cobalt Sword",
+  "cobalt_shield": "Cobalt Shield",
+  "runite_helm": "Runite Helm",
+  "runite_chest": "Runite Chest",
+  "runite_legs": "Runite Legs",
+  "runite_gloves": "Runite Gloves",
+  "runite_boots": "Runite Boots",
+  "runite_sword": "Runite Sword",
+  "runite_shield": "Runite Shield",
+  "starsteel_helm": "Starsteel Helm",
+  "starsteel_chest": "Starsteel Chest",
+  "starsteel_legs": "Starsteel Legs",
+  "starsteel_gloves": "Starsteel Gloves",
+  "starsteel_boots": "Starsteel Boots",
+  "starsteel_sword": "Starsteel Sword",
+  "starsteel_shield": "Starsteel Shield",
+  "warlord_bulwark": "Warlord's Bulwark",
+  "bronze_dagger": "Bronze Dagger",
+  "iron_dagger": "Iron Dagger",
+  "steel_dagger": "Steel Dagger",
+  "mithril_dagger": "Mithril Dagger",
+  "cobalt_dagger": "Cobalt Dagger",
+  "runite_dagger": "Runite Dagger",
+  "starsteel_dagger": "Starsteel Dagger",
+  "bronze_hammer": "Bronze Hammer",
+  "iron_hammer": "Iron Hammer",
+  "steel_hammer": "Steel Hammer",
+  "mithril_hammer": "Mithril Hammer",
+  "cobalt_hammer": "Cobalt Hammer",
+  "runite_hammer": "Runite Hammer",
+  "starsteel_hammer": "Starsteel Hammer",
+  "bronze_cape": "Bronze Cape",
+  "iron_cape": "Iron Cape",
+  "steel_cape": "Steel Cape",
+  "mithril_cape": "Mithril Cape",
+  "cobalt_cape": "Cobalt Cape",
+  "runite_cape": "Runite Cape",
+  "starsteel_cape": "Starsteel Cape",
+  "plague_fang_dagger": "Plague Fang Dagger",
+  "chitin_maul": "Chitin Maul",
+  "warcleaver": "Warcleaver",
+  "bone_reaper": "Bone Reaper",
+  "soulbinder_hammer": "Soulbinder Hammer",
+  "ironfang_claws": "Ironfang Claws",
+  "ratskin_cape": "Roughhide Cape",
+  "silkwoven_cape": "Silkwoven Cape",
+  "warband_cape": "Warband Cape",
+  "wraithweave_cape": "Wraithweave Cape",
+  "pack_alpha_cape": "Pack Alpha Cape",
+  "ratskin_tunic": "Roughhide Tunic",
+  "chitin_plate": "Broodplate Cuirass",
+  "warband_armor": "Warband Hide Armour",
+  "bone_plate_cuirass": "Bone Plate Cuirass",
+  "pack_leader_vest": "Pack Leader Vest",
+  "sanguine_chip": "Chipped Sanguine",
+  "sanguine_polish": "Polished Sanguine",
+  "sanguine_flaw": "Flawless Sanguine",
+  "verdant_chip": "Chipped Verdant",
+  "verdant_polish": "Polished Verdant",
+  "verdant_flaw": "Flawless Verdant",
+  "azure_chip": "Chipped Azure",
+  "azure_polish": "Polished Azure",
+  "azure_flaw": "Flawless Azure",
+  "topaz_chip": "Chipped Topaz",
+  "topaz_polish": "Polished Topaz",
+  "topaz_flaw": "Flawless Topaz",
+  "onyx_chip": "Chipped Onyx",
+  "onyx_polish": "Polished Onyx",
+  "onyx_flaw": "Flawless Onyx",
+  "hawkseye_chip": "Chipped Hawkseye",
+  "hawkseye_polish": "Polished Hawkseye",
+  "hawkseye_flaw": "Flawless Hawkseye",
+  "rat_tail": "Rat Tail",
+  "gnawed_bone": "Gnawed Bone",
+  "ratskin": "Raw Hide",
+  "chitin": "Spider Carapace",
+  "drake_hide": "Drake Hide",
+  "rat_fang": "Rat Fang",
+  "royal_rat_sigil": "Royal Rat Sigil",
+  "rat_queen_crown": "Rat Queen's Crown",
+  "spider_silk": "Spider Silk",
+  "chitin_shard": "Chitin Shard",
+  "venom_sac": "Venom Sac",
+  "spinneret": "Spinneret",
+  "silken_sigil": "Silken Sigil",
+  "widow_crown": "Widow's Crown",
+  "goblin_ear": "Goblin Ear",
+  "goblin_tooth": "Goblin Tooth",
+  "tanned_hide": "Tanned Hide",
+  "rusted_blade": "Rusted Blade",
+  "crude_cleaver": "Crude Cleaver",
+  "tribal_fetish": "Tribal Fetish",
+  "bone_charm": "Bone Charm",
+  "shaman_tooth": "Shaman's Tooth",
+  "warchief_banner": "Warchief's Banner",
+  "warchief_crown": "Warchief's Crown",
+  "ancient_bone": "Ancient Bone",
+  "cursed_dust": "Cursed Dust",
+  "rib_plate": "Rib Plate",
+  "soul_shard": "Soul Shard",
+  "ectoplasm": "Ectoplasm",
+  "lich_phylactery": "Lich's Phylactery",
+  "lich_crown": "Lich's Crown",
+  "crown_jewel": "Crown Jewel",
+  "wolf_pelt": "Wolf Pelt",
+  "wolf_fang": "Wolf Fang",
+  "frostfur": "Frostfur",
+  "alpha_claw": "Alpha Claw",
+  "howling_horn": "Howling Horn",
+  "pack_eye": "Pack-Eye",
+  "ironfang_pelt": "Ironfang's Pelt",
+  "ironfang_skull": "Ironfang's Skull",
+  "moonstone_eye": "Moonstone Eye",
+  "ogre_hide": "Ogre Hide",
+  "ogre_tusk": "Ogre Tusk",
+  "splintered_club": "Splintered Club",
+  "warhound_fang": "Warhound Fang",
+  "seer_idol": "Seer Idol",
+  "gorestone": "Gorestone",
+  "warlord_totem": "Warlord's Totem",
+  "tyrant_heart": "Tyrant Heart",
+  "warlord_skull": "Warlord's Skull",
+  "troll_hide": "Troll Hide",
+  "troll_blood": "Troll Blood",
+  "granite_core": "Granite Core",
+  "granite_sigil": "Granite Sigil",
+  "mountain_heart": "Mountain Heart",
+  "troll_maul": "Troll Maul",
+  "troll_king_skull": "Troll King's Skull",
+  "wyrmscale": "Wyrmscale",
+  "dragon_fang": "Dragon Fang",
+  "cinder_gland": "Cinder Gland",
+  "ember_crest": "Ember Crest",
+  "dragonheart": "Dragonheart",
+  "wyrmfang_blade": "Wyrmfang Blade",
+  "emberwyrm_skull": "Emberwyrm Skull",
+  "demonhide": "Demonhide",
+  "brimstone": "Brimstone",
+  "void_cinder": "Void Cinder",
+  "infernal_crest": "Infernal Crest",
+  "hellheart": "Hellheart",
+  "doomblade": "Doomblade",
+  "demonlord_skull": "Demon Lord's Skull",
+  "barrow_blade": "Barrow Blade",
+  "barrow_shield": "Barrow Shield",
+  "barrow_dagger": "Barrow Dagger",
+  "grave_cleaver": "Grave Cleaver",
+  "barrow_maul": "Barrow Maul",
+  "grave_iron": "Grave Iron",
+  "barrow_dust": "Barrow Dust",
+  "wraithcloth": "Wraithcloth",
+  "runed_bone": "Runed Bone",
+  "emberforged_blade": "Emberforged Blade",
+  "cinderguard": "Cinderguard",
+  "forgebreaker": "Forgebreaker",
+  "cinderfang": "Cinderfang",
+  "slagbreaker": "Slagbreaker",
+  "molten_bar": "Molten Bar",
+  "emberweave": "Emberweave",
+  "drakeforged_rune": "Drakeforged Rune",
+  "voidrend": "Voidrend",
+  "nullward": "Nullward",
+  "voidcleaver": "Voidcleaver",
+  "voidedge": "Voidedge",
+  "riftcrusher": "Riftcrusher",
+  "voidsteel_bar": "Voidsteel Bar",
+  "voidweave": "Voidweave",
+  "sunderstone": "Sunderstone",
+  "spirecore": "Spire Core",
+  "riftshard": "Riftshard",
+  "dawnshard": "Dawnshard",
+  "trove_shallows": "Barnacled Coin-Purse",
+  "trove_wracks": "The Ninth Bell",
+  "trove_mist": "Hollowtide Almanac",
+  "trove_far": "Scale of the Old Thing",
+  "trove_odd": "The Steady Lantern",
+  "chart_gravekeel": "Wrecker's Chart",
+  "chart_gibbet": "Hangman's Chart",
+  "chart_crown": "Drowned King's Chart",
+  "chart_voidmaw": "Chart of the Long Descent",
+  "salt_iron": "Salt-Forged Iron",
+  "krakenbone": "Krakenbone",
+  "tidewrought": "Tidewrought Heart",
+  "cannon_barrel": "Salvaged Gun Barrel",
+  "spet_sailing": "Storm Petrel",
+  "cape_sailing": "Sailing Cape",
+  "radcliff_tally": "Radcliff's Tally",
+  "rock_salt": "Rock Salt",
+  "driftwood": "Bleached Driftwood",
+  "gull_egg": "Gull Egg",
+  "barnacle_iron": "Barnacle Iron",
+  "tide_glass": "Tide-Worn Glass",
+  "kelp_frond": "Kelp Frond",
+  "wrack_timber": "Wrack Timber",
+  "tarred_rope": "Tarred Rope",
+  "salvaged_powder": "Salvaged Powder",
+  "sailors_locket": "Sailor's Locket",
+  "ship_bell": "Cracked Ship's Bell",
+  "drowned_ledger": "Drowned Ledger",
+  "mistglass": "Mistglass",
+  "fogweed": "Fogweed",
+  "spire_stone": "Spire Stone",
+  "siren_scale": "Siren Scale",
+  "drowned_coin": "Drowned Coin",
+  "tidebound_pearl": "Tidebound Pearl",
+  "voidwood": "Voidwood",
+  "deep_amber": "Deep Amber",
+  "leviathan_scale": "Leviathan Scale",
+  "abyssal_pearl": "Abyssal Pearl",
+  "starfall_cinder": "Starfall Cinder",
+  "crown_fragment": "Crown Fragment",
+  "bronze_axe": "Bronze Axe",
+  "iron_axe": "Iron Axe",
+  "steel_axe": "Steel Axe",
+  "cobalt_axe": "Cobalt Axe",
+  "eclipse_axe": "Eclipse Axe",
+  "bronze_pick": "Bronze Pick",
+  "iron_pick": "Iron Pick",
+  "steel_pick": "Steel Pick",
+  "cobalt_pick": "Cobalt Pick",
+  "eclipse_pick": "Eclipse Pick",
+  "cane_rod": "Bamboo Rod",
+  "iron_rod": "Iron Rod",
+  "crystal_rod": "Crystal Rod",
+  "moonrod": "Moon Rod",
+  "voidrod": "Void Rod",
+  "foraging_pouch": "Forager's Pouch",
+  "herbalist_kit": "Herbalist Kit",
+  "druid_satchel": "Druid's Satchel",
+  "void_pouch": "Void Pouch",
+  "eclipse_satchel": "Eclipse Satchel",
+  "iron_tongs": "Iron Tongs",
+  "steel_anvil": "Steel Anvil",
+  "master_forge": "Master Forge",
+  "master_bellows": "Master Bellows",
+  "eclipse_forge": "Eclipse Forge",
+  "copper_pan": "Copper Pan",
+  "iron_pan": "Iron Pan",
+  "ember_stove": "Ember Stove",
+  "void_stove": "Void Stove",
+  "eclipse_hearth": "Eclipse Hearth",
+  "stone_mortar": "Stone Mortar",
+  "iron_mortar": "Iron Mortar",
+  "crystal_mortar": "Crystal Mortar",
+  "void_alembic": "Void Alembic",
+  "eclipse_crucible": "Eclipse Crucible",
+  "flint": "Flint & Steel",
+  "iron_tinder": "Iron Tinderbox",
+  "ember_tinder": "Ember Tinderbox",
+  "void_tinder": "Void Tinderbox",
+  "eclipse_tinder": "Eclipse Tinder",
+  "leather_boots": "Leather Boots",
+  "iron_runners": "Iron Runners",
+  "swift_boots": "Swift Boots",
+  "wind_treads": "Wind Treads",
+  "eclipse_treads": "Eclipse Treads",
+  "copper_lens": "Copper Lens",
+  "silver_lens": "Silver Lens",
+  "crystal_lens": "Crystal Lens",
+  "void_lens": "Void Lens",
+  "eclipse_lens": "Eclipse Lens",
+  "wooden_trowel": "Wooden Trowel",
+  "iron_trowel": "Iron Trowel",
+  "mithril_trowel": "Mithril Trowel",
+  "ancient_trowel": "Ancient Trowel",
+  "eclipse_trowel": "Eclipse Trowel",
+  "everflame_axe": "Everflame Axe",
+  "everflame_pick": "Everflame Pick",
+  "everflame_rod": "Everflame Rod",
+  "everflame_satchel": "Everflame Satchel",
+  "everflame_forge": "Everflame Forge",
+  "everflame_hearth": "Everflame Hearth",
+  "everflame_crucible": "Everflame Crucible",
+  "everflame_tinder": "Everflame Tinder",
+  "everflame_lens": "Everflame Lens",
+  "everflame_trowel": "Everflame Trowel",
+  "everflame_treads": "Everflame Treads",
+  "goblin_meat": "Goblin Meat",
+  "wolf_meat": "Wolf Meat",
+  "ogre_meat": "Ogre Meat",
+  "troll_meat": "Troll Meat",
+  "drake_meat": "Drake Meat",
+  "boar_meat": "Boar Meat",
+  "elk_meat": "Elk Meat",
+  "rhino_meat": "Rhino Meat",
+  "demon_meat": "Demon Meat",
+  "rough_leather": "Roughhide Leather",
+  "rough_helm": "Roughhide Cowl",
+  "rough_chest": "Roughhide Jerkin",
+  "rough_legs": "Roughhide Chaps",
+  "rough_gloves": "Roughhide Bracers",
+  "rough_boots": "Roughhide Boots",
+  "chitin_leather": "Chitinweave Leather",
+  "chitin_helm": "Chitinweave Cowl",
+  "chitin_chest": "Chitinweave Jerkin",
+  "chitin_legs": "Chitinweave Chaps",
+  "chitin_gloves": "Chitinweave Bracers",
+  "chitin_boots": "Chitinweave Boots",
+  "wolf_leather": "Wolfhide Leather",
+  "wolf_helm": "Wolfhide Cowl",
+  "wolf_chest": "Wolfhide Jerkin",
+  "wolf_legs": "Wolfhide Chaps",
+  "wolf_gloves": "Wolfhide Bracers",
+  "wolf_boots": "Wolfhide Boots",
+  "ogre_leather": "Ogrehide Leather",
+  "ogre_helm": "Ogrehide Cowl",
+  "ogre_chest": "Ogrehide Jerkin",
+  "ogre_legs": "Ogrehide Chaps",
+  "ogre_gloves": "Ogrehide Bracers",
+  "ogre_boots": "Ogrehide Boots",
+  "troll_leather": "Trollhide Leather",
+  "troll_helm": "Trollhide Cowl",
+  "troll_chest": "Trollhide Jerkin",
+  "troll_legs": "Trollhide Chaps",
+  "troll_gloves": "Trollhide Bracers",
+  "troll_boots": "Trollhide Boots",
+  "drake_leather": "Drakehide Leather",
+  "drake_helm": "Drakehide Cowl",
+  "drake_chest": "Drakehide Jerkin",
+  "drake_legs": "Drakehide Chaps",
+  "drake_gloves": "Drakehide Bracers",
+  "drake_boots": "Drakehide Boots",
+  "demon_leather": "Demonhide Leather",
+  "demon_helm": "Demonhide Cowl",
+  "demon_chest": "Demonhide Jerkin",
+  "demon_legs": "Demonhide Chaps",
+  "demon_gloves": "Demonhide Bracers",
+  "demon_boots": "Demonhide Boots",
+  "wraith_leather": "Wraithhide Leather",
+  "wraith_helm": "Wraithhide Cowl",
+  "wraith_chest": "Wraithhide Jerkin",
+  "wraith_legs": "Wraithhide Chaps",
+  "wraith_gloves": "Wraithhide Bracers",
+  "wraith_boots": "Wraithhide Boots",
+  "ember_leather": "Emberhide Leather",
+  "ember_helm": "Emberhide Cowl",
+  "ember_chest": "Emberhide Jerkin",
+  "ember_legs": "Emberhide Chaps",
+  "ember_gloves": "Emberhide Bracers",
+  "ember_boots": "Emberhide Boots",
+  "void_leather": "Voidhide Leather",
+  "void_helm": "Voidhide Cowl",
+  "void_chest": "Voidhide Jerkin",
+  "void_legs": "Voidhide Chaps",
+  "void_gloves": "Voidhide Bracers",
+  "void_boots": "Voidhide Boots",
+  "boar_hide": "Boar Hide",
+  "timber_pelt": "Timber Pelt",
+  "stag_hide": "Stag Hide",
+  "lynx_pelt": "Lynx Pelt",
+  "bear_pelt": "Frost Bear Pelt",
+  "leopard_pelt": "Snow Leopard Pelt",
+  "elk_hide": "Elk Hide",
+  "mammoth_hide": "Mammoth Hide",
+  "jackal_pelt": "Jackal Pelt",
+  "cinder_hide": "Cinderhide",
+  "stalker_pelt": "Stalker Pelt",
+  "rhino_hide": "Rhino Hide",
+  "boar_roast": "Spit-roast Boar",
+  "elk_haunch": "Smoked Elk Haunch",
+  "rhino_steak": "Seared Rhino Steak",
+  "briar_cloak": "Briarhide Cloak",
+  "lynx_bracers": "Lynxhide Bracers",
+  "elk_striders": "Elkhide Striders",
+  "frostpelt_mantle": "Frostpelt Mantle",
+  "stalker_hood": "Stalkerhide Hood",
+  "rhino_bulwark": "Rhinohide Bulwark",
+  "barrow_chest": "Warden's Aegis",
+  "barrow_legs": "Warden's Greaves",
+  "barrow_helm": "Barrow Warden's Helm",
+  "barrow_gloves": "Barrow Warden's Gauntlets",
+  "barrow_boots": "Barrow Warden's Sabatons",
+  "wraithbound_cowl": "Wraithbound Cowl",
+  "graveshroud_vest": "Grave-Shroud Vest",
+  "emberforged_aegis": "Emberforged Aegis",
+  "emberforged_greaves": "Emberforged Greaves",
+  "cinderweave_cowl": "Cinderweave Cowl",
+  "emberhide_vest": "Emberhide Vest",
+  "abyssal_aegis": "Abyssal Aegis",
+  "voidforged_greaves": "Voidforged Greaves",
+  "riftshadow_cowl": "Riftshadow Cowl",
+  "voidheart_shroud": "Voidheart Shroud",
+  "dawnbreaker": "Dawnbreaker",
+  "starfang": "Starfang",
+  "worldsunder_maul": "Worldsunder Maul",
+  "aegis_of_dawn": "Aegis of Dawn",
+  "sunpiercer": "Sunpiercer",
+  "dawnreaper": "Dawnreaper",
+  "dawnward_helm": "Dawnward Helm",
+  "dawnward_chest": "Dawnward Cuirass",
+  "dawnward_legs": "Dawnward Greaves",
+  "dawnward_boots": "Dawnward Sabatons",
+  "sunweave_helm": "Sunweave Hood",
+  "sunweave_chest": "Sunweave Vest",
+  "sunweave_legs": "Sunweave Leggings",
+  "sunweave_boots": "Sunweave Treads",
+  "thornbite_shortbow": "Thornbite Shortbow",
+  "rimeshot_shortbow": "Rimeshot Shortbow",
+  "mammothhorn_longbow": "Mammothhorn Longbow",
+  "ashlock_crossbow": "Ashlock Crossbow",
+  "sundershaft": "Sundershaft",
+  "sunderbolt": "Sunderbolt",
+  "sunderedge": "Sunderedge",
+  "faultward": "Faultward",
+  "plummet": "Plummet",
+  "stonewright_gauntlets": "Stonewright Gauntlets",
+  "gravesteel_helm": "Gravesteel Helm",
+  "gravesteel_chest": "Gravesteel Chest",
+  "gravesteel_legs": "Gravesteel Legs",
+  "gravesteel_gloves": "Gravesteel Gloves",
+  "gravesteel_boots": "Gravesteel Boots",
+  "gravesteel_sword": "Gravesteel Sword",
+  "gravesteel_shield": "Gravesteel Shield",
+  "gravesteel_dagger": "Gravesteel Dagger",
+  "gravesteel_hammer": "Gravesteel Hammer",
+  "moltensteel_helm": "Moltensteel Helm",
+  "moltensteel_chest": "Moltensteel Chest",
+  "moltensteel_legs": "Moltensteel Legs",
+  "moltensteel_gloves": "Moltensteel Gloves",
+  "moltensteel_boots": "Moltensteel Boots",
+  "moltensteel_sword": "Moltensteel Sword",
+  "moltensteel_shield": "Moltensteel Shield",
+  "moltensteel_dagger": "Moltensteel Dagger",
+  "moltensteel_hammer": "Moltensteel Hammer",
+  "voidsteel_helm": "Voidsteel Helm",
+  "voidsteel_chest": "Voidsteel Chest",
+  "voidsteel_legs": "Voidsteel Legs",
+  "voidsteel_gloves": "Voidsteel Gloves",
+  "voidsteel_boots": "Voidsteel Boots",
+  "voidsteel_sword": "Voidsteel Sword",
+  "voidsteel_shield": "Voidsteel Shield",
+  "voidsteel_dagger": "Voidsteel Dagger",
+  "voidsteel_hammer": "Voidsteel Hammer",
+  "bronze_buckler": "Bronze Buckler",
+  "iron_buckler": "Iron Buckler",
+  "steel_buckler": "Steel Buckler",
+  "mithril_buckler": "Mithril Buckler",
+  "cobalt_buckler": "Cobalt Buckler",
+  "runite_buckler": "Runite Buckler",
+  "starsteel_buckler": "Starsteel Buckler",
+  "moltensteel_buckler": "Moltensteel Buckler",
+  "voidsteel_buckler": "Voidsteel Buckler",
+  "dawnsteel_buckler": "Dawnsteel Buckler",
+  "cindermantle": "Cindermantle",
+  "voidshroud": "Voidshroud Cape",
+  "dawnmantle": "Dawnmantle",
+  "wood_shaft": "Arrow Shafts",
+  "feather": "Feather",
+  "raw_fowl": "Raw Fowl",
+  "flax": "Flax",
+  "bowstring": "Bowstring",
+  "bronze_arrowhead": "Bronze Arrowhead",
+  "bronze_bolt_tip": "Bronze Bolt Tip",
+  "bronze_arrow": "Bronze Arrow",
+  "bronze_bolt": "Bronze Bolt",
+  "iron_arrowhead": "Iron Arrowhead",
+  "iron_bolt_tip": "Iron Bolt Tip",
+  "iron_arrow": "Iron Arrow",
+  "iron_bolt": "Iron Bolt",
+  "steel_arrowhead": "Steel Arrowhead",
+  "steel_bolt_tip": "Steel Bolt Tip",
+  "steel_arrow": "Steel Arrow",
+  "steel_bolt": "Steel Bolt",
+  "mithril_arrowhead": "Mithril Arrowhead",
+  "mithril_bolt_tip": "Mithril Bolt Tip",
+  "mithril_arrow": "Mithril Arrow",
+  "mithril_bolt": "Mithril Bolt",
+  "cobalt_arrowhead": "Cobalt Arrowhead",
+  "cobalt_bolt_tip": "Cobalt Bolt Tip",
+  "cobalt_arrow": "Cobalt Arrow",
+  "cobalt_bolt": "Cobalt Bolt",
+  "runite_arrowhead": "Runite Arrowhead",
+  "runite_bolt_tip": "Runite Bolt Tip",
+  "runite_arrow": "Runite Arrow",
+  "runite_bolt": "Runite Bolt",
+  "starsteel_arrowhead": "Starsteel Arrowhead",
+  "starsteel_bolt_tip": "Starsteel Bolt Tip",
+  "starsteel_arrow": "Starsteel Arrow",
+  "starsteel_bolt": "Starsteel Bolt",
+  "starfall_arrowhead": "Starfall Arrowhead",
+  "starfall_bolt_tip": "Starfall Bolt Tip",
+  "starfall_arrow": "Starfall Arrow",
+  "starfall_bolt": "Starfall Bolt",
+  "unstrung_pine_shortbow": "Unstrung Pine Shortbow",
+  "pine_shortbow": "Pine Shortbow",
+  "unstrung_pine_longbow": "Unstrung Pine Longbow",
+  "pine_longbow": "Pine Longbow",
+  "unstrung_oak_shortbow": "Unstrung Oak Shortbow",
+  "oak_shortbow": "Oak Shortbow",
+  "unstrung_oak_longbow": "Unstrung Oak Longbow",
+  "oak_longbow": "Oak Longbow",
+  "unstrung_ironbark_shortbow": "Unstrung Ironbark Shortbow",
+  "ironbark_shortbow": "Ironbark Shortbow",
+  "unstrung_ironbark_longbow": "Unstrung Ironbark Longbow",
+  "ironbark_longbow": "Ironbark Longbow",
+  "unstrung_ember_shortbow": "Unstrung Emberwood Shortbow",
+  "ember_shortbow": "Emberwood Shortbow",
+  "unstrung_ember_longbow": "Unstrung Emberwood Longbow",
+  "ember_longbow": "Emberwood Longbow",
+  "unstrung_frost_shortbow": "Unstrung Frostwood Shortbow",
+  "frost_shortbow": "Frostwood Shortbow",
+  "unstrung_frost_longbow": "Unstrung Frostwood Longbow",
+  "frost_longbow": "Frostwood Longbow",
+  "unstrung_shadow_shortbow": "Unstrung Shadowwood Shortbow",
+  "shadow_shortbow": "Shadowwood Shortbow",
+  "unstrung_shadow_longbow": "Unstrung Shadowwood Longbow",
+  "shadow_longbow": "Shadowwood Longbow",
+  "unstrung_ancient_shortbow": "Unstrung Ancient Shortbow",
+  "ancient_shortbow": "Ancient Shortbow",
+  "unstrung_ancient_longbow": "Unstrung Ancient Longbow",
+  "ancient_longbow": "Ancient Longbow",
+  "unstrung_bronze_crossbow": "Unstrung Bronze Crossbow",
+  "bronze_crossbow": "Bronze Crossbow",
+  "unstrung_iron_crossbow": "Unstrung Iron Crossbow",
+  "iron_crossbow": "Iron Crossbow",
+  "unstrung_steel_crossbow": "Unstrung Steel Crossbow",
+  "steel_crossbow": "Steel Crossbow",
+  "unstrung_mithril_crossbow": "Unstrung Mithril Crossbow",
+  "mithril_crossbow": "Mithril Crossbow",
+  "unstrung_cobalt_crossbow": "Unstrung Cobalt Crossbow",
+  "cobalt_crossbow": "Cobalt Crossbow",
+  "unstrung_runite_crossbow": "Unstrung Runite Crossbow",
+  "runite_crossbow": "Runite Crossbow",
+  "unstrung_starsteel_crossbow": "Unstrung Starsteel Crossbow",
+  "starsteel_crossbow": "Starsteel Crossbow",
+  "unstrung_starfall_crossbow": "Unstrung Starfall Crossbow",
+  "starfall_crossbow": "Starfall Crossbow",
+  "flax_seed": "Flax Seed",
+  "roast_fowl": "Roast Fowl",
+  "runestone": "Runestone",
+  "ash_rune": "Ash Rune",
+  "soot_rune": "Soot Rune",
+  "char_rune": "Char Rune",
+  "cinder_rune": "Cinder Rune",
+  "kiln_rune": "Kiln Rune",
+  "forge_rune": "Forge Rune",
+  "crucible_rune": "Crucible Rune",
+  "starfall_rune": "Starfall Rune",
+  "sunder_rune": "Sunder Rune",
+  "pine_wand": "Pine Wand",
+  "pine_staff": "Pine Staff",
+  "oak_wand": "Oak Wand",
+  "oak_staff": "Oak Staff",
+  "ironbark_wand": "Ironbark Wand",
+  "ironbark_staff": "Ironbark Staff",
+  "ember_wand": "Emberwood Wand",
+  "ember_staff": "Emberwood Staff",
+  "frost_wand": "Frostwood Wand",
+  "frost_staff": "Frostwood Staff",
+  "shadow_wand": "Shadowwood Wand",
+  "shadow_staff": "Shadowwood Staff",
+  "ancient_wand": "Ancient Wand",
+  "ancient_staff": "Ancient Staff",
+  "gravecall_staff": "Gravecall Staff",
+  "barrow_wand": "Barrow Wand",
+  "slagfire_staff": "Slagfire Staff",
+  "emberglass_wand": "Emberglass Wand",
+  "riftcaller": "Riftcaller",
+  "nullspire_wand": "Nullspire Wand",
+  "dawncaller": "Dawncaller",
+  "starcall_wand": "Starcall Wand",
+  "faultline": "Faultline",
+  "gnawbone_wand": "Gnawbone Wand",
+  "briarwood_wand": "Briarwood Wand",
+  "webspinner_staff": "Webspinner Staff",
+  "fetish_staff": "Shaman’s Fetish Staff",
+  "gravecaller": "Gravecaller",
+  "frostbrand_staff": "Frostbrand Staff",
+  "moonhowl_wand": "Moonhowl Wand",
+  "seers_eye": "Seer’s Eye",
+  "mossheart_wand": "Mossheart Wand",
+  "cinderspine": "Cinderspine",
+  "ashglass_staff": "Ashglass Staff",
+  "brimstone_sceptre": "Brimstone Sceptre",
+  "stormfeather_wand": "Stormfeather Wand",
+  "linen": "Linen",
+  "linen_hood": "Linen Hood",
+  "linen_robe": "Linen Robe",
+  "linen_leggings": "Linen Leggings",
+  "linen_wraps": "Linen Wraps",
+  "linen_slippers": "Linen Slippers",
+  "spidersilk": "Spidersilk",
+  "spidersilk_hood": "Spidersilk Hood",
+  "spidersilk_robe": "Spidersilk Robe",
+  "spidersilk_leggings": "Spidersilk Leggings",
+  "spidersilk_wraps": "Spidersilk Wraps",
+  "spidersilk_slippers": "Spidersilk Slippers",
+  "gravecloth": "Gravecloth",
+  "gravecloth_hood": "Gravecloth Hood",
+  "gravecloth_robe": "Gravecloth Robe",
+  "gravecloth_leggings": "Gravecloth Leggings",
+  "gravecloth_wraps": "Gravecloth Wraps",
+  "gravecloth_slippers": "Gravecloth Slippers",
+  "rimeweave": "Rimeweave",
+  "rimeweave_hood": "Rimeweave Hood",
+  "rimeweave_robe": "Rimeweave Robe",
+  "rimeweave_leggings": "Rimeweave Leggings",
+  "rimeweave_wraps": "Rimeweave Wraps",
+  "rimeweave_slippers": "Rimeweave Slippers",
+  "seercloth": "Seercloth",
+  "seercloth_hood": "Seercloth Hood",
+  "seercloth_robe": "Seercloth Robe",
+  "seercloth_leggings": "Seercloth Leggings",
+  "seercloth_wraps": "Seercloth Wraps",
+  "seercloth_slippers": "Seercloth Slippers",
+  "stoneweave": "Stoneweave",
+  "stoneweave_hood": "Stoneweave Hood",
+  "stoneweave_robe": "Stoneweave Robe",
+  "stoneweave_leggings": "Stoneweave Leggings",
+  "stoneweave_wraps": "Stoneweave Wraps",
+  "stoneweave_slippers": "Stoneweave Slippers",
+  "wyrmsilk": "Wyrmsilk",
+  "wyrmsilk_hood": "Wyrmsilk Hood",
+  "wyrmsilk_robe": "Wyrmsilk Robe",
+  "wyrmsilk_leggings": "Wyrmsilk Leggings",
+  "wyrmsilk_wraps": "Wyrmsilk Wraps",
+  "wyrmsilk_slippers": "Wyrmsilk Slippers",
+  "runebound_hood": "Runebound Hood",
+  "runebound_robe": "Runebound Robe",
+  "runebound_leggings": "Runebound Leggings",
+  "runebound_wraps": "Runebound Wraps",
+  "runebound_slippers": "Runebound Slippers",
+  "drakerune_hood": "Drakerune Hood",
+  "drakerune_robe": "Drakerune Robe",
+  "drakerune_leggings": "Drakerune Leggings",
+  "drakerune_wraps": "Drakerune Wraps",
+  "drakerune_slippers": "Drakerune Slippers",
+  "riftwoven_hood": "Riftwoven Hood",
+  "riftwoven_robe": "Riftwoven Robe",
+  "riftwoven_leggings": "Riftwoven Leggings",
+  "riftwoven_wraps": "Riftwoven Wraps",
+  "riftwoven_slippers": "Riftwoven Slippers",
+  "dawnveil_hood": "Dawnveil Hood",
+  "dawnveil_robe": "Dawnveil Robe",
+  "dawnveil_leggings": "Dawnveil Leggings",
+  "dawnveil_slippers": "Dawnveil Slippers",
+  "wyrd_chip": "Chipped Wyrdstone",
+  "wyrd_polish": "Polished Wyrdstone",
+  "wyrd_flaw": "Flawless Wyrdstone",
+  "arcane_draught_1": "Arcane Draught I",
+  "arcane_draught_2": "Arcane Draught II"
+ },
+ "skill": {
+  "woodcutting": "Woodcutting",
+  "mining": "Mining",
+  "fishing": "Fishing",
+  "foraging": "Foraging",
+  "smithing": "Smithing",
+  "alchemy": "Alchemy",
+  "firemaking": "Firemaking",
+  "agility": "Agility",
+  "thieving": "Thieving",
+  "jeweler": "Jeweler",
+  "farming": "Farming",
+  "cooking": "Cooking",
+  "crafting": "Crafting",
+  "fletching": "Fletching",
+  "runecrafting": "Runecrafting"
+ },
+ "uses": {
+  "runestone": [],
+  "ash": [
+   {
+    "skill": "Alchemy",
+    "act": "Transmute Arcane Dust",
+    "n": 2,
+    "lvl": 15
+   }
+  ],
+  "charcoal": [],
+  "ember_dust": [
+   {
+    "skill": "Crafting",
+    "act": "Everflame Axe",
+    "n": 120,
+    "lvl": 95
+   },
+   {
+    "skill": "Crafting",
+    "act": "Everflame Crucible",
+    "n": 120,
+    "lvl": 95
+   },
+   {
+    "skill": "Crafting",
+    "act": "Everflame Forge",
+    "n": 120,
+    "lvl": 95
+   },
+   {
+    "skill": "Crafting",
+    "act": "Everflame Hearth",
+    "n": 120,
+    "lvl": 95
+   },
+   {
+    "skill": "Crafting",
+    "act": "Everflame Lens",
+    "n": 120,
+    "lvl": 95
+   },
+   {
+    "skill": "Crafting",
+    "act": "Everflame Pick",
+    "n": 120,
+    "lvl": 95
+   },
+   {
+    "skill": "Crafting",
+    "act": "Everflame Lockpicks",
+    "n": 40,
+    "lvl": 95
+   },
+   {
+    "skill": "Crafting",
+    "act": "Everflame Rod",
+    "n": 120,
+    "lvl": 95
+   },
+   {
+    "skill": "Crafting",
+    "act": "Everflame Satchel",
+    "n": 120,
+    "lvl": 95
+   },
+   {
+    "skill": "Crafting",
+    "act": "Everflame Tinder",
+    "n": 120,
+    "lvl": 95
+   },
+   {
+    "skill": "Crafting",
+    "act": "Everflame Treads",
+    "n": 120,
+    "lvl": 95
+   },
+   {
+    "skill": "Crafting",
+    "act": "Everflame Trowel",
+    "n": 120,
+    "lvl": 95
+   }
+  ],
+  "pine_log": [
+   {
+    "skill": "Firemaking",
+    "act": "Burn pine logs",
+    "n": 1,
+    "lvl": 1
+   },
+   {
+    "skill": "Crafting",
+    "act": "Bronze Helm",
+    "n": 1,
+    "lvl": 1
+   },
+   {
+    "skill": "Crafting",
+    "act": "Roughhide Cowl",
+    "n": 1,
+    "lvl": 1
+   },
+   {
+    "skill": "Crafting",
+    "act": "Bronze Gloves",
+    "n": 1,
+    "lvl": 1
+   },
+   {
+    "skill": "Crafting",
+    "act": "Roughhide Bracers",
+    "n": 1,
+    "lvl": 1
+   },
+   {
+    "skill": "Crafting",
+    "act": "Bronze Boots",
+    "n": 1,
+    "lvl": 1
+   },
+   {
+    "skill": "Crafting",
+    "act": "Roughhide Boots",
+    "n": 1,
+    "lvl": 1
+   },
+   {
+    "skill": "Crafting",
+    "act": "Bronze Legs",
+    "n": 1,
+    "lvl": 3
+   },
+   {
+    "skill": "Crafting",
+    "act": "Roughhide Chaps",
+    "n": 1,
+    "lvl": 1
+   },
+   {
+    "skill": "Crafting",
+    "act": "Bronze Chest",
+    "n": 1,
+    "lvl": 5
+   },
+   {
+    "skill": "Crafting",
+    "act": "Roughhide Jerkin",
+    "n": 1,
+    "lvl": 1
+   },
+   {
+    "skill": "Crafting",
+    "act": "Bronze Sword",
+    "n": 1,
+    "lvl": 7
+   },
+   {
+    "skill": "Crafting",
+    "act": "Bronze Dagger",
+    "n": 1,
+    "lvl": 7
+   },
+   {
+    "skill": "Crafting",
+    "act": "Bronze Hammer",
+    "n": 1,
+    "lvl": 7
+   },
+   {
+    "skill": "Crafting",
+    "act": "Bronze Shield",
+    "n": 1,
+    "lvl": 9
+   },
+   {
+    "skill": "Crafting",
+    "act": "Bronze Cape",
+    "n": 2,
+    "lvl": 1
+   },
+   {
+    "skill": "Crafting",
+    "act": "Bronze Axe",
+    "n": 1,
+    "lvl": 1
+   },
+   {
+    "skill": "Crafting",
+    "act": "Bronze Pick",
+    "n": 1,
+    "lvl": 1
+   },
+   {
+    "skill": "Crafting",
+    "act": "Bronze Lockpicks",
+    "n": 1,
+    "lvl": 1
+   },
+   {
+    "skill": "Crafting",
+    "act": "Bamboo Rod",
+    "n": 2,
+    "lvl": 1
+   },
+   {
+    "skill": "Crafting",
+    "act": "Forager's Pouch",
+    "n": 1,
+    "lvl": 1
+   },
+   {
+    "skill": "Crafting",
+    "act": "Stone Mortar",
+    "n": 1,
+    "lvl": 1
+   },
+   {
+    "skill": "Crafting",
+    "act": "Wooden Trowel",
+    "n": 2,
+    "lvl": 1
+   },
+   {
+    "skill": "Fletching",
+    "act": "Carve Pine shafts",
+    "n": 1,
+    "lvl": 1
+   },
+   {
+    "skill": "Fletching",
+    "act": "Carve a Pine Shortbow",
+    "n": 6,
+    "lvl": 1
+   },
+   {
+    "skill": "Fletching",
+    "act": "Carve a Pine Longbow",
+    "n": 9,
+    "lvl": 5
+   },
+   {
+    "skill": "Fletching",
+    "act": "Assemble a Bronze Crossbow",
+    "n": 5,
+    "lvl": 3
+   },
+   {
+    "skill": "Fletching",
+    "act": "Assemble an Iron Crossbow",
+    "n": 5,
+    "lvl": 14
+   }
+  ],
+  "ash_rune": [],
+  "oak_log": [
+   {
+    "skill": "Firemaking",
+    "act": "Burn oak logs",
+    "n": 1,
+    "lvl": 10
+   },
+   {
+    "skill": "Crafting",
+    "act": "Iron Helm",
+    "n": 1,
+    "lvl": 15
+   },
+   {
+    "skill": "Crafting",
+    "act": "Chitinweave Cowl",
+    "n": 1,
+    "lvl": 12
+   },
+   {
+    "skill": "Crafting",
+    "act": "Iron Gloves",
+    "n": 1,
+    "lvl": 15
+   },
+   {
+    "skill": "Crafting",
+    "act": "Chitinweave Bracers",
+    "n": 1,
+    "lvl": 12
+   },
+   {
+    "skill": "Crafting",
+    "act": "Lynxhide Bracers",
+    "n": 1,
+    "lvl": 22
+   },
+   {
+    "skill": "Crafting",
+    "act": "Iron Boots",
+    "n": 1,
+    "lvl": 15
+   },
+   {
+    "skill": "Crafting",
+    "act": "Chitinweave Boots",
+    "n": 1,
+    "lvl": 12
+   },
+   {
+    "skill": "Crafting",
+    "act": "Iron Legs",
+    "n": 1,
+    "lvl": 17
+   },
+   {
+    "skill": "Crafting",
+    "act": "Chitinweave Chaps",
+    "n": 1,
+    "lvl": 12
+   },
+   {
+    "skill": "Crafting",
+    "act": "Iron Chest",
+    "n": 1,
+    "lvl": 19
+   },
+   {
+    "skill": "Crafting",
+    "act": "Chitinweave Jerkin",
+    "n": 1,
+    "lvl": 12
+   },
+   {
+    "skill": "Crafting",
+    "act": "Iron Sword",
+    "n": 1,
+    "lvl": 21
+   },
+   {
+    "skill": "Crafting",
+    "act": "Iron Dagger",
+    "n": 1,
+    "lvl": 21
+   },
+   {
+    "skill": "Crafting",
+    "act": "Iron Hammer",
+    "n": 1,
+    "lvl": 21
+   },
+   {
+    "skill": "Crafting",
+    "act": "Iron Shield",
+    "n": 1,
+    "lvl": 23
+   },
+   {
+    "skill": "Crafting",
+    "act": "Iron Cape",
+    "n": 2,
+    "lvl": 15
+   },
+   {
+    "skill": "Crafting",
+    "act": "Briarhide Cloak",
+    "n": 1,
+    "lvl": 18
+   },
+   {
+    "skill": "Crafting",
+    "act": "Herbalist Kit",
+    "n": 1,
+    "lvl": 12
+   },
+   {
+    "skill": "Crafting",
+    "act": "Iron Axe",
+    "n": 1,
+    "lvl": 12
+   },
+   {
+    "skill": "Crafting",
+    "act": "Iron Mortar",
+    "n": 1,
+    "lvl": 12
+   },
+   {
+    "skill": "Crafting",
+    "act": "Iron Pick",
+    "n": 1,
+    "lvl": 12
+   },
+   {
+    "skill": "Crafting",
+    "act": "Iron Lockpicks",
+    "n": 1,
+    "lvl": 12
+   },
+   {
+    "skill": "Crafting",
+    "act": "Iron Runners",
+    "n": 1,
+    "lvl": 12
+   },
+   {
+    "skill": "Crafting",
+    "act": "Iron Tinderbox",
+    "n": 1,
+    "lvl": 12
+   },
+   {
+    "skill": "Crafting",
+    "act": "Iron Trowel",
+    "n": 1,
+    "lvl": 12
+   },
+   {
+    "skill": "Crafting",
+    "act": "Silver Lens",
+    "n": 1,
+    "lvl": 12
+   },
+   {
+    "skill": "Fletching",
+    "act": "Carve Oak shafts",
+    "n": 1,
+    "lvl": 12
+   },
+   {
+    "skill": "Fletching",
+    "act": "Carve an Oak Shortbow",
+    "n": 6,
+    "lvl": 12
+   },
+   {
+    "skill": "Fletching",
+    "act": "Carve an Oak Longbow",
+    "n": 9,
+    "lvl": 16
+   },
+   {
+    "skill": "Fletching",
+    "act": "Assemble a Steel Crossbow",
+    "n": 5,
+    "lvl": 26
+   }
+  ],
+  "soot_rune": [],
+  "ironbark_log": [
+   {
+    "skill": "Firemaking",
+    "act": "Burn ironbark logs",
+    "n": 1,
+    "lvl": 25
+   },
+   {
+    "skill": "Crafting",
+    "act": "Steel Helm",
+    "n": 1,
+    "lvl": 30
+   },
+   {
+    "skill": "Crafting",
+    "act": "Wolfhide Cowl",
+    "n": 1,
+    "lvl": 27
+   },
+   {
+    "skill": "Crafting",
+    "act": "Steel Gloves",
+    "n": 1,
+    "lvl": 30
+   },
+   {
+    "skill": "Crafting",
+    "act": "Wolfhide Bracers",
+    "n": 1,
+    "lvl": 27
+   },
+   {
+    "skill": "Crafting",
+    "act": "Steel Boots",
+    "n": 1,
+    "lvl": 30
+   },
+   {
+    "skill": "Crafting",
+    "act": "Wolfhide Boots",
+    "n": 1,
+    "lvl": 27
+   },
+   {
+    "skill": "Crafting",
+    "act": "Steel Legs",
+    "n": 1,
+    "lvl": 32
+   },
+   {
+    "skill": "Crafting",
+    "act": "Wolfhide Chaps",
+    "n": 1,
+    "lvl": 27
+   },
+   {
+    "skill": "Crafting",
+    "act": "Steel Chest",
+    "n": 1,
+    "lvl": 34
+   },
+   {
+    "skill": "Crafting",
+    "act": "Wolfhide Jerkin",
+    "n": 1,
+    "lvl": 27
+   },
+   {
+    "skill": "Crafting",
+    "act": "Steel Sword",
+    "n": 1,
+    "lvl": 36
+   },
+   {
+    "skill": "Crafting",
+    "act": "Steel Dagger",
+    "n": 1,
+    "lvl": 36
+   },
+   {
+    "skill": "Crafting",
+    "act": "Steel Hammer",
+    "n": 1,
+    "lvl": 36
+   },
+   {
+    "skill": "Crafting",
+    "act": "Steel Shield",
+    "n": 1,
+    "lvl": 38
+   },
+   {
+    "skill": "Crafting",
+    "act": "Steel Cape",
+    "n": 2,
+    "lvl": 30
+   },
+   {
+    "skill": "Crafting",
+    "act": "Crystal Lens",
+    "n": 1,
+    "lvl": 28
+   },
+   {
+    "skill": "Crafting",
+    "act": "Crystal Mortar",
+    "n": 1,
+    "lvl": 28
+   },
+   {
+    "skill": "Crafting",
+    "act": "Crystal Rod",
+    "n": 1,
+    "lvl": 28
+   },
+   {
+    "skill": "Crafting",
+    "act": "Druid's Satchel",
+    "n": 1,
+    "lvl": 28
+   },
+   {
+    "skill": "Crafting",
+    "act": "Ember Stove",
+    "n": 1,
+    "lvl": 28
+   },
+   {
+    "skill": "Crafting",
+    "act": "Ember Tinderbox",
+    "n": 1,
+    "lvl": 28
+   },
+   {
+    "skill": "Crafting",
+    "act": "Master Forge",
+    "n": 1,
+    "lvl": 28
+   },
+   {
+    "skill": "Crafting",
+    "act": "Mithril Trowel",
+    "n": 1,
+    "lvl": 28
+   },
+   {
+    "skill": "Crafting",
+    "act": "Steel Axe",
+    "n": 1,
+    "lvl": 28
+   },
+   {
+    "skill": "Crafting",
+    "act": "Steel Pick",
+    "n": 1,
+    "lvl": 28
+   },
+   {
+    "skill": "Crafting",
+    "act": "Steel Lockpicks",
+    "n": 1,
+    "lvl": 28
+   },
+   {
+    "skill": "Crafting",
+    "act": "Swift Boots",
+    "n": 1,
+    "lvl": 28
+   },
+   {
+    "skill": "Fletching",
+    "act": "Carve Ironbark shafts",
+    "n": 1,
+    "lvl": 27
+   },
+   {
+    "skill": "Fletching",
+    "act": "Carve an Ironbark Shortbow",
+    "n": 6,
+    "lvl": 27
+   },
+   {
+    "skill": "Fletching",
+    "act": "Carve an Ironbark Longbow",
+    "n": 9,
+    "lvl": 31
+   },
+   {
+    "skill": "Fletching",
+    "act": "Assemble a Mithril Crossbow",
+    "n": 5,
+    "lvl": 40
+   }
+  ],
+  "char_rune": [],
+  "arcane_dust": [
+   {
+    "skill": "Alchemy",
+    "act": "Transmute Night Essence",
+    "n": 1,
+    "lvl": 58
+   }
+  ],
+  "ember_log": [
+   {
+    "skill": "Firemaking",
+    "act": "Burn emberwood logs",
+    "n": 1,
+    "lvl": 40
+   },
+   {
+    "skill": "Crafting",
+    "act": "Mithril Helm",
+    "n": 1,
+    "lvl": 50
+   },
+   {
+    "skill": "Crafting",
+    "act": "Ogrehide Cowl",
+    "n": 1,
+    "lvl": 40
+   },
+   {
+    "skill": "Crafting",
+    "act": "Mithril Gloves",
+    "n": 1,
+    "lvl": 50
+   },
+   {
+    "skill": "Crafting",
+    "act": "Ogrehide Bracers",
+    "n": 1,
+    "lvl": 40
+   },
+   {
+    "skill": "Crafting",
+    "act": "Mithril Boots",
+    "n": 1,
+    "lvl": 50
+   },
+   {
+    "skill": "Crafting",
+    "act": "Ogrehide Boots",
+    "n": 1,
+    "lvl": 40
+   },
+   {
+    "skill": "Crafting",
+    "act": "Mithril Legs",
+    "n": 1,
+    "lvl": 52
+   },
+   {
+    "skill": "Crafting",
+    "act": "Ogrehide Chaps",
+    "n": 1,
+    "lvl": 40
+   },
+   {
+    "skill": "Crafting",
+    "act": "Mithril Chest",
+    "n": 1,
+    "lvl": 54
+   },
+   {
+    "skill": "Crafting",
+    "act": "Ogrehide Jerkin",
+    "n": 1,
+    "lvl": 40
+   },
+   {
+    "skill": "Crafting",
+    "act": "Mithril Sword",
+    "n": 1,
+    "lvl": 56
+   },
+   {
+    "skill": "Crafting",
+    "act": "Mithril Dagger",
+    "n": 1,
+    "lvl": 56
+   },
+   {
+    "skill": "Crafting",
+    "act": "Mithril Hammer",
+    "n": 1,
+    "lvl": 56
+   },
+   {
+    "skill": "Crafting",
+    "act": "Mithril Shield",
+    "n": 1,
+    "lvl": 58
+   },
+   {
+    "skill": "Crafting",
+    "act": "Mithril Cape",
+    "n": 2,
+    "lvl": 50
+   },
+   {
+    "skill": "Crafting",
+    "act": "Ancient Trowel",
+    "n": 1,
+    "lvl": 50
+   },
+   {
+    "skill": "Crafting",
+    "act": "Cobalt Axe",
+    "n": 1,
+    "lvl": 50
+   },
+   {
+    "skill": "Crafting",
+    "act": "Cobalt Pick",
+    "n": 1,
+    "lvl": 50
+   },
+   {
+    "skill": "Crafting",
+    "act": "Cobalt Lockpicks",
+    "n": 1,
+    "lvl": 50
+   },
+   {
+    "skill": "Crafting",
+    "act": "Master Bellows",
+    "n": 1,
+    "lvl": 50
+   },
+   {
+    "skill": "Crafting",
+    "act": "Moon Rod",
+    "n": 1,
+    "lvl": 50
+   },
+   {
+    "skill": "Crafting",
+    "act": "Void Alembic",
+    "n": 1,
+    "lvl": 50
+   },
+   {
+    "skill": "Crafting",
+    "act": "Void Lens",
+    "n": 1,
+    "lvl": 50
+   },
+   {
+    "skill": "Crafting",
+    "act": "Void Pouch",
+    "n": 1,
+    "lvl": 50
+   },
+   {
+    "skill": "Crafting",
+    "act": "Void Stove",
+    "n": 1,
+    "lvl": 50
+   },
+   {
+    "skill": "Crafting",
+    "act": "Void Tinderbox",
+    "n": 1,
+    "lvl": 50
+   },
+   {
+    "skill": "Crafting",
+    "act": "Wind Treads",
+    "n": 1,
+    "lvl": 50
+   },
+   {
+    "skill": "Fletching",
+    "act": "Carve Emberwood shafts",
+    "n": 1,
+    "lvl": 45
+   },
+   {
+    "skill": "Fletching",
+    "act": "Carve an Emberwood Shortbow",
+    "n": 6,
+    "lvl": 45
+   },
+   {
+    "skill": "Fletching",
+    "act": "Carve an Emberwood Longbow",
+    "n": 9,
+    "lvl": 49
+   },
+   {
+    "skill": "Fletching",
+    "act": "Assemble a Cobalt Crossbow",
+    "n": 5,
+    "lvl": 54
+   }
+  ],
+  "cinder_rune": [],
+  "frost_log": [
+   {
+    "skill": "Firemaking",
+    "act": "Burn frostwood logs",
+    "n": 1,
+    "lvl": 55
+   },
+   {
+    "skill": "Crafting",
+    "act": "Cobalt Helm",
+    "n": 1,
+    "lvl": 65
+   },
+   {
+    "skill": "Crafting",
+    "act": "Trollhide Cowl",
+    "n": 1,
+    "lvl": 55
+   },
+   {
+    "skill": "Crafting",
+    "act": "Cobalt Gloves",
+    "n": 1,
+    "lvl": 65
+   },
+   {
+    "skill": "Crafting",
+    "act": "Trollhide Bracers",
+    "n": 1,
+    "lvl": 55
+   },
+   {
+    "skill": "Crafting",
+    "act": "Cobalt Boots",
+    "n": 1,
+    "lvl": 65
+   },
+   {
+    "skill": "Crafting",
+    "act": "Elkhide Striders",
+    "n": 1,
+    "lvl": 50
+   },
+   {
+    "skill": "Crafting",
+    "act": "Trollhide Boots",
+    "n": 1,
+    "lvl": 55
+   },
+   {
+    "skill": "Crafting",
+    "act": "Cobalt Legs",
+    "n": 1,
+    "lvl": 67
+   },
+   {
+    "skill": "Crafting",
+    "act": "Trollhide Chaps",
+    "n": 1,
+    "lvl": 55
+   },
+   {
+    "skill": "Crafting",
+    "act": "Cobalt Chest",
+    "n": 1,
+    "lvl": 69
+   },
+   {
+    "skill": "Crafting",
+    "act": "Trollhide Jerkin",
+    "n": 1,
+    "lvl": 55
+   },
+   {
+    "skill": "Crafting",
+    "act": "Cobalt Sword",
+    "n": 1,
+    "lvl": 71
+   },
+   {
+    "skill": "Crafting",
+    "act": "Cobalt Dagger",
+    "n": 1,
+    "lvl": 71
+   },
+   {
+    "skill": "Crafting",
+    "act": "Cobalt Hammer",
+    "n": 1,
+    "lvl": 71
+   },
+   {
+    "skill": "Crafting",
+    "act": "Cobalt Shield",
+    "n": 1,
+    "lvl": 73
+   },
+   {
+    "skill": "Crafting",
+    "act": "Cobalt Cape",
+    "n": 2,
+    "lvl": 65
+   },
+   {
+    "skill": "Crafting",
+    "act": "Frostpelt Mantle",
+    "n": 1,
+    "lvl": 55
+   },
+   {
+    "skill": "Crafting",
+    "act": "Eclipse Axe",
+    "n": 1,
+    "lvl": 68
+   },
+   {
+    "skill": "Crafting",
+    "act": "Eclipse Crucible",
+    "n": 1,
+    "lvl": 68
+   },
+   {
+    "skill": "Crafting",
+    "act": "Eclipse Forge",
+    "n": 1,
+    "lvl": 68
+   },
+   {
+    "skill": "Crafting",
+    "act": "Eclipse Hearth",
+    "n": 1,
+    "lvl": 68
+   },
+   {
+    "skill": "Crafting",
+    "act": "Eclipse Lens",
+    "n": 1,
+    "lvl": 68
+   },
+   {
+    "skill": "Crafting",
+    "act": "Eclipse Pick",
+    "n": 1,
+    "lvl": 68
+   },
+   {
+    "skill": "Crafting",
+    "act": "Eclipse Lockpicks",
+    "n": 1,
+    "lvl": 68
+   },
+   {
+    "skill": "Crafting",
+    "act": "Eclipse Satchel",
+    "n": 1,
+    "lvl": 68
+   },
+   {
+    "skill": "Crafting",
+    "act": "Eclipse Tinder",
+    "n": 1,
+    "lvl": 68
+   },
+   {
+    "skill": "Crafting",
+    "act": "Eclipse Treads",
+    "n": 1,
+    "lvl": 68
+   },
+   {
+    "skill": "Crafting",
+    "act": "Eclipse Trowel",
+    "n": 1,
+    "lvl": 68
+   },
+   {
+    "skill": "Crafting",
+    "act": "Void Rod",
+    "n": 1,
+    "lvl": 68
+   },
+   {
+    "skill": "Fletching",
+    "act": "Carve Frostwood shafts",
+    "n": 1,
+    "lvl": 62
+   },
+   {
+    "skill": "Fletching",
+    "act": "Carve a Frostwood Shortbow",
+    "n": 6,
+    "lvl": 62
+   },
+   {
+    "skill": "Fletching",
+    "act": "Carve a Frostwood Longbow",
+    "n": 9,
+    "lvl": 66
+   },
+   {
+    "skill": "Fletching",
+    "act": "Assemble a Runite Crossbow",
+    "n": 5,
+    "lvl": 66
+   }
+  ],
+  "kiln_rune": [],
+  "shadow_log": [
+   {
+    "skill": "Firemaking",
+    "act": "Burn shadowwood logs",
+    "n": 1,
+    "lvl": 70
+   },
+   {
+    "skill": "Crafting",
+    "act": "Runite Helm",
+    "n": 1,
+    "lvl": 80
+   },
+   {
+    "skill": "Crafting",
+    "act": "Drakehide Cowl",
+    "n": 1,
+    "lvl": 68
+   },
+   {
+    "skill": "Crafting",
+    "act": "Runite Gloves",
+    "n": 1,
+    "lvl": 80
+   },
+   {
+    "skill": "Crafting",
+    "act": "Drakehide Bracers",
+    "n": 1,
+    "lvl": 68
+   },
+   {
+    "skill": "Crafting",
+    "act": "Runite Boots",
+    "n": 1,
+    "lvl": 80
+   },
+   {
+    "skill": "Crafting",
+    "act": "Drakehide Boots",
+    "n": 1,
+    "lvl": 68
+   },
+   {
+    "skill": "Crafting",
+    "act": "Runite Legs",
+    "n": 1,
+    "lvl": 82
+   },
+   {
+    "skill": "Crafting",
+    "act": "Drakehide Chaps",
+    "n": 1,
+    "lvl": 68
+   },
+   {
+    "skill": "Crafting",
+    "act": "Runite Chest",
+    "n": 1,
+    "lvl": 84
+   },
+   {
+    "skill": "Crafting",
+    "act": "Drakehide Jerkin",
+    "n": 1,
+    "lvl": 68
+   },
+   {
+    "skill": "Crafting",
+    "act": "Runite Sword",
+    "n": 1,
+    "lvl": 86
+   },
+   {
+    "skill": "Crafting",
+    "act": "Runite Dagger",
+    "n": 1,
+    "lvl": 86
+   },
+   {
+    "skill": "Crafting",
+    "act": "Runite Hammer",
+    "n": 1,
+    "lvl": 86
+   },
+   {
+    "skill": "Crafting",
+    "act": "Runite Shield",
+    "n": 1,
+    "lvl": 88
+   },
+   {
+    "skill": "Crafting",
+    "act": "Runite Cape",
+    "n": 2,
+    "lvl": 80
+   },
+   {
+    "skill": "Fletching",
+    "act": "Carve Shadowwood shafts",
+    "n": 1,
+    "lvl": 78
+   },
+   {
+    "skill": "Fletching",
+    "act": "Carve a Shadowwood Shortbow",
+    "n": 6,
+    "lvl": 78
+   },
+   {
+    "skill": "Fletching",
+    "act": "Carve a Shadowwood Longbow",
+    "n": 9,
+    "lvl": 82
+   },
+   {
+    "skill": "Fletching",
+    "act": "Assemble a Starsteel Crossbow",
+    "n": 5,
+    "lvl": 78
+   }
+  ],
+  "forge_rune": [],
+  "ancient_log": [
+   {
+    "skill": "Firemaking",
+    "act": "Burn ancient logs",
+    "n": 1,
+    "lvl": 85
+   },
+   {
+    "skill": "Crafting",
+    "act": "Gravesteel Helm",
+    "n": 1,
+    "lvl": 90
+   },
+   {
+    "skill": "Crafting",
+    "act": "Starsteel Helm",
+    "n": 1,
+    "lvl": 90
+   },
+   {
+    "skill": "Crafting",
+    "act": "Moltensteel Helm",
+    "n": 1,
+    "lvl": 93
+   },
+   {
+    "skill": "Crafting",
+    "act": "Voidsteel Helm",
+    "n": 1,
+    "lvl": 96
+   },
+   {
+    "skill": "Crafting",
+    "act": "Wraithhide Cowl",
+    "n": 1,
+    "lvl": 75
+   },
+   {
+    "skill": "Crafting",
+    "act": "Stalkerhide Hood",
+    "n": 1,
+    "lvl": 80
+   },
+   {
+    "skill": "Crafting",
+    "act": "Demonhide Cowl",
+    "n": 1,
+    "lvl": 82
+   },
+   {
+    "skill": "Crafting",
+    "act": "Emberhide Cowl",
+    "n": 1,
+    "lvl": 84
+   },
+   {
+    "skill": "Crafting",
+    "act": "Voidhide Cowl",
+    "n": 1,
+    "lvl": 90
+   },
+   {
+    "skill": "Crafting",
+    "act": "Gravesteel Gloves",
+    "n": 1,
+    "lvl": 90
+   },
+   {
+    "skill": "Crafting",
+    "act": "Starsteel Gloves",
+    "n": 1,
+    "lvl": 90
+   },
+   {
+    "skill": "Crafting",
+    "act": "Moltensteel Gloves",
+    "n": 1,
+    "lvl": 93
+   },
+   {
+    "skill": "Crafting",
+    "act": "Voidsteel Gloves",
+    "n": 1,
+    "lvl": 96
+   },
+   {
+    "skill": "Crafting",
+    "act": "Wraithhide Bracers",
+    "n": 1,
+    "lvl": 75
+   },
+   {
+    "skill": "Crafting",
+    "act": "Demonhide Bracers",
+    "n": 1,
+    "lvl": 82
+   },
+   {
+    "skill": "Crafting",
+    "act": "Emberhide Bracers",
+    "n": 1,
+    "lvl": 84
+   },
+   {
+    "skill": "Crafting",
+    "act": "Voidhide Bracers",
+    "n": 1,
+    "lvl": 90
+   },
+   {
+    "skill": "Crafting",
+    "act": "Gravesteel Boots",
+    "n": 1,
+    "lvl": 90
+   },
+   {
+    "skill": "Crafting",
+    "act": "Starsteel Boots",
+    "n": 1,
+    "lvl": 90
+   },
+   {
+    "skill": "Crafting",
+    "act": "Moltensteel Boots",
+    "n": 1,
+    "lvl": 93
+   },
+   {
+    "skill": "Crafting",
+    "act": "Voidsteel Boots",
+    "n": 1,
+    "lvl": 96
+   },
+   {
+    "skill": "Crafting",
+    "act": "Wraithhide Boots",
+    "n": 1,
+    "lvl": 75
+   },
+   {
+    "skill": "Crafting",
+    "act": "Demonhide Boots",
+    "n": 1,
+    "lvl": 82
+   },
+   {
+    "skill": "Crafting",
+    "act": "Emberhide Boots",
+    "n": 1,
+    "lvl": 84
+   },
+   {
+    "skill": "Crafting",
+    "act": "Voidhide Boots",
+    "n": 1,
+    "lvl": 90
+   },
+   {
+    "skill": "Crafting",
+    "act": "Gravesteel Legs",
+    "n": 1,
+    "lvl": 92
+   },
+   {
+    "skill": "Crafting",
+    "act": "Starsteel Legs",
+    "n": 1,
+    "lvl": 92
+   },
+   {
+    "skill": "Crafting",
+    "act": "Moltensteel Legs",
+    "n": 1,
+    "lvl": 95
+   },
+   {
+    "skill": "Crafting",
+    "act": "Voidsteel Legs",
+    "n": 1,
+    "lvl": 98
+   },
+   {
+    "skill": "Crafting",
+    "act": "Wraithhide Chaps",
+    "n": 1,
+    "lvl": 75
+   },
+   {
+    "skill": "Crafting",
+    "act": "Demonhide Chaps",
+    "n": 1,
+    "lvl": 82
+   },
+   {
+    "skill": "Crafting",
+    "act": "Emberhide Chaps",
+    "n": 1,
+    "lvl": 84
+   },
+   {
+    "skill": "Crafting",
+    "act": "Voidhide Chaps",
+    "n": 1,
+    "lvl": 90
+   },
+   {
+    "skill": "Crafting",
+    "act": "Gravesteel Chest",
+    "n": 1,
+    "lvl": 94
+   },
+   {
+    "skill": "Crafting",
+    "act": "Starsteel Chest",
+    "n": 1,
+    "lvl": 94
+   },
+   {
+    "skill": "Crafting",
+    "act": "Moltensteel Chest",
+    "n": 1,
+    "lvl": 97
+   },
+   {
+    "skill": "Crafting",
+    "act": "Voidsteel Chest",
+    "n": 1,
+    "lvl": 99
+   },
+   {
+    "skill": "Crafting",
+    "act": "Wraithhide Jerkin",
+    "n": 1,
+    "lvl": 75
+   },
+   {
+    "skill": "Crafting",
+    "act": "Demonhide Jerkin",
+    "n": 1,
+    "lvl": 82
+   },
+   {
+    "skill": "Crafting",
+    "act": "Emberhide Jerkin",
+    "n": 1,
+    "lvl": 84
+   },
+   {
+    "skill": "Crafting",
+    "act": "Voidhide Jerkin",
+    "n": 1,
+    "lvl": 90
+   },
+   {
+    "skill": "Crafting",
+    "act": "Gravesteel Sword",
+    "n": 1,
+    "lvl": 96
+   },
+   {
+    "skill": "Crafting",
+    "act": "Starsteel Sword",
+    "n": 1,
+    "lvl": 96
+   },
+   {
+    "skill": "Crafting",
+    "act": "Moltensteel Sword",
+    "n": 1,
+    "lvl": 99
+   },
+   {
+    "skill": "Crafting",
+    "act": "Voidsteel Sword",
+    "n": 1,
+    "lvl": 99
+   },
+   {
+    "skill": "Crafting",
+    "act": "Gravesteel Dagger",
+    "n": 1,
+    "lvl": 96
+   },
+   {
+    "skill": "Crafting",
+    "act": "Starsteel Dagger",
+    "n": 1,
+    "lvl": 96
+   },
+   {
+    "skill": "Crafting",
+    "act": "Moltensteel Dagger",
+    "n": 1,
+    "lvl": 99
+   },
+   {
+    "skill": "Crafting",
+    "act": "Voidsteel Dagger",
+    "n": 1,
+    "lvl": 99
+   },
+   {
+    "skill": "Crafting",
+    "act": "Gravesteel Hammer",
+    "n": 1,
+    "lvl": 96
+   },
+   {
+    "skill": "Crafting",
+    "act": "Starsteel Hammer",
+    "n": 1,
+    "lvl": 96
+   },
+   {
+    "skill": "Crafting",
+    "act": "Moltensteel Hammer",
+    "n": 1,
+    "lvl": 99
+   },
+   {
+    "skill": "Crafting",
+    "act": "Voidsteel Hammer",
+    "n": 1,
+    "lvl": 99
+   },
+   {
+    "skill": "Crafting",
+    "act": "Gravesteel Shield",
+    "n": 1,
+    "lvl": 98
+   },
+   {
+    "skill": "Crafting",
+    "act": "Starsteel Shield",
+    "n": 1,
+    "lvl": 98
+   },
+   {
+    "skill": "Crafting",
+    "act": "Moltensteel Shield",
+    "n": 1,
+    "lvl": 99
+   },
+   {
+    "skill": "Crafting",
+    "act": "Voidsteel Shield",
+    "n": 1,
+    "lvl": 99
+   },
+   {
+    "skill": "Crafting",
+    "act": "Rhinohide Bulwark",
+    "n": 2,
+    "lvl": 88
+   },
+   {
+    "skill": "Crafting",
+    "act": "Starsteel Cape",
+    "n": 2,
+    "lvl": 90
+   },
+   {
+    "skill": "Fletching",
+    "act": "Carve Ancient shafts",
+    "n": 1,
+    "lvl": 90
+   },
+   {
+    "skill": "Fletching",
+    "act": "Carve an Ancient Shortbow",
+    "n": 6,
+    "lvl": 90
+   },
+   {
+    "skill": "Fletching",
+    "act": "Carve an Ancient Longbow",
+    "n": 9,
+    "lvl": 94
+   },
+   {
+    "skill": "Fletching",
+    "act": "Assemble a Starfall Crossbow",
+    "n": 5,
+    "lvl": 90
+   }
+  ],
+  "crucible_rune": [],
+  "flax": [
+   {
+    "skill": "Fletching",
+    "act": "Spin a bowstring",
+    "n": 3,
+    "lvl": 1
+   }
+  ],
+  "spider_silk": [
+   {
+    "skill": "Alchemy",
+    "act": "Bind Silk Poultice",
+    "n": 4,
+    "lvl": 10
+   }
+  ],
+  "cursed_dust": [
+   {
+    "skill": "Alchemy",
+    "act": "Temper Ironhide II (dust)",
+    "n": 3,
+    "lvl": 35
+   }
+  ],
+  "frostfur": [
+   {
+    "skill": "Alchemy",
+    "act": "Brew Berserker's II (fur)",
+    "n": 2,
+    "lvl": 45
+   }
+  ],
+  "seer_idol": [
+   {
+    "skill": "Alchemy",
+    "act": "Distill Keen Mind III",
+    "n": 2,
+    "lvl": 55
+   }
+  ],
+  "granite_core": [
+   {
+    "skill": "Alchemy",
+    "act": "Brew Regen Tonic (blood)",
+    "n": 1,
+    "lvl": 58
+   }
+  ],
+  "cinder_gland": [
+   {
+    "skill": "Alchemy",
+    "act": "Grind Honed Edge II (drake)",
+    "n": 2,
+    "lvl": 62
+   },
+   {
+    "skill": "Cooking",
+    "act": "Sear Drake Flank",
+    "n": 1,
+    "lvl": 72
+   }
+  ],
+  "linen": [],
+  "spidersilk": [],
+  "gravecloth": [],
+  "rimeweave": [],
+  "seercloth": [],
+  "stoneweave": [],
+  "wraithcloth": [
+   {
+    "skill": "Crafting",
+    "act": "Tan Wraithhide Leather",
+    "n": 1,
+    "lvl": 75
+   }
+  ],
+  "wyrmsilk": [],
+  "emberweave": [
+   {
+    "skill": "Crafting",
+    "act": "Tan Emberhide Leather",
+    "n": 1,
+    "lvl": 84
+   }
+  ],
+  "voidweave": [
+   {
+    "skill": "Crafting",
+    "act": "Tan Voidhide Leather",
+    "n": 1,
+    "lvl": 90
+   }
+  ],
+  "runed_bone": [],
+  "drakeforged_rune": [],
+  "riftshard": [],
+  "moonflower": [
+   {
+    "skill": "Alchemy",
+    "act": "Transmute Night Essence",
+    "n": 2,
+    "lvl": 58
+   }
+  ],
+  "ashbloom": [
+   {
+    "skill": "Alchemy",
+    "act": "Brew Honed Edge Potion II",
+    "n": 1,
+    "lvl": 62
+   },
+   {
+    "skill": "Alchemy",
+    "act": "Brew Berserker's Brew II",
+    "n": 1,
+    "lvl": 78
+   },
+   {
+    "skill": "Alchemy",
+    "act": "Brew Hawkeye Draught II",
+    "n": 1,
+    "lvl": 78
+   }
+  ],
+  "barrow_dust": [],
+  "rune_fragment": [],
+  "mana_essence": []
+ },
+ "made": {
+  "runestone": [],
+  "ash": [
+   {
+    "skill": "Firemaking",
+    "act": "Burn pine logs",
+    "n": 1,
+    "lvl": 1
+   },
+   {
+    "skill": "Firemaking",
+    "act": "Burn oak logs",
+    "n": 1,
+    "lvl": 10
+   },
+   {
+    "skill": "Firemaking",
+    "act": "Burn bleached driftwood",
+    "n": 1,
+    "lvl": 12
+   },
+   {
+    "skill": "Firemaking",
+    "act": "Burn ironbark logs",
+    "n": 1,
+    "lvl": 25
+   },
+   {
+    "skill": "Firemaking",
+    "act": "Burn emberwood logs",
+    "n": 1,
+    "lvl": 40
+   },
+   {
+    "skill": "Firemaking",
+    "act": "Burn frostwood logs",
+    "n": 1,
+    "lvl": 55
+   },
+   {
+    "skill": "Firemaking",
+    "act": "Burn shadowwood logs",
+    "n": 1,
+    "lvl": 70
+   },
+   {
+    "skill": "Firemaking",
+    "act": "Burn ancient logs",
+    "n": 1,
+    "lvl": 85
+   },
+   {
+    "skill": "Firemaking",
+    "act": "Burn deep amber",
+    "n": 1,
+    "lvl": 88
+   }
+  ],
+  "charcoal": [
+   {
+    "skill": "Firemaking",
+    "act": "Burn bleached driftwood",
+    "n": 1,
+    "lvl": 12
+   },
+   {
+    "skill": "Firemaking",
+    "act": "Burn ironbark logs",
+    "n": 1,
+    "lvl": 25
+   },
+   {
+    "skill": "Firemaking",
+    "act": "Burn emberwood logs",
+    "n": 1,
+    "lvl": 40
+   },
+   {
+    "skill": "Firemaking",
+    "act": "Burn frostwood logs",
+    "n": 2,
+    "lvl": 55
+   },
+   {
+    "skill": "Firemaking",
+    "act": "Burn shadowwood logs",
+    "n": 2,
+    "lvl": 70
+   },
+   {
+    "skill": "Firemaking",
+    "act": "Burn ancient logs",
+    "n": 3,
+    "lvl": 85
+   },
+   {
+    "skill": "Firemaking",
+    "act": "Burn deep amber",
+    "n": 3,
+    "lvl": 88
+   }
+  ],
+  "ember_dust": [
+   {
+    "skill": "Firemaking",
+    "act": "Burn emberwood logs",
+    "n": 1,
+    "lvl": 40
+   },
+   {
+    "skill": "Firemaking",
+    "act": "Burn frostwood logs",
+    "n": 1,
+    "lvl": 55
+   },
+   {
+    "skill": "Firemaking",
+    "act": "Burn shadowwood logs",
+    "n": 2,
+    "lvl": 70
+   },
+   {
+    "skill": "Firemaking",
+    "act": "Burn ancient logs",
+    "n": 2,
+    "lvl": 85
+   },
+   {
+    "skill": "Firemaking",
+    "act": "Burn deep amber",
+    "n": 3,
+    "lvl": 88
+   }
+  ],
+  "pine_log": [
+   {
+    "skill": "Woodcutting",
+    "act": "Chop pine saplings",
+    "n": 1,
+    "lvl": 1
+   }
+  ],
+  "ash_rune": [],
+  "oak_log": [
+   {
+    "skill": "Woodcutting",
+    "act": "Chop oaks",
+    "n": 1,
+    "lvl": 10
+   }
+  ],
+  "soot_rune": [],
+  "ironbark_log": [
+   {
+    "skill": "Woodcutting",
+    "act": "Chop ironbark",
+    "n": 1,
+    "lvl": 25
+   }
+  ],
+  "char_rune": [],
+  "arcane_dust": [
+   {
+    "skill": "Alchemy",
+    "act": "Transmute Arcane Dust",
+    "n": 1,
+    "lvl": 15
+   }
+  ],
+  "ember_log": [
+   {
+    "skill": "Woodcutting",
+    "act": "Chop emberwood",
+    "n": 1,
+    "lvl": 45
+   }
+  ],
+  "cinder_rune": [],
+  "frost_log": [
+   {
+    "skill": "Woodcutting",
+    "act": "Chop frostwood",
+    "n": 1,
+    "lvl": 65
+   }
+  ],
+  "kiln_rune": [],
+  "shadow_log": [
+   {
+    "skill": "Woodcutting",
+    "act": "Chop shadowwood",
+    "n": 1,
+    "lvl": 78
+   }
+  ],
+  "forge_rune": [],
+  "ancient_log": [
+   {
+    "skill": "Woodcutting",
+    "act": "Chop ancient oak",
+    "n": 1,
+    "lvl": 90
+   }
+  ],
+  "crucible_rune": [],
+  "flax": [
+   {
+    "skill": "Foraging",
+    "act": "Gather wild flax",
+    "n": 1,
+    "lvl": 1
+   }
+  ],
+  "spider_silk": [],
+  "cursed_dust": [],
+  "frostfur": [],
+  "seer_idol": [],
+  "granite_core": [],
+  "cinder_gland": [],
+  "linen": [],
+  "spidersilk": [],
+  "gravecloth": [],
+  "rimeweave": [],
+  "seercloth": [],
+  "stoneweave": [],
+  "wraithcloth": [],
+  "wyrmsilk": [],
+  "emberweave": [],
+  "voidweave": [],
+  "runed_bone": [],
+  "drakeforged_rune": [],
+  "riftshard": [],
+  "moonflower": [],
+  "ashbloom": [
+   {
+    "skill": "Foraging",
+    "act": "Pluck ashbloom",
+    "n": 1,
+    "lvl": 62
+   }
+  ],
+  "barrow_dust": [],
+  "rune_fragment": [],
+  "mana_essence": [
+   {
+    "skill": "Alchemy",
+    "act": "Transmute Bloom Essence",
+    "n": 1,
+    "lvl": 42
+   }
+  ]
+ },
+ "mon": {
+  "rat": {
+   "name": "Cave Rat",
+   "lvl": 1,
+   "zone": "Rat Warrens",
+   "boss": false
+  },
+  "plague_rat": {
+   "name": "Plague Rat",
+   "lvl": 3,
+   "zone": "Rat Warrens",
+   "boss": false
+  },
+  "dire_rat": {
+   "name": "Dire Rat",
+   "lvl": 6,
+   "zone": "Rat Warrens",
+   "boss": false
+  },
+  "brood_rat": {
+   "name": "Rat Brood Mother",
+   "lvl": 9,
+   "zone": "Rat Warrens",
+   "boss": false
+  },
+  "rat_queen": {
+   "name": "Rat Queen",
+   "lvl": 12,
+   "zone": "Rat Warrens",
+   "boss": true
+  },
+  "spider": {
+   "name": "Cave Spider",
+   "lvl": 5,
+   "zone": "Spider Hollow",
+   "boss": false
+  },
+  "web_weaver": {
+   "name": "Web Weaver",
+   "lvl": 8,
+   "zone": "Spider Hollow",
+   "boss": false
+  },
+  "venomfang": {
+   "name": "Venomfang",
+   "lvl": 11,
+   "zone": "Spider Hollow",
+   "boss": false
+  },
+  "brood_matron": {
+   "name": "Brood Matron",
+   "lvl": 14,
+   "zone": "Spider Hollow",
+   "boss": false
+  },
+  "silkweaver_queen": {
+   "name": "Silkweaver Queen",
+   "lvl": 17,
+   "zone": "Spider Hollow",
+   "boss": true
+  },
+  "goblin": {
+   "name": "Goblin",
+   "lvl": 10,
+   "zone": "Goblin Cave",
+   "boss": false
+  },
+  "goblin_archer": {
+   "name": "Goblin Archer",
+   "lvl": 13,
+   "zone": "Goblin Cave",
+   "boss": false
+  },
+  "goblin_brute": {
+   "name": "Goblin Brute",
+   "lvl": 16,
+   "zone": "Goblin Cave",
+   "boss": false
+  },
+  "goblin_shaman": {
+   "name": "Goblin Shaman",
+   "lvl": 19,
+   "zone": "Goblin Cave",
+   "boss": false
+  },
+  "goblin_warchief": {
+   "name": "Goblin Warchief",
+   "lvl": 22,
+   "zone": "Goblin Cave",
+   "boss": true
+  },
+  "skeleton": {
+   "name": "Skeleton",
+   "lvl": 18,
+   "zone": "Skeleton Crypt",
+   "boss": false
+  },
+  "skel_archer": {
+   "name": "Skeletal Archer",
+   "lvl": 21,
+   "zone": "Skeleton Crypt",
+   "boss": false
+  },
+  "crypt_wight": {
+   "name": "Crypt Wight",
+   "lvl": 24,
+   "zone": "Skeleton Crypt",
+   "boss": false
+  },
+  "bone_knight": {
+   "name": "Bone Knight",
+   "lvl": 27,
+   "zone": "Skeleton Crypt",
+   "boss": false
+  },
+  "lich": {
+   "name": "Lich",
+   "lvl": 30,
+   "zone": "Skeleton Crypt",
+   "boss": true
+  },
+  "wolf": {
+   "name": "Dire Wolf",
+   "lvl": 30,
+   "zone": "Wolf Den",
+   "boss": false
+  },
+  "frost_wolf": {
+   "name": "Frost Wolf",
+   "lvl": 33,
+   "zone": "Wolf Den",
+   "boss": false
+  },
+  "alpha_wolf": {
+   "name": "Alpha Wolf",
+   "lvl": 36,
+   "zone": "Wolf Den",
+   "boss": false
+  },
+  "pack_hunter": {
+   "name": "Pack Hunter",
+   "lvl": 39,
+   "zone": "Wolf Den",
+   "boss": false
+  },
+  "ironfang": {
+   "name": "Ironfang",
+   "lvl": 42,
+   "zone": "Wolf Den",
+   "boss": true
+  },
+  "ogre_grunt": {
+   "name": "Ogre Grunt",
+   "lvl": 44,
+   "zone": "Ogre Stronghold",
+   "boss": false
+  },
+  "ogre": {
+   "name": "Ogre",
+   "lvl": 47,
+   "zone": "Ogre Stronghold",
+   "boss": false
+  },
+  "ogre_houndmaster": {
+   "name": "Ogre Houndmaster",
+   "lvl": 50,
+   "zone": "Ogre Stronghold",
+   "boss": false
+  },
+  "ogre_seer": {
+   "name": "Ogre Seer",
+   "lvl": 53,
+   "zone": "Ogre Stronghold",
+   "boss": false
+  },
+  "ogre_warlord": {
+   "name": "Ogre Warlord",
+   "lvl": 56,
+   "zone": "Ogre Stronghold",
+   "boss": true
+  },
+  "cave_troll": {
+   "name": "Cave Troll",
+   "lvl": 58,
+   "zone": "Troll Caverns",
+   "boss": false
+  },
+  "troll": {
+   "name": "Stone Troll",
+   "lvl": 61,
+   "zone": "Troll Caverns",
+   "boss": false
+  },
+  "moss_troll": {
+   "name": "Moss Troll",
+   "lvl": 64,
+   "zone": "Troll Caverns",
+   "boss": false
+  },
+  "cavern_troll": {
+   "name": "Cavern Troll",
+   "lvl": 67,
+   "zone": "Troll Caverns",
+   "boss": false
+  },
+  "troll_king": {
+   "name": "Troll King",
+   "lvl": 70,
+   "zone": "Troll Caverns",
+   "boss": true
+  },
+  "drake": {
+   "name": "Crag Drake",
+   "lvl": 72,
+   "zone": "Wyvern Roost",
+   "boss": false
+  },
+  "wyvern": {
+   "name": "Ashwing Wyvern",
+   "lvl": 75,
+   "zone": "Wyvern Roost",
+   "boss": false
+  },
+  "cinder_drake": {
+   "name": "Cinder Drake",
+   "lvl": 78,
+   "zone": "Wyvern Roost",
+   "boss": false
+  },
+  "magma_wyrm": {
+   "name": "Magma Wyrm",
+   "lvl": 81,
+   "zone": "Wyvern Roost",
+   "boss": false
+  },
+  "emberwyrm": {
+   "name": "Emberwyrm",
+   "lvl": 84,
+   "zone": "Wyvern Roost",
+   "boss": true
+  },
+  "hellhound": {
+   "name": "Hellhound",
+   "lvl": 86,
+   "zone": "Demon Sanctum",
+   "boss": false
+  },
+  "demon": {
+   "name": "Sanctum Demon",
+   "lvl": 89,
+   "zone": "Demon Sanctum",
+   "boss": false
+  },
+  "abyssal_fiend": {
+   "name": "Abyssal Fiend",
+   "lvl": 92,
+   "zone": "Demon Sanctum",
+   "boss": false
+  },
+  "dread_knight": {
+   "name": "Dread Knight",
+   "lvl": 95,
+   "zone": "Demon Sanctum",
+   "boss": false
+  },
+  "demon_lord": {
+   "name": "Demon Lord",
+   "lvl": 99,
+   "zone": "Demon Sanctum",
+   "boss": true
+  },
+  "wild_boar": {
+   "name": "Wild Boar",
+   "lvl": 6,
+   "zone": "Thornwood Thicket",
+   "boss": false
+  },
+  "timber_wolf": {
+   "name": "Timber Wolf",
+   "lvl": 11,
+   "zone": "Thornwood Thicket",
+   "boss": false
+  },
+  "thornback_stag": {
+   "name": "Thornback Stag",
+   "lvl": 16,
+   "zone": "Thornwood Thicket",
+   "boss": false
+  },
+  "briar_lynx": {
+   "name": "Briar Lynx",
+   "lvl": 22,
+   "zone": "Thornwood Thicket",
+   "boss": false
+  },
+  "frost_bear": {
+   "name": "Frost Bear",
+   "lvl": 35,
+   "zone": "Frostfang Tundra",
+   "boss": false
+  },
+  "snow_leopard": {
+   "name": "Snow Leopard",
+   "lvl": 42,
+   "zone": "Frostfang Tundra",
+   "boss": false
+  },
+  "tundra_elk": {
+   "name": "Tundra Elk",
+   "lvl": 48,
+   "zone": "Frostfang Tundra",
+   "boss": false
+  },
+  "ice_mammoth": {
+   "name": "Ice Mammoth",
+   "lvl": 55,
+   "zone": "Frostfang Tundra",
+   "boss": false
+  },
+  "ash_jackal": {
+   "name": "Ash Jackal",
+   "lvl": 65,
+   "zone": "Ashen Steppe",
+   "boss": false
+  },
+  "cinder_boar": {
+   "name": "Cinder Boar",
+   "lvl": 72,
+   "zone": "Ashen Steppe",
+   "boss": false
+  },
+  "dust_stalker": {
+   "name": "Dust Stalker",
+   "lvl": 80,
+   "zone": "Ashen Steppe",
+   "boss": false
+  },
+  "scorch_rhino": {
+   "name": "Scorch Rhino",
+   "lvl": 88,
+   "zone": "Ashen Steppe",
+   "boss": false
+  }
+ },
+ "gear": {
+  "cobalt_chest": {
+   "name": "Cobalt Chest",
+   "st": {
+    "atk": 0,
+    "str": 0,
+    "def": 32
+   }
+  },
+  "cobalt_helm": {
+   "name": "Cobalt Helm",
+   "st": {
+    "atk": 0,
+    "str": 0,
+    "def": 14
+   }
+  },
+  "troll_chest": {
+   "name": "Trollhide Jerkin",
+   "st": {
+    "atk": 4,
+    "str": 0,
+    "def": 19,
+    "crit": 0.02
+   }
+  },
+  "seercloth_robe": {
+   "name": "Seercloth Robe",
+   "st": {
+    "atk": 2,
+    "str": 0,
+    "def": 12,
+    "runeSave": 0.015,
+    "mpow": 1
+   }
+  },
+  "frost_staff": {
+   "name": "Frostwood Staff",
+   "st": {
+    "atk": 17,
+    "str": 0,
+    "def": 0,
+    "crit": 0.08
+   }
+  },
+  "cobalt_buckler": {
+   "name": "Cobalt Buckler",
+   "st": {
+    "atk": 6,
+    "str": 0,
+    "def": 11,
+    "crit": 0.02,
+    "dodge": 0.02,
+    "aspd": 0.025,
+    "rstr": 1,
+    "mpow": 1
+   }
+  },
+  "dawnsteel_buckler": {
+   "name": "Dawnsteel Buckler",
+   "st": {
+    "atk": 11,
+    "str": 0,
+    "def": 27,
+    "crit": 0.045,
+    "dodge": 0.045,
+    "aspd": 0.05,
+    "rstr": 2,
+    "mpow": 2
+   }
+  },
+  "stonewright_gauntlets": {
+   "name": "Stonewright Gauntlets",
+   "st": {
+    "atk": 16,
+    "str": 0,
+    "def": 32,
+    "rstr": 2,
+    "mpow": 2
+   }
+  },
+  "faultward": {
+   "name": "Faultward",
+   "st": {
+    "atk": 0,
+    "str": 0,
+    "def": 118
+   }
+  }
+ },
+ "drops": {
+  "spider_silk": [
+   {
+    "who": "Cave Spider",
+    "zone": "Spider Hollow",
+    "lvl": 5,
+    "chance": 0.27,
+    "boss": false
+   },
+   {
+    "who": "Web Weaver",
+    "zone": "Spider Hollow",
+    "lvl": 8,
+    "chance": 0.33,
+    "boss": false
+   },
+   {
+    "who": "Venomfang",
+    "zone": "Spider Hollow",
+    "lvl": 11,
+    "chance": 0.21,
+    "boss": false
+   },
+   {
+    "who": "Silkweaver Queen",
+    "zone": "Spider Hollow",
+    "lvl": 17,
+    "chance": 0.65,
+    "boss": true
+   }
+  ],
+  "soot_rune": [
+   {
+    "who": "Goblin Shaman",
+    "zone": "Goblin Cave",
+    "lvl": 19,
+    "chance": 0.3,
+    "boss": false
+   },
+   {
+    "who": "Crypt Wight",
+    "zone": "Skeleton Crypt",
+    "lvl": 24,
+    "chance": 0.22,
+    "boss": false
+   }
+  ],
+  "cursed_dust": [
+   {
+    "who": "Skeleton",
+    "zone": "Skeleton Crypt",
+    "lvl": 18,
+    "chance": 0.08,
+    "boss": false
+   },
+   {
+    "who": "Skeletal Archer",
+    "zone": "Skeleton Crypt",
+    "lvl": 21,
+    "chance": 0.14,
+    "boss": false
+   },
+   {
+    "who": "Crypt Wight",
+    "zone": "Skeleton Crypt",
+    "lvl": 24,
+    "chance": 0.26,
+    "boss": false
+   },
+   {
+    "who": "Bone Knight",
+    "zone": "Skeleton Crypt",
+    "lvl": 27,
+    "chance": 0.14,
+    "boss": false
+   },
+   {
+    "who": "Lich",
+    "zone": "Skeleton Crypt",
+    "lvl": 30,
+    "chance": 0.7,
+    "boss": true
+   }
+  ],
+  "char_rune": [
+   {
+    "who": "Lich",
+    "zone": "Skeleton Crypt",
+    "lvl": 30,
+    "chance": 0.6,
+    "boss": true
+   }
+  ],
+  "frostfur": [
+   {
+    "who": "Frost Wolf",
+    "zone": "Wolf Den",
+    "lvl": 33,
+    "chance": 0.16,
+    "boss": false
+   },
+   {
+    "who": "Alpha Wolf",
+    "zone": "Wolf Den",
+    "lvl": 36,
+    "chance": 0.18,
+    "boss": false
+   },
+   {
+    "who": "Ironfang",
+    "zone": "Wolf Den",
+    "lvl": 42,
+    "chance": 0.7,
+    "boss": true
+   },
+   {
+    "who": "Snow Leopard",
+    "zone": "Frostfang Tundra",
+    "lvl": 42,
+    "chance": 0.1,
+    "boss": false
+   },
+   {
+    "who": "Ice Mammoth",
+    "zone": "Frostfang Tundra",
+    "lvl": 55,
+    "chance": 0.12,
+    "boss": false
+   }
+  ],
+  "seer_idol": [
+   {
+    "who": "Ogre Seer",
+    "zone": "Ogre Stronghold",
+    "lvl": 53,
+    "chance": 0.22,
+    "boss": false
+   },
+   {
+    "who": "Ogre Warlord",
+    "zone": "Ogre Stronghold",
+    "lvl": 56,
+    "chance": 0.5,
+    "boss": true
+   }
+  ],
+  "kiln_rune": [
+   {
+    "who": "Ogre Seer",
+    "zone": "Ogre Stronghold",
+    "lvl": 53,
+    "chance": 0.3,
+    "boss": false
+   }
+  ],
+  "granite_core": [
+   {
+    "who": "Cave Troll",
+    "zone": "Troll Caverns",
+    "lvl": 58,
+    "chance": 0.12,
+    "boss": false
+   },
+   {
+    "who": "Stone Troll",
+    "zone": "Troll Caverns",
+    "lvl": 61,
+    "chance": 0.16,
+    "boss": false
+   },
+   {
+    "who": "Cavern Troll",
+    "zone": "Troll Caverns",
+    "lvl": 67,
+    "chance": 0.2,
+    "boss": false
+   },
+   {
+    "who": "Troll King",
+    "zone": "Troll Caverns",
+    "lvl": 70,
+    "chance": 0.8,
+    "boss": true
+   }
+  ],
+  "cinder_gland": [
+   {
+    "who": "Ashwing Wyvern",
+    "zone": "Wyvern Roost",
+    "lvl": 75,
+    "chance": 0.07,
+    "boss": false
+   },
+   {
+    "who": "Cinder Drake",
+    "zone": "Wyvern Roost",
+    "lvl": 78,
+    "chance": 0.24,
+    "boss": false
+   },
+   {
+    "who": "Magma Wyrm",
+    "zone": "Wyvern Roost",
+    "lvl": 81,
+    "chance": 0.16,
+    "boss": false
+   },
+   {
+    "who": "Emberwyrm",
+    "zone": "Wyvern Roost",
+    "lvl": 84,
+    "chance": 0.6,
+    "boss": true
+   },
+   {
+    "who": "Cinder Boar",
+    "zone": "Ashen Steppe",
+    "lvl": 72,
+    "chance": 0.08,
+    "boss": false
+   }
+  ]
+ },
+ "zones": [
+  {
+   "id": "rat_warrens",
+   "name": "Rat Warrens",
+   "lvl": 1,
+   "hunt": false
+  },
+  {
+   "id": "spider_hollow",
+   "name": "Spider Hollow",
+   "lvl": 3,
+   "hunt": false
+  },
+  {
+   "id": "goblin_cave",
+   "name": "Goblin Cave",
+   "lvl": 8,
+   "hunt": false
+  },
+  {
+   "id": "skeleton_crypt",
+   "name": "Skeleton Crypt",
+   "lvl": 18,
+   "hunt": false
+  },
+  {
+   "id": "wolf_den",
+   "name": "Wolf Den",
+   "lvl": 28,
+   "hunt": false
+  },
+  {
+   "id": "ogre_stronghold",
+   "name": "Ogre Stronghold",
+   "lvl": 42,
+   "hunt": false
+  },
+  {
+   "id": "troll_caverns",
+   "name": "Troll Caverns",
+   "lvl": 58,
+   "hunt": false
+  },
+  {
+   "id": "wyvern_roost",
+   "name": "Wyvern Roost",
+   "lvl": 72,
+   "hunt": false
+  },
+  {
+   "id": "demon_sanctum",
+   "name": "Demon Sanctum",
+   "lvl": 86,
+   "hunt": false
+  },
+  {
+   "id": "thornwood",
+   "name": "Thornwood Thicket",
+   "lvl": 5,
+   "hunt": false
+  },
+  {
+   "id": "frostfang",
+   "name": "Frostfang Tundra",
+   "lvl": 35,
+   "hunt": false
+  },
+  {
+   "id": "ashen_steppe",
+   "name": "Ashen Steppe",
+   "lvl": 65,
+   "hunt": false
+  }
+ ],
+ "guilds": [
+  {
+   "id": "furrow",
+   "name": "The Furrow",
+   "skills": [
+    "farming"
+   ]
+  },
+  {
+   "id": "timber",
+   "name": "The Timberhall",
+   "skills": [
+    "woodcutting",
+    "firemaking"
+   ]
+  },
+  {
+   "id": "delvers",
+   "name": "The Delvers",
+   "skills": [
+    "mining"
+   ]
+  },
+  {
+   "id": "deepwater",
+   "name": "The Deepwater Company",
+   "skills": [
+    "fishing",
+    "cooking"
+   ]
+  },
+  {
+   "id": "emberforge",
+   "name": "The Emberforge",
+   "skills": [
+    "smithing",
+    "crafting"
+   ]
+  },
+  {
+   "id": "ashen",
+   "name": "The Ashen Circle",
+   "skills": [
+    "alchemy",
+    "foraging"
+   ]
+  },
+  {
+   "id": "facet",
+   "name": "The Gilded Facet",
+   "skills": [
+    "jeweler"
+   ]
+  },
+  {
+   "id": "night",
+   "name": "The Nightmarket",
+   "skills": [
+    "thieving"
+   ]
+  },
+  {
+   "id": "legion",
+   "name": "The Iron Legion",
+   "skills": []
+  },
+  {
+   "id": "quiethand",
+   "name": "The Quiet Hand",
+   "skills": []
+  }
+ ],
+ "capes": 15,
+ "raids": [
+  {
+   "id": "sunken_barrow",
+   "name": "The Sunken Barrow",
+   "lvl": 70,
+   "stages": 6,
+   "gear": [
+    [
+     "barrow_blade",
+     0.01
+    ],
+    [
+     "barrow_shield",
+     0.01
+    ],
+    [
+     "barrow_dagger",
+     0.01
+    ],
+    [
+     "barrow_maul",
+     0.01
+    ],
+    [
+     "grave_cleaver",
+     0.0022
+    ],
+    [
+     "barrow_chest",
+     0.018
+    ],
+    [
+     "barrow_legs",
+     0.018
+    ],
+    [
+     "wraithbound_cowl",
+     0.018
+    ],
+    [
+     "graveshroud_vest",
+     0.018
+    ],
+    [
+     "gravecall_staff",
+     0.01
+    ],
+    [
+     "barrow_wand",
+     0.01
+    ]
+   ]
+  },
+  {
+   "id": "emberforge",
+   "name": "The Emberforge Deep",
+   "lvl": 80,
+   "stages": 6,
+   "gear": [
+    [
+     "emberforged_blade",
+     0.01
+    ],
+    [
+     "cinderguard",
+     0.01
+    ],
+    [
+     "cinderfang",
+     0.01
+    ],
+    [
+     "slagbreaker",
+     0.01
+    ],
+    [
+     "forgebreaker",
+     0.0022
+    ],
+    [
+     "emberforged_aegis",
+     0.018
+    ],
+    [
+     "emberforged_greaves",
+     0.018
+    ],
+    [
+     "cinderweave_cowl",
+     0.018
+    ],
+    [
+     "emberhide_vest",
+     0.018
+    ],
+    [
+     "cindermantle",
+     0.018
+    ],
+    [
+     "slagfire_staff",
+     0.01
+    ],
+    [
+     "emberglass_wand",
+     0.01
+    ]
+   ]
+  },
+  {
+   "id": "abyssal_throne",
+   "name": "The Abyssal Throne",
+   "lvl": 90,
+   "stages": 7,
+   "gear": [
+    [
+     "voidrend",
+     0.01
+    ],
+    [
+     "nullward",
+     0.01
+    ],
+    [
+     "voidedge",
+     0.01
+    ],
+    [
+     "riftcrusher",
+     0.01
+    ],
+    [
+     "voidcleaver",
+     0.002
+    ],
+    [
+     "abyssal_aegis",
+     0.012
+    ],
+    [
+     "voidforged_greaves",
+     0.018
+    ],
+    [
+     "riftshadow_cowl",
+     0.018
+    ],
+    [
+     "voidheart_shroud",
+     0.018
+    ],
+    [
+     "voidshroud",
+     0.018
+    ],
+    [
+     "riftcaller",
+     0.01
+    ],
+    [
+     "nullspire_wand",
+     0.01
+    ]
+   ]
+  },
+  {
+   "id": "empyrean_throne",
+   "name": "The Empyrean Throne",
+   "lvl": 99,
+   "stages": 8,
+   "gear": [
+    [
+     "dawnbreaker",
+     0.01
+    ],
+    [
+     "starfang",
+     0.01
+    ],
+    [
+     "worldsunder_maul",
+     0.01
+    ],
+    [
+     "sunpiercer",
+     0.01
+    ],
+    [
+     "aegis_of_dawn",
+     0.01
+    ],
+    [
+     "dawnreaper",
+     0.002
+    ],
+    [
+     "dawnward_helm",
+     0.018
+    ],
+    [
+     "dawnward_chest",
+     0.018
+    ],
+    [
+     "dawnward_legs",
+     0.018
+    ],
+    [
+     "dawnward_boots",
+     0.018
+    ],
+    [
+     "sunweave_helm",
+     0.018
+    ],
+    [
+     "sunweave_chest",
+     0.018
+    ],
+    [
+     "sunweave_legs",
+     0.018
+    ],
+    [
+     "sunweave_boots",
+     0.018
+    ],
+    [
+     "dawnmantle",
+     0.018
+    ],
+    [
+     "dawncaller",
+     0.01
+    ],
+    [
+     "starcall_wand",
+     0.01
+    ],
+    [
+     "dawnveil_hood",
+     0.018
+    ],
+    [
+     "dawnveil_robe",
+     0.018
+    ],
+    [
+     "dawnveil_leggings",
+     0.018
+    ],
+    [
+     "dawnveil_slippers",
+     0.018
+    ]
+   ]
+  },
+  {
+   "id": "sundered_spire",
+   "name": "The Sundered Spire",
+   "lvl": 99,
+   "stages": 0,
+   "gear": []
+  }
+ ],
+ "spireGear": [
+  "sunderedge",
+  "faultward",
+  "plummet",
+  "stonewright_gauntlets",
+  "faultline"
+ ],
+ "ach": 62,
+ "actCounts": {
+  "woodcutting": 7,
+  "mining": 12,
+  "fishing": 8,
+  "foraging": 15,
+  "smithing": 30,
+  "alchemy": 50,
+  "firemaking": 9,
+  "agility": 8,
+  "thieving": 14,
+  "jeweler": 48,
+  "farming": 0,
+  "cooking": 31,
+  "crafting": 246,
+  "fletching": 69,
+  "runecrafting": 79
+ },
+ "treeNodes": {
+  "woodcutting": 14,
+  "mining": 14,
+  "fishing": 14,
+  "foraging": 12,
+  "smithing": 12,
+  "cooking": 14,
+  "alchemy": 14,
+  "firemaking": 14,
+  "thieving": 14,
+  "agility": 14,
+  "jeweler": 12,
+  "farming": 14,
+  "crafting": 12,
+  "fletching": 16,
+  "runecrafting": 16
+ }
+}
