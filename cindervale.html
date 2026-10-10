@@ -8407,6 +8407,9 @@ body:not(.is-demo) .demo-only{display:none !important}
 .cvammo .ev-icon{width:calc(13px*var(--tscale));height:calc(13px*var(--tscale))}
 /* A cast's damage number takes the colour of its element. */
 .cvsplat.el-fire{color:#ff9a4a}
+.cvsplat.el-frost{color:#9fd8f0}
+.cvsplat.el-storm{color:#cdbcff}
+.cvsplat.el-shadow{color:#b98be8}
 
 /* ── hit splats: a contained column over the foe, not the whole stage ─────
    Every offset is written out; do NOT reintroduce `inset-inline:auto` here. It is
@@ -15506,7 +15509,7 @@ const ICONS = {
   frost_staff: _staffSVG(MAGE_WOOD_PAL.frost), shadow_staff: _staffSVG(MAGE_WOOD_PAL.shadow), ancient_staff: _staffSVG(MAGE_WOOD_PAL.ancient),
   runecrafting: _runecraftSVG(),
   cape_runecrafting: _runeCapeSVG(),
-  el_fire: _elementSVG('fire'),
+  el_fire: _elementSVG('fire'), el_frost: _elementSVG('frost'), el_storm: _elementSVG('storm'), el_shadow: _elementSVG('shadow'),
 };
 /* The five charms are painted art (0.9.122.29); _charmSVG and the loop that
    merged its output into ICONS went with them. */
@@ -18141,7 +18144,7 @@ const TREES = {
     /* Says which effects, because it is true of those two only: Storm's sure cast
        has Clear Sight, and Shadow heals on every hit already. */
     N('rn_brand','Branded',RN_TREE_ICONS.rn_brand,7,60,   // 7: the tree sums to exactly 98
-      r=>'+'+fmtRank(r*RN_BRAND_RANK*100)+'% chance a Fire hit burns', r=>'+'+fmtRank(RN_BRAND_RANK*100)+'% to +'+fmtRank(r*RN_BRAND_RANK*100)+'%'),
+      r=>'+'+fmtRank(r*RN_BRAND_RANK*100)+'% chance a Fire hit burns or a Frost hit chills', r=>'+'+fmtRank(RN_BRAND_RANK*100)+'% to +'+fmtRank(r*RN_BRAND_RANK*100)+'%'),
     N('rn_gm_speed','Swift Kiln',RN_TREE_ICONS.rn_gm_speed,5,75,
       r=>'Reduces task time by '+(r*1.8).toFixed(1)+'% (grandmaster)', r=>'+1.8% faster to '+(r*1.8).toFixed(1)+'%'),
     N('rn_gm_xp','Stone Memory',RN_TREE_ICONS.rn_gm_xp,5,75,
@@ -23691,11 +23694,28 @@ function magicStyle(){
      storm   the pierce roll     Plummet and Windcutter
      shadow  the lifesteal line  Lifeblood and Bloodthirst
    `lvl` is the Magic level that opens it. `word` is what the button says when the
-   monster in front of you is neither weak to it nor resists it. */
+   monster in front of you is neither weak to it nor resists it.
+
+   Every monster is weak to one element and most resist one (`weakEl` and
+   `resistEl` on its row), written zone by zone so that no element is the answer
+   everywhere and each has somewhere it is wrong. Nothing a new mage can reach
+   resists Fire, the only element below Magic 12. Frost opens with the Goblin Cave,
+   Storm with the Wolf Den, and Shadow at 50, the level of the first Ogre that is
+   weak to it. Raid stages and Spire monsters carry the two fields as well, and a
+   Spire floor that borrows a monster copies them with its weakness. */
 const MAGIC_ELEMENTS=[
   {k:'fire',   n:'Fire',   lvl:1,  col:'#e0762f', word:'burns',
    rider:{burn:0.024},
    line:'A hit can set the monster on fire. It burns for 8 seconds.'},
+  {k:'frost',  n:'Frost',  lvl:12, col:'#7fb8d4', word:'slows',
+   rider:{chill:{chance:0.30, slow:0.25, ms:6000}},
+   line:'A hit can chill the monster. It attacks 25% slower for 6 seconds.'},
+  {k:'storm',  n:'Storm',  lvl:30, col:'#b9a4f0', word:'cannot miss',
+   rider:{pierce:0.04},
+   line:'4% of casts cannot miss.'},
+  {k:'shadow', n:'Shadow', lvl:50, col:'#9a5ad0', word:'heals you',
+   rider:{leech:0.03},
+   line:'You heal for 3% of the damage you deal.'},
 ];
 const ELEMENT_BY={}; MAGIC_ELEMENTS.forEach(e=>{ ELEMENT_BY[e.k]=e; });
 const ELEMENT_WEAK_MULT=1.15, ELEMENT_RESIST_MULT=0.85;   // the 15% a sword's damage type gets. One number.
@@ -31833,6 +31853,15 @@ function buildMonLogHTML(){
           <span class="mldt-tag${sel.resistTo?' resist':' none'}"><span class="mldt-t"><span class="mldt-k">Resists</span>
             <span class="mldt-v">${sel.resistTo||'nothing'}</span></span>
             <span class="mldt-n">${sel.resistTo?'−15%':''}</span></span>
+          <!-- The element it is weak to and the one it resists (0.9.127.4), in the
+               same two tags. A mage reads these the way a fighter reads the pair
+               before them. -->
+          <span class="mldt-tag${sel.weakEl?' weak':' none'}"><span class="mldt-t"><span class="mldt-k">Weak to</span>
+            <span class="mldt-v">${sel.weakEl?ELEMENT_BY[sel.weakEl].n:'no element'}</span></span>
+            <span class="mldt-n">${sel.weakEl?'+15%':''}</span></span>
+          <span class="mldt-tag${sel.resistEl?' resist':' none'}"><span class="mldt-t"><span class="mldt-k">Resists</span>
+            <span class="mldt-v">${sel.resistEl?ELEMENT_BY[sel.resistEl].n:'no element'}</span></span>
+            <span class="mldt-n">${sel.resistEl?'−15%':''}</span></span>
           <span class="mldt-tag swings"><span class="mldt-t"><span class="mldt-k">Damage type</span>
             <span class="mldt-v">${sel.dmgType||'—'}</span></span></span>
           <!-- Family was derivable from the zone since 0.9.121.15 and displayed
@@ -31988,7 +32017,9 @@ function buildRaidLogBody(raid){
   const sKills=(state.monKills&&state.monKills[sel.id])||0;
   const headSub=`${sel.raidBoss?'Final Boss':(sel.miniBoss?'Mini-Boss':'Stage '+(idx+1)+'/'+raid.stages.length)} · Lv ${sel.lvl} · ${raid.name}`;
   const _wIco=t=>iconHTML('bronze_'+(t==='slash'?'sword':t==='stab'?'dagger':'hammer'));
-  const dmgTags=(sel.weakTo||sel.resistTo)?`<div class="mlog-dmgtype">
+  const dmgTags=(sel.weakTo||sel.resistTo||sel.weakEl||sel.resistEl)?`<div class="mlog-dmgtype">
+      ${sel.weakEl?`<span class="mldt-tag weak"><span class="mldt-icon">${iconHTML('el_'+sel.weakEl)}</span><span class="mldt-lbl">Weak to ${ELEMENT_BY[sel.weakEl].n}</span><span class="mldt-val">+15% dmg</span></span>`:''}
+      ${sel.resistEl?`<span class="mldt-tag resist"><span class="mldt-icon">${iconHTML('el_'+sel.resistEl)}</span><span class="mldt-lbl">Resists ${ELEMENT_BY[sel.resistEl].n}</span><span class="mldt-val">−15% dmg</span></span>`:''}
       ${sel.weakTo?`<span class="mldt-tag weak"><span class="mldt-icon">${_wIco(sel.weakTo)}</span><span class="mldt-lbl">Weak to ${sel.weakTo}</span><span class="mldt-val">+15% dmg</span></span>`:''}
       ${sel.resistTo?`<span class="mldt-tag resist"><span class="mldt-icon">${_wIco(sel.resistTo)}</span><span class="mldt-lbl">Resists ${sel.resistTo}</span><span class="mldt-val">−15% dmg</span></span>`:''}
     </div>`:'';
@@ -33326,92 +33357,92 @@ const MONSTERS=[
   // flavor only — used by combat tick to roll player-vs-foe matchups.
   // weakTo / resistTo: damage TYPES the foe is vulnerable to / resists when YOU
   // strike them with that weapon style. Wired into combatTick (±15% dmg, see [JS-CMB]).
-  {id:'rat',         zone:'rat_warrens', name:'Cave Rat',         icon:'🐀', lvl:1,  hp:50,  atk:14,   str:4,   def:7,   coins:3,   xp:8,   swingMs:1700, dmgType:'stab',  weakTo:'crush'},
-  {id:'plague_rat',  zone:'rat_warrens', name:'Plague Rat',       icon:'🐀', lvl:3,  hp:63,  atk:16,   str:8,   def:8,   coins:6,   xp:14,  swingMs:1600, dmgType:'stab',  weakTo:'crush'},
-  {id:'dire_rat',    zone:'rat_warrens', name:'Dire Rat',         icon:'🐀', lvl:6,  hp:84,  atk:19,   str:14,   def:10,   coins:12,  xp:24,  swingMs:1700, dmgType:'stab',  weakTo:'crush'},
-  {id:'brood_rat',   zone:'rat_warrens', name:'Rat Brood Mother', icon:'🐀', lvl:9,  hp:134,  atk:27,  str:29,  def:17,  coins:22,  xp:42,  swingMs:2000, dmgType:'crush', weakTo:'crush'},
-  {id:'rat_queen',   zone:'rat_warrens', name:'Rat Queen',        icon:'👑', lvl:12, hp:439, atk:71,  str:52,  def:39,  coins:60,  xp:130, swingMs:2400, boss:true, bossReq:'royal_rat_sigil', dmgType:'slash', weakTo:'crush'},
+  {id:'rat',         zone:'rat_warrens', name:'Cave Rat',         icon:'🐀', lvl:1,  hp:50,  atk:14,   str:4,   def:7,   coins:3,   xp:8,   swingMs:1700, dmgType:'stab',  weakTo:'crush', weakEl:'fire'},
+  {id:'plague_rat',  zone:'rat_warrens', name:'Plague Rat',       icon:'🐀', lvl:3,  hp:63,  atk:16,   str:8,   def:8,   coins:6,   xp:14,  swingMs:1600, dmgType:'stab',  weakTo:'crush', weakEl:'fire'},
+  {id:'dire_rat',    zone:'rat_warrens', name:'Dire Rat',         icon:'🐀', lvl:6,  hp:84,  atk:19,   str:14,   def:10,   coins:12,  xp:24,  swingMs:1700, dmgType:'stab',  weakTo:'crush', weakEl:'fire'},
+  {id:'brood_rat',   zone:'rat_warrens', name:'Rat Brood Mother', icon:'🐀', lvl:9,  hp:134,  atk:27,  str:29,  def:17,  coins:22,  xp:42,  swingMs:2000, dmgType:'crush', weakTo:'crush', weakEl:'fire'},
+  {id:'rat_queen',   zone:'rat_warrens', name:'Rat Queen',        icon:'👑', lvl:12, hp:439, atk:71,  str:52,  def:39,  coins:60,  xp:130, swingMs:2400, boss:true, bossReq:'royal_rat_sigil', dmgType:'slash', weakTo:'crush', weakEl:'fire'},
   // ── Spider Hollow ─────────────────────────────────────────────────────────
-  {id:'spider',           zone:'spider_hollow', name:'Cave Spider',     icon:'🕷️', lvl:5,  hp:76,  atk:18,   str:12,   def:9,   coins:8,   xp:18,  swingMs:1500, dmgType:'stab', weakTo:'crush', resistTo:'stab'},
-  {id:'web_weaver',       zone:'spider_hollow', name:'Web Weaver',      icon:'🕷️', lvl:8,  hp:97,  atk:21,  str:18,   def:11,   coins:14,  xp:28,  swingMs:1700, dmgType:'stab', weakTo:'crush', resistTo:'stab'},
-  {id:'venomfang',        zone:'spider_hollow', name:'Venomfang',       icon:'🕷️', lvl:11, hp:160,  atk:38,  str:26,  def:16,  coins:22,  xp:44,  swingMs:1600, dmgType:'stab', weakTo:'crush', resistTo:'stab'},
-  {id:'brood_matron',     zone:'spider_hollow', name:'Brood Matron',    icon:'🕷️', lvl:14, hp:234, atk:50,  str:46,  def:26,  coins:35,  xp:70,  swingMs:2100, dmgType:'stab', weakTo:'crush', resistTo:'stab'},
-  {id:'silkweaver_queen', zone:'spider_hollow', name:'Silkweaver Queen',icon:'👑', lvl:17, hp:529, atk:79,  str:71,  def:47,  coins:90,  xp:175, swingMs:2500, boss:true, bossReq:'silken_sigil', dmgType:'stab', weakTo:'crush', resistTo:'stab'},
+  {id:'spider',           zone:'spider_hollow', name:'Cave Spider',     icon:'🕷️', lvl:5,  hp:76,  atk:18,   str:12,   def:9,   coins:8,   xp:18,  swingMs:1500, dmgType:'stab', weakTo:'crush', resistTo:'stab', weakEl:'fire'},
+  {id:'web_weaver',       zone:'spider_hollow', name:'Web Weaver',      icon:'🕷️', lvl:8,  hp:97,  atk:21,  str:18,   def:11,   coins:14,  xp:28,  swingMs:1700, dmgType:'stab', weakTo:'crush', resistTo:'stab', weakEl:'fire'},
+  {id:'venomfang',        zone:'spider_hollow', name:'Venomfang',       icon:'🕷️', lvl:11, hp:160,  atk:38,  str:26,  def:16,  coins:22,  xp:44,  swingMs:1600, dmgType:'stab', weakTo:'crush', resistTo:'stab', weakEl:'fire', resistEl:'shadow'},
+  {id:'brood_matron',     zone:'spider_hollow', name:'Brood Matron',    icon:'🕷️', lvl:14, hp:234, atk:50,  str:46,  def:26,  coins:35,  xp:70,  swingMs:2100, dmgType:'stab', weakTo:'crush', resistTo:'stab', weakEl:'fire', resistEl:'frost'},
+  {id:'silkweaver_queen', zone:'spider_hollow', name:'Silkweaver Queen',icon:'👑', lvl:17, hp:529, atk:79,  str:71,  def:47,  coins:90,  xp:175, swingMs:2500, boss:true, bossReq:'silken_sigil', dmgType:'stab', weakTo:'crush', resistTo:'stab', weakEl:'fire', resistEl:'frost'},
   // ── Goblin Cave ───────────────────────────────────────────────────────────
-  {id:'goblin',          zone:'goblin_cave', name:'Goblin',           icon:'👺', lvl:10, hp:151,  atk:37,  str:24,   def:15,   coins:15,  xp:30,  swingMs:2000, dmgType:'slash', weakTo:'slash'},
-  {id:'goblin_archer',   zone:'goblin_cave', name:'Goblin Archer',    icon:'🏹', lvl:13, hp:172,  atk:40,  str:30,  def:18,   coins:22,  xp:46,  swingMs:1500, dmgType:'stab',  weakTo:'slash'},
-  {id:'goblin_brute',    zone:'goblin_cave', name:'Goblin Brute',     icon:'👹', lvl:16, hp:193, atk:43,  str:37,  def:19,  coins:38,  xp:76,  swingMs:2400, dmgType:'slash', weakTo:'stab',  resistTo:'slash'},
-  {id:'goblin_shaman',   zone:'goblin_cave', name:'Goblin Shaman',    icon:'🧙', lvl:19, hp:279, atk:56,  str:61,  def:31,  coins:50,  xp:100, swingMs:2000, dmgType:'crush', weakTo:'slash'},
-  {id:'goblin_warchief', zone:'goblin_cave', name:'Goblin Warchief',  icon:'👑', lvl:22, hp:731, atk:122,  str:94,  def:68,  coins:130, xp:250, swingMs:2600, boss:true, bossReq:'warchief_banner', dmgType:'slash', weakTo:'stab', resistTo:'slash'},
+  {id:'goblin',          zone:'goblin_cave', name:'Goblin',           icon:'👺', lvl:10, hp:151,  atk:37,  str:24,   def:15,   coins:15,  xp:30,  swingMs:2000, dmgType:'slash', weakTo:'slash', weakEl:'frost'},
+  {id:'goblin_archer',   zone:'goblin_cave', name:'Goblin Archer',    icon:'🏹', lvl:13, hp:172,  atk:40,  str:30,  def:18,   coins:22,  xp:46,  swingMs:1500, dmgType:'stab',  weakTo:'slash', weakEl:'frost'},
+  {id:'goblin_brute',    zone:'goblin_cave', name:'Goblin Brute',     icon:'👹', lvl:16, hp:193, atk:43,  str:37,  def:19,  coins:38,  xp:76,  swingMs:2400, dmgType:'slash', weakTo:'stab',  resistTo:'slash', weakEl:'frost'},
+  {id:'goblin_shaman',   zone:'goblin_cave', name:'Goblin Shaman',    icon:'🧙', lvl:19, hp:279, atk:56,  str:61,  def:31,  coins:50,  xp:100, swingMs:2000, dmgType:'crush', weakTo:'slash', weakEl:'frost', resistEl:'fire'},
+  {id:'goblin_warchief', zone:'goblin_cave', name:'Goblin Warchief',  icon:'👑', lvl:22, hp:731, atk:122,  str:94,  def:68,  coins:130, xp:250, swingMs:2600, boss:true, bossReq:'warchief_banner', dmgType:'slash', weakTo:'stab', resistTo:'slash', weakEl:'frost', resistEl:'fire'},
   // ── Skeleton Crypt (1.0.93) ────────────────────────────────────────────────
   // Undead: bones SHATTER under crushing weapons but laugh off slashes. Wights
   // are insubstantial flesh — slashes find them; crushes pass through.
-  {id:'skeleton',     zone:'skeleton_crypt', name:'Skeleton',         icon:'💀', lvl:18, hp:206,  atk:45, str:41, def:21, coins:25,  xp:50,  swingMs:2100, dmgType:'crush', weakTo:'crush', resistTo:'slash'},
-  {id:'skel_archer',  zone:'skeleton_crypt', name:'Skeletal Archer',  icon:'💀', lvl:21, hp:269, atk:65, str:49, def:29, coins:35,  xp:70,  swingMs:1600, dmgType:'stab',  weakTo:'crush', resistTo:'slash'},
-  {id:'crypt_wight',  zone:'skeleton_crypt', name:'Crypt Wight',      icon:'👻', lvl:24, hp:286, atk:69, str:56, def:30, coins:50,  xp:100, swingMs:2300, dmgType:'slash', weakTo:'slash', resistTo:'crush'},
-  {id:'bone_knight',  zone:'skeleton_crypt', name:'Bone Knight',      icon:'⚔️', lvl:27, hp:407, atk:87, str:87, def:47, coins:75,  xp:150, swingMs:2600, dmgType:'crush', weakTo:'crush', resistTo:'stab'},
-  {id:'lich',         zone:'skeleton_crypt', name:'Lich',             icon:'👑', lvl:30, hp:1046, atk:174, str:128, def:98, coins:200, xp:360, swingMs:2800, boss:true, bossReq:'lich_phylactery', dmgType:'slash', weakTo:'slash', resistTo:'crush'},
+  {id:'skeleton',     zone:'skeleton_crypt', name:'Skeleton',         icon:'💀', lvl:18, hp:206,  atk:45, str:41, def:21, coins:25,  xp:50,  swingMs:2100, dmgType:'crush', weakTo:'crush', resistTo:'slash', weakEl:'fire', resistEl:'frost'},
+  {id:'skel_archer',  zone:'skeleton_crypt', name:'Skeletal Archer',  icon:'💀', lvl:21, hp:269, atk:65, str:49, def:29, coins:35,  xp:70,  swingMs:1600, dmgType:'stab',  weakTo:'crush', resistTo:'slash', weakEl:'fire', resistEl:'frost'},
+  {id:'crypt_wight',  zone:'skeleton_crypt', name:'Crypt Wight',      icon:'👻', lvl:24, hp:286, atk:69, str:56, def:30, coins:50,  xp:100, swingMs:2300, dmgType:'slash', weakTo:'slash', resistTo:'crush', weakEl:'fire', resistEl:'shadow'},
+  {id:'bone_knight',  zone:'skeleton_crypt', name:'Bone Knight',      icon:'⚔️', lvl:27, hp:407, atk:87, str:87, def:47, coins:75,  xp:150, swingMs:2600, dmgType:'crush', weakTo:'crush', resistTo:'stab', weakEl:'storm', resistEl:'frost'},
+  {id:'lich',         zone:'skeleton_crypt', name:'Lich',             icon:'👑', lvl:30, hp:1046, atk:174, str:128, def:98, coins:200, xp:360, swingMs:2800, boss:true, bossReq:'lich_phylactery', dmgType:'slash', weakTo:'slash', resistTo:'crush', weakEl:'fire', resistEl:'storm'},
   // ── Wolf Den (1.0.93) ─────────────────────────────────────────────────────
   // Beasts: fast, claw-and-fang, lightly armored. Stab finds the gap between
   // ribs; crush bounces off thick winter pelts. Ironfang's scarred hide turns
   // most blades — only a precise thrust gets through.
-  {id:'wolf',         zone:'wolf_den', name:'Dire Wolf',         icon:'🐺', lvl:30, hp:391, atk:95, str:71, def:42, coins:55,  xp:90,  swingMs:1600, dmgType:'slash', weakTo:'stab'},
-  {id:'frost_wolf',   zone:'wolf_den', name:'Frost Wolf',        icon:'🐺', lvl:33, hp:412, atk:98, str:77, def:44, coins:75,  xp:130, swingMs:1700, dmgType:'slash', weakTo:'slash', resistTo:'crush'},
-  {id:'alpha_wolf',   zone:'wolf_den', name:'Alpha Wolf',        icon:'🐺', lvl:36, hp:433, atk:101, str:83, def:46, coins:105, xp:180, swingMs:1800, dmgType:'slash', weakTo:'stab'},
-  {id:'pack_hunter',  zone:'wolf_den', name:'Pack Hunter',       icon:'🐺', lvl:39, hp:597, atk:127, str:126, def:68, coins:145, xp:235, swingMs:1500, dmgType:'stab',  weakTo:'crush'},
-  {id:'ironfang',     zone:'wolf_den', name:'Ironfang',          icon:'👑', lvl:42, hp:1485, atk:241, str:180, def:137, coins:290, xp:460, swingMs:2400, boss:true, bossReq:'ironfang_pelt', dmgType:'stab', weakTo:'stab', resistTo:'crush'},
+  {id:'wolf',         zone:'wolf_den', name:'Dire Wolf',         icon:'🐺', lvl:30, hp:391, atk:95, str:71, def:42, coins:55,  xp:90,  swingMs:1600, dmgType:'slash', weakTo:'stab', weakEl:'storm'},
+  {id:'frost_wolf',   zone:'wolf_den', name:'Frost Wolf',        icon:'🐺', lvl:33, hp:412, atk:98, str:77, def:44, coins:75,  xp:130, swingMs:1700, dmgType:'slash', weakTo:'slash', resistTo:'crush', weakEl:'fire', resistEl:'frost'},
+  {id:'alpha_wolf',   zone:'wolf_den', name:'Alpha Wolf',        icon:'🐺', lvl:36, hp:433, atk:101, str:83, def:46, coins:105, xp:180, swingMs:1800, dmgType:'slash', weakTo:'stab', weakEl:'storm'},
+  {id:'pack_hunter',  zone:'wolf_den', name:'Pack Hunter',       icon:'🐺', lvl:39, hp:597, atk:127, str:126, def:68, coins:145, xp:235, swingMs:1500, dmgType:'stab',  weakTo:'crush', weakEl:'storm', resistEl:'shadow'},
+  {id:'ironfang',     zone:'wolf_den', name:'Ironfang',          icon:'👑', lvl:42, hp:1485, atk:241, str:180, def:137, coins:290, xp:460, swingMs:2400, boss:true, bossReq:'ironfang_pelt', dmgType:'stab', weakTo:'stab', resistTo:'crush', weakEl:'storm', resistEl:'frost'},
   // ── Ogre Stronghold (1.0.1) — full tier: 4 standard + Ogre Warlord boss ─────
   // Crush brutes weak to slash; the Houndmaster is a fast slasher (weak to stab)
   // and the Seer resists stab — style-swap zone. Boss gated by warlord_totem.
-  {id:'ogre_grunt',       zone:'ogre_stronghold', name:'Ogre Grunt',       icon:'👹', lvl:44, hp:567,  atk:134,  str:103,  def:60,  coins:165, xp:255, swingMs:2600, dmgType:'crush', weakTo:'slash'},
-  {id:'ogre',             zone:'ogre_stronghold', name:'Ogre',             icon:'👹', lvl:47, hp:588,  atk:137,  str:109,  def:62,  coins:200, xp:310, swingMs:2800, dmgType:'crush', weakTo:'slash', resistTo:'crush'},
-  {id:'ogre_houndmaster', zone:'ogre_stronghold', name:'Ogre Houndmaster', icon:'👹', lvl:50, hp:609,  atk:140,  str:115,  def:64,  coins:245, xp:380, swingMs:2000, dmgType:'slash', weakTo:'stab'},
-  {id:'ogre_seer',        zone:'ogre_stronghold', name:'Ogre Seer',        icon:'👹', lvl:53, hp:837,  atk:175, str:172,  def:94,  coins:295, xp:460, swingMs:2200, dmgType:'crush', weakTo:'slash', resistTo:'stab'},
-  {id:'ogre_warlord',     zone:'ogre_stronghold', name:'Ogre Warlord',     icon:'👑', lvl:56, hp:2025, atk:321, str:240, def:182, coins:580, xp:820, swingMs:2900, boss:true, bossReq:'warlord_totem', dmgType:'crush', weakTo:'slash', resistTo:'crush'},
+  {id:'ogre_grunt',       zone:'ogre_stronghold', name:'Ogre Grunt',       icon:'👹', lvl:44, hp:567,  atk:134,  str:103,  def:60,  coins:165, xp:255, swingMs:2600, dmgType:'crush', weakTo:'slash', weakEl:'frost'},
+  {id:'ogre',             zone:'ogre_stronghold', name:'Ogre',             icon:'👹', lvl:47, hp:588,  atk:137,  str:109,  def:62,  coins:200, xp:310, swingMs:2800, dmgType:'crush', weakTo:'slash', resistTo:'crush', weakEl:'frost'},
+  {id:'ogre_houndmaster', zone:'ogre_stronghold', name:'Ogre Houndmaster', icon:'👹', lvl:50, hp:609,  atk:140,  str:115,  def:64,  coins:245, xp:380, swingMs:2000, dmgType:'slash', weakTo:'stab', weakEl:'shadow', resistEl:'fire'},
+  {id:'ogre_seer',        zone:'ogre_stronghold', name:'Ogre Seer',        icon:'👹', lvl:53, hp:837,  atk:175, str:172,  def:94,  coins:295, xp:460, swingMs:2200, dmgType:'crush', weakTo:'slash', resistTo:'stab', weakEl:'shadow', resistEl:'storm'},
+  {id:'ogre_warlord',     zone:'ogre_stronghold', name:'Ogre Warlord',     icon:'👑', lvl:56, hp:2025, atk:321, str:240, def:182, coins:580, xp:820, swingMs:2900, boss:true, bossReq:'warlord_totem', dmgType:'crush', weakTo:'slash', resistTo:'crush', weakEl:'shadow', resistEl:'fire'},
   // ── Troll Caverns ─────────────────────────────────────────────────────────
   // ── Troll Caverns (1.0.3) — full tier: 4 trolls + Troll King boss ───────────
   // Slow crush brutes with stony hides. Stone Troll resists crush (rock plate);
   // Moss Troll regenerates (flavor); Cavern Troll is the red-eyed bruiser.
-  {id:'cave_troll',   zone:'troll_caverns', name:'Cave Troll',    icon:'🗿', lvl:58, hp:769,  atk:178, str:136, def:79, coins:620,  xp:860,  swingMs:3000, dmgType:'crush', weakTo:'slash'},
-  {id:'troll',        zone:'troll_caverns', name:'Stone Troll',   icon:'🗿', lvl:61, hp:790, atk:180, str:142, def:81, coins:700,  xp:980,  swingMs:3200, dmgType:'crush', weakTo:'stab',  resistTo:'crush'},
-  {id:'moss_troll',   zone:'troll_caverns', name:'Moss Troll',    icon:'🗿', lvl:64, hp:806, atk:183, str:148, def:83, coins:800,  xp:1120, swingMs:2900, dmgType:'crush', weakTo:'slash'},
-  {id:'cavern_troll', zone:'troll_caverns', name:'Cavern Troll',  icon:'🗿', lvl:67, hp:1099, atk:227, str:218, def:122, coins:920,  xp:1290, swingMs:3100, dmgType:'crush', weakTo:'stab'},
-  {id:'troll_king',   zone:'troll_caverns', name:'Troll King',    icon:'👑', lvl:70, hp:2610, atk:411, str:300, def:235, coins:1350, xp:1980, swingMs:3300, boss:true, bossReq:'granite_sigil', dmgType:'crush', weakTo:'slash', resistTo:'crush'},
+  {id:'cave_troll',   zone:'troll_caverns', name:'Cave Troll',    icon:'🗿', lvl:58, hp:769,  atk:178, str:136, def:79, coins:620,  xp:860,  swingMs:3000, dmgType:'crush', weakTo:'slash', weakEl:'storm', resistEl:'shadow'},
+  {id:'troll',        zone:'troll_caverns', name:'Stone Troll',   icon:'🗿', lvl:61, hp:790, atk:180, str:142, def:81, coins:700,  xp:980,  swingMs:3200, dmgType:'crush', weakTo:'stab',  resistTo:'crush', weakEl:'storm', resistEl:'fire'},
+  {id:'moss_troll',   zone:'troll_caverns', name:'Moss Troll',    icon:'🗿', lvl:64, hp:806, atk:183, str:148, def:83, coins:800,  xp:1120, swingMs:2900, dmgType:'crush', weakTo:'slash', weakEl:'fire', resistEl:'frost'},
+  {id:'cavern_troll', zone:'troll_caverns', name:'Cavern Troll',  icon:'🗿', lvl:67, hp:1099, atk:227, str:218, def:122, coins:920,  xp:1290, swingMs:3100, dmgType:'crush', weakTo:'stab', weakEl:'shadow', resistEl:'storm'},
+  {id:'troll_king',   zone:'troll_caverns', name:'Troll King',    icon:'👑', lvl:70, hp:2610, atk:411, str:300, def:235, coins:1350, xp:1980, swingMs:3300, boss:true, bossReq:'granite_sigil', dmgType:'crush', weakTo:'slash', resistTo:'crush', weakEl:'storm', resistEl:'fire'},
   // ── Wyvern Roost ──────────────────────────────────────────────────────────
   // ── Wyvern Roost (1.0.4) — draconic apex: 4 drakes + Emberwyrm boss ─────────
   // Molten-scaled flyers. Hard scales resist slash; the Cinder Drake bites (stab)
   // and the Magma Wyrm body-slams (crush, resists crush). Boss gated by Ember Crest.
-  {id:'drake',        zone:'wyvern_roost', name:'Crag Drake',     icon:'🐉', lvl:72, hp:987, atk:226, str:169, def:102, coins:1450, xp:2150, swingMs:2200, dmgType:'slash', weakTo:'stab'},
-  {id:'wyvern',       zone:'wyvern_roost', name:'Ashwing Wyvern', icon:'🐉', lvl:75, hp:1008, atk:229, str:175, def:104, coins:1600, xp:2400, swingMs:2400, dmgType:'slash', weakTo:'stab', resistTo:'slash'},
-  {id:'cinder_drake', zone:'wyvern_roost', name:'Cinder Drake',   icon:'🐉', lvl:78, hp:1029, atk:232, str:181, def:106, coins:1800, xp:2700, swingMs:2000, dmgType:'stab',  weakTo:'crush'},
-  {id:'magma_wyrm',   zone:'wyvern_roost', name:'Magma Wyrm',     icon:'🐉', lvl:81, hp:1395, atk:287, str:265, def:154, coins:2050, xp:3050, swingMs:2600, dmgType:'crush', weakTo:'stab', resistTo:'crush'},
-  {id:'emberwyrm',    zone:'wyvern_roost', name:'Emberwyrm',      icon:'👑', lvl:84, hp:2858, atk:436, str:353, def:256, coins:3000, xp:4400, swingMs:2700, boss:true, bossReq:'ember_crest', dmgType:'slash', weakTo:'stab', resistTo:'crush'},
+  {id:'drake',        zone:'wyvern_roost', name:'Crag Drake',     icon:'🐉', lvl:72, hp:987, atk:226, str:169, def:102, coins:1450, xp:2150, swingMs:2200, dmgType:'slash', weakTo:'stab', weakEl:'frost', resistEl:'fire'},
+  {id:'wyvern',       zone:'wyvern_roost', name:'Ashwing Wyvern', icon:'🐉', lvl:75, hp:1008, atk:229, str:175, def:104, coins:1600, xp:2400, swingMs:2400, dmgType:'slash', weakTo:'stab', resistTo:'slash', weakEl:'storm', resistEl:'fire'},
+  {id:'cinder_drake', zone:'wyvern_roost', name:'Cinder Drake',   icon:'🐉', lvl:78, hp:1029, atk:232, str:181, def:106, coins:1800, xp:2700, swingMs:2000, dmgType:'stab',  weakTo:'crush', weakEl:'frost', resistEl:'fire'},
+  {id:'magma_wyrm',   zone:'wyvern_roost', name:'Magma Wyrm',     icon:'🐉', lvl:81, hp:1395, atk:287, str:265, def:154, coins:2050, xp:3050, swingMs:2600, dmgType:'crush', weakTo:'stab', resistTo:'crush', weakEl:'frost', resistEl:'storm'},
+  {id:'emberwyrm',    zone:'wyvern_roost', name:'Emberwyrm',      icon:'👑', lvl:84, hp:2858, atk:436, str:353, def:256, coins:3000, xp:4400, swingMs:2700, boss:true, bossReq:'ember_crest', dmgType:'slash', weakTo:'stab', resistTo:'crush', weakEl:'frost', resistEl:'fire'},
   // ── Demon Sanctum ─────────────────────────────────────────────────────────
   // ── Demon Sanctum (1.0.5) — endgame: 4 demons + Demon Lord boss (L86-99) ────
   // The Demon Lord is now the proper final boss (gated by the Infernal Crest).
   // Hellhound is a fast slasher; Dread Knight is the armored crush wall.
-  {id:'hellhound',    zone:'demon_sanctum', name:'Hellhound',     icon:'😈', lvl:86, hp:1084,  atk:240,  str:198, def:111, coins:3200, xp:4700,  swingMs:1900, dmgType:'slash', weakTo:'stab'},
-  {id:'demon',        zone:'demon_sanctum', name:'Sanctum Demon',  icon:'😈', lvl:89, hp:1100,  atk:243,  str:204, def:113, coins:3500, xp:5200,  swingMs:2500, dmgType:'crush', weakTo:'slash'},
-  {id:'abyssal_fiend',zone:'demon_sanctum', name:'Abyssal Fiend',  icon:'😈', lvl:92, hp:1205,  atk:262,  str:213, def:122, coins:3900, xp:5800,  swingMs:2300, dmgType:'stab',  weakTo:'crush', resistTo:'stab'},
-  {id:'dread_knight', zone:'demon_sanctum', name:'Dread Knight',   icon:'😈', lvl:95, hp:1629,  atk:324,  str:309, def:178, coins:4400, xp:6500,  swingMs:2700, dmgType:'crush', weakTo:'stab',  resistTo:'crush'},
-  {id:'demon_lord',   zone:'demon_sanctum', name:'Demon Lord',     icon:'👑', lvl:99, hp:3353, atk:494, str:414, def:296, coins:7000, xp:10000, swingMs:2800, boss:true, bossReq:'infernal_crest', dmgType:'slash', weakTo:'slash', resistTo:'crush'},
+  {id:'hellhound',    zone:'demon_sanctum', name:'Hellhound',     icon:'😈', lvl:86, hp:1084,  atk:240,  str:198, def:111, coins:3200, xp:4700,  swingMs:1900, dmgType:'slash', weakTo:'stab', weakEl:'frost', resistEl:'fire'},
+  {id:'demon',        zone:'demon_sanctum', name:'Sanctum Demon',  icon:'😈', lvl:89, hp:1100,  atk:243,  str:204, def:113, coins:3500, xp:5200,  swingMs:2500, dmgType:'crush', weakTo:'slash', weakEl:'storm', resistEl:'fire'},
+  {id:'abyssal_fiend',zone:'demon_sanctum', name:'Abyssal Fiend',  icon:'😈', lvl:92, hp:1205,  atk:262,  str:213, def:122, coins:3900, xp:5800,  swingMs:2300, dmgType:'stab',  weakTo:'crush', resistTo:'stab', weakEl:'storm', resistEl:'shadow'},
+  {id:'dread_knight', zone:'demon_sanctum', name:'Dread Knight',   icon:'😈', lvl:95, hp:1629,  atk:324,  str:309, def:178, coins:4400, xp:6500,  swingMs:2700, dmgType:'crush', weakTo:'stab',  resistTo:'crush', weakEl:'storm', resistEl:'shadow'},
+  {id:'demon_lord',   zone:'demon_sanctum', name:'Demon Lord',     icon:'👑', lvl:99, hp:3353, atk:494, str:414, def:296, coins:7000, xp:10000, swingMs:2800, boss:true, bossReq:'infernal_crest', dmgType:'slash', weakTo:'slash', resistTo:'crush', weakEl:'frost', resistEl:'storm'},
   // ── HUNTING GROUNDS (1.0.74) — open beast zones, no bosses. Farming + Slayer
   // targets + alt hide sources. Stats mirror same-level dungeon mobs.
   // Thornwood Thicket (Lv 6-22)
-  {id:'wild_boar',     zone:'thornwood', name:'Wild Boar',       icon:'wild_boar',     lvl:6,  hp:88,   atk:20,  str:16,  def:10,  coins:10,  xp:22,  swingMs:1900, dmgType:'crush', weakTo:'slash'},
-  {id:'timber_wolf',   zone:'thornwood', name:'Timber Wolf',     icon:'timber_wolf',   lvl:11, hp:162,  atk:38,  str:26,  def:16,  coins:16,  xp:34,  swingMs:1600, dmgType:'slash', weakTo:'stab'},
-  {id:'thornback_stag',zone:'thornwood', name:'Thornback Stag',  icon:'thornback_stag',lvl:16, hp:205,  atk:44,  str:38,  def:20,  coins:24,  xp:58,  swingMs:2000, dmgType:'stab',  weakTo:'crush'},
-  {id:'briar_lynx',    zone:'thornwood', name:'Briar Lynx',      icon:'briar_lynx',    lvl:22, hp:258,  atk:58,  str:48,  def:27,  coins:34,  xp:82,  swingMs:1400, dmgType:'slash', weakTo:'crush'},
+  {id:'wild_boar',     zone:'thornwood', name:'Wild Boar',       icon:'wild_boar',     lvl:6,  hp:88,   atk:20,  str:16,  def:10,  coins:10,  xp:22,  swingMs:1900, dmgType:'crush', weakTo:'slash', weakEl:'fire'},
+  {id:'timber_wolf',   zone:'thornwood', name:'Timber Wolf',     icon:'timber_wolf',   lvl:11, hp:162,  atk:38,  str:26,  def:16,  coins:16,  xp:34,  swingMs:1600, dmgType:'slash', weakTo:'stab', weakEl:'fire', resistEl:'shadow'},
+  {id:'thornback_stag',zone:'thornwood', name:'Thornback Stag',  icon:'thornback_stag',lvl:16, hp:205,  atk:44,  str:38,  def:20,  coins:24,  xp:58,  swingMs:2000, dmgType:'stab',  weakTo:'crush', weakEl:'frost'},
+  {id:'briar_lynx',    zone:'thornwood', name:'Briar Lynx',      icon:'briar_lynx',    lvl:22, hp:258,  atk:58,  str:48,  def:27,  coins:34,  xp:82,  swingMs:1400, dmgType:'slash', weakTo:'crush', weakEl:'fire'},
   // Frostfang Tundra (Lv 35-55)
-  {id:'frost_bear',    zone:'frostfang', name:'Frost Bear',      icon:'frost_bear',    lvl:35, hp:432,  atk:100, str:82,  def:46,  coins:80,  xp:150, swingMs:2400, dmgType:'crush', weakTo:'slash'},
-  {id:'snow_leopard',  zone:'frostfang', name:'Snow Leopard',    icon:'snow_leopard',  lvl:42, hp:522,  atk:118, str:100, def:58,  coins:110, xp:210, swingMs:1500, dmgType:'slash', weakTo:'stab'},
-  {id:'tundra_elk',    zone:'frostfang', name:'Tundra Elk',      icon:'tundra_elk',    lvl:48, hp:600,  atk:132, str:112, def:64,  coins:140, xp:250, swingMs:2100, dmgType:'stab',  weakTo:'crush'},
-  {id:'ice_mammoth',   zone:'frostfang', name:'Ice Mammoth',     icon:'ice_mammoth',   lvl:55, hp:760,  atk:160, str:150, def:86,  coins:200, xp:360, swingMs:2900, dmgType:'crush', weakTo:'slash', resistTo:'crush'},
+  {id:'frost_bear',    zone:'frostfang', name:'Frost Bear',      icon:'frost_bear',    lvl:35, hp:432,  atk:100, str:82,  def:46,  coins:80,  xp:150, swingMs:2400, dmgType:'crush', weakTo:'slash', weakEl:'fire', resistEl:'frost'},
+  {id:'snow_leopard',  zone:'frostfang', name:'Snow Leopard',    icon:'snow_leopard',  lvl:42, hp:522,  atk:118, str:100, def:58,  coins:110, xp:210, swingMs:1500, dmgType:'slash', weakTo:'stab', weakEl:'fire', resistEl:'frost'},
+  {id:'tundra_elk',    zone:'frostfang', name:'Tundra Elk',      icon:'tundra_elk',    lvl:48, hp:600,  atk:132, str:112, def:64,  coins:140, xp:250, swingMs:2100, dmgType:'stab',  weakTo:'crush', weakEl:'storm', resistEl:'frost'},
+  {id:'ice_mammoth',   zone:'frostfang', name:'Ice Mammoth',     icon:'ice_mammoth',   lvl:55, hp:760,  atk:160, str:150, def:86,  coins:200, xp:360, swingMs:2900, dmgType:'crush', weakTo:'slash', resistTo:'crush', weakEl:'shadow', resistEl:'frost'},
   // Ashen Steppe (Lv 65-88)
-  {id:'ash_jackal',    zone:'ashen_steppe', name:'Ash Jackal',    icon:'ash_jackal',    lvl:65, hp:905,  atk:205, str:175, def:105, coins:500, xp:720,  swingMs:1600, dmgType:'slash', weakTo:'stab'},
-  {id:'cinder_boar',   zone:'ashen_steppe', name:'Cinder Boar',   icon:'cinder_boar',   lvl:72, hp:1010, atk:222, str:190, def:108, coins:700, xp:980,  swingMs:2400, dmgType:'crush', weakTo:'slash'},
-  {id:'dust_stalker',  zone:'ashen_steppe', name:'Dust Stalker',  icon:'dust_stalker',  lvl:80, hp:1210, atk:262, str:225, def:140, coins:900, xp:1300, swingMs:1700, dmgType:'stab',  weakTo:'crush'},
-  {id:'scorch_rhino',  zone:'ashen_steppe', name:'Scorch Rhino',  icon:'scorch_rhino',  lvl:88, hp:1600, atk:315, str:300, def:178, coins:1300,xp:2100, swingMs:2900, dmgType:'crush', weakTo:'stab', resistTo:'crush'},
+  {id:'ash_jackal',    zone:'ashen_steppe', name:'Ash Jackal',    icon:'ash_jackal',    lvl:65, hp:905,  atk:205, str:175, def:105, coins:500, xp:720,  swingMs:1600, dmgType:'slash', weakTo:'stab', weakEl:'frost', resistEl:'fire'},
+  {id:'cinder_boar',   zone:'ashen_steppe', name:'Cinder Boar',   icon:'cinder_boar',   lvl:72, hp:1010, atk:222, str:190, def:108, coins:700, xp:980,  swingMs:2400, dmgType:'crush', weakTo:'slash', weakEl:'frost', resistEl:'fire'},
+  {id:'dust_stalker',  zone:'ashen_steppe', name:'Dust Stalker',  icon:'dust_stalker',  lvl:80, hp:1210, atk:262, str:225, def:140, coins:900, xp:1300, swingMs:1700, dmgType:'stab',  weakTo:'crush', weakEl:'shadow', resistEl:'storm'},
+  {id:'scorch_rhino',  zone:'ashen_steppe', name:'Scorch Rhino',  icon:'scorch_rhino',  lvl:88, hp:1600, atk:315, str:300, def:178, coins:1300,xp:2100, swingMs:2900, dmgType:'crush', weakTo:'stab', resistTo:'crush', weakEl:'shadow', resistEl:'fire'},
 ];
 
 /* ════ COMBAT REBALANCE v2 (1.0.26) ═══════════════════════════════════════════════
@@ -33460,10 +33491,10 @@ const ZONES=[
 const AERIE_LIVE = /[?&]aerie=1/.test((typeof location!=='undefined'&&location.search)||'');
 if(AERIE_LIVE){
   MONSTERS.push(
-    {id:'crag_hawk',   zone:'aerie', name:'Crag Hawk',   icon:'crag_hawk',   lvl:26, hp:265,  atk:72,  str:50,  def:28,  coins:45,  xp:98,   swingMs:1300, dmgType:'slash', weakTo:'ranged'},
-    {id:'storm_eagle', zone:'aerie', name:'Storm Eagle', icon:'storm_eagle', lvl:45, hp:500,  atk:130, str:104, def:54,  coins:125, xp:205,  swingMs:1400, dmgType:'slash', weakTo:'ranged'},
-    {id:'gryphon',     zone:'aerie', name:'Gryphon',     icon:'gryphon',     lvl:60, hp:860,  atk:185, str:165, def:98,  coins:330, xp:540,  swingMs:1900, dmgType:'stab',  weakTo:'ranged'},
-    {id:'phoenix',     zone:'aerie', name:'Phoenix',     icon:'phoenix',     lvl:90, hp:1500, atk:340, str:250, def:170, coins:1400,xp:2050, swingMs:1700, dmgType:'slash', weakTo:'ranged', resistTo:'crush'}
+    {id:'crag_hawk',   zone:'aerie', name:'Crag Hawk',   icon:'crag_hawk',   lvl:26, hp:265,  atk:72,  str:50,  def:28,  coins:45,  xp:98,   swingMs:1300, dmgType:'slash', weakTo:'ranged', weakEl:'storm'},
+    {id:'storm_eagle', zone:'aerie', name:'Storm Eagle', icon:'storm_eagle', lvl:45, hp:500,  atk:130, str:104, def:54,  coins:125, xp:205,  swingMs:1400, dmgType:'slash', weakTo:'ranged', weakEl:'frost', resistEl:'storm'},
+    {id:'gryphon',     zone:'aerie', name:'Gryphon',     icon:'gryphon',     lvl:60, hp:860,  atk:185, str:165, def:98,  coins:330, xp:540,  swingMs:1900, dmgType:'stab',  weakTo:'ranged', weakEl:'storm'},
+    {id:'phoenix',     zone:'aerie', name:'Phoenix',     icon:'phoenix',     lvl:90, hp:1500, atk:340, str:250, def:170, coins:1400,xp:2050, swingMs:1700, dmgType:'slash', weakTo:'ranged', resistTo:'crush', weakEl:'frost', resistEl:'fire'}
   );
   ZONES.push({id:'aerie', name:'Stormcrest Aerie', icon:'aerie', accent:'#9ab4c8', unlockLvl:26, type:'hunt',
     blurb:"Cliffs above the cloud line where the big birds nest. Bring a bow."});
@@ -36033,14 +36064,14 @@ const RAIDS=[
     // Sequence — 4 revenants + 1 mini-boss + 1 final boss. HP totals ~9.4k with no
     // heal between stages; a geared Lv70 raider clears in ~3.5–5 min.
     stages:[
-      {id:'barrow_sentry',   zone:'sunken_barrow', name:'Barrow Sentry',    icon:'barrow_sentry',   lvl:68, hp:900,  atk:200, str:150, def:100, coins:0, xp:1400, swingMs:2300, dmgType:'slash', weakTo:'crush'},
-      {id:'drowned_footman', zone:'sunken_barrow', name:'Drowned Footman',  icon:'drowned_footman', lvl:69, hp:980,  atk:206, str:158, def:104, coins:0, xp:1500, swingMs:2500, dmgType:'stab',  weakTo:'crush'},
-      {id:'barrow_champion', zone:'sunken_barrow', name:'Barrow Champion',  icon:'barrow_champion', lvl:71, hp:2100, atk:300, str:230, def:150, coins:0, xp:2600, swingMs:2600, dmgType:'slash', weakTo:'stab',  miniBoss:true,
+      {id:'barrow_sentry',   zone:'sunken_barrow', name:'Barrow Sentry',    icon:'barrow_sentry',   lvl:68, hp:900,  atk:200, str:150, def:100, coins:0, xp:1400, swingMs:2300, dmgType:'slash', weakTo:'crush', weakEl:'storm', resistEl:'frost'},
+      {id:'drowned_footman', zone:'sunken_barrow', name:'Drowned Footman',  icon:'drowned_footman', lvl:69, hp:980,  atk:206, str:158, def:104, coins:0, xp:1500, swingMs:2500, dmgType:'stab',  weakTo:'crush', weakEl:'storm', resistEl:'frost'},
+      {id:'barrow_champion', zone:'sunken_barrow', name:'Barrow Champion',  icon:'barrow_champion', lvl:71, hp:2100, atk:300, str:230, def:150, coins:0, xp:2600, swingMs:2600, dmgType:'slash', weakTo:'stab', weakEl:'fire', resistEl:'shadow',  miniBoss:true,
         raidfx:{name:'Grave Chill', desc:'Your attacks are 25% slower.', swingMult:1.25},
         castfx:{kinds:['slam'], everyMs:11000, castMs:3200, openMs:5000, frac:0.26, labels:{slam:'Grave Hammer'}}},
-      {id:'tomb_revenant',   zone:'sunken_barrow', name:'Tomb Revenant',    icon:'tomb_revenant',   lvl:70, hp:1050, atk:212, str:166, def:108, coins:0, xp:1550, swingMs:2200, dmgType:'crush', weakTo:'slash'},
-      {id:'wardens_herald',  zone:'sunken_barrow', name:"Warden's Herald",  icon:'wardens_herald',  lvl:72, hp:1200, atk:226, str:182, def:122, coins:0, xp:1800, swingMs:2400, dmgType:'slash', weakTo:'crush'},
-      {id:'barrow_warden',   zone:'sunken_barrow', name:'The Barrow Warden', icon:'barrow_warden',  lvl:74, hp:3200, atk:360, str:290, def:200, coins:0, xp:4200, swingMs:2800, dmgType:'crush', weakTo:'slash', boss:true, raidBoss:true,
+      {id:'tomb_revenant',   zone:'sunken_barrow', name:'Tomb Revenant',    icon:'tomb_revenant',   lvl:70, hp:1050, atk:212, str:166, def:108, coins:0, xp:1550, swingMs:2200, dmgType:'crush', weakTo:'slash', weakEl:'fire', resistEl:'shadow'},
+      {id:'wardens_herald',  zone:'sunken_barrow', name:"Warden's Herald",  icon:'wardens_herald',  lvl:72, hp:1200, atk:226, str:182, def:122, coins:0, xp:1800, swingMs:2400, dmgType:'slash', weakTo:'crush', weakEl:'storm', resistEl:'frost'},
+      {id:'barrow_warden',   zone:'sunken_barrow', name:'The Barrow Warden', icon:'barrow_warden',  lvl:74, hp:3200, atk:360, str:290, def:200, coins:0, xp:4200, swingMs:2800, dmgType:'crush', weakTo:'slash', weakEl:'fire', resistEl:'shadow', boss:true, raidBoss:true,
         raidfx:{name:"Warden's Curse", desc:'20% less Defence and 15% slower attacks.', defMult:0.80, swingMult:1.15},
         castfx:{kinds:['slam'], everyMs:10000, castMs:3200, openMs:5000, frac:0.30, labels:{slam:"Warden's Reckoning"}}},
     ],
@@ -36076,14 +36107,14 @@ const RAIDS=[
     blurb:"A forge drowned an age ago, rekindled when the tyrant Ignar woke and breathed his own fire back into the bellows. Molten constructs keep it roaring, and they do not stop for the living.",
     // 6 stages · ~13,300 total HP on one bar · a geared Lv80 raider clears in ~4-6 min.
     stages:[
-      {id:'forge_thrall',   zone:'emberforge', name:'Forge Thrall',    icon:'forge_thrall',   lvl:78, hp:1300, atk:250, str:200, def:130, coins:0, xp:3000, swingMs:2200, dmgType:'crush', weakTo:'slash'},
-      {id:'cinder_golem',   zone:'emberforge', name:'Cinder Golem',    icon:'cinder_golem',   lvl:79, hp:1450, atk:258, str:210, def:145, coins:0, xp:3200, swingMs:2600, dmgType:'crush', weakTo:'stab'},
-      {id:'molten_sentinel',zone:'emberforge', name:'Molten Sentinel', icon:'molten_sentinel',lvl:82, hp:2900, atk:330, str:270, def:185, coins:0, xp:5200, swingMs:2600, dmgType:'crush', weakTo:'slash', miniBoss:true,
+      {id:'forge_thrall',   zone:'emberforge', name:'Forge Thrall',    icon:'forge_thrall',   lvl:78, hp:1300, atk:250, str:200, def:130, coins:0, xp:3000, swingMs:2200, dmgType:'crush', weakTo:'slash', weakEl:'frost', resistEl:'fire'},
+      {id:'cinder_golem',   zone:'emberforge', name:'Cinder Golem',    icon:'cinder_golem',   lvl:79, hp:1450, atk:258, str:210, def:145, coins:0, xp:3200, swingMs:2600, dmgType:'crush', weakTo:'stab', weakEl:'frost', resistEl:'fire'},
+      {id:'molten_sentinel',zone:'emberforge', name:'Molten Sentinel', icon:'molten_sentinel',lvl:82, hp:2900, atk:330, str:270, def:185, coins:0, xp:5200, swingMs:2600, dmgType:'crush', weakTo:'slash', weakEl:'storm', resistEl:'fire', miniBoss:true,
         raidfx:{name:'Forge Heat', desc:'Your attacks are 20% slower.', swingMult:1.20},
         castfx:{kinds:['slam'], everyMs:10500, castMs:3000, openMs:4800, frac:0.28, labels:{slam:'Forge Slam'}}},
-      {id:'ashbound_brute', zone:'emberforge', name:'Ashbound Brute',  icon:'ashbound_brute', lvl:80, hp:1520, atk:268, str:224, def:150, coins:0, xp:3400, swingMs:2500, dmgType:'slash', weakTo:'stab'},
-      {id:'ember_colossus', zone:'emberforge', name:'Emberforged Colossus', icon:'ember_colossus', lvl:82, hp:1750, atk:288, str:250, def:168, coins:0, xp:3900, swingMs:2700, dmgType:'crush', weakTo:'slash'},
-      {id:'ignar', zone:'emberforge', name:'Ignar, the Forge-Tyrant', icon:'ignar', lvl:84, hp:4400, atk:400, str:330, def:225, coins:0, xp:8000, swingMs:2800, dmgType:'crush', weakTo:'slash', boss:true, raidBoss:true,
+      {id:'ashbound_brute', zone:'emberforge', name:'Ashbound Brute',  icon:'ashbound_brute', lvl:80, hp:1520, atk:268, str:224, def:150, coins:0, xp:3400, swingMs:2500, dmgType:'slash', weakTo:'stab', weakEl:'frost', resistEl:'fire'},
+      {id:'ember_colossus', zone:'emberforge', name:'Emberforged Colossus', icon:'ember_colossus', lvl:82, hp:1750, atk:288, str:250, def:168, coins:0, xp:3900, swingMs:2700, dmgType:'crush', weakTo:'slash', weakEl:'storm', resistEl:'fire'},
+      {id:'ignar', zone:'emberforge', name:'Ignar, the Forge-Tyrant', icon:'ignar', lvl:84, hp:4400, atk:400, str:330, def:225, coins:0, xp:8000, swingMs:2800, dmgType:'crush', weakTo:'slash', weakEl:'frost', resistEl:'fire', boss:true, raidBoss:true,
         raidfx:{name:"Tyrant's Wrath", desc:'20% less Defence and 15% slower attacks.', defMult:0.80, swingMult:1.15},
         bossfx:{kind:'burn', tickMs:2600, frac:0.05, label:"Tyrant's Fire", desc:'You burn for 5% of your max health every 2.6s until the fight ends.'},
         castfx:{kinds:['slam'], everyMs:11000, castMs:3000, openMs:5500, frac:0.28, labels:{slam:'Forge Hammer'}}},
@@ -36117,15 +36148,15 @@ const RAIDS=[
     blurb:"Past the Sanctum, reality thins to nothing. On a throne of unmade world sits Xor'Vael, the Void Sovereign, and everything between the door and the dais wants you erased.",
     // 7 stages · ~19,300 total HP on one bar · the true endgame gauntlet.
     stages:[
-      {id:'void_wretch',  zone:'abyssal_throne', name:'Void Wretch',   icon:'void_wretch',  lvl:88, hp:1700, atk:470, str:390, def:270, coins:0, xp:5200, swingMs:2200, dmgType:'stab',  weakTo:'slash'},
-      {id:'rift_stalker', zone:'abyssal_throne', name:'Rift Stalker',  icon:'rift_stalker', lvl:89, hp:1850, atk:485, str:405, def:280, coins:0, xp:5500, swingMs:1700, dmgType:'slash', weakTo:'stab'},
-      {id:'null_warden',  zone:'abyssal_throne', name:'Null Warden',   icon:'null_warden',  lvl:92, hp:3400, atk:560, str:470, def:330, coins:0, xp:8600, swingMs:2500, dmgType:'crush', weakTo:'slash', miniBoss:true,
+      {id:'void_wretch',  zone:'abyssal_throne', name:'Void Wretch',   icon:'void_wretch',  lvl:88, hp:1700, atk:470, str:390, def:270, coins:0, xp:5200, swingMs:2200, dmgType:'stab',  weakTo:'slash', weakEl:'fire', resistEl:'shadow'},
+      {id:'rift_stalker', zone:'abyssal_throne', name:'Rift Stalker',  icon:'rift_stalker', lvl:89, hp:1850, atk:485, str:405, def:280, coins:0, xp:5500, swingMs:1700, dmgType:'slash', weakTo:'stab', weakEl:'storm', resistEl:'shadow'},
+      {id:'null_warden',  zone:'abyssal_throne', name:'Null Warden',   icon:'null_warden',  lvl:92, hp:3400, atk:560, str:470, def:330, coins:0, xp:8600, swingMs:2500, dmgType:'crush', weakTo:'slash', weakEl:'fire', resistEl:'shadow', miniBoss:true,
         raidfx:{name:'Unmaking', desc:'25% less Defence.', defMult:0.75},
         castfx:{kinds:['slam'], everyMs:10000, castMs:3000, openMs:4500, frac:0.28, labels:{slam:'Unmaking Blow'}}},
-      {id:'abyssal_maw',  zone:'abyssal_throne', name:'Abyssal Maw',   icon:'abyssal_maw',  lvl:90, hp:1950, atk:500, str:420, def:290, coins:0, xp:5800, swingMs:2400, dmgType:'crush', weakTo:'slash'},
-      {id:'void_herald',  zone:'abyssal_throne', name:'Void Herald',   icon:'void_herald',  lvl:91, hp:2100, atk:515, str:435, def:300, coins:0, xp:6100, swingMs:2100, dmgType:'stab',  weakTo:'crush'},
-      {id:'riftbound_colossus', zone:'abyssal_throne', name:'Riftbound Colossus', icon:'riftbound_colossus', lvl:92, hp:2400, atk:530, str:455, def:315, coins:0, xp:6600, swingMs:2700, dmgType:'crush', weakTo:'slash'},
-      {id:'xorvael', zone:'abyssal_throne', name:"Xor'Vael, the Void Sovereign", icon:'xorvael', lvl:94, hp:5600, atk:620, str:520, def:360, coins:0, xp:12000, swingMs:2700, dmgType:'slash', weakTo:'stab', boss:true, raidBoss:true,
+      {id:'abyssal_maw',  zone:'abyssal_throne', name:'Abyssal Maw',   icon:'abyssal_maw',  lvl:90, hp:1950, atk:500, str:420, def:290, coins:0, xp:5800, swingMs:2400, dmgType:'crush', weakTo:'slash', weakEl:'frost', resistEl:'shadow'},
+      {id:'void_herald',  zone:'abyssal_throne', name:'Void Herald',   icon:'void_herald',  lvl:91, hp:2100, atk:515, str:435, def:300, coins:0, xp:6100, swingMs:2100, dmgType:'stab',  weakTo:'crush', weakEl:'storm', resistEl:'shadow'},
+      {id:'riftbound_colossus', zone:'abyssal_throne', name:'Riftbound Colossus', icon:'riftbound_colossus', lvl:92, hp:2400, atk:530, str:455, def:315, coins:0, xp:6600, swingMs:2700, dmgType:'crush', weakTo:'slash', weakEl:'fire', resistEl:'shadow'},
+      {id:'xorvael', zone:'abyssal_throne', name:"Xor'Vael, the Void Sovereign", icon:'xorvael', lvl:94, hp:5600, atk:620, str:520, def:360, coins:0, xp:12000, swingMs:2700, dmgType:'slash', weakTo:'stab', weakEl:'storm', resistEl:'shadow', boss:true, raidBoss:true,
         raidfx:{name:'Erasure', desc:'28% less Defence and 20% slower attacks.', defMult:0.72, swingMult:1.20},
         castfx:{kinds:['rupture','slam'], everyMs:8500, castMs:3400, openMs:5000, frac:0.32, reqDmg:800,
           labels:{rupture:'Void Rupture', slam:'Sovereign Blow'}}},
@@ -36164,16 +36195,16 @@ const RAIDS=[
     blurb:"Climb out of the void and you do not find more darkness. You find a wound of blinding light. On a throne of dead suns slumbers Aureon, the first god, still dreaming the world. Everything between the stair and the dais burns to keep him asleep.",
     // 8 stages · ~26,650 total HP on one bar · the true capstone gauntlet (Lv99 / T10).
     stages:[
-      {id:'dawnling',            zone:'empyrean_throne', name:'Dawnling',              icon:'dawnling',            lvl:95, hp:2200, atk:650, str:540, def:380, coins:0, xp:7000, swingMs:2200, dmgType:'stab',  weakTo:'slash'},
-      {id:'radiant_wisp',        zone:'empyrean_throne', name:'Radiant Wisp',          icon:'radiant_wisp',        lvl:96, hp:2350, atk:670, str:560, def:390, coins:0, xp:7400, swingMs:1700, dmgType:'slash', weakTo:'crush'},
-      {id:'seraph_warden',       zone:'empyrean_throne', name:'Seraph Warden',         icon:'seraph_warden',       lvl:98, hp:4200, atk:760, str:640, def:450, coins:0, xp:11000, swingMs:2500, dmgType:'slash', weakTo:'stab',  miniBoss:true,
+      {id:'dawnling',            zone:'empyrean_throne', name:'Dawnling',              icon:'dawnling',            lvl:95, hp:2200, atk:650, str:540, def:380, coins:0, xp:7000, swingMs:2200, dmgType:'stab',  weakTo:'slash', weakEl:'shadow', resistEl:'fire'},
+      {id:'radiant_wisp',        zone:'empyrean_throne', name:'Radiant Wisp',          icon:'radiant_wisp',        lvl:96, hp:2350, atk:670, str:560, def:390, coins:0, xp:7400, swingMs:1700, dmgType:'slash', weakTo:'crush', weakEl:'shadow', resistEl:'storm'},
+      {id:'seraph_warden',       zone:'empyrean_throne', name:'Seraph Warden',         icon:'seraph_warden',       lvl:98, hp:4200, atk:760, str:640, def:450, coins:0, xp:11000, swingMs:2500, dmgType:'slash', weakTo:'stab', weakEl:'shadow', resistEl:'fire',  miniBoss:true,
         raidfx:{name:'Blinding Radiance', desc:'25% less Defence.', defMult:0.75},
         castfx:{kinds:['slam'], everyMs:9500, castMs:2900, openMs:4500, frac:0.30, labels:{slam:'Verdict'}}},
-      {id:'astral_hound',        zone:'empyrean_throne', name:'Astral Hound',          icon:'astral_hound',        lvl:96, hp:2450, atk:690, str:580, def:400, coins:0, xp:7800, swingMs:2000, dmgType:'crush', weakTo:'slash'},
-      {id:'lightbringer_herald', zone:'empyrean_throne', name:'Lightbringer Herald',   icon:'lightbringer_herald', lvl:97, hp:2650, atk:720, str:610, def:415, coins:0, xp:8200, swingMs:2100, dmgType:'stab',  weakTo:'crush'},
-      {id:'empyrean_colossus',   zone:'empyrean_throne', name:'Empyrean Colossus',     icon:'empyrean_colossus',   lvl:98, hp:3000, atk:760, str:650, def:440, coins:0, xp:9000, swingMs:2700, dmgType:'crush', weakTo:'slash'},
-      {id:'fallen_choir',        zone:'empyrean_throne', name:'The Fallen Choir',      icon:'fallen_choir',        lvl:97, hp:2800, atk:730, str:620, def:420, coins:0, xp:8600, swingMs:2300, dmgType:'slash', weakTo:'stab'},
-      {id:'aureon', zone:'empyrean_throne', name:'Aureon, the Dawnbroken God', icon:'aureon', lvl:99, hp:7000, atk:860, str:720, def:500, coins:0, xp:16000, swingMs:2700, dmgType:'slash', weakTo:'stab', boss:true, raidBoss:true,
+      {id:'astral_hound',        zone:'empyrean_throne', name:'Astral Hound',          icon:'astral_hound',        lvl:96, hp:2450, atk:690, str:580, def:400, coins:0, xp:7800, swingMs:2000, dmgType:'crush', weakTo:'slash', weakEl:'frost', resistEl:'shadow'},
+      {id:'lightbringer_herald', zone:'empyrean_throne', name:'Lightbringer Herald',   icon:'lightbringer_herald', lvl:97, hp:2650, atk:720, str:610, def:415, coins:0, xp:8200, swingMs:2100, dmgType:'stab',  weakTo:'crush', weakEl:'shadow', resistEl:'storm'},
+      {id:'empyrean_colossus',   zone:'empyrean_throne', name:'Empyrean Colossus',     icon:'empyrean_colossus',   lvl:98, hp:3000, atk:760, str:650, def:440, coins:0, xp:9000, swingMs:2700, dmgType:'crush', weakTo:'slash', weakEl:'frost', resistEl:'fire'},
+      {id:'fallen_choir',        zone:'empyrean_throne', name:'The Fallen Choir',      icon:'fallen_choir',        lvl:97, hp:2800, atk:730, str:620, def:420, coins:0, xp:8600, swingMs:2300, dmgType:'slash', weakTo:'stab', weakEl:'storm', resistEl:'shadow'},
+      {id:'aureon', zone:'empyrean_throne', name:'Aureon, the Dawnbroken God', icon:'aureon', lvl:99, hp:7000, atk:860, str:720, def:500, coins:0, xp:16000, swingMs:2700, dmgType:'slash', weakTo:'stab', weakEl:'shadow', resistEl:'fire', boss:true, raidBoss:true,
         raidfx:{name:'Judgment', desc:'30% less Defence and 20% slower attacks.', defMult:0.70, swingMult:1.20},
         castfx:{kinds:['rupture','slam'], everyMs:8000, castMs:3400, openMs:5000, frac:0.34, reqDmg:1000,
           labels:{rupture:'Radiant Judgment', slam:'Dawnfall'}}},
@@ -36416,45 +36447,45 @@ function spireBoon(key){
    Spire Weight on every landing with that raid boss's curse. */
 const SPIRE_NATIVES=[
   {id:'spr_rubble_shade', name:'Rubble Shade', from:1, art:'rubble_shade', native:true,
-   swingMs:1350, dmgType:'crush', weakTo:'slash',
+   swingMs:1350, dmgType:'crush', weakTo:'slash', weakEl:'storm', resistEl:'shadow',
    mod:{hp:0.55, str:0.78},
    blurb:'Loose masonry that never finished falling. It hits often and it hits light.'},
 
   {id:'spr_floorwarden', name:'Floorwarden', from:1, art:'floorwarden', native:true,
-   swingMs:2900, dmgType:'crush', weakTo:'crush', resistTo:'slash',
+   swingMs:2900, dmgType:'crush', weakTo:'crush', resistTo:'slash', weakEl:'storm', resistEl:'fire',
    mod:{hp:1.30, def:1.30, str:1.12},
    castfx:{kinds:['slam'], everyMs:9500, castMs:3000, openMs:5000, frac:0.30,
            labels:{slam:'Floor Drop'}},
    blurb:'It held this floor up, and nobody ever told it to stop.'},
 
   {id:'spr_stairwraith', name:'Stairwraith', from:11, art:'stairwraith', native:true,
-   swingMs:1200, dmgType:'stab', weakTo:'crush',
+   swingMs:1200, dmgType:'stab', weakTo:'crush', weakEl:'fire', resistEl:'shadow',
    mod:{hp:0.68, str:0.92},
    raidfx:{name:'Vertigo', desc:'18% less accuracy while it is alive.',
            accMult:0.82},
    blurb:'Something that walked up a staircase which was already sideways.'},
 
   {id:'spr_mortarfiend', name:'Mortarfiend', from:11, art:'mortarfiend', native:true,
-   swingMs:2500, dmgType:'crush', weakTo:'slash', resistTo:'stab',
+   swingMs:2500, dmgType:'crush', weakTo:'slash', resistTo:'stab', weakEl:'frost', resistEl:'fire',
    mod:{def:1.45, hp:1.10},
    castfx:{kinds:['rupture'], everyMs:9000, castMs:3200, openMs:5000, frac:0.30,
            reqDmg:520, labels:{rupture:'Setting Fast'}},
    blurb:'It is trying to set. Break it open before it does.'},
 
   {id:'spr_keystone_golem', name:'Keystone Golem', from:26, art:'keystone_golem', native:true,
-   swingMs:3100, dmgType:'crush', weakTo:'stab',
+   swingMs:3100, dmgType:'crush', weakTo:'stab', weakEl:'storm', resistEl:'frost',
    mod:{hp:1.70, str:0.85},
    monfx:{enrage:{below:0.50, aspd:0.25, label:'Keystone Pulled'}},
    blurb:'Pull the keystone and everything above it comes down. It knows that.'},
 
   {id:'spr_plumbhang', name:'Plumbhang', from:26, art:'plumbhang', native:true,
-   swingMs:2200, dmgType:'stab', weakTo:'crush',
+   swingMs:2200, dmgType:'stab', weakTo:'crush', weakEl:'fire',
    mod:{hp:1.15},
    monfx:{regen:{tickMs:2500, frac:0.030, cap:0.30, label:'Trueing'}},
    blurb:'It hangs perfectly still and heals itself over time.'},
 
   {id:'spr_ashen_architect', name:'Ashen Architect', from:41, art:'ashen_architect', native:true,
-   swingMs:2600, dmgType:'slash', weakTo:'crush',
+   swingMs:2600, dmgType:'slash', weakTo:'crush', weakEl:'frost', resistEl:'fire',
    mod:{str:1.12},
    raidfx:{name:'Redrawn', desc:'18% less Defence while it is alive.',
            defMult:0.82},
@@ -36463,14 +36494,14 @@ const SPIRE_NATIVES=[
    blurb:'Still drawing the floor you are standing on.'},
 
   {id:'spr_hollow_choirstone', name:'Hollow Choirstone', from:41, art:'hollow_choirstone', native:true,
-   swingMs:2000, dmgType:'slash', weakTo:'stab', resistTo:'crush',
+   swingMs:2000, dmgType:'slash', weakTo:'stab', resistTo:'crush', weakEl:'shadow', resistEl:'storm',
    mod:{hp:1.20, str:1.05},
    monfx:{regen:{tickMs:3000, frac:0.022, cap:0.22, label:'Reprise'},
           enrage:{below:0.35, aspd:0.22, label:'Crescendo'}},
    blurb:'A pillar of fused singing faces. It only gets louder as it goes.'},
 
   {id:'spr_the_landing', name:'The Landing', from:1, boss:true, art:'the_landing', native:true,
-   swingMs:2800, dmgType:'crush', weakTo:'slash',
+   swingMs:2800, dmgType:'crush', weakTo:'slash', weakEl:'storm', resistEl:'fire',
    mod:{hp:1.25, str:1.12, def:1.15},
    monfx:{enrage:{below:0.40, aspd:0.28, label:'Giving Way'}},
    castfx:{kinds:['rupture','slam'], everyMs:8500, castMs:3300, openMs:5000, frac:0.34,
@@ -36547,6 +36578,7 @@ function spireFloor(floor, preview){
     coins:0, xp:Math.round(SPR_BASE.xp*sc.xp*bossMult),
     swingMs:Math.max(900,Math.round((base.swingMs||SPR_BASE.swingMs)*fx.swingMs)),
     dmgType:base.dmgType, weakTo:base.weakTo, resistTo:base.resistTo,
+    weakEl:base.weakEl, resistEl:base.resistEl,   // a borrowed monster keeps its elements with its weakness
     boss:isBoss, raidBoss:false, miniBoss:isBoss,
     spireFloor:floor, placeId:place.id, swingScale:Math.min(1, swRatio), blurb:(nat0&&base.blurb)||undefined,
     /* A native's own curse REPLACES Spire Weight rather than stacking with it. Two
@@ -44910,6 +44942,8 @@ function cgDetailHTML(m){
         ${m.boss?'<span class="cg-chip boss">Boss</span>':''}
         ${m.weakTo?`<span class="cg-chip weak">weak to ${m.weakTo}</span>`:''}
         ${m.resistTo?`<span class="cg-chip res">resists ${m.resistTo}</span>`:''}
+        ${m.weakEl?`<span class="cg-chip weak">weak to ${ELEMENT_BY[m.weakEl].n}</span>`:''}
+        ${m.resistEl?`<span class="cg-chip res">resists ${ELEMENT_BY[m.resistEl].n}</span>`:''}
         <span class="cg-chip">${kills.toLocaleString()} killed</span>
       </div>
       <button class="cg-go" id="cgFight" data-cgfight="${m.id}"${(lk||combat.active)?' disabled':''}>${
@@ -45539,7 +45573,7 @@ ${combat.raid?buildRaidProgressHTML():''}
             <div class="cvst2${mon.atk>(defBase+defGear)?' up':''}" data-tip="ENEMY ATTACK: compared against your Defence.&#10;&#10;Your Defence: ${defBase+defGear}&#10;Higher means it hits you more often."><b>${mon.atk}</b><i>Attack</i></div>
             <div class="cvst2${mon.str>(hitBase+hitGear)?' up':''}" data-tip="ENEMY MAX HIT: the most damage one of its hits can do.&#10;&#10;Yours: ${hitBase+hitGear}"><b>${mon.str}</b><i>Max hit</i></div>
             <div class="cvst2${mon.def>(accBase+accGear)?' up':''}" data-tip="ENEMY DEFENCE: compared against your Accuracy.&#10;&#10;Your Accuracy: ${accBase+accGear}&#10;Higher means you miss more."><b>${mon.def}</b><i>Defence</i></div>
-            <div class="cvst2${mon.swingMs<yourSwing?' up':''}" data-tip="ENEMY ATTACK SPEED: seconds between its attacks.&#10;&#10;Yours: ${speedDisplay}${mon.weakTo?'&#10;Weak to '+mon.weakTo+' (+15% from you)':''}${mon.resistTo?'&#10;Resists '+mon.resistTo+' (-15%)':''}"><b>${(mon.swingMs/1000).toFixed(2)}s</b><i>Speed</i></div>
+            <div class="cvst2${mon.swingMs<yourSwing?' up':''}" data-tip="ENEMY ATTACK SPEED: seconds between its attacks.&#10;&#10;Yours: ${speedDisplay}${mon.weakTo?'&#10;Weak to '+mon.weakTo+' (+15% from you)':''}${mon.resistTo?'&#10;Resists '+mon.resistTo+' (-15%)':''}${mon.weakEl?'&#10;Weak to '+ELEMENT_BY[mon.weakEl].n+' (+15% from a spell)':''}${mon.resistEl?'&#10;Resists '+ELEMENT_BY[mon.resistEl].n+' (-15%)':''}"><b>${(mon.swingMs/1000).toFixed(2)}s</b><i>Speed</i></div>
           </div>
         </div>
         ${combat.raid?'':`<div class="cvglass">

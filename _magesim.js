@@ -730,6 +730,114 @@ function PAGE() {
     return o;
   }
 
+  /* ── the element pass ── */
+  function elements() {
+    var els = MAGIC_ELEMENTS.map(function (e) { return e.k; });
+    var count = {}; els.forEach(function (e) { count[e] = { weak: 0, resist: 0 }; });
+    var byZone = {}, rows = [];
+    MONSTERS.forEach(function (m) {
+      if (m.weakEl) count[m.weakEl].weak++; if (m.resistEl) count[m.resistEl].resist++;
+      (byZone[m.zone] = byZone[m.zone] || []).push(m);
+      rows.push({ id: m.id, name: m.name, zone: m.zone, lvl: m.lvl, boss: !!m.boss, weakTo: m.weakTo || '', resistTo: m.resistTo || '', weakEl: m.weakEl || '', resistEl: m.resistEl || '' });
+    });
+    var zones = ZONES.map(function (z) {
+      var ms = byZone[z.id] || [], score = {};
+      els.forEach(function (e) { score[e] = ms.reduce(function (s, m) { return s + (m.weakEl === e ? 1 : m.resistEl === e ? -1 : 0); }, 0); });
+      var bestE = els.slice().sort(function (a, b) { return score[b] - score[a]; })[0];
+      return { id: z.id, name: z.name, lvl: z.unlockLvl, hunt: z.type === 'hunt', n: ms.length, score: score, best: bestE, bestWeak: ms.filter(function (m) { return m.weakEl === bestE; }).length,
+        minLvl: Math.min.apply(null, ms.map(function (m) { return m.lvl; })), maxLvl: Math.max.apply(null, ms.map(function (m) { return m.lvl; })) };
+    });
+    /* a mage who has not unlocked an element yet: is the only one he has ever the wrong one? */
+    var early = MONSTERS.filter(function (m) { return m.lvl <= 14 && m.resistEl === 'fire'; }).map(function (m) { return m.id; });
+    var melee = { weak: 0, resist: 0 }, ranged = { weak: 0, resist: 0 };
+    MONSTERS.forEach(function (m) { if (m.weakTo && m.weakTo !== 'ranged') melee.weak++; if (m.resistTo && m.resistTo !== 'ranged') melee.resist++; if (m.weakTo === 'ranged') ranged.weak++; if (m.resistTo === 'ranged') ranged.resist++; });
+    /* of the monsters a mage can still be fighting once an element is unlocked, how
+       many is it the right answer for, and how many the wrong one */
+    var after = {};
+    MAGIC_ELEMENTS.forEach(function (e) {
+      var pool = MONSTERS.filter(function (m) { return m.lvl >= e.lvl - 6; });
+      after[e.k] = { pool: pool.length, weak: pool.filter(function (m) { return m.weakEl === e.k; }).length, resist: pool.filter(function (m) { return m.resistEl === e.k; }).length };
+    });
+    return { count: count, zones: zones, rows: rows, total: MONSTERS.length, fireResistedEarly: early, melee: melee, ranged: ranged, after: after };
+  }
+  /* What each row carries, to hold against the design's three tables: every
+     monster, every raid stage, every Spire monster. And a Spire floor that borrows
+     a monster has to carry that monster's elements, as it carries its weakness. */
+  function elTables() {
+    var pair = function (m) { return [m.weakEl || null, m.resistEl || null]; };
+    var mon = {}, raid = {}, spire = [];
+    MONSTERS.forEach(function (m) { mon[m.id] = pair(m); });
+    for (var id in RAID_MON_BY_ID) raid[id] = pair(RAID_MON_BY_ID[id]);
+    SPIRE_NATIVES.forEach(function (n) { spire.push([n.name].concat(pair(n))); });
+    var known = MAGIC_ELEMENTS.map(function (e) { return e.k; }), odd = [];
+    var all = MONSTERS.concat(Object.keys(RAID_MON_BY_ID).map(function (k) { return RAID_MON_BY_ID[k]; }), SPIRE_NATIVES);
+    all.forEach(function (m) {
+      if (!m.weakEl || known.indexOf(m.weakEl) < 0) odd.push(m.id + ' weak ' + m.weakEl);
+      if (m.resistEl && known.indexOf(m.resistEl) < 0) odd.push(m.id + ' resists ' + m.resistEl);
+      if (m.resistEl && m.resistEl === m.weakEl) odd.push(m.id + ' is weak to what it resists');
+    });
+    var floors = 0, wrong = [];
+    for (var f = 1; f <= 160; f++) {
+      var fm = spireFloor(f, true), bid = fm.id.replace(/^spr_/, '');
+      var base = MONSTERS.filter(function (m) { return m.id === bid; })[0] || RAID_MON_BY_ID[bid] || SPIRE_NATIVES.filter(function (n) { return n.id === fm.id; })[0];
+      if (!base) { wrong.push('floor ' + f + ': no base for ' + fm.id); continue; }
+      floors++;
+      if (fm.weakEl !== base.weakEl || fm.resistEl !== base.resistEl || fm.weakTo !== base.weakTo) wrong.push('floor ' + f + ' ' + fm.name);
+    }
+    /* what the bar and the fight make of it */
+    var rat = MONSTERS.filter(function (m) { return m.id === 'rat'; })[0], knight = MONSTERS.filter(function (m) { return m.id === 'bone_knight'; })[0];
+    var mult = [elementMult(rat, 'fire'), elementMult(rat, 'frost'), elementMult(knight, 'storm'), elementMult(knight, 'frost'), elementMult(knight, 'fire')];
+    return { mon: mon, raid: raid, spire: spire, odd: odd, floors: floors, wrong: wrong, mult: mult, raidStages: Object.keys(RAID_MON_BY_ID).length, natives: SPIRE_NATIVES.length };
+  }
+  /* The elements in the real tick, dice fixed: Frost chills and the chill slows the
+     monster, Storm lands a cast that would have missed, Shadow heals, and the
+     weakness is worth 15% either way. */
+  function elementFx() {
+    var o = {}, realRandom = Math.random;
+    function arm(el, monId) {
+      state = defaultState(); normalizeState();
+      state.combatXp.magic = XP_CUM[99]; state.combatXp.hitpoints = XP_CUM[99]; state.combatXp.defence = XP_CUM[99];
+      state.items = { ancient_staff: 1, crucible_rune: 1000 }; state.combatEquipped = { weapon: 'ancient_staff', quiver: 'crucible_rune' };
+      state.combatSpell = BIGGEST; state.combatElement = el;
+      state.zone = 'rat_warrens'; combat.raid = null; combat.monId = monId || 'rat'; combat.log = []; combat.rare = null;
+      refreshCombatStats();
+      combat.active = true; combat.foeHp = 1e9; combat.foeMaxHp = 1e9; combat.foeStatus = {};
+      combat.youHp = combat.youMaxHp; combat.foeSwingStart = Date.now() + 1e9; combat.foeSwingMs = 2000;
+    }
+    function cast() { combat.youSwingStart = Date.now() - combat.youSwingMs - 1; combatTick(); }
+    try {
+      /* the weakness, on one fixed roll: neutral, weak, resisted */
+      var dmg = function (el, monId) { arm(el, monId); Math.random = function () { return 0.5; }; cast(); return 1e9 - combat.foeHp; };
+      var neutral = dmg('fire', 'bone_knight'), weak = dmg('storm', 'bone_knight'), res = dmg('frost', 'bone_knight');
+      o.weak = [neutral, weak, res, +(weak / neutral).toFixed(3), +(res / neutral).toFixed(3)];
+      /* Frost: every roll low, so the chill lands, and the monster's attack time is the slowed one */
+      arm('frost'); Math.random = function () { return 0.01; }; cast();
+      var pin = combat.foeStatus.pin;
+      o.frost = [!!pin, pin ? pin.slow : 0, pin ? pin.base : 0];
+      combat.foeSwingStart = Date.now() - 5000; cast();
+      o.frostSlow = [combat.foeSwingMs, pin ? Math.round(pin.base * 1.25) : 0];
+      /* Storm: a hit roll that would miss against a monster with a great deal of Defence */
+      var stormHit = function (roll) {
+        arm('storm'); var m = getMonster('rat'), keep = m.def; m.def = 1e9;
+        var n = 0; Math.random = function () { n++; return roll(n); };
+        try { cast(); } finally { m.def = keep; }
+        return 1e9 - combat.foeHp;
+      };
+      /* rolls in order: the rune save, Windcutter, the sure cast, then the hit. 0.02 is under Storm's 4%. */
+      o.storm = [stormHit(function (n) { return n === 3 ? 0.02 : 0.5; }) > 0, stormHit(function () { return 0.5; }) > 0];
+      /* Shadow: a hit heals 3% of what it dealt */
+      arm('shadow'); combat.youHp = 100; Math.random = function () { return 0.5; }; cast();
+      var dealt = 1e9 - combat.foeHp;
+      o.shadow = [dealt, combat.youHp - 100, Math.max(1, Math.floor(dealt * 0.03))];
+      /* Fire's burn tick is 2.4% of max hit */
+      arm('fire'); Math.random = function () { return 0.01; }; cast();
+      o.fire = [combat.foeStatus.burn ? combat.foeStatus.burn.tickDmg : 0, Math.max(1, Math.round(combat.youMaxHit * 0.024))];
+      /* the damage number carries the element */
+      o.unlock = MAGIC_ELEMENTS.map(function (e) { return [e.k, e.lvl]; });
+    } finally { Math.random = realRandom; combat.active = false; combat.raid = null; state = defaultState(); normalizeState(); }
+    return o;
+  }
+
   /* ── the spell bar, the keys, and the line on the health bar ──
      The bar is the part of Magic a player touches most, so it is driven here the
      way a player drives it: a press on a button, a key, a press on a greyed one. */
@@ -857,7 +965,7 @@ function PAGE() {
   }
 
   window.SIM = { levelCheck: levelCheck, saves: saves, consts: consts, parity: parity, ladder: ladder, dressed: dressed, economy: economy, skillXp: skillXp,
-    reagents: reagents, structure: structure, nodes: nodes, spells: spells, spellSizes: spellSizes, castRates: castRates, casting: casting, bar: bar, gold: gold };
+    reagents: reagents, structure: structure, nodes: nodes, spells: spells, spellSizes: spellSizes, castRates: castRates, casting: casting, bar: bar, gold: gold, elements: elements, elTables: elTables, elementFx: elementFx };
 }
 
 setTimeout(() => {
@@ -896,7 +1004,7 @@ setTimeout(() => {
   check(sv.legacy.level === sv.legacy.was, 'and at the combat level it had', sv.legacy.was + ' before, ' + sv.legacy.level + ' after');
   check(sv.badXp === 0 && sv.negXp === 0, 'Magic XP that is not a number, or is negative, is mended to 0');
   check(sv.unknownEl === 'fire' && sv.unknownSpell === 'surge', 'an unknown element goes back to Fire and an unknown spell to the biggest');
-  check(sv.locked.every(x => x[1] === 'fire' && x[2] === x[0]), 'an element is kept only once the Magic level opens it', sv.locked.map(x => x[0]).join(' ') || 'Fire is the only element so far');
+  check(sv.locked.every(x => x[1] === 'fire' && x[2] === x[0]), 'an element is kept only once the Magic level opens it', sv.locked.map(x => x[0]).join(' '));
   check(sv.slotArcher[0] === sv.slotArcher[1] && sv.slotMage[0] === sv.slotMage[1] && sv.slotMage[0] === sv.slotArcher[0],
     'the save slot shows the level the game shows, for an archer and for a mage', 'archer ' + sv.slotArcher.join('/') + ', mage ' + sv.slotMage.join('/'));
   check(sv.guild.join() === 'true,false,true,false', 'a guild can ask for a Ranged level or a Magic level');
@@ -1116,6 +1224,37 @@ setTimeout(() => {
   check(R.cast.slots[0].join() === 'weapon' && R.cast.slots[1].join() === 'weapon' && R.cast.slots[2].join() === 'quiver' && R.cast.slots[3].length === 0, 'a staff goes in the weapon slot and a rune in the quiver');
   check(R.cast.pools[0] === 'staff' && R.cast.pools[1].indexOf('atkBoost') < 0 && R.cast.pools[1][0] === 'magicDmg' && R.cast.pools[2] === 'weapon' && R.cast.pools[3] === 'bow',
     'a staff rolls from the staff pool, and Attack is not in it', (R.cast.pools[1] || []).join(' '));
+
+  /* 9b. elements */
+  R.elements = J('SIM.elements()');
+  console.log('\n9b. THE ELEMENT PASS  ·  ' + R.elements.total + ' monsters');
+  console.log('   ' + Object.keys(R.elements.count).map(k => `${k}: weak ${R.elements.count[k].weak}, resist ${R.elements.count[k].resist}`).join(' · '));
+  console.log(`   today: ${R.elements.melee.weak} of ${R.elements.total} are weak to a melee type and ${R.elements.melee.resist} resist one; ${R.elements.ranged.weak} are weak to ranged and ${R.elements.ranged.resist} resist it`);
+  for (const z of R.elements.zones) console.log(`   ${padr(z.name, 18)} Lv ${pad(z.minLvl, 2)}-${pad(z.maxLvl, 2)}  best ${padr(z.best, 7)} (${z.bestWeak}/${z.n} weak)   ` + Object.keys(z.score).map(k => k[0].toUpperCase() + (z.score[k] >= 0 ? '+' : '') + z.score[k]).join(' '));
+  const cnt = R.elements.count;
+  console.log('   once unlocked: ' + Object.keys(R.elements.after).map(k => { const a = R.elements.after[k]; return `${k} is right for ${a.weak} of ${a.pool} and wrong for ${a.resist}`; }).join(' · '));
+  check(Object.keys(cnt).length === 4 && Object.keys(cnt).every(k => cnt[k].weak >= 6 && cnt[k].resist >= 6), 'every element has monsters weak to it and monsters that resist it', Object.keys(cnt).map(k => `${k} ${cnt[k].weak}/${cnt[k].resist}`).join('  '));
+  check(R.elements.fireResistedEarly.length <= 1, 'Fire, the only element below Magic 12, is almost never the wrong one that early', R.elements.fireResistedEarly.join(', ') || 'nothing under level 15 resists it');
+  check(R.elements.rows.every(r => r.weakEl), 'every monster is weak to one element, as every monster is weak to one melee type');
+  same('the element pass over the ' + R.elements.total + ' monsters is the prototype\'s, row for row', R.elements, GOLD.elements);
+  R.el = J('SIM.elTables()');
+  const pairEq = (a, b) => a && b && (a[0] || null) === (b[0] || null) && (a[1] || null) === (b[1] || null);
+  const monBad = Object.keys(R.el.mon).filter(id => !pairEq(R.el.mon[id], GOLD.el.mon[id]));
+  check(Object.keys(R.el.mon).length === 57 && monBad.length === 0, 'all 57 monsters carry the element the design gives them', monBad.join(', ') || Object.keys(R.el.mon).length + ' rows');
+  const raidBad = Object.keys(GOLD.el.raid).filter(id => !pairEq(R.el.raid[id], GOLD.el.raid[id]));
+  check(R.el.raidStages === 27 && Object.keys(GOLD.el.raid).length === 27 && raidBad.length === 0, 'and all 27 raid stages', raidBad.join(', ') || '27 stages');
+  const spireBad = GOLD.el.spire.filter(r => !R.el.spire.some(x => x[0] === r[0] && pairEq([x[1], x[2]], [r[1], r[2]]))).map(r => r[0]);
+  check(R.el.natives === 9 && spireBad.length === 0, 'and all nine Spire monsters', spireBad.join(', ') || '9 monsters');
+  check(R.el.odd.length === 0, 'no row names an element that does not exist, and nothing is weak to what it resists', R.el.odd.slice(0, 4).join(', '));
+  check(R.el.floors === 160 && R.el.wrong.length === 0, 'a Spire floor that borrows a monster carries its elements with its weakness', R.el.wrong.slice(0, 3).join(', ') || R.el.floors + ' floors');
+  check(R.el.mult.join() === '1.15,1,1.15,0.85,1', 'weak is +15%, resisted is -15%, and anything else is neither', R.el.mult.join(' '));
+  R.fx = J('SIM.elementFx()');
+  check(R.fx.unlock.map(u => u.join(' ')).join(', ') === 'fire 1, frost 12, storm 30, shadow 50', 'Fire opens at Magic 1, Frost at 12, Storm at 30, Shadow at 50');
+  check(R.fx.weak[3] > 1.14 && R.fx.weak[3] < 1.16 && R.fx.weak[4] > 0.84 && R.fx.weak[4] < 0.86, 'in the fight, the same roll does 15% more to a weak monster and 15% less to one that resists', `${R.fx.weak[0]} plain, ${R.fx.weak[1]} weak, ${R.fx.weak[2]} resisted`);
+  check(R.fx.fire[0] === R.fx.fire[1] && R.fx.fire[0] > 0, 'Fire burns for 2.4% of your max hit a tick', R.fx.fire.join(' = '));
+  check(R.fx.frost[0] === true && R.fx.frost[1] === 0.25 && R.fx.frostSlow[0] === R.fx.frostSlow[1], 'Frost chills, and a chilled monster attacks 25% slower', R.fx.frost[2] + 'ms -> ' + R.fx.frostSlow[0] + 'ms');
+  check(R.fx.storm[0] === true && R.fx.storm[1] === false, 'Storm lands a cast that would have missed');
+  check(R.fx.shadow[1] === R.fx.shadow[2] && R.fx.shadow[1] > 0, 'Shadow heals you for 3% of the damage you deal', `${R.fx.shadow[0]} dealt, ${R.fx.shadow[1]} healed`);
 
   /* 10. the spell bar */
   console.log('\n10. THE SPELL BAR  ·  pressed, keyed and greyed, the way a player meets it');
