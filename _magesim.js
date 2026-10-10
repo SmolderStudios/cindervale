@@ -136,12 +136,11 @@ function PAGE() {
   var BIGGEST = SPELL_SIZES[SPELL_SIZES.length - 1].k;
   var FIRE = MAGIC_ELEMENTS[0];
   var foeDefFor = function (lv) { return Math.round(12 + lv * 3.2); };   // _rangedsim.js's level-scaled defence
-  var has = function (fn) { return typeof window[fn] === 'function'; };
 
   var METAL = ['bronze', 'iron', 'steel', 'mithril', 'cobalt', 'runite', 'starsteel', 'starfall'];
   var WOOD = ['pine', 'oak', 'ironbark', 'ember', 'frost', 'shadow', 'ancient'];
   var HIDE = ['rough', 'chitin', 'wolf', 'ogre', 'troll', 'drake', 'demon'];
-  var CLOTHK = (typeof CLOTH_TIERS !== 'undefined') ? CLOTH_TIERS.map(function (c) { return c.key; }) : [];
+  var CLOTHK = CLOTH_TIERS.map(function (c) { return c.key; });
   var PL = ['helm', 'chest', 'legs', 'gloves', 'boots'], RB = ['hood', 'robe', 'leggings', 'wraps', 'slippers'];
   /* the rune ladder, read off the game: the items that are runes, and the act that carves each */
   var RUNES = Object.keys(ITEMS).filter(function (id) { return isRune(id); })
@@ -184,7 +183,7 @@ function PAGE() {
       block: +((typeof shieldDamageReduction === 'function') ? shieldDamageReduction() : 0).toFixed(4),
       atkBoost: +(cb.atkBoost || 0).toFixed(4), rangedStr: +(cb.rangedStr || 0).toFixed(4), magicDmg: +(cb.magicDmg || 0).toFixed(4),
       atk: cs.atk, str: cs.str, rstr: cs.rstr || 0, mpow: cs.mpow || 0, gdef: cs.def,
-      armourMult: +((usingMagic() ? (has('magicArmourMult') ? magicArmourMult() : 1) : usingRanged() ? rangedArmourMult() : 1)).toFixed(4),
+      armourMult: +((usingMagic() ? magicArmourMult() : usingRanged() ? rangedArmourMult() : 1)).toFixed(4),
       runeSave: usingMagic() ? +runeSaveRate().toFixed(4) : 0, size: usingMagic() ? spellSize() : 1, style: combatXpStat(), cl: combatLevel() };
   }
 
@@ -838,6 +837,86 @@ function PAGE() {
     return o;
   }
 
+  /* ── fight numbers for the simulated fights ── */
+  function fighters(lv, t) {
+    var metal = METAL[t - 1], wood = WOOD[t - 1], hide = HIDE[t - 1], cloth = CLOTHK[t - 1], rune = RUNE[t - 1];
+    var cape = { cape: metal + '_cape' }, out = {};
+    state = defaultState(); normalizeState(); state.xp.agility = XP_CUM[lv];
+    function one(key, o) { wear(o, lv); var s = snap(); var w = ITEMS[eqCombatWeapon()] || {}; s.dmgType = w.dmgType; s.kind = w.magic ? 'magic' : w.ranged ? 'ranged' : 'melee'; s.lcrit = s.crit; out[key] = s; }
+    one('melee', { weapon: metal + '_sword', armour: set5(metal, PL, { cape: metal + '_cape', shield: metal + '_shield' }) });
+    one('bow', { weapon: wood + '_shortbow', quiver: metal + '_arrow', armour: set5(hide, PL, cape) });
+    one('wand', { weapon: wood + '_wand', quiver: rune, armour: set5(cloth, RB, { cape: metal + '_cape', shield: metal + '_buckler' }) });
+    one('staff', { weapon: wood + '_staff', quiver: rune, armour: set5(cloth, RB, cape) });
+    /* the same staff casting each smaller spell its rune powers */
+    for (var sz = runeClassOf(rune) - 1; sz >= 1; sz--) one('staff_s' + sz, { weapon: wood + '_staff', quiver: rune, armour: set5(cloth, RB, cape), spell: SPELL_SIZES[sz - 1].k });
+    one('wandBare', { weapon: wood + '_wand', quiver: rune, armour: set5(cloth, RB, cape) });
+    one('longbow', { weapon: wood + '_longbow', quiver: metal + '_arrow', armour: set5(hide, PL, cape) });
+    one('meleeBuckler', { weapon: metal + '_sword', armour: set5(metal, PL, { cape: metal + '_cape', shield: metal + '_buckler' }) });
+    one('xbowBuckler', { weapon: metal + '_crossbow', quiver: metal + '_bolt', armour: set5(hide, PL, { cape: metal + '_cape', shield: metal + '_buckler' }) });
+    state = defaultState(); normalizeState();
+    return out;
+  }
+
+  /* ── robes: built off leather, and what casting in anything else costs ── */
+  function robes() {
+    var o = { tiers: [], bad: [] };
+    CLOTH_TIERS.forEach(function (t) {
+      var sum = { def: 0, atk: 0, mpow: 0, save: 0 }, lsum = { def: 0, atk: 0 }, req = null;
+      RB.forEach(function (p, i) {
+        var id = t.key + '_' + p, it = ITEMS[id], st = COMBAT_GEAR_STATS[id], L = COMBAT_GEAR_STATS[t.leather + '_' + PL[i]];
+        if (!it || !st || !L) { o.bad.push(id + ' missing'); return; }
+        if (!it.cloth || it.light) o.bad.push(id + ' is not cloth');
+        if (st.def !== Math.max(1, Math.round((L.def || 0) * 0.62))) o.bad.push(id + ' def ' + st.def);
+        if (st.atk !== Math.round((L.atk || 0) * 0.5)) o.bad.push(id + ' atk ' + st.atk);
+        if (st.runeSave !== 0.015) o.bad.push(id + ' save ' + st.runeSave);
+        if (st.crit || st.dodge || st.aspd || st.str || st.rstr) o.bad.push(id + ' carries a stat that is not cloth\'s');
+        if (it.ctier !== t.ctier || it.cslot !== ['helmet', 'chest', 'legs', 'gloves', 'boots'][i]) o.bad.push(id + ' tier or slot');
+        if (!SKILLS.runecrafting.acts.some(function (a) { return a.out && a.out[id]; })) o.bad.push(id + ' has no recipe');
+        if (!ICONS[id]) o.bad.push(id + ' has no icon');
+        var r = combatGearReq(id); req = r; if (!r || r.stat !== 'defence' || r.level !== COMBAT_GEAR_REQ[t.ctier]) o.bad.push(id + ' requirement');
+        sum.def += st.def; sum.atk += st.atk; sum.mpow += st.mpow || 0; sum.save += st.runeSave; lsum.def += L.def || 0; lsum.atk += L.atk || 0;
+      });
+      if (!ITEMS[t.key] || !ICONS[t.key] || !SKILLS.runecrafting.acts.some(function (a) { return a.out && a.out[t.key]; })) o.bad.push(t.key + ' cloth');
+      o.tiers.push({ key: t.key, set: t.set, tier: t.ctier, def: sum.def, atk: sum.atk, mpow: sum.mpow, want: t.mpow, save: +sum.save.toFixed(3), leatherDef: lsum.def, leatherAtk: lsum.atk, req: req && req.level });
+    });
+    /* the armour rule, piece by piece, on a level 99 mage */
+    function arm(eq) {
+      state = defaultState(); normalizeState(); for (var k in state.combatXp) state.combatXp[k] = XP_CUM[99];
+      state.items = { crucible_rune: 1e6 }; state.combatEquipped = eq; combat.active = false; combat.raid = null; refreshCombatStats();
+      return { mult: +magicArmourMult().toFixed(4), hit: playerMaxHit(), def: nonClothDef(), save: +runeSaveRate().toFixed(4), mpow: combatStats().mpow };
+    }
+    var W = { weapon: 'ancient_staff', quiver: 'crucible_rune' }, add = function (x) { var e = {}; for (var k in W) e[k] = W[k]; for (var k2 in x) e[k2] = x[k2]; return e; };
+    var cloth = set5('wyrmsilk', RB), leather = set5('demon', PL), plate = set5('starsteel', PL);
+    o.rule = { naked: arm(add({})), cloth: arm(add(cloth)), leather: arm(add(leather)), plate: arm(add(plate)),
+      plateChest: arm(add({ chest: 'starsteel_chest' })), chestDef: COMBAT_GEAR_STATS.starsteel_chest.def,
+      shield: arm({ weapon: 'ancient_wand', quiver: 'crucible_rune', shield: 'starsteel_shield' }), cape: arm(add({ cape: 'starsteel_cape' })),
+      stonewright: arm(add({ gloves: 'stonewright_gauntlets' })), raidPlate: arm(add(set5('dawnward', ['helm', 'chest', 'legs', 'gloves', 'boots']))) };
+    /* a sword and a bow pay nothing */
+    state.combatEquipped = { weapon: 'starsteel_sword', chest: 'starsteel_chest' }; var swordMult = magicArmourMult();
+    state.combatEquipped = { weapon: 'ancient_shortbow', quiver: 'starsteel_arrow', chest: 'starsteel_chest' }; state.items.starsteel_arrow = 10; var bowMult = magicArmourMult();
+    o.others = [swordMult, bowMult];
+    /* Magic Power on what every build already wears */
+    o.bucklers = ['cobalt', 'runite', 'starsteel', 'moltensteel', 'voidsteel', 'dawnsteel'].map(function (k) { var s = COMBAT_GEAR_STATS[k + '_buckler']; return s ? (s.mpow || 0) : -1; });
+    o.lowBucklers = ['bronze', 'iron', 'steel', 'mithril'].map(function (k) { var s = COMBAT_GEAR_STATS[k + '_buckler']; return s ? (s.mpow || 0) : -1; });
+    o.stonewright = [COMBAT_GEAR_STATS.stonewright_gauntlets.mpow, !!ITEMS.stonewright_gauntlets.cloth, !!ITEMS.stonewright_gauntlets.light];
+    var capes = Object.keys(COMBAT_GEAR_STATS).filter(function (id) { return ITEMS[id] && ITEMS[id].cslot === 'cape'; });
+    o.capes = { n: capes.length, withStr: capes.filter(function (id) { return (COMBAT_GEAR_STATS[id].str || 0) > 0; }).length,
+      wrong: capes.filter(function (id) { var s = COMBAT_GEAR_STATS[id]; return (s.str || 0) > 0 ? s.mpow !== s.str : !!s.mpow; }) };
+    /* nothing that is not a robe, a buckler, Stonewright or a cape carries Magic Power */
+    o.strays = Object.keys(COMBAT_GEAR_STATS).filter(function (id) { var it = ITEMS[id], s = COMBAT_GEAR_STATS[id]; if (!it || it._variant || !s.mpow) return false;
+      return !(it.cloth || it.cslot === 'cape' || /_buckler$/.test(id) || id === 'stonewright_gauntlets'); });
+    /* Ascension raises Magic Power with a piece's other numbers */
+    state = defaultState(); normalizeState(); state.asc = {}; var b0 = gearStats('wyrmsilk_robe').mpow; state.asc.wyrmsilk_robe = 10; var b1 = gearStats('wyrmsilk_robe');
+    o.asc = [b0, b1.mpow, b1.def, COMBAT_GEAR_STATS.wyrmsilk_robe.def, b1.runeSave];
+    /* cards: what a robe, leather and plate each say */
+    var chips = function (id) { var d = document.createElement('div'); d.innerHTML = combatGearStatBlock(id); return [].map.call(d.querySelectorAll('.nt-chip'), function (c) { return c.textContent.trim(); }); };
+    state = defaultState(); normalizeState();
+    o.cards = { robe: chips('seercloth_robe'), leather: chips('troll_chest'), plate: chips('cobalt_chest'), cape: chips('cobalt_cape'), stonewright: chips('stonewright_gauntlets'), staff: chips('frost_staff'), wand: chips('frost_wand') };
+    var d2 = document.createElement('div'); d2.innerHTML = combatGearStatBlock('seercloth_robe'); o.robeStats = d2.querySelector('.nt-stats').textContent.replace(/\s+/g, ' ').trim();
+    state = defaultState(); normalizeState();
+    return o;
+  }
+
   /* ── the spell bar, the keys, and the line on the health bar ──
      The bar is the part of Magic a player touches most, so it is driven here the
      way a player drives it: a press on a button, a key, a press on a greyed one. */
@@ -951,7 +1030,12 @@ function PAGE() {
       var inp = 0; for (var k in r.act.inp) inp += (ITEMS[k].sell || 0) * r.act.inp[k];
       return { name: r.n, inputs: inp, batch: r.act.out[r.id] * (ITEMS[r.id].sell || 0), each: ITEMS[r.id].sell };
     });
-    return { best: out, batches: batches };
+    /* and every act in the skill, the same way: nothing it makes is worth much more than it took */
+    var acts = SKILLS.runecrafting.acts.map(function (a) {
+      var i = 0, o = 0; for (var k in a.inp) i += (ITEMS[k].sell || 0) * a.inp[k]; for (var k2 in a.out) o += (ITEMS[k2].sell || 0) * a.out[k2];
+      return { name: a.name, inputs: i, sells: o };
+    });
+    return { best: out, batches: batches, acts: acts };
   }
 
   function consts() {
@@ -965,7 +1049,7 @@ function PAGE() {
   }
 
   window.SIM = { levelCheck: levelCheck, saves: saves, consts: consts, parity: parity, ladder: ladder, dressed: dressed, economy: economy, skillXp: skillXp,
-    reagents: reagents, structure: structure, nodes: nodes, spells: spells, spellSizes: spellSizes, castRates: castRates, casting: casting, bar: bar, gold: gold, elements: elements, elTables: elTables, elementFx: elementFx };
+    reagents: reagents, structure: structure, nodes: nodes, spells: spells, spellSizes: spellSizes, castRates: castRates, casting: casting, bar: bar, gold: gold, elements: elements, elTables: elTables, elementFx: elementFx, fighters: fighters, robes: robes };
 }
 
 setTimeout(() => {
@@ -987,7 +1071,8 @@ setTimeout(() => {
   same('the tree is the shape the prototype measured', { treeSum: R.structure.treeSum, nodes: R.structure.nodes, cols: R.structure.cols, maxAbreast: R.structure.maxAbreast, sameShapeAsFletching: R.structure.sameShapeAsFletching }, GOLD.structure);
   check(R.structure.missing.length === 0, 'every Runecrafting input exists in the game, and so does everything it makes', R.structure.missing.slice(0, 4).join(', '));
   check(R.structure.pfx === 'rn' && R.structure.rail === 'produce' && !!R.structure.accent && R.structure.cape === 'cape_runecrafting' && R.structure.capeInShop,
-    'it has its tree prefix, its place on the rail, its colour, and a cape the shop sells', JSON.stringify(R.structure.acts));
+    'it has its tree prefix, its place on the rail, its colour, and a cape the shop sells');
+  check(JSON.stringify(R.structure.acts) === '{"runes":8,"wands":7,"staves":7,"cloth":7,"robes":35}', '64 acts in five tabs: runes, wands, staves, cloth, robes', JSON.stringify(R.structure.acts));
 
   /* 1. combat level */
   console.log('\n1. COMBAT LEVEL');
@@ -1052,8 +1137,8 @@ setTimeout(() => {
   same('the ladder is the prototype\'s, to the digit', R.ladder, GOLD.ladder);
   same('and its worst point', R.ladderWorst, GOLD.ladderWorst);
 
-  /* 4. dressed: needs robes */
-  if (C.robes) {
+  /* 4. dressed */
+  {
     R.dressed = J('SIM.dressed([40,60,80,99],[3,5,6,7])');
     console.log('\n4. DRESSED  ·  crafted gear, no enchants. Plate for the sword, leather for the bow, cloth for the mage. Magic with Fire.');
     console.log('   lv  def |  two hands: bow   STAFF  staff/bow |  one hand + buckler: sword  crossbow   WAND   wand/sword  wand/xbow |  sword+shield  wand+shield');
@@ -1173,8 +1258,8 @@ setTimeout(() => {
   check(R.reagents.magicSpendsOnce.rune_fragment === 0 && R.reagents.magicSpendsOnce.mana_essence === 0, 'Magic spends no Rune Fragments and no Mana Essence');
   same('what Magic takes from the enchanting pool is what the prototype measured', R.reagents, GOLD.reagents);
 
-  /* 7. skilling xp: needs the whole act list, robes included, to be the prototype's */
-  if (C.robes) {
+  /* 7. skilling xp */
+  {
     R.skillXp = J('SIM.skillXp()');
     console.log('\n7. RUNECRAFTING XP AGAINST ITS NEIGHBOURS  ·  best unlocked act, xp/hr, no tree');
     const CMP = ['runecrafting', 'fletching', 'crafting', 'smithing', 'cooking', 'alchemy', 'jeweler', 'firemaking', 'mining'];
@@ -1256,6 +1341,112 @@ setTimeout(() => {
   check(R.fx.storm[0] === true && R.fx.storm[1] === false, 'Storm lands a cast that would have missed');
   check(R.fx.shadow[1] === R.fx.shadow[2] && R.fx.shadow[1] > 0, 'Shadow heals you for 3% of the damage you deal', `${R.fx.shadow[0]} dealt, ${R.fx.shadow[1]} healed`);
 
+  /* 9c. robes */
+  console.log('\n9c. ROBES  ·  built off the leather of the same tier');
+  R.robes = J('SIM.robes()');
+  console.log('   set          tier  Def  Atk  Magic Power  rune saving | leather Def / Atk | needs Defence');
+  for (const t of R.robes.tiers) console.log(`   ${padr(t.set, 12)} ${pad(t.tier, 3)} ${pad(t.def, 5)} ${pad(t.atk, 4)} ${pad('+' + t.mpow, 9)} ${pad((t.save * 100).toFixed(1) + '%', 12)}   | ${pad(t.leatherDef, 7)} / ${padr(t.leatherAtk, 4)}    | ${t.req}`);
+  check(R.robes.tiers.length === 7 && R.robes.bad.length === 0, 'seven cloths and 35 robe pieces, each 62% of its leather piece\'s Defence and half its Attack, each with a recipe and an icon', R.robes.bad.slice(0, 4).join(', ') || '35 pieces');
+  check(R.robes.tiers.map(t => t.def).join() === '6,9,15,24,31,42,54' && R.robes.tiers.map(t => t.atk).join() === '6,6,8,8,12,14,17', 'the sets total what the design page prints', R.robes.tiers.map(t => t.def + '/' + t.atk).join(' '));
+  check(R.robes.tiers.every(t => t.mpow === t.want) && R.robes.tiers.map(t => t.mpow).join() === '0,1,1,2,3,4,5', 'a set carries the Magic Power of its tier', R.robes.tiers.map(t => '+' + t.mpow).join(' '));
+  check(R.robes.tiers.every(t => t.save === 0.075), 'and five pieces keep the runes of 7.5% of casts');
+  check(R.robes.tiers.map(t => t.req).join() === '1,10,20,30,40,55,70', 'robes need Defence, on the ladder plate and leather climb');
+  const RL = R.robes.rule;
+  check(RL.cloth.mult === 1 && RL.naked.mult === 1 && RL.cloth.def === 0, 'cloth costs a spell nothing');
+  check(RL.plateChest.def === RL.chestDef && RL.plateChest.mult === +(1 - 0.003 * RL.chestDef).toFixed(4), 'a piece that is not cloth costs 0.3% Magic damage for each point of its Defence', `a Starsteel Chest, ${RL.chestDef} Defence: x${RL.plateChest.mult}`);
+  check(RL.leather.mult < 1 && RL.plate.mult < RL.leather.mult && RL.plate.hit < RL.leather.hit && RL.leather.hit < RL.cloth.hit, 'so leather hits softer than cloth and plate softer again', `max hit: cloth ${RL.cloth.hit}, leather ${RL.leather.hit}, plate ${RL.plate.hit}`);
+  check(RL.raidPlate.mult === 0.6, 'to a limit of 40%', 'Dawnward plate: x' + RL.raidPlate.mult);
+  check(RL.shield.mult === 1 && RL.cape.mult === 1, 'the shield and the cape are exempt');
+  check(RL.stonewright.mult === 1 && R.robes.stonewright[1] === true && R.robes.stonewright[2] === true, 'and Stonewright Gauntlets count as cloth');
+  check(R.robes.others.join() === '1,1', 'a sword and a bow pay nothing for plate');
+  check(RL.cloth.save === 0.075 && RL.leather.save === 0 && RL.cloth.mpow === 5, 'worn, a Wyrmsilk set gives +5 Magic Power and keeps the runes of 7.5% of casts');
+  check(R.robes.bucklers.join() === '1,1,1,2,2,2' && R.robes.lowBucklers.join() === '0,0,0,0', 'bucklers from Cobalt up carry Magic Power', R.robes.bucklers.join(' '));
+  check(R.robes.stonewright[0] === 2, 'Stonewright Gauntlets carry +2');
+  check(R.robes.capes.withStr > 0 && R.robes.capes.wrong.length === 0, 'and every cape with Strength carries the same Magic Power', R.robes.capes.withStr + ' of ' + R.robes.capes.n + ' capes');
+  check(R.robes.strays.length === 0, 'nothing else in the game carries Magic Power', R.robes.strays.join(', '));
+  check(R.robes.asc[0] === 2 && R.robes.asc[1] === Math.round(2 * 1.6) && R.robes.asc[2] === Math.round(R.robes.asc[3] * 1.6) && R.robes.asc[4] === 0.015, 'Ascension raises Magic Power on a piece with its other numbers', `+${R.robes.asc[0]} -> +${R.robes.asc[1]} at ten ranks`);
+  const CD = R.robes.cards;
+  check(CD.robe.some(c => /^Cloth · spells at full strength$/.test(c)) && !CD.robe.some(c => /Magic damage|Heavy armour|Light armour/.test(c)), 'a robe\'s card says it is cloth', CD.robe.join(' | '));
+  check(/\+\d+ Atk/.test(R.robes.robeStats) && /\+\d+ Def/.test(R.robes.robeStats) && /\+1 Magic Power/.test(R.robes.robeStats) && /1\.5% of casts keep their runes/.test(R.robes.robeStats), 'with its Magic Power and what it saves', R.robes.robeStats);
+  check(CD.leather.some(c => c === 'Light armour') && CD.leather.some(c => /^-\d+(\.\d)?% Magic damage$/.test(c)), 'leather\'s card says what it costs a spell', CD.leather.join(' | '));
+  check(CD.plate.some(c => c === 'Heavy armour') && CD.plate.some(c => /% ranged accuracy$/.test(c)) && CD.plate.some(c => /^-\d+(\.\d)?% Magic damage$/.test(c)), 'and plate\'s, under the line a bow already gets', CD.plate.join(' | '));
+  check(!CD.cape.some(c => /Magic damage/.test(c)) && CD.stonewright.some(c => /^Cloth/.test(c)) && !CD.stonewright.some(c => /Magic damage/.test(c)), 'a cape and Stonewright Gauntlets show no cost, because they have none');
+  check(CD.staff.some(c => c === 'Two-handed') && CD.staff.some(c => c === '+44% damage') && CD.staff.some(c => c === '25% slower attacks') && CD.staff.some(c => c === 'Heavy'), 'a staff\'s card: two-handed, heavy, +44% damage, 25% slower', CD.staff.join(' | '));
+  check(CD.wand.some(c => /^Light · \+\d/.test(c)) && CD.wand.some(c => c === '13% faster attacks') && !CD.wand.some(c => c === 'Two-handed'), 'a wand\'s card: light, with the light weapon\'s crit, and 13% faster', CD.wand.join(' | '));
+
+  /* 9d. fights */
+  if (!QUICK) {
+    console.log('\n9d. FIGHTS  ·  40 simulated hours each on the real monster, dressed in crafted gear of the tier');
+    const REF = { 20: 'goblin_shaman', 50: 'ogre_houndmaster', 75: 'wyvern', 99: 'dread_knight' };
+    const TIER = { 20: 3, 50: 5, 75: 7, 99: 7 };
+    const EL = C.elements;
+    R.fights = [];
+    for (const lv of [20, 50, 75, 99]) {
+      const F = J(`SIM.fighters(${lv},${TIER[lv]})`), M = C.monsters.find(m => m.id === REF[lv]);
+      const o = { lv, mon: M.name, monId: M.id, weakTo: M.weakTo, weakEl: M.weakEl, resistEl: M.resistEl, rows: {} };
+      /* validation: on a monster that cannot die the loop must agree with the closed form */
+      const dummy = Object.assign({}, M, { hp: 1e12 });
+      const v = fight(F.melee, dummy, C, { neutral: true, hours: 60 });
+      const exp = clamp(F.melee.acc / (F.melee.acc + M.def)) * F.melee.hit * 0.75 * (1 + F.melee.crit * (1 + F.melee.critDmg)) / (F.melee.swing / 1000);
+      o.validate = pct(v.rawDps, exp);
+      o.rows.melee = fight(F.melee, M, C, { neutral: true });
+      o.rows.meleeWeak = fight(F.melee, M, C, { forceWk: 1.15 });
+      o.rows.bow = fight(F.bow, M, C, { neutral: true });
+      o.rows.longbow = fight(F.longbow, M, C, { neutral: true });
+      o.rows.meleeBuckler = fight(F.meleeBuckler, M, C, { neutral: true });
+      o.rows.xbowBuckler = fight(F.xbowBuckler, M, C, { neutral: true });
+      for (const fam of ['wand', 'staff', 'wandBare']) {
+        o.rows[fam] = fight(F[fam], M, C, { neutral: true, save: 0 });
+        for (const e of EL) o.rows[fam + '_' + e.k] = fight(F[fam], M, C, { neutral: true, el: e.k, save: 0 });
+        o.rows[fam + '_weak'] = fight(F[fam], M, C, { el: 'fire', forceWk: C.WEAK, save: 0 });
+        o.rows[fam + '_resist'] = fight(F[fam], M, C, { el: 'fire', forceWk: C.RESIST, save: 0 });
+      }
+      /* the same staff at each smaller size, Fire on, to see what a real monster does to the trade */
+      o.sizes = [{ size: F.staff.size, name: C.sizes[F.staff.size - 1].n, hit: F.staff.hit, dps: o.rows.staff_fire.dps, spentHr: o.rows.staff_fire.spentHr, killsHr: o.rows.staff_fire.killsHr }];
+      for (let sz = F.staff.size - 1; sz >= 1; sz--) {
+        const x = fight(F['staff_s' + sz], M, C, { neutral: true, el: 'fire', save: 0 });
+        o.rows['staff_fire_s' + sz] = x;
+        o.sizes.push({ size: sz, name: C.sizes[sz - 1].n, hit: F['staff_s' + sz].hit, dps: x.dps, spentHr: x.spentHr, killsHr: x.killsHr });
+      }
+      for (const z of o.sizes) { z.ofBig = pct(z.dps, o.sizes[0].dps); z.hitOfBig = pct(z.hit, o.sizes[0].hit); }
+      o.stats = { melee: F.melee, bow: F.bow, wand: F.wand, staff: F.staff, wandBare: F.wandBare };
+      R.fights.push(o);
+      const m = o.rows.melee;
+      console.log(`\n   Lv ${lv}  ${M.name} (${M.hp} hp, def ${M.def})   loop against the closed form: ${o.validate}%`);
+      console.log('   ' + padr('', 22) + pad('dps', 7) + pad('% melee', 9) + pad('kills/hr', 10) + pad('xp/hr', 9) + pad('% melee', 9) + pad('dmg taken/hr', 14) + pad('healed/hr', 11) + pad('casts/hr', 10));
+      const line = (label, x) => console.log('   ' + padr(label, 22) + pad(x.dps.toFixed(1), 7) + pad(pct(x.dps, m.dps) + '%', 9) + pad(Math.round(x.killsHr), 10) + pad(Math.round(x.xpHr / 1000) + 'k', 9) + pad(pct(x.xpHr, m.xpHr) + '%', 9) + pad(Math.round(x.takenHr).toLocaleString(), 14) + pad(Math.round(x.healHr).toLocaleString(), 11) + pad(Math.round(x.castsHr), 10));
+      line('sword + shield', m); line('shortbow', o.rows.bow); line('crossbow + buckler', o.rows.xbowBuckler);
+      line('staff, no element', o.rows.staff);
+      for (const e of EL) line('  staff ' + e.n, o.rows['staff_' + e.k]);
+      line('  staff Fire, weak', o.rows.staff_weak); line('  staff Fire, resisted', o.rows.staff_resist);
+      line('wand, hand empty', o.rows.wandBare); line('wand + buckler', o.rows.wand);
+    }
+    check(R.fights.every(f => Math.abs(f.validate - 100) < 1.5), 'the fight loop agrees with the closed form on a monster that cannot die', R.fights.map(f => f.validate + '%').join(' '));
+    const fx = R.fights.map(f => ({ lv: f.lv, fire: pct(f.rows.staff_fire.dps, f.rows.staff.dps), storm: pct(f.rows.staff_storm.dps, f.rows.staff.dps),
+      frostTaken: pct(f.rows.staff_frost.takenHr, f.rows.staff.takenHr), shadowHeal: pct(f.rows.staff_shadow.healHr, f.rows.staff.takenHr) }));
+    R.riders = fx;
+    console.log('\n   WHAT EACH ELEMENT IS WORTH on a monster that is neither weak nor resistant (staff)');
+    for (const x of fx) console.log(`   Lv ${pad(x.lv, 2)}: Fire ${(x.fire - 100).toFixed(1)}% more damage · Storm ${(x.storm - 100).toFixed(1)}% more damage · Frost ${(100 - x.frostTaken).toFixed(1)}% less damage taken · Shadow heals ${x.shadowHeal.toFixed(1)}% of the damage you take`);
+    check(fx.every(x => x.fire - 100 <= 4 && x.fire - 100 >= 0.5), 'on a real monster the burn from Fire is worth half a percent to 4%: never a tier, never nothing', fx.map(x => (x.fire - 100).toFixed(1) + '%').join(' '));
+    R.real = R.fights.map(f => ({ lv: f.lv, mon: f.mon, staffVsBow: pct(f.rows.staff_fire.dps, f.rows.bow.dps), wandBareVsBow: pct(f.rows.wandBare_fire.dps, f.rows.bow.dps),
+      wandVsXbow: pct(f.rows.wand_fire.dps, f.rows.xbowBuckler.dps), wandVsSwordB: pct(f.rows.wand_fire.dps, f.rows.meleeBuckler.dps), staffVsWandBare: pct(f.rows.staff_fire.dps, f.rows.wandBare_fire.dps),
+      bowVsSword: pct(f.rows.bow.dps, f.rows.melee.dps), longVsBow: pct(f.rows.longbow.dps, f.rows.bow.dps) }));
+    console.log('\n   ON REAL MONSTERS, dressed, Fire on: ' + R.real.map(x => `Lv ${x.lv} staff ${x.staffVsBow}% of the bow, wand alone ${x.wandBareVsBow}%, wand+buckler ${x.wandVsXbow}% of crossbow+buckler`).join('  ·  '));
+    check(R.real.every(x => x.staffVsBow >= 95 && x.staffVsBow <= 105), 'on real monsters a staff in cloth is inside 95-105% of a bow in leather', R.real.map(x => x.staffVsBow + '%').join(' '));
+    check(R.real.every(x => x.wandBareVsBow >= 95 && x.wandBareVsBow <= 105), 'and so is a wand with the other hand empty', R.real.map(x => x.wandBareVsBow + '%').join(' '));
+    check(R.real.every(x => x.wandVsXbow >= 95 && x.wandVsXbow <= 108), 'and a wand with a buckler is inside 95-108% of a crossbow with a buckler', R.real.map(x => x.wandVsXbow + '%').join(' '));
+    console.log('\n   SPELL SIZES ON REAL MONSTERS (staff, Fire, nothing saved): damage as a share of the biggest spell, and runes spent an hour');
+    for (const f of R.fights) console.log(`   Lv ${pad(f.lv, 2)} ${padr(f.mon, 18)} ` + f.sizes.map(z => `${z.name} ${z.ofBig}% (max hit ${z.hitOfBig}%), ${Math.round(z.spentHr).toLocaleString()} runes`).join('  ·  '));
+    check(R.fights.every(f => f.sizes.every((z, i) => i === 0 || (z.dps < f.sizes[i - 1].dps && z.spentHr < f.sizes[i - 1].spentHr))), 'on real monsters a smaller spell does less damage and spends fewer runes, every time');
+    check(R.fights.every(f => f.sizes.every(z => z.ofBig >= z.hitOfBig - 1.5)), 'and loses no more than its max hit says: a smaller hit wastes less on a monster that is nearly dead');
+    R.xp = R.fights.map(f => ({ lv: f.lv, mon: f.mon, melee: Math.round(f.rows.melee.xpHr), bow: Math.round(f.rows.bow.xpHr), wand: Math.round(f.rows.wandBare_fire.xpHr), staff: Math.round(f.rows.staff_fire.xpHr),
+      wandPct: pct(f.rows.wandBare_fire.xpHr, f.rows.bow.xpHr), staffPct: pct(f.rows.staff_fire.xpHr, f.rows.bow.xpHr), bowPct: pct(f.rows.bow.xpHr, f.rows.melee.xpHr) }));
+    same('the 40-hour fights are the prototype\'s, to the digit: every fighter, every element, every size', R.fights, GOLD.fights);
+    same('what each element is worth', R.riders, GOLD.riders);
+    same('how a mage stands beside an archer on real monsters', R.real, GOLD.real);
+    same('and the combat XP an hour', R.xp, GOLD.xp);
+  }
+
   /* 10. the spell bar */
   console.log('\n10. THE SPELL BAR  ·  pressed, keyed and greyed, the way a player meets it');
   R.bar = J('SIM.bar()');
@@ -1291,6 +1482,8 @@ setTimeout(() => {
   const median = others.slice().sort((a, b) => a - b)[Math.floor(others.length / 2)];
   console.log('   best gold an hour at 99 with the tree: ' + Object.keys(R.gold.best).map(k => k + ' ' + Math.round(R.gold.best[k].gph / 100).toLocaleString() + 'g').join(' · '));
   check(R.gold.batches.every(b => b.batch <= b.inputs * 3), 'no batch of runes sells for more than three times what went into it', R.gold.batches.map(b => (b.batch / b.inputs).toFixed(1) + 'x').join(' '));
+  const dear = R.gold.acts.filter(a => a.sells > a.inputs * 3);
+  check(R.gold.acts.length === 64 && dear.length === 0, 'and nothing else the skill makes does either: wands, staves, cloth, robes', dear.map(a => a.name).join(', ') || 'dearest against its inputs: ' + R.gold.acts.slice().sort((a, b) => b.sells / b.inputs - a.sells / a.inputs)[0].name);
   check(R.gold.best.runecrafting.gph <= Math.max(...others), 'Runecrafting is not the best gold in the game', R.gold.best.runecrafting.act + ', ' + Math.round(R.gold.best.runecrafting.gph / 100).toLocaleString() + 'g an hour against a median of ' + Math.round(median / 100).toLocaleString() + 'g');
 
   console.log(`\n${fails ? fails + ' CHECK' + (fails > 1 ? 'S' : '') + ' FAILED' : 'PASS'}: ${fails ? fails + ' of ' : 'all '}${checks} Magic checks\n`);

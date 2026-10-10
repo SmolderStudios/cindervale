@@ -11073,6 +11073,16 @@ const ITEMS={
   frost_staff:    {name:'Frostwood Staff', icon:'\u{1FA84}', sell:1830, cgear:true, ctier:5, cslot:'weapon', dmgType:'magic', magic:true, ammo:'rune', mfam:'staff', wclass:'heavy', swingMult:1.25, dmgMult:1.44, twoHanded:true, desc:'Slow to cast and hits hard. Takes both hands, so you cannot carry a shield. Every cast spends runes.'},
   shadow_staff:   {name:'Shadowwood Staff', icon:'\u{1FA84}', sell:4300, cgear:true, ctier:6, cslot:'weapon', dmgType:'magic', magic:true, ammo:'rune', mfam:'staff', wclass:'heavy', swingMult:1.25, dmgMult:1.44, twoHanded:true, desc:'Slow to cast and hits hard. Takes both hands, so you cannot carry a shield. Every cast spends runes.'},
   ancient_staff:  {name:'Ancient Staff', icon:'\u{1FA84}', sell:10106, cgear:true, ctier:7, cslot:'weapon', dmgType:'magic', magic:true, ammo:'rune', mfam:'staff', wclass:'heavy', swingMult:1.25, dmgMult:1.44, twoHanded:true, desc:'Slow to cast and hits hard. Takes both hands, so you cannot carry a shield. Every cast spends runes.'},
+  /* Cloth: one bolt for each tier of robes. Linen is flax; every cloth above it is
+     Spider Silk and one thing from the zone of its tier. The robe pieces themselves
+     are made beside the leather they are measured against: see CLOTH_TIERS. */
+  linen:          {name:'Linen', icon:'\u{1F9F5}', sell:30, desc:'A bolt of linen, woven on a loom. Runecrafting sews it into robes.'},
+  spidersilk:     {name:'Spidersilk', icon:'\u{1F9F5}', sell:57, desc:'A bolt of spidersilk, woven on a loom. Runecrafting sews it into robes.'},
+  gravecloth:     {name:'Gravecloth', icon:'\u{1F9F5}', sell:108, desc:'A bolt of gravecloth, woven on a loom. Runecrafting sews it into robes.'},
+  rimeweave:      {name:'Rimeweave', icon:'\u{1F9F5}', sell:206, desc:'A bolt of rimeweave, woven on a loom. Runecrafting sews it into robes.'},
+  seercloth:      {name:'Seercloth', icon:'\u{1F9F5}', sell:391, desc:'A bolt of seercloth, woven on a loom. Runecrafting sews it into robes.'},
+  stoneweave:     {name:'Stoneweave', icon:'\u{1F9F5}', sell:743, desc:'A bolt of stoneweave, woven on a loom. Runecrafting sews it into robes.'},
+  wyrmsilk:       {name:'Wyrmsilk', icon:'\u{1F9F5}', sell:1411, desc:'A bolt of wyrmsilk, woven on a loom. Runecrafting sews it into robes.'},
 };
 
 /* ════════ COMBAT GEAR STATS ════════════════════════════════════════════════════
@@ -12615,7 +12625,8 @@ const SKILLS={
      Runes run all day, so they are the slow XP. Wands and staves are the XP acts,
      as bows are in Fletching. A batch is 40 runes for each rune the grade's biggest
      spell spends, so one full-size cast costs the same work at every grade. The
-     two spdMult values written as sums are the doubles the formula gives. */
+     spdMult values written as sums are the doubles the formula gives. Five tabs:
+     runes, wands, staves, cloth, robes. */
   runecrafting:{name:'Runecrafting',icon:'\u{1F52E}',acts:[
     {id:'rn_r_ash',name:'Carve Ash Runes',cat:'runes',lvl:1,ms:4200,xp:40,spdMult:0.52,minMs:800,inp:{runestone:1,ash:1},out:{ash_rune:40}},
     {id:'rn_r_soot',name:'Carve Soot Runes',cat:'runes',lvl:12,ms:4720,xp:98,spdMult:0.558,minMs:910,inp:{runestone:1,ash:2},out:{soot_rune:40}},
@@ -12639,6 +12650,50 @@ const SKILLS={
     {id:'rn_staff_shadow',name:'Bind a Shadowwood Staff',cat:'staves',lvl:70,ms:11500,xp:1100,spdMult:0.75,minMs:2400,inp:{shadow_log:4,forge_rune:240,arcane_dust:16},out:{shadow_staff:1}},
     {id:'rn_wand_ancient',name:'Bind an Ancient Wand',cat:'wands',lvl:78,ms:12400,xp:1080,spdMult:0.79,minMs:2580,inp:{ancient_log:2,crucible_rune:120,arcane_dust:20},out:{ancient_wand:1}},
     {id:'rn_staff_ancient',name:'Bind an Ancient Staff',cat:'staves',lvl:82,ms:12400,xp:1290,spdMult:0.79,minMs:2580,inp:{ancient_log:4,crucible_rune:240,arcane_dust:20},out:{ancient_staff:1}},
+    /* Cloth and robes. Thirteen bolts make a set: hood 2, robe 4, leggings 3, wraps
+       2, slippers 2, the shape the leather recipe has. */
+    {id:'rn_loom_linen',name:'Weave Linen',cat:'cloth',lvl:1,ms:2600,xp:34,spdMult:0.61,minMs:420,inp:{flax:3},out:{linen:1}},
+    {id:'rn_rb_linen_hood',name:'Linen Hood',cat:'robes',subcat:'hood',lvl:1,ms:4500,xp:48,spdMult:0.51,minMs:540,inp:{linen:2},out:{linen_hood:1}},
+    {id:'rn_rb_linen_robe',name:'Linen Robe',cat:'robes',subcat:'robe',lvl:4,ms:4500,xp:77,spdMult:0.51,minMs:540,inp:{linen:4},out:{linen_robe:1}},
+    {id:'rn_rb_linen_leggings',name:'Linen Leggings',cat:'robes',subcat:'leggings',lvl:3,ms:4500,xp:60,spdMult:0.51,minMs:540,inp:{linen:3},out:{linen_leggings:1}},
+    {id:'rn_rb_linen_wraps',name:'Linen Wraps',cat:'robes',subcat:'wraps',lvl:1,ms:4500,xp:50,spdMult:0.51,minMs:540,inp:{linen:2},out:{linen_wraps:1}},
+    {id:'rn_rb_linen_slippers',name:'Linen Slippers',cat:'robes',subcat:'slippers',lvl:2,ms:4500,xp:48,spdMult:0.51,minMs:540,inp:{linen:2},out:{linen_slippers:1}},
+    {id:'rn_loom_spidersilk',name:'Weave Spidersilk',cat:'cloth',lvl:12,ms:3900,xp:46,spdMult:0.65,minMs:650,inp:{spider_silk:3},out:{spidersilk:1}},
+    {id:'rn_rb_spidersilk_hood',name:'Spidersilk Hood',cat:'robes',subcat:'hood',lvl:12,ms:6600,xp:84,spdMult:0.545,minMs:840,inp:{spidersilk:2},out:{spidersilk_hood:1}},
+    {id:'rn_rb_spidersilk_robe',name:'Spidersilk Robe',cat:'robes',subcat:'robe',lvl:15,ms:6600,xp:134,spdMult:0.545,minMs:840,inp:{spidersilk:4},out:{spidersilk_robe:1}},
+    {id:'rn_rb_spidersilk_leggings',name:'Spidersilk Leggings',cat:'robes',subcat:'leggings',lvl:14,ms:6600,xp:105,spdMult:0.545,minMs:840,inp:{spidersilk:3},out:{spidersilk_leggings:1}},
+    {id:'rn_rb_spidersilk_wraps',name:'Spidersilk Wraps',cat:'robes',subcat:'wraps',lvl:12,ms:6600,xp:88,spdMult:0.545,minMs:840,inp:{spidersilk:2},out:{spidersilk_wraps:1}},
+    {id:'rn_rb_spidersilk_slippers',name:'Spidersilk Slippers',cat:'robes',subcat:'slippers',lvl:13,ms:6600,xp:84,spdMult:0.545,minMs:840,inp:{spidersilk:2},out:{spidersilk_slippers:1}},
+    {id:'rn_loom_gravecloth',name:'Weave Gravecloth',cat:'cloth',lvl:27,ms:5200,xp:58,spdMult:0.69,minMs:880,inp:{spider_silk:3,cursed_dust:1},out:{gravecloth:1}},
+    {id:'rn_rb_gravecloth_hood',name:'Gravecloth Hood',cat:'robes',subcat:'hood',lvl:27,ms:8700,xp:120,spdMult:0.51+2*0.035,minMs:1140,inp:{gravecloth:2},out:{gravecloth_hood:1}},
+    {id:'rn_rb_gravecloth_robe',name:'Gravecloth Robe',cat:'robes',subcat:'robe',lvl:30,ms:8700,xp:192,spdMult:0.51+2*0.035,minMs:1140,inp:{gravecloth:4},out:{gravecloth_robe:1}},
+    {id:'rn_rb_gravecloth_leggings',name:'Gravecloth Leggings',cat:'robes',subcat:'leggings',lvl:29,ms:8700,xp:150,spdMult:0.51+2*0.035,minMs:1140,inp:{gravecloth:3},out:{gravecloth_leggings:1}},
+    {id:'rn_rb_gravecloth_wraps',name:'Gravecloth Wraps',cat:'robes',subcat:'wraps',lvl:27,ms:8700,xp:126,spdMult:0.51+2*0.035,minMs:1140,inp:{gravecloth:2},out:{gravecloth_wraps:1}},
+    {id:'rn_rb_gravecloth_slippers',name:'Gravecloth Slippers',cat:'robes',subcat:'slippers',lvl:28,ms:8700,xp:120,spdMult:0.51+2*0.035,minMs:1140,inp:{gravecloth:2},out:{gravecloth_slippers:1}},
+    {id:'rn_loom_rimeweave',name:'Weave Rimeweave',cat:'cloth',lvl:40,ms:6500,xp:70,spdMult:0.73,minMs:1110,inp:{spider_silk:3,frostfur:1},out:{rimeweave:1}},
+    {id:'rn_rb_rimeweave_hood',name:'Rimeweave Hood',cat:'robes',subcat:'hood',lvl:40,ms:10800,xp:156,spdMult:0.615,minMs:1440,inp:{rimeweave:2},out:{rimeweave_hood:1}},
+    {id:'rn_rb_rimeweave_robe',name:'Rimeweave Robe',cat:'robes',subcat:'robe',lvl:43,ms:10800,xp:250,spdMult:0.615,minMs:1440,inp:{rimeweave:4},out:{rimeweave_robe:1}},
+    {id:'rn_rb_rimeweave_leggings',name:'Rimeweave Leggings',cat:'robes',subcat:'leggings',lvl:42,ms:10800,xp:195,spdMult:0.615,minMs:1440,inp:{rimeweave:3},out:{rimeweave_leggings:1}},
+    {id:'rn_rb_rimeweave_wraps',name:'Rimeweave Wraps',cat:'robes',subcat:'wraps',lvl:40,ms:10800,xp:164,spdMult:0.615,minMs:1440,inp:{rimeweave:2},out:{rimeweave_wraps:1}},
+    {id:'rn_rb_rimeweave_slippers',name:'Rimeweave Slippers',cat:'robes',subcat:'slippers',lvl:41,ms:10800,xp:156,spdMult:0.615,minMs:1440,inp:{rimeweave:2},out:{rimeweave_slippers:1}},
+    {id:'rn_loom_seercloth',name:'Weave Seercloth',cat:'cloth',lvl:55,ms:7800,xp:82,spdMult:0.77,minMs:1340,inp:{spider_silk:4,seer_idol:1},out:{seercloth:1}},
+    {id:'rn_rb_seercloth_hood',name:'Seercloth Hood',cat:'robes',subcat:'hood',lvl:55,ms:12900,xp:192,spdMult:0.65,minMs:1740,inp:{seercloth:2},out:{seercloth_hood:1}},
+    {id:'rn_rb_seercloth_robe',name:'Seercloth Robe',cat:'robes',subcat:'robe',lvl:58,ms:12900,xp:307,spdMult:0.65,minMs:1740,inp:{seercloth:4},out:{seercloth_robe:1}},
+    {id:'rn_rb_seercloth_leggings',name:'Seercloth Leggings',cat:'robes',subcat:'leggings',lvl:57,ms:12900,xp:240,spdMult:0.65,minMs:1740,inp:{seercloth:3},out:{seercloth_leggings:1}},
+    {id:'rn_rb_seercloth_wraps',name:'Seercloth Wraps',cat:'robes',subcat:'wraps',lvl:55,ms:12900,xp:202,spdMult:0.65,minMs:1740,inp:{seercloth:2},out:{seercloth_wraps:1}},
+    {id:'rn_rb_seercloth_slippers',name:'Seercloth Slippers',cat:'robes',subcat:'slippers',lvl:56,ms:12900,xp:192,spdMult:0.65,minMs:1740,inp:{seercloth:2},out:{seercloth_slippers:1}},
+    {id:'rn_loom_stoneweave',name:'Weave Stoneweave',cat:'cloth',lvl:68,ms:9100,xp:94,spdMult:0.81,minMs:1570,inp:{spider_silk:4,granite_core:1},out:{stoneweave:1}},
+    {id:'rn_rb_stoneweave_hood',name:'Stoneweave Hood',cat:'robes',subcat:'hood',lvl:68,ms:15000,xp:228,spdMult:0.685,minMs:2040,inp:{stoneweave:2},out:{stoneweave_hood:1}},
+    {id:'rn_rb_stoneweave_robe',name:'Stoneweave Robe',cat:'robes',subcat:'robe',lvl:71,ms:15000,xp:365,spdMult:0.685,minMs:2040,inp:{stoneweave:4},out:{stoneweave_robe:1}},
+    {id:'rn_rb_stoneweave_leggings',name:'Stoneweave Leggings',cat:'robes',subcat:'leggings',lvl:70,ms:15000,xp:285,spdMult:0.685,minMs:2040,inp:{stoneweave:3},out:{stoneweave_leggings:1}},
+    {id:'rn_rb_stoneweave_wraps',name:'Stoneweave Wraps',cat:'robes',subcat:'wraps',lvl:68,ms:15000,xp:239,spdMult:0.685,minMs:2040,inp:{stoneweave:2},out:{stoneweave_wraps:1}},
+    {id:'rn_rb_stoneweave_slippers',name:'Stoneweave Slippers',cat:'robes',subcat:'slippers',lvl:69,ms:15000,xp:228,spdMult:0.685,minMs:2040,inp:{stoneweave:2},out:{stoneweave_slippers:1}},
+    {id:'rn_loom_wyrmsilk',name:'Weave Wyrmsilk',cat:'cloth',lvl:82,ms:10400,xp:106,spdMult:0.85,minMs:1800,inp:{spider_silk:5,cinder_gland:1},out:{wyrmsilk:1}},
+    {id:'rn_rb_wyrmsilk_hood',name:'Wyrmsilk Hood',cat:'robes',subcat:'hood',lvl:82,ms:17100,xp:264,spdMult:0.72,minMs:2340,inp:{wyrmsilk:2},out:{wyrmsilk_hood:1}},
+    {id:'rn_rb_wyrmsilk_robe',name:'Wyrmsilk Robe',cat:'robes',subcat:'robe',lvl:85,ms:17100,xp:422,spdMult:0.72,minMs:2340,inp:{wyrmsilk:4},out:{wyrmsilk_robe:1}},
+    {id:'rn_rb_wyrmsilk_leggings',name:'Wyrmsilk Leggings',cat:'robes',subcat:'leggings',lvl:84,ms:17100,xp:330,spdMult:0.72,minMs:2340,inp:{wyrmsilk:3},out:{wyrmsilk_leggings:1}},
+    {id:'rn_rb_wyrmsilk_wraps',name:'Wyrmsilk Wraps',cat:'robes',subcat:'wraps',lvl:82,ms:17100,xp:277,spdMult:0.72,minMs:2340,inp:{wyrmsilk:2},out:{wyrmsilk_wraps:1}},
+    {id:'rn_rb_wyrmsilk_slippers',name:'Wyrmsilk Slippers',cat:'robes',subcat:'slippers',lvl:83,ms:17100,xp:264,spdMult:0.72,minMs:2340,inp:{wyrmsilk:2},out:{wyrmsilk_slippers:1}},
   ]},
 
   cooking:{name:'Cooking',icon:'🍳',acts:[
@@ -15507,6 +15562,8 @@ const ICONS = {
   frost_wand: _wandSVG(MAGE_WOOD_PAL.frost), shadow_wand: _wandSVG(MAGE_WOOD_PAL.shadow), ancient_wand: _wandSVG(MAGE_WOOD_PAL.ancient),
   pine_staff: _staffSVG(MAGE_WOOD_PAL.pine), oak_staff: _staffSVG(MAGE_WOOD_PAL.oak), ironbark_staff: _staffSVG(MAGE_WOOD_PAL.ironbark), ember_staff: _staffSVG(MAGE_WOOD_PAL.ember),
   frost_staff: _staffSVG(MAGE_WOOD_PAL.frost), shadow_staff: _staffSVG(MAGE_WOOD_PAL.shadow), ancient_staff: _staffSVG(MAGE_WOOD_PAL.ancient),
+  linen: _clothSVG(CLOTH_PAL.linen), spidersilk: _clothSVG(CLOTH_PAL.spidersilk), gravecloth: _clothSVG(CLOTH_PAL.gravecloth), rimeweave: _clothSVG(CLOTH_PAL.rimeweave),
+  seercloth: _clothSVG(CLOTH_PAL.seercloth), stoneweave: _clothSVG(CLOTH_PAL.stoneweave), wyrmsilk: _clothSVG(CLOTH_PAL.wyrmsilk),
   runecrafting: _runecraftSVG(),
   cape_runecrafting: _runeCapeSVG(),
   el_fire: _elementSVG('fire'), el_frost: _elementSVG('frost'), el_storm: _elementSVG('storm'), el_shadow: _elementSVG('shadow'),
@@ -16246,16 +16303,28 @@ function combatGearStatBlock(itemId){
      not light costs 0.6% ranged accuracy, down to a floor (rangedArmourMult). Nothing
      on screen said so, or said which pieces were light. Each armour piece now names
      its class and what it costs an archer, and a bow says what your armour costs it. */
+  /* Three classes since 0.9.127.4. Cloth is the mage's and costs a spell nothing.
+     Anything else costs 0.3% Magic damage for each point of its Defence
+     (magicArmourMult), and its card says how much. A cape is exempt from that, as a
+     shield is, so it carries no such chip. A piece can be light and cloth at once:
+     Stonewright Gauntlets are. */
   if({helmet:1,chest:1,legs:1,gloves:1,boots:1,cape:1}[it.cslot] && (s.def||0)>0){
+    if(it.cloth) chips.push(_chip('#b9a4f0','magic','Cloth · spells at full strength'));
     if(it.light) chips.push(_chip('#7fd8c8','ui_wind','Light armour'));
     else {
-      chips.push(_chip('#e0762f','ui_muscle','Heavy armour'));
+      if(!it.cloth) chips.push(_chip('#e0762f','ui_muscle','Heavy armour'));
       chips.push(_chip('#e0762f','','-'+(Math.round(s.def*RANGED_PLATE_PER_DEF*1000)/10)+'% ranged accuracy'));
     }
+    if(!it.cloth && it.cslot!=='cape') chips.push(_chip('#b9a4f0','','-'+(Math.round(s.def*MAGIC_ARMOUR_PER_DEF*1000)/10)+'% Magic damage'));
   }
   if(it.cslot==='weapon' && it.ranged){
     var _hvy=1-Math.max(RANGED_PLATE_FLOOR,1-heavyArmourDef()*RANGED_PLATE_PER_DEF);
     if(_hvy>0) chips.push(_chip('#e0762f','ui_muscle','Your heavy armour: -'+Math.round(_hvy*100)+'% accuracy'));
+  }
+  /* And a staff or a wand says what the armour you have on costs it. */
+  if(it.cslot==='weapon' && it.magic){
+    var _ncl=1-Math.max(MAGIC_ARMOUR_FLOOR,1-nonClothDef()*MAGIC_ARMOUR_PER_DEF);
+    if(_ncl>0) chips.push(_chip('#e0762f','ui_muscle','Your armour that is not cloth: -'+Math.round(_ncl*100)+'% Magic damage'));
   }
   var chipLine=chips.length?'<div class="nt-chips">'+chips.join('')+'</div>':'';
 
@@ -19729,6 +19798,7 @@ function _bodyItemDescBase(id){
     if(s.atk) parts.push('+'+s.atk+' Atk');
     if(s.str) parts.push('+'+s.str+' Str');
     if(s.rstr) parts.push('+'+s.rstr+' Ranged Str');
+    if(s.mpow) parts.push('+'+s.mpow+' Magic Power');
     if(s.def) parts.push('+'+s.def+' Def');
     return parts.length?parts.join(' · '):'No combat stats';
   }
@@ -23361,13 +23431,13 @@ function combatGearBreakdown(){
     if(!itemId||seen[itemId]) return;
     const stats=gearStats(itemId);
     if(!stats) return;
-    if(!(stats.atk||stats.str||stats.def||stats.rstr)) return;
+    if(!(stats.atk||stats.str||stats.def||stats.rstr||stats.mpow)) return;
     seen[itemId]=true;
     const it=ITEMS[itemId];
     out.push({
       id:itemId,
       name:it?it.name:itemId,
-      atk:stats.atk||0, str:stats.str||0, def:stats.def||0, rstr:stats.rstr||0
+      atk:stats.atk||0, str:stats.str||0, def:stats.def||0, rstr:stats.rstr||0, mpow:stats.mpow||0
     });
   };
   for(const slot of order) pushPiece(ce[slot]);
@@ -23393,6 +23463,7 @@ function openGearModal(){
       if(g.atk) parts.push(`<span class="gdm-stat gdm-atk">+${g.atk} Attack</span>`);
       if(g.str) parts.push(`<span class="gdm-stat gdm-str">+${g.str} Strength</span>`);
       if(g.rstr) parts.push(`<span class="gdm-stat gdm-str">+${g.rstr} Ranged Strength</span>`);
+      if(g.mpow) parts.push(`<span class="gdm-stat gdm-str">+${g.mpow} Magic Power</span>`);
       if(g.def) parts.push(`<span class="gdm-stat gdm-def">+${g.def} Defence</span>`);
       return `<div class="gdm-row">
         <span class="gdm-ic">${iconHTML(g.id)}</span>
@@ -23410,6 +23481,7 @@ function openGearModal(){
       <div class="gdm-tot-row"><span>Attack</span><b>+${cs.atk}</b></div>
       <div class="gdm-tot-row"><span>Strength</span><b>+${cs.str}</b></div>
       ${cs.rstr?`<div class="gdm-tot-row"><span>Ranged Strength</span><b>+${cs.rstr}</b></div>`:''}
+      ${cs.mpow?`<div class="gdm-tot-row"><span>Magic Power</span><b>+${cs.mpow}</b></div>`:''}
       <div class="gdm-tot-row"><span>Defence</span><b>+${cs.def}</b></div>
     </div>`;
   }
@@ -23778,6 +23850,32 @@ function runeSaveRate(){
   for(const s in ce){ const g=gearStats(ce[s]); if(g&&g.runeSave) r+=g.runeSave; }
   return Math.min(RUNE_SAVE_CAP, r);
 }
+/* Casting in armour that is not cloth.
+
+   Every point of Defence on a worn piece that is not cloth costs 0.3% Magic damage,
+   down to a floor of 60%. Damage and not accuracy, because accuracy saturates: the
+   ranged rule had to be made large to bite. The shield is exempt, for the reason
+   the ranged rule gives: a wand's whole point is the free hand. A cape is exempt
+   too. You can cast in plate. You will just hit softer, and the number moves as
+   you swap pieces. Melee and Ranged are untouched: the multiplier is 1 unless a
+   staff or a wand is held. */
+const MAGIC_ARMOUR_PER_DEF=0.003;   // -0.3% Magic damage per point of Defence that is not cloth
+const MAGIC_ARMOUR_FLOOR=0.60;      // a cost, never a wall
+function nonClothDef(){
+  const ce=state&&state.combatEquipped; if(!ce) return 0;
+  let d=0;
+  for(const slot in ce){
+    if(slot==='weapon'||slot==='quiver'||slot==='shield'||slot==='cape') continue;
+    const id=ce[slot], it=id&&ITEMS[id]; if(!it||it.cloth) continue;
+    const cs=gearStats(id); if(!cs) continue;
+    d+=cs.def||0;
+  }
+  return d;
+}
+function magicArmourMult(){
+  if(!usingMagic()) return 1;
+  return Math.max(MAGIC_ARMOUR_FLOOR, 1-nonClothDef()*MAGIC_ARMOUR_PER_DEF);
+}
 /* Chance this cast cannot miss: the element's own, and Clear Sight from the tree. */
 function mageSureChance(){
   const e=ELEMENT_BY[spellElement()];
@@ -23886,13 +23984,13 @@ function playerMaxHit(){
       * _wm * (1 + (b.rangedStr||0)) * classMaxHitMult()
       * (1 + treeRank('fletching','fl_dmg')*FL_DMG_RANK)));   // Practised Draw: damage only, not accuracy
   }
-  /* A spell: (Magic level x 1.35 + Magic Power x 5) x the staff x Magic damage %.
-     Strength, Ranged Strength and Attack % are not on this line, from gear,
-     potions or food. */
+  /* A spell: (Magic level x 1.35 + Magic Power x 5) x the staff x Magic damage %,
+     less what plate and leather cost it. Strength, Ranged Strength and Attack %
+     are not on this line, from gear, potions or food. */
   if(usingMagic()){
     const _wm=(ITEMS[eqCombatWeapon()]||{}).dmgMult||1;
     return Math.max(1, Math.round((cmbLvl('magic')*MAGIC_HIT_LVL + ((cs.mpow||0)+runePow())*COMBAT_P.HIT_GEAR)
-      * _wm * (1 + (b.magicDmg||0)) * classMaxHitMult()
+      * _wm * (1 + (b.magicDmg||0)) * classMaxHitMult() * magicArmourMult()
       * (1 + treeRank('runecrafting','rn_dmg')*RN_DMG_RANK)));   // Deep Cut: damage only, not accuracy
   }
   return Math.max(1, Math.round((cmbLvl('strength')*COMBAT_P.HIT_LVL + (cs.str+bonusStr)*COMBAT_P.HIT_GEAR) * (1 + (b.atkBoost||0)) * classMaxHitMult()));
@@ -32732,7 +32830,7 @@ function _bagDockHTML(id,cat){
     if({helmet:1,chest:1,legs:1,gloves:1,boots:1}[it.cslot]) sub+=' · '+(it.light?'Light':'Heavy');
     const s=gearStats(id)||{};
     const st=[];
-    if(s.atk) st.push('+'+s.atk+' Atk'); if(s.str) st.push('+'+s.str+' Str'); if(s.rstr) st.push('+'+s.rstr+' Ranged Str'); if(s.def) st.push('+'+s.def+' Def');
+    if(s.atk) st.push('+'+s.atk+' Atk'); if(s.str) st.push('+'+s.str+' Str'); if(s.rstr) st.push('+'+s.rstr+' Ranged Str'); if(s.mpow) st.push('+'+s.mpow+' Magic Power'); if(s.def) st.push('+'+s.def+' Def');
     if(s.crit) st.push('+'+Math.round(s.crit*100)+'% Crit'); if(s.dodge) st.push('+'+Math.round(s.dodge*100)+'% Dodge');
     if(s.aspd) st.push('+'+Math.round(s.aspd*100)+'% Atk Speed');
     if(st.length) chips.push('<span class="dk-chip">'+st.join(' · ')+'</span>');
@@ -34397,6 +34495,63 @@ LEATHER_TIERS.forEach(function(t,ti){
       inp:inp, out:out});
   });
 });
+/* ════ CLOTH (0.9.127.4) — the third armour class ══════════════════════════════════
+   Robes, beside leather and plate. A robe piece is BUILT OFF the leather piece of
+   the same tier, here, straight after that leather is made, so the two ladders
+   cannot drift apart:
+
+     Defence       62% of the leather piece's, and never less than 1
+     Attack        half of it (Attack on armour is accuracy)
+     Magic Power   the tier's total, shared out across the five pieces
+     rune saving   1.5% of casts a piece, so 7.5% for the set
+
+   It carries none of leather's crit, dodge or attack speed. What it has in their
+   place is that it costs a spell nothing: see magicArmourMult(). Robes need
+   Defence, like all armour, on the ladder plate and leather climb.
+
+   The recipes are in the Runecrafting skill itself, in the SKILLS literal. */
+const CLOTH_TIERS=[
+  {key:'linen',     set:'Linen',      leather:'rough',  ctier:1, mpow:0},
+  {key:'spidersilk',set:'Spidersilk', leather:'chitin', ctier:2, mpow:1},
+  {key:'gravecloth',set:'Gravecloth', leather:'wolf',   ctier:3, mpow:1},
+  {key:'rimeweave', set:'Rimeweave',  leather:'ogre',   ctier:4, mpow:2},
+  {key:'seercloth', set:'Seercloth',  leather:'troll',  ctier:5, mpow:3},
+  {key:'stoneweave',set:'Stoneweave', leather:'drake',  ctier:6, mpow:4},
+  {key:'wyrmsilk',  set:'Wyrmsilk',   leather:'demon',  ctier:7, mpow:5},
+];
+const ROBE_DEF_FRAC=0.62, ROBE_ATK_FRAC=0.50, ROBE_RUNE_SAVE=0.015;
+/* hood, robe, leggings, wraps, slippers: beside the leather helm, chest, legs,
+   gloves and boots, in that order */
+const _RSLOTS=['hood','robe','leggings','wraps','slippers'];
+const _RSLOT_NOUN={hood:'Hood',robe:'Robe',leggings:'Leggings',wraps:'Wraps',slippers:'Slippers'};
+const _RSLOT_CSLOT={hood:'helmet',robe:'chest',leggings:'legs',wraps:'gloves',slippers:'boots'};
+const ROBE_MPOW_SPREAD=[0.15,0.35,0.25,0.10,0.15];
+/* A set's Magic Power is a whole number and so is each piece's. Every piece gets
+   the floor of its share, and what is left over goes to the pieces that lost the
+   most to the floor, the robe before the leggings on a tie. */
+function robeMpowSpread(total){
+  const raw=ROBE_MPOW_SPREAD.map(s=>total*s), out=raw.map(Math.floor);
+  const left=total-out.reduce((a,b)=>a+b,0);
+  const order=raw.map((v,i)=>[v-Math.floor(v),i]).sort((a,b)=>b[0]-a[0]||a[1]-b[1]);
+  for(let i=0;i<left;i++) out[order[i][1]]++;
+  return out;
+}
+CLOTH_TIERS.forEach(function(t){
+  const mp=robeMpowSpread(t.mpow);
+  _RSLOTS.forEach(function(slot,si){
+    const id=t.key+'_'+slot;
+    const L=COMBAT_GEAR_STATS[t.leather+'_'+_LSLOTS[si]];
+    if(!L) return;
+    ITEMS[id]={name:t.set+' '+_RSLOT_NOUN[slot], icon:'\u{1F9E5}', sell:Math.round(50*Math.pow(2.1,t.ctier-1)), cgear:true, ctier:t.ctier,
+      cslot:_RSLOT_CSLOT[slot], cloth:true,
+      desc:t.set+' cut and sewn into a robe piece. Less Defence than leather, and some of your casts keep their runes. '
+        +(mp[si]?'It adds Magic Power. ':'')+'Plate and leather weaken your spells and cloth does not.'};
+    const cs={atk:Math.round((L.atk||0)*ROBE_ATK_FRAC), str:0, def:Math.max(1,Math.round((L.def||0)*ROBE_DEF_FRAC)), runeSave:ROBE_RUNE_SAVE};
+    if(mp[si]) cs.mpow=mp[si];
+    COMBAT_GEAR_STATS[id]=cs;
+    ICONS[id]=_ROBE_GEN[slot](CLOTH_PAL[t.key]);
+  });
+});
 // New hides feed the two leather tiers whose zones didn't already drop a hide.
 (function(){
   const add=function(mon,id,chance,qty){ if(!MONSTER_DROPS[mon]) MONSTER_DROPS[mon]=[]; const e={id:id,chance:chance}; if(qty) e.qty=qty; MONSTER_DROPS[mon].push(e); };
@@ -35660,6 +35815,20 @@ function hasPet(petId){ return !!(state && state.pets && state.pets[petId]); }
   for(const id in COMBAT_GEAR_STATS){
     const it=ITEMS[id], s=COMBAT_GEAR_STATS[id];
     if(it&&it.cslot==='cape'&&(s.str||0)>0&&!s.rstr) s.rstr=s.str;
+  }
+  /* MAGIC POWER (0.9.127.4) on the same short list, with the same numbers, for the
+     same reason: these are what every build already wears. Stonewright is flagged
+     cloth so it does not weaken a spell, as it is flagged light so it does not cost
+     a bow accuracy. All armour Magic Power that is not on a robe lives here. */
+  const MPOW_BUCKLERS={cobalt:1, runite:1, starsteel:1, moltensteel:2, voidsteel:2, dawnsteel:2};
+  for(const k in MPOW_BUCKLERS){ const s=COMBAT_GEAR_STATS[k+'_buckler']; if(s) s.mpow=MPOW_BUCKLERS[k]; }
+  if(COMBAT_GEAR_STATS.stonewright_gauntlets){
+    COMBAT_GEAR_STATS.stonewright_gauntlets.mpow=2;
+    if(ITEMS.stonewright_gauntlets) ITEMS.stonewright_gauntlets.cloth=true;
+  }
+  for(const id in COMBAT_GEAR_STATS){
+    const it=ITEMS[id], s=COMBAT_GEAR_STATS[id];
+    if(it&&it.cslot==='cape'&&(s.str||0)>0&&!s.mpow) s.mpow=s.str;
   }
 
   window.RANGED_AMMO=AMMO; window.RANGED_WOODS=WOODS;
@@ -38244,11 +38413,15 @@ function _gearStatsHTML(){
     }catch(e){}
     let heavy=0;
     try{ heavy=Math.round((1-Math.max(RANGED_PLATE_FLOOR,1-heavyArmourDef()*RANGED_PLATE_PER_DEF))*100); }catch(e){}
+    /* With a staff or a wand held, the armour line is the one a spell pays. */
+    let mage=false, ncl=0;
+    try{ mage=usingMagic(); ncl=mage?Math.round((1-magicArmourMult())*100):0; }catch(e){}
     return '<div class="eq-stats"><div class="eq-sgrid">'
       +'<div><b>'+acc+'</b><span>Accuracy</span></div><div><b>'+hit+'</b><span>Max hit</span></div>'
       +'<div><b>'+def+'</b><span>Defence</span></div><div><b>'+spd+'</b><span>Speed</span></div></div>'
-      +((chips.length||heavy)?'<div class="eq-bon">'+chips.map(c=>'<span class="dk-chip good">'+c+'</span>').join('')
-        +(heavy?'<span class="dk-chip bad">Heavy armour: -'+heavy+'% ranged accuracy</span>':'')+'</div>':'')
+      +((chips.length||heavy||ncl)?'<div class="eq-bon">'+chips.map(c=>'<span class="dk-chip good">'+c+'</span>').join('')
+        +(mage?(ncl?'<span class="dk-chip bad">Armour that is not cloth: -'+ncl+'% Magic damage</span>':'')
+             :(heavy?'<span class="dk-chip bad">Heavy armour: -'+heavy+'% ranged accuracy</span>':''))+'</div>':'')
       +'</div>';
   }
   /* The skilling half says what the worn gear alone gives the skill you are on:
@@ -39375,7 +39548,7 @@ function showItemTooltip(itemId, x, y, note){
     const _tn={1:'Bronze',2:'Iron',3:'Steel',4:'Mithril',5:'Cobalt',6:'Runite',7:'Starsteel',8:'Void'};
     const _sl={helmet:'Helmet',chest:'Chest',legs:'Legs',gloves:'Gloves',boots:'Boots',weapon:'Weapon',shield:'Shield',cape:'Cape'};
     // A tier with no metal name used to print "Tier 11 · Tier 11"; the number alone is enough.
-    if(it.light) _meta.push('Leather'); else if(_tn[it.ctier]) _meta.push(_tn[it.ctier]);
+    if(it.light) _meta.push('Leather'); else if(it.cloth) _meta.push('Cloth'); else if(_tn[it.ctier]) _meta.push(_tn[it.ctier]);
     if(it.ctier) _meta.push('Tier '+it.ctier);
     _meta.push(_sl[it.cslot]||it.cslot);
   } else if(it.ammo){ _meta.push(it.ammo==='rune'?'Rune':'Ammunition'); _meta.push(it.ammo==='rune'?'Staves and wands':(it.ammo==='bolt'?'Crossbows':'Bows')); }
@@ -43882,6 +44055,7 @@ function gearRowStatLine(itemId){
     if(cs.atk) parts.push(`+${cs.atk} atk`);
     if(cs.str) parts.push(`+${cs.str} str`);
     if(cs.rstr) parts.push(`+${cs.rstr} ranged str`);
+    if(cs.mpow) parts.push(`+${cs.mpow} magic power`);
     if(cs.def) parts.push(`+${cs.def} def`);
     return parts.join(' · ')||'no stats';
   }
