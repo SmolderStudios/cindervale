@@ -8959,7 +8959,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.127.3">v0.9.127</div>
+  <div class="mm-ver" data-build="0.9.127.4">v0.9.127</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -19228,7 +19228,8 @@ const COMBAT_GEAR_REQ={1:1,2:10,3:20,4:30,5:40,6:55,7:70,8:80,9:90,10:99,11:99};
 function combatGearReq(id){
   const it=ITEMS[id];
   if(!it||!it.cgear||!it.ctier) return null;
-  const stat=(it.cslot==='weapon')?(it.ranged?'ranged':'attack'):'defence';
+  /* A staff or a wand gates on Magic (0.9.127.4), on the same ladder. */
+  const stat=(it.cslot==='weapon')?(it.magic?'magic':(it.ranged?'ranged':'attack')):'defence';
   return {stat, level:COMBAT_GEAR_REQ[it.ctier]||1};
 }
 const COMBAT_STAT_NAME={attack:'Attack',strength:'Strength',defence:'Defence',hitpoints:'Hitpoints',ranged:'Ranged',magic:'Magic'};
@@ -20224,8 +20225,10 @@ function defaultState(){
     playtimeMs:0,      // total active playtime, accumulated while tab is open
     firstPlayed:Date.now(), // wall-clock first session start
     gearPresets:{},    // {skillName: {slot:itemId, ...}} — saved gear loadout per skill
-    combatXp:{attack:0,strength:0,defence:0,ranged:0,hitpoints:(typeof XP_CUM!=='undefined'&&XP_CUM[10])||0}, // hp starts at lvl 10
+    combatXp:{attack:0,strength:0,defence:0,ranged:0,magic:0,hitpoints:(typeof XP_CUM!=='undefined'&&XP_CUM[10])||0}, // hp starts at lvl 10
     combatStyle:'attack', // 'attack'|'strength'|'defence' — where chosen-style XP routes
+    combatElement:'fire', // 'fire'|'frost'|'storm'|'shadow': the element a staff or a wand casts
+    combatSpell:'surge',  // 'bolt'|'blast'|'wave'|'surge': the spell size asked for. The loaded rune caps it.
     zone:'rat_warrens',   // currently-selected combat zone (Rat Warrens is the starter)
     bossUnlocked:{},      // {monsterId:true} — persistent boss tile unlocks (sticky once earned)
     // Auto-heal — if enabled, the combat tick drinks the lowest-waste heal
@@ -20303,6 +20306,9 @@ function normalizeState(){
   if(!state.hints||typeof state.hints!=='object') state.hints={};
   if(typeof state.hintsOn!=='boolean') state.hintsOn=false;
   for(const s in SKILLS) if(typeof state.xp[s]!=='number') state.xp[s]=0;
+  /* Runecrafting (0.9.127.4). The loop above already covers it, because the skill
+     is in the SKILLS literal. Named anyway: Ranged shipped a stat with no guard. */
+  if(typeof state.xp.runecrafting!=='number') state.xp.runecrafting=0;
   /* XP curve v2 (0.9.11) — the early band was stretched, which lifts XP_CUM at
      every level from 11 up. Read literally, a save parked just under a boundary
      would be silently demoted on load — worst case 99→98, which strips a skill
@@ -21065,13 +21071,19 @@ function normalizeState(){
   /* 'ranged' belongs in this list since 0.9.124 shipped it (0.9.125.4). A save from
      before then has no key at all, and a corrupt one would have kept a string or a
      negative number forever, which reads as a Ranged level of 1 with no way to fix it. */
-  for(const k of ['attack','strength','defence','ranged','hitpoints']){
+  for(const k of ['attack','strength','defence','ranged','magic','hitpoints']){
     if(typeof state.combatXp[k]!=='number'||state.combatXp[k]<0) state.combatXp[k]=0;
   }
   // Hitpoints starts at level 10 — bring any older save up to that floor.
   const _hpFloor=(typeof XP_CUM!=='undefined'&&XP_CUM[10])||0;
   if(state.combatXp.hitpoints<_hpFloor) state.combatXp.hitpoints=_hpFloor;
   if(state.combatStyle!=='attack'&&state.combatStyle!=='strength'&&state.combatStyle!=='defence') state.combatStyle='attack';
+  /* Magic (0.9.127.4). The element goes back to Fire when it is missing, unknown,
+     or one this save's Magic level has not opened, so a save can never sit on an
+     element it cannot cast. The spell size goes back to the biggest, which is what
+     a mage who never touches the spell bar casts. */
+  if(!elementUnlocked(state.combatElement)) state.combatElement='fire';
+  if(!SPELL_SIZES.some(s=>s.k===state.combatSpell)) state.combatSpell=SPELL_SIZES[SPELL_SIZES.length-1].k;
   // Combat zone: ensure a valid current zone, default to Rat Warrens for older saves.
   if(typeof state.zone!=='string'||!ZONES.find(z=>z.id===state.zone)) state.zone='rat_warrens';
   if(!state.bossUnlocked||typeof state.bossUnlocked!=='object'||Array.isArray(state.bossUnlocked)) state.bossUnlocked={};
@@ -22459,7 +22471,7 @@ function combatUniqueBonuses(){
    This comment previously also listed Savage Edge, Executioner, Berserker, Stonewall
    and Warlord, which were wired in 1.0.104 — keep it in step with CMAST_UNWIRED. */
 function cmastBonuses(){
-  const b={atkBoost:0,rangedStr:0,hpBoost:0,defBoost:0,critChance:0,lifesteal:0,aspd:0,
+  const b={atkBoost:0,rangedStr:0,magicDmg:0,hpBoost:0,defBoost:0,critChance:0,lifesteal:0,aspd:0,
            maxHpFlat:0,dmgReduce:0,combatXpMult:0,gpMult:0,
            /* (0.9.130) channels added when the last unwired nodes landed */
            rareDrop:0,doubleDrop:0,critDmg:0,consolation:0,trophyGuarantee:0,
@@ -22475,14 +22487,17 @@ function cmastBonuses(){
      the any-weapon nodes (Skirmisher, Vanguard, Champion, Conqueror) feed whichever
      one the weapon in your hand uses. `_dk` is that channel. */
   const _rng = (typeof usingRanged==='function') && usingRanged();
-  const _dk = _rng ? 'rangedStr' : 'atkBoost';
+  /* Three channels since 0.9.127.4. A staff or a wand reads magicDmg, the any-weapon
+     nodes follow it there, and a melee node gives a spell nothing. */
+  const _mag = (typeof usingMagic==='function') && usingMagic();
+  const _dk = _mag ? 'magicDmg' : (_rng ? 'rangedStr' : 'atkBoost');
   // effect-key → channel (only always-on scalars; conditional/proc keys ignored here)
   for(const id in state.cmast){
     const rank=state.cmast[id]||0; if(rank<=0) continue;
     const node=(typeof CMAST_BY_ID!=='undefined')&&CMAST_BY_ID[id]; if(!node) continue;
     const ef=node.effect;
     if(ef){
-      if(ef.meleeDmg && !_rng) b.atkBoost += ef.meleeDmg*rank;
+      if(ef.meleeDmg && !_rng && !_mag) b.atkBoost += ef.meleeDmg*rank;
       if(ef.rangedDmg && _rng) b.rangedStr += ef.rangedDmg*rank;
       if(ef.anyDmg)            b[_dk] += ef.anyDmg*rank;
       if(ef.rangedCrit && _rng) b.critChance += ef.rangedCrit*rank;
@@ -22616,13 +22631,14 @@ function combatBonusesAll(){
   /* Iron Legion melee damage and Quiet Hand crit (0.9.124.45). A bow gets no melee
      damage, the same gate Brutal Strikes uses. */
   const gdc=(typeof gdCombatBonus==='function')?gdCombatBonus():{cdmg:0,crit:0};
-  const gdMelee=(typeof usingRanged==='function'&&usingRanged())?0:(gdc.cdmg||0);
+  const gdMelee=((typeof usingRanged==='function'&&usingRanged())||(typeof usingMagic==='function'&&usingMagic()))?0:(gdc.cdmg||0);
   // Trophy jewelry innate combat keys — read from the COMBAT loadout only, so a
   // ring worn for skilling gold doesn't also buff combat (and vice-versa).
   const ce=(state&&state.combatEquipped)||{};
   const tj={
     atkBoost:  jewelryInnateBonus(ce,'atkBoost'),
     rangedStr: jewelryInnateBonus(ce,'rangedStr'),
+    magicDmg:  jewelryInnateBonus(ce,'magicDmg'),
     hpBoost:   jewelryInnateBonus(ce,'hpBoost'),
     defBoost:  jewelryInnateBonus(ce,'defBoost'),
     critChance:jewelryInnateBonus(ce,'critChance'),
@@ -22637,12 +22653,18 @@ function combatBonusesAll(){
      which have no ranged twin, so they feed whichever channel the weapon in your
      hand reads rather than leaving an archer's sockets dead. */
   const rng=(typeof usingRanged==='function')&&usingRanged();
+  /* Magic damage % is the third channel (0.9.127.4): a spell's damage and its
+     accuracy, and nothing labelled Attack or Ranged reaches it. "Damage with any
+     weapon" follows a staff or a wand the way it follows a bow. */
+  const mag=(typeof usingMagic==='function')&&usingMagic();
   const anyDmg=(e.dmgBoost||0) + (s.dmgBoost||0) + (st.dmgBoost||0) + (u.dmgBoost||0) + (tj.dmgBoost||0);
   return {
     atkBoost:  (e.atkBoost||0)  + (s.atkBoost||0) + (st.atkBoost||0) + (u.atkBoost||0) + (asc.atkBoost||0) + cm.atkBoost + tj.atkBoost + gdMelee
-               + (rng?0:anyDmg),
+               + ((rng||mag)?0:anyDmg),
     rangedStr: (e.rangedStr||0) + (s.rangedStr||0) + (st.rangedStr||0) + (u.rangedStr||0) + (cm.rangedStr||0) + tj.rangedStr
                + (rng?anyDmg:0),
+    magicDmg:  (e.magicDmg||0) + (s.magicDmg||0) + (st.magicDmg||0) + (u.magicDmg||0) + (cm.magicDmg||0) + (tj.magicDmg||0)
+               + (mag?anyDmg:0),
     hpBoost:   (e.hpBoost||0)   + (s.hpBoost||0)  + (st.hpBoost||0)  + (u.hpBoost||0)  + (asc.hpBoost||0) + cm.hpBoost + tj.hpBoost,
     defBoost:  (e.defBoost||0)  + (s.defBoost||0) + (st.defBoost||0) + (u.defBoost||0) + (asc.defBoost||0) + cm.defBoost + tj.defBoost,
     // Leather crit stacks on top of enchant/socket/set/unique crit — all flow through
@@ -22669,7 +22691,10 @@ function combatStats(){
      slot's worth of melee gear quietly raised your arrows too. The arrow's own
      strength is added in playerMaxHit, not here, because it only counts while
      that arrow is loaded. */
-  let atk=0, str=0, def=0, rstr=0;
+  /* mpow is Magic Power (0.9.127.4): what a spell's max hit reads. It is summed
+     beside Strength and Ranged Strength and never mixes with either. The loaded
+     rune's own power is added in playerMaxHit, as the arrow's is. */
+  let atk=0, str=0, def=0, rstr=0, mpow=0;
   // Combat stats are sourced from the COMBAT loadout only — the player's
   // skilling loadout is fully independent and doesn't bleed into combat math.
   const ce=state&&state.combatEquipped;
@@ -22681,6 +22706,7 @@ function combatStats(){
       str += cs.str||0;
       def += cs.def||0;
       rstr += cs.rstr||0;
+      mpow += cs.mpow||0;
     }
   }
   // Mastersmith — +10% from worn crafted gear when the perk is owned.
@@ -22691,6 +22717,7 @@ function combatStats(){
       str = Math.round(str*1.1);
       def = Math.round(def*1.1);
       rstr = Math.round(rstr*1.1);
+      mpow = Math.round(mpow*1.1);
     }
   }catch(e){}
   // Active combat buff potions add on top of gear (atk/str/def from Honed
@@ -22707,7 +22734,7 @@ function combatStats(){
   // Class ↔ armour synergy (1.0.70) — a small Attack/Defence bonus for wearing the
   // armour your class favours (rogue/berserker→leather atk, guardian→plate def).
   try{ const cab=classArmorStatBonus(); atk+=cab.atk; def+=cab.def; }catch(e){}
-  return {atk, str, def, rstr};
+  return {atk, str, def, rstr, mpow};
 }
 
 /* Per-piece combat gear contribution list, for the click-expand sidebar panel.
@@ -22806,6 +22833,13 @@ const COMBAT_STATS={
     +'Ranged damage % raises your max hit and accuracy with a bow, the way Attack % does with a sword.'
     +((typeof RANGED_ACC_FROM_ATTACK!=='undefined'&&RANGED_ACC_FROM_ATTACK)?' Attack % still raises your accuracy with a bow, but not your damage.':' Attack % does nothing for a bow.')+'\n'
     +'One level here does the job of an Attack level and a Strength level, so it is worth less than either. Every shot spends ammunition.'; }},
+  /* Magic (0.9.127.4) is the same bargain as Ranged, for a staff or a wand: one stat
+     for accuracy and damage. Attack % has never reached a spell, so there is no
+     switch here to carry. */
+  magic:     {name:'Magic',     icon:'✨', desc:'Accuracy AND damage, for staves and wands only.\nEach Magic level adds +1.5 accuracy and +1.35 max hit.\n'
+    +'Each point of Magic Power adds +5 max hit. Most of it comes from the rune you have loaded; robes, bucklers, gauntlets and capes add more.\n'
+    +'Magic damage % raises your max hit and accuracy with a staff or a wand, the way Attack % does with a sword. Attack % does nothing for a spell.\n'
+    +'One level here does the job of an Attack level and a Strength level, so it is worth less than either. Every cast spends runes: one for a Bolt, up to four for a Surge.'},
   hitpoints: {name:'Hitpoints', icon:'❤️', desc:'Your health pool. Reach 0 and you retreat.\nMax HP = Hitpoints level × 10 + ½ × gear def (Lv 10 = 100, Lv 99 = 990).\nGains XP from every point of damage you deal, and a share of every kill.\nStarts at level 10.'},
 };
 
@@ -22830,10 +22864,20 @@ function cmbLvlProgress(stat){
    attack+strength always wins, so **no existing character's combat level moves**.
    A summed formula would have handed every melee player a level for a stat they
    have never used. */
-function combatLevel(){
-  const a=cmbLvl('attack'), s=cmbLvl('strength'), d=cmbLvl('defence'), h=cmbLvl('hitpoints');
-  const r=cmbLvl('ranged');
-  return Math.max(1, Math.floor((Math.max(a+s, r*2)+d+h)/4));
+/* Magic is the third term (0.9.127.4), for the reason Ranged was the second: one
+   stat doing the work of two. A save from before Magic has it at level 1, the term
+   is 2, and attack+strength is never less than that, so again nothing moves.
+   _magesim.js puts 200,000 saves through both formulas to prove it.
+
+   `cx` is a combatXp map to read in place of the loaded character. The main menu
+   passes a parsed save here. It used to keep a copy of the formula, and the copy
+   still averaged the four melee stats, so an archer's save slot showed the wrong
+   level. */
+function combatLevel(cx){
+  const L=cx?(k=>levelFromXp(cx[k]||0)):cmbLvl;
+  const a=L('attack'), s=L('strength'), d=L('defence'), h=L('hitpoints');
+  const r=L('ranged'), m=L('magic');
+  return Math.max(1, Math.floor((Math.max(a+s, r*2, m*2)+d+h)/4));
 }
 
 /* ════ COMBAT MATH v2 (1.0.26) — unified number-scale with monsters ════════════
@@ -22987,11 +23031,71 @@ function rangedStyle(){
   if(typeof usingRanged!=='function' || !usingRanged()) return null;
   return RANGED_STYLES[(state&&state.combatStyle)||'attack'] || RANGED_STYLES.attack;
 }
+/* ── MAGIC (0.9.127.4) ────────────────────────────────────────────────────────
+   The third way to fight. It copies the Ranged plumbing on purpose: one stat for
+   accuracy and damage, ammunition in the quiver slot, three styles on the same
+   three slots. What is its own is the spell: an element and a size, picked on the
+   spell bar while the fight runs.
+
+   The design, measured, is _magedesign/preview.html. _magesim.js holds this file
+   to those numbers, so a change here that moves one of them fails a harness. */
+const MAGIC_HIT_LVL = 1.35;   // max hit per Magic level. Ranged's number: one stat, two jobs.
+function isMagicWeapon(id){ return !!(id&&ITEMS[id]&&ITEMS[id].magic); }
+function usingMagic(){ return isMagicWeapon(eqCombatWeapon()); }
+/* The three Magic styles, on the three slots melee and Ranged already use, so
+   state.combatStyle needs no migration. The numbers are the ones Ranged's styles
+   were tuned to. */
+const MAGIC_STYLES={
+  attack:  {name:'Focused', swing:1.00, acc:1.00, def:false,
+            blurb:'Steady casting. No bonus, no penalty.'},
+  strength:{name:'Swift',   swing:0.88, acc:0.90, def:false,
+            blurb:'Casts faster but hits less often. Uses runes faster too.'},
+  defence: {name:'Warded',  swing:1.08, acc:1.00, def:true,
+            blurb:'Slower, and half the XP goes to Defence.'},
+};
+/* The active Magic style, or null when no staff or wand is in hand. Checked for
+   null by every reader, for the reason rangedStyle() is. */
+function magicStyle(){
+  if(!usingMagic()) return null;
+  return MAGIC_STYLES[(state&&state.combatStyle)||'attack'] || MAGIC_STYLES.attack;
+}
+/* The elements. Each one reuses an effect the fight already has, so none needs a
+   new timer, status or damage path:
+     fire    foeStatus.burn      the weapon burn
+     frost   foeStatus.pin       the slow Pinning Shot applies
+     storm   the pierce roll     Plummet and Windcutter
+     shadow  the lifesteal line  Lifeblood and Bloodthirst
+   `lvl` is the Magic level that opens it. `word` is what the button says when the
+   monster in front of you is neither weak to it nor resists it. */
+const MAGIC_ELEMENTS=[
+  {k:'fire',   n:'Fire',   lvl:1,  col:'#e0762f', word:'burns',
+   rider:{burn:0.024},
+   line:'A hit can set the monster on fire. It burns for 8 seconds.'},
+];
+const ELEMENT_BY={}; MAGIC_ELEMENTS.forEach(e=>{ ELEMENT_BY[e.k]=e; });
+const ELEMENT_WEAK_MULT=1.15, ELEMENT_RESIST_MULT=0.85;   // the 15% a sword's damage type gets. One number.
+function elementUnlocked(k){ const e=ELEMENT_BY[k]; return !!e && cmbLvl('magic')>=e.lvl; }
+/* The element being cast. Fire when the saved one is not open: normalizeState
+   mends the save, and this covers the dev panel dropping a level mid-session. */
+function spellElement(){
+  const k=(state&&state.combatElement)||'fire';
+  return elementUnlocked(k)?k:'fire';
+}
+/* The four spell sizes. `runes` is what one cast spends and `m` sets how much of
+   the rune a smaller spell gets: see spellPower(). */
+const SPELL_SIZES=[
+  {k:'bolt',  n:'Bolt',  runes:1, m:1.0},
+  {k:'blast', n:'Blast', runes:2, m:1.5},
+  {k:'wave',  n:'Wave',  runes:3, m:2.0},
+  {k:'surge', n:'Surge', runes:4, m:2.6},
+];
+
 /* Which stat's LEVEL a style button should show. Melee trains what it says;
-   every ranged style trains Ranged, so all three read the Ranged level. */
-function styleStatFor(slot){ return rangedStyle() ? 'ranged' : slot; }
+   every ranged style trains Ranged and every Magic style trains Magic. */
+function styleStatFor(slot){ return usingMagic() ? 'magic' : (rangedStyle() ? 'ranged' : slot); }
 
 function combatXpStat(){
+  if(usingMagic()) return 'magic';
   if(usingRanged()) return 'ranged';
   return (state.combatStyle==='strength'||state.combatStyle==='defence')?state.combatStyle:'attack';
 }
@@ -23012,6 +23116,14 @@ const RANGED_ACC_FROM_ATTACK = true;
 function playerAccuracy(){
   const cs=combatStats();
   const b=combatBonusesAll();
+  /* A staff or a wand: the Magic level stands in for Attack, and Magic damage %
+     raises it the way Attack % does for a sword. Attack % is not in this sum. */
+  if(usingMagic()){
+    const _ms=magicStyle();
+    const pct=(b.magicDmg||0) + (b.accBoost||0);
+    return Math.round((cmbLvl('magic')*COMBAT_P.ACC_LVL + cs.atk*COMBAT_P.ACC_GEAR)
+      * (1 + pct) * classAccuracyMult() * (_ms?_ms.acc:1));
+  }
   const rng=usingRanged();
   const lvl=rng?cmbLvl('ranged'):cmbLvl('attack');
   /* accBoost is Point Blank and nothing else today. It is deliberately NOT folded
@@ -23048,6 +23160,14 @@ function playerMaxHit(){
     return Math.max(1, Math.round((cmbLvl('ranged')*RANGED_HIT_LVL + ((cs.rstr||0)+ammoStr())*COMBAT_P.HIT_GEAR)
       * _wm * (1 + (b.rangedStr||0)) * classMaxHitMult()
       * (1 + treeRank('fletching','fl_dmg')*FL_DMG_RANK)));   // Practised Draw: damage only, not accuracy
+  }
+  /* A spell: (Magic level x 1.35 + Magic Power x 5) x the staff x Magic damage %.
+     Strength, Ranged Strength and Attack % are not on this line, from gear,
+     potions or food. */
+  if(usingMagic()){
+    const _wm=(ITEMS[eqCombatWeapon()]||{}).dmgMult||1;
+    return Math.max(1, Math.round((cmbLvl('magic')*MAGIC_HIT_LVL + (cs.mpow||0)*COMBAT_P.HIT_GEAR)
+      * _wm * (1 + (b.magicDmg||0)) * classMaxHitMult()));
   }
   return Math.max(1, Math.round((cmbLvl('strength')*COMBAT_P.HIT_LVL + (cs.str+bonusStr)*COMBAT_P.HIT_GEAR) * (1 + (b.atkBoost||0)) * classMaxHitMult()));
 }
@@ -23095,7 +23215,9 @@ function playerSwingMs(){
   const _as=(_ab&&_ab.aspd>0)?(1-_ab.aspd):1;
   /* Ranged style. Rapid looses faster, Longrange slower; a melee weapon gets 1. */
   const _rs=(typeof rangedStyle==='function')?rangedStyle():null;
-  const _rsw=_rs?_rs.swing:1;
+  /* And the Magic style: Swift casts faster, Warded slower. */
+  const _ms=(typeof magicStyle==='function')?magicStyle():null;
+  const _rsw=_rs?_rs.swing:(_ms?_ms.swing:1);
   return Math.max(COMBAT_MIN_SWING_MS, Math.round(base*classSwingMult()*_wm*_as*_rsw));
 }
 
@@ -23431,7 +23553,8 @@ const DMG_TYPES={
   slash:{n:'Slashing', ico:'bronze_sword',  col:'#d0a848'},
   stab: {n:'Stabbing', ico:'bronze_dagger', col:'#9bd8c8'},
   crush:{n:'Crushing', ico:'bronze_hammer', col:'#e0975a'},
-  ranged:{n:'Ranged',  ico:'bronze_dagger', col:'#a8c86a'}
+  ranged:{n:'Ranged',  ico:'bronze_dagger', col:'#a8c86a'},
+  magic: {n:'Magic',   ico:'magic',         col:'#b9a4f0'}
 };
 function dmgTypeIcon(t){ const d=DMG_TYPES[t]; return d?iconHTML(d.ico):''; }
 function dmgTypeName(t){ const d=DMG_TYPES[t]; return d?d.n:''; }
@@ -27634,15 +27757,16 @@ function gdNextRep(id){ const n=gdTitleNum(id); return n>=6?null:GD_REP[n]; }
 /* Can you join yet? One skill requirement, stated on the tile. */
 function gdReqMet(g){
   for(const k in g.req){
-    const lvl = (k==='attack'||k==='strength'||k==='defence'||k==='hitpoints')
-      ? cmbLvl(k) : levelFromXp(state.xp[k]||0);
+    /* Any combat stat, read off COMBAT_STATS (0.9.127.4). The list here named the
+       four melee stats, so a guild could not ask for a Ranged or a Magic level. */
+    const lvl = COMBAT_STATS[k] ? cmbLvl(k) : levelFromXp(state.xp[k]||0);
     if(lvl < g.req[k]) return false;
   }
   return true;
 }
 function gdReqText(g){
   const k=Object.keys(g.req)[0], want=g.req[k];
-  const have=(k==='attack'||k==='strength'||k==='defence'||k==='hitpoints')?cmbLvl(k):levelFromXp(state.xp[k]||0);
+  const have=COMBAT_STATS[k]?cmbLvl(k):levelFromXp(state.xp[k]||0);
   return (SKILLS[k]?SKILLS[k].name:(k.charAt(0).toUpperCase()+k.slice(1)))+' '+want+' — you have '+have;
 }
 
@@ -36000,6 +36124,8 @@ function gearStats(id){
   // Ranged Strength rises with the rest (0.9.127.2). Only set when the piece has
   // it, so a sword's card never grows a "+0 Ranged Str".
   if(base.rstr) out.rstr=Math.round(base.rstr*m);
+  // And Magic Power (0.9.127.4), under the same rule.
+  if(base.mpow) out.mpow=Math.round(base.mpow*m);
   return out;
 }
 
@@ -42579,8 +42705,9 @@ function grantCombatXp(stat,amount){
      place all of them pass through, so a new grant site inherits the split
      instead of quietly forgetting it. The recursion terminates because the
      second call passes 'defence', which is not 'ranged'. */
-  if(stat==='ranged' && typeof rangedStyle==='function'){
-    const _rs=rangedStyle();
+  /* Warded does the same for Magic (0.9.127.4). */
+  if((stat==='ranged'||stat==='magic') && typeof rangedStyle==='function'){
+    const _rs=(stat==='magic')?magicStyle():rangedStyle();
     if(_rs && _rs.def){
       const _half=Math.max(1, Math.round(amount*0.5));
       amount=Math.max(1, amount-_half);
@@ -42596,7 +42723,7 @@ function grantCombatXp(stat,amount){
     if(_xm>0) amount*=(1+_xm); }
   amount*=XP_SCALE;                       // global XP faucet (0.9.121.8)
   amount=Math.max(1, Math.round(amount));
-  if(!state.combatXp) state.combatXp={attack:0,strength:0,defence:0,ranged:0,hitpoints:0};
+  if(!state.combatXp) state.combatXp={attack:0,strength:0,defence:0,ranged:0,magic:0,hitpoints:0};
   const beforeStat=cmbLvl(stat);
   const beforeCl=combatLevel();
   state.combatXp[stat]=(state.combatXp[stat]||0)+amount;
@@ -50156,7 +50283,7 @@ $('tabSocket').addEventListener('click',()=>{ leaveFullPanels(); viewTab='socket
   $('devSetLevel').addEventListener('click',()=>{
     const key=sel.value, lvl=Math.min(MAX_LEVEL,Math.max(1,parseInt($('devXp').value)||1));
     if(COMBAT_STATS[key]){
-      if(!state.combatXp) state.combatXp={attack:0,strength:0,defence:0,ranged:0,hitpoints:0};
+      if(!state.combatXp) state.combatXp={attack:0,strength:0,defence:0,ranged:0,magic:0,hitpoints:0};
       state.combatXp[key]=XP_CUM[lvl];
       refreshCombatStats(); renderAll(); saveGame();
       toast(`${COMBAT_STATS[key].name} set to level ${lvl}`);
@@ -50169,7 +50296,7 @@ $('tabSocket').addEventListener('click',()=>{ leaveFullPanels(); viewTab='socket
   // "spawned raid gear won't equip" case: armour gates on Defence, weapons on
   // Attack, so a single-stat "Set Lv" leaves the others below the tier's requirement.
   $('devMaxCombat').addEventListener('click',()=>{
-    if(!state.combatXp) state.combatXp={attack:0,strength:0,defence:0,ranged:0,hitpoints:0};
+    if(!state.combatXp) state.combatXp={attack:0,strength:0,defence:0,ranged:0,magic:0,hitpoints:0};
     for(const k in COMBAT_STATS) state.combatXp[k]=XP_CUM[MAX_LEVEL];
     refreshCombatStats(); renderAll(); saveGame();
     toast(`All combat stats set to level ${MAX_LEVEL}`);
@@ -50230,7 +50357,7 @@ $('tabSocket').addEventListener('click',()=>{ leaveFullPanels(); viewTab='socket
   const _tsBtn=$('devTrailerSetup');
   if(_tsBtn) _tsBtn.addEventListener('click',()=>{
     for(const k in SKILLS){ state.xp[k]=XP_CUM[_tSkill[k]||50]; }
-    if(!state.combatXp) state.combatXp={attack:0,strength:0,defence:0,ranged:0,hitpoints:0};
+    if(!state.combatXp) state.combatXp={attack:0,strength:0,defence:0,ranged:0,magic:0,hitpoints:0};
     for(const k in COMBAT_STATS){ state.combatXp[k]=XP_CUM[_tCombat[k]||58]; }
     if(typeof refreshCombatStats==='function') refreshCombatStats();
     const _g=150000; state.coins+=_g*SILVER_PER_GOLD; if(typeof _coinsBaseline!=='undefined'&&_coinsBaseline!=null)_coinsBaseline+=_g*SILVER_PER_GOLD;
@@ -50268,11 +50395,10 @@ function mmSummary(n){
     if(s._silverV3) silverCoins=s.coins||0;
     else if(s._silverV2) silverCoins=Math.round((s.coins||0)/10);
     else silverCoins=Math.round((s.coins||0)*SILVER_PER_GOLD);
-    // Combat level from the save's own combatXp — combatLevel() reads globals and
-    // there is no loaded character here, so recompute it from the parsed blob.
-    const cx=s.combatXp||{};
-    const cl=Math.max(1, Math.floor((levelFromXp(cx.attack||0)+levelFromXp(cx.strength||0)
-             +levelFromXp(cx.defence||0)+levelFromXp(cx.hitpoints||0))/4));
+    /* Combat level from the save's own combatXp. There is no loaded character here,
+       so combatLevel() is handed the parsed blob (0.9.127.4). This line had a copy
+       of the formula from before Ranged, so an archer's slot read too low. */
+    const cl=combatLevel(s.combatXp||{});
     return { name:(typeof s.charName==='string'&&s.charName.trim())?s.charName:'Adventurer',
              totalLevel:tot, combatLevel:cl, playtimeMs:s.playtimeMs||0,
              coins:silverCoins, lastSeen:s.lastSeen||0,
