@@ -1,7 +1,7 @@
 /* Magic: the balance harness.
  *
  *     node _magesim.js           every table and every check
- *     node _magesim.js --quick   skip the simulated fights
+ *     node _magesim.js --quick   skip the simulated fights and the live ones (10 s, not a minute)
  *     CV_FILE=other.html node _magesim.js     the same checks off another build
  *
  * Magic was designed as a prototype laid over build 0.9.127.3 and measured there
@@ -19,6 +19,14 @@
  *
  * Every number comes from the game's own functions. Nothing here is a copy of a
  * formula, except the old combat level, which is kept to compare against.
+ *
+ * Section 13 does no sums of its own at all. It runs the game's tick() and
+ * combatTick() on a clock it holds, an hour of game time at a go, and counts what
+ * came out: the XP and the runes a card promises, and the damage the model in 9d
+ * predicts. That is where the 100 ms combat timer shows: the tick restarts an
+ * attack from the tick it landed on, so every attack time is rounded up to the
+ * next tenth of a second, for every weapon. The model does not round, so the two
+ * are compared with that rounding counted.
  *
  * NOT here, because they need gear from later slices (Faultline, Dawnveil, the
  * Sunder Rune, the Sorcery column): the best in slot table and the Spire wall.
@@ -836,6 +844,49 @@ function PAGE() {
       /* Fire's burn tick is 2.4% of max hit */
       arm('fire'); Math.random = function () { return 0.01; }; cast();
       o.fire = [combat.foeStatus.burn ? combat.foeStatus.burn.tickDmg : 0, Math.max(1, Math.round(combat.youMaxHit * 0.024))];
+      /* A slow must not outlive the monster it was put on. The live run in section 13
+         found this: a kill wiped the status and left the stretched attack time
+         behind, the next slow took that as its base, and six kills later the
+         monster was attacking at a third of its speed. Chill it, kill it, and the
+         next one has to attack at its own speed, every time. */
+      var own = getMonster('rat').swingMs || COMBAT_BASE_SWING_MS;
+      var afterKills = function (armIt) {
+        armIt(); combat.foeSwingMs = own;
+        var seen = [], slowed = [];
+        Math.random = function () { return 0.01; };          // every roll low: the hit lands, the slow lands
+        for (var k = 0; k < 6; k++) {
+          combat.foeHp = 1e9; combat.foeMaxHp = 1e9; cast();  // slowed, and still alive
+          slowed.push(combat.foeStatus && combat.foeStatus.pin ? combat.foeSwingMs : 0);
+          combat.foeHp = 1; cast();                           // the next hit kills it: the respawn
+          seen.push(combat.foeSwingMs);
+        }
+        return { fresh: seen, slowed: slowed };
+      };
+      o.own = own;
+      o.chillKills = afterKills(function () { arm('frost'); });
+      o.pinKills = afterKills(function () {
+        state = defaultState(); normalizeState();
+        state.combatXp.ranged = XP_CUM[99]; state.combatXp.hitpoints = XP_CUM[99]; state.combatXp.defence = XP_CUM[99];
+        state.items = { ancient_shortbow: 1, starsteel_arrow: 1000, demon_chest: 1 };
+        state.combatEquipped = { weapon: 'ancient_shortbow', quiver: 'starsteel_arrow', chest: 'demon_chest' };
+        state.cmast = { k_t5_m: 1 };                          // Pinning Shot: a crit slows the monster 15%
+        state.zone = 'rat_warrens'; combat.raid = null; combat.monId = 'rat'; combat.log = []; combat.rare = null;
+        refreshCombatStats();
+        combat.active = true; combat.foeHp = 1e9; combat.foeMaxHp = 1e9; combat.foeStatus = {};
+        combat.youHp = combat.youMaxHp; combat.foeSwingStart = Date.now() + 1e9;
+      });
+      /* And a slowed monster that enrages keeps the enrage: the slow's stored base is
+         what gets faster, or the tick rebuilds the old speed over it a tick later. */
+      arm('frost'); Math.random = function () { return 0.5; };
+      combat.monfx = { enrage: { below: 0.4, aspd: 0.25 }, raged: false };
+      combat.foeStatus = { pin: { base: 2000, until: Date.now() + 60000, slow: 0.25 } };
+      combat.foeHp = 3e8; combat.foeMaxHp = 1e9;
+      combat.youSwingStart = Date.now() + 1e9; combatTick();
+      o.enrage = [combat.monfx.raged, combat.foeStatus.pin ? combat.foeStatus.pin.base : 0, combat.foeSwingMs];
+      if (combat.foeStatus.pin) combat.foeStatus.pin.until = Date.now() - 1;
+      combat.youSwingStart = Date.now() + 1e9; combatTick();
+      o.enrageAfter = [!!combat.foeStatus.pin, combat.foeSwingMs];
+      combat.monfx = null;
       /* the damage number carries the element */
       o.unlock = MAGIC_ELEMENTS.map(function (e) { return [e.k, e.lvl]; });
     } finally { Math.random = realRandom; combat.active = false; combat.raid = null; state = defaultState(); normalizeState(); }
@@ -843,22 +894,183 @@ function PAGE() {
   }
 
   /* ── fight numbers for the simulated fights ── */
-  function fighters(lv, t) {
+  /* One definition of each dressed build, so the model below and the live fights
+     further down are looking at the same character. */
+  function loadout(key, t) {
     var metal = METAL[t - 1], wood = WOOD[t - 1], hide = HIDE[t - 1], cloth = CLOTHK[t - 1], rune = RUNE[t - 1];
+    var cape = { cape: metal + '_cape' };
+    if (key === 'melee') return { weapon: metal + '_sword', armour: set5(metal, PL, { cape: metal + '_cape', shield: metal + '_shield' }) };
+    if (key === 'bow') return { weapon: wood + '_shortbow', quiver: metal + '_arrow', armour: set5(hide, PL, cape) };
+    if (key === 'wand') return { weapon: wood + '_wand', quiver: rune, armour: set5(cloth, RB, { cape: metal + '_cape', shield: metal + '_buckler' }) };
+    if (key === 'staff') return { weapon: wood + '_staff', quiver: rune, armour: set5(cloth, RB, cape) };
+    if (key === 'wandBare') return { weapon: wood + '_wand', quiver: rune, armour: set5(cloth, RB, cape) };
+    if (key === 'longbow') return { weapon: wood + '_longbow', quiver: metal + '_arrow', armour: set5(hide, PL, cape) };
+    if (key === 'meleeBuckler') return { weapon: metal + '_sword', armour: set5(metal, PL, { cape: metal + '_cape', shield: metal + '_buckler' }) };
+    if (key === 'xbowBuckler') return { weapon: metal + '_crossbow', quiver: metal + '_bolt', armour: set5(hide, PL, { cape: metal + '_cape', shield: metal + '_buckler' }) };
+    return null;
+  }
+  function fighters(lv, t) {
+    var wood = WOOD[t - 1], cloth = CLOTHK[t - 1], rune = RUNE[t - 1], metal = METAL[t - 1];
     var cape = { cape: metal + '_cape' }, out = {};
     state = defaultState(); normalizeState(); state.xp.agility = XP_CUM[lv];
     function one(key, o) { wear(o, lv); var s = snap(); var w = ITEMS[eqCombatWeapon()] || {}; s.dmgType = w.dmgType; s.kind = w.magic ? 'magic' : w.ranged ? 'ranged' : 'melee'; s.lcrit = s.crit; out[key] = s; }
-    one('melee', { weapon: metal + '_sword', armour: set5(metal, PL, { cape: metal + '_cape', shield: metal + '_shield' }) });
-    one('bow', { weapon: wood + '_shortbow', quiver: metal + '_arrow', armour: set5(hide, PL, cape) });
-    one('wand', { weapon: wood + '_wand', quiver: rune, armour: set5(cloth, RB, { cape: metal + '_cape', shield: metal + '_buckler' }) });
-    one('staff', { weapon: wood + '_staff', quiver: rune, armour: set5(cloth, RB, cape) });
+    one('melee', loadout('melee', t));
+    one('bow', loadout('bow', t));
+    one('wand', loadout('wand', t));
+    one('staff', loadout('staff', t));
     /* the same staff casting each smaller spell its rune powers */
     for (var sz = runeClassOf(rune) - 1; sz >= 1; sz--) one('staff_s' + sz, { weapon: wood + '_staff', quiver: rune, armour: set5(cloth, RB, cape), spell: SPELL_SIZES[sz - 1].k });
-    one('wandBare', { weapon: wood + '_wand', quiver: rune, armour: set5(cloth, RB, cape) });
-    one('longbow', { weapon: wood + '_longbow', quiver: metal + '_arrow', armour: set5(hide, PL, cape) });
-    one('meleeBuckler', { weapon: metal + '_sword', armour: set5(metal, PL, { cape: metal + '_cape', shield: metal + '_buckler' }) });
-    one('xbowBuckler', { weapon: metal + '_crossbow', quiver: metal + '_bolt', armour: set5(hide, PL, { cape: metal + '_cape', shield: metal + '_buckler' }) });
+    one('wandBare', loadout('wandBare', t));
+    one('longbow', loadout('longbow', t));
+    one('meleeBuckler', loadout('meleeBuckler', t));
+    one('xbowBuckler', loadout('xbowBuckler', t));
     state = defaultState(); normalizeState();
+    return out;
+  }
+
+  /* ── live: the game's own tick() and combatTick(), on a clock this harness holds ──
+     Everything above asks the game's functions for a number and does the sum itself.
+     This does no sums. It starts the fight or the act the way a player does, steps
+     the clock at the pace the game's own timers run (100 ms in a fight, 250 ms at a
+     bench) and counts what happened. Rendering is switched off for the run, because
+     it is a thousand times the cost and changes no number; nothing else is.
+     Two things are held still so the build that is measured stays that build: the
+     levels (ten hours of XP would carry a level 20 character past 50) and, in a
+     fight, the player's health. */
+  var QUIET = ['renderCombat', 'updateCombatBars', 'cmbSplat', 'renderAll', 'renderTick', 'saveGame', 'toast', 'renderQuestDock', 'questCheck',
+    'refreshCombatTabIndicator', 'renderRightPanel', 'renderHeader', 'renderSkillList', 'showHint'];
+  function hush(on) {
+    if (on) { hush.keep = {}; QUIET.forEach(function (k) { if (typeof window[k] === 'function') { hush.keep[k] = window[k]; window[k] = function () {}; } }); }
+    else { for (var k in (hush.keep || {})) window[k] = hush.keep[k]; hush.keep = {}; }
+  }
+  function seeded(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; var t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  /* One dressed build against one real monster for `hours` of game time. `neutral`
+     blanks the monster's weaknesses for the run, which is what the model's rows do. */
+  function liveFight(key, lv, t, monId, hours, seed, neutral, el) {
+    var D = Date.now, R = Math.random, out = { key: key };
+    var mon = getMonster(monId), keepM = { weakTo: mon.weakTo, resistTo: mon.resistTo, weakEl: mon.weakEl, resistEl: mon.resistEl };
+    var keep = { menu: mmAtMenu };
+    try {
+      state = defaultState(); normalizeState(); state.xp.agility = XP_CUM[lv];
+      wear(loadout(key, t), lv);
+      if (el) { state.combatElement = el; refreshCombatStats(); out.el = spellElement(); }
+      if (neutral) { mon.weakTo = null; mon.resistTo = null; mon.weakEl = null; mon.resistEl = null; }
+      mmAtMenu = false; enterCombat(); state.cmbSubTab = 'arena'; state.cmbView = 'fight';
+      selectZone(mon.zone); selectMonster(monId);
+      var fake = D.call(Date) + (window.__clockShift || 0); Date.now = function () { return fake; };
+      Math.random = seeded(seed);
+      engageCombat(); stopCombatTimer();
+      out.engaged = !!combat.active;
+      out.swing = playerSwingMs(); out.hit = playerMaxHit(); out.acc = playerAccuracy(); out.spell = usingMagic() ? spellName() : '';
+      hush(true);
+      var q = state.combatEquipped.quiver, q0 = q ? state.items[q] : 0, kills = function () { return (state.monKills && state.monKills[monId]) || 0; }, k0 = kills();
+      var base = JSON.parse(JSON.stringify(state.combatXp)), gain = {}, stat = combatXpStat(), hit0 = combat.youMaxHit;
+      var dealt = 0, taken = 0, casts = 0, steps = Math.round(hours * 36000), i;
+      for (i = 0; i < steps; i++) {
+        fake += 100;
+        var fh = combat.foeHp, yh = combat.youHp, kk = kills(), sw = combat.youSwingStart;
+        combatTick();
+        if (!combat.active) { out.stopped = combat.log.slice(-1).map(function (l) { return l.t; })[0] || 'stopped'; break; }
+        if (combat.youSwingStart !== sw) casts++;
+        dealt += (kills() > kk || combat.foeHp > fh) ? fh : (fh - combat.foeHp);
+        if (combat.youHp < yh) taken += yh - combat.youHp;
+        combat.youHp = combat.youMaxHp;
+        for (var k in base) { var d = (state.combatXp[k] || 0) - base[k]; if (d) { gain[k] = (gain[k] || 0) + d; state.combatXp[k] = base[k]; } }
+        if (combat.youMaxHit !== hit0) refreshCombatStats();
+      }
+      out.dps = dealt / (hours * 3600); out.killsHr = (kills() - k0) / hours; out.castsHr = casts / hours;
+      out.spentHr = q ? (q0 - state.items[q]) / hours : 0; out.xpHr = (gain[stat] || 0) / hours; out.takenHr = taken / hours;
+    } catch (e) { out.err = String(e && e.stack || e).slice(0, 400); }
+    finally {
+      hush(false); Date.now = D; Math.random = R;
+      mon.weakTo = keepM.weakTo; mon.resistTo = keepM.resistTo; mon.weakEl = keepM.weakEl; mon.resistEl = keepM.resistEl;
+      try { stopCombatTimer(); } catch (e) {} combat.active = false; combat.raid = null; combatMode = false; mmAtMenu = keep.menu;
+      try { _lastTickWall = 0; } catch (e) {}
+      state = defaultState(); normalizeState();
+    }
+    return out;
+  }
+  /* A whole raid, or `maxMin` game minutes of the Spire, through the real tick, with
+     the player topped up after every step. It answers two things a single cast
+     cannot: does a build get from stage to stage with everything a raid throws at
+     it running, and how long does it take beside the others. */
+  function liveRaid(key, lv, t, raidId, seed, maxMin, ammo, el) {
+    var D = Date.now, R = Math.random, out = { key: key, stages: [] }, keep = { menu: mmAtMenu };
+    try {
+      state = defaultState(); normalizeState(); state.xp.agility = XP_CUM[lv];
+      var o = loadout(key, t); if (ammo) o.quiver = ammo;
+      wear(o, lv);
+      if (el) { state.combatElement = el; refreshCombatStats(); }
+      mmAtMenu = false; enterCombat();
+      var fake = D.call(Date) + (window.__clockShift || 0); Date.now = function () { return fake; };
+      Math.random = seeded(seed);
+      startRaid(raidId); stopCombatTimer();
+      out.started = !!(combat.raid && combat.active); out.spell = usingMagic() ? spellName() : '';
+      hush(true);
+      var q = state.combatEquipped.quiver, q0 = q ? state.items[q] : 0, t0 = fake, at = fake, mark = combat.raid ? (combat.raid.endless ? combat.raid.floor : combat.raid.stage) : 0;
+      var base = JSON.parse(JSON.stringify(state.combatXp)), hit0 = combat.youMaxHit, steps = Math.round(maxMin * 600), i;
+      for (i = 0; i < steps; i++) {
+        fake += 100; combatTick();
+        if (!combat.raid || !combat.active) break;
+        combat.youHp = combat.youMaxHp;
+        for (var k in base) if (state.combatXp[k] !== base[k]) state.combatXp[k] = base[k];
+        if (combat.youMaxHit !== hit0 && !combat.raidDebuff) { refreshCombatStats(); hit0 = combat.youMaxHit; }
+        var now = combat.raid.endless ? combat.raid.floor : combat.raid.stage;
+        if (now !== mark) { out.stages.push(Math.round((fake - at) / 1000)); at = fake; mark = now; }
+      }
+      out.seconds = Math.round((fake - t0) / 1000); out.cleared = !combat.raid && !combat.active; out.floor = combat.raid ? combat.raid.floor : 0;
+      out.spent = q ? q0 - (state.items[q] || 0) : 0;
+      out.last = combat.log.slice(-1).map(function (l) { return String(l.t).replace(/<[^>]+>/g, ''); })[0] || '';
+    } catch (e) { out.err = String(e && e.stack || e).slice(0, 400); }
+    finally {
+      hush(false); Date.now = D; Math.random = R;
+      try { stopCombatTimer(); } catch (e) {} combat.active = false; combat.raid = null; combat.raidDebuff = null; combat.bossfx = null; combat.monfx = null; combatMode = false; mmAtMenu = keep.menu;
+      try { _lastTickWall = 0; } catch (e) {}
+      state = defaultState(); normalizeState();
+    }
+    return out;
+  }
+  /* The act a player would pick at a level: the best XP an hour on its own card. */
+  function livePick(skill, lv, trees, cat) {
+    setSkills(lv, trees);
+    var best = '', top = 0;
+    SKILLS[skill].acts.forEach(function (a) {
+      if ((a.lvl || 1) > lv || (cat && a.cat !== cat)) return;
+      for (var i in (a.inp || {})) state.items[i] = 1e9;
+      var c; try { c = ratesFor(a, skill); } catch (e) { return; }
+      if (c.xph > top) { top = c.xph; best = a.id; }
+    });
+    state = defaultState(); normalizeState();
+    return best;
+  }
+  /* One act for `hours` of game time through tick(), with everything it needs on hand. */
+  function liveSkill(skill, actId, lv, trees, hours, seed) {
+    var D = Date.now, R = Math.random, out = {}, keep = { menu: mmAtMenu };
+    try {
+      setSkills(lv, trees);
+      var act = actOf(skill, actId);
+      for (var i in (act.inp || {})) state.items[i] = 1e9;
+      mmAtMenu = false; combatMode = false; combat.active = false; combat.raid = null;
+      var c = ratesFor(act, skill);
+      out.act = act.name; out.card = { ms: c.ms, xph: c.xph, rph: c.rph };
+      var fake = D.call(Date) + (window.__clockShift || 0); Date.now = function () { return fake; };
+      Math.random = seeded(seed);
+      hush(true);
+      state.action = { skill: skill, actId: actId }; state.actionStart = fake;
+      var base = state.xp[skill], gained = 0, steps = Math.round(hours * 14400);
+      var outIds = Object.keys(act.out || {}), inIds = Object.keys(act.inp || {}), o0 = {}, i0 = {};
+      outIds.forEach(function (id) { o0[id] = state.items[id] || 0; }); inIds.forEach(function (id) { i0[id] = state.items[id] || 0; });
+      for (var s = 0; s < steps; s++) {
+        fake += 250; tick();
+        if (!state.action) { out.stopped = true; break; }
+        if (state.xp[skill] !== base) { gained += state.xp[skill] - base; state.xp[skill] = base; }
+      }
+      out.xph = gained / hours;
+      out.made = {}; outIds.forEach(function (id) { out.made[id] = ((state.items[id] || 0) - o0[id]) / hours; });
+      out.used = {}; inIds.forEach(function (id) { out.used[id] = (i0[id] - (state.items[id] || 0)) / hours; });
+      out.cardAfter = ratesFor(act, skill).xph;
+    } catch (e) { out.err = String(e && e.stack || e).slice(0, 400); }
+    finally { hush(false); Date.now = D; Math.random = R; state.action = null; mmAtMenu = keep.menu; try { _lastTickWall = 0; } catch (e) {} state = defaultState(); normalizeState(); }
     return out;
   }
 
@@ -1181,11 +1393,15 @@ function PAGE() {
 
   window.SIM = { levelCheck: levelCheck, saves: saves, consts: consts, parity: parity, ladder: ladder, dressed: dressed, economy: economy, skillXp: skillXp,
     reagents: reagents, structure: structure, nodes: nodes, spells: spells, spellSizes: spellSizes, castRates: castRates, casting: casting, bar: bar, gold: gold, elements: elements, elTables: elTables, elementFx: elementFx, fighters: fighters, robes: robes,
-    journey: journey, veteran: veteran };
+    journey: journey, veteran: veteran, liveFight: liveFight, liveSkill: liveSkill, livePick: livePick, liveRaid: liveRaid,
+    raids: function () { return RAIDS.map(function (r) { return { id: r.id, name: r.name, endless: !!r.endless, stages: (r.stages || []).length }; }); } };
 }
 
 setTimeout(() => {
   const w = dom.window;
+  /* The live section must not care what day it is run on. CV_CLOCK_SHIFT moves the
+     clock it holds by that many hours, and the section has to print the same thing. */
+  w.eval('window.__clockShift=' + (Math.round((+process.env.CV_CLOCK_SHIFT || 0) * 3600000)) + ';');
   w.eval('(' + PAGE.toString() + ')()');
   const J = src => JSON.parse(w.eval('JSON.stringify(' + src + ')'));
   const C = J('SIM.consts()');
@@ -1470,6 +1686,13 @@ setTimeout(() => {
   check(R.fx.weak[3] > 1.14 && R.fx.weak[3] < 1.16 && R.fx.weak[4] > 0.84 && R.fx.weak[4] < 0.86, 'in the fight, the same roll does 15% more to a weak monster and 15% less to one that resists', `${R.fx.weak[0]} plain, ${R.fx.weak[1]} weak, ${R.fx.weak[2]} resisted`);
   check(R.fx.fire[0] === R.fx.fire[1] && R.fx.fire[0] > 0, 'Fire burns for 2.4% of your max hit a tick', R.fx.fire.join(' = '));
   check(R.fx.frost[0] === true && R.fx.frost[1] === 0.25 && R.fx.frostSlow[0] === R.fx.frostSlow[1], 'Frost chills, and a chilled monster attacks 25% slower', R.fx.frost[2] + 'ms -> ' + R.fx.frostSlow[0] + 'ms');
+  const CK = R.fx.chillKills, PK = R.fx.pinKills, OWN = R.fx.own;
+  check(CK.fresh.length === 6 && CK.fresh.every(x => x === OWN) && CK.slowed.every(x => x === Math.round(OWN * 1.25)),
+    'kill a chilled monster and the next one attacks at its own speed: the chill does not pile up from kill to kill', 'six kills: ' + CK.fresh.join(' ') + ' ms fresh, ' + CK.slowed.join(' ') + ' chilled');
+  check(PK.fresh.length === 6 && PK.fresh.every(x => x === OWN) && PK.slowed.every(x => x === Math.round(OWN * 1.15)),
+    'and the same for an archer\'s Pinning Shot, which had done it since 0.9.123.13', 'six kills: ' + PK.fresh.join(' ') + ' ms fresh, ' + PK.slowed.join(' ') + ' pinned');
+  check(R.fx.enrage[0] === true && R.fx.enrage[1] === 1500 && R.fx.enrage[2] === 1875 && R.fx.enrageAfter[0] === false && R.fx.enrageAfter[1] === 1500,
+    'a slowed monster that enrages is 25% faster and still slowed, and stays enraged when the slow ends', '2000 ms: ' + R.fx.enrage[2] + ' ms enraged and chilled, ' + R.fx.enrageAfter[1] + ' ms once the chill is gone');
   check(R.fx.storm[0] === true && R.fx.storm[1] === false, 'Storm lands a cast that would have missed');
   check(R.fx.shadow[1] === R.fx.shadow[2] && R.fx.shadow[1] > 0, 'Shadow heals you for 3% of the damage you deal', `${R.fx.shadow[0]} dealt, ${R.fx.shadow[1]} healed`);
 
@@ -1642,6 +1865,125 @@ setTimeout(() => {
     if (!v) { check(false, 'a level 99 mage casts Storm Surge in ' + name); continue; }
     check(v.cl === 99 && v.worn === 7 && v.inRaid && v.buttons === 4 + NEL && v.spell === 'Storm Surge' && v.spent === 4 && v.dealt === v.want && v.said === `Storm Surge hits the ${v.foe} for ${v.dealt}.` && v.still && VT.refused.length === 0,
       'a level 99 mage in Wyrmsilk casts Storm Surge in ' + name + ': 4 runes, and the run goes on', v.said + (v.weak === 'storm' ? ' (weak to Storm)' : v.resist === 'storm' ? ' (resists Storm)' : ''));
+  }
+
+  /* 13. live */
+  if (!QUICK) {
+    console.log('\n13. LIVE  ·  the game\'s own tick() and combatTick() on a held clock, with the levels held still');
+    const kk = x => (x / 1000).toFixed(1) + 'k';
+    /* 13a. Runecrafting: what an hour at the bench really gives, against what its card says */
+    console.log('\n   RUNECRAFTING  ·  one game hour through tick(), everything it needs on hand');
+    console.log('   ' + padr('lv', 4) + padr('best XP on a card', 26) + pad('card xp/hr', 11) + pad('live', 9) + pad('', 8) + '   ' + padr('best rune', 22) + pad('card runes/hr', 14) + pad('live', 9) + pad('', 8) + pad('xp/hr', 9) + '   an hour of carving eats');
+    const LS = [];
+    for (const trees of [false, true]) {
+      for (const lv of (trees ? [99] : [1, 20, 40, 60, 80, 99])) {
+        const a = J(`SIM.livePick('runecrafting',${lv},${trees},'')`), ar = J(`SIM.livePick('runecrafting',${lv},${trees},'runes')`);
+        const x = J(`SIM.liveSkill('runecrafting','${a}',${lv},${trees},1,${700 + lv})`), r = J(`SIM.liveSkill('runecrafting','${ar}',${lv},${trees},${trees ? 4 : 1},${800 + lv})`);
+        const id = Object.keys(r.made || {})[0], made = r.made ? r.made[id] : 0;
+        LS.push({ lv, trees, x, r, made, err: x.err || r.err });
+        if (x.err || r.err) { console.log('   ' + (x.err || r.err)); continue; }
+        console.log('   ' + padr(lv + (trees ? '*' : ''), 4) + padr(x.act, 26) + pad(kk(x.card.xph), 11) + pad(kk(x.xph), 9) + pad(pct(x.xph, x.card.xph) + '%', 8) + '   ' + padr(r.act, 22) + pad(Math.round(r.card.rph).toLocaleString(), 14) + pad(Math.round(made).toLocaleString(), 9) + pad(pct(made, r.card.rph) + '%', 8) + pad(kk(r.xph), 9)
+          + '   ' + Object.keys(r.used).map(k => Math.round(r.used[k]).toLocaleString() + ' ' + k.replace(/_/g, ' ')).join(', '));
+      }
+    }
+    console.log('   * with every tree full. A card\'s XP creeps up a little as the hour goes, so live sits a touch over it.');
+    const plain = LS.filter(s => !s.trees), full = LS.filter(s => s.trees);
+    check(LS.every(s => !s.err) && plain.every(s => s.x.xph >= s.x.card.xph * 0.995 && s.x.xph <= s.x.card.xph * 1.02 && s.r.xph >= s.r.card.xph * 0.995 && s.r.xph <= s.r.card.xph * 1.02),
+      'an hour of Runecrafting through tick() gives the XP its card says', plain.map(s => pct(s.x.xph, s.x.card.xph) + '%').join(' '));
+    check(plain.every(s => Math.abs(s.made / s.r.card.rph - 1) < 0.005), 'and the runes its card says', plain.map(s => pct(s.made, s.r.card.rph) + '%').join(' '));
+    check(full.every(s => !s.err && Math.abs(s.made / s.r.card.rph - 1) < 0.03 && s.x.xph >= s.x.card.xph * 0.995 && s.x.xph <= s.x.card.xph * 1.03),
+      'with every tree full the card still tells the truth: double batches and Close Cutting come out at what it promises', full.map(s => pct(s.made, s.r.card.rph) + '% of ' + Math.round(s.r.card.rph).toLocaleString() + ' runes an hour').join(' '));
+
+    /* 13b. fights: the real combat tick against the model in 9d */
+    const REF = { 20: 'goblin_shaman', 50: 'ogre_houndmaster', 75: 'wyvern', 99: 'dread_knight' }, TIER = { 20: 3, 50: 5, 75: 7, 99: 7 };
+    const ROW = { melee: 'melee', bow: 'bow', xbowBuckler: 'xbowBuckler', staff: 'staff_fire', wandBare: 'wandBare_fire', wand: 'wand_fire' };
+    const NAME = { melee: 'sword + shield', bow: 'shortbow', xbowBuckler: 'crossbow + buckler', staff: 'staff, Fire', wandBare: 'wand, Fire', wand: 'wand + buckler, Fire' };
+    const HRS = 8, LF = [];
+    console.log(`\n   FIGHTS  ·  ${HRS} game hours each through combatTick(), 100 ms a step as the game's own timer runs, on the monsters of 9d`);
+    console.log('   The game restarts an attack from the tick it landed on, so every attack time is rounded up to the next 100 ms. "timer" is what that leaves.');
+    for (const lv of [20, 50, 75, 99]) {
+      const G = R.fights.find(f => f.lv === lv), L = {};
+      console.log(`\n   Lv ${lv}  ${G.mon}`);
+      console.log('   ' + padr('', 22) + pad('attack', 8) + pad('timer', 7) + pad('live dps', 10) + pad('model', 8) + pad('x timer', 9) + pad('live/that', 11) + pad('kills/hr', 10) + pad('casts/hr', 10) + pad('spent/hr', 10) + pad('xp/hr', 9));
+      for (const key of Object.keys(ROW)) {
+        const v = J(`SIM.liveFight('${key}',${lv},${TIER[lv]},'${REF[lv]}',${HRS},${9000 + lv},true)`), m = G.rows[ROW[key]];
+        const timer = v.swing / (Math.ceil(v.swing / 100) * 100);
+        v.model = m.dps; v.timer = timer; v.of = v.dps / (m.dps * timer); v.lv = lv; L[key] = v; LF.push(v);
+        if (v.err || v.stopped) { console.log('   ' + padr(NAME[key], 22) + (v.err || v.stopped)); continue; }
+        console.log('   ' + padr(NAME[key], 22) + pad((v.swing / 1000).toFixed(2) + 's', 8) + pad((timer * 100).toFixed(1) + '%', 7) + pad(v.dps.toFixed(1), 10) + pad(m.dps.toFixed(1), 8) + pad((m.dps * timer).toFixed(1), 9) + pad((v.of * 100).toFixed(1) + '%', 11)
+          + pad(Math.round(v.killsHr), 10) + pad(Math.round(v.castsHr), 10) + pad(v.spentHr ? Math.round(v.spentHr).toLocaleString() : '', 10) + pad(Math.round(v.xpHr / 1000) + 'k', 9));
+      }
+      const live = (a, b) => pct(L[a].dps, L[b].dps), mod = (a, b) => pct(G.rows[ROW[a]].dps, G.rows[ROW[b]].dps);
+      L.ratios = { staffBow: live('staff', 'bow'), wandBow: live('wandBare', 'bow'), wandXbow: live('wand', 'xbowBuckler'), staffMelee: live('staff', 'melee') };
+      LF.push({ lv, ratios: L.ratios });
+      console.log(`   live, and the model beside it:  staff ${L.ratios.staffBow}% of the bow (${mod('staff', 'bow')}%)  ·  wand ${L.ratios.wandBow}% of the bow (${mod('wandBare', 'bow')}%)  ·  wand + buckler ${L.ratios.wandXbow}% of the crossbow + buckler (${mod('wand', 'xbowBuckler')}%)`);
+    }
+    const rows = LF.filter(v => v.key), rat = LF.filter(v => v.ratios);
+    check(rows.length === 24 && rows.every(v => !v.err && !v.stopped && v.engaged), 'all 24 fights ran their eight hours: nobody ran out of runes, and nothing stopped a fight');
+    /* Eight hours is about ten thousand attacks, so one row carries a point or so of
+       dice either way. Each row is held to 5%, which no change to the order of the
+       dice can trip, and the average for each kind of weapon to 2%, which is the
+       check that would catch a rule the tick applies and the model does not. */
+    check(rows.every(v => Math.abs(v.of - 1) < 0.05), 'the real combat tick deals what the model says, once the 100 ms timer is counted: sword, bow, crossbow, staff and wand alike',
+      'furthest: ' + rows.slice().sort((a, b) => Math.abs(b.of - 1) - Math.abs(a.of - 1)).slice(0, 3).map(v => NAME[v.key] + ' Lv ' + v.lv + ' ' + (v.of * 100).toFixed(1) + '%').join(', '));
+    const avg = re => { const x = rows.filter(v => re.test(v.key)); return x.reduce((s, v) => s + v.of, 0) / x.length; };
+    const AV = { sword: avg(/^melee/), bows: avg(/bow/i), magic: avg(/staff|wand/) };
+    check(Object.keys(AV).every(k => Math.abs(AV[k] - 1) < 0.02), 'and on average to within 2% for each kind of weapon', 'sword ' + (AV.sword * 100).toFixed(1) + '%  ·  bow and crossbow ' + (AV.bows * 100).toFixed(1) + '%  ·  staff and wand ' + (AV.magic * 100).toFixed(1) + '%');
+    const worst = Math.min(...rows.map(v => v.timer));
+    console.log(`   The timer costs these 24 builds between ${((1 - Math.max(...rows.map(v => v.timer))) * 100).toFixed(1)}% and ${((1 - worst) * 100).toFixed(1)}% of their damage. It is in the tick every weapon shares, and it was there before Magic.`);
+    check(rat.every(v => v.ratios.staffBow > 90 && v.ratios.staffBow < 110 && v.ratios.wandBow > 90 && v.ratios.wandBow < 110),
+      'live, with the timer and the dice both in it, a staff and a wand in cloth are each within 10 points of a bow in leather at every level', rat.map(v => 'Lv ' + v.lv + ' ' + v.ratios.staffBow + '% / ' + v.ratios.wandBow + '%').join('  ·  '));
+    /* 13c. the elements, on a monster with its real weakness left on */
+    {
+      const lv = 50, M = C.monsters.find(m => m.id === REF[lv]), E = {};
+      console.log(`\n   ELEMENTS  ·  the Lv ${lv} staff on the ${M.name} as it really is (weak to ${M.weakEl || 'nothing'}, resists ${M.resistEl || 'nothing'}), 12 game hours an element`);
+      for (const e of C.elements) {
+        const v = J(`SIM.liveFight('staff',${lv},${TIER[lv]},'${REF[lv]}',12,${9500 + e.lvl},false,'${e.k}')`);
+        E[e.k] = v;
+        console.log('   ' + padr(e.n, 8) + pad(v.err || v.stopped || v.dps.toFixed(1), 8) + ' dps' + pad(Math.round(v.killsHr), 6) + ' kills/hr' + pad(Math.round(v.takenHr).toLocaleString(), 9) + ' damage taken/hr   ' + (M.weakEl === e.k ? 'weak' : M.resistEl === e.k ? 'resisted' : 'neither'));
+      }
+      /* Held to what the model in 9d says for this monster, not to a flat 15%: a
+         bigger hit wastes more on a monster that is nearly dead, so the weakness is
+         worth about 12% here and the resistance about 13%. */
+      const G = R.fights.find(f => f.lv === lv).rows;
+      const wantWeak = G.staff_weak.dps / G.staff_fire.dps, wantRes = G.staff_resist.dps / G.staff_frost.dps, wantFrost = G.staff_frost.takenHr / G.staff_storm.takenHr;
+      const gotWeak = E[M.weakEl].dps / E.frost.dps, gotRes = E[M.resistEl].dps / E.frost.dps, gotFrost = E.frost.takenHr / E.storm.takenHr;
+      check(C.elements.every(e => E[e.k].el === e.k && !E[e.k].err && !E[e.k].stopped), 'each element was really the one cast');
+      check(M.weakEl === 'shadow' && M.resistEl === 'fire' && Math.abs(gotWeak - wantWeak) < 0.06, 'over twelve hours the weak element is worth what the model says it is on this monster',
+        'Shadow does ' + ((gotWeak - 1) * 100).toFixed(1) + '% more than Frost, the model says ' + ((wantWeak - 1) * 100).toFixed(1) + '%');
+      check(Math.abs(gotRes - wantRes) < 0.06, 'and so is the resisted one', 'Fire does ' + ((1 - gotRes) * 100).toFixed(1) + '% less, burn included, the model says ' + ((1 - wantRes) * 100).toFixed(1) + '%');
+      check(gotFrost < 0.99 && Math.abs(gotFrost - wantFrost) < 0.05, 'Frost makes the monster hit you less, by what the model says and no more',
+        ((1 - gotFrost) * 100).toFixed(1) + '% less damage taken than with Storm, the model says ' + ((1 - wantFrost) * 100).toFixed(1) + '%');
+    }
+    /* 13d. raids and the Spire, end to end */
+    {
+      const RD = J('SIM.raids()'), WHO = [['melee', 'sword + shield', '', ''], ['bow', 'shortbow', 'starfall_arrow', ''], ['staff', 'staff, Storm Surge', 'starfall_rune', 'storm'], ['wand', 'wand + buckler, Shadow Surge', 'starfall_rune', 'shadow']];
+      console.log('\n   RAIDS AND THE SPIRE  ·  Lv 99 in crafted gear with the best ammunition it takes, every stage through combatTick(), health topped up');
+      console.log('   ' + padr('', 30) + RD.map(r => pad(r.endless ? 'Spire, 20 min' : r.name.replace(/^The /, ''), 17)).join('') + pad('four raids', 12));
+      const T = {};
+      for (const [key, label, ammo, el] of WHO) {
+        T[key] = { runs: [], total: 0, floor: 0, ok: true };
+        let line = '   ' + padr(label, 30);
+        for (const r of RD) {
+          const v = J(`SIM.liveRaid('${key}',99,7,'${r.id}',4242,${r.endless ? 20 : 240},'${ammo}','${el}')`);
+          T[key].runs.push(v);
+          if (v.err || !v.started) { T[key].ok = false; line += pad('FAILED', 17); if (v.err) console.log('   ' + v.err); continue; }
+          if (r.endless) { T[key].floor = v.floor; line += pad('floor ' + v.floor, 17); }
+          else { if (!v.cleared || v.stages.length !== r.stages - 1) T[key].ok = false; T[key].total += v.seconds; line += pad(v.cleared ? v.seconds + 's' : 'stuck at ' + (v.stages.length + 1), 17); }
+        }
+        console.log(line + pad(T[key].total + 's', 12));
+      }
+      check(Object.keys(T).every(k => T[k].ok), 'a staff, a wand, a bow and a sword each clear all four raids stage by stage through the real tick, and start the Spire');
+      check(T.staff.total > T.bow.total * 0.6 && T.staff.total < T.bow.total * 1.6 && T.wand.total > T.bow.total * 0.6 && T.wand.total < T.bow.total * 1.6,
+        'a mage takes about as long over the four raids as an archer in the same tier of gear', 'staff ' + pct(T.staff.total, T.bow.total) + '% of the bow\'s time, wand ' + pct(T.wand.total, T.bow.total) + '%, sword ' + pct(T.melee.total, T.bow.total) + '%');
+      check(Math.abs(T.staff.floor - T.bow.floor) <= 5 && Math.abs(T.wand.floor - T.bow.floor) <= 5 && T.staff.floor >= 10,
+        'and climbs the Spire about as fast: within five floors of the bow in twenty minutes', 'sword ' + T.melee.floor + ', bow ' + T.bow.floor + ', staff ' + T.staff.floor + ', wand ' + T.wand.floor);
+      const sp = T.staff.runs.filter(v => v.spent).map(v => v.spent);
+      check(T.staff.runs.every(v => v.spell === 'Storm Surge') && sp.length === RD.length, 'the staff cast Storm Surge the whole way, and spent runes in every one', sp.join(' / ') + ' runes');
+    }
+    const mg = rows.filter(v => /staff|wand/.test(v.key));
+    check(mg.every(v => v.spentHr > 0 && v.spentHr <= v.castsHr * (/Blast/.test(v.spell) ? 2 : /Wave/.test(v.spell) ? 3 : /Surge/.test(v.spell) ? 4 : 1)),
+      'a mage never spends more runes than its casts times the size of the spell, and robes keep some back', mg.filter(v => v.lv === 99).map(v => NAME[v.key] + ' ' + v.spell + ': ' + Math.round(v.spentHr).toLocaleString() + ' runes for ' + Math.round(v.castsHr).toLocaleString() + ' casts').join('  ·  '));
   }
 
   console.log(`\n${fails ? fails + ' CHECK' + (fails > 1 ? 'S' : '') + ' FAILED' : 'PASS'}: ${fails ? fails + ' of ' : 'all '}${checks} Magic checks\n`);

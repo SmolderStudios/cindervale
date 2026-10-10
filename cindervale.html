@@ -37287,6 +37287,12 @@ function tickMonsterFx(now, mon){
     mf.raged=true;
     const _fast=en.aspd||0.25;
     combat.foeSwingMs=Math.max(600, Math.round(combat.foeSwingMs*(1-_fast)));
+    /* A slowed monster enrages too (0.9.127.4). While a slow is on, the tick
+       rebuilds foeSwingMs from the slow's stored base every time, so speeding up
+       foeSwingMs alone lasted one tick and the enrage was lost for the rest of
+       the floor. The base is what has to get faster. */
+    if(combat.foeStatus&&combat.foeStatus.pin&&combat.foeStatus.pin.base)
+      combat.foeStatus.pin.base=Math.max(600, Math.round(combat.foeStatus.pin.base*(1-_fast)));
     cmbLog('\u2726 '+(en.label||'Enraged')+': the '+mon.name+' now attacks '
       +Math.round(_fast*100)+'% faster.','rare-spawn');
   }
@@ -43533,6 +43539,16 @@ function combatTick(){
       combat.foeHp=nextEff.hp;
       combat.foeMaxHp=nextEff.hp;   // (1.0.104) cmast HP-conditional procs
       combat.foeStatus={}; cmastResetFight(false);   // (1.0.60) fresh foe — poison/stun don't carry to the respawn; (0.9.130) re-arm the once-per-fight saves
+      /* A fresh foe attacks at its own speed (0.9.127.4). A slow lives in
+         combat.foeSwingMs while it lasts and is put back when it runs out, but the
+         line above throws the slow away on a kill and used to leave the stretched
+         time behind it. The next slow then took THAT as its base, so every kill
+         landed on a slowed monster made the next one slower for good: 15% a time
+         for an archer with Pinning Shot since 0.9.123.13, and 25% a time with a
+         Frost chill, until the monster stopped attacking at all. Found by running
+         Frost through the real tick for twelve hours: it took 0.4% of the damage.
+         Engage, resume and every raid stage already set this; the respawn did not. */
+      combat.foeSwingMs=baseMon.swingMs||COMBAT_BASE_SWING_MS;
       if(combat.rare){
         cmbLog(`⚡ A rare ${baseMon.name} materializes from the shadows!`,'rare-spawn');
         if(!combatMode && typeof toast==='function'){ toast(`⚡ Rare ${baseMon.name} appears!`); }

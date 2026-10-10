@@ -9,7 +9,8 @@ Commit after each slice so a failure can be found, but push nothing until all fi
 WHERE THINGS STAND
 
 - `cindervale.html` is at build 0.9.127.4, release v0.9.127. The file is 12.03 MB. The audit fails it at 13.5 MB.
-- `_magesim.js` (167 checks) holds the real file to the numbers the prototype measured, in `_magesim.golden.json`. It does NOT hold the best in slot table or the Spire wall. Those are `best`, `bestSummary` and `walls` in `_magedesign/results.json`, and they are this session's to prove.
+- `_magesim.js` (186 checks) holds the real file to the numbers the prototype measured, in `_magesim.golden.json`. It does NOT hold the best in slot table or the Spire wall. Those are `best`, `bestSummary` and `walls` in `_magedesign/results.json`, and they are this session's to prove.
+- Its section 13 runs the game's own `tick()` and `combatTick()` on a held clock for hours of game time and counts what comes out. It is the only check that sees what the tick really does over a fight, and it is what caught Frost: a chill that outlived the monster it was put on and piled up kill after kill until nothing attacked. The prototype and every closed form had passed that. Put everything this session adds to a fight through it.
 - The prototype no longer lays over the game. `_magedesign/overlay.js` and `ui.js` are exact string edits cut against 0.9.127.3, and the core rewrote the functions they edit. They are still the change list for these five slices. Read them. Do not try to run them against the current file.
 - `_magedesign/shootreal.js` takes real screenshots off the real file (headless Chrome from the trailer kit, Electron user agent, `?cvdev=1`). Add scenes to it.
 - CLAUDE.md has a Magic section and three conventions (the third damage channel, the key lists, how ammunition is named). Read them before anything else.
@@ -25,7 +26,7 @@ READ FIRST
 
 FIRST COMMAND
 
-Run the whole pipeline before touching anything: `node --check`, `_validate.js`, `_raidmom.js` (72), `_spiretest.js` (211), `_audit_tests.js` (1269), `_magesim.js` (167). All green or stop and tell me.
+Run the whole pipeline before touching anything: `node --check`, `_validate.js`, `_raidmom.js` (72), `_spiretest.js` (211), `_audit_tests.js` (1269), `_magesim.js` (186). All green or stop and tell me.
 
 Then run the prototype against the build it was cut for, so the reference is known good:
 
@@ -90,12 +91,14 @@ TRAPS ALREADY PAID FOR
 - `_magesim.js` pins seven cloths, 35 robe pieces and 64 Runecrafting acts in five tabs, and `_magesim.golden.json` pins the skill's structure and its XP table. Raid robes move all of them. Move them on purpose, in the commit that adds the robes, and say so.
 - A cast that misses does 0 and applies no element. Echo and Attunement are for casts that landed.
 - The combat tick can turn a miss into 1 damage: for melee and bows against a monster that is weak or resists, and for every weapon, spells included, when the crit roll comes up on a miss. That is an old fault in shared code with its own task. Do not build on it and do not fix it here. If it has been fixed by the time you read this, Echo and Attunement need no guard of their own.
+- A status that stores something to put back later (a slow keeps the monster's own attack time in `foeStatus.pin.base`) is wiped on every kill. Whatever it changed has to be put back by the respawn too. Echo, Attunement, a staff that stuns and a staff that poisons all add to what a kill has to clean up: check each one across a kill, in section 13, not on one cast.
+- The combat timer rounds every attack time up to the next 100 ms, for every weapon. Live damage sits 0 to 6% under the closed forms because of it. Section 13 counts it. Do not fix it here: it is a buff to everything and it is my call.
 - `#combatPanel` is rebuilt on every kill. Anything new on the fight screen acts on `pointerdown` from the document, as the spell bar does.
 - The audit suite runs as the demo. Anything that needs a level past 10 has to lift `demoXpCap` the way the other blocks in it do.
 
 BALANCE: THE REAL FILE MUST MEASURE WHAT THE PROTOTYPE MEASURED
 
-Extend `_magesim.js`, do not start another harness. Add the best in slot table (38 rows), its summary and the twelve Spire walls, cut from `results.json` into the golden file. The real file has to reproduce them to the digit: a finished staff at 102.9% of a finished bow at Defence 500 and 100.5% at 1000, a wand and buckler at 101.2%, and a mage's wall on floor 30, floor 45 ascended. A difference is a porting bug, not a balance change.
+Extend `_magesim.js`, do not start another harness. Add the best in slot builds to the live fights in section 13 as well as to the tables: a finished mage, archer and fighter each run through the real tick, in a zone, in a raid and on the Spire. Add the best in slot table (38 rows), its summary and the twelve Spire walls, cut from `results.json` into the golden file. The real file has to reproduce them to the digit: a finished staff at 102.9% of a finished bow at Defence 500 and 100.5% at 1000, a wand and buckler at 101.2%, and a mage's wall on floor 30, floor 45 ascended. A difference is a porting bug, not a balance change.
 Three places the core differs from the prototype on purpose. If a number cannot match because of one of them, say which, and show me both numbers:
 1. Swift and Warded fold into one product in `playerSwingMs`, as Ranged styles do. The prototype rounded twice. At most 1 ms.
 2. Rune prices.
