@@ -416,6 +416,28 @@ function SCENES_IN_PAGE() {
       info.has = ['Dawncaller', 'Starcall Wand', 'Dawnveil Robe', 'Faultline', 'magic power 34'].filter(function (w) { return info.text.indexOf(w) >= 0; });
       info.text = info.text.slice(0, 200);
     }
+    /* the gem and the draught: their cards, and a robe with two Wyrdstones in it */
+    if (scene === 'wyrdstone_card') {
+      mage99(); state.items.wyrd_flaw = 4; state.items.arcane_draught_2 = 6; state.items.dawnveil_robe = 1;
+      state.combatEquipped = { weapon: 'frost_staff', quiver: 'forge_rune', chest: 'dawnveil_robe' };
+      state.sockets = { dawnveil_robe: { slots: 2, gems: ['wyrd_flaw', 'wyrd_flaw'] } };
+      refreshCombatStats(); enterCombat();
+      cards(['wyrd_flaw', 'dawnveil_robe', 'arcane_draught_2'], ['The gem: any monster, or the Gem Exchange', 'A robe with two of them in it', 'The draught: Alchemy 78, from Nightbloom']);
+      info.magicDmg = +combatBonusesAll().magicDmg.toFixed(3);
+    }
+    /* a fight with an Arcane Draught running: the effects bar, the chip under your health, the potion button */
+    if (scene === 'fight_draught') {
+      state.items.arcane_draught_2 = 6; state.items.arcane_draught_1 = 3; state.items.hawkeye_draught_2 = 2;
+      fightNow();
+      var hitBefore = combat.youMaxHit; usePotion('arcane_draught_2', true); refreshCombatStats();
+      combat.foeHp = Math.round(combat.foeMaxHp * 0.62);
+      renderCombat(); updateCombatBars(); try { renderEffectsBar(); } catch (e) { info.err = String(e); }
+      splats([[212, 'hit el-' + EL]]);
+      info.hit = [hitBefore, combat.youMaxHit]; info.effects = state.effects.map(function (e) { return (e.name || e._itemId) + ' mpow ' + (e.mpow || 0); });
+      info.chips = [].map.call(document.querySelectorAll('#cmbYouStatus .st-ic'), function (c) { return c.getAttribute('data-tip'); });
+      info.bar = (document.getElementById('effectsBar') || { textContent: '' }).textContent.replace(/\s+/g, ' ').trim();
+      info.room = railRoom();
+    }
     /* a fight with a find in hand: what it does shows on the spell bar and in the log */
     if (scene === 'fight_unique') {
       state.combatXp.magic = XP_CUM[44]; state.combatXp.defence = XP_CUM[40]; state.combatXp.hitpoints = XP_CUM[50];
@@ -474,6 +496,8 @@ const SCENES = {
   raid_robe_card: { sel: '#gearShot', dir: 'gear' },
   dawnveil_set: { full: true, dir: 'gear' },
   faultline_card: { sel: '#gearShot', dir: 'gear' },
+  wyrdstone_card: { sel: '#gearShot', dir: 'gear' },
+  fight_draught: { full: true, dir: 'gear' },
   raid_log:     { sel: '#combatPanel', dir: 'gear' },
   spire_log:    { sel: '#combatPanel', dir: 'gear' },
   fight_unique: { full: true, dir: 'gear' }

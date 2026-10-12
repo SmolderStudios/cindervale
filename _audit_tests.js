@@ -3413,7 +3413,11 @@ setTimeout(() => {
       'runebound_hood','runebound_robe','runebound_leggings','runebound_wraps','runebound_slippers',
       'drakerune_hood','drakerune_robe','drakerune_leggings','drakerune_wraps','drakerune_slippers',
       'riftwoven_hood','riftwoven_robe','riftwoven_leggings','riftwoven_wraps','riftwoven_slippers',
-      'dawnveil_hood','dawnveil_robe','dawnveil_leggings','dawnveil_slippers'];
+      'dawnveil_hood','dawnveil_robe','dawnveil_leggings','dawnveil_slippers',
+      /* Slice 7: the gem and the brew. Neither is a rune, a staff or cloth, so they are
+         here by name, the way the Hawkseye and the Hawkeye Draught are on HAWK_PENDING.
+         Both are drawn by the generators every other gem and potion came off. */
+      'wyrd_chip','wyrd_polish','wyrd_flaw','arcane_draught_1','arcane_draught_2'];
     const SVG_OK = new Set(['radcliff_tally'].concat(RANGED_PENDING, SPIRE_PENDING, HAWK_PENDING, MAGE_PENDING));
 
     const unexpected = cov.svg.filter(id => !SVG_OK.has(id));
@@ -10594,7 +10598,8 @@ setTimeout(() => {
     ok('the ranged brew joins the potion conflict rules rather than stacking',
        G.blocked === true, 'the weaker draught was refused while the stronger one is up');
     ok('every gem colour has three tiers, a name and a place in the order',
-       Object.keys(G.colours).length === 6 && Object.values(G.colours).every(n => n === 3) && G.unnamed.length === 0,
+       /* seven since the Wyrdstone (0.9.127.11), were six */
+       Object.keys(G.colours).length === 7 && Object.values(G.colours).every(n => n === 3) && G.unnamed.length === 0,
        JSON.stringify(G.colours) + (G.unnamed.length ? ' unnamed: ' + G.unnamed.join(',') : ''));
     ok('Hawkseye drops from kills like the other combat gems', G.drops === true);
     ok('and the draught is brewable at two levels, with a ladder in the alchemy panel',
@@ -10825,7 +10830,10 @@ setTimeout(() => {
        gq.n > 100 && gq.bad.length === 0, gq.n + ' quests' + (gq.bad.length ? ', e.g. ' + gq.bad.join(' | ') : ''));
     ok('a quest already on a board is renamed from its act', gq.renamed === 'Brew Wisdom Potion III 75 times', gq.renamed);
     ok('and any recipe for that potion counts toward it, another potion does not', gq.have === 7, 'have ' + gq.have);
-    ok('an item tooltip names the recipe the way its card does (#229)', gq.uses === 'Shadow Crystal', gq.uses);
+    /* Nightbloom brews the two Arcane Draughts since 0.9.127.11, so it has three uses and
+       not one. The point of #229 stands: "Shadow Crystal", the name on the card, and
+       never "Transmute Night Essence". */
+    ok('an item tooltip names the recipe the way its card does (#229)', gq.uses === 'Arcane Draught I|Shadow Crystal|Arcane Draught II', gq.uses);
     ok('a skip never hands back the errand it replaced (#200 #219 #223 #231 #232)',
        gq.skips > 1000 && gq.clash === 0 && gq.coin2 === 0, gq.skips + ' skips, ' + gq.clash + ' clashes' + (gq.ex.length ? ': ' + gq.ex.join(' | ') : ''));
     ok('deliver arrowheads and hammer arrowheads are one errand (#219)', gq.c219 === true, String(gq.c219));
@@ -11486,6 +11494,119 @@ setTimeout(() => {
     ok('a found staff rolls enchants from the staff pool, never Attack, and its unique enchant is Magic damage', rg.pool[0] === 'staff' && rg.pool[1] === true && rg.pool[2] === 'magicDmg', rg.pool.join(' '));
     ok('no save field was added: a new character is unchanged, and a save holding the new gear loads with it',
        rg.save[0] === '{}' && rg.save[1] === 1 && rg.save[2] === 400 && rg.save.slice(3).join() === 'faultline,sunder_rune,dawnveil_robe,riftwoven_hood', rg.save.join(' '));
+  }
+
+  section('The mage gets a gem and a brew of their own: Wyrdstone and the Arcane Draught (0.9.127.11)');
+  {
+    /* Until this, no gem in the game raised a spell (Sanguine is Attack, Hawkseye is
+       Ranged damage) and no potion did either, so a mage's sockets held health and the
+       potion shelf held nothing. A new stat is in a dozen key lists, and one it is
+       missing from is a gem or a brew that shows on the card and does nothing: each
+       is driven here until a max hit moves. */
+    const W = ev(`(function(){
+      var _cap=demoXpCap; demoXpCap=function(){ return XP_CAP; };
+      var out={};
+      try{
+        function reset(){
+          state=defaultState(); normalizeState();
+          ['attack','strength','defence','hitpoints','ranged','magic'].forEach(function(k){ state.combatXp[k]=XP_CUM[99]; });
+          state.items={ancient_staff:1, starfall_rune:1e5, ancient_longbow:1, starfall_arrow:1e5, starsteel_sword:1, wyrmsilk_hood:1,
+                       arcane_draught_1:5, arcane_draught_2:5, hawkeye_draught_2:5, berserker_2:5, warriors_brew:5, wyrd_flaw:3, sanguine_flaw:3, hawkseye_flaw:3};
+          state.cmast={}; state.sockets={}; state.variants={}; state.effects=[]; state.combatSpell='surge'; state.combatElement='fire';
+          combat.active=false; combat.raid=null;
+        }
+        function staff(extra){ var ce={weapon:'ancient_staff', quiver:'starfall_rune'}; for(var k in (extra||{})) ce[k]=extra[k]; state.combatEquipped=ce; refreshCombatStats(); }
+        function bow(extra){ var ce={weapon:'ancient_longbow', quiver:'starfall_arrow'}; for(var k in (extra||{})) ce[k]=extra[k]; state.combatEquipped=ce; refreshCombatStats(); }
+        function sword(extra){ var ce={weapon:'starsteel_sword'}; for(var k in (extra||{})) ce[k]=extra[k]; state.combatEquipped=ce; refreshCombatStats(); }
+        function gem(id){ state.sockets={wyrmsilk_hood:{slots:1,gems:[id]}}; }
+        var HOOD={helmet:'wyrmsilk_hood'};
+        /* the gem, on all three weapons, and the other two gems on a staff */
+        reset(); staff(HOOD); var m0=playerMaxHit(), a0=playerAccuracy();
+        gem('wyrd_flaw'); staff(HOOD); out.wyrdStaff={hit:playerMaxHit(), was:m0, acc:playerAccuracy(), accWas:a0, magic:combatBonusesAll().magicDmg, sock:combatSocketBonuses().magicDmg};
+        reset(); bow(HOOD); var b0=playerMaxHit(); gem('wyrd_flaw'); bow(HOOD); out.wyrdBow={hit:playerMaxHit(), was:b0};
+        reset(); sword(HOOD); var s0=playerMaxHit(); gem('wyrd_flaw'); sword(HOOD); out.wyrdSword={hit:playerMaxHit(), was:s0};
+        reset(); gem('sanguine_flaw'); staff(HOOD); out.sangStaff=playerMaxHit();
+        reset(); gem('hawkseye_flaw'); staff(HOOD); out.hawkStaff=playerMaxHit();
+        out.cuts=['wyrd_chip','wyrd_polish','wyrd_flaw'].map(function(id){ var g=SOCKET_GEMS[id]; return [g.tier, g.bonus.magicDmg, g.desc, ITEMS[id].name, ITEMS[id].sell, !!ITEMS[id].socketGem]; });
+        /* the brew */
+        function drink(id){ state.effects=[]; usePotion(id,true); refreshCombatStats(); }
+        reset(); staff(HOOD); drink('arcane_draught_2'); out.brewStaff={hit:playerMaxHit(), was:m0, mpow:combatStats().mpow, eff:(state.effects[0]||{}).mpow};
+        reset(); staff(HOOD); drink('arcane_draught_1'); out.brew1=playerMaxHit();
+        reset(); bow(HOOD); drink('arcane_draught_2'); out.brewBow={hit:playerMaxHit(), was:b0};
+        reset(); sword(HOOD); drink('arcane_draught_2'); out.brewSword={hit:playerMaxHit(), was:s0};
+        reset(); staff(HOOD); drink('berserker_2'); out.strStaff=playerMaxHit();
+        reset(); staff(HOOD); drink('hawkeye_draught_2'); out.rngStaff=playerMaxHit();
+        reset(); staff(HOOD); drink('warriors_brew'); out.tripleStaff=playerMaxHit();
+        reset(); bow(HOOD); drink('warriors_brew'); out.tripleBow={hit:playerMaxHit(), was:b0};
+        out.triple=JSON.stringify(ITEMS.warriors_brew.potion);
+        /* a stronger brew of the same stat blocks the weaker one, and the Triple Brew's +3 blocks Arcane I's +2 */
+        reset(); staff(HOOD); state.effects=[]; usePotion('arcane_draught_2',true); var n1=state.items.arcane_draught_1; usePotion('arcane_draught_1',true); out.blocked=(state.items.arcane_draught_1===n1);
+        reset(); staff(HOOD); state.effects=[]; usePotion('warriors_brew',true); n1=state.items.arcane_draught_1; usePotion('arcane_draught_1',true); out.blockedByTriple=(state.items.arcane_draught_1===n1);
+        /* auto-buff keeps it up through the real tick */
+        reset(); staff(HOOD); state.autoBuff={enabled:true,itemId:''}; state.items={ancient_staff:1, starfall_rune:1e5, wyrmsilk_hood:1, arcane_draught_2:3};
+        combat.monId='rat'; combat.active=true; combat.foeHp=1e9; combat.foeMaxHp=1e9; combat.foeStatus={}; combat.youHp=combat.youMaxHp; combat.foeSwingStart=Date.now()+1e9; combat.youSwingStart=Date.now()+1e9;
+        combatTick(); out.auto=[state.items.arcane_draught_2, (state.effects.filter(function(e){ return e.mpow>0; })[0]||{}).mpow||0, combat.youMaxHit>m0];
+        /* what the fight screen and the cards say */
+        var chipsYou=statusChips('you').map(function(c){ return c.key.split(':')[0]+' '+c.tip.replace(/ · .*$/,''); });
+        out.chips=chipsYou;
+        state.effects=[{_itemId:'hawkeye_draught_2', rstr:4, expires:Date.now()+60000, name:'Hawkeye Draught II'}];
+        out.chipsRng=statusChips('you').map(function(c){ return c.key.split(':')[0]+' '+c.tip.replace(/ · .*$/,''); });
+        combat.active=false;
+        out.text=[alchEffectText('arcane_draught_2').main, alchEffectText('warriors_brew').main];
+        showItemTooltip('arcane_draught_1',10,10,''); out.tip=ttEl().textContent.replace(/\\s+/g,' '); hideTooltip();
+        out.combatTab=[alchIsCombat('arcane_draught_1'), alchIsCombat('arcane_draught_2')];
+        state.items.arcane_draught_2=3; state.effects=[];
+        out.offered=combatBuffItems().some(function(b){ return b.id==='arcane_draught_2'; });
+        /* the effects bar's line for each */
+        state.effects=[{_itemId:'arcane_draught_2', mpow:4, expires:Date.now()+60000, name:'Arcane Draught II'},{_itemId:'hawkeye_draught_2', rstr:4, expires:Date.now()+60000, name:'Hawkeye Draught II'}];
+        var seen=[], keepTip=window.showGearTip; window.showGearTip=function(h){ seen.push(String(h).replace(/<[^>]+>/g,' ').replace(/\\s+/g,' ')); };
+        try{ renderEffectsBar(); [].forEach.call(document.querySelectorAll('#effectsBar > *'),function(c){ c.dispatchEvent(new MouseEvent('mouseenter',{bubbles:false})); }); }catch(e){ seen.push('ERR '+e.message); }
+        window.showGearTip=keepTip; out.bar=seen;
+        /* data: every colour whole, named, orderable, droppable; the recipes and the ladder */
+        var colours={}; for(var id in SOCKET_GEMS) colours[SOCKET_GEMS[id].color]=(colours[SOCKET_GEMS[id].color]||0)+1;
+        out.colours=colours;
+        out.unnamed=Object.keys(colours).filter(function(c){ return !SO_LINE[c] || SO_ORDER.indexOf(c)<0; });
+        out.drops=SGEM_COLORS_COMBAT.indexOf('wyrd')>=0 && SGEM_COLORS_COMBAT.length===5;
+        out.recipes=SKILLS.alchemy.acts.filter(function(a){ return a.out&&(a.out.arcane_draught_1||a.out.arcane_draught_2); }).map(function(a){ return a.id+':'+a.lvl+':'+JSON.stringify(a.inp); });
+        out.ladder=ALCH_LADDER.some(function(L){ return L.key==='arcane'&&L.tiers.join()==='arcane_draught_1,arcane_draught_2'; });
+        var hk=SKILLS.alchemy.acts.filter(function(a){ return a.out&&a.out.hawkeye_draught_2; })[0], ar=SKILLS.alchemy.acts.filter(function(a){ return a.out&&a.out.arcane_draught_2; })[0];
+        out.pace=[hk.lvl===ar.lvl, hk.ms===ar.ms, hk.xp===ar.xp, SKILLS.alchemy.acts.indexOf(ar)>SKILLS.alchemy.acts.indexOf(hk)];
+        reset(); gem('wyrd_flaw'); staff(HOOD);
+        var tot=document.createElement('div'); try{ tot.appendChild(_soTotals()); }catch(e){ tot.textContent='ERR '+e.message; }
+        out.totals=tot.textContent.replace(/\\s+/g,' ');
+      } finally { combat.active=false; combat.raid=null; demoXpCap=_cap; state=defaultState(); normalizeState(); refreshCombatStats(); }
+      return out;
+    })()`);
+    const ratio = o => o.hit / o.was;
+    ok('a Flawless Wyrdstone raises a staff\'s max hit and its accuracy by 8%',
+       Math.abs(ratio(W.wyrdStaff) - 1.08) < 0.01 && W.wyrdStaff.acc > W.wyrdStaff.accWas && Math.abs(W.wyrdStaff.magic - 0.08) < 1e-9 && W.wyrdStaff.sock === 0.08,
+       'max hit ' + W.wyrdStaff.was + ' -> ' + W.wyrdStaff.hit + ', accuracy ' + W.wyrdStaff.accWas + ' -> ' + W.wyrdStaff.acc);
+    ok('and does nothing for a bow or a sword', W.wyrdBow.hit === W.wyrdBow.was && W.wyrdSword.hit === W.wyrdSword.was, 'bow ' + W.wyrdBow.hit + ', sword ' + W.wyrdSword.hit);
+    ok('a Sanguine or a Hawkseye gem does nothing for a spell', W.sangStaff === W.wyrdStaff.was && W.hawkStaff === W.wyrdStaff.was, W.sangStaff + ' / ' + W.hawkStaff);
+    ok('the three cuts are +2%, +4% and +8% Magic damage, priced as every other gem is',
+       W.cuts.map(c => c[1]).join() === '0.02,0.04,0.08' && W.cuts.map(c => c[4]).join() === '200,800,3200' && W.cuts.every((c, i) => c[0] === i + 1 && c[5] && /Wyrdstone$/.test(c[3]) && c[2] === '+' + [2, 4, 8][i] + '% Magic damage'),
+       W.cuts.map(c => c[3] + ' ' + c[2]).join(', '));
+    ok('an Arcane Draught raises a staff\'s max hit: +4 Magic Power from II, less from I',
+       W.brewStaff.hit > W.brewStaff.was && W.brewStaff.eff === 4 && W.brew1 > W.brewStaff.was && W.brew1 < W.brewStaff.hit, W.brewStaff.was + ' -> ' + W.brew1 + ' -> ' + W.brewStaff.hit);
+    ok('and nothing for a bow or a sword', W.brewBow.hit === W.brewBow.was && W.brewSword.hit === W.brewSword.was);
+    ok('Strength and Ranged Strength from a potion still do nothing for a spell', W.strStaff === W.wyrdStaff.was && W.rngStaff === W.wyrdStaff.was, W.strStaff + ' / ' + W.rngStaff);
+    ok('Warrior\'s Triple Brew carries +3 Magic Power now, so it covers a staff as it covers a bow',
+       W.tripleStaff > W.wyrdStaff.was && W.tripleStaff < W.brewStaff.hit && ratio(W.tripleBow) > 1.01 && /"mpow":3/.test(W.triple), W.triple);
+    ok('the brew joins the potion rules: a stronger one blocks a weaker, the Triple Brew\'s +3 included', W.blocked === true && W.blockedByTriple === true);
+    ok('auto-buff drinks it in a fight, through the tick', W.auto[0] === 2 && W.auto[1] === 4 && W.auto[2] === true, W.auto.join(' '));
+    ok('a running draught has a chip under your health, and so at last does a Hawkeye Draught',
+       W.chips.some(c => c === 'mpow Magic Power +4') && W.chipsRng.some(c => c === 'rstr Ranged Strength +4'), W.chips.join(', ') + ' | ' + W.chipsRng.join(', '));
+    ok('and a line on the effects bar, which Ranged Strength never had either',
+       W.bar.some(t => /\+4 Magic Power/.test(t)) && W.bar.some(t => /\+4 Ranged Strength/.test(t)) && !W.bar.some(t => /^ERR/.test(t)), W.bar.join(' | ').slice(0, 200));
+    ok('the alchemy panel and the item card say what it gives',
+       /\+4 Magic Power/.test(W.text[0]) && /\+3 Magic Power/.test(W.text[1]) && /\+2 Magic Power/.test(W.tip) && W.combatTab.every(Boolean), W.text.join(' | '));
+    ok('it shows up in the combat buff picker', W.offered === true);
+    ok('every gem colour has three tiers, a name and a place in the order, Wyrdstone among them',
+       Object.keys(W.colours).length === 7 && Object.values(W.colours).every(n => n === 3) && W.unnamed.length === 0 && W.colours.wyrd === 3, JSON.stringify(W.colours));
+    ok('Wyrdstone drops from kills like the other combat gems', W.drops === true);
+    ok('the draught is brewed from Nightbloom at Alchemy 45 and 78, at the Hawkeye pair\'s pace, and sits after it',
+       W.recipes.join(' ') === 'al_ca1:45:{"moonflower":3} al_ca2:78:{"moonflower":3,"ashbloom":1}' && W.ladder === true && W.pace.every(Boolean), W.recipes.join(' '));
+    ok('the Socket page totals have a Magic damage cell that reads the gem', /\+8% ?Magic Dmg/i.test(W.totals) && /Magic damage/.test(W.totals), W.totals.slice(0, 160));
   }
 
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));

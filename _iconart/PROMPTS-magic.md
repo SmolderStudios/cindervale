@@ -768,3 +768,324 @@ missing. It can go the way `_capeSVG` went with the twelve capes: `_runeSVG`,
 pieces, `_runecraftSVG`, `_runeCapeSVG`, `_elementSVG`, `RN_TREE_ICONS`, and the
 line in the loop with them. That is a code change, not an art one, and it was left
 for its own build.
+
+---
+
+# The gear half: finds, raid robes, Dawnveil, the gem and the draught
+
+Slices 5, 7 and 8 of `_magedesign/` added 46 items, and every one ships drawn:
+`[JS-ICONS-MAGE-DROPS]` for the staves, wands, raid robes, Dawnveil and the Sunder
+Rune, and the shared gem and potion generators for the Wyrdstone and the Arcane
+Draught. All 46 ids are named on `MAGE_PENDING` in `_audit_tests.js`, and an
+assertion under that list fails the day a listed id is no longer drawn, so take
+each id off as its sheet is injected. The contact sheet of what is in the game now
+is `_magedesign/shots/gear/sheet.png` (`node _magedesign/shootreal.js gear`).
+
+| Family | Painted | Ships as | Sheet |
+|---|---|---|---|
+| Found in the zones | 12 | the ids under sheet O | O |
+| Found in the raids and the Spire | 9 | the ids under sheet P | P |
+| Sunder Rune | 1 | `sunder_rune` | Q |
+| Raid robes | 15 | `runebound_*`, `drakerune_*`, `riftwoven_*` | R |
+| Dawnveil | 4 | `dawnveil_hood`, `_robe`, `_leggings`, `_slippers` | S |
+| Wyrdstone and the Arcane Draught | 5 | `wyrd_chip`, `_polish`, `_flaw`, `arcane_draught_1`, `_2` | T |
+
+**46 icons across six sheets**, all through the item pack, like sheets A to I.
+At the 4.3 KB an item icon averages that is about 200 KB; the file is 12.62 MB
+against the audit's 13.5 MB.
+
+## Three things specific to this batch
+
+- **A found staff or wand is its own shape.** The crafted ones are one wand and one
+  staff in seven woods. These 21 are not: each is a different object, and that is
+  what makes one a find. Sheets O and P describe each cell on its own and nothing
+  on them is "the same design repeated".
+- **They still have to read as a wand or a staff at 20px.** A wand is SHORT and
+  slanted. A staff is LONG, runs corner to corner, and carries something large at
+  the top. Keep the head in the top right of the cell in all 21.
+- **Raid robes are the five robe shapes again**, in three new cloths, so sheet R is
+  five designs by three cloths and must match sheets E to I piece for piece.
+  Dawnveil is NOT those shapes: it is its own four.
+
+## Sheet O - Found in the zones (12, grid 4x3)
+
+````
+SHEET: Found wands and staves, the twelve zones. 12 cells, 4 across and 3 down.
+
+Twelve DIFFERENT magic weapons, one for each cell. A WAND is short, about a
+forearm long, held in one hand, drawn on a diagonal from bottom left to top right.
+A STAFF is long, about a man's height, drawn on the same diagonal from corner to
+corner, with a large head at the top right. Every one is a single object on its
+own, no hands, no figure. Each is made from the creature or the place it comes
+from.
+
+CELLS:
+  1. Gnawbone Wand        - WAND. A rat's thigh bone with knuckled ends, gnawed to a
+                            splintered point, tooth marks along it. A small orange
+                            flame at the point.
+  2. Briarwood Wand       - WAND. A twisted twig of dark briar with thorns still on
+                            it and one green leaf. A wet green bead at the tip,
+                            dripping.
+  3. Webspinner Staff     - STAFF. A plain grey pole topped by a round hoop of dark
+                            chitin strung with a spider's web. A drop of green venom
+                            hangs in the middle of the web.
+  4. Shaman's Fetish Staff - STAFF. A rough dark wooden pole topped by a small
+                            goblin skull with two pale blue glowing eye sockets. A
+                            red feather and a teal feather hang from cords below it,
+                            with a few teeth and beads.
+  5. Gravecaller          - STAFF. A dark iron pole. At the top a skeletal hand of
+                            three bone fingers closes round an orange flame.
+  6. Frostbrand Staff     - STAFF. A pale birch pole topped by a cluster of three
+                            sharp shards of clear blue ice, the middle one tallest.
+  7. Moonhowl Wand        - WAND. A grey rod with a silver crescent moon at the tip
+                            and a small yellow spark of lightning inside the
+                            crescent. One white wolf fang hangs from the grip.
+  8. Seer's Eye           - STAFF. A dark wooden pole whose top splits into two
+                            curved prongs that cradle one large open eye: white,
+                            with a violet iris and a slit pupil.
+  9. Mossheart Wand       - WAND. A short thick club of grey stone and bark, patched
+                            with green moss. At the tip a green gem cut in the shape
+                            of a heart.
+ 10. Cinderspine          - STAFF. Made of a drake's spine: a chain of bone
+                            vertebrae from end to end, topped by a curved tail spike
+                            that glows ember orange.
+ 11. Ashglass Staff       - STAFF. A thin pole of black volcanic glass topped by a
+                            tall jagged shard of the same glass, sharp and angular,
+                            with a line of pale blue light running through it.
+ 12. Brimstone Sceptre    - WAND. A short heavy rod of dark red iron with gold bands
+                            and a gold pommel. At the top two curved demon horns
+                            hold a yellow crystal of brimstone.
+````
+
+<details><summary>id order for <code>sheets/mg_finds_zone.txt</code></summary>
+
+```
+gnawbone_wand
+briarwood_wand
+webspinner_staff
+fetish_staff
+gravecaller
+frostbrand_staff
+moonhowl_wand
+seers_eye
+mossheart_wand
+cinderspine
+ashglass_staff
+brimstone_sceptre
+```
+</details>
+
+---
+
+## Sheet P - Found in the raids and the Spire (9, grid 5x2)
+
+The last cell is empty. Two from each raid, in that raid's colours, and Faultline.
+These are the best staves and wands in the game and should look it: richer and
+brighter from 1 to 9.
+
+````
+SHEET: Found wands and staves, the raids and the Spire. 9 cells, 5 across and 2
+down. The last cell is empty.
+
+Nine DIFFERENT magic weapons. A WAND is short and slanted. A STAFF is long, corner
+to corner, with a large head at the top right. Single objects, no hands. They come
+in pairs, a staff and a wand from the same place, in the same colours.
+
+CELLS:
+  1. Gravecall Staff   - STAFF, pale grey-green bone and iron. The top curls over
+                         into a shepherd's crook, and a small pale green bell hangs
+                         from the end of the crook.
+  2. Barrow Wand       - WAND, pale bone. At the tip a small open cage of thin bone
+                         bars with a pale green ghost light shut inside it.
+  3. Slagfire Staff    - STAFF, dark iron. At the top an iron crucible, tilted, full
+                         of bright orange molten metal that spills down one side.
+  4. Emberglass Wand   - WAND. The whole wand is one long tapering shard of amber
+                         glass with a bright ember line down its middle, set in a
+                         short brass grip.
+  5. Riftcaller        - STAFF, dark violet. At the top a ring broken in two halves
+                         that do not meet, and in the gap between them a bright
+                         magenta four-point star.
+  6. Nullspire Wand    - WAND. A thin black needle tapering to a point, with one
+                         violet ring floating round it near the tip, not touching.
+                         A small violet orb for a pommel.
+  7. Dawncaller        - STAFF, bright gold. At the top a round sun disc with eight
+                         short rays, white-gold and glowing.
+  8. Starcall Wand     - WAND, bright gold. At the tip a large white-gold star with
+                         eight points, four long and four short, and two tiny stars
+                         beside it.
+  9. Faultline         - STAFF of rose-pink stone, the richest of the nine. The top
+                         is split into two jagged prongs, and a crooked line of
+                         white-pink light runs up the split between them. A few
+                         small chips of stone fall from it.
+````
+
+<details><summary>id order for <code>sheets/mg_finds_raid.txt</code></summary>
+
+```
+gravecall_staff
+barrow_wand
+slagfire_staff
+emberglass_wand
+riftcaller
+nullspire_wand
+dawncaller
+starcall_wand
+faultline
+_spare
+```
+</details>
+
+---
+
+## Sheet Q - The Sunder Rune (1)
+
+One cell. It is the ninth rune of sheet A and has to sit beside those eight: the
+same tablet and the same mark. Paste sheet A's finished image into the same
+conversation first.
+
+````
+ONE ICON: Sunder Rune. The same small upright stone tablet and the same carved
+angular mark as the rune sheet above: a vertical stroke with two sharp chevrons
+branching to the right. This one is cut from dark rose-grey stone, and the mark
+glows a bright rose-pink with a white core, brighter than any of the eight, with
+three or four tiny four-point sparkles round it. Not fire, not frost, not lightning:
+only the glow in the groove.
+````
+
+<details><summary>id for <code>sheets/mg_sunder.txt</code></summary>
+
+```
+sunder_rune
+```
+</details>
+
+---
+
+## Sheet R - Raid robes (15, grid 5x3)
+
+Three rows, one for each cloth. Five columns, one for each piece, in the order hood,
+robe, leggings, wraps, slippers. **Paste the finished sheets E to I into the same
+conversation first**: these are the same five pieces, in three new cloths.
+
+````
+SHEET: Raid robes. 15 cells, 5 across and 3 down.
+
+Each ROW is one cloth. Each COLUMN is one piece, the same five pieces as the robe
+sheets above, drawn exactly as they are there:
+  column 1  the HOOD: a soft pointed cowl with a dark opening and a short mantle
+  column 2  the ROBE: a long cloth robe with sleeves, belted at the waist
+  column 3  the LEGGINGS: loose cloth trousers with a waistband
+  column 4  the WRAPS: a pair of cloth hand and forearm wraps
+  column 5  the SLIPPERS: a pair of soft cloth slippers
+
+THE THREE CLOTHS:
+  row 1  Runebound  - pale grey-green grave cloth, worn thin, with trim of pale
+                      ghost-green and small glowing green runes on the trim
+  row 2  Drakerune  - near-black charcoal cloth with trim of molten orange, and a
+                      faint ember glow in the folds
+  row 3  Riftwoven  - deep violet-black cloth that swallows the light, with trim of
+                      bright magenta and a faint violet glow
+
+Every piece is CLOTH and only cloth: soft, hanging, folded. No metal plates, no
+rivets, no buckles, no leather straps, no fur. These are richer than the seven
+cloths above: Riftwoven is the finest robe that can be made.
+````
+
+<details><summary>id order for <code>sheets/mg_raidrobes.txt</code></summary>
+
+```
+runebound_hood
+runebound_robe
+runebound_leggings
+runebound_wraps
+runebound_slippers
+drakerune_hood
+drakerune_robe
+drakerune_leggings
+drakerune_wraps
+drakerune_slippers
+riftwoven_hood
+riftwoven_robe
+riftwoven_leggings
+riftwoven_wraps
+riftwoven_slippers
+```
+</details>
+
+---
+
+## Sheet S - Dawnveil (4, grid 4x1)
+
+The Empyrean Throne's cloth set, beside Dawnward plate and Sunweave leather. Four
+pieces and no wraps. These are NOT the robe shapes of sheets E to I.
+
+````
+SHEET: Dawnveil, a set of four. 4 cells in one row.
+
+A matching set of radiant white-gold cloth, the robes of a sun priest. Bright ivory
+and pale gold cloth with white trim and a small sun emblem on every piece: a white
+disc with eight short rays. A soft gold glow round each. CLOTH only: soft, hanging,
+folded. No plates, no rivets, no buckles, no leather.
+
+CELLS:
+  1. Dawnveil Hood      - a tall cowl with a curled peak, a dark opening, and a thin
+                          gold circlet floating round the brow like a halo, with
+                          the sun emblem at its front
+  2. Dawnveil Robe      - a wide vestment that flares to the hem, with a high
+                          collar and very wide bell sleeves, and a large sun emblem
+                          on the chest
+  3. Dawnveil Leggings  - loose cloth trousers with a broad waistband carrying the
+                          sun emblem, and a long sash hanging down the front ending
+                          in a gold tassel
+  4. Dawnveil Slippers  - a pair of pointed cloth slippers, each with a small white
+                          wing of three feathers at the heel
+````
+
+<details><summary>id order for <code>sheets/mg_dawnveil.txt</code></summary>
+
+```
+dawnveil_hood
+dawnveil_robe
+dawnveil_leggings
+dawnveil_slippers
+```
+</details>
+
+---
+
+## Sheet T - Wyrdstone and the Arcane Draught (5, grid 5x1)
+
+The gem is the seventh socket gem and has to match the six that are painted
+(Sanguine, Hawkseye, Verdant, Azure, Topaz, Onyx): the same three cuts. The draught
+is the twin of the Hawkeye Draught: the same two bottles. **Paste the painted
+Hawkseye gems and the Hawkeye Draughts into the conversation first.**
+
+````
+SHEET: Wyrdstone and Arcane Draught. 5 cells in one row.
+
+CELLS:
+  1. Chipped Wyrdstone    - a rough, uneven shard of violet crystal, unpolished, no
+                            glow. The same cut as the chipped gems above.
+  2. Polished Wyrdstone   - a clean round-cut violet gem with neat facets and a
+                            faint halo. The same cut as the polished gems above.
+  3. Flawless Wyrdstone   - a brilliant-cut violet gem, bright lilac at the centre,
+                            with a strong violet glow and a few white sparkles. The
+                            same cut as the flawless gems above.
+  4. Arcane Draught I     - the small round potion bottle of the draughts above,
+                            filled with glowing violet liquid, a simple angular
+                            rune mark showing white in the glass.
+  5. Arcane Draught II    - the larger, finer bottle of the draughts above, the same
+                            violet liquid brighter, the rune mark bolder, one tiny
+                            star beside it.
+````
+
+<details><summary>id order for <code>sheets/mg_wyrd.txt</code></summary>
+
+```
+wyrd_chip
+wyrd_polish
+wyrd_flaw
+arcane_draught_1
+arcane_draught_2
+```
+</details>

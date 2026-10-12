@@ -968,6 +968,12 @@ function PAGE() {
       if (/^bis:/.test(key)) build(bisBuild(key.slice(4), { agi: 99, el: el || 'fire' }));
       else { var lo = loadout(key, t); if (over && over.weapon) lo.weapon = over.weapon; wear(lo, lv); }
       if (el) { state.combatElement = el; refreshCombatStats(); out.el = spellElement(); }
+      if (over && over.gems) {
+        var ceq = state.combatEquipped, nGems = 0;
+        for (var gs in ceq) { var gn = maxSocketsFor(variantBase(ceq[gs])); if (gn > 0) { state.sockets[ceq[gs]] = { slots: gn, gems: Array(gn).fill(over.gems) }; nGems += gn; } }
+        refreshCombatStats(); out.sockets = nGems;
+      }
+      if (over && over.brew) { state.items[over.brew] = 1e5; state.autoBuff = { enabled: true, itemId: over.brew }; }
       if (neutral) { mon.weakTo = null; mon.resistTo = null; mon.weakEl = null; mon.resistEl = null; }
       mmAtMenu = false; enterCombat(); state.cmbSubTab = 'arena'; state.cmbView = 'fight';
       selectZone(mon.zone); selectMonster(monId);
@@ -980,7 +986,7 @@ function PAGE() {
       var q = state.combatEquipped.quiver, q0 = q ? state.items[q] : 0, kills = function () { return (state.monKills && state.monKills[monId]) || 0; }, k0 = kills();
       var base = JSON.parse(JSON.stringify(state.combatXp)), gain = {}, stat = combatXpStat(), hit0 = combat.youMaxHit;
       var dealt = 0, taken = 0, casts = 0, steps = Math.round(hours * 36000), i;
-      var own = mon.swingMs || COMBAT_BASE_SWING_MS, seen = { poison: 0, burn: 0, pin: 0, stun: 0 }, carried = 0, healed = 0, held = (over && over.hpFrac) || 1;
+      var own = mon.swingMs || COMBAT_BASE_SWING_MS, seen = { poison: 0, burn: 0, pin: 0, stun: 0 }, carried = 0, healed = 0, held = (over && over.hpFrac) || 1, lapsed = 0;
       if (held < 1) combat.youHp = Math.round(combat.youMaxHp * held);
       for (i = 0; i < steps; i++) {
         fake += 100;
@@ -994,6 +1000,7 @@ function PAGE() {
           if (kills() > kk) { if (fst.poison || fst.burn || fst.pin || fst.stun || combat.foeSwingMs !== own) carried++; }
           else { for (var sk in seen) if (fst[sk]) seen[sk]++; }
           if (combat.youHp > yh) healed += combat.youHp - yh;
+          if (over.brew && !state.effects.some(function (e) { return e.expires > fake && e.mpow > 0; })) lapsed++;
         }
         if (combat.youHp < yh) taken += yh - combat.youHp;
         combat.youHp = held < 1 ? Math.round(combat.youMaxHp * held) : combat.youMaxHp;
@@ -1002,7 +1009,8 @@ function PAGE() {
       }
       out.dps = dealt / (hours * 3600); out.killsHr = (kills() - k0) / hours; out.castsHr = casts / hours;
       out.spentHr = q ? (q0 - state.items[q]) / hours : 0; out.xpHr = (gain[stat] || 0) / hours; out.takenHr = taken / hours;
-      if (over) { out.seen = seen; out.carried = carried; out.healedHr = healed / hours; out.weapon = eqCombatWeapon(); }
+      if (over) { out.seen = seen; out.carried = carried; out.healedHr = healed / hours; out.weapon = eqCombatWeapon(); out.hitEnd = combat.youMaxHit; }
+      if (over && over.brew) { out.drunkHr = (1e5 - (state.items[over.brew] || 0)) / hours; out.lapsed = lapsed; }
     } catch (e) { out.err = String(e && e.stack || e).slice(0, 400); }
     finally {
       hush(false); Date.now = D; Math.random = R;
@@ -1385,6 +1393,42 @@ function PAGE() {
     state = defaultState(); normalizeState();
     return out;
   }
+
+  /* ── the gem and the draught (slice 7): what each is, and the max hit it moves ── */
+  function gemBrew() {
+    var o = { gems: [], potions: [] };
+    function base() {
+      state = defaultState(); normalizeState();
+      ['attack', 'strength', 'defence', 'hitpoints', 'ranged', 'magic'].forEach(function (k) { state.combatXp[k] = XP_CUM[99]; });
+      state.items = { ancient_staff: 1, starfall_rune: 1e5, ancient_longbow: 1, starfall_arrow: 1e5, starsteel_sword: 1, wyrmsilk_hood: 1 };
+      state.sockets = {}; state.effects = []; state.combatSpell = BIGGEST; state.combatElement = 'fire'; combat.active = false; combat.raid = null;
+    }
+    function hold(kind) {
+      state.combatEquipped = kind === 'staff' ? { weapon: 'ancient_staff', quiver: 'starfall_rune', helmet: 'wyrmsilk_hood' }
+        : kind === 'bow' ? { weapon: 'ancient_longbow', quiver: 'starfall_arrow', helmet: 'wyrmsilk_hood' } : { weapon: 'starsteel_sword', helmet: 'wyrmsilk_hood' };
+      refreshCombatStats(); return [playerMaxHit(), playerAccuracy()];
+    }
+    base(); var s0 = hold('staff'); o.hit0 = s0[0]; o.acc0 = s0[1]; o.bow0 = hold('bow')[0]; o.sword0 = hold('sword')[0];
+    Object.keys(SOCKET_GEMS).filter(function (id) { return SOCKET_GEMS[id].color === 'wyrd'; }).sort(function (a, b) { return SOCKET_GEMS[a].tier - SOCKET_GEMS[b].tier; }).forEach(function (id) {
+      base(); state.sockets = { wyrmsilk_hood: { slots: 1, gems: [id] } };
+      var s = hold('staff'), g = SOCKET_GEMS[id];
+      o.gems.push({ id: id, name: ITEMS[id].name, color: g.color, tier: g.tier, magicDmg: g.bonus.magicDmg, desc: g.desc, hit: s[0], acc: s[1], bow: hold('bow')[0], sword: hold('sword')[0] });
+    });
+    ['arcane_draught_1', 'arcane_draught_2'].forEach(function (id) {
+      if (!ITEMS[id]) return;
+      base(); state.items[id] = 2; hold('staff'); usePotion(id, true);
+      var s = hold('staff'), act = SKILLS.alchemy.acts.filter(function (a) { return a.out && a.out[id]; })[0] || {};
+      o.potions.push({ id: id, name: ITEMS[id].name, mpow: ITEMS[id].potion.mpow, dur: ITEMS[id].potion.dur, lvl: act.lvl, inp: act.inp, hit: s[0], bow: hold('bow')[0], sword: hold('sword')[0] });
+    });
+    base(); state.items.warriors_brew = 2; hold('staff'); usePotion('warriors_brew', true); o.triple = { mpow: ITEMS.warriors_brew.potion.mpow || 0, hit: hold('staff')[0] };
+    base(); state.items.berserker_2 = 2; hold('staff'); usePotion('berserker_2', true); o.strength = hold('staff')[0];
+    /* Every function that handles a potion's Ranged Strength has to handle its Magic
+       Power: a key list that is missed drops the stat in silence. Read off the source. */
+    var LISTS = ['alchIsCombat', 'alchEffectText', 'activePotionCombatStats', 'combatStats', 'combatBuffItems', 'autoApplyBuffs', 'usePotion', 'renderEffectsBar', 'statusChips', 'showItemTooltip'];
+    o.keys = { n: LISTS.length, missing: LISTS.filter(function (n) { var f = window[n]; if (typeof f !== 'function') return true; var s = String(f); return !/rstr/.test(s) || !/mpow/.test(s); }) };
+    state = defaultState(); normalizeState();
+    return o;
+  }
   /* ── robes: built off leather, and what casting in anything else costs ── */
   function robes() {
     var o = { tiers: [], bad: [] };
@@ -1710,7 +1754,7 @@ function PAGE() {
 
   window.SIM = { levelCheck: levelCheck, saves: saves, consts: consts, parity: parity, ladder: ladder, dressed: dressed, economy: economy, skillXp: skillXp,
     reagents: reagents, structure: structure, nodes: nodes, spells: spells, spellSizes: spellSizes, castRates: castRates, casting: casting, bar: bar, gold: gold, elements: elements, elTables: elTables, elementFx: elementFx, fighters: fighters, robes: robes,
-    journey: journey, veteran: veteran, liveFight: liveFight, liveSkill: liveSkill, livePick: livePick, liveRaid: liveRaid, finds: finds, findWorth: findWorth, best: best, walls: walls,
+    journey: journey, veteran: veteran, liveFight: liveFight, liveSkill: liveSkill, livePick: livePick, liveRaid: liveRaid, finds: finds, findWorth: findWorth, best: best, walls: walls, gemBrew: gemBrew,
     raids: function () { return RAIDS.map(function (r) { return { id: r.id, name: r.name, endless: !!r.endless, stages: (r.stages || []).length }; }); } };
 }
 
@@ -2218,6 +2262,25 @@ setTimeout(() => {
     same('what each find is worth beside the crafted weapon is what was measured when it was built', R.findWorth, (GOLD.built || {}).findWorth);
   }
 
+  /* 9f. the gem and the draught (slice 7) */
+  {
+    console.log('\n9f. THE GEM AND THE DRAUGHT  ·  Wyrdstone and the Arcane Draught, the twins of Hawkseye and the Hawkeye Draught');
+    R.gemBrew = J('SIM.gemBrew()');
+    const GB = R.gemBrew, DG = GOLD.drops.gem, DP = GOLD.drops.potions;
+    for (const g of GB.gems) console.log(`   ${padr(g.name, 20)} ${g.desc}   max hit ${GB.hit0} -> ${g.hit} (${pct(g.hit, GB.hit0)}%), accuracy ${GB.acc0} -> ${g.acc}`);
+    for (const p of GB.potions) console.log(`   ${padr(p.name, 20)} +${p.mpow} Magic Power for ${p.dur / 60} minutes, Alchemy ${p.lvl}, from ${Object.keys(p.inp).map(k => p.inp[k] + ' ' + k.replace(/_/g, ' ')).join(' and ')}   max hit ${GB.hit0} -> ${p.hit}`);
+    check(GB.gems.length === 3 && DG.tiers.every((t, i) => { const g = GB.gems[i]; return g && g.id === t[0] && g.name === t[1] + ' ' + DG.n && g.color === DG.color && g.magicDmg === t[2] && g.tier === i + 1; }),
+      'the three cuts of Wyrdstone are the design\'s: +2%, +4% and +8% Magic damage', GB.gems.map(g => g.desc).join(', '));
+    check(GB.gems.every(g => Math.abs(g.hit / GB.hit0 - (1 + g.magicDmg)) < 0.005 && g.acc > GB.acc0 && g.sword === GB.sword0 && g.bow === GB.bow0),
+      'each raises a staff\'s max hit by its own size and its accuracy with it, and does nothing for a sword or a bow', GB.gems.map(g => pct(g.hit, GB.hit0) + '%').join(' '));
+    check(GB.potions.length === 2 && DP.every((d, i) => { const p = GB.potions[i]; return p && p.id === d.id && p.name === d.n && p.mpow === d.mpow && p.dur === d.sec && p.lvl === d.lvl && JSON.stringify(p.inp) === JSON.stringify(d.inp); }),
+      'the two Arcane Draughts are the design\'s: +2 Magic Power for 2 minutes at Alchemy 45 and +4 for 3 minutes at 78, from Nightbloom', GB.potions.map(p => p.name + ' +' + p.mpow).join(', '));
+    check(GB.potions.every(p => p.hit > GB.hit0 && p.sword === GB.sword0 && p.bow === GB.bow0) && GB.potions[1].hit > GB.potions[0].hit, 'each raises a staff\'s max hit, the second more, and does nothing for a sword or a bow');
+    check(GB.triple.mpow === 3 && GB.triple.hit > GB.hit0 && GB.triple.hit < GB.potions[1].hit, 'Warrior\'s Triple Brew gains +3 Magic Power: between the two draughts', 'max hit ' + GB.hit0 + ' -> ' + GB.triple.hit);
+    check(GB.strength === GB.hit0, 'and Strength from a potion still does nothing for a spell', String(GB.strength));
+    check(GB.keys.missing.length === 0, 'Magic Power is in every potion key list Ranged Strength is in, so nothing drops it in silence', GB.keys.missing.join(', ') || GB.keys.n + ' lists read');
+  }
+
   /* 10. the spell bar */
   console.log('\n10. THE SPELL BAR  ·  pressed, keyed and greyed, the way a player meets it');
   R.bar = J('SIM.bar()');
@@ -2489,6 +2552,28 @@ setTimeout(() => {
          the wall is section 14's. */
       check(L.spire.staff >= L.spire.archer * 0.75 && L.spire.wand >= L.spire.archer * 0.75 && L.spire.staff >= 30, 'and with its health topped up climbs the Spire at least three quarters as far as the archer in twenty minutes', 'archer ' + L.spire.archer + ', staff ' + L.spire.staff + ', wand ' + L.spire.wand + ', fighter ' + L.spire.fighter);
     }
+    /* 13g. the gem and the draught, in the fight. A Wyrdstone in every socket, and an
+       Arcane Draught kept up by auto-buff through the tick, each beside the same
+       mage without it. */
+    {
+      const GH = 4, LV = 99, MON = 'dread_knight', MD = C.monsters.find(m => m.id === MON);
+      const run = over => J(`SIM.liveFight('staff',${LV},7,'${MON}',${GH},9800,true,'fire',${over})`);
+      const plain = run('{}'), gems = run(`{gems:'wyrd_flaw'}`), brew = run(`{brew:'arcane_draught_2'}`);
+      const cf = v => clamp(v.acc / (v.acc + MD.def)) * v.hit;
+      const wantGems = cf(gems) / cf(plain), gotGems = gems.dps / plain.dps;
+      const wantBrew = brew.hitEnd / plain.hit, gotBrew = brew.dps / plain.dps;
+      console.log(`\n   THE GEM AND THE DRAUGHT  ·  the Lv ${LV} staff in Wyrmsilk on the ${MD.name}, ${GH} game hours each through combatTick()`);
+      console.log(`   plain                         max hit ${plain.hit}, accuracy ${plain.acc}   ${plain.dps.toFixed(1)} dps`);
+      console.log(`   ${gems.sockets} Flawless Wyrdstones          max hit ${gems.hit}, accuracy ${gems.acc}   ${gems.dps.toFixed(1)} dps   ${(gotGems * 100).toFixed(1)}% of plain, the numbers say ${(wantGems * 100).toFixed(1)}%`);
+      console.log(`   Arcane Draught II, auto-buff  max hit ${brew.hitEnd}                 ${brew.dps.toFixed(1)} dps   ${(gotBrew * 100).toFixed(1)}% of plain, the max hit says ${(wantBrew * 100).toFixed(1)}%   ${brew.drunkHr.toFixed(1)} drunk an hour, ${brew.lapsed} ticks without it`);
+      check(!plain.err && !gems.err && !brew.err && plain.engaged && gems.engaged && brew.engaged && !gems.stopped && !brew.stopped, 'all three fights ran their four hours');
+      /* 5% and not 3: six gems make the hit half as big again, and a bigger hit wastes more
+         on a monster that is nearly dead. The max hit and the accuracy do not know that. */
+      check(gems.sockets >= 5 && Math.abs(gotGems / wantGems - 1) < 0.05 && gotGems <= wantGems && gotGems > 1.3, 'live, Wyrdstones are worth what the max hit and the accuracy they add say, less what a bigger hit wastes on a kill', gems.sockets + ' gems: ' + (gotGems * 100).toFixed(1) + '% live, ' + (wantGems * 100).toFixed(1) + '% from the numbers');
+      check(brew.hitEnd > plain.hit && Math.abs(gotBrew / wantBrew - 1) < 0.03, 'and so is an Arcane Draught', (gotBrew * 100).toFixed(1) + '% live, ' + (wantBrew * 100).toFixed(1) + '% from the max hit');
+      check(brew.lapsed === 0 && brew.drunkHr > 18 && brew.drunkHr < 22, 'auto-buff keeps the draught up across every kill: about twenty an hour for a three minute potion, and never a tick without it', brew.drunkHr.toFixed(1) + ' an hour');
+      check(plain.carried === 0 && gems.carried === 0 && brew.carried === 0, 'and nothing is carried from one monster to the next');
+    }
     const mg = rows.filter(v => /staff|wand/.test(v.key));
     check(mg.every(v => v.spentHr > 0 && v.spentHr <= v.castsHr * (/Blast/.test(v.spell) ? 2 : /Wave/.test(v.spell) ? 3 : /Surge/.test(v.spell) ? 4 : 1)),
       'a mage never spends more runes than its casts times the size of the spell, and robes keep some back', mg.filter(v => v.lv === 99).map(v => NAME[v.key] + ' ' + v.spell + ': ' + Math.round(v.spentHr).toLocaleString() + ' runes for ' + Math.round(v.castsHr).toLocaleString() + ' casts').join('  ·  '));
@@ -2509,7 +2594,7 @@ setTimeout(() => {
       const g = BG.find(y => y.label === x.label), s = x.s, pc = x.kind === 'magic' ? s.magicDmg : x.kind === 'ranged' ? s.rangedStr : s.atkBoost;
       /* Magic Power is left out of a fighter's or an archer's numbers: neither reads it,
          and Warrior's Triple Brew only carries some once slice 7 is built. */
-      const sOf = s => { const o = JSON.parse(JSON.stringify(s)); if (x.kind !== 'magic') delete o.mpow; return o; };
+      const sOf = s => { const o = JSON.parse(JSON.stringify(s)); if (x.kind !== 'magic' && !H.brewMagic) delete o.mpow; return o; };
       x.design = g ? g.dps : null; x.exact = same3(x, g) && !!g && diff(sOf(x.s), sOf(g.s)) === '';
       x.ofDesign = g ? pct(x.dps['500'], g.dps['500']) : null;
       console.log('   ' + padr(x.label, 46) + pad(s.acc, 6) + pad(s.hit, 6) + pad((s.swing / 1000).toFixed(2), 7) + pad(Math.round(s.crit * 100) + '%', 6) + pad(Math.round(pc * 100) + '%', 6) + pad(x.dps['500'], 9) + pad(x.dps['1000'], 9) + pad(x.dps['2000'], 9)
