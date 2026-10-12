@@ -65,6 +65,13 @@ if (COLX.length) COLS = COLX.length - 1;
    rather than assumed. Use it for any sheet whose rows are not all the same width. */
 const ROWCOLS = (arg('--rowcols') || '').split(',').filter(s => s !== '').map(Number).filter(n => !isNaN(n));
 const DRY = has('--dry');
+/* --noeat: the crop already stops above the caption, so everything inside it is
+   artwork. Take the whole ink box and trim nothing. The caption trims below decide
+   "text" by counting ink runs in a row, and a pair of hand wraps with four hanging
+   tails is four short runs a row: every wrap on the Magic sheets came back with its
+   tails cut off straight across. With a measured crop there is no caption to find,
+   so there is nothing for the trim to be right about. */
+const NOEAT = has('--noeat');
 /* --debug <n> dumps the band analysis for cell n and stops. */
 const DEBUG = arg('--debug') === null ? -1 : +arg('--debug');
 const SHEET = path.resolve(__dirname, sheetArg);
@@ -77,7 +84,7 @@ let IDS = fs.readFileSync(path.resolve(__dirname, idsArg), 'utf8')
    padding would then be counted as real items. */
 if (ROWCOLS.length) IDS = IDS.filter(id => !id.startsWith('_spare'));
 
-const WORK = `async (uri, COLS, ROWS, PAD, CAP_START, CROP, INSET, COLX, ROWCOLS, DEBUG) => {
+const WORK = `async (uri, COLS, ROWS, PAD, CAP_START, CROP, INSET, COLX, ROWCOLS, DEBUG, NOEAT) => {
   const img = new Image(); img.src = uri; await img.decode();
   const cx0 = CROP.length >= 2 ? CROP[0] : 0, cy0 = CROP.length >= 2 ? CROP[1] : 0;
   const cx1 = CROP.length >= 4 ? CROP[2] : img.width, cy1 = CROP.length >= 4 ? CROP[3] : img.height;
@@ -221,7 +228,7 @@ const WORK = `async (uri, COLS, ROWS, PAD, CAP_START, CROP, INSET, COLX, ROWCOLS
       const solid = b => { let t = 0; for (let i = b[0]; i <= b[1]; i++) if (isText(i)) t++; return t * 2 < (b[1] - b[0] + 1); };
       while (lo > 0 && bands[lo][0] - bands[lo - 1][1] <= GLUE && solid(bands[lo - 1])) lo--;
       while (hi < bands.length - 1 && bands[hi + 1][0] - bands[hi][1] <= GLUE && solid(bands[hi + 1])) hi++;
-      const use = bands.slice(lo, hi + 1);
+      const use = NOEAT ? bands : bands.slice(lo, hi + 1);
       /* Last defence: a caption that touches the artwork with no blank row between
          them, so band logic cannot split it. "2. Bone Marrow Stew" sat directly on top
          of Cooked Swordfish that way. Text is SPARSE — letters leave gaps, so ink over
@@ -251,9 +258,9 @@ const WORK = `async (uri, COLS, ROWS, PAD, CAP_START, CROP, INSET, COLX, ROWCOLS
       };
       let top = use[0][0], bot = use[use.length - 1][1];
       const limit = top + Math.round(hgt * 0.33), floor = bot - Math.round(hgt * 0.33);
-      const cutTop = eat(top, 1, Math.min(limit, bot));
+      const cutTop = NOEAT ? -1 : eat(top, 1, Math.min(limit, bot));
       if (cutTop >= 0) { top = cutTop + 1; while (top < bot && !on(top)) top++; }
-      const cutBot = eat(bot, -1, Math.max(floor, top));
+      const cutBot = NOEAT ? -1 : eat(bot, -1, Math.max(floor, top));
       if (cutBot >= 0) { bot = cutBot - 1; while (bot > top && !on(bot)) bot--; }
       const ay0 = y0 + top, ay1 = y0 + bot;
 
@@ -288,7 +295,7 @@ const WORK = `async (uri, COLS, ROWS, PAD, CAP_START, CROP, INSET, COLX, ROWCOLS
   const uri = 'data:image/png;base64,' + fs.readFileSync(SHEET).toString('base64');
   const browser = await puppeteer.launch({ executablePath: CHROME, headless: 'new' });
   const page = await browser.newPage();
-  const res = await page.evaluate(new Function('return ' + WORK)(), uri, COLS, ROWS, PAD, CAP_START, CROP, INSET, COLX, ROWCOLS, DEBUG);
+  const res = await page.evaluate(new Function('return ' + WORK)(), uri, COLS, ROWS, PAD, CAP_START, CROP, INSET, COLX, ROWCOLS, DEBUG, NOEAT);
   await browser.close();
 
   if (res.debug) { console.log(JSON.stringify(res, null, 1)); return; }

@@ -50,6 +50,45 @@ ids into the live block and fails if any other entry changes. Do not re-inject t
 whole block with inject.js: this machine's Chrome encodes every icon to different
 bytes (gate54.js: 0 of 873 identical, +0.37 MB).
 
+**Magic and Runecrafting (0.9.127.6): new ids are MERGED, and keyed by their keyline.**
+87 icons and a banner off 14 sheets (`sheets/mg_*.png`, `sheets/rn_*.png`). Three
+things about this batch are now the way every batch of new items goes in:
+
+- **Cut with measured rows.** These sheets are not a uniform grid and the caption
+  trim reads a thin tail as text: the wraps came out with their ties cut off. Each
+  sheet's `cutall.js` entry carries `noeat: true` (which is `slice.js --noeat`: keep
+  every band the crop holds) and a `crop` for each row that stops above the
+  captions. `node _iconart/cutall.js mg_wraps` re-cuts one sheet.
+- **Key with `keyline.js`, not `key.js`.** `key.js` cuts enclosed near-white as a
+  hole, and here that is the glow in a rune, the middle of the Frost mark and every
+  highlight on the white Spidersilk: 30 of the 87 came out holed. `keyline.js` uses
+  the dark ink outline as the wall instead; its header says how, step by step.
+  `keyline.json` lists the ids it owns (`key.js` skips them unless `--force`), the
+  three plates whose ink-walled white really is a hole (`holes`), and any per-id
+  setting. A new batch with bright or white art: add its ids there.
+- **Merge with `mergeitems.js`, never `inject.js`.** `inject.js` rewrites the whole
+  block from a full pack, and a full pack is different bytes on this machine (see
+  Jewelry above). Pack ONLY the new ids and merge them:
+
+```bash
+# from the repo root: pack.js reads --picks from where you stand
+node _iconart/cutall.js mg_runes                    # one PLAN entry a sheet -> raw/
+node _iconart/keyline.js                            # every id in keyline.json -> cut/
+node _iconart/pack.js --picks _iconart/picks_magic.json --out pack.magic.json
+node _iconart/mergeitems.js --pack pack.magic.json --dry    # "live 873 icons, pack 71: 71 new, 0 replaced"
+node _iconart/mergeitems.js --pack pack.magic.json
+node _iconart/pack.js --picks _iconart/picks_rn_nodes.json --out pack_nodes.json --size 112
+node _iconart/injectnodes.js --pack pack_nodes.json         # merges into NODE_ART
+node _iconart/banner.js sheets/rn_banner.png runecrafting --band 0.28,0.59 --q 0.72
+```
+
+  `picks_magic.json` and `picks_rn_nodes.json` name just this batch. The 71 item ids
+  were also appended to `picks.json` by hand, so a full pack still knows them.
+  `mergeitems.js` reads the block by line, refuses to write unless every entry that
+  was live reads back whole, and keeps the ids sorted. A pack id that already has an
+  entry is replaced and named in the output, so one icon can be re-cut and swapped
+  the same way; every entry the pack does not name stays byte for byte as it was.
+
 ## How the swap works
 
 `iconHTML(id)` returns `ICONS[id]` verbatim at every render site, so replacing an
@@ -96,6 +135,10 @@ what makes "regenerate one family, re-inject" safe to repeat.
 | `subjects.js` | one bespoke description per item + the `pale` flag |
 | `gen.js` | batch generator, writes `raw/` and `raw/_log.json` |
 | `key.js` | backdrop removal, trim, square, downscale -> `cut/` |
+| `keyline.js`, `keyline.json` | the same job by the ink outline, for art with glow or white in it |
+| `cutall.js`, `slice.js` | every sheet's grid and crops, and the slicer they drive |
+| `mergeitems.js` | add new ids to the live `ART_ITEM` block, the rest untouched |
+| `injectnodes.js`, `banner.js` | merge tree plates into `NODE_ART`, a banner into `SKILL_ART` |
 | `verify.js` | automated hue/value/contrast/coverage flags |
 | `sheet.js` | review PNG on the real satchel tile at real sizes |
 | `picker.js` | `pick.html`, the A/B chooser |

@@ -170,6 +170,72 @@ const PLAN = [
     { ids: 'wraithcloth',     crop: '12,1188,176,1233',   grid: '1x1' },
     { ids: 'wyrmscale',       crop: '176,1188,290,1233',  grid: '1x1' },
   ]},
+
+  /* ---- Magic and Runecrafting (0.9.127.6): fourteen sheets, 87 icons ---------
+     Captioned sheets with clean blank rows between each row of artwork and its
+     caption (measured: the art bands and the caption bands never touch). So every
+     row is given as a band that stops above its caption, the columns are found
+     inside it (rowcols: the second row holds three, spaced to nothing in particular
+     on the cloth and staves sheets), and nothing is trimmed (noeat).
+     noeat is not optional here. The caption trim reads "text" as many short ink runs
+     in a row, and four hanging tails on a pair of wraps are exactly that: the first
+     cut took the tails off every wrap, straight across.
+     The banner (rn_banner.png) is not cut here; banner.js takes it whole. */
+  { name: 'mg_runes', sheet: 'mg_runes.png', noeat: true, rows: [
+    { ids: 'runestone ash_rune soot_rune char_rune cinder_rune', crop: '0,84,1536,424', rowcols: [5] },
+    { ids: 'kiln_rune forge_rune crucible_rune starfall_rune',   crop: '0,546,1536,878', rowcols: [4] },
+  ]},
+  { name: 'mg_wands', sheet: 'mg_wands.png', noeat: true, rows: [
+    { ids: 'pine_wand oak_wand ironbark_wand ember_wand', crop: '0,37,1536,424', rowcols: [4] },
+    { ids: 'frost_wand shadow_wand ancient_wand',         crop: '0,538,1536,925', rowcols: [3] },
+  ]},
+  { name: 'mg_staves', sheet: 'mg_staves.png', noeat: true, rows: [
+    { ids: 'pine_staff oak_staff ironbark_staff ember_staff', crop: '0,0,1224,580', rowcols: [4] },
+    { ids: 'frost_staff shadow_staff ancient_staff',          crop: '0,629,1224,1215', rowcols: [3] },
+  ]},
+  { name: 'mg_cloth', sheet: 'mg_cloth.png', noeat: true, rows: [
+    { ids: 'linen spidersilk gravecloth rimeweave', crop: '0,98,1536,406', rowcols: [4] },
+    { ids: 'seercloth stoneweave wyrmsilk',         crop: '0,539,1536,861', rowcols: [3] },
+  ]},
+  { name: 'mg_hood', sheet: 'mg_hood.png', noeat: true, rows: [
+    { ids: 'linen_hood spidersilk_hood gravecloth_hood rimeweave_hood', crop: '0,27,1536,440', rowcols: [4] },
+    { ids: 'seercloth_hood stoneweave_hood wyrmsilk_hood',              crop: '0,534,1536,942', rowcols: [3] },
+  ]},
+  { name: 'mg_robe', sheet: 'mg_robe.png', noeat: true, rows: [
+    { ids: 'linen_robe spidersilk_robe gravecloth_robe rimeweave_robe', crop: '0,17,1536,436', rowcols: [4] },
+    { ids: 'seercloth_robe stoneweave_robe wyrmsilk_robe',              crop: '0,514,1536,936', rowcols: [3] },
+  ]},
+  { name: 'mg_leggings', sheet: 'mg_leggings.png', noeat: true, rows: [
+    { ids: 'linen_leggings spidersilk_leggings gravecloth_leggings rimeweave_leggings', crop: '0,16,1536,410', rowcols: [4] },
+    { ids: 'seercloth_leggings stoneweave_leggings wyrmsilk_leggings',                  crop: '0,492,1536,893', rowcols: [3] },
+  ]},
+  { name: 'mg_wraps', sheet: 'mg_wraps.png', noeat: true, rows: [
+    { ids: 'linen_wraps spidersilk_wraps gravecloth_wraps rimeweave_wraps', crop: '0,37,1536,421', rowcols: [4] },
+    { ids: 'seercloth_wraps stoneweave_wraps wyrmsilk_wraps',               crop: '0,511,1536,893', rowcols: [3] },
+  ]},
+  { name: 'mg_slippers', sheet: 'mg_slippers.png', noeat: true, rows: [
+    { ids: 'linen_slippers spidersilk_slippers gravecloth_slippers rimeweave_slippers', crop: '0,136,1536,425', rowcols: [4] },
+    { ids: 'seercloth_slippers stoneweave_slippers wyrmsilk_slippers',                  crop: '0,556,1536,853', rowcols: [3] },
+  ]},
+  /* No captions on these three. */
+  { name: 'mg_elements', sheet: 'mg_elements.png', noeat: true, rows: [
+    { ids: 'el_fire el_frost el_storm el_shadow', crop: '0,20,2172,681', rowcols: [4] },
+  ]},
+  { name: 'rn_skill', sheet: 'rn_skill.png', noeat: true, rows: [
+    { ids: 'runecrafting', crop: '0,0,1254,1254', grid: '1x1' },
+  ]},
+  { name: 'rn_cape', sheet: 'rn_cape.png', noeat: true, rows: [
+    { ids: 'cape_runecrafting', crop: '0,0,1145,1374', grid: '1x1' },
+  ]},
+  /* The sixteen tree plates: four rows of four, no captions, the rows a few pixels
+     apart (the third and fourth are ONE blank row apart, at y 890). These are node
+     art, not item art: packed at 112px through picks_nodes and injectnodes.js. */
+  { name: 'rn_nodes', sheet: 'rn_nodes.png', noeat: true, rows: [
+    { ids: 'rn_speed rn_xp rn_double rn_save',         crop: '0,8,1271,315', rowcols: [4] },
+    { ids: 'rn_batch rn_acc rn_thrift rn_dmg',         crop: '0,316,1271,605', rowcols: [4] },
+    { ids: 'rn_sure rn_bind rn_brand rn_gm_speed',     crop: '0,606,1271,890', rowcols: [4] },
+    { ids: 'rn_gm_xp rn_gm_save rn_endless rn_cape',   crop: '0,890,1271,1208', rowcols: [4] },
+  ]},
 ];
 
 const only = process.argv.slice(2).filter(a => !a.startsWith('--'));
@@ -183,6 +249,7 @@ function slice(sheet, idsFile, opts) {
   if (opts.colx) argv.push('--colx', opts.colx);
   if (opts.crop) argv.push('--crop', opts.crop);
   if (opts.inset) argv.push('--inset', String(opts.inset));
+  if (opts.noeat) argv.push('--noeat');
   if (LIST) { console.log('    node ' + argv.map(a => path.basename(a)).join(' ')); return 0; }
   const out = execFileSync('node', argv, { encoding: 'utf8' });
   return (out.match(/^ {2}wrote/gm) || []).length;
@@ -203,7 +270,7 @@ for (const p of PLAN) {
   if (p.rows) {
     for (const r of p.rows) {
       fs.writeFileSync(TMP, r.ids.split(/\s+/).join('\n') + '\n');
-      n += slice(p.sheet, '_cutall.txt', { grid: r.grid || p.grid, crop: r.crop, colx: r.colx, inset: r.inset || p.inset });
+      n += slice(p.sheet, '_cutall.txt', { grid: r.rowcols ? null : (r.grid || p.grid), rowcols: r.rowcols, crop: r.crop, colx: r.colx, inset: r.inset || p.inset, noeat: r.noeat || p.noeat });
     }
   } else {
     n = slice(p.sheet, p.ids, p);

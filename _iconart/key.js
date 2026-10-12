@@ -200,8 +200,17 @@ const WORK = `async (uri, SIZE, MARGIN) => {
      again to pick up eight changed files. */
   const only = arg('--only');
   const want = only ? new Set(only.split(',')) : null;
+  /* Ids that keyline.js owns are never keyed here (0.9.127.6). This tool cuts enclosed
+     near-white as a hole, which on the Magic art is the glow in a rune and the white
+     of the Spidersilk; a full re-key would put thirty holed icons back into cut/
+     over the good ones. --force keys them anyway. */
+  const KL = fs.existsSync(path.join(__dirname, 'keyline.json')) ? new Set(JSON.parse(fs.readFileSync(path.join(__dirname, 'keyline.json'), 'utf8')).ids || []) : new Set();
+  const FORCE = process.argv.includes('--force');
+  let skipped = 0;
   const files = fs.readdirSync(RAW).filter(f => f.endsWith('.png'))
-    .filter(f => !want || want.has(f.split('__')[0]));
+    .filter(f => !want || want.has(f.split('__')[0]))
+    .filter(f => { if (FORCE || !KL.has(f.split('__')[0])) return true; skipped++; return false; });
+  if (skipped) console.log(skipped + ' skipped: keyed by keyline.js (see keyline.json)');
   if (!files.length) { console.log('nothing in raw/'); return; }
   const b = await puppeteer.launch({ executablePath: CHROME, headless: true,
     args: ['--allow-file-access-from-files'] });

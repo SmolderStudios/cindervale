@@ -1,5 +1,11 @@
 # Magic and Runecrafting - the art list for the core
 
+> **DONE at 0.9.127.6.** All 14 sheets came back and all 88 assets are in the game:
+> 71 item icons in `ART_ITEM`, 16 plates in `NODE_ART`, the banner in `SKILL_ART`.
+> They added 429 KB (the estimate below said 393), which takes the file from
+> 12.04 MB to 12.46 MB. What was actually run is in **How they went in** at the
+> end and in `README.md`; the sheet prompts are kept as written, for a re-roll.
+
 Everything build 0.9.127.4 added is drawn in inline SVG (`[JS-ICONS-MAGE]`). This is
 the painted version of that list, grouped the way section 15 of
 `_magedesign/preview.html` groups it, and limited to what the core actually ships.
@@ -487,6 +493,14 @@ tag in the Monster Log. A mark is one bold shape and its colour, nothing more.
 a painted one is muddier than the drawn one it replaces, keep the drawn one. Nothing
 in the audit fails if these four stay drawn.
 
+**What happened (0.9.127.6):** all four painted marks went in. Fire, Frost and Storm
+read better painted than drawn. Shadow came back as the dark crescent this sheet
+asks for, and at 14px on its own selected button (dark purple) it is the lowest
+contrast of the four; its name sits beside it everywhere it is drawn, so it stayed
+as painted. If it ever needs to read lighter, lift its tones and leave the ink line
+alone (gamma about 0.6 on the coloured pixels only), then swap that one id with
+`mergeitems.js`. The audit now asserts all four are painted.
+
 ````
 SHEET: Four element marks for a dark-fantasy RPG. 4 cells, 4 across and 1 down.
 
@@ -711,67 +725,46 @@ cape_runecrafting
 
 ---
 
-## After they land
+## How they went in (0.9.127.6)
 
-Sheets A to J, L and N go through the normal item pipeline: `slice.js`, then
-`key.js`, then add the ids to `_iconart/picks.json`, then
-`pack.js --picks _iconart/picks.json`, then `inject.js`.
+Not the way this file first said. Three things changed between the plan and the job,
+and `README.md` has the commands that were really run:
 
-**Do not skip the picks.json step.** An id that is not in that file is dropped by
-`pack.js` silently, and the run still prints "wrote pack.json".
+- **The sheets are not a uniform grid**, so `slice.js --grid` on its own was wrong for
+  most of them and the caption trim cut the ties off the wraps. Every sheet has its
+  own entry in `cutall.js` with measured rows and `noeat: true`.
+- **`key.js` holed 30 of the 87.** It cuts enclosed near-white as a hole, and here
+  that is the glow in a rune, the middle of the Frost mark and the white of the
+  Spidersilk. These ids are keyed by `keyline.js` and listed in `keyline.json`.
+- **`inject.js` was not used.** It rewrites the whole block from a full pack, and a
+  full pack is different bytes on this machine. Only the 71 new ids were packed
+  (`picks_magic.json`) and merged with `mergeitems.js`; all 873 icons that were live
+  are byte for byte what they were.
 
-```bash
-node _iconart/slice.js sheets/mg_runes.png     sheets/mg_runes.txt     --grid 5x2
-node _iconart/slice.js sheets/mg_wands.png     sheets/mg_wands.txt     --grid 4x2
-node _iconart/slice.js sheets/mg_staves.png    sheets/mg_staves.txt    --grid 4x2
-node _iconart/slice.js sheets/mg_cloth.png     sheets/mg_cloth.txt     --grid 4x2
-node _iconart/slice.js sheets/mg_hood.png      sheets/mg_hood.txt      --grid 4x2
-node _iconart/slice.js sheets/mg_robe.png      sheets/mg_robe.txt      --grid 4x2
-node _iconart/slice.js sheets/mg_leggings.png  sheets/mg_leggings.txt  --grid 4x2
-node _iconart/slice.js sheets/mg_wraps.png     sheets/mg_wraps.txt     --grid 4x2
-node _iconart/slice.js sheets/mg_slippers.png  sheets/mg_slippers.txt  --grid 4x2
-node _iconart/slice.js sheets/mg_elements.png  sheets/mg_elements.txt  --grid 4x1
-node _iconart/slice.js sheets/rn_nodes.png     sheets/rn_nodes.txt     --grid 4x4
-node _iconart/slice.js sheets/rn_skill.png     sheets/rn_skill.txt     --grid 1x1
-node _iconart/slice.js sheets/rn_cape.png      sheets/rn_cape.txt      --grid 1x1
+The banner is `--band 0.28,0.59 --q 0.72` (27.6 KB). The plates are 112px, the items
+96px, like every other pack.
 
-node _iconart/key.js --only "<comma,separated,ids>"
-node _iconart/pack.js --picks _iconart/picks.json
-node _iconart/inject.js
-node _iconart/pack.js --picks _iconart/picks_nodes.json --out pack_nodes.json --size 112
-node _iconart/injectnodes.js --pack pack_nodes.json
-node _iconart/banner.js sheets/rn_banner.png runecrafting --band 0.17,0.49
-```
+### What came out of `_audit_tests.js`
 
-The `--band` on the banner is Fletching's and is only a starting point: it picks the
-horizontal strip of the painting that becomes the 177 px tall banner, so look at the
-crop before injecting.
+All three exemptions that kept the art sweep green while these were drawn are gone:
 
-### What to undo in `_audit_tests.js` as each one lands
-
-Three exemptions keep the art sweep green while these are drawn. Each one comes out
-with the sheet that replaces it, and not before:
-
-| When this is injected | Remove |
+| Was | Now |
 |---|---|
-| Sheets A to I (the 65 items) | the ids from `MAGE_PENDING`. It is built from what the items are (`isRune`, `it.magic`, `it.cloth`), so narrow the test rather than deleting it while any item is still drawn |
-| Sheet K (the 16 plates) | the `if(s==='runecrafting') continue;` skip in the node art check |
-| Sheet N (the cape) | `'Runecrafting Cape'` from `ART_EXEMPT` |
+| `MAGE_PENDING` held the 65 items | an empty list. A new drawn item is named there by id; the rule that built it from `isRune`, `it.magic` and `it.cloth` must not come back |
+| `if(s==='runecrafting') continue;` in the node art check | removed, so the 16 plates are swept like every other tree |
+| `'Runecrafting Cape'` in `ART_EXEMPT` | removed |
 
-Sheets J, L and M are not on any list: the element marks, the rail icon and the
-banner fall back to what is drawn and nothing fails if they wait.
+One assertion was added in their place: all 71 Magic and Runecrafting icons are
+painted (65 items, the four element marks, the skill and the cape).
 
-### What comes out of the game when they land
+### What is still in the game
 
-`[JS-ICONS-MAGE]` is about 34 KB of generators. Once every id it draws is painted,
-the whole block can go, the way `_capeSVG` went with the twelve capes: `_runeSVG`,
+`[JS-ICONS-MAGE]`, about 34 KB of generators, is still there on purpose. The painted
+block lands after `/* ==ICONS-DONE== */`, which is below every place a drawn icon is
+assigned (the `ICONS` literal and the `CLOTH_TIERS` loop), so paint wins with no
+change to either and a drawn icon only ever shows for an id whose painted one is
+missing. It can go the way `_capeSVG` went with the twelve capes: `_runeSVG`,
 `_runestoneSVG`, `_wandSVG`, `_staffSVG`, `_clothSVG`, the five `_r*SVG` robe
-pieces, `_runecraftSVG`, `_runeCapeSVG`, `RN_TREE_ICONS`. Keep `_elementSVG` if the
-painted marks lose at 14px.
-
-The 35 robe icons are assigned in the `CLOTH_TIERS` loop (`ICONS[id]=...`), not in
-the `ICONS` literal. That is safe: `inject.js` lands its block after
-`/* ==ICONS-DONE== */`, which is below the loop, so a painted robe wins with no
-change to the loop. Checked at 0.9.127.4: the loop is at character 7.0 million and
-the marker at 8.5 million. The line in the loop only needs to go when the generators
-do.
+pieces, `_runecraftSVG`, `_runeCapeSVG`, `_elementSVG`, `RN_TREE_ICONS`, and the
+line in the loop with them. That is a code change, not an art one, and it was left
+for its own build.

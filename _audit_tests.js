@@ -1792,10 +1792,8 @@ setTimeout(() => {
            PENDING, not rejected: the tree renders correctly, it is just not painted
            like the other thirteen. Drop this skip when the art lands. */
         if(s==='fletching') continue;
-        /* Runecrafting (0.9.127.4) ships on drawn plates, RN_TREE_ICONS, until its
-           sixteen nodes get a sheet. PENDING, on the same terms: drop this skip
-           when the art lands. */
-        if(s==='runecrafting') continue;
+        /* Runecrafting shipped on drawn plates in 0.9.127.4 and its sixteen were
+           painted in 0.9.127.6, so it is checked like the rest: no skip. */
         if(!NODE_ART[n.id]) miss.push(s+'/'+n.id);
         else if(!/^<img /.test(String(n.icon))) notimg.push(s+'/'+n.id);
       }
@@ -3395,25 +3393,34 @@ setTimeout(() => {
        and they come off this list the day the painted icons are injected. */
     const HAWK_PENDING = ['hawkseye_chip','hawkseye_polish','hawkseye_flaw',
                           'hawkeye_draught_1','hawkeye_draught_2'];
-    /* Magic and Runecrafting (0.9.127.4) ship on generated SVG, [JS-ICONS-MAGE], for
-       the reason the Ranged batch did: a sheet run cannot happen in the same pass
-       that adds the items. Built from what the items ARE (a rune, a staff or a
-       wand, cloth) rather than typed out, so it cannot cover an id that was never
-       part of this. PENDING, not rejected: do NOT add these to KEEP_SVG. The sheet
-       prompts are in _iconart/PROMPTS-magic.md. */
-    const MAGE_PENDING = JSON.parse(ev(`(function(){
-      if(typeof isRune!=='function') return '[]';
-      var out=['runestone'];
-      for(var id in ITEMS){ var it=ITEMS[id]; if(isRune(id)||it.magic||it.cloth) out.push(id); }
-      if(typeof CLOTH_TIERS!=='undefined') CLOTH_TIERS.forEach(function(c){ out.push(c.key); });
-      return JSON.stringify(out);
-    })()`));
+    /* Magic and Runecrafting shipped on generated SVG in 0.9.127.4 and were painted in
+       0.9.127.6: 87 icons off fourteen sheets, keyed by _iconart/keyline.js and merged
+       with _iconart/mergeitems.js. The list is kept, and kept EMPTY on purpose. It
+       used to be a rule (anything that is a rune, a staff, a wand or cloth), which
+       would now excuse a painted icon that fell back to its drawing. Slices 5 to 9
+       add staves, wands, robes and a rune that will ship drawn first: name THOSE ids
+       here when they land. Do not put the rule back. */
+    const MAGE_PENDING = [];
     const SVG_OK = new Set(['radcliff_tally'].concat(RANGED_PENDING, SPIRE_PENDING, HAWK_PENDING, MAGE_PENDING));
 
     const unexpected = cov.svg.filter(id => !SVG_OK.has(id));
     ok('only known-exempt items are still on SVG, and none is iconless',
        unexpected.length === 0 && cov.none.length === 0,
        JSON.stringify({art: cov.art, svgTotal: cov.svg.length, unexpected, iconless: cov.none}));
+    /* And by name, so it cannot pass by a Magic id simply not being an item any more:
+       the 65 items, the four element marks (they are ICONS entries, not items, so the
+       sweep above never sees them), the skill's rail icon and the cape. */
+    const magePainted = JSON.parse(ev(`(function(){
+      var ids=['runestone','runecrafting','cape_runecrafting'];
+      for(var id in ITEMS){ var it=ITEMS[id]; if(isRune(id)||it.magic||(it.cloth&&id!=='stonewright_gauntlets')) ids.push(id); }
+      CLOTH_TIERS.forEach(function(c){ ids.push(c.key); });
+      MAGIC_ELEMENTS.forEach(function(e){ ids.push('el_'+e.k); });
+      var bad=ids.filter(function(id){ return !/^<img class="ev-icon art-item"/.test(String(ICONS[id]||'')); });
+      return JSON.stringify({n:ids.length, bad:bad, shown:/art-item/.test(iconHTML('starfall_rune'))&&/art-item/.test(iconHTML('el_frost'))});
+    })()`));
+    ok('all 71 Magic and Runecrafting icons are painted: 65 items, four element marks, the skill and the cape',
+       magePainted.n === 71 && magePainted.bad.length === 0 && magePainted.shown === true,
+       magePainted.n + ' ids' + (magePainted.bad.length ? ', still drawn: ' + magePainted.bad.slice(0, 8).join(' ') : ''));
   }
   section('In-game menu — grouping + Back (0.9.123.x)');
   {
@@ -5824,10 +5831,9 @@ setTimeout(() => {
        ART_EXEMPT is an explicit list, not a count — an id that stops needing the
        exemption and stays here is dead weight, and an id that appears WITHOUT being
        added is the thing this guards. */
-    /* 'Runecrafting Cape' (0.9.127.4) is PENDING: the skill shipped with its cape so
-       its capstone could be bought, and the cape is on generated art until the
-       Magic sheets land. Delete it from here when they do. */
-    const ART_EXEMPT = new Set(['ember_ring', 'moon_amulet', 'Runecrafting Cape']);
+    /* 'Runecrafting Cape' was on this list from 0.9.127.4 until its painted cape went
+       in with the Magic sheets (0.9.127.6). */
+    const ART_EXEMPT = new Set(['ember_ring', 'moon_amulet']);
     const painted = JSON.parse(ev(`(function(){
       state=defaultState(); normalizeState();
       for(var k in state.xp) state.xp[k]=XP_CUM[99];

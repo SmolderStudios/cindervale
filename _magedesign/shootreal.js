@@ -261,8 +261,10 @@ function SCENES_IN_PAGE() {
       };
       var item = function (id) { return cell(ITEMS[id] ? ITEMS[id].name : id, iconHTML(id)); };
       var sec = function (title, sub, cells) { return '<h2>' + title + '<small>' + sub + '</small></h2><div class="row">' + cells.join('') + '</div>'; };
-      var h = '<h1>Magic and Runecrafting: generated icons, build ' + document.querySelector('.mm-ver').getAttribute('data-build') + '</h1>'
-        + '<p>Every icon below is what the game file holds today, drawn by the game. They stand in until the painted sheets land. Each is shown at 76, 34 and 18 px.</p>';
+      /* The heading counts painted against drawn itself (an <img> is painted art, an
+         <svg> is a generator), so it cannot go stale the way a fixed line did. */
+      var h = '<h1>Magic and Runecrafting: the icons, build ' + document.querySelector('.mm-ver').getAttribute('data-build') + '</h1>'
+        + '<p>Every icon below is what the game file holds today: <span id="mageSheetN"></span>. Each is shown at 76, 34 and 18 px.</p>';
       h += sec('Runestone and runes', 'one stone, a glow for each grade', ['runestone'].concat(runes).map(item));
       h += sec('Wands', 'one silhouette, seven woods', wands.map(item));
       h += sec('Staves', 'one silhouette, seven woods', staves.map(item));
@@ -287,7 +289,11 @@ function SCENES_IN_PAGE() {
       d0.appendChild(st);
       document.body.appendChild(d0);
       window.scrollTo(0, 0);
-      info.height = Math.ceil(d0.getBoundingClientRect().height); info.icons = d0.querySelectorAll('.c').length;
+      var cells = d0.querySelectorAll('.c'), painted = 0;
+      for (var ci = 0; ci < cells.length; ci++) if (cells[ci].querySelector('.s1 img')) painted++;
+      d0.querySelector('#mageSheetN').textContent = painted === cells.length ? 'all ' + painted + ' are painted'
+        : painted + ' painted, ' + (cells.length - painted) + ' still drawn by the game';
+      info.height = Math.ceil(d0.getBoundingClientRect().height); info.icons = cells.length; info.painted = painted;
     }
     if (scene === 'stats') { selectedSkill = 'mining'; viewTab = 'stats'; try { renderAll(); } catch (e) { info.err = String(e); } }
     return info;
