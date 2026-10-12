@@ -9044,7 +9044,7 @@ button.en-canchip.pick:disabled{opacity:.4;cursor:default}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.127.8">v0.9.127</div>
+  <div class="mm-ver" data-build="0.9.127.9">v0.9.127</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -19062,9 +19062,17 @@ function farmRunQuiet(from, span){
    your Offline cap allows, the same two numbers every other skill is paid by.
    Whatever was left growing when that time ran out keeps growing on the wall
    clock, as it always has, so a night away is never worth less than it was. */
-function offlineFarmResolve(awayMs, rate){
-  if(!(awayMs>0)||!(rate>0)||!state.lastSeen) return null;
-  return farmRunQuiet(state.lastSeen, Math.round(awayMs*rate));
+/* `from` is when the time away began. The caller says, because lastSeen is only
+   that moment while nothing has saved since: any save stamps it, and a held clock
+   started from a fresh stamp would run the farmhand into the future and leave
+   crops planted later than now (0.9.127.9). */
+function offlineFarmResolve(awayMs, rate, from){
+  if(!(awayMs>0)||!(rate>0)) return null;
+  if(!(from>0)) from=state.lastSeen;
+  if(!(from>0)) return null;
+  const now=Date.now();
+  const span=Math.min(Math.round(awayMs*rate), Math.max(0,now-from));   // never past the present
+  return farmRunQuiet(from, span);
 }
 /* The 2 s farming timer, and the same catch-up for a window nobody can see. The
    engine holds a hidden window's timers to once a second and then once a minute,
@@ -27482,7 +27490,7 @@ function grantOffline(){
      with anything: in view it works beside whatever else you are doing, so it does
      here too. It is paid by the bare Offline efficiency and the same capped time. */
   let _offFarm=null;
-  try{ _offFarm=offlineFarmResolve(away, om.rate); }catch(e){ _offFarm=null; }
+  try{ _offFarm=offlineFarmResolve(away, om.rate, Date.now()-awayRaw); }catch(e){ _offFarm=null; }
   if(_offFarm){
     const _fd=farmerDef();
     summary.push({icon:'🌾', iconId:'farming', label:'Farming',
