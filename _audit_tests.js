@@ -10554,6 +10554,174 @@ setTimeout(() => {
     ok('the draught shows up in the combat buff picker', G.offered === true);
   }
 
+  section('A hidden window keeps fighting (0.9.127.5)');
+  {
+    /* The engine slows the timers of a window nobody can see: once a second for a
+       minute, then once a MINUTE (a minimised game, a background tab). combatTick()
+       resolves one attack from each side, so a minimised game fought at one attack
+       a minute, and nothing threw. The fight's timer now runs the ticks it missed,
+       through combatTick() itself, on the clock they would have had.
+
+       Everything here goes through the timer the game really starts: setInterval is
+       watched while the fight begins, and whatever the game hands it is fired on a
+       clock this holds. `ops` is what happens, in order:
+         ['fire', gap, n]   the timer fires n times, each `gap` ms after the last
+         ['jump', ms]       time passes and nothing fires
+         ['tick'] ['save']  the 250 ms loop, and a save
+         ['stop'] ['engage'] ['snap', name] */
+    ev(`window.__hw=function(o){
+      var D=Date.now, R=Math.random, SI=window.setInterval, CI=window.clearInterval, CT=window.combatTick;
+      var keep={menu:mmAtMenu, slot:mmSlot, ls:window.lsSet, mode:combatMode}, kept={};
+      var PAINT=['renderCombat','updateCombatBars','cmbSplat','renderRightPanel'];
+      var QUIET=['renderAll','renderHeader','toast','showHint','refreshCombatTabIndicator','renderSkillList','showOfflineSummary','renderQuestDock','questCheck','renderPets','showDemoBuy'];
+      var out={steps:0, fires:0, most:0, per:[], snaps:{}, held:{}, drawn:{}, leaked:0, err:''};
+      var fake=D.call(Date), mine=function(){ return fake; }, T={fn:null,id:0,n:0}, mon=o.mon||'brood_rat';
+      function snap(){ return {kills:(state.monKills&&state.monKills[mon])||0, food:state.items.cooked_minnow||0, hp:combat.youHp, foeHp:combat.foeHp,
+        coins:state.coins||0, xp:JSON.stringify(state.combatXp), on:!!combat.active, timerOn:!!T.fn, timers:T.n, steps:out.steps,
+        offXp:state.offlineXp||0, seenBehind:state.lastSeen?fake-state.lastSeen:null, clock:Date.now===mine, idle:_combatCatchUp===null,
+        held:JSON.parse(JSON.stringify(out.held)), drawn:JSON.parse(JSON.stringify(out.drawn))}; }
+      try{
+        state=defaultState(); normalizeState();
+        ['attack','strength','defence','hitpoints'].forEach(function(k){ state.combatXp[k]=XP_CUM[o.lv||8]; });
+        state.items={bronze_sword:1}; if(o.food!==0) state.items.cooked_minnow=100000;
+        state.combatEquipped={weapon:'bronze_sword'};
+        state.hints=state.hints||{}; state.hints.combat_unarmed=1;
+        mmAtMenu=false; mmSlot=o.slot?3:0; window.lsSet=function(){ return true; };
+        QUIET.forEach(function(k){ if(typeof window[k]==='function'){ kept[k]=window[k]; window[k]=function(){}; } });
+        /* The four paints a catch-up holds back. Counted here; really drawn only
+           when the test asks for it, because jsdom draws slowly. A call made while
+           a catch-up is running always goes through, so the game can count it too. */
+        PAINT.forEach(function(k){ kept[k]=window[k]; out.held[k]=0; out.drawn[k]=0;
+          window[k]=function(){ var c=!!_combatCatchUp; if(c) out.held[k]++; else out.drawn[k]++;
+            if(!(c||o.paint)) return;
+            /* a damage number that reaches the page during a catch-up has leaked */
+            var host=(c&&k==='cmbSplat')?document.getElementById('cmbSplats'):null, n0=host?host.childElementCount:0;
+            var r=kept[k].apply(this,arguments);
+            if(host&&host.childElementCount!==n0) out.leaked++;
+            return r; }; });
+        refreshCombatStats();
+        Date.now=mine;
+        Math.random=(function(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; var t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; })(o.seed||11);
+        window.setInterval=function(fn,ms){ if(ms===100){ T.fn=fn; T.id=800000+(++T.n); return T.id; } return SI.apply(window,arguments); };
+        window.clearInterval=function(id){ if(id&&id===T.id){ T.fn=null; return; } return CI.apply(window,arguments); };
+        var inFire=0;
+        window.combatTick=function(){ out.steps++; inFire++; if(o.throwAt&&out.steps===o.throwAt) throw new Error('thrown on purpose'); return CT(); };
+        combatMode=(o.panel!==false); state.cmbSubTab='arena'; state.zone='rat_warrens'; combat.monId=mon;
+        engageCombat();
+        out.engaged=!!combat.active; out.timer=T.fn?T.fn.name:''; out.splatHost=!!document.getElementById('cmbSplats');
+        (o.ops||[]).forEach(function(op){
+          if(op[0]==='fire'){ for(var i=0;i<(op[2]||1);i++){ fake+=op[1]; inFire=0; if(T.fn){ out.fires++; T.fn(); } if(inFire>out.most) out.most=inFire; out.per.push(inFire); } }
+          else if(op[0]==='jump') fake+=op[1];
+          else if(op[0]==='tick') tick();
+          else if(op[0]==='save') saveGame();
+          else if(op[0]==='stop'){ stopCombatTimer(); combat.active=false; }
+          else if(op[0]==='engage'){ combat.youHp=combat.youMaxHp; engageCombat(); }
+          else if(op[0]==='snap') out.snaps[op[1]]=snap();
+        });
+        out.end=snap();
+      }catch(e){ out.err=String(e&&e.message||e); out.end=snap(); }
+      finally{
+        Date.now=D; Math.random=R; window.combatTick=CT;
+        try{ stopCombatTimer(); }catch(e){}
+        window.setInterval=SI; window.clearInterval=CI; window.lsSet=keep.ls;
+        for(var k in kept) window[k]=kept[k];
+        combat.active=false; combat.raid=null; combatMode=keep.mode; mmAtMenu=keep.menu; mmSlot=keep.slot;
+        try{ _lastTickWall=0; }catch(e){}
+        state=defaultState(); normalizeState();
+      }
+      return JSON.stringify(out);
+    };`);
+    const HW = o => JSON.parse(ev('__hw(' + JSON.stringify(o) + ')'));
+    const fought = s => [s.kills, s.food, s.hp, s.foeHp, s.coins, s.xp].join(' | ');
+
+    ok('the fight\'s timer is combatTimerTick, and nothing starts one on combatTick itself',
+       /setInterval\(combatTimerTick,\s*COMBAT_TICK_MS\)/.test(html) && !/setInterval\(\s*combatTick\b/.test(html));
+    ok('a hidden window is worth what a seen one is: COMBAT_CATCHUP_RATE is 1, a tick is 100 ms, and the line is the two minutes skilling uses',
+       ev('COMBAT_CATCHUP_RATE===1 && COMBAT_TICK_MS===100 && TICK_CATCHUP_MAX_MS===120000'),
+       ev('COMBAT_CATCHUP_RATE+" / "+COMBAT_TICK_MS+" ms / "+TICK_CATCHUP_MAX_MS+" ms"'));
+
+    /* Ten minutes of one fight, four ways, with the same dice. */
+    const seen = HW({ ops: [['fire', 100, 6000]] });
+    const hidden = HW({ ops: [['fire', 60000, 10]] });
+    const first = HW({ ops: [['fire', 1000, 600]] });
+    const ragged = HW({ ops: [['fire', 59991, 5], ['fire', 60014, 5]] });
+    ok('the fight starts, on the timer the game named', seen.engaged && seen.timer === 'combatTimerTick', seen.timer || seen.err);
+    ok('a timer that is on time runs one tick a firing', seen.most === 1 && seen.steps === 6000 && !seen.err, seen.steps + ' ticks from ' + seen.fires + ' firings' + (seen.err ? ' ' + seen.err : ''));
+    ok('ten minutes in view is a real fight: kills, and food eaten',
+       seen.end.kills >= 5 && seen.end.food < 100000, seen.end.kills + ' kills, ' + (100000 - seen.end.food) + ' minnows');
+    ok('a timer held back a minute fights the whole minute: 600 ticks a firing',
+       hidden.most === 600 && hidden.per.every(n => n === 600) && !hidden.err, hidden.per.join(',') + (hidden.err ? ' ' + hidden.err : ''));
+    ok('and ten minutes hidden come out exactly as ten minutes seen: kills, food, health, gold and XP',
+       fought(hidden.end) === fought(seen.end), fought(hidden.end).slice(0, 60) + '  vs  ' + fought(seen.end).slice(0, 60));
+    ok('the first hidden minute, a tick a second, comes out the same too',
+       first.per.every(n => n === 10) && fought(first.end) === fought(seen.end), first.steps + ' ticks; ' + fought(first.end).slice(0, 60));
+    ok('gaps that are not a whole number of ticks are still fought in full (59,991 and 60,014 ms, as measured)',
+       ragged.per.every(n => n === 600) && Math.abs(ragged.end.kills - seen.end.kills) <= Math.max(3, seen.end.kills * 0.2),
+       ragged.per.join(',') + '; ' + ragged.end.kills + ' kills against ' + seen.end.kills);
+    ok('the clock is the real one again after every catch-up, and nothing is left held',
+       hidden.end.clock && hidden.end.idle && first.end.clock && first.end.idle);
+
+    /* What counts as late, and what is too late. */
+    const edges = HW({ ops: [['fire', 100, 3], ['fire', 150], ['fire', 199], ['fire', 200], ['fire', 250], ['fire', 1013], ['fire', 120000], ['fire', 100], ['fire', 120001], ['fire', 100]] });
+    ok('under two ticks late is one tick; from two ticks on, every tick that was missed',
+       edges.per.slice(0, 8).join(',') === '1,1,1,1,1,2,3,10', edges.per.slice(0, 8).join(','));
+    ok('two minutes is still fought, all 1,200 ticks of it', edges.per[8] === 1200, String(edges.per[8]));
+    ok('a gap over two minutes is not: it is left for the offline settle, and the fight is on time again straight after',
+       edges.per[9] === 1 && edges.per[10] === 0 && edges.per[11] === 1, edges.per.slice(9).join(','));
+
+    /* A machine that sleeps. The stray tick this used to fight could eat, eating
+       saves, and a save stamps lastSeen: grantOffline() then found ten seconds to
+       settle instead of ten minutes. */
+    const sleep = HW({ slot: true, ops: [['tick'], ['save'], ['fire', 100, 20], ['tick'], ['snap', 'awake'], ['fire', 600000], ['snap', 'woke'], ['tick'], ['snap', 'settled'], ['fire', 100], ['snap', 'on']] });
+    const S = sleep.snaps;
+    ok('ten minutes asleep: the late timer fights nothing and stamps nothing',
+       !sleep.err && S.woke.steps === S.awake.steps && S.woke.seenBehind >= 600000, sleep.err || ((S.woke.steps - S.awake.steps) + ' ticks, lastSeen ' + Math.round(S.woke.seenBehind / 1000) + ' s behind'));
+    ok('so tick() settles all of it as time away',
+       S.settled.offXp > S.woke.offXp, 'Offline XP ' + S.woke.offXp + ' -> ' + S.settled.offXp);
+    ok('and takes the fight up again on a fresh timer, which is on time from its first tick',
+       S.settled.on && S.settled.timers === S.woke.timers + 1 && S.on.steps === S.settled.steps + 1, S.settled.timers + ' timers, ' + (S.on.steps - S.settled.steps) + ' tick');
+
+    /* A new fight does not inherit the time since the last one. */
+    const again = HW({ ops: [['fire', 100, 5], ['stop'], ['jump', 600000], ['engage'], ['fire', 100], ['fire', 60000]] });
+    ok('a fight begun ten minutes after the last one starts on time, and is caught up from its own start',
+       again.per.join(',') === '1,1,1,1,1,1,600', again.per.join(','));
+
+    /* Things that end a catch-up early. */
+    const death = HW({ lv: 1, food: 0, mon: 'dire_rat', ops: [['fire', 60000, 3]] });
+    ok('dying in the middle of a catch-up ends it there: the fight and its timer stop',
+       !death.err && death.engaged && !death.end.on && !death.end.timerOn && death.steps > 0 && death.steps < 600 && death.fires === 1,
+       death.err || (death.steps + ' ticks, then nothing for ' + (3 - death.fires) + ' more firings'));
+    const thrown = HW({ throwAt: 9, ops: [['fire', 100, 5], ['fire', 60000]] });
+    ok('a tick that throws inside a catch-up still gets the real clock back, and nothing is left held',
+       thrown.err === 'thrown on purpose' && thrown.end.clock && thrown.end.idle, thrown.err + ', clock back ' + thrown.end.clock + ', idle ' + thrown.end.idle);
+
+    /* Saving. A tick that eats saves on the clock it ran on. */
+    const saved = HW({ slot: true, ops: [['save'], ['fire', 100, 3], ['fire', 60000, 3]] });
+    ok('a catch-up that ate leaves lastSeen on the real clock, not a minute behind',
+       !saved.err && saved.end.food < 100000 && saved.end.seenBehind === 0, saved.err || ((100000 - saved.end.food) + ' minnows eaten, lastSeen ' + saved.end.seenBehind + ' ms behind'));
+
+    /* Painting. updateCombatBars() is nine tenths of a tick, so a minute of ticks
+       painted one by one would hold the window for a second as you come back. */
+    const paint = HW({ paint: true, ops: [['fire', 100, 3], ['snap', 'a'], ['fire', 60000], ['snap', 'b']] });
+    const dP = k => paint.snaps.b.drawn[k] - paint.snaps.a.drawn[k], hP = k => paint.snaps.b.held[k] - paint.snaps.a.held[k];
+    ok('a minute caught up paints the bars once, not six hundred times',
+       !paint.err && hP('updateCombatBars') >= 590 && dP('updateCombatBars') === 1, paint.err || (hP('updateCombatBars') + ' held, ' + dP('updateCombatBars') + ' drawn'));
+    ok('the fight panel once, however many kills and meals it held',
+       hP('renderCombat') >= 2 && dP('renderCombat') === 1, hP('renderCombat') + ' held, ' + dP('renderCombat') + ' drawn');
+    ok('and floats no damage numbers for hits nobody saw',
+       paint.splatHost && hP('cmbSplat') >= 10 && paint.leaked === 0, hP('cmbSplat') + ' asked for, ' + paint.leaked + ' reached the page');
+    /* The loop this must not make: with the satchel open, painting the right-hand
+       side is the slow thing that makes a tick late. Painted after every late tick
+       it would keep every tick late. */
+    const quietRun = HW({ panel: false, seed: 5, ops: [['fire', 100, 3], ['snap', 'a'], ['fire', 300], ['snap', 'b']] });
+    const qa = quietRun.snaps.a, qb = quietRun.snaps.b;
+    ok('a late tick with nothing to show paints nothing at all',
+       !quietRun.err && qb.kills === qa.kills && qb.food === qa.food && qb.steps === qa.steps + 3
+       && qb.drawn.renderRightPanel === qa.drawn.renderRightPanel && qb.drawn.renderCombat === qa.drawn.renderCombat && qb.drawn.updateCombatBars === qa.drawn.updateCombatBars,
+       quietRun.err || ((qb.steps - qa.steps) + ' ticks caught up, ' + (qb.drawn.renderRightPanel - qa.drawn.renderRightPanel) + ' paints of the right-hand side'));
+    ev('delete window.__hw');
+  }
+
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));
   process.exit(fail ? 1 : 0);
 }, 2500);

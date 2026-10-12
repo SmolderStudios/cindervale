@@ -194,6 +194,77 @@ setTimeout(()=>{
     ok('but a deliberate false is respected', ev('state.raidAuto===false'), ev('String(state.raidAuto)'));
   }
 
+  section('A raid in a hidden window (0.9.127.5)');
+  {
+    /* A minimised game gets its timers once a minute. A raid's charged attacks and
+       Ignar's burn run on the clock while combatTick() gave you one attack a tick,
+       so a hidden raid was one attack a minute against a boss on full speed. The
+       fight's timer now runs the ticks it missed, each on the clock it would have
+       had, and Date.now is that clock for as long as the catch-up lasts: a stage
+       that begins inside one stamps its attack timers, its first charged attack and
+       the run's clear time off it. This drives the timer the game really starts,
+       the way _audit_tests.js does for an ordinary fight. */
+    ev(`window.__hwRaid=function(gap, minutes){
+      var D=Date.now, R=Math.random, SI=window.setInterval, CI=window.clearInterval, CT=window.combatTick, kept={};
+      var QUIET=['renderCombat','updateCombatBars','cmbSplat','renderAll','renderRightPanel','renderHeader','toast','showHint','refreshCombatTabIndicator','renderSkillList','saveGame','logNotification'];
+      var out={steps:0, fires:0, most:0, stagesInOneFiring:0, err:''};
+      var fake=D.call(Date), mine=function(){ return fake; }, T={fn:null,id:0,n:0};
+      try{
+        state=defaultState(); normalizeState();
+        for(const k of ['attack','strength','defence','hitpoints','ranged']) state.combatXp[k]=XP_CUM[99];
+        var eq={weapon:'starsteel_sword', shield:'starsteel_shield', helmet:'starsteel_helm', chest:'starsteel_chest', legs:'starsteel_legs', gloves:'starsteel_gloves', boots:'starsteel_boots', cape:'starsteel_cape'};
+        state.items={}; for(var s in eq) state.items[eq[s]]=1;
+        state.combatEquipped=eq;
+        QUIET.forEach(function(k){ if(typeof window[k]==='function'){ kept[k]=window[k]; window[k]=function(){}; } });
+        refreshCombatStats();
+        Date.now=mine;
+        Math.random=(function(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; var t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; })(4242);
+        window.setInterval=function(fn,ms){ if(ms===100){ T.fn=fn; T.id=800000+(++T.n); return T.id; } return SI.apply(window,arguments); };
+        window.clearInterval=function(id){ if(id&&id===T.id){ T.fn=null; return; } return CI.apply(window,arguments); };
+        /* health topped up after every tick, as _magesim.js does for a raid: the
+           question is whether the run moves, not whether this loadout survives it */
+        window.combatTick=function(){ out.steps++; var r=CT(); if(combat.raid&&combat.active) combat.youHp=combat.youMaxHp; return r; };
+        /* the sections above leave their last run standing, and startRaid() refuses to start over one */
+        try{ stopCombatTimer(); }catch(e){} combat.active=false; combat.raid=null; combat.raidDebuff=null; clearRaidMomentum();
+        _raidResult=null;
+        startRaid('sunken_barrow');
+        out.started=!!(combat.raid&&combat.active&&T.fn); out.timer=T.fn?T.fn.name:'';
+        var t0=fake, end=t0+minutes*60000;
+        while(fake<end && T.fn && combat.raid){
+          var st=combat.raid.stage, s0=out.steps;
+          fake+=gap; out.fires++; T.fn();
+          if(out.steps-s0>out.most) out.most=out.steps-s0;
+          var moved=(combat.raid?combat.raid.stage:getRaid('sunken_barrow').stages.length)-st;
+          if(moved>out.stagesInOneFiring) out.stagesInOneFiring=moved;
+        }
+        out.cleared=!combat.raid && !combat.active && !!_raidResult && !_raidResult.failed;
+        out.timeMs=_raidResult?_raidResult.timeMs:0; out.rating=_raidResult?_raidResult.rating:'';
+        out.wall=fake-t0; out.timerOn=!!T.fn; out.clock=Date.now===mine; out.idle=_combatCatchUp===null;
+      }catch(e){ out.err=String(e&&e.message||e); }
+      finally{
+        Date.now=D; Math.random=R; window.combatTick=CT;
+        try{ stopCombatTimer(); }catch(e){}
+        window.setInterval=SI; window.clearInterval=CI;
+        for(var k in kept) window[k]=kept[k];
+        combat.active=false; combat.raid=null; combat.raidDebuff=null; combat.bossfx=null; combat.monfx=null; clearRaidMomentum(); _raidResult=null;
+        state=defaultState(); normalizeState();
+      }
+      return JSON.stringify(out);
+    };`);
+    const seen=JSON.parse(ev('__hwRaid(100, 30)')), hid=JSON.parse(ev('__hwRaid(60000, 30)'));
+    ok('in view, the test character clears the Sunken Barrow', seen.started && seen.cleared && !seen.err,
+       seen.err || (Math.round(seen.timeMs/1000)+'s, '+seen.steps+' ticks, '+seen.rating+' rank'));
+    ok('with its timer held to once a minute the same run clears, on the same tick',
+       hid.started && hid.cleared && !hid.err && hid.steps===seen.steps, hid.err || (hid.steps+' ticks from '+hid.fires+' firings, against '+seen.steps));
+    ok('a stage that begins inside a catch-up starts fighting inside it', hid.stagesInOneFiring>=2,
+       hid.stagesInOneFiring+' stages passed in one firing');
+    ok('the clear time and the rank are the fight\'s own, not the wake-up\'s',
+       hid.timeMs===seen.timeMs && hid.rating===seen.rating && hid.wall>hid.timeMs,
+       Math.round(hid.timeMs/1000)+'s '+hid.rating+' rank, noticed '+Math.round(hid.wall/1000)+'s in');
+    ok('and the run leaves the real clock and no held painting behind it', hid.clock && hid.idle && !hid.timerOn);
+    ev('delete window.__hwRaid');
+  }
+
   console.log('\n'+(fail? fail+' FAILED, '+pass+' passed'
                         : 'PASS — all '+pass+' raid-momentum checks'));
   process.exit(fail?1:0);
