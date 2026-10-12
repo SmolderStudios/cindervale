@@ -14494,6 +14494,176 @@ function _rSlippersSVG(p){
 }
 const _ROBE_GEN={hood:_rHoodSVG, robe:_rRobeSVG, leggings:_rLeggingsSVG, wraps:_rWrapsSVG, slippers:_rSlippersSVG};
 
+/* ════ [JS-ICONS-MAGE-DROPS] dropped staves and wands, and raid cloth (0.9.127.11) ════
+   Twenty-one finds: twelve from the zones, eight from the raids and Faultline from
+   the Spire. Each is its own shape, not a palette on the crafted silhouette: that
+   is what makes it a find. Generated art, drawn until the sheets are painted, and
+   every id it draws is named on MAGE_PENDING in _audit_tests.js until then.
+
+   `w` and `t` are the gradients _mgDefs() builds for the shaft and for the stone
+   or light at its head. Gradient ids are safe here for the reason the block above
+   gives: iconHTML() stamps each rendered copy with its own suffix. */
+const _MW_O='#130d08';
+function _mwShaft(x1,y1,x2,y2,wd,g,hl){
+  const dx=x2-x1, dy=y2-y1, L=Math.sqrt(dx*dx+dy*dy), nx=-dy/L*wd/2, ny=dx/L*wd/2;
+  const f=function(n){ return Math.round(n*10)/10; };
+  return '<path d="M'+f(x1+nx)+' '+f(y1+ny)+' L'+f(x2+nx)+' '+f(y2+ny)+' L'+f(x2-nx)+' '+f(y2-ny)+' L'+f(x1-nx)+' '+f(y1-ny)+' Z" fill="'+g+'" stroke="'+_MW_O+'" stroke-width="1.4" stroke-linejoin="round"/>'
+    +(hl?'<path d="M'+f(x1+nx*0.4)+' '+f(y1+ny*0.4)+' L'+f(x2+nx*0.4)+' '+f(y2+ny*0.4)+'" stroke="'+hl+'" stroke-width="1.1" opacity="0.55" stroke-linecap="round"/>':'');
+}
+/* a stroked line with the dark outline every shape here carries */
+function _mwLine(d,wd,col){
+  return '<path d="'+d+'" fill="none" stroke="'+_MW_O+'" stroke-width="'+(wd+2.6)+'" stroke-linecap="round" stroke-linejoin="round"/>'
+    +'<path d="'+d+'" fill="none" stroke="'+col+'" stroke-width="'+wd+'" stroke-linecap="round" stroke-linejoin="round"/>';
+}
+function _mwBands(d){
+  return '<path d="'+d+'" stroke="#1a1208" stroke-width="3.6" stroke-linecap="round"/><path d="'+d+'" stroke="#d2b272" stroke-width="1.6" stroke-linecap="round"/>';
+}
+function _mwIcon(p,sx,sy,srx,body){
+  const w=_mgDefs(p), t=_mgDefs(p.tip);
+  return '<svg class="ev-icon" viewBox="0 0 64 64">'+w.m+t.m
+    +'<ellipse cx="'+sx+'" cy="'+sy+'" rx="'+srx+'" ry="2.4" fill="#000" opacity="0.3"/>'
+    +body('url(#'+w.s+')','url(#'+t.s+')','url(#'+t.g+')')+_mgSpark(p.tip)+'</svg>';
+}
+const MAGE_DROP_PAL={
+  gnawbone:  {l:'#f3ead2',m:'#cdbf9c',d:'#7d6f52', tip:{l:'#ffe6b0',m:'#ff9a3c',d:'#a03408',glow:'#ff8a3a'}},
+  briarwood: {l:'#a88a52',m:'#6b4f26',d:'#2f200d', tip:{l:'#e8ffb0',m:'#8fd44a',d:'#3f6f14',glow:'#8fd44a'}},
+  webspinner:{l:'#8f937e',m:'#4d5142',d:'#20221a', tip:{l:'#e8ffb0',m:'#8fd44a',d:'#3f6f14',glow:'#8fd44a'}},
+  fetish:    {l:'#8a6a48',m:'#553a22',d:'#24160b', tip:{l:'#f4fcff',m:'#9fd8f0',d:'#3a7fa0',glow:'#8fd0e6'}},
+  gravecaller:{l:'#8d939c',m:'#484d57',d:'#1b1e24', tip:{l:'#fff0c0',m:'#ff9a3c',d:'#a03408',glow:'#ff8a3a'}},
+  frostbrand:{l:'#e2e9ee',m:'#93a3ad',d:'#44525b', tip:{l:'#ffffff',m:'#a9dcf2',d:'#3a7fa0',glow:'#8fd0e6'}},
+  moonhowl:  {l:'#c2c6cf',m:'#737885',d:'#30333c', tip:{l:'#ffffff',m:'#cdbcff',d:'#5a44a8',glow:'#b9a4f0'}},
+  seer:      {l:'#7c6a58',m:'#46372b',d:'#1d1510', tip:{l:'#ecd2ff',m:'#a060d8',d:'#3c1466',glow:'#9a5ad0'}},
+  mossheart: {l:'#a39a86',m:'#625a4b',d:'#2a2620', tip:{l:'#dfffc8',m:'#5fc86a',d:'#1f6a2c',glow:'#6fd87a'}},
+  cinderspine:{l:'#d2c1a4',m:'#84725a',d:'#362b1e', tip:{l:'#ffe6b0',m:'#ff7a2a',d:'#8a2408',glow:'#ff6a2a'}},
+  ashglass:  {l:'#909dad',m:'#3b434e',d:'#12161c', tip:{l:'#ffffff',m:'#a9d8ee',d:'#3f6f8a',glow:'#9fd0ea'}},
+  brimstone: {l:'#b8503e',m:'#6c211b',d:'#2a0a0a', tip:{l:'#fffbd0',m:'#f2d23a',d:'#8a6a08',glow:'#cdbcff'}},
+};
+const _MAGE_DROP_ART={
+  /* a rat's thigh bone, gnawed to a point */
+  gnawbone:function(p){ return _mwIcon(p,27,58.5,13,function(W,T,G){ return ''
+    +'<circle cx="48" cy="12" r="13" fill="'+G+'"/>'
+    +_mwShaft(15,51,41,22,6.6,W,p.l)
+    +'<circle cx="11.5" cy="50.5" r="4.8" fill="'+W+'" stroke="'+_MW_O+'" stroke-width="1.4"/><circle cx="15.8" cy="55.6" r="4.8" fill="'+W+'" stroke="'+_MW_O+'" stroke-width="1.4"/>'
+    +'<circle cx="10.4" cy="49.2" r="1.4" fill="#fff" opacity="0.6"/>'
+    +'<path d="M37.6 20.4 L49.5 10.5 L46 25 L42.6 21.2 L41.6 25.6 Z" fill="'+W+'" stroke="'+_MW_O+'" stroke-width="1.3" stroke-linejoin="round"/>'
+    +'<path d="M21 43.5 q2.6 -3.4 4.6 0.4 M26.6 37.2 q2.6 -3.4 4.6 0.4 M32.2 31 q2.6 -3.4 4.6 0.4" fill="none" stroke="#4a3f2c" stroke-width="1.5" stroke-linecap="round"/>'
+    +'<path d="M49.5 10.5 Q54 5.5 51.5 1.5 Q58 6 56 13 Q54.5 18 50 16.5 Q46.5 15 49.5 10.5 Z" fill="'+T+'" stroke="#5a1c04" stroke-width="0.9"/>'
+    +'<path d="M51.6 11.6 Q53.6 9 53 6.6 Q55.4 9.6 54 13 Q52.6 15 51.6 11.6 Z" fill="#fff" opacity="0.7"/>'; }); },
+  /* a twist of briar, still in thorn */
+  briarwood:function(p){ return _mwIcon(p,26,58.5,13,function(W,T,G){ const d='M12 55 Q21 48 23 39 Q25 30 33 27 Q41 24 45 15'; return ''
+    +'<circle cx="47" cy="12" r="13" fill="'+G+'"/>'
+    +'<path d="M20 47 L13.5 42.5 L21.5 43 Z M24 37 L30.5 39.5 L24.5 41.5 Z M27 30 L22.5 24 L30 27 Z M36 26.5 L39.5 32 L33.5 29 Z M41 21 L36.5 16 L43 18 Z" fill="'+p.d+'" stroke="'+_MW_O+'" stroke-width="1" stroke-linejoin="round"/>'
+    +_mwLine(d,5.2,W)
+    +'<path d="M14 53 Q21.5 46.5 23.5 38" fill="none" stroke="'+p.l+'" stroke-width="1.1" opacity="0.55" stroke-linecap="round"/>'
+    +'<path d="M33 27 Q26 15 37 12 Q39 21 33 27 Z" fill="#4f8a2c" stroke="'+_MW_O+'" stroke-width="1.1" stroke-linejoin="round"/><path d="M33.4 26 Q33 19 36 14" fill="none" stroke="#bfe89a" stroke-width="0.9"/>'
+    +'<circle cx="47" cy="12" r="5.6" fill="'+T+'" stroke="#1c3408" stroke-width="1.3"/><circle cx="45.2" cy="10.2" r="1.6" fill="#fff" opacity="0.75"/>'
+    +'<path d="M50.5 17 Q53 22 50.5 24.5 Q48 22 50.5 17 Z" fill="'+T+'" stroke="#1c3408" stroke-width="0.9"/>'; }); },
+  /* a hoop strung with web */
+  webspinner:function(p){ return _mwIcon(p,22,60,12,function(W,T,G){ return ''
+    +'<circle cx="42" cy="17" r="17" fill="'+G+'"/>'
+    +_mwShaft(15,59,33,29,5,W,p.l)
+    +'<circle cx="42" cy="17" r="12.4" fill="#141610" fill-opacity="0.55" stroke="'+_MW_O+'" stroke-width="6.2"/><circle cx="42" cy="17" r="12.4" fill="none" stroke="'+W+'" stroke-width="3.6"/>'
+    +'<path d="M42 5.6 V28.4 M30.6 17 H53.4 M34 9 L50 25 M50 9 L34 25" stroke="#eef2e6" stroke-width="0.9" opacity="0.85"/>'
+    +'<path d="M42 11.6 L45.8 13.2 L47.4 17 L45.8 20.8 L42 22.4 L38.2 20.8 L36.6 17 L38.2 13.2 Z M42 8.2 L48.2 10.8 L50.8 17 L48.2 23.2 L42 25.8 L35.8 23.2 L33.2 17 L35.8 10.8 Z" fill="none" stroke="#eef2e6" stroke-width="0.8" opacity="0.8"/>'
+    +'<path d="M42 12 Q46.6 18 42 22.4 Q37.4 18 42 12 Z" fill="'+T+'" stroke="#1c3408" stroke-width="1"/><circle cx="41" cy="16.6" r="1.2" fill="#fff" opacity="0.8"/>'
+    +_mwBands('M27.6 37.6 L33.6 41.2 M24.8 42.4 L30.8 46'); }); },
+  /* a goblin's skull, feathers and teeth on a cord */
+  fetish:function(p){ return _mwIcon(p,22,60,12,function(W,T,G){ return ''
+    +'<circle cx="41" cy="14" r="15" fill="'+G+'"/>'
+    +_mwShaft(15,59,35,26,5,W,p.l)
+    +'<path d="M31 33 Q24 34 21 40" fill="none" stroke="#2a1c10" stroke-width="1.3"/>'
+    +'<path d="M21 40 L16 52 L20.5 50.5 L24.5 53 Z" fill="#c8483a" stroke="'+_MW_O+'" stroke-width="1" stroke-linejoin="round"/><path d="M21 41 L20.5 50" stroke="#ffd9c8" stroke-width="0.8"/>'
+    +'<path d="M34 34 Q40 36 43 42" fill="none" stroke="#2a1c10" stroke-width="1.3"/>'
+    +'<path d="M43 42 L41 54 L45.5 51.5 L49 54.5 Z" fill="#3f9a8a" stroke="'+_MW_O+'" stroke-width="1" stroke-linejoin="round"/><path d="M43.4 43 L45 51" stroke="#d2fff4" stroke-width="0.8"/>'
+    +'<circle cx="24.6" cy="36" r="1.7" fill="#e0b24a" stroke="'+_MW_O+'" stroke-width="0.7"/><circle cx="38.6" cy="36.6" r="1.7" fill="#e0b24a" stroke="'+_MW_O+'" stroke-width="0.7"/>'
+    +'<path d="M31.5 13 Q31.5 3.5 41 3.5 Q50.5 3.5 50.5 13 Q50.5 18.5 47 20.5 L47 25.5 L35 25.5 L35 20.5 Q31.5 18.5 31.5 13 Z" fill="#e9e1cb" stroke="'+_MW_O+'" stroke-width="1.4" stroke-linejoin="round"/>'
+    +'<path d="M33.5 11 Q34.5 5.5 40 5" fill="none" stroke="#fff" stroke-width="1.2" opacity="0.7" stroke-linecap="round"/>'
+    +'<ellipse cx="37" cy="13.6" rx="2.9" ry="3.3" fill="#0d1620"/><ellipse cx="45" cy="13.6" rx="2.9" ry="3.3" fill="#0d1620"/>'
+    +'<circle cx="37" cy="13.8" r="1.5" fill="'+T+'"/><circle cx="45" cy="13.8" r="1.5" fill="'+T+'"/>'
+    +'<path d="M41 17 L39.8 20 L42.2 20 Z" fill="#3a2c1c"/><path d="M38 22 V25.5 M41 22 V25.5 M44 22 V25.5" stroke="#3a2c1c" stroke-width="1"/>'; }); },
+  /* a dead hand, closed round a flame */
+  gravecaller:function(p){ return _mwIcon(p,24,60,12,function(W,T,G){ return ''
+    +'<circle cx="42" cy="14" r="17" fill="'+G+'"/>'
+    +_mwShaft(17,59,34,29,5.2,W,p.l)
+    +'<path d="M42 23 Q33 16 39 5 Q40.5 10 44 10.5 Q43 6 46.5 3 Q52 9 50 16 Q48.5 22 42 23 Z" fill="'+T+'" stroke="#5a1c04" stroke-width="1"/>'
+    +'<path d="M43 20.5 Q39 15.5 42 11 Q43 14 45.4 13.4 Q47.6 17 43 20.5 Z" fill="#fff" opacity="0.75"/>'
+    +_mwLine('M33.5 28.5 Q26.5 20 31.5 11.5',2.6,'#e2dcc6')+_mwLine('M36 29.5 Q44 30 50 25.5 Q54.5 22 54 16.5',2.6,'#e2dcc6')+_mwLine('M35 29 Q38 27.5 40.5 28.5',2.6,'#e2dcc6')
+    +'<circle cx="31.5" cy="11.5" r="1.9" fill="#f4eeda" stroke="'+_MW_O+'" stroke-width="0.9"/><circle cx="54" cy="16.5" r="1.9" fill="#f4eeda" stroke="'+_MW_O+'" stroke-width="0.9"/><circle cx="28.6" cy="20.4" r="1.6" fill="#f4eeda" stroke="'+_MW_O+'" stroke-width="0.8"/><circle cx="46.6" cy="28.4" r="1.6" fill="#f4eeda" stroke="'+_MW_O+'" stroke-width="0.8"/>'
+    +_mwBands('M28.4 37.8 L34.6 41.4 M25.6 42.8 L31.8 46.4'); }); },
+  /* three shards of ice that never melt */
+  frostbrand:function(p){ return _mwIcon(p,22,60,12,function(W,T,G){ return ''
+    +'<circle cx="40" cy="18" r="19" fill="'+G+'"/>'
+    +_mwShaft(15,59,33,30,5,W,'#ffffff')
+    +'<path d="M27 13 L35 22 L32 33 L23.5 24 Z" fill="'+T+'" stroke="#16384a" stroke-width="1.2" stroke-linejoin="round"/>'
+    +'<path d="M51 17 L57 27 L48 36 L42.5 28 Z" fill="'+T+'" stroke="#16384a" stroke-width="1.2" stroke-linejoin="round"/>'
+    +'<path d="M39 3 L47.5 18 L41 35 L31.5 22 Z" fill="'+T+'" stroke="#16384a" stroke-width="1.3" stroke-linejoin="round"/>'
+    +'<path d="M39 3 L40.5 20 L41 35 L31.5 22 Z" fill="#fff" opacity="0.45"/><path d="M27 13 L29 23 L32 33 L23.5 24 Z M51 17 L50 27 L48 36 L42.5 28 Z" fill="#fff" opacity="0.3"/>'
+    +'<path d="M39 3 L40.5 20 L47.5 18 M40.5 20 L41 35" fill="none" stroke="#16384a" stroke-width="0.7" opacity="0.6"/>'
+    +_mwBands('M26.4 38.8 L32.4 42.4 M23.6 43.6 L29.6 47.2'); }); },
+  /* a sickle moon, and the fang of the wolf that howled at it */
+  moonhowl:function(p){ return _mwIcon(p,26,58.5,13,function(W,T,G){ return ''
+    +'<circle cx="45" cy="15" r="15" fill="'+G+'"/>'
+    +_mwShaft(13,54,38,27,5,W,p.l)
+    +'<circle cx="11.6" cy="55.4" r="4" fill="'+W+'" stroke="'+_MW_O+'" stroke-width="1.3"/>'
+    +'<path d="M49 3 A13 13 0 1 0 59 23 A10.5 10.5 0 1 1 49 3 Z" fill="'+T+'" stroke="#241a4a" stroke-width="1.3" stroke-linejoin="round"/>'
+    +'<path d="M46.5 5.5 A10.6 10.6 0 0 0 37 17" fill="none" stroke="#fff" stroke-width="1.3" opacity="0.75" stroke-linecap="round"/>'
+    +'<path d="M50 9 L46 15.5 H49.6 L46.6 21.5 L54 13.6 H50.2 L52.6 9 Z" fill="#fff6b0" stroke="#5a44a8" stroke-width="0.7" stroke-linejoin="round"/>'
+    +'<path d="M26 40.5 Q24 44 26 47" fill="none" stroke="#2a1c10" stroke-width="1.1"/>'
+    +'<path d="M23.2 46.4 L29.4 46 L27.2 57 Z" fill="#f6f0dc" stroke="'+_MW_O+'" stroke-width="1" stroke-linejoin="round"/>'
+    +_mwBands('M20.4 43 L25.8 48.4'); }); },
+  /* an ogre seer's eye, and it still looks */
+  seer:function(p){ return _mwIcon(p,22,60,12,function(W,T,G){ return ''
+    +'<circle cx="41" cy="15" r="18" fill="'+G+'"/>'
+    +_mwShaft(15,59,34,29,5.2,W,p.l)
+    +_mwLine('M33 29 Q24 25 25 14 Q25.5 9 29 6',3.4,W)+_mwLine('M36.4 30.6 Q50 31 56 21 Q58 16 56.5 11',3.4,W)
+    +'<path d="M26.5 16 Q40 1.5 56 14.5 Q42 29 26.5 16 Z" fill="#f4efe2" stroke="'+_MW_O+'" stroke-width="1.4" stroke-linejoin="round"/>'
+    +'<path d="M29 15.6 Q40 5 53.4 14" fill="none" stroke="#b3a48c" stroke-width="1" opacity="0.7"/>'
+    +'<circle cx="41" cy="15.4" r="6.6" fill="'+T+'" stroke="#1c0a30" stroke-width="1.1"/>'
+    +'<path d="M41 10 Q43.6 15.4 41 20.8 Q38.4 15.4 41 10 Z" fill="#0a0410"/><circle cx="38.6" cy="12.8" r="1.6" fill="#fff" opacity="0.85"/>'
+    +'<path d="M30 19.5 L27.5 22.5 M52.5 18.5 L55 21" stroke="#8a2c2c" stroke-width="0.8" opacity="0.7"/>'
+    +_mwBands('M27.6 38.4 L33.8 42 M24.8 43.4 L31 47'); }); },
+  /* troll stone gone green, with a heart in it that beats */
+  mossheart:function(p){ return _mwIcon(p,26,58.5,14,function(W,T,G){ return ''
+    +'<circle cx="45" cy="16" r="15" fill="'+G+'"/>'
+    +'<path d="M9.5 51 L18 59 L41.5 31 L33 22 Z" fill="'+W+'" stroke="'+_MW_O+'" stroke-width="1.5" stroke-linejoin="round"/>'
+    +'<path d="M12.5 51 L33.5 25" stroke="'+p.l+'" stroke-width="1.2" opacity="0.5" stroke-linecap="round"/>'
+    +'<path d="M22 44 L27 39 M29 46 L31 43.5 M17 49 L19 51.5" stroke="#1c1a16" stroke-width="1" opacity="0.6" stroke-linecap="round"/>'
+    +'<path d="M14 46 Q16 41 21 42.5 Q24 45 20 48.5 Q16 50 14 46 Z M26 33 Q27 27.5 33 28 Q37 30.5 34 35 Q29 37.5 26 33 Z M23 52 Q26 49.5 29 51.5 Q28.5 55 25 55.5 Z" fill="#4f8a3a" stroke="#16300f" stroke-width="1" stroke-linejoin="round"/>'
+    +'<circle cx="17.6" cy="45" r="1.1" fill="#bfe89a"/><circle cx="30.4" cy="31" r="1.2" fill="#bfe89a"/>'
+    +'<path d="M45 28 C33.5 19.5 35 6.5 41.4 6.5 C43.8 6.5 45 9 45 10.4 C45 9 46.2 6.5 48.6 6.5 C55 6.5 56.5 19.5 45 28 Z" fill="'+T+'" stroke="#0f3a18" stroke-width="1.4" stroke-linejoin="round"/>'
+    +'<path d="M39.4 10.6 Q41 8.4 43 9.6" fill="none" stroke="#fff" stroke-width="1.5" opacity="0.8" stroke-linecap="round"/><path d="M45 13 L45 24" stroke="#0f3a18" stroke-width="0.8" opacity="0.5"/>'; }); },
+  /* a drake's spine, and the tail spike still hot */
+  cinderspine:function(p){ return _mwIcon(p,22,60,12,function(W,T,G){
+    let v=''; for(let i=0;i<6;i++){ const x=15+i*4.1, y=57.5-i*6.2;
+      v+='<g transform="rotate(-33 '+x+' '+y+')"><path d="M'+(x-6.4)+' '+(y-1)+' L'+(x-3.2)+' '+(y-2.6)+' L'+(x+3.2)+' '+(y-2.6)+' L'+(x+6.4)+' '+(y-1)+' L'+(x+3.4)+' '+(y+2.6)+' L'+(x-3.4)+' '+(y+2.6)+' Z" fill="'+W+'" stroke="'+_MW_O+'" stroke-width="1.2" stroke-linejoin="round"/>'
+        +'<path d="M'+(x-2.4)+' '+(y-1.2)+' H'+(x+2.4)+'" stroke="'+p.l+'" stroke-width="0.9" opacity="0.7"/></g>'; }
+    return '<circle cx="45" cy="13" r="16" fill="'+G+'"/>'
+    +'<path d="M14 58 L37 24" stroke="'+_MW_O+'" stroke-width="3.4" stroke-linecap="round"/><path d="M14 58 L37 24" stroke="'+p.d+'" stroke-width="1.6" stroke-linecap="round"/>'+v
+    +'<path d="M33.5 24.5 Q34 9 54 3 Q49.5 14 43.5 29 Q38 29.5 33.5 24.5 Z" fill="'+T+'" stroke="#4a1404" stroke-width="1.4" stroke-linejoin="round"/>'
+    +'<path d="M37 22 Q39 12 49.5 6.5" fill="none" stroke="#fff" stroke-width="1.4" opacity="0.7" stroke-linecap="round"/>'
+    +'<path d="M41 26.5 Q44 19 47 13" fill="none" stroke="#4a1404" stroke-width="0.9" opacity="0.55"/>'; }); },
+  /* steppe sand, struck to black glass */
+  ashglass:function(p){ return _mwIcon(p,22,60,12,function(W,T,G){ return ''
+    +'<circle cx="42" cy="15" r="18" fill="'+G+'"/>'
+    +_mwShaft(15.5,59.5,34,29,4.4,W,'#c8d4e2')
+    +'<path d="M31 32 L27.5 18 L42 2 L54 13 L44.5 21 L48 25.5 L38.5 34 Z" fill="'+W+'" stroke="'+_MW_O+'" stroke-width="1.4" stroke-linejoin="round"/>'
+    +'<path d="M42 2 L39 18 L31 32 L27.5 18 Z" fill="#c8d4e2" opacity="0.4"/><path d="M42 2 L39 18 L44.5 21 L54 13 Z" fill="#000" opacity="0.25"/>'
+    +'<path d="M39 18 L44.5 21 M39 18 L38.5 34" stroke="#c8d4e2" stroke-width="0.7" opacity="0.6"/>'
+    +'<path d="M41 6.5 L37.4 17.5 L35 29" fill="none" stroke="'+T+'" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M41 6.5 L37.4 17.5 L35 29" fill="none" stroke="#fff" stroke-width="0.8" opacity="0.9" stroke-linecap="round"/>'
+    +'<path d="M22 44 L26.5 47 M19.4 48.6 L23.8 51.4" stroke="#c8d4e2" stroke-width="1.2" opacity="0.6" stroke-linecap="round"/>'; }); },
+  /* a demon's rod of office, horned, with brimstone set in it */
+  brimstone:function(p){ return _mwIcon(p,27,58.5,13,function(W,T,G){ return ''
+    +'<circle cx="45" cy="17" r="16" fill="'+G+'"/>'
+    +_mwShaft(15,54,37,29,6.6,W,p.l)
+    +'<circle cx="13.4" cy="56" r="4.6" fill="#e0b24a" stroke="'+_MW_O+'" stroke-width="1.3"/><circle cx="12.4" cy="54.8" r="1.3" fill="#fff" opacity="0.7"/>'
+    +'<path d="M36.5 27 Q22 22.5 25.5 5 Q30.5 15.5 41 20 Z" fill="'+W+'" stroke="'+_MW_O+'" stroke-width="1.4" stroke-linejoin="round"/>'
+    +'<path d="M43.5 33.5 Q57 38.5 61.5 21 Q55 28.5 47 26.5 Z" fill="'+W+'" stroke="'+_MW_O+'" stroke-width="1.4" stroke-linejoin="round"/>'
+    +'<path d="M27 9 Q29.5 17 37.5 21.5" fill="none" stroke="'+p.l+'" stroke-width="1" opacity="0.6" stroke-linecap="round"/>'
+    +'<path d="M46 5.5 L54 17.5 L45 30 L37 18 Z" fill="'+T+'" stroke="#4a3804" stroke-width="1.4" stroke-linejoin="round"/>'
+    +'<path d="M46 5.5 L45.4 17.6 L37 18 Z" fill="#fff" opacity="0.5"/><path d="M45.4 17.6 L45 30 M37 18 L54 17.5" stroke="#4a3804" stroke-width="0.7" opacity="0.6"/>'
+    +_mwBands('M22.6 41.6 L28.8 47 M26.6 37 L32.8 42.4'); }); },
+};
+
 /* The Runecrafting skill icon: a struck stone and the chisel that cut it. Heavy
    and dark, because the rail draws it at twenty pixels. */
 function _runecraftSVG(){
@@ -16402,6 +16572,9 @@ function combatGearStatBlock(itemId){
     var _ncl=1-Math.max(MAGIC_ARMOUR_FLOOR,1-nonClothDef()*MAGIC_ARMOUR_PER_DEF);
     if(_ncl>0) chips.push(_chip('#e0762f','ui_muscle','Your armour that is not cloth: -'+Math.round(_ncl*100)+'% Magic damage'));
   }
+  /* A found staff or wand that is better with one element says which, and by how much. */
+  if(it.cslot==='weapon' && it.magic && it.aff && ELEMENT_BY[it.aff.el])
+    chips.push(_chip(ELEMENT_BY[it.aff.el].col,'el_'+it.aff.el,'+'+(Math.round(it.aff.dmg*1000)/10)+'% damage with '+ELEMENT_BY[it.aff.el].n));
   var chipLine=chips.length?'<div class="nt-chips">'+chips.join('')+'</div>':'';
 
   /* The tier/slot line moved up into the card's header band, where it is the first
@@ -24184,6 +24357,13 @@ function elementMult(mon,el){
   if(!mon) return 1; el=el||spellElement();
   return mon.weakEl===el ? ELEMENT_WEAK_MULT : (mon.resistEl===el ? ELEMENT_RESIST_MULT : 1);
 }
+/* A staff or a wand that is better with one element (0.9.127.11): `aff:{el,dmg}` on
+   the item, and 1 for everything else. Read on the line the weakness is read on,
+   for a cast that landed, so it is worth what the card says and no more. */
+function spellAffinity(el){
+  const w=ITEMS[eqCombatWeapon()]; el=el||spellElement();
+  return (w&&w.magic&&w.aff&&w.aff.el===el) ? 1+w.aff.dmg : 1;
+}
 /* What the element does when a cast lands. Every branch writes to a status the
    fight already runs, so there is nothing new to tick and nothing new to clear.
    Branded raises the chance of the two that are rolled, the burn and the chill. */
@@ -24193,8 +24373,12 @@ function mageOnHit(mon,dmg,now){
   if(!combat.foeStatus) combat.foeStatus={};
   if(e.rider.burn && Math.random()<Math.min(1,BURN_CHANCE+more)){
     const fresh=!combat.foeStatus.burn;
+    /* A staff that burns on its own (Cinderspine) burns hotter than Fire does.
+       Fire keeps that burn going and never cools it. */
+    const _wb=(ITEMS[eqCombatWeapon()]||{}).wfx;
+    const _hot=(_wb&&_wb.burn&&combat.foeStatus.burn)?combat.foeStatus.burn.tickDmg:0;
     combat.foeStatus.burn={
-      tickDmg:Math.max(1,Math.round(combat.youMaxHit*e.rider.burn)),
+      tickDmg:Math.max(_hot,1,Math.round(combat.youMaxHit*e.rider.burn)),
       until:now+BURN_DUR_MS,
       last:combat.foeStatus.burn?combat.foeStatus.burn.last:now
     };
@@ -35733,6 +35917,138 @@ const HUNT_KIT=[
   ICONS.stonewright_gauntlets=_glovesSVG(PLATE);
 })();
 
+/* ════ MAGIC: what the zones drop (0.9.127.11, slice 5 of _magedesign/) ═══════════
+   Every staff and wand was crafted and the ladder stopped at tier 7, while a
+   fighter and an archer had a find in every zone. This is one unique wand or staff
+   a zone, twelve of them. Each has the numbers of the crafted weapon of its tier
+   and ONE thing the crafted one does not have:
+
+     aff     an element it is better with, read by spellAffinity() on the line the
+             element's weakness is
+     wfx     an effect the fight already had: poison, or a burn whatever the element
+     ubonus  lifesteal, through the channel raid uniques use
+
+   So it is a choice beside the crafted weapon and not a replacement, the rule the
+   proc bows follow. One the boss also drops sits at or a little above its tier,
+   where Wyrmfang and Doomblade sit.
+
+   They are ordinary rows on MONSTER_DROPS, so a rare spawn multiplies them by four
+   and stops at 85% with no code of its own, and the tier follows the zone: nothing
+   in the Rat Warrens is above tier 1. The Stormfeather Wand waits for the Aerie
+   and is not defined here. Every number is _magedesign/design.js's.
+
+   The same builder makes the raid and Spire weapons further down. */
+const MAGE_FAMILY={
+  wand: {wclass:'light', swingMult:0.87, dmgMult:1.00, twoHanded:false, crit:0,    critTier:0,
+         tail:'One hand, so a buckler or a shield still fits. Every cast spends runes.'},
+  staff:{wclass:'heavy', swingMult:1.25, dmgMult:1.44, twoHanded:true,  crit:0.06, critTier:0.004,
+         tail:'Takes both hands, so you cannot carry a shield. Every cast spends runes.'},
+};
+/* The one thing a found staff or wand does, in the words its card uses. Built from
+   the fields the fight reads, so the card cannot say a number the fight does not use. */
+function mageDropDoes(d){
+  const out=[], pc=function(x){ return Math.round(x*1000)/10; };
+  if(d.aff) out.push(ELEMENT_BY[d.aff.el].n+' spells cast with it deal '+pc(d.aff.dmg)+'% more damage.');
+  if(d.wfx&&d.wfx.poison) out.push('A cast that hits has a '+pc(POISON_CHANCE)+'% chance to poison the monster. Poison stacks, and each stack lowers its Defence.');
+  if(d.wfx&&d.wfx.burn) out.push('A cast that hits has a '+pc(BURN_CHANCE)+'% chance to set the monster on fire, whatever the element.');
+  if(d.wfx&&d.wfx.stun) out.push('A cast that hits has a '+pc(d.wfx.stun.chance)+'% chance to stun the monster for '+d.wfx.stun.dur+' seconds.');
+  if(d.wfx&&d.wfx.cleave) out.push('A cast that hits has a '+pc(d.wfx.cleave.chance)+'% chance to hit twice.');
+  if(d.ubonus){
+    const u=d.ubonus, bits=[];
+    if(u.magicDmg) bits.push('+'+pc(u.magicDmg)+'% Magic damage');
+    if(u.critChance) bits.push('+'+pc(u.critChance)+'% crit chance');
+    if(bits.length) out.push(bits.join(' and ')+'.');
+    if(u.lifesteal) out.push('You heal for '+pc(u.lifesteal)+'% of the damage you deal.');
+  }
+  return out.join(' ');
+}
+function mageDropWeapon(d){
+  const F=MAGE_FAMILY[d.fam];
+  ITEMS[d.id]=Object.assign({name:d.name, icon:'\u{1FA84}', sell:d.sell, rare:true, cgear:true, ctier:d.tier, cslot:'weapon',
+    dmgType:'magic', magic:true, ammo:'rune', mfam:d.fam, wclass:F.wclass, swingMult:F.swingMult, dmgMult:F.dmgMult},
+    F.twoHanded?{twoHanded:true}:{}, d.aff?{aff:d.aff}:{}, d.wfx?{wfx:d.wfx}:{}, d.ubonus?{ubonus:d.ubonus}:{},
+    {desc:d.lore+' <b>'+mageDropDoes(d)+'</b> '+F.tail});
+  const cs={atk:d.atk, str:0, def:0};
+  if(d.mpow) cs.mpow=d.mpow;
+  if(F.crit) cs.crit=+(F.crit+F.critTier*d.tier).toFixed(3);
+  COMBAT_GEAR_STATS[d.id]=cs;
+  ICONS[d.id]=_MAGE_DROP_ART[d.art](MAGE_DROP_PAL[d.art]);
+}
+/* `from` is [monster, chance]: 0.5% to 1% from a named monster and 3% from the boss,
+   the rates the gear beside them on these tables already carries. */
+const MAGE_ZONE_DROPS=[
+  {id:'gnawbone_wand',    name:'Gnawbone Wand',    fam:'wand',  tier:1, atk:3,  mpow:0, sell:280,   art:'gnawbone',
+   from:[['brood_rat',0.007]], aff:{el:'fire',dmg:0.06},
+   lore:"A rat's thigh bone, gnawed to a point by the brood."},
+  {id:'briarwood_wand',   name:'Briarwood Wand',   fam:'wand',  tier:2, atk:5,  mpow:0, sell:720,   art:'briarwood',
+   from:[['timber_wolf',0.010]], wfx:{poison:{mult:0.08}},
+   lore:'A twist of Thornwood briar that never lost its thorns.'},
+  {id:'webspinner_staff', name:'Webspinner Staff', fam:'staff', tier:2, atk:5,  mpow:0, sell:720,   art:'webspinner',
+   from:[['venomfang',0.007]], wfx:{poison:{mult:0.08}},
+   lore:'A hoop of chitin strung with web, and the web is still wet.'},
+  {id:'fetish_staff',     name:"Shaman's Fetish Staff", fam:'staff', tier:3, atk:8, mpow:0, sell:1400, art:'fetish',
+   from:[['goblin_shaman',0.006]], aff:{el:'frost',dmg:0.08},
+   lore:"The Shaman's own: a goblin skull, two feathers and a string of teeth."},
+  {id:'gravecaller',      name:'Gravecaller',      fam:'staff', tier:4, atk:14, mpow:1, sell:3600,  art:'gravecaller',
+   from:[['crypt_wight',0.005],['lich',0.030]], aff:{el:'fire',dmg:0.08},
+   lore:'A dead hand on an iron pole, closed round a flame that does not go out.'},
+  {id:'frostbrand_staff', name:'Frostbrand Staff', fam:'staff', tier:4, atk:12, mpow:0, sell:3200,  art:'frostbrand',
+   from:[['frost_bear',0.009]], aff:{el:'frost',dmg:0.08},
+   lore:'Three shards of tundra ice that have never melted.'},
+  {id:'moonhowl_wand',    name:'Moonhowl Wand',    fam:'wand',  tier:5, atk:17, mpow:0, sell:4800,  art:'moonhowl',
+   from:[['alpha_wolf',0.006],['ironfang',0.030]], aff:{el:'storm',dmg:0.06},
+   lore:'A sickle moon in silver, hung with the fang of the wolf that howled at it.'},
+  {id:'seers_eye',        name:"Seer's Eye",       fam:'staff', tier:6, atk:25, mpow:2, sell:7000,  art:'seer',
+   from:[['ogre_seer',0.005],['ogre_warlord',0.030]], aff:{el:'shadow',dmg:0.08},
+   lore:"An Ogre Seer's eye on a staff, and it still looks."},
+  {id:'mossheart_wand',   name:'Mossheart Wand',   fam:'wand',  tier:7, atk:34, mpow:2, sell:9200,  art:'mossheart',
+   from:[['moss_troll',0.005],['troll_king',0.030]], ubonus:{lifesteal:0.04},
+   lore:'Troll stone gone green, with a heart in it that still beats.'},
+  {id:'cinderspine',      name:'Cinderspine',      fam:'staff', tier:7, atk:36, mpow:3, sell:16000, art:'cinderspine',
+   from:[['cinder_drake',0.005],['emberwyrm',0.030]], wfx:{burn:{mult:0.13}},
+   lore:"A drake's spine, with the tail spike still hot."},
+  {id:'ashglass_staff',   name:'Ashglass Staff',   fam:'staff', tier:8, atk:44, mpow:5, sell:22000, art:'ashglass',
+   from:[['scorch_rhino',0.007]], aff:{el:'frost',dmg:0.08},
+   lore:'Steppe sand struck to black glass, and cold all the way through.'},
+  {id:'brimstone_sceptre',name:'Brimstone Sceptre',fam:'wand',  tier:8, atk:48, mpow:7, sell:24000, art:'brimstone',
+   from:[['abyssal_fiend',0.005],['demon_lord',0.030]], aff:{el:'storm',dmg:0.06},
+   lore:"A demon's rod of office, horned, with brimstone set in it."},
+];
+MAGE_ZONE_DROPS.forEach(function(d){
+  mageDropWeapon(d);
+  d.from.forEach(function(r){
+    const t=MONSTER_DROPS[r[0]]; if(!t) return;
+    /* in front, where the gear rows sit, and behind a boss's trophy */
+    t.splice((t[0]&&t[0].once)?1:0, 0, {id:d.id, chance:r[1]});
+  });
+});
+/* Anything that casts drops its runes, the rule the archers follow for arrows. The
+   grade is read off the monster's level against the level Runecrafting carves each
+   rune at, so a fight can never hand out a rune from further up the ladder than it
+   sits on. The counts are for a one-rune spell and are multiplied by what the
+   grade's biggest spell spends, so a kill is worth a few casts at any grade. A
+   top-up, not a supply. */
+const MAGE_RUNE_DROPS=[
+  ['goblin_shaman', 0.30, [8,18]],
+  ['crypt_wight',   0.22, [6,14]],
+  ['lich',          0.60, [20,40]],
+  ['ogre_seer',     0.30, [8,18]],
+  ['abyssal_fiend', 0.24, [8,18]],
+  ['demon',         0.14, [5,12]],
+];
+(function(){
+  const carve=SKILLS.runecrafting.acts.filter(function(a){ return a.cat==='runes'; })
+    .map(function(a){ return {id:Object.keys(a.out)[0], lvl:a.lvl}; }).sort(function(a,b){ return a.lvl-b.lvl; });
+  MAGE_RUNE_DROPS.forEach(function(r){
+    const m=MONSTERS.filter(function(x){ return x.id===r[0]; })[0];
+    if(!m||!MONSTER_DROPS[r[0]]||!carve.length) return;
+    let rune=carve[0].id;
+    carve.forEach(function(c){ if(c.lvl<=m.lvl) rune=c.id; });
+    const n=runeClassOf(rune);
+    MONSTER_DROPS[r[0]].push({id:rune, chance:r[1], qty:[r[2][0]*n, r[2][1]*n]});
+  });
+})();
+
 /* Empyrean Throne — zone + foe icons (1.0.87). Radiant gold silhouettes with an
    indigo "fallen-god" accent; Aureon carries one dawn eye + one void eye to read as
    the Dawnbroken God. Registered on the ICONS map so getMonster/iconHTML render them. */
@@ -44069,7 +44385,8 @@ function combatTick(){
       /* A spell's matchup is its element, not the weapon's damage type, on the
          same line and for the same 15%. Only a cast that landed: a miss stays 0. */
       if(_mg){
-        if(youDmg>0){ const _em=elementMult(mon); if(_em!==1) youDmg=Math.max(1,Math.round(youDmg*_em)); }
+        /* And the element a found staff or wand is better with, on the same line. */
+        if(youDmg>0){ const _em=elementMult(mon)*spellAffinity(); if(_em!==1) youDmg=Math.max(1,Math.round(youDmg*_em)); }
       }
       else if(_wepType){
         if(mon.weakTo===_wepType){ youDmg=Math.max(1, Math.round(youDmg*1.15)); }
@@ -46139,6 +46456,7 @@ function spellBarHTML(mon){
   if(!usingMagic()) return '';
   const cur=spellElement();
   const a=readyAmmo(), cls=a?runeClassOf(a):0, size=a?spellSize():0, rune=a?ITEMS[a]:null;
+  const held=ITEMS[eqCombatWeapon()]||{};
   let h='<div class="cvspell" id="cmbSpellBar">';
   SPELL_SIZES.forEach(function(s,i){
     const n=i+1, can=n<=cls, need=(ITEMS[spellFirstRune(n)]||{}).name||'Rune';
@@ -46151,12 +46469,16 @@ function spellBarHTML(mon){
   MAGIC_ELEMENTS.forEach(function(e){
     const open=elementUnlocked(e.k);
     const weak=!!(mon&&mon.weakEl===e.k), res=!!(mon&&mon.resistEl===e.k);
+    /* The element the staff or wand in your hand is better with (a found one). */
+    const aff=(open&&held.aff&&held.aff.el===e.k)?Math.round(held.aff.dmg*1000)/10:0;
     const tag=!open ? '<small>'+iconHTML('ui_lock')+'Magic '+e.lvl+'</small>'
       : weak ? '<small class="weak">weak +15%</small>'
-      : res ? '<small class="res">resists -15%</small>' : '<small>'+e.word+'</small>';
+      : res ? '<small class="res">resists -15%</small>'
+      : aff ? '<small class="weak">'+(held.mfam||'staff')+' +'+aff+'%</small>' : '<small>'+e.word+'</small>';
     const tip=e.n+': '+e.line+(!open ? ' Unlocks at Magic '+e.lvl+'.'
       : weak ? ' '+mon.name+' is weak to it: +15% damage.'
-      : res ? ' '+mon.name+' resists it: -15% damage.' : '');
+      : res ? ' '+mon.name+' resists it: -15% damage.' : '')
+      +(aff ? ' Your '+held.name+' adds '+aff+'% to '+e.n+' damage.' : '');
     h+='<button class="cmb-style cvspell-b cel'+(cur===e.k?' sel':'')+'" data-el="'+e.k+'" title="'+mmEsc(tip)+'" style="--el:'+e.col+'"'+(open?'':' disabled')+'>'
       +'<span class="cel-top">'+iconHTML('el_'+e.k)+'<span class="cst-nm">'+e.n+'</span></span>'+tag+'</button>';
   });

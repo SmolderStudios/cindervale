@@ -2,6 +2,8 @@
  *
  *     node _magedesign/shootreal.js              every scene -> shots/real/*.png
  *     node _magedesign/shootreal.js fight raid   only those
+ *     node _magedesign/shootreal.js gear         the gear half (finds, raid robes, Dawnveil,
+ *                                                Faultline) -> shots/gear/*.png
  *
  * shoot.js photographs the design: build 0.9.127.3 with overlay.js and ui.js on
  * top. This is its twin for the build that has Magic in it. A working copy of
@@ -295,6 +297,110 @@ function SCENES_IN_PAGE() {
         : painted + ' painted, ' + (cells.length - painted) + ' still drawn by the game';
       info.height = Math.ceil(d0.getBoundingClientRect().height); info.icons = cells.length; info.painted = painted;
     }
+    /* ── the gear half of Magic: finds, raid weapons and robes, Dawnveil, Faultline.
+       These land in shots/gear. Every list is read off the game, so a scene shows
+       whatever of it the build holds. ─────────────────────────────────────────── */
+    /* item cards side by side, each drawn by the game's own tooltip and copied out */
+    function cards(ids, heads) {
+      var old = document.getElementById('gearShot'); if (old) old.remove();
+      var box = document.createElement('div'); box.id = 'gearShot';
+      box.style.cssText = 'position:absolute;left:60px;top:60px;z-index:99999;display:flex;gap:28px;align-items:flex-start;background:#120c07;padding:26px 28px;border:1px solid #3a2a18;border-radius:8px';
+      ids.forEach(function (id, i) {
+        showItemTooltip(id, 300, 200, '');
+        var c = ttEl().cloneNode(true);
+        c.style.position = 'static'; c.style.display = 'block'; c.style.opacity = '1'; c.style.visibility = 'visible'; c.style.transform = 'none'; c.style.left = 'auto'; c.style.top = 'auto';
+        var col = document.createElement('div');
+        col.innerHTML = '<div style="font:italic 13px Georgia,serif;color:#a8946c;margin:0 0 8px 2px">' + ((heads && heads[i]) || '') + '</div>';
+        col.appendChild(c); box.appendChild(col);
+      });
+      hideTooltip(); document.body.appendChild(box);
+      info.cards = ids.map(function (id) { return ITEMS[id].name; });
+      info.text = ids.map(function (id, i) { return box.children[i].textContent.replace(/\s+/g, ' ').trim().slice(0, 420); });
+    }
+    var isFind = function (id) { return !!(ITEMS[id] && ITEMS[id].magic && !ITEMS[id]._variant && typeof isUniqueGear === 'function' && isUniqueGear(id)); };
+    var finds = Object.keys(ITEMS).filter(isFind).sort(function (a, b) { return ITEMS[a].ctier - ITEMS[b].ctier; });
+    var isZoneFind = function (id) { for (var m in MONSTER_DROPS) if (MONSTER_DROPS[m].some(function (x) { return x.id === id; })) return true; return false; };
+    function mage99() {
+      ['magic', 'defence', 'hitpoints'].forEach(function (k) { state.combatXp[k] = XP_CUM[99]; });
+      state.xp.agility = XP_CUM[70];
+    }
+    if (scene === 'gear_sheet') {
+      var oldS = document.getElementById('mageSheet'); if (oldS) oldS.remove();
+      var drawn = function (id) { return /^<svg class="ev-icon"/.test(String(ICONS[id] || '')); };
+      var cellG = function (id, note) { var s = iconHTML(id);
+        return '<div class="c"><div class="b"><div class="s1">' + s + '</div><div class="s2">' + s + '</div><div class="s3">' + s + '</div></div><span>' + ITEMS[id].name + '</span>' + (note ? '<i>' + note + '</i>' : '') + '</div>'; };
+      var secG = function (title, sub, ids, note) { return ids.length ? '<h2>' + title + '<small>' + sub + '</small></h2><div class="row">' + ids.map(function (id) { return cellG(id, note ? note(id) : ''); }).join('') + '</div>' : ''; };
+      var where = function (id) {
+        var out = [];
+        for (var m in MONSTER_DROPS) MONSTER_DROPS[m].forEach(function (x) { if (x.id === id) out.push(getMonster(m).name); });
+        RAIDS.forEach(function (r) { (r.gearDrops || []).forEach(function (g) { if (g.id === id) out.push(r.name); }); });
+        if (typeof SPIRE_GEAR !== 'undefined' && SPIRE_GEAR.indexOf(id) >= 0) out.push('The Sundered Spire');
+        return 'T' + ITEMS[id].ctier + ' ' + (ITEMS[id].mfam || '') + ' · ' + out.join(', ');
+      };
+      var zoneF = finds.filter(isZoneFind), raidF = finds.filter(function (id) { return !isZoneFind(id); });
+      var runesD = Object.keys(ITEMS).filter(function (id) { return isRune(id) && drawn(id); });
+      var robeSets = CLOTH_TIERS.filter(function (c) { return drawn(c.key + '_robe'); });
+      var veil = Object.keys(ITEMS).filter(function (id) { return ITEMS[id].setKey === 'dawnveil'; });
+      var other = Object.keys(ITEMS).filter(function (id) { return !ITEMS[id]._variant && drawn(id) && (/^wyrd_/.test(id) || /^arcane_draught/.test(id)); });
+      var hg = '<h1>Magic, the gear half: every new icon, build ' + document.querySelector('.mm-ver').getAttribute('data-build') + '</h1>'
+        + '<p>Drawn by the game until its sheets are painted: <span id="mageSheetN"></span>. Each is shown at 76, 34 and 18 px. A found staff or wand is its own shape; raid robes are the five robe shapes in three new cloths; Dawnveil is its own four.</p>';
+      hg += secG('Found in the zones', 'one staff or wand a zone, each its own shape', zoneF, where);
+      hg += secG('Found in the raids and the Spire', 'two a raid, and Faultline', raidF, where);
+      hg += secG('The Spire rune', 'the rune stone, in the Spire\'s rose', runesD);
+      robeSets.forEach(function (c) { hg += secG(c.set + ' robes', 'the five robe shapes, raid cloth', ['hood', 'robe', 'leggings', 'wraps', 'slippers'].map(function (p) { return c.key + '_' + p; })); });
+      hg += secG('Dawnveil', 'four pieces from The Empyrean Throne, their own shapes', veil);
+      hg += secG('The gem and the draught', 'Wyrdstone and the Arcane Draught', other);
+      var dg = document.createElement('div'); dg.id = 'mageSheet'; dg.innerHTML = hg;
+      var stg = document.createElement('style');
+      stg.textContent = '#mageSheet{position:absolute;left:0;top:0;z-index:99999;width:1560px;box-sizing:border-box;background:#120c07;color:#d9c8a4;font:13px/1.35 Georgia,serif;padding:22px 24px 30px}'
+        + '#mageSheet h1{font:600 20px Georgia;color:#e8d8b0;margin:0 0 4px}#mageSheet p{margin:0 0 6px;color:#a8946c}'
+        + '#mageSheet h2{font:600 13px Georgia;letter-spacing:2px;text-transform:uppercase;color:#c79b4e;margin:20px 0 8px;border-bottom:1px solid #3a2a18;padding-bottom:4px}'
+        + '#mageSheet h2 small{font:italic 12px Georgia;letter-spacing:0;text-transform:none;color:#8a7654;margin-left:12px}'
+        + '#mageSheet .row{display:flex;flex-wrap:wrap;gap:10px}'
+        + '#mageSheet .c{background:#1d140c;border:1px solid #3a2a18;border-radius:6px;padding:9px 9px 7px;display:flex;flex-direction:column;align-items:center;gap:4px;width:180px;box-sizing:border-box}'
+        + '#mageSheet .b{display:flex;align-items:flex-end;gap:9px;height:78px}'
+        + '#mageSheet .ev-icon{display:block}#mageSheet .s1 .ev-icon{width:76px;height:76px}#mageSheet .s2 .ev-icon{width:34px;height:34px}#mageSheet .s3 .ev-icon{width:18px;height:18px}'
+        + '#mageSheet .c span{font-size:12.5px;color:#d9c8a4;text-align:center}#mageSheet .c i{font-size:10.5px;color:#8a7654;text-align:center;font-style:normal;line-height:1.25}';
+      dg.appendChild(stg); document.body.appendChild(dg); window.scrollTo(0, 0);
+      var cs = dg.querySelectorAll('.c'), nd = 0;
+      for (var gi = 0; gi < cs.length; gi++) if (cs[gi].querySelector('.s1 svg')) nd++;
+      dg.querySelector('#mageSheetN').textContent = nd + ' of ' + cs.length + ' are drawn, ' + (cs.length - nd) + ' painted';
+      info.height = Math.ceil(dg.getBoundingClientRect().height); info.icons = cs.length; info.drawn = nd;
+    }
+    /* a zone find's card beside the crafted weapon of its tier */
+    if (scene === 'unique_card') {
+      state.combatXp.magic = XP_CUM[45]; state.items.frostbrand_staff = 1; state.items.ember_staff = 1;
+      enterCombat();
+      cards(['frostbrand_staff', 'ember_staff'], ['Found: a Frost Bear, 0.9%', 'Crafted: Runecrafting 44']);
+    }
+    /* the Monster Log on a monster that drops a find and its runes */
+    if (scene === 'monster_log') {
+      enterCombat(); state.cmbSubTab = 'log'; state.monLogZone = 'goblin_cave'; state.monLogSel = 'goblin_shaman';
+      state.monDrops = state.monDrops || {}; state.monDrops.goblin_shaman = { soot_rune: 412, tribal_fetish: 9, goblin_meat: 11, fetish_staff: 1 };
+      state.monKills.goblin_shaman = 164;
+      renderCombat();
+      info.rows = [].map.call(document.querySelectorAll('#combatPanel [data-mldrop]'), function (e) { return e.textContent.replace(/\s+/g, ' ').trim(); }).slice(0, 14);
+    }
+    /* a fight with a find in hand: what it does shows on the spell bar and in the log */
+    if (scene === 'fight_unique') {
+      state.combatXp.magic = XP_CUM[44]; state.combatXp.defence = XP_CUM[40]; state.combatXp.hitpoints = XP_CUM[50];
+      state.items.frostbrand_staff = 1; state.items.cinder_rune = 3200;
+      state.combatEquipped = { weapon: 'frostbrand_staff', quiver: 'cinder_rune', cape: 'mithril_cape' };
+      ['hood', 'robe', 'leggings', 'wraps', 'slippers'].forEach(function (p, i) { state.items['rimeweave_' + p] = 1; state.combatEquipped[['helmet', 'chest', 'legs', 'gloves', 'boots'][i]] = 'rimeweave_' + p; });
+      state.combatElement = 'frost'; state.combatSpell = 'blast'; state.zone = 'wolf_den'; state.zoneMode = 'dungeons';
+      refreshCombatStats(); enterCombat();
+      try { selectZone('wolf_den'); selectMonster('alpha_wolf'); engageCombat(); stopCombatTimer(); } catch (e) { info.err = String(e); }
+      /* a dozen casts through the real tick, the dice seeded, so the log is what the game wrote */
+      var sd = 11, rr = Math.random; Math.random = function () { sd |= 0; sd = sd + 0x6D2B79F5 | 0; var t = Math.imul(sd ^ sd >>> 15, 1 | sd); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+      var hp0 = combat.youMaxHp;
+      for (var ci2 = 0; ci2 < 5 && combat.active; ci2++) { combat.youSwingStart = Date.now() - combat.youSwingMs - 1; combat.foeSwingStart = Date.now() + 5000; combatTick(); combat.youHp = hp0; }
+      Math.random = rr;
+      renderCombat(); updateCombatBars();
+      info.spell = spellName(); info.aff = spellAffinity(); info.hit = combat.youMaxHit;
+      info.bar = [].map.call(document.querySelectorAll('#cmbSpellBar [data-el]'), function (b) { return b.textContent.replace(/\s+/g, ' ').trim() + ' | ' + b.getAttribute('title'); });
+      info.log = combat.log.map(function (l) { return String(l.t).replace(/<[^>]+>/g, ''); }).slice(-8);
+      info.room = barRoom();
+    }
     if (scene === 'stats') { selectedSkill = 'mining'; viewTab = 'stats'; try { renderAll(); } catch (e) { info.err = String(e); } }
     return info;
   };
@@ -325,11 +431,19 @@ const SCENES = {
   tree:     { full: true },
   stats:    { full: true },
   sheet:    { sel: '#mageSheet', tall: true },
-  full:     { full: true }
+  full:     { full: true },
+  /* the gear half: `dir` is the folder under shots/, `file` the name the brief asks for */
+  gear_sheet:   { sel: '#mageSheet', tall: true, dir: 'gear', file: 'sheet' },
+  unique_card:  { sel: '#gearShot', dir: 'gear' },
+  monster_log:  { sel: '#combatPanel', dir: 'gear' },
+  fight_unique: { full: true, dir: 'gear' }
 };
 
 (async () => {
-  const want = process.argv.slice(2).length ? process.argv.slice(2) : Object.keys(SCENES);
+  /* no arguments: the scenes of shots/real. `gear`: the scenes of shots/gear. Or name them. */
+  const args = process.argv.slice(2);
+  const want = args.length === 1 && args[0] === 'gear' ? Object.keys(SCENES).filter(k => SCENES[k].dir === 'gear')
+    : args.length ? args : Object.keys(SCENES).filter(k => !SCENES[k].dir);
   const src = fs.readFileSync(path.join(ROOT, 'cindervale.html'), 'utf8');
   const STILL = '<style>.mage-still .cvsplat{animation:none !important;opacity:1 !important}</style>';
   const html = src.replace('</head>', SHIM + STILL + '</head>')
@@ -345,9 +459,9 @@ const SCENES = {
   p.on('pageerror', e => { errs.push(e.message); console.log('  ! pageerror: ' + e.message); });
   await p.goto('file:///' + tmp.split(String.fromCharCode(92)).join('/') + '?cvdev=1', { waitUntil: 'load' });
   await new Promise(r => setTimeout(r, 2800));
-  const metaFile = path.join(OUT, 'meta.json');
-  const meta = fs.existsSync(metaFile) ? JSON.parse(fs.readFileSync(metaFile, 'utf8')) : {};
-  meta._build = await p.evaluate(() => document.querySelector('.mm-ver').getAttribute('data-build'));
+  const build = await p.evaluate(() => document.querySelector('.mm-ver').getAttribute('data-build'));
+  const metas = {};
+  const metaOf = dir => { if (!metas[dir]) { const f = path.join(dir, 'meta.json'); metas[dir] = fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, 'utf8')) : {}; metas[dir]._build = build; } return metas[dir]; };
   for (const id of want) {
     const S = SCENES[id]; if (!S) { console.log('no scene ' + id); continue; }
     let info;
@@ -355,7 +469,8 @@ const SCENES = {
     await new Promise(r => setTimeout(r, 450));
     /* the contact sheet is taller than a screen: grow the viewport to fit it, and put it back after */
     if (S.tall && info && info.height) await p.setViewport({ width: 1920, height: info.height + 20, deviceScaleFactor: 1 });
-    const file = path.join(OUT, id + '.png');
+    const dir = S.dir ? path.join(__dirname, 'shots', S.dir) : OUT; fs.mkdirSync(dir, { recursive: true });
+    const file = path.join(dir, (S.file || id) + '.png'), meta = metaOf(dir);
     let clip = null;
     if (!S.full) {
       clip = await p.evaluate((sel, tip) => {
@@ -373,9 +488,10 @@ const SCENES = {
     } else { await p.screenshot({ path: file }); }
     meta[id] = { clip, info };
     if (S.tall) { await p.evaluate(() => { const e = document.getElementById('mageSheet'); if (e) e.remove(); }); await p.setViewport({ width: 1920, height: 1080, deviceScaleFactor: 1 }); }
+    await p.evaluate(() => { const e = document.getElementById('gearShot'); if (e) e.remove(); });
     console.log(id.padEnd(10), clip ? `${clip.width}x${clip.height}` : 'full', info ? JSON.stringify(info).slice(0, 260) : '');
   }
-  fs.writeFileSync(metaFile, JSON.stringify(meta, null, 1));
+  for (const dir in metas) fs.writeFileSync(path.join(dir, 'meta.json'), JSON.stringify(metas[dir], null, 1));
   await b.close(); fs.unlinkSync(tmp);
   console.log(errs.length ? errs.length + ' page error(s)' : 'no page errors');
 })().catch(e => { console.error(e); try { fs.unlinkSync(path.join(__dirname, 'work-shootreal.html')); } catch (x) {} process.exit(1); });

@@ -3400,7 +3400,12 @@ setTimeout(() => {
        would now excuse a painted icon that fell back to its drawing. Slices 5 to 9
        add staves, wands, robes and a rune that will ship drawn first: name THOSE ids
        here when they land. Do not put the rule back. */
-    const MAGE_PENDING = [];
+    /* Slice 5 (0.9.127.11): the twelve staves and wands the zones drop. Drawn by
+       [JS-ICONS-MAGE-DROPS] until their sheet is painted, and named one by one. Take
+       an id off the day its painted icon is injected: the check under the list fails
+       if a listed id is no longer drawn, so it cannot go stale. */
+    const MAGE_PENDING = ['gnawbone_wand','briarwood_wand','webspinner_staff','fetish_staff','gravecaller','frostbrand_staff',
+                          'moonhowl_wand','seers_eye','mossheart_wand','cinderspine','ashglass_staff','brimstone_sceptre'];
     const SVG_OK = new Set(['radcliff_tally'].concat(RANGED_PENDING, SPIRE_PENDING, HAWK_PENDING, MAGE_PENDING));
 
     const unexpected = cov.svg.filter(id => !SVG_OK.has(id));
@@ -3411,8 +3416,8 @@ setTimeout(() => {
        the 65 items, the four element marks (they are ICONS entries, not items, so the
        sweep above never sees them), the skill's rail icon and the cape. */
     const magePainted = JSON.parse(ev(`(function(){
-      var ids=['runestone','runecrafting','cape_runecrafting'];
-      for(var id in ITEMS){ var it=ITEMS[id]; if(isRune(id)||it.magic||(it.cloth&&id!=='stonewright_gauntlets')) ids.push(id); }
+      var ids=['runestone','runecrafting','cape_runecrafting'], pend=${JSON.stringify(MAGE_PENDING)};
+      for(var id in ITEMS){ var it=ITEMS[id]; if(pend.indexOf(id)>=0) continue; if(isRune(id)||it.magic||(it.cloth&&id!=='stonewright_gauntlets')) ids.push(id); }
       CLOTH_TIERS.forEach(function(c){ ids.push(c.key); });
       MAGIC_ELEMENTS.forEach(function(e){ ids.push('el_'+e.k); });
       var bad=ids.filter(function(id){ return !/^<img class="ev-icon art-item"/.test(String(ICONS[id]||'')); });
@@ -3421,6 +3426,14 @@ setTimeout(() => {
     ok('all 71 Magic and Runecrafting icons are painted: 65 items, four element marks, the skill and the cape',
        magePainted.n === 71 && magePainted.bad.length === 0 && magePainted.shown === true,
        magePainted.n + ' ids' + (magePainted.bad.length ? ', still drawn: ' + magePainted.bad.slice(0, 8).join(' ') : ''));
+    /* And the other way round: an id on the pending list has to be a real item that is
+       still drawn. One that has been painted, or renamed away, comes off the list. */
+    const magePend = JSON.parse(ev(`(function(){
+      var pend=${JSON.stringify(MAGE_PENDING)};
+      return JSON.stringify(pend.filter(function(id){ return !ITEMS[id] || !/^<svg class="ev-icon"/.test(String(ICONS[id]||'')); }));
+    })()`));
+    ok('every Magic id waiting for painted art is a real item that is still drawn', magePend.length === 0,
+       magePend.length ? 'painted or gone, take off MAGE_PENDING: ' + magePend.join(' ') : MAGE_PENDING.length + ' pending');
   }
   section('In-game menu — grouping + Back (0.9.123.x)');
   {
@@ -11181,6 +11194,164 @@ setTimeout(() => {
     ok('the other enchant is still rolled from everything else', en.others === en.pool - 1, en.others + ' of ' + (en.pool - 1) + ' seen');
     ok('choosing costs nothing extra, and a locked choice is kept', en.same === true && en.kept === true && en.locked === true);
     ok('with no choice a piece rolls as it always did', en.free >= en.pool - 1, en.free + ' stats seen on the first enchant');
+  }
+
+  section('Magic finds: a staff or a wand in every zone, and runes off the casters (0.9.127.11)');
+  {
+    /* Every staff and wand was crafted and the ladder stopped at tier 7. Twelve finds,
+       one a zone, each with ONE thing the crafted weapon of its tier does not have.
+       None of this throws when it breaks: an `aff` nothing reads shows on the card and
+       does nothing, a drop row on the wrong table is just a find nobody finds, and a
+       unique that shares the crafted silhouette is only visible by looking. This suite
+       boots as the demo, so the level cap is lifted for the block and put back. */
+    const mf = JSON.parse(ev(`(function(){
+      var _cap=demoXpCap; demoXpCap=function(){ return XP_CAP; };
+      var R=Math.random, o={};
+      try{
+        var D=MAGE_ZONE_DROPS, ids=D.map(function(d){ return d.id; });
+        o.n=D.length;
+        o.bad=D.filter(function(d){ var it=ITEMS[d.id], st=COMBAT_GEAR_STATS[d.id];
+          return !(it&&st&&it.magic&&it.cgear&&it.cslot==='weapon'&&it.rare&&it.ammo==='rune'&&it.ctier===d.tier&&st.atk===d.atk&&(st.mpow||0)===d.mpow
+            &&!!it.twoHanded===(d.fam==='staff')&&isUniqueGear(d.id)&&combatGearReq(d.id).stat==='magic'&&!isRune(d.id)
+            &&((d.aff?1:0)+(d.wfx?1:0)+(d.ubonus?1:0))===1); }).map(function(d){ return d.id; });
+        /* each its own shape: the drawing with its colours and gradient ids taken out */
+        var shape=function(svg){ return String(svg).replace(/#[0-9a-fA-F]{3,8}/g,'#').replace(/mgi\\d+[gs]/g,'G'); };
+        var shapes=ids.map(function(id){ return shape(ICONS[id]); });
+        var crafted=[shape(_wandSVG(MAGE_WOOD_PAL.pine)), shape(_staffSVG(MAGE_WOOD_PAL.pine))];
+        o.drawn=ids.filter(function(id){ return !/^<svg class="ev-icon" viewBox="0 0 64 64">/.test(String(ICONS[id])); });
+        o.shapes=shapes.filter(function(s,i){ return shapes.indexOf(s)===i && crafted.indexOf(s)<0; }).length;
+        /* the tables */
+        var rows={}, wrong=[];
+        D.forEach(function(d){ d.from.forEach(function(r){
+          var m=MONSTERS.filter(function(x){ return x.id===r[0]; })[0], row=(MONSTER_DROPS[r[0]]||[]).filter(function(x){ return x.id===d.id; });
+          if(!m||row.length!==1||row[0].chance!==r[1]||row[0].qty) wrong.push(d.id+'@'+r[0]);
+          else if(m.boss ? r[1]!==0.03 : !(r[1]>=0.005&&r[1]<=0.01)) wrong.push(d.id+' rate '+r[1]);
+          rows[d.id]=(rows[d.id]||0)+1; }); });
+        var onTables=0; for(var mid in MONSTER_DROPS) MONSTER_DROPS[mid].forEach(function(x){ if(ids.indexOf(x.id)>=0) onTables++; });
+        o.wrong=wrong; o.rows=onTables; o.listed=D.reduce(function(s,d){ return s+d.from.length; },0);
+        /* one a zone, and the tier follows the zone */
+        var zoneOf={}, ceil={};
+        MONSTERS.forEach(function(m){ (MONSTER_DROPS[m.id]||[]).forEach(function(x){ var it=ITEMS[x.id];
+          if(it&&it.cgear&&!it.magic) ceil[m.zone]=Math.max(ceil[m.zone]||0,it.ctier||0); }); });
+        D.forEach(function(d){ d.from.forEach(function(r){ var m=MONSTERS.filter(function(x){ return x.id===r[0]; })[0]; (zoneOf[d.id]=zoneOf[d.id]||{})[m.zone]=1; }); });
+        o.zones=Object.keys(ids.reduce(function(a,id){ Object.keys(zoneOf[id]).forEach(function(z){ a[z]=(a[z]||0)+1; }); return a; },{})).length;
+        o.twoZones=ids.filter(function(id){ return Object.keys(zoneOf[id]).length!==1; });
+        o.aboveZone=D.filter(function(d){ var z=Object.keys(zoneOf[d.id])[0]; return d.tier>(ceil[z]||0); }).map(function(d){ return d.id; });
+        /* and what it takes to wield it is no more than five levels past the hardest thing in the zone */
+        o.early=D.filter(function(d){ var z=Object.keys(zoneOf[d.id])[0], top=Math.max.apply(null,MONSTERS.filter(function(m){ return m.zone===z; }).map(function(m){ return m.lvl; }));
+          return COMBAT_GEAR_REQ[d.tier]>top+5; }).map(function(d){ return d.id; });
+        o.aerie=!!ITEMS.stormfeather_wand;
+        /* a rare spawn: four times the chance, never more than 85%, with no code of its own */
+        var roll=function(mon,rare,c){ state=defaultState(); normalizeState(); Math.random=function(){ return c; };
+          var got=rollDrops(mon,rare).map(function(x){ return x.id; }); Math.random=R; return got; };
+        var p=0.007;
+        o.rare=[roll('brood_rat',false,p-1e-6).indexOf('gnawbone_wand')>=0, roll('brood_rat',false,p+1e-6).indexOf('gnawbone_wand')>=0,
+                roll('brood_rat',true,p*RARE_DROP_MUL-1e-6).indexOf('gnawbone_wand')>=0, roll('brood_rat',true,p*RARE_DROP_MUL+1e-6).indexOf('gnawbone_wand')>=0,
+                roll('lich',true,RARE_DROP_CAP-1e-6).indexOf('char_rune')>=0, roll('lich',true,RARE_DROP_CAP+1e-6).indexOf('char_rune')>=0];
+        /* the fight: one cast through combatTick with the dice fixed */
+        var arm=function(weapon,el,monId){
+          state=defaultState(); normalizeState();
+          ['magic','defence','hitpoints'].forEach(function(k){ state.combatXp[k]=XP_CUM[99]; });
+          state.items={starfall_rune:1000}; state.items[weapon]=1;
+          state.combatEquipped={weapon:weapon, quiver:ITEMS[weapon].ctier>=7?'starfall_rune':'ash_rune'}; state.items.ash_rune=1000;
+          state.combatSpell='bolt'; state.combatElement=el;
+          state.zone='rat_warrens'; combat.raid=null; combat.monId=monId||'rat'; combat.log=[]; combat.rare=null;
+          refreshCombatStats();
+          combat.active=true; combat.foeHp=1e9; combat.foeMaxHp=1e9; combat.foeStatus={};
+          combat.youHp=combat.youMaxHp; combat.foeSwingStart=Date.now()+1e9; combat.foeSwingMs=1e9;
+        };
+        var cast=function(c){ Math.random=function(){ return c; }; combat.youSwingStart=Date.now()-combat.youSwingMs-1; combatTick(); Math.random=R; return 1e9-combat.foeHp; };
+        var base=function(){ return Math.max(1,Math.round(combat.youMaxHit*(COMBAT_P.HIT_MIN+(1-COMBAT_P.HIT_MIN)*0.5))); };
+        /* bone_knight is weak to Storm, resists Frost and is neither to Fire and Shadow */
+        o.aff=D.filter(function(d){ return d.aff; }).map(function(d){
+          var others=MAGIC_ELEMENTS.map(function(e){ return e.k; }).filter(function(k){ return k!==d.aff.el; });
+          var mon=MONSTERS.filter(function(m){ return m.weakEl!==d.aff.el&&m.resistEl!==d.aff.el&&m.weakEl!==others[0]&&m.resistEl!==others[0]; })[0];
+          var weakMon=MONSTERS.filter(function(m){ return m.weakEl===d.aff.el; })[0];
+          arm(d.id,d.aff.el,mon.id); var b=base(), with_=cast(0.5);
+          arm(d.id,others[0],mon.id); var without=cast(0.5);
+          arm(d.id,d.aff.el,weakMon.id); var bw=base(), weak=cast(0.5);
+          arm(d.id,d.aff.el,mon.id); var miss=cast(0.99);
+          return [d.id, with_===Math.max(1,Math.round(b*(1+d.aff.dmg))), without===b, weak===Math.max(1,Math.round(bw*(ELEMENT_WEAK_MULT*(1+d.aff.dmg)))), miss===0, with_>without];
+        });
+        arm('frost_staff','frost','rat'); var c0=base(); o.crafted=[cast(0.5)===c0, spellAffinity('frost'), spellAffinity('fire')];
+        state.combatEquipped={weapon:'starsteel_sword'}; o.sword=spellAffinity('fire');
+        /* poison, a burn whatever the element, and lifesteal */
+        arm('briarwood_wand','fire','rat'); cast(0.2);
+        o.poison=[!!(combat.foeStatus.poison), combat.foeStatus.poison?combat.foeStatus.poison.tickDmg:0, Math.max(1,Math.round(combat.youMaxHit*0.08))];
+        arm('cinderspine','frost','rat'); cast(0.2);
+        var hot=Math.max(1,Math.round(combat.youMaxHit*0.13));
+        o.burn=[!!(combat.foeStatus.burn), combat.foeStatus.burn?combat.foeStatus.burn.tickDmg:0, hot];
+        /* Fire's own burn, landing on one the staff lit: it runs on, and is not cooled */
+        var fireOn=function(weapon){ arm(weapon,'fire','rat'); var t=Date.now();
+          combat.foeStatus.burn={tickDmg:hot, until:t+1000, last:t};
+          Math.random=function(){ return 0.2; }; mageOnHit(getMonster('rat'),50,t); Math.random=R;
+          return [combat.foeStatus.burn.tickDmg, combat.foeStatus.burn.until-t, Math.max(1,Math.round(combat.youMaxHit*0.024))]; };
+        o.burnKept=fireOn('cinderspine'); o.burnKept.push(hot); o.burnPlain=fireOn('ancient_staff');
+        arm('mossheart_wand','fire','rat'); combat.youHp=100; var dealt=cast(0.5);
+        o.leech=[combat.youHp-100, Math.max(1,Math.floor(dealt*0.04)), combatBonusesAll().lifesteal];
+        arm('ancient_wand','fire','rat'); combat.youHp=100; cast(0.5); o.leechPlain=combat.youHp-100;
+        /* the card, and the spell bar */
+        var chips=function(id){ var d=document.createElement('div'); d.innerHTML=combatGearStatBlock(id); return [].map.call(d.querySelectorAll('.nt-chip'),function(c){ return c.textContent.trim(); }); };
+        o.cardAff=D.filter(function(d){ return d.aff; }).filter(function(d){ return chips(d.id).indexOf('+'+Math.round(d.aff.dmg*100)+'% damage with '+ELEMENT_BY[d.aff.el].n)<0; }).map(function(d){ return d.id; });
+        o.cardPlain=chips('frost_staff').filter(function(c){ return /damage with/.test(c); }).length;
+        o.descs=D.filter(function(d){ return !new RegExp('<b>[^<]*'+(d.aff?ELEMENT_BY[d.aff.el].n+' spells cast with it deal '+Math.round(d.aff.dmg*100)+'% more damage':d.wfx&&d.wfx.poison?'25% chance to poison':d.wfx&&d.wfx.burn?'30% chance to set the monster on fire, whatever the element':'You heal for 4% of the damage you deal')).test(ITEMS[d.id].desc); }).map(function(d){ return d.id; });
+        var all=D.map(function(d){ return ITEMS[d.id].name+' '+ITEMS[d.id].desc; }).join(' | ').replace(/<[^>]+>/g,' ');
+        o.words=(all.match(/\\b(swing|swings|blows?|guard|stretch|landings?|weight|affix(es)?|pays?|yields?|procs?)\\b|\\u2014/gi)||[]).join(',');
+        arm('frostbrand_staff','fire','rat'); combat.active=false;
+        var bar=document.createElement('div'); bar.innerHTML=spellBarHTML(getMonster('rat'));
+        var btn=function(k){ var b=bar.querySelector('[data-el="'+k+'"]'); return b?[b.textContent.replace(/\\s+/g,' ').trim(), b.getAttribute('title')]:['','']; };
+        o.bar=[btn('frost'), btn('storm'), btn('fire')];
+        bar.innerHTML=spellBarHTML(getMonster('goblin')); o.barWeak=btn('frost');
+        arm('frost_staff','fire','rat'); combat.active=false; bar.innerHTML=spellBarHTML(getMonster('rat')); o.barPlain=btn('frost');
+        /* runes off the six that cast, and off nothing else */
+        var carve=SKILLS.runecrafting.acts.filter(function(a){ return a.cat==='runes'; });
+        o.runes=MAGE_RUNE_DROPS.map(function(r){
+          var m=MONSTERS.filter(function(x){ return x.id===r[0]; })[0], row=(MONSTER_DROPS[r[0]]||[]).filter(function(x){ return isRune(x.id); });
+          if(!m||row.length!==1) return [r[0],false];
+          var act=carve.filter(function(a){ return a.out[row[0].id]; })[0], next=carve.filter(function(a){ return a.lvl>act.lvl; }).sort(function(a,b){ return a.lvl-b.lvl; })[0];
+          var n=runeClassOf(row[0].id);
+          return [r[0], row[0].chance===r[1]&&row[0].qty[0]===r[2][0]*n&&row[0].qty[1]===r[2][1]*n&&act.lvl<=m.lvl&&(!next||next.lvl>m.lvl), ITEMS[row[0].id].name, row[0].qty.join(' to ')]; });
+        var casters=0; for(var m2 in MONSTER_DROPS) if(MONSTER_DROPS[m2].some(function(x){ return isRune(x.id); })) casters++;
+        o.casters=casters;
+        o.sells=D.every(function(d){ return ITEMS[d.id].sell>0; });
+      } finally { Math.random=R; combat.active=false; combat.raid=null; demoXpCap=_cap; state=defaultState(); normalizeState(); refreshCombatStats(); }
+      return JSON.stringify(o);
+    })()`));
+    ok('twelve found staves and wands, each a magic weapon of its tier with exactly one thing of its own',
+       mf.n === 12 && mf.bad.length === 0, mf.bad.join(', ') || '12 finds');
+    ok('each is drawn as its own shape: twelve silhouettes, none of them the crafted wand or staff',
+       mf.drawn.length === 0 && mf.shapes === 12, mf.shapes + ' shapes' + (mf.drawn.length ? ', not drawn: ' + mf.drawn.join(' ') : ''));
+    ok('each is a row on the tables its zone already had: 0.5 to 1% from a named monster, 3% from the boss',
+       mf.wrong.length === 0 && mf.rows === mf.listed && mf.rows === 18, mf.wrong.join(', ') || mf.rows + ' rows');
+    ok('one a zone across twelve zones, and the Stormfeather Wand waits for the Aerie',
+       mf.zones === 12 && mf.twoZones.length === 0 && mf.aerie === false, mf.zones + ' zones');
+    ok('no zone drops a staff or wand above the tier of the gear it already dropped, or one its own monsters are far too weak for',
+       mf.aboveZone.length === 0 && mf.early.length === 0, mf.aboveZone.concat(mf.early).join(', '));
+    ok('a rare spawn multiplies a find by four and stops at 85%, with no code of its own',
+       mf.rare.join() === 'true,false,true,false,true,false', mf.rare.join(' '));
+    ok('a find that is better with one element does that much more with it in the fight, on top of a weakness, and a miss is still nothing',
+       mf.aff.length === 8 && mf.aff.every(r => r[1] && r[2] && r[3] && r[4] && r[5]), mf.aff.filter(r => !(r[1] && r[2] && r[3] && r[4] && r[5])).map(r => r.join(' ')).join(' | ') || '8 weapons');
+    ok('a crafted staff and a sword get nothing from it',
+       mf.crafted[0] === true && mf.crafted[1] === 1 && mf.crafted[2] === 1 && mf.sword === 1, JSON.stringify(mf.crafted));
+    ok('the Briarwood Wand poisons for 8% of your max hit a tick',
+       mf.poison[0] === true && mf.poison[1] === mf.poison[2] && mf.poison[1] > 0, mf.poison.join(' '));
+    ok('Cinderspine burns whatever the element, for 13% of your max hit a tick',
+       mf.burn[0] === true && mf.burn[1] === mf.burn[2], mf.burn.join(' '));
+    ok('and casting Fire with it keeps that burn going without cooling it to the 2.4% Fire burns for on a crafted staff',
+       mf.burnKept[0] === mf.burnKept[3] && mf.burnKept[1] === 8000 && mf.burnKept[0] > mf.burnKept[2] && mf.burnPlain[0] === mf.burnPlain[2] && mf.burnPlain[1] === 8000,
+       'Cinderspine ' + mf.burnKept[0] + ' a tick, a crafted staff ' + mf.burnPlain[0]);
+    ok('the Mossheart Wand heals you for 4% of the damage you deal, and a crafted wand heals nothing',
+       mf.leech[0] === mf.leech[1] && mf.leech[0] > 0 && Math.abs(mf.leech[2] - 0.04) < 1e-9 && mf.leechPlain === 0, mf.leech.join(' '));
+    ok('the card says the one thing the weapon does: a chip for the element, and the sentence in bold',
+       mf.cardAff.length === 0 && mf.cardPlain === 0 && mf.descs.length === 0, mf.cardAff.concat(mf.descs).join(', '));
+    ok('in plain words: no swings, blows, guard, weight, affixes or em dashes', mf.words === '', mf.words);
+    ok('the spell bar marks the element your staff is better with, and still says weak when the monster is',
+       /staff \+8%/.test(mf.bar[0][0]) && /Your Frostbrand Staff adds 8% to Frost damage\./.test(mf.bar[0][1]) && !/\+8%/.test(mf.bar[1][0]) && /weak \+15%/.test(mf.bar[2][0])
+       && /weak \+15%/.test(mf.barWeak[0]) && /adds 8% to Frost damage/.test(mf.barWeak[1]) && !/\+8%/.test(mf.barPlain[0]) && !/adds/.test(mf.barPlain[1]),
+       mf.bar[0][0] + ' | ' + mf.barWeak[0] + ' | ' + mf.barPlain[0]);
+    ok('the six monsters that cast drop the rune of their level, a few casts a kill, and nothing else drops runes',
+       mf.runes.length === 6 && mf.runes.every(r => r[1] === true) && mf.casters === 6, mf.runes.map(r => r[0] + ' ' + (r[2] || '?') + ' ' + (r[3] || '')).join(', '));
+    ok('every find sells for something', mf.sells === true);
   }
 
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));

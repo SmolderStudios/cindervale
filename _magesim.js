@@ -293,7 +293,7 @@ function PAGE() {
       var r2 = (p / (swing / 1000)) * ch, up2 = 1 - Math.exp(-r2 * BURN_DUR_MS / 1000);
       dot += up2 * hit * FIRE.rider.burn / (BURN_TICK_MS / 1000);
     }
-    return (base * (m / n) * critMul * extra) * (opt.weak ? ELEMENT_WEAK_MULT : opt.resist ? ELEMENT_RESIST_MULT : 1) + dot;
+    return (base * (m / n) * critMul * extra) * (opt.weak ? ELEMENT_WEAK_MULT : opt.resist ? ELEMENT_RESIST_MULT : 1) * (opt.aff || 1) + dot;
   }
   function dressed(levels, tiers) {
     return levels.map(function (lv, ix) {
@@ -945,14 +945,21 @@ function PAGE() {
   }
   function seeded(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; var t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
   /* One dressed build against one real monster for `hours` of game time. `neutral`
-     blanks the monster's weaknesses for the run, which is what the model's rows do. */
-  function liveFight(key, lv, t, monId, hours, seed, neutral, el) {
+     blanks the monster's weaknesses for the run, which is what the model's rows do.
+     `over` puts another weapon in the build's hand (a find, beside the crafted one)
+     and switches on three counts the plain runs do not need: the ticks a status was
+     on the monster, anything still on a monster the tick it replaced the last one,
+     and what the player was healed. `over.hpFrac` holds health there, not at full,
+     because lifesteal heals nothing at full health. */
+  function liveFight(key, lv, t, monId, hours, seed, neutral, el, over) {
     var D = Date.now, R = Math.random, out = { key: key };
     var mon = getMonster(monId), keepM = { weakTo: mon.weakTo, resistTo: mon.resistTo, weakEl: mon.weakEl, resistEl: mon.resistEl };
     var keep = { menu: mmAtMenu };
     try {
       state = defaultState(); normalizeState(); state.xp.agility = XP_CUM[lv];
-      wear(loadout(key, t), lv);
+      var lo = loadout(key, t);
+      if (over && over.weapon) lo.weapon = over.weapon;
+      wear(lo, lv);
       if (el) { state.combatElement = el; refreshCombatStats(); out.el = spellElement(); }
       if (neutral) { mon.weakTo = null; mon.resistTo = null; mon.weakEl = null; mon.resistEl = null; }
       mmAtMenu = false; enterCombat(); state.cmbSubTab = 'arena'; state.cmbView = 'fight';
@@ -966,6 +973,8 @@ function PAGE() {
       var q = state.combatEquipped.quiver, q0 = q ? state.items[q] : 0, kills = function () { return (state.monKills && state.monKills[monId]) || 0; }, k0 = kills();
       var base = JSON.parse(JSON.stringify(state.combatXp)), gain = {}, stat = combatXpStat(), hit0 = combat.youMaxHit;
       var dealt = 0, taken = 0, casts = 0, steps = Math.round(hours * 36000), i;
+      var own = mon.swingMs || COMBAT_BASE_SWING_MS, seen = { poison: 0, burn: 0, pin: 0, stun: 0 }, carried = 0, healed = 0, held = (over && over.hpFrac) || 1;
+      if (held < 1) combat.youHp = Math.round(combat.youMaxHp * held);
       for (i = 0; i < steps; i++) {
         fake += 100;
         var fh = combat.foeHp, yh = combat.youHp, kk = kills(), sw = combat.youSwingStart;
@@ -973,13 +982,20 @@ function PAGE() {
         if (!combat.active) { out.stopped = combat.log.slice(-1).map(function (l) { return l.t; })[0] || 'stopped'; break; }
         if (combat.youSwingStart !== sw) casts++;
         dealt += (kills() > kk || combat.foeHp > fh) ? fh : (fh - combat.foeHp);
+        if (over) {
+          var fst = combat.foeStatus || {};
+          if (kills() > kk) { if (fst.poison || fst.burn || fst.pin || fst.stun || combat.foeSwingMs !== own) carried++; }
+          else { for (var sk in seen) if (fst[sk]) seen[sk]++; }
+          if (combat.youHp > yh) healed += combat.youHp - yh;
+        }
         if (combat.youHp < yh) taken += yh - combat.youHp;
-        combat.youHp = combat.youMaxHp;
+        combat.youHp = held < 1 ? Math.round(combat.youMaxHp * held) : combat.youMaxHp;
         for (var k in base) { var d = (state.combatXp[k] || 0) - base[k]; if (d) { gain[k] = (gain[k] || 0) + d; state.combatXp[k] = base[k]; } }
         if (combat.youMaxHit !== hit0) refreshCombatStats();
       }
       out.dps = dealt / (hours * 3600); out.killsHr = (kills() - k0) / hours; out.castsHr = casts / hours;
       out.spentHr = q ? (q0 - state.items[q]) / hours : 0; out.xpHr = (gain[stat] || 0) / hours; out.takenHr = taken / hours;
+      if (over) { out.seen = seen; out.carried = carried; out.healedHr = healed / hours; out.weapon = eqCombatWeapon(); }
     } catch (e) { out.err = String(e && e.stack || e).slice(0, 400); }
     finally {
       hush(false); Date.now = D; Math.random = R;
@@ -1074,6 +1090,59 @@ function PAGE() {
     return out;
   }
 
+
+  /* ── finds: the staves and wands that are dropped, not made (slices 5 and 8) ──
+     What each one is, where it drops and at what chance, read off the game, to
+     hold against _magedesign/design.js row for row. */
+  function finds() {
+    var out = { rows: [], runes: [] };
+    var tableOf = function (id) {
+      var t = [];
+      for (var mid in MONSTER_DROPS) MONSTER_DROPS[mid].forEach(function (x) { if (x.id === id) t.push(['mon:' + mid, x.chance]); });
+      RAIDS.forEach(function (r) { (r.gearDrops || []).forEach(function (g) { if (g.id === id) t.push(['raid:' + r.id, g.chance]); }); });
+      if (typeof SPIRE_GEAR !== 'undefined' && SPIRE_GEAR.indexOf(id) >= 0) t.push(['spire', 0]);
+      return t;
+    };
+    Object.keys(ITEMS).filter(function (id) { return ITEMS[id].magic && isUniqueGear(id); }).forEach(function (id) {
+      var it = ITEMS[id], st = COMBAT_GEAR_STATS[id], t7 = Math.min(7, it.ctier), crafted = WOOD[t7 - 1] + '_' + it.mfam, cs = COMBAT_GEAR_STATS[crafted];
+      out.rows.push({ id: id, n: it.name, fam: it.mfam, t: it.ctier, atk: st.atk, mpow: st.mpow || 0, crit: st.crit || 0,
+        aff: it.aff || null, wfx: it.wfx || null, ubonus: it.ubonus || null, from: tableOf(id),
+        crafted: crafted, craftedAtk: cs.atk, craftedCrit: cs.crit || 0, craftedHas: !!(cs.mpow || ITEMS[crafted].aff || ITEMS[crafted].wfx || ITEMS[crafted].ubonus),
+        req: combatGearReq(id), sameFamily: it.swingMult === ITEMS[crafted].swingMult && it.dmgMult === ITEMS[crafted].dmgMult && !!it.twoHanded === !!ITEMS[crafted].twoHanded && it.wclass === ITEMS[crafted].wclass,
+        rare: !!it.rare, sell: it.sell, icon: /^<svg class="ev-icon"/.test(String(ICONS[id] || '')) ? 'drawn' : /art-item/.test(String(ICONS[id] || '')) ? 'painted' : 'none',
+        does: (/<b>(.*?)<\/b>/.exec(it.desc) || [])[1] || '' });
+    });
+    for (var mid in MONSTER_DROPS) MONSTER_DROPS[mid].forEach(function (x) {
+      if (!isRune(x.id)) return;
+      var m = MONSTERS.filter(function (y) { return y.id === mid; })[0];
+      var act = SKILLS.runecrafting.acts.filter(function (a) { return a.out && a.out[x.id]; })[0];
+      out.runes.push({ mon: mid, name: m.name, lvl: m.lvl, boss: !!m.boss, rune: x.id, runeName: ITEMS[x.id].name, carvedAt: act ? act.lvl : 0, cls: runeClassOf(x.id), chance: x.chance, qty: x.qty });
+    });
+    return out;
+  }
+  /* What a find is worth beside the crafted weapon of its tier: the same mage, in
+     the crafted robes of the tier, at the level the find drops at, with each element
+     that level has opened, on a monster that is neither weak nor resistant. A find
+     that only a named monster drops has the crafted weapon's numbers, so with any
+     element but its own it must come out the same to the digit. */
+  function findWorth() {
+    var out = [];
+    MAGE_ZONE_DROPS.forEach(function (d) {
+      var t7 = Math.min(7, d.tier), named = MONSTERS.filter(function (m) { return m.id === d.from[0][0]; })[0];
+      var lv = Math.min(99, Math.max(COMBAT_GEAR_REQ[d.tier], named.lvl)), def = foeDefFor(lv);
+      var crafted = WOOD[t7 - 1] + '_' + d.fam, rune = RUNE[Math.min(8, d.tier) - 1];
+      var arm = function (w, e) { return { weapon: w, quiver: rune, el: e, armour: set5(CLOTHK[t7 - 1], RB, { cape: METAL[t7 - 1] + '_cape' }) }; };
+      var row = { id: d.id, name: d.name, tier: d.tier, lv: lv, foeDef: def, crafted: crafted, rune: rune, aff: d.aff || null, bossToo: d.from.length > 1, els: {} };
+      MAGIC_ELEMENTS.filter(function (e) { return e.lvl <= lv; }).forEach(function (e) {
+        wear(arm(crafted, e.k), lv); var c = fullDps(def, { el: e.k }), ch = playerMaxHit();
+        wear(arm(d.id, e.k), lv); var a = spellAffinity(e.k), f = fullDps(def, { el: e.k, aff: a });
+        row.els[e.k] = { crafted: c, find: f, aff: a, hit: [ch, playerMaxHit()] };
+      });
+      out.push(row);
+    });
+    state = defaultState(); normalizeState();
+    return out;
+  }
   /* ── robes: built off leather, and what casting in anything else costs ── */
   function robes() {
     var o = { tiers: [], bad: [] };
@@ -1119,9 +1188,10 @@ function PAGE() {
     var capes = Object.keys(COMBAT_GEAR_STATS).filter(function (id) { return ITEMS[id] && ITEMS[id].cslot === 'cape'; });
     o.capes = { n: capes.length, withStr: capes.filter(function (id) { return (COMBAT_GEAR_STATS[id].str || 0) > 0; }).length,
       wrong: capes.filter(function (id) { var s = COMBAT_GEAR_STATS[id]; return (s.str || 0) > 0 ? s.mpow !== s.str : !!s.mpow; }) };
-    /* nothing that is not a robe, a buckler, Stonewright or a cape carries Magic Power */
+    /* nothing that is not a robe, a buckler, Stonewright, a cape or a staff or wand that
+       was found carries Magic Power. A crafted staff or wand carries none: the rune does. */
     o.strays = Object.keys(COMBAT_GEAR_STATS).filter(function (id) { var it = ITEMS[id], s = COMBAT_GEAR_STATS[id]; if (!it || it._variant || !s.mpow) return false;
-      return !(it.cloth || it.cslot === 'cape' || /_buckler$/.test(id) || id === 'stonewright_gauntlets'); });
+      return !(it.cloth || it.cslot === 'cape' || /_buckler$/.test(id) || id === 'stonewright_gauntlets' || (it.magic && isUniqueGear(id))); });
     /* Ascension raises Magic Power with a piece's other numbers */
     state = defaultState(); normalizeState(); state.asc = {}; var b0 = gearStats('wyrmsilk_robe').mpow; state.asc.wyrmsilk_robe = 10; var b1 = gearStats('wyrmsilk_robe');
     o.asc = [b0, b1.mpow, b1.def, COMBAT_GEAR_STATS.wyrmsilk_robe.def, b1.runeSave];
@@ -1388,12 +1458,13 @@ function PAGE() {
       sizes: SPELL_SIZES.map(function (s) { return { k: s.k, n: s.n, runes: s.runes, m: s.m }; }),
       monsters: MONSTERS.map(function (m) { return { id: m.id, name: m.name, zone: m.zone, lvl: m.lvl, hp: m.hp, atk: m.atk, str: m.str, def: m.def, xp: m.xp, coins: m.coins, swingMs: m.swingMs, boss: !!m.boss, weakTo: m.weakTo, resistTo: m.resistTo, weakEl: m.weakEl, resistEl: m.resistEl }; }),
       build: (document.querySelector('.mm-ver') || { getAttribute: function () { return ''; } }).getAttribute('data-build'),
-      demo: IS_DEMO, robes: CLOTHK.length, magicWeapons: Object.keys(ITEMS).filter(isMagicWeapon).length };
+      demo: IS_DEMO, robes: CLOTHK.length, magicWeapons: Object.keys(ITEMS).filter(isMagicWeapon).length,
+      runeLevels: SKILLS.runecrafting.acts.filter(function (a) { return a.cat === 'runes'; }).map(function (a) { return a.lvl; }) };
   }
 
   window.SIM = { levelCheck: levelCheck, saves: saves, consts: consts, parity: parity, ladder: ladder, dressed: dressed, economy: economy, skillXp: skillXp,
     reagents: reagents, structure: structure, nodes: nodes, spells: spells, spellSizes: spellSizes, castRates: castRates, casting: casting, bar: bar, gold: gold, elements: elements, elTables: elTables, elementFx: elementFx, fighters: fighters, robes: robes,
-    journey: journey, veteran: veteran, liveFight: liveFight, liveSkill: liveSkill, livePick: livePick, liveRaid: liveRaid,
+    journey: journey, veteran: veteran, liveFight: liveFight, liveSkill: liveSkill, livePick: livePick, liveRaid: liveRaid, finds: finds, findWorth: findWorth,
     raids: function () { return RAIDS.map(function (r) { return { id: r.id, name: r.name, endless: !!r.endless, stages: (r.stages || []).length }; }); } };
 }
 
@@ -1718,7 +1789,7 @@ setTimeout(() => {
   check(R.robes.bucklers.join() === '1,1,1,2,2,2' && R.robes.lowBucklers.join() === '0,0,0,0', 'bucklers from Cobalt up carry Magic Power', R.robes.bucklers.join(' '));
   check(R.robes.stonewright[0] === 2, 'Stonewright Gauntlets carry +2');
   check(R.robes.capes.withStr > 0 && R.robes.capes.wrong.length === 0, 'and every cape with Strength carries the same Magic Power', R.robes.capes.withStr + ' of ' + R.robes.capes.n + ' capes');
-  check(R.robes.strays.length === 0, 'nothing else in the game carries Magic Power', R.robes.strays.join(', '));
+  check(R.robes.strays.length === 0, 'nothing else in the game carries Magic Power, but a staff or a wand that was found: a crafted one carries none', R.robes.strays.join(', '));
   check(R.robes.asc[0] === 2 && R.robes.asc[1] === Math.round(2 * 1.6) && R.robes.asc[2] === Math.round(R.robes.asc[3] * 1.6) && R.robes.asc[4] === 0.015, 'Ascension raises Magic Power on a piece with its other numbers', `+${R.robes.asc[0]} -> +${R.robes.asc[1]} at ten ranks`);
   const CD = R.robes.cards;
   check(CD.robe.some(c => /^Cloth · spells at full strength$/.test(c)) && !CD.robe.some(c => /Magic damage|Heavy armour|Light armour/.test(c)), 'a robe\'s card says it is cloth', CD.robe.join(' | '));
@@ -1800,6 +1871,65 @@ setTimeout(() => {
     same('what each element is worth', R.riders, GOLD.riders);
     same('how a mage stands beside an archer on real monsters', R.real, GOLD.real);
     same('and the combat XP an hour', R.xp, GOLD.xp);
+  }
+
+  /* 9e. finds: the staves and wands that are dropped, not made */
+  {
+    console.log('\n9e. FINDS  ·  a staff or a wand in every zone, and runes off the monsters that cast');
+    R.finds = J('SIM.finds()');
+    const apos = s => String(s).split(String.fromCharCode(8217)).join(String.fromCharCode(39));
+    const FAM = GOLD.drops.families, DW = GOLD.drops.weapons.filter(d => !d.aerie);
+    const wantFrom = d => [[d.from, d.chance == null ? 0 : d.chance]].concat((d.also || []).map(a => ['mon:' + a[0], a[1]]));
+    const sameRow = (r, d) => r && r.n === apos(d.n) && r.fam === d.fam && r.t === d.t && r.atk === d.atk && r.mpow === d.mpow
+      && r.crit === (FAM[d.fam].crit ? +(FAM[d.fam].crit + FAM[d.fam].critTier * d.t).toFixed(3) : 0)
+      && JSON.stringify(r.aff) === JSON.stringify(d.aff || null) && JSON.stringify(r.wfx) === JSON.stringify(d.wfx || null) && JSON.stringify(r.ubonus) === JSON.stringify(d.ubonus || null)
+      && wantFrom(d).length === r.from.length && wantFrom(d).every(f => r.from.some(g => g[0] === f[0] && g[1] === f[1]));
+    const zoneWant = DW.filter(d => /^mon:/.test(d.from)), zoneGot = R.finds.rows.filter(r => r.from.length && r.from.every(f => /^mon:/.test(f[0])));
+    const monName = id => (C.monsters.find(m => m.id === id) || { name: id }).name;
+    console.log('   ' + padr('find', 24) + padr('kind', 11) + pad('Atk', 4) + pad('Power', 7) + pad('crit', 7) + '   ' + padr('crafted of the tier', 22) + padr('dropped by', 44) + 'what it does');
+    for (const r of zoneGot.slice().sort((a, b) => a.t - b.t)) console.log('   ' + padr(r.n, 24) + padr(r.fam + ', T' + r.t, 11) + pad(r.atk, 4) + pad(r.mpow ? '+' + r.mpow : '', 7) + pad(r.crit ? (r.crit * 100).toFixed(1) + '%' : '', 7)
+      + '   ' + padr(r.crafted.replace(/_/g, ' ') + ' ' + r.craftedAtk, 22) + padr(r.from.map(f => monName(f[0].slice(4)) + ' ' + +(f[1] * 100).toFixed(1) + '%').join(', '), 44) + r.does.replace(/ Poison stacks.*$/, ''));
+    const rowBad = zoneWant.filter(d => !sameRow(zoneGot.find(x => x.id === d.id), d)).map(d => d.id);
+    check(zoneGot.length === 12 && zoneWant.length === 12 && rowBad.length === 0,
+      'the twelve zone finds are the design\'s, row for row: name, tier, Attack, Magic Power, crit, what each does, where it drops and how often', rowBad.join(', ') || '12 rows');
+    check(!R.finds.rows.some(r => r.id === 'stormfeather_wand'), 'the Stormfeather Wand is not defined: it waits for the Aerie');
+    const shapeBad = R.finds.rows.filter(r => !(r.sameFamily && r.req && r.req.stat === 'magic' && r.rare && r.sell > 0 && r.icon !== 'none' && r.does && !r.craftedHas)).map(r => r.id);
+    check(shapeBad.length === 0, 'each casts like the crafted wand or staff of its kind, is wielded on Magic, has an icon, and says what it does on its card', shapeBad.join(', '));
+    const one = zoneGot.filter(r => ((r.aff ? 1 : 0) + (r.wfx ? 1 : 0) + (r.ubonus ? 1 : 0)) !== 1).map(r => r.id);
+    check(one.length === 0, 'each zone find has exactly one thing the crafted weapon does not', one.join(', '));
+    const named = zoneGot.filter(r => r.t <= 7 && r.from.length === 1), bossToo = zoneGot.filter(r => r.t <= 7 && r.from.length > 1), past = zoneGot.filter(r => r.t > 7);
+    check(named.length === 5 && named.every(r => r.atk === r.craftedAtk && r.mpow === 0 && r.crit === r.craftedCrit),
+      'a find only a named monster drops has the numbers of the crafted weapon of its tier', named.map(r => r.n + ' ' + r.atk + '=' + r.craftedAtk).join(', '));
+    check(bossToo.length === 5 && bossToo.every(r => r.atk >= r.craftedAtk && r.crit === r.craftedCrit) && past.length === 2 && past.every(r => r.atk > r.craftedAtk),
+      'one the boss also drops is never below it, and the two tier 8 finds sit above the last crafted tier', bossToo.concat(past).map(r => r.n + ' ' + r.atk + (r.mpow ? '/+' + r.mpow : '') + ' (' + r.craftedAtk + ')').join(', '));
+    const bossIds = new Set(C.monsters.filter(m => m.boss).map(m => m.id));
+    check(zoneGot.every(r => r.from.every(f => bossIds.has(f[0].slice(4)) ? f[1] === 0.03 : (f[1] >= 0.005 && f[1] <= 0.01))),
+      'the rates are the ones gear on these tables already has: 0.5 to 1% from a named monster, 3% from the boss');
+    /* runes off the casters */
+    const RD = GOLD.drops.runes;
+    for (const r of R.finds.runes) console.log(`   ${padr(r.name + (r.boss ? ' (boss)' : ''), 22)} Lv ${pad(r.lvl, 2)}  ${padr(r.runeName + 's', 15)} x${r.qty[0]} to ${r.qty[1]}, ${Math.round(r.chance * 100)}%   carved at Runecrafting ${pad(r.carvedAt, 2)}   about ${(r.chance * (r.qty[0] + r.qty[1]) / 2 / r.cls).toFixed(1)} casts a kill`);
+    const runeBad = RD.filter(d => { const r = R.finds.runes.find(x => x.mon === d[0]); return !(r && r.chance === d[1] && r.qty[0] === d[2][0] * r.cls && r.qty[1] === d[2][1] * r.cls); }).map(d => d[0]);
+    check(R.finds.runes.length === RD.length && RD.length === 6 && runeBad.length === 0, 'the six monsters that cast drop runes at the design\'s chance, the count multiplied by what the grade\'s biggest spell spends', runeBad.join(', ') || R.finds.runes.map(r => r.runeName).join(', '));
+    const rungs = C.runeLevels;
+    check(R.finds.runes.every(r => r.carvedAt <= r.lvl && !rungs.some(l => l > r.carvedAt && l <= r.lvl)), 'and the grade is the best one Runecrafting carves at or below the monster\'s level: no fight hands out a rune from further up the ladder');
+    check(R.finds.runes.every(r => { const c = r.chance * (r.qty[0] + r.qty[1]) / 2 / r.cls; return c >= 1 && c <= 20; }), 'a top-up and not a supply: a kill is worth between one cast and twenty');
+    /* what a find is worth beside the crafted weapon of its tier */
+    R.findWorth = J('SIM.findWorth()');
+    console.log('\n   BESIDE THE CRAFTED WEAPON OF ITS TIER  ·  the same mage in the crafted robes of the tier, at the level it drops, each element, neither weak nor resisted');
+    for (const w of R.findWorth) console.log(`   Lv ${pad(w.lv, 2)}  ${padr(w.name, 22)} beside ${padr(w.crafted.replace(/_/g, ' '), 15)} ` + Object.keys(w.els).map(k => `${k} ${pct(w.els[k].find, w.els[k].crafted)}%`).join('   '));
+    const WN = R.findWorth.filter(w => !w.bossToo && w.tier <= 7);
+    check(WN.every(w => Object.keys(w.els).every(k => (w.aff && w.aff.el === k) || w.els[k].find === w.els[k].crafted)),
+      'with any element but its own, a find only a named monster drops is the crafted weapon to the digit: a choice, not a replacement');
+    const WA = R.findWorth.filter(w => w.aff), own = w => w.els[w.aff.el];
+    check(WA.length === 8 && WA.every(w => own(w) && own(w).aff === 1 + w.aff.dmg), 'all eight finds with an element can cast it at the level they drop, and the fight reads the bonus', WA.map(w => w.aff.el + ' +' + Math.round(w.aff.dmg * 100) + '%').join(' '));
+    check(WA.filter(w => !w.bossToo && w.tier <= 7).every(w => { const r = own(w).find / own(w).crafted; return r <= 1 + w.aff.dmg + 1e-9 && r > 1 + w.aff.dmg * 0.9; }),
+      'with its own element it is worth what its card says, and no more', WA.filter(w => !w.bossToo && w.tier <= 7).map(w => w.name + ' ' + pct(own(w).find, own(w).crafted) + '%').join(', '));
+    check(WA.every(w => Object.keys(w.els).every(k => own(w).find / own(w).crafted >= w.els[k].find / w.els[k].crafted - 1e-9)), 'its own element is always its best one');
+    const top = Math.max(...R.findWorth.map(w => Math.max(...Object.keys(w.els).map(k => w.els[k].find / w.els[k].crafted))));
+    const topT7 = Math.max(...R.findWorth.filter(w => w.tier <= 7).map(w => Math.max(...Object.keys(w.els).map(k => w.els[k].find / w.els[k].crafted))));
+    check(R.findWorth.every(w => Object.keys(w.els).every(k => w.els[k].find >= w.els[k].crafted)) && topT7 <= 1.25 && top <= 1.45,
+      'no find is worse than the crafted weapon, none within the crafted tiers is more than a quarter better, and a tier 8 find is less than a tier and a half over tier 7', 'most over the crafted weapon: ' + ((topT7 - 1) * 100).toFixed(1) + '% within tier 7, ' + ((top - 1) * 100).toFixed(1) + '% at tier 8');
+    same('what each find is worth beside the crafted weapon is what was measured when it was built', R.findWorth, (GOLD.built || {}).findWorth);
   }
 
   /* 10. the spell bar */
@@ -1984,11 +2114,61 @@ setTimeout(() => {
       const sp = T.staff.runs.filter(v => v.spent).map(v => v.spent);
       check(T.staff.runs.every(v => v.spell === 'Storm Surge') && sp.length === RD.length, 'the staff cast Storm Surge the whole way, and spent runes in every one', sp.join(' / ') + ' runes');
     }
+    /* 13e. the finds, beside the crafted weapon of their tier, across thousands of kills.
+       A status only goes wrong across a kill: a poison or a burn that is still on the
+       next monster, a slow that leaves its stretched attack time behind. So every
+       tick that ends in a kill is checked for anything carried over. */
+    {
+      const FH = 6;
+      /* find, the crafted loadout it stands in for, level, tier, monster, element, health held at */
+      const PAIRS = [
+        ['gnawbone_wand', 'wandBare', 9, 1, 'dire_rat', 'fire', 0],
+        ['briarwood_wand', 'wandBare', 12, 2, 'goblin', 'fire', 0],
+        ['webspinner_staff', 'staff', 12, 2, 'goblin', 'fire', 0],
+        ['frostbrand_staff', 'staff', 40, 4, 'alpha_wolf', 'frost', 0],
+        ['cinderspine', 'staff', 78, 7, 'wyvern', 'frost', 0],
+        ['mossheart_wand', 'wandBare', 70, 7, 'cave_troll', 'fire', 0.5]
+      ];
+      console.log(`\n   FINDS  ·  ${FH} game hours each through combatTick(), beside the crafted weapon of the tier: same level, same robes, same monster, its weakness left on`);
+      console.log('   ' + padr('', 20) + padr('element, monster', 26) + pad('crafted dps', 12) + pad('find dps', 10) + pad('', 8) + pad('kills/hr', 10) + '   what the tick did');
+      const FL = {};
+      for (const [id, key, lv, t, mon, el, hp] of PAIRS) {
+        const over = hp ? `{hpFrac:${hp}}` : '{}', overF = hp ? `{weapon:'${id}',hpFrac:${hp}}` : `{weapon:'${id}'}`;
+        const a = J(`SIM.liveFight('${key}',${lv},${t},'${mon}',${FH},${9700 + lv},false,'${el}',${over})`);
+        const b = J(`SIM.liveFight('${key}',${lv},${t},'${mon}',${FH},${9700 + lv},false,'${el}',${overF})`);
+        const M = C.monsters.find(m => m.id === mon), rel = M.weakEl === el ? ', weak' : M.resistEl === el ? ', resisted' : '';
+        FL[id] = { a, b, ratio: b.dps / a.dps };
+        if (a.err || b.err) { console.log('   ' + (a.err || b.err)); continue; }
+        const did = [];
+        for (const k of ['poison', 'burn', 'pin', 'stun']) if (b.seen[k] || a.seen[k]) did.push(({ pin: 'slowed', stun: 'stunned', poison: 'poisoned', burn: 'burning' })[k] + ' ' + (b.seen[k] / (FH * 360)).toFixed(1) + '% of the time (crafted ' + (a.seen[k] / (FH * 360)).toFixed(1) + '%)');
+        if (hp) did.push('healed ' + Math.round(b.healedHr).toLocaleString() + ' an hour (crafted ' + Math.round(a.healedHr) + ')');
+        console.log('   ' + padr(R.finds.rows.find(r => r.id === id).n, 20) + padr(el + ', ' + M.name + rel, 26) + pad(a.dps.toFixed(1), 12) + pad(b.dps.toFixed(1), 10) + pad((FL[id].ratio * 100).toFixed(1) + '%', 8) + pad(Math.round(b.killsHr), 10) + '   ' + (did.join(', ') || 'the element bonus'));
+      }
+      const all = Object.keys(FL).map(k => FL[k]);
+      check(all.length === 6 && all.every(x => !x.a.err && !x.b.err && x.a.engaged && x.b.engaged && !x.a.stopped && !x.b.stopped && x.b.killsHr > 50), 'all twelve fights ran their six hours');
+      check(all.every(x => x.a.carried === 0 && x.b.carried === 0), 'nothing is carried from one monster to the next: no poison, burn, stun or slow on a fresh monster, and it attacks at its own speed',
+        all.reduce((s, x) => s + Math.round((x.a.killsHr + x.b.killsHr) * FH), 0).toLocaleString() + ' kills checked');
+      const g = FL.gnawbone_wand, f = FL.frostbrand_staff;
+      check(g.ratio > 1.01 && g.ratio < 1.09, 'live, the Gnawbone Wand does about 6% more with Fire than a Pine Wand, on top of the weakness both get', (g.ratio * 100).toFixed(1) + '%');
+      check(f.ratio > 1.03 && f.ratio < 1.11, 'and the Frostbrand Staff about 8% more with Frost than an Emberwood Staff', (f.ratio * 100).toFixed(1) + '%');
+      const bw = FL.briarwood_wand, ws = FL.webspinner_staff;
+      check(bw.b.seen.poison > 0 && ws.b.seen.poison > 0 && bw.a.seen.poison === 0 && ws.a.seen.poison === 0 && bw.ratio > 1 && bw.ratio < 1.3 && ws.ratio > 1 && ws.ratio < 1.3,
+        'the Briarwood Wand and the Webspinner Staff poison, the crafted ones do not, and the poison is worth a few percent', 'wand ' + (bw.ratio * 100).toFixed(1) + '%, staff ' + (ws.ratio * 100).toFixed(1) + '%');
+      const cs = FL.cinderspine;
+      check(cs.b.seen.burn > 0 && cs.a.seen.burn === 0 && cs.b.seen.pin > 0 && cs.a.seen.pin > 0 && cs.ratio > 1.05 && cs.ratio < 1.4,
+        'Cinderspine burns while casting Frost, with the chill and the burn on the same monster', (cs.ratio * 100).toFixed(1) + '% of an Ancient Staff');
+      check(Math.abs(cs.b.takenHr / cs.a.takenHr - 1) < 0.12, 'and the chill slows the monster no more and no less than it does for a crafted staff', Math.round(cs.b.takenHr).toLocaleString() + ' damage taken an hour against ' + Math.round(cs.a.takenHr).toLocaleString());
+      const mh = FL.mossheart_wand, share = mh.b.healedHr / (mh.b.dps * 3600);
+      check(mh.b.healedHr > 0 && mh.a.healedHr === 0 && share > 0.02 && share < 0.06, 'the Mossheart Wand heals for about 4% of the damage it deals, and a crafted wand heals nothing', (share * 100).toFixed(1) + '% of the damage dealt');
+    }
     const mg = rows.filter(v => /staff|wand/.test(v.key));
     check(mg.every(v => v.spentHr > 0 && v.spentHr <= v.castsHr * (/Blast/.test(v.spell) ? 2 : /Wave/.test(v.spell) ? 3 : /Surge/.test(v.spell) ? 4 : 1)),
       'a mage never spends more runes than its casts times the size of the spell, and robes keep some back', mg.filter(v => v.lv === 99).map(v => NAME[v.key] + ' ' + v.spell + ': ' + Math.round(v.spentHr).toLocaleString() + ' runes for ' + Math.round(v.castsHr).toLocaleString() + ' casts').join('  ·  '));
   }
 
+  /* CV_DUMP=file writes everything this run measured, so a number that is meant to
+     move can be cut into the golden file by hand. It never writes the golden file. */
+  if (process.env.CV_DUMP) fs.writeFileSync(process.env.CV_DUMP, JSON.stringify(R));
   console.log(`\n${fails ? fails + ' CHECK' + (fails > 1 ? 'S' : '') + ' FAILED' : 'PASS'}: ${fails ? fails + ' of ' : 'all '}${checks} Magic checks\n`);
   process.exit(fails ? 1 : 0);
 }, 2800);
