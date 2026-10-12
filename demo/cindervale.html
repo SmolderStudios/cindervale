@@ -9011,7 +9011,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.127.4">v0.9.127</div>
+  <div class="mm-ver" data-build="0.9.127.5">v0.9.127</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -38228,6 +38228,7 @@ function sizeRightBar(force){
   document.documentElement.style.setProperty('--rb-h',Math.max(480,h)+'px');
 }
 function renderRightPanel(){
+  if(_combatCatchUp){ _combatCatchUp.right++; return; }   // held until the catch-up is over, see combatCatchUp()
   /* While the satchel screen is open the right bar is covered, and every caller
      that refreshes the right bar after an item changes means the satchel. */
   if(invOpen){ renderInvGear(); renderInventory(); updateNotifBadge(); return; }
@@ -42877,7 +42878,8 @@ function resumeCombatSession(){
 function startCombatTimer(){
   stopCombatTimer();
   // Fast tick — each side fires on its own swingMs schedule, not on tick boundaries.
-  _combatTimer=setInterval(combatTick,100);
+  _combatTickWall=Date.now();
+  _combatTimer=setInterval(combatTimerTick,COMBAT_TICK_MS);
 }
 function stopCombatTimer(){
   if(_combatTimer){ clearInterval(_combatTimer); _combatTimer=null; }
@@ -42915,6 +42917,7 @@ function stopCombatTimer(){
    but read completely differently here. Horizontal jitter keeps stacked hits
    from landing on top of each other. */
 function cmbSplat(text,cls){
+  if(_combatCatchUp) return;   // a hit that landed while nobody was looking has no number to float
   try{
     var host=document.getElementById('cmbSplats'); if(!host) return;
     if(host.childElementCount>14) host.removeChild(host.firstChild);
@@ -43010,6 +43013,100 @@ function cvDropRowsHTML(m){
   }catch(e){ return ''; }
 }
 /* ==DROPROWS-END== */
+/* ==== A LATE TICK (0.9.127.5) ================================================
+   combatTick() below is one tick of a fight: at most one attack from each side.
+   That is all a fight needs while its timer fires every 100 ms, and it is what
+   went wrong whenever the engine held the timer back.
+
+   A window nobody can see has its timers slowed: once a second for the first
+   minute, then once a MINUTE. Measured on a minimised window in the wrapper's own
+   Electron (42.5, Chrome 148, the build players have); the same engine does it
+   to a background tab in a browser. So a minimised game fought at one attack a
+   minute: a Lv 99 archer on a Dread Knight went from 169 kills an hour to 5.
+   Skilling never had the problem, because tick() works out how many cycles fit
+   in the time that has passed.
+
+   The timer now does the same for a fight. When it fires late it runs the ticks
+   it missed, in order, through combatTick() itself, each on the clock it would
+   have had. Nothing is worked out a second way, so everything a tick does still
+   happens: auto-eat spends food, a shot spends an arrow and a cast spends runes,
+   a rare can appear, a raid moves on to its next stage, and you can die. A
+   minimised window and one in front of you come out the same.
+
+   Date.now is swapped for the length of the catch-up, and put back in a finally.
+   Every timer a fight keeps reads the clock through it (attack times, poison and
+   burn, food that heals over time, potion effects, Ruin and Brace, a raid's
+   charged attacks, a fresh raid stage), so stepping the one clock moves all of
+   them together. Passing a time into combatTick() alone would leave the rest on
+   the real clock: a bowl of broth would heal nothing until the catch-up was over
+   and a new raid stage would not start attacking. The harnesses have always
+   driven fights this way (SIM.liveFight in _magesim.js).
+
+   Painting waits. updateCombatBars() is nine tenths of what a tick costs (1.8 ms
+   of 2.0, measured in the wrapper's Electron), so a minute of ticks painted one by
+   one held the window for 1.5 seconds as you came back to it, and for 4 seconds
+   out of every minute while it was hidden. While the catch-up runs, the fight
+   panel, its bars and the right-hand side are counted instead of drawn, and each
+   is drawn once at the end if a tick asked for it. The floating damage numbers
+   are dropped. A minute then costs 20 ms in view.
+
+   Three limits:
+     a tick that is on time (under two ticks since the last one) is left alone;
+     a gap over TICK_CATCHUP_MAX_MS is a sleeping or locked machine, not a hidden
+       window. tick() settles that as time away, through grantOffline() and
+       resumeCombatSession(), exactly as it did before. This steps aside for it
+       and does not fight the one stray tick it used to: that tick could eat,
+       eating saves, and a save stamps lastSeen, which left grantOffline() with
+       nothing to settle;
+     COMBAT_CATCHUP_RATE is how much of the missed time is fought. At 1 a hidden
+       window is worth what a visible one is. Lower it and only the last part of
+       each gap is fought.
+
+   combatTick() is still exactly one tick. Only the timer comes through here, so
+   the harnesses that call combatTick() themselves see no change. _hiddenwindow.js
+   measures all of this through the real timer on a held clock, and _audit_tests.js
+   holds it in place. */
+const COMBAT_TICK_MS=100;
+const COMBAT_CATCHUP_RATE=1;
+/* When the fight's timer last fired, on the wall clock. Runtime only, like
+   _lastTickWall. startCombatTimer() stamps it, so a new fight never inherits the
+   gap since the last one and its first tick is measured from the moment it began. */
+let _combatTickWall=0;
+/* Not null while a catch-up is running: it counts the paints the ticks asked for.
+   A `var`, so the four functions that read it can be called before this line has run. */
+var _combatCatchUp=null;
+function combatTimerTick(){
+  const now=Date.now(), last=_combatTickWall;
+  _combatTickWall=now;
+  const gap=last?now-last:0;
+  if(gap<COMBAT_TICK_MS*2 || !combat.active){ combatTick(); return; }
+  if(gap>TICK_CATCHUP_MAX_MS) return;
+  combatCatchUp(last, now);
+}
+function combatCatchUp(from, to){
+  const span=Math.round((to-from)*COMBAT_CATCHUP_RATE);
+  const steps=Math.round(span/COMBAT_TICK_MS);
+  if(steps<=1){ combatTick(); return; }
+  const realNow=Date.now, seen=state.lastSeen, held={bars:0, panel:0, right:0};
+  let at=to-span;
+  try{
+    Date.now=function(){ return at; };
+    _combatCatchUp=held;
+    for(let i=1; i<=steps && combat.active; i++){
+      at=to-span+Math.round(span*i/steps);
+      combatTick();
+    }
+  } finally { Date.now=realNow; _combatCatchUp=null; }
+  /* A tick that ate saved the game on the clock it ran on. Save again on the real
+     one, so lastSeen is never left behind the time that has just been fought. */
+  if(state.lastSeen!==seen) saveGame();
+  /* Paint once, and only what the ticks asked for. Never more: with the satchel
+     open, painting the right-hand side is the slow thing that made the tick late,
+     and painting it after every late tick would keep every tick late. */
+  if(held.panel) renderCombat();
+  if(held.right) renderRightPanel();
+  if(held.bars) updateCombatBars();
+}
 function combatTick(){
   if(!combat.active){ stopCombatTimer(); return; }
   const baseMon=getMonster(combat.monId);
@@ -43844,6 +43941,7 @@ function _syncChipRow(el, side, prevSig, setSig){
 
 function updateCombatBars(){
   if(!combatMode) return;
+  if(_combatCatchUp){ _combatCatchUp.bars++; return; }   // held until the catch-up is over, see combatCatchUp()
   const baseMon=getMonster(combat.monId);
   const mon=rareModify(baseMon,combat.rare);
   const foePct=combat.active?Math.max(0,100*combat.foeHp/mon.hp):100;
@@ -45381,6 +45479,7 @@ window.addEventListener('keydown',function(e){
   }
 });
 function renderCombat(){
+  if(_combatCatchUp){ _combatCatchUp.panel++; return; }   // held until the catch-up is over, see combatCatchUp()
   const panel=$('combatPanel');
   if(!panel) return;
   /* [UI-PREVIEW] Every zone already ships an accent hex and it only ever reached a 3px
