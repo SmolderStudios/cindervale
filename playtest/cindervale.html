@@ -7283,6 +7283,15 @@ body:not(.is-demo) .demo-only{display:none !important}
 .en-canchip{display:flex;flex-direction:column;padding:7px 10px;border-radius:7px;background:#120c07;box-shadow:var(--ew-well)}
 .en-canchip b{font-weight:normal;font-size:calc(12.5px*var(--tscale));color:#e8d7b0}
 .en-canchip span{font-family:var(--num);font-size:calc(11px*var(--tscale));color:#9a8a68;margin-top:1px}
+/* The same chips as buttons: press one to choose that enchant (#207). */
+button.en-canchip.pick{border:0;text-align:left;cursor:var(--cur-pointer);font:inherit;color:inherit;
+  box-shadow:var(--ew-well),inset 0 0 0 1px var(--trim-d);transition:box-shadow .12s,background .12s}
+button.en-canchip.pick:hover:not(:disabled){background:#1b1209;box-shadow:var(--ew-well),inset 0 0 0 1px var(--trim)}
+button.en-canchip.pick.on{background:#2a1a08;box-shadow:var(--ew-well),inset 0 0 0 1.5px var(--ember)}
+button.en-canchip.pick.on b{color:var(--gold-hi,#f0c060)}
+button.en-canchip.pick:disabled{opacity:.4;cursor:default}
+.en-canlab b{color:#e8d7b0;font-weight:normal}
+.en-pk{font-weight:normal;font-size:.78em;letter-spacing:.06em;text-transform:uppercase;color:var(--ember);margin-left:4px}
 .en-act{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding-top:4px}
 .en-mats{display:flex;flex-wrap:wrap;gap:6px;flex:1;min-width:0}
 .en-go{flex:none;font-family:'Cinzel',serif;font-size:calc(14px*var(--tscale));letter-spacing:.04em;color:#1a0f04;
@@ -9035,7 +9044,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.127.7">v0.9.127</div>
+  <div class="mm-ver" data-build="0.9.127.8">v0.9.127</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -11847,8 +11856,17 @@ function _enchPick(keys,exclude){
 }
 /* Roll a piece's lines. With keepLocked, a locked line survives untouched and the
    free lines reroll to stats DIFFERENT from what was kept, so a lock can never
-   leave two lines of the same stat. */
-function enchRollLines(id,keepLocked){
+   leave two lines of the same stat.
+
+   `pick` (0.9.127.8, ticket #207): the one enchant the player chose for this
+   piece. "I dislike the fact we cannot pick the enchant we want any more. If we
+   have rng on one and not the other there would be a bit more control." Jordan:
+   "maybe I can give it one guaranteed and the rest rng picks." So one line of a
+   piece takes the stat you name and only its number is rolled; every other line
+   is as random as it was. It is flagged p:true, there is only ever one, and it
+   leads the piece, so the piece is named for what you chose. If a locked line
+   already carries that stat, that line is the chosen one and nothing else moves. */
+function enchRollLines(id,keepLocked,pick){
   const P=enchPoolFor(id); if(!P) return [];
   const old=(state.variants&&state.variants[id]&&state.variants[id].lines)||[];
   const oldNormal=old.filter(l=>l&&!l.u), oldUnique=old.find(l=>l&&l.u);
@@ -11856,6 +11874,15 @@ function enchRollLines(id,keepLocked){
   for(let i=0;i<ENCH_LINES;i++){
     const prev=oldNormal[i];
     lines.push(keepLocked&&prev&&prev.lock?prev:null);
+  }
+  if(pick&&P.keys.indexOf(pick)>=0){
+    lines.forEach(function(l){ if(l) delete l.p; });
+    const held=lines.find(l=>l&&l.k===pick);
+    if(held) held.p=true;
+    else {
+      const slot=lines.findIndex(l=>!l);
+      if(slot>=0){ const q=_enchQ(); lines[slot]={k:pick, v:enchValueAt(pick,id,q,1), q:+q.toFixed(3), lock:false, p:true}; }
+    }
   }
   for(let i=0;i<lines.length;i++){
     if(lines[i]) continue;
@@ -11872,7 +11899,28 @@ function enchRollLines(id,keepLocked){
       lines.push({k:k, v:enchValueAt(k,id,q,ENCH_UNIQUE_MULT), q:+q.toFixed(3), lock:false, u:true});
     }
   }
-  return lines.filter(Boolean);
+  // the chosen line leads; everything else keeps its order
+  return lines.filter(Boolean).sort(function(a,b){ return (b.p?1:0)-(a.p?1:0); });
+}
+/* The stat a piece has been told to carry, or null. Before a piece is enchanted it
+   is still part of a stack and has no record of its own, so the choice made on the
+   bench waits in _enchPickSel until the first enchant gives it one. */
+var _enchPickSel={};
+function enchPickOf(id){
+  const v=state.variants&&state.variants[id];
+  const k=v?v.pick:_enchPickSel[id];
+  const P=enchPoolFor(id);
+  return (k&&P&&P.keys.indexOf(k)>=0)?k:null;
+}
+function setEnchPick(id,key){
+  const v=state.variants&&state.variants[id];
+  if(v){ if(key) v.pick=key; else delete v.pick; saveGame(); }
+  else if(key) _enchPickSel[id]=key; else delete _enchPickSel[id];
+}
+/* A chosen line that is locked cannot be swapped for another stat by a reroll. */
+function enchPickLocked(id){
+  const v=state.variants&&state.variants[id];
+  return !!(v&&v.lines&&v.lines.some(l=>l&&l.p&&l.lock));
 }
 function enchLockCount(vid){ const v=state.variants&&state.variants[vid]; return v?v.lines.filter(l=>l.lock).length:0; }
 function enchMaxLocks(vid){ const v=state.variants&&state.variants[vid]; return v?Math.max(0,v.lines.length-1):0; }
@@ -11925,7 +11973,9 @@ function enchantPiece(id,opts){
   const vid=isVariantId(id)?id:splitToVariant(id,{worn:opts.worn});
   if(!vid){ if(typeof toast==='function') toast('You do not have that piece.'); return null; }
   enchSpend(cost);
-  state.variants[vid].lines=enchRollLines(vid,rolled);
+  /* The choice made on the stack follows the piece that came off it. */
+  if(vid!==id&&_enchPickSel[id]){ state.variants[vid].pick=_enchPickSel[id]; }
+  state.variants[vid].lines=enchRollLines(vid,rolled,enchPickOf(vid));
   registerVariant(vid);                         // the name follows the leading line
   if(typeof refreshCombatStats==='function') try{ refreshCombatStats(); }catch(e){}
   saveGame();
@@ -18618,16 +18668,23 @@ function cropDisplayIconId(c){
 }
 
 /* ── Farmer for Hire ──
-   Hired help that automates patches. Higher tiers do more and charge a higher
-   per-harvest wage (auto-deducted from coins while the toggle is ON). */
+   Hired help that automates patches. Higher tiers do more.
+
+   NO WAGE since 0.9.127.8 (ticket #222, Jordan: "fix the farmhand wages"). It was
+   a flat 75, 180 or 400 gold a harvest whatever was planted, so it was 2% of a
+   Riftmoss harvest and more than the whole of a Flax or a Wildberry one: the
+   cheap crops lost money every time the farmhand touched them, and a farmhand
+   that ran out of gold switched itself off. A tier is paid for once, when it is
+   hired, or earned as a title in The Furrow (gdFarmTier), which is the half of the
+   0.9.123 design that was never wired in. */
 const FARMER_TIERS=[
-  {tier:1, name:'Apprentice Farmhand', icon:'🧑‍🌾', hireCost:5000,   wage:75,  reqLvl:8,
+  {tier:1, name:'Apprentice Farmhand', icon:'🧑‍🌾', hireCost:5000,   reqLvl:8,
    autoHarvest:true, autoReplant:false, autoPlant:false, autoTend:false,
    desc:'Auto-harvests ready patches only.'},
-  {tier:2, name:'Journeyman Farmer',   icon:'👨‍🌾', hireCost:40000,  wage:180, reqLvl:25,
+  {tier:2, name:'Journeyman Farmer',   icon:'👨‍🌾', hireCost:40000,  reqLvl:25,
    autoHarvest:true, autoReplant:true,  autoPlant:true,  autoTend:false,
    desc:'Harvests, replants, and plants empty patches.'},
-  {tier:3, name:'Master Cultivator',   icon:'🌾',    hireCost:200000, wage:400, reqLvl:50,
+  {tier:3, name:'Master Cultivator',   icon:'🌾',    hireCost:200000, reqLvl:50,
    autoHarvest:true, autoReplant:true,  autoPlant:true,  autoTend:true,
    desc:'Harvests, replants, plants, and tends to speed growth.'},
 ];
@@ -18740,6 +18797,7 @@ function harvestPatch(patchId, silent){
     var qty=crop.out[outId]*mult;
     // Bountiful Crop bonus yield (fa_yield passive)
     qty+=binom(1,m.extraBar)*crop.out[outId];
+    qty+=masteryMore('crop_'+crop.id,crop.out[outId],1);   // mastery of this crop: a chance of one more
     // Plentiful Harvest (master1): guaranteed +1 of every crop type
     if(m.master1) qty+=1;
     state.items[outId]=(state.items[outId]||0)+qty;
@@ -18757,7 +18815,7 @@ function harvestPatch(patchId, silent){
   if(crop.rareDrops){
     for(var ri=0;ri<crop.rareDrops.length;ri++){
       var rd=crop.rareDrops[ri];
-      var got=binom(mult, effDropChance(rd.chance)); // mult = 1 normally, 2 with Abundance
+      var got=binom(mult, effDropChance(rd.chance)*(1+masteryRare('crop_'+crop.id))); // mult = 1 normally, 2 with Abundance
       if(got>0){
         state.items[rd.id]=(state.items[rd.id]||0)+got;
         markDiscovered(rd.id);
@@ -18858,7 +18916,12 @@ function toggleFarmer(){
   toast(state.farmer.enabled?'🧑‍🌾 Auto-farming enabled.':'⏸ Auto-farming paused.');
 }
 
-// Runs on a timer — harvests/replants/tends patches and charges the wage.
+/* Set while the farmhand's missed time is being played through on a held clock
+   (farmRunQuiet): no toast, no repaint, no save and no drop rows for any of it.
+   The tally is what the summary is written from. `var`, so nothing that reads it
+   early can trip over it. */
+var _farmQuiet=null;
+// Runs on a timer — harvests, replants and tends patches.
 function tickFarmer(){
   var f=state.farmer;
   if(!f||!f.enabled||!f.tier) return;
@@ -18910,12 +18973,6 @@ function tickFarmer(){
       var pid=pids[i];
       var ps=state.patches[pid];
       if(!ps||!patchReady(ps)||!patchUnlocked(pid)) continue;
-      if((state.coins||0)<def.wage*SILVER_PER_GOLD){
-        f.enabled=false;
-        toast('💸 Out of gold — the farmer stopped working. Re-enable when you can pay the wage.');
-        break;
-      }
-      state.coins-=def.wage*SILVER_PER_GOLD; totalWage+=def.wage;
       harvestPatch(pid,true);
       harvested++;
       // Replant (tier 2+) — uses the AUTO-PLANT choice (chosen seed, or best owned in
@@ -18944,6 +19001,7 @@ function tickFarmer(){
     }
   }
 
+  if(_farmQuiet){ _farmQuiet.h+=harvested; _farmQuiet.t+=tended; _farmQuiet.p+=planted2+replanted; return; }
   if(harvested>0||tended>0||planted2>0){
     if(harvested>0){
       var msg=def.icon+' Farmer harvested '+harvested+' patch'+(harvested>1?'es':'');
@@ -18951,7 +19009,6 @@ function tickFarmer(){
       if(replanted>0) addons.push('replanted '+replanted);
       if(planted2>0) addons.push('planted '+planted2);
       if(addons.length) msg+=' & '+addons.join(' & ');
-      msg+=' (−'+totalWage.toLocaleString()+'g)';
       toast(msg);
     } else if(planted2>0){
       toast(def.icon+' Farmer planted '+planted2+' empty patch'+(planted2>1?'es':'')+'.');
@@ -18961,11 +19018,70 @@ function tickFarmer(){
   }
 }
 
-// Grant offline farming growth (patches grow while offline)
-function grantOfflineFarming(awayMs){
-  if(!state.patches) return;
-  // Patches just accumulate elapsed time — they auto-complete if grown
-  // No action needed since growthPct uses real timestamps
+/* ── The farmhand's missed time (0.9.127.8, ticket #233) ───────────────────────
+   "If farming is meant to continue offline if you have a farmer assigned, I don't
+   believe it is." It was not. Patches grow on the wall clock, so they finished
+   while the game was closed and then sat there: the farmhand harvested each one
+   once when you came back and that was the whole night. grantOfflineFarming() was
+   an empty function with no callers.
+
+   The farmhand's time away is played through tickFarmer() itself, on a clock held
+   by this function, the way a hidden fight is played through combatTick(). Nothing
+   is worked out a second way: it harvests, replants from your seed vault, tends on
+   each crop's own cooldown, rolls the rare drops and the set pieces and earns the
+   XP and the mastery exactly as it does in view, and it stops when the seeds run
+   out. `from` to `from+span` is the stretch it works; the caller decides how long
+   that is. Returns what happened, or null if nothing did. */
+const FARM_CATCHUP_STEP_MS=15000, FARM_CATCHUP_MAX_STEPS=6000;
+function farmRunQuiet(from, span){
+  const f=state.farmer;
+  if(!f||!f.enabled||!f.tier||!state.patches||!(span>0)) return null;
+  const steps=Math.max(1,Math.min(FARM_CATCHUP_MAX_STEPS,Math.ceil(span/FARM_CATCHUP_STEP_MS)));
+  const itemsBefore={};
+  for(const k in state.items) itemsBefore[k]=state.items[k];
+  const xpBefore=state.xp.farming||0, lvlBefore=levelFromXp(xpBefore);
+  const realNow=Date.now, tally={h:0,t:0,p:0};
+  let at=from;
+  try{
+    Date.now=function(){ return at; };
+    _farmQuiet=tally;
+    for(let i=1;i<=steps;i++){ at=from+Math.round(span*i/steps); tickFarmer(); }
+  } finally { Date.now=realNow; _farmQuiet=null; }
+  if(!tally.h&&!tally.t&&!tally.p) return null;
+  const items=[];
+  for(const k in state.items){
+    const d=(state.items[k]||0)-(itemsBefore[k]||0);
+    if(d>0&&ITEMS[k]) items.push({id:k,name:ITEMS[k].name,icon:ITEMS[k].icon||'📦',qty:d,rare:!!ITEMS[k].rare});
+  }
+  items.sort((a,b)=>(b.rare-a.rare)||(b.qty-a.qty));
+  const lvlAfter=levelFromXp(state.xp.farming||0);
+  return {harvests:tally.h, tends:tally.t, planted:tally.p, xp:(state.xp.farming||0)-xpBefore,
+          items:items, lvlUp:lvlAfter>lvlBefore?lvlAfter:0};
+}
+/* With the game closed the farmhand works at your Offline efficiency for the time
+   your Offline cap allows, the same two numbers every other skill is paid by.
+   Whatever was left growing when that time ran out keeps growing on the wall
+   clock, as it always has, so a night away is never worth less than it was. */
+function offlineFarmResolve(awayMs, rate){
+  if(!(awayMs>0)||!(rate>0)||!state.lastSeen) return null;
+  return farmRunQuiet(state.lastSeen, Math.round(awayMs*rate));
+}
+/* The 2 s farming timer, and the same catch-up for a window nobody can see. The
+   engine holds a hidden window's timers to once a second and then once a minute,
+   and a Master Cultivator that tends every 15 to 96 seconds was tending once a
+   minute. A late timer plays through the time it missed, at the full rate (the
+   rule a hidden fight follows since 0.9.127.5). Past TICK_CATCHUP_MAX_MS the
+   machine was asleep and tick() settles it as offline time instead. */
+let _farmTickAt=0;
+function farmTimerTick(){
+  const now=Date.now(), gap=_farmTickAt?now-_farmTickAt:0;
+  _farmTickAt=now;
+  if(gap>FARM_CATCHUP_STEP_MS && gap<=TICK_CATCHUP_MAX_MS){
+    const r=farmRunQuiet(now-gap, gap);
+    if(r){ if(viewTab==='acts'&&selectedSkill==='farming') renderFarming(); renderHeader(); saveGame(); }
+    return;
+  }
+  tickFarmer();
 }
 
 /* Check if any patches just became ready — send toast + mark for glow highlight */
@@ -19156,15 +19272,14 @@ function buildFarmerPanel(){
   if(activeDef){
     txt.innerHTML='<div class="fm-l1"><b>'+activeDef.name+'</b>'
       +'<span class="fm-wk'+(f.enabled?'':' off')+'">'+(f.enabled?'working':'paused')+'</span></div>'
-      +'<p>'+_fmCapsLine(activeDef)+' \u00b7 <em>'+iconHTML('ui_coin')+' '+activeDef.wage.toLocaleString()+'g a harvest</em></p>';
+      +'<p>'+_fmCapsLine(activeDef)+' \u00b7 <em>no wage</em> \u00b7 keeps working with the game closed, at your Offline efficiency</p>';
   } else {
     var first=FARMER_TIERS[0];
     txt.innerHTML='<div class="fm-l1"><b>No farmhand</b></div>'
       /* Ticket #233. This said "while you are away", which everywhere else in the
          game means with the game closed. A farmhand works while the game is open. */
-      +'<p>An <em>'+first.name+'</em> harvests your ready patches for you while the game is open. '
-      +'With the game closed your patches keep growing and are harvested when you come back. '
-      +iconHTML('ui_coin')+' '+first.wage.toLocaleString()+'g a harvest.</p>';
+      +'<p>An <em>'+first.name+'</em> harvests your ready patches for you. Hired once, no wage. '
+      +'With the game closed it keeps working at your Offline efficiency.</p>';
   }
   row.appendChild(txt);
 
@@ -19254,7 +19369,7 @@ function buildFarmerPanel(){
         var card=document.createElement('div');
         card.className='fm-tier'+(active?' on':'')+((!owned&&(!lvlOk||!prevOk))?' lock':'');
         card.innerHTML='<b>'+t.name+'</b><i>'+_fmCapsOnly(t)+'</i>'
-          +'<em>'+iconHTML('ui_coin')+' '+t.wage.toLocaleString()+'g a harvest</em>';
+          +'<em>'+(owned?'yours \u00b7 no wage':'hired once, no wage \u00b7 or free at '+GD_BY.furrow.titles[t.tier*2-1]+' in The Furrow')+'</em>';
         if(active){
           card.innerHTML+='<span class="fm-inuse">\u2713 in use</span>';
         } else if(owned){
@@ -21358,6 +21473,20 @@ function normalizeState(){
   if(typeof state.presetAuto!=='boolean') state.presetAuto=false;
   for(var _gpKey2 in state.gearPresets) _migPendantToNeck(state.gearPresets[_gpKey2]);
   if(!state.mastery||typeof state.mastery!=='object'||Array.isArray(state.mastery)) state.mastery={};
+  /* Mastery counts time since 0.9.127.8 (see masteryWeight). What a save earned
+     under the old count is worth the same hours under the new one, converted once. */
+  if(state.masteryV!==2){
+    if(typeof masteryWeight==='function'){
+      for(const _mk in state.mastery){
+        const _mv=state.mastery[_mk];
+        if(typeof _mv!=='number'||!(_mv>0)) continue;
+        const _mw=masteryWeight(_mk);
+        if(_mw>1) state.mastery[_mk]=_mv*_mw;
+      }
+      if(typeof invalidateMasteryCache==='function') invalidateMasteryCache();
+    }
+    state.masteryV=2;
+  }
   if(!Array.isArray(state.effects)) state.effects=[];
   /* Container-only guards were the pattern here: Array.isArray at the top, then
      every element dereferenced unguarded below. A single null entry — which is
@@ -21635,6 +21764,19 @@ function normalizeState(){
   if(typeof state.farmer.maxTier!=='number') state.farmer.maxTier=state.farmer.tier||0;
   if(state.farmer.maxTier<state.farmer.tier) state.farmer.maxTier=state.farmer.tier;
   if(state.farmer.maxTier>3) state.farmer.maxTier=3;
+  /* The Furrow's titles 2, 4 and 6 come with the three farmhands (0.9.127.8). The
+     0.9.123 design said so and only its reputation migration was ever written:
+     gdFarmTier() had no callers. A title is never lost, so this only ever raises. */
+  try{
+    if(typeof gdFarmTier==='function' && state.gd){
+      var _gft=gdFarmTier();
+      if(_gft>state.farmer.maxTier){
+        state.farmer.maxTier=_gft;
+        if(typeof logNotification==='function' && typeof FARMER_TIERS!=='undefined')
+          logNotification('farm','\u2726','The Furrow has sent you the '+FARMER_TIERS[_gft-1].name+'. Put it to work on the Farming page.');
+      }
+    }
+  }catch(e){}
   if(typeof state.farmer.enabled!=='boolean') state.farmer.enabled=false;
   if(state.farmer.seedId!==null&&!getCrop(state.farmer.seedId)) state.farmer.seedId=null;
   /* (0.9.122.4) The seed the shelf has selected. Persisted now that every Plant
@@ -22460,6 +22602,7 @@ function logDrop(id, qty){
 function showItemPop(id, qty){
   if(!id||!qty||qty<=0) return;
   const it=ITEMS[id]; if(!it) return;
+  if(_farmQuiet) return;           // a farmhand's missed time is reported once, in its summary
   logDrop(id,qty);                 // #195 — feeds the right-panel Drops tab
   const container=$('itemDropsFeed'); if(!container) return;
   const now=Date.now();
@@ -24457,8 +24600,12 @@ function thiefSuccess(act){
   return Math.max(0.05, Math.min(THIEF_SUCC_CAP, c));
 }
 
-function skillDropChance(skillKey, drop, m){
+function skillDropChance(skillKey, drop, m, actId){
   let c=effDropChance(drop.chance);
+  /* Mastery of the activity it drops from: 0.2% more a level (0.9.127.8). A
+     multiplier, like every other drop bonus, and the one that reaches a prized
+     catch too: it is the mastery of catching that fish. */
+  if(actId){ const _mr=masteryRare(actId); if(_mr>0) c*=(1+_mr); }
   const dropId=drop.id;
   const isPrized=!!(ITEMS[dropId]&&ITEMS[dropId].prizedOf);
   /* Rare find chance, from a rolled enchant line ([JS-02c]). Multiplicative, like
@@ -24834,14 +24981,14 @@ function gpPerAction(act,skill){
   if(skill==='thieving'&&act.coins){
     const cm=1+treeRank('thieving','th_coins')*0.03
               +(treeRank('thieving','th_master1')>0?0.20:0)
-              +earnedGoldBonus('skill');
+              +earnedGoldBonus('skill')+masteryYield(act.id);
     const _s=(typeof thiefSuccess==='function'?thiefSuccess(act):1);
     gp+=act.coins*cm*_s*(1+(treeRank('thieving','th_master3')>0?0.10:0));   // + Second Pocket
   }
   // Agility coin reward — already receives a coinMult at runtime; replicate it here for display
   if(IS_AGILITY_SKILL[skill]&&act.coins){
     const p=SK_PFX[skill];
-    const coinMult=1+(treeRank(skill,p+'_coins')*0.03)+(treeRank(skill,p+'_master1')>0?0.25:0)+(treeRank(skill,p+'_master3')>0?0.25:0)+(treeRank(skill,'ag_gm_coins')*0.06)+(treeRank(skill,'ag_gm_coins2')>0?0.75:0)+earnedGoldBonus('skill');
+    const coinMult=1+(treeRank(skill,p+'_coins')*0.03)+(treeRank(skill,p+'_master1')>0?0.25:0)+(treeRank(skill,p+'_master3')>0?0.25:0)+(treeRank(skill,'ag_gm_coins')*0.06)+(treeRank(skill,'ag_gm_coins2')>0?0.75:0)+earnedGoldBonus('skill')+masteryYield(act.id);
     gp+=act.coins*coinMult; // act.coins is already SILVER (matches item-sell silver)
   }
   for(const [id,q] of Object.entries(act.out)){
@@ -24866,6 +25013,7 @@ function gpPerAction(act,skill){
     }else{
       avgQty=processOutAvg(act,skill,id,q,m);
     }
+    if(IS_G) avgQty+=q*masteryYield(act.id);   // processOutAvg carries it for everything else
     gp+=avgQty*sv;
   }
   return gp;
@@ -24891,6 +25039,7 @@ function processOutAvg(act,skill,id,q,m){
   if(m.cr_flawless) avg+=q*0.15*2;                                 // Flawless Forge
   if(skill==='fletching'){ const fb=fletchOutBonus(id); avg=(avg+fb.add)*fb.mult; }
   if(skill==='runecrafting'){ const rb=runeOutBonus(id); avg=avg*(1+rb.pct)*rb.mult; }   // Close Cutting, the cape
+  avg+=q*masteryYield(act.id);                                     // mastery: a chance of one more
   return avg;
 }
 
@@ -24938,6 +25087,7 @@ function ratesFor(act,skill){
     } else {
       avgQty=processOutAvg(act,skill,mainId,mainQ,m);
     }
+    if(IS_GATHER[skill]) avgQty+=mainQ*masteryYield(act.id);   // mastery: a chance of one more
     rph=Math.round(avgQty*actsPerHour);
     const it=ITEMS[mainId];
     rphLabel=(it?iconHTML(mainId)+' ':'')+(it?it.name:mainId)+'/hr';
@@ -25071,10 +25221,17 @@ function masteryActs(sk){ return ((sk&&sk.acts)||[]).filter(a=>!masteryExempt(a)
    simply never grew it. */
 function masteryRowHTML(actId,tail){
   const mb=masteryBadgeHtml(actId);
+  /* What this level pays, on hover (0.9.127.8). */
+  const _sk=actSkillOf(actId), _a=_sk?getAct(_sk,actId):null;
+  /* At level 0 there is nothing to list, so it says what a level is worth. */
+  const _tip='Mastery '+mb.lvl+(mb.lvl>=MAX_MASTERY?' (max)':'')+'&#10;'
+    +(mb.lvl>0?masteryPerkLines(_sk,_a,actId).join('&#10;')
+              :'Each level gives: '+masteryPerkLines(_sk,_a,actId,1).join(', '))
+    +(mb.lvl<MAX_MASTERY?'&#10;'+mb.pct+'% of the way to level '+(mb.lvl+1):'');
   const badge=mb.lvl>0
     ? `<span class="mastery-badge mb-${mb.tier}">${MASTERY_STAR[mb.tier]} ${mb.label}</span>`
     : '<span class="mastery-badge mb-none">\u00b7 Mastery 0</span>';
-  return `<div class="mastery-row">${badge}`
+  return `<div class="mastery-row" data-rtip="${_tip}">${badge}`
        + `<div class="mastery-bar"><i style="width:${mb.pct}%;background:${mb.barColor}"></i></div>${tail||''}</div>`;
 }
 function masteryBadgeHtml(actId){
@@ -25671,10 +25828,77 @@ function actSkillOf(actId){
 }
 function masteryXpRate(actId){ return MASTERY_XP_RATE[actSkillOf(actId)]||1; }
 
+/* ── Mastery by time, not by count (0.9.127.8, tickets #213 and #214) ──────────
+   "I had chopping ancient logs open and running close to 48 hours and only made it
+   to 45. That should have been max." Mastery was one point an action, on a curve
+   that asks for 125,892 of them. A smelt at its fastest takes 0.8 s and a chop of
+   ancient oak 10 s, so the same bar was 28 hours of one and 350 of the other.
+   Measured across all 528 activities at their fastest: 7 to 385 hours, median 60,
+   and the whole of gathering between 140 and 385.
+
+   An action is now worth its own length. Every activity reaches 100 in about
+   MASTERY_FULL_HOURS at its fastest speed (minMs), whatever it is. Nothing got
+   slower: an action shorter than the reference still counts one, so the 144
+   activities that were already under 40 hours are exactly as they were. The curve
+   and every tier are untouched. normalizeState multiplies what a save has already
+   earned by the same weight, once (state.masteryV), so 48 hours of ancient oak is
+   the 100 it should have been.
+
+   A crop is weighed by how long a harvest takes on a full field that is tended as
+   often as it can be, since that is the pace a farmhand keeps. */
+const MASTERY_FULL_HOURS=40;
+const MASTERY_REF_MS=MASTERY_FULL_HOURS*3600000/MASTERY_XP_TABLE[MAX_MASTERY];
+let _mWeight={};
+function cropMasteryWeight(crop){
+  if(!crop||!(crop.growMs>0)) return 1;
+  const cd=Math.max(15000,(crop.tendInterval||60000)*0.30);   // the tend cooldown at the speed cap
+  const cut=crop.growMs*(crop.tendBoost||0);
+  let best=crop.growMs;
+  for(let k=1;k<=60;k++){ const t=Math.max(k*cd, crop.growMs-k*cut); if(t<best) best=t; if(k*cut>=crop.growMs) break; }
+  const patches=(typeof PATCHES!=='undefined'&&PATCHES.length)||1;
+  return Math.max(1,(best/patches)/MASTERY_REF_MS);
+}
+function masteryWeight(actId){
+  if(_mWeight[actId]!=null) return _mWeight[actId];
+  let w=1, found=false;
+  if(typeof actId==='string'&&actId.indexOf('crop_')===0){
+    const crop=(typeof CROPS!=='undefined')?CROPS.find(c=>c.id===actId.slice(5)):null;
+    if(crop){ w=cropMasteryWeight(crop); found=true; }
+  } else {
+    const sk=actSkillOf(actId), a=sk?getAct(sk,actId):null;
+    if(a){ w=Math.max(1,(a.minMs||a.ms||0)/MASTERY_REF_MS); found=true; }
+  }
+  if(found) _mWeight[actId]=w;
+  return w;
+}
+/* What a level of mastery pays, on the activity it was earned on (#214: "it is
+   mostly an endgame thing and the skill is long maxed and not in need of xp").
+   The XP bonus stays. Beside it, each level is now a 0.1% chance of one more of
+   whatever the activity makes (or 0.1% more gold where it pays gold instead), and
+   0.2% more of its rare drops. At 100 that is +10% XP, a 10% chance of one more
+   and 20% more rare drops, on that one activity. */
+const MASTERY_YIELD_PER_LVL=0.001, MASTERY_RARE_PER_LVL=0.002;
+function masteryYield(actId){ return masteryLevel(actId)*MASTERY_YIELD_PER_LVL; }
+function masteryRare(actId){ return masteryLevel(actId)*MASTERY_RARE_PER_LVL; }
+/* The extra items for `times` actions that each make `q`. */
+function masteryMore(actId,q,times){ const my=masteryYield(actId); return my>0?q*binom(times,my):0; }
+/* The lines a card or the log prints for an activity's mastery. */
+function masteryPerkLines(skKey,act,actId,atLevel){
+  const id=actId||(act&&act.id), lvl=(atLevel!=null)?atLevel:masteryLevel(id);
+  const pc=function(v){ return (Math.round(v*1000)/10)+'%'; };
+  const out=['+'+pc(lvl*0.001)+' XP'];
+  const makes=!!(act&&Object.keys(act.out||{}).some(o=>ITEMS[o]))||(typeof id==='string'&&id.indexOf('crop_')===0);
+  if(makes) out.push(pc(lvl*MASTERY_YIELD_PER_LVL)+' chance of one more');
+  else if(act&&act.coins) out.push('+'+pc(lvl*MASTERY_YIELD_PER_LVL)+' gold');
+  const drops=(act&&typeof DROPS!=='undefined'&&DROPS[act.id]&&DROPS[act.id].length)||(typeof id==='string'&&id.indexOf('crop_')===0);
+  if(drops) out.push('+'+pc(lvl*MASTERY_RARE_PER_LVL)+' rare drops');
+  return out;
+}
+
 function recordMastery(actId, times){
   const prevXp=state.mastery[actId]||0;
   const prevLvl=masteryLevel(actId); // level BEFORE adding
-  state.mastery[actId]=prevXp+times*masteryXpRate(actId);
+  state.mastery[actId]=prevXp+times*masteryXpRate(actId)*masteryWeight(actId);   // an action is worth its length
   invalidateMasteryCache();          // platinumMasteryCount is memoised
   const newLvl=masteryLevel(actId); // level AFTER adding
   if(newLvl>prevLvl){
@@ -25684,7 +25908,11 @@ function recordMastery(actId, times){
       if(prevLvl<threshold&&newLvl>=threshold){
         const tier=masteryTier(newLvl);
         const sk=Object.entries(SKILLS).find(([,s])=>s.acts.some(a=>a.id===actId));
-        const actName=sk?(actShownName(sk[0],sk[1].acts.find(a=>a.id===actId))||'activity'):'activity';
+        /* A crop's mastery is keyed crop_<seed id> and is in no act table, so this
+           used to announce "activity reached Bronze". */
+        const _crop=(typeof actId==='string'&&actId.indexOf('crop_')===0&&typeof CROPS!=='undefined')?CROPS.find(c=>c.id===actId.slice(5)):null;
+        const actName=_crop?_crop.name
+          :sk?(actShownName(sk[0],sk[1].acts.find(a=>a.id===actId))||'activity'):'activity';
         const tierName=MASTERY_LABEL[tier];
         toast(`${tierName} Mastery! ${actName} reached ${tierName} ★`);
         logNotification('mastery', '★', `${tierName} Mastery — ${actName}`);
@@ -26389,6 +26617,9 @@ function completeAction(act,skillKey,times){
     }
 
     // apply sell bonus to value in sell functions not here (qty is physical)
+    /* Mastery: a chance of one more, a level at a time (0.9.127.8). Last, so no
+       node above can swallow it. A tool is made once and never multiplies. */
+    if(!(ITEMS[id]&&ITEMS[id].tool)) qty+=masteryMore(act.id,q,times);
     if(qty>0) grantItem(id, qty);
     /* Tool crafted — stop here rather than letting the loop re-arm. The guard at
        the top of completeAction would catch the next cycle anyway, but it would
@@ -26463,7 +26694,8 @@ function completeAction(act,skillKey,times){
     if(got>0){
       const coinMult=1 + treeRank('thieving','th_coins')*0.03
                        + (treeRank('thieving','th_master1')>0?0.20:0)
-                       + earnedGoldBonus('skill');   // Coin Purse (#141), Windfall on the skilling doll (#140)
+                       + earnedGoldBonus('skill')    // Coin Purse (#141), Windfall on the skilling doll (#140)
+                       + masteryYield(act.id);       // mastery of this steal (0.9.127.8)
       const coins=Math.round((act.coins||0)*got*coinMult);
       if(coins>0){ state.coins+=coins; showCoinPop(coins); }
       const L=act.loot;
@@ -26492,7 +26724,7 @@ function completeAction(act,skillKey,times){
   let agBonusLaps=0;
   if(IS_AGILITY_SKILL[skillKey]&&act.coins){
     const p=SK_PFX[skillKey];
-    const coinMult=1+(treeRank(skillKey,p+'_coins')*0.03)+(treeRank(skillKey,p+'_master1')>0?0.25:0)+(treeRank(skillKey,p+'_master3')>0?0.25:0)+(treeRank(skillKey,'ag_gm_coins')*0.06)+(treeRank(skillKey,'ag_gm_coins2')>0?0.75:0)+earnedGoldBonus('skill');
+    const coinMult=1+(treeRank(skillKey,p+'_coins')*0.03)+(treeRank(skillKey,p+'_master1')>0?0.25:0)+(treeRank(skillKey,p+'_master3')>0?0.25:0)+(treeRank(skillKey,'ag_gm_coins')*0.06)+(treeRank(skillKey,'ag_gm_coins2')>0?0.75:0)+earnedGoldBonus('skill')+masteryYield(act.id);
     // Runner's High (Lv99): 20% chance per lap to instantly collect a second lap's rewards.
     if(m.ag_bonusLap) agBonusLaps=binom(times,0.20);
     const coinsGained=Math.round((act.coins||0)*(times+agBonusLaps)*coinMult); // already SILVER
@@ -26504,7 +26736,7 @@ function completeAction(act,skillKey,times){
   if(IS_G){
     const dropTable=DROPS[act.id]||[];
     for(const drop of dropTable){
-      const hits=binom(times,skillDropChance(skillKey,drop,m));
+      const hits=binom(times,skillDropChance(skillKey,drop,m,act.id));
       if(hits>0) grantItem(drop.id, hits);
     }
   }
@@ -26561,8 +26793,11 @@ function completeAction(act,skillKey,times){
    the XP it pays carries that mastery's own bonus the way the first bar's does. */
 function secondBarMastery(act,cycles){
   if(!act||!(cycles>0)) return;
-  if(typeof masteryExempt==='function' && masteryExempt(act)) return;
-  recordMastery(act.id,cycles);
+  if(!(typeof masteryExempt==='function' && masteryExempt(act))) recordMastery(act.id,cycles);
+  /* ...and the skill's pet and its set pieces (0.9.127.8, Jordan: "second bars
+     should"). The first bar has always rolled both on every action. */
+  const sk=actSkillOf(act.id);
+  if(sk){ rollSkillPet(sk,act,cycles); rollSkillingGear(sk,act.lvl,cycles); }
 }
 function setWcDoubleAct(actId){
   if(state.wcDoubleAct&&state.wcDoubleAct.actId===actId){
@@ -26599,6 +26834,7 @@ function completeWcDoubleAction(act,cycles){
       const hwdHits=Math.floor(state.wcStrikes/10);
       if(hwdHits>0){ state.wcStrikes=state.wcStrikes%10; qty+=hwdHits*1; }   // primary bar pays *1; tip says '+1 bonus log'
     }
+    qty+=masteryMore(act.id,q,cycles);
     if(qty>0) grantItem(id,qty);
     // Lumberjack Kin forage drops
     if(m.wc_kin>0){
@@ -26633,7 +26869,7 @@ function completeWcDoubleAction(act,cycles){
   secondBarMastery(act,cycles);
   // Rare drops — same chance as the primary bar, Lucky Lure included
   const dropTable=DROPS[act.id]||[];
-  for(const drop of dropTable){ const hits=binom(cycles,skillDropChance('woodcutting',drop,m)); if(hits>0) grantItem(drop.id,hits); }
+  for(const drop of dropTable){ const hits=binom(cycles,skillDropChance('woodcutting',drop,m,act.id)); if(hits>0) grantItem(drop.id,hits); }
 }
 
 function setFishDoubleAct(actId){
@@ -26685,6 +26921,7 @@ function completeFishDoubleAction(act,cycles){
         }
       }
     }
+    qty+=masteryMore(act.id,q,cycles);
     if(qty>0) grantItem(id,qty);
   }
   // XP
@@ -26695,7 +26932,7 @@ function completeFishDoubleAction(act,cycles){
   secondBarMastery(act,cycles);
   // Rare drops — same chance as the primary bar, Lucky Lure included
   const dropTable=DROPS[act.id]||[];
-  for(const drop of dropTable){ const hits=binom(cycles,skillDropChance('fishing',drop,m)); if(hits>0) grantItem(drop.id,hits); }
+  for(const drop of dropTable){ const hits=binom(cycles,skillDropChance('fishing',drop,m,act.id)); if(hits>0) grantItem(drop.id,hits); }
 }
 
 function setMineDoubleAct(actId){
@@ -26723,6 +26960,7 @@ function completeDoubleAction(act,cycles){
     // (chance-based, matching the primary bar — the secondary copies were
     // missed when master2 went from '+1 always' to a roll, leaving this bar
     // out-yielding its own intended output by 54-74%.)
+    qty+=masteryMore(act.id,q,cycles);
     if(qty>0){ grantItem(id,qty); }
     // Coal Seeker
     if(id!=='coal'&&m.mi_coal>0){
@@ -26741,7 +26979,7 @@ function completeDoubleAction(act,cycles){
   secondBarMastery(act,cycles);
   // Rare drops — same chance as the primary bar, Lucky Lure included
   const dropTable=DROPS[act.id]||[];
-  for(const drop of dropTable){ const hits=binom(cycles,skillDropChance('mining',drop,m)); if(hits>0) grantItem(drop.id,hits); }
+  for(const drop of dropTable){ const hits=binom(cycles,skillDropChance('mining',drop,m,act.id)); if(hits>0) grantItem(drop.id,hits); }
 }
 
 /* ════ [JS-21e] main tick ════════════════════════════════════════════════════════ */
@@ -27238,6 +27476,19 @@ function grantOffline(){
       lvlUp:after>before?after:0
     });
     if(act.inp&&done<cycles) { /* ran out of ingredients — the slot stays set */ }
+  }
+
+  /* 2b. The farmhand (0.9.127.8, ticket #233). Not a slot and not one-or-the-other
+     with anything: in view it works beside whatever else you are doing, so it does
+     here too. It is paid by the bare Offline efficiency and the same capped time. */
+  let _offFarm=null;
+  try{ _offFarm=offlineFarmResolve(away, om.rate); }catch(e){ _offFarm=null; }
+  if(_offFarm){
+    const _fd=farmerDef();
+    summary.push({icon:'🌾', iconId:'farming', label:'Farming',
+      sub:(_fd?_fd.name:'Your farmhand')+' · '+_offFarm.harvests.toLocaleString()+' harvest'+(_offFarm.harvests===1?'':'s')
+        +(_offFarm.tends?' · '+_offFarm.tends.toLocaleString()+' tend'+(_offFarm.tends===1?'':'s'):''),
+      xp:_offFarm.xp, items:_offFarm.items, lvlUp:_offFarm.lvlUp});
   }
 
   /* 3. was the dual-skill bonus: a RANDOM second skill trained alongside the
@@ -27787,7 +28038,7 @@ function dropsHtml(act,skillKey,m){
   const chips=tbl.map(function(d){
     const it=ITEMS[d.id]; if(!it) return '';
     let c=d.chance;
-    try{ if(typeof skillDropChance==='function') c=skillDropChance(skillKey,d,m); }catch(e){}
+    try{ if(typeof skillDropChance==='function') c=skillDropChance(skillKey,d,m,act.id); }catch(e){}
     /* Below a tenth of a percent "0.1%" is a lie and "0.06%" is noise on a card
        this size, so the rarest tail says it is rare and puts the number in the
        tooltip with everything else. */
@@ -28108,7 +28359,7 @@ function buildActBtn(act,reqLvl,lvl,m,bestXph,bestRph){
   let coinDisplay='';
   if(IS_AGILITY_SKILL[selectedSkill]&&act.coins){
     const p=SK_PFX[selectedSkill];
-    const coinMult=1+(treeRank(selectedSkill,p+'_coins')*0.03)+(treeRank(selectedSkill,p+'_master1')>0?0.25:0)+(treeRank(selectedSkill,p+'_master3')>0?0.25:0)+(treeRank(selectedSkill,'ag_gm_coins')*0.06)+(treeRank(selectedSkill,'ag_gm_coins2')>0?0.75:0)+earnedGoldBonus('skill');
+    const coinMult=1+(treeRank(selectedSkill,p+'_coins')*0.03)+(treeRank(selectedSkill,p+'_master1')>0?0.25:0)+(treeRank(selectedSkill,p+'_master3')>0?0.25:0)+(treeRank(selectedSkill,'ag_gm_coins')*0.06)+(treeRank(selectedSkill,'ag_gm_coins2')>0?0.75:0)+earnedGoldBonus('skill')+masteryYield(act.id);
     const effCoins=Math.round(act.coins*coinMult);
     coinDisplay=`${fmtCoins(effCoins,true)} per lap`;
   }
@@ -28639,8 +28890,8 @@ const GUILDS=[
   {id:'furrow', name:'The Furrow', sub:'Farmers', skills:['farming'], req:{farming:12},
    titles:['Field Hand','Tenant','Yeoman','Reeve','Steward','Master of the Furrow'],
    perks:[null,{speed:0.03},{yield:0.04},{speed:0.06},{xp:0.05},{yield:0.10}],
-   perkTxt:['You can take Furrow quests','+3% farming speed','+4% crop yield',
-            '+6% farming speed','+5% farming XP','+10% crop yield']},
+   perkTxt:['You can take Furrow quests','+3% farming speed. The Apprentice Farmhand is yours.','+4% crop yield',
+            '+6% farming speed. The Journeyman Farmer is yours.','+5% farming XP','+10% crop yield. The Master Cultivator is yours.']},
 
   {id:'timber', name:'The Timberhall', sub:'Woodcutters', skills:['woodcutting','firemaking'], req:{woodcutting:12},
    titles:['Sawhand','Feller','Woodwright','Timberman','Forest Warden','Master of the Timberhall'],
@@ -28928,7 +29179,7 @@ function gdRareInputMs(act){
   for(const s of (_gdDropSrc[act.onlyIf]||[])){
     if((s.a.lvl||1)>levelFromXp((state.xp&&state.xp[s.sk])||0)) continue;
     let c=s.d.chance, ms=0;
-    try{ c=skillDropChance(s.sk,s.d,mods(s.sk)); }catch(e){}
+    try{ c=skillDropChance(s.sk,s.d,mods(s.sk),s.a.id); }catch(e){}
     try{ ms=actMs(s.a,s.sk); }catch(e){ ms=0; }
     if(!(ms>0)) ms=s.a.ms||10000;
     if(!(c>0)) continue;
@@ -40913,7 +41164,7 @@ function renderMastery(){
       <span class="mt-chip gold">★ Gold ${gold}</span>
       <span class="mt-chip plat">★ Platinum ${plat}</span>
     </div>
-    <div class="mlog-legend">Rank an activity by doing it · <b style="color:#cd7f32">Bronze</b> L10 +1% · <b style="color:#aab8c2">Silver</b> L25 +2.5% · <b style="color:#ffd700">Gold</b> L50 +5% · <b style="color:#bb00ff">Platinum</b> L100 +10% xp · each Platinum also +1% to every skill</div>`;
+    <div class="mlog-legend">Rank an activity by doing it. Every activity takes about the same time to master: ${MASTERY_FULL_HOURS} hours at its fastest.<br>Each level gives that activity <b>+0.1% XP</b>, a <b>0.1% chance of one more</b> of what it makes, and <b>0.2% more of its rare drops</b>.<br><b style="color:#cd7f32">Bronze</b> is level 10 · <b style="color:#aab8c2">Silver</b> 25 · <b style="color:#ffd700">Gold</b> 50 · <b style="color:#bb00ff">Platinum</b> 100 · each Platinum also gives +1% XP to every skill</div>`;
   box.appendChild(hdr);
 
   // Skill picker (1.0.19) — a compact grid of skill buttons; only the selected
@@ -40972,13 +41223,13 @@ function renderMastery(){
   for(const act of actList){
     const mb=masteryBadgeHtml(act.id);
     const tier=mb.tier;
-    // Rates above 1x store fractional mastery XP; never show the player "12.5 actions".
-    const actions=Math.floor(state.mastery[act.id]||0);
-    const toNext=mb.lvl<MAX_MASTERY?Math.max(0,Math.ceil(mb.nextXp-actions)):0;
+    /* Mastery is counted in time now, so there is no count of actions to print.
+       The tile says what the level pays and how far the next one is. */
+    const actions=(state.mastery[act.id]||0)>0?1:0;
     const outIc=Object.keys(act.out||{})[0];
     const xpBonus=masteryXpBonus(act.id)*100;
     const rankLabel = tier==='plat'?'★ Platinum (MAX)':tier==='gold'?`★ Gold ${mb.lvl}`:tier==='silver'?`★ Silver ${mb.lvl}`:tier==='bronze'?`★ Bronze ${mb.lvl}`:(actions>0?`Mastery ${mb.lvl}`:'Not started');
-    const tip=`${actShownName(_masterySel,act)} — ${rankLabel}`+(xpBonus>0?` · +${xpBonus.toFixed(1)}% xp`:'')+` · ${actions.toLocaleString()} done`+(tier!=='plat'&&mb.lvl<MAX_MASTERY?` · ${toNext.toLocaleString()} to next`:'');
+    const tip=`${actShownName(_masterySel,act)}: ${rankLabel}`+(mb.lvl>0?' · '+masteryPerkLines(_masterySel,act).join(' · '):'')+(mb.lvl<MAX_MASTERY?` · ${mb.pct}% of the way to level ${mb.lvl+1}`:'');
     const tile=document.createElement('div');
     tile.className=`ma-tile${tier!=='none'?' mb-'+tier:''}`;
     tile.title=tip;
@@ -42467,6 +42718,7 @@ function _enBench(id,redraw){
       row.appendChild(lk);
       row.appendChild(_ewEl('en-lb',
         '<span class="en-ll">'+S.label
+          +(L.p?' <b class="en-pk">your choice</b>':'')
           +(L.u?' <b class="en-uq">Unique</b>':'')
           +(L.sk&&SKILLS[L.sk]?' <small>'+SKILLS[L.sk].name+' only</small>':'')+'</span>'
         +'<span class="en-lv">+'+_enPct(L.v)+'</span>'
@@ -42480,13 +42732,27 @@ function _enBench(id,redraw){
     if(normal.length>ENCH_LINES&&normal.some(function(l){return l.legacy;}))
       wrap.appendChild(_ewEl('en-note','This piece still carries the enchant it had before enchanting changed. '
         +'Rerolling it gives it two enchants like everything else.'));
-  } else {
+  }
+  /* Choose one (#207). The same list the bench has always shown, as buttons: the
+     one you press is guaranteed, the other enchant is still rolled from the rest. */
+  {
+    const pick=enchPickOf(id), pickLocked=enchPickLocked(id);
     const can=_ewEl('en-can');
-    can.appendChild(_ewEl('en-canlab','Rolls two of these'+(uq?', plus one Unique enchant at double strength':'')));
+    can.appendChild(_ewEl('en-canlab',
+      (pick?'You chose <b>'+ENCH_STAT[pick].label+'</b>. It is guaranteed; its number is still rolled. The other enchant is random'
+           :'Choose one enchant and it is guaranteed. Its number is still rolled, and the other enchant is random')
+      +(uq?', plus one Unique enchant at double strength.':'.')
+      +(pickLocked?' Unlock your chosen enchant to change it.':'')));
     const chips=_ewEl('en-canchips');
     P.keys.forEach(function(k){
       const r=enchRange(k,id,1);
-      chips.appendChild(_ewEl('en-canchip','<b>'+ENCH_STAT[k].label+'</b><span>'+_enPct(r[0])+' to '+_enPct(r[1])+'</span>'));
+      const c=document.createElement('button');
+      c.type='button';
+      c.className='en-canchip pick'+(pick===k?' on':'');
+      c.innerHTML='<b>'+ENCH_STAT[k].label+'</b><span>'+_enPct(r[0])+' to '+_enPct(r[1])+'</span>';
+      if(pickLocked&&pick!==k) c.disabled=true;
+      c.addEventListener('click',function(){ setEnchPick(id,pick===k?null:k); redraw(); });
+      chips.appendChild(c);
     });
     can.appendChild(chips);
     wrap.appendChild(can);
@@ -42522,8 +42788,8 @@ function _enBench(id,redraw){
   act.appendChild(go);
   wrap.appendChild(act);
   wrap.appendChild(_ewEl('en-odds', on
-    ?'Locked enchants do not change when you reroll. Locking makes rerolls cost more.'
-    :'Each enchant rolls a random value in its range.'));
+    ?'Locked enchants do not change when you reroll. Locking makes rerolls cost more. Choosing an enchant costs nothing extra.'
+    :'Each enchant rolls a random value in its range. Choosing one costs nothing extra.'));
   return wrap;
 }
 
@@ -42539,8 +42805,8 @@ function renderEnchanting(){
   box.innerHTML='';
   const intro=document.createElement('div');
   intro.className='skill-intro';
-  intro.innerHTML='<b>Enchanting</b> adds two random enchants to a piece, three on unique and raid gear. '
-    +'Reroll for better numbers. Lock an enchant to keep it. '
+  intro.innerHTML='<b>Enchanting</b> adds two enchants to a piece, three on unique and raid gear. '
+    +'You choose one of them. The rest are random. Reroll for better numbers. Lock an enchant to keep it. '
     +'A matching ring and <span class="k">amulet</span> make a skilling set; ring and <span class="k">pendant</span>, a combat set.';
   box.appendChild(intro);
 
@@ -53242,7 +53508,7 @@ function mmStartEngine(){
   setInterval(()=>{
     if(mmAtMenu) return;
     tickFarmingNotifications();
-    tickFarmer();
+    farmTimerTick();
     if(viewTab==='acts'&&selectedSkill==='farming') renderFarming();
   },2000);
   setInterval(saveGame,5000);
