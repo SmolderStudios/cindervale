@@ -11109,6 +11109,29 @@ setTimeout(() => {
     ok('an Apprentice only harvests what was ready, once', !!fh.t1 && fh.t1.h === 8 && fh.t1.t === 0, JSON.stringify(fh.t1));
     ok('a farming timer that fires a minute late plays the minute through', fh.hidden === true, 'the tend it missed is stamped ' + fh.hiddenAt + ' s ago');
     ok('a Furrow title brings its farmhand with it', fh.title === 4 && fh.tier === 2, 'title ' + fh.title + ', tier ' + fh.tier);
+    /* 0.9.127.9. The farmhand's held clock starts where the time away began, which
+       the caller hands over. lastSeen is only that moment until something saves:
+       started from a fresh stamp the clock would run into the future and leave
+       crops planted later than now. */
+    const ff = ev(`(function(){
+      state=defaultState(); normalizeState(); mmAtMenu=false; mmSlot=1;
+      state.xp.farming=XP_CUM[99]; state.farmer={tier:3,maxTier:3,enabled:true,seedId:null};
+      var top=CROPS.slice().sort(function(a,b){ return b.lvl-a.lvl; })[0];
+      state.seeds={}; state.seeds[top.id]=5000;
+      var away=8*3600000, began=Date.now()-away;
+      var fill=function(){ PATCHES.forEach(function(p){ state.patches[p.id]={seedId:top.id, plantedAt:began-60000, growMs:top.growMs, tendedMs:0, lastTended:0}; }); };
+      var future=function(){ var n=Date.now()+1000; return Object.keys(state.patches).some(function(k){ var p=state.patches[k]; return p&&(p.plantedAt>n||(p.lastTended||0)>n); }); };
+      /* a save landed a moment ago, and the caller says when the time away began */
+      fill(); state.lastSeen=Date.now();
+      var r=offlineFarmResolve(away,0.30,began);
+      var a={h:r?r.harvests:0, future:future()};
+      /* the same save, and nobody says: there is no time away to find, so nothing happens */
+      fill(); state.lastSeen=Date.now();
+      var r2=offlineFarmResolve(away,0.30);
+      return {given:a, blind:{ran:!!r2, future:future()}};
+    })()`);
+    ok('the farmhand\'s time away is counted from when it began, whoever saved since', ff.given.h > 20 && ff.given.future === false, JSON.stringify(ff.given));
+    ok('and with no start to go by it never works into the future', ff.blind.ran === false && ff.blind.future === false, JSON.stringify(ff.blind));
 
     /* ── choosing an enchant ───────────────────────────────────────────────────── */
     const en = ev(`(function(){
