@@ -4806,11 +4806,12 @@ setTimeout(() => {
       }
       return JSON.stringify({harvests:n, key:'crop_'+crop.id,
         value:state.mastery['crop_'+crop.id]||0,
+        weight:masteryWeight('crop_'+crop.id),     // a harvest is worth its length since 0.9.127.8
         level:masteryLevel('crop_'+crop.id),
         keys:Object.keys(state.mastery).length});
     })()`));
     ok('a farming harvest records mastery, keyed by crop',
-       farm.harvests > 30 && farm.value === farm.harvests && farm.level > 0,
+       farm.harvests > 30 && Math.abs(farm.value - farm.harvests * farm.weight) < 1e-6 && farm.level > 0,
        JSON.stringify(farm));
 
     /* One definition of the row, so a sixth bespoke panel cannot be written without
@@ -10990,6 +10991,150 @@ setTimeout(() => {
     ok('and asks for about a handful of voyages of cargo, not a number off your level', sl.big === 0, sl.big + ' oversized');
     ok('an old board is refitted: unstarted low-water orders go, one under way stays and shrinks',
        sl.unstarted === 0 && sl.kept === 1 && sl.keptNeed < 320, sl.board);
+  }
+
+  section('Mastery by time, the farmhand, choosing an enchant (0.9.127.8)');
+  {
+    /* ── mastery: every activity takes the same time, and nothing got slower ──── */
+    const ms = ev(`(function(){
+      state=defaultState(); normalizeState();
+      var TOP=MASTERY_XP_TABLE[100], worst=0, slower=0, n=0, least=1e9;
+      for(var k in SKILLS) masteryActs(SKILLS[k]).forEach(function(a){ n++;
+        var w=masteryWeight(a.id); if(w<1) slower++;
+        var h=TOP/(masteryXpRate(a.id)*w)*(a.minMs||a.ms)/3.6e6; if(h>worst) worst=h; if(h<least) least=h; });
+      var cropWorst=0; CROPS.forEach(function(c){ var w=masteryWeight('crop_'+c.id); if(w<1) slower++; if(w>cropWorst) cropWorst=w; });
+      /* 48 hours of ancient oak: 17,280 chops, level 45 on the old count */
+      state.mastery={wc7:17280, sm1:5000}; delete state.masteryV;
+      var before=masteryLevel('wc7'); normalizeState();
+      var after=masteryLevel('wc7'), smelt=state.mastery.sm1, once=state.mastery.wc7;
+      normalizeState(); normalizeState();
+      /* a fresh action is worth its length */
+      state=defaultState(); normalizeState(); state.xp.woodcutting=XP_CUM[99];
+      completeAction(getAct('woodcutting','wc7'),'woodcutting',10);
+      return {n:n, worst:worst, least:least, slower:slower, cropWorst:cropWorst, before:before, after:after, smelt:smelt,
+        once:once===17280*masteryWeight('wc7'), v:state.masteryV, ten:state.mastery.wc7, w:masteryWeight('wc7')};
+    })()`);
+    ok('every activity reaches mastery 100 in 40 hours or less at its fastest (#213)',
+       ms.n > 500 && ms.worst <= 40.01, ms.n + ' activities, ' + ms.least.toFixed(1) + ' to ' + ms.worst.toFixed(1) + ' hours');
+    ok('and none takes longer than it did: an action never counts for less than one', ms.slower === 0, ms.slower + ' slower');
+    ok('48 hours of ancient oak is mastery 100, not 45', ms.before === 45 && ms.after === 100, ms.before + ' -> ' + ms.after);
+    ok('what a save had earned is converted once, and a fast activity is left as it was', ms.once === true && ms.smelt === 5000 && ms.v === 2);
+    ok('a new action is worth its own length', Math.abs(ms.ten - 10 * ms.w) < 1e-6 && ms.w > 8, '10 chops = ' + ms.ten.toFixed(1));
+
+    /* ── mastery: what a level pays ────────────────────────────────────────────── */
+    const mp = ev(`(function(){
+      state=defaultState(); normalizeState();
+      state.xp.mining=XP_CUM[99]; state.xp.smithing=XP_CUM[99]; state.xp.fishing=XP_CUM[99];
+      var TOP=MASTERY_XP_TABLE[100], mi=SKILLS.mining.acts[0], ore=Object.keys(mi.out)[0], N=150000;
+      var run=function(){ state.items[ore]=0; var x=state.xp.mining; completeAction(mi,'mining',N); state.xp.mining=x; return state.items[ore]/N; };
+      var card0=ratesFor(mi,'mining').rph, per0=run();
+      state.mastery[mi.id]=TOP; invalidateMasteryCache();
+      var card1=ratesFor(mi,'mining').rph, per1=run();
+      var dr=DROPS.fi7.find(function(d){ return d.id==='prized_raw_shark'; }), m=mods('fishing');
+      var c0=skillDropChance('fishing',dr,m,'fi7'); state.mastery.fi7=TOP; invalidateMasteryCache(); var c1=skillDropChance('fishing',dr,m,'fi7');
+      var sm=getAct('smithing','sm1'); state.mastery.sm1=TOP; invalidateMasteryCache();
+      state.items={copper_ore:1e7,tin_ore:1e7,coal:1e7};
+      var card=processOutAvg(sm,'smithing','bronze_bar',sm.out.bronze_bar,mods('smithing'));
+      completeAction(sm,'smithing',100000); var real=(state.items.bronze_bar||0)/100000;
+      return {card0:card0, card1:card1, per0:per0, per1:per1, c0:c0, c1:c1, card:card, real:real,
+        perks:masteryPerkLines('mining',mi).join(' | ')};
+    })()`);
+    ok('mastery 100 is a 10% chance of one more, in the roll (#214)', Math.abs(mp.per1 / mp.per0 - 1.10) < 0.01, mp.per0.toFixed(3) + ' -> ' + mp.per1.toFixed(3) + ' an action');
+    ok('and on the card', Math.abs(mp.card1 / mp.card0 - 1.10) < 0.01, mp.card0 + ' -> ' + mp.card1 + ' an hour');
+    ok('and 20% more of that activity\'s rare drops', Math.abs(mp.c1 / mp.c0 - 1.20) < 1e-9, mp.c0 + ' -> ' + mp.c1);
+    ok('a processing card and the craft still agree with mastery in both', Math.abs(mp.card - mp.real) < 0.01, mp.card.toFixed(3) + ' vs ' + mp.real.toFixed(3));
+    ok('and the tooltip says all three', /XP/.test(mp.perks) && /one more/.test(mp.perks), mp.perks);
+
+    /* ── second bars: the pet and the set pieces ───────────────────────────────── */
+    const sb2 = ev(`(function(){
+      state=defaultState(); normalizeState(); state.xp.woodcutting=XP_CUM[99]; state.xp.fishing=XP_CUM[99]; state.xp.mining=XP_CUM[99];
+      var pet=0, gear=0, rp=rollSkillPet, rg=rollSkillingGear;
+      rollSkillPet=function(){ pet++; return rp.apply(this,arguments); };
+      rollSkillingGear=function(){ gear++; return rg.apply(this,arguments); };
+      completeWcDoubleAction(SKILLS.woodcutting.acts[3],5); completeFishDoubleAction(SKILLS.fishing.acts[0],5); completeDoubleAction(SKILLS.mining.acts[0],5);
+      rollSkillPet=rp; rollSkillingGear=rg;
+      return {pet:pet, gear:gear};
+    })()`);
+    ok('each second bar rolls the skill pet and the set pieces', sb2.pet === 3 && sb2.gear === 3, JSON.stringify(sb2));
+
+    /* ── the farmhand: no wage, Furrow titles, and the time it missed ──────────── */
+    const fh = ev(`(function(){
+      var o={};
+      state=defaultState(); normalizeState(); mmAtMenu=false; mmSlot=1;
+      state.xp.farming=XP_CUM[99]; state.coins=0;
+      state.farmer={tier:3,maxTier:3,enabled:true,seedId:null};
+      var top=CROPS.slice().sort(function(a,b){ return b.lvl-a.lvl; })[0];
+      state.seeds={}; state.seeds[top.id]=5000;
+      var fill=function(plantedAt){ PATCHES.forEach(function(p){ state.patches[p.id]={seedId:top.id, plantedAt:plantedAt, growMs:top.growMs, tendedMs:0, lastTended:0}; }); };
+      var t0=Date.now(); fill(t0-top.growMs*2); tickFarmer();
+      o.coins=state.coins; o.enabled=state.farmer.enabled; o.wageField=FARMER_TIERS.some(function(t){ return 'wage' in t; });
+      /* eight hours with the game closed, at the base 30% */
+      var away=8*3600000; state.lastSeen=Date.now()-away; fill(state.lastSeen-60000);
+      _dropLog.length=0; var saves=0, rs=saveGame; saveGame=function(){ saves++; };
+      var r=offlineFarmResolve(away,0.30); saveGame=rs;
+      o.off=r?{h:r.harvests,t:r.tends,xp:r.xp,items:r.items.length}:null;
+      o.clock=Math.abs(Date.now()-t0)<60000; o.quiet=(_farmQuiet===null); o.rows=_dropLog.length; o.saves=saves;
+      /* the whole of it through grantOffline, as a relaunch would */
+      state.lastSeen=Date.now()-away; fill(state.lastSeen-60000);
+      var sum=null, rso=showOfflineSummary; try{ showOfflineSummary=function(a,s){ sum=s; }; }catch(e){}
+      try{ grantOffline(); }catch(e){ o.err=e.message; }
+      try{ showOfflineSummary=rso; }catch(e){}
+      o.row=sum?!!sum.filter(function(l){ return l.label==='Farming'; }).length:null;
+      /* an Apprentice only harvests what was ready */
+      state.farmer={tier:1,maxTier:1,enabled:true,seedId:null};
+      state.lastSeen=Date.now()-away; fill(state.lastSeen-top.growMs*2);
+      var r1=offlineFarmResolve(away,0.30); o.t1=r1?{h:r1.harvests,t:r1.tends}:null;
+      /* a hidden window: the 2 s timer fires a minute late and plays the minute through */
+      state.farmer={tier:3,maxTier:3,enabled:true,seedId:null};
+      /* the crop with the shortest tend cooldown, planted 100 s ago: a tend falls due
+         half way through the missing minute, and is stamped there, not at the end */
+      var quick=CROPS.slice().sort(function(a,b){ return a.tendInterval-b.tendInterval; })[0];
+      state.seeds[quick.id]=50; var nowT=Date.now();
+      PATCHES.forEach(function(p){ state.patches[p.id]={seedId:quick.id, plantedAt:nowT-100000, growMs:quick.growMs, tendedMs:0, lastTended:0}; });
+      _farmTickAt=nowT-60000;
+      farmTimerTick();
+      var ps0=state.patches[PATCHES[0].id]||{};
+      o.hidden=(ps0.tendedMs>0 && ps0.lastTended>0 && ps0.lastTended<Date.now()-5000);
+      o.hiddenAt=ps0.lastTended?Math.round((Date.now()-ps0.lastTended)/1000):null;
+      /* a Furrow title brings its farmhand */
+      state=defaultState(); normalizeState();
+      state.gd={furrow:{rep:GD_REP[3],q:[],rolled:0,day:gdDayIndex(),skipped:0,bought:{}}};
+      normalizeState(); o.title=gdTitleNum('furrow'); o.tier=state.farmer.maxTier;
+      return o;
+    })()`);
+    ok('the farmhand takes no wage and never stops for want of gold (#222)', fh.coins === 0 && fh.enabled === true && fh.wageField === false, JSON.stringify({coins: fh.coins, enabled: fh.enabled}));
+    ok('with the game closed the farmhand keeps working (#233)', !!fh.off && fh.off.h > 20 && fh.off.t > 20 && fh.off.items > 0, JSON.stringify(fh.off));
+    ok('on a held clock that is put back, with no drop rows and no saves on the way', fh.clock === true && fh.quiet === true && fh.rows === 0 && fh.saves === 0, JSON.stringify({rows: fh.rows, saves: fh.saves}));
+    ok('and the Welcome Back panel has a Farming row for it', !fh.err && fh.row === true, String(fh.err || fh.row));
+    ok('an Apprentice only harvests what was ready, once', !!fh.t1 && fh.t1.h === 8 && fh.t1.t === 0, JSON.stringify(fh.t1));
+    ok('a farming timer that fires a minute late plays the minute through', fh.hidden === true, 'the tend it missed is stamped ' + fh.hiddenAt + ' s ago');
+    ok('a Furrow title brings its farmhand with it', fh.title === 4 && fh.tier === 2, 'title ' + fh.title + ', tier ' + fh.tier);
+
+    /* ── choosing an enchant ───────────────────────────────────────────────────── */
+    const en = ev(`(function(){
+      state=defaultState(); normalizeState();
+      var id=Object.keys(ITEMS).find(function(i){ return ITEMS[i].cgear&&ITEMS[i].cslot==='helmet'&&isEnchantable(i)&&!isUniqueGear(i); });
+      state.items[id]=3;
+      for(var t in ENCHANT_COST_BY_TIER) for(var m in ENCHANT_COST_BY_TIER[t]) state.items[m]=1e7;
+      var P=enchPoolFor(id), pick=P.keys[P.keys.length-1], cost0=JSON.stringify(enchApplyCost(id));
+      setEnchPick(id,pick);
+      var same=JSON.stringify(enchApplyCost(id))===cost0;
+      var vid=enchantPiece(id,{}), bad=0, others={};
+      for(var i=0;i<200;i++){ enchantPiece(vid,{}); var L=state.variants[vid].lines;
+        if(L[0].k!==pick||!L[0].p||L.filter(function(l){ return l.p; }).length!==1||L[1].k===pick) bad++; others[L[1].k]=1; }
+      toggleEnchLock(vid,0); var kv=state.variants[vid].lines[0].v; enchantPiece(vid,{});
+      var kept=state.variants[vid].lines[0].v===kv, locked=enchPickLocked(vid);
+      toggleEnchLock(vid,0);
+      setEnchPick(vid,null); var seen={};
+      for(var j=0;j<200;j++){ enchantPiece(vid,{}); seen[state.variants[vid].lines[0].k]=1; }
+      delete _enchPickSel[id];
+      return {same:same, bad:bad, others:Object.keys(others).length, pool:P.keys.length, kept:kept, locked:locked,
+        free:Object.keys(seen).length, name:ITEMS[vid].name};
+    })()`);
+    ok('the enchant you choose is on the piece every time, once, and leads it (#207)', en.bad === 0, en.bad + ' of 200 rerolls wrong');
+    ok('the other enchant is still rolled from everything else', en.others === en.pool - 1, en.others + ' of ' + (en.pool - 1) + ' seen');
+    ok('choosing costs nothing extra, and a locked choice is kept', en.same === true && en.kept === true && en.locked === true);
+    ok('with no choice a piece rolls as it always did', en.free >= en.pool - 1, en.free + ' stats seen on the first enchant');
   }
 
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));

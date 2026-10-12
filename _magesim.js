@@ -1886,11 +1886,14 @@ setTimeout(() => {
           + '   ' + Object.keys(r.used).map(k => Math.round(r.used[k]).toLocaleString() + ' ' + k.replace(/_/g, ' ')).join(', '));
       }
     }
-    console.log('   * with every tree full. A card\'s XP creeps up a little as the hour goes, so live sits a touch over it.');
+    console.log('   * with every tree full. A card\'s XP and its runes creep up a little as the hour goes (mastery), so live sits a touch over it.');
     const plain = LS.filter(s => !s.trees), full = LS.filter(s => s.trees);
     check(LS.every(s => !s.err) && plain.every(s => s.x.xph >= s.x.card.xph * 0.995 && s.x.xph <= s.x.card.xph * 1.02 && s.r.xph >= s.r.card.xph * 0.995 && s.r.xph <= s.r.card.xph * 1.02),
       'an hour of Runecrafting through tick() gives the XP its card says', plain.map(s => pct(s.x.xph, s.x.card.xph) + '%').join(' '));
-    check(plain.every(s => Math.abs(s.made / s.r.card.rph - 1) < 0.005), 'and the runes its card says', plain.map(s => pct(s.made, s.r.card.rph) + '%').join(' '));
+    /* Since 0.9.127.8 a level of mastery is a 0.1% chance of one more, so the runes creep up
+       through the hour the way the XP always has (about 16 levels of mastery in it). Same
+       band as the XP check above: never under the card, never more than 2% over. */
+    check(plain.every(s => s.made >= s.r.card.rph * 0.995 && s.made <= s.r.card.rph * 1.02), 'and the runes its card says', plain.map(s => pct(s.made, s.r.card.rph) + '%').join(' '));
     check(full.every(s => !s.err && Math.abs(s.made / s.r.card.rph - 1) < 0.03 && s.x.xph >= s.x.card.xph * 0.995 && s.x.xph <= s.x.card.xph * 1.03),
       'with every tree full the card still tells the truth: double batches and Close Cutting come out at what it promises', full.map(s => pct(s.made, s.r.card.rph) + '% of ' + Math.round(s.r.card.rph).toLocaleString() + ' runes an hour').join(' '));
 
