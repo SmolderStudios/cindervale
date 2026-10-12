@@ -265,6 +265,38 @@ setTimeout(()=>{
     ev('delete window.__hwRaid');
   }
 
+  /* Ticket #237 (0.9.127.7): "You can run a skill while you are in raid." Skilling
+     and fighting are one or the other, and a raid started through its own door had
+     no such rule. The other direction was worse: starting a skill mid-raid stopped
+     the fight and left the run standing, and engaging again refilled your health. */
+  console.log('\nA raid and a skill do not run together (#237)');
+  {
+    const r=JSON.parse(ev(`(function(){
+      try{ if(combat.raid||combat.active) fleeCombat(); }catch(e){}
+      state=defaultState(); normalizeState(); mmAtMenu=false; mmSlot=1;
+      Object.keys(COMBAT_STATS).forEach(function(k){ state.combatXp[k]=XP_CUM[99]; });
+      state.xp.mining=XP_CUM[50]; refreshCombatStats();
+      setAction('mining',SKILLS.mining.acts[0].id);
+      var training=!!state.action;
+      startRaid('sunken_barrow');
+      var out={training:training, raid:!!combat.raid, live:combat.active===true, stopped:state.action===null};
+      combat.youHp=Math.max(1,Math.round(combat.youMaxHp*0.2)); var hp=combat.youHp, stage=combat.raid?combat.raid.stage:-1;
+      setAction('mining',SKILLS.mining.acts[0].id);
+      out.refused=(state.action===null);
+      out.stillRaid=!!combat.raid&&combat.active===true&&combat.raid.stage===stage;
+      out.noHeal=(combat.youHp===hp);
+      try{ fleeCombat(); }catch(e){}
+      setAction('mining',SKILLS.mining.acts[0].id);
+      out.afterLeaving=!!state.action;
+      state.action=null;
+      return JSON.stringify(out);
+    })()`));
+    ok('starting a raid stops the skill that was running', r.training && r.raid && r.live && r.stopped, JSON.stringify(r));
+    ok('a skill cannot be started during a raid, and the run is left alone', r.refused && r.stillRaid);
+    ok('so there is no stopping a raid for a free refill of your health', r.noHeal);
+    ok('once you have left the raid, the skill starts as usual', r.afterLeaving);
+  }
+
   console.log('\n'+(fail? fail+' FAILED, '+pass+' passed'
                         : 'PASS — all '+pass+' raid-momentum checks'));
   process.exit(fail?1:0);

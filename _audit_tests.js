@@ -7006,7 +7006,7 @@ setTimeout(() => {
       for(var d=0; d<40; d++) GUILDS.forEach(function(g){ if(g.combat) return;
         gdRollQuests(g.id,true);
         state.gd[g.id].q.forEach(function(q){ if(q.kind!=='do'||q.skill==='farming') return; n++;   // "Tend N patches" counts tends, and says so
-          if(!/ times$/.test(q.name)) bad.push(q.name); }); });
+          if(!/ (\\d+ times|once)$/.test(q.name)) bad.push(q.name); }); });   // "once" since 0.9.127.7: a prized catch can be an order of one
       return {n:n, bad:bad};
     })()`);
     ok('every do quest is worded in actions, "N times" (#133 #134)',
@@ -9810,13 +9810,29 @@ setTimeout(() => {
        pay.base === pay.raw && pay.streaked > pay.base, JSON.stringify(pay));
 
     /* #200. A skip that cannot find a replacement must not burn the day's skip. */
+    /* This read the source for two strings, which says the code is there and not
+       that it works: it stayed green while #219, #223, #231 and #232 were reported.
+       It runs the skip now. The Radcliff #198 to #238 section below does it 1,500
+       times across every guild. */
     const skip = ev(`(function(){
-      var src=${JSON.stringify(html)};
-      return {guards:/your skip is still available/.test(src),
-              comparesItems:/const avoid=ids\\(q\\)/.test(src)};
+      state=defaultState(); normalizeState();
+      for(var sk in SKILLS) state.xp[sk]=XP_CUM[99];
+      state.gd={}; gdJoin('deepwater');
+      var r=state.gd.deepwater;
+      r.q=[{kind:'deliver',size:'small',skill:'cooking',target:'cooked_voideel',name:'Deliver 30 Cooked Void Eel',need:30,have:0,done:false}];
+      var hits=0;
+      for(var i=0;i<80;i++){ r.skipped=0;
+        r.q[0]={kind:'deliver',size:'small',skill:'cooking',target:'cooked_voideel',name:'Deliver 30 Cooked Void Eel',need:30,have:0,done:false};
+        gdSkip('deepwater',0);
+        var q=r.q[0]; if(q.target==='cooked_voideel'||(q.items&&q.items.cooked_voideel)) hits++; }
+      var real=gdRollOne; gdRollOne=function(){ return null; };
+      r.skipped=0; var before=r.q[0].name; gdSkip('deepwater',0);
+      var kept=(r.skipped===0 && r.q[0].name===before);
+      gdRollOne=real;
+      return {hits:hits, kept:kept};
     })()`);
     ok('a guild skip avoids the item it replaced, and is not spent on a failed reroll (#200)',
-       skip.guards === true && skip.comparesItems === true, JSON.stringify(skip));
+       skip.hits === 0 && skip.kept === true, JSON.stringify(skip));
   }
 
   section('The Combat Mastery board can actually be filled (1.0 audit)');
@@ -10726,6 +10742,254 @@ setTimeout(() => {
        && qb.drawn.renderRightPanel === qa.drawn.renderRightPanel && qb.drawn.renderCombat === qa.drawn.renderCombat && qb.drawn.updateCombatBars === qa.drawn.updateCombatBars,
        quietRun.err || ((qb.steps - qa.steps) + ' ticks caught up, ' + (qb.drawn.renderRightPanel - qa.drawn.renderRightPanel) + ' paints of the right-hand side'));
     ev('delete window.__hw');
+  }
+
+  section('Radcliff #198 to #238 (0.9.127.7)');
+  {
+    /* ── guild quests ─────────────────────────────────────────────────────────── */
+    const gq = ev(`(function(){
+      state=defaultState(); normalizeState();
+      for(var sk in SKILLS) state.xp[sk]=XP_CUM[99];
+      state.monKills={}; MONSTERS.forEach(function(m){ if(!m.boss) state.monKills[m.id]=5; });
+      /* records made by hand: gdJoin refuses the two combat guilds without the levels */
+      state.gd={}; GUILDS.forEach(function(g){ state.gd[g.id]={rep:0,q:[],rolled:0,day:-1,skipped:0,bought:{}}; });
+      var shown={};
+      ['cooking','alchemy'].forEach(function(sk){ SKILLS[sk].acts.forEach(function(a){ var o=gdActOut(a); if(o){ shown[ITEMS[o].name]=1; shown[ITEMS[o].name.replace(/^Cooked /,'')]=1; } }); });
+      var bad=[], n=0;
+      for(var i=0;i<1500;i++){ ['deepwater','ashen'].forEach(function(id){
+        var q=gdRollOne(GD_BY[id],['small','standard','long'][i%3]);
+        if(!q||q.kind!=='do'||!ACT_NAMED_BY_OUTPUT[q.skill]) return; n++;
+        var m=q.name.match(/^(Cook|Brew|Make) (.+?) (\\d+ times|once)$/);
+        if(!m||!shown[m[2]]) bad.push(q.name); }); }
+      var clash=0, coin2=0, skips=0, ex=[];
+      for(var j=0;j<1500;j++){ var g=GUILDS[j%GUILDS.length], r=state.gd[g.id];
+        gdRollQuests(g.id,true); if(!r.q.length) continue;
+        var idx=j%r.q.length, old=JSON.parse(JSON.stringify(r.q[idx]));
+        gdSkip(g.id,idx); if(r.skipped<1) continue; skips++;
+        var nq=r.q[idx];
+        if(gdQuestsClash(old,nq)||nq.name===old.name){ clash++; if(ex.length<3) ex.push(old.name+' -> '+nq.name); }
+        if(old.kind==='coin'&&nq.kind==='coin') coin2++; }
+      var hammer=null, hsk=null;
+      for(var k in SKILLS) SKILLS[k].acts.forEach(function(a){ if(!hammer&&a.out&&a.out.starfall_arrowhead!=null){ hammer=a; hsk=k; } });
+      var pz=getAct('cooking','co_pz_voideel');
+      var sized=gdActCount('cooking',pz,20), byFire=Math.round(20*60000/actMs(pz,'cooking'));
+      state.xp.fishing=XP_CUM[60];
+      var noWater=gdBestActs('cooking').some(function(a){ return a.id==='co_pz_voideel'; });
+      state.xp.fishing=XP_CUM[99];
+      state.gd.ashen.q=[{kind:'do',size:'small',skill:'alchemy',act:'al_m16',name:'Distill Void Insight 75 times',need:75,have:0,done:false}];
+      gdNormalize(); var renamed=state.gd.ashen.q[0].name;
+      gdOnAction('alchemy',5,'al9'); gdOnAction('alchemy',2,'al_m16'); gdOnAction('alchemy',50,'al1');
+      var have=state.gd.ashen.q[0].have;
+      viewTab='guild'; _gdOpen='legion';
+      state.gd.legion.q=[{kind:'kill',size:'small',target:'cave_rat',name:'Kill 10 Cave Rat',need:10,have:9,done:false}];
+      renderGuilds(); gdOnKill('cave_rat',1); gdProgressTick();
+      var b=document.querySelector('.gd-q[data-gdq="0"] .gd-btn'), rep0=state.gd.legion.rep;
+      var lit=(b.textContent==='Claim'&&!b.disabled); b.click();
+      var claimed=state.gd.legion.q[0].done===true&&state.gd.legion.rep>rep0;
+      viewTab='acts'; _gdOpen=null;
+      return {bad:bad.slice(0,3), n:n, skips:skips, clash:clash, coin2:coin2, ex:ex,
+        c219:hammer?gdQuestsClash({kind:'deliver',skill:hsk,target:'starfall_arrowhead'},{kind:'do',skill:hsk,act:hammer.id}):null,
+        c231:gdQuestsClash({kind:'deliver',skill:'cooking',target:'prized_tuna'},{kind:'do',skill:'cooking',act:'co_pz_tuna'}),
+        c223:gdQuestsClash({kind:'coin',need:5},{kind:'coin',need:9}),
+        coal:gdQuestsClash({kind:'do',skill:'smithing',act:SKILLS.smithing.acts[2].id},{kind:'do',skill:'smithing',act:SKILLS.smithing.acts[9].id}),
+        sized:sized, byFire:byFire, noWater:noWater, renamed:renamed, have:have, lit:lit, claimed:claimed,
+        uses:recipeUsesFor('moonflower').map(function(u){ return u.act; }).join('|')};
+    })()`);
+    ok('a Cooking or Alchemy quest is named after what its card shows (#201 #211 #220 #230)',
+       gq.n > 100 && gq.bad.length === 0, gq.n + ' quests' + (gq.bad.length ? ', e.g. ' + gq.bad.join(' | ') : ''));
+    ok('a quest already on a board is renamed from its act', gq.renamed === 'Brew Wisdom Potion III 75 times', gq.renamed);
+    ok('and any recipe for that potion counts toward it, another potion does not', gq.have === 7, 'have ' + gq.have);
+    ok('an item tooltip names the recipe the way its card does (#229)', gq.uses === 'Shadow Crystal', gq.uses);
+    ok('a skip never hands back the errand it replaced (#200 #219 #223 #231 #232)',
+       gq.skips > 1000 && gq.clash === 0 && gq.coin2 === 0, gq.skips + ' skips, ' + gq.clash + ' clashes' + (gq.ex.length ? ': ' + gq.ex.join(' | ') : ''));
+    ok('deliver arrowheads and hammer arrowheads are one errand (#219)', gq.c219 === true, String(gq.c219));
+    ok('so are a prized tuna order and cooking prized tuna (#231), and gold for gold (#223 #232)', gq.c231 === true && gq.c223 === true);
+    ok('but two smelts are not one errand because both burn coal', gq.coal === false);
+    ok('a prized-catch quest is sized by the fishing, not the cooking (#231)',
+       gq.sized >= 1 && gq.sized * 5 < gq.byFire, 'Long asks for ' + gq.sized + ', sized off the fire it was ' + gq.byFire);
+    ok('and is not offered when the water it comes from is out of reach', gq.noWater === false);
+    ok('a quest that finishes while its page is open can be claimed (#205)', gq.lit === true && gq.claimed === true, JSON.stringify({lit: gq.lit, claimed: gq.claimed}));
+
+    /* ── second bars, drops, clicks ───────────────────────────────────────────── */
+    const sb = ev(`(function(){
+      state=defaultState(); normalizeState();
+      state.xp.woodcutting=XP_CUM[99]; state.xp.fishing=XP_CUM[99]; state.xp.mining=XP_CUM[99];
+      var wc=SKILLS.woodcutting.acts[4], fi=SKILLS.fishing.acts[4], mi=SKILLS.mining.acts[4];
+      completeWcDoubleAction(wc,3); completeFishDoubleAction(fi,3); completeDoubleAction(mi,3);
+      var m=[state.mastery[wc.id]||0, state.mastery[fi.id]||0, state.mastery[mi.id]||0];
+      _dropLog.length=0;
+      for(var i=0;i<12;i++){ logDrop('ancient_log',1); logDrop('shadow_log',1); }
+      var rows=_dropLog.length, qty=_dropLog.map(function(d){ return d.id+'x'+d.qty; }).join(',');
+      /* a silent harvest (the farmhand's) still reports what landed */
+      state.xp.farming=XP_CUM[99]; _dropLog.length=0;
+      var crop=CROPS[0], pid=PATCHES[0].id;
+      state.patches[pid]={seedId:crop.id, plantedAt:Date.now()-crop.growMs*3, growMs:crop.growMs, lastTended:0, tendedMs:0};
+      var harvested=harvestPatch(pid,true);
+      return {m:m, rows:rows, qty:qty, harvested:harvested, farmRows:_dropLog.length};
+    })()`);
+    ok('a second bar earns mastery for what it does (#204)', sb.m.every(x => x > 0), JSON.stringify(sb.m));
+    ok('two bars taking turns make two rows in the Drops tab, not twenty-four (#228)', sb.rows === 2, sb.rows + ' rows: ' + sb.qty);
+    ok('and a farmhand harvest reaches the Drops tab at all (#228)', sb.harvested === true && sb.farmRows >= 1, sb.farmRows + ' rows');
+
+    const clk = ev(`(function(){
+      state=defaultState(); normalizeState(); mmAtMenu=false; mmSlot=1;
+      viewTab='acts'; selectedSkill='mining'; renderAll();
+      var row=function(){ return document.querySelector('#skillList .skill-row[data-skill="smithing"]'); };
+      var a=row();
+      document.dispatchEvent(new MouseEvent('mousedown',{bubbles:true}));
+      renderTick();
+      var heldSame=(row()===a), owed=_repaintOwed;
+      document.dispatchEvent(new MouseEvent('mouseup',{bubbles:true}));
+      flushOwedRepaint();
+      var rebuilt=(row()!==a), owedAfter=_repaintOwed;
+      /* a button held past the limit does not freeze the screen */
+      var b=row(); document.dispatchEvent(new MouseEvent('mousedown',{bubbles:true}));
+      _ptrDownAt=Date.now()-PTR_HOLD_MAX_MS-50; renderTick();
+      var stuck=(row()===b);
+      document.dispatchEvent(new MouseEvent('mouseup',{bubbles:true}));
+      return {heldSame:heldSame, owed:owed, rebuilt:rebuilt, owedAfter:owedAfter, stuck:stuck};
+    })()`);
+    ok('no automatic repaint lands between a press and its release (#209)', clk.heldSame === true && clk.owed === true, JSON.stringify(clk));
+    ok('the held repaint lands once the button is up', clk.rebuilt === true && clk.owedAfter === false);
+    ok('and a button held too long stops holding the screen', clk.stuck === false);
+
+    /* ── achievements and the Mastery board ───────────────────────────────────── */
+    const ach = ev(`(function(){
+      state=defaultState(); normalizeState();
+      var A=ACH_BY_ID.all_zones, boss=ZONES.filter(function(z){ return z.type!=='hunt'; }), hunt=ZONES.filter(function(z){ return z.type==='hunt'; });
+      state.cmastZoneClears={}; boss.slice(0,boss.length-1).forEach(function(z){ state.cmastZoneClears[z.id]=true; });
+      hunt.forEach(function(z){ state.cmastZoneClears[z.id]=true; });
+      var early=A.check();
+      ZONES.forEach(function(z){ state.cmastZoneClears[z.id]=true; });
+      var all=A.check();
+      state=defaultState(); normalizeState();
+      Object.keys(COMBAT_STATS).forEach(function(k){ state.combatXp[k]=XP_CUM[99]; });
+      state.monKills={}; MONSTERS.forEach(function(m){ state.monKills[m.id]=3; });
+      MONSTERS.filter(function(m){ return m.boss; }).forEach(function(m){ state.cmastBossKills[m.id]=true; state.cmastZoneClears[m.zone]=true; });
+      [25,50,75,99].forEach(function(m){ state.cmastMilestones[m]=true; });
+      state.raidClears={}; RAIDS.filter(function(r){ return !r.endless; }).forEach(function(r){ state.raidClears[r.id]=2; });
+      state.spireBest=34; state.cmastGranted=120; state.cmast={x:0};
+      var cl=combatLevel();
+      normalizeState(); var back=state.cmastGranted;
+      normalizeState(); normalizeState(); var again=state.cmastGranted;
+      grantCmastPoints(1,'test'); state.spireBest=40; normalizeState(); var live=state.cmastGranted;
+      var chips=(buildCmastViewHTML().match(/<span class="src"[^>]*>[^<]*<b>/g)||[]).length;
+      return {early:early, all:all, cl:cl, back:back, again:again, live:live, earnable:_achCmastEarnable(), cap:CMAST_CAP, chips:chips, zones:ZONES.length};
+    })()`);
+    ok('Realm Walker does not fire with a zone still to clear (#208)', ach.early === false && ach.all === true, JSON.stringify({early: ach.early, all: ach.all, zones: ach.zones}));
+    ok('a save that cleared raids, grounds and Spire rungs before they paid is made whole (#234)',
+       ach.cl === 99 ? ach.back === 130 : ach.back > 120, 'combat ' + ach.cl + ': 120 -> ' + ach.back);
+    ok('once, and never on top of a point the live grant already paid', ach.again === ach.back && ach.live === ach.back + 1, JSON.stringify({again: ach.again, live: ach.live}));
+    ok('Full Board asks for every point the board holds', ach.earnable === ach.cap, ach.earnable + ' vs ' + ach.cap);
+    ok('and the board lists every source of a point', ach.chips >= 6, ach.chips + ' chips');
+
+    /* ── panels ───────────────────────────────────────────────────────────────── */
+    const ui = ev(`(function(){
+      var o={};
+      state=defaultState(); normalizeState(); mmAtMenu=false; mmSlot=1;
+      /* #238: a focused dropdown that is not open must not freeze Farming */
+      state.xp.farming=XP_CUM[99]; viewTab='acts'; selectedSkill='farming'; renderCenter();
+      var box=$('activityGrid'), sel=document.createElement('select'); box.appendChild(sel); sel.focus();
+      _farmInteractAt=0; var mark=document.createElement('i'); mark.id='__frz'; box.appendChild(mark);
+      renderFarming();
+      o.farmRepaints=!document.getElementById('__frz');
+      o.fieldNote=/tending takes time off the grow/i.test(box.textContent);
+      /* #215: the cards follow the satchel while nothing else repaints them */
+      selectedSkill='smithing'; state.xp.smithing=XP_CUM[99]; combatMode=false; invOpen=false; renderCenter();
+      var card=function(){ return document.querySelector('#activityGrid .act'); }, c0=card();
+      bagRepaintTick(); o.quiet=(card()===c0);
+      state.items.copper_ore=(state.items.copper_ore||0)+7; bagRepaintTick(); o.follows=(card()!==c0);
+      /* #206: the running card keeps its mastery row, with the runs left inside it */
+      state.items.copper_ore=500; state.items.tin_ore=500; state.action={skill:'smithing',actId:'sm1'}; state.actionStart=Date.now(); renderCenter();
+      var act=document.querySelector('#activityGrid .act.active');
+      o.activeRow=!!(act&&act.querySelector('.mastery-row .mastery-bar')&&act.querySelector('.runs .runs-left'));
+      o.hideRule=/\\.act\\.active \\.mastery-row\\{\\s*display:none/.test(document.documentElement.innerHTML);
+      state.action=null;
+      /* #224: every item card says how many you hold */
+      state.items.iron_ore=12; o.owned=ttOwnedText('iron_ore'); o.none=ttOwnedText('gold_ore');
+      /* #235: out of points is said, not swallowed */
+      state.offlineXp=OFFLINE_XP_CUM[OFFLINE_MAX_LEVEL]; state.tree._offline={};
+      var left=offlineEarnedPoints();
+      OFFLINE_TREE.forEach(function(n){ if(n.gm||left<=0) return; var r=Math.min(n.max,left); if(n.needs&&!(state.tree._offline[n.needs]>0)) return; state.tree._offline[n.id]=r; left-=r; });
+      o.left=offlineAvailPoints();
+      /* the tree is the panel's second tab */
+      try{ _ofpTab='tree'; var ex=document.getElementById('offlineConfigOverlay'); if(ex) ex.remove(); openOfflineOverlay(); }catch(e){ o.offErr=e.message; }
+      var labs=[].map.call(document.querySelectorAll('.ofp-lab'),function(x){ return x.textContent; }).join(' | ');
+      o.heading=/Grandmaster . opens at \\d+ points earned/.test(labs);
+      var buys=[].filter.call(document.querySelectorAll('.ofp-node:not(.maxed):not(.lock) .ofp-buy'),function(b){ return true; });
+      o.buyOff=buys.length>0&&buys.every(function(b){ return !b.disabled&&b.classList.contains('off'); });
+      o.says=buys.length>0&&/No points left to spend/.test(buys[0].parentNode.textContent);
+      var ov=document.getElementById('offlineConfigOverlay'); if(ov) ov.remove(); _ofpTab='tonight';
+      /* #202: the quiver tile carries its count */
+      var arrow=Object.keys(ITEMS).find(function(i){ return ITEMS[i].ammo==='arrow'&&!ITEMS[i].ranged; });
+      state.items[arrow]=4321; state.combatEquipped.quiver=arrow; _gearFilter='combat';
+      var doll=gearDollEl(54,26,10), ct=doll.querySelector('.dl-ct');
+      o.quiver=ct?ct.textContent:null;
+      /* #225: the Bulwark takes its place by level, and a buckler is not leather */
+      var sh=SKILLS.crafting.acts.filter(function(a){ return a.cat==='shield'&&a.subcat!=='buckler'; }).map(function(a){ return a.lvl; });
+      o.shieldsSorted=sh.every(function(l,i){ return i===0||sh[i-1]<=l; });
+      o.bulwarkIn=SKILLS.crafting.acts.some(function(a){ return a.id==='cr_hk_rhino_bulwark'&&!a.subcat; })
+        ||SKILLS.crafting.acts.some(function(a){ return /bulwark/.test(a.id)&&a.cat==='shield'&&!a.subcat; });
+      /* #227: nothing on screen still says a spare shares its enchant */
+      /* What is on screen, not the source: the comments there quote the old lines. */
+      var ring=Object.keys(JEWELRY_GEM_TIER)[0]; state.items[ring]=1; state.xp.jeweler=XP_CUM[99];
+      selectedSkill='jeweler'; viewTab='acts'; renderCenter();
+      var jg=$('activityGrid'), jtxt=jg.textContent+' '+[].map.call(jg.querySelectorAll('[title]'),function(x){ return x.title; }).join(' ');
+      viewTab='socket'; renderCenter(); jtxt+=' '+$('socketView').textContent; viewTab='acts';
+      o.jewelOwnedNote=/You already own one/.test(jtxt);
+      o.stale=/shares its enchant|shared by all your copies|every copy you own is drilled/.test(jtxt)||/Enchants survive a sale/.test(JSON.stringify(HINTS));
+      /* #218 */
+      var rl=SLAYER_PERKS.find(function(p){ return p.id==='relentless'; });
+      o.relentless=rl.eff(1)+' '+rl.lab;
+      return o;
+    })()`);
+    ok('Farming repaints with a dropdown focused but closed (#238)', ui.farmRepaints === true);
+    ok('the field says what tending does (#217)', ui.fieldNote === true);
+    ok('recipe cards follow the satchel while a fight fills it (#215)', ui.quiet === true && ui.follows === true, JSON.stringify({quiet: ui.quiet, follows: ui.follows}));
+    ok('a running card keeps its mastery row, and its runs chip says how long is left (#206)', ui.activeRow === true && ui.hideRule === false, JSON.stringify({row: ui.activeRow, rule: ui.hideRule}));
+    ok('an item card says how many you hold, at zero too (#224)', ui.owned === 'In your satchel: 12' && ui.none === 'In your satchel: 0', ui.owned + ' / ' + ui.none);
+    ok('the Offline tree says the gate is a gate, and why a button will not take a point (#235)',
+       !ui.offErr && ui.left === 0 && ui.heading === true && ui.buyOff === true && ui.says === true, JSON.stringify({err: ui.offErr, left: ui.left, heading: ui.heading, buyOff: ui.buyOff, says: ui.says}));
+    ok('the quiver tile shows how much is loaded (#202)', ui.quiver === '4.3k', String(ui.quiver));
+    ok('the Rhinohide Bulwark sorts by level among the shields (#225)', ui.shieldsSorted === true && ui.bulwarkIn === true, JSON.stringify({sorted: ui.shieldsSorted, found: ui.bulwarkIn}));
+    ok('no text still says a spare copy shares its enchant (#227)', ui.stale === false, JSON.stringify({stale: ui.stale, ownedNoteOnThisTab: ui.jewelOwnedNote}));
+    ok('Relentless says it is a heal (#218)', /healed/.test(ui.relentless) && !/^\+/.test(ui.relentless), ui.relentless);
+
+    /* ── sailing ──────────────────────────────────────────────────────────────── */
+    const sl = ev(`(function(){
+      state=defaultState(); normalizeState();
+      var o={};
+      var ord=SAIL_ORDERS.find(function(x){ return x.find>1; });
+      o.chartBase=sailChartChance('chart_gravekeel',null); o.chartSearch=sailChartChance('chart_gravekeel',ord);
+      o.txt=sailChartOddsTxt('chart_gravekeel');
+      var real=sailReach;
+      /* a captain with fifteen islands open */
+      sailReach=function(ix){ return ix<15?'ok':'lvl'; };
+      var isles=sailCommIsles(), low=Math.min.apply(null,isles.map(function(ix){ return SAIL_ISLES[ix].lv; }));
+      var shallowOnly={}; SAIL_ISLES.forEach(function(is,ix){ if(ix<15&&isles.indexOf(ix)<0) (is.d||[]).forEach(function(e){ shallowOnly[e.i]=1; }); });
+      isles.forEach(function(ix){ (SAIL_ISLES[ix].d||[]).forEach(function(e){ delete shallowOnly[e.i]; }); });
+      var bad=0, n=0, big=0;
+      for(var i=0;i<600;i++){ var c=SAIL_COMM_KINDS.land.make(70); if(!c) continue; n++;
+        if(shallowOnly[c.arg]) bad++;
+        if(c.need>sailCommPerVoyage(c.arg,isles)*7.6+5) big++; }
+      o.isles=isles.length; o.low=low; o.n=n; o.bad=bad; o.big=big; o.onlyLow=Object.keys(shallowOnly).length;
+      /* an old board: unstarted orders are rolled again, one under way keeps its progress */
+      var lowItem=Object.keys(shallowOnly)[0];
+      state.sail.comms=[{k:'land',arg:lowItem,need:320,prog:0},{k:'land',arg:lowItem,need:320,prog:40},{k:'triumph',arg:0,need:2,prog:0}];
+      var bd=sailCommBoard();
+      o.board=bd.map(function(c){ return c.k+':'+(c.arg===lowItem?'low':'x')+':'+c.prog+'/'+c.need+':v'+c.v; }).join(' ');
+      o.kept=bd.filter(function(c){ return c.arg===lowItem&&c.prog===40; }).length;
+      o.keptNeed=(bd.find(function(c){ return c.arg===lowItem&&c.prog===40; })||{}).need;
+      o.unstarted=bd.filter(function(c){ return c.arg===lowItem&&c.prog===0; }).length;
+      sailReach=real;
+      return o;
+    })()`);
+    ok('the Search order raises the chance of a treasure map (#216)', sl.chartSearch > sl.chartBase && /Search order/.test(sl.txt), sl.txt);
+    ok('a commission draws from the upper part of what you can reach (#221)',
+       sl.n > 300 && sl.onlyLow > 0 && sl.bad === 0, sl.isles + ' of 15 islands, lowest Lv ' + sl.low + ', ' + sl.bad + ' of ' + sl.n + ' asked for a low-water item');
+    ok('and asks for about a handful of voyages of cargo, not a number off your level', sl.big === 0, sl.big + ' oversized');
+    ok('an old board is refitted: unstarted low-water orders go, one under way stays and shrinks',
+       sl.unstarted === 0 && sl.kept === 1 && sl.keptNeed < 320, sl.board);
   }
 
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));
