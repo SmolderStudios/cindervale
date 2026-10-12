@@ -119,14 +119,16 @@ setTimeout(()=>{
     const g=JSON.parse(ev("JSON.stringify(SPIRE_GEAR.map(id=>({id,n:ITEMS[id].name,slot:ITEMS[id].cslot,"+
       "t:ITEMS[id].ctier,cap:ascCap(id),st:COMBAT_GEAR_STATS[id],ub:ITEMS[id].ubonus||null,mg:ITEMS[id].momGain||0,"+
       "req:combatGearReq(id)})))"));
-    ok('the Spire drops four pieces', g.length===4, g.map(x=>x.n).join(', '));
+    /* Five since 0.9.127.11: Faultline, the staff. Each piece rolls on its own, so a
+       fifth does not make the other four rarer. */
+    ok('the Spire drops five pieces', g.length===5, g.map(x=>x.n).join(', '));
     ok('all of them are T11 and ascend to ten', g.every(x=>x.t===11&&x.cap===10));
     /* T11 missing from COMBAT_GEAR_REQ makes the best gear in the game equip at
        level 1, and nothing else in the file would notice. */
     ok('and every one gates at Lv 99', g.every(x=>x.req&&x.req.level===99),
        JSON.stringify(g.map(x=>x.req&&x.req.level)));
     ok('they cover the slots the Empyrean does not',
-       g.map(x=>x.slot).sort().join(',')==='gloves,shield,weapon,weapon',
+       g.map(x=>x.slot).sort().join(',')==='gloves,shield,weapon,weapon,weapon',
        g.map(x=>x.slot).join(', '));
 
     /* The whole reason these exist: each has to actually be best in slot. */
@@ -140,6 +142,11 @@ setTimeout(()=>{
     beats('sunderedge','dawnbreaker','the sword beats Dawnbreaker');
     beats('faultward','aegis_of_dawn','the shield beats the Aegis of Dawn');
     beats('plummet','sunpiercer','the bow beats Sunpiercer');
+    /* A staff's damage is Magic Power, where a sword's is Strength, so it is held on
+       Attack and Magic Power together. */
+    { const a=JSON.parse(ev("JSON.stringify([COMBAT_GEAR_STATS.faultline,COMBAT_GEAR_STATS.dawncaller])"));
+      ok('the staff beats Dawncaller', a[0].atk>a[1].atk && a[0].mpow>a[1].mpow, (a[0].atk+'/+'+a[0].mpow)+' vs '+(a[1].atk+'/+'+a[1].mpow));
+      ok('  Faultline is a real staff', ev("!!(ITEMS.faultline.magic && ITEMS.faultline.ammo==='rune' && ITEMS.faultline.twoHanded && combatGearReq('faultline').stat==='magic')"), 'magic/rune/2H/Magic 99'); }
     /* Both are real ranged weapons now, not bow-shaped melee. Without the flags
        usingRanged() is false, the ranged level is never read, no arrow is spent and
        the armour penalty never engages - it is a bow in name only. */
@@ -179,6 +186,22 @@ setTimeout(()=>{
     ok('and non-landing floors give none', ev('!state.items.sundershaft'),
        String(ev('state.items.sundershaft||0')));
 
+    /* And a rune (0.9.127.11), the one rune Runecrafting cannot carve. Four for every
+       arrow, because a Surge spends four a cast. */
+    const sr=JSON.parse(ev("JSON.stringify({rune:isRune('sunder_rune'), pow:ITEMS.sunder_rune.runePow, cls:runeClassOf('sunder_rune'), sell:ITEMS.sunder_rune.sell, use:itemUseKind('sunder_rune'), shaft:ITEMS.sundershaft.ammoStr,"
+      +"made:Object.values(SKILLS).some(sk=>(sk.acts||[]).some(a=>a.out&&a.out.sunder_rune))})"));
+    ok('the Spire drops its own rune, as strong as its arrow', sr.rune===true && sr.pow===sr.shaft && sr.pow>ev('ITEMS.starfall_rune.runePow') && sr.cls===4,
+       'Starfall Rune '+ev('String(ITEMS.starfall_rune.runePow)')+' -> Sunder Rune '+sr.pow+', a Surge rune');
+    ok('it is spent, not sold, the satchel knows what it is for, and nothing carves it', sr.sell===2 && sr.use==='ammo' && sr.made===false, sr.sell+' silver, '+sr.use);
+    ev("state.items={}; for(var f=1;f<=50;f++){ spireFloorLoot(f); }");
+    ok('a climb to 50 stocks four runes for every arrow', ev('state.items.sunder_rune===state.items.sundershaft*4 && state.items.sunder_rune>2000'),
+       ev('String(state.items.sunder_rune||0)')+' runes, '+ev('String(state.items.sundershaft||0)')+' arrows');
+    ev("state.items={}; for(var f=1;f<=60;f++){ if(f%SPR_BOSS_EVERY!==0) spireFloorLoot(f); }");
+    ok('and only boss floors give them', ev('!state.items.sunder_rune'), String(ev('state.items.sunder_rune||0')));
+    ok('only the Empyrean and Spire staves and wands cast a Sunder Rune',
+       ev("ammoFitsWeapon('faultline','sunder_rune')===true && ammoFitsWeapon('dawncaller','sunder_rune')===true && ammoFitsWeapon('starcall_wand','sunder_rune')===true && ammoFitsWeapon('riftcaller','sunder_rune')===false && ammoFitsWeapon('ancient_staff','sunder_rune')===false"));
+    ok('the top crafted staff still casts the top crafted rune, and no bow takes a rune',
+       ev("ammoFitsWeapon('ancient_staff','starfall_rune')===true && ammoFitsWeapon('plummet','sunder_rune')===false && ammoFitsWeapon('faultline','sundershaft')===false"));
     /* Ammunition is gated by the WEAPON's tier, not the archer's level. Without
        this a Pine Shortbow could loose a Sundershaft the moment one dropped. */
     ok('a starting bow cannot draw the best arrow',
@@ -967,6 +990,24 @@ setTimeout(()=>{
     ok('and lethality binds an archer too, base and ascended',
        arch.w0.kill<=arch.w0.time && arch.w1.kill<=arch.w1.time+2,
        'base '+arch.w0.kill+' vs '+arch.w0.time+', ascended '+arch.w1.kill+' vs '+arch.w1.time);
+
+    /* And for a mage (0.9.127.11): the best staff and rune, and the Empyrean's cloth
+       set, in the same four armour slots. A staff has less Defence behind it than a
+       bow in leather, so this is the build the band is most likely to lose first. */
+    ev("state.combatXp.magic=XP_CUM[99]; state.items.sunder_rune=1e6;");
+    const mage=wallFor("{weapon:'faultline',quiver:'sunder_rune',helm:'dawnveil_hood',chest:'dawnveil_robe',legs:'dawnveil_leggings',boots:'dawnveil_slippers'}");
+    console.log('       mage Lv99 (Faultline, Sunder Rune, Dawnveil): acc '+mage.base.acc+' · max hit '+mage.base.hit+
+                ' · lethality wall '+mage.w0.kill+', four-minute wall '+mage.w0.time);
+    console.log('       mage fully ascended: acc '+mage.asc.acc+' · max hit '+mage.asc.hit+
+                ' · lethality wall '+mage.w1.kill+', four-minute wall '+mage.w1.time);
+    const mageWall=Math.min(mage.w0.kill, mage.w0.time);
+    ok('a mage\'s wall lands in the same band', mageWall>=25 && mageWall<=65, 'wall near floor '+mageWall);
+    ok('and lethality binds a mage too, base and ascended',
+       mage.w0.kill<=mage.w0.time && mage.w1.kill<=mage.w1.time+2,
+       'base '+mage.w0.kill+' vs '+mage.w0.time+', ascended '+mage.w1.kill+' vs '+mage.w1.time);
+    ok('and a mage climbs about as far as an archer: never more than five floors behind, base or ascended',
+       mageWall>=archWall-5 && mage.w1.kill>=arch.w1.kill-5,
+       'fighter '+wall+' / '+wallA+', archer '+archWall+' / '+arch.w1.kill+', mage '+mageWall+' / '+mage.w1.kill);
   }
 
   console.log('\n'+(fail? fail+' FAILED, '+pass+' passed'

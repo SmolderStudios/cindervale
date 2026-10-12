@@ -28,9 +28,15 @@
  * next tenth of a second, for every weapon. The model does not round, so the two
  * are compared with that rounding counted.
  *
- * NOT here, because they need gear from later slices (Faultline, Dawnveil, the
- * Sunder Rune, the Sorcery column): the best in slot table and the Spire wall.
- * Those two stay in _magedesign/sim.js, which runs against build 0.9.127.3.
+ * Since the gear half (slices 5 and 8) the best in slot table and the Spire wall
+ * are here too, in section 14, held to _magedesign/results.json: every fighter
+ * and archer row, the three bare mage rows and all twelve walls, to the digit.
+ * The finished mage rows need the Sorcery column (slice 6) and the Wyrdstone
+ * (slice 7). Until both are built they are held under the design and to what
+ * this file measured, and the section says which is missing.
+ *
+ * In the golden file, `drops` is cut from _magedesign/design.js and `built` is
+ * what the real file measured for things the prototype never ran.
  */
 'use strict';
 const fs = require('fs');
@@ -594,7 +600,7 @@ function PAGE() {
   function spells() {
     var out = { table: [], sizes: [] };
     RUNES.forEach(function (r) {
-      var cls = runeClassOf(r.id), row = { id: r.id, name: r.n, tier: r.t, rn: r.rn, pow: ITEMS[r.id].runePow, arrow: ITEMS[METAL[r.t - 1] + '_arrow'].ammoStr, cls: cls, biggest: SPELL_SIZES[cls - 1].n,
+      var cls = runeClassOf(r.id), row = { id: r.id, name: r.n, tier: r.t, rn: r.rn, pow: ITEMS[r.id].runePow, arrow: (ITEMS[METAL[r.t - 1] + '_arrow'] || ITEMS.sundershaft).ammoStr, cls: cls, biggest: SPELL_SIZES[cls - 1].n,
         batch: r.act ? r.act.out[r.id] : 0, sizes: [] };
       for (var s = 1; s <= cls; s++) row.sizes.push(spellPower(row.pow, cls, s));
       out.table.push(row);
@@ -957,9 +963,10 @@ function PAGE() {
     var keep = { menu: mmAtMenu };
     try {
       state = defaultState(); normalizeState(); state.xp.agility = XP_CUM[lv];
-      var lo = loadout(key, t);
-      if (over && over.weapon) lo.weapon = over.weapon;
-      wear(lo, lv);
+      /* `bis:mage`, `bis:wand`, `bis:archer` and `bis:fighter` are the finished builds of
+         section 14, with everything on, at the Agility a finished character has */
+      if (/^bis:/.test(key)) build(bisBuild(key.slice(4), { agi: 99, el: el || 'fire' }));
+      else { var lo = loadout(key, t); if (over && over.weapon) lo.weapon = over.weapon; wear(lo, lv); }
       if (el) { state.combatElement = el; refreshCombatStats(); out.el = spellElement(); }
       if (neutral) { mon.weakTo = null; mon.resistTo = null; mon.weakEl = null; mon.resistEl = null; }
       mmAtMenu = false; enterCombat(); state.cmbSubTab = 'arena'; state.cmbView = 'fight';
@@ -1014,8 +1021,8 @@ function PAGE() {
     var D = Date.now, R = Math.random, out = { key: key, stages: [] }, keep = { menu: mmAtMenu };
     try {
       state = defaultState(); normalizeState(); state.xp.agility = XP_CUM[lv];
-      var o = loadout(key, t); if (ammo) o.quiver = ammo;
-      wear(o, lv);
+      if (/^bis:/.test(key)) build(bisBuild(key.slice(4), { agi: 99, el: el || 'fire' }));
+      else { var o = loadout(key, t); if (ammo) o.quiver = ammo; wear(o, lv); }
       if (el) { state.combatElement = el; refreshCombatStats(); }
       mmAtMenu = false; enterCombat();
       var fake = D.call(Date) + (window.__clockShift || 0); Date.now = function () { return fake; };
@@ -1118,6 +1125,15 @@ function PAGE() {
       var act = SKILLS.runecrafting.acts.filter(function (a) { return a.out && a.out[x.id]; })[0];
       out.runes.push({ mon: mid, name: m.name, lvl: m.lvl, boss: !!m.boss, rune: x.id, runeName: ITEMS[x.id].name, carvedAt: act ? act.lvl : 0, cls: runeClassOf(x.id), chance: x.chance, qty: x.qty });
     });
+    /* Dawnveil, piece by piece, and the rune only the Spire has */
+    if (typeof DAWNVEIL !== 'undefined') {
+      var emp = RAIDS.filter(function (r) { return r.id === 'empyrean_throne'; })[0];
+      out.veil = DAWNVEIL.pieces.map(function (p) { var st = COMBAT_GEAR_STATS[p[0]], it = ITEMS[p[0]], L = COMBAT_GEAR_STATS[p[3]], row = emp.gearDrops.filter(function (g) { return g.id === p[0]; })[0];
+        return { id: p[0], n: it.name, slot: it.cslot, t: it.ctier, from: p[3], mpow: st.mpow, save: st.runeSave, def: st.def, atk: st.atk, leatherDef: L.def, leatherAtk: L.atk, cloth: !!it.cloth, set: it.setKey, chance: row ? row.chance : 0 }; });
+      out.veilSet = { pieces: COMBAT_SETS.dawnveil.pieces.length, bonus: COMBAT_SETS.dawnveil.bonus, desc: COMBAT_SETS.dawnveil.desc };
+    }
+    if (ITEMS.sunder_rune) out.spireRune = { id: 'sunder_rune', n: ITEMS.sunder_rune.name, t: ITEMS.sunder_rune.ammoTier, pow: ITEMS.sunder_rune.runePow, sell: ITEMS.sunder_rune.sell, cls: runeClassOf('sunder_rune') };
+    out.spireGear = SPIRE_GEAR.slice();
     return out;
   }
   /* What a find is worth beside the crafted weapon of its tier: the same mage, in
@@ -1143,6 +1159,232 @@ function PAGE() {
     state = defaultState(); normalizeState();
     return out;
   }
+
+  /* ── best in slot, everything on: the _rangedstr.js builder, with a third branch ──
+     A finished character is assembled the way that harness assembles its archer:
+     the same enchant picker, the same sockets, the same Ascension, and the Mastery
+     board spent through the real allocate path. This is _magedesign/simlib.js's
+     build(), row(), best(), wall() and walls() pointed at the real file, so the
+     rows can be held against what the prototype measured.
+
+     Two things the design's finished mage has that this file may not: the Sorcery
+     column of Combat Mastery (slice 6) and the Wyrdstone gem (slice 7). The builder
+     asks for both by name and takes what exists. `SC` is the design's list of
+     columns for a mage; the two that are Sorcery's give nothing until it is built. */
+  var NEWSTATS = false;
+  function colNodes(tree) { return CMAST_NODES.filter(function (n) { return n.tree === tree; }); }
+  function spend(trees) {
+    state.cmast = {}; state.cmastGranted = 400; state.cmastShards = 0;
+    var want = {}; trees.forEach(function (t) { colNodes(t).forEach(function (n) { want[n.id] = n.max; }); });
+    var moved = true;
+    while (moved) { moved = false;
+      for (var id in want) { while (cmastRank(id) < want[id] && cmastCanAllocate(id)) { cmastAllocate(id); moved = true; } } }
+    var got = {}; for (var k in state.cmast) if (state.cmast[k] > 0) got[k] = state.cmast[k];
+    return got;
+  }
+  function maxTree(skill) { var t = {}; (TREES[skill] || []).forEach(function (n) { t[n.id] = n.max; }); return t; }
+  function prio(kind) {
+    var dmg = kind === 'magic' ? 'magicDmg' : kind === 'ranged' ? 'rangedStr' : 'atkBoost';
+    var p = NEWSTATS ? [dmg, 'critDmg', 'accBoost', 'critChance'] : [dmg, 'critChance'];
+    ['atkBoost', 'lifesteal', 'hpBoost', 'defBoost', 'goldFind', 'rangedStr', 'magicDmg'].forEach(function (k) { if (p.indexOf(k) < 0) p.push(k); });
+    /* a mage never wants Attack or Ranged damage, an archer never wants Magic damage */
+    if (kind === 'magic') p = p.filter(function (k) { return k !== 'atkBoost' && k !== 'rangedStr'; }).concat(['atkBoost', 'rangedStr']);
+    else p = p.filter(function (k) { return k !== 'magicDmg'; }).concat(['magicDmg']);
+    return p;
+  }
+  function pickKeys(keys, n, kind, used) {
+    var out = [], p = prio(kind);
+    for (var i = 0; i < p.length && out.length < n; i++) if (keys.indexOf(p[i]) >= 0 && (used || []).indexOf(p[i]) < 0) out.push(p[i]);
+    for (var j = 0; j < keys.length && out.length < n; j++) if (out.indexOf(keys[j]) < 0 && (used || []).indexOf(keys[j]) < 0) out.push(keys[j]);
+    return out;
+  }
+  function build(o) {
+    state = defaultState(); normalizeState();
+    var L = o.lvl || 99;
+    state.combatXp = { attack: XP_CUM[L], strength: XP_CUM[L], defence: XP_CUM[L], hitpoints: XP_CUM[99], ranged: XP_CUM[L], magic: XP_CUM[L] };
+    state.items = {}; state.tree = {}; state.cmast = {}; state.charClass = o.cls || null;
+    state.variants = {}; state.sockets = {}; state.asc = {}; state.effects = [];
+    state.combatElement = o.el || 'fire'; state.combatStyle = 'attack';
+    state.combatSpell = o.spell || BIGGEST;
+    if (o.agi) state.xp.agility = XP_CUM[o.agi];
+    var ce = {}, kind = 'melee';
+    if (o.weapon) { ce.weapon = o.weapon; var wi = ITEMS[o.weapon] || {}; kind = wi.magic ? 'magic' : wi.ranged ? 'ranged' : 'melee'; }
+    if (o.quiver) { ce.quiver = o.quiver; state.items[o.quiver] = 1e6; }
+    for (var s in (o.armour || {})) ce[s] = o.armour[s];
+    if (o.jewelry) { ce.ring_l = 'void_ring'; ce.ring_r = 'void_ring'; ce.amulet = 'void_jewel'; }
+    for (var s2 in ce) { if (s2 === 'quiver') continue; state.items[ce[s2]] = (state.items[ce[s2]] || 0) + 1; }
+    state.combatEquipped = ce;
+    if (o.enchQ != null) {
+      Object.keys(ce).filter(function (s) { return s !== 'quiver'; }).forEach(function (s) {
+        var id = ce[s]; if (!isEnchantable(id)) return;
+        var vid = splitToVariant(id, { worn: { map: ce, slot: s } }); if (!vid) return;
+        var P = enchPoolFor(vid), lines = [];
+        if (P) pickKeys(P.keys, ENCH_LINES, kind).forEach(function (k) { lines.push({ k: k, v: enchValueAt(k, vid, o.enchQ, 1), q: o.enchQ, lock: false }); });
+        if (isUniqueGear(vid)) {
+          var uk = pickKeys(enchUniquePoolFor(vid), 1, kind, lines.map(function (l) { return l.k; }))[0];
+          if (uk) lines.push({ k: uk, v: enchValueAt(uk, vid, o.enchQ, ENCH_UNIQUE_MULT), q: o.enchQ, lock: false, u: true });
+        }
+        state.variants[vid].lines = lines; registerVariant(vid);
+        ce[s] = vid;
+      });
+    }
+    if (o.sockets) {
+      /* the damage gem of the build: Wyrdstone for a mage where the game has it, and
+         where it does not, nothing in the game raises a spell from a socket, so the
+         sockets hold health */
+      var gem = o.gem || (kind === 'magic' ? (SOCKET_GEMS.wyrd_flaw ? 'wyrd_flaw' : 'verdant_flaw') : kind === 'ranged' ? 'hawkseye_flaw' : 'sanguine_flaw');
+      for (var s3 in ce) { var id3 = ce[s3], n = maxSocketsFor(variantBase(id3)); if (n > 0) state.sockets[id3] = { slots: n, gems: Array(n).fill(gem) }; }
+    }
+    if (o.asc) { for (var s4 in ce) { var id4 = ce[s4], c = ascCap(variantBase(id4)); if (c > 0) state.asc[id4] = c; } }
+    if (o.cmast) spend(o.cmast); else state.cmast = {};
+    if (o.fletch) state.tree.fletching = maxTree('fletching');
+    if (o.rune) { state.tree.runecrafting = maxTree('runecrafting'); state.xp.runecrafting = XP_CUM[99]; state.gear = (state.gear || []).concat(['cape_runecrafting']); }
+    if (o.potion) { state.effects = [Object.assign({ id: o.potion, expires: Date.now() + 3.6e6 }, ITEMS[o.potion].potion)]; }
+    combat.active = false; combat.raid = null;
+    refreshCombatStats();
+    return kind;
+  }
+  function row(label, o, defs, opt) {
+    var kind = build(o);
+    var s = snap(), out = { label: label, kind: kind, s: s, dps: {}, got: Object.keys(state.cmast).length };
+    (defs || [500, 1000, 2000]).forEach(function (d) { out.dps[d] = +fullDps(d, opt).toFixed(1); });
+    return out;
+  }
+  var BIS = (function () {
+    var SUN = { helmet: 'sunweave_helm', chest: 'sunweave_chest', legs: 'sunweave_legs', boots: 'sunweave_boots', gloves: 'stonewright_gauntlets', cape: 'dawnmantle' };
+    var DAWN = { helmet: 'dawnward_helm', chest: 'dawnward_chest', legs: 'dawnward_legs', boots: 'dawnward_boots', gloves: 'stonewright_gauntlets', cape: 'dawnmantle' };
+    var VEIL = { helmet: 'dawnveil_hood', chest: 'dawnveil_robe', legs: 'dawnveil_leggings', boots: 'dawnveil_slippers', gloves: 'stonewright_gauntlets', cape: 'dawnmantle' };
+    function withShield(a, sh) { var o = {}; for (var k in a) o[k] = a[k]; o.shield = sh; return o; }
+    return { RC: ['mark', 'ranged', 'magic', 'mr', 'kb', 'rm'], MC: ['melee', 'ranged', 'magic', 'mr', 'kb', 'rm'], SC: ['sorc', 'ranged', 'magic', 'gs', 'rm'],
+      FULL: { jewelry: true, enchQ: 0.4, sockets: true, asc: true },
+      SWORD: { weapon: 'sunderedge', armour: withShield(DAWN, 'faultward') },
+      TWOH: { weapon: 'dawnreaper', armour: DAWN },
+      BOW: { weapon: 'plummet', quiver: 'sundershaft', armour: SUN },
+      SUNP: { weapon: 'sunpiercer', quiver: 'sundershaft', armour: SUN },
+      XBOW: { weapon: 'starfall_crossbow', quiver: 'sunderbolt', armour: withShield(SUN, 'faultward') },
+      STAFF: { weapon: 'faultline', quiver: 'sunder_rune', armour: VEIL },
+      DAWNC: { weapon: 'dawncaller', quiver: 'sunder_rune', armour: VEIL },
+      WAND: { weapon: 'starcall_wand', quiver: 'sunder_rune', armour: withShield(VEIL, 'dawnsteel_buckler') } };
+  })();
+  function mk() { var o = {}; for (var i = 0; i < arguments.length; i++) for (var k in arguments[i]) o[k] = arguments[i][k]; return o; }
+  /* the three finished builds the live runs use, by name */
+  function bisBuild(who, extra) {
+    var b = who === 'mage' ? mk(BIS.FULL, BIS.STAFF, { cmast: BIS.SC, rune: true })
+          : who === 'wand' ? mk(BIS.FULL, BIS.WAND, { cmast: BIS.SC, rune: true })
+          : who === 'archer' ? mk(BIS.FULL, BIS.BOW, { cmast: BIS.RC, fletch: true })
+          : mk(BIS.FULL, BIS.SWORD, { cmast: BIS.MC });
+    return mk(b, extra || {});
+  }
+  function best() {
+    var B = BIS, RC = B.RC, MC = B.MC, SC = B.SC, rows = [];
+    function F(extra) { return mk(B.FULL, extra); }
+    rows.push(row('bare: Sunderedge + Faultward', B.SWORD));
+    rows.push(row('bare: Dawnreaper (2H)', B.TWOH));
+    rows.push(row('bare: Plummet + Sundershaft', B.BOW));
+    rows.push(row('bare: Sunpiercer + Sundershaft', B.SUNP));
+    rows.push(row('bare: Starfall xbow + Sunderbolt + Faultward', B.XBOW));
+    rows.push(row('bare: Faultline + Sunder Rune', B.STAFF));
+    rows.push(row('bare: Dawncaller + Sunder Rune', B.DAWNC));
+    rows.push(row('bare: Starcall Wand + buckler', B.WAND));
+    rows.push(row('FULL: Sunderedge + Faultward', F(mk(B.SWORD, { cmast: MC }))));
+    rows.push(row('FULL: Dawnreaper (2H)', F(mk(B.TWOH, { cmast: MC }))));
+    rows.push(row('FULL: Plummet + Sundershaft', F(mk(B.BOW, { cmast: RC, fletch: true }))));
+    rows.push(row('FULL: Sunpiercer + Sundershaft', F(mk(B.SUNP, { cmast: RC, fletch: true }))));
+    rows.push(row('FULL: Starfall xbow + Faultward', F(mk(B.XBOW, { cmast: RC, fletch: true }))));
+    rows.push(row('FULL: Faultline + Sunder Rune', F(mk(B.STAFF, { cmast: SC, rune: true }))));
+    rows.push(row('FULL: Dawncaller + Sunder Rune', F(mk(B.DAWNC, { cmast: SC, rune: true }))));
+    rows.push(row('FULL: Starcall Wand + buckler', F(mk(B.WAND, { cmast: SC, rune: true }))));
+    rows.push(row('  + Fire burning: Faultline', F(mk(B.STAFF, { cmast: SC, rune: true })), null, { el: 'fire' }));
+    rows.push(row('  + Storm: Faultline', F(mk(B.STAFF, { cmast: SC, rune: true, el: 'storm' })), null, { el: 'storm' }));
+    rows.push(row('  + a weakness hit: Faultline', F(mk(B.STAFF, { cmast: SC, rune: true })), null, { el: 'fire', weak: true }));
+    rows.push(row('  + a resisted element: Faultline', F(mk(B.STAFF, { cmast: SC, rune: true })), null, { resist: true }));
+    /* the same mage casting a smaller spell with the same Sunder Runes, Fire burning */
+    ['wave', 'blast', 'bolt'].forEach(function (k) { rows.push(row('size ' + k + ': Faultline', F(mk(B.STAFF, { cmast: SC, rune: true, spell: k })), null, { el: 'fire' })); });
+    rows.push(row('no gems: Plummet + Sundershaft', F(mk(B.BOW, { cmast: RC, fletch: true, sockets: false }))));
+    rows.push(row('no gems: Faultline + Sunder Rune', F(mk(B.STAFF, { cmast: SC, rune: true, sockets: false }))));
+    rows.push(row('no board: Plummet + Sundershaft', F(mk(B.BOW, { fletch: true }))));
+    rows.push(row('no board: Faultline + Sunder Rune', F(mk(B.STAFF, { rune: true }))));
+    rows.push(row('rogue: Plummet + Sundershaft', F(mk(B.BOW, { cmast: RC, fletch: true, cls: 'rogue' }))));
+    rows.push(row('rogue: Starcall Wand + buckler', F(mk(B.WAND, { cmast: SC, rune: true, cls: 'rogue' }))));
+    rows.push(row('berserker: Faultline + Sunder Rune', F(mk(B.STAFF, { cmast: SC, rune: true, cls: 'berserker' }))));
+    rows.push(row('berserker: Starfall xbow + Faultward', F(mk(B.XBOW, { cmast: RC, fletch: true, cls: 'berserker' }))));
+    rows.push(row('brew: Plummet + Sundershaft', F(mk(B.BOW, { cmast: RC, fletch: true, potion: 'warriors_brew' }))));
+    rows.push(row('brew: Faultline + Sunder Rune', F(mk(B.STAFF, { cmast: SC, rune: true, potion: 'warriors_brew' }))));
+    rows.push(row('90% rolls: Plummet + Sundershaft', F(mk(B.BOW, { cmast: RC, fletch: true, enchQ: 0.9 }))));
+    rows.push(row('90% rolls: Faultline + Sunder Rune', F(mk(B.STAFF, { cmast: SC, rune: true, enchQ: 0.9 }))));
+    NEWSTATS = true;
+    rows.push(row('new stats: Sunderedge + Faultward', F(mk(B.SWORD, { cmast: MC }))));
+    rows.push(row('new stats: Plummet + Sundershaft', F(mk(B.BOW, { cmast: RC, fletch: true }))));
+    rows.push(row('new stats: Faultline + Sunder Rune', F(mk(B.STAFF, { cmast: SC, rune: true }))));
+    NEWSTATS = false;
+    /* what of the design's finished mage this file has: the column and the gem */
+    var have = { sorcery: colNodes('sorc').length, bridge: colNodes('gs').length, wyrdstone: !!SOCKET_GEMS.wyrd_flaw, brewMagic: !!(ITEMS.warriors_brew && ITEMS.warriors_brew.potion && ITEMS.warriors_brew.potion.mpow),
+      boardNodes: CMAST_NODES.length, boardCap: CMAST_NODES.reduce(function (s, n) { return s + n.max; }, 0), columns: CMAST_COLS.slice() };
+    state = defaultState(); normalizeState();
+    return { rows: rows, have: have };
+  }
+  /* The Spire wall, _wall.js's definition: gear and Ascension, nothing else. */
+  function wall(eq, asc, extra) {
+    state = defaultState(); normalizeState();
+    state.combatXp = {}; ['attack', 'strength', 'defence', 'hitpoints', 'ranged', 'magic'].forEach(function (k) { state.combatXp[k] = XP_CUM[99]; });
+    state.items = { sundershaft: 1e6, sunder_rune: 1e6, sunderbolt: 1e6 };
+    state.combatEquipped = eq; state.asc = {};
+    if (extra && extra.el) state.combatElement = extra.el;
+    if (asc) Object.keys(state.combatEquipped).forEach(function (sl) { var id = state.combatEquipped[sl]; if (id && ascCap(id) > 0) state.asc[id] = ascCap(id); });
+    refreshCombatStats();
+    var acc = playerAccuracy(), hit = playerMaxHit(), def = playerDefence(), sw = playerSwingMs(), hp = maxHpFromStats(), dr = ascensionDR();
+    var dps = (hit * 0.65) * (1000 / sw);
+    var lethal = 0, slow = 0, samples = {};
+    /* Frost on, as an option: a chilled monster attacks slower while the chill is
+       up. Uptime from the same closed form as burn. */
+    var chill = 1;
+    if (extra && extra.frost) {
+      var c = ELEMENT_BY.frost.rider.chill;
+      var pHit = 0.5, rate = (pHit / (sw / 1000)) * c.chance, up = 1 - Math.exp(-rate * c.ms / 1000);
+      chill = 1 / (1 + c.slow * up);
+    }
+    for (var f = 1; f <= 250; f++) {
+      var m = spireFloor(f, true);
+      var hc = clamp(acc / (acc + m.def));
+      var secs = m.hp / (dps * hc);
+      var fh = clamp(m.atk / (m.atk + def));
+      var fdps = (m.str * 0.65) * fh * (1000 / (m.swingMs || 2400)) * (1 - dr) * chill;
+      if (!slow && secs > 240) slow = f;
+      if (!lethal && fdps * 8 > hp * 2.2) lethal = f;
+      if (f === 25 || f === 30 || f === 40) samples[f] = { secs: Math.round(secs), fdps: Math.round(fdps) };
+      if (lethal && slow) break;
+    }
+    return { acc: acc, hit: hit, def: def, sw: sw, hp: hp, dr: dr, lethal: lethal || 999, slow: slow || 999, samples: samples };
+  }
+  function walls() {
+    var CAPE = { cape: 'dawnmantle' }, GL = { gloves: 'stonewright_gauntlets' };
+    var PLATE = { helmet: 'dawnward_helm', chest: 'dawnward_chest', legs: 'dawnward_legs', boots: 'dawnward_boots' };
+    var LTHR = { helmet: 'sunweave_helm', chest: 'sunweave_chest', legs: 'sunweave_legs', boots: 'sunweave_boots' };
+    var VEIL = { helmet: 'dawnveil_hood', chest: 'dawnveil_robe', legs: 'dawnveil_leggings', boots: 'dawnveil_slippers' };
+    var B = [
+      ['sword + shield', mk({ weapon: 'sunderedge', shield: 'faultward' }, PLATE, GL, CAPE)],
+      ['two-handed', mk({ weapon: 'dawnreaper' }, PLATE, GL, CAPE)],
+      ['bow (Sunweave)', mk({ weapon: 'plummet', quiver: 'sundershaft' }, LTHR, GL, CAPE)],
+      ['staff (Dawnveil)', mk({ weapon: 'faultline', quiver: 'sunder_rune' }, VEIL, GL, CAPE)],
+      ['wand + buckler (Dawnveil)', mk({ weapon: 'starcall_wand', quiver: 'sunder_rune', shield: 'dawnsteel_buckler' }, VEIL, GL, CAPE)]
+    ];
+    /* The tower borrows a different zone for each set of floors every day, and one of
+       the three samples (what a floor deals a second) moves a point with the route.
+       The walls are read on the day the prototype measured them, 10 October 2026, so
+       this prints the same thing whatever day it is run. */
+    var out = [], D = Date.now, noon = new Date(2026, 9, 10, 12, 0, 0).getTime();
+    Date.now = function () { return noon; };
+    try {
+      B.forEach(function (b) {
+        [false, true].forEach(function (asc) { var r = wall(JSON.parse(JSON.stringify(b[1])), asc); r.label = b[0]; r.asc = asc; out.push(r); });
+      });
+      [false, true].forEach(function (asc) {
+        var r = wall(JSON.parse(JSON.stringify(B[3][1])), asc, { el: 'frost', frost: true }); r.label = 'staff (Dawnveil), Frost on'; r.asc = asc; out.push(r);
+      });
+    } finally { Date.now = D; }
+    state = defaultState(); normalizeState();
+    return out;
+  }
   /* ── robes: built off leather, and what casting in anything else costs ── */
   function robes() {
     var o = { tiers: [], bad: [] };
@@ -1162,8 +1404,12 @@ function PAGE() {
         var r = combatGearReq(id); req = r; if (!r || r.stat !== 'defence' || r.level !== COMBAT_GEAR_REQ[t.ctier]) o.bad.push(id + ' requirement');
         sum.def += st.def; sum.atk += st.atk; sum.mpow += st.mpow || 0; sum.save += st.runeSave; lsum.def += L.def || 0; lsum.atk += L.atk || 0;
       });
-      if (!ITEMS[t.key] || !ICONS[t.key] || !SKILLS.runecrafting.acts.some(function (a) { return a.out && a.out[t.key]; })) o.bad.push(t.key + ' cloth');
-      o.tiers.push({ key: t.key, set: t.set, tier: t.ctier, def: sum.def, atk: sum.atk, mpow: sum.mpow, want: t.mpow, save: +sum.save.toFixed(3), leatherDef: lsum.def, leatherAtk: lsum.atk, req: req && req.level });
+      /* a crafted cloth is woven at the loom; a raid cloth is the raid's own, and is not */
+      if (t.raid) { if (!ITEMS[t.cloth] || !ITEMS[t.reagent] || ITEMS[t.key] || SKILLS.runecrafting.acts.some(function (a) { return a.out && a.out[t.cloth]; })) o.bad.push(t.key + ' cloth'); }
+      else if (!ITEMS[t.key] || !ICONS[t.key] || !SKILLS.runecrafting.acts.some(function (a) { return a.out && a.out[t.key]; })) o.bad.push(t.key + ' cloth');
+      var actOfPiece = function (p) { return SKILLS.runecrafting.acts.filter(function (a) { return a.out && a.out[t.key + '_' + p]; })[0] || {}; };
+      o.tiers.push({ key: t.key, set: t.set, tier: t.ctier, def: sum.def, atk: sum.atk, mpow: sum.mpow, want: t.mpow, save: +sum.save.toFixed(3), leatherDef: lsum.def, leatherAtk: lsum.atk, req: req && req.level,
+        leather: t.leather, raid: t.raid || '', cloth: t.cloth || t.key, reagent: t.reagent || '', rn: actOfPiece('hood').lvl || 0, robeInp: actOfPiece('robe').inp || null, hoodInp: actOfPiece('hood').inp || null });
     });
     /* the armour rule, piece by piece, on a level 99 mage */
     function arm(eq) {
@@ -1464,7 +1710,7 @@ function PAGE() {
 
   window.SIM = { levelCheck: levelCheck, saves: saves, consts: consts, parity: parity, ladder: ladder, dressed: dressed, economy: economy, skillXp: skillXp,
     reagents: reagents, structure: structure, nodes: nodes, spells: spells, spellSizes: spellSizes, castRates: castRates, casting: casting, bar: bar, gold: gold, elements: elements, elTables: elTables, elementFx: elementFx, fighters: fighters, robes: robes,
-    journey: journey, veteran: veteran, liveFight: liveFight, liveSkill: liveSkill, livePick: livePick, liveRaid: liveRaid, finds: finds, findWorth: findWorth,
+    journey: journey, veteran: veteran, liveFight: liveFight, liveSkill: liveSkill, livePick: livePick, liveRaid: liveRaid, finds: finds, findWorth: findWorth, best: best, walls: walls,
     raids: function () { return RAIDS.map(function (r) { return { id: r.id, name: r.name, endless: !!r.endless, stages: (r.stages || []).length }; }); } };
 }
 
@@ -1491,7 +1737,9 @@ setTimeout(() => {
   check(R.structure.missing.length === 0, 'every Runecrafting input exists in the game, and so does everything it makes', R.structure.missing.slice(0, 4).join(', '));
   check(R.structure.pfx === 'rn' && R.structure.rail === 'produce' && !!R.structure.accent && R.structure.cape === 'cape_runecrafting' && R.structure.capeInShop,
     'it has its tree prefix, its place on the rail, its colour, and a cape the shop sells');
-  check(JSON.stringify(R.structure.acts) === '{"runes":8,"wands":7,"staves":7,"cloth":7,"robes":35}', '64 acts in five tabs: runes, wands, staves, cloth, robes', JSON.stringify(R.structure.acts));
+  /* 79 since the gear half, were 64: fifteen raid robe pieces. A raid cloth is the
+     raid's own and is not woven, so the looms are still seven. */
+  check(JSON.stringify(R.structure.acts) === '{"runes":8,"wands":7,"staves":7,"cloth":7,"robes":50}', '79 acts in five tabs: runes, wands, staves, cloth, robes', JSON.stringify(R.structure.acts));
 
   /* 1. combat level */
   console.log('\n1. COMBAT LEVEL');
@@ -1772,11 +2020,22 @@ setTimeout(() => {
   R.robes = J('SIM.robes()');
   console.log('   set          tier  Def  Atk  Magic Power  rune saving | leather Def / Atk | needs Defence');
   for (const t of R.robes.tiers) console.log(`   ${padr(t.set, 12)} ${pad(t.tier, 3)} ${pad(t.def, 5)} ${pad(t.atk, 4)} ${pad('+' + t.mpow, 9)} ${pad((t.save * 100).toFixed(1) + '%', 12)}   | ${pad(t.leatherDef, 7)} / ${padr(t.leatherAtk, 4)}    | ${t.req}`);
-  check(R.robes.tiers.length === 7 && R.robes.bad.length === 0, 'seven cloths and 35 robe pieces, each 62% of its leather piece\'s Defence and half its Attack, each with a recipe and an icon', R.robes.bad.slice(0, 4).join(', ') || '35 pieces');
-  check(R.robes.tiers.map(t => t.def).join() === '6,9,15,24,31,42,54' && R.robes.tiers.map(t => t.atk).join() === '6,6,8,8,12,14,17', 'the sets total what the design page prints', R.robes.tiers.map(t => t.def + '/' + t.atk).join(' '));
-  check(R.robes.tiers.every(t => t.mpow === t.want) && R.robes.tiers.map(t => t.mpow).join() === '0,1,1,2,3,4,5', 'a set carries the Magic Power of its tier', R.robes.tiers.map(t => '+' + t.mpow).join(' '));
+  /* Ten cloths and 50 pieces since the gear half, were seven and 35: Runebound,
+     Drakerune and Riftwoven, off the three raid leathers. */
+  check(R.robes.tiers.length === 10 && R.robes.bad.length === 0, 'ten cloths and 50 robe pieces, each 62% of its leather piece\'s Defence and half its Attack, each with a recipe and an icon', R.robes.bad.slice(0, 4).join(', ') || '50 pieces');
+  check(R.robes.tiers.map(t => t.def).join() === '6,9,15,24,31,42,54,40,57,69' && R.robes.tiers.map(t => t.atk).join() === '6,6,8,8,12,14,17,20,27,30', 'the sets total what the design page prints', R.robes.tiers.map(t => t.def + '/' + t.atk).join(' '));
+  check(R.robes.tiers.every(t => t.mpow === t.want) && R.robes.tiers.map(t => t.mpow).join() === '0,1,1,2,3,4,5,6,7,9', 'a set carries the Magic Power of its tier', R.robes.tiers.map(t => '+' + t.mpow).join(' '));
   check(R.robes.tiers.every(t => t.save === 0.075), 'and five pieces keep the runes of 7.5% of casts');
-  check(R.robes.tiers.map(t => t.req).join() === '1,10,20,30,40,55,70', 'robes need Defence, on the ladder plate and leather climb');
+  check(R.robes.tiers.map(t => t.req).join() === '1,10,20,30,40,55,70,70,80,90', 'robes need Defence, on the ladder plate and leather climb');
+  {
+    const DC = GOLD.drops.cloth, clothBad = DC.filter(c => { const t = R.robes.tiers.find(x => x.key === c.k); if (!t) return true;
+      const robe = {}; if (c.raid) { robe[c.cloth] = 4; robe[c.rune] = 1; } else robe[c.k] = 4;
+      const hood = {}; hood[c.raid ? c.cloth : c.k] = 2;
+      return !(t.set === c.n && t.leather === c.lk && t.tier === c.t && t.mpow === c.mpow && t.rn === c.rn && t.raid === (c.raid || '') && JSON.stringify(t.robeInp) === JSON.stringify(robe) && JSON.stringify(t.hoodInp) === JSON.stringify(hood)); }).map(c => c.k);
+    check(DC.length === 10 && clothBad.length === 0, 'all ten cloths are the design\'s: the leather each is built off, its tier, its Magic Power, the Runecrafting level, and what the robe is sewn from', clothBad.join(', ') || '10 rows');
+    const RC3 = R.robes.tiers.filter(t => t.raid);
+    check(RC3.length === 3 && RC3.every(t => t.cloth !== t.key && t.reagent), 'the three raid robes are sewn from the raid\'s own cloth, and the robe piece takes one of its rune material', RC3.map(t => t.set + ': ' + Object.keys(t.robeInp).map(k => t.robeInp[k] + ' ' + k.replace(/_/g, ' ')).join(' and ')).join(' · '));
+  }
   const RL = R.robes.rule;
   check(RL.cloth.mult === 1 && RL.naked.mult === 1 && RL.cloth.def === 0, 'cloth costs a spell nothing');
   check(RL.plateChest.def === RL.chestDef && RL.plateChest.mult === +(1 - 0.003 * RL.chestDef).toFixed(4), 'a piece that is not cloth costs 0.3% Magic damage for each point of its Defence', `a Starsteel Chest, ${RL.chestDef} Defence: x${RL.plateChest.mult}`);
@@ -1905,6 +2164,33 @@ setTimeout(() => {
     const bossIds = new Set(C.monsters.filter(m => m.boss).map(m => m.id));
     check(zoneGot.every(r => r.from.every(f => bossIds.has(f[0].slice(4)) ? f[1] === 0.03 : (f[1] >= 0.005 && f[1] <= 0.01))),
       'the rates are the ones gear on these tables already has: 0.5 to 1% from a named monster, 3% from the boss');
+    /* the raids and the Spire: two a raid, and Faultline */
+    {
+      const raidWant = DW.filter(d => !/^mon:/.test(d.from)), raidGot = R.finds.rows.filter(r => r.from.length && r.from.every(f => !/^mon:/.test(f[0])));
+      const where = f => f[0] === 'spire' ? 'The Sundered Spire, boss floors' : f[0].slice(5).replace(/_/g, ' ') + ' ' + +(f[1] * 100).toFixed(1) + '%';
+      console.log('');
+      for (const r of raidGot.slice().sort((a, b) => a.t - b.t || (a.fam < b.fam ? -1 : 1))) console.log('   ' + padr(r.n, 24) + padr(r.fam + ', T' + r.t, 11) + pad(r.atk, 4) + pad(r.mpow ? '+' + r.mpow : '', 7) + pad(r.crit ? (r.crit * 100).toFixed(1) + '%' : '', 7)
+        + '   ' + padr(r.crafted.replace(/_/g, ' ') + ' ' + r.craftedAtk, 22) + padr(r.from.map(where).join(', '), 44) + r.does);
+      const raidBad = raidWant.filter(d => !sameRow(raidGot.find(x => x.id === d.id), d)).map(d => d.id);
+      check(raidGot.length === 9 && raidWant.length === 9 && raidBad.length === 0, 'the eight raid weapons and Faultline are the design\'s, row for row: name, tier, Attack, Magic Power, crit, what each does, where it drops and how often', raidBad.join(', ') || '9 rows');
+      check(R.finds.rows.length === 21, 'twenty-one found staves and wands in all, and no others', R.finds.rows.length + ' rows');
+      check(raidGot.every(r => r.atk > r.craftedAtk && r.mpow > 0), 'each has more Attack than any staff or wand that can be made, and Magic Power of its own');
+      const climbs = fam => { const l = raidGot.filter(r => r.fam === fam).sort((a, b) => a.t - b.t); return l.every((r, i) => i === 0 || (r.t > l[i - 1].t && r.atk > l[i - 1].atk && r.mpow > l[i - 1].mpow)); };
+      check(climbs('staff') && climbs('wand'), 'tier by tier, each raid\'s staff and wand is above the one before in Attack and in Magic Power',
+        raidGot.filter(r => r.fam === 'staff').sort((a, b) => a.t - b.t).map(r => 'T' + r.t + ' ' + r.atk + '/+' + r.mpow).join(' · '));
+      check(JSON.stringify(R.finds.spireGear) === '["sunderedge","faultward","plummet","stonewright_gauntlets","faultline"]', 'Faultline is the fifth name in the Spire\'s gear, behind the four that were there');
+      /* Dawnveil */
+      const DV = GOLD.drops.dawnveil, V = R.finds.veil || [];
+      const veilBad = DV.pieces.filter((p, i) => { const v = V.find(x => x.id === DV.k + '_' + p);
+        return !(v && v.n === DV.n + ' ' + DV.pieceName[i] && v.slot === DV.slots[i] && v.t === DV.t && v.from === DV.from[i] && v.mpow === DV.mpow[i] && v.save === DV.save && v.chance === DV.chance
+          && v.cloth && v.set === DV.k && v.def === Math.max(1, Math.round(v.leatherDef * 0.62)) && v.atk === Math.round(v.leatherAtk * 0.5)); });
+      console.log('   Dawnveil: ' + V.map(v => v.n.replace('Dawnveil ', '') + ' ' + v.def + ' Def, ' + v.atk + ' Atk, +' + v.mpow + ' Magic Power').join(' · ') + '  ·  ' + (R.finds.veilSet ? R.finds.veilSet.desc : ''));
+      check(V.length === 4 && veilBad.length === 0, 'Dawnveil is the design\'s four pieces: built off Sunweave as a robe is built off leather, +2, +4, +3 and +2 Magic Power, 2% of casts each, 1.8% each from The Empyrean Throne', veilBad.join(', ') || '4 pieces');
+      check(R.finds.veilSet && R.finds.veilSet.pieces === 4 && JSON.stringify(R.finds.veilSet.bonus) === JSON.stringify(DV.set), 'and its set bonus is the design\'s: +10% crit chance and +8% damage', JSON.stringify((R.finds.veilSet || {}).bonus));
+      /* the Sunder Rune */
+      const SR = GOLD.drops.spireRune, sr = R.finds.spireRune || {};
+      check(sr.id === SR.id && sr.n === SR.n && sr.t === SR.t && sr.pow === SR.pow && sr.cls === 4 && sr.sell === 2, 'the Sunder Rune is the design\'s: tier 11, +38 Magic Power, a Surge rune, and it sells for 2 silver as Starfall does', sr.n + ' +' + sr.pow);
+    }
     /* runes off the casters */
     const RD = GOLD.drops.runes;
     for (const r of R.finds.runes) console.log(`   ${padr(r.name + (r.boss ? ' (boss)' : ''), 22)} Lv ${pad(r.lvl, 2)}  ${padr(r.runeName + 's', 15)} x${r.qty[0]} to ${r.qty[1]}, ${Math.round(r.chance * 100)}%   carved at Runecrafting ${pad(r.carvedAt, 2)}   about ${(r.chance * (r.qty[0] + r.qty[1]) / 2 / r.cls).toFixed(1)} casts a kill`);
@@ -1968,7 +2254,7 @@ setTimeout(() => {
   console.log('   best gold an hour at 99 with the tree: ' + Object.keys(R.gold.best).map(k => k + ' ' + Math.round(R.gold.best[k].gph / 100).toLocaleString() + 'g').join(' · '));
   check(R.gold.batches.every(b => b.batch <= b.inputs * 3), 'no batch of runes sells for more than three times what went into it', R.gold.batches.map(b => (b.batch / b.inputs).toFixed(1) + 'x').join(' '));
   const dear = R.gold.acts.filter(a => a.sells > a.inputs * 3);
-  check(R.gold.acts.length === 64 && dear.length === 0, 'and nothing else the skill makes does either: wands, staves, cloth, robes', dear.map(a => a.name).join(', ') || 'dearest against its inputs: ' + R.gold.acts.slice().sort((a, b) => b.sells / b.inputs - a.sells / a.inputs)[0].name);
+  check(R.gold.acts.length === 79 && dear.length === 0, 'and nothing else the skill makes does either: wands, staves, cloth, robes, raid robes', dear.map(a => a.name).join(', ') || 'dearest against its inputs: ' + R.gold.acts.slice().sort((a, b) => b.sells / b.inputs - a.sells / a.inputs)[0].name);
   check(R.gold.best.runecrafting.gph <= Math.max(...others), 'Runecrafting is not the best gold in the game', R.gold.best.runecrafting.act + ', ' + Math.round(R.gold.best.runecrafting.gph / 100).toLocaleString() + 'g an hour against a median of ' + Math.round(median / 100).toLocaleString() + 'g');
 
   /* 12. the goal, end to end */
@@ -2161,11 +2447,128 @@ setTimeout(() => {
       const mh = FL.mossheart_wand, share = mh.b.healedHr / (mh.b.dps * 3600);
       check(mh.b.healedHr > 0 && mh.a.healedHr === 0 && share > 0.02 && share < 0.06, 'the Mossheart Wand heals for about 4% of the damage it deals, and a crafted wand heals nothing', (share * 100).toFixed(1) + '% of the damage dealt');
     }
+    /* 13f. the finished builds, through the real tick: in a zone, in the hardest raid,
+       and on the Spire. Section 14 has the closed forms; this is the same three
+       characters with everything on, fighting. The mage here is the mage this file
+       can build, which is the design's less whatever section 14 says is not built. */
+    {
+      const WHO = [['fighter', 'Sunderedge + Faultward', ''], ['archer', 'Plummet + Sundershaft', ''], ['mage', 'Faultline + Sunder Rune', 'storm'], ['wand', 'Starcall Wand + buckler', 'storm']];
+      const ZH = 3, ZONE = 'dread_knight', ZM = C.monsters.find(m => m.id === ZONE);
+      const RD = J('SIM.raids()'), HARD = RD.filter(r => !r.endless).slice(-1)[0], SP = RD.find(r => r.endless);
+      console.log(`\n   BEST IN SLOT, LIVE  ·  Lv 99 with everything on, Agility 99: ${ZH} game hours on the ${ZM.name} (${ZM.hp} health, Defence ${ZM.def}), ${HARD.name} start to finish, and 20 minutes of the Spire`);
+      console.log('   ' + padr('', 28) + pad('attack', 8) + pad('max hit', 9) + pad('zone dps', 10) + pad('kills/hr', 10) + pad('spent/hr', 10) + pad('xp/hr', 9) + pad(HARD.name.replace(/^The /, ''), 18) + pad('Spire', 10));
+      const BL = {};
+      for (const [who, label, el] of WHO) {
+        const z = J(`SIM.liveFight('bis:${who}',99,7,'${ZONE}',${ZH},9900,true,'${el}',{})`);
+        const r = J(`SIM.liveRaid('bis:${who}',99,7,'${HARD.id}',4242,240,'','${el}')`);
+        const s = J(`SIM.liveRaid('bis:${who}',99,7,'${SP.id}',4242,20,'','${el}')`);
+        BL[who] = { z, r, s };
+        if (z.err || r.err || s.err) { console.log('   ' + padr(label, 28) + (z.err || r.err || s.err)); continue; }
+        console.log('   ' + padr(label, 28) + pad((z.swing / 1000).toFixed(2) + 's', 8) + pad(z.hit, 9) + pad(z.dps.toFixed(0), 10) + pad(Math.round(z.killsHr), 10) + pad(z.spentHr ? Math.round(z.spentHr).toLocaleString() : '', 10) + pad(Math.round(z.xpHr / 1000) + 'k', 9)
+          + pad(r.cleared ? r.seconds + 's' : 'stuck at ' + (r.stages.length + 1), 18) + pad('floor ' + s.floor, 10));
+      }
+      const all = Object.keys(BL).map(k => BL[k]), A = BL.archer, M = BL.mage, W = BL.wand, F = BL.fighter;
+      check(all.length === 4 && all.every(x => !x.z.err && !x.r.err && !x.s.err && x.z.engaged && !x.z.stopped && x.r.started && x.r.cleared && x.r.stages.length === HARD.stages - 1 && x.s.started),
+        'a finished fighter, archer, staff and wand each fight three hours in a zone, clear ' + HARD.name + ' stage by stage and start the Spire, through the real tick');
+      check(M.z.spell === 'Storm Surge' && W.z.spell === 'Storm Surge' && M.z.weapon.indexOf('faultline') === 0 && M.z.spentHr > 0 && M.z.spentHr <= M.z.castsHr * 4 * 0.5 && M.r.spent > 0,
+        'the mage casts Storm Surge with Sunder Runes the whole way, and keeps the runes of most of its casts', Math.round(M.z.spentHr).toLocaleString() + ' runes an hour for ' + Math.round(M.z.castsHr).toLocaleString() + ' casts');
+      /* a quiver that ends fuller than it began: `spent` is what left it less what the floors gave */
+      check(M.s.spent < 0 && W.s.spent < 0, 'on the Spire the boss floors hand a mage more Sunder Runes than it casts', (-M.s.spent).toLocaleString() + ' more in the quiver after twenty minutes, to floor ' + M.s.floor);
+      check(M.z.carried === 0 && W.z.carried === 0 && A.z.carried === 0 && F.z.carried === 0, 'nothing is carried from one monster to the next for any of them',
+        Math.round((M.z.killsHr + W.z.killsHr + A.z.killsHr + F.z.killsHr) * ZH).toLocaleString() + ' kills checked');
+      R.bisLive = { zone: { staff: pct(M.z.dps, A.z.dps), wand: pct(W.z.dps, A.z.dps), fighter: pct(F.z.dps, A.z.dps) }, raid: { staff: pct(M.r.seconds, A.r.seconds), wand: pct(W.r.seconds, A.r.seconds), fighter: pct(F.r.seconds, A.r.seconds) },
+        spire: { fighter: F.s.floor, archer: A.s.floor, staff: M.s.floor, wand: W.s.floor } };
+      const L = R.bisLive;
+      console.log(`   beside the archer:  zone damage  staff ${L.zone.staff}%, wand ${L.zone.wand}%, fighter ${L.zone.fighter}%   ·   time over the raid  staff ${L.raid.staff}%, wand ${L.raid.wand}%, fighter ${L.raid.fighter}%   ·   Spire floor  archer ${L.spire.archer}, staff ${L.spire.staff}, wand ${L.spire.wand}, fighter ${L.spire.fighter}`);
+      /* The design puts a finished staff at 102.9% of a finished bow. Without the column
+         and the gem it is behind, and how far is section 14's to say. What has to hold
+         here whatever is built: the mage is a real third build, not a broken one. */
+      check(L.zone.staff > 55 && L.zone.staff < 125 && L.zone.wand > 55 && L.zone.wand < 125, 'live in a zone, a finished mage does between 55% and 125% of a finished archer\'s damage', 'staff ' + L.zone.staff + '%, wand ' + L.zone.wand + '%');
+      check(L.raid.staff < 200 && L.raid.wand < 200, 'and takes less than twice as long over the hardest raid', 'staff ' + L.raid.staff + '% of the archer\'s time, wand ' + L.raid.wand + '%');
+      /* Health is topped up here, so this is how fast each climbs and not where it dies:
+         the wall is section 14's. */
+      check(L.spire.staff >= L.spire.archer * 0.75 && L.spire.wand >= L.spire.archer * 0.75 && L.spire.staff >= 30, 'and with its health topped up climbs the Spire at least three quarters as far as the archer in twenty minutes', 'archer ' + L.spire.archer + ', staff ' + L.spire.staff + ', wand ' + L.spire.wand + ', fighter ' + L.spire.fighter);
+    }
     const mg = rows.filter(v => /staff|wand/.test(v.key));
     check(mg.every(v => v.spentHr > 0 && v.spentHr <= v.castsHr * (/Blast/.test(v.spell) ? 2 : /Wave/.test(v.spell) ? 3 : /Surge/.test(v.spell) ? 4 : 1)),
       'a mage never spends more runes than its casts times the size of the spell, and robes keep some back', mg.filter(v => v.lv === 99).map(v => NAME[v.key] + ' ' + v.spell + ': ' + Math.round(v.spentHr).toLocaleString() + ' runes for ' + Math.round(v.castsHr).toLocaleString() + ' casts').join('  ·  '));
   }
 
+
+  /* 14. best in slot, and the Spire wall */
+  {
+    console.log('\n14. BEST IN SLOT  ·  Lv 99, the shape of _rangedstr.js: damage a second against Defence 500, 1000 and 2000');
+    const BR = J('SIM.best()'), BG = GOLD.best, BB = (GOLD.built || {}).best || [];
+    R.best = BR.rows; R.bestHave = BR.have;
+    const H = BR.have, sorc = H.sorcery > 0 && H.bridge > 0;
+    console.log('   The design\'s finished mage has two things this file may not: the Sorcery column of Combat Mastery (' + (sorc ? 'built: ' + H.sorcery + ' nodes and ' + H.bridge + ' on the bridge' : 'NOT BUILT, slice 6')
+      + ') and the Wyrdstone gem (' + (H.wyrdstone ? 'built' : 'NOT BUILT, slice 7') + '). The board is ' + H.columns.length + ' columns, ' + H.boardCap + ' points.');
+    console.log('   ' + padr('build', 46) + pad('acc', 6) + pad('hit', 6) + pad('swing', 7) + pad('crit', 6) + pad('dmg%', 6) + pad('@500', 9) + pad('@1000', 9) + pad('@2000', 9) + '   the design measured' + pad('', 8) + 'of it');
+    const same3 = (a, b) => a && b && a.dps['500'] === b.dps['500'] && a.dps['1000'] === b.dps['1000'] && a.dps['2000'] === b.dps['2000'];
+    for (const x of R.best) {
+      const g = BG.find(y => y.label === x.label), s = x.s, pc = x.kind === 'magic' ? s.magicDmg : x.kind === 'ranged' ? s.rangedStr : s.atkBoost;
+      /* Magic Power is left out of a fighter's or an archer's numbers: neither reads it,
+         and Warrior's Triple Brew only carries some once slice 7 is built. */
+      const sOf = s => { const o = JSON.parse(JSON.stringify(s)); if (x.kind !== 'magic') delete o.mpow; return o; };
+      x.design = g ? g.dps : null; x.exact = same3(x, g) && !!g && diff(sOf(x.s), sOf(g.s)) === '';
+      x.ofDesign = g ? pct(x.dps['500'], g.dps['500']) : null;
+      console.log('   ' + padr(x.label, 46) + pad(s.acc, 6) + pad(s.hit, 6) + pad((s.swing / 1000).toFixed(2), 7) + pad(Math.round(s.crit * 100) + '%', 6) + pad(Math.round(pc * 100) + '%', 6) + pad(x.dps['500'], 9) + pad(x.dps['1000'], 9) + pad(x.dps['2000'], 9)
+        + '   ' + (g ? padr(g.dps['500'] + ' / ' + g.dps['1000'] + ' / ' + g.dps['2000'], 26) + (x.exact ? 'the same' : x.ofDesign + '%') : 'not in the design'));
+    }
+    check(R.best.length === 38 && BG.length === 38 && R.best.every((x, i) => x.label === BG[i].label), 'the best in slot table is the design\'s 38 rows, in its order');
+    const others = R.best.filter(x => x.kind !== 'magic');
+    check(others.length === 18 && others.every(x => x.exact), 'every fighter and archer row is what the prototype measured, to the digit: Magic moved none of them',
+      others.filter(x => !x.exact).map(x => x.label).join(', ') || '18 rows');
+    const bare = R.best.filter(x => x.kind === 'magic' && /^bare:/.test(x.label));
+    check(bare.length === 3 && bare.every(x => x.exact), 'the three bare mage rows are the prototype\'s, to the digit: Faultline, Dawncaller and the Starcall Wand, in Dawnveil, with Sunder Runes',
+      bare.map(x => x.label.replace('bare: ', '') + ' ' + x.dps['500'] + (x.exact ? '' : ' (design ' + (x.design || {})['500'] + ')')).join(' · '));
+    /* The rows that need what is not built. Each is held to what this file measured
+       when the gear was built, and must never be ABOVE the design: a row that climbs
+       past it without the column is a number that moved for another reason. */
+    const full = R.best.filter(x => x.kind === 'magic' && !/^bare:/.test(x.label));
+    const NOBOARD = 'no board: Faultline + Sunder Rune', nb = R.best.find(x => x.label === NOBOARD);
+    if (H.wyrdstone) check(nb.exact, 'with no Mastery board the finished mage is the prototype\'s, to the digit: best gear, enchants, Wyrdstones, the Runecrafting tree and cape, full Ascension',
+      nb.dps['500'] + ' / ' + nb.dps['1000'] + ' / ' + nb.dps['2000'] + (nb.exact ? '' : ', the design ' + nb.design['500'] + ' / ' + nb.design['1000'] + ' / ' + nb.design['2000']));
+    const waiting = full.filter(x => !x.exact);
+    if (sorc && H.wyrdstone) check(waiting.length === 0, 'every finished mage row is the prototype\'s, to the digit', waiting.map(x => x.label + ' ' + x.ofDesign + '%').join(', ') || '17 rows');
+    else {
+      check(waiting.every(x => x.dps['500'] <= x.design['500'] && x.dps['1000'] <= x.design['1000'] && x.dps['2000'] <= x.design['2000']),
+        'the ' + waiting.length + ' finished mage rows that need ' + [sorc ? '' : 'the Sorcery column', H.wyrdstone ? '' : 'the Wyrdstone'].filter(Boolean).join(' and ') + ' are all under the design, none over it',
+        'from ' + Math.min(...waiting.map(x => x.ofDesign)) + '% to ' + Math.max(...waiting.map(x => x.ofDesign)) + '% of it');
+      R.bestWaiting = waiting.map(x => ({ label: x.label, dps: x.dps, s: x.s }));
+      same('and each is what this file measured when the gear was built', R.bestWaiting, BB);
+    }
+    const g = l => R.best.find(x => x.label === l);
+    const fb = g('FULL: Plummet + Sundershaft'), fm = g('FULL: Faultline + Sunder Rune'), fw = g('FULL: Starcall Wand + buckler'), fsw = g('FULL: Sunderedge + Faultward');
+    R.bestSummary = { staffVsBow: pct(fm.dps[500], fb.dps[500]), staffVsBow1000: pct(fm.dps[1000], fb.dps[1000]), staffVsBow2000: pct(fm.dps[2000], fb.dps[2000]), staffVsSword: pct(fm.dps[500], fsw.dps[500]), wandVsBow: pct(fw.dps[500], fb.dps[500]) };
+    const GS = GOLD.bestSummary;
+    console.log(`\n   THE FINISHED MAGE BESIDE THE FINISHED ARCHER  ·  Faultline as a share of Plummet`);
+    console.log(`   this file:   ${R.bestSummary.staffVsBow}% at Defence 500, ${R.bestSummary.staffVsBow1000}% at 1000, ${R.bestSummary.staffVsBow2000}% at 2000; the Starcall Wand and a buckler ${R.bestSummary.wandVsBow}%; of the sword and shield ${R.bestSummary.staffVsSword}%`);
+    console.log(`   the design:  ${GS.staffVsBow}% at Defence 500, ${GS.staffVsBow1000}% at 1000, ${GS.staffVsBow2000}% at 2000; the Starcall Wand and a buckler ${GS.wandVsBow}%; of the sword and shield ${GS.staffVsSword}%`);
+    /* where the gap is: the same pair with the board off, and with the gems off */
+    const nbB = g('no board: Plummet + Sundershaft'), ngB = g('no gems: Plummet + Sundershaft'), ngM = g('no gems: Faultline + Sunder Rune');
+    R.bestGap = { noBoard: pct(nb.dps[500], nbB.dps[500]), noBoardDesign: pct(nb.design[500], nbB.design[500]), noGems: pct(ngM.dps[500], ngB.dps[500]), noGemsDesign: pct(ngM.design[500], ngB.design[500]),
+      boardWorthArcher: pct(fb.dps[500], nbB.dps[500]), boardWorthMage: pct(fm.dps[500], nb.dps[500]), boardWorthMageDesign: pct(fm.design[500], nb.design[500]),
+      gemsWorthArcher: pct(fb.dps[500], ngB.dps[500]), gemsWorthMage: pct(fm.dps[500], ngM.dps[500]), gemsWorthMageDesign: pct(fm.design[500], ngM.design[500]) };
+    const GP = R.bestGap;
+    console.log(`   with no Mastery board on either: ${GP.noBoard}% (the design ${GP.noBoardDesign}%)  ·  with no gems on either: ${GP.noGems}% (the design ${GP.noGemsDesign}%)`);
+    console.log(`   what the board is worth: ${GP.boardWorthArcher}% to the archer, ${GP.boardWorthMage}% to the mage (the design ${GP.boardWorthMageDesign}%)  ·  what the gems are worth: ${GP.gemsWorthArcher}% to the archer, ${GP.gemsWorthMage}% to the mage (the design ${GP.gemsWorthMageDesign}%)`);
+    if (sorc && H.wyrdstone) check(diff(R.bestSummary, GS) === '' && R.bestSummary.staffVsBow >= 95 && R.bestSummary.staffVsBow <= 105, 'the finished mage is inside 95-105% of the finished archer, as the design measured',
+      `staff ${R.bestSummary.staffVsBow}% at def 500, ${R.bestSummary.staffVsBow1000}% at def 1000; wand ${R.bestSummary.wandVsBow}%`);
+    else check(R.bestSummary.staffVsBow < GS.staffVsBow && (!H.wyrdstone || (GP.noBoard === GP.noBoardDesign && GP.noBoard >= 95)),
+      'the finished mage is behind the finished archer by what is not built, and by nothing else' + (H.wyrdstone ? ': with the board off both, the staff is the design\'s share of the bow' : ''),
+      `staff ${R.bestSummary.staffVsBow}% of the bow, the design ${GS.staffVsBow}%` + (H.wyrdstone ? `; board off, ${GP.noBoard}% and the design ${GP.noBoardDesign}%` : ''));
+
+    R.walls = J('SIM.walls()');
+    console.log('\n   THE SPIRE WALL  ·  Lv 99 in the best gear, the definition _wall.js uses');
+    console.log('   ' + padr('build', 34) + pad('acc', 6) + pad('hit', 6) + pad('def', 6) + pad('hp', 6) + pad('DR', 5) + pad('lethal', 8) + pad('4-min', 7));
+    for (const x of R.walls) console.log('   ' + padr(x.label + (x.asc ? '  *max' : '  *0'), 34) + pad(x.acc, 6) + pad(x.hit, 6) + pad(x.def, 6) + pad(x.hp, 6) + pad((x.dr * 100).toFixed(0) + '%', 5) + pad(x.lethal, 8) + pad(x.slow, 7));
+    for (const x of R.walls.filter(x => /staff|wand/.test(x.label))) {
+      const w = Math.min(x.lethal, x.slow);
+      check(w >= 25 && w <= 65 && x.lethal <= x.slow, `${x.label}${x.asc ? ' (ascended)' : ''}: the wall is between floors 25 and 65, and lethality is the limit, not the length of the fight`, 'lethal on floor ' + x.lethal + ', four minutes on floor ' + x.slow);
+    }
+    same('all twelve walls are the prototype\'s, to the digit: a mage\'s is floor 30, and floor 45 ascended', R.walls, GOLD.walls);
+  }
   /* CV_DUMP=file writes everything this run measured, so a number that is meant to
      move can be cut into the golden file by hand. It never writes the golden file. */
   if (process.env.CV_DUMP) fs.writeFileSync(process.env.CV_DUMP, JSON.stringify(R));

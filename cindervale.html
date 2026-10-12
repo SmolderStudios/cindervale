@@ -12700,7 +12700,8 @@ const SKILLS={
      as bows are in Fletching. A batch is 40 runes for each rune the grade's biggest
      spell spends, so one full-size cast costs the same work at every grade. The
      spdMult values written as sums are the doubles the formula gives. Five tabs:
-     runes, wands, staves, cloth, robes. */
+     runes, wands, staves, cloth, robes. 79 acts since the three raid cloths: seven
+     looms, and fifty robe pieces. */
   runecrafting:{name:'Runecrafting',icon:'\u{1F52E}',acts:[
     {id:'rn_r_ash',name:'Carve Ash Runes',cat:'runes',lvl:1,ms:4200,xp:40,spdMult:0.52,minMs:800,inp:{runestone:1,ash:1},out:{ash_rune:40}},
     {id:'rn_r_soot',name:'Carve Soot Runes',cat:'runes',lvl:12,ms:4720,xp:98,spdMult:0.558,minMs:910,inp:{runestone:1,ash:2},out:{soot_rune:40}},
@@ -12768,6 +12769,26 @@ const SKILLS={
     {id:'rn_rb_wyrmsilk_leggings',name:'Wyrmsilk Leggings',cat:'robes',subcat:'leggings',lvl:84,ms:17100,xp:330,spdMult:0.72,minMs:2340,inp:{wyrmsilk:3},out:{wyrmsilk_leggings:1}},
     {id:'rn_rb_wyrmsilk_wraps',name:'Wyrmsilk Wraps',cat:'robes',subcat:'wraps',lvl:82,ms:17100,xp:277,spdMult:0.72,minMs:2340,inp:{wyrmsilk:2},out:{wyrmsilk_wraps:1}},
     {id:'rn_rb_wyrmsilk_slippers',name:'Wyrmsilk Slippers',cat:'robes',subcat:'slippers',lvl:83,ms:17100,xp:264,spdMult:0.72,minMs:2340,inp:{wyrmsilk:2},out:{wyrmsilk_slippers:1}},
+    /* Raid robes (0.9.127.11): Runebound, Drakerune and Riftwoven. No bolt is woven
+       for these. The cloth is the raid's own, the one its leather is tanned from, and
+       the robe piece takes one of the raid's rune material, which nothing else in
+       the game used. They ask the Runecrafting level the leather of the same raid
+       asks of Crafting: 75, 84 and 90. */
+    {id:'rn_rb_runebound_hood',name:'Runebound Hood',cat:'robes',subcat:'hood',lvl:75,ms:19200,xp:300,spdMult:0.51+7*0.035,minMs:2640,inp:{wraithcloth:2},out:{runebound_hood:1}},
+    {id:'rn_rb_runebound_robe',name:'Runebound Robe',cat:'robes',subcat:'robe',lvl:75,ms:19200,xp:480,spdMult:0.51+7*0.035,minMs:2640,inp:{wraithcloth:4,runed_bone:1},out:{runebound_robe:1}},
+    {id:'rn_rb_runebound_leggings',name:'Runebound Leggings',cat:'robes',subcat:'leggings',lvl:75,ms:19200,xp:375,spdMult:0.51+7*0.035,minMs:2640,inp:{wraithcloth:3},out:{runebound_leggings:1}},
+    {id:'rn_rb_runebound_wraps',name:'Runebound Wraps',cat:'robes',subcat:'wraps',lvl:75,ms:19200,xp:315,spdMult:0.51+7*0.035,minMs:2640,inp:{wraithcloth:2},out:{runebound_wraps:1}},
+    {id:'rn_rb_runebound_slippers',name:'Runebound Slippers',cat:'robes',subcat:'slippers',lvl:75,ms:19200,xp:300,spdMult:0.51+7*0.035,minMs:2640,inp:{wraithcloth:2},out:{runebound_slippers:1}},
+    {id:'rn_rb_drakerune_hood',name:'Drakerune Hood',cat:'robes',subcat:'hood',lvl:84,ms:21300,xp:336,spdMult:0.51+8*0.035,minMs:2940,inp:{emberweave:2},out:{drakerune_hood:1}},
+    {id:'rn_rb_drakerune_robe',name:'Drakerune Robe',cat:'robes',subcat:'robe',lvl:84,ms:21300,xp:538,spdMult:0.51+8*0.035,minMs:2940,inp:{emberweave:4,drakeforged_rune:1},out:{drakerune_robe:1}},
+    {id:'rn_rb_drakerune_leggings',name:'Drakerune Leggings',cat:'robes',subcat:'leggings',lvl:84,ms:21300,xp:420,spdMult:0.51+8*0.035,minMs:2940,inp:{emberweave:3},out:{drakerune_leggings:1}},
+    {id:'rn_rb_drakerune_wraps',name:'Drakerune Wraps',cat:'robes',subcat:'wraps',lvl:84,ms:21300,xp:353,spdMult:0.51+8*0.035,minMs:2940,inp:{emberweave:2},out:{drakerune_wraps:1}},
+    {id:'rn_rb_drakerune_slippers',name:'Drakerune Slippers',cat:'robes',subcat:'slippers',lvl:84,ms:21300,xp:336,spdMult:0.51+8*0.035,minMs:2940,inp:{emberweave:2},out:{drakerune_slippers:1}},
+    {id:'rn_rb_riftwoven_hood',name:'Riftwoven Hood',cat:'robes',subcat:'hood',lvl:90,ms:23400,xp:372,spdMult:0.80,minMs:3240,inp:{voidweave:2},out:{riftwoven_hood:1}},
+    {id:'rn_rb_riftwoven_robe',name:'Riftwoven Robe',cat:'robes',subcat:'robe',lvl:90,ms:23400,xp:595,spdMult:0.80,minMs:3240,inp:{voidweave:4,riftshard:1},out:{riftwoven_robe:1}},
+    {id:'rn_rb_riftwoven_leggings',name:'Riftwoven Leggings',cat:'robes',subcat:'leggings',lvl:90,ms:23400,xp:465,spdMult:0.80,minMs:3240,inp:{voidweave:3},out:{riftwoven_leggings:1}},
+    {id:'rn_rb_riftwoven_wraps',name:'Riftwoven Wraps',cat:'robes',subcat:'wraps',lvl:90,ms:23400,xp:391,spdMult:0.80,minMs:3240,inp:{voidweave:2},out:{riftwoven_wraps:1}},
+    {id:'rn_rb_riftwoven_slippers',name:'Riftwoven Slippers',cat:'robes',subcat:'slippers',lvl:90,ms:23400,xp:372,spdMult:0.80,minMs:3240,inp:{voidweave:2},out:{riftwoven_slippers:1}},
   ]},
 
   cooking:{name:'Cooking',icon:'🍳',acts:[
@@ -14662,6 +14683,165 @@ const _MAGE_DROP_ART={
     +'<path d="M46 5.5 L54 17.5 L45 30 L37 18 Z" fill="'+T+'" stroke="#4a3804" stroke-width="1.4" stroke-linejoin="round"/>'
     +'<path d="M46 5.5 L45.4 17.6 L37 18 Z" fill="#fff" opacity="0.5"/><path d="M45.4 17.6 L45 30 M37 18 L54 17.5" stroke="#4a3804" stroke-width="0.7" opacity="0.6"/>'
     +_mwBands('M22.6 41.6 L28.8 47 M26.6 37 L32.8 42.4'); }); },
+};
+/* The eight raid weapons, and Faultline from the Spire (slice 8). */
+Object.assign(MAGE_DROP_PAL,{
+  gravecall: {l:'#d3dccc',m:'#7f8f80',d:'#35423a', tip:{l:'#eafff0',m:'#8fe0b0',d:'#2f7a55',glow:'#7fe0a8'}},
+  barrow:    {l:'#e6e2cf',m:'#aaa58c',d:'#55513f', tip:{l:'#eafff0',m:'#8fe0b0',d:'#2f7a55',glow:'#7fe0a8'}},
+  slagfire:  {l:'#8d929b',m:'#474c55',d:'#1c1f25', tip:{l:'#fff2b8',m:'#ff8a2a',d:'#9a2c08',glow:'#ff7a2a'}},
+  emberglass:{l:'#d9b070',m:'#8a5a26',d:'#3a220c', tip:{l:'#fff6d0',m:'#ffa23c',d:'#b03c0c',glow:'#ff8a3a'}},
+  riftcaller:{l:'#8e7cbc',m:'#40305f',d:'#160f26', tip:{l:'#ffffff',m:'#e070ff',d:'#5a1a8a',glow:'#b060f0'}},
+  nullspire: {l:'#6a5a8a',m:'#2a2040',d:'#0c0814', tip:{l:'#f6e6ff',m:'#c890ff',d:'#4a1a7a',glow:'#a060e0'}},
+  dawncaller:{l:'#fff2c0',m:'#e6b23e',d:'#9a6a1e', tip:{l:'#ffffff',m:'#ffe08a',d:'#d8902a',glow:'#ffcf5a',spark:1}},
+  starcall:  {l:'#fff2c0',m:'#e6b23e',d:'#9a6a1e', tip:{l:'#ffffff',m:'#fff0b8',d:'#e0a83a',glow:'#ffe08a',spark:1}},
+  faultline: {l:'#f6d8ec',m:'#b45a8e',d:'#5e2a4a', tip:{l:'#ffffff',m:'#ffc4e6',d:'#c96a9a',glow:'#e88fc0',spark:1}},
+});
+Object.assign(_MAGE_DROP_ART,{
+  /* a crook, and the bell that hangs from it */
+  gravecall:function(p){ return _mwIcon(p,25,60,12,function(W,T,G){ return ''
+    +'<circle cx="44" cy="30" r="14" fill="'+G+'"/>'
+    +_mwLine('M19 59 L30 25 Q33.5 8 43 6.5 Q53.5 6 53.5 15.5 Q53 21 48 22',4.6,W)
+    +'<path d="M20.6 57 L31.4 25" stroke="'+p.l+'" stroke-width="1.1" opacity="0.55" stroke-linecap="round"/>'
+    +'<path d="M48 22 V26" stroke="#1a1208" stroke-width="1.6"/>'
+    +'<path d="M48 25.5 Q41 26.5 40.5 35 L38 40.5 H58 L55.5 35 Q55 26.5 48 25.5 Z" fill="'+T+'" stroke="#123a28" stroke-width="1.4" stroke-linejoin="round"/>'
+    +'<path d="M43 30 Q43.6 27.6 46.4 27.2" fill="none" stroke="#fff" stroke-width="1.3" opacity="0.8" stroke-linecap="round"/><path d="M39.4 37.6 H56.6" stroke="#123a28" stroke-width="0.9" opacity="0.6"/>'
+    +'<circle cx="48" cy="43" r="2.4" fill="#e9e1cb" stroke="'+_MW_O+'" stroke-width="1"/>'
+    +_mwBands('M22.6 41 L29 43.2 M21 46 L27.4 48.2'); }); },
+  /* a rod, and a barrow light shut in a cage */
+  barrow:function(p){ return _mwIcon(p,26,58.5,13,function(W,T,G){ return ''
+    +'<circle cx="43" cy="19" r="15" fill="'+G+'"/>'
+    +_mwShaft(13,54,34,31,5,W,'#ffffff')
+    +'<circle cx="11.6" cy="55.6" r="3.8" fill="'+W+'" stroke="'+_MW_O+'" stroke-width="1.3"/>'
+    +'<path d="M43 30 Q34 21 41.5 9 Q43 14.5 46 15 Q46 11 48.4 8.6 Q54 16 50.5 24 Q48.5 29.5 43 30 Z" fill="'+T+'" stroke="#123a28" stroke-width="1"/>'
+    +'<path d="M43.6 27.4 Q40 22 43 17 Q44 20 46 20 Q48 24 43.6 27.4 Z" fill="#fff" opacity="0.75"/>'
+    +_mwLine('M34 31 L30.5 17 L44 5 L56.5 18.5 L41.5 33.5 Z',1.9,W)
+    +'<path d="M30.5 17 L56.5 18.5 M44 5 L41.5 33.5 M37 11.2 L49 26" fill="none" stroke="'+_MW_O+'" stroke-width="2.6"/><path d="M30.5 17 L56.5 18.5 M44 5 L41.5 33.5 M37 11.2 L49 26" fill="none" stroke="'+p.m+'" stroke-width="1.1"/>'
+    +_mwBands('M20.4 43.4 L25.6 48.6 M24.2 39.4 L29.4 44.6'); }); },
+  /* a crucible on a pole, and it is never empty */
+  slagfire:function(p){ return _mwIcon(p,22,60,12,function(W,T,G){ return ''
+    +'<circle cx="42" cy="18" r="18" fill="'+G+'"/>'
+    +_mwShaft(15,59,33,30,5.4,W,p.l)
+    +'<path d="M26 20 L54 9 L55.5 23 Q50 35.5 36.5 34 Q29 30 26 20 Z" fill="'+W+'" stroke="'+_MW_O+'" stroke-width="1.5" stroke-linejoin="round"/>'
+    +'<path d="M29 23 Q33 30 39 31.4" fill="none" stroke="'+p.l+'" stroke-width="1.1" opacity="0.5" stroke-linecap="round"/>'
+    +'<ellipse cx="40" cy="14.5" rx="14.8" ry="4.6" transform="rotate(-21.5 40 14.5)" fill="'+T+'" stroke="#4a1404" stroke-width="1.3"/>'
+    +'<ellipse cx="38" cy="14.4" rx="6.4" ry="1.6" transform="rotate(-21.5 38 14.4)" fill="#fff" opacity="0.7"/>'
+    +'<path d="M52 10.5 Q58.5 15.5 56 25 Q55 30.5 57.5 34.5 Q52 34 51.5 27 Q51 18.5 49 13 Z" fill="'+T+'" stroke="#4a1404" stroke-width="1.2" stroke-linejoin="round"/>'
+    +'<circle cx="56.5" cy="40.5" r="2.2" fill="'+T+'" stroke="#4a1404" stroke-width="0.9"/>'
+    +'<path d="M30 12 Q28 8 30.5 4.5 M38 8 Q36.5 4.5 38.5 1.5" fill="none" stroke="#ffd9a8" stroke-width="1.2" opacity="0.6" stroke-linecap="round"/>'
+    +_mwBands('M26.4 38.8 L32.6 42.4 M23.6 43.6 L29.8 47.2'); }); },
+  /* forge glass, drawn out while it was still alight */
+  emberglass:function(p){ return _mwIcon(p,29,58.5,14,function(W,T,G){ return ''
+    +'<circle cx="40" cy="22" r="20" fill="'+G+'"/>'
+    +'<path d="M19 47.5 L24.5 37 L54.5 5 L33.5 44.5 L26.5 52.5 Z" fill="'+T+'" stroke="#5a1c04" stroke-width="1.4" stroke-linejoin="round"/>'
+    +'<path d="M24.5 37 L54.5 5 L29 42.6 Z" fill="#fff" opacity="0.55"/><path d="M29 42.6 L54.5 5 L33.5 44.5 Z" fill="#7a1e04" opacity="0.3"/>'
+    +'<path d="M27 40.5 L47 14" stroke="#fff" stroke-width="1.5" opacity="0.9" stroke-linecap="round"/>'
+    +'<path d="M24.5 37 L29 42.6 L33.5 44.5 M29 42.6 L26.5 52.5" fill="none" stroke="#5a1c04" stroke-width="0.8" opacity="0.6"/>'
+    +'<path d="M10.5 54.5 L16.5 59.5 L27.5 49 L21 43 Z" fill="'+W+'" stroke="'+_MW_O+'" stroke-width="1.4" stroke-linejoin="round"/>'
+    +'<path d="M12.6 54.4 L21.4 45.6" stroke="'+p.l+'" stroke-width="1.1" opacity="0.6" stroke-linecap="round"/>'
+    +_mwBands('M17.6 47 L23.4 52.4'); }); },
+  /* a ring broken in two, and what shows through the break */
+  riftcaller:function(p){ return _mwIcon(p,22,60,12,function(W,T,G){ return ''
+    +'<circle cx="42" cy="17" r="18" fill="'+G+'"/>'
+    +_mwShaft(15,59,33,30,5.2,W,p.l)
+    +_mwLine('M33 30 Q26.5 22 30 12.5 Q33 5.5 40.5 4',4.2,W)+_mwLine('M37.5 32 Q48 33.5 54 26 Q58.5 19.5 55.5 11.5',4.2,W)
+    +'<path d="M40.5 4 L45.5 1.5 L44 7 Z M55.5 11.5 L60 8.5 L58.5 14.5 Z" fill="'+W+'" stroke="'+_MW_O+'" stroke-width="1.1" stroke-linejoin="round"/>'
+    +'<path d="M43.5 4.5 L46.5 13.5 L55.5 17 L46.5 20.5 L43.5 30 L40.5 20.5 L31.5 17 L40.5 13.5 Z" fill="'+T+'" stroke="#2a0a4a" stroke-width="1.2" stroke-linejoin="round"/>'
+    +'<path d="M43.5 9 L45 15.6 L51 17 L45 18.6 L43.5 25 L42 18.6 L36 17 L42 15.6 Z" fill="#fff" opacity="0.8"/>'
+    +_mwBands('M26.4 38.8 L32.6 42.4 M23.6 43.6 L29.8 47.2'); }); },
+  /* a needle of nothing, and a ring that will not touch it */
+  nullspire:function(p){ return _mwIcon(p,24,59,12,function(W,T,G){
+    const ring=function(sweep){ const d='M29.5 22.5 A10.5 4.6 0 0 '+sweep+' 50.5 22.5'; return '<g transform="rotate(40 40 22.5)"><path d="'+d+'" fill="none" stroke="'+_MW_O+'" stroke-width="4.6" stroke-linecap="round"/><path d="'+d+'" fill="none" stroke="'+T+'" stroke-width="2.4" stroke-linecap="round"/></g>'; };
+    return '<circle cx="40" cy="22" r="17" fill="'+G+'"/>'
+    +ring(1)
+    +'<path d="M9.5 53 L15.5 58.5 L55 5 Z" fill="'+W+'" stroke="'+_MW_O+'" stroke-width="1.4" stroke-linejoin="round"/>'
+    +'<path d="M12 53.6 L52 8" stroke="'+p.l+'" stroke-width="1" opacity="0.6" stroke-linecap="round"/>'
+    +ring(0)
+    +'<circle cx="11.6" cy="56.4" r="4.2" fill="'+T+'" stroke="#2a0a4a" stroke-width="1.3"/><circle cx="10.4" cy="55.2" r="1.3" fill="#fff" opacity="0.8"/>'
+    +_mwBands('M17.4 45.4 L23 50.6'); }); },
+  /* the sun, on a pole */
+  dawncaller:function(p){ return _mwIcon(p,26,60,12,function(W,T,G){
+    let rays=''; for(let i=0;i<8;i++){ rays+='<path d="M37 '+(i%2?2.6:0.6)+' L39.6 6.4 L34.4 6.4 Z" transform="rotate('+(i*45)+' 37 17)" fill="'+T+'" stroke="#8a5a0c" stroke-width="0.9" stroke-linejoin="round"/>'; }
+    return '<circle cx="37" cy="17" r="20" fill="'+G+'"/>'
+    +_mwShaft(20,60,33.5,28,5.2,W,'#ffffff')
+    +'<path d="M29 28.6 L39 31 L37 26 L32 25 Z" fill="'+W+'" stroke="'+_MW_O+'" stroke-width="1.2" stroke-linejoin="round"/>'
+    +rays
+    +'<circle cx="37" cy="17" r="8.6" fill="'+T+'" stroke="#8a5a0c" stroke-width="1.4"/><circle cx="37" cy="17" r="5" fill="#fff" opacity="0.6"/><circle cx="34.6" cy="14.4" r="1.8" fill="#fff" opacity="0.9"/>'
+    +_mwBands('M23.4 44.6 L30.2 46.8 M21.6 49.4 L28.4 51.6'); }); },
+  /* a star that came when it was called */
+  starcall:function(p){ return _mwIcon(p,26,58.5,13,function(W,T,G){ return ''
+    +'<circle cx="44" cy="18" r="18" fill="'+G+'"/>'
+    +_mwShaft(13,54,35,30,4.6,W,'#ffffff')
+    +'<circle cx="11.6" cy="55.6" r="3.8" fill="'+W+'" stroke="'+_MW_O+'" stroke-width="1.3"/>'
+    +'<path d="M44 0.5 L47.4 13.4 L60.5 17.5 L47.4 21.6 L44 35.5 L40.6 21.6 L27.5 17.5 L40.6 13.4 Z" fill="'+T+'" stroke="#8a5a0c" stroke-width="1.3" stroke-linejoin="round"/>'
+    +'<path d="M36 9.5 L42.4 15 L51.6 9 L46.4 17.4 L52 25.6 L43.4 20.6 L36 26 L40.8 17.6 Z" fill="'+T+'" stroke="#8a5a0c" stroke-width="0.9" stroke-linejoin="round"/>'
+    +'<path d="M44 6 L45.6 15.6 L54 17.5 L45.6 19.4 L44 29 L42.4 19.4 L34 17.5 L42.4 15.6 Z" fill="#fff" opacity="0.85"/>'
+    +'<path d="M57 31 L58.2 34.2 L61.5 35.5 L58.2 36.8 L57 40 L55.8 36.8 L52.5 35.5 L55.8 34.2 Z M27 3 L27.9 5.6 L30.5 6.5 L27.9 7.4 L27 10 L26.1 7.4 L23.5 6.5 L26.1 5.6 Z" fill="'+T+'" stroke="#8a5a0c" stroke-width="0.6"/>'
+    +_mwBands('M20.4 43.4 L25.6 48.6 M24.2 39.4 L29.4 44.6'); }); },
+  /* the Spire's own fault, cut out and carried */
+  faultline:function(p){ return _mwIcon(p,22,60,12,function(W,T,G){ return ''
+    +'<circle cx="40" cy="19" r="21" fill="'+G+'"/>'
+    +'<path d="M11.5 57 L18.5 61.5 L33 40 L26 34.5 Z" fill="'+W+'" stroke="'+_MW_O+'" stroke-width="1.5" stroke-linejoin="round"/>'
+    +'<path d="M13.6 56.4 L27 36.6" stroke="'+p.l+'" stroke-width="1.2" opacity="0.6" stroke-linecap="round"/>'
+    +'<path d="M25 36 L21.5 22 L27.5 23 L31 3.5 L37.5 16 L34.5 19 L37 30.5 L30.5 39.5 Z" fill="'+W+'" stroke="'+_MW_O+'" stroke-width="1.5" stroke-linejoin="round"/>'
+    +'<path d="M34 41.5 L40.5 33 L39 26.5 L50.5 20.5 L49 15 L60.5 9.5 L55.5 27 L49.5 28.5 L50.5 35.5 L38.5 44.5 Z" fill="'+W+'" stroke="'+_MW_O+'" stroke-width="1.5" stroke-linejoin="round"/>'
+    +'<path d="M31 3.5 L30 22 L25 36 L21.5 22 L27.5 23 Z" fill="#fff" opacity="0.35"/><path d="M60.5 9.5 L52 22 L40.5 33 L39 26.5 L50.5 20.5 L49 15 Z" fill="#fff" opacity="0.3"/>'
+    +'<path d="M32 39.5 L39 30 L36.5 20.5 L45.5 15 L43 8.5" fill="none" stroke="'+T+'" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>'
+    +'<path d="M32 39.5 L39 30 L36.5 20.5 L45.5 15 L43 8.5" fill="none" stroke="#fff" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>'
+    +'<path d="M45 46 L48.5 44 L49 48 Z M52.5 40 L55 39 L55 42 Z" fill="'+p.m+'" stroke="'+_MW_O+'" stroke-width="0.8"/>'
+    +_mwBands('M18.4 46.6 L24.6 50.8'); }); },
+});
+/* The three raid cloths, on the five robe shapes the crafted sets use. */
+CLOTH_PAL.runebound={l:'#e4ece0',m:'#93a89c',d:'#3a4a44',trim:'#7fe0a8',glow:'#7fe0a8'};
+CLOTH_PAL.drakerune={l:'#75625e',m:'#3d2e2d',d:'#170e0e',trim:'#ff8a3a',glow:'#ff6a2a'};
+CLOTH_PAL.riftwoven={l:'#8362bc',m:'#3d2669',d:'#130a27',trim:'#ec84ff',glow:'#a060e0'};
+RUNE_PAL.sunder={l:'#ffffff',m:'#ffc4e6',d:'#c96a9a',glow:'#e88fc0',spark:1};
+/* Dawnveil is its own four shapes, as Dawnward and Sunweave are theirs. */
+const DAWNVEIL_PAL={l:'#fffbe6',m:'#f0d27a',d:'#a8782a',trim:'#ffffff',glow:'#ffcf5a',dk:'#5a3c0c'};
+function _dvSun(cx,cy,r){
+  let s=''; for(let i=0;i<8;i++) s+='<path d="M'+cx+' '+(cy-r*2.1)+' L'+(cx+r*0.42)+' '+(cy-r*1.15)+' L'+(cx-r*0.42)+' '+(cy-r*1.15)+' Z" transform="rotate('+(i*45)+' '+cx+' '+cy+')" fill="#fff6c8" stroke="#8a5a0c" stroke-width="0.6" stroke-linejoin="round"/>';
+  return s+'<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="#ffffff" stroke="#8a5a0c" stroke-width="0.9"/>';
+}
+const _DAWNVEIL_ART={
+  hood:function(p){ const d=_mgDefs(p); return '<svg class="ev-icon" viewBox="0 0 64 64">'+d.m
+    +'<ellipse cx="32" cy="59" rx="17" ry="2.6" fill="#000" opacity="0.32"/><circle cx="32" cy="30" r="31" fill="url(#'+d.g+')"/>'
+    +'<path d="M32 13 Q26 4 33 1.5 Q33 8 39 11 Q51 17 51.5 36 L48.5 54 Q32 62 15.5 54 L12.5 36 Q13 19 25 13.5 Q29 12 32 13 Z" fill="url(#'+d.s+')" stroke="#2e1e06" stroke-width="1.5" stroke-linejoin="round"/>'
+    +'<path d="M25 13.5 Q16 19 15 34 L18.5 25 Q22 16.5 30 13.6 Z" fill="#fff" opacity="0.6"/>'
+    +'<path d="M32 23 Q44.5 25 43.5 39 Q41 51.5 32 51.5 Q23 51.5 20.5 39 Q19.5 25 32 23 Z" fill="#150e06" stroke="#fff" stroke-width="2" stroke-linejoin="round"/>'
+    +'<path d="M15.5 54 Q21 48 22.5 41 M48.5 54 Q43 48 41.5 41" fill="none" stroke="'+p.d+'" stroke-width="1.3" opacity="0.7" stroke-linecap="round"/>'
+    +'<ellipse cx="32" cy="18.4" rx="15" ry="4" fill="none" stroke="#5a3c0c" stroke-width="3.4"/><ellipse cx="32" cy="18.4" rx="15" ry="4" fill="none" stroke="#fff3b0" stroke-width="1.6"/>'
+    +_dvSun(32,18.2,2.5)+'</svg>'; },
+  robe:function(p){ const d=_mgDefs(p); return '<svg class="ev-icon" viewBox="0 0 64 64">'+d.m
+    +'<ellipse cx="32" cy="60" rx="23" ry="2.6" fill="#000" opacity="0.32"/><circle cx="32" cy="33" r="31" fill="url(#'+d.g+')"/>'
+    +'<path d="M23 9 L3 36 Q7 44 14 46 L23 31 Z" fill="'+p.m+'" stroke="#2e1e06" stroke-width="1.4" stroke-linejoin="round"/>'
+    +'<path d="M41 9 L61 36 Q57 44 50 46 L41 31 Z" fill="'+p.d+'" stroke="#2e1e06" stroke-width="1.4" stroke-linejoin="round"/>'
+    +'<path d="M4.6 36.6 Q8 43 13.6 44.6 M59.4 36.6 Q56 43 50.4 44.6" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>'
+    +'<path d="M22 5 L42 5 L46 22 L55 59 L9 59 L18 22 Z" fill="url(#'+d.s+')" stroke="#2e1e06" stroke-width="1.5" stroke-linejoin="round"/>'
+    +'<path d="M22 5 L32 5 L27 59 L9 59 L18 22 Z" fill="#fff" opacity="0.4"/>'
+    +'<path d="M22 5 L25 1.5 L32 9 L39 1.5 L42 5 L32 20 Z" fill="'+p.d+'" stroke="#2e1e06" stroke-width="1.3" stroke-linejoin="round"/><path d="M25.5 4 L32 12.5 L38.5 4" fill="none" stroke="#fff" stroke-width="1.2"/>'
+    +'<path d="M32 38 L32 59 M22 44 L19.5 58 M42 44 L44.5 58" stroke="'+p.d+'" stroke-width="1.1" opacity="0.6" stroke-linecap="round"/>'
+    +'<path d="M11 53.5 L53 53.5" stroke="#fff" stroke-width="2" opacity="0.95"/><path d="M10 56.4 L54 56.4" stroke="'+p.d+'" stroke-width="1"/>'
+    +_dvSun(32,30,4.2)+'</svg>'; },
+  leggings:function(p){ const d=_mgDefs(p); return '<svg class="ev-icon" viewBox="0 0 64 64">'+d.m
+    +'<ellipse cx="32" cy="60" rx="22" ry="2.6" fill="#000" opacity="0.32"/><circle cx="32" cy="34" r="31" fill="url(#'+d.g+')"/>'
+    +'<path d="M16 13 L48 13 L56 58 L36 58 L33 34 L27 58 L8 58 Z" fill="url(#'+d.s+')" stroke="#2e1e06" stroke-width="1.5" stroke-linejoin="round"/>'
+    +'<path d="M16 13 L27 13 L18 58 L8 58 Z" fill="#fff" opacity="0.4"/>'
+    +'<path d="M22 20 L16 54 M40 20 L46 54 M45 18 L52 52" stroke="'+p.d+'" stroke-width="1.1" opacity="0.55" stroke-linecap="round"/>'
+    +'<path d="M9.4 52.4 L26.6 52.4 M37 52.4 L54.6 52.4" stroke="#fff" stroke-width="2.2"/>'
+    +'<path d="M14.5 6 L49.5 6 L49 14.5 L15 14.5 Z" fill="'+p.d+'" stroke="#2e1e06" stroke-width="1.3" stroke-linejoin="round"/><path d="M15 10.2 L49 10.2" stroke="#fff" stroke-width="1.6"/>'
+    +'<path d="M30 14 L24 38 L29.5 42 L35.5 38 L34 14 Z" fill="'+p.m+'" stroke="#2e1e06" stroke-width="1.2" stroke-linejoin="round"/><path d="M26.4 36.6 L29.6 39 L33.4 36.6" fill="none" stroke="#fff" stroke-width="1.2"/>'
+    +'<path d="M29.5 42 V48" stroke="#5a3c0c" stroke-width="1.2"/><circle cx="29.5" cy="49.6" r="2" fill="#fff6c8" stroke="#8a5a0c" stroke-width="0.8"/>'
+    +_dvSun(32,10.2,2.6)+'</svg>'; },
+  slippers:function(p){ const d=_mgDefs(p);
+    const shoe=function(dx,dy,dim){ return '<g transform="translate('+dx+' '+dy+')">'
+      +'<path d="M12 24 Q2 21 1 9 Q6 12.5 9.5 17 Q7.5 9.5 10 3 Q14 9 14 17 Q15.5 11.5 19 8 Q20.5 16 16.5 23 Z" fill="#fffdf0" stroke="#5a3c0c" stroke-width="1.2" stroke-linejoin="round"/>'
+      +'<path d="M4 12.5 Q7 17 11 21 M10.6 8 Q12 14 13 20 M17.6 12 Q16.6 17 15 21" fill="none" stroke="'+p.d+'" stroke-width="0.8" opacity="0.7"/>'
+      +'<path d="M7 33 Q6 26 12 24 L21 21.5 Q27 22 31 27 Q37 31.5 47 31 Q51 31.5 51 34.5 Q51 38 46 38 L11 38 Q7 37.5 7 33 Z" fill="url(#'+d.s+')" stroke="#2e1e06" stroke-width="1.4" stroke-linejoin="round"/>'
+      +(dim?'':'<path d="M9 32 Q8.6 27 13 25.6 L20 23.6" fill="none" stroke="#fff" stroke-width="1.3" opacity="0.85" stroke-linecap="round"/>')
+      +'<path d="M12.5 24 Q17 28 21.5 22" fill="none" stroke="#fff" stroke-width="1.8"/><path d="M8 35.2 L50 35.2" stroke="'+p.d+'" stroke-width="1.2" opacity="0.85"/>'
+      +'<circle cx="33" cy="31.4" r="2.2" fill="#fff6c8" stroke="#8a5a0c" stroke-width="0.8"/></g>'; };
+    return '<svg class="ev-icon" viewBox="0 0 64 64">'+d.m
+    +'<ellipse cx="32" cy="58.5" rx="25" ry="2.6" fill="#000" opacity="0.32"/><circle cx="32" cy="34" r="31" fill="url(#'+d.g+')"/>'
+    +shoe(11,-3,true)+shoe(3,19,false)+'</svg>'; },
 };
 
 /* The Runecrafting skill icon: a struck stone and the chisel that cut it. Heavy
@@ -16575,6 +16755,14 @@ function combatGearStatBlock(itemId){
   /* A found staff or wand that is better with one element says which, and by how much. */
   if(it.cslot==='weapon' && it.magic && it.aff && ELEMENT_BY[it.aff.el])
     chips.push(_chip(ELEMENT_BY[it.aff.el].col,'el_'+it.aff.el,'+'+(Math.round(it.aff.dmg*1000)/10)+'% damage with '+ELEMENT_BY[it.aff.el].n));
+  /* And what one adds on its own (`ubonus`). A sword's or a bow's is in its
+     description, behind Shift; a staff says it here, where its element would be. */
+  if(it.cslot==='weapon' && it.magic && it.ubonus){
+    var _ub=it.ubonus, _upc=function(x){ return Math.round(x*1000)/10; };
+    if(_ub.magicDmg)   chips.push(_chip('#b9a4f0','magic','+'+_upc(_ub.magicDmg)+'% Magic damage'));
+    if(_ub.critChance) chips.push(_chip('#ffd24a','ui_spark','+'+_upc(_ub.critChance)+'% crit chance'));
+    if(_ub.lifesteal)  chips.push(_chip('#e88888','ui_heart','Heals '+_upc(_ub.lifesteal)+'% of damage dealt'));
+  }
   var chipLine=chips.length?'<div class="nt-chips">'+chips.join('')+'</div>':'';
 
   /* The tier/slot line moved up into the card's header band, where it is the first
@@ -16624,6 +16812,10 @@ function wfxTipHTML(itemId){
     parts.push('<span style="color:#ff8a3a">'+iconHTML('ui_flame')+' '+Math.round(BURN_CHANCE*100)+'% chance to burn foes on hit</span>');
   if(fx.stun){ var s=fx.stun;
     parts.push('<span style="color:#ffd24a">'+iconHTML('ui_spark')+' '+Math.round(s.chance*100)+'% chance to stun on hit</span>'); }
+  /* A staff whose casts can hit twice (Faultline). A cleaver or a bow that does it
+     says so in its own description. */
+  if(fx.cleave && it.magic)
+    parts.push('<span style="color:#e88fc0">'+iconHTML('ui_spark')+' '+Math.round(fx.cleave.chance*100)+'% chance a cast hits twice</span>');
   if(fx.reflect){ var r=fx.reflect;
     parts.push('<span style="color:#e88">'+iconHTML('ui_shield')+' '+Math.round(r.chance*100)+'% chance to reflect '+Math.round(r.pct*100)+'% of damage taken</span>'); }
   if(!parts.length) return '';
@@ -32861,7 +33053,7 @@ function buildSpireLogBody(raid){
       <thead><tr><th>Piece</th><th>Slot</th><th>Stats</th>${[10,25,40,55,70].map(f=>`<th>F${f}</th>`).join('')}</tr></thead>
       <tbody>${SPIRE_GEAR.map(id=>{
         const it=ITEMS[id]||{}, cs=COMBAT_GEAR_STATS[id]||{};
-        const st=(cs.atk+(cs.str||0)+(cs.rstr||0))>cs.def?(`atk ${cs.atk} `+(cs.rstr?`ranged str ${cs.rstr}`:`str ${cs.str}`)):`def ${cs.def}${cs.atk?' atk '+cs.atk:''}`;
+        const st=(cs.atk+(cs.str||0)+(cs.rstr||0))>cs.def?(`atk ${cs.atk} `+(cs.rstr?`ranged str ${cs.rstr}`:(it.magic?`magic power ${cs.mpow||0}`:`str ${cs.str}`))):`def ${cs.def}${cs.atk?' atk '+cs.atk:''}`;
         const have=(state.items&&state.items[id])>0;
         return `<tr class="${have?'mls-done':''}">
           <td class="mls-f" style="font-weight:400">${iconHTML(id)} ${it.name||id}</td>
@@ -35326,6 +35518,13 @@ const CLOTH_TIERS=[
   {key:'seercloth', set:'Seercloth',  leather:'troll',  ctier:5, mpow:3},
   {key:'stoneweave',set:'Stoneweave', leather:'drake',  ctier:6, mpow:4},
   {key:'wyrmsilk',  set:'Wyrmsilk',   leather:'demon',  ctier:7, mpow:5},
+  /* The three raid cloths (0.9.127.11), each built off the raid leather of its tier.
+     No bolt is woven: `cloth` is the raid's own, the one that leather is tanned
+     from, and the robe piece takes one `reagent`, the raid's rune material, which
+     nothing in the game used. */
+  {key:'runebound', set:'Runebound',  leather:'wraith', ctier:7, mpow:6, cloth:'wraithcloth', reagent:'runed_bone',       raid:'sunken_barrow'},
+  {key:'drakerune', set:'Drakerune',  leather:'ember',  ctier:8, mpow:7, cloth:'emberweave',  reagent:'drakeforged_rune', raid:'emberforge'},
+  {key:'riftwoven', set:'Riftwoven',  leather:'void',   ctier:9, mpow:9, cloth:'voidweave',   reagent:'riftshard',        raid:'abyssal_throne'},
 ];
 const ROBE_DEF_FRAC=0.62, ROBE_ATK_FRAC=0.50, ROBE_RUNE_SAVE=0.015;
 /* hood, robe, leggings, wraps, slippers: beside the leather helm, chest, legs,
@@ -35960,6 +36159,7 @@ function mageDropDoes(d){
     if(bits.length) out.push(bits.join(' and ')+'.');
     if(u.lifesteal) out.push('You heal for '+pc(u.lifesteal)+'% of the damage you deal.');
   }
+  if(d.note) out.push(d.note);
   return out.join(' ');
 }
 function mageDropWeapon(d){
@@ -36048,6 +36248,75 @@ const MAGE_RUNE_DROPS=[
     MONSTER_DROPS[r[0]].push({id:rune, chance:r[1], qty:[r[2][0]*n, r[2][1]*n]});
   });
 })();
+
+/* ════ MAGIC: what the raids and the Spire drop (0.9.127.11, slice 8 of _magedesign/) ═══
+   A staff and a wand in every raid, on the gearDrops tables beside the sword, the
+   dagger and the bow, at the 1% the weapons there carry. Each carries Attack and
+   Magic Power the way a raid bow carries Attack and Ranged Strength, on the same
+   anchors. Faultline is the Spire's, the fifth name in SPIRE_GEAR.
+
+   `note` is for a weapon whose one thing is its numbers and nothing else. */
+const MAGE_RAID_DROPS=[
+  {id:'gravecall_staff', name:'Gravecall Staff', fam:'staff', tier:7,  atk:39, mpow:6,  sell:19000,  art:'gravecall',
+   from:'sunken_barrow', wfx:{stun:{chance:0.10,dur:1.2}},
+   lore:"A warden's crook from the Sunken Barrow, with the bell that called the dead to their posts."},
+  {id:'barrow_wand',     name:'Barrow Wand',     fam:'wand',  tier:7,  atk:39, mpow:5,  sell:16500,  art:'barrow',
+   from:'sunken_barrow', note:'More Attack than any wand you can make, and Magic Power of its own.',
+   lore:'A rod of barrow bone, with one of the tomb lights shut in a cage at its tip.'},
+  {id:'slagfire_staff',  name:'Slagfire Staff',  fam:'staff', tier:8,  atk:54, mpow:12, sell:42000,  art:'slagfire',
+   from:'emberforge', aff:{el:'fire',dmg:0.08},
+   lore:'A crucible on an iron pole, from the Emberforge, and it is never empty.'},
+  {id:'emberglass_wand', name:'Emberglass Wand', fam:'wand',  tier:8,  atk:54, mpow:10, sell:40000,  art:'emberglass',
+   from:'emberforge', aff:{el:'fire',dmg:0.06},
+   lore:'Forge glass, drawn out thin while it was still alight.'},
+  {id:'riftcaller',      name:'Riftcaller',      fam:'staff', tier:9,  atk:68, mpow:20, sell:90000,  art:'riftcaller',
+   from:'abyssal_throne', aff:{el:'shadow',dmg:0.08},
+   lore:'A ring broken in two, and something on the far side of the break looks back.'},
+  {id:'nullspire_wand',  name:'Nullspire Wand',  fam:'wand',  tier:9,  atk:68, mpow:17, sell:88000,  art:'nullspire',
+   from:'abyssal_throne', aff:{el:'shadow',dmg:0.06},
+   lore:'A needle of nothing from the Abyssal Throne, and a ring that will not touch it.'},
+  {id:'dawncaller',      name:'Dawncaller',      fam:'staff', tier:10, atk:74, mpow:28, sell:125000, art:'dawncaller',
+   from:'empyrean_throne', wfx:{burn:{mult:0.16}},
+   lore:"The Dawnbroken God's own staff: the sun, on a pole."},
+  {id:'starcall_wand',   name:'Starcall Wand',   fam:'wand',  tier:10, atk:70, mpow:24, sell:120000, art:'starcall',
+   from:'empyrean_throne', ubonus:{critChance:0.07, magicDmg:0.05},
+   lore:'A star that came when it was called, and stayed.'},
+  {id:'faultline',       name:'Faultline',       fam:'staff', tier:11, atk:80, mpow:34, sell:205000, art:'faultline',
+   from:'spire', ubonus:{magicDmg:0.07, critChance:0.05}, wfx:{cleave:{chance:0.10}},
+   lore:"The Spire's own fault, cut out of the stone and carried. The best staff in Cindervale."},
+];
+MAGE_RAID_DROPS.forEach(mageDropWeapon);
+
+/* The Spire's rune, beside its arrow and its bolt: the same 38, the one rune that
+   cannot be carved. It is a Surge rune, as Starfall is. Spent, not sold. */
+ITEMS.sunder_rune={name:'Sunder Rune', icon:'\u{1F52E}', sell:2, rare:true, ammo:'rune', runePow:38, ammoTier:11,
+  desc:"A rune cut from the Spire's own stone. It can power a Surge and any smaller spell, and a Surge cast with it gets <b>38 Magic Power</b>. It cannot be made with Runecrafting and only comes from the Spire. Used up when you cast."};
+ICONS.sunder_rune=_runeSVG(RUNE_PAL.sunder);
+
+/* Dawnveil: The Empyrean Throne's third set, beside Dawnward plate and Sunweave
+   leather. Four pieces, each built off the Sunweave piece of its slot the way a
+   crafted robe is built off the leather of its tier, with none of leather's crit,
+   dodge or attack speed. The set bonus is Sunweave's, and follows the staff. */
+const DAWNVEIL={
+  runeSave:0.02,
+  /* id, slot, the word for the piece, the Sunweave piece it is built off, Magic Power, sells for, its drawing */
+  pieces:[['dawnveil_hood',    'helmet','Hood',    'sunweave_helm', 2,34000,'hood'],
+          ['dawnveil_robe',    'chest', 'Robe',    'sunweave_chest',4,58000,'robe'],
+          ['dawnveil_leggings','legs',  'Leggings','sunweave_legs', 3,48000,'leggings'],
+          ['dawnveil_slippers','boots', 'Slippers','sunweave_boots',2,32000,'slippers']],
+};
+DAWNVEIL.pieces.forEach(function(p){
+  const L=COMBAT_GEAR_STATS[p[3]]||{};
+  ITEMS[p[0]]={name:'Dawnveil '+p[2], icon:'\u{1F9E5}', sell:p[5], rare:true, cgear:true, ctier:10, cslot:p[1], cloth:true, setKey:'dawnveil',
+    desc:'Cloth from The Empyrean Throne that no hand wove. It adds Magic Power, and some of your casts keep their runes. Part of the <b>Dawnveil</b> set.'};
+  COMBAT_GEAR_STATS[p[0]]={atk:Math.round((L.atk||0)*ROBE_ATK_FRAC), str:0, def:Math.max(1,Math.round((L.def||0)*ROBE_DEF_FRAC)),
+    mpow:p[4], runeSave:DAWNVEIL.runeSave};
+  ICONS[p[0]]=_DAWNVEIL_ART[p[6]](DAWNVEIL_PAL);
+});
+COMBAT_SETS.dawnveil={ name:'Dawnveil',
+  pieces:DAWNVEIL.pieces.map(function(p){ return p[0]; }),
+  bonus:{critChance:0.10, dmgBoost:0.08},
+  desc:'Full set: +10% crit chance and +8% damage with any weapon.' };
 
 /* Empyrean Throne — zone + foe icons (1.0.87). Radiant gold silhouettes with an
    indigo "fallen-god" accent; Aureon carries one dawn eye + one void eye to read as
@@ -37209,6 +37478,8 @@ const RAIDS=[
       {id:'barrow_shield',    chance:0.010},
       {id:'barrow_dagger',    chance:0.010},
       {id:'barrow_maul',      chance:0.010},   // 1H crush — fills the type gap (1.0.87)
+      {id:'gravecall_staff',  chance:0.010},   // a staff and a wand, for a mage (0.9.127.11)
+      {id:'barrow_wand',      chance:0.010},
       {id:'grave_cleaver',    chance:0.0022},  // marquee 2H — super-rare
       {id:'barrow_chest',     chance:0.018},   // Warden's Aegis (plate unique)
       {id:'barrow_legs',      chance:0.018},   // Warden's Greaves (plate unique)
@@ -37249,6 +37520,8 @@ const RAIDS=[
       {id:'cinderguard',         chance:0.010},
       {id:'cinderfang',          chance:0.010},   // 1H stab dagger — fills the type gap (1.0.87)
       {id:'slagbreaker',         chance:0.010},   // 1H crush hammer — fills the type gap (1.0.87)
+      {id:'slagfire_staff',      chance:0.010},   // a staff and a wand, for a mage (0.9.127.11)
+      {id:'emberglass_wand',     chance:0.010},
       {id:'forgebreaker',        chance:0.0022},  // marquee 2H — super-rare
       {id:'emberforged_aegis',   chance:0.018},
       {id:'emberforged_greaves', chance:0.018},
@@ -37291,6 +37564,8 @@ const RAIDS=[
       {id:'nullward',          chance:0.010},
       {id:'voidedge',          chance:0.010},   // 1H slash sword — fills the type gap, sword-and-board (1.0.87)
       {id:'riftcrusher',       chance:0.010},   // 1H crush hammer — fills the type gap (1.0.87)
+      {id:'riftcaller',        chance:0.010},   // a staff and a wand, for a mage (0.9.127.11)
+      {id:'nullspire_wand',    chance:0.010},
       {id:'voidcleaver',       chance:0.0020},
       {id:'abyssal_aegis',     chance:0.012},   // marquee — carries cheat-death
       {id:'voidforged_greaves',chance:0.018},
@@ -37339,6 +37614,8 @@ const RAIDS=[
       {id:'starfang',         chance:0.010},
       {id:'worldsunder_maul', chance:0.010},
       {id:'sunpiercer',       chance:0.010},
+      {id:'dawncaller',       chance:0.010},   // a staff and a wand, for a mage (0.9.127.11)
+      {id:'starcall_wand',    chance:0.010},
       {id:'aegis_of_dawn',    chance:0.010},
       {id:'dawnreaper',       chance:0.0020},  // marquee 2H — super-rare
       {id:'dawnward_helm',    chance:0.018},
@@ -37349,6 +37626,10 @@ const RAIDS=[
       {id:'sunweave_chest',   chance:0.018},
       {id:'sunweave_legs',    chance:0.018},
       {id:'sunweave_boots',   chance:0.018},
+      {id:'dawnveil_hood',    chance:0.018},   // the cloth set (0.9.127.11)
+      {id:'dawnveil_robe',    chance:0.018},
+      {id:'dawnveil_leggings',chance:0.018},
+      {id:'dawnveil_slippers',chance:0.018},
       {id:'dawnmantle',       chance:0.018},   // T10 cape (1.0.90)
     ],
     matPool:DAWN_MAT_POOL,
@@ -37816,7 +38097,7 @@ function grantRaidRewards(raid, timeMs){
    so roughly three deep climbs for a piece and a long haul for all four. */
 const SPR_GEAR_BASE=0.00005;
 const SPR_GEAR_STEP=1.155;
-const SPIRE_GEAR=['sunderedge','faultward','plummet','stonewright_gauntlets'];
+const SPIRE_GEAR=['sunderedge','faultward','plummet','stonewright_gauntlets','faultline'];
 function spireGearChance(floor){
   return Math.min(1, SPR_GEAR_BASE*Math.pow(SPR_GEAR_STEP, Math.max(0,floor-1)));
 }
@@ -37841,6 +38122,8 @@ function spireFloorLoot(floor){
     const q=Math.round(20+floor*2.5);
     give('sundershaft', q);
     give('sunderbolt', Math.round(q*0.6));
+    /* And runes, four for every arrow, because a Surge spends four a cast (0.9.127.11). */
+    give('sunder_rune', q*4);
   }
   /* Gear rolls on landings. charDropMult keeps hardcore/accelerated consistent with
      every other drop in the game; the clamp keeps the dial from pushing past one. */
@@ -40273,6 +40556,7 @@ function buildSourceMap(){
       addSource('spirecore',   spire('Landings from floor 15 down',1));
       addSource('sundershaft', spire('Every landing, in bulk',1));
       addSource('sunderbolt',  spire('Every landing, in bulk',1));
+      addSource('sunder_rune', spire('Every boss floor, in bulk',1));
     }
     if(typeof spireGearChance==='function'){
       const at50=spireGearChance(50);
@@ -40725,7 +41009,9 @@ function showItemTooltip(itemId, x, y, note){
   const _useKind=(typeof itemUseKind==='function')?itemUseKind(itemId):'recipe';
   const _act={bosskey:['#e0b05c',`${iconHTML('ui_lock')} Opens the ${escapeHTML(String(bossKeyFor(itemId)))}'s lair. Keep one.`],
               none:['#7da33f','Nothing uses this. Sell it.'],
-              ammo:['#a8c86a','Goes in your quiver. Each shot uses one.'],
+              /* A rune is spent by the cast, one to four of them (0.9.127.11). It read "each
+                 shot uses one" on the two runes that no recipe uses, Starfall and Sunder. */
+              ammo:['#a8c86a',(typeof isRune==='function'&&isRune(itemId))?'Goes in your quiver. A cast spends one for a Bolt, and up to four for a Surge.':'Goes in your quiver. Each shot uses one.'],
               keepsake:['#a08a64','Nothing uses this, and it cannot be sold. It is yours to keep.'],
               /* (0.9.124.11) No recipe names these, so without a line here the
                  tooltip would fall through to "Nothing uses this. Sell it." */
@@ -44477,7 +44763,7 @@ function combatTick(){
                 :`You ${didCrit?'<span style="color:#ffd700">crit</span> ':''}hit the ${mon.name} for ${youDmg}.`,'hit');
       cmbSplat(youDmg,(didCrit?'crit':'hit')+(_mg?' el-'+spellElement():''));
       if(_mg) mageOnHit(mon,youDmg,now);
-      if(_cleaveDmg>0){ cmbLog(`🪓 Reaping Arc cleaves again for ${_cleaveDmg}!`,'hit'); setTimeout(function(){cmbSplat(_cleaveDmg,'cleave');},150); }
+      if(_cleaveDmg>0){ cmbLog(_mg?(spellName()+' hits a second time for '+_cleaveDmg+'.'):`🪓 Reaping Arc cleaves again for ${_cleaveDmg}!`,'hit'); setTimeout(function(){cmbSplat(_cleaveDmg,'cleave');},150); }
       // Per-damage XP factor ÷10 vs old scale — damage numbers are ~10× bigger now.
       grantCombatXp(style,(youDmg+_cleaveDmg)*0.4);
       grantCombatXp('hitpoints',Math.round((youDmg+_cleaveDmg)*0.133));

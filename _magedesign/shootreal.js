@@ -270,9 +270,9 @@ function SCENES_IN_PAGE() {
       h += sec('Runestone and runes', 'one stone, a glow for each grade', ['runestone'].concat(runes).map(item));
       h += sec('Wands', 'one silhouette, seven woods', wands.map(item));
       h += sec('Staves', 'one silhouette, seven woods', staves.map(item));
-      h += sec('Cloth', 'one bolt, seven cloths', CLOTH_TIERS.map(function (c) { return item(c.key); }));
+      h += sec('Cloth', 'one bolt, seven cloths', CLOTH_TIERS.filter(function (c) { return ITEMS[c.key]; }).map(function (c) { return item(c.key); }));
       ['hood', 'robe', 'leggings', 'wraps', 'slippers'].forEach(function (p) {
-        h += sec('Robes: ' + p, 'one silhouette, seven cloths', CLOTH_TIERS.map(function (c) { return item(c.key + '_' + p); }));
+        h += sec('Robes: ' + p, 'one silhouette, a palette a cloth', CLOTH_TIERS.map(function (c) { return item(c.key + '_' + p); }));
       });
       h += sec('Skill, cape and elements', 'the rail icon, the Runecrafting Cape, and the four marks on the spell bar',
         [cell('Runecrafting', iconHTML('runecrafting')), cell('Runecrafting Cape', iconHTML('cape_runecrafting'))].concat(MAGIC_ELEMENTS.map(function (e) { return cell(e.n, iconHTML('el_' + e.k)); })));
@@ -381,6 +381,41 @@ function SCENES_IN_PAGE() {
       renderCombat();
       info.rows = [].map.call(document.querySelectorAll('#combatPanel [data-mldrop]'), function (e) { return e.textContent.replace(/\s+/g, ' ').trim(); }).slice(0, 14);
     }
+    /* a raid robe's card, beside the raid leather it is built off and the last crafted robe */
+    if (scene === 'raid_robe_card') {
+      mage99(); state.xp.runecrafting = XP_CUM[92];
+      state.items.riftwoven_robe = 1; state.items.voidweave = 9; state.items.riftshard = 2;
+      enterCombat();
+      cards(['riftwoven_robe', 'void_chest', 'wyrmsilk_robe'], ['Raid cloth: Runecrafting 90, from Voidweave and a Riftshard', 'The raid leather it is built off', 'The last crafted robe']);
+    }
+    /* Dawnveil worn, all four, with Faultline: the doll, what it adds up to, and a piece's card */
+    if (scene === 'dawnveil_set') {
+      mage99();
+      state.combatEquipped = { weapon: 'faultline', quiver: 'sunder_rune', helmet: 'dawnveil_hood', chest: 'dawnveil_robe', legs: 'dawnveil_leggings', boots: 'dawnveil_slippers', gloves: 'stonewright_gauntlets', cape: 'dawnmantle' };
+      for (var dk in state.combatEquipped) state.items[state.combatEquipped[dk]] = 1;
+      state.items.sunder_rune = 3560; state.combatElement = 'storm'; state.combatSpell = 'surge';
+      refreshCombatStats(); enterCombat(); rightTab = 'gear'; renderAll();
+      cards(['dawnveil_robe', 'dawnveil_hood'], ['Worn with the other three', '']);
+      info.sets = activeCombatSets(); var cbv = combatBonusesAll();
+      info.crit = +cbv.critChance.toFixed(3); info.magicDmg = +cbv.magicDmg.toFixed(3); info.hit = playerMaxHit(); info.save = +runeSaveRate().toFixed(3);
+      info.gear = (document.getElementById('gearView') || { textContent: '' }).textContent.replace(/\s+/g, ' ').slice(0, 260);
+    }
+    /* Faultline, beside the Empyrean's staff and the rune it casts */
+    if (scene === 'faultline_card') {
+      mage99(); state.items.faultline = 1; state.items.sunder_rune = 3560;
+      enterCombat();
+      cards(['faultline', 'dawncaller', 'sunder_rune'], ['The Sundered Spire, boss floors', 'The Empyrean Throne, 1%', 'Spire boss floors, in bulk']);
+    }
+    /* the Monster Log on a raid and on the Spire: the staff, the wand, Dawnveil and Faultline on their tables */
+    if (scene === 'raid_log' || scene === 'spire_log') {
+      mage99(); enterCombat(); state.cmbSubTab = 'log';
+      state.monLogZone = scene === 'raid_log' ? 'empyrean_throne' : SPR_ID;
+      state.raidClears = { empyrean_throne: 14 }; state.spireBest = 35;
+      renderCombat();
+      info.text = (document.getElementById('combatPanel') || { textContent: '' }).textContent.replace(/\s+/g, ' ');
+      info.has = ['Dawncaller', 'Starcall Wand', 'Dawnveil Robe', 'Faultline', 'magic power 34'].filter(function (w) { return info.text.indexOf(w) >= 0; });
+      info.text = info.text.slice(0, 200);
+    }
     /* a fight with a find in hand: what it does shows on the spell bar and in the log */
     if (scene === 'fight_unique') {
       state.combatXp.magic = XP_CUM[44]; state.combatXp.defence = XP_CUM[40]; state.combatXp.hitpoints = XP_CUM[50];
@@ -436,6 +471,11 @@ const SCENES = {
   gear_sheet:   { sel: '#mageSheet', tall: true, dir: 'gear', file: 'sheet' },
   unique_card:  { sel: '#gearShot', dir: 'gear' },
   monster_log:  { sel: '#combatPanel', dir: 'gear' },
+  raid_robe_card: { sel: '#gearShot', dir: 'gear' },
+  dawnveil_set: { full: true, dir: 'gear' },
+  faultline_card: { sel: '#gearShot', dir: 'gear' },
+  raid_log:     { sel: '#combatPanel', dir: 'gear' },
+  spire_log:    { sel: '#combatPanel', dir: 'gear' },
   fight_unique: { full: true, dir: 'gear' }
 };
 

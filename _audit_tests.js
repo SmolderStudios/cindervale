@@ -3405,7 +3405,15 @@ setTimeout(() => {
        an id off the day its painted icon is injected: the check under the list fails
        if a listed id is no longer drawn, so it cannot go stale. */
     const MAGE_PENDING = ['gnawbone_wand','briarwood_wand','webspinner_staff','fetish_staff','gravecaller','frostbrand_staff',
-                          'moonhowl_wand','seers_eye','mossheart_wand','cinderspine','ashglass_staff','brimstone_sceptre'];
+                          'moonhowl_wand','seers_eye','mossheart_wand','cinderspine','ashglass_staff','brimstone_sceptre',
+      /* Slice 8: two a raid and Faultline, the Spire's rune, the three raid cloths as
+         fifteen robe pieces, and Dawnveil. */
+      'gravecall_staff','barrow_wand','slagfire_staff','emberglass_wand','riftcaller','nullspire_wand','dawncaller','starcall_wand','faultline',
+      'sunder_rune',
+      'runebound_hood','runebound_robe','runebound_leggings','runebound_wraps','runebound_slippers',
+      'drakerune_hood','drakerune_robe','drakerune_leggings','drakerune_wraps','drakerune_slippers',
+      'riftwoven_hood','riftwoven_robe','riftwoven_leggings','riftwoven_wraps','riftwoven_slippers',
+      'dawnveil_hood','dawnveil_robe','dawnveil_leggings','dawnveil_slippers'];
     const SVG_OK = new Set(['radcliff_tally'].concat(RANGED_PENDING, SPIRE_PENDING, HAWK_PENDING, MAGE_PENDING));
 
     const unexpected = cov.svg.filter(id => !SVG_OK.has(id));
@@ -3418,7 +3426,7 @@ setTimeout(() => {
     const magePainted = JSON.parse(ev(`(function(){
       var ids=['runestone','runecrafting','cape_runecrafting'], pend=${JSON.stringify(MAGE_PENDING)};
       for(var id in ITEMS){ var it=ITEMS[id]; if(pend.indexOf(id)>=0) continue; if(isRune(id)||it.magic||(it.cloth&&id!=='stonewright_gauntlets')) ids.push(id); }
-      CLOTH_TIERS.forEach(function(c){ ids.push(c.key); });
+      CLOTH_TIERS.forEach(function(c){ if(ITEMS[c.key]) ids.push(c.key); });
       MAGIC_ELEMENTS.forEach(function(e){ ids.push('el_'+e.k); });
       var bad=ids.filter(function(id){ return !/^<img class="ev-icon art-item"/.test(String(ICONS[id]||'')); });
       return JSON.stringify({n:ids.length, bad:bad, shown:/art-item/.test(iconHTML('starfall_rune'))&&/art-item/.test(iconHTML('el_frost'))});
@@ -4734,9 +4742,11 @@ setTimeout(() => {
        so it is no longer an item nothing in the game wants. */
     /* charcoal left it in 0.9.127.4: Char and Cinder Runes are baked with it, its
        first use since Firemaking started making it. */
+    /* runed_bone, drakeforged_rune and riftshard left it in 0.9.127.11: each is what the
+       robe of its raid's cloth is sewn with (Runebound, Drakerune, Riftwoven). */
     const SELL_ONLY = ['abyssal_scale','barrow_dust','cut_purse',
-      'drakeforged_rune','ember_resin','energy_crystal','goblin_ear','golden_spore',
-      'jewelled_dagger','pocket_watch','riftshard','runed_bone','sealed_letter',
+      'ember_resin','energy_crystal','goblin_ear','golden_spore',
+      'jewelled_dagger','pocket_watch','sealed_letter',
       'signet_ring','silver_plate','splintered_club','stamina_shard','void_essence',
       /* Added 0.9.122.41. Stolen goods exist to be sold; that is the point of them. */
       'silver_censer','smuggler_ledger','heirloom_locket','officers_sabre',
@@ -9389,7 +9399,7 @@ setTimeout(() => {
        /Sundered Spire/.test(src.stone) && /Every floor/.test(src.stone)
        && /Sundered Spire/.test(src.core) && /floor 15/.test(src.core)
        && /Sundered Spire/.test(src.shaft) && /landing/i.test(src.shaft), JSON.stringify(src));
-    ok('and its four uniques quote a real depth-scaled chance',
+    ok('and its uniques quote a real depth-scaled chance',
        /Sundered Spire/.test(src.gear) && src.gearChance > 0 && src.gearChance < 1, JSON.stringify(src));
     ok('a cape you can only buy says so, and every shop item has a line',
        /The Shop/.test(src.cape) && /100,000g/.test(src.cape) && src.everyShopItem === true, JSON.stringify(src));
@@ -9407,10 +9417,12 @@ setTimeout(() => {
       compSearch=''; state.discovered={}; compCat='all'; renderCompendium();
       return {unowned:unowned, ownedShows:/Barrow Warden/.test(owned), ownedCount:owned.split(' / ').length};
     })()`);
+    /* Five and six since 0.9.127.11, were four and five: the Barrow Wand is a fifth
+       piece with Barrow in its name that the raid still drops. */
     ok('the Collection Log stops listing a retired piece nobody can get any more',
-       ret.unowned === 4, JSON.stringify(ret));
+       ret.unowned === 5, JSON.stringify(ret));
     ok('but still shows one to a player who already owns it',
-       ret.ownedShows === true && ret.ownedCount === 5, JSON.stringify(ret));
+       ret.ownedShows === true && ret.ownedCount === 6, JSON.stringify(ret));
   }
 
   section('Radcliff #163, #165, #168 (0.9.126.2)');
@@ -11352,6 +11364,128 @@ setTimeout(() => {
     ok('the six monsters that cast drop the rune of their level, a few casts a kill, and nothing else drops runes',
        mf.runes.length === 6 && mf.runes.every(r => r[1] === true) && mf.casters === 6, mf.runes.map(r => r[0] + ' ' + (r[2] || '?') + ' ' + (r[3] || '')).join(', '));
     ok('every find sells for something', mf.sells === true);
+  }
+
+  section('Magic in the raids and the Spire: weapons, raid robes, Dawnveil, Faultline, Sunder Runes (0.9.127.11)');
+  {
+    /* The other half of the gear. What can break here without throwing: a robe built
+       off the wrong leather, a recipe that asks for a cloth nobody can get, a set bonus
+       that shows on the card and reaches no fight, a rune the Spire never hands out,
+       and a save that held none of this loading into a game that expects it. */
+    const rg = JSON.parse(ev(`(function(){
+      var _cap=demoXpCap; demoXpCap=function(){ return XP_CAP; };
+      var R=Math.random, o={};
+      try{
+        state=defaultState(); normalizeState();
+        var RB=['hood','robe','leggings','wraps','slippers'], LP=['helm','chest','legs','gloves','boots'], SL=['helmet','chest','legs','gloves','boots'];
+        var raidCloth=CLOTH_TIERS.filter(function(t){ return t.raid; });
+        o.cloths=raidCloth.map(function(t){
+          var bad=[], sum={def:0,atk:0,mpow:0};
+          RB.forEach(function(p,i){
+            var id=t.key+'_'+p, it=ITEMS[id], st=COMBAT_GEAR_STATS[id], L=COMBAT_GEAR_STATS[t.leather+'_'+LP[i]];
+            var act=SKILLS.runecrafting.acts.filter(function(a){ return a.out&&a.out[id]; })[0];
+            var lAct=SKILLS.crafting.acts.filter(function(a){ return a.out&&a.out[t.leather+'_'+LP[i]]; })[0];
+            if(!it||!st||!L||!act||!lAct){ bad.push(id+' missing'); return; }
+            if(!it.cloth||it.light||it.ctier!==t.ctier||it.cslot!==SL[i]) bad.push(id+' shape');
+            if(st.def!==Math.max(1,Math.round(L.def*ROBE_DEF_FRAC))||st.atk!==Math.round(L.atk*ROBE_ATK_FRAC)||st.runeSave!==ROBE_RUNE_SAVE) bad.push(id+' numbers');
+            if(st.crit||st.dodge||st.aspd||st.str||st.rstr) bad.push(id+' carries a stat that is not cloth\\'s');
+            var need=JSON.stringify(act.inp), want={}; want[t.cloth]=[2,4,3,2,2][i]; if(p==='robe') want[t.reagent]=1;
+            if(need!==JSON.stringify(want)) bad.push(id+' recipe '+need);
+            if(act.lvl!==lAct.lvl||act.cat!=='robes'||act.subcat!==p) bad.push(id+' level '+act.lvl+' against leather '+lAct.lvl);
+            if(isUniqueGear(id)) bad.push(id+' reads as a drop');
+            sum.def+=st.def; sum.atk+=st.atk; sum.mpow+=st.mpow||0;
+          });
+          var raid=RAIDS.filter(function(r){ return r.id===t.raid; })[0];
+          var pool=(raid&&raid.matPool)||RAID_MAT_POOL;
+          if(!pool.some(function(x){ return x.id===t.cloth; })||!pool.some(function(x){ return x.id===t.reagent; })) bad.push(t.key+' cloth or reagent is not in its raid\\'s loot');
+          if(ITEMS[t.key]) bad.push(t.key+' has a bolt of its own');
+          return {key:t.key, set:t.set, tier:t.ctier, def:sum.def, atk:sum.atk, mpow:sum.mpow, want:t.mpow, bad:bad};
+        });
+        o.acts=SKILLS.runecrafting.acts.length; o.robeActs=SKILLS.runecrafting.acts.filter(function(a){ return a.cat==='robes'; }).length;
+        o.looms=SKILLS.runecrafting.acts.filter(function(a){ return a.cat==='cloth'; }).length;
+        /* a mage at 99 */
+        var arm=function(eq){ state=defaultState(); normalizeState(); Object.keys(COMBAT_STATS).forEach(function(k){ state.combatXp[k]=XP_CUM[99]; });
+          state.items={sunder_rune:1e5, starfall_rune:1e5, sundershaft:1e5}; state.combatEquipped=eq; state.combatSpell='surge'; state.combatElement='fire';
+          combat.active=false; combat.raid=null; refreshCombatStats();
+          var b=combatBonusesAll(); return {crit:+b.critChance.toFixed(4), magic:+b.magicDmg.toFixed(4), ranged:+b.rangedStr.toFixed(4), atk:+b.atkBoost.toFixed(4), hit:playerMaxHit(), mult:magicArmourMult(), save:+runeSaveRate().toFixed(4), mpow:combatStats().mpow, sets:activeCombatSets().join()}; };
+        var V={helmet:'dawnveil_hood',chest:'dawnveil_robe',legs:'dawnveil_leggings',boots:'dawnveil_slippers'};
+        var add=function(a,b){ var x={}; for(var k in a) x[k]=a[k]; for(var k2 in b) x[k2]=b[k2]; return x; };
+        var three=add(V,{}); delete three.boots;
+        o.veil={ bare:arm({weapon:'faultline',quiver:'sunder_rune'}), three:arm(add(three,{weapon:'faultline',quiver:'sunder_rune'})), four:arm(add(V,{weapon:'faultline',quiver:'sunder_rune'})),
+                 bow:arm(add(V,{weapon:'plummet',quiver:'sundershaft'})), sword:arm(add(V,{weapon:'sunderedge'})) };
+        o.veilPieces=DAWNVEIL.pieces.map(function(p){ var it=ITEMS[p[0]], st=COMBAT_GEAR_STATS[p[0]], L=COMBAT_GEAR_STATS[p[3]];
+          return !!(it.cloth&&!it.light&&it.ctier===10&&it.setKey==='dawnveil'&&it.rare&&st.def===Math.round(L.def*ROBE_DEF_FRAC)&&st.atk===Math.round(L.atk*ROBE_ATK_FRAC)&&st.mpow===p[4]&&st.runeSave===0.02&&!st.crit&&!st.dodge&&!st.aspd&&isUniqueGear(p[0])); });
+        state=defaultState(); normalizeState(); state.combatEquipped=add(V,{});
+        var d=document.createElement('div'); d.innerHTML=combatGearStatBlock('dawnveil_robe'); o.veilCard=d.textContent.replace(/\\s+/g,' ');
+        /* Faultline and the Sunder Rune off a Spire boss floor */
+        var loot=function(floor,c){ state=defaultState(); normalizeState(); Math.random=function(){ return c; }; var l=spireFloorLoot(floor); Math.random=R;
+          return {gear:(l.gear||[]).join(), rune:state.items.sunder_rune||0, shaft:state.items.sundershaft||0}; };
+        o.spire=[loot(30,0), loot(30,0.9999), loot(31,0)];
+        o.spireGear=SPIRE_GEAR.join();
+        o.rune={is:isRune('sunder_rune'), cls:runeClassOf('sunder_rune'), pow:ITEMS.sunder_rune.runePow, sell:ITEMS.sunder_rune.sell,
+          sizes:[1,2,3,4].map(function(s){ return spellPower(ITEMS.sunder_rune.runePow,4,s); }), made:SKILLS.runecrafting.acts.some(function(a){ return a.out&&a.out.sunder_rune; }),
+          dropsOffMonsters:Object.keys(MONSTER_DROPS).some(function(m){ return MONSTER_DROPS[m].some(function(x){ return x.id==='sunder_rune'; }); })};
+        /* the nine found in the raids and the Spire: shapes, cards, words */
+        var W=MAGE_RAID_DROPS, ids=W.map(function(x){ return x.id; });
+        var shape=function(svg){ return String(svg).replace(/#[0-9a-fA-F]{3,8}/g,'#').replace(/mgi\\d+[gs]/g,'G'); };
+        var all=MAGE_ZONE_DROPS.map(function(x){ return x.id; }).concat(ids), shapes=all.map(function(id){ return shape(ICONS[id]); });
+        o.shapes=shapes.filter(function(s,i){ return shapes.indexOf(s)===i; }).length;
+        /* a cloth with a glow draws one more circle than one without, so hold these against a crafted cloth that glows */
+        var veilShapes=DAWNVEIL.pieces.map(function(p){ return shape(ICONS[p[0]]); }), robeShapes=RB.map(function(p){ return shape(_ROBE_GEN[p](CLOTH_PAL.rimeweave)); });
+        o.veilOwn=veilShapes.filter(function(s,i){ return veilShapes.indexOf(s)===i && robeShapes.indexOf(s)<0; }).length;
+        o.raidRobesShare=raidCloth.every(function(t){ return RB.every(function(p,i){ return shape(ICONS[t.key+'_'+p])===robeShapes[i]; }); });
+        o.weapons=W.filter(function(x){ var it=ITEMS[x.id], st=COMBAT_GEAR_STATS[x.id];
+          return !(it&&it.magic&&it.rare&&it.ctier===x.tier&&st.atk===x.atk&&st.mpow===x.mpow&&isUniqueGear(x.id)&&combatGearReq(x.id).stat==='magic'&&/<b>[^<]+<\\/b>/.test(it.desc)); }).map(function(x){ return x.id; });
+        var chips=function(id){ var e=document.createElement('div'); e.innerHTML=combatGearStatBlock(id); return e.textContent.replace(/\\s+/g,' '); };
+        o.own=[/\\+7% Magic damage/.test(chips('faultline')), /\\+5% crit chance/.test(chips('faultline')), /\\+7% crit chance/.test(chips('starcall_wand')), /\\+5% Magic damage/.test(chips('starcall_wand')),
+               /Heals 4% of damage dealt/.test(chips('mossheart_wand')), !/crit chance|Heals/.test(chips('ancient_staff')), !/% Magic damage/.test(chips('plummet'))];
+        var tipOf=function(id){ showItemTooltip(id,10,10,''); var t=ttEl().textContent; hideTooltip(); return t; };
+        o.quiver=[/A cast spends one for a Bolt, and up to four for a Surge/.test(tipOf('sunder_rune')), /A cast spends one for a Bolt/.test(tipOf('starfall_rune')), /Each shot uses one/.test(tipOf('sundershaft')), !/Each shot uses one/.test(tipOf('sunder_rune'))];
+        o.cards=[/10% chance a cast hits twice/.test(chips('faultline')), /\\+34 Magic Power/.test(chips('faultline')), /\\+8% damage with Shadow/.test(chips('riftcaller')), /10% chance to stun on hit/.test(chips('gravecall_staff')), /30% chance to burn/.test(chips('dawncaller'))];
+        var text=W.map(function(x){ return ITEMS[x.id].name+' '+ITEMS[x.id].desc; }).concat(DAWNVEIL.pieces.map(function(p){ return ITEMS[p[0]].desc; }), [ITEMS.sunder_rune.desc, COMBAT_SETS.dawnveil.desc],
+          SKILLS.runecrafting.acts.filter(function(a){ return /^rn_rb_(runebound|drakerune|riftwoven)/.test(a.id); }).map(function(a){ return a.name; })).join(' | ').replace(/<[^>]+>/g,' ');
+        o.words=(text.match(/\\b(swing|swings|blows?|guard|stretch|landings?|weight|affix(es)?|pays?|yields?|procs?)\\b|\\u2014/gi)||[]).join(',');
+        /* a staff that was found rolls from the staff pool, with the unique enchant on top */
+        var P=enchPoolFor('faultline'); o.pool=[P&&P.pool, P&&P.keys.indexOf('atkBoost')<0, enchUniquePoolFor('faultline')[0]];
+        /* a save from before any of this, and one holding all of it */
+        state=defaultState(); normalizeState(); var plain=JSON.stringify(state.combatEquipped);
+        state.items={faultline:1,sunder_rune:400,dawnveil_robe:1,riftwoven_hood:1}; state.combatEquipped={weapon:'faultline',quiver:'sunder_rune',chest:'dawnveil_robe',helmet:'riftwoven_hood'};
+        var saved=JSON.parse(JSON.stringify(state)); state=saved; normalizeState();
+        o.save=[plain, state.items.faultline, state.items.sunder_rune, state.combatEquipped.weapon, state.combatEquipped.quiver, state.combatEquipped.chest, state.combatEquipped.helmet];
+      } finally { Math.random=R; combat.active=false; combat.raid=null; demoXpCap=_cap; state=defaultState(); normalizeState(); refreshCombatStats(); }
+      return JSON.stringify(o);
+    })()`));
+    const cb = rg.cloths.reduce((a, c) => a.concat(c.bad), []);
+    ok('three raid cloths go through the loop the seven crafted ones do: fifteen robe pieces, each 62% of its raid leather\'s Defence and half its Attack',
+       rg.cloths.length === 3 && cb.length === 0, cb.slice(0, 4).join(', ') || rg.cloths.map(c => c.set + ' ' + c.def + '/' + c.atk).join(', '));
+    ok('Runebound, Drakerune and Riftwoven carry +6, +7 and +9 Magic Power at tiers 7, 8 and 9',
+       rg.cloths.map(c => c.mpow).join() === '6,7,9' && rg.cloths.every(c => c.mpow === c.want) && rg.cloths.map(c => c.tier).join() === '7,8,9', rg.cloths.map(c => '+' + c.mpow).join(' '));
+    ok('Runecrafting is 79 acts now: 50 robe pieces, and still seven looms because a raid cloth is not woven',
+       rg.acts === 79 && rg.robeActs === 50 && rg.looms === 7, rg.acts + ' acts');
+    ok('Dawnveil is four cloth pieces built off Sunweave, with none of leather\'s crit, dodge or attack speed', rg.veilPieces.length === 4 && rg.veilPieces.every(Boolean), rg.veilPieces.join(' '));
+    const V = rg.veil;
+    ok('all four worn give +10% crit chance and +8% damage, and three give nothing',
+       V.four.sets === 'dawnveil' && Math.abs(V.four.crit - V.bare.crit - 0.10) < 1e-9 && Math.abs(V.four.magic - V.bare.magic - 0.08) < 1e-9 && V.three.sets === '' && V.three.crit === V.bare.crit && V.three.magic === V.bare.magic,
+       'crit ' + V.bare.crit + ' -> ' + V.four.crit + ', Magic damage ' + V.bare.magic + ' -> ' + V.four.magic);
+    ok('the damage follows the weapon: Magic damage for a staff, Ranged damage for a bow, Attack for a sword',
+       V.four.ranged === 0 && V.four.atk === 0 && Math.abs(V.bow.ranged - 0.08 - 0.07) < 1e-9 && V.bow.magic === 0 && V.sword.atk >= 0.08 && V.sword.magic === 0,
+       'staff ' + V.four.magic + ', bow ' + V.bow.ranged + ', sword ' + V.sword.atk);
+    ok('it is cloth, so it costs a spell nothing, and it reaches the max hit', V.four.mult === 1 && V.four.hit > V.three.hit && V.three.hit > V.bare.hit && V.four.save === 0.08 && V.four.mpow - V.bare.mpow === 11, 'max hit ' + V.bare.hit + ' -> ' + V.four.hit);
+    ok('a Dawnveil card names the set and says it is active when all four are worn', /Dawnveil set · 4\/4/.test(rg.veilCard) && /\+10% crit chance and \+8% damage with any weapon/.test(rg.veilCard) && /Cloth · spells at full strength/.test(rg.veilCard), rg.veilCard.slice(0, 160));
+    ok('Faultline is the Spire\'s fifth piece and drops on a boss floor', rg.spireGear.split(',').length === 5 && /faultline/.test(rg.spire[0].gear) && rg.spire[1].gear === '' && rg.spire[2].gear === '', rg.spire[0].gear);
+    ok('Sunder Runes come four for every arrow, on boss floors only', rg.spire[0].rune === rg.spire[0].shaft * 4 && rg.spire[0].rune > 0 && rg.spire[2].rune === 0 && rg.rune.dropsOffMonsters === false, rg.spire[0].rune + ' runes, ' + rg.spire[0].shaft + ' arrows on floor 30');
+    ok('a Sunder Rune is a rune that powers a Surge with 38, cannot be carved, and sells for 2 silver',
+       rg.rune.is === true && rg.rune.cls === 4 && rg.rune.pow === 38 && rg.rune.sell === 2 && rg.rune.made === false && rg.rune.sizes.join() === '15,22,29,38', rg.rune.sizes.join(' '));
+    ok('the nine found in the raids and the Spire are magic weapons of their tier, each with its card line in bold', rg.weapons.length === 0, rg.weapons.join(', '));
+    ok('twenty-one found staves and wands, twenty-one shapes; Dawnveil is its own four; raid robes are the five robe shapes',
+       rg.shapes === 21 && rg.veilOwn === 4 && rg.raidRobesShare === true, rg.shapes + ' shapes, ' + rg.veilOwn + ' Dawnveil');
+    ok('their cards say what they do: a second hit, Magic Power, an element, a stun, a burn', rg.cards.every(Boolean), rg.cards.join(' '));
+    ok('and what a found staff or wand adds on its own is on the card without Shift held: Magic damage, crit chance, healing', rg.own.every(Boolean), rg.own.join(' '));
+    ok('a rune\'s card says what a cast spends, where an arrow\'s says each shot uses one', rg.quiver.every(Boolean), rg.quiver.join(' '));
+    ok('in plain words, with no em dash', rg.words === '', rg.words);
+    ok('a found staff rolls enchants from the staff pool, never Attack, and its unique enchant is Magic damage', rg.pool[0] === 'staff' && rg.pool[1] === true && rg.pool[2] === 'magicDmg', rg.pool.join(' '));
+    ok('no save field was added: a new character is unchanged, and a save holding the new gear loads with it',
+       rg.save[0] === '{}' && rg.save[1] === 1 && rg.save[2] === 400 && rg.save.slice(3).join() === 'faultline,sunder_rune,dawnveil_robe,riftwoven_hood', rg.save.join(' '));
   }
 
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));
