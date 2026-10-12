@@ -2749,6 +2749,7 @@ body:not(.is-demo) .demo-only{display:none !important}
   cursor:var(--cur-pointer);padding:0}
 .ofp-buy:hover:not(:disabled){border-color:var(--trim);background:#2c2013;color:#fbeed0}
 .ofp-buy:disabled{opacity:.3;cursor:default}
+.ofp-buy.off{opacity:.3}   /* no points left: still takes the click, to say so (#235) */
 .ofp-stancetag{display:inline-block;font-family:var(--num);font-size:calc(9.5px*var(--tscale));
   letter-spacing:.1em;color:#8fd0e6;border:1px solid #2c4762;background:#101a26;
   border-radius:999px;padding:1px 7px;margin-left:6px;vertical-align:1px}
@@ -3085,6 +3086,8 @@ body:not(.is-demo) .demo-only{display:none !important}
 #itemTooltip .nt-hd{padding:9px 12px 8px;background:linear-gradient(180deg,#241a0d,#1b1409)}
 #itemTooltip .nt-hd .tt-name{margin-bottom:0;display:flex;align-items:center;gap:6px}
 #itemTooltip .nt-meta{font-size:calc(11.5px*var(--tscale));color:#8a7455;letter-spacing:.6px;margin-top:2px}
+#itemTooltip .nt-own{font-size:calc(11.5px*var(--tscale));color:#b9a57e;margin-top:2px}
+#itemTooltip .nt-own:empty{display:none}
 #itemTooltip .nt-rare{color:#ffd700;font-size:calc(11px*var(--tscale));letter-spacing:1px;margin-left:auto}
 #itemTooltip .nt-sec{padding:8px 12px;border-top:1px solid #2e2113}
 #itemTooltip .nt-sec>.tt-sub:last-child{margin-bottom:0}
@@ -4294,6 +4297,13 @@ body:not(.is-demo) .demo-only{display:none !important}
 /* During a raid the ribbon owns the far-left edge, so the stats rail slides right
    to clear it. Outside a raid nothing about the arena changes. */
 .cvstage.rx-raid .cvrail.l{left:calc(94px*var(--tscale))}
+/* Ticket #226. The right rail has 500px of stage (times the text size) whatever the
+   window, and a raid adds the Momentum panel to it: five panels whose own minimums
+   came to about 614px against 573, so the log at the bottom was cut off by the
+   stage. The two lines that go are "hold a bow / a staff to train it", which is
+   advice you cannot act on in the middle of a raid. Measured in Chrome at text
+   sizes 0.85, 1.15 and 1.35, melee and bow: nothing is cut with them gone. */
+.cvstage.rx-raid .cst-ranged,.cvstage.rx-raid .cst-magic{display:none}
 /* ════ The Sundered Spire + Ascension (0.9.124.11) ════════════════════════════ */
 .spr-fxrow{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
 .spr-fxrow.run{margin-top:7px}
@@ -5795,6 +5805,9 @@ body:not(.is-demo) .demo-only{display:none !important}
   color:var(--dim,#7a6748)}
 .fm-seed.on i{color:var(--trim)}
 /* Vault header: the note sits quiet beside the count, the toggle sits right. */
+/* What tending does, under the field's heading (#217). Its own line: inside the
+   heading it was set in capitals and pushed the counts onto two rows. */
+.fm-tendnote{font-size:calc(12px*var(--tscale));color:var(--muted);font-style:italic;margin:-2px 0 8px}
 .fm-vnote{font-family:var(--num);font-size:calc(10.5px*var(--tscale));color:#7a6a4a;
   margin-left:8px;font-weight:400}
 .fm-vsell{margin-left:auto;font-family:var(--num);font-size:calc(11px*var(--tscale));
@@ -6190,7 +6203,9 @@ body:not(.is-demo) .demo-only{display:none !important}
   position:absolute; left:4px; right:0; bottom:0; height:3px;
   margin:0; border-radius:0; z-index:2;
 }
-.act.active .mastery-row{ display:none; }
+/* The mastery row stays on a running card (#206). How long the materials will
+   last rides on the runs chip, so the card is the same height running or not. */
+.act .runs .runs-left{ font-size:inherit; white-space:nowrap; }
 .act .act-running-info{
   margin-top:0; flex-wrap:nowrap; gap:8px; min-width:0;
   font-size:calc(11.5px*var(--tscale)); line-height:1.5;
@@ -7810,6 +7825,10 @@ body:not(.is-demo) .demo-only{display:none !important}
 .lo-slot.lock .ev-icon{opacity:.55}
 .lo-slot.more{font-family:var(--num);font-size:calc(12px*var(--tscale));color:#c9b48c}
 .lo-btns{display:flex;gap:4px}
+/* The same cards under the Satchel screen's doll (#236). */
+.inv-lo{display:grid;gap:6px;margin-top:10px}
+.inv-lo-lab{font-family:var(--num);font-size:calc(10.5px*var(--tscale));letter-spacing:.12em;text-transform:uppercase;color:#8a7657}
+.inv-lo .lo-btns{flex-wrap:wrap;margin-top:6px}
 .lo-btns .bag-btn{flex:1;min-width:0;height:26px;padding:0 4px;font-size:calc(11.5px*var(--tscale))}
 .lo-btns .bag-btn.warn{border-color:rgba(224,120,80,.75);background:#3a170c;color:#ffc9a8}
 
@@ -7953,6 +7972,11 @@ body:not(.is-demo) .demo-only{display:none !important}
 .gsp-foot{flex:none;display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px;padding-top:12px;
   border-top:1px solid rgba(214,170,96,.14);font-size:calc(12.5px*var(--tscale));color:#9c8864}
 .dl-sq .sg-prog{top:-7px;right:-10px;font-size:calc(10px*var(--tscale))}
+/* How many arrows, bolts or runes are loaded (#202). Bottom right, where a stack
+   count sits on every satchel tile. */
+.dl-sq .dl-ct{position:absolute;right:2px;bottom:1px;z-index:2;font-family:var(--num);font-size:calc(11px*var(--tscale));
+  line-height:1;color:#f0e0c0;text-shadow:0 1px 2px #000,0 0 3px #000;pointer-events:none}
+.dl-sq .dl-ct.low{color:#ff9a7a}
 .dl-sq .eq-x{top:-7px;right:-7px}
 .dl-names{display:flex;flex-wrap:wrap;justify-content:center;gap:4px;margin-top:4px}
 .dl-names.none{font-size:calc(12px*var(--tscale));color:var(--muted);font-style:italic}
@@ -9011,7 +9035,7 @@ body:not(.is-demo) .demo-only{display:none !important}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.127.6">v0.9.127</div>
+  <div class="mm-ver" data-build="0.9.127.7">v0.9.127</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -16223,7 +16247,7 @@ function combatGearStatBlock(itemId){
   if(s.aspd)  parts.push('<span style="color:#9be89b">'+iconHTML('ui_bolt')+' +'+Math.round(s.aspd*100)+'% Atk Speed</span>');
   // Shield block (1.0.87) — flat damage reduction, computed from this shield's Defence.
   // Bucklers (offhand) don't block; they're the rogue's light offhand instead.
-  if(it.cslot==='shield' && !it.offhand){ var _sdr=Math.min(0.28,(s.def||0)*0.003); if(_sdr>0) parts.push('<span style="color:#8fb8ff">'+iconHTML('ui_shield')+' Blocks '+Math.round(_sdr*100)+'% of each hit</span> <span style="color:var(--muted);font-size:calc(11px*var(--tscale))">(half that if you carry a light weapon)</span>'); if(it.hpBlock) parts.push('<span style="color:#9be89b">'+iconHTML('ui_heart')+' Extra block that grows with your max HP (up to +'+Math.round((it.hpBlock.cap||0.08)*100)+'%)</span>'); if(it.hpStr) parts.push('<span style="color:#ffb37a">'+iconHTML('ui_muscle')+' Extra Strength that grows with your max HP (up to +'+(it.hpStr.cap||20)+')</span>'); }
+  if(it.cslot==='shield' && !it.offhand){ var _sdr=Math.min(0.28,(s.def||0)*0.003); if(_sdr>0) parts.push('<span style="color:#8fb8ff">'+iconHTML('ui_shield')+' Blocks '+Math.round(_sdr*100)+'% of each hit</span> <span style="color:var(--muted);font-size:calc(11px*var(--tscale))">(with a dagger or another light weapon it blocks half that and you attack 20% slower, as every full shield does)</span>'); if(it.hpBlock) parts.push('<span style="color:#9be89b">'+iconHTML('ui_heart')+' Extra block that grows with your max HP (up to +'+Math.round((it.hpBlock.cap||0.08)*100)+'%)</span>'); if(it.hpStr) parts.push('<span style="color:#ffb37a">'+iconHTML('ui_muscle')+' Extra Strength that grows with your max HP (up to +'+(it.hpStr.cap||20)+')</span>'); }
   if(it.cslot==='shield' && it.offhand) parts.push('<span style="color:#9be89b">'+iconHTML('ui_sword')+' Off-hand — no block, but it never slows a light weapon</span>');
   var statLine=parts.length?parts.join(' &nbsp; '):'<span style="color:var(--muted)">No combat stats</span>';
   // Equip requirement (1.0.26) — green if met, red lock if not.
@@ -18693,7 +18717,7 @@ function tendPatch(patchId, silent){
   if(!silent){
     showXpPop('farming',xpGain);
     renderFarming(); saveGame();
-    toast('🌱 Tended! Growth boosted by '+Math.round(crop.tendBoost*100)+'%. Next tend in '+fmtTime(effectiveTendInterval)+'.');
+    toast('🌱 Tended. '+Math.round(crop.tendBoost*(gmTend?2:1)*100)+'% of the grow time taken off. Next tend in '+fmtTime(effectiveTendInterval)+'.');
   }
   return true;
 }
@@ -18720,7 +18744,12 @@ function harvestPatch(patchId, silent){
     if(m.master1) qty+=1;
     state.items[outId]=(state.items[outId]||0)+qty;
     markDiscovered(outId);
-    if(!silent) showItemPop(outId, qty);
+    /* Ticket #228: "If you have farming going while training something else farming
+       won't show up" in the drops window. `silent` is for the farmhand and Harvest
+       all, and it was silencing this too, so the only harvest that ever reached the
+       feed was one patch clicked by hand. Silent still means no toast, no XP pop
+       and no repaint. What landed in the satchel is always reported. */
+    showItemPop(outId, qty);
   }
 
   // Rare drops — chance-based per harvest (e.g. Void Essence from Ancient Bloom).
@@ -18732,7 +18761,7 @@ function harvestPatch(patchId, silent){
       if(got>0){
         state.items[rd.id]=(state.items[rd.id]||0)+got;
         markDiscovered(rd.id);
-        if(!silent) showItemPop(rd.id, got);
+        showItemPop(rd.id, got);
       }
     }
   }
@@ -18747,7 +18776,7 @@ function harvestPatch(patchId, silent){
   if(Math.random()<returnChance){
     addSeed(ps.seedId,1);
     markDiscovered(ps.seedId);
-    if(!silent) showItemPop(ps.seedId, 1);
+    showItemPop(ps.seedId, 1);
   }
 
   /* Mastery (ticket #67). Farming harvests here rather than through completeAction,
@@ -19131,7 +19160,10 @@ function buildFarmerPanel(){
   } else {
     var first=FARMER_TIERS[0];
     txt.innerHTML='<div class="fm-l1"><b>No farmhand</b></div>'
-      +'<p>An <em>'+first.name+'</em> harvests your ready patches while you are away. '
+      /* Ticket #233. This said "while you are away", which everywhere else in the
+         game means with the game closed. A farmhand works while the game is open. */
+      +'<p>An <em>'+first.name+'</em> harvests your ready patches for you while the game is open. '
+      +'With the game closed your patches keep growing and are harvested when you come back. '
       +iconHTML('ui_coin')+' '+first.wage.toLocaleString()+'g a harvest.</p>';
   }
   row.appendChild(txt);
@@ -19276,10 +19308,9 @@ function renderFarming(){
   // every call, so we must re-assert block FIRST — before any early-return —
   // otherwise a skipped rebuild leaves block content reflowing inside a grid.
   box.style.display='block';
-  // The farmhand's seed picker is still a <select>, so the focus guard stays:
-  // a rebuild mid-choice would close the list out from under the player.
-  var _af=document.activeElement;
-  if(_af && _af.tagName==='SELECT' && box.contains(_af)) return;
+  // The farmhand's seed picker is still a <select>: a rebuild while its list is
+  // open would close it out from under the player. Open, not merely focused (#238).
+  if(selOpenIn(box)) return;
   if(Date.now()-_farmInteractAt<3000) return;
   box.innerHTML='';
   var lvl=farmingLvl();
@@ -19376,8 +19407,15 @@ function renderFarming(){
   });
   var fieldLab=document.createElement('div');
   fieldLab.className='fm-lab';
+  /* Ticket #217: "Does tending do anything besides cutting the growing time? If so,
+     it would be nice to note that somewhere." It was said once, in a hint that goes
+     away at Farming 20. */
   fieldLab.innerHTML='Your field <b>'+ready+' ready \u00b7 '+growing+' growing \u00b7 '+empty+' empty</b>';
   box.appendChild(fieldLab);
+  var tendNote=document.createElement('div');
+  tendNote.className='fm-tendnote';
+  tendNote.textContent='Tending takes time off the grow and gives 15% of the harvest XP. It does not change what you harvest.';
+  box.appendChild(tendNote);
 
   var field=document.createElement('div');
   field.className='fm-field';
@@ -19444,7 +19482,8 @@ function renderFarming(){
       +'<div class="fm-bar amb"><i style="width:'+pct2+'%"></i></div>';
     var t=document.createElement('button');
     t.className='fm-btn wide';
-    t.textContent=canTend?('Tend \u00b7 \u2212'+Math.round(crop.tendBoost*100)+'%')
+    /* The real cut. Perfect Tender doubles it, and the button still said 30%. */
+    t.textContent=canTend?('Tend \u00b7 \u2212'+Math.round(crop.tendBoost*(treeRank('farming','fa_gm_tend')>0?2:1)*100)+'%')
       :('Tend in '+fmtTime(tendEvery-since));
     t.disabled=!canTend;
     if(canTend) t.addEventListener('click',function(){ tendPatch(p.id); });
@@ -20406,42 +20445,52 @@ function _loStatusHTML(st){
    click only asks. Kept here, not on the button: the tab repaints as actions
    finish and would forget it. */
 var _loArm=null;
-function _loBtnsHTML(scope,key,st){
+function _loBtnsHTML(scope,key,st,always){
   var a=' data-scope="'+scope+'" data-key="'+key+'"';
   var eq=!st.set?'':(st.worn?'<button type="button" class="bag-btn" disabled>Equipped</button>'
                            :'<button type="button" class="bag-btn gold" data-lo="equip"'+a+'>Equip</button>');
   var armed=_loArm&&_loArm.key===scope+':'+key&&Date.now()<_loArm.until;
   // A skilling card is half the bar wide, so its button says Save; the tip says what.
-  var saveLbl=armed?'Replace it?':(scope==='combat'?'Save current':'Save');
-  var save=(!st.set||scope==='combat')?'<button type="button" class="bag-btn'+(armed?' warn':'')+'" data-lo="save"'+a
+  var saveLbl=armed?'Replace it?':(scope==='combat'?'Save current':(st.set?'Update':'Save'));
+  var save=(!st.set||scope==='combat'||always)?'<button type="button" class="bag-btn'+(armed?' warn':'')+'" data-lo="save"'+a
     +' title="Save what you are wearing now">'+saveLbl+'</button>':'';
   return eq+save+'<button type="button" class="bag-btn" data-lo="edit"'+a+'>Edit</button>';
+}
+/* One handler for every preset button, wherever it is drawn: the Presets tab and,
+   since ticket #236, the Satchel screen's gear column. `repaint` redraws the
+   surface the click came from. Saving over a set you are not wearing asks first,
+   for a skilling set as well now that the Satchel can update one. */
+function _loRepaintAll(){
+  if(rightTab==='presets') renderPresets();
+  if(typeof invOpen!=='undefined'&&invOpen){ _invGearKey=''; renderInvGear(); }
+}
+function _loClick(e,box,repaint){
+  var el=e.target.closest?e.target.closest('[data-lo]'):null;
+  if(!el||!box.contains(el)||el.disabled) return;
+  var act=el.getAttribute('data-lo'), scope=el.getAttribute('data-scope'), key=el.getAttribute('data-key');
+  if(act==='scope'){ _loScope=el.getAttribute('data-v'); box.scrollTop=0; repaint(); return; }
+  if(act==='auto'){ state.presetAuto=!state.presetAuto; saveGame(); repaint(); return; }
+  if(act==='equip'){ if(scope==='combat') equipCombatPreset(key); else equipGearPreset(key); _loRepaintAll(); return; }
+  if(act==='save'){
+    var st=presetStatus(scope,key), id=scope+':'+key;
+    if(st.set&&!st.worn&&!(_loArm&&_loArm.key===id&&Date.now()<_loArm.until)){
+      _loArm={key:id,until:Date.now()+4000}; repaint();
+      setTimeout(function(){ if(_loArm&&_loArm.key===id&&Date.now()>=_loArm.until){ _loArm=null; _loRepaintAll(); } },4100);
+      return;
+    }
+    _loArm=null;
+    if(scope==='combat') saveCombatPreset(key); else saveGearPreset(key);
+    _loRepaintAll();
+    return;
+  }
+  if(act==='edit'){ openPresetEditor(key,scope); return; }
 }
 function renderPresets(){
   var box=$('presetsView'); if(!box) return;
   var keep=box.scrollTop;
   if(!box._loWired){
     box._loWired=true;
-    box.addEventListener('click',function(e){
-      var el=e.target.closest?e.target.closest('[data-lo]'):null;
-      if(!el||!box.contains(el)||el.disabled) return;
-      var act=el.getAttribute('data-lo'), scope=el.getAttribute('data-scope'), key=el.getAttribute('data-key');
-      if(act==='scope'){ _loScope=el.getAttribute('data-v'); box.scrollTop=0; renderPresets(); return; }
-      if(act==='auto'){ state.presetAuto=!state.presetAuto; saveGame(); renderPresets(); return; }
-      if(act==='equip'){ if(scope==='combat') equipCombatPreset(key); else equipGearPreset(key); return; }
-      if(act==='save'){
-        var st=presetStatus(scope,key), id=scope+':'+key;
-        if(scope==='combat'&&st.set&&!st.worn&&!(_loArm&&_loArm.key===id&&Date.now()<_loArm.until)){
-          _loArm={key:id,until:Date.now()+4000}; renderPresets();
-          setTimeout(function(){ if(_loArm&&_loArm.key===id&&Date.now()>=_loArm.until){ _loArm=null; if(rightTab==='presets') renderPresets(); } },4100);
-          return;
-        }
-        _loArm=null;
-        if(scope==='combat') saveCombatPreset(key); else saveGearPreset(key);
-        return;
-      }
-      if(act==='edit'){ openPresetEditor(key,scope); return; }
-    });
+    box.addEventListener('click',function(e){ _loClick(e,box,renderPresets); });
   }
   var html='<div class="lo-seg">'
     +'<button type="button" class="'+(_loScope==='skilling'?'on':'')+'" data-lo="scope" data-v="skilling">Skilling</button>'
@@ -21938,7 +21987,54 @@ function normalizeState(){
   if(state.cmast && typeof state.cmast==='object'){
     for(const id in state.cmast){ if(typeof CMAST_BY_ID!=='undefined' && !CMAST_BY_ID[id]) delete state.cmast[id]; }
   }
+  cmastReconcile();
   if(typeof CMAST_CAP!=='undefined') state.cmastShards=Math.max(0, (state.cmastGranted||0) - CMAST_CAP);
+}
+/* Ticket #234: "got ranged to 99 and only got 125 of the 132 points for the tree.
+   the patch for this doesn't seem to fix existing saves." It did not. 0.9.126.8
+   added twelve points (three hunting grounds, four raid first-clears, five Spire
+   rungs) and every one is paid at the moment of the event: the first clear, the
+   climb that first passes the rung, the kill that completes a roster. A save that
+   had already cleared the raid, passed the floor or emptied the ground before that
+   build was never going to see the event again, so those points were gone for good
+   on exactly the characters that had done the most.
+
+   This works out what the save's own record says it has earned and raises the
+   counter to it. Everything it reads is something the live grants also write
+   (combat level, boss kills, zone clears, raid clears, the deepest Spire floor), so
+   it can only ever agree with them: it never pays twice, and it never takes a
+   point away. Runs on every load. */
+function cmastReconcile(){
+  if(typeof MONSTERS==='undefined'||typeof ZONES==='undefined'||typeof RAIDS==='undefined'
+     ||typeof CMAST_SPIRE_FLOORS==='undefined'||typeof combatLevel!=='function') return 0;
+  if(!state||!state.cmastBossKills||!state.cmastZoneClears||!state.cmastMilestones) return 0;
+  const mk=state.monKills||{};
+  for(const m of MONSTERS) if(m.boss&&(mk[m.id]||0)>0) state.cmastBossKills[m.id]=true;
+  for(const id in state.cmastBossKills){
+    const m=MONSTERS.find(x=>x.id===id&&x.boss);
+    if(m&&m.zone) state.cmastZoneClears[m.zone]=true;
+  }
+  for(const z of ZONES){
+    if(state.cmastZoneClears[z.id]) continue;
+    const roster=MONSTERS.filter(m=>m.zone===z.id);
+    if(roster.length && !roster.some(m=>m.boss) && roster.every(m=>(mk[m.id]||0)>0)) state.cmastZoneClears[z.id]=true;
+  }
+  const cl=combatLevel();
+  [25,50,75,99].forEach(mil=>{ if(cl>=mil) state.cmastMilestones[mil]=true; });
+  const earned=Math.min(98,Math.max(0,cl-1))
+    +[25,50,75,99].filter(m=>state.cmastMilestones[m]).length
+    +Object.keys(state.cmastBossKills).filter(id=>MONSTERS.some(m=>m.id===id&&m.boss)).length
+    +Object.keys(state.cmastZoneClears).filter(id=>ZONES.some(z=>z.id===id)).length
+    +RAIDS.filter(r=>!r.endless&&((state.raidClears&&state.raidClears[r.id])||0)>0).length
+    +CMAST_SPIRE_FLOORS.filter(f=>(state.spireBest||0)>=f).length;
+  const owed=earned-(state.cmastGranted||0);
+  if(owed<=0) return 0;
+  state.cmastGranted=earned;
+  try{
+    if(typeof logNotification==='function')
+      logNotification('combat','\u2726','+'+owed+' Mastery Point'+(owed>1?'s':'')+' you had already earned (zones, raids and Spire floors cleared before they paid).');
+  }catch(e){}
+  return owed;
 }
 
 let selectedSkill='woodcutting';
@@ -22334,13 +22430,28 @@ const _itemDropState={}; // id -> { el, qty, born }
    than fifty. Deliberately NOT saved — it is a view of this session, and
    persisting it would put fifty rows of churn in every save. */
 const DROP_LOG_MAX=60;
+const DROP_LOG_BURST_MS=60000;   // how long a row keeps growing after its last drop
 const _dropLog=[];   // newest first: {id, qty, at, rare}
 function logDrop(id, qty){
   if(!id||!qty||qty<=0) return;
   const it=ITEMS[id]; if(!it) return;
   const now=Date.now();
-  const top=_dropLog[0];
-  if(top && top.id===id && (now-top.at)<_itemDropMergeMs){ top.qty+=qty; top.at=now; }
+  /* Ticket #228: "Not all drops are reporting to the drops window. If you have 2
+     logs going for instance one of the logs won't show up." Every drop was logged,
+     but a row only grew if it was the NEWEST row and under a second and a half
+     old. Two bars take turns being newest, so neither ever merged: the list filled
+     with sixty single-log lines in a couple of minutes and anything slower (a
+     harvest, the second bar, a rare) was pushed off the end before it was read.
+     An item that keeps arriving now grows its own row wherever that row sits, for
+     as long as it keeps coming within a minute. Rows stay where they first
+     appeared, so two bars do not swap places on every chop. */
+  let row=null;
+  for(let i=0;i<_dropLog.length;i++){
+    if(_dropLog[i].id!==id) continue;
+    if((now-_dropLog[i].at)<DROP_LOG_BURST_MS) row=_dropLog[i];
+    break;
+  }
+  if(row){ row.qty+=qty; row.at=now; }
   else _dropLog.unshift({id, qty, at:now, rare:!!it.rare});
   if(_dropLog.length>DROP_LOG_MAX) _dropLog.length=DROP_LOG_MAX;
   if(typeof rightTab!=='undefined' && rightTab==='drops' && typeof renderDrops==='function') renderDrops();
@@ -24958,13 +25069,13 @@ function masteryActs(sk){ return ((sk&&sk.acts)||[]).filter(a=>!masteryExempt(a)
 /* The row itself, so the panels that draw their own cards stop having to choose
    whether to have one. buildActBtn kept this inline and four bespoke renderers
    simply never grew it. */
-function masteryRowHTML(actId){
+function masteryRowHTML(actId,tail){
   const mb=masteryBadgeHtml(actId);
   const badge=mb.lvl>0
     ? `<span class="mastery-badge mb-${mb.tier}">${MASTERY_STAR[mb.tier]} ${mb.label}</span>`
     : '<span class="mastery-badge mb-none">\u00b7 Mastery 0</span>';
   return `<div class="mastery-row">${badge}`
-       + `<div class="mastery-bar"><i style="width:${mb.pct}%;background:${mb.barColor}"></i></div></div>`;
+       + `<div class="mastery-bar"><i style="width:${mb.pct}%;background:${mb.barColor}"></i></div>${tail||''}</div>`;
 }
 function masteryBadgeHtml(actId){
   const lvl=masteryLevel(actId);
@@ -25573,7 +25684,7 @@ function recordMastery(actId, times){
       if(prevLvl<threshold&&newLvl>=threshold){
         const tier=masteryTier(newLvl);
         const sk=Object.entries(SKILLS).find(([,s])=>s.acts.some(a=>a.id===actId));
-        const actName=sk?(sk[1].acts.find(a=>a.id===actId)||{}).name||'activity':'activity';
+        const actName=sk?(actShownName(sk[0],sk[1].acts.find(a=>a.id===actId))||'activity'):'activity';
         const tierName=MASTERY_LABEL[tier];
         toast(`${tierName} Mastery! ${actName} reached ${tierName} ★`);
         logNotification('mastery', '★', `${tierName} Mastery — ${actName}`);
@@ -25588,6 +25699,36 @@ function recordMastery(actId, times){
    ================================================================= */
 /* ════ [JS-21a] afford / getAct helpers ══════════════════════════════════════════ */
 function getAct(skillKey,actId){ const sk=SKILLS[skillKey]; return sk?sk.acts.find(a=>a.id===actId):undefined; }
+
+/* The name a player can find on screen for an act (tickets #201, #211, #220, #229,
+   #230). Most skills print act.name on the card. Cooking and Alchemy title their
+   cards with what the act MAKES ("Ogre Roast", "Shadow Crystal"), so their act names
+   ("Roast Ogre Haunch", "Transmute Night Essence", "Distill Void Insight") are on no
+   card anywhere, and a quest or a tooltip that printed one named something nobody
+   could look up. Where several recipes make the same potion the first ingredient
+   tells them apart, which is how the card's own "ways to make this" list does it.
+   Not cached: it is asked for at render time, and 198 acts are pushed after parse. */
+const ACT_NAMED_BY_OUTPUT={cooking:1,alchemy:1};
+function actShownName(skKey,act){
+  if(!act) return '';
+  if(!ACT_NAMED_BY_OUTPUT[skKey]||!SKILLS[skKey]) return act.name||act.id;
+  const o=Object.keys(act.out||{}).find(id=>ITEMS[id]);
+  if(!o) return act.name||act.id;
+  let nm=ITEMS[o].name;
+  if(SKILLS[skKey].acts.some(a=>a!==act&&a.out&&a.out[o]!=null)){
+    const first=Object.keys(act.inp||{}).find(id=>ITEMS[id]);
+    if(first) nm+=' from '+ITEMS[first].name;
+  }
+  return nm;
+}
+/* Every act in a skill that makes the same thing as this one, this one included.
+   A quest that says "Brew Wisdom Potion III 75 times" counts all four recipes. */
+function actTwins(skKey,act){
+  const sk=SKILLS[skKey]; if(!sk||!act) return [];
+  const o=Object.keys(act.out||{}).find(id=>ITEMS[id]);
+  if(!o) return [act];
+  return sk.acts.filter(a=>a.out&&a.out[o]!=null);
+}
 
 /* Crafted skilling tools are a one-time unlock that lives in state.gear, NOT in
    state.items. The T6 Everflame recipes consume the previous-tier tool as an
@@ -26412,6 +26553,17 @@ function completeAction(act,skillKey,times){
 }
 
 /* ════ [JS-21d] woodcutting double-action helper ═════════════════════════════════ */
+/* Ticket #204: "Pretty sure second actions are not earning any mastery." They were
+   not. The three second bars are the only completions that do not run through
+   completeAction(), and each was written as a copy of it with the parts its author
+   remembered: the guild hook was missed (#95, #128) and so was this. A log chopped
+   on the second bar is a log chopped, so it counts toward that tree's mastery, and
+   the XP it pays carries that mastery's own bonus the way the first bar's does. */
+function secondBarMastery(act,cycles){
+  if(!act||!(cycles>0)) return;
+  if(typeof masteryExempt==='function' && masteryExempt(act)) return;
+  recordMastery(act.id,cycles);
+}
 function setWcDoubleAct(actId){
   if(state.wcDoubleAct&&state.wcDoubleAct.actId===actId){
     state.wcDoubleAct=null;
@@ -26474,10 +26626,11 @@ function completeWcDoubleAction(act,cycles){
     }
   }
   // XP — secondary bar gives full XP at 50% speed (2× ms compensates)
-  const xpGained=Math.round(act.xp*cycles*m.xpMult);
+  const xpGained=Math.round(act.xp*cycles*m.xpMult*(1+masteryXpBonus(act.id)));
   const xpBanked=addSkillXp('woodcutting', xpGained);
   recordXpGain('woodcutting',xpBanked);
   showXpPop('woodcutting',xpBanked);
+  secondBarMastery(act,cycles);
   // Rare drops — same chance as the primary bar, Lucky Lure included
   const dropTable=DROPS[act.id]||[];
   for(const drop of dropTable){ const hits=binom(cycles,skillDropChance('woodcutting',drop,m)); if(hits>0) grantItem(drop.id,hits); }
@@ -26535,10 +26688,11 @@ function completeFishDoubleAction(act,cycles){
     if(qty>0) grantItem(id,qty);
   }
   // XP
-  const xpGained=Math.round(act.xp*cycles*m.xpMult);
+  const xpGained=Math.round(act.xp*cycles*m.xpMult*(1+masteryXpBonus(act.id)));
   const xpBanked=addSkillXp('fishing', xpGained);
   recordXpGain('fishing',xpBanked);
   showXpPop('fishing',xpBanked);
+  secondBarMastery(act,cycles);
   // Rare drops — same chance as the primary bar, Lucky Lure included
   const dropTable=DROPS[act.id]||[];
   for(const drop of dropTable){ const hits=binom(cycles,skillDropChance('fishing',drop,m)); if(hits>0) grantItem(drop.id,hits); }
@@ -26580,10 +26734,11 @@ function completeDoubleAction(act,cycles){
     if(id!=='coal'&&m.mi_hard){ state.items['coal']=(state.items['coal']||0)+cycles; showItemPop('coal',cycles); }
   }
   // XP at 50% — already folded in via the 2x ms, so just give normal xp
-  const xpGained=Math.round(act.xp*cycles*m.xpMult);
+  const xpGained=Math.round(act.xp*cycles*m.xpMult*(1+masteryXpBonus(act.id)));
   const xpBanked=addSkillXp('mining', xpGained);
   recordXpGain('mining',xpBanked);
   showXpPop('mining',xpBanked);
+  secondBarMastery(act,cycles);
   // Rare drops — same chance as the primary bar, Lucky Lure included
   const dropTable=DROPS[act.id]||[];
   for(const drop of dropTable){ const hits=binom(cycles,skillDropChance('mining',drop,m)); if(hits>0) grantItem(drop.id,hits); }
@@ -26814,7 +26969,7 @@ function offlineFallbackTakeover(fromSkill, fromActId){
   if(act.inp && canAfford(act,1,mods(cfg.skill))<=0) return '';
   state.action = {skill:cfg.skill, actId:cfg.actId};
   state.actionStart = Date.now();
-  return act.name || cfg.actId;
+  return actShownName(cfg.skill,act) || cfg.actId;
 }
 
 /* ==== Offline combat (0.9.122) ==============================================
@@ -27076,7 +27231,7 @@ function grantOffline(){
       icon:SKILLS[skill].icon,
       iconId:skill,
       label:SKILLS[skill].name,
-      sub:act.name+(_slots.length>1?' · skill '+(_si+1)+' of '+_slots.length:'')
+      sub:actShownName(skill,act)+(_slots.length>1?' · skill '+(_si+1)+' of '+_slots.length:'')
          +(_stance.id!=='steady'?' · '+_stance.name:''),
       xp:xpEarned,
       items:gained,
@@ -27292,6 +27447,15 @@ function setAction(skillKey,actId){
        above, so a refused start (no fire, missing materials, demo cap) never ends
        a fight the player is winning. Retreating costs nothing, but it does forfeit
        the current foe's progress, so say it rather than doing it silently. */
+    /* ...and a raid is not something you retreat from by clicking a recipe (#237).
+       This used to stop the fight and leave combat.raid standing, so the run, its
+       stage and its Momentum were all still there, and engaging again refilled
+       your health to full in the middle of the gauntlet. Leaving a raid is the
+       Disengage button's job, where it says what you lose. */
+    if(combat.raid){
+      toast('You cannot train during a raid. Disengage first.');
+      return;
+    }
     if(combat.active){
       stopCombatTimer();
       combat.active=false; combat.rare=false;
@@ -27483,7 +27647,7 @@ function renderSkillList(){
       ?`<div class="xph-row">
           <span class="xph-label">${
             (isActive&&state.action&&getAct(key,state.action.actId))
-              ? getAct(key,state.action.actId).name
+              ? actShownName(key,getAct(key,state.action.actId))
               : fmtK(xphNow)+' xp/hr'
           }</span>
           <div class="xph-bar-wrap"><span class="xph-bar-fill" style="width:${barPct}%"></span></div>
@@ -27533,7 +27697,7 @@ function renderSkillList(){
        so a two- or three-skill night looked identical to a one-skill one. */
     ofCfg&&ofAct&&ofSk
       ? (()=>{ const st=offlineStance(), n=offlineSlots().filter(Boolean).length;
-               return escapeHTML(ofAct.name)
+               return escapeHTML(actShownName(ofCfg.skill,ofAct))
                  +(st.id==='steady'?'':' · '+escapeHTML(st.name))
                  +(n>1?' · '+n+' skills':''); })()
       : 'Click to configure'
@@ -27687,7 +27851,7 @@ function thiefLootHtml(act){
   return '<div class="drops"><span class="dl">can steal</span>'+chips.join('')+'</div>';
 }
 
-function needsHtml(act,m){
+function needsHtml(act,m,tail){
   if(!act.inp) return '';
   const runsLeft=canAfford(act,Infinity,m);
   // Compact material chips: [icon] have/need, tinted red when short. The material
@@ -27706,7 +27870,7 @@ function needsHtml(act,m){
   }).filter(Boolean).join('');
   // When you can't craft, show no label — the red chip(s) + the dimmed card already say it.
   const runs=(runsLeft===Infinity||runsLeft<=0) ? ''
-    : `<span class="runs">${runsLeft>999?'999+':runsLeft} run${runsLeft===1?'':'s'}</span>`;
+    : `<span class="runs">${runsLeft>999?'999+':runsLeft} run${runsLeft===1?'':'s'}${tail?' \u00b7 '+tail:''}</span>`;
   return `<div class="needs">${chips}${runs}</div>`;
 }
 
@@ -27989,19 +28153,27 @@ function buildActBtn(act,reqLvl,lvl,m,bestXph,bestRph){
                  : toolOwned?`✓ Already owned`
                  : toolSuper?`✓ Upgraded · this one forged the next tool`
                  : (fireOut&&!isActive)?`⚠ Fire is out`
-                 : dupeJewel?`⚠ Owned — a 2nd shares its enchant`
-                 : metaExtra||'';
+                 : metaExtra||'';   // the "a 2nd shares its enchant" warning went with 0.9.127 (#227)
   const metaText = metaState;
 
+  /* Ticket #206: "the mastery bar disappears when we are running a recipe." The
+     running line used to REPLACE the mastery row, so that a card does not grow when
+     you start it (that reflow was its own bug). The mastery row stays now, exactly
+     as it is on an idle card, and the one thing the running line added, how long
+     the materials will last, rides on the card's own runs chip. A card with no
+     mastery row (a tool, a trophy piece) keeps the old line. */
+  const runsTxt=((act.inp||selectedSkill==='cooking')&&effectiveRuns!==Infinity)
+    ? `~${fmtDuration(effectiveRuns*ms)} left${selectedSkill==='cooking'&&fuelLeft<runsLeft?' (fuel)':''}` : '';   // the count is the runs chip above it
   let masteryHtml='';
   if(!locked&&!masteryExempt(act)) masteryHtml=masteryRowHTML(act.id);
+  const runsTail=(isActive&&masteryHtml&&runsTxt)?`<span class="runs-left">${runsTxt}</span>`:'';
 
   const runningHtml=isActive
-    ?`<div class="prog"><i></i></div>
-       <div class="act-running-info">
+    ?`<div class="prog"><i></i></div>`
+      +(masteryHtml?'':`<div class="act-running-info">
          <span class="stopnote">Working… click to stop</span>
-         ${(act.inp||selectedSkill==='cooking')&&effectiveRuns!==Infinity?`<span class="runs-left">${effectiveRuns} run${effectiveRuns===1?'':'s'} left · ~${fmtDuration(effectiveRuns*ms)}${selectedSkill==='cooking'&&fuelLeft<runsLeft?' (fuel)':''}</span>`:''}
-       </div>`:'';
+         ${runsTxt?`<span class="runs-left">${runsTxt}</span>`:''}
+       </div>`):'';
 
   /* Tier as forged pips. The count is the number of rungs in THIS act's own
      ladder, not in the whole skill — a Runite Helm reads "Tier 6 of 7" against
@@ -28029,7 +28201,7 @@ function buildActBtn(act,reqLvl,lvl,m,bestXph,bestRph){
         <span class="act-tier">${isAlchSingleton?tierBadge:('Lv '+reqLvl)}</span>
       </div>
       ${heroHtml}
-      ${metaText?`<span class="meta${dupeJewel?' warn':''}">${metaText}</span>`:''}
+      ${metaText?`<span class="meta">${metaText}</span>`:''}
       ${locked||depleted||toolOwned||toolSuper?'':statsHtml}
       ${/* Locked recipes used to hide their materials entirely, so you could not
             see what an upcoming craft needed until you already had the level —
@@ -28037,7 +28209,7 @@ function buildActBtn(act,reqLvl,lvl,m,bestXph,bestRph){
             .needs-locked wrapper dims them so a locked card still reads as
             locked, and the have/need counts stay live and accurate. */''}
       ${toolOwned||toolSuper?'':(locked?`<div class="needs-locked">${makesHtml(act)}</div>`:makesHtml(act))}
-      ${toolOwned||toolSuper?'':(locked?`<div class="needs-locked">${needsHtml(act,m)}</div>`:needsHtml(act,m))}
+      ${toolOwned||toolSuper?'':(locked?`<div class="needs-locked">${needsHtml(act,m)}</div>`:needsHtml(act,m,runsTail))}
       ${toolOwned||toolSuper?'':(locked?`<div class="needs-locked">${dropsHtml(act,selectedSkill,m)||thiefLootHtml(act)}</div>`:(dropsHtml(act,selectedSkill,m)||thiefLootHtml(act)))}
       ${masteryHtml}
       ${runningHtml}
@@ -28053,9 +28225,10 @@ function buildActBtn(act,reqLvl,lvl,m,bestXph,bestRph){
   btn.title=act.name+(outQty>1?' · makes '+outQty:'')+' · '+Math.round(xpPerAction(act,selectedSkill))+' XP per action · '+(ms/1000).toFixed(1)+'s'
     +(locked?' · unlocks at Lv '+reqLvl:' · '+fmtK(xph)+' xp/hr')
     +(act.succ!=null?' \u00b7 '+Math.round(thiefSuccess(act)*100)+'% success':'')
-    +(dupeJewel?'\n\nYou already own one. A second ring can be worn in your other hand, but'
-       +' enchants and sockets are shared by all your copies, so a spare'
-       +' cannot have a different enchant.':'');
+    /* Ticket #227: this still said enchants are shared by all your copies. Since
+       0.9.127 enchanting takes one piece off the stack and makes it its own item. */
+    +(dupeJewel?'\n\nYou already own one. Each piece is enchanted on its own, so a spare'
+       +' can carry different enchants. Plain copies of the same item share their sockets.':'');
   if(!locked&&!depleted&&!toolOwned&&!toolSuper) btn.addEventListener('click',()=>setAction(selectedSkill,act.id));
   return btn;
 }
@@ -28564,6 +28737,12 @@ function gdNormalize(){
       if(typeof q.need!=='number'||!isFinite(q.need)||q.need<1) q.need=1;
       if(!GD_SIZE[q.size]) q.size='small';
       if(typeof q.done!=='boolean') q.done=false;
+      /* A Cooking or Alchemy quest rolled before 0.9.127.7 is named after a recipe
+         that is on no card ("Distill Void Insight"). Renamed from its act, so nobody
+         has to wait for midnight to find out what it meant. */
+      if(q.kind==='do'&&q.act&&ACT_NAMED_BY_OUTPUT[q.skill]){
+        const _qa=getAct(q.skill,q.act); if(_qa) q.name=gdDoName(q.skill,_qa,q.need);
+      }
       /* A supply order carries a map of item→count instead of one target. A broken
          one would divide by a zero total in the progress bar, so it is repaired
          into an ordinary single-item deliver rather than left on the board. */
@@ -28722,8 +28901,41 @@ function gdBestActs(skill){
   const lvl=levelFromXp(state.xp[skill]||0);
   return sk.acts.filter(a=>{
     const need=(a.lvl||1);
+    /* A recipe that needs a rare catch is only on the board once you can reach the
+       water it comes from: Cooking 90 with Fishing 60 has no way to a prized void eel. */
+    if(a.onlyIf && !(gdRareInputMs(a)>0)) return false;
     return lvl>=need && !gdOneTimeAct(a);
   });
+}
+/* Ticket #231. "Cook prized tuna" takes two seconds at the fire and, at a third of
+   a percent a cast, the better part of an hour at the water. Every quest is sized
+   in minutes of the act it names, so the board measured the fire and asked for 90
+   prized fish as a Small order and 600 as a Long one: ten hours of fishing for a
+   twenty minute quest, on a board that turns over at midnight. This is how long ONE
+   of the rare input takes to come up, at the player's own cast time and their own
+   chance (Lucky Lure, the Everflame Rod, a prized enchant), so gdActCount can add
+   it to the cook. 0 for an act with no rare input, or with no source in reach. */
+let _gdDropSrc=null;   // item id -> [{sk, a, d}], every act whose DROPS table holds it
+function gdRareInputMs(act){
+  if(!act||!act.onlyIf||typeof DROPS==='undefined') return 0;
+  if(!_gdDropSrc){
+    _gdDropSrc={};
+    for(const sk in SKILLS) for(const a of (SKILLS[sk].acts||[]))
+      for(const d of (DROPS[a.id]||[])) if(d&&d.id) (_gdDropSrc[d.id]=_gdDropSrc[d.id]||[]).push({sk:sk,a:a,d:d});
+  }
+  const need=(act.inp&&act.inp[act.onlyIf])||1;
+  let best=0;
+  for(const s of (_gdDropSrc[act.onlyIf]||[])){
+    if((s.a.lvl||1)>levelFromXp((state.xp&&state.xp[s.sk])||0)) continue;
+    let c=s.d.chance, ms=0;
+    try{ c=skillDropChance(s.sk,s.d,mods(s.sk)); }catch(e){}
+    try{ ms=actMs(s.a,s.sk); }catch(e){ ms=0; }
+    if(!(ms>0)) ms=s.a.ms||10000;
+    if(!(c>0)) continue;
+    const per=ms/c*need;
+    if(!best||per<best) best=per;
+  }
+  return best;
 }
 /* A skilling tool is a ONE-TIME unlock: grantItem drops it into state.gear and
    returns 0 for every copy after the first, so it never enters the satchel and the
@@ -28800,8 +29012,10 @@ function gdActCount(skill,act,mins){
   let ms=0;
   try{ ms=actMs(act,skill); }catch(e){ ms=0; }
   if(!(ms>0)) ms=act.ms||10000;
+  const rare=gdRareInputMs(act);   // a prized catch is sized by the fishing (#231)
+  ms+=rare;
   let n=Math.round(mins*60000/ms);
-  n=Math.max(4,Math.min(600,n));
+  n=Math.max(rare>0?1:4,Math.min(600,n));
   const step=n>=200?25:n>=80?10:n>=30?5:1;
   return Math.max(step,Math.round(n/step)*step);
 }
@@ -29031,8 +29245,27 @@ function gdRollOne(g,size){
   }
   const act=gdPickAct(acts);
   const n=gdActCount(skill,act,S.mins);
+  return {kind:'do',size,skill,act:act.id,name:gdDoName(skill,act,n),need:n,have:0,done:false};
+}
+/* What a `do` quest is called. Its own function so a quest already on a board can
+   be renamed from its act when the wording changes, instead of carrying the old
+   line until midnight. */
+function gdDoName(skill,act,n){
   const outId=gdActOut(act);
   const verb=GD_VERB[skill]||(IS_GATHER[skill]?'Gather':'Make');
+  /* Tickets #201, #211, #220, #230. Cooking and Alchemy title their cards with what
+     the recipe MAKES, so "Distill Void Insight 75 times", "Transmute Night Essence"
+     and "Roast Ogre Haunch" named things that are on no card in the game. The quest
+     says what the card says, and any recipe that makes it counts (gdDoCounts): the
+     potion is the job, not which of four ways you brewed it. */
+  const times=(n===1)?'once':n+' times';
+  if(ACT_NAMED_BY_OUTPUT[skill]&&outId){
+    const v=(skill==='alchemy'&&!ITEMS[outId].potion)?'Make':verb;
+    /* "Cook Cooked Shark" is the card's name with the verb said twice. */
+    const nm=(skill==='cooking')?ITEMS[outId].name.replace(/^Cooked /,''):ITEMS[outId].name;
+    return v+' '+nm+' '+times;
+  }
+  const acts=(SKILLS[skill]&&SKILLS[skill].acts)||[];
   /* Three namings, and the act table decides which.
 
      Normally the OUTPUT names the quest — "Mine 40 Iron Ore" beats "Mine iron 40
@@ -29057,22 +29290,83 @@ function gdRollOne(g,size){
   const shared=outId && acts.filter(a=>gdActOut(a)===outId).length>1;
   const nameIsOrder=(skill==='thieving');
   const itemNamed=outId && act.name.toLowerCase()===ITEMS[outId].name.toLowerCase();
-  const name = !outId ? (nameIsOrder ? act.name+' '+n+' times'
-                                     : verb+' the '+act.name+' '+n+' times')
-             : (shared||!itemNamed) ? act.name+' '+n+' times'
-             :          verb+' '+ITEMS[outId].name+' '+n+' times';
-  return {kind:'do',size,skill,act:act.id,name:name,need:n,have:0,done:false};
+  return !outId ? (nameIsOrder ? act.name+' '+times
+                               : verb+' the '+act.name+' '+times)
+       : (shared||!itemNamed) ? act.name+' '+times
+       :          verb+' '+ITEMS[outId].name+' '+times;
+}
+/* Does finishing this act count toward this `do` quest? The act it names always
+   does. Where the quest is named for what it makes (Cooking, Alchemy), so does any
+   other recipe for the same thing. */
+function gdDoCounts(q,skillKey,actId){
+  if(!q.act||q.act===actId) return true;
+  if(!ACT_NAMED_BY_OUTPUT[skillKey]) return false;
+  const want=getAct(skillKey,q.act), did=getAct(skillKey,actId);
+  const o=want?gdActOut(want):null;
+  return !!(o&&did&&did.out&&did.out[o]!=null);
 }
 
-/* Two quests on one board should not be the same job wearing different numbers, so
-   they are deduped by what they ASK FOR, not by their printed name — "Mine 40 Iron
-   Ore" and "Deliver 40 Iron Ore" are one errand. A guild with a thin act pool would
-   end up with an empty board under that rule, so the key test gets most of the
-   tries and a plain name test takes the rest. */
-function gdQuestKey(q){
-  if(!q) return '';
-  if(q.kind==='supply') return 'sup:'+Object.keys(q.items||{}).sort().join(',');
-  return q.kind+':'+(q.act||q.target||q.skill||'');
+/* ── is this the same errand? (tickets #200, #219, #223, #231, #232) ────────────
+   Two quests on one board should not be the same job wearing different numbers,
+   and a skipped quest must not come back as its own twin. The old test compared a
+   key made of the quest's KIND and its target, so "Deliver 40 Starfall Arrowheads"
+   (deliver:arrowhead) and "Hammer Starfall Arrowheads 40 times" (do:that act) were
+   strangers, and the skip only ever looked at deliver and supply targets: a `do`
+   quest and a gold order carry neither, so they matched nothing and the first roll
+   was always accepted.
+
+   `core` is what a quest sends you to get: the items it asks for, or what its act
+   makes. `inp` is what making those eats, one step back. Two quests are one errand
+   when either one's core meets the other's core or inputs, so a prized tuna order
+   and "Cook Prized Tuna" clash, and so do steel bars and a steel sword. Inputs are
+   never compared with inputs, or every smith's quest would clash over coal. Two
+   gold orders are one errand whatever the amounts. */
+let _gdMakers=null;   // item id -> [{sk, a}], every act that makes it
+function gdQuestTouch(q){
+  const core=new Set(), inp=new Set();
+  const t={core:core, inp:inp, coin:!!(q&&q.kind==='coin')};
+  if(!q) return t;
+  /* Anything that needs a rare catch is one family: skipping a prized tuna and
+     being handed a prized shark is the same wait at a different pier. */
+  const eat=function(a){ for(const i in (a.inp||{})) inp.add(i); if(a.onlyIf) core.add('rarecatch'); };
+  if(q.kind==='do'){
+    const a=q.act?getAct(q.skill,q.act):null;
+    if(a){
+      /* What an act makes only identifies it when nothing else in the skill makes
+         the same thing. Nine of Firemaking's burns pour out Ash: counting it would
+         make "Burn oak logs" and "Burn pine logs" one errand, and the Timberhall
+         could never fill a board. Those are told apart by the log they eat. */
+      const all=(SKILLS[q.skill]&&SKILLS[q.skill].acts)||[];
+      const named=!!ACT_NAMED_BY_OUTPUT[q.skill];
+      (named?actTwins(q.skill,a):[a]).forEach(function(x){
+        for(const o in (x.out||{})){
+          if(!ITEMS[o]) continue;
+          if(named || !all.some(y=>y!==x&&y.out&&y.out[o]!=null)) core.add(o);
+        }
+        eat(x);
+      });
+      core.add('act:'+q.act);
+    } else core.add('do:'+(q.skill||''));          // farming's "Tend N patches" names no act
+    return t;
+  }
+  if(q.kind==='kill'){ if(q.target) core.add('mon:'+q.target); return t; }
+  if(q.kind==='deliver'&&q.target) core.add(q.target);
+  if(q.kind==='supply') for(const k in (q.items||{})) core.add(k);
+  if(!_gdMakers){
+    _gdMakers={};
+    for(const sk in SKILLS) for(const a of (SKILLS[sk].acts||[]))
+      for(const o in (a.out||{})) (_gdMakers[o]=_gdMakers[o]||[]).push({sk:sk,a:a});
+  }
+  for(const id of Array.from(core)) for(const m of (_gdMakers[id]||[])) eat(m.a);
+  return t;
+}
+function gdQuestsClash(a,b){
+  if(!a||!b) return false;
+  const A=gdQuestTouch(a), B=gdQuestTouch(b);
+  if(A.coin||B.coin) return A.coin&&B.coin;
+  for(const x of A.core) if(B.core.has(x)||B.inp.has(x)) return true;
+  for(const x of B.core) if(A.inp.has(x)) return true;
+  return false;
 }
 function gdRollQuests(id,force){
   const g=GD_BY[id], r=gdRec(id); if(!g||!r) return;
@@ -29086,7 +29380,9 @@ function gdRollQuests(id,force){
       const q=gdRollOne(g,size);
       if(!q) continue;
       const strict=tries<10;
-      const clash=strict ? out.some(o=>gdQuestKey(o)===gdQuestKey(q))
+      /* Ten tries for a board of three different errands, then a thin pool is
+         allowed to settle for three different lines. */
+      const clash=strict ? out.some(o=>o.name===q.name||gdQuestsClash(o,q))
                          : out.some(o=>o.name===q.name);
       if(!clash) out.push(q);
     }
@@ -29218,7 +29514,7 @@ function gdOnAction(skillKey,times,actId){
          not fill up while you swing at copper. Farming's tend quest names none, so
          it counts every tend, and any quest left over from a save written before
          quests named acts keeps its old skill-wide behaviour rather than freezing. */
-      if(q.act && q.act!==actId) continue;
+      if(!gdDoCounts(q,skillKey,actId)) continue;
       q.have=Math.min(q.need,q.have+times);
     }
   }
@@ -29314,31 +29610,30 @@ function gdSkip(id,idx){
      trying to get away from came straight back inside the new order. Compare the
      ITEMS a quest asks for, not just its title.
 
-     Kept as a preference rather than a hard rule: a small guild's pool can be
-     narrow enough that nothing avoids the item, and refusing to reroll at all
-     would be worse than a partial overlap. Twelve tries look for a clean one, then
-     it settles for any quest that is merely not a duplicate. */
-  const ids=q0=>{
-    const s=new Set();
-    if(q0){
-      if(q0.target) s.add(q0.target);
-      if(q0.items) for(const k in q0.items) s.add(k);
-    }
-    return s;
-  };
-  const avoid=ids(q);
-  let clean=null, fallback=null;
-  for(let tries=0;tries<12;tries++){
+     That fix compared deliver and supply targets and nothing else, and it was a
+     preference: after twelve tries any quest with a different title was taken.
+     Radcliff kept finding the gaps. A `do` quest and a gold order carry no target,
+     so they were never compared with anything: hand in starfall arrowheads became
+     hammer starfall arrowheads (#219), a prized tuna order became cook prized tuna
+     (#231), and a gold order became a bigger gold order (#223, #232).
+
+     It is a rule now. What comes back is never the errand you skipped
+     (gdQuestsClash: the same items, what they are made from, the same act, the same
+     monster, or gold for gold), and where the pool allows it is not a twin of
+     another quest on the board either. If the guild has nothing else, it says so
+     and the skip is not spent. */
+  let clean=null, other=null;
+  for(let tries=0;tries<24 && !clean;tries++){
     const nq=gdRollOne(g,q.size);
-    if(!nq || r.q.some((o,oi)=>oi!==idx&&o.name===nq.name) || nq.name===q.name) continue;
-    if(!fallback) fallback=nq;
-    let hit=false; for(const id of ids(nq)) if(avoid.has(id)){ hit=true; break; }
-    if(!hit){ clean=nq; break; }
+    if(!nq || nq.name===q.name || gdQuestsClash(nq,q)) continue;
+    if(r.q.some((o,oi)=>oi!==idx&&o.name===nq.name)) continue;
+    if(r.q.some((o,oi)=>oi!==idx&&!o.done&&gdQuestsClash(nq,o))){ if(!other) other=nq; continue; }
+    clean=nq;
   }
-  const pick=clean||fallback;
+  const pick=clean||other;
   /* Only spend the skip if the board actually moved. Before this, twelve failed
      tries burned the day's one skip and left the same quest sitting there. */
-  if(!pick){ toast('Nothing else to offer right now — your skip is still available.'); return; }
+  if(!pick){ toast('Nothing else to offer right now. Your skip is still available.'); return; }
   r.q[idx]=pick;
   r.skipped++;
   renderAll(); saveGame();
@@ -29688,7 +29983,11 @@ function _gdGuildPage(id){
     /* The quest title carries the item, so the shared satchel card answers "where
        do I get this" on hover — the other half of the Steam report above. A supply
        order already says it per line on its chips. */
-    const titleAttr=(q.kind==='deliver'&&ITEMS[q.target])?' data-item="'+q.target+'"':'';
+    /* A `do` quest carries what its act makes (#201: "No clue what that is and there
+       is no mouse over to see"), so hovering it says where the thing is made. */
+    const _doOut=(q.kind==='do'&&q.act)?gdActOut(getAct(q.skill,q.act)):null;
+    const titleAttr=(q.kind==='deliver'&&ITEMS[q.target])?' data-item="'+q.target+'"'
+                   :_doOut?' data-item="'+_doOut+'"':'';
     row.innerHTML=
       '<div class="gd-qt"><b'+titleAttr+'>'+q.name+'</b><i>'+S.label
       +(isCoin?' · taken from your purse when you hand in'
@@ -29707,7 +30006,14 @@ function _gdGuildPage(id){
       +'<button class="gd-btn'+cls+'"'+((q.done||cls===' off')?' disabled':'')+'>'+btn+'</button>'
       +'</div>';
     const b=row.querySelector('.gd-btn');
-    if(!q.done && ready) b.addEventListener('click',()=>gdClaim(id,i));
+    /* Ticket #205: "Can't claim a combat guild quest if you are engaged in combat
+       with that creature." The handler used to be bound only if the quest was
+       already finished when the page was drawn. gdProgressTick() turns the button
+       to Claim the moment the last kill lands, without redrawing the page, so a
+       quest finished while you watched had a lit button with nothing behind it,
+       until something else rebuilt the panel (switching monsters did). Always
+       bound: a disabled button does not click, and gdClaim checks for itself. */
+    if(!q.done) b.addEventListener('click',()=>gdClaim(id,i));
     const sk=row.querySelector('.gd-skip');
     if(sk && canSkip) sk.addEventListener('click',()=>gdSkip(id,i));
     left.appendChild(row);
@@ -31559,7 +31865,7 @@ function renderStats(){
     <div class="stat-section-label">Currently Running</div>
     <div class="stat-row tip-above" data-tip="${_tt(`${(ms/1000).toFixed(1)}s per action · ${fmtK(xph)} xp/hr · ${fmtK(rph)} ${rphLabel}`)}">
       <span class="sr-label">Activity</span>
-      <span class="sr-value" style="color:var(--ember);font-size:calc(14px*var(--tscale))">${act.name}</span>
+      <span class="sr-value" style="color:var(--ember);font-size:calc(14px*var(--tscale))">${actShownName(skill,act)}</span>
     </div>`;
     }
   } else if(hasFarmingSpecial){
@@ -32688,8 +32994,12 @@ let _invGearKey='';
 function renderInvGear(){
   const box=$('invGear'); if(!box) return;
   const lo=_gearFilter==='combat'?state.combatEquipped:state.skillingEquipped;
+  /* The skill whose set the Skilling view offers: what is running, else what is open. */
+  const loSkill=(state.action&&SKILLS[state.action.skill])?state.action.skill:selectedSkill;
   const key=_gearFilter+'|'+JSON.stringify(lo||{})+'|'+JSON.stringify(state.combatXp||{})+'|'
-    +((state.action&&state.action.skill)||'')+'|'+selectedSkill;
+    +((state.action&&state.action.skill)||'')+'|'+selectedSkill
+    +'|'+JSON.stringify(state.combatPresets||{})+'|'+JSON.stringify((state.gearPresets||{})[loSkill]||null)
+    +'|'+((_loArm&&Date.now()<_loArm.until)?_loArm.key:'');
   if(key===_invGearKey&&box.firstChild) return;
   _invGearKey=key;
   box.innerHTML='';
@@ -32703,6 +33013,26 @@ function renderInvGear(){
   box.appendChild(gearDollEl(54,26,10));
   const st=document.createElement('div'); st.innerHTML=_gearStatsHTML();
   if(st.firstChild) box.appendChild(st.firstChild);
+  /* Ticket #236: "It would be nice if we got options to save or update combat
+     presets from the satchel window." This is where gear gets changed, and the
+     Presets tab cannot be reached while the Satchel is open. The same cards and the
+     same buttons, without the row of slots (the doll above is the slots). */
+  const pre=document.createElement('div'); pre.className='inv-lo';
+  const loCard=function(scope,k,icon,label,always){
+    const s=presetStatus(scope,k);
+    return '<div class="lo-card'+(s.worn?' active':'')+'"><div class="lo-head">'+iconHTML(icon)
+      +'<div class="lo-tt"><span class="nm">'+label+'</span></div>'+_loStatusHTML(s)+'</div>'
+      +'<div class="lo-btns">'+_loBtnsHTML(scope,k,s,always)+'</div></div>';
+  };
+  let loHtml='<div class="inv-lo-lab">Presets</div>';
+  if(_gearFilter==='combat') COMBAT_LOADOUTS.forEach(function(d){ if(!d.soon) loHtml+=loCard('combat',d.key,d.icon,d.label); });
+  else loHtml+=loCard('skilling',loSkill,loSkill,SKILLS[loSkill].name,true);
+  pre.innerHTML=loHtml;
+  box.appendChild(pre);
+  if(!box._loWired){
+    box._loWired=true;
+    box.addEventListener('click',function(e){ _loClick(e,box,function(){ _invGearKey=''; renderInvGear(); }); });
+  }
   if(_bagDrag) bagDollArm(_bagDrag);   // rebuilt mid-drag (a kill in a background fight): keep the lit squares
 }
 
@@ -34809,8 +35139,15 @@ const HUNT_KIT=[
     COMBAT_GEAR_STATS[k.id]=cs;
     const c=CRAFT[k.ctier];
     const out={}; out[k.id]=1;
+    /* Ticket #225: "it is out of order in the recipe window." Every hunt piece was
+       filed under subcat 'leather'. Helm, gloves and boots have a Leather tab for
+       that. Shields and capes do not, so there it only made a second group that
+       sorts after the first: the Lv 88 Rhinohide Bulwark sat after the Lv 99
+       Voidsteel Shield wearing a tier 1 of 1 stripe, and the Lv 18 Briarhide Cloak
+       after the Lv 90 Starsteel Cape. With no subcat they take their place by level. */
+    const _hkSub=(k.slot==='shield'||k.slot==='cape')?undefined:'leather';
     SKILLS.crafting.acts.push({id:'cr_hk_'+k.id, name:k.name,
-      cat:(k.slot==='helmet'?'helm':k.slot), subcat:'leather', lvl:k.lv,
+      cat:(k.slot==='helmet'?'helm':k.slot), subcat:_hkSub, lvl:k.lv,
       ms:c[0], xp:Math.round((60+(k.stats.def||0)*5+(k.stats.atk||0)*8)*(0.9+k.ctier*0.3)),
       spdMult:c[1], minMs:c[2], inp:k.inp, out:out});
   });
@@ -37152,8 +37489,15 @@ function startRaid(id){
   if(combat.active) return;
   const raid=getRaid(id); if(!raid) return;
   if(combatLevel()<raid.unlockLvl){ toast(`🔒 Requires Combat Lv ${raid.unlockLvl} to enter ${raid.name}.`); return; }
-  // Skilling keeps running through a raid, same as a normal fight. The no-retreat
-  // rule is about the raid, not about the rest of the character.
+  /* Ticket #237: "You can run a skill while you are in raid." Skilling and fighting
+     have been one or the other since 0.9.109, and engageCombat() says so, but a raid
+     starts here and this function still carried the comment from before that rule
+     ("skilling keeps running through a raid") and no guard. Below the level check,
+     so a raid that never starts stops nothing. */
+  if(state.action){
+    const _s=SKILLS[state.action.skill]; state.action=null;
+    if(_s) toast('\u2694 '+_s.name+' stopped. You cannot train during a raid.');
+  }
   if(typeof _combatGearSlot!=='undefined') _combatGearSlot=null;
   state.cmbSubTab='arena';
   state.zoneMode='raids';
@@ -37741,7 +38085,10 @@ const SLAYER_PERKS=[
   {id:'fortune',       ic:'slp_fortune',    lvl:75, max:3, cost:[150,380,900],       name:"Slayer's Fortune",
    eff:n=>'+'+(n*12)+'%', lab:'double-points chance',desc:'Chance to get double Slayer Points when you finish a bounty.'},
   {id:'relentless',    ic:'slp_relentless', lvl:75, max:3, cost:[150,380,900],       name:'Relentless',
-   eff:n=>'+'+(n*3)+'%', lab:'max HP per kill',     desc:'Heals you each time you kill your bounty target.'},
+   /* Ticket #218: "+3% max HP per kill" read as a bigger health bar, or a buff, or
+      something done to the enemy. It is an instant heal on you. */
+   eff:n=>(n*3)+'%', lab:'of your max health healed per bounty kill',
+   desc:'Each time you kill the monster your bounty names, you are healed straight away. It is not a buff and it does not change the monster. It does nothing at full health or on other monsters.'},
 ];
 
 /* Tier bands for the shop. Grouping by unlock level is what turns a flat list into
@@ -38472,6 +38819,18 @@ function _gearStatsHTML(){
 
 /* The paper doll for whichever loadout _gearFilter names. The Gear tab and the
    satchel screen both draw it (0.9.124.47). */
+/* The count on a loaded quiver tile. Red under 100, which is about a minute of
+   shooting, so running dry is something you see coming on the doll. */
+function dollAmmoPaint(el){
+  var n=(state&&state.items&&state.items[el.getAttribute('data-ammo')])||0;
+  var txt=fmtK(n);
+  if(el.textContent!==txt) el.textContent=txt;
+  var low=n<100; if(el.classList.contains('low')!==low) el.classList.toggle('low',low);
+}
+function dollAmmoTick(){
+  var els=document.querySelectorAll('.dl-ct[data-ammo]');
+  for(var i=0;i<els.length;i++) dollAmmoPaint(els[i]);
+}
 function gearDollEl(sq,cg,rg){
   /* The doll (see buildDoll) is a fixed 3-wide layout, so a new BODY_SLOTS entry
      does NOT appear here on its own. A skilling loadout can still hold a weapon
@@ -38490,6 +38849,15 @@ function gearDollEl(sq,cg,rg){
     cell.className='dl-sq'+(filled?'':' empty')+(isSkillingGear?' set':'');
     cell.title=def.label+(filled?': '+equippedDef.name:': empty, click to equip');
     cell.innerHTML=filled?iconHTML(equippedId)+gearMarksHTML(equippedId):(def.empty||'');
+    /* Ticket #202: "It would be nice if it said the number of ammo in the quiver
+       slot on the gear tabs. Right now we have to find the ammo in the inventory."
+       dollAmmoTick() keeps it moving while you shoot. */
+    if(slotKey==='quiver'&&filled){
+      var _ct=document.createElement('span');
+      _ct.className='dl-ct'; _ct.setAttribute('data-ammo',equippedId);
+      cell.appendChild(_ct);
+      dollAmmoPaint(_ct);
+    }
     // X/4 badge for skilling set pieces, only while viewing the skilling loadout
     if(isSkillingGear && _gearFilter==='skilling'){
       var sgSetDef=SKILLING_SETS[ITEMS[equippedId].gearSkill];
@@ -38525,8 +38893,7 @@ function gearDollEl(sq,cg,rg){
 function renderGear(){
   // Two-layer guard: skip rebuild if a select inside the gear panel is focused,
   // OR if the user interacted with any gear select in the last 3 seconds.
-  var _gaf=document.activeElement;
-  if(_gaf&&_gaf.tagName==='SELECT'&&$('gearView')&&$('gearView').contains(_gaf)) return;
+  if(selOpenIn($('gearView'))) return;   // open, not merely focused: see selOpenIn (#238)
   if(Date.now()-_gearInteractAt<3000) return;
   const box=$('gearView');
   const keep=box.scrollTop;
@@ -39071,7 +39438,7 @@ function buildSourceMap(){
     for(const act of sk.acts){
       // guaranteed outputs
       for(const id of Object.keys(act.out)){
-        addSource(id,{actName:act.name,skIcon:sk.icon,skName:sk.name,skKey:skKey,chance:1,reqLvl:act.lvl});
+        addSource(id,{actName:actShownName(skKey,act),skIcon:sk.icon,skName:sk.name,skKey:skKey,chance:1,reqLvl:act.lvl});
       }
       // inputs (consumed by — for processing skills)
       if(act.inp){
@@ -39476,7 +39843,7 @@ function recipeUsesFor(id){
         if(!act.inp) continue;
         for(const iid in act.inp){
           (_recipeUses[iid]=_recipeUses[iid]||[]).push({skKey:skKey, skName:sk.name, skIcon:sk.icon,
-            act:act.name||act.id, qty:act.inp[iid], lvl:act.lvl||1});
+            act:actShownName(skKey,act), qty:act.inp[iid], lvl:act.lvl||1});
         }
       }
     }
@@ -39554,6 +39921,33 @@ function sourceListHTML(sources, expanded){
 }
 
 let _ttExpanded=false, _ttLast=null;
+/* Ticket #224: "it would be nice if the tooltip told us how many of an item we
+   have in our bags. It does in some cases but doesn't on all tooltips." The only
+   count on any card was the "have 3, need 5" a recipe chip passes in as its note,
+   so four surfaces said it and every other one (what a recipe makes, a drop chip,
+   a shop crate, a guild order, the monster log) did not. It is on the card itself
+   now, so every surface gets it, at zero too. A seed is counted in the vault, a
+   tool or a set piece is owned or not, and enchanted copies are their own items
+   so they are counted beside the plain stack. */
+function ttOwnedText(id){
+  const it=ITEMS[id]; if(!it||!state) return '';
+  if(it.tool) return (Array.isArray(state.gear)&&state.gear.indexOf(id)>=0)?'You own this':'You do not own this';
+  if(it.skillGear){
+    let own=!!(state.skillingGear&&state.skillingGear[id]);
+    if(!own) for(const s in (state.equipped||{})) if(state.equipped[s]===id){ own=true; break; }
+    return own?'You own this':'You do not own this';
+  }
+  const seed=(typeof isSeedId==='function')&&isSeedId(id);
+  const n=(typeof bagQty==='function')?bagQty(id):((state.items&&state.items[id])||0);
+  let txt=(seed?'In your seed vault: ':'In your satchel: ')+n.toLocaleString();
+  const worn=(n>0&&typeof reservedForEquip==='function')?Math.min(n,reservedForEquip(id)):0;
+  if(worn>0) txt+=' ('+worn+' worn)';
+  let ench=0;
+  if(state.variants&&!(typeof isVariantId==='function'&&isVariantId(id)))
+    for(const v in state.variants){ const r=state.variants[v]; if(r&&r.base===id&&(state.items[v]||0)>0) ench+=state.items[v]; }
+  if(ench>0) txt+=' \u00b7 '+ench+' more enchanted';
+  return txt;
+}
 function showItemTooltip(itemId, x, y, note){
   const it=ITEMS[itemId]; if(!it) return;
   _ttLast={id:itemId, x:x, y:y, note:note};
@@ -39573,9 +39967,11 @@ function showItemTooltip(itemId, x, y, note){
     const _tn={1:'Bronze',2:'Iron',3:'Steel',4:'Mithril',5:'Cobalt',6:'Runite',7:'Starsteel',8:'Void'};
     const _sl={helmet:'Helmet',chest:'Chest',legs:'Legs',gloves:'Gloves',boots:'Boots',weapon:'Weapon',shield:'Shield',cape:'Cape'};
     // A tier with no metal name used to print "Tier 11 · Tier 11"; the number alone is enough.
-    if(it.light) _meta.push('Leather'); else if(it.cloth) _meta.push('Cloth'); else if(_tn[it.ctier]) _meta.push(_tn[it.ctier]);
+    /* A metal buckler is flagged light too (it never slows a light weapon), and so
+       read "Leather · Tier 7 · Shield" on a piece of starsteel (#225). */
+    if(it.light&&!it.offhand) _meta.push('Leather'); else if(it.cloth) _meta.push('Cloth'); else if(_tn[it.ctier]) _meta.push(_tn[it.ctier]);
     if(it.ctier) _meta.push('Tier '+it.ctier);
-    _meta.push(_sl[it.cslot]||it.cslot);
+    _meta.push(it.offhand?'Buckler':(_sl[it.cslot]||it.cslot));
   } else if(it.ammo){ _meta.push(it.ammo==='rune'?'Rune':'Ammunition'); _meta.push(it.ammo==='rune'?'Staves and wands':(it.ammo==='bolt'?'Crossbows':'Bows')); }
   /* Food is `potion:{heal:n}` in the data, so the potion test has to come SECOND
      or every cooked dish introduces itself as a potion. */
@@ -39584,7 +39980,8 @@ function showItemTooltip(itemId, x, y, note){
 
   let html=`<div class="nt-hd"><div class="tt-name">${iconHTML(itemId)} <span>${it.name}</span>`
     +(isRare?`<span class="nt-rare">RARE</span>`:``)+`</div>`
-    +(_meta.length?`<div class="nt-meta">${_meta.join(' · ')}</div>`:``)+`</div>`;
+    +(_meta.length?`<div class="nt-meta">${_meta.join(' · ')}</div>`:``)
+    +`<div class="nt-own">${ttOwnedText(itemId)}</div>`+`</div>`;
   /* Context the hovered surface wants to add - "have 3, need 5 per craft"
      from a recipe chip. Carried by data-itemnote so the surface does not
      need a second tooltip of its own. */
@@ -40581,12 +40978,12 @@ function renderMastery(){
     const outIc=Object.keys(act.out||{})[0];
     const xpBonus=masteryXpBonus(act.id)*100;
     const rankLabel = tier==='plat'?'★ Platinum (MAX)':tier==='gold'?`★ Gold ${mb.lvl}`:tier==='silver'?`★ Silver ${mb.lvl}`:tier==='bronze'?`★ Bronze ${mb.lvl}`:(actions>0?`Mastery ${mb.lvl}`:'Not started');
-    const tip=`${act.name} — ${rankLabel}`+(xpBonus>0?` · +${xpBonus.toFixed(1)}% xp`:'')+` · ${actions.toLocaleString()} done`+(tier!=='plat'&&mb.lvl<MAX_MASTERY?` · ${toNext.toLocaleString()} to next`:'');
+    const tip=`${actShownName(_masterySel,act)} — ${rankLabel}`+(xpBonus>0?` · +${xpBonus.toFixed(1)}% xp`:'')+` · ${actions.toLocaleString()} done`+(tier!=='plat'&&mb.lvl<MAX_MASTERY?` · ${toNext.toLocaleString()} to next`:'');
     const tile=document.createElement('div');
     tile.className=`ma-tile${tier!=='none'?' mb-'+tier:''}`;
     tile.title=tip;
     tile.innerHTML=`<span class="ma-ic">${outIc?iconHTML(outIc):iconHTML('ui_coin')}</span>`
-      +`<div class="ma-body"><div class="ma-nm">${act.name}</div><div class="ma-bar"><i style="width:${mb.pct}%;background:${mb.barColor}"></i></div></div>`
+      +`<div class="ma-body"><div class="ma-nm">${actShownName(_masterySel,act)}</div><div class="ma-bar"><i style="width:${mb.pct}%;background:${mb.barColor}"></i></div></div>`
       +`<span class="ma-lvl" style="color:${mb.barColor}">${mb.lvl||'·'}</span>`;
     grid.appendChild(tile);
   }
@@ -40766,8 +41163,8 @@ function renderXpDetail(){
       ? '<div class="sk-banner-running">'
         +'<span class="sk-banner-running-name" id="xdActName">'
         +(isRunning
-            ? '\u25b6 '+runningAct.name
-            : '\u25b6 '+SKILLS[runningSkKey].icon+' '+runningAct.name+' ('+SKILLS[runningSkKey].name+')')
+            ? '\u25b6 '+actShownName(runningSkKey,runningAct)
+            : '\u25b6 '+SKILLS[runningSkKey].icon+' '+actShownName(runningSkKey,runningAct)+' ('+SKILLS[runningSkKey].name+')')
         +'</span>'
         +'<div class="sk-banner-running-bar"><div class="sk-banner-running-fill" id="xdActFill"></div></div>'
         +'<span class="sk-banner-running-time" id="xdActTime"></span>'
@@ -40794,6 +41191,31 @@ function renderXpDetail(){
 }
 
 
+/* Ticket #215: "ingredients have stopped updating in skills. I was grinding elk
+   meat for a cooking quest and I had to switch to a different skill and back to get
+   the number I have to update." He was fighting while looking at Cooking. A fight
+   stops skilling, and a finished skilling action is the only thing that repaints
+   the centre panel, so during a fight nothing redrew the cards: the satchel on the
+   right counted the drops as they landed and the have/need chips beside it did not.
+   The same went for a farmhand's harvest and a ship coming home.
+
+   A cheap fingerprint of the satchel, taken when the cards are drawn and checked
+   once a second. If it has moved and no finished action is about to repaint
+   anyway, the cards are redrawn. A fingerprint and not a counter in grantItem:
+   twenty-odd places add to or take from state.items directly. */
+let _bagSigPainted='';
+function _bagSig(){
+  const it=(state&&state.items)||{}; let s=0, n=0;
+  for(const k in it){ const q=it[k]; if(q>0){ n++; s=(s*31+q*(k.length*131+k.charCodeAt(0)))%2147483647; } }
+  return n+':'+s;
+}
+function bagRepaintTick(){
+  if(viewTab!=='acts'||combatMode||invOpen||_repaintHeld()) return;
+  if(typeof sailMode!=='undefined'&&sailMode) return;
+  if(selectedSkill==='farming') return;        // farming repaints itself every two seconds
+  if(_cvSelPop) return;                        // a dropdown is open: renderCenter would refuse anyway
+  if(_bagSig()!==_bagSigPainted) renderCenter();
+}
 function renderCenter(){
   /* Picking a skill, a page or a mode while the satchel is open means leaving it;
      every one of those paths changes one of these, whichever code did it. */
@@ -40878,12 +41300,12 @@ function renderCenter(){
   // Rebuilding destroys the native dropdown and snaps it shut mid-click.
   // The animate() loop still updates progress bars and timers via element IDs, so
   // skipping a rebuild has no visible cost — the next tick (after the dropdown closes) refreshes.
-  var _focused=document.activeElement;
-  if(_focused && _focused.tagName==='SELECT'){
+  {
     var _activeId=({acts:'activityGrid',tree:'treeView',shop:'shopView',mastery:'masteryView',comp:'compView',ach:'achView',guild:'guildView',enchant:'enchantView',socket:'socketView'})[viewTab];
     var _activePanel=_activeId?$(_activeId):null;
-    if(_activePanel && _activePanel.contains(_focused)) return;
+    if(_activePanel && selOpenIn(_activePanel)) return;   // open, not merely focused (#238)
   }
+  _bagSigPainted=_bagSig();   // what the cards about to be drawn were counted from (#215)
   if(viewTab==='acts') renderActivities();
   else if(viewTab==='tree') renderPassives();
   else if(viewTab==='shop') renderShop();
@@ -40930,6 +41352,16 @@ function _achTreeSpentMax(){ let m=0; const t=state.tree||{}; for(const s in t){
 function _achTreeSpentAny(){ let t=0; const tr=state.tree||{}; for(const s in tr) for(const n in tr[s]) t+=tr[s][n]; return t; }
 function _achDiscovered(){ const d=state.discovered||{}; let c=0; for(const k in d) if(d[k]) c++; return c; }
 function _achZoneClears(){ return Object.keys(state.cmastZoneClears||{}).length; }
+/* Ticket #208: "Just got achievement for finishing all combat zones, but I haven't
+   done that yet. Still have all of Demon Sanctum and some of Ashen Steppe." Realm
+   Walker asked for as many clears as there are zones WITH A BOSS, nine. Since
+   0.9.126.8 the three hunting grounds are in that same map, so any nine of the
+   twelve fired it: eight dungeons and Thornwood, with the last dungeon untouched.
+   It asks for every zone by name now, so a thirteenth zone cannot do this again. */
+function _achAllZonesCleared(){
+  const c=state.cmastZoneClears||{};
+  return ZONES.length>0 && ZONES.every(z=>!!c[z.id]);
+}
 /* 0.9.124.6 helpers. Every one counts off the DATA (SKILLS, GUILDS, RAIDS,
    SAIL_ISLES) rather than a literal, which is the whole lesson of Ashen
    Ascendant having said "twelve" for two skills too long. */
@@ -40976,9 +41408,13 @@ function _achTrophies(){ return Object.keys(state.trophies||{}).length; }
    Full Board asked for the cap and was unobtainable by twelve points, which is
    exactly the defect the shard_bearer comment three lines below documents. */
 function _achCmastEarnable(){
-  const bz={}; MONSTERS.forEach(m=>{ if(m.boss&&m.zone) bz[m.zone]=1; });
+  /* Every source grantCmastPoints() is called from. This still said 120 after
+     0.9.126.8 added the hunting grounds, the raids and the Spire rungs, so Full
+     Board fired twelve points before the board was full. */
   const lv=(typeof MAX_LEVEL==='number'?MAX_LEVEL:99)-1;
-  return lv + 4 + MONSTERS.filter(m=>m.boss).length + Object.keys(bz).length;
+  return lv + 4 + MONSTERS.filter(m=>m.boss).length + ZONES.length
+    + (typeof RAIDS!=='undefined'?RAIDS.filter(r=>!r.endless).length:0)
+    + (typeof CMAST_SPIRE_FLOORS!=='undefined'?CMAST_SPIRE_FLOORS.length:0);
 }
 
 const ACH_CATS=[
@@ -41053,7 +41489,7 @@ const ACHIEVEMENTS=[
      condition is kept as an OR so anyone who already banked one keeps it. */
   {id:'shard_bearer', cat:'endgame', icon:'shard_bearer',   name:'Shard Bearer',  desc:'Spend 100 Combat Mastery points.',             check:()=>(state.cmastShards||0)>=1||cmastSpent()>=100},
   {id:'xp_100m',      cat:'endgame', icon:'xp_100m',  name:'Hundred Million',desc:'Earn 100,000,000 total skilling XP.',         check:()=>_achTotalXp()>=1e8},
-  {id:'all_zones',    cat:'endgame', icon:'all_zones', name:'Realm Walker',  desc:'Clear every combat zone.',                     check:()=>_achZoneClears()>=ZONES.filter(z=>z.type!=='hunt').length},
+  {id:'all_zones',    cat:'endgame', icon:'all_zones', name:'Realm Walker',  desc:'Clear every combat zone.',                     check:()=>_achAllZonesCleared()},
 
   /* ══ 0.9.124.6 ═══════════════════════════════════════════════════════════════
      Sailing, guilds, raids, ranged and fletching had ZERO achievements between
@@ -41459,13 +41895,13 @@ function buildTonight(body, redraw){
     const pv=offlinePreviewSlot(slots[i], capMs, rate);
     if(!pv||pv.cycles<=0) continue;
     any=true;
-    if(pv.ranDry) dry={when:pv.ranDry, name:pv.act.name};
+    if(pv.ranDry) dry={when:pv.ranDry, name:actShownName(pv.skill,pv.act)};
     const items=pv.outs.map(o=>'<span class="ofp-pit">'+iconHTML(o.id)
       +'<span>'+((ITEMS[o.id]&&ITEMS[o.id].name)||o.id)+'</span><b>×'
       +o.qty.toLocaleString()+'</b></span>').join('');
     prev.appendChild(_ofpEl('div','ofp-prow',
       '<span class="pic">'+iconHTML(pv.skill)+'</span>'
-      +'<span class="pnm"><b>'+SKILLS[pv.skill].name+'</b><i>'+pv.act.name
+      +'<span class="pnm"><b>'+SKILLS[pv.skill].name+'</b><i>'+actShownName(pv.skill,pv.act)
         +' · '+pv.cycles.toLocaleString()+' actions</i></span>'
       +'<span class="pxp">'+(pv.xp?'+'+pv.xp.toLocaleString()+' xp':'no xp')+'</span>'
       +(items?'<span class="ofp-pitems">'+items+'</span>':'')));
@@ -41548,7 +41984,7 @@ function _ofpThread(i, cfg, stance, redraw){
        a time and only after you had already picked it. */
     const xph=Math.round(act.xp*(3600000/actMs(act,pick))*m.xpMult*rate);
     const b=_ofpEl('button','ofp-act'+(on?' on':''),
-      '<span class="nm">'+act.name+' <span class="lv">Lv '+act.lvl+'</span></span>'
+      '<span class="nm">'+actShownName(pick,act)+' <span class="lv">Lv '+act.lvl+'</span></span>'
       +'<span class="xph">'+(stance.xp?fmtK(xph)+' xp/hr':'materials only')+'</span>');
     b.addEventListener('click',()=>{
       offlineSetSlot(i,{skill:pick,actId:act.id});
@@ -41596,7 +42032,14 @@ function buildTree(body, redraw){
   for(const node of OFFLINE_TREE){
     if(node.tier!==tier){
       tier=node.tier;
-      body.appendChild(_ofpEl('div','ofp-lab',tier+(node.req?' · '+node.req+' points earned':'')));
+      /* Ticket #235: "I'm hovering over my grandmaster pts for offline and I cannot
+         select any of them." The heading read "GRANDMASTER · 34 POINTS EARNED",
+         which is the gate, and reads exactly like a balance of 34 to spend. He had
+         none: the four tiers above hold 55 and the tree hands out 49. It says what
+         the number is now, and each card says why its button will not take a click. */
+      body.appendChild(_ofpEl('div','ofp-lab',tier+(node.req
+        ?' · opens at '+node.req+' points earned'+(earned<node.req?' (you have earned '+earned+')':'')
+        :'')));
       grid=_ofpEl('div','ofp-nodes');
       body.appendChild(grid);
     }
@@ -41617,14 +42060,25 @@ function buildTree(body, redraw){
          two lines. */
       +(node.stance?'<span class="ofp-stancetag">STANCE</span>':'')+'</span>'
       +(needsUnmet?'<span class="nreq">Needs '+(needsNode?needsNode.name:needsId)+' first</span>'
-        :(locked?'<span class="nreq">Needs '+node.req+' points earned first</span>':''))
+        :(locked?'<span class="nreq">Needs '+node.req+' points earned first</span>'
+        :((!maxed&&avail<=0)?'<span class="nreq">No points left to spend</span>':'')))
       +'<span class="nd">'+(maxed?node.desc(rank)
         :(rank>0?node.desc(rank)+' · next: '+node.next(rank+1)
                 :'Next: '+(node.max>1?node.desc(1):node.next(1))))+'</span></span>'
       +'<span class="nr">'+rank+'/'+node.max+'</span>';
     const buy=_ofpEl('button','ofp-buy',maxed?'✓':'+');
-    buy.disabled=maxed||!!locked||avail<=0;
+    /* Out of points is not `disabled`: a disabled button swallows the click, and
+       the click is the moment to say why nothing happened. */
+    const broke=!maxed&&!locked&&avail<=0;
+    buy.disabled=maxed||!!locked;
+    if(broke){ buy.classList.add('off'); buy.setAttribute('aria-disabled','true'); }
     buy.addEventListener('click',()=>{
+      if(broke){
+        toast(earned>=OFFLINE_MAX_LEVEL-1
+          ?'No points left. The tree gives '+(OFFLINE_MAX_LEVEL-1)+' and you have spent them all. Refund every point to place them again.'
+          :'No points left to spend. Each Offline level gives one, or refund every point to place them again.');
+        return;
+      }
       if(maxed||locked||avail<=0) return;
       if(!state.tree._offline) state.tree._offline={};
       state.tree._offline[node.id]=(state.tree._offline[node.id]||0)+1;
@@ -42075,6 +42529,13 @@ function _enBench(id,redraw){
 
 function renderEnchanting(){
   const box=$('enchantView'); if(!box) return;
+  /* Ticket #210: "The scroll window in enchant that lists the pieces also resets to
+     top when a skill gets done." Every finished action repaints the centre panel,
+     this panel is rebuilt from nothing, and the new list was then scrolled to the
+     selected piece, which by default is the first one. Where you had scrolled to
+     is kept across a redraw that did not change the filter or the selection. */
+  const _oldRail=box.querySelector('.en-rail');
+  const _keep=_oldRail?{top:_oldRail.scrollTop,f:_enFilter,sel:_enchantSel}:null;
   box.innerHTML='';
   const intro=document.createElement('div');
   intro.className='skill-intro';
@@ -42131,7 +42592,8 @@ function renderEnchanting(){
   box.appendChild(stack);
   /* Keep the chosen piece in view after a redraw. */
   const sel=rail.querySelector('.en-piece.sel');
-  if(sel&&rail.scrollHeight>rail.clientHeight+2) rail.scrollTop=Math.max(0,sel.offsetTop-rail.clientHeight/2);
+  if(_keep&&_keep.f===_enFilter&&_keep.sel===_enchantSel) rail.scrollTop=_keep.top;
+  else if(sel&&rail.scrollHeight>rail.clientHeight+2) rail.scrollTop=Math.max(0,sel.offsetTop-rail.clientHeight/2);
 }
 
 /* ════ [JS-25] SOCKETING UI ══════════════════════════════════════════════════════
@@ -42263,6 +42725,9 @@ function _ownedSocketGems(){
 
 function renderSockets(){
   const box=$('socketView'); if(!box) return;
+  // the same scroll-keeping as the Enchant list (#210)
+  const _oldRail=box.querySelector('.so-rail');
+  const _keep=_oldRail?{top:_oldRail.scrollTop,sel:_socketSel}:null;
   box.innerHTML='';
 
   const intro=document.createElement('div');
@@ -42272,9 +42737,9 @@ function renderSockets(){
      the totals ("Attack · Max HP · Defence come from gems in your worn combat
      gear…"), the per-piece socket counts are on every card as "Drill socket 1 of 2",
      and the Gem Exchange is a labelled block at the bottom of this same panel. */
-  intro.innerHTML='<b>Socketing</b> — drill a piece, then set gems in it. '
+  intro.innerHTML='<b>Socketing</b>: drill a piece, then set gems in it. '
     +'Gems only work while you are wearing the item. '
-    +'Drill one and every copy you own is drilled too.';
+    +'Plain copies of the same item share their sockets. An enchanted piece has its own.';
   box.appendChild(intro);
 
   /* Rail order is the panel's opinion about what you came here to do. Sorting by
@@ -42366,7 +42831,8 @@ function renderSockets(){
   syncFade();
   requestAnimationFrame(syncFade);
   const selCard=rail.querySelector('.so-piece.sel');
-  if(selCard&&rail.scrollHeight>rail.clientHeight+2){
+  if(_keep&&_keep.sel===_socketSel){ rail.scrollTop=_keep.top; syncFade(); }
+  else if(selCard&&rail.scrollHeight>rail.clientHeight+2){
     rail.scrollTop=Math.max(0,selCard.offsetTop-rail.clientHeight/2+selCard.offsetHeight/2);
     syncFade();
   }
@@ -44596,13 +45062,24 @@ function buildCmastViewHTML(){
   const lvlPts=Math.min(98, Math.max(0,cl-1));
   const milPts=[25,50,75,99].filter(m=>state.cmastMilestones&&state.cmastMilestones[m]).length;
   const bossPts=Object.keys(state.cmastBossKills||{}).length;
-  const zonePts=Object.keys(state.cmastZoneClears||{}).length;
+  const zonePts=Object.keys(state.cmastZoneClears||{}).filter(id=>ZONES.some(z=>z.id===id)).length;
+  /* Ticket #234: "only got 125 of the 132 points". The chips stopped at Zones, so
+     the raids and the Spire rungs were points with no line anywhere, and nothing
+     said how many each source holds. Every source is here with its total, so the
+     ones still to earn can be read off the page. */
+  const bossTot=MONSTERS.filter(m=>m.boss).length;
+  const raidList=RAIDS.filter(r=>!r.endless);
+  const raidPts=raidList.filter(r=>(state.raidClears&&state.raidClears[r.id])>0).length;
+  const spirePts=CMAST_SPIRE_FLOORS.filter(f=>(state.spireBest||0)>=f).length;
+  const nextRung=CMAST_SPIRE_FLOORS.find(f=>(state.spireBest||0)<f);
   const srcHTML=`
     <div class="cmast-h-src">
-      <span class="src">Combat lvl <b>${lvlPts}</b></span>
-      <span class="src">Milestones <b>${milPts}/4</b></span>
-      <span class="src">Bosses <b>${bossPts}</b></span>
-      <span class="src">Zones <b>${zonePts}</b></span>
+      <span class="src" data-rtip="Combat level&#10;One point for each combat level after the first.">Combat lvl <b>${lvlPts}/98</b></span>
+      <span class="src" data-rtip="Milestones&#10;One point at combat level 25, 50, 75 and 99.">Milestones <b>${milPts}/4</b></span>
+      <span class="src" data-rtip="Bosses&#10;One point the first time you kill each zone boss.">Bosses <b>${bossPts}/${bossTot}</b></span>
+      <span class="src" data-rtip="Zones&#10;One point for each zone cleared.&#10;A zone with a boss clears when the boss dies.&#10;A hunting ground clears when you have killed one of every creature in it.">Zones <b>${zonePts}/${ZONES.length}</b></span>
+      <span class="src" data-rtip="Raids&#10;One point the first time you clear each raid.">Raids <b>${raidPts}/${raidList.length}</b></span>
+      <span class="src" data-rtip="The Spire&#10;One point at Spire floor ${CMAST_SPIRE_FLOORS.join(', ')}.${nextRung?'&#10;Your next is floor '+nextRung+'. Your deepest is '+(state.spireBest||0)+'.':''}">Spire <b>${spirePts}/${CMAST_SPIRE_FLOORS.length}</b></span>
       ${shards>0?`<span class="src">Shards <b>${shards}</b></span>`:''}
     </div>
   `;
@@ -45518,7 +45995,7 @@ function renderCombat(){
   let noteHtml;
   if(state.action){
     const sk=SKILLS[state.action.skill]; const act=getAct(state.action.skill,state.action.actId);
-    noteHtml=`<div class="cmb-skilling-note">🌿 Training: ${sk?sk.icon:''} ${sk?sk.name:''}${act?` — ${act.name}`:''}. Starting a fight stops it.</div>`;
+    noteHtml=`<div class="cmb-skilling-note">🌿 Training: ${sk?sk.icon:''} ${sk?sk.name:''}${act?` — ${actShownName(state.action.skill,act)}`:''}. Starting a fight stops it.</div>`;
   }else{
     noteHtml=`<div class="cmb-skilling-note">🌿 No skill is training. Skilling and combat are one or the other — starting one stops the other.</div>`;
   }
@@ -46437,13 +46914,44 @@ function _tooltipOpen(){
   }catch(e){}
   return false;
 }
+/* ── …and while a mouse button is down (ticket #209) ───────────────────────────
+   "I am having issues with having to click something 3 or 4 times for the game to
+   register that I have clicked it. Sometimes it is switching back to a skill from
+   the guild page. Other times it is switching tabs within a skill."
+
+   A click is a press and a release on the SAME element. Every panel here is
+   rebuilt through innerHTML, so a repaint that lands between the two swaps the
+   button out from under the pointer: the press went to one node, the release goes
+   to its replacement, and the browser sends a click to neither. Nothing throws.
+   The skill list alone is rebuilt once a second by the engine and again on every
+   finished action, so with two bars running a tenth-of-a-second press is lost
+   about one time in four, and a slower hand loses more. It got worse with every
+   feature that finishes something on a timer, which is why it kept coming back.
+
+   Automatic repaints wait for the release, exactly as they already wait for a
+   tooltip. A repaint a click asks for still goes straight through renderAll().
+   The release only clears the flag: the held repaint lands on the next tick, in
+   its own task, so it can never fall between a mouseup and its click either.
+   PTR_HOLD_MAX_MS is the limit on how long a held button can hold the screen
+   still (a release outside the window is not always reported). */
+const PTR_HOLD_MAX_MS=1500;
+let _ptrDownAt=0;
+function _ptrHeld(){ return _ptrDownAt>0 && (Date.now()-_ptrDownAt)<PTR_HOLD_MAX_MS; }
+function _repaintHeld(){ return _ptrHeld() || _tooltipOpen(); }
+(function(){
+  const down=function(){ _ptrDownAt=Date.now(); };
+  const up=function(){ _ptrDownAt=0; };
+  ['pointerdown','mousedown'].forEach(function(t){ document.addEventListener(t,down,true); });
+  ['pointerup','mouseup','pointercancel','dragend'].forEach(function(t){ document.addEventListener(t,up,true); });
+  window.addEventListener('blur',up);
+})();
 function renderTick(){
-  if(_tooltipOpen()){ _repaintOwed=true; return; }
+  if(_repaintHeld()){ _repaintOwed=true; return; }
   _repaintOwed=false;
   renderAll();
 }
 function flushOwedRepaint(){
-  if(_repaintOwed && !_tooltipOpen()){ _repaintOwed=false; renderAll(); }
+  if(_repaintOwed && !_repaintHeld()){ _repaintOwed=false; renderAll(); }
 }
 
 /* progress bar animation */
@@ -46515,7 +47023,9 @@ function animate(){
         }
         var _tl2=_rl===Infinity?0:_rl*_ms2-_elapsed;
         var _isFuelLim=state.action.skill==='cooking'&&_rl<(_act.inp?canAfford(_act,Infinity,_m):Infinity);
-        _runsEl.textContent=_rl>0?(_rl+' run'+(_rl===1?'':'s')+' left · ~'+fmtDuration(Math.max(0,_tl2))+(_isFuelLim?' (fuel)':'')):'Last run…';
+        /* Just the time: it shares the mastery row now (#206), and the card's own
+           runs chip already carries the count. */
+        _runsEl.textContent=_rl>0?('~'+fmtDuration(Math.max(0,_tl2))+' left'+(_isFuelLim?' (fuel)':'')):'Last run…';
       }
 
       // Action timer bar in xpDetail — always visible regardless of selected skill tab
@@ -47036,6 +47546,25 @@ for(const _cid in SAIL_CHARTS){
   SAIL_CHART_BY_SRC[SAIL_CHARTS[_cid].from]=_cid;
 }
 function sailHasChart(cid){ return !!(state.sail&&state.sail.charts&&state.sail.charts[cid]); }
+/* Ticket #216: "I am starting to think the wrecker's chart is bugged." It is not,
+   it is 9% a landing at Widow's Wrack, which is a median of eight voyages of two
+   and a quarter hours. But the Search order says "far more rare finds" and the map
+   roll never read the order: Search made each voyage 40% longer for no extra chance
+   at the one rare thing on that island, so the order that sounds like the way to
+   hunt a map was the worst way to do it. A map is a rare find, so the order's own
+   multiplier applies to it now, the same number the trove roll already uses. */
+function sailChartChance(cid,ord){
+  const c=SAIL_CHARTS[cid]; if(!c) return 0;
+  const f=(ord&&ord.find>0)?ord.find:1;
+  return Math.min(0.95,c.chance*f);
+}
+/* "9.0%, or 15.8% on the Search order": the two numbers a map hunt turns on. */
+function sailChartOddsTxt(cid){
+  const base=sailChartChance(cid,null);
+  let best=null;
+  SAIL_ORDERS.forEach(function(o){ if(o.find>1&&(!best||o.find>best.find)) best=o; });
+  return (base*100).toFixed(1)+'%'+(best?', or '+(sailChartChance(cid,best)*100).toFixed(1)+'% on the '+best.n+' order':'');
+}
 function sailChartFor(i){ return SAIL_CHART_BY_ISLE[i]||null; }
 
 /* ── the ship's log (0.9.73) ───────────────────────────────────────────────────
@@ -47573,7 +48102,7 @@ function _sailResolve(slot){
      by reloading, same as the outcome. */
   let chartFound=null;
   const srcChart=SAIL_CHART_BY_SRC[landed];
-  if(srcChart && !sailHasChart(srcChart) && v.chartRoll < SAIL_CHARTS[srcChart].chance){
+  if(srcChart && !sailHasChart(srcChart) && v.chartRoll < sailChartChance(srcChart,ord)){
     if(!state.sail.charts) state.sail.charts={};
     state.sail.charts[srcChart]=1;
     grantItem(srcChart,1); markDiscovered(srcChart);
@@ -47814,27 +48343,70 @@ function sailBuildConsortHull(t){
    affect, which is the opposite of what an idle game wants; refilling on claim
    means the board is always exactly as busy as you are. */
 const SAIL_COMM_SALVAGE=['salt_iron','krakenbone','cannon_barrel','tidewrought'];
+/* Ticket #221: "I am sailing 70 and getting quests VERY frequently for The
+   Shallows or items that come from there. Those areas barely cover my crew costs."
+
+   A commission drew from every island in reach with equal weight. At Sailing 70
+   that is fifteen islands and 36 cargo items, fifteen of which only come from The
+   Shallows, so about one roll in five sent a level 70 captain back to the first
+   water in the game. And a commission only ever leaves the board by being
+   finished, so the ones nobody wanted piled up there.
+
+   The board draws from the upper part of what you can reach, the rule the guild
+   boards already follow (gdPickAct): the top 60% of your islands by level, never
+   fewer than three, so the early game is unchanged. */
+function sailCommIsles(){
+  const r=[];
+  SAIL_ISLES.forEach((is,ix)=>{ if(sailReach(ix)==='ok') r.push(ix); });
+  r.sort((a,b)=>SAIL_ISLES[a].lv-SAIL_ISLES[b].lv);
+  return r.slice(-Math.max(3,Math.ceil(r.length*0.6)));
+}
+/* What one voyage lands of a cargo item, on average, at the best of those islands:
+   the chance the island's draw picks it, times the middle of its amount. */
+function sailCommPerVoyage(id,isles){
+  let best=0;
+  (isles||sailCommIsles()).forEach(ix=>{
+    const is=SAIL_ISLES[ix], d=is.d||[], e=d.find(x=>x.i===id);
+    if(!e) return;
+    const tot=d.reduce((t,x)=>t+x.w,0)||1;
+    const picks=Math.min(d.length, is.pk?(is.pk[0]+is.pk[1])/2:2);
+    const per=Math.min(1,picks*e.w/tot)*(e.q[0]+e.q[1])/2;
+    if(per>best) best=per;
+  });
+  return best;
+}
+/* A cargo order is four to seven voyages' worth of the thing it asks for. It used
+   to be (40 + 4 a level) of anything, which grew with your level while the cargo
+   an island gives does not: at 70 that was 320 Rock Salt, about thirty trips to
+   Shalefoot, and it would have been 320 of something a deep island gives three
+   of. Rounded to a number someone would write on a slate. */
+function sailCommLandNeed(id,isles,roll){
+  const per=sailCommPerVoyage(id,isles);
+  if(!(per>0)) return 0;
+  const n=Math.max(3,Math.round(per*(4+(roll==null?Math.random():roll)*3)));
+  const step=n>=100?10:n>=30?5:1;
+  return Math.max(step,Math.round(n/step)*step);
+}
 const SAIL_COMM_KINDS={
   land:{
     /* Deliver bulk. Drawn from the bulk tables of islands you can actually reach,
        so the board never asks for something behind a wall. */
     make(lvl){
-      const pool=[];
-      SAIL_ISLES.forEach((is,ix)=>{
-        if(sailReach(ix)!=='ok') return;
-        (is.d||[]).forEach(e=>{ if(pool.indexOf(e.i)<0) pool.push(e.i); });
-      });
+      const isles=sailCommIsles(), pool=[];
+      isles.forEach(ix=>{ (SAIL_ISLES[ix].d||[]).forEach(e=>{ if(pool.indexOf(e.i)<0) pool.push(e.i); }); });
       if(!pool.length) return null;
       const id=pool[Math.floor(Math.random()*pool.length)];
-      return {k:'land', arg:id, need:Math.max(20, Math.round((40+lvl*4)*(0.7+Math.random()*0.6)))};
+      const need=sailCommLandNeed(id,isles);
+      return need>0?{k:'land', arg:id, need:need}:null;
     },
     text(c){ return 'Land '+c.need.toLocaleString()+'× '+(ITEMS[c.arg]?ITEMS[c.arg].name:c.arg); },
     hint(){ return 'Any island that can drop it.'; }
   },
   salvage:{
     make(lvl){
+      const isles=sailCommIsles();
       const pool=SAIL_COMM_SALVAGE.filter(id=>{
-        return SAIL_ISLES.some((is,ix)=>sailReach(ix)==='ok' && sailMatDrops(is).some(m=>m.id===id));
+        return isles.some(ix=>sailMatDrops(SAIL_ISLES[ix]).some(m=>m.id===id));
       });
       if(!pool.length) return null;
       const id=pool[Math.floor(Math.random()*pool.length)];
@@ -47845,7 +48417,8 @@ const SAIL_COMM_KINDS={
   },
   sea:{
     make(lvl){
-      const open=SAIL_BANDS.map((b,bi)=>bi).filter(bi=>SAIL_ISLES.some((is,ix)=>is.b===bi&&sailReach(ix)==='ok'));
+      const isles=sailCommIsles();
+      const open=SAIL_BANDS.map((b,bi)=>bi).filter(bi=>isles.some(ix=>SAIL_ISLES[ix].b===bi));
       if(!open.length) return null;
       const bi=open[Math.floor(Math.random()*open.length)];
       return {k:'sea', arg:bi, need:2+Math.floor(Math.random()*3)};
@@ -47879,13 +48452,34 @@ function sailCommMake(){
   for(let i=kinds.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); const t=kinds[i]; kinds[i]=kinds[j]; kinds[j]=t; }
   for(const k of kinds){
     const c=SAIL_COMM_KINDS[k].make(lvl);
-    if(c){ c.prog=0; return c; }
+    if(c){ c.prog=0; c.v=2; return c; }
   }
   return null;
+}
+/* A board written before 0.9.127.7 is full of what the old generator made, and
+   nothing but finishing one ever clears it. Once: an order nobody has started is
+   rolled again, and one already under way keeps its progress but is not left
+   asking for more than a new one would. */
+function sailCommRefit(s){
+  /* Measured against every island in reach, not just the upper part: an order under
+     way for Rock Salt has to be sized by Shalefoot, the only place that has it. */
+  const isles=[];
+  SAIL_ISLES.forEach((is,ix)=>{ if(sailReach(ix)==='ok') isles.push(ix); });
+  s.comms=s.comms.filter(function(c){
+    if(!c||c.v===2) return !!c;
+    if(!(c.prog>0)) return false;
+    if(c.k==='land'){
+      const top=sailCommLandNeed(c.arg,isles,1);
+      if(top>0&&c.need>top) c.need=Math.max(c.prog,top);
+    }
+    c.v=2;
+    return true;
+  });
 }
 function sailCommBoard(){
   const s=state.sail;
   if(!s.comms||!Array.isArray(s.comms)) s.comms=[];
+  if(s.comms.some(c=>c&&c.v!==2)) sailCommRefit(s);
   while(s.comms.length<SAIL_COMM_SLOTS){
     const c=sailCommMake();
     if(!c) break;
@@ -50216,7 +50810,7 @@ function sailWhyText(i){
   const isle=sailIsle(i), h=sailHull(), why=sailReach(i);
   if(why==='chart'){
     const cid=sailChartFor(i), src=sailIsle(SAIL_CHARTS[cid].from);
-    return 'Needs <b>'+ITEMS[cid].name+'</b> — '+(SAIL_CHARTS[cid].chance*100).toFixed(1)+'% at '+src.n+'.';
+    return 'Needs <b>'+ITEMS[cid].name+'</b>: '+sailChartOddsTxt(cid)+', each landing at '+src.n+'.';
   }
   if(why==='lvl')    return 'Needs Sailing '+isle.lv+'.';
   if(why==='stores') return 'Needs Range '+isle.st+' — you have '+h.stores+'.';
@@ -50229,8 +50823,8 @@ function sailChartHint(i){
   const cid=SAIL_CHART_BY_SRC[i];
   if(!cid || sailHasChart(cid)) return '';
   const opened=sailIsle(SAIL_CHARTS[cid].isle);
-  return '<b>'+ITEMS[cid].name+'</b> · '+(SAIL_CHARTS[cid].chance*100).toFixed(1)
-    +'% — opens <b>'+opened.n+'</b>.';
+  return '<b>'+ITEMS[cid].name+'</b> · '+sailChartOddsTxt(cid)
+    +'. Opens <b>'+opened.n+'</b>.';
 }
 
 /* ── island hover card ── */
@@ -52268,7 +52862,7 @@ const HINTS={
   socket_sell_loss:{
     guard:true,
     title:'Selling this destroys its sockets',
-    body:"The gems come back to your satchel. The sockets do not. The gold and gem dust you spent drilling them is gone for good.\n\nEnchants survive a sale, so this one is easy to get wrong.\n\nUpgrading to a better tier? Pop the gems out and keep one copy instead of selling the whole stack.",
+    body:"The gems come back to your satchel. The sockets do not. The gold and gem dust you spent drilling them is gone for good.\n\nAn enchanted piece is its own item. Sell it and its enchants go with it.\n\nUpgrading to a better tier? Pop the gems out and keep one copy instead of selling the whole stack.",
   },
 };
 function showHint(id, extra){
@@ -52636,9 +53230,14 @@ function mmStartEngine(){
   if(mmStarted) return;
   mmStarted=true;
   setInterval(tick,250);
-  setInterval(()=>{ if(mmAtMenu) return; updateSmoothedXph(); tickEffects(); renderEffectsBar();
-    if(!_tooltipOpen()) renderSkillList();   // don't yank a tooltip out from under the cursor
+  setInterval(()=>{ if(mmAtMenu) return; updateSmoothedXph(); tickEffects();
+    /* Neither is rebuilt under a tooltip or under a pressed mouse button: the first
+       loses the tooltip, the second loses the click (#209, see _ptrHeld). */
+    if(!_ptrHeld()) renderEffectsBar();
+    if(!_repaintHeld()) renderSkillList();
     navBagTile();                            // the satchel tile's slot count; keyed, so cheap
+    dollAmmoTick();                          // the loaded-ammunition count on the gear doll (#202)
+    bagRepaintTick();                        // have/need chips on the cards, while something else fills the satchel (#215)
     checkAchievements(); },1000);
   setInterval(()=>{
     if(mmAtMenu) return;
@@ -53346,6 +53945,18 @@ if(IS_DEMO) document.body.classList.add('is-demo');
    Positions divide by _rootZoom(): getBoundingClientRect returns post-zoom
    visual px, but px set on an element inside the zoomed root get re-scaled. */
 var _cvSelPop=null, _cvSelEl=null, _cvSelIdx=-1;
+/* Is one of these lists open, for a <select> inside `box`?
+
+   Ticket #238: "Farming timers have been freezing while watching the skill between
+   tends." Three panels (Farming, Gear, the centre panel) refuse to rebuild while a
+   <select> inside them has FOCUS, which was the right test when the list was a
+   native popup that closed when focus left. These lists are drawn in the page, and
+   the note above keeps focus on the <select> on purpose, including after a choice
+   is made. So one touch of the farmhand's seed picker froze the whole Farming panel,
+   countdowns and bars and all, until the next mouse press somewhere else moved
+   focus off it. The farmhand kept working and charging; only the paint stopped.
+   What those guards mean is "a list is open", so that is what they ask now. */
+function selOpenIn(box){ return !!(_cvSelPop && _cvSelEl && box && box.contains(_cvSelEl)); }
 
 function _cvSelClose(){
   if(_cvSelPop && _cvSelPop.parentNode) _cvSelPop.parentNode.removeChild(_cvSelPop);
