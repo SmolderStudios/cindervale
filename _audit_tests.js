@@ -11513,7 +11513,7 @@ setTimeout(() => {
        V.four.ranged === 0 && V.four.atk === 0 && Math.abs(V.bow.ranged - 0.08 - 0.07) < 1e-9 && V.bow.magic === 0 && V.sword.atk >= 0.08 && V.sword.magic === 0,
        'staff ' + V.four.magic + ', bow ' + V.bow.ranged + ', sword ' + V.sword.atk);
     ok('it is cloth, so it costs a spell nothing, and it reaches the max hit', V.four.mult === 1 && V.four.hit > V.three.hit && V.three.hit > V.bare.hit && V.four.save === 0.08 && V.four.mpow - V.bare.mpow === 11, 'max hit ' + V.bare.hit + ' -> ' + V.four.hit);
-    ok('a Dawnveil card names the set and says it is active when all four are worn', /Dawnveil set · 4\/4/.test(rg.veilCard) && /\+10% crit chance and \+8% damage with any weapon/.test(rg.veilCard) && /Cloth · spells at full strength/.test(rg.veilCard), rg.veilCard.slice(0, 160));
+    ok('a Dawnveil card names the set and says it is active when all four are worn', /Dawnveil set · 4\/4 · ACTIVE/.test(rg.veilCard) && /\+10% crit chance and \+8% damage with any weapon/.test(rg.veilCard) && /Cloth · spells at full strength/.test(rg.veilCard), rg.veilCard.slice(0, 160));
     ok('Faultline is the Spire\'s fifth piece and drops on a boss floor', rg.spireGear.split(',').length === 5 && /faultline/.test(rg.spire[0].gear) && rg.spire[1].gear === '' && rg.spire[2].gear === '', rg.spire[0].gear);
     ok('Sunder Runes come four for every arrow, on boss floors only', rg.spire[0].rune === rg.spire[0].shaft * 4 && rg.spire[0].rune > 0 && rg.spire[2].rune === 0 && rg.rune.dropsOffMonsters === false, rg.spire[0].rune + ' runes, ' + rg.spire[0].shaft + ' arrows on floor 30');
     ok('a Sunder Rune is a rune that powers a Surge with 38, cannot be carved, and sells for 2 silver',
@@ -11873,6 +11873,51 @@ setTimeout(() => {
 
     ok('the whole board can be bought in an order its prerequisites allow, and that is Full Board',
        S.full.spent === 166 && S.full.fires === true && S.full.oneShort === false, JSON.stringify(S.full));
+  }
+
+  section('A staff says Staff on its card, and nothing says it with an em dash (0.9.127.11)');
+  {
+    /* Two things seen on the gear screenshots. The card header printed the tier's
+       metal and the word Weapon for a staff or a wand, "Mithril · Tier 4 · Weapon" on
+       a Frostbrand Staff, which is neither mithril nor all it is. And a full set
+       said "4/4" and then ACTIVE after an em dash, on every set, from one string. */
+    const C = JSON.parse(ev(`(function(){
+      var o={}, dash=String.fromCharCode(8212);
+      var meta=function(id){ showItemTooltip(id,10,10); var e=ttEl().querySelector('.nt-meta'); var t=e?e.textContent:''; hideTooltip(); return t; };
+      state=defaultState(); normalizeState();
+      o.heads={}; ['frostbrand_staff','frost_staff','frost_wand','gnawbone_wand','faultline','starcall_wand','mithril_sword','cobalt_buckler','troll_chest','seercloth_robe','forge_rune'].forEach(function(id){ o.heads[id]=meta(id); });
+      var mw=Object.keys(ITEMS).filter(function(id){ var it=ITEMS[id]; return it.magic&&it.cslot==='weapon'&&!it._variant; });
+      o.n=mw.length;
+      o.bad=mw.filter(function(id){ var it=ITEMS[id]; return meta(id)!=='Tier '+it.ctier+' · '+(it.mfam==='wand'?'Wand':'Staff'); });
+      o.kinds=mw.reduce(function(a,id){ a[ITEMS[id].mfam]=(a[ITEMS[id].mfam]||0)+1; return a; },{});
+      /* every set: all of it worn, then one piece short */
+      var line=function(id){ var d=document.createElement('div'); d.innerHTML=combatGearStatBlock(id); return d.textContent; };
+      o.sets=Object.keys(COMBAT_SETS).map(function(k){
+        var st=COMBAT_SETS[k], ce={}, n=st.pieces.length;
+        st.pieces.forEach(function(p){ var it=ITEMS[p]; ce[it.cslot+(ce[it.cslot]?'2':'')]=p; });
+        state.combatEquipped=ce; var full=line(st.pieces[0]);
+        var short={}; Object.keys(ce).slice(1).forEach(function(s){ short[s]=ce[s]; }); state.combatEquipped=short; var part=line(st.pieces[0]);
+        state.combatEquipped={};
+        return {k:k, full:full.indexOf(st.name+' set · '+n+'/'+n+' · ACTIVE')>=0, dash:full.indexOf(dash+' ACTIVE')>=0||full.indexOf('ACTIVE')!==full.lastIndexOf('ACTIVE'),
+                part:part.indexOf(st.name+' set · '+(n-1)+'/'+n)>=0 && part.indexOf('ACTIVE')<0};
+      });
+      o.roles=Object.keys(_CMAST_DISC).filter(function(k){ return String(_CMAST_DISC[k].role).indexOf(dash)>=0; });
+      o.roleText=CMAST_COLS.map(function(k){ return _CMAST_DISC[k].role; });
+      state=defaultState(); normalizeState();
+      return JSON.stringify(o);
+    })()`));
+    ok('a found staff says Tier 4 · Staff, with no metal in front of it', C.heads.frostbrand_staff === 'Tier 4 · Staff', C.heads.frostbrand_staff);
+    ok('a crafted staff and a crafted wand say the same of themselves', /^Tier \d+ · Staff$/.test(C.heads.frost_staff) && /^Tier \d+ · Wand$/.test(C.heads.frost_wand), C.heads.frost_staff + ' | ' + C.heads.frost_wand);
+    ok('and so does every staff and wand in the game, found, crafted or from a raid', C.n >= 35 && C.bad.length === 0 && C.kinds.staff > 0 && C.kinds.wand > 0,
+       C.bad.length ? C.bad.slice(0, 6).join(' ') : C.n + ' weapons: ' + C.kinds.staff + ' staves, ' + C.kinds.wand + ' wands');
+    ok('nothing else changed: a sword keeps its metal, a buckler, leather and cloth their own word, a rune its line',
+       C.heads.mithril_sword === 'Mithril · Tier 4 · Weapon' && C.heads.cobalt_buckler === 'Cobalt · Tier 5 · Buckler' && /^Leather · Tier \d+ · Chest$/.test(C.heads.troll_chest)
+       && /^Cloth · Tier \d+ · Chest$/.test(C.heads.seercloth_robe) && C.heads.forge_rune === 'Rune · Staves and wands',
+       [C.heads.mithril_sword, C.heads.cobalt_buckler, C.heads.troll_chest, C.heads.seercloth_robe, C.heads.forge_rune].join(' | '));
+    ok('a full set says so after a middle dot, on every set', C.sets.length >= 3 && C.sets.every(s => s.full === true && s.dash === false), C.sets.filter(s => !s.full || s.dash).map(s => s.k).join(' ') || C.sets.length + ' sets');
+    ok('and a set one piece short does not say it at all', C.sets.every(s => s.part === true), C.sets.filter(s => !s.part).map(s => s.k).join(' '));
+    ok('the set line is still built in one place', (html.match(/' set · '\+worn\+'\/'\+st\.pieces\.length\+\(complete\?' · ACTIVE':''\)/g) || []).length === 1 && !html.includes("' — ACTIVE'"));
+    ok('no column or bridge on the Mastery board is described with an em dash', C.roles.length === 0, C.roles.join(' ') || C.roleText.join(' | '));
   }
 
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));

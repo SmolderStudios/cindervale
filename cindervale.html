@@ -16725,7 +16725,7 @@ function combatGearStatBlock(itemId){
     for(var i=0;i<st.pieces.length;i++){ if(wornSet[st.pieces[i]]) worn++; }
     var complete=worn>=st.pieces.length;
     setLine='<div style="margin-top:7px;padding-top:6px;border-top:1px solid var(--trim-d);font-size:calc(12px*var(--tscale))">'
-      +'<span style="color:'+(complete?'#7fd8c8':'#9c8c72')+';letter-spacing:.5px">'+iconHTML('ui_spark')+' '+st.name+' set · '+worn+'/'+st.pieces.length+(complete?' — ACTIVE':'')+'</span>'
+      +'<span style="color:'+(complete?'#7fd8c8':'#9c8c72')+';letter-spacing:.5px">'+iconHTML('ui_spark')+' '+st.name+' set · '+worn+'/'+st.pieces.length+(complete?' · ACTIVE':'')+'</span>'
       +'<div style="color:'+(complete?'#bfe6db':'var(--muted)')+';font-size:calc(11.5px*var(--tscale));line-height:1.45;margin-top:2px">'+st.desc+'</div></div>';
   }
   /* Damage type (0.9.120). Weapons only, and only when the item declares one —
@@ -41041,9 +41041,13 @@ function showItemTooltip(itemId, x, y, note){
     // A tier with no metal name used to print "Tier 11 · Tier 11"; the number alone is enough.
     /* A metal buckler is flagged light too (it never slows a light weapon), and so
        read "Leather · Tier 7 · Shield" on a piece of starsteel (#225). */
-    if(it.light&&!it.offhand) _meta.push('Leather'); else if(it.cloth) _meta.push('Cloth'); else if(_tn[it.ctier]) _meta.push(_tn[it.ctier]);
+    /* A staff or a wand is wood and bone, not the tier's metal, and "Weapon" says less
+       than what it is. It read "Mithril · Tier 4 · Weapon" on a Frostbrand Staff. */
+    const _mw=!!(it.magic&&it.cslot==='weapon');
+    if(_mw){ /* no metal */ }
+    else if(it.light&&!it.offhand) _meta.push('Leather'); else if(it.cloth) _meta.push('Cloth'); else if(_tn[it.ctier]) _meta.push(_tn[it.ctier]);
     if(it.ctier) _meta.push('Tier '+it.ctier);
-    _meta.push(it.offhand?'Buckler':(_sl[it.cslot]||it.cslot));
+    _meta.push(_mw?(it.mfam==='wand'?'Wand':'Staff'):(it.offhand?'Buckler':(_sl[it.cslot]||it.cslot)));
   } else if(it.ammo){ _meta.push(it.ammo==='rune'?'Rune':'Ammunition'); _meta.push(it.ammo==='rune'?'Staves and wands':(it.ammo==='bolt'?'Crossbows':'Bows')); }
   /* Food is `potion:{heal:n}` in the data, so the potion test has to come SECOND
      or every cooked dish introduces itself as a potion. */
@@ -45898,11 +45902,11 @@ const _CMAST_TIER_NAME={1:'Foundation',2:'Discipline',3:'Technique',4:'Mastery',
    the old three-tree engine — melee/ranged/magic have not meant those things since
    1.0.22. These are the names, roles and colours the player actually sees. */
 const _CMAST_DISC={
-  melee:  {name:'Onslaught', pc:'#e0762f', dim:'rgba(224,118,47,.42)',  glow:'rgba(224,118,47,.42)',  far:'rgba(224,118,47,.16)', hot:'#7a3a10', warm:'#3a2109', wash:'rgba(224,118,47,.05)',  role:'Raw offence — damage, crits, attack speed.', sig:'cross_blades'},
-  ranged: {name:'Bulwark',   pc:'#79a8d8', dim:'rgba(121,168,216,.42)', glow:'rgba(121,168,216,.4)',  far:'rgba(121,168,216,.15)', hot:'#24486a', warm:'#16283a', wash:'rgba(121,168,216,.045)', role:'Staying alive — HP, damage reduction, lifesteal.', sig:'shield'},
-  magic:  {name:'Warfare',   pc:'#e0b44a', dim:'rgba(224,180,74,.42)',  glow:'rgba(224,180,74,.4)',   far:'rgba(224,180,74,.15)',  hot:'#6b4c0b', warm:'#382806', wash:'rgba(224,180,74,.045)',  role:'Spoils — combat XP, gold, drop rates.', sig:'crown'},
+  melee:  {name:'Onslaught', pc:'#e0762f', dim:'rgba(224,118,47,.42)',  glow:'rgba(224,118,47,.42)',  far:'rgba(224,118,47,.16)', hot:'#7a3a10', warm:'#3a2109', wash:'rgba(224,118,47,.05)',  role:'Raw offence: damage, crits, attack speed.', sig:'cross_blades'},
+  ranged: {name:'Bulwark',   pc:'#79a8d8', dim:'rgba(121,168,216,.42)', glow:'rgba(121,168,216,.4)',  far:'rgba(121,168,216,.15)', hot:'#24486a', warm:'#16283a', wash:'rgba(121,168,216,.045)', role:'Staying alive: HP, damage reduction, lifesteal.', sig:'shield'},
+  magic:  {name:'Warfare',   pc:'#e0b44a', dim:'rgba(224,180,74,.42)',  glow:'rgba(224,180,74,.4)',   far:'rgba(224,180,74,.15)',  hot:'#6b4c0b', warm:'#382806', wash:'rgba(224,180,74,.045)',  role:'Spoils: combat XP, gold, drop rates.', sig:'crown'},
   mr:     {name:'Duel',      pc:'#c99a6a', dim:'rgba(201,154,106,.42)', glow:'rgba(201,154,106,.34)', far:'rgba(201,154,106,.13)', hot:'#4e3a1e', warm:'#2c2012', wash:'transparent', role:'Onslaught + Bulwark', sig:'twin_blades'},
-  mark:   {name:'Marksman',  pc:'#4fa89b', dim:'rgba(79,168,155,.42)',  glow:'rgba(79,168,155,.4)',   far:'rgba(79,168,155,.15)',  hot:'#1d5049', warm:'#132e2a', wash:'rgba(79,168,155,.045)', role:'Ranged offence — draw weight, ammunition, accuracy.', sig:'bow'},
+  mark:   {name:'Marksman',  pc:'#4fa89b', dim:'rgba(79,168,155,.42)',  glow:'rgba(79,168,155,.4)',   far:'rgba(79,168,155,.15)',  hot:'#1d5049', warm:'#132e2a', wash:'rgba(79,168,155,.045)', role:'Ranged offence: draw weight, ammunition, accuracy.', sig:'bow'},
   kb:     {name:'Outrider',  pc:'#8fb0a0', dim:'rgba(143,176,160,.42)', glow:'rgba(143,176,160,.34)', far:'rgba(143,176,160,.13)', hot:'#3a4c42', warm:'#212c26', wash:'transparent', role:'Marksman + Bulwark', sig:'cycle'},
   sorc:   {name:'Sorcery',   pc:'#b9a4f0', dim:'rgba(185,164,240,.42)', glow:'rgba(185,164,240,.4)',  far:'rgba(185,164,240,.15)', hot:'#3c2a6a', warm:'#221a3a', wash:'rgba(185,164,240,.045)', role:'Magic offence: spell damage, runes, the elements.', sig:'orb'},
   gs:     {name:'Warcaster', pc:'#cdb89a', dim:'rgba(205,184,154,.42)', glow:'rgba(205,184,154,.34)', far:'rgba(205,184,154,.13)', hot:'#4a3e2a', warm:'#2a2418', wash:'transparent', role:'Warfare + Sorcery', sig:'wand'},
