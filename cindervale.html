@@ -9044,7 +9044,7 @@ button.en-canchip.pick:disabled{opacity:.4;cursor:default}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.127.9">v0.9.127</div>
+  <div class="mm-ver" data-build="0.9.127.10">v0.9.127</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -19081,6 +19081,23 @@ function offlineFarmResolve(awayMs, rate, from){
    rule a hidden fight follows since 0.9.127.5). Past TICK_CATCHUP_MAX_MS the
    machine was asleep and tick() settles it as offline time instead. */
 let _farmTickAt=0;
+/* The body of the 2 s farming timer, named so it can be driven by a test.
+
+   Time at the menu is not a late timer (0.9.127.10, found by the sleep-settle
+   session). This returns early there, so the stamp went stale for the length of
+   the visit, and the first tick back played a visit of 15 s to two minutes
+   through at the full rate, after the launch path had already settled the same
+   time as time away. It also carried across a change of character: B's farmhand
+   was played for the time since A's last tick. Measured on 0.9.127.8: 60 s and
+   100 s at the menu each gave 8 tends and 8 harvests nobody had earned. The stamp
+   is dropped at the menu, here and in mmShowMenu(), so the first tick back is an
+   ordinary one. The same trap _lastTickWall had. */
+function farmIntervalTick(){
+  if(mmAtMenu){ _farmTickAt=0; return; }
+  tickFarmingNotifications();
+  farmTimerTick();
+  if(viewTab==='acts'&&selectedSkill==='farming') renderFarming();
+}
 function farmTimerTick(){
   const now=Date.now(), gap=_farmTickAt?now-_farmTickAt:0;
   _farmTickAt=now;
@@ -52637,6 +52654,7 @@ function mmSummary(n){
 }
 function mmShowMenu(){
   mmAtMenu=true; mmSlot=0;
+  _farmTickAt=0;   // a visit to the menu is settled by the launch path, never played through by the farming timer
   // Storage blocked (see getDeviceId): the game runs but nothing can ever be
   // saved. Say so once, rather than letting the player lose a session to it.
   if(_noStorage&&!_noStorageWarned){
@@ -53513,12 +53531,7 @@ function mmStartEngine(){
     dollAmmoTick();                          // the loaded-ammunition count on the gear doll (#202)
     bagRepaintTick();                        // have/need chips on the cards, while something else fills the satchel (#215)
     checkAchievements(); },1000);
-  setInterval(()=>{
-    if(mmAtMenu) return;
-    tickFarmingNotifications();
-    farmTimerTick();
-    if(viewTab==='acts'&&selectedSkill==='farming') renderFarming();
-  },2000);
+  setInterval(farmIntervalTick,2000);
   setInterval(saveGame,5000);
   // (removed) a second 1s renderSkillList interval — the one above already does it,
   // so the most expensive render in the game was running twice a second.

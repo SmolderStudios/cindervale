@@ -11132,6 +11132,29 @@ setTimeout(() => {
     })()`);
     ok('the farmhand\'s time away is counted from when it began, whoever saved since', ff.given.h > 20 && ff.given.future === false, JSON.stringify(ff.given));
     ok('and with no start to go by it never works into the future', ff.blind.ran === false && ff.blind.future === false, JSON.stringify(ff.blind));
+    /* 0.9.127.10, found by the sleep-settle session. The 2 s farming timer does
+       nothing at the menu, so its stamp went stale there and the first tick back
+       played the whole visit through, on top of the launch path's own settle. */
+    const fm = ev(`(function(){
+      state=defaultState(); normalizeState(); mmAtMenu=false; mmSlot=1;
+      state.xp.farming=XP_CUM[99]; state.farmer={tier:3,maxTier:3,enabled:true,seedId:null};
+      var quick=CROPS.slice().sort(function(a,b){ return a.tendInterval-b.tendInterval; })[0];
+      state.seeds={}; state.seeds[quick.id]=50; var t0=Date.now();
+      var fill=function(){ PATCHES.forEach(function(p){ state.patches[p.id]={seedId:quick.id, plantedAt:t0-100000, growMs:quick.growMs, tendedMs:0, lastTended:0}; }); };
+      var first=function(){ return state.patches[PATCHES[0].id]||{}; };
+      /* a minute at the menu */
+      fill(); _farmTickAt=t0-60000; mmAtMenu=true; farmIntervalTick();
+      var atMenu={stamp:_farmTickAt, tended:first().tendedMs||0};
+      mmAtMenu=false; farmIntervalTick();
+      var back={late:(first().lastTended||0)>0&&first().lastTended<Date.now()-5000, stamp:_farmTickAt>0};
+      /* the same minute with the game in view the whole time is still played through */
+      fill(); _farmTickAt=Date.now()-60000; farmIntervalTick();
+      var inView=(first().lastTended||0)>0&&first().lastTended<Date.now()-5000;
+      var src=String(mmShowMenu);
+      return {atMenu:atMenu, back:back, inView:inView, menuClears:/_farmTickAt=0/.test(src)};
+    })()`);
+    ok('time at the menu is not played through by the farming timer', fm.atMenu.stamp === 0 && fm.atMenu.tended === 0 && fm.back.late === false && fm.back.stamp === true && fm.menuClears === true, JSON.stringify(fm));
+    ok('a late timer in a window that stayed open still is', fm.inView === true);
 
     /* ── choosing an enchant ───────────────────────────────────────────────────── */
     const en = ev(`(function(){
