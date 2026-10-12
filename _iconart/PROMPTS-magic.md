@@ -1089,3 +1089,105 @@ arcane_draught_1
 arcane_draught_2
 ```
 </details>
+
+---
+
+# The Sorcery column: thirteen Mastery plates
+
+Slice 6 added the fifth column of Combat Mastery, Sorcery, and its bridge to
+Warfare: thirteen nodes, and every one ships on a drawn plate. They are in
+`SORC_PLATES` in `cindervale.html`, beside `CMAST_ICON_SVG`, and they fill only the
+ids `CMAST_ART.icons` has no painted plate for. Cut a painted plate into
+`CMAST_ART.icons` under the same id and the drawing stops being used, with no other
+edit. The thirteen ids are on `SORC_PLATES_PENDING` in `_audit_tests.js`, which
+fails the day a listed plate is painted and still listed, so take each id off as
+it lands. What is in the game now is at the bottom of
+`_magedesign/shots/gear/sheet.png`, and on the board in
+`_magedesign/shots/gear/mastery_board.png`.
+
+| Family | Painted | Ships as | Sheet |
+|---|---|---|---|
+| Sorcery plates | 13 | `s_t1` to `s_cap`, `gs_t3`, `gs_t4` | U |
+
+**These are not item icons.** They go through the Combat Mastery pipeline, the one
+`_cmastpreview/ART-PROMPTS.md` describes and `_cmastpreview/reart.js` cuts, not the
+item pack. Three rules from that file decide everything about this sheet:
+
+- **White and light grey on a transparent background, no colour anywhere.** The
+  board tints every plate with its column's colour at render time (Sorcery is
+  `#b9a4f0`, the bridge `#cdb89a`), so a coloured plate fights the tint. Shade
+  normally, without hue.
+- **They render at about 27 px** on the five-column board (33 px if the board is
+  ever drawn at full size). One heavy silhouette, at most three or four parts,
+  thick strokes. Draw for the thumbnail.
+- **4 KB each as WebP at most.** Thirteen is about 50 KB.
+
+**Paste the painted Marksman sheet (`cmast_2_marksman.png`) into the conversation
+first**, so the weight, the margins and the shading match the fifty plates that
+are already on the board.
+
+## Sheet U - Sorcery plates (13, grid 5x3, two cells spare)
+
+````
+A contact sheet of dark-fantasy RPG skill icons, drawn as flat white and
+light-grey silhouettes on a fully transparent background, no colour
+anywhere. Arranged on an even 5-column by 3-row grid, fifteen equal square
+cells, generous even margins, each icon centred in its own cell and not
+touching the edges. Every icon is a single bold silhouette that stays
+readable at 24 pixels: few parts, thick strokes, strong outline, no thin
+lines, no text, no borders, no drop shadows, no background. Consistent
+weight and scale across all of them, matching the reference sheet above.
+
+1.  Steady Mind    - An open spellbook seen from the front, one small
+                     four-point star hanging still above it.
+2.  Deep Focus     - A crystal ball on a low stand, a bright core at its
+                     centre.
+3.  Rune Thrift    - A cut runestone with one angular rune carved in it, and
+                     a second smaller stone tucked behind it.
+4.  Spellbreak     - A heater shield split from top to bottom by one jagged
+                     crack.
+5.  Quick Hands    - A short wand held at a slant with a spark at its tip
+                     and three speed lines trailing behind it.
+6.  Heavy Casting  - A tall staff planted upright in the ground, a heavy orb
+                     held in the fork at its head.
+7.  Sharp Mind     - A single open eye inside an upright diamond.
+8.  Echo           - One small orb with two widening arcs travelling away
+                     from it to the right, like a sound repeating.
+9.  Attunement     - A ring with four small discs set on it at the compass
+                     points, and a four-point star in the middle.
+10. Rune Keeper    - A drawstring pouch, tied shut, with one angular rune
+                     marked on its side.
+11. Archmage       - A tall pointed hat with a wide brim, a four-point star
+                     cut into the crown.
+12. Battle Scholar - A sword driven point down into an open book.
+13. Warcaster      - A sword and a staff crossed in an X, the staff with an
+                     orb at its head.
+14. (spare)        - A burning candle beside a closed book.
+15. (spare)        - A hand holding a small flame.
+````
+
+Cells 1 to 11 are the column from top to bottom (the three in row 5 left to right:
+Echo, Attunement, Rune Keeper). Cells 12 and 13 are the bridge to Warfare.
+Attunement is the column's powerful node and Archmage its capstone, so they sit in
+the bigger frames and can carry a little more detail than the rest.
+
+Deliverable: `cmast_6_sorcery.png`, cells 256px, transparent.
+
+<details><summary>id order for the cutter</summary>
+
+```
+s_t1
+s_t2_l
+s_t2_r
+s_t3_l
+s_t3_r
+s_t4_l
+s_t4_r
+s_t5_l
+s_t5_m
+s_t5_r
+s_cap
+gs_t3
+gs_t4
+```
+</details>

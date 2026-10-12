@@ -350,6 +350,17 @@ function SCENES_IN_PAGE() {
       robeSets.forEach(function (c) { hg += secG(c.set + ' robes', 'the five robe shapes, raid cloth', ['hood', 'robe', 'leggings', 'wraps', 'slippers'].map(function (p) { return c.key + '_' + p; })); });
       hg += secG('Dawnveil', 'four pieces from The Empyrean Throne, their own shapes', veil);
       hg += secG('The gem and the draught', 'Wyrdstone and the Arcane Draught', other);
+      /* the thirteen Sorcery plates: the drawing on its own, then the node as the board
+         draws it at full size and at the size five columns leave it */
+      var plateNodes = CMAST_NODES.filter(function (n) { return n.tree === 'sorc' || n.tree === 'gs'; });
+      plateNodes.forEach(function (n) { state.cmast[n.id] = n.max; });
+      var plateDrawn = plateNodes.filter(function (n) { return /^data:image\/svg/.test(CMAST_ART.icons[n.id] || ''); }).length;
+      var kindOf = function (n) { return n.capstone ? 'capstone' : n.powerful ? 'powerful' : n.hybrid ? 'bridge' : n.unique ? 'unique' : 'ranked, ' + n.max + ' points'; };
+      hg += '<h2>Combat Mastery: the Sorcery plates<small>eleven in the column and two on the bridge to Warfare, white on nothing like the fifty painted ones</small></h2><div class="row">'
+        + plateNodes.map(function (n) {
+            return '<div class="c pl"><div class="b"><div class="p1"><img src="' + CMAST_ART.icons[n.id] + '" alt=""></div>'
+              + '<div class="cmast-grid pg" style="--u:1px">' + _cmastNodeHTML(n) + '</div><div class="cmast-grid pg" style="--u:.8px">' + _cmastNodeHTML(n) + '</div></div>'
+              + '<span>' + n.name + '</span><i>' + n.id + ' · ' + kindOf(n) + '</i></div>'; }).join('') + '</div>';
       var dg = document.createElement('div'); dg.id = 'mageSheet'; dg.innerHTML = hg;
       var stg = document.createElement('style');
       stg.textContent = '#mageSheet{position:absolute;left:0;top:0;z-index:99999;width:1560px;box-sizing:border-box;background:#120c07;color:#d9c8a4;font:13px/1.35 Georgia,serif;padding:22px 24px 30px}'
@@ -360,12 +371,53 @@ function SCENES_IN_PAGE() {
         + '#mageSheet .c{background:#1d140c;border:1px solid #3a2a18;border-radius:6px;padding:9px 9px 7px;display:flex;flex-direction:column;align-items:center;gap:4px;width:180px;box-sizing:border-box}'
         + '#mageSheet .b{display:flex;align-items:flex-end;gap:9px;height:78px}'
         + '#mageSheet .ev-icon{display:block}#mageSheet .s1 .ev-icon{width:76px;height:76px}#mageSheet .s2 .ev-icon{width:34px;height:34px}#mageSheet .s3 .ev-icon{width:18px;height:18px}'
-        + '#mageSheet .c span{font-size:12.5px;color:#d9c8a4;text-align:center}#mageSheet .c i{font-size:10.5px;color:#8a7654;text-align:center;font-style:normal;line-height:1.25}';
+        + '#mageSheet .c span{font-size:12.5px;color:#d9c8a4;text-align:center}#mageSheet .c i{font-size:10.5px;color:#8a7654;text-align:center;font-style:normal;line-height:1.25}'
+        + '#mageSheet .c.pl{width:286px}#mageSheet .c.pl .b{height:112px;align-items:center;gap:12px}#mageSheet .p1 img{width:76px;height:76px;display:block}'
+        + '#mageSheet .pg{border:0;background:none;margin:0;overflow:visible;position:static;font-family:' + getComputedStyle(document.body).fontFamily + '}#mageSheet .pg::before{display:none}#mageSheet .pg .node{pointer-events:none}';
       dg.appendChild(stg); document.body.appendChild(dg); window.scrollTo(0, 0);
       var cs = dg.querySelectorAll('.c'), nd = 0;
       for (var gi = 0; gi < cs.length; gi++) if (cs[gi].querySelector('.s1 svg')) nd++;
-      dg.querySelector('#mageSheetN').textContent = nd + ' of ' + cs.length + ' are drawn, ' + (cs.length - nd) + ' painted';
+      var nItems = dg.querySelectorAll('.c:not(.pl)').length;
+      dg.querySelector('#mageSheetN').textContent = nd + ' of ' + nItems + ' item icons are drawn, ' + (nItems - nd) + ' painted, and ' + plateDrawn + ' of ' + plateNodes.length + ' Mastery plates are drawn';
+      info.plates = plateNodes.length; info.platesDrawn = plateDrawn;
       info.height = Math.ceil(dg.getBoundingClientRect().height); info.icons = cs.length; info.drawn = nd;
+    }
+    /* The Mastery board with five columns. `mastery_board` is the board as built: drawn
+       in board units, so all five columns fit the panel. `mastery_board_scroll` is the
+       alternative, for the picture only: the same board at full size, which scrolls
+       sideways. `sorcery_node` is the fifth column close up with a node selected. */
+    var oldWide = document.getElementById('mageWide'); if (oldWide) oldWide.remove();
+    if (scene === 'mastery_board' || scene === 'mastery_board_scroll' || scene === 'sorcery_node') {
+      state.cmast = {}; state.cmastGranted = 0; cmastReconcile();
+      [['s_t1', 4], ['s_t2_l', 5], ['s_t2_r', 3], ['s_t3_l', 1], ['s_t3_r', 1], ['s_t4_l', 2],
+       ['g_t1', 4], ['g_t2_l', 3], ['g_t2_r', 3], ['g_t3_r', 1], ['gs_t3', 1],
+       ['r_t1', 4], ['r_t2_l', 3], ['m_t1', 2]].forEach(function (x) { for (var i = 0; i < x[1]; i++) cmastAllocate(x[0]); });
+      enterCombat(); state.cmbSubTab = 'mastery'; _cmastSelected = 's_t4_l';
+      if (scene === 'mastery_board_scroll') { var sw = document.createElement('style'); sw.id = 'mageWide'; sw.textContent = '.cmast-grid{--u:1px !important;width:' + (92 + CMAST_COLS.length * 322 + 2) + 'px}.cmast-gh,.cmast-gb{grid-template-columns:92px repeat(' + CMAST_COLS.length + ',322px) !important}'; document.head.appendChild(sw); }
+      renderCombat();
+      var cvs = document.querySelector('.cmast-canvas'), grd = document.querySelector('.cmast-grid'), nd0 = grd.querySelector('.node[data-node="s_t2_l"]');
+      var heads = grd.querySelectorAll('.cmast-ch'), lastHead = heads[heads.length - 1].getBoundingClientRect(), cvr = cvs.getBoundingClientRect();
+      info.columns = heads.length; info.panelShows = cvs.clientWidth; info.boardIs = cvs.scrollWidth; info.scrollsSideways = cvs.scrollWidth > cvs.clientWidth + 1;
+      info.unit = +(nd0.getBoundingClientRect().width / 86).toFixed(3);
+      info.node = Math.round(nd0.getBoundingClientRect().width) + 'px wide, plate ' + Math.round(nd0.querySelector('.tile').getBoundingClientRect().width) + 'px, name ' + getComputedStyle(nd0.querySelector('.nm')).fontSize + ', points ' + getComputedStyle(nd0.querySelector('.pill')).fontSize;
+      info.sorceryInView = Math.round(Math.max(0, Math.min(lastHead.right, cvr.right) - Math.max(lastHead.left, cvr.left))) + ' of ' + Math.round(lastHead.width) + 'px';
+      info.points = document.querySelector('.cmast-h-val').textContent.trim(); info.spent = cmastSpent(); info.cap = CMAST_CAP;
+      info.chips = [].map.call(document.querySelectorAll('.cmast-h-src .src'), function (c) { return c.textContent.trim(); }).join(' | ');
+      info.plates = [].filter.call(grd.querySelectorAll('.node'), function (n) { return !!n.querySelector('img.art'); }).length + ' of ' + grd.querySelectorAll('.node').length + ' nodes on a plate';
+      info.namesCut = [].filter.call(grd.querySelectorAll('.node .nm'), function (n) { return n.scrollWidth > n.clientWidth + 1; }).map(function (n) { return n.textContent; });
+      info.overlap = (function () { var ns = [].slice.call(grd.querySelectorAll('.node')), bad = [];
+        for (var a = 0; a < ns.length; a++) for (var b2 = a + 1; b2 < ns.length; b2++) { var ra = ns[a].getBoundingClientRect(), rb = ns[b2].getBoundingClientRect();
+          if (ra.left < rb.right - 1 && rb.left < ra.right - 1 && ra.top < rb.bottom - 1 && rb.top < ra.bottom - 1) bad.push(ns[a].getAttribute('data-node') + '/' + ns[b2].getAttribute('data-node')); }
+        return bad; })();
+      info.belowTheFold = Math.max(0, Math.round(document.querySelector('.cmast').getBoundingClientRect().bottom - window.innerHeight));
+      info.detail = document.querySelector('.cmast-detail').textContent.replace(/\s+/g, ' ').trim().slice(0, 200);
+      if (scene === 'sorcery_node') {
+        var capCell = grd.querySelector('.node[data-node="s_cap"]').closest('.cmast-gc').getBoundingClientRect(), det = document.querySelector('.cmast-detail').getBoundingClientRect();
+        var bw = nd0.getBoundingClientRect().width;
+        info.clips = [{ x: Math.floor(lastHead.left - bw * 0.62), y: Math.floor(lastHead.top) - 2, width: Math.ceil(lastHead.width + bw * 0.62) + 2, height: Math.ceil(capCell.bottom - lastHead.top) + 4 },
+                      { x: Math.floor(det.left), y: Math.floor(det.top), width: Math.ceil(det.width), height: Math.ceil(det.height) }];
+        window.scrollTo(0, 0);
+      }
     }
     /* a zone find's card beside the crafted weapon of its tier */
     if (scene === 'unique_card') {
@@ -491,6 +543,11 @@ const SCENES = {
   full:     { full: true },
   /* the gear half: `dir` is the folder under shots/, `file` the name the brief asks for */
   gear_sheet:   { sel: '#mageSheet', tall: true, dir: 'gear', file: 'sheet' },
+  /* slice 6. `bars` shows scrollbars (every other scene hides them), `stitch` joins the
+     clips a scene names into one picture, at twice the size */
+  mastery_board: { full: true, dir: 'gear', bars: true },
+  mastery_board_scroll: { full: true, dir: 'gear', bars: true },
+  sorcery_node: { dir: 'gear', stitch: true },
   unique_card:  { sel: '#gearShot', dir: 'gear' },
   monster_log:  { sel: '#combatPanel', dir: 'gear' },
   raid_robe_card: { sel: '#gearShot', dir: 'gear' },
@@ -514,20 +571,29 @@ const SCENES = {
     .replace('</' + 'body>', '<script>\n(' + SCENES_IN_PAGE.toString() + ')();\n</' + 'script>\n</' + 'body>');
   const tmp = path.join(__dirname, 'work-shootreal.html');
   fs.writeFileSync(tmp, html);
+  const errs = [], metas = {};
+  let build = '';
+  const metaOf = dir => { if (!metas[dir]) { const f = path.join(dir, 'meta.json'); metas[dir] = fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, 'utf8')) : {}; metas[dir]._build = build; } return metas[dir]; };
+  want.filter(id => !SCENES[id]).forEach(id => console.log('no scene ' + id));
+  /* Two passes: scrollbars hidden, as every scene has always been shot, and then the
+     scenes that are ABOUT a scrollbar (`bars`) with them drawn. Headless both times.
+     Puppeteer hides scrollbars itself when it runs headless, so leaving the flag out
+     is not enough: its own default has to be taken off as well. */
+  for (const bars of [false, true]) {
+  const ids = want.filter(id => SCENES[id] && !!SCENES[id].bars === bars);
+  if (!ids.length) continue;
   const b = await puppeteer.launch({ executablePath: CHROME, headless: true,
     defaultViewport: { width: 1920, height: 1080, deviceScaleFactor: 1 },
-    args: ['--hide-scrollbars', '--font-render-hinting=none', '--allow-file-access-from-files'] });
+    ignoreDefaultArgs: bars ? ['--hide-scrollbars'] : [],
+    args: (bars ? [] : ['--hide-scrollbars']).concat(['--font-render-hinting=none', '--allow-file-access-from-files']) });
   const p = await b.newPage();
   await p.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) cindervale-idle/0.9.127 Chrome/151.0.0.0 Electron/33.0.0 Safari/537.36');
-  const errs = [];
   p.on('pageerror', e => { errs.push(e.message); console.log('  ! pageerror: ' + e.message); });
   await p.goto('file:///' + tmp.split(String.fromCharCode(92)).join('/') + '?cvdev=1', { waitUntil: 'load' });
   await new Promise(r => setTimeout(r, 2800));
-  const build = await p.evaluate(() => document.querySelector('.mm-ver').getAttribute('data-build'));
-  const metas = {};
-  const metaOf = dir => { if (!metas[dir]) { const f = path.join(dir, 'meta.json'); metas[dir] = fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, 'utf8')) : {}; metas[dir]._build = build; } return metas[dir]; };
-  for (const id of want) {
-    const S = SCENES[id]; if (!S) { console.log('no scene ' + id); continue; }
+  build = await p.evaluate(() => document.querySelector('.mm-ver').getAttribute('data-build'));
+  for (const id of ids) {
+    const S = SCENES[id];
     let info;
     try { info = await p.evaluate(s => window.__mage(s), id); } catch (e) { console.log('  ! ' + id + ': ' + e.message); continue; }
     await new Promise(r => setTimeout(r, 450));
@@ -536,7 +602,7 @@ const SCENES = {
     const dir = S.dir ? path.join(__dirname, 'shots', S.dir) : OUT; fs.mkdirSync(dir, { recursive: true });
     const file = path.join(dir, (S.file || id) + '.png'), meta = metaOf(dir);
     let clip = null;
-    if (!S.full) {
+    if (!S.full && !S.stitch) {
       clip = await p.evaluate((sel, tip) => {
         let el = null;
         if (tip) el = (typeof ttEl === 'function') ? ttEl() : null;
@@ -546,7 +612,24 @@ const SCENES = {
         return { x: Math.max(0, Math.floor(r.left) - 6), y: Math.max(0, Math.floor(r.top) - 6), width: Math.ceil(r.width) + 12, height: Math.ceil(r.height) + 12 };
       }, S.sel, !!S.tip);
     }
-    if (clip && clip.width > 10 && clip.height > 10) {
+    if (S.stitch && info && info.clips) {
+      /* A close-up: each clip the scene names is photographed at twice the size, and the
+         pieces are stacked into one picture on a blank page. Both are real captures. */
+      await p.setViewport({ width: 1920, height: 1080, deviceScaleFactor: 2 });
+      await new Promise(r => setTimeout(r, 250));
+      const parts = [];
+      for (const c of info.clips) parts.push((await p.screenshot({ clip: c, encoding: 'base64' })));
+      await p.setViewport({ width: 1920, height: 1080, deviceScaleFactor: 1 });
+      const q = await b.newPage();
+      const w = Math.max(...info.clips.map(c => c.width)) * 2, h = info.clips.reduce((s, c) => s + c.height * 2 + 14, 14);
+      await q.setViewport({ width: w + 28, height: h, deviceScaleFactor: 1 });
+      await q.setContent('<body style="margin:0;padding:14px;background:#120c07">' + parts.map((d, i) =>
+        '<img style="display:block;margin:0 auto 14px;width:' + info.clips[i].width * 2 + 'px;height:' + info.clips[i].height * 2 + 'px" src="data:image/png;base64,' + d + '">').join('') + '</body>');
+      await new Promise(r => setTimeout(r, 200));
+      await q.screenshot({ path: file });
+      await q.close();
+      clip = { width: w + 28, height: h };
+    } else if (clip && clip.width > 10 && clip.height > 10) {
       clip.width = Math.min(clip.width, 1920 - clip.x); clip.height = Math.min(clip.height, S.tall ? 6000 : 2400);
       await p.screenshot({ path: file, clip });
     } else { await p.screenshot({ path: file }); }
@@ -555,7 +638,9 @@ const SCENES = {
     await p.evaluate(() => { const e = document.getElementById('gearShot'); if (e) e.remove(); });
     console.log(id.padEnd(10), clip ? `${clip.width}x${clip.height}` : 'full', info ? JSON.stringify(info).slice(0, 260) : '');
   }
+  await b.close();
+  }
   for (const dir in metas) fs.writeFileSync(path.join(dir, 'meta.json'), JSON.stringify(metas[dir], null, 1));
-  await b.close(); fs.unlinkSync(tmp);
+  fs.unlinkSync(tmp);
   console.log(errs.length ? errs.length + ' page error(s)' : 'no page errors');
 })().catch(e => { console.error(e); try { fs.unlinkSync(path.join(__dirname, 'work-shootreal.html')); } catch (x) {} process.exit(1); });

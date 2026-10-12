@@ -3698,6 +3698,10 @@ body:not(.is-demo) .demo-only{display:none !important}
 .cmast-d-swatch.magic{background:#d4a04a}
 .cmast-d-swatch.mr{background:#9d7868}
 .cmast-d-swatch.rm{background:#a39668}
+.cmast-d-swatch.mark{background:#4fa89b}
+.cmast-d-swatch.kb{background:#8fb0a0}
+.cmast-d-swatch.sorc{background:#b9a4f0}
+.cmast-d-swatch.gs{background:#cdb89a}
 .cmast-d-name{font-size:calc(15px*var(--tscale));color:var(--ember);font-weight:bold;letter-spacing:0.5px}
 .cmast-d-tag{font-size:calc(11px*var(--tscale));background:var(--raised-s);border:1px solid var(--trim-d);padding:2px 6px;border-radius:3px;letter-spacing:1px;color:var(--muted)}
 .cmast-d-tag.weapon{color:#8a7a5a;border-color:#5a4a38}
@@ -3749,7 +3753,22 @@ body:not(.is-demo) .demo-only{display:none !important}
 
    .cmast-grid::before is an empty paint layer sitting under the nodes. It is
    where a painted background goes when that art exists — no node moves for it. */
+/* THE BOARD UNIT (0.9.127.11). Five columns need 1702px and the panel shows 1366,
+   so the board is drawn in units of --u and not in px: one unit is 1px when the
+   board fits, and the panel's width over the board's width when it does not. Every
+   size below that makes the board wider or taller is a multiple of it, so the
+   whole board shrinks together and never scrolls sideways.
+
+   The width it needs is 92 for the tier names, and for each column three nodes
+   (86), two gaps (26) and the cell's padding (6 a side): 322. If any of those four
+   numbers changes, change it in --u as well. --cm-n is the number of columns,
+   written by _cmastStageHTML from CMAST_COLS.
+
+   Not CSS zoom: the root is already zoomed (applyRootZoom), and a second zoom
+   inside it is one more thing every tooltip would have to divide by. */
+.cmast-canvas{container-type:inline-size}
 .cmast-grid{position:relative;border:1px solid var(--trim-d);border-radius:11px;
+  --u:min(1px, calc((100cqw - 4px) / (92 + var(--cm-n,4) * 322)));
   overflow:hidden;margin:0 auto 12px;
   background:linear-gradient(180deg,#1c150d,#141009)}
 /* The paint layer this was left empty for. The plate is already darkened at cut
@@ -3758,28 +3777,28 @@ body:not(.is-demo) .demo-only{display:none !important}
 .cmast-grid::before{content:'';position:absolute;inset:0;z-index:0;pointer-events:none;
   background:linear-gradient(180deg,rgba(10,7,4,.34),rgba(10,7,4,.52)),
              var(--cmast-bg) center/cover no-repeat}
-.cmast-gh{display:grid;grid-template-columns:var(--cm-cols);position:relative;z-index:1;
+.cmast-gh{display:grid;grid-template-columns:calc(92*var(--u)) repeat(var(--cm-n,4),1fr);position:relative;z-index:1;
   background:rgba(0,0,0,.20)}
 .cmast-gh > .sp{border-right:1px solid rgba(255,255,255,.05)}
-.cmast-ch{padding:10px 14px 11px;position:relative}
+.cmast-ch{padding:calc(10*var(--u)) calc(14*var(--u)) calc(11*var(--u));position:relative}
 .cmast-ch::before{content:'';position:absolute;inset:0;background:var(--pc);opacity:.09}
-.cmast-ch::after{content:'';position:absolute;left:14px;right:14px;bottom:0;height:2px;
+.cmast-ch::after{content:'';position:absolute;left:calc(14*var(--u));right:calc(14*var(--u));bottom:0;height:2px;
   background:var(--pc);border-radius:2px}
-.cmast-ch b{position:relative;display:block;font-size:calc(14px*var(--tscale));
+.cmast-ch b{position:relative;display:block;font-size:calc(14*var(--u)*var(--tscale));
   color:var(--pc);letter-spacing:1.2px}
 .cmast-ch i{position:relative;display:block;font-style:normal;color:var(--muted);
-  font-size:calc(11px*var(--tscale));margin-top:2px}
-.cmast-ch u{position:absolute;right:14px;top:9px;text-decoration:none;font-family:var(--num);
-  font-size:calc(14px*var(--tscale));color:var(--pc);font-weight:bold}
-.cmast-gb{display:grid;grid-template-columns:var(--cm-cols);position:relative;z-index:1}
-.cmast-gt{display:flex;align-items:center;justify-content:flex-end;padding:0 11px;
+  font-size:calc(11*var(--u)*var(--tscale));margin-top:2px}
+.cmast-ch u{position:absolute;right:calc(14*var(--u));top:calc(9*var(--u));text-decoration:none;font-family:var(--num);
+  font-size:calc(14*var(--u)*var(--tscale));color:var(--pc);font-weight:bold}
+.cmast-gb{display:grid;grid-template-columns:calc(92*var(--u)) repeat(var(--cm-n,4),1fr);position:relative;z-index:1}
+.cmast-gt{display:flex;align-items:center;justify-content:flex-end;padding:0 calc(11*var(--u));
   border-right:1px solid rgba(255,255,255,.05);border-bottom:1px solid rgba(255,255,255,.045);
-  font-family:var(--num);font-size:calc(9.5px*var(--tscale));letter-spacing:1.6px;
+  font-family:var(--num);font-size:calc(9.5*var(--u)*var(--tscale));letter-spacing:calc(1.6*var(--u));
   color:#7a6544;text-transform:uppercase;text-align:right}
-.cmast-gc{min-height:96px;display:flex;align-items:center;justify-content:center;
-  gap:26px;position:relative;padding:11px 6px;
+.cmast-gc{min-height:calc(96*var(--u));display:flex;align-items:center;justify-content:center;
+  gap:calc(26*var(--u));position:relative;padding:calc(11*var(--u)) calc(6*var(--u));
   border-bottom:1px solid rgba(255,255,255,.045)}
-.cmast-gc::before{content:'';position:absolute;inset:5px 4px;border-radius:10px;
+.cmast-gc::before{content:'';position:absolute;inset:calc(5*var(--u)) calc(4*var(--u));border-radius:calc(10*var(--u));
   background:linear-gradient(180deg,rgba(255,255,255,.03),transparent);pointer-events:none}
 /* A bridge straddles the seam between two columns, so it hangs off the left edge
    of the RIGHT-hand one. z-index clears the cell highlight above. */
@@ -3792,12 +3811,12 @@ body:not(.is-demo) .demo-only{display:none !important}
    now carry the kind: plain tile ranked, tinted unique, tinted+lit powerful,
    large capstone, dashed bridge. */
 .cmast-grid .node{background:none;border:0;padding:0;cursor:var(--cur-pointer);
-  display:flex;flex-direction:column;align-items:center;gap:5px;width:86px;
+  display:flex;flex-direction:column;align-items:center;gap:calc(5*var(--u));width:calc(86*var(--u));
   color:inherit;font-family:inherit}
 /* The tile is now the painted frame. --frame is the ring plate, set per node;
    the well behind it carries the discipline colour, which is the whole reason
    the plates are greyscale. The old border/border-radius drawing is gone. */
-.cmast-grid .node .tile{width:52px;height:52px;flex:none;
+.cmast-grid .node .tile{width:calc(52*var(--u));height:calc(52*var(--u));flex:none;
   display:flex;align-items:center;justify-content:center;position:relative;
   transition:transform .12s,filter .12s}
 .cmast-grid .node .tile::before{content:'';position:absolute;inset:11%;border-radius:50%;
@@ -3809,21 +3828,21 @@ body:not(.is-demo) .demo-only{display:none !important}
 .cmast-grid .node .tile .art{position:relative;z-index:2;width:64%;height:64%;
   object-fit:contain;filter:drop-shadow(0 1px 2px rgba(0,0,0,.8))}
 .cmast-grid .node:hover .tile{transform:translateY(-2px)}
-.cmast-grid .node .tile svg{width:24px;height:24px;color:var(--pc);opacity:.9;position:relative;z-index:2}
-.cmast-grid .node .nm{font-size:calc(11px*var(--tscale));line-height:1.2;text-align:center;
+.cmast-grid .node .tile svg{width:calc(24*var(--u));height:calc(24*var(--u));color:var(--pc);opacity:.9;position:relative;z-index:2}
+.cmast-grid .node .nm{font-size:calc(11*var(--u)*var(--tscale));line-height:1.2;text-align:center;
   color:var(--text)}
-.cmast-grid .node .pill{font-family:var(--num);font-size:calc(10px*var(--tscale));
+.cmast-grid .node .pill{font-family:var(--num);font-size:calc(10*var(--u)*var(--tscale));
   color:var(--muted)}
 .cmast-grid .node .pill s{text-decoration:none}
-.cmast-grid .node.key .tile{width:62px;height:62px}
-.cmast-grid .node.key .tile svg{width:27px;height:27px}
-.cmast-grid .node.cap .tile{width:66px;height:66px}
+.cmast-grid .node.key .tile{width:calc(62*var(--u));height:calc(62*var(--u))}
+.cmast-grid .node.key .tile svg{width:calc(27*var(--u));height:calc(27*var(--u))}
+.cmast-grid .node.cap .tile{width:calc(66*var(--u));height:calc(66*var(--u))}
 .cmast-grid .node.cap .tile::before{inset:20%}
-.cmast-grid .node.cap .tile svg{width:28px;height:28px}
-.cmast-grid .node.brdg .tile{width:44px;height:44px}
+.cmast-grid .node.cap .tile svg{width:calc(28*var(--u));height:calc(28*var(--u))}
+.cmast-grid .node.brdg .tile{width:calc(44*var(--u));height:calc(44*var(--u))}
 .cmast-grid .node.brdg .tile::before{inset:19%}
-.cmast-grid .node.brdg .tile svg{width:20px;height:20px}
-.cmast-grid .node.brdg .nm,.cmast-grid .node.brdg .pill{font-size:calc(10px*var(--tscale))}
+.cmast-grid .node.brdg .tile svg{width:calc(20*var(--u));height:calc(20*var(--u))}
+.cmast-grid .node.brdg .nm,.cmast-grid .node.brdg .pill{font-size:calc(10*var(--u)*var(--tscale))}
 /* States. "ready" is the one that has to shout — it is the only thing on the board
    telling you where a point can go right now. */
 .cmast-grid .node.ready .tile::before{
@@ -22595,15 +22614,28 @@ function cmastReconcile(){
     +Object.keys(state.cmastBossKills).filter(id=>MONSTERS.some(m=>m.id===id&&m.boss)).length
     +Object.keys(state.cmastZoneClears).filter(id=>ZONES.some(z=>z.id===id)).length
     +RAIDS.filter(r=>!r.endless&&((state.raidClears&&state.raidClears[r.id])||0)>0).length
-    +CMAST_SPIRE_FLOORS.filter(f=>(state.spireBest||0)>=f).length;
+    +CMAST_SPIRE_FLOORS.filter(f=>(state.spireBest||0)>=f).length
+    /* Magic levels (0.9.127.11). Read from the level and not from a flag, so a save
+       from 0.9.127.4 on, which had Magic levels and no column to spend them in, is
+       paid here the first time it loads and can never be paid twice. */
+    +cmastMagicPoints(cmbLvl('magic'));
   const owed=earned-(state.cmastGranted||0);
   if(owed<=0) return 0;
   state.cmastGranted=earned;
   try{
     if(typeof logNotification==='function')
-      logNotification('combat','\u2726','+'+owed+' Mastery Point'+(owed>1?'s':'')+' you had already earned (zones, raids and Spire floors cleared before they paid).');
+      logNotification('combat','\u2726','+'+owed+' Mastery Point'+(owed>1?'s':'')+' you had already earned (zones, raids, Spire floors and Magic levels from before they paid).');
   }catch(e){}
   return owed;
+}
+/* What Magic levels pay toward the Mastery board: one point at every third level
+   and a second at 99, so 34 at Magic 99, which is the Sorcery column (30) and its
+   bridge to Warfare (4). The one place the rule is written: the live grant in
+   grantCombatXp, the back-pay in cmastReconcile, the chip on the board and what
+   Full Board asks for all call this. */
+function cmastMagicPoints(lvl){
+  lvl=Math.max(0, Math.min(99, Math.floor(lvl||0)));
+  return Math.floor(lvl/3) + (lvl>=99?1:0);
 }
 
 let selectedSkill='woodcutting';
@@ -23856,7 +23888,11 @@ function cmastBonuses(){
            /* (0.9.123.13) Marksman. accBoost is separate from atkBoost because
               atkBoost is read by playerAccuracy AND playerMaxHit, so anything
               routed through it silently doubles as a damage buff. */
-           accBoost:0,ammoSave:0,armourPen:0,volley:0,ammoRefundOnMiss:0,pinning:0};
+           accBoost:0,ammoSave:0,armourPen:0,volley:0,ammoRefundOnMiss:0,pinning:0,
+           /* (0.9.127.11) Sorcery. runeSave is its own pool, read by runeSaveRate()
+              and nothing else, so nothing from the Marksman column saves a rune and
+              nothing from this one saves an arrow. */
+           runeSave:0,spellPen:0,echo:0,attune:0,runeRefundOnMiss:0};
   if(!state||!state.cmast) return b;
   /* THE WEAPON GATE. Two damage channels since 0.9.127.2: atkBoost for melee and
      rangedStr for a bow or crossbow. Before that there was only atkBoost, which
@@ -23879,6 +23915,17 @@ function cmastBonuses(){
       if(ef.rangedDmg && _rng) b.rangedStr += ef.rangedDmg*rank;
       if(ef.anyDmg)            b[_dk] += ef.anyDmg*rank;
       if(ef.rangedCrit && _rng) b.critChance += ef.rangedCrit*rank;
+      /* Sorcery (0.9.127.11). Deep Focus and Sharp Mind are a staff's or a wand's,
+         the way Draw Weight and Point Blank are a bow's. */
+      if(ef.magicDmg && _mag)  b.magicDmg   += ef.magicDmg*rank;
+      if(ef.magicCrit && _mag) b.critChance += ef.magicCrit*rank;
+      if(ef.runeSave)          b.runeSave   += ef.runeSave*rank;      // Rune Thrift, Battle Scholar
+      if(ef.staffDmg && _mag){
+        /* Heavy Casting: doubled on the staff it is named for, half on a wand, for
+           the reason Heavy Draw pays a bow half. */
+        const _sw=ITEMS[eqCombatWeapon()];
+        b.magicDmg += ef.staffDmg*rank*((_sw&&_sw.mfam==='staff')?2:1);
+      }
       if(ef.ammoSave)          b.ammoSave += ef.ammoSave*rank;
       if(ef.xbowDmg && _rng){
         /* Doubled on the weapon it is named for, half on the other. A node that
@@ -23923,6 +23970,17 @@ function cmastBonuses(){
     if(id==='k_t5_r'){ b.ammoRefundOnMiss=1; }                                        // Quiver Master
     if(id==='k_cap' && typeof usingRanged==='function' && usingRanged()){ b.critDmg+=0.25; } // Deadeye
     if(id==='kb_t4'){ b[_dk]+=0.06; b.maxHpFlat+=4; }                                 // Vanguard
+    /* ── Sorcery (0.9.127.11) ── the Marksman column's shape, for a staff or a wand. */
+    if(id==='s_t3_l' && _mag){ b.spellPen+=0.10; }                                    // Spellbreak
+    if(id==='s_t3_r'){
+      const _qw=ITEMS[eqCombatWeapon()];
+      if(_qw && _qw.magic && _qw.mfam==='wand') b.aspd+=0.05;                         // Quick Hands, wands only
+    }
+    if(id==='s_t5_l'){ b.echo+=0.08; }                                               // Echo
+    if(id==='s_t5_m'){ b.attune=1; }                                                 // Attunement
+    if(id==='s_t5_r'){ b.runeRefundOnMiss=1; }                                       // Rune Keeper
+    if(id==='s_cap' && _mag){ b.critDmg+=0.25; }                                     // Archmage
+    if(id==='gs_t4'){ b[_dk]+=0.06; b.maxHpFlat+=4; }                                 // Warcaster
     if(id==='g_t5_l'){ b.rareDrop+=0.03; }                                           // Headhunter
     if(id==='g_t3_r'){ b.consolation+=0.25; }                                        // Scavenger
     if(id==='g_t3_l'){ b.trophyGuarantee=1; }                                        // Trophy Hunter
@@ -24549,6 +24607,10 @@ function runeSaveRate(){
   let r = treeRank('runecrafting','rn_save')*0.05
         + treeRank('runecrafting','rn_gm_save')*0.04
         + (treeRank('runecrafting','rn_endless')>0?0.05:0);
+  /* Rune Thrift and Battle Scholar (0.9.127.11), into the same pool and under the
+     same ceiling, the way Fletcher's Thrift joins the arrows'. */
+  { const _cmR=(typeof cmastBonuses==='function')?cmastBonuses():null;
+    if(_cmR && _cmR.runeSave>0) r += _cmR.runeSave; }
   const ce=(state&&state.combatEquipped)||{};
   for(const s in ce){ const g=gearStats(ce[s]); if(g&&g.runeSave) r+=g.runeSave; }
   return Math.min(RUNE_SAVE_CAP, r);
@@ -24600,11 +24662,15 @@ function spellAffinity(el){
 /* What the element does when a cast lands. Every branch writes to a status the
    fight already runs, so there is nothing new to tick and nothing new to clear.
    Branded raises the chance of the two that are rolled, the burn and the chill. */
-function mageOnHit(mon,dmg,now){
+function mageOnHit(mon,dmg,now,crit){
   const e=ELEMENT_BY[spellElement()]; if(!e) return;
   const more=treeRank('runecrafting','rn_brand')*RN_BRAND_RANK;
+  /* Attunement (0.9.127.11): a crit applies the element's effect without the roll.
+     That is the burn and the chill. Storm's is rolled before the cast lands and
+     Shadow's is never rolled, so a crit has nothing to add to either. */
+  const sure=!!(crit && (typeof cmastBonuses==='function') && cmastBonuses().attune);
   if(!combat.foeStatus) combat.foeStatus={};
-  if(e.rider.burn && Math.random()<Math.min(1,BURN_CHANCE+more)){
+  if(e.rider.burn && (sure || Math.random()<Math.min(1,BURN_CHANCE+more))){
     const fresh=!combat.foeStatus.burn;
     /* A staff that burns on its own (Cinderspine) burns hotter than Fire does.
        Fire keeps that burn going and never cools it. */
@@ -24617,7 +24683,7 @@ function mageOnHit(mon,dmg,now){
     };
     if(fresh) cmbLog('The '+mon.name+' catches fire.','hit');
   }
-  if(e.rider.chill && Math.random()<Math.min(1,e.rider.chill.chance+more)){
+  if(e.rider.chill && (sure || Math.random()<Math.min(1,e.rider.chill.chance+more))){
     const base=(combat.foeStatus.pin&&combat.foeStatus.pin.base)||combat.foeSwingMs;
     if(!combat.foeStatus.pin) cmbLog('The '+mon.name+' is chilled. It attacks '+Math.round(e.rider.chill.slow*100)+'% slower.','status');
     combat.foeStatus.pin={base:base, until:now+e.rider.chill.ms, slow:e.rider.chill.slow};
@@ -34751,7 +34817,25 @@ const CMAST_NODES=[
   {id:'k_t5_r', tree:'mark', tier:5, branch:'r', max:1, name:'Quiver Master', desc:'A shot that misses does not spend the arrow.', prereq:['k_t4_r:3'], unique:true},
   {id:'k_cap', tree:'mark', tier:6, branch:'c', max:1, name:'Deadeye', desc:'+25% ranged crit damage.', prereq:['k_t5_m:1'], capstone:true},
 
-  // ───────── BRIDGES — cross-discipline (12 pts) ─────────
+  // ───────── SORCERY — magic offence (30 pts) ─────────
+  /* The fifth column (0.9.127.11). Marksman's shape and sizes node for node, so the
+     two columns are worth the same; the three unique nodes are Magic's own. The key
+     is 'sorc' because 'magic' is Warfare's layout slot and is taken. Every node
+     here wants a staff or a wand in hand, the way every Marksman node wants a bow.
+     The 34 points it and its bridge cost come from Magic levels: cmastMagicPoints(). */
+  {id:'s_t1', tree:'sorc', tier:1, branch:'c', max:4, name:'Steady Mind', desc:'+4% combat XP per rank.', effect:{combatXp:0.04}},
+  {id:'s_t2_l', tree:'sorc', tier:2, branch:'l', max:5, name:'Deep Focus', desc:'+2% Magic damage per rank.', prereq:['s_t1:1'], effect:{magicDmg:0.02}},
+  {id:'s_t2_r', tree:'sorc', tier:2, branch:'r', max:5, name:'Rune Thrift', desc:'Each rank: +4% chance a cast keeps its runes.', prereq:['s_t1:1'], effect:{runeSave:0.04}},
+  {id:'s_t3_l', tree:'sorc', tier:3, branch:'l', max:1, name:'Spellbreak', desc:'Ignore 10% of the target’s Defence.', prereq:['s_t2_l:3'], unique:true},
+  {id:'s_t3_r', tree:'sorc', tier:3, branch:'r', max:1, name:'Quick Hands', desc:'+5% attack speed with a wand.', prereq:['s_t2_r:3'], unique:true},
+  {id:'s_t4_l', tree:'sorc', tier:4, branch:'l', max:5, name:'Heavy Casting', desc:'+2% staff damage per rank, +1% with a wand.', prereq:['s_t3_l:1','s_t3_r:1'], effect:{staffDmg:0.01}},
+  {id:'s_t4_r', tree:'sorc', tier:4, branch:'r', max:5, name:'Sharp Mind', desc:'+2% crit chance per rank.', prereq:['s_t3_l:1','s_t3_r:1'], effect:{magicCrit:0.02}},
+  {id:'s_t5_l', tree:'sorc', tier:5, branch:'l', max:1, name:'Echo', desc:'8% chance a cast hits twice.', prereq:['s_t4_l:3'], unique:true},
+  {id:'s_t5_m', tree:'sorc', tier:5, branch:'m', max:1, name:'Attunement', desc:'A crit always applies your element’s effect.', prereq:['s_t4_l:3','s_t4_r:3'], unique:true, powerful:true},
+  {id:'s_t5_r', tree:'sorc', tier:5, branch:'r', max:1, name:'Rune Keeper', desc:'A cast that misses does not spend its runes.', prereq:['s_t4_r:3'], unique:true},
+  {id:'s_cap', tree:'sorc', tier:6, branch:'c', max:1, name:'Archmage', desc:'+25% crit damage with spells.', prereq:['s_t5_m:1'], capstone:true},
+
+  // ───────── BRIDGES — cross-discipline (16 pts) ─────────
   /* A bridge sits on the seam between two ADJACENT columns, so the board order
      decides which pairs exist. Order is Onslaught | Marksman | Bulwark | Warfare,
      which makes mr_* the Onslaught/Marksman seam (it used to be Onslaught/Bulwark,
@@ -34763,6 +34847,9 @@ const CMAST_NODES=[
   {id:'kb_t4', tree:'kb', tier:4, branch:'h', max:1, name:'Vanguard', desc:'+6% damage and +4 max HP.', prereq:['k_t4_r:3','r_t4_l:3'], hybrid:true, unique:true},
   {id:'rm_t3', tree:'rm', tier:3, branch:'h', max:3, name:'Tactician', desc:'+1% crit chance per rank.', prereq:['r_t3_r:1','g_t3_l:1'], hybrid:true, effect:{critChance:0.01}},
   {id:'rm_t4', tree:'rm', tier:4, branch:'h', max:1, name:'Champion', desc:'+5% damage and +5% damage reduction.', prereq:['r_t4_r:3','g_t4_l:3'], hybrid:true, unique:true},
+  /* gs_* is the Warfare/Sorcery seam, the same weight as the other three. */
+  {id:'gs_t3', tree:'gs', tier:3, branch:'h', max:3, name:'Battle Scholar', desc:'+1% crit chance and +1% chance a cast keeps its runes, per rank.', prereq:['g_t3_r:1','s_t3_l:1'], hybrid:true, effect:{critChance:0.01,runeSave:0.01}},
+  {id:'gs_t4', tree:'gs', tier:4, branch:'h', max:1, name:'Warcaster', desc:'+6% damage and +4 max HP.', prereq:['g_t4_r:3','s_t4_l:3'], hybrid:true, unique:true},
 ];
 
 /* Cached lookup — node by id. Built once. */
@@ -34814,6 +34901,14 @@ const CMAST_ICONS={
   // Bridges
   mr_t3:'twin_blades', mr_t4:'cross_blades',
   rm_t3:'target',      rm_t4:'lens',
+  // Sorcery. Its plates are SORC_PLATES below; these are the line glyphs a node
+  // falls back to if its plate ever goes missing.
+  s_t1:'moon',  s_t2_l:'orb',  s_t2_r:'gem',
+  s_t3_l:'bolt', s_t3_r:'wand',
+  s_t4_l:'wand', s_t4_r:'eye',
+  s_t5_l:'trail', s_t5_m:'void', s_t5_r:'gem',
+  s_cap:'crown',
+  gs_t3:'star', gs_t4:'cross_blades',
 };
 
 /* SVG icon library — each entry is the inner markup for a 16×16 icon coord
@@ -34862,13 +34957,67 @@ const CMAST_ICON_SVG={
   lens:         '<circle cx="7" cy="7" r="3.8" fill="none" stroke-width="1.5"/><path d="M9.8 9.8 L13.5 13.5" stroke-width="1.8" fill="none"/>',
 };
 
+
+/* ── Sorcery plates (0.9.127.11) ──────────────────────────────────────────────
+   Thirteen drawn plates for the fifth column: white and light grey on nothing, the
+   way the fifty painted ones are, so the same tint, frame and locked filter apply
+   to them and one drawing serves every state. Drawn for the size they show at
+   (about 27px on the five-column board): one heavy shape and at most three parts.
+
+   They fill only the ids CMAST_ART has no painted plate for. Paint one, cut it
+   into CMAST_ART.icons, and the drawing below stops being used without another
+   edit. _audit_tests.js lists the thirteen as pending and fails the day one is
+   painted and still on its list. The sheet prompt is sheet U in
+   _iconart/PROMPTS-magic.md. */
+const SORC_PLATES=(function(){
+  const W='#f4f4f4', G='#bdbdbd', D='#7a7a7a', K='#161616';
+  const S=b=>'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" stroke-linecap="round" stroke-linejoin="round">'+b+'</svg>';
+  const P=(d,f)=>'<path d="'+d+'" fill="'+f+'"/>';
+  const L=(d,c,w)=>'<path d="'+d+'" fill="none" stroke="'+c+'" stroke-width="'+w+'"/>';
+  const C=(x,y,r,f)=>'<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="'+f+'"/>';
+  /* a four-point star, r wide, pinched to a third */
+  const X=(x,y,r,f)=>{ const q=+(r*0.3).toFixed(1);
+    return P('M'+x+' '+(y-r)+' L'+(x+q)+' '+(y-q)+' L'+(x+r)+' '+y+' L'+(x+q)+' '+(y+q)+' L'+x+' '+(y+r)+' L'+(x-q)+' '+(y+q)+' L'+(x-r)+' '+y+' L'+(x-q)+' '+(y-q)+' Z',f); };
+  return {
+    /* Steady Mind: an open book under one still star */
+    s_t1:   S(P('M31 24 L7 18 V50 L31 56 Z',W)+P('M33 24 L57 18 V50 L33 56 Z',G)+X(32,10,9,W)),
+    /* Deep Focus: a scrying orb on its stand, bright at the core */
+    s_t2_l: S(P('M18 59 H46 L41 48 H23 Z',D)+C(32,27,21,G)+C(32,27,10,W)+L('M18 20 Q22 10 32 8',W,3.5)),
+    /* Rune Thrift: a cut runestone, and one saved behind it */
+    s_t2_r: S(P('M38 5 H55 L61 18 L56 36 H44 Z',D)+P('M18 14 H42 L52 30 L44 59 H16 L8 30 Z',W)+L('M30 25 V49 M30 29 L40 37 M30 39 L40 47',K,4.5)),
+    /* Spellbreak: a shield split from top to bottom */
+    s_t3_l: S(P('M32 5 L55 13 V31 Q55 49 32 59 Q9 49 9 31 V13 Z',W)+L('M38 5 L27 28 L37 31 L27 59',K,5.5)),
+    /* Quick Hands: a wand mid-flick, three lines behind it */
+    s_t3_r: S(L('M4 20 H24 M4 32 H18 M4 44 H12',G,4.5)+L('M24 55 L46 22',W,7)+L('M24 55 L30 46',D,9)+X(50,14,11,W)),
+    /* Heavy Casting: a staff planted hard, a heavy orb in its fork */
+    s_t4_l: S(L('M14 59 H50',D,4.5)+L('M32 27 V58',G,7)+L('M19 9 Q19 27 32 27 Q45 27 45 9',W,6)+C(32,13,9,W)),
+    /* Sharp Mind: an open eye inside a point */
+    s_t4_r: S(L('M32 4 L59 32 L32 60 L5 32 Z',G,5)+P('M14 32 Q32 15 50 32 Q32 49 14 32 Z',W)+C(32,32,7,K)+C(34.5,29.5,2.2,W)),
+    /* Echo: one orb and the two rings that follow it */
+    s_t5_l: S(C(15,32,10,W)+L('M31 14 Q43 32 31 50',W,5.5)+L('M43 8 Q59 32 43 56',G,5)),
+    /* Attunement: the four elements on one ring, a star where they meet */
+    s_t5_m: S('<circle cx="32" cy="32" r="21" fill="none" stroke="'+G+'" stroke-width="5"/>'+C(32,11,7.5,W)+C(53,32,7.5,W)+C(32,53,7.5,W)+C(11,32,7.5,W)+X(32,32,10,W)),
+    /* Rune Keeper: a drawstring pouch with a rune marked on it */
+    s_t5_r: S(P('M23 24 L16 8 Q32 14 48 8 L41 24 Z',G)+P('M13 33 Q8 58 32 59 Q56 58 51 33 Q45 23 32 23 Q19 23 13 33 Z',W)+L('M21 25 H43',D,5)+L('M32 34 V52 M32 38 L41 45',K,4.5)),
+    /* Archmage: the tall hat, a star cut into it */
+    s_cap:  S('<ellipse cx="32" cy="50" rx="28" ry="9" fill="'+G+'"/>'+P('M35 3 L48 46 H16 Z',W)+P('M17 41 H47 L48 46 H16 Z',D)+X(32,27,7,K)),
+    /* Battle Scholar: a sword driven down into an open book */
+    gs_t3:  S(P('M31 32 L6 26 V53 L31 59 Z',W)+P('M33 32 L58 26 V53 L33 59 Z',G)+L('M32 6 V46',K,11)+L('M21 15 H43',K,9)
+              +P('M28 15 H36 L34.5 43 L32 48 L29.5 43 Z',W)+L('M21 15 H43',W,5)+L('M32 5 V13',W,5)),
+    /* Warcaster: a staff and a sword crossed */
+    gs_t4:  S(L('M12 57 L46 17',G,6)+C(50,11,8.5,W)+L('M53 57 L19 16',K,11)+L('M53 57 L19 16',W,6)+L('M37 52 L50 41',W,5.5)),
+  };
+})();
+(function(){
+  for(const k in SORC_PLATES){ if(!CMAST_ART.icons[k]) CMAST_ART.icons[k]='data:image/svg+xml;utf8,'+encodeURIComponent(SORC_PLATES[k]); }
+})();
 /* Spendable cap = the sum of every node's max rank. Currently the Melee tree
    only (30). When the Ranged/Magic trees return this grows automatically, and
    shard banking (grantCmastPoints) re-derives against the larger cap. */
 const CMAST_CAP=CMAST_NODES.reduce((s,n)=>s+n.max,0);
 /* The Spire rungs that pay a Mastery Point, in ascending order. Part of closing
-   the gap between what the board COSTS (CMAST_CAP, 132) and what a player could
-   ever earn, which was 120: 98 combat levels, 4 milestones, 9 boss first-kills
+   the gap between what the board COSTS (CMAST_CAP, 132 then, 166 with Sorcery) and
+   what a player could ever earn, which was 120: 98 combat levels, 4 milestones, 9 boss first-kills
    and 9 zone clears. The missing twelve are 3 bossless hunting grounds, 4 raid
    first-clears and these 5 floors. _audit_tests.js asserts the arithmetic, so a
    new node or a new zone cannot quietly reopen the gap. */
@@ -42340,7 +42489,8 @@ function _achCmastEarnable(){
   const lv=(typeof MAX_LEVEL==='number'?MAX_LEVEL:99)-1;
   return lv + 4 + MONSTERS.filter(m=>m.boss).length + ZONES.length
     + (typeof RAIDS!=='undefined'?RAIDS.filter(r=>!r.endless).length:0)
-    + (typeof CMAST_SPIRE_FLOORS!=='undefined'?CMAST_SPIRE_FLOORS.length:0);
+    + (typeof CMAST_SPIRE_FLOORS!=='undefined'?CMAST_SPIRE_FLOORS.length:0)
+    + cmastMagicPoints(99);   // 34 from Magic levels, the Sorcery column and its bridge
 }
 
 const ACH_CATS=[
@@ -44682,7 +44832,9 @@ function combatTick(){
     /* Bodkin Points is armour shred from a second source, so it multiplies with
        poison rather than adding to it — two 15% reductions leave 72%, not 70%. */
     const _cmPen=(typeof cmastBonuses==='function')?cmastBonuses():null;
-    const _penMul=(_cmPen&&_cmPen.armourPen>0&&typeof usingRanged==='function'&&usingRanged())
+    /* Spellbreak (0.9.127.11) is the same shred for a cast. */
+    const _penMul=(_mg&&_cmPen&&_cmPen.spellPen>0) ? (1-_cmPen.spellPen)
+      : (_cmPen&&_cmPen.armourPen>0&&typeof usingRanged==='function'&&usingRanged())
       ? (1-_cmPen.armourPen) : 1;
     const _effDef=Math.max(1, mon.def*(1-POISON_DEF_PER_STK*_pStk)*_penMul);
     /* Pierce (0.9.124.23) — Plummet's shot finds true down and the guard does not
@@ -44704,11 +44856,18 @@ function combatTick(){
       /* Quiver Master — the arrow that missed goes back in the quiver. */
       if(_spentAmmo){
         const _qm=(typeof cmastBonuses==='function')?cmastBonuses():null;
-        /* Arrows and bolts only. Quiver Master is a Marksman node, and a rune that
-           missed is spent. */
+        /* Arrows and bolts only. Quiver Master is a Marksman node and never hands
+           back a rune. */
         if(_qm && _qm.ammoRefundOnMiss && !_mg) state.items[_spentAmmo]=(state.items[_spentAmmo]||0)+1;
+        /* Rune Keeper (0.9.127.11) is the Sorcery twin: a cast that missed gets back
+           every rune it spent, all four of a Surge. */
+        if(_qm && _qm.runeRefundOnMiss && _mg) state.items[_spentAmmo]=(state.items[_spentAmmo]||0)+_spentN;
       }
     }
+    /* Did the cast land? Read here, before the crit roll: a crit that comes up on
+       a miss still turns it into 1 damage further down (an old fault in shared
+       code), and Echo and Attunement are for casts that really landed. */
+    const _mgLanded=_mg&&youDmg>0;
     let didCrit=false;
     {
       // ── Damage-type matchup (1.0.93) — equipped weapon's dmgType vs foe's
@@ -44791,6 +44950,12 @@ function combatTick(){
          the same second-hit path so the two can never both fire on one swing. The
          arrow is free because the ammunition was already spent at the top of this
          block; nothing is deducted again here. */
+      /* Echo (0.9.127.11): the Sorcery answer, on the same second-hit path, so one
+         cast is never more than two hits. The runes were spent once, above. */
+      if(!_cleaveDmg && _mgLanded){
+        const _cmE=(typeof cmastBonuses==='function')?cmastBonuses():null;
+        if(_cmE && _cmE.echo>0 && Math.random()<_cmE.echo) _cleaveDmg=youDmg;
+      }
       if(!_cleaveDmg && typeof usingRanged==='function' && usingRanged()){
         const _cmV=(typeof cmastBonuses==='function')?cmastBonuses():null;
         if(_cmV && _cmV.volley>0 && Math.random()<_cmV.volley) _cleaveDmg=youDmg;
@@ -44811,7 +44976,7 @@ function combatTick(){
       cmbLog(_mg?(spellName()+' '+(didCrit?'<span style="color:#ffd700">crits</span>':'hits')+' the '+mon.name+' for '+youDmg+'.')
                 :`You ${didCrit?'<span style="color:#ffd700">crit</span> ':''}hit the ${mon.name} for ${youDmg}.`,'hit');
       cmbSplat(youDmg,(didCrit?'crit':'hit')+(_mg?' el-'+spellElement():''));
-      if(_mg) mageOnHit(mon,youDmg,now);
+      if(_mg) mageOnHit(mon,youDmg,now,didCrit&&_mgLanded);
       if(_cleaveDmg>0){ cmbLog(_mg?(spellName()+' hits a second time for '+_cleaveDmg+'.'):`🪓 Reaping Arc cleaves again for ${_cleaveDmg}!`,'hit'); setTimeout(function(){cmbSplat(_cleaveDmg,'cleave');},150); }
       // Per-damage XP factor ÷10 vs old scale — damage numbers are ~10× bigger now.
       grantCombatXp(style,(youDmg+_cleaveDmg)*0.4);
@@ -45262,6 +45427,13 @@ function grantCombatXp(stat,amount){
   // ── Combat Mastery grant on combat-level ups (v1.0.69) ──────────────────────
   // 1 pt per combat level above the previous combat level. Also fires the
   // 25/50/75/99 milestone bonuses the first time the player crosses each.
+  /* Magic levels pay for the Sorcery column (0.9.127.11): one point at every third
+     level and a second at 99. cmastReconcile() counts the same thing from the
+     level itself, so a save that had the levels before the column is paid on load. */
+  if(stat==='magic' && afterStat>beforeStat){
+    const _mp=cmastMagicPoints(afterStat)-cmastMagicPoints(beforeStat);
+    if(_mp>0) grantCmastPoints(_mp,'Magic Lv '+afterStat);
+  }
   if(afterCl>beforeCl){
     const lvlsGained=afterCl-beforeCl;
     grantCmastPoints(lvlsGained,`Combat Lv ${afterCl}`);
@@ -45732,6 +45904,8 @@ const _CMAST_DISC={
   mr:     {name:'Duel',      pc:'#c99a6a', dim:'rgba(201,154,106,.42)', glow:'rgba(201,154,106,.34)', far:'rgba(201,154,106,.13)', hot:'#4e3a1e', warm:'#2c2012', wash:'transparent', role:'Onslaught + Bulwark', sig:'twin_blades'},
   mark:   {name:'Marksman',  pc:'#4fa89b', dim:'rgba(79,168,155,.42)',  glow:'rgba(79,168,155,.4)',   far:'rgba(79,168,155,.15)',  hot:'#1d5049', warm:'#132e2a', wash:'rgba(79,168,155,.045)', role:'Ranged offence — draw weight, ammunition, accuracy.', sig:'bow'},
   kb:     {name:'Outrider',  pc:'#8fb0a0', dim:'rgba(143,176,160,.42)', glow:'rgba(143,176,160,.34)', far:'rgba(143,176,160,.13)', hot:'#3a4c42', warm:'#212c26', wash:'transparent', role:'Marksman + Bulwark', sig:'cycle'},
+  sorc:   {name:'Sorcery',   pc:'#b9a4f0', dim:'rgba(185,164,240,.42)', glow:'rgba(185,164,240,.4)',  far:'rgba(185,164,240,.15)', hot:'#3c2a6a', warm:'#221a3a', wash:'rgba(185,164,240,.045)', role:'Magic offence: spell damage, runes, the elements.', sig:'orb'},
+  gs:     {name:'Warcaster', pc:'#cdb89a', dim:'rgba(205,184,154,.42)', glow:'rgba(205,184,154,.34)', far:'rgba(205,184,154,.13)', hot:'#4a3e2a', warm:'#2a2418', wash:'transparent', role:'Warfare + Sorcery', sig:'wand'},
   rm:     {name:'Command',   pc:'#b8b06a', dim:'rgba(184,176,106,.42)', glow:'rgba(184,176,106,.34)', far:'rgba(184,176,106,.13)', hot:'#4a4622', warm:'#2a2812', wash:'transparent', role:'Bulwark + Warfare', sig:'target'},
 };
 function _cmastNodeX(node){
@@ -45845,16 +46019,17 @@ function _cmastNodeHTML(n){
    board: the header row, the grid tracks and which seam a bridge hangs on are all
    derived from it, so re-ordering the disciplines is a one-line change and adding
    a fifth is a one-entry change. */
-const CMAST_COLS=['melee','mark','ranged','magic'];
+const CMAST_COLS=['melee','mark','ranged','magic','sorc'];
 /* Which seam each bridge sits on, as [left column, right column]. A bridge renders
    inside the RIGHT column's cell and hangs off its left edge. */
-const CMAST_SEAM={mr:['melee','mark'], kb:['mark','ranged'], rm:['ranged','magic']};
+const CMAST_SEAM={mr:['melee','mark'], kb:['mark','ranged'], rm:['ranged','magic'], gs:['magic','sorc']};
 
 /* The whole board: header row, then one row per tier. */
 function _cmastStageHTML(){
-  const cols=`92px repeat(${CMAST_COLS.length},1fr)`;
   const bg=(typeof CMAST_ART!=='undefined'&&CMAST_ART.bg)?`--cmast-bg:url(${CMAST_ART.bg});`:'';
-  const h=[`<div class="cmast-canvas"><div class="cmast-grid" style="${bg}--cm-cols:${cols}">`];
+  /* --cm-n is all the stylesheet needs: the tracks and the board unit are both
+     worked out from it there (see THE BOARD UNIT in [CSS-29]). */
+  const h=[`<div class="cmast-canvas"><div class="cmast-grid" style="${bg}--cm-n:${CMAST_COLS.length}">`];
   h.push(`<div class="cmast-gh"><div class="sp"></div>`);
   for(const key of CMAST_COLS){
     const d=_CMAST_DISC[key];
@@ -45907,12 +46082,15 @@ function _cmastTotalsHTML(){
     ['+'+Math.round((b.rangedStr||0)*100)+'%','Ranged Dmg','mark',b.rangedStr],
     /* Only with a staff or a wand in hand, which is when the any-weapon nodes
        land in this channel. Without one it would be a cell that is always 0. */
-    ...((typeof usingMagic==='function'&&usingMagic())?[['+'+Math.round((b.magicDmg||0)*100)+'%','Magic Dmg','magic',b.magicDmg]]:[]),
+    ...((typeof usingMagic==='function'&&usingMagic())?[['+'+Math.round((b.magicDmg||0)*100)+'%','Magic Dmg','sorc',b.magicDmg]]:[]),
     ['+'+Math.round((b.critChance||0)*100)+'%','Crit','melee',b.critChance],
     ['+'+Math.round((b.critDmg||0)*100)+'%','Crit Dmg','melee',b.critDmg],
     ['+'+Math.round((b.aspd||0)*100)+'%','Atk Speed','melee',b.aspd],
     ['+'+Math.round((b.accBoost||0)*100)+'%','Accuracy','mark',b.accBoost],
-    ['+'+Math.round((cmastBonuses().ammoSave||0)*100)+'%','Ammo Saved','mark',cmastBonuses().ammoSave],
+    /* A staff or a wand keeps runes, from its own pool (0.9.127.11). */
+    ((typeof usingMagic==='function'&&usingMagic())
+      ? ['+'+Math.round((b.runeSave||0)*100)+'%','Runes Kept','sorc',b.runeSave]
+      : ['+'+Math.round((b.ammoSave||0)*100)+'%','Ammo Saved','mark',b.ammoSave]),
     ['+'+Math.round(b.maxHpFlat||0),'Max HP','ranged',b.maxHpFlat],
     ['+'+Math.round((b.dmgReduce||0)*100)+'%','Dmg Reduce','ranged',b.dmgReduce],
     ['+'+Math.round((b.lifesteal||0)*100)+'%','Lifesteal','ranged',b.lifesteal],
@@ -46017,6 +46195,9 @@ function buildCmastViewHTML(){
   const raidPts=raidList.filter(r=>(state.raidClears&&state.raidClears[r.id])>0).length;
   const spirePts=CMAST_SPIRE_FLOORS.filter(f=>(state.spireBest||0)>=f).length;
   const nextRung=CMAST_SPIRE_FLOORS.find(f=>(state.spireBest||0)<f);
+  /* Magic levels pay for the Sorcery column and its bridge (0.9.127.11). */
+  const magLv=cmbLvl('magic'), magPts=cmastMagicPoints(magLv), magTot=cmastMagicPoints(99);
+  const magNext=magLv>=99?0:Math.min(99,(Math.floor(magLv/3)+1)*3);
   const srcHTML=`
     <div class="cmast-h-src">
       <span class="src" data-rtip="Combat level&#10;One point for each combat level after the first.">Combat lvl <b>${lvlPts}/98</b></span>
@@ -46025,6 +46206,7 @@ function buildCmastViewHTML(){
       <span class="src" data-rtip="Zones&#10;One point for each zone cleared.&#10;A zone with a boss clears when the boss dies.&#10;A hunting ground clears when you have killed one of every creature in it.">Zones <b>${zonePts}/${ZONES.length}</b></span>
       <span class="src" data-rtip="Raids&#10;One point the first time you clear each raid.">Raids <b>${raidPts}/${raidList.length}</b></span>
       <span class="src" data-rtip="The Spire&#10;One point at Spire floor ${CMAST_SPIRE_FLOORS.join(', ')}.${nextRung?'&#10;Your next is floor '+nextRung+'. Your deepest is '+(state.spireBest||0)+'.':''}">Spire <b>${spirePts}/${CMAST_SPIRE_FLOORS.length}</b></span>
+      <span class="src" data-rtip="Magic levels&#10;One point at every third Magic level, and a second at 99.${magNext?'&#10;Your next is Magic '+magNext+'. You are Magic '+magLv+'.':''}">Magic lvl <b>${magPts}/${magTot}</b></span>
       ${shards>0?`<span class="src">Shards <b>${shards}</b></span>`:''}
     </div>
   `;
@@ -47740,7 +47922,9 @@ ${combat.raid?buildRaidProgressHTML():''}
         const id=g.getAttribute('data-node');
         const n=CMAST_BY_ID[id]; if(!n) return;
         const rank=cmastRank(id);
-        const treeLbl=n.tree==='melee'?'Onslaught':n.tree==='ranged'?'Bulwark':n.tree==='magic'?'Warfare':'Bridge';
+        /* Read from the one table of names. This spelled three out by hand, so a
+           Marksman node said Bridge, and a Sorcery node would have too. */
+        const treeLbl=(_CMAST_DISC[n.tree]&&_CMAST_DISC[n.tree].name)||'Bridge';
         const tags=[];
         if(n.capstone) tags.push('<span class="tt-tag cap">CAPSTONE</span>');
         if(n.powerful) tags.push('<span class="tt-tag uniq">POWERFUL</span>');

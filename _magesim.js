@@ -29,11 +29,11 @@
  * are compared with that rounding counted.
  *
  * Since the gear half (slices 5 and 8) the best in slot table and the Spire wall
- * are here too, in section 14, held to _magedesign/results.json: every fighter
- * and archer row, the three bare mage rows and all twelve walls, to the digit.
- * The finished mage rows need the Sorcery column (slice 6) and the Wyrdstone
- * (slice 7). Until both are built they are held under the design and to what
- * this file measured, and the section says which is missing.
+ * are here too, in section 14, held to _magedesign/results.json to the digit: all
+ * 38 rows and all twelve walls. The finished mage rows waited for the Wyrdstone
+ * (slice 7) and the Sorcery column (slice 6); both are built, and section 9g holds
+ * each of the column's thirteen nodes to one cast in the real tick with the dice
+ * held, and 13h holds the whole column to hours of it.
  *
  * In the golden file, `drops` is cut from _magedesign/design.js and `built` is
  * what the real file measured for things the prototype never ran.
@@ -275,7 +275,8 @@ function PAGE() {
     var acc = playerAccuracy(), hit = playerMaxHit(), swing = playerSwingMs();
     var rng = usingRanged(), mag = usingMagic();
     var cm = cmastBonuses(), cb = combatBonusesAll();
-    var pen = (rng && cm.armourPen > 0) ? (1 - cm.armourPen) : 1;
+    /* Bodkin Points for a bow, Spellbreak for a cast (slice 6) */
+    var pen = (rng && cm.armourPen > 0) ? (1 - cm.armourPen) : (mag && cm.spellPen > 0) ? (1 - cm.spellPen) : 1;
     var p = clamp(acc / (acc + def * pen));
     var w = ITEMS[eqCombatWeapon()] || {};
     var pierce = (w.wfx && w.wfx.pierce) ? w.wfx.pierce.chance : 0;
@@ -291,11 +292,14 @@ function PAGE() {
     if (w.wfx && w.wfx.cleave) extra += w.wfx.cleave.chance;
     else if (state.cmast['m_t5_m'] > 0) extra += 0.08;
     else if (rng && cm.volley > 0) extra += cm.volley;
+    else if (mag && cm.echo > 0) extra += cm.echo;
     var base = (p * avg) / (swing / 1000);
     var bb = rng ? treeRank('fletching', 'fl_barb') * FL_BARB_RANK : 0, dot = 0;
     if (bb > 0) { var rate = (p / (swing / 1000)) * bb; var up = 1 - Math.exp(-rate * POISON_DUR_MS / 1000); dot = up * hit * POISON_TICK_MULT / (POISON_TICK_MS / 1000); }
     if (mag && opt.el === 'fire') {
       var ch = Math.min(1, BURN_CHANCE + treeRank('runecrafting', 'rn_brand') * RN_BRAND_RANK);
+      /* Attunement: a crit burns without the roll */
+      if (cm.attune) ch = 1 - (1 - ch) * (1 - crit);
       var r2 = (p / (swing / 1000)) * ch, up2 = 1 - Math.exp(-r2 * BURN_DUR_MS / 1000);
       dot += up2 * hit * FIRE.rider.burn / (BURN_TICK_MS / 1000);
     }
@@ -956,7 +960,11 @@ function PAGE() {
      and switches on three counts the plain runs do not need: the ticks a status was
      on the monster, anything still on a monster the tick it replaced the last one,
      and what the player was healed. `over.hpFrac` holds health there, not at full,
-     because lifesteal heals nothing at full health. */
+     because lifesteal heals nothing at full health. `over.cmast` is a Mastery board to
+     fight with. `over.count` reads the tick's own log as it is written: casts that
+     landed, crits, misses, second hits, and a miss the old crit fault turned into 1
+     damage, which is counted apart so it is never taken for a cast that landed. It
+     also returns what the closed forms say this build should do, to hold them against. */
   function liveFight(key, lv, t, monId, hours, seed, neutral, el, over) {
     var D = Date.now, R = Math.random, out = { key: key };
     var mon = getMonster(monId), keepM = { weakTo: mon.weakTo, resistTo: mon.resistTo, weakEl: mon.weakEl, resistEl: mon.resistEl };
@@ -974,6 +982,13 @@ function PAGE() {
         refreshCombatStats(); out.sockets = nGems;
       }
       if (over && over.brew) { state.items[over.brew] = 1e5; state.autoBuff = { enabled: true, itemId: over.brew }; }
+      if (over && over.cmast) { state.cmast = JSON.parse(JSON.stringify(over.cmast)); refreshCombatStats(); }
+      if (over && over.count) {
+        var cmM = cmastBonuses(), accM = playerAccuracy(), penM = (usingMagic() && cmM.spellPen > 0) ? 1 - cmM.spellPen : (usingRanged() && cmM.armourPen > 0) ? 1 - cmM.armourPen : 1;
+        var pM = clamp(accM / (accM + mon.def * penM)), sureM = usingMagic() ? mageSureChance() : 0;
+        out.model = { dps: fullDps(mon.def, { el: el }), p: sureM * 0.97 + (1 - sureM) * pM, keep: usingMagic() ? runeSaveRate() : 0, size: usingMagic() ? spellSize() : 1,
+          crit: Math.min(1, combatBonusesAll().critChance || 0), echo: cmM.echo || 0 };
+      }
       if (neutral) { mon.weakTo = null; mon.resistTo = null; mon.weakEl = null; mon.resistEl = null; }
       mmAtMenu = false; enterCombat(); state.cmbSubTab = 'arena'; state.cmbView = 'fight';
       selectZone(mon.zone); selectMonster(monId);
@@ -983,6 +998,17 @@ function PAGE() {
       out.engaged = !!combat.active;
       out.swing = playerSwingMs(); out.hit = playerMaxHit(); out.acc = playerAccuracy(); out.spell = usingMagic() ? spellName() : '';
       hush(true);
+      if (over && over.count) {
+        var cnt = out.count = { hits: 0, crits: 0, misses: 0, seconds: 0, critOnMiss: 0 };
+        hush.keep.cmbLog = window.cmbLog;
+        window.cmbLog = function (t) {
+          t = String(t);
+          if (/ hits a second time for /.test(t)) cnt.seconds++;
+          else if (/ misses the /.test(t) || /^You miss the /.test(t)) cnt.misses++;
+          else if (/crits?<\/span> /.test(t)) { cnt.crits++; cnt.hits++; if (/ for 1\.$/.test(t)) cnt.critOnMiss++; }
+          else if (/ hits the /.test(t) || /^You hit the /.test(t)) cnt.hits++;
+        };
+      }
       var q = state.combatEquipped.quiver, q0 = q ? state.items[q] : 0, kills = function () { return (state.monKills && state.monKills[monId]) || 0; }, k0 = kills();
       var base = JSON.parse(JSON.stringify(state.combatXp)), gain = {}, stat = combatXpStat(), hit0 = combat.youMaxHit;
       var dealt = 0, taken = 0, casts = 0, steps = Math.round(hours * 36000), i;
@@ -1047,7 +1073,7 @@ function PAGE() {
         for (var k in base) if (state.combatXp[k] !== base[k]) state.combatXp[k] = base[k];
         if (combat.youMaxHit !== hit0 && !combat.raidDebuff) { refreshCombatStats(); hit0 = combat.youMaxHit; }
         var now = combat.raid.endless ? combat.raid.floor : combat.raid.stage;
-        if (now !== mark) { out.stages.push(Math.round((fake - at) / 1000)); at = fake; mark = now; }
+        if (now !== mark) { out.stages.push(Math.round((fake - at) / 100) / 10); at = fake; mark = now; }
       }
       out.seconds = Math.round((fake - t0) / 1000); out.cleared = !combat.raid && !combat.active; out.floor = combat.raid ? combat.raid.floor : 0;
       out.spent = q ? q0 - (state.items[q] || 0) : 0;
@@ -1175,10 +1201,9 @@ function PAGE() {
      build(), row(), best(), wall() and walls() pointed at the real file, so the
      rows can be held against what the prototype measured.
 
-     Two things the design's finished mage has that this file may not: the Sorcery
-     column of Combat Mastery (slice 6) and the Wyrdstone gem (slice 7). The builder
-     asks for both by name and takes what exists. `SC` is the design's list of
-     columns for a mage; the two that are Sorcery's give nothing until it is built. */
+     `SC` is the design's list of columns for a mage: Sorcery, Bulwark, Warfare, and
+     the two bridges between them. The builder asks for the Wyrdstone and the column by
+     name, which is how the rows were measured before either was built. */
   var NEWSTATS = false;
   function colNodes(tree) { return CMAST_NODES.filter(function (n) { return n.tree === tree; }); }
   function spend(trees) {
@@ -1392,6 +1417,143 @@ function PAGE() {
     } finally { Date.now = D; }
     state = defaultState(); normalizeState();
     return out;
+  }
+
+  /* ── the Sorcery column (slice 6) ──
+     What the board holds, what Magic levels pay for it, and every node in the real
+     tick: one cast at a time with the dice held, so a node is held to the cast it
+     changes and not to an average. The dice are one number for the whole cast, and
+     what decides a hit is the accuracy the fight is given, so nothing here depends on
+     the order the tick asks for its rolls in. */
+  function sorcery() {
+    var o = {};
+    o.nodes = CMAST_NODES.filter(function (n) { return n.tree === 'sorc' || n.tree === 'gs'; }).map(function (n) { return JSON.parse(JSON.stringify(n)); });
+    o.cap = CMAST_CAP; o.earn = _achCmastEarnable(); o.unwired = Object.keys(CMAST_UNWIRED).length; o.cols = CMAST_COLS.slice(); o.seam = CMAST_SEAM.gs;
+    o.per = {}; CMAST_NODES.forEach(function (n) { o.per[n.tree] = (o.per[n.tree] || 0) + n.max; });
+    o.points = []; for (var l = 1; l <= 99; l++) o.points.push(cmastMagicPoints(l));
+
+    /* level by level through grantCombatXp, the way a fight pays it */
+    var mils = function () { return [25, 50, 75, 99].filter(function (m) { return state.cmastMilestones[m]; }).length; };
+    state = defaultState(); normalizeState(); state.cmast = {};
+    o.paid = [];
+    for (var L = 2; L <= 99; L++) {
+      state.combatXp.magic = XP_CUM[L] - 1;
+      var g = state.cmastGranted, c = combatLevel(), m0 = mils();
+      grantCombatXp('magic', 1);
+      o.paid.push(cmbLvl('magic') === L ? state.cmastGranted - g - (combatLevel() - c) - (mils() - m0) : -1);
+    }
+    /* the back-pay: a save that has the levels and was paid nothing for them */
+    o.back = [1, 2, 3, 30, 64, 98, 99].map(function (lvl) {
+      state = defaultState(); normalizeState(); state.cmast = { m_t1: 1 };
+      state.combatXp.magic = XP_CUM[lvl]; var cl = combatLevel();
+      state.cmastMilestones = {}; [25, 50, 75, 99].forEach(function (m) { if (cl >= m) state.cmastMilestones[m] = true; });
+      var old = (cl - 1) + mils();
+      state.cmastGranted = old; normalizeState(); var first = state.cmastGranted - old;
+      /* and through a save: written out, read back, loaded again */
+      state = JSON.parse(JSON.stringify(state)); normalizeState(); normalizeState();
+      return [lvl, first, state.cmastGranted - old];
+    });
+
+    /* the board with everything bought, through the real allocate path */
+    state = defaultState(); normalizeState(); state.cmastGranted = 400;
+    var all = spend(CMAST_COLS.concat(Object.keys(CMAST_SEAM)));
+    o.bought = Object.keys(all).reduce(function (s, k) { return s + all[k]; }, 0);
+
+    var KN = getMonster('dread_knight'), keepK = { weakEl: KN.weakEl, resistEl: KN.resistEl, weakTo: KN.weakTo, resistTo: KN.resistTo };
+    var realRandom = Math.random;
+    function arm(weapon, cm, opt) {
+      opt = opt || {};
+      state = defaultState(); normalizeState();
+      state.combatXp.magic = XP_CUM[opt.lvl || 99]; state.combatXp.hitpoints = XP_CUM[99]; state.combatXp.defence = XP_CUM[99];
+      state.items = {}; state.items[weapon] = 1; state.items.starfall_rune = opt.runes || 1000;
+      state.combatEquipped = { weapon: weapon, quiver: 'starfall_rune' };
+      state.combatSpell = opt.spell || BIGGEST; state.combatElement = opt.el || 'fire'; state.cmast = JSON.parse(JSON.stringify(cm || {}));
+      state.zone = KN.zone; combat.raid = null; combat.monId = KN.id; combat.log = [];
+      refreshCombatStats();
+      combat.active = true; combat.foeHp = 1e9; combat.foeMaxHp = 1e9; combat.rare = null; combat.foeStatus = {};
+      combat.youHp = combat.youMaxHp; combat.foeSwingStart = Date.now() + 1e9; combat.foeSwingMs = 1e9;
+      /* `acc` is the accuracy the cast is made with: huge always lands, 0 never does */
+      if (opt.acc != null) combat.youAcc = opt.acc;
+    }
+    function cast(dice) {
+      Math.random = function () { return dice; };
+      combat.youSwingStart = Date.now() - combat.youSwingMs - 1;
+      var hp = combat.foeHp, q = state.items.starfall_rune || 0, xp = state.combatXp.magic, log0 = combat.log.length;
+      combatTick();
+      var lines = combat.log.slice(log0).map(function (x) { return String(x.t); });
+      return { dealt: hp - combat.foeHp, spent: q - (state.items.starfall_rune || 0), left: state.items.starfall_rune || 0, xp: state.combatXp.magic - xp,
+        burn: !!(combat.foeStatus && combat.foeStatus.burn), chill: !!(combat.foeStatus && combat.foeStatus.pin),
+        second: lines.some(function (t) { return /hits a second time for/.test(t); }), miss: lines.some(function (t) { return /misses the/.test(t); }),
+        crit: lines.some(function (t) { return /crits<\/span> the/.test(t); }), hit: combat.youMaxHit, swing: combat.youSwingMs, hp: combat.youMaxHp };
+    }
+    /* the same cast with and without a set of ranks */
+    function pair(weapon, cm, dice, opt, base) { arm(weapon, base || {}, opt); var a = cast(dice); var both = JSON.parse(JSON.stringify(base || {})); for (var k in cm) both[k] = cm[k]; arm(weapon, both, opt); return [a, cast(dice)]; }
+    /* what a cast that lands and does not crit must do, from the fight's own max hit */
+    function plainHit(hit, dice) { return Math.max(1, Math.round(hit * (COMBAT_P.HIT_MIN + (1 - COMBAT_P.HIT_MIN) * dice))); }
+    var SURE = { acc: 1e9 }, NEVER = { acc: 0 };
+    try {
+      KN.weakEl = null; KN.resistEl = null; KN.weakTo = null; KN.resistTo = null;
+      arm('ancient_staff', {}, SURE); o.base = { crit: +combatBonusesAll().critChance.toFixed(4), def: KN.def, keep: runeSaveRate(), size: spellSize(), burnChance: BURN_CHANCE, hitMin: COMBAT_P.HIT_MIN };
+
+      /* damage: Deep Focus, Heavy Casting on a staff and on a wand, Warcaster */
+      var dmg = function (weapon, cm) { var p = pair(weapon, cm, 0.5, SURE); return { hit: [p[0].hit, p[1].hit], dealt: [p[0].dealt, p[1].dealt], want: [plainHit(p[0].hit, 0.5), plainHit(p[1].hit, 0.5)], hp: [p[0].hp, p[1].hp] }; };
+      o.focus = dmg('ancient_staff', { s_t2_l: 5 });
+      o.heavyStaff = dmg('ancient_staff', { s_t4_l: 5 });
+      o.heavyWand = dmg('ancient_wand', { s_t4_l: 5 });
+      o.caster = dmg('ancient_staff', { gs_t4: 1 });
+      /* crit: Sharp Mind makes a cast crit that would not have, Archmage makes a crit bigger */
+      var sm = pair('ancient_staff', { s_t4_r: 5 }, 0.15, SURE);
+      o.sharp = { crit: [sm[0].crit, sm[1].crit], dealt: [sm[0].dealt, sm[1].dealt], plain: plainHit(sm[0].hit, 0.15) };
+      var am = pair('ancient_staff', { s_cap: 1 }, 0.05, SURE);
+      o.arch = { crit: [am[0].crit, am[1].crit], dealt: [am[0].dealt, am[1].dealt], plain: plainHit(am[0].hit, 0.05) };
+      /* Spellbreak: accuracy equal to the monster's Defence is a coin toss. The dice at
+         0.51 lose it. With a tenth of that Defence gone the same dice win it. */
+      var sb = pair('ancient_staff', { s_t3_l: 1 }, 0.51, { acc: KN.def });
+      o.spellbreak = { miss: [sb[0].miss, sb[1].miss], dealt: [sb[0].dealt, sb[1].dealt], chance: [KN.def / (KN.def + KN.def), KN.def / (KN.def + KN.def * 0.9)] };
+      var bk = pair('ancient_staff', { k_t3_l: 1 }, 0.51, { acc: KN.def });
+      o.bodkin = [bk[0].miss, bk[1].miss];
+      /* Quick Hands: a wand's attack time, and not a staff's */
+      arm('ancient_wand', {}); var w0 = combat.youSwingMs; arm('ancient_wand', { s_t3_r: 1 }); var w1 = combat.youSwingMs;
+      arm('ancient_staff', {}); var s0 = combat.youSwingMs; arm('ancient_staff', { s_t3_r: 1 }); var s1 = combat.youSwingMs;
+      o.quick = { wand: [w0, w1], staff: [s0, s1] };
+      /* Steady Mind: the XP one cast is worth */
+      var xp = pair('ancient_staff', { s_t1: 4 }, 0.5, { acc: 1e9, lvl: 50 });
+      o.steady = [xp[0].xp, xp[1].xp, xp[0].dealt, xp[1].dealt];
+
+      /* runes: Rune Thrift and Battle Scholar keep them, on the roll */
+      var th = pair('ancient_staff', { s_t2_r: 5 }, 0.15, SURE), bs = pair('ancient_staff', { gs_t3: 3 }, 0.02, SURE), ft = pair('ancient_staff', { k_t2_r: 5 }, 0.15, SURE);
+      o.thrift = [th[0].spent, th[1].spent]; o.scholar = [bs[0].spent, bs[1].spent]; o.fletcher = [ft[0].spent, ft[1].spent];
+      arm('ancient_staff', { s_t2_r: 5, gs_t3: 3 }, SURE); o.keepNodes = +runeSaveRate().toFixed(4);
+      /* Rune Keeper: a cast that misses gets all of them back. Dice at 0.09 is over the
+         staff's crit chance, so this is a clean miss and not the old crit-on-a-miss. */
+      var rk = pair('ancient_staff', { s_t5_r: 1 }, 0.09, NEVER);
+      o.keeper = { miss: [rk[0].miss, rk[1].miss], spent: [rk[0].spent, rk[1].spent], dealt: [rk[0].dealt, rk[1].dealt] };
+      var rkHit = pair('ancient_staff', { s_t5_r: 1 }, 0.5, SURE); o.keeperHit = [rkHit[0].spent, rkHit[1].spent];
+      var rkBolt = pair('ancient_staff', { s_t5_r: 1 }, 0.09, { acc: 0, spell: SPELL_SIZES[0].k }); o.keeperBolt = [rkBolt[0].spent, rkBolt[1].spent];
+      var rkLast = pair('ancient_staff', { s_t5_r: 1 }, 0.09, { acc: 0, runes: 3 }); o.keeperLast = [rkLast[0].left, rkLast[1].left, combat.active];
+      var qm = pair('ancient_staff', { k_t5_r: 1 }, 0.09, NEVER); o.quiverMaster = [qm[0].spent, qm[1].spent];
+
+      /* Echo: 8% of casts that land hit twice, and the second hit is the first again */
+      var e1 = pair('ancient_staff', { s_t5_l: 1 }, 0.05, SURE), e2 = pair('ancient_staff', { s_t5_l: 1 }, 0.09, SURE);
+      o.echo = { under: [e1[0].dealt, e1[1].dealt, e1[0].second, e1[1].second, e1[1].spent], over: [e2[0].dealt, e2[1].dealt, e2[1].second] };
+      /* a cast that misses and rolls a crit: the tick's old fault makes it 1 damage.
+         Echo must not double it. */
+      var e3 = pair('ancient_staff', { s_t5_l: 1 }, 0.05, NEVER);
+      o.echoMiss = { dealt: [e3[0].dealt, e3[1].dealt], second: e3[1].second, crit: e3[1].crit };
+
+      /* Attunement. Crit chance is raised over the burn chance with nodes any build can
+         take, so there are dice that crit and still fail the burn roll. */
+      var CR = { s_t4_r: 5, gs_t3: 3, m_t2_r: 5, kb_t3: 3, rm_t3: 3 };
+      arm('ancient_staff', CR, SURE); o.attCrit = +combatBonusesAll().critChance.toFixed(4);
+      var a1 = pair('ancient_staff', { s_t5_m: 1 }, 0.34, SURE, CR), a2 = pair('ancient_staff', { s_t5_m: 1 }, 0.5, SURE, CR);
+      var a3 = pair('ancient_staff', { s_t5_m: 1 }, 0.34, { acc: 1e9, el: 'frost' }, CR), a4 = pair('ancient_staff', { s_t5_m: 1 }, 0.34, NEVER, CR);
+      o.attune = { crit: [a1[0].crit, a1[1].crit], fire: [a1[0].burn, a1[1].burn], noCrit: [a2[0].crit, a2[1].crit, a2[0].burn, a2[1].burn],
+        frost: [a3[0].chill, a3[1].chill], onMiss: [a4[1].crit, a4[1].burn, a4[1].dealt] };
+    } finally {
+      Math.random = realRandom; KN.weakEl = keepK.weakEl; KN.resistEl = keepK.resistEl; KN.weakTo = keepK.weakTo; KN.resistTo = keepK.resistTo;
+      combat.active = false; combat.raid = null; state = defaultState(); normalizeState();
+    }
+    return o;
   }
 
   /* ── the gem and the draught (slice 7): what each is, and the max hit it moves ── */
@@ -1754,7 +1916,7 @@ function PAGE() {
 
   window.SIM = { levelCheck: levelCheck, saves: saves, consts: consts, parity: parity, ladder: ladder, dressed: dressed, economy: economy, skillXp: skillXp,
     reagents: reagents, structure: structure, nodes: nodes, spells: spells, spellSizes: spellSizes, castRates: castRates, casting: casting, bar: bar, gold: gold, elements: elements, elTables: elTables, elementFx: elementFx, fighters: fighters, robes: robes,
-    journey: journey, veteran: veteran, liveFight: liveFight, liveSkill: liveSkill, livePick: livePick, liveRaid: liveRaid, finds: finds, findWorth: findWorth, best: best, walls: walls, gemBrew: gemBrew,
+    journey: journey, veteran: veteran, liveFight: liveFight, liveSkill: liveSkill, livePick: livePick, liveRaid: liveRaid, finds: finds, findWorth: findWorth, best: best, walls: walls, gemBrew: gemBrew, sorcery: sorcery,
     raids: function () { return RAIDS.map(function (r) { return { id: r.id, name: r.name, endless: !!r.endless, stages: (r.stages || []).length }; }); } };
 }
 
@@ -2281,6 +2443,66 @@ setTimeout(() => {
     check(GB.keys.missing.length === 0, 'Magic Power is in every potion key list Ranged Strength is in, so nothing drops it in silence', GB.keys.missing.join(', ') || GB.keys.n + ' lists read');
   }
 
+  /* 9g. the Sorcery column (slice 6) */
+  {
+    console.log('\n9g. THE SORCERY COLUMN  ·  the fifth column of Combat Mastery: what it holds, what pays for it, and each node in combatTick with the dice held');
+    R.sorcery = J('SIM.sorcery()');
+    const SO = R.sorcery, DS = GOLD.drops.sorc, DB = GOLD.drops.sorcBridge, DPT = GOLD.drops.sorcPoints;
+    for (const n of SO.nodes) console.log(`   ${padr(n.id, 8)}${padr(n.name, 16)}${pad(n.max, 2)}   ${n.desc}`);
+    same('the thirteen nodes are the design\'s: names, sizes, what each needs and what each says', SO.nodes, DS.map(d => Object.assign({ tree: 'sorc' }, d)).concat(DB.map(d => Object.assign({ tree: 'gs' }, d))));
+    check(SO.nodes.length === 13 && SO.per.sorc === 30 && SO.per.gs === 4 && SO.cap === 166 && SO.earn === 166 && SO.bought === 166 && SO.unwired === 0,
+      'eleven nodes worth 30 and a two node bridge worth 4: the board is 166, every point of it can be earned and spent, and no node is badged as not yet active',
+      'board ' + SO.cap + ', earnable ' + SO.earn + ', bought through the real allocate path ' + SO.bought);
+    check(SO.cols.join() === 'melee,mark,ranged,magic,sorc' && SO.seam.join() === 'magic,sorc' && ['melee', 'mark', 'ranged', 'magic', 'sorc'].every(t => SO.per[t] === 30),
+      'Sorcery is the fifth column, worth what each of the other four is, and its bridge sits on the seam with Warfare');
+    const pts = l => Math.floor(l / DPT.every) + (l >= DPT.bonusAt ? 1 : 0);
+    check(SO.points.length === 99 && SO.points.every((p, i) => p === pts(i + 1)) && SO.points[98] === 34 && SO.points[98] === SO.per.sorc + SO.per.gs,
+      'Magic levels pay one point at every third level and a second at 99, the design\'s rule: 34 at Magic 99, which is the column and its bridge', 'Magic 30: ' + SO.points[29] + ', Magic 98: ' + SO.points[97] + ', Magic 99: ' + SO.points[98]);
+    check(SO.paid.length === 98 && SO.paid.every((p, i) => p === pts(i + 2) - pts(i + 1)) && SO.paid.reduce((a, b) => a + b, 0) === 34,
+      'walked level by level through grantCombatXp, each is paid on the level that earns it and on no other', 'two at Magic 99, one at each of ' + SO.paid.map((p, i) => p === 1 ? i + 2 : 0).filter(Boolean).length + ' others');
+    check(SO.back.every(b => b[1] === pts(b[0]) && b[2] === b[1]),
+      'a save that already has the levels is paid for them on load, and written out and loaded twice more it is not paid again', SO.back.map(b => 'Magic ' + b[0] + ': ' + b[1]).join(', '));
+
+    const B = SO.base, F = SO.focus, HS = SO.heavyStaff, HW = SO.heavyWand, WC = SO.caster, SM = SO.sharp, AM = SO.arch, SB = SO.spellbreak, Q = SO.quick, E = SO.echo, EM = SO.echoMiss, AT = SO.attune, K = SO.keeper;
+    const up = a => ((a[1] / a[0] - 1) * 100).toFixed(1) + '%';
+    console.log(`\n   one cast at a time: Ancient Staff, Starfall Surge, the Dread Knight (Defence ${B.def}), no board but the node named`);
+    console.log(`   Deep Focus 5       max hit ${F.hit[0]} -> ${F.hit[1]} (+${up(F.hit)}), and a cast that lands at half its range does ${F.dealt[0]} -> ${F.dealt[1]}`);
+    console.log(`   Heavy Casting 5    staff ${HS.hit[0]} -> ${HS.hit[1]} (+${up(HS.hit)}), wand ${HW.hit[0]} -> ${HW.hit[1]} (+${up(HW.hit)})`);
+    console.log(`   Warcaster          max hit ${WC.hit[0]} -> ${WC.hit[1]} (+${up(WC.hit)}), max health ${WC.hp[0]} -> ${WC.hp[1]}`);
+    console.log(`   Sharp Mind 5       dice at 0.15: ${SM.crit[0] ? 'crit' : 'no crit'} for ${SM.dealt[0]} -> ${SM.crit[1] ? 'crit' : 'no crit'} for ${SM.dealt[1]}`);
+    console.log(`   Archmage           a crit that did ${AM.dealt[0]} does ${AM.dealt[1]} (x${(AM.dealt[1] / AM.plain).toFixed(2)} of the hit, from x${(AM.dealt[0] / AM.plain).toFixed(2)})`);
+    console.log(`   Spellbreak         accuracy ${B.def} against Defence ${B.def}, dice at 0.51: ${SB.miss[0] ? 'misses' : 'hits'} at ${(SB.chance[0] * 100).toFixed(1)}% -> ${SB.miss[1] ? 'misses' : 'hits for ' + SB.dealt[1]} at ${(SB.chance[1] * 100).toFixed(1)}%`);
+    console.log(`   Quick Hands        wand ${Q.wand[0]} ms -> ${Q.wand[1]} ms, staff ${Q.staff[0]} ms -> ${Q.staff[1]} ms`);
+    console.log(`   Steady Mind 4      the same cast is worth ${SO.steady[0]} -> ${SO.steady[1]} Magic XP`);
+    console.log(`   Rune Thrift 5      dice at 0.15: spends ${SO.thrift[0]} -> ${SO.thrift[1]}     Battle Scholar 3, dice at 0.02: spends ${SO.scholar[0]} -> ${SO.scholar[1]}     both: ${(SO.keepNodes * 100).toFixed(0)}% of casts keep their runes`);
+    console.log(`   Rune Keeper        a Surge that misses spends ${K.spent[0]} -> ${K.spent[1]}, a Bolt ${SO.keeperBolt[0]} -> ${SO.keeperBolt[1]}, the last 3 runes of a stack leave ${SO.keeperLast[0]} -> ${SO.keeperLast[1]}`);
+    console.log(`   Echo               dice at 0.05: ${E.under[0]} -> ${E.under[1]} with a second hit, for ${E.under[4]} runes     dice at 0.09: ${E.over[0]} -> ${E.over[1]}`);
+    console.log(`   Attunement         crit chance ${(SO.attCrit * 100).toFixed(1)}%, dice at 0.34 (a crit, and over the ${B.burnChance * 100}% burn roll): ${AT.fire[0] ? 'burns' : 'no burn'} -> ${AT.fire[1] ? 'burns' : 'no burn'}, with Frost ${AT.frost[0] ? 'chills' : 'no chill'} -> ${AT.frost[1] ? 'chills' : 'no chill'}`);
+
+    check(B.crit > 0.05 && B.crit < 0.09 && B.keep === 0 && B.size === 4 && B.burnChance === 0.3 && SO.attCrit > 0.34,
+      'the dice are set against the game\'s own numbers: a bare staff crits under 9% of the time, keeps no runes, casts a Surge, and a burn is rolled at 30%', 'crit ' + (B.crit * 100).toFixed(1) + '%');
+    const exact = d => d.dealt[0] === d.want[0] && d.dealt[1] === d.want[1] && d.dealt[1] > d.dealt[0];
+    check(exact(F) && Math.abs(F.hit[1] / F.hit[0] - 1.10) < 0.005, 'Deep Focus: five ranks are +10% Magic damage, and the cast that lands is exactly that much bigger', F.dealt.join(' -> '));
+    check(exact(HS) && exact(HW) && Math.abs(HS.hit[1] / HS.hit[0] - 1.10) < 0.005 && Math.abs(HW.hit[1] / HW.hit[0] - 1.05) < 0.005, 'Heavy Casting: +10% with a staff at five ranks and +5% with a wand, in the cast', 'staff +' + up(HS.hit) + ', wand +' + up(HW.hit));
+    check(exact(WC) && Math.abs(WC.hit[1] / WC.hit[0] - 1.06) < 0.005 && WC.hp[1] - WC.hp[0] === 4, 'Warcaster: +6% damage in the cast and +4 max health in the fight');
+    check(SM.crit[0] === false && SM.crit[1] === true && SM.dealt[0] === SM.plain && SM.dealt[1] === SM.plain * 2, 'Sharp Mind: a cast that would not have crit, crits, for twice the hit', SM.dealt.join(' -> '));
+    check(AM.crit[0] && AM.crit[1] && AM.dealt[0] === AM.plain * 2 && AM.dealt[1] === Math.round(AM.plain * 2.25), 'Archmage: a crit is 2.25 times the hit and not 2', AM.dealt.join(' -> '));
+    check(SB.miss[0] === true && SB.dealt[0] === 0 && SB.miss[1] === false && SB.dealt[1] > 0 && SO.bodkin.join() === 'true,true',
+      'Spellbreak: a cast the monster\'s Defence would have turned lands, because a tenth of that Defence is gone, and Bodkin Points does not do it for a staff', (SB.chance[0] * 100).toFixed(1) + '% to hit -> ' + (SB.chance[1] * 100).toFixed(1) + '%');
+    check(Q.wand[1] < Q.wand[0] && Math.abs(Q.wand[1] / Q.wand[0] - 0.95) < 0.002 && Q.staff[1] === Q.staff[0], 'Quick Hands: the fight\'s own attack time is 5% shorter with a wand and unchanged with a staff', Q.wand.join(' -> ') + ' ms');
+    check(SO.steady[2] === SO.steady[3] && Math.abs(SO.steady[1] / SO.steady[0] - 1.16) < 0.01, 'Steady Mind: the same cast is worth 16% more Magic XP at four ranks', SO.steady[0] + ' -> ' + SO.steady[1]);
+    check(SO.thrift.join() === '4,0' && SO.scholar.join() === '4,0' && SO.fletcher.join() === '4,4' && SO.keepNodes === 0.23,
+      'Rune Thrift and Battle Scholar keep a cast\'s runes on the roll, 23% between them, and Fletcher\'s Thrift keeps none', 'Thrift ' + SO.thrift.join(' -> ') + ', Scholar ' + SO.scholar.join(' -> ') + ', Fletcher\'s ' + SO.fletcher.join(' -> '));
+    check(K.miss.join() === 'true,true' && K.dealt.join() === '0,0' && K.spent.join() === '4,0' && SO.keeperHit.join() === '4,4' && SO.keeperBolt.join() === '1,0' && SO.keeperLast.join() === '0,3,true' && SO.quiverMaster.join() === '4,4',
+      'Rune Keeper: a cast that misses gets back every rune it spent, a Surge four and a Bolt one and the last three of a stack three, a cast that lands still spends, and Quiver Master does not do it for a staff');
+    check(E.under[1] === E.under[0] * 2 && E.under[2] === false && E.under[3] === true && E.under[4] === 4 && E.over[1] === E.over[0] && E.over[2] === false,
+      'Echo: under 8% on the dice a cast that landed hits a second time for the same again, the runes are spent once, and over 8% it does not', E.under[0] + ' -> ' + E.under[1]);
+    check(EM.dealt[1] === EM.dealt[0] && EM.dealt[1] <= 1 && EM.second === false, 'and a cast that missed is never echoed, not even when the tick\'s old fault turns it into 1 damage on a crit roll', 'a miss that rolled a crit did ' + EM.dealt[1]);
+    check(AT.crit.join() === 'true,true' && AT.fire.join() === 'false,true' && AT.frost.join() === 'false,true' && AT.noCrit.join() === 'false,false,false,false',
+      'Attunement: a crit that failed the burn roll burns anyway, and chills with Frost, and a cast that did not crit gets nothing from it');
+    check(AT.onMiss[1] === false && AT.onMiss[2] <= 1, 'nor does a cast that missed, whatever the crit roll says', 'a miss that rolled a crit: ' + (AT.onMiss[1] ? 'burned' : 'no burn'));
+  }
+
   /* 10. the spell bar */
   console.log('\n10. THE SPELL BAR  ·  pressed, keyed and greyed, the way a player meets it');
   R.bar = J('SIM.bar()');
@@ -2512,8 +2734,8 @@ setTimeout(() => {
     }
     /* 13f. the finished builds, through the real tick: in a zone, in the hardest raid,
        and on the Spire. Section 14 has the closed forms; this is the same three
-       characters with everything on, fighting. The mage here is the mage this file
-       can build, which is the design's less whatever section 14 says is not built. */
+       characters with everything on, fighting. Since slice 6 the mage here is the
+       design's mage: the Sorcery column, Wyrdstones, Dawnveil and Faultline. */
     {
       const WHO = [['fighter', 'Sunderedge + Faultward', ''], ['archer', 'Plummet + Sundershaft', ''], ['mage', 'Faultline + Sunder Rune', 'storm'], ['wand', 'Starcall Wand + buckler', 'storm']];
       const ZH = 3, ZONE = 'dread_knight', ZM = C.monsters.find(m => m.id === ZONE);
@@ -2543,10 +2765,33 @@ setTimeout(() => {
         spire: { fighter: F.s.floor, archer: A.s.floor, staff: M.s.floor, wand: W.s.floor } };
       const L = R.bisLive;
       console.log(`   beside the archer:  zone damage  staff ${L.zone.staff}%, wand ${L.zone.wand}%, fighter ${L.zone.fighter}%   ·   time over the raid  staff ${L.raid.staff}%, wand ${L.raid.wand}%, fighter ${L.raid.fighter}%   ·   Spire floor  archer ${L.spire.archer}, staff ${L.spire.staff}, wand ${L.spire.wand}, fighter ${L.spire.fighter}`);
-      /* The design puts a finished staff at 102.9% of a finished bow. Without the column
-         and the gem it is behind, and how far is section 14's to say. What has to hold
-         here whatever is built: the mage is a real third build, not a broken one. */
-      check(L.zone.staff > 55 && L.zone.staff < 125 && L.zone.wand > 55 && L.zone.wand < 125, 'live in a zone, a finished mage does between 55% and 125% of a finished archer\'s damage', 'staff ' + L.zone.staff + '%, wand ' + L.zone.wand + '%');
+      /* The same climb, twenty floors at a time. On the early floors, as on the Dread
+         Knight above, every one of these builds kills in one hit, so the only thing
+         that counts is how often it attacks: the wand is ahead and the staff behind,
+         and that is attack time, not damage. By floors 61 to 80 nothing dies in one
+         hit, and that stretch is the live twin of section 14's table. */
+      const span = (x, a, b) => +x.s.stages.slice(a - 1, b).reduce((t, v) => t + v, 0).toFixed(1);
+      const BANDS = [[1, 20], [21, 40], [41, 60], [61, 80]];
+      console.log('\n   the same Spire climb, by the seconds each twenty floors took. Early floors die in one hit, so attack time decides them. By 61 to 80 nothing does.');
+      console.log('   ' + padr('', 28) + BANDS.map(b => pad(b[0] + ' to ' + b[1], 11)).join('') + pad('61 to 80, of the archer', 26));
+      for (const [who, label] of WHO) console.log('   ' + padr(label, 28) + BANDS.map(b => pad(span(BL[who], b[0], b[1]).toFixed(1), 11)).join('') + pad(pct(span(BL[who], 61, 80), span(A, 61, 80)) + '%', 26));
+      L.deep = { staff: pct(span(M, 61, 80), span(A, 61, 80)), wand: pct(span(W, 61, 80), span(A, 61, 80)), fighter: pct(span(F, 61, 80), span(A, 61, 80)) };
+      L.early = { staff: pct(span(M, 1, 20), span(A, 1, 20)), wand: pct(span(W, 1, 20), span(A, 1, 20)) };
+      check(all.every(x => x.s.floor > 80 && x.s.stages.length >= 80), 'all four climb past floor 80 in the twenty minutes', all.map(x => x.s.floor).join(', '));
+      /* Held to a fifth either way and not to the digit: this is one climb with the dice
+         in it, one element held the whole way (a player would change it floor by
+         floor), the 100 ms timer rounding each attack time, and big hits wasted on
+         monsters that are nearly dead. Section 14 is the table that is exact. */
+      check(L.deep.staff > 80 && L.deep.staff < 120 && L.deep.wand > 80 && L.deep.wand < 120,
+        'on floors 61 to 80 of the same climb, where nothing dies in one hit, a finished staff and a finished wand each take within a fifth of the time a finished archer takes',
+        'staff ' + L.deep.staff + '% of the archer\'s time, wand ' + L.deep.wand + '%, sword and shield ' + L.deep.fighter + '%');
+      check(L.early.wand < L.early.staff && W.z.swing < A.z.swing && A.z.swing < M.z.swing, 'and on the floors where everything dies in one hit the order is the order of the attack times: wand, bow, staff',
+        'floors 1 to 20: wand ' + L.early.wand + '% of the archer\'s time, staff ' + L.early.staff + '%');
+      /* The zone and the raid: one hit a kill, so these read attack time. What has to
+         hold is that the mage is a real third build, with a staff or with a wand. */
+      check(L.zone.staff > 55 && L.zone.staff < 125 && L.zone.wand > 55 && L.zone.wand < 125 && M.z.killsHr > M.z.castsHr * 0.9,
+        'live in a zone a finished mage kills in one hit, it does between 55% and 125% of a finished archer\'s damage: the wand more, the staff less, by how often each attacks',
+        'staff ' + L.zone.staff + '%, wand ' + L.zone.wand + '%; the staff kills with ' + Math.round(M.z.killsHr / M.z.castsHr * 100) + '% of its casts');
       check(L.raid.staff < 200 && L.raid.wand < 200, 'and takes less than twice as long over the hardest raid', 'staff ' + L.raid.staff + '% of the archer\'s time, wand ' + L.raid.wand + '%');
       /* Health is topped up here, so this is how fast each climbs and not where it dies:
          the wall is section 14's. */
@@ -2574,6 +2819,50 @@ setTimeout(() => {
       check(brew.lapsed === 0 && brew.drunkHr > 18 && brew.drunkHr < 22, 'auto-buff keeps the draught up across every kill: about twenty an hour for a three minute potion, and never a tick without it', brew.drunkHr.toFixed(1) + ' an hour');
       check(plain.carried === 0 && gems.carried === 0 && brew.carried === 0, 'and nothing is carried from one monster to the next');
     }
+    /* 13h. the Sorcery column, in the fight and across kills. The dice-held casts of
+       section 9g hold each node to one cast. This is the whole column bought, for
+       hours, through the tick, with what the tick's own log said happened counted:
+       casts that landed, crits, second hits, and the runes that left the quiver. */
+    {
+      const SH = 5, MON = 'dread_knight', MD = C.monsters.find(m => m.id === MON);
+      const COL = '{s_t1:4,s_t2_l:5,s_t2_r:5,s_t3_l:1,s_t3_r:1,s_t4_l:5,s_t4_r:5,s_t5_l:1,s_t5_m:1,s_t5_r:1,s_cap:1}';
+      const run = (key, hours, over) => J(`SIM.liveFight('${key}',99,7,'${MON}',${hours},9900,true,'fire',${over})`);
+      const plain = run('staff', SH, '{count:true}'), col = run('staff', SH, `{count:true,cmast:${COL}}`);
+      const wp = run('wand', 2, '{count:true}'), wq = run('wand', 2, '{count:true,cmast:{s_t3_r:1}}');
+      const st = v => { const c = v.count, landed = c.hits - c.critOnMiss, casts = c.hits + c.misses;
+        return { casts, landed, p: landed / casts, crit: (c.crits - c.critOnMiss) / landed, echo: c.seconds / landed, perCast: v.spentHr / v.castsHr, burn: v.seen.burn / (SH * 36000) }; };
+      const P = st(plain), S = st(col);
+      console.log(`\n   THE SORCERY COLUMN  ·  the Lv 99 staff in Wyrmsilk on the ${MD.name}, ${SH} game hours each through combatTick(), with no board and with the whole column bought`);
+      console.log('   ' + padr('', 22) + pad('max hit', 9) + pad('casts land', 12) + pad('crit', 8) + pad('hit twice', 11) + pad('runes a cast', 14) + pad('burning', 9) + pad('dps', 8) + pad('xp/hr', 9) + pad('kills/hr', 10));
+      for (const [label, v, s] of [['no board', plain, P], ['the Sorcery column', col, S]]) {
+        const m = v.model;
+        console.log('   ' + padr(label, 22) + pad(v.hit, 9) + pad((s.p * 100).toFixed(1) + '%', 12) + pad((s.crit * 100).toFixed(1) + '%', 8) + pad((s.echo * 100).toFixed(1) + '%', 11) + pad(s.perCast.toFixed(2), 14)
+          + pad((s.burn * 100).toFixed(0) + '%', 9) + pad(v.dps.toFixed(1), 8) + pad(Math.round(v.xpHr / 1000) + 'k', 9) + pad(Math.round(v.killsHr), 10));
+        console.log('   ' + padr('  what the numbers say', 22) + pad('', 9) + pad((m.p * 100).toFixed(1) + '%', 12) + pad((m.crit * 100).toFixed(1) + '%', 8) + pad((m.echo * 100).toFixed(1) + '%', 11) + pad((m.size * (1 - m.keep) * (v === col ? m.p : 1)).toFixed(2), 14)
+          + pad('', 9) + pad(m.dps.toFixed(1), 8));
+      }
+      const wantDps = col.model.dps / plain.model.dps, gotDps = col.dps / plain.dps;
+      console.log(`   the column is worth ${(gotDps * 100).toFixed(1)}% of no board live, and ${(wantDps * 100).toFixed(1)}% by the closed form, which cannot see what a bigger hit wastes on a monster that is nearly dead`);
+      console.log(`   Quick Hands, a wand for 2 game hours: ${wp.swing} ms -> ${wq.swing} ms, ${Math.round(wp.castsHr)} -> ${Math.round(wq.castsHr)} casts an hour`);
+      check([plain, col, wp, wq].every(v => !v.err && v.engaged && !v.stopped), 'all four fights ran their hours');
+      check(P.casts === Math.round(plain.castsHr * SH) && S.casts === Math.round(col.castsHr * SH), 'the tick\'s log accounts for every cast: each one either landed or missed', P.casts.toLocaleString() + ' and ' + S.casts.toLocaleString() + ' casts');
+      check(Math.abs(P.p - plain.model.p) < 0.015 && Math.abs(S.p - col.model.p) < 0.015 && col.model.p > plain.model.p && S.p > P.p,
+        'Spellbreak: more casts land, by what a tenth of the Defence is worth', (P.p * 100).toFixed(1) + '% -> ' + (S.p * 100).toFixed(1) + '%, the numbers say ' + (plain.model.p * 100).toFixed(1) + '% -> ' + (col.model.p * 100).toFixed(1) + '%');
+      check(Math.abs(P.crit - plain.model.crit) < 0.015 && Math.abs(S.crit - col.model.crit) < 0.015 && S.crit > P.crit + 0.08,
+        'Sharp Mind: ten points more of the casts that land are crits', (P.crit * 100).toFixed(1) + '% -> ' + (S.crit * 100).toFixed(1) + '%');
+      check(P.echo === 0 && plain.count.seconds === 0 && S.echo > 0.065 && S.echo < 0.095, 'Echo: about 8% of the casts that land hit twice, and none do without it', col.count.seconds.toLocaleString() + ' of ' + S.landed.toLocaleString() + ', ' + (S.echo * 100).toFixed(1) + '%');
+      const wantPlain = plain.model.size * (1 - plain.model.keep), wantCol = col.model.size * (1 - col.model.keep) * col.model.p;
+      check(Math.abs(P.perCast / wantPlain - 1) < 0.03 && Math.abs(S.perCast / wantCol - 1) < 0.03 && S.perCast < P.perCast * 0.75,
+        'Rune Thrift and Rune Keeper: a cast costs the runes it does not keep, and with the column only when it lands', P.perCast.toFixed(2) + ' runes a cast -> ' + S.perCast.toFixed(2) + ', the numbers say ' + wantPlain.toFixed(2) + ' -> ' + wantCol.toFixed(2));
+      check(S.burn > P.burn * 1.05, 'Attunement: the monster burns more of the time, because a crit burns without the roll', (P.burn * 100).toFixed(1) + '% of the time -> ' + (S.burn * 100).toFixed(1) + '%');
+      check(gotDps > 1.2 && gotDps <= wantDps * 1.01 && gotDps > wantDps * 0.9, 'the whole column is worth what its numbers say in damage, less what a bigger hit wastes on a kill', (gotDps * 100).toFixed(1) + '% live, ' + (wantDps * 100).toFixed(1) + '% by the closed form');
+      check(col.xpHr / plain.xpHr > gotDps * 1.1, 'Steady Mind: XP an hour rises by more than the damage does', Math.round(plain.xpHr / 1000) + 'k -> ' + Math.round(col.xpHr / 1000) + 'k an hour');
+      const up100 = ms => Math.ceil(ms / 100) * 100, wantCasts = up100(wp.swing) / up100(wq.swing);
+      check(wq.swing < wp.swing && Math.abs((wq.castsHr / wp.castsHr) / wantCasts - 1) < 0.01, 'Quick Hands: a wand gets through more casts an hour, by what its attack time says once the timer has rounded both',
+        '+' + ((wq.castsHr / wp.castsHr - 1) * 100).toFixed(1) + '% casts, the attack times say +' + ((wantCasts - 1) * 100).toFixed(1) + '%');
+      check(plain.carried === 0 && col.carried === 0 && wp.carried === 0 && wq.carried === 0, 'and nothing the column does is carried from one monster to the next: no burn, no slow, and the monster attacks at its own speed',
+        Math.round((plain.killsHr + col.killsHr) * SH + (wp.killsHr + wq.killsHr) * 2).toLocaleString() + ' kills checked');
+    }
     const mg = rows.filter(v => /staff|wand/.test(v.key));
     check(mg.every(v => v.spentHr > 0 && v.spentHr <= v.castsHr * (/Blast/.test(v.spell) ? 2 : /Wave/.test(v.spell) ? 3 : /Surge/.test(v.spell) ? 4 : 1)),
       'a mage never spends more runes than its casts times the size of the spell, and robes keep some back', mg.filter(v => v.lv === 99).map(v => NAME[v.key] + ' ' + v.spell + ': ' + Math.round(v.spentHr).toLocaleString() + ' runes for ' + Math.round(v.castsHr).toLocaleString() + ' casts').join('  ·  '));
@@ -2583,19 +2872,19 @@ setTimeout(() => {
   /* 14. best in slot, and the Spire wall */
   {
     console.log('\n14. BEST IN SLOT  ·  Lv 99, the shape of _rangedstr.js: damage a second against Defence 500, 1000 and 2000');
-    const BR = J('SIM.best()'), BG = GOLD.best, BB = (GOLD.built || {}).best || [];
+    const BR = J('SIM.best()'), BG = GOLD.best;
     R.best = BR.rows; R.bestHave = BR.have;
-    const H = BR.have, sorc = H.sorcery > 0 && H.bridge > 0;
-    console.log('   The design\'s finished mage has two things this file may not: the Sorcery column of Combat Mastery (' + (sorc ? 'built: ' + H.sorcery + ' nodes and ' + H.bridge + ' on the bridge' : 'NOT BUILT, slice 6')
-      + ') and the Wyrdstone gem (' + (H.wyrdstone ? 'built' : 'NOT BUILT, slice 7') + '). The board is ' + H.columns.length + ' columns, ' + H.boardCap + ' points.');
+    const H = BR.have;
+    console.log('   A finished mage is the design\'s: Faultline or the Starcall Wand, Dawnveil, Sunder Runes, a Wyrdstone in every socket, the Sorcery column (' + H.sorcery + ' nodes and ' + H.bridge + ' on its bridge), the Runecrafting tree and cape. The board is ' + H.columns.length + ' columns, ' + H.boardCap + ' points.');
+    check(H.sorcery === 11 && H.bridge === 2 && H.boardCap === 166 && H.columns.length === 5 && H.wyrdstone && H.brewMagic,
+      'everything the design\'s finished mage is built from is in this file: the column, its bridge, the gem, and Magic Power on the Triple Brew');
     console.log('   ' + padr('build', 46) + pad('acc', 6) + pad('hit', 6) + pad('swing', 7) + pad('crit', 6) + pad('dmg%', 6) + pad('@500', 9) + pad('@1000', 9) + pad('@2000', 9) + '   the design measured' + pad('', 8) + 'of it');
     const same3 = (a, b) => a && b && a.dps['500'] === b.dps['500'] && a.dps['1000'] === b.dps['1000'] && a.dps['2000'] === b.dps['2000'];
     for (const x of R.best) {
       const g = BG.find(y => y.label === x.label), s = x.s, pc = x.kind === 'magic' ? s.magicDmg : x.kind === 'ranged' ? s.rangedStr : s.atkBoost;
-      /* Magic Power is left out of a fighter's or an archer's numbers: neither reads it,
-         and Warrior's Triple Brew only carries some once slice 7 is built. */
-      const sOf = s => { const o = JSON.parse(JSON.stringify(s)); if (x.kind !== 'magic' && !H.brewMagic) delete o.mpow; return o; };
-      x.design = g ? g.dps : null; x.exact = same3(x, g) && !!g && diff(sOf(x.s), sOf(g.s)) === '';
+      /* exact means the three damage numbers AND everything behind them: accuracy, max
+         hit, attack time, crit, the damage channel, the runes kept */
+      x.design = g ? g.dps : null; x.exact = same3(x, g) && !!g && diff(x.s, g.s) === '';
       x.ofDesign = g ? pct(x.dps['500'], g.dps['500']) : null;
       console.log('   ' + padr(x.label, 46) + pad(s.acc, 6) + pad(s.hit, 6) + pad((s.swing / 1000).toFixed(2), 7) + pad(Math.round(s.crit * 100) + '%', 6) + pad(Math.round(pc * 100) + '%', 6) + pad(x.dps['500'], 9) + pad(x.dps['1000'], 9) + pad(x.dps['2000'], 9)
         + '   ' + (g ? padr(g.dps['500'] + ' / ' + g.dps['1000'] + ' / ' + g.dps['2000'], 26) + (x.exact ? 'the same' : x.ofDesign + '%') : 'not in the design'));
@@ -2607,22 +2896,16 @@ setTimeout(() => {
     const bare = R.best.filter(x => x.kind === 'magic' && /^bare:/.test(x.label));
     check(bare.length === 3 && bare.every(x => x.exact), 'the three bare mage rows are the prototype\'s, to the digit: Faultline, Dawncaller and the Starcall Wand, in Dawnveil, with Sunder Runes',
       bare.map(x => x.label.replace('bare: ', '') + ' ' + x.dps['500'] + (x.exact ? '' : ' (design ' + (x.design || {})['500'] + ')')).join(' · '));
-    /* The rows that need what is not built. Each is held to what this file measured
-       when the gear was built, and must never be ABOVE the design: a row that climbs
-       past it without the column is a number that moved for another reason. */
+    /* The finished rows. Until slice 6 these waited for the Sorcery column and were
+       held to what the file measured without it. That record (built.best) left the
+       golden file when the column landed: they are held to the design itself now. */
     const full = R.best.filter(x => x.kind === 'magic' && !/^bare:/.test(x.label));
     const NOBOARD = 'no board: Faultline + Sunder Rune', nb = R.best.find(x => x.label === NOBOARD);
-    if (H.wyrdstone) check(nb.exact, 'with no Mastery board the finished mage is the prototype\'s, to the digit: best gear, enchants, Wyrdstones, the Runecrafting tree and cape, full Ascension',
+    check(nb.exact, 'with no Mastery board the finished mage is the prototype\'s, to the digit: best gear, enchants, Wyrdstones, the Runecrafting tree and cape, full Ascension',
       nb.dps['500'] + ' / ' + nb.dps['1000'] + ' / ' + nb.dps['2000'] + (nb.exact ? '' : ', the design ' + nb.design['500'] + ' / ' + nb.design['1000'] + ' / ' + nb.design['2000']));
-    const waiting = full.filter(x => !x.exact);
-    if (sorc && H.wyrdstone) check(waiting.length === 0, 'every finished mage row is the prototype\'s, to the digit', waiting.map(x => x.label + ' ' + x.ofDesign + '%').join(', ') || '17 rows');
-    else {
-      check(waiting.every(x => x.dps['500'] <= x.design['500'] && x.dps['1000'] <= x.design['1000'] && x.dps['2000'] <= x.design['2000']),
-        'the ' + waiting.length + ' finished mage rows that need ' + [sorc ? '' : 'the Sorcery column', H.wyrdstone ? '' : 'the Wyrdstone'].filter(Boolean).join(' and ') + ' are all under the design, none over it',
-        'from ' + Math.min(...waiting.map(x => x.ofDesign)) + '% to ' + Math.max(...waiting.map(x => x.ofDesign)) + '% of it');
-      R.bestWaiting = waiting.map(x => ({ label: x.label, dps: x.dps, s: x.s }));
-      same('and each is what this file measured when the gear was built', R.bestWaiting, BB);
-    }
+    const off = full.filter(x => !x.exact);
+    check(full.length === 17 && off.length === 0, 'every finished mage row is the prototype\'s, to the digit: the staff and the wand, each element, each size of spell, each class, the brew, the better rolls, and with the gems or the board taken off',
+      off.map(x => x.label + ' ' + x.ofDesign + '%').join(', ') || '17 rows');
     const g = l => R.best.find(x => x.label === l);
     const fb = g('FULL: Plummet + Sundershaft'), fm = g('FULL: Faultline + Sunder Rune'), fw = g('FULL: Starcall Wand + buckler'), fsw = g('FULL: Sunderedge + Faultward');
     R.bestSummary = { staffVsBow: pct(fm.dps[500], fb.dps[500]), staffVsBow1000: pct(fm.dps[1000], fb.dps[1000]), staffVsBow2000: pct(fm.dps[2000], fb.dps[2000]), staffVsSword: pct(fm.dps[500], fsw.dps[500]), wandVsBow: pct(fw.dps[500], fb.dps[500]) };
@@ -2638,11 +2921,12 @@ setTimeout(() => {
     const GP = R.bestGap;
     console.log(`   with no Mastery board on either: ${GP.noBoard}% (the design ${GP.noBoardDesign}%)  ·  with no gems on either: ${GP.noGems}% (the design ${GP.noGemsDesign}%)`);
     console.log(`   what the board is worth: ${GP.boardWorthArcher}% to the archer, ${GP.boardWorthMage}% to the mage (the design ${GP.boardWorthMageDesign}%)  ·  what the gems are worth: ${GP.gemsWorthArcher}% to the archer, ${GP.gemsWorthMage}% to the mage (the design ${GP.gemsWorthMageDesign}%)`);
-    if (sorc && H.wyrdstone) check(diff(R.bestSummary, GS) === '' && R.bestSummary.staffVsBow >= 95 && R.bestSummary.staffVsBow <= 105, 'the finished mage is inside 95-105% of the finished archer, as the design measured',
-      `staff ${R.bestSummary.staffVsBow}% at def 500, ${R.bestSummary.staffVsBow1000}% at def 1000; wand ${R.bestSummary.wandVsBow}%`);
-    else check(R.bestSummary.staffVsBow < GS.staffVsBow && (!H.wyrdstone || (GP.noBoard === GP.noBoardDesign && GP.noBoard >= 95)),
-      'the finished mage is behind the finished archer by what is not built, and by nothing else' + (H.wyrdstone ? ': with the board off both, the staff is the design\'s share of the bow' : ''),
-      `staff ${R.bestSummary.staffVsBow}% of the bow, the design ${GS.staffVsBow}%` + (H.wyrdstone ? `; board off, ${GP.noBoard}% and the design ${GP.noBoardDesign}%` : ''));
+    same('the finished mage beside the finished archer is the design\'s, to the digit: a staff 102.9% of a bow at Defence 500 and 100.5% at 1000, a wand and buckler 101.2%', R.bestSummary, GS);
+    check(R.bestSummary.staffVsBow === 102.9 && R.bestSummary.staffVsBow1000 === 100.5 && R.bestSummary.wandVsBow === 101.2 && R.bestSummary.staffVsBow >= 95 && R.bestSummary.staffVsBow <= 105 && R.bestSummary.wandVsBow >= 95 && R.bestSummary.wandVsBow <= 105,
+      'which is inside 95 to 105% of the archer, with a staff or a wand: a best in slot, not a second best',
+      `staff ${R.bestSummary.staffVsBow}% at Defence 500, ${R.bestSummary.staffVsBow1000}% at 1000, ${R.bestSummary.staffVsBow2000}% at 2000; wand ${R.bestSummary.wandVsBow}%; of the sword and shield ${R.bestSummary.staffVsSword}%`);
+    check(GP.noBoard === GP.noBoardDesign && GP.noGems === GP.noGemsDesign && GP.boardWorthMage === GP.boardWorthMageDesign && GP.gemsWorthMage === GP.gemsWorthMageDesign,
+      'and it gets there the way the design does: the board is worth ' + GP.boardWorthMage + '% to a mage and the gems ' + GP.gemsWorthMage + '%', 'the archer\'s board is worth ' + GP.boardWorthArcher + '% and gems ' + GP.gemsWorthArcher + '%');
 
     R.walls = J('SIM.walls()');
     console.log('\n   THE SPIRE WALL  ·  Lv 99 in the best gear, the definition _wall.js uses');

@@ -1582,6 +1582,21 @@ setTimeout(() => {
       k_t5_r:['SETUP_BOW', PROBE.bonuses],                             // Quiver Master -> refund on miss
       k_cap:['SETUP_BOW', PROBE.bonuses],                              // Deadeye
       kb_t3:['', PROBE.bonuses], kb_t4:['', PROBE.bonuses],            // Outrider, Vanguard
+      /* Sorcery (0.9.127.11). Every node here wants a staff or a wand, so each probe
+         hands it one: a wand for Quick Hands, a staff for the rest. They read the
+         player-facing function wherever there is one, for the reason MAXHIT does. */
+      s_t1:['SETUP_STAFF', PROBE.bonuses],                             // Steady Mind
+      s_t2_l:['SETUP_STAFF', 'MAXHIT'],                                // Deep Focus
+      s_t2_r:['SETUP_STAFF', 'RUNESAVE'],                              // Rune Thrift
+      s_t3_l:['SETUP_STAFF', PROBE.bonuses],                           // Spellbreak
+      s_t3_r:['SETUP_WAND', 'SWING'],                                  // Quick Hands
+      s_t4_l:['SETUP_STAFF', 'MAXHIT'],                                // Heavy Casting
+      s_t4_r:['SETUP_STAFF', 'CRIT'],                                  // Sharp Mind
+      s_t5_l:['SETUP_STAFF', PROBE.bonuses],                           // Echo
+      s_t5_m:['SETUP_STAFF', 'ATTUNE'],                                // Attunement
+      s_t5_r:['SETUP_STAFF', PROBE.bonuses],                           // Rune Keeper
+      s_cap:['SETUP_STAFF', 'CRITDMG'],                                // Archmage
+      gs_t3:['SETUP_STAFF', 'RUNESAVE'], gs_t4:['SETUP_STAFF', 'MAXHIT'],   // Battle Scholar, Warcaster
     };
     /* Setups and the bespoke probes for the nodes that only exist inside a fight. */
     const SETUP = {
@@ -1595,6 +1610,10 @@ setTimeout(() => {
                      state.combatEquipped={weapon:'shadow_longbow',quiver:'runite_arrow'};`,
       SETUP_XBOW:   `state.combatXp.ranged=XP_CUM[80]; state.items.runite_bolt=5000;
                      state.combatEquipped={weapon:'runite_crossbow',quiver:'runite_bolt'};`,
+      SETUP_STAFF:  `state.combatXp.magic=XP_CUM[80]; state.items.forge_rune=5000;
+                     state.combatEquipped={weapon:'frost_staff',quiver:'forge_rune'};`,
+      SETUP_WAND:   `state.combatXp.magic=XP_CUM[80]; state.items.forge_rune=5000;
+                     state.combatEquipped={weapon:'frost_wand',quiver:'forge_rune'};`,
     };
     const BESPOKE = {
       // Bleeder: a crit must leave a bleed on the foe. Drives the same foeStatus
@@ -1616,6 +1635,13 @@ setTimeout(() => {
       ACC:     `playerAccuracy()`,
       SWING:   `playerSwingMs()`,
       AMMOSTR: `ammoStr()`,
+      RUNESAVE:`runeSaveRate()`,
+      CRIT:    `combatBonusesAll().critChance`,
+      CRITDMG: `combatBonusesAll().critDmg`,
+      /* Attunement only shows on a crit: the dice are held so the roll alone fails. */
+      ATTUNE: `(function(){ combat.foeStatus={}; combat.youMaxHit=100; var r=Math.random; Math.random=function(){ return 0.999; };
+        try{ mageOnHit({name:'Dummy'},50,Date.now(),true); } finally { Math.random=r; }
+        var b=combat.foeStatus.burn?1:0; combat.foeStatus={}; return b; })()`,
     };
 
     const ids = ev('CMAST_NODES.map(n=>n.id)');
@@ -1663,17 +1689,19 @@ setTimeout(() => {
 
     /* Point economy is a hard invariant. It is NOT the skilling trees' 98 — Combat
        Mastery grew to 132 when Marksman landed (0.9.123.13), four columns of 30 plus
-       12 in bridges. A node whose max changes silently rebalances the game, so the
-       number is asserted flat rather than derived. */
-    ok('mastery tree still totals exactly 132 points',
-       ev('CMAST_NODES.reduce((s,n)=>s+n.max,0)') === 132,
+       12 in bridges, and to 166 when Sorcery landed (0.9.127.11): five columns of 30
+       plus 16 in bridges. A node whose max changes silently rebalances the game, so
+       the number is asserted flat rather than derived. */
+    ok('mastery tree still totals exactly 166 points',
+       ev('CMAST_NODES.reduce((s,n)=>s+n.max,0)') === 166,
        String(ev('CMAST_NODES.reduce((s,n)=>s+n.max,0)')));
     /* Each discipline carries exactly 30. An unbalanced column is a balance change
        wearing a layout change's clothes. */
     {
       const per = ev(`(function(){var b={};CMAST_NODES.forEach(function(n){b[n.tree]=(b[n.tree]||0)+n.max;});return b;})()`);
-      ['melee','mark','ranged','magic'].forEach(t =>
+      ['melee','mark','ranged','magic','sorc'].forEach(t =>
         ok('the ' + t + ' column is 30 points', per[t] === 30, String(per[t])));
+      ok('and each of the four bridges is 4', ['mr','kb','rm','gs'].every(t => per[t] === 4), JSON.stringify(per));
     }
 
     /* Splat duplication (0.9.130) — every damage popup was emitted three times, so
@@ -9879,15 +9907,19 @@ setTimeout(() => {
       var raids=RAIDS.filter(function(r){ return r.gearDrops&&r.gearDrops.length; }).length;
       var spire=(typeof CMAST_SPIRE_FLOORS!=='undefined')?CMAST_SPIRE_FLOORS.length:0;
       var levels=98, milestones=4;
+      /* Magic levels pay for the Sorcery column and its bridge (0.9.127.11): one at
+         every third level and a second at 99. Counted here by hand, not by asking
+         the game, so the two have to agree. */
+      var magic=0; for(var L=1;L<=99;L++){ if(L%3===0) magic++; if(L===99) magic++; }
       var earnable=levels+milestones+bossZones /*boss first-kills*/+bossZones /*their zone clears*/
-                  +huntZones+raids+spire;
+                  +huntZones+raids+spire+magic;
       return {cap:CMAST_CAP, earnable:earnable, bossZones:bossZones, huntZones:huntZones,
-              raids:raids, spire:spire,
+              raids:raids, spire:spire, magic:magic, magicGame:cmastMagicPoints(99),
               spireAscending:(typeof CMAST_SPIRE_FLOORS!=='undefined')
                 && CMAST_SPIRE_FLOORS.every(function(f,i,a){ return i===0||f>a[i-1]; })};
     })()`);
     ok('every point the board costs can be earned',
-       cm.earnable >= cm.cap, JSON.stringify(cm));
+       cm.earnable >= cm.cap && cm.magic === 34 && cm.magicGame === cm.magic, JSON.stringify(cm));
     ok('and the Spire rungs are in ascending order',
        cm.spireAscending === true, JSON.stringify(cm.spire));
 
@@ -10912,10 +10944,12 @@ setTimeout(() => {
     })()`);
     ok('Realm Walker does not fire with a zone still to clear (#208)', ach.early === false && ach.all === true, JSON.stringify({early: ach.early, all: ach.all, zones: ach.zones}));
     ok('a save that cleared raids, grounds and Spire rungs before they paid is made whole (#234)',
-       ach.cl === 99 ? ach.back === 130 : ach.back > 120, 'combat ' + ach.cl + ': 120 -> ' + ach.back);
+       /* 130 until Sorcery (0.9.127.11). This save has every combat stat at 99, Magic
+          among them, and Magic 99 is 34 points it was never paid: 164. */
+       ach.cl === 99 ? ach.back === 164 : ach.back > 120, 'combat ' + ach.cl + ': 120 -> ' + ach.back);
     ok('once, and never on top of a point the live grant already paid', ach.again === ach.back && ach.live === ach.back + 1, JSON.stringify({again: ach.again, live: ach.live}));
     ok('Full Board asks for every point the board holds', ach.earnable === ach.cap, ach.earnable + ' vs ' + ach.cap);
-    ok('and the board lists every source of a point', ach.chips >= 6, ach.chips + ' chips');
+    ok('and the board lists every source of a point', ach.chips >= 7, ach.chips + ' chips');
 
     /* ── panels ───────────────────────────────────────────────────────────────── */
     const ui = ev(`(function(){
@@ -11607,6 +11641,238 @@ setTimeout(() => {
     ok('the draught is brewed from Nightbloom at Alchemy 45 and 78, at the Hawkeye pair\'s pace, and sits after it',
        W.recipes.join(' ') === 'al_ca1:45:{"moonflower":3} al_ca2:78:{"moonflower":3,"ashbloom":1}' && W.ladder === true && W.pace.every(Boolean), W.recipes.join(' '));
     ok('the Socket page totals have a Magic damage cell that reads the gem', /\+8% ?Magic Dmg/i.test(W.totals) && /Magic damage/.test(W.totals), W.totals.slice(0, 160));
+  }
+
+  section('The Sorcery column: the fifth column of Combat Mastery (0.9.127.11)');
+  {
+    /* Magic slice 6. Eleven nodes and a two node bridge to Warfare: 34 points on the
+       board, paid for by 34 points from Magic levels. Everything here is the silent
+       kind of wrong: a node that shows and does nothing, points paid twice or never,
+       a fifth column that falls off the side of the panel. The fights themselves
+       (Spellbreak, Echo, Attunement and Rune Keeper across a kill) are in
+       _magesim.js, which runs the real tick. */
+    const _capS = ev('String(demoXpCap)');
+    ev('demoXpCap=function(){ return XP_CAP; };');
+    const S = JSON.parse(ev(`(function(){
+      var o={};
+      var fresh=function(){ state=defaultState(); normalizeState(); state.cmast={}; };
+      var staff=function(){ state.combatXp.magic=XP_CUM[80]; state.items.forge_rune=5000; state.combatEquipped={weapon:'frost_staff',quiver:'forge_rune'}; };
+      var wand=function(){ state.combatXp.magic=XP_CUM[80]; state.items.forge_rune=5000; state.combatEquipped={weapon:'frost_wand',quiver:'forge_rune'}; };
+      var bow=function(){ state.combatXp.ranged=XP_CUM[80]; state.items.runite_arrow=5000; state.combatEquipped={weapon:'shadow_longbow',quiver:'runite_arrow'}; };
+      var sword=function(){ state.combatXp.attack=XP_CUM[80]; state.combatXp.strength=XP_CUM[80]; state.items.runite_sword=1; state.combatEquipped={weapon:'runite_sword'}; };
+      var shape=function(n,id){ return [id,n.tier,n.branch,n.max,!!n.unique,!!n.powerful,!!n.capstone].join(':'); };
+
+      /* the shape: Marksman's, node for node */
+      o.cap=CMAST_CAP; o.earn=_achCmastEarnable(); o.cols=CMAST_COLS.join(); o.seam=(CMAST_SEAM.gs||[]).join();
+      o.sorc=CMAST_NODES.filter(function(n){ return n.tree==='sorc'; }).map(function(n){ return shape(n,n.id); });
+      o.mark=CMAST_NODES.filter(function(n){ return n.tree==='mark'; }).map(function(n){ return shape(n,'s'+n.id.slice(1)); });
+      o.gs=CMAST_NODES.filter(function(n){ return n.tree==='gs'; }).map(function(n){ return n.id+':'+n.max+':'+n.prereq.join('+'); });
+      o.names=[_CMAST_DISC.sorc&&_CMAST_DISC.sorc.name, _CMAST_DISC.gs&&_CMAST_DISC.gs.name];
+      var dash=String.fromCharCode(8212);
+      o.copy=CMAST_NODES.filter(function(n){ return (n.tree==='sorc'||n.tree==='gs')
+        && (/swing|blow|guard|landing|stretch|weight|affix/i.test(n.name+' '+n.desc) || (n.name+n.desc+_CMAST_DISC[n.tree].role).indexOf(dash)>=0); }).map(function(n){ return n.id; });
+
+      /* the points: one at every third Magic level and a second at 99 */
+      o.mp=[0,1,2,3,4,6,30,98,99,150].map(cmastMagicPoints);
+      fresh(); var g0=state.cmastGranted, c0=combatLevel();
+      grantCombatXp('magic', XP_CUM[99]*4);
+      var c1=combatLevel(), mil=[25,50,75,99].filter(function(m){ return c0<m&&c1>=m; }).length;
+      o.live={lvl:cmbLvl('magic'), got:state.cmastGranted-g0, want:(c1-c0)+mil+cmastMagicPoints(99)};
+      var step=function(to){ fresh(); state.combatXp.magic=XP_CUM[to]-1; var g=state.cmastGranted, c=combatLevel(); grantCombatXp('magic',5);
+        return [cmbLvl('magic'), state.cmastGranted-g-(combatLevel()-c)]; };
+      o.steps=[step(3),step(4),step(5),step(6),step(99)];
+
+      /* a save from 0.9.127.4 on: Magic 60 and not a point for it */
+      fresh();
+      ['attack','strength','defence','hitpoints'].forEach(function(k){ state.combatXp[k]=XP_CUM[70]; });
+      state.combatXp.ranged=0; state.combatXp.magic=XP_CUM[60];
+      var clB=combatLevel(); state.cmastMilestones={}; [25,50,75,99].forEach(function(m){ if(clB>=m) state.cmastMilestones[m]=true; });
+      var old=(clB-1)+[25,50,75,99].filter(function(m){ return clB>=m; }).length;
+      state.cmastGranted=old; state.cmast={m_t1:1};
+      normalizeState(); var b1=state.cmastGranted; normalizeState(); normalizeState(); var b2=state.cmastGranted;
+      state.combatXp.magic=XP_CUM[63]-1; var clC=combatLevel(); grantCombatXp('magic',5);
+      var b3=state.cmastGranted-(combatLevel()-clC); normalizeState(); var b4=state.cmastGranted-(combatLevel()-clC);
+      o.back={cl:clB, old:old, first:b1, again:b2, live:b3, after:b4, owed:cmastMagicPoints(60), lvl:cmbLvl('magic')};
+      o.flags=Object.keys(state).filter(function(k){ return /sorc|magicpoint|magpaid|cmastmag|backpay/i.test(k); });
+
+      /* the board */
+      fresh(); staff(); state.combatXp.magic=XP_CUM[64];
+      var h=buildCmastViewHTML();
+      o.board={five:h.indexOf('--cm-n:5')>=0, heads:(h.match(/class="cmast-ch"/g)||[]).length, nodes:(h.match(/data-node="/g)||[]).length,
+        crests:(h.match(/class="cmast-crest"/g)||[]).length, chip:(h.match(/Magic lvl <b>[0-9]+.[0-9]+<.b>/)||[''])[0],
+        tip:h.indexOf('data-rtip="Magic levels&#10;One point at every third Magic level, and a second at 99.&#10;Your next is Magic 66. You are Magic 64.')>=0,
+        chips:(h.match(/<span class="src"[^>]*>[^<]*<b>/g)||[]).length,
+        kept:h.indexOf('Runes Kept')>=0, magdmg:h.indexOf('Magic Dmg')>=0, ammo:h.indexOf('Ammo Saved')>=0};
+      enterCombat(); state.cmbSubTab='mastery'; _cmastSelected='s_t5_m'; renderCombat();
+      var br=document.querySelector('.cmast-gbr [data-node="gs_t3"]'), dt=(document.querySelector('.cmast-detail')||{textContent:''}).textContent;
+      o.dom={bridgeInSorc:br?!!br.closest('.cmast-gc').querySelector('[data-node="s_t3_l"]'):false,
+        detail:dt.indexOf('SORCERY')>=0 && dt.indexOf('Attunement')>=0 && dt.indexOf('POWERFUL')>=0, swatch:!!document.querySelector('.cmast-d-swatch.sorc'),
+        onPlate:[].filter.call(document.querySelectorAll('.cmast-grid .node'), function(n){ return !!n.querySelector('img.art'); }).length};
+      _cmastSelected=null; state.cmbSubTab='arena';
+      fresh(); bow(); h=buildCmastViewHTML(); o.bowStrip={ammo:h.indexOf('Ammo Saved')>=0, kept:h.indexOf('Runes Kept')>=0, magdmg:h.indexOf('Magic Dmg')>=0};
+
+      /* the plates */
+      o.plates=CMAST_NODES.map(function(n){ var a=CMAST_ART.icons[n.id]||''; return [n.id, a.indexOf('data:image/svg+xml')===0?'drawn':(a.indexOf('data:image/webp')===0?'painted':'none')]; });
+      o.plateKeys=Object.keys(SORC_PLATES).sort().join();
+      o.plateDistinct=(function(){ var s={}; Object.keys(SORC_PLATES).forEach(function(k){ s[SORC_PLATES[k]]=1; }); return Object.keys(s).length; })();
+      o.plateHue=[]; Object.keys(SORC_PLATES).forEach(function(k){ (SORC_PLATES[k].match(/#[0-9a-f]{6}/g)||[]).forEach(function(c){
+        if(!(c.slice(1,3)===c.slice(3,5)&&c.slice(3,5)===c.slice(5,7))) o.plateHue.push(k+' '+c); }); });
+      o.plateBytes=Object.keys(SORC_PLATES).reduce(function(s,k){ return s+SORC_PLATES[k].length; },0);
+      o.fallback=CMAST_NODES.filter(function(n){ return (n.tree==='sorc'||n.tree==='gs') && !CMAST_ICON_SVG[CMAST_ICONS[n.id]]; }).map(function(n){ return n.id; });
+
+      /* what each node does to a number the fight reads, and to whom */
+      var two=function(setup,id,rank,fn){ fresh(); setup(); var a=fn(); fresh(); setup(); state.cmast[id]=rank; return [a,fn()]; };
+      var dmg=function(){ return +combatBonusesAll().magicDmg.toFixed(4); }, crit=function(){ return +combatBonusesAll().critChance.toFixed(4); };
+      var cdmg=function(){ return +combatBonusesAll().critDmg.toFixed(4); };
+      o.focus=two(staff,'s_t2_l',5,playerMaxHit); o.focusPct=two(staff,'s_t2_l',5,dmg); o.focusAcc=two(staff,'s_t2_l',5,playerAccuracy);
+      o.focusSword=two(sword,'s_t2_l',5,playerMaxHit); o.focusBow=two(bow,'s_t2_l',5,playerMaxHit);
+      o.thrift=two(staff,'s_t2_r',5,runeSaveRate); o.thriftArrow=two(bow,'s_t2_r',5,function(){ return arrowSaveRate(eqQuiver()); });
+      o.fletchRune=two(staff,'k_t2_r',5,runeSaveRate);
+      o.quickWand=two(wand,'s_t3_r',1,playerSwingMs); o.quickStaff=two(staff,'s_t3_r',1,playerSwingMs); o.quickBow=two(bow,'s_t3_r',1,playerSwingMs);
+      o.heavyStaff=two(staff,'s_t4_l',5,dmg); o.heavyWand=two(wand,'s_t4_l',5,dmg); o.heavyHit=two(staff,'s_t4_l',5,playerMaxHit);
+      o.sharp=two(staff,'s_t4_r',5,crit); o.sharpBow=two(bow,'s_t4_r',5,crit);
+      o.arch=two(staff,'s_cap',1,cdmg); o.archBow=two(bow,'s_cap',1,cdmg);
+      o.pen=two(staff,'s_t3_l',1,function(){ return cmastBonuses().spellPen; });
+      o.penBow=two(bow,'s_t3_l',1,function(){ return cmastBonuses().spellPen+cmastBonuses().armourPen; });
+      o.bodkinStaff=two(staff,'k_t3_l',1,function(){ return cmastBonuses().spellPen; });
+      o.scholar=two(staff,'gs_t3',3,function(){ return [crit(), +runeSaveRate().toFixed(4)]; });
+      o.caster=two(staff,'gs_t4',1,function(){ return [dmg(), maxHpFromStats()]; });
+      o.casterSword=two(sword,'gs_t4',1,function(){ return +combatBonusesAll().atkBoost.toFixed(4); });
+      o.xp=two(staff,'s_t1',4,function(){ return +combatBonusesAll().combatXpMult.toFixed(4); });
+      o.procs=two(staff,'s_t5_l',1,function(){ return cmastBonuses().echo; }).concat(two(staff,'s_t5_r',1,function(){ return cmastBonuses().runeRefundOnMiss; }));
+
+      /* the ceiling a cast shares with an arrow */
+      fresh(); staff(); state.tree.runecrafting={}; (TREES.runecrafting||[]).forEach(function(n){ state.tree.runecrafting[n.id]=n.max; });
+      var noNodes=runeSaveRate(); state.cmast={s_t2_r:5,gs_t3:3}; o.ceiling=[noNodes, runeSaveRate(), RUNE_SAVE_CAP];
+
+      /* Attunement: a crit applies the element's effect without the roll. The dice are
+         held so the roll alone always fails. */
+      var att=function(on,crit2,el){ fresh(); staff(); state.combatElement=el; if(on) state.cmast.s_t5_m=1;
+        combat.foeStatus={}; combat.youMaxHit=100; combat.foeSwingMs=2000; combat.youHp=50; combat.youMaxHp=100;
+        var r=Math.random; Math.random=function(){ return 0.999; };
+        try{ mageOnHit({name:'Dummy'},50,Date.now(),crit2); } finally { Math.random=r; }
+        var s=combat.foeStatus; combat.foeStatus={};
+        return (s.burn?'burn':'')+(s.pin?'chill':'')||'nothing'; };
+      o.att=[att(true,true,'fire'), att(true,false,'fire'), att(false,true,'fire'), att(true,true,'frost'), att(false,true,'frost'), att(true,true,'storm'), att(true,true,'shadow')];
+
+      /* Full Board: the whole board, bought in an order the prerequisites allow */
+      fresh(); state.cmastGranted=CMAST_CAP;
+      var mv=true; while(mv){ mv=false; CMAST_NODES.forEach(function(n){ while(cmastCanAllocate(n.id)){ state.cmast[n.id]=cmastRank(n.id)+1; mv=true; } }); }
+      o.full={spent:cmastSpent(), fires:!!ACH_BY_ID.mastery_full.check()}; state.cmast.s_cap=0; o.full.oneShort=!!ACH_BY_ID.mastery_full.check();
+
+      state=defaultState(); normalizeState();
+      return JSON.stringify(o);
+    })()`));
+    ev('demoXpCap=' + _capS + ';');
+
+    ok('the board is five columns and 166 points, and every one of them can be earned',
+       S.cap === 166 && S.earn === 166 && S.cols === 'melee,mark,ranged,magic,sorc', JSON.stringify({cap: S.cap, earn: S.earn, cols: S.cols}));
+    ok('Sorcery is Marksman\'s shape node for node: the same tiers, sizes and kinds, so the two columns are worth the same',
+       S.sorc.length === 11 && S.sorc.join() === S.mark.join(), S.sorc.join(' '));
+    ok('its bridge hangs on the Warfare seam: Battle Scholar 3 and Warcaster 1, opened from both sides',
+       S.seam === 'magic,sorc' && S.gs.join(' ') === 'gs_t3:3:g_t3_r:1+s_t3_l:1 gs_t4:1:g_t4_r:3+s_t4_l:3' && S.names.join() === 'Sorcery,Warcaster', S.gs.join(' '));
+    ok('no Sorcery node uses a banned word or an em dash', S.copy.length === 0, S.copy.join(' '));
+
+    ok('Magic levels pay one point at every third level and a second at 99: 34 in all, the column and its bridge',
+       S.mp.join() === '0,0,0,1,1,2,10,32,34,34', S.mp.join());
+    ok('a character taken from Magic 1 to 99 is paid all 34 as it levels', S.live.lvl === 99 && S.live.got === S.live.want, JSON.stringify(S.live));
+    ok('one at Magic 3, none at 4 or 5, one at 6, and two at 99',
+       JSON.stringify(S.steps) === '[[3,1],[4,0],[5,0],[6,1],[99,2]]', JSON.stringify(S.steps));
+    ok('a save that had Magic 60 before the column existed is paid its 20 on load, worked out from the level',
+       S.back.owed === 20 && S.back.first === S.back.old + 20, JSON.stringify(S.back));
+    ok('once: loading again pays nothing', S.back.again === S.back.first, String(S.back.again));
+    ok('and a level earned afterwards is paid by the live grant alone, never again by the next load',
+       S.back.live === S.back.first + 1 && S.back.after === S.back.live, JSON.stringify({live: S.back.live, after: S.back.after}));
+    ok('with no flag in the save to say it happened: the level is the record', S.flags.length === 0, S.flags.join(' '));
+
+    ok('the board draws five columns, five crests and all 63 nodes',
+       S.board.five === true && S.board.heads === 5 && S.board.crests === 5 && S.board.nodes === 63, JSON.stringify(S.board));
+    ok('and lists Magic levels beside the other six sources, with how many of the 34 are in',
+       S.board.chip === 'Magic lvl <b>21/34</b>' && S.board.tip === true && S.board.chips === 7, S.board.chip + ' of ' + S.board.chips + ' chips');
+    ok('the bridge to Warfare is drawn in the Sorcery column, on its left edge', S.dom.bridgeInSorc === true);
+    ok('a Sorcery node\'s detail strip names its column', S.dom.detail === true && S.dom.swatch === true, JSON.stringify(S.dom));
+    ok('the totals say Magic damage and runes kept to a mage, and arrows saved to an archer',
+       S.board.kept === true && S.board.magdmg === true && S.board.ammo === false && S.bowStrip.ammo === true && S.bowStrip.kept === false && S.bowStrip.magdmg === false,
+       JSON.stringify([S.board.kept, S.board.magdmg, S.board.ammo, S.bowStrip]));
+    ok('the hover card reads the column\'s name from the one table, not from three spelled out by hand',
+       html.includes("const treeLbl=(_CMAST_DISC[n.tree]&&_CMAST_DISC[n.tree].name)||'Bridge';") && !html.includes("n.tree==='magic'?'Warfare':'Bridge'"));
+
+    /* Five columns in the room four had. The board is drawn in units that shrink
+       with the panel, and it must not be done with a second CSS zoom inside the
+       zoomed root, which every tooltip would then have to divide by. */
+    const gridCss = (html.match(/\.cmast-grid\{position:relative;[^}]*\}/) || [''])[0];
+    ok('the board is drawn in a unit that is the panel over the width five columns need',
+       gridCss.includes('--u:min(1px, calc((100cqw - 4px) / (92 + var(--cm-n,4) * 322)))') && html.includes('.cmast-canvas{container-type:inline-size}'), gridCss.slice(0, 200));
+    ok('with no CSS zoom on it', !/zoom\s*:/.test(gridCss) && !/\.cmast-(grid|canvas)[^{}]*\{[^}]*zoom\s*:/.test(html));
+    {
+      /* every size that makes the board wider is in board units: none left in px */
+      const a = html.indexOf('.cmast-grid{position:relative;'), b = html.indexOf('@media(prefers-reduced-motion:reduce){ .cmast-grid .node .tile{transition:none} }');
+      const blk = html.slice(a, b);
+      const wide = (blk.match(/(?:^|[;{\s])(?:width|min-width|gap|padding|grid-template-columns)\s*:[^;}]*/g) || []).filter(d => /\dpx/.test(d));
+      ok('and nothing that sets a width, a gap or a padding on it is still in px', a > 0 && b > a && wide.length === 0, wide.join(' | ').slice(0, 200));
+      ok('the four numbers the unit is worked out from are the ones the board uses: 92, 86, 26 and 6',
+         blk.includes('grid-template-columns:calc(92*var(--u)) repeat(var(--cm-n,4),1fr)') && blk.includes('width:calc(86*var(--u))')
+         && blk.includes('gap:calc(26*var(--u))') && blk.includes('padding:calc(11*var(--u)) calc(6*var(--u))') && 86 * 3 + 26 * 2 + 6 * 2 === 322);
+    }
+    ok('nothing on the board repaints from a timer', !/set(?:Interval|Timeout)\([^)]{0,80}(?:cmast|Cmast)/.test(html));
+
+    /* The plates. Thirteen are drawn and wait for a painted sheet, the way the items on
+       MAGE_PENDING do. PENDING, not rejected: take an id off as its plate is painted. */
+    const SORC_PLATES_PENDING = ['s_t1', 's_t2_l', 's_t2_r', 's_t3_l', 's_t3_r', 's_t4_l', 's_t4_r', 's_t5_l', 's_t5_m', 's_t5_r', 's_cap', 'gs_t3', 'gs_t4'];
+    {
+      const none = S.plates.filter(p => p[1] === 'none').map(p => p[0]);
+      const drawn = S.plates.filter(p => p[1] === 'drawn').map(p => p[0]);
+      const stale = SORC_PLATES_PENDING.filter(id => !drawn.includes(id));
+      const unlisted = drawn.filter(id => !SORC_PLATES_PENDING.includes(id));
+      ok('every Mastery node has a plate', none.length === 0 && S.dom.onPlate === 63, none.join(' ') || S.dom.onPlate + ' on a plate');
+      ok('the fifty painted plates are still painted, and only the Sorcery ones are drawn', unlisted.length === 0 && S.plates.length - drawn.length === 50, unlisted.join(' '));
+      ok('every Sorcery plate waiting for painted art is still a drawing',
+         stale.length === 0, stale.length ? 'painted or gone, take off SORC_PLATES_PENDING: ' + stale.join(' ') : SORC_PLATES_PENDING.length + ' pending');
+      ok('there is a drawing for each of the thirteen, and no two are the same',
+         S.plateKeys === SORC_PLATES_PENDING.slice().sort().join() && S.plateDistinct === 13, S.plateKeys);
+      ok('drawn the way the painted ones are: white and grey on nothing, no colour, so the column\'s tint is the only hue',
+         S.plateHue.length === 0, S.plateHue.join(' '));
+      ok('and small: thirteen drawings in under 12 KB', S.plateBytes < 12000, S.plateBytes + ' bytes');
+      ok('each still has a line glyph to fall back to', S.fallback.length === 0, S.fallback.join(' '));
+    }
+
+    /* What each node is worth, read through the functions the fight reads. */
+    const up = (p, by) => Math.abs((p[1] - p[0]) - by) < 1e-6, flat = p => JSON.stringify(p[0]) === JSON.stringify(p[1]);
+    ok('Deep Focus: +10% Magic damage at five ranks, which is a bigger hit and better accuracy with a staff',
+       up(S.focusPct, 0.10) && S.focus[1] > S.focus[0] && S.focusAcc[1] > S.focusAcc[0], S.focus.join(' -> ') + ', accuracy ' + S.focusAcc.join(' -> '));
+    ok('and nothing for a sword or a bow', flat(S.focusSword) && flat(S.focusBow), S.focusSword.join() + ' | ' + S.focusBow.join());
+    ok('Rune Thrift: +20% of casts keep their runes at five ranks', up(S.thrift, 0.20), S.thrift.join(' -> '));
+    ok('it saves no arrows, and Fletcher\'s Thrift saves no runes: the two pools never mix', flat(S.thriftArrow) && flat(S.fletchRune), S.thriftArrow.join() + ' | ' + S.fletchRune.join());
+    ok('Quick Hands: a wand attacks 5% faster, a staff and a bow do not',
+       S.quickWand[1] < S.quickWand[0] && Math.abs(S.quickWand[1] / S.quickWand[0] - 0.95) < 0.002 && flat(S.quickStaff) && flat(S.quickBow), S.quickWand.join(' -> ') + ' ms');
+    ok('Heavy Casting: +10% Magic damage with a staff at five ranks, +5% with a wand', up(S.heavyStaff, 0.10) && up(S.heavyWand, 0.05) && S.heavyHit[1] > S.heavyHit[0],
+       S.heavyStaff.join(' -> ') + ' | ' + S.heavyWand.join(' -> '));
+    ok('Sharp Mind: +10% crit chance at five ranks, with a staff or a wand only', up(S.sharp, 0.10) && flat(S.sharpBow), S.sharp.join(' -> '));
+    ok('Archmage: +25% crit damage with spells, and not with a bow', up(S.arch, 0.25) && flat(S.archBow), S.arch.join(' -> '));
+    ok('Spellbreak: 10% of the target\'s Defence, for a cast only, and Bodkin Points gives a cast nothing',
+       up(S.pen, 0.10) && flat(S.penBow) && flat(S.bodkinStaff), S.pen.join(' -> '));
+    ok('Battle Scholar: +3% crit chance and +3% of casts keep their runes at three ranks', up([S.scholar[0][0], S.scholar[1][0]], 0.03) && up([S.scholar[0][1], S.scholar[1][1]], 0.03), JSON.stringify(S.scholar));
+    ok('Warcaster: +6% damage with the weapon in your hand, a staff or a sword, and +4 max HP',
+       up([S.caster[0][0], S.caster[1][0]], 0.06) && S.caster[1][1] - S.caster[0][1] === 4 && up(S.casterSword, 0.06), JSON.stringify(S.caster));
+    ok('Steady Mind: +16% combat XP at four ranks', up(S.xp, 0.16), S.xp.join(' -> '));
+    ok('Echo and Rune Keeper reach the fight as their own channels', S.procs.join() === '0,0.08,0,1', S.procs.join());
+    ok('with every source at once, a cast keeps its runes 85% of the time and no more',
+       S.ceiling[1] === S.ceiling[2] && S.ceiling[2] === 0.85 && S.ceiling[0] <= 0.85, S.ceiling.join(' -> '));
+    ok('Attunement: a crit burns with Fire and chills with Frost without the roll, and only a crit, and only with the node',
+       S.att.join() === 'burn,nothing,nothing,chill,nothing,nothing,nothing', S.att.join());
+    [
+      ['Spellbreak is read where the hit chance is worked out', "(_mg&&_cmPen&&_cmPen.spellPen>0) ? (1-_cmPen.spellPen)"],
+      ['Echo rolls the second hit of a cast that landed', "if(_cmE && _cmE.echo>0 && Math.random()<_cmE.echo) _cleaveDmg=youDmg;"],
+      ['and only of one that landed: a crit on a miss is not a cast that landed', "const _mgLanded=_mg&&youDmg>0;"],
+      ['Rune Keeper hands back every rune a missed cast spent', "if(_qm && _qm.runeRefundOnMiss && _mg) state.items[_spentAmmo]=(state.items[_spentAmmo]||0)+_spentN;"],
+      ['Attunement reaches the element with the crit', "if(_mg) mageOnHit(mon,youDmg,now,didCrit&&_mgLanded);"],
+      ['Rune Thrift joins the rune pool', "if(_cmR && _cmR.runeSave>0) r += _cmR.runeSave;"],
+      ['Magic levels are paid where combat XP is granted', "if(_mp>0) grantCmastPoints(_mp,'Magic Lv '+afterStat);"],
+      ['and counted where a save is reconciled', "+cmastMagicPoints(cmbLvl('magic'));"],
+    ].forEach(([label, frag]) => ok(label, html.includes(frag), 'call site missing'));
+
+    ok('the whole board can be bought in an order its prerequisites allow, and that is Full Board',
+       S.full.spent === 166 && S.full.fires === true && S.full.oneShort === false, JSON.stringify(S.full));
   }
 
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));
