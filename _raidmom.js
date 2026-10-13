@@ -564,6 +564,179 @@ setTimeout(()=>{
     ev('delete window.__slp');
   }
 
+  section('Six achievements for Magic, each earned the way a player earns it (slice 9)');
+  {
+    /* Here and not in _audit_tests.js because three of the six need the full game:
+       a raid, the Spire, and Shadow at Magic 50. Nothing below sets a field an
+       achievement reads. Levels are raised through grantCombatXp() and
+       addSkillXp(), robes go on through equipBodyItem(), and every kill is a cast
+       through combatTick() with the dice held so that it lands. The raid is cleared
+       stage by stage and the Spire floor by floor, by the monster in front of you
+       dying to that cast. */
+    const A=JSON.parse(ev(`(function(){
+      try{ if(combat.raid||combat.active) fleeCombat(); }catch(e){}
+      var R=Math.random, o={}, sent=[], keepSteam=window.steamAchievement, keepShow=window.showOfflineSummary;
+      window.steamAchievement=function(id){ sent.push(id); };
+      var fresh=function(weapon, quiver){
+        try{ if(combat.raid||combat.active) fleeCombat(); }catch(e){}
+        state=defaultState(); normalizeState(); mmAtMenu=false; mmSlot=1;
+        Object.keys(COMBAT_STATS).forEach(function(k){ state.combatXp[k]=XP_CUM[99]; });
+        state.combatXp.magic=XP_CUM[98];             // one short, so Magic 99 is only ever earned where it is meant to be
+        state.items={cooked_trout:500};
+        state.combatEquipped={};
+        if(weapon){ state.items[weapon]=1; state.combatEquipped.weapon=weapon; }
+        if(quiver){ state.items[quiver]=50000; state.combatEquipped.quiver=quiver; }
+        state.combatElement='fire'; state.combatSpell='bolt'; state.raidAuto=false;
+        state.achBackfilled=1;                       // a save that has been played: what it earns now is announced
+        if(state.hints) state.hints.combat_unarmed=1;
+        refreshCombatStats(); sent.length=0;
+      };
+      var has=function(id){ checkAchievements(); return !!state.achievements[id]; };
+      var SIXIDS=['magic_99','rune_99','four_elements','full_robes','staff_raid','staff_spire'];
+      /* which of the six have gone to Steam since the character was made */
+      var sentSix=function(){ return sent.filter(function(id){ return SIXIDS.indexOf(id)>=0; }).sort().join(','); };
+      var cast=function(){ Math.random=function(){ return 0.01; }; combat.youSwingStart=Date.now()-combat.youSwingMs-1; combat.foeSwingStart=Date.now()+1e9;
+        try{ combatTick(); } finally { Math.random=R; } };
+      /* one kill of one monster in a zone, with the element named */
+      var kill=function(zone, el){
+        try{ if(combat.active) fleeCombat(); }catch(e){}
+        var monId=monstersInZone(zone).filter(function(m){ return !m.boss; })[0].id;
+        enterCombat(); selectZone(zone); selectMonster(monId);
+        if(el) pickSpell('el', el);
+        engageCombat(); stopCombatTimer();
+        var k0=state.monKills[monId]||0, n=0;
+        while((state.monKills[monId]||0)===k0 && combat.active && n<20){ combat.foeHp=1; cast(); n++; }
+        var got=(state.monKills[monId]||0)-k0;
+        try{ if(combat.active) fleeCombat(); }catch(e){}
+        return got;
+      };
+      var els=function(zone){ return Object.keys((state.elKills||{})[zone]||{}).sort().join(','); };
+
+      /* 1 and 2. the two levels */
+      fresh();
+      o.fresh=ACHIEVEMENTS.filter(function(a){ return a.cat==='magic'; }).map(function(a){ return a.id; }).filter(function(id){ return has(id); });
+      o.magic98=has('magic_99');
+      grantCombatXp('magic', (XP_CUM[99]-XP_CUM[98])*4);
+      o.magic99={lvl:cmbLvl('magic'), ach:has('magic_99')};
+      state.xp.runecrafting=XP_CUM[98]; o.rune98=has('rune_99');
+      addSkillXp('runecrafting', (XP_CUM[99]-XP_CUM[98])*4);
+      o.rune99={lvl:levelFromXp(state.xp.runecrafting), ach:has('rune_99')};
+      o.sentLevels=sentSix();
+      /* and a save that was already there before the achievements existed */
+      fresh(); state.combatXp.magic=XP_CUM[99]; state.xp.runecrafting=XP_CUM[99]; normalizeState();
+      o.old={before:!!state.achievements.magic_99, magic:has('magic_99'), rune:has('rune_99')};
+
+      /* 3. robes, put on through the real equip */
+      fresh();
+      var cloth=CLOTH_TIERS[0].key, pieces=[['hood','helmet'],['robe','chest'],['leggings','legs'],['wraps','gloves'],['slippers','boots']];
+      pieces.slice(0,4).forEach(function(p){ state.items[cloth+'_'+p[0]]=1; equipBodyItem(cloth+'_'+p[0], p[1], 'combat'); });
+      o.robes4={worn:Object.keys(state.combatEquipped).length, ach:has('full_robes')};
+      state.items.bronze_boots=1; equipBodyItem('bronze_boots','boots','combat');
+      o.robesPlate={boots:state.combatEquipped.boots, ach:has('full_robes')};
+      state.items[cloth+'_slippers']=1; equipBodyItem(cloth+'_slippers','boots','combat');
+      o.robes5={boots:state.combatEquipped.boots, ach:has('full_robes'), sent:sentSix()};
+      /* a save found already wearing them: the next check gives it */
+      fresh(); pieces.forEach(function(p){ var id=CLOTH_TIERS[2].key+'_'+p[0]; state.items[id]=1; state.combatEquipped[p[1]]=id; }); normalizeState();
+      o.robesOld={before:!!state.achievements.full_robes, ach:has('full_robes')};
+
+      /* 4. each element in one zone */
+      fresh('ancient_staff','starfall_rune');
+      var za=ZONES[0].id, zb=ZONES[1].id;
+      o.el={kills:[kill(za,'fire'), kill(za,'frost'), kill(za,'storm')]};
+      o.el.three={els:els(za), ach:has('four_elements')};
+      o.el.kills.push(kill(zb,'shadow'));
+      o.el.split={a:els(za), b:els(zb), ach:has('four_elements')};
+      o.el.kills.push(kill(za,'shadow'));
+      o.el.four={els:els(za), ach:has('four_elements'), sent:sentSix()};
+      /* a sword's kill is no element's */
+      fresh('starsteel_sword'); o.el.swordKill=kill(za); o.el.sword=Object.keys(state.elKills).length;
+      /* and a fight left running counts the element it was left casting */
+      fresh('ancient_staff','starfall_rune'); state.combatElement='storm';
+      var mon=monstersInZone(za).filter(function(m){ return !m.boss; })[0].id;
+      state.combatSession={monId:mon, style:'attack', youHp:combat.youMaxHp, rare:false, at:Date.now()-2*3600000}; state.lastSeen=Date.now()-2*3600000;
+      window.showOfflineSummary=function(){};
+      var k0=state.monKills[mon]||0; grantOffline();
+      o.el.away={kills:(state.monKills[mon]||0)-k0, els:els(za)};
+
+      /* 5. a raid, cleared */
+      var clear=function(raidId){
+        enterCombat(); startRaid(raidId); stopCombatTimer();
+        var n=0, stages=0, st=combat.raid?combat.raid.stage:-1;
+        while(combat.raid && n<300){ combat.foeHp=1; combat.youHp=combat.youMaxHp; cast(); n++; if(combat.raid && combat.raid.stage!==st){ st=combat.raid.stage; stages++; } }
+        return {started:st>=0, cleared:!combat.raid, casts:n, stages:stages};
+      };
+      var RAID=RAIDS.filter(function(r){ return !r.endless; })[0].id;
+      fresh('ancient_staff','starfall_rune');
+      enterCombat(); startRaid(RAID); stopCombatTimer(); combat.foeHp=1; cast(); fleeCombat();
+      o.raidFled={rec:Object.keys(state.mageRaids).length, clears:state.raidClears[RAID]||0, ach:has('staff_raid')};
+      var c1=clear(RAID);
+      o.raidStaff={run:c1, rec:state.mageRaids[RAID]||0, clears:state.raidClears[RAID]||0, ach:has('staff_raid'), sent:sentSix()};
+      fresh('ancient_wand','starfall_rune'); var c2=clear(RAID);
+      o.raidWand={run:c2, rec:state.mageRaids[RAID]||0, ach:has('staff_raid')};
+      fresh('starsteel_sword'); var c3=clear(RAID);
+      o.raidSword={run:c3, rec:Object.keys(state.mageRaids).length, clears:state.raidClears[RAID]||0, ach:has('staff_raid')};
+      /* a sword for every stage but the last, and a staff picked up for that one */
+      fresh('starsteel_sword'); state.items.ancient_staff=1; state.items.starfall_rune=50000;
+      enterCombat(); startRaid(RAID); stopCombatTimer();
+      var lastStage=getRaid(RAID).stages.length-1, n2=0;
+      while(combat.raid && combat.raid.stage<lastStage && n2<300){ combat.foeHp=1; combat.youHp=combat.youMaxHp; cast(); n2++; }
+      var atLast=!!combat.raid && combat.raid.stage===lastStage;
+      state.combatEquipped={weapon:'ancient_staff', quiver:'starfall_rune'}; refreshCombatStats();
+      while(combat.raid && n2<600){ combat.foeHp=1; combat.youHp=combat.youMaxHp; cast(); n2++; }
+      o.raidSwap={atLast:atLast, staffAtEnd:usingMagic(), cleared:!combat.raid, rec:Object.keys(state.mageRaids).length, clears:state.raidClears[RAID]||0, ach:has('staff_raid')};
+
+      /* 6. the Spire */
+      var climb=function(from, floors){ enterCombat(); startRaid(SPR_ID); stopCombatTimer(); combat.raid.floor=from;
+        for(var i=0;i<floors && combat.raid;i++){ combat.foeHp=1; combat.youHp=combat.youMaxHp; cast(); } };
+      fresh('ancient_staff','starfall_rune'); climb(29,1);
+      o.spire29={best:state.spireBest, mage:state.spireBestMage, ach:has('staff_spire')};
+      combat.foeHp=1; combat.youHp=combat.youMaxHp; cast();
+      o.spire30={best:state.spireBest, mage:state.spireBestMage, ach:has('staff_spire'), sent:sentSix()};
+      fresh('starsteel_sword'); climb(30,1);
+      o.spireSword={best:state.spireBest, mage:state.spireBestMage, ach:has('staff_spire')};
+      /* a deeper climb with a sword leaves the mage's own best where it was */
+      fresh('ancient_staff','starfall_rune'); climb(30,1); fleeCombat();
+      state.items.starsteel_sword=1; state.combatEquipped={weapon:'starsteel_sword'}; refreshCombatStats(); climb(40,1);
+      o.spireBoth={best:state.spireBest, mage:state.spireBestMage};
+
+      /* Steam: an unlock is sent the moment it is earned, and replayed on every load */
+      fresh(); ['magic_99','rune_99','four_elements','full_robes','staff_raid','staff_spire'].forEach(function(id){ state.achievements[id]=Date.now(); });
+      sent.length=0; cvSteamAchSync(); o.replay=sentSix();
+
+      try{ if(combat.raid||combat.active) fleeCombat(); }catch(e){}
+      window.steamAchievement=keepSteam; window.showOfflineSummary=keepShow;
+      state=defaultState(); normalizeState(); refreshCombatStats();
+      return JSON.stringify(o);
+    })()`));
+    const SIX='four_elements,full_robes,magic_99,rune_99,staff_raid,staff_spire';
+    ok('none of the six is earned by a level 99 fighter who has done none of it', A.fresh.length===0, A.fresh.join(' '));
+    ok('Magic 99 through grantCombatXp(): not at 98, earned at 99', A.magic98===false && A.magic99.lvl===99 && A.magic99.ach===true, 'level '+A.magic99.lvl);
+    ok('Runecrafting 99 through addSkillXp(): not at 98, earned at 99', A.rune98===false && A.rune99.lvl===99 && A.rune99.ach===true, 'level '+A.rune99.lvl);
+    ok('and each is sent to Steam under its own id as it is earned', A.sentLevels==='magic_99,rune_99', A.sentLevels);
+    ok('a save that was already level 99 in both gets both on its first check after loading', A.old.before===false && A.old.magic===true && A.old.rune===true);
+    ok('four robes are not a full set, and neither are four robes and plate boots', A.robes4.worn===4 && A.robes4.ach===false && A.robesPlate.boots==='bronze_boots' && A.robesPlate.ach===false, JSON.stringify(A.robes4));
+    ok('the fifth robe, put on through equipBodyItem(), is', /_slippers$/.test(A.robes5.boots) && A.robes5.ach===true && A.robes5.sent==='full_robes', A.robes5.boots);
+    ok('and a save found wearing five robes gets it on its first check', A.robesOld.before===false && A.robesOld.ach===true);
+    ok('every kill landed through combatTick()', A.el.kills.join()==='1,1,1,1,1' && A.el.swordKill===1, A.el.kills.join(' '));
+    ok('Fire, Frost and Storm in one zone are three of four', A.el.three.els==='fire,frost,storm' && A.el.three.ach===false, A.el.three.els);
+    ok('Shadow in another zone does not finish it', A.el.split.b==='shadow' && A.el.split.a==='fire,frost,storm' && A.el.split.ach===false, A.el.split.a+' | '+A.el.split.b);
+    ok('Shadow in the same zone does', A.el.four.els==='fire,frost,shadow,storm' && A.el.four.ach===true && A.el.four.sent==='four_elements', A.el.four.els);
+    ok('a sword\'s kill is no element\'s', A.el.sword===0);
+    ok('a fight left running counts the element it was left casting', A.el.away.kills>0 && A.el.away.els==='storm', A.el.away.kills+' kills, '+A.el.away.els);
+    ok('a raid fled with a staff is not a raid cleared', A.raidFled.rec===0 && A.raidFled.clears===0 && A.raidFled.ach===false);
+    ok('a raid cleared with a staff, every stage killed by a cast, is', A.raidStaff.run.started && A.raidStaff.run.cleared && A.raidStaff.run.stages>=3 && A.raidStaff.rec===1 && A.raidStaff.clears===1 && A.raidStaff.ach===true && A.raidStaff.sent==='staff_raid',
+       A.raidStaff.run.stages+' stages after the first, '+A.raidStaff.run.casts+' casts');
+    ok('a wand counts as a staff does', A.raidWand.run.cleared && A.raidWand.rec===1 && A.raidWand.ach===true);
+    ok('a sword clears the raid and earns the clear, not the achievement', A.raidSword.run.cleared && A.raidSword.clears===1 && A.raidSword.rec===0 && A.raidSword.ach===false);
+    ok('and a staff picked up for the last stage of a raid a sword fought is not a mage\'s clear',
+       A.raidSwap.atLast && A.raidSwap.staffAtEnd && A.raidSwap.cleared && A.raidSwap.clears===1 && A.raidSwap.rec===0 && A.raidSwap.ach===false, JSON.stringify(A.raidSwap));
+    ok('Spire floor 29 cleared with a staff is one short', A.spire29.best===29 && A.spire29.mage===29 && A.spire29.ach===false, 'deepest '+A.spire29.best);
+    ok('floor 30 is it', A.spire30.best===30 && A.spire30.mage===30 && A.spire30.ach===true && A.spire30.sent==='staff_spire', 'deepest '+A.spire30.best);
+    ok('floor 30 with a sword is the deepest floor and not a mage\'s', A.spireSword.best===30 && A.spireSword.mage===0 && A.spireSword.ach===false);
+    ok('a deeper climb with a sword leaves what the staff reached where it was', A.spireBoth.best===40 && A.spireBoth.mage===30, 'deepest '+A.spireBoth.best+', with a staff '+A.spireBoth.mage);
+    ok('all six are replayed to Steam on a load, by the ids the schema rows carry', A.replay===SIX, A.replay);
+  }
+
   console.log('\n'+(fail? fail+' FAILED, '+pass+' passed'
                         : 'PASS — all '+pass+' raid-momentum checks'));
   process.exit(fail?1:0);

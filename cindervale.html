@@ -22474,6 +22474,20 @@ function normalizeState(){
      climbs it took. The run itself is runtime state like every other raid. */
   if(typeof state.spireBest!=='number'||!isFinite(state.spireBest)||state.spireBest<0) state.spireBest=0;
   if(typeof state.spireRuns!=='number'||!isFinite(state.spireRuns)||state.spireRuns<0) state.spireRuns=0;
+  /* What a staff or a wand has done (Magic slice 9). Three achievements ask for
+     things no save recorded: a kill with each element in one zone, a raid cleared
+     with a staff, and how deep in the Spire a staff has been. A save from before
+     them has none of it and starts from nothing: there is no way to tell, after
+     the fact, which weapon a kill was made with.
+       elKills        zone id -> { fire:1, frost:1, ... }, the elements that have killed there
+       mageRaids      raid id -> clears with a staff or a wand in hand
+       spireBestMage  the deepest Spire floor cleared with one */
+  if(!state.elKills||typeof state.elKills!=='object'||Array.isArray(state.elKills)) state.elKills={};
+  for(const k in state.elKills){ const v=state.elKills[k]; if(!v||typeof v!=='object'||Array.isArray(v)) delete state.elKills[k]; }
+  if(!state.mageRaids||typeof state.mageRaids!=='object'||Array.isArray(state.mageRaids)) state.mageRaids={};
+  for(const k in state.mageRaids){ if(typeof state.mageRaids[k]!=='number'||!isFinite(state.mageRaids[k])||state.mageRaids[k]<0) state.mageRaids[k]=0; }
+  if(typeof state.spireBestMage!=='number'||!isFinite(state.spireBestMage)||state.spireBestMage<0) state.spireBestMage=0;
+  if(state.spireBestMage>state.spireBest) state.spireBestMage=state.spireBest;   // never deeper than the deepest floor of all
   /* Ascension ranks, keyed by item id. Anything that is not a real, ascendable
      piece of combat gear is dropped rather than carried, so a hand-edited save
      cannot put a rank on a log or push one past the cap. */
@@ -24697,6 +24711,16 @@ function elementMult(mon,el){
 function spellAffinity(el){
   const w=ITEMS[eqCombatWeapon()]; el=el||spellElement();
   return (w&&w.magic&&w.aff&&w.aff.el===el) ? 1+w.aff.dmg : 1;
+}
+/* A monster in a zone has died to a spell (Magic slice 9): note which element, for
+   the achievement that asks for all four in one zone. Called where a kill is
+   counted, for a kill in a zone and for the kills a fight left running earned. A
+   raid's monsters and the Spire's belong to no zone and are never noted. */
+function noteElementKill(mon){
+  if(!mon||!mon.zone||!usingMagic()) return;
+  if(!state.elKills||typeof state.elKills!=='object') state.elKills={};
+  const z=state.elKills[mon.zone]||(state.elKills[mon.zone]={});
+  z[spellElement()]=1;
 }
 /* What the element does when a cast lands. Every branch writes to a status the
    fight already runs, so there is nothing new to tick and nothing new to clear.
@@ -28045,6 +28069,7 @@ function offlineCombatResolve(awayMs, om){
     if(!state.monDrops[base.id]) state.monDrops[base.id]={};
     for(const _d in items) state.monDrops[base.id][_d]=(state.monDrops[base.id][_d]||0)+items[_d];
   }
+  if(kills>0) noteElementKill(base);   // the element the fight was left casting
   if(kills>0&&typeof gdOnKill==='function') gdOnKill(base.id,kills);
 
   /* Out of food means the fight is over - do not silently resume it on a body
@@ -38522,6 +38547,13 @@ function grantRaidRewards(raid, timeMs){
   if(!state.raidClears[raid.id] && typeof grantCmastPoints==='function')
     grantCmastPoints(1,`First clear: ${raid.name}`);
   state.raidClears[raid.id]=(state.raidClears[raid.id]||0)+1;
+  /* And a clear with a staff or a wand is counted on its own (Magic slice 9): one in
+     hand for the last kill, and for every stage before it (handleRaidKill marks a
+     run in which anything else made a kill). */
+  if(usingMagic() && !(combat.raid && combat.raid.notMage)){
+    if(!state.mageRaids||typeof state.mageRaids!=='object') state.mageRaids={};
+    state.mageRaids[raid.id]=(state.mageRaids[raid.id]||0)+1;
+  }
   if(!state.raidBest) state.raidBest={};
   const prev=state.raidBest[raid.id];
   const bestRating = !prev ? rt.key : (ratingIndex(rt.key)<ratingIndex(prev.rating)?rt.key:prev.rating);
@@ -38621,6 +38653,9 @@ function handleSpireFloorClear(baseMon){
       for(const f of CMAST_SPIRE_FLOORS)
         if(wasBest<f && floor>=f) grantCmastPoints(1,`Spire floor ${f}`);
   }
+  /* The deepest floor cleared with a staff or a wand, kept apart from the deepest of
+     all (Magic slice 9). No message of its own: the line above says the floor. */
+  if(usingMagic() && floor>(state.spireBestMage||0)) state.spireBestMage=floor;
   momAdd(MOM_PER_STAGE);
   combat.raid.floor=floor+1;
   combat.raid.stage=floor;              // keeps the shared stage machinery honest
@@ -39220,6 +39255,9 @@ function handleRaidKill(baseMon){
   const raid=getRaid(combat.raid.id);
   // The Spire pays per floor and never "wins", so it takes its own path entirely.
   if(raid.endless){ handleSpireFloorClear(baseMon); return; }
+  /* A stage that fell to anything but a staff or a wand: this run is not a mage's
+     clear, whatever is in hand at the end (Magic slice 9). */
+  if(!usingMagic()) combat.raid.notMage=true;
   const style=combatXpStat();
   grantCombatXp(style, Math.round((baseMon.xp||0)*0.75));
   grantCombatXp('hitpoints', Math.round((baseMon.xp||0)*0.25));
@@ -42733,6 +42771,20 @@ function _achRaidClears(){ return Object.keys(state.raidClears||{}).length; }
 function _achRaidS(){ const b=state.raidBest||{};
   for(const k in b) if(b[k]&&b[k].rating==='S') return true; return false; }
 function _achTrophies(){ return Object.keys(state.trophies||{}).length; }
+/* Magic (slice 9). The two levels and what is worn are read off the save, so a
+   character who already qualifies gets those three on the first check. The other
+   three read records that begin with this build (see normalizeState): the elements
+   that have killed in a zone, the raids cleared with a staff or a wand, and the
+   deepest Spire floor cleared with one.
+   Cloth is what the armour rule calls cloth: robes, Dawnveil, and the Stonewright
+   Gauntlets, so the best a mage can wear counts. */
+const ACH_ARMOUR_SLOTS=['helmet','chest','legs','gloves','boots'];
+function _achClothWorn(){ const ce=state.combatEquipped||{}; let n=0;
+  for(const s of ACH_ARMOUR_SLOTS){ const it=ce[s]&&ITEMS[ce[s]]; if(it&&it.cloth) n++; } return n; }
+function _achElementsInOneZone(){ const ek=state.elKills||{}; let best=0;
+  for(const z in ek){ let n=0; for(const e of MAGIC_ELEMENTS) if(ek[z]&&ek[z][e.k]) n++; if(n>best) best=n; } return best; }
+function _achMageRaids(){ const mr=state.mageRaids||{}; let n=0;
+  for(const k in mr) if(mr[k]>0) n++; return n; }
 /* How many Combat Mastery points a finished character can ever be GRANTED, which is
    not the size of the board. grantCmastPoints has four sources: one per combat level
    above the starting 1, the four milestones at 25/50/75/99, one per boss first-kill,
@@ -42756,6 +42808,7 @@ const ACH_CATS=[
   ['skilling',  'Skilling'],
   ['combat',    'Combat'],
   ['ranged',    'Ranged'],
+  ['magic',     'Magic'],
   ['sailing',   'Sailing'],
   ['guild',     'Guilds'],
   ['collection','Collection'],
@@ -42857,6 +42910,18 @@ const ACHIEVEMENTS=[
   {id:'crossbow_kill',cat:'ranged',   icon:'crossbow_kill',name:'Crank and Loose',desc:'Obtain a crossbow.',                   check:()=>_achCrossbowOwned()},
   {id:'fletch_99',    cat:'ranged',   icon:'fletch_99',    name:'Straight and True',desc:'Reach level 99 in Fletching.',       check:()=>_achLvl('fletching')>=99},
 
+  /* ── Magic and Runecrafting (slice 9) ── a category of their own, the way Ranged
+     has one. Ids are permanent: each is a Steam API Name. Wherever one says a
+     staff, a wand counts, and the words say so. Floor 30 is where the Spire test
+     puts a finished mage's wall with no Ascension, so that one wants a climb with
+     some of it. */
+  {id:'magic_99',     cat:'magic',    icon:'magic_99',     name:'The Old Art',   desc:'Reach level 99 in Magic.',              check:()=>cmbLvl('magic')>=99},
+  {id:'rune_99',      cat:'magic',    icon:'rune_99',      name:'Cut in Stone',  desc:'Reach level 99 in Runecrafting.',       check:()=>_achLvl('runecrafting')>=99},
+  {id:'four_elements',cat:'magic',    icon:'four_elements',name:'All Four',      desc:'Kill a monster with each of the four elements in one zone.', check:()=>_achElementsInOneZone()>=MAGIC_ELEMENTS.length},
+  {id:'full_robes',   cat:'magic',    icon:'full_robes',   name:'Robed',         desc:'Wear cloth in all five armour slots.',  check:()=>_achClothWorn()>=ACH_ARMOUR_SLOTS.length},
+  {id:'staff_raid',   cat:'magic',    icon:'staff_raid',   name:'Not a Blade Drawn', desc:'Clear a raid with a staff or a wand.', check:()=>_achMageRaids()>=1},
+  {id:'staff_spire',  cat:'magic',    icon:'staff_spire',  name:'Thirty Floors Up', desc:'Clear Spire floor 30 with a staff or a wand.', check:()=>(state.spireBestMage||0)>=30},
+
   // ── Sailing ──
   {id:'first_voyage', cat:'sailing',  icon:'first_voyage', name:'Cast Off',      desc:'Complete your first voyage.',           check:()=>((state.sail&&state.sail.voyages)||0)>=1},
   {id:'ten_isles',    cat:'sailing',  icon:'ten_isles',    name:'Chartmaker',    desc:'Find ten islands.',                     check:()=>_achIsles()>=10},
@@ -42954,6 +43019,95 @@ const ACH_BY_ID={}; ACHIEVEMENTS.forEach(a=>{ ACH_BY_ID[a.id]=a; });
   ICONS["zone_three"]="<img class=\"ev-icon art-ach\" alt=\"\" loading=\"lazy\" src=\"data:image/webp;base64,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\">";
 })();
 /* ==== /ACH_ART ==== */
+
+/* ════ [JS-ACH-MAGE] the six Magic achievements, drawn (slice 9) ════════════════
+   Every other achievement wears a painted emblem out of the block above. These
+   six are generated art, drawn until their sheet is painted (sheet V in
+   _iconart/PROMPTS-magic.md), and each id is named on ACH_PENDING in
+   _audit_tests.js until then.
+
+   It FILLS, it does not assign: an id the block above already holds is left
+   alone, so the day a painted emblem is injected under one of these names the
+   drawing stops being used with no edit here.
+
+   Gradient ids are safe to repeat between icons for the reason [JS-ICONS-MAGE]
+   gives: iconHTML() stamps each rendered copy with its own suffix. */
+(function(){
+  const O='#130d08';
+  const defs=function(id,l,m,d,glow){ return '<defs>'
+    +'<linearGradient id="'+id+'s" x1="0.15" y1="0" x2="0.85" y2="1"><stop offset="0" stop-color="'+l+'"/><stop offset="0.5" stop-color="'+m+'"/><stop offset="1" stop-color="'+d+'"/></linearGradient>'
+    +(glow?'<radialGradient id="'+id+'g" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="'+glow+'" stop-opacity="0.6"/><stop offset="1" stop-color="'+glow+'" stop-opacity="0"/></radialGradient>':'')
+    +'</defs>'; };
+  const svg=function(body){ return '<svg class="ev-icon" viewBox="0 0 64 64">'+body+'</svg>'; };
+  /* a four-point star of light */
+  const star=function(x,y,r,op){ const a=r*0.28; return '<path d="M'+x+' '+(y-r)+' L'+(x+a)+' '+(y-a)+' L'+(x+r)+' '+y+' L'+(x+a)+' '+(y+a)+' L'+x+' '+(y+r)+' L'+(x-a)+' '+(y+a)+' L'+(x-r)+' '+y+' L'+(x-a)+' '+(y-a)+' Z" fill="#fff" opacity="'+op+'"/>'; };
+  /* one of the four stones on the ring, in its element's own colour */
+  const stone=function(x,y,k,mark){ return '<circle cx="'+x+'" cy="'+y+'" r="9.4" fill="'+ELEMENT_BY[k].col+'" stroke="'+O+'" stroke-width="1.6"/>'
+    +'<path d="M'+(x-5.5)+' '+(y-3.5)+' Q'+(x-3)+' '+(y-7.5)+' '+(x+2)+' '+(y-7.2)+'" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" opacity="0.55"/>'+mark; };
+  const RUNE='M27 19 V47 M27 21 L39 29.5 L27 38 L39 47';
+  const CLAW='M24 40 Q15 30 20 16 Q24 24 29 31 M33 43 Q47 46 54 36 Q45 36 37 33';
+  const STAIR='M22.2 44 L42.6 38 M23.6 33 L40.6 28 M25 22.5 L39 18.5';
+  const DRAWN={
+    /* Magic 99: an orb held in the fork of a staff */
+    magic_99: svg(defs('am','#f0e6ff','#a47ae8','#3f1c7a','#b9a4f0')+defs('aw','#b08a56','#6e4f28','#2c1c0c')
+      +'<circle cx="34" cy="24" r="23" fill="url(#amg)"/>'
+      +'<path d="M9 58 L27 36 L31.5 39.5 L14 61 Z" fill="url(#aws)" stroke="'+O+'" stroke-width="1.5" stroke-linejoin="round"/>'
+      +'<path d="'+CLAW+'" fill="none" stroke="'+O+'" stroke-width="6.4" stroke-linecap="round"/>'
+      +'<path d="'+CLAW+'" fill="none" stroke="#c9a15e" stroke-width="3.4" stroke-linecap="round"/>'
+      +'<circle cx="35" cy="24" r="12.5" fill="url(#ams)" stroke="'+O+'" stroke-width="1.6"/>'
+      +'<path d="M27.5 20 Q30 14 36.5 13.5" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" opacity="0.8"/>'
+      +star(35,25,6.5,0.9)+star(52,12,3.2,0.75)+star(13,12,2.6,0.6)),
+    /* Runecrafting 99: a standing stone with the rune cut right through it */
+    rune_99: svg(defs('ar','#8d867a','#57514a','#221f1b','#ff8a3a')
+      +'<ellipse cx="32" cy="58" rx="19" ry="2.6" fill="#000" opacity="0.32"/>'
+      +'<circle cx="32" cy="31" r="25" fill="url(#arg)"/>'
+      +'<path d="M17 56 L14 22 Q15 9 32 7 Q49 9 50 22 L47 56 Z" fill="url(#ars)" stroke="'+O+'" stroke-width="1.7" stroke-linejoin="round"/>'
+      +'<path d="M19 21 Q21 13 30 11" fill="none" stroke="#c9c1b2" stroke-width="1.6" stroke-linecap="round" opacity="0.6"/>'
+      +'<path d="'+RUNE+'" fill="none" stroke="#5a1c04" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>'
+      +'<path d="'+RUNE+'" fill="none" stroke="#ff9a3c" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>'
+      +'<path d="'+RUNE+'" fill="none" stroke="#fff0c0" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/>'
+      +'<path d="M40 52 L46 55 M22 53 L18 55.5" stroke="'+O+'" stroke-width="1.2" stroke-linecap="round" opacity="0.6"/>'),
+    /* each element in one zone: four stones on a ring, one of each */
+    four_elements: svg('<circle cx="32" cy="32" r="19.5" fill="none" stroke="'+O+'" stroke-width="6.2"/><circle cx="32" cy="32" r="19.5" fill="none" stroke="#c9a15e" stroke-width="3.2"/>'
+      +stone(32,12.5,'fire','<path d="M32 18 Q27 14.5 30.5 9.5 Q31 12.5 33 11 Q36.5 14.5 32 18 Z" fill="#fff3c8"/>')
+      +stone(51.5,32,'frost','<path d="M51.5 26.5 V37.5 M46.7 29.2 L56.3 34.8 M56.3 29.2 L46.7 34.8" stroke="#f4fcff" stroke-width="1.7" stroke-linecap="round"/>')
+      +stone(32,51.5,'shadow','<path d="M35.5 47 A5.6 5.6 0 1 0 35.5 56 A4.4 4.4 0 1 1 35.5 47 Z" fill="#f0dcff"/>')
+      +stone(12.5,32,'storm','<path d="M14.5 26 L9.5 32.5 H13 L10.5 38 L16 31 H12.6 Z" fill="#fffbe0" stroke="#4a3a86" stroke-width="0.6" stroke-linejoin="round"/>')
+      +star(32,32,6.2,0.9)),
+    /* cloth in every armour slot: a hooded robe, front on, with nobody in it */
+    full_robes: svg(defs('ab','#8c7fd0','#4a3f94','#1a1640')
+      +'<ellipse cx="32" cy="59" rx="20" ry="2.6" fill="#000" opacity="0.32"/>'
+      +'<path d="M32 5 Q20 7 19 21 Q18 26 21.5 29 L8 37 L12.5 47 L19 43.5 L15 58 H49 L45 43.5 L51.5 47 L56 37 L42.5 29 Q46 26 45 21 Q44 7 32 5 Z" fill="url(#abs)" stroke="'+O+'" stroke-width="1.7" stroke-linejoin="round"/>'
+      +'<path d="M32 10 Q24.5 12 24.5 21 Q24.5 27 32 30 Q39.5 27 39.5 21 Q39.5 12 32 10 Z" fill="#0d0a1c" stroke="'+O+'" stroke-width="1.2"/>'
+      +'<path d="M32 30 V58" stroke="#e8c874" stroke-width="2.4"/><path d="M15.6 55.2 H48.4" stroke="#e8c874" stroke-width="2.2"/>'
+      +'<path d="M26.5 39.5 H37.5" stroke="'+O+'" stroke-width="4.6" stroke-linecap="round"/><path d="M26.5 39.5 H37.5" stroke="#e8c874" stroke-width="2.4" stroke-linecap="round"/>'
+      +'<path d="M22 12 Q25 8.5 30 7.5" fill="none" stroke="#d8d0ff" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>'
+      +'<circle cx="29" cy="20.5" r="1.3" fill="#cdbcff"/><circle cx="35" cy="20.5" r="1.3" fill="#cdbcff"/>'),
+    /* a raid cleared with a staff: the boss's crown, and a staff standing through it */
+    staff_raid: svg(defs('ac','#f2d98a','#c79b4e','#6b4a16','#ff9a3c')+defs('ad','#b08a56','#6e4f28','#2c1c0c')
+      +'<ellipse cx="32" cy="58.5" rx="21" ry="2.6" fill="#000" opacity="0.32"/>'
+      +'<circle cx="32" cy="13" r="13" fill="url(#acg)"/>'
+      +'<path d="M29.4 56 V20 H34.6 V56 Z" fill="url(#ads)" stroke="'+O+'" stroke-width="1.5" stroke-linejoin="round"/>'
+      +'<path d="M9 56 L7 33 L18 43 L24 30 L32 41 L40 30 L46 43 L57 33 L55 56 Z" fill="url(#acs)" stroke="'+O+'" stroke-width="1.7" stroke-linejoin="round"/>'
+      +'<path d="M9.6 50 H54.4" stroke="#6b4a16" stroke-width="1.6"/>'
+      +'<circle cx="20" cy="52.8" r="1.9" fill="#a03408"/><circle cx="32" cy="52.8" r="1.9" fill="#3a7fa0"/><circle cx="44" cy="52.8" r="1.9" fill="#a03408"/>'
+      +'<path d="M29.4 41.5 V30 H34.6 V41.5" fill="url(#ads)" stroke="'+O+'" stroke-width="1.5" stroke-linejoin="round"/>'
+      +'<path d="M32 4.5 L39.5 13 L32 22.5 L24.5 13 Z" fill="#ffb060" stroke="'+O+'" stroke-width="1.6" stroke-linejoin="round"/>'
+      +'<path d="M32 7.5 L36.2 13 L32 18.6 Z" fill="#fff3c8" opacity="0.85"/>'
+      +'<path d="M11 36.5 L17 42" stroke="#fff6d0" stroke-width="1.4" stroke-linecap="round" opacity="0.6"/>'),
+    /* Spire floor 30 with a staff: the tower, in the Spire's rose, lit at the top */
+    staff_spire: svg(defs('at','#e8c4c8','#a8707c','#3c1c28','#ff9ab0')
+      +'<ellipse cx="32" cy="59" rx="18" ry="2.5" fill="#000" opacity="0.32"/>'
+      +'<circle cx="32" cy="10" r="12" fill="url(#atg)"/>'
+      +'<path d="M19 58 L25 15 L32 5 L39 15 L45 58 Z" fill="url(#ats)" stroke="'+O+'" stroke-width="1.7" stroke-linejoin="round"/>'
+      +'<path d="'+STAIR+'" stroke="'+O+'" stroke-width="2.6" stroke-linecap="round"/>'
+      +'<path d="'+STAIR+'" stroke="#f6dfe2" stroke-width="1.1" stroke-linecap="round" opacity="0.8"/>'
+      +'<path d="M29 58 V51 Q32 47.5 35 51 V58 Z" fill="#160a10" stroke="'+O+'" stroke-width="1.1"/>'
+      +'<path d="M26.4 18 L30.6 9.4" stroke="#fff" stroke-width="1.5" stroke-linecap="round" opacity="0.55"/>'
+      +star(32,8,6.4,0.95)+star(50,22,2.8,0.65)+star(13,30,2.4,0.55)),
+  };
+  for(const id in DRAWN) if(!ICONS[id]) ICONS[id]=DRAWN[id];
+})();
 
 function achUnlocked(id){ return !!(state.achievements&&state.achievements[id]); }
 /* Count only ids that still exist. A save that earned a since-removed achievement
@@ -45419,6 +45573,7 @@ function combatTick(){
       // Increment before applying the drops so the Log re-render on rare-kill
       // pet acquisition reflects the latest numbers.
       state.monKills[baseMon.id]=(state.monKills[baseMon.id]||0)+1;
+      noteElementKill(baseMon);   // which element killed here, when it was a spell
       if(typeof gdOnKill==='function') gdOnKill(baseMon.id);
       if(!state.monDrops[baseMon.id]) state.monDrops[baseMon.id]={};
       for(const d of drops){

@@ -194,5 +194,47 @@
   "desc": "Earn every other achievement.",
   "cat": "endgame",
   "hidden": true
+ },
+ {
+  "id": "magic_99",
+  "name": "The Old Art",
+  "desc": "Reach level 99 in Magic.",
+  "cat": "magic",
+  "hidden": false
+ },
+ {
+  "id": "rune_99",
+  "name": "Cut in Stone",
+  "desc": "Reach level 99 in Runecrafting.",
+  "cat": "magic",
+  "hidden": false
+ },
+ {
+  "id": "four_elements",
+  "name": "All Four",
+  "desc": "Kill a monster with each of the four elements in one zone.",
+  "cat": "magic",
+  "hidden": false
+ },
+ {
+  "id": "full_robes",
+  "name": "Robed",
+  "desc": "Wear cloth in all five armour slots.",
+  "cat": "magic",
+  "hidden": false
+ },
+ {
+  "id": "staff_raid",
+  "name": "Not a Blade Drawn",
+  "desc": "Clear a raid with a staff or a wand.",
+  "cat": "magic",
+  "hidden": false
+ },
+ {
+  "id": "staff_spire",
+  "name": "Thirty Floors Up",
+  "desc": "Clear Spire floor 30 with a staff or a wand.",
+  "cat": "magic",
+  "hidden": false
  }
 ]

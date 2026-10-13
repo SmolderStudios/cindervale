@@ -4,7 +4,7 @@
  *
  * The existing guards prove none of them fires on a fresh save. That is the easy
  * half. This builds a "god state" that satisfies every condition the game can
- * express, and asserts all 62 then return true. Anything still false is either
+ * express, and asserts all 68 then return true. Anything still false is either
  * unobtainable or reading a field nothing ever sets - the shard_bearer failure
  * mode, which sat unobtainable in the shipped game until someone noticed.
  *
@@ -109,6 +109,16 @@ const PROBE = function () {
   state.slayer.points = 99999;
   state.raidClears = {}; state.raidBest = {};
   RAIDS.forEach(r => { state.raidClears[r.id] = 5; state.raidBest[r.id] = { rating: 'S', timeMs: 1000 }; });
+
+  /* Magic (slice 9): a robe in every armour slot, and the three records a staff or a
+     wand leaves behind. The two levels are covered by the loops at the top. */
+  state.items = state.items || {};
+  ['hood', 'robe', 'leggings', 'wraps', 'slippers'].forEach((p, ix) => {
+    const id = CLOTH_TIERS[0].key + '_' + p; state.items[id] = 1;
+    state.combatEquipped[['helmet', 'chest', 'legs', 'gloves', 'boots'][ix]] = id; });
+  state.elKills = {}; state.elKills[ZONES[0].id] = {}; MAGIC_ELEMENTS.forEach(e => { state.elKills[ZONES[0].id][e.k] = 1; });
+  state.mageRaids = {}; state.mageRaids[RAIDS[0].id] = 1;
+  state.spireBest = 60; state.spireBestMage = 60;
 
   normalizeState();
 

@@ -1191,3 +1191,82 @@ gs_t3
 gs_t4
 ```
 </details>
+
+---
+
+# The loose ends: six achievement emblems
+
+Slice 9 added six achievements, in a category of their own (Magic), and every one
+ships on a drawn emblem: six SVGs in `cindervale.html` straight under the
+`ACH_ART` block, in `[JS-ACH-MAGE]`. The six ids are on `ACH_PENDING` in
+`_audit_tests.js`. Every other achievement is held to painted art there, and the
+check under the list fails the day a listed id is painted and still listed, so
+take each id off as it lands. What is in the game now is
+`_magedesign/shots/away/achievements.png` (`node _magedesign/shootreal.js away`).
+
+| Family | Painted | Ships as | Sheet |
+|---|---|---|---|
+| Magic achievements | 6 | `magic_99`, `rune_99`, `four_elements`, `full_robes`, `staff_raid`, `staff_spire` | V |
+
+**These are not item icons either.** They go through the achievement pipeline, the
+one `_iconart/ACHIEVEMENTS-REWORK.md` section 5 describes: sliced and keyed as the
+other four achievement sheets were, packed at 96 px, and spliced in with
+`_iconart/injectach.js`, which merges into the `ACH_ART` block and leaves the 62
+that are there alone. The painted emblem wins without another edit: `[JS-ACH-MAGE]`
+runs straight after `ACH_ART` and only fills an id that block left empty.
+
+Three rules from that file decide this sheet:
+
+- **One emblem a cell, one accent colour, no scene.** It is read at 64 px in a list
+  of other games' achievements.
+- **A flat pure white background**, like the four achievement sheets, not the
+  transparent one the Mastery plates use.
+- **Steam wants two 64 px tiles for each**, the emblem and a grey one. Only the
+  emblem is painted. `node _iconart/achtile.js` makes both tiles from the cutout,
+  with the Magic category's border.
+
+**Paste the style block from `_iconart/ACHIEVEMENTS-REWORK.md` section 5 first, then
+the painted sheet B (`sheets/ach_b.png`)**, so the weight, the outline and the
+shading match the 62 emblems that are already in the panel.
+
+## Sheet V - Magic achievements (6, grid 3x2)
+
+````
+SHEET: Achievement emblems, set E. 6 cells, 3 across and 2 down.
+
+  1.  The Old Art        a wooden staff head seen close: two curved prongs holding
+                         a round violet orb, a four-point star of light inside it
+  2.  Cut in Stone       a standing grey runestone with a rounded top, one angular
+                         rune cut deep into its face and glowing ember orange
+  3.  All Four           a bronze ring carrying four round stones at the compass
+                         points: one ember orange, one ice blue, one pale violet,
+                         one deep purple
+  4.  Robed              a hooded robe seen from the front with nobody in it: a
+                         deep cowl with a dark opening, wide sleeves, a gold
+                         stripe down the front and a gold hem
+  5.  Not a Blade Drawn  a heavy gold crown with five points, and a plain wooden
+                         staff standing upright through the middle of it, an
+                         orange crystal at the staff's head
+  6.  Thirty Floors Up   a tall narrow tower of rose-pink stone that tapers to a
+                         point, a stair winding round it, a white star of light
+                         at its tip
+````
+
+Cell 3 is the one place a second colour is right: the four stones are the four
+elements (Fire `#e0762f`, Frost `#7fb8d4`, Storm `#b9a4f0`, Shadow `#9a5ad0`), and
+the ring holds them together as one shape. Cell 6 is the Spire, so its stone is
+the rose the Spire's own art uses.
+
+Deliverable: `ach_e.png`, cells 256px, on white.
+
+<details><summary>id order for <code>sheets/ach_e.txt</code></summary>
+
+```
+magic_99
+rune_99
+four_elements
+full_robes
+staff_raid
+staff_spire
+```
+</details>

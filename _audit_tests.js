@@ -6704,6 +6704,38 @@ setTimeout(() => {
     ok('and none of them fires on one',
        achSet.early.length === 0, achSet.early.join(', '));
 
+    /* ── which achievements are still on a drawn emblem ───────────────────────
+       The check above passes an SVG as readily as a painting, so nothing held the
+       62 painted emblems to their paintings: one that fell back to a drawing, or
+       lost its entry in the ACH_ART block, would have shipped as whatever ICONS
+       held under that name. They are held now, and the ones that ship drawn are
+       named, the way MAGE_PENDING names items.
+
+       The six Magic achievements of slice 9 are drawn by [JS-ACH-MAGE] until
+       their sheet (V, in _iconart/PROMPTS-magic.md) is painted. PENDING, not
+       rejected: take an id off the day its emblem is injected. The second check
+       fails if a listed id is no longer a drawn achievement, so the list cannot
+       go stale. hearth_cat wears Smokey's own portrait, which is a pet's
+       painting and not an achievement's, so it is asked for by what it is. */
+    const ACH_PENDING = ['magic_99', 'rune_99', 'four_elements', 'full_robes', 'staff_raid', 'staff_spire'];
+    const achArt = JSON.parse(ev(`(function(){
+      var pend=${JSON.stringify(ACH_PENDING)}, drawn=[], other=[];
+      ACHIEVEMENTS.forEach(function(a){
+        var raw=String(ICONS[a.icon]||'');
+        if(/^<svg class="ev-icon"/.test(raw)) drawn.push(a.id);
+        else if(!/^<img class="ev-icon art-ach"/.test(raw) && a.id!=='hearth_cat') other.push(a.id);
+      });
+      return JSON.stringify({drawn:drawn, other:other, n:ACHIEVEMENTS.length,
+        cat:/^<img /.test(String(ICONS[ACH_BY_ID.hearth_cat.icon]||'')),
+        stale:pend.filter(function(id){ return drawn.indexOf(id)<0; }),
+        unlisted:drawn.filter(function(id){ return pend.indexOf(id)<0; })});
+    })()`));
+    ok('every achievement is on its painted emblem, except the ones named as waiting for theirs',
+       achArt.unlisted.length === 0 && achArt.other.length === 0 && achArt.cat === true,
+       achArt.unlisted.concat(achArt.other).join(' ') || (achArt.n - achArt.drawn.length) + ' painted, ' + achArt.drawn.length + ' drawn');
+    ok('every achievement waiting for a painted emblem is a real one that is still drawn', achArt.stale.length === 0,
+       achArt.stale.length ? 'painted or gone, take off ACH_PENDING: ' + achArt.stale.join(' ') : ACH_PENDING.length + ' pending');
+
     /* ── every achievement is REACHABLE ──────────────────────────────────────
        Three have now shipped unobtainable. shard_bearer asked you to bank a
        mastery shard after the board grew past what a character can earn.
@@ -6759,6 +6791,13 @@ setTimeout(() => {
       state.slayer.tasksDone=500; state.slayer.streak=99; state.slayer.points=99999;
       state.raidClears={}; state.raidBest={};
       RAIDS.forEach(function(r){ state.raidClears[r.id]=5; state.raidBest[r.id]={rating:'S',timeMs:1000}; });
+      /* Magic (slice 9): a robe in every armour slot, and the three records a staff or
+         a wand leaves behind. The levels are covered by the two loops at the top. */
+      ['hood','robe','leggings','wraps','slippers'].forEach(function(p,ix){
+        state.combatEquipped[['helmet','chest','legs','gloves','boots'][ix]]=CLOTH_TIERS[0].key+'_'+p; });
+      state.elKills={}; state.elKills[ZONES[0].id]={}; MAGIC_ELEMENTS.forEach(function(e){ state.elKills[ZONES[0].id][e.k]=1; });
+      state.mageRaids={}; state.mageRaids[RAIDS[0].id]=1;
+      state.spireBest=60; state.spireBestMage=60;
       normalizeState();
       state.achievements={};
       ACHIEVEMENTS.forEach(function(a){ if(a.id!=='everything') state.achievements[a.id]=1; });
@@ -12201,6 +12240,76 @@ setTimeout(() => {
     ok('and a set one piece short does not say it at all', C.sets.every(s => s.part === true), C.sets.filter(s => !s.part).map(s => s.k).join(' '));
     ok('the set line is still built in one place', (html.match(/' set · '\+worn\+'\/'\+st\.pieces\.length\+\(complete\?' · ACTIVE':''\)/g) || []).length === 1 && !html.includes("' — ACTIVE'"));
     ok('no column or bridge on the Mastery board is described with an em dash', C.roles.length === 0, C.roles.join(' ') || C.roleText.join(' | '));
+  }
+
+  section('Six achievements for Magic (slice 9)');
+  {
+    /* What can be asked without a raid or the full game. Each of the six being
+       earned the way a player earns it (levels through the XP functions, robes
+       through the equip, kills, a raid and the Spire through combatTick) is in
+       _raidmom.js, which boots the full game. */
+    const M = JSON.parse(ev(`(function(){
+      var o={};
+      state=defaultState(); normalizeState();
+      var six=ACHIEVEMENTS.filter(function(a){ return a.cat==='magic'; });
+      o.total=ACHIEVEMENTS.length; o.ids=six.map(function(a){ return a.id; });
+      o.rows=six.map(function(a){ return a.name+' | '+a.desc; });
+      o.cats=ACH_CATS.map(function(c){ return c[0]; }); o.label=(ACH_CATS.filter(function(c){ return c[0]==='magic'; })[0]||[])[1];
+      o.empty=ACH_CATS.filter(function(c){ return !ACHIEVEMENTS.some(function(a){ return a.cat===c[0]; }); }).map(function(c){ return c[0]; });
+      o.homeless=ACHIEVEMENTS.filter(function(a){ return !ACH_CATS.some(function(c){ return c[0]===a.cat; }); }).map(function(a){ return a.id; });
+      o.iconIsId=six.every(function(a){ return a.icon===a.id; });
+      /* ICONS is one flat namespace: an achievement id that is also an item, a monster
+         or a skill would wear its picture, or paint over it */
+      o.clash=six.map(function(a){ return a.id; }).filter(function(id){ return ITEMS[id]||SKILLS[id]||MONSTERS.some(function(m){ return m.id===id; }); });
+      o.fresh=six.filter(function(a){ return a.check(); }).map(function(a){ return a.id; });
+      /* the panel: the category has a button, and its six cards are drawn */
+      viewTab='ach'; _achCat='magic'; renderAchievements();
+      var box=document.getElementById('achView');
+      o.cards=box.querySelectorAll('.ach-card').length;
+      o.button=[].some.call(box.querySelectorAll('.ach-catbtn'), function(b){ return b.getAttribute('data-achcat')==='magic' && /Magic/.test(b.textContent) && /0\\/6/.test(b.textContent); });
+      o.locked=[].every.call(box.querySelectorAll('.ach-card'), function(c){ return !c.classList.contains('got'); });
+      state.achievements.full_robes=Date.now(); renderAchievements();
+      o.got=box.querySelectorAll('.ach-card.got').length; o.gotSvg=!!box.querySelector('.ach-card.got .ach-ic svg.ev-icon');
+      _achCat=ACH_CATS[0][0]; viewTab='acts';
+      /* the three records a staff leaves: a save without them, and a save with rubbish in them */
+      state=defaultState(); delete state.elKills; delete state.mageRaids; delete state.spireBestMage; normalizeState();
+      o.old={el:JSON.stringify(state.elKills), raids:JSON.stringify(state.mageRaids), spire:state.spireBestMage};
+      state=defaultState(); state.elKills={rat_warrens:'fire', spider_hollow:{fire:1}, x:null}; state.mageRaids=[1,2]; state.spireBest=12; state.spireBestMage=40; normalizeState();
+      o.bad={el:JSON.stringify(state.elKills), raids:JSON.stringify(state.mageRaids), spire:state.spireBestMage};
+      state=defaultState(); state.elKills='x'; state.mageRaids={sunken_barrow:-3, emberforge:'a', abyssal_throne:2}; state.spireBestMage='deep'; normalizeState();
+      o.bad2={el:JSON.stringify(state.elKills), raids:JSON.stringify(state.mageRaids), spire:state.spireBestMage};
+      /* Cindervale asks for every other achievement, so it asks for these */
+      state=defaultState(); normalizeState();
+      ACHIEVEMENTS.forEach(function(a){ if(a.id!=='everything') state.achievements[a.id]=1; });
+      o.everyAll=ACH_BY_ID.everything.check();
+      delete state.achievements.staff_spire; o.everyLess=ACH_BY_ID.everything.check();
+      state=defaultState(); normalizeState();
+      return JSON.stringify(o);
+    })()`));
+    /* 68, were 62: the six below. Nothing pinned the number before; it is pinned here
+       because a Steam row is made by hand for each one, and a count that moves
+       without this line moving is a row nobody made. */
+    ok('68 achievements: the 62 there were, and six for Magic', M.total === 68 && M.ids.length === 6, M.total + ' in all, ' + M.ids.length + ' in Magic');
+    ok('they are Magic 99, Runecrafting 99, the four elements, the robes, a raid and the Spire, under ids that never change',
+       M.ids.join() === 'magic_99,rune_99,four_elements,full_robes,staff_raid,staff_spire', M.ids.join(' '));
+    ok('Magic is a category of its own, after Ranged, and every category has something in it',
+       M.label === 'Magic' && M.cats.indexOf('magic') === M.cats.indexOf('ranged') + 1 && M.empty.length === 0 && M.homeless.length === 0, M.cats.join(' '));
+    ok('each wears an emblem of its own name, and none of the six names is an item, a skill or a monster',
+       M.iconIsId === true && M.clash.length === 0, M.clash.join(' '));
+    ok('none is earned by a new character', M.fresh.length === 0, M.fresh.join(' '));
+    ok('the panel has a Magic button and draws six cards under it, locked until earned',
+       M.button === true && M.cards === 6 && M.locked === true, M.cards + ' cards');
+    ok('and an earned one shows its drawn emblem', M.got === 1 && M.gotSvg === true);
+    /* The words. Jordan reads every one: no em dash, none of the words he has thrown
+       out, and "a staff or a wand" wherever a wand counts as a staff does. */
+    const banned = new RegExp(String.fromCharCode(8212) + '|\\bpays?\\b|\\bpaid\\b|\\byields?\\b|\\bbinds? to\\b|\\bswings?\\b|\\bblows?\\b|\\bstrikes?\\b|\\bguard\\b|\\bprocs?\\b|\\baffix|\\bdearer\\b|genuinely', 'i');
+    ok('the six are worded plainly', M.rows.every(r => !banned.test(r)) && M.rows.filter(r => /with a staff or a wand\.$/.test(r)).length === 2,
+       M.rows.filter(r => banned.test(r)).join(' | ') || M.rows.join(' | '));
+    ok('a save from before them loads with nothing recorded', M.old.el === '{}' && M.old.raids === '{}' && M.old.spire === 0, JSON.stringify(M.old));
+    ok('rubbish in the element record is dropped zone by zone, and the rest is kept', M.bad.el === '{"spider_hollow":{"fire":1}}' && M.bad2.el === '{}', M.bad.el + ' ' + M.bad2.el);
+    ok('rubbish in the raid record is mended', M.bad.raids === '{}' && M.bad2.raids === '{"sunken_barrow":0,"emberforge":0,"abyssal_throne":2}', M.bad.raids + ' ' + M.bad2.raids);
+    ok('a mage\'s deepest floor is a number, and never deeper than the deepest floor of all', M.bad.spire === 12 && M.bad2.spire === 0, M.bad.spire + ' ' + M.bad2.spire);
+    ok('Cindervale, which asks for every other achievement, asks for these too', M.everyAll === true && M.everyLess === false);
   }
 
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));
