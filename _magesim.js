@@ -1967,7 +1967,9 @@ function PAGE() {
   }
   function awayRows(lines) {
     return (lines || []).filter(function (l) { return l.label === 'Offline Combat' || l.label === 'Runes' || l.label === 'Arrows' || l.label === 'Bolts'; })
-      .map(function (l) { return { label: l.label, sub: l.sub, xp: l.xp || 0, icon: l.iconId || '', art: /^<(img|svg)/.test(String(iconHTML(l.iconId) || '')) }; });
+      .map(function (l) { return { label: l.label, sub: l.sub, xp: l.xp || 0, icon: l.iconId || '', art: /^<(img|svg)/.test(String(iconHTML(l.iconId) || '')),
+        /* what the panel will print on each drop's chip: it reads it.name, and nothing else */
+        drops: (l.items || []).map(function (it) { return String(it.name); }) }; });
   }
   /* A launch: the game was closed with the fight running, `hours` ago. */
   function awayLaunch(key, lv, t, monId, hours, o) {
@@ -3200,6 +3202,12 @@ setTimeout(() => {
       'and is charged kills x casts a kill x runes a cast, less what was kept', `${mage.m.kills} x ${mage.M.castsKill.toFixed(2)} x ${mage.n.size} x ${(1 - mage.n.keep).toFixed(3)} = ${mage.m.spent.toLocaleString()} ${mage.n.plural}`);
     check(mage.session && mage.resumed && mage.ret && mage.ret.fightEnded === false && mage.ret.why === '', 'the fight is taken up again');
     check(mage.m.other.length === 0 && mage.m.ate > 0, 'nothing leaves the satchel but the runes and the food', mage.m.other.join(', '));
+    /* The Offline Combat row never named its drops: the panel printed "undefined" on
+       every chip, for every weapon, since offline combat was built. Seen on the first
+       real screenshot of this panel. */
+    const named = v => { const r = v.rows.find(x => x.label === 'Offline Combat'); return !!r && r.drops.length > 0 && r.drops.every(n => n && n !== 'undefined' && !/_/.test(n)); };
+    check(named(mage) && named(bow) && named(sword), 'Welcome Back names what the fight dropped, for a staff, a bow and a sword',
+      (mage.rows.find(x => x.label === 'Offline Combat') || { drops: [] }).drops.slice(0, 4).join(', '));
     const rr = mage.rows.find(r => r.label === 'Runes'), rc = mage.rows.find(r => r.label === 'Offline Combat');
     check(mage.nRows === 2 && rc && rc.sub === `${MD.name} ×${mage.m.kills.toLocaleString()}` && rr && rr.icon === mage.n.quiver && rr.art
       && rr.sub.indexOf(`${mage.m.spent.toLocaleString()} ${mage.n.plural} spent on Shadow Blast`) === 0,

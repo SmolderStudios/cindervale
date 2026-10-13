@@ -28160,7 +28160,9 @@ function grantOffline(measured){
   let _offCombat=null;
   try{ _offCombat=offlineCombatResolve(away, om); }catch(e){ _offCombat=null; }
   if(_offCombat && _offCombat.kills>0){
-    const _its=Object.keys(_offCombat.items).map(function(id){ return {id:id, qty:_offCombat.items[id]}; });
+    /* Each drop carries its name. The panel prints it.name, the way it does for the
+       skilling rows, and this row never set one: every chip read "undefined x69". */
+    const _its=Object.keys(_offCombat.items).map(function(id){ return {id:id, name:(ITEMS[id]&&ITEMS[id].name)||id, qty:_offCombat.items[id]}; });
     summary.push({icon:'\u2694', iconId:'ui_sword', label:'Offline Combat',
                   sub:_offCombat.mon+' \u00d7'+_offCombat.kills.toLocaleString()
                     +(_offCombat.capped?' \u00b7 capped, '+_offCombat.wanted.toLocaleString()+' were possible':''),
