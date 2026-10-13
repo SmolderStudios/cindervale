@@ -37,7 +37,8 @@
  *   3. a raid and twenty minutes of the Spire, seen and hidden
  *   4. skilling, seen and hidden: the rule a fight is being brought into line with
  *   5. what one hour away from a closed game counts, beside it
- *   6. a machine that sleeps for ten minutes in the middle of a fight
+ *   6. a machine that sleeps for ten minutes in the middle of a fight, with its
+ *      timers waking in their usual order and again with the save waking first
  *
  * It asserts nothing. The checks that hold the timer in place are in _audit_tests.js.
  */
@@ -121,26 +122,34 @@ function HW_PAGE() {
      The fight's own timer is not named here: setInterval is watched while the fight
      starts and whatever the game hands it for 100 ms is the timer, on any build.
      `plan` is a list of [milliseconds, pace] spans, where pace is 0 for a window
-     you can see and otherwise the time between the engine's wake-ups. */
+     you can see and otherwise the time between the engine's wake-ups. A span can
+     name a third thing: the timer the engine runs ahead of the others on each of
+     its wake-ups ('s' is the save). */
   function clockwork(start) {
     var C = { fake: start, fn: null, id: 0, n: 0, fires: 0, SI: window.setInterval, CI: window.clearInterval };
     window.setInterval = function (fn, ms) { if (ms === 100) { C.fn = fn; C.id = 900000 + (++C.n); return C.id; } return C.SI.apply(window, arguments); };
     window.clearInterval = function (id) { if (id && id === C.id) { C.fn = null; return; } return C.CI.apply(window, arguments); };
     C.due = { c: start + 100, k: start + 250, e: start + 1000, s: start + 5000 };
-    /* One wake-up: everything that is due fires once, in the order it fell due. */
-    C.wake = function (now, exact) {
+    /* One wake-up: everything that is due fires once. The order is the fight,
+       tick(), the once-a-second housekeeping, the save, unless `lead` names one
+       that goes first. Nothing fires twice: the one that led is no longer due. */
+    C.wake = function (now, exact, lead) {
       C.fake = now;
       var d = C.due, step = function (k, ms) { d[k] = exact ? d[k] + ms : now + ms; };
-      if (d.c <= now) { if (C.fn) { C.fires++; C.fn(); } step('c', 100); }
-      if (d.k <= now) { tick(); step('k', 250); }
-      if (d.e <= now) { tickEffects(); step('e', 1000); }
-      if (d.s <= now) { saveGame(); step('s', 5000); }
+      var fire = {
+        c: function () { if (d.c <= now) { if (C.fn) { C.fires++; C.fn(); } step('c', 100); } },
+        k: function () { if (d.k <= now) { tick(); step('k', 250); } },
+        e: function () { if (d.e <= now) { tickEffects(); step('e', 1000); } },
+        s: function () { if (d.s <= now) { saveGame(); step('s', 5000); } }
+      };
+      if (lead) fire[lead]();
+      fire.c(); fire.k(); fire.e(); fire.s();
     };
     C.run = function (plan, each) {
       for (var p = 0; p < plan.length; p++) {
         var end = C.fake + plan[p][0], pace = plan[p][1];
         while (C.fake < end) {
-          if (pace) C.wake(C.fake + pace, false);
+          if (pace) C.wake(C.fake + pace, false, plan[p][2]);
           else C.wake(Math.min(C.due.c, C.due.k, C.due.e, C.due.s), true);
           if (each && each() === false) return;
         }
@@ -324,7 +333,7 @@ function child(file) {
     const H = HOURS * 3600000, MIN = 60000;
     const SEEN = [[H, 0]], HIDDEN = [[H, MIN]], FIRST = [[H, 1000]];
     const F = (o) => J('HW.fight(' + JSON.stringify(o) + ')');
-    const o = { file: path.basename(file), build: J('HW.build()'), rate: J('HW.rate()'), demo: J('IS_DEMO'), hours: HOURS, seen: [], hidden: [], first: [], offline: [], raids: [], skills: [], sleep: [] };
+    const o = { file: path.basename(file), build: J('HW.build()'), rate: J('HW.rate()'), demo: J('IS_DEMO'), hours: HOURS, seen: [], hidden: [], first: [], offline: [], raids: [], skills: [], sleep: [], sleepSave: [] };
     for (const lv of [20, 50, 75, 99]) for (const [key] of WHO) {
       const b = { key, lv, t: TIER[lv], mon: REF[lv], food: FOOD[lv], seed: 7000 + lv };
       const mon = J(`HW.mon('${REF[lv]}')`);
@@ -346,6 +355,11 @@ function child(file) {
        sleep as one wake-up, a minute seen. With a save slot open, as a real game has. */
     for (const [key] of WHO) for (const seed of [1, 2, 3, 4, 5, 6, 7, 8])
       o.sleep.push(F({ key, lv: 99, t: 7, mon: REF[99], food: FOOD[99], seed: 600 + seed, name: 'sleep', plan: [[MIN, 0], [10 * MIN, 10 * MIN], [MIN, 0]] }));
+    /* The same sleeps with one thing changed: on waking, the save's timer runs
+       before the others. A save stamps lastSeen, which is where the settle used to
+       read the time away from. */
+    for (const [key] of WHO) for (const seed of [1, 2, 3, 4, 5, 6, 7, 8])
+      o.sleepSave.push(F({ key, lv: 99, t: 7, mon: REF[99], food: FOOD[99], seed: 600 + seed, name: 'sleep, save first', plan: [[MIN, 0], [10 * MIN, 10 * MIN, 's'], [MIN, 0]] }));
     process.stdout.write('\n@@HW@@' + JSON.stringify(o) + '@@HW@@\n');
     process.exit(0);
   }, 2800);
@@ -419,12 +433,21 @@ function tables(B) {
   console.log('\n6. A MACHINE THAT SLEEPS  ·  a Lv 99 fight, a minute seen, ten minutes asleep, a minute seen, eight times each with different dice');
   console.log('   Over two minutes without a tick is not a hidden window. tick() settles it as time away, at the offline rate, and takes up the fight again.');
   console.log('   "settled" is how many of the eight got that time. The Offline skill earns XP whenever it is.');
-  for (const [key] of WHO) B.forEach((b, bi) => {
-    const rows = b.sleep.filter(r => r.key === key), ok = rows.filter(r => !r.err);
+  const slept = list => { for (const [key] of WHO) B.forEach((b, bi) => {
+    const rows = (b[list] || []).filter(r => r.key === key), ok = rows.filter(r => !r.err);
+    if (!rows.length) { console.log('   ' + padr(bi ? '' : label(key), 16) + padr(many ? b.label : '', many ? 9 : 0) + 'not in these numbers'); return; }
     const settled = ok.filter(r => r.offXp > 0).length, kills = ok.map(r => r.kills);
     console.log('   ' + padr(bi ? '' : label(key), 16) + padr(many ? b.label : '', many ? 9 : 0) + `settled ${settled} of ${ok.length}   kills in the twelve minutes: ${kills.join(', ')}   most ticks from one late timer: ${Math.max(...ok.map(r => r.most))}`
       + (rows.length !== ok.length ? '   ' + rows.filter(r => r.err)[0].err.slice(0, 160) : ''));
-  });
+  }); };
+  console.log('\n   6a. On waking, the timers run in the order the fight, tick(), the once-a-second housekeeping, the save');
+  slept('sleep');
+  console.log('\n   6b. The same sleeps and the same dice, but on waking the save runs first');
+  console.log('       A save stamps lastSeen. Up to build 0.9.127.10 the settle read the time away off lastSeen, so a save that ran before tick() left it nothing.');
+  console.log('       From 0.9.127.11 tick() hands the settle the gap it measured between its own two ticks, and the order no longer matters.');
+  console.log('       Chrome keeps the autosave\'s own timer behind tick()\'s (0 of 240 stalls on the real page), so read this order as anything that saves ahead of the settle.');
+  console.log('       An opening objective completing at the top of tick() does, in every engine.');
+  slept('sleepSave');
   console.log('');
 }
 
@@ -446,7 +469,7 @@ else {
   }))).then(B => {
     B.forEach((b, i) => { b.label = labels[i]; });
     const bad = [];
-    for (const b of B) for (const k of ['seen', 'hidden', 'first', 'offline', 'raids', 'skills', 'sleep']) for (const r of b[k]) if (r.err) bad.push(`${b.label} ${k}: ${r.err}`);
+    for (const b of B) for (const k of ['seen', 'hidden', 'first', 'offline', 'raids', 'skills', 'sleep', 'sleepSave']) for (const r of (b[k] || [])) if (r.err) bad.push(`${b.label} ${k}: ${r.err}`);
     tables(B);
     if (bad.length) console.log('SOMETHING DID NOT RUN:\n   ' + bad.slice(0, 8).join('\n   '));
     const js = opt('json', '');

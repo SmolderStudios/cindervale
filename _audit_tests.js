@@ -4292,6 +4292,185 @@ setTimeout(() => {
        'actionStart is '+(suspend.long.now-suspend.long.actionStart)+'ms behind now');
     ok('the activity is still running afterwards', suspend.stillGoing===true);
 
+    /* ── and it does not turn on who saved first (0.9.127.11) ─────────────────
+       The settle above read the time away off lastSeen, and every saveGame()
+       stamps lastSeen. So anything that saved between the machine waking and
+       tick() running left it no time away, and the whole sleep was dropped with
+       no error: an opening objective completing at the top of tick() itself,
+       and, in an engine that runs their timers ahead of tick's, the 5 s autosave
+       and the farmhand's harvest (Chrome was measured not to; the comment in
+       tick() has the numbers). The block above never saw it, because it moves
+       lastSeen back by hand, which is the one thing a real save undoes.
+
+       tick() now hands grantOffline() the gap it measured between two of its own
+       ticks. That needs the last tick to be forgotten at the menu, or the first
+       tick back would settle the visit a second time after the launch path has.
+
+       All of this is on a clock the test holds, so a gap is exact and two runs can
+       be compared to the digit. `ops` is what happens, in order:
+         ['jump', ms]    time passes and nothing runs
+         ['save']        saveGame()
+         ['tick']        the 250 ms loop
+         ['quit']        out to the menu, through mmQuitToMenu()
+         ['enter']       back in through mmStart(), the game's own launch path,
+                         with only the engine's timers left unstarted
+         ['menu', on]    the menu flag alone, for tick()'s own half of that
+         ['launch']      what mmFinishStart does about time away: settle it off
+                         lastSeen, then save
+         ['objective']   an opening objective is ready to complete
+         ['farm']        a Master Cultivator, seeds to replant, every patch planted a minute ago
+         ['snap', name] */
+    ev(`window.__sus=function(ops){
+      var D=Date.now, R=Math.random, SE=window.mmStartEngine, GO=window.grantOffline, TP=window.tendPatch, HP=window.harvestPatch, S0=state, kept={};
+      var PANES=['emberMenu','charSelect','mmDestiny'];
+      var keep={menu:mmAtMenu, slot:mmSlot, base:_coinsBaseline, wall:_lastTickWall, sel:selectedSkill, tab:viewTab, rtab:rightTab,
+        inv:invOpen, mode:combatMode, raw:lsGet(mmKey(3)),
+        cls:PANES.map(function(id){ var el=document.getElementById(id); return el?el.className:null; })};
+      var QUIET=['renderAll','renderHeader','renderTick','renderSkillList','renderRightPanel','renderQuestDock','showOfflineSummary','toast','showHint','showXpPop','showItemPop'];
+      var fake=D.call(Date), out={snaps:{}, grants:[], err:''}, LOG='', CROP='', F={tend:0, harv:0};
+      function snap(){ return {off:state.offlineXp||0, logs:(LOG&&state.items[LOG])||0, seenBehind:state.lastSeen?fake-state.lastSeen:null,
+        actBehind:state.action?fake-state.actionStart:null, on:!!state.action, step:state.onboard?state.onboard.step:null,
+        /* the farmhand: what it has done, the seeds left, and patches planted at a
+           time the clock has not reached */
+        tend:F.tend, harv:F.harv, seeds:CROP?(state.seeds[CROP]||0):0,
+        ahead:Object.keys(state.patches||{}).filter(function(p){ return state.patches[p]&&state.patches[p].plantedAt>fake; }).length}; }
+      try{
+        state=defaultState(); normalizeState();
+        state.charName='Sleeper'; state.charType=Object.keys(CHAR_TYPES)[0]; state.charClass=Object.keys(CHAR_CLASSES)[0];
+        state.onboard={step:-1,done:true,hidden:false};
+        state.xp.woodcutting=XP_CUM[40];
+        state.action={skill:'woodcutting',actId:(gdBestActs('woodcutting')[0]||{}).id};
+        /* What the act makes. The suite boots as the demo, which holds skill XP at its
+           cap, so the skilling is counted in logs. */
+        LOG=Object.keys((getAct('woodcutting',state.action.actId)||{}).out||{})[0]||'';
+        mmAtMenu=false; mmSlot=3; _lastTickWall=0;
+        QUIET.forEach(function(k){ if(typeof window[k]==='function'){ kept[k]=window[k]; window[k]=function(){}; } });
+        window.mmStartEngine=function(){};   // the real one starts the real timers, on the real clock
+        /* Every call is kept: the time tick() handed over, or 0 for a call that left
+           it to lastSeen. */
+        window.grantOffline=function(ms){ out.grants.push(ms>0?ms:0); return GO.apply(this,arguments); };
+        window.tendPatch=function(){ var r=TP.apply(this,arguments); if(r) F.tend++; return r; };
+        window.harvestPatch=function(){ F.harv++; return HP.apply(this,arguments); };
+        Date.now=function(){ return fake; };
+        /* the same dice every run, so two runs can be compared to the digit */
+        Math.random=(function(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; var t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; })(52);
+        state.actionStart=fake; state.lastSeen=fake;
+        ops.forEach(function(op){
+          if(op[0]==='jump') fake+=op[1];
+          else if(op[0]==='farm'){
+            state.xp.farming=XP_CUM[99]; state.farmer={tier:3,maxTier:3,enabled:true,seedId:null};
+            var top=CROPS.slice().sort(function(a,b){ return b.lvl-a.lvl; })[0]; CROP=top.id;
+            state.seeds={}; state.seeds[CROP]=5000;
+            PATCHES.forEach(function(p){ state.patches[p.id]={seedId:CROP, plantedAt:fake-60000, growMs:top.growMs, tendedMs:0, lastTended:0}; });
+          }
+          else if(op[0]==='save') saveGame();
+          else if(op[0]==='tick') tick();
+          else if(op[0]==='quit') mmQuitToMenu();
+          else if(op[0]==='enter') mmStart(3,false);
+          else if(op[0]==='menu') mmAtMenu=!!op[1];
+          else if(op[0]==='launch'){ grantOffline(); saveGame(); }
+          else if(op[0]==='objective'){ state.onboard={step:0,done:false,hidden:false}; state.items.pine_log=50; }
+          else if(op[0]==='snap') out.snaps[op[1]]=snap();
+        });
+      }catch(e){ out.err=String(e&&e.message||e); }
+      finally{
+        Date.now=D; Math.random=R; window.mmStartEngine=SE; window.grantOffline=GO; window.tendPatch=TP; window.harvestPatch=HP;
+        for(var k in kept) window[k]=kept[k];
+        if(keep.raw==null) lsDel(mmKey(3)); else lsSet(mmKey(3),keep.raw);
+        PANES.forEach(function(id,i){ var el=document.getElementById(id); if(el&&keep.cls[i]!=null) el.className=keep.cls[i]; });
+        mmAtMenu=keep.menu; mmSlot=keep.slot; _coinsBaseline=keep.base; _lastTickWall=keep.wall;
+        selectedSkill=keep.sel; viewTab=keep.tab; rightTab=keep.rtab; invOpen=keep.inv; combatMode=keep.mode;
+        for(var sk in SKILLS) resetXphTracker(sk);   // XP was recorded at times the real clock has not reached
+        state=S0;
+      }
+      return JSON.stringify(out);
+    };`);
+    const SUS = ops => JSON.parse(ev('__sus(' + JSON.stringify(ops) + ')'));
+    const MINUTE = 60000;
+    const gain = (r, a, b) => r.snaps[b].off - r.snaps[a].off;
+    const chopped = (r, a, b) => r.snaps[b].logs - r.snaps[a].logs;
+
+    /* The yardstick: what launching the game gives for the same time away. */
+    const launch25 = SUS([['save'], ['snap', 'a'], ['jump', 25 * MINUTE], ['launch'], ['snap', 'b']]);
+    const launch40 = SUS([['save'], ['snap', 'a'], ['jump', 40 * MINUTE], ['launch'], ['snap', 'b']]);
+    const launch0 = SUS([['save'], ['snap', 'a'], ['launch'], ['snap', 'b']]);
+    const L25 = gain(launch25, 'a', 'b'), L40 = gain(launch40, 'a', 'b');
+    ok('the launch path is untouched: it reads the time away off lastSeen, and a save made a moment ago is no time away',
+       !launch25.err && !launch40.err && !launch0.err && L25 > 0 && L40 > L25 && gain(launch0, 'a', 'b') === 0
+       && launch25.grants.join() === '0' && launch0.grants.join() === '0',
+       launch25.err || launch40.err || launch0.err || ('Offline XP +' + L25 + ' for 25 minutes, +' + L40 + ' for 40, +' + gain(launch0, 'a', 'b') + ' for none'));
+
+    const plain = SUS([['tick'], ['save'], ['snap', 'a'], ['jump', 25 * MINUTE], ['snap', 'woke'], ['tick'], ['snap', 'b']]);
+    const early = SUS([['tick'], ['save'], ['snap', 'a'], ['jump', 25 * MINUTE], ['save'], ['snap', 'woke'], ['tick'], ['snap', 'b'], ['jump', 250], ['tick'], ['snap', 'c']]);
+    ok('the case that lost the sleep: a save has run before tick(), so lastSeen says no time has passed',
+       !plain.err && !early.err && plain.snaps.woke.seenBehind === 25 * MINUTE && early.snaps.woke.seenBehind === 0,
+       plain.err || early.err || ('lastSeen is ' + plain.snaps.woke.seenBehind + ' ms behind with no save, ' + early.snaps.woke.seenBehind + ' ms with one'));
+    ok('a 25 minute sleep is settled all the same when a save runs first',
+       gain(early, 'a', 'b') > 0, 'Offline XP +' + gain(early, 'a', 'b'));
+    ok('to the digit what it is with no save, and what launching the game gives for 25 minutes: Offline XP and the logs chopped',
+       gain(early, 'a', 'b') === gain(plain, 'a', 'b') && gain(early, 'a', 'b') === L25
+       && chopped(early, 'a', 'b') === chopped(plain, 'a', 'b') && chopped(early, 'a', 'b') === chopped(launch25, 'a', 'b') && chopped(early, 'a', 'b') > 0,
+       'Offline XP +' + gain(early, 'a', 'b') + ' / +' + gain(plain, 'a', 'b') + ' / +' + L25
+       + ', logs +' + chopped(early, 'a', 'b') + ' / +' + chopped(plain, 'a', 'b') + ' / +' + chopped(launch25, 'a', 'b'));
+    ok('tick() hands over the gap it measured, and nothing is read off lastSeen',
+       early.grants.join() === String(25 * MINUTE) && plain.grants.join() === String(25 * MINUTE),
+       'handed over ' + early.grants.join() + ' ms with a save first, ' + plain.grants.join() + ' ms without');
+    ok('once: the next tick settles nothing more, and the action clock restarted at the settle',
+       gain(early, 'b', 'c') === 0 && early.grants.length === 1 && early.snaps.b.actBehind === 0 && early.snaps.c.on === true,
+       'Offline XP +' + gain(early, 'b', 'c') + ' on the next tick, action clock ' + early.snaps.b.actBehind + ' ms behind the settle');
+
+    const brief = SUS([['tick'], ['save'], ['snap', 'a'], ['jump', 30000], ['save'], ['tick'], ['snap', 'b']]);
+    ok('a 30 second stall with the same early save is still NOT settled as time away',
+       !brief.err && gain(brief, 'a', 'b') === 0 && brief.grants.length === 0,
+       brief.err || ('Offline XP +' + gain(brief, 'a', 'b') + ', grantOffline called ' + brief.grants.length + ' times'));
+    const line = SUS([['tick'], ['save'], ['snap', 'a'], ['jump', 120000], ['save'], ['tick'], ['snap', 'b'], ['jump', 120001], ['save'], ['tick'], ['snap', 'c']]);
+    ok('the line has not moved: two minutes exactly is a stall, a millisecond over is a sleep',
+       !line.err && gain(line, 'a', 'b') === 0 && gain(line, 'b', 'c') > 0 && line.grants.join() === '120001',
+       line.err || ('Offline XP +' + gain(line, 'a', 'b') + ' at 120,000 ms, +' + gain(line, 'b', 'c') + ' at 120,001'));
+
+    const twice = SUS([['tick'], ['save'], ['snap', 'a'], ['jump', 25 * MINUTE], ['tick'], ['snap', 'b'], ['jump', 40 * MINUTE], ['tick'], ['snap', 'c']]);
+    ok('two sleeps with no save between them are settled once each: 25 minutes, then 40, not 65',
+       !twice.err && gain(twice, 'a', 'b') === L25 && gain(twice, 'b', 'c') === L40 && twice.grants.join() === [25 * MINUTE, 40 * MINUTE].join(),
+       twice.err || ('Offline XP +' + gain(twice, 'a', 'b') + ' then +' + gain(twice, 'b', 'c') + '; 40 minutes is +' + L40));
+
+    const objective = SUS([['tick'], ['save'], ['snap', 'a'], ['objective'], ['jump', 25 * MINUTE], ['tick'], ['snap', 'b']]);
+    ok('an opening objective completing on the waking tick saves before the settle, and the sleep still counts',
+       !objective.err && objective.snaps.b.step === 1 && objective.snaps.b.seenBehind === 0 && gain(objective, 'a', 'b') === L25,
+       objective.err || ('objective step ' + objective.snaps.b.step + ', lastSeen ' + objective.snaps.b.seenBehind + ' ms behind, Offline XP +' + gain(objective, 'a', 'b')));
+
+    /* The menu. Time spent there belongs to the launch path. Until 0.9.127.11 the
+       first tick back still came into the suspend block holding a last tick from
+       before the visit, and was turned away only by the save mmFinishStart had
+       just made. */
+    const menu = SUS([['tick'], ['save'], ['snap', 'in'], ['quit'], ['jump', 25 * MINUTE], ['enter'], ['snap', 'entered'], ['jump', 250], ['tick'], ['snap', 'back']]);
+    ok('25 minutes at the menu are settled by the launch path on the way back in, through the game\'s own quit and start',
+       !menu.err && gain(menu, 'in', 'entered') === L25 && menu.snaps.entered.on === true,
+       menu.err || ('Offline XP +' + gain(menu, 'in', 'entered')));
+    ok('and not a second time by the first tick back',
+       gain(menu, 'entered', 'back') === 0 && menu.snaps.back.on === true,
+       'Offline XP +' + gain(menu, 'entered', 'back') + ' on the first tick back');
+    const menuTick = SUS([['tick'], ['save'], ['snap', 'in'], ['menu', 1], ['tick'], ['jump', 25 * MINUTE], ['tick'], ['menu', 0], ['launch'], ['snap', 'entered'], ['jump', 250], ['tick'], ['snap', 'back']]);
+    ok('tick() forgets its last tick for as long as the menu is up, whatever put it there',
+       !menuTick.err && gain(menuTick, 'in', 'entered') === L25 && gain(menuTick, 'entered', 'back') === 0,
+       menuTick.err || ('Offline XP +' + gain(menuTick, 'in', 'entered') + ' from the launch path, +' + gain(menuTick, 'entered', 'back') + ' on the first tick back'));
+
+    /* The farmhand (0.9.127.8) is played through the time away from where it began,
+       and 0.9.127.9 takes that moment from grantOffline() and not from lastSeen.
+       Held here from this side: with the gap handed over and the farmhand still
+       starting at lastSeen, a save before the settle played it from NOW into the
+       future, and all eight patches were left planted up to 141 minutes ahead. */
+    const HOURS8 = 8 * 3600000;
+    const farmPlain = SUS([['farm'], ['tick'], ['save'], ['snap', 'a'], ['jump', HOURS8], ['tick'], ['snap', 'b']]);
+    const farmEarly = SUS([['farm'], ['tick'], ['save'], ['snap', 'a'], ['jump', HOURS8], ['save'], ['tick'], ['snap', 'b']]);
+    const fP = farmPlain.snaps.b || {}, fE = farmEarly.snaps.b || {}, fP0 = farmPlain.snaps.a || {}, fE0 = farmEarly.snaps.a || {};
+    ok('eight hours asleep with a farmhand: it works through them, and plants nothing at a time not yet reached',
+       !farmPlain.err && fP.harv - fP0.harv > 20 && fP.tend - fP0.tend > 20 && fP.ahead === 0,
+       farmPlain.err || ((fP.tend - fP0.tend) + ' tends, ' + (fP.harv - fP0.harv) + ' harvests, ' + (fP0.seeds - fP.seeds) + ' seeds planted, ' + fP.ahead + ' patches ahead of the clock'));
+    ok('to the digit the same when a save runs before the settle: tends, harvests and seeds, and still nothing ahead of the clock',
+       !farmEarly.err && fE.tend - fE0.tend === fP.tend - fP0.tend && fE.harv - fE0.harv === fP.harv - fP0.harv && fE0.seeds - fE.seeds === fP0.seeds - fP.seeds && fE.ahead === 0,
+       farmEarly.err || ((fE.tend - fE0.tend) + ' tends, ' + (fE.harv - fE0.harv) + ' harvests, ' + (fE0.seeds - fE.seeds) + ' seeds planted, ' + fE.ahead + ' patches ahead of the clock'));
+    ev('delete window.__sus');
+
     /* ── EVERY quest a guild can roll is completable ─────────────────────────
        The broadest guard in the file: it rolls the whole quest space at four level
        bands and asks, of each one, "could the player actually finish this today?"
@@ -10653,25 +10832,34 @@ setTimeout(() => {
          ['fire', gap, n]   the timer fires n times, each `gap` ms after the last
          ['jump', ms]       time passes and nothing fires
          ['tick'] ['save']  the 250 ms loop, and a save
-         ['stop'] ['engage'] ['snap', name] */
+         ['stop'] ['engage'] ['snap', name]
+         ['engage', id]     the same, against another monster
+         ['flee'] ['die']   fleeCombat(), and the game's own death with health at 0 */
     ev(`window.__hw=function(o){
-      var D=Date.now, R=Math.random, SI=window.setInterval, CI=window.clearInterval, CT=window.combatTick;
-      var keep={menu:mmAtMenu, slot:mmSlot, ls:window.lsSet, mode:combatMode}, kept={};
+      var D=Date.now, R=Math.random, SI=window.setInterval, CI=window.clearInterval, CT=window.combatTick, RD=window._resolvePlayerDeath;
+      var keep={menu:mmAtMenu, slot:mmSlot, ls:window.lsSet, mode:combatMode, base:_coinsBaseline}, kept={};
       var PAINT=['renderCombat','updateCombatBars','cmbSplat','renderRightPanel'];
       var QUIET=['renderAll','renderHeader','toast','showHint','refreshCombatTabIndicator','renderSkillList','showOfflineSummary','renderQuestDock','questCheck','renderPets','showDemoBuy'];
-      var out={steps:0, fires:0, most:0, per:[], snaps:{}, held:{}, drawn:{}, leaked:0, err:''};
+      var out={steps:0, fires:0, most:0, per:[], snaps:{}, held:{}, drawn:{}, leaked:0, deaths:0, err:''};
       var fake=D.call(Date), mine=function(){ return fake; }, T={fn:null,id:0,n:0}, mon=o.mon||'brood_rat';
       function snap(){ return {kills:(state.monKills&&state.monKills[mon])||0, food:state.items.cooked_minnow||0, hp:combat.youHp, foeHp:combat.foeHp,
         coins:state.coins||0, xp:JSON.stringify(state.combatXp), on:!!combat.active, timerOn:!!T.fn, timers:T.n, steps:out.steps,
         offXp:state.offlineXp||0, seenBehind:state.lastSeen?fake-state.lastSeen:null, clock:Date.now===mine, idle:_combatCatchUp===null,
+        /* which monster is in front of you, which one the save says is, every kill
+           so far, and what the gold watch would call a jump at the next save */
+        mon:combat.monId, session:state.combatSession?state.combatSession.monId:null, all:JSON.parse(JSON.stringify(state.monKills||{})),
+        watch:_coinsBaseline==null?null:(state.coins||0)-_coinsBaseline,
+        /* deaths so far, and how often the fight log has said the food ran out */
+        deaths:out.deaths, said:combat.log.filter(function(l){ return /ran out of food/i.test(l.t); }).length,
         held:JSON.parse(JSON.stringify(out.held)), drawn:JSON.parse(JSON.stringify(out.drawn))}; }
       try{
         state=defaultState(); normalizeState();
         ['attack','strength','defence','hitpoints'].forEach(function(k){ state.combatXp[k]=XP_CUM[o.lv||8]; });
-        state.items={bronze_sword:1}; if(o.food!==0) state.items.cooked_minnow=100000;
+        state.items={bronze_sword:1}; if(o.food!==0) state.items.cooked_minnow=(o.food>0?o.food:100000);
         state.combatEquipped={weapon:'bronze_sword'};
         state.hints=state.hints||{}; state.hints.combat_unarmed=1;
         mmAtMenu=false; mmSlot=o.slot?3:0; window.lsSet=function(){ return true; };
+        if(o.watch) _coinsBaseline=state.coins||0;   // the gold watch, armed as mmFinishStart arms it
         QUIET.forEach(function(k){ if(typeof window[k]==='function'){ kept[k]=window[k]; window[k]=function(){}; } });
         /* The four paints a catch-up holds back. Counted here; really drawn only
            when the test asks for it, because jsdom draws slowly. A call made while
@@ -10691,6 +10879,8 @@ setTimeout(() => {
         window.clearInterval=function(id){ if(id&&id===T.id){ T.fn=null; return; } return CI.apply(window,arguments); };
         var inFire=0;
         window.combatTick=function(){ out.steps++; inFire++; if(o.throwAt&&out.steps===o.throwAt) throw new Error('thrown on purpose'); return CT(); };
+        window._resolvePlayerDeath=function(){ out.deaths++; return RD.apply(this,arguments); };
+        combat.log.length=0;
         combatMode=(o.panel!==false); state.cmbSubTab='arena'; state.zone='rat_warrens'; combat.monId=mon;
         engageCombat();
         out.engaged=!!combat.active; out.timer=T.fn?T.fn.name:''; out.splatHost=!!document.getElementById('cmbSplats');
@@ -10700,17 +10890,20 @@ setTimeout(() => {
           else if(op[0]==='tick') tick();
           else if(op[0]==='save') saveGame();
           else if(op[0]==='stop'){ stopCombatTimer(); combat.active=false; }
-          else if(op[0]==='engage'){ combat.youHp=combat.youMaxHp; engageCombat(); }
+          else if(op[0]==='engage'){ if(op[1]) combat.monId=op[1]; combat.youHp=combat.youMaxHp; engageCombat(); }
+          else if(op[0]==='flee') fleeCombat();
+          else if(op[0]==='die'){ combat.youHp=0; _resolvePlayerDeath(); }
           else if(op[0]==='snap') out.snaps[op[1]]=snap();
         });
         out.end=snap();
       }catch(e){ out.err=String(e&&e.message||e); out.end=snap(); }
       finally{
-        Date.now=D; Math.random=R; window.combatTick=CT;
+        Date.now=D; Math.random=R; window.combatTick=CT; window._resolvePlayerDeath=RD;
         try{ stopCombatTimer(); }catch(e){}
         window.setInterval=SI; window.clearInterval=CI; window.lsSet=keep.ls;
         for(var k in kept) window[k]=kept[k];
         combat.active=false; combat.raid=null; combatMode=keep.mode; mmAtMenu=keep.menu; mmSlot=keep.slot;
+        _coinsBaseline=keep.base;
         try{ _lastTickWall=0; }catch(e){}
         state=defaultState(); normalizeState();
       }
@@ -10765,6 +10958,96 @@ setTimeout(() => {
        S.settled.offXp > S.woke.offXp, 'Offline XP ' + S.woke.offXp + ' -> ' + S.settled.offXp);
     ok('and takes the fight up again on a fresh timer, which is on time from its first tick',
        S.settled.on && S.settled.timers === S.woke.timers + 1 && S.on.steps === S.settled.steps + 1, S.settled.timers + ' timers, ' + (S.on.steps - S.settled.steps) + ' tick');
+    /* The same sleep with one thing added: a save runs after the machine wakes and
+       before tick() settles. A save stamps lastSeen, so until 0.9.127.11 the settle
+       found no time away and all ten minutes went. tick() now hands over the gap
+       it measured. */
+    const sleepSaved = HW({ slot: true, ops: [['tick'], ['save'], ['fire', 100, 20], ['tick'], ['snap', 'awake'], ['fire', 600000], ['save'], ['snap', 'woke'], ['tick'], ['snap', 'settled'], ['fire', 100], ['snap', 'on']] });
+    const SS = sleepSaved.snaps;
+    const awayWon = s => s ? [s.offXp, s.kills, s.food, s.coins, s.xp].join(' | ') : 'no snapshot';
+    ok('the same sleep with a save run before tick(): lastSeen says no time has passed, and it is settled all the same',
+       !sleepSaved.err && SS.woke.seenBehind === 0 && SS.settled.offXp > SS.woke.offXp && SS.settled.kills > SS.woke.kills,
+       sleepSaved.err || ('lastSeen ' + SS.woke.seenBehind + ' ms behind, Offline XP ' + SS.woke.offXp + ' -> ' + SS.settled.offXp + ', kills ' + SS.woke.kills + ' -> ' + SS.settled.kills));
+    ok('to the digit what the sleep with no save comes to: Offline XP, kills, food, gold and combat XP',
+       !sleepSaved.err && awayWon(SS.settled) === awayWon(S.settled), awayWon(SS.settled).slice(0, 70) + '  vs  ' + awayWon(S.settled).slice(0, 70));
+    ok('and the fight is taken up again, on time from its first tick',
+       !sleepSaved.err && SS.settled.on && SS.on.steps === SS.settled.steps + 1, (SS.on ? SS.on.steps - SS.settled.steps : '?') + ' tick');
+
+    /* The fight that is settled is the one standing when the machine slept, not the
+       one the last save saw (0.9.127.11). All the settle knows of a fight is
+       state.combatSession, and only saveGame() wrote it, so it could be five seconds
+       behind. Each case below changes the fight AFTER the last save and then sleeps
+       ten minutes with nothing saving on the way back. tick() now takes the fight
+       as it stands before it settles.
+
+       The raid half of this (a stale session resumed INTO a raid) and the gold
+       watch against its real line are in _raidmom.js, which boots the full game. */
+    const snapOf = (r, k) => (r.snaps && r.snaps[k]) || {};
+    const brood = s => (s.all && s.all.brood_rat) || 0, dire = s => (s.all && s.all.dire_rat) || 0;
+    const usual = S.settled.kills - S.woke.kills;
+
+    const begun = HW({ slot: true, ops: [['stop'], ['tick'], ['save'], ['engage'], ['fire', 100, 20], ['tick'], ['snap', 'awake'], ['fire', 600000], ['tick'], ['snap', 'settled'], ['fire', 100], ['snap', 'on']] });
+    const bA = snapOf(begun, 'awake'), bS = snapOf(begun, 'settled'), bN = snapOf(begun, 'on');
+    ok('press Fight and close the lid: the fight is on, and the save has not seen it',
+       !begun.err && bA.on === true && bA.session === null, begun.err || ('fighting ' + bA.on + ', session in the save ' + bA.session));
+    ok('it is settled all the same, for the kills a fight the save had seen gets',
+       brood(bS) - brood(bA) === usual && usual > 0 && bS.offXp > bA.offXp, (brood(bS) - brood(bA)) + ' kills, against ' + usual);
+    ok('and taken up again, on time from its first tick',
+       bS.on === true && bS.session === 'brood_rat' && bN.steps === bS.steps + 1, 'fighting ' + bS.on + ', session ' + bS.session);
+
+    const fled = HW({ slot: true, ops: [['tick'], ['fire', 100, 20], ['save'], ['flee'], ['tick'], ['snap', 'awake'], ['fire', 600000], ['tick'], ['snap', 'settled']] });
+    const fA = snapOf(fled, 'awake'), fS = snapOf(fled, 'settled');
+    ok('flee after the last save: you are out of the fight, and the save still says you are in it',
+       !fled.err && fA.on === false && fA.session === 'brood_rat', fled.err || ('fighting ' + fA.on + ', session in the save ' + fA.session));
+    ok('ten minutes asleep settles none of it: no kills, no gold, no food eaten',
+       brood(fS) === brood(fA) && fS.coins === fA.coins && fS.food === fA.food, 'kills ' + brood(fA) + ' -> ' + brood(fS) + ', food ' + fA.food + ' -> ' + fS.food);
+    ok('the fight is not started again, the session is gone, and the Offline skill still gets its time',
+       fS.on === false && fS.timerOn === false && fS.session === null && fS.offXp > fA.offXp, 'fighting ' + fS.on + ', session ' + fS.session + ', Offline XP ' + fA.offXp + ' -> ' + fS.offXp);
+
+    const lost = HW({ slot: true, ops: [['tick'], ['fire', 100, 20], ['save'], ['die'], ['tick'], ['snap', 'awake'], ['fire', 600000], ['tick'], ['snap', 'settled']] });
+    const lA = snapOf(lost, 'awake'), lS = snapOf(lost, 'settled');
+    ok('nor is a fight you LOST after the last save settled, or started again',
+       !lost.err && lA.on === false && lA.session === 'brood_rat' && brood(lS) === brood(lA) && lS.coins === lA.coins && lS.on === false && lS.session === null,
+       lost.err || ('session in the save ' + lA.session + '; after: kills ' + brood(lA) + ' -> ' + brood(lS) + ', fighting ' + lS.on));
+
+    const swapped = HW({ slot: true, ops: [['tick'], ['fire', 100, 20], ['save'], ['flee'], ['engage', 'dire_rat'], ['fire', 100, 5], ['tick'], ['snap', 'awake'], ['fire', 600000], ['tick'], ['snap', 'settled']] });
+    const wA = snapOf(swapped, 'awake'), wS = snapOf(swapped, 'settled');
+    ok('change monster after the last save: you are on a Dire Rat, the save says Brood Rat',
+       !swapped.err && wA.on === true && wA.mon === 'dire_rat' && wA.session === 'brood_rat', swapped.err || ('fighting ' + wA.mon + ', session in the save ' + wA.session));
+    ok('it is the Dire Rat that is settled and taken up again, and not one more Brood Rat',
+       dire(wS) > dire(wA) && brood(wS) === brood(wA) && wS.on === true && wS.mon === 'dire_rat' && wS.session === 'dire_rat',
+       'Dire Rat kills ' + dire(wA) + ' -> ' + dire(wS) + ', Brood Rat ' + brood(wA) + ' -> ' + brood(wS) + ', fighting ' + wS.mon);
+
+    /* The gold watch. Its line is half a million gold, which nothing in the demo
+       earns, so here it is the sum that is held: the watch's baseline moves by
+       exactly what the settle added, and what it would call a jump is still 0. */
+    const purse = HW({ slot: true, watch: true, ops: [['tick'], ['fire', 100, 20], ['save'], ['tick'], ['snap', 'awake'], ['fire', 600000], ['tick'], ['snap', 'settled']] });
+    const pA = snapOf(purse, 'awake'), pS = snapOf(purse, 'settled');
+    ok('the gold a settle adds is not a jump to the gold watch',
+       !purse.err && pA.watch === 0 && pS.coins > pA.coins && pS.watch === 0,
+       purse.err || ('the settle added ' + (pS.coins - pA.coins) + ' silver, the watch sees ' + pS.watch));
+
+    /* Out of food. When the satchel cannot cover the kills the time away would
+       give, the settle counts what the food allows and the fight is over. On a
+       launch nothing is running, so that was already true. After a sleep the fight
+       in front of you carried on with an empty satchel, under a Welcome Back panel
+       saying it had stopped, until you died. The settle now ends it (0.9.127.11).
+       Two ways to be out: too little food for the time, and none at all against
+       something that outlasts a full health bar. */
+    const lean = HW({ slot: true, food: 3, ops: [['tick'], ['save'], ['tick'], ['snap', 'awake'], ['fire', 600000], ['tick'], ['snap', 'settled'], ['fire', 100, 600], ['snap', 'on']] });
+    const eA = snapOf(lean, 'awake'), eS = snapOf(lean, 'settled'), eN = snapOf(lean, 'on');
+    ok('three minnows are not enough for ten minutes asleep: the fight is over when you come back, and the log says why',
+       !lean.err && eA.on === true && eA.food === 3 && eS.on === false && eS.timerOn === false && eS.session === null && eS.said === 1 && brood(eS) < brood(eA) + usual,
+       lean.err || ('minnows ' + eA.food + ' -> ' + eS.food + ', kills ' + brood(eA) + ' -> ' + brood(eS) + ' (a full satchel gets ' + usual + '), fighting ' + eS.on + ', said ' + eS.said + ' time(s)'));
+    ok('a minute on, nothing more has been fought and nobody has died',
+       brood(eN) === brood(eS) && eN.on === false && eN.deaths === 0 && eN.hp === eS.hp,
+       'kills ' + brood(eS) + ' -> ' + brood(eN) + ', deaths ' + eN.deaths);
+    const bare = HW({ slot: true, lv: 1, food: 0, mon: 'dire_rat', ops: [['tick'], ['save'], ['tick'], ['snap', 'awake'], ['fire', 600000], ['tick'], ['snap', 'settled'], ['fire', 100, 100], ['snap', 'on']] });
+    const rA = snapOf(bare, 'awake'), rS = snapOf(bare, 'settled'), rN = snapOf(bare, 'on');
+    ok('nothing to eat against a monster that outlasts your health: no kills are counted, and that fight is ended too',
+       !bare.err && rA.on === true && dire(rS) === dire(rA) && rS.on === false && rS.session === null && rS.said === 1 && rN.on === false && rN.deaths === 0,
+       bare.err || ('kills ' + dire(rA) + ' -> ' + dire(rS) + ', fighting ' + rS.on + ', said ' + rS.said + ' time(s); ten seconds on, deaths ' + rN.deaths));
+    ok('and with food to spare the fight log says nothing about food', S.settled.said === 0 && S.settled.on === true, 'said ' + S.settled.said + ' time(s), fighting ' + S.settled.on);
 
     /* A new fight does not inherit the time since the last one. */
     const again = HW({ ops: [['fire', 100, 5], ['stop'], ['jump', 600000], ['engage'], ['fire', 100], ['fire', 60000]] });

@@ -9065,7 +9065,7 @@ button.en-canchip.pick:disabled{opacity:.4;cursor:default}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.127.10">v0.9.127</div>
+  <div class="mm-ver" data-build="0.9.127.11">v0.9.127</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -22926,7 +22926,8 @@ function skillHasNewDiscovery(skillKey){
 const TICK_CATCHUP_MAX_MS = 120000;   // 2 minutes
 /* Wall-clock of the previous tick. Runtime only, never saved: a stale one out of
    a save file would read as a suspend the moment the game opened, and the boot
-   path already settles that case. */
+   path already settles that case. Cleared at the menu for the same reason:
+   whatever gap tick() measures from it is settled as time away. */
 let _lastTickWall = 0;
 const XPH_WINDOW = 120000; // 2 minute rolling window — smooth cross-activity average
 const XPH_WARMUP =  10000; // show theoretical for first 10s until real data builds up
@@ -23438,18 +23439,35 @@ function _serializeState(){
   state._seal = _cheatSeal(state);
   return JSON.stringify(state);
 }
+/* The fight a save can take up again, as it stands this instant: a fight in
+   progress that is not a raid, or nothing. state.combatSession is all that
+   grantOffline() and resumeCombatSession() ever know of a fight.
+
+   saveGame() calls this so that closing the game does not discard the fight, and
+   the sleep settle in tick() calls it for itself (0.9.127.11), because the last save
+   can be five seconds old and the fight may not be the same one.
+
+   A raid is never a session. It cannot be taken up again, so there is nothing to
+   write, and until 0.9.127.11 nothing was done at all: whatever the session held
+   when the raid began stayed in the save for the length of the raid. Flee a fight
+   and enter a raid before the next autosave, and that fight was still "in
+   progress" twenty minutes later. */
+function snapCombatSession(){
+  try{
+    if(typeof combat==='undefined' || !combat) return;
+    if(combat.active && !combat.raid){
+      state.combatSession={ monId:combat.monId, style:(state.combatStyle||'attack'),
+                            youHp:Math.round(combat.youHp), rare:!!combat.rare, at:Date.now() };
+    } else {
+      state.combatSession=null;
+    }
+  }catch(e){}
+}
 function saveGame(){
   /* Snapshot the live fight so closing the game does not discard it. Kept
      here rather than mirrored on every combat mutation: saveGame is the one
      place that definitely runs before the tab goes away. */
-  try{
-    if(typeof combat!=='undefined' && combat && combat.active && !combat.raid){
-      state.combatSession={ monId:combat.monId, style:(state.combatStyle||'attack'),
-                            youHp:Math.round(combat.youHp), rare:!!combat.rare, at:Date.now() };
-    } else if(typeof combat!=='undefined' && combat && !combat.active){
-      state.combatSession=null;
-    }
-  }catch(e){}
+  snapCombatSession();
   if(mmAtMenu || !mmSlot) return;
   state.lastSeen=Date.now();
   // Gold-spike watch: an impossibly large jump since the last save (a runtime
@@ -27499,7 +27517,9 @@ function completeDoubleAction(act,cycles){
 /* ════ [JS-21e] main tick ════════════════════════════════════════════════════════ */
 function tick(){
   if(typeof questCheck==='function') questCheck();
-  if(mmAtMenu) return;
+  /* No character is being played at the menu, so there is no last tick to measure
+     a gap from. See the end of A SUSPEND DURING A LIVE SESSION below. */
+  if(mmAtMenu){ _lastTickWall=0; return; }
   /* The dock's progress track, readout and sub-rows are generated from live state,
      so it has to repaint every tick. questCheck() only rendered when a step ADVANCED
      (it returns at `if(!done)`), which froze the bar at whatever it read the moment
@@ -27534,13 +27554,85 @@ function tick(){
      A gap past the clamp is settled the same way a relaunch settles it, because
      that path is already built and tested for exactly this: offline skilling XP,
      the offline combat resolve with its food limit and death safety, farming, and
-     the summary so the player can SEE what the away time paid. lastSeen is stale
-     by the gap for free — the autosave that stamps it was throttled too. */
+     the summary so the player can SEE what the away time paid.
+
+     THE TIME SETTLED IS THE GAP MEASURED HERE (0.9.127.11), handed to
+     grantOffline(). Until then grantOffline() read it off lastSeen, on the
+     reasoning that lastSeen is stale by the gap for free, because the autosave
+     that stamps it was throttled too. That holds only while nothing saves between
+     the machine waking and this line, and every saveGame() stamps lastSeen. When
+     something did, grantOffline() found no time away and the whole sleep was
+     dropped without a word: no Offline skill XP, no offline combat, no skilling.
+     What could save first:
+       - questCheck() at the top of this very function, when an opening objective
+         completes. Run in Chrome with the objective's logs in the bag, a 125 s
+         stall settled nothing;
+       - the fight's own late tick, which could eat, and eating saves: 4 sleeps
+         of 24 on a held clock. Closed on its own in 0.9.127.5 (combatTimerTick
+         steps aside for a gap this long);
+       - the 5 s autosave and the farmhand's harvest on the 2 s timer, in an
+         engine that runs those timers ahead of this one. Chrome does not: the
+         four timers mmStartEngine starts together stay in step, and in 240
+         stalls neither ran ahead of it, while the ember timer, started at page
+         load on a phase of its own, did 7 times. An engine that counts an
+         interval from when it last ran, not from when it was due, lets them
+         drift apart, and the demo runs in any browser.
+     The gap needs nothing from a save, so no save can take it away, whoever runs
+     first and whatever is added later.
+
+     It cannot be settled twice either. _lastTickWall moves to `now` just below,
+     so the next gap starts where this one ended whether or not a save has run in
+     between. Read off lastSeen, two sleeps with no save between them settled the
+     first one again.
+
+     lastSeen was doing one more job that nobody had written down. After a visit
+     to the menu the first tick back still held a _lastTickWall from before the
+     visit, came in here, and was turned away only because mmFinishStart had
+     saved a moment earlier. That time is the launch path's, and it has already
+     settled it. So the last tick is forgotten at the menu, in mmShowMenu() as
+     the character is left and at the top of this function for as long as the
+     menu is up, and a gap can never reach back across one. */
   if(_lastTickWall){
     const _gap = now - _lastTickWall;
     if(_gap > TICK_CATCHUP_MAX_MS && !mmAtMenu && mmSlot){
       try{
-        grantOffline();
+        /* THE FIGHT SETTLED IS THE ONE STANDING NOW (0.9.127.11), not the one the
+           last save saw. Only saveGame() wrote state.combatSession, so it could be
+           five seconds behind the fight, and the settle went by it for the whole
+           sleep. Measured, ten minutes asleep:
+             - a fight begun in those seconds earned no kills at all (press Fight,
+               close the lid);
+             - one that was fled, or lost, was settled anyway and started again;
+             - a changed monster was settled, and came back, as the old one;
+             - a raid entered in those seconds kept the stale session for as long
+               as the raid lasted, and the resume put that fight INTO the raid: the
+               stage's monster was swapped for it at full health, and killing it
+               moved the raid on. Flee a Cave Rat, enter the hardest raid, sleep
+               two minutes, and stage one was a Cave Rat.
+           A save that happened to run just before this line put the first three
+           right, which is the same dependence on who saved first the time used to
+           have. Nothing put the fourth right: saveGame() left the session alone
+           for the whole of a raid. */
+        snapCombatSession();
+        /* The settle's gold is honest gold. mmFinishStart re-reads the gold watch's
+           baseline after its own settle, so that offline gold never trips it; here
+           the baseline moves by what the settle added and by nothing else, so the
+           watch still sees gold that arrived any other way. Without this, six hours
+           asleep in a Lv 99 fight (about 900,000 gold on a Demon, against a line of
+           500,000) sent "Sudden gold spike (possible injection)" to the audit
+           channel on the next save, about an honest player. */
+        const _gold=state.coins||0;
+        let _settle=null;
+        try{ _settle=grantOffline(_gap); }
+        finally{ if(_coinsBaseline!=null) _coinsBaseline+=(state.coins||0)-_gold; }
+        /* OUT OF FOOD (0.9.127.11). When the satchel cannot cover the kills the time
+           away would give, the settle counts what the food allows and the fight is
+           over: "you never die while away". On a launch that is true, because no
+           fight is running. Here one still was. The resume below found no session
+           and did nothing, so the fight carried on with an empty satchel, under a
+           Welcome Back panel saying it had stopped: three fish and six hours asleep
+           on a Demon was two more kills and then a death. */
+        if(_settle && _settle.fightEnded) stopFightOutOfFood();
         try{ resumeCombatSession(); }catch(e){}
         /* The action's own clock is settled now. Without this the clamp below
            would pay a further two minutes at the online rate for time grantOffline
@@ -27858,14 +27950,20 @@ function offlineCombatResolve(awayMs, om){
 }
 
 /* ════ [JS-21f] offline grant & summary ══════════════════════════════════════════ */
-function grantOffline(){
-  if(!state.lastSeen) return;
+/* `measured` is tick()'s alone: the length of a gap between two of its own ticks,
+   when the machine slept or was locked with the game open (A SUSPEND DURING A LIVE
+   SESSION, in tick(), says why it is not read off the save). Launching the game
+   and importing a save hand over nothing, and the time away is read off lastSeen
+   exactly as it always has been. */
+function grantOffline(measured){
+  const _own=measured>0;
+  if(!_own && !state.lastSeen) return;
   const om=offlineMods();
   /* The cap the SLOTS work against, stance included — Dead to the World counts half
      of it. Reported as the real cap so the Welcome Back panel says the number the
      player actually has, and so "capped" means what it says. */
   const capMs=offlineCapMs();
-  const awayRaw=Date.now()-state.lastSeen;
+  const awayRaw=_own ? measured : Date.now()-state.lastSeen;
   const away=Math.min(awayRaw, capMs);
   if(away<10000) return; // less than 10s — ignore
 
@@ -28074,6 +28172,12 @@ function grantOffline(){
     totalLevels:summary.reduce((s,l)=>s+(l.lvlUp?1:0),0)
   };
   if(summary.length) showOfflineSummary(away,summary,meta);
+  /* What the caller may have to act on (0.9.127.11). The sleep settle in tick() has
+     a fight still running in front of it, and has to end it when the food ran out;
+     a launch has nothing running and ignores this. Told here, and not left for the
+     caller to read off state.combatSession, because a save anywhere in this
+     function writes the session straight back from the fight that is still live. */
+  return { fightEnded: !!(_offCombat && _offCombat.ranOut) };
 }
 
 function showOfflineSummary(awayMs, lines, meta){
@@ -44429,12 +44533,39 @@ function fleeCombat(){
   refreshCombatTabIndicator();
 }
 
+/* End the fight in front of you because the settle ran the satchel dry (0.9.127.11).
+   Only the sleep settle in tick() calls this: it is the one place a fight is still
+   live when grantOffline() has just decided it is over. Cleared as fleeCombat()
+   clears a fight, and said the way an empty quiver is said. The session goes too,
+   whatever a save may have written back into it, so nothing takes the fight up
+   again behind this. Never a raid: a raid is not settled as a fight at all. */
+function stopFightOutOfFood(){
+  if(!combat.active || combat.raid) return false;
+  stopCombatTimer();
+  combat.active=false;
+  combat.rare=false;
+  combat.regens=[];
+  combat.foeStatus={}; cmastResetFight();
+  combat.youSwingStart=0;
+  combat.foeSwingStart=0;
+  state.combatSession=null;
+  cmbLog('\u2716 You ran out of food while you were away. The fight stops.','miss');
+  renderCombat();
+  refreshCombatTabIndicator();
+  return true;
+}
+
 /* Resume the fight the save was holding (0.9.122). Called after grantOffline,
    which has already rewarded the away time and cleared the session if food ran
    out — so reaching here means there is still a fight worth standing in. */
 function resumeCombatSession(){
   const cs=state && state.combatSession;
   if(!cs) return false;
+  /* Never into a raid (0.9.127.11). Everything below rewrites the fight in front of
+     you, and with a raid live that is the raid's own stage: its monster became the
+     session's, at full health, and killing that one cleared the stage. A session
+     found while a raid is live is a leftover by definition, so it goes. */
+  if(combat.raid){ state.combatSession=null; return false; }
   const mon=(typeof getMonster==='function')?getMonster(cs.monId):null;
   if(!mon){ state.combatSession=null; return false; }
   if(state.action) return false;          // one or the other; skilling wins a tie
@@ -53501,6 +53632,10 @@ function mmSummary(n){
 }
 function mmShowMenu(){
   mmAtMenu=true; mmSlot=0;
+  /* tick()'s clock stops with the character. A last tick kept across the menu
+     would read as a suspend on the first tick back, and that time is settled by
+     mmFinishStart on the way in (see A SUSPEND DURING A LIVE SESSION in tick()). */
+  _lastTickWall=0;
   _farmTickAt=0;   // a visit to the menu is settled by the launch path, never played through by the farming timer
   // Storage blocked (see getDeviceId): the game runs but nothing can ever be
   // saved. Say so once, rather than letting the player lose a session to it.

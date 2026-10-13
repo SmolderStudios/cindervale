@@ -391,6 +391,179 @@ setTimeout(()=>{
     ok('and the two hits are one cast to Momentum', rd.twice.mom===rd.twice.perHit, '+'+rd.twice.mom);
   }
 
+  section('A machine that sleeps, in the full game (0.9.127.11)');
+  {
+    /* Over two minutes without a tick is a sleeping machine, and tick() settles the
+       gap as time away: grantOffline(), then resumeCombatSession(). All either of
+       them knows of a fight is state.combatSession, and until 0.9.127.11 only
+       saveGame() wrote that, up to five seconds behind the fight. It also left it
+       alone for the whole of a raid. So: flee a fight, enter a raid before the next
+       autosave, and the fled fight was still "in progress" for as long as the raid
+       ran. Sleep in that raid and the settle credited the fled monster's kills,
+       then resumed that fight INTO the raid: the stage's monster became the fled
+       one at full health, and killing it moved the raid on. Flee a Cave Rat and
+       stage one of any raid was a Cave Rat.
+
+       Here because this harness boots the full game: a raid wants Lv 70 and the
+       gold watch wants half a million gold, and the demo that _audit_tests.js runs
+       as has neither. On a clock this holds, through the timer the game starts.
+       `ops` is what happens, in order:
+         ['engage', id] ['flee'] ['raid', id]   the game's own
+         ['fire', gap, n]   the fight's timer fires n times, each `gap` ms after the last
+         ['tick'] ['save']  the 250 ms loop, and saveGame()
+         ['plant', id]      a session written straight into the save
+         ['resume']         resumeCombatSession(), called as the settle calls it
+         ['gold', n]        n gold arrives from nowhere
+         ['food', n]        how many Cooked Void Eels are in the satchel
+         ['saveInSettle']   a save runs inside the settle, after the fight is resolved
+         ['snap', name] */
+    ev(`window.__slp=function(ops){
+      var D=Date.now, R=Math.random, SI=window.setInterval, CI=window.clearInterval, AP=window._auditPing, RD=window._resolvePlayerDeath, kept={};
+      var keep={menu:mmAtMenu, slot:mmSlot, ls:window.lsSet, base:_coinsBaseline, mode:combatMode};
+      var QUIET=['renderCombat','updateCombatBars','cmbSplat','renderAll','renderRightPanel','renderHeader','toast','showHint','refreshCombatTabIndicator','renderSkillList','logNotification','showOfflineSummary','renderQuestDock','questCheck','renderPets','showItemPop','showXpPop'];
+      var out={snaps:{}, pings:[], resumed:null, deaths:0, err:''};
+      var fake=D.call(Date), T={fn:null,id:0,n:0};
+      function snap(){ return { mon:combat.monId, on:!!combat.active, raid:combat.raid?combat.raid.id:'', stage:combat.raid?combat.raid.stage:-1,
+        foeHp:Math.round(combat.foeHp||0), hp:Math.round(combat.youHp||0), session:state.combatSession?state.combatSession.monId:null,
+        kills:JSON.stringify(state.monKills||{}), offXp:state.offlineXp||0, gold:Math.round((state.coins||0)/SILVER_PER_GOLD), pings:out.pings.length,
+        /* the food left, whether the fight's timer is still set, deaths so far, and
+           the lines in the fight log that say the food ran out */
+        food:state.items.cooked_voideel||0, timerOn:!!T.fn, deaths:out.deaths,
+        said:combat.log.filter(function(l){ return /ran out of food/i.test(l.t); }).map(function(l){ return l.t; }),
+        took:combat.log.filter(function(l){ return /take up the fight/i.test(l.t); }).length }; }
+      try{
+        state=defaultState(); normalizeState();
+        for(const k of ['attack','strength','defence','hitpoints','ranged']) state.combatXp[k]=XP_CUM[99];
+        var eq={weapon:'starsteel_sword', shield:'starsteel_shield', helmet:'starsteel_helm', chest:'starsteel_chest', legs:'starsteel_legs', gloves:'starsteel_gloves', boots:'starsteel_boots', cape:'starsteel_cape'};
+        state.items={cooked_voideel:1000000}; for(var s in eq) state.items[eq[s]]=1;
+        state.combatEquipped=eq;
+        state.hints=state.hints||{}; state.hints.combat_unarmed=1;
+        mmAtMenu=false; mmSlot=3; _lastTickWall=0;
+        window.lsSet=function(){ return true; };           // the save runs and stamps; only the write to storage is left out
+        _coinsBaseline=state.coins||0;                     // as mmFinishStart leaves it on the way in
+        QUIET.forEach(function(k){ if(typeof window[k]==='function'){ kept[k]=window[k]; window[k]=function(){}; } });
+        window._auditPing=function(reason){ out.pings.push(String(reason)); };   // counted, never sent
+        window._resolvePlayerDeath=function(){ out.deaths++; return RD.apply(this,arguments); };
+        refreshCombatStats();
+        Date.now=function(){ return fake; };
+        Math.random=(function(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; var t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; })(4242);
+        window.setInterval=function(fn,ms){ if(ms===100){ T.fn=fn; T.id=800000+(++T.n); return T.id; } return SI.apply(window,arguments); };
+        window.clearInterval=function(id){ if(id&&id===T.id){ T.fn=null; return; } return CI.apply(window,arguments); };
+        try{ stopCombatTimer(); }catch(e){} combat.active=false; combat.raid=null; combat.raidDebuff=null; clearRaidMomentum(); _raidResult=null;
+        combatMode=true; state.cmbSubTab='arena'; combat.log.length=0;
+        ops.forEach(function(op){
+          if(op[0]==='engage'){ state.zone=getMonster(op[1]).zone; combat.monId=op[1]; combat.youHp=combat.youMaxHp; engageCombat(); }
+          else if(op[0]==='flee') fleeCombat();
+          else if(op[0]==='raid') startRaid(op[1]);
+          else if(op[0]==='fire'){ for(var i=0;i<(op[2]||1);i++){ fake+=op[1]; if(T.fn) T.fn(); } }
+          else if(op[0]==='tick') tick();
+          else if(op[0]==='save') saveGame();
+          else if(op[0]==='plant') state.combatSession={monId:op[1], style:'attack', youHp:combat.youMaxHp, rare:false, at:fake};
+          else if(op[0]==='resume') out.resumed=resumeCombatSession();
+          else if(op[0]==='gold') state.coins=(state.coins||0)+op[1]*SILVER_PER_GOLD;
+          else if(op[0]==='food'){ if(op[1]) state.items.cooked_voideel=op[1]; else delete state.items.cooked_voideel; }
+          else if(op[0]==='saveInSettle') window.showOfflineSummary=function(){ saveGame(); };   // the last thing grantOffline() calls
+          else if(op[0]==='snap') out.snaps[op[1]]=snap();
+        });
+      }catch(e){ out.err=String(e&&e.message||e); }
+      finally{
+        Date.now=D; Math.random=R; window._auditPing=AP; window._resolvePlayerDeath=RD;
+        try{ stopCombatTimer(); }catch(e){}
+        window.setInterval=SI; window.clearInterval=CI; window.lsSet=keep.ls;
+        for(var k in kept) window[k]=kept[k];
+        combat.active=false; combat.raid=null; combat.raidDebuff=null; combat.bossfx=null; combat.monfx=null; clearRaidMomentum(); _raidResult=null;
+        combatMode=keep.mode; mmAtMenu=keep.menu; mmSlot=keep.slot; _coinsBaseline=keep.base; _lastTickWall=0;
+        state=defaultState(); normalizeState();
+      }
+      return JSON.stringify(out);
+    };`);
+    const SLP=ops=>JSON.parse(ev('__slp('+JSON.stringify(ops)+')'));
+    const TEN=600000, HARD=ev("RAIDS.filter(function(r){ return !r.endless; }).slice(-1)[0].id");
+    const first=ev("getRaid('"+HARD+"').stages[0].id");
+
+    /* Flee a Cave Rat, enter the hardest raid before any save, sleep ten minutes. */
+    const stale=SLP([['tick'],['engage','rat'],['fire',100,20],['save'],['flee'],['raid',HARD],['fire',100,30],['tick'],['snap','asleep'],
+                     ['fire',TEN],['tick'],['snap','woke'],['fire',100,3],['snap','on']]);
+    const A=stale.snaps.asleep||{}, W=stale.snaps.woke||{}, N=stale.snaps.on||{};
+    ok('the case: a fled Cave Rat is still the fight in the save, three seconds into the hardest raid',
+       !stale.err && A.session==='rat' && A.raid===HARD && A.mon===first && A.on===true,
+       stale.err || ('session '+A.session+', in '+A.raid+' against '+A.mon));
+    ok('ten minutes asleep there settles no fight: not one Cave Rat is credited',
+       W.kills===A.kills && W.gold===A.gold, 'kills '+A.kills+' -> '+W.kills+', gold '+A.gold+' -> '+W.gold);
+    ok('the time away still counts for what it should: the Offline skill', W.offXp>A.offXp, 'Offline XP '+A.offXp+' -> '+W.offXp);
+    ok('and the raid is left exactly as it was: the same stage, the same monster, the same health on both sides',
+       W.raid===HARD && W.stage===A.stage && W.mon===first && W.foeHp===A.foeHp && W.hp===A.hp && W.on===true,
+       W.mon+' '+W.foeHp+' (was '+A.mon+' '+A.foeHp+'), you '+W.hp+' (was '+A.hp+'), stage '+(W.stage+1));
+    ok('the leftover session is gone, and the raid goes on against its own monster',
+       W.session===null && N.mon===first && N.raid===HARD && N.foeHp<=W.foeHp, 'session '+W.session+'; three ticks on, '+N.mon+' '+N.foeHp);
+
+    /* The half no save ever put right: saveGame() left the session alone in a raid. */
+    const inRaid=SLP([['tick'],['engage','rat'],['fire',100,20],['save'],['flee'],['raid',HARD],['fire',100,10],['snap','entered'],['save'],['snap','saved']]);
+    ok('a save made in a raid does not keep a fight in it: a raid is never a session',
+       !inRaid.err && inRaid.snaps.entered.session==='rat' && inRaid.snaps.saved.session===null && inRaid.snaps.saved.raid===HARD,
+       inRaid.err || ('session '+inRaid.snaps.entered.session+' before the save, '+inRaid.snaps.saved.session+' after'));
+
+    /* And the last line of defence, whoever leaves a session lying about. */
+    const guard=SLP([['raid',HARD],['fire',100,10],['snap','before'],['plant','rat'],['resume'],['snap','after']]);
+    ok('resumeCombatSession() refuses while a raid is live, and drops the session it was handed',
+       !guard.err && guard.resumed===false && guard.snaps.after.mon===first && guard.snaps.after.foeHp===guard.snaps.before.foeHp
+       && guard.snaps.after.hp===guard.snaps.before.hp && guard.snaps.after.session===null,
+       guard.err || ('returned '+guard.resumed+', still '+guard.snaps.after.mon+' '+guard.snaps.after.foeHp));
+
+    /* The gold watch. saveGame() sends "Sudden gold spike (possible injection)" to
+       the audit channel when gold has risen by more than GOLD_SPIKE since the last
+       save. mmFinishStart re-reads the baseline after its own settle so that honest
+       offline gold never trips it. The sleep settle did not, so six hours asleep in
+       a Lv 99 fight flagged an honest player. */
+    const line=ev('GOLD_SPIKE/SILVER_PER_GOLD');
+    const rich=SLP([['tick'],['engage','demon'],['fire',100,20],['save'],['tick'],['snap','asleep'],['fire',6*3600000],['tick'],['snap','woke'],
+                    ['save'],['snap','saved'],['gold',line+100000],['save'],['snap','odd']]);
+    const G=rich.snaps;
+    ok('six hours asleep on a Demon settles more gold than the watch allows between two saves',
+       !rich.err && G.woke.gold-G.asleep.gold>line, rich.err || ((G.woke.gold-G.asleep.gold).toLocaleString('en-US')+' gold against a line of '+line.toLocaleString('en-US')));
+    ok('and the next save sends no gold spike for it', G.saved.pings===0, G.saved.pings+' sent');
+    ok('gold that arrives any other way still trips the watch', G.odd.pings===1, G.odd.pings+' sent for '+(line+100000).toLocaleString('en-US')+' gold from nowhere');
+    /* The baseline moves by what the settle added, and is not simply read again:
+       reading it again would wave through anything that arrived since the last
+       save, alongside the settle. */
+    const mixed=SLP([['tick'],['engage','demon'],['fire',100,20],['save'],['tick'],['gold',line+100000],['fire',6*3600000],['tick'],['snap','woke'],['save'],['snap','saved']]);
+    ok('even when it arrives between the last save and the settle', !mixed.err && mixed.snaps.saved.pings===1,
+       mixed.err || (mixed.snaps.saved.pings+' sent'));
+
+    /* Out of food. offlineCombatResolve() treats food as the limit: when the satchel
+       cannot cover the kills the time away would give, it settles what the food
+       allows, clears the session, and the fight is over. On a launch that is true,
+       because nothing is running. After a sleep the fight in front of you still
+       was: resumeCombatSession() found no session and did nothing, and the fight
+       carried on with an empty satchel, under a Welcome Back panel saying it had
+       stopped, until you died. The settle now ends it, on grantOffline()'s own
+       word and not on what the save holds, because a save run inside the settle
+       writes the session straight back from the fight that is still live. */
+    const SIX=6*3600000;
+    const dry=SLP([['tick'],['engage','demon'],['fire',100,20],['save'],['food',3],['tick'],['snap','asleep'],['fire',SIX],['tick'],['snap','woke'],['fire',100,600],['snap','on']]);
+    const DA=dry.snaps.asleep||{}, DW=dry.snaps.woke||{}, DN=dry.snaps.on||{};
+    ok('the case: three fish in the satchel, six hours asleep on a Demon, and the settle eats all three',
+       !dry.err && DA.on===true && DA.food===3 && DW.food===0 && DW.kills!==DA.kills,
+       dry.err || ('fish '+DA.food+' -> '+DW.food+', kills '+DA.kills+' -> '+DW.kills));
+    ok('the fight in front of you is over when you come back: not running, its timer cleared, nothing left in the save',
+       DW.on===false && DW.timerOn===false && DW.session===null, 'fighting '+DW.on+', timer '+DW.timerOn+', session '+DW.session);
+    ok('and the fight log says why, once', (DW.said||[]).length===1, (DW.said||[]).join(' | ')||'nothing said');
+    ok('a minute on, nothing more has been fought and nobody has died',
+       DN.kills===DW.kills && DN.on===false && DN.deaths===0 && DN.hp===DW.hp,
+       'kills '+DW.kills+' -> '+DN.kills+', deaths '+DN.deaths+', health '+DW.hp+' -> '+DN.hp);
+    const dry2=SLP([['tick'],['engage','demon'],['fire',100,20],['save'],['food',3],['tick'],['saveInSettle'],['fire',SIX],['tick'],['snap','woke'],['fire',100,600],['snap','on']]);
+    const D2W=dry2.snaps.woke||{}, D2N=dry2.snaps.on||{};
+    ok('a save run inside the settle cannot bring the fight back',
+       !dry2.err && D2W.on===false && D2W.session===null && D2N.on===false && D2N.deaths===0 && D2N.kills===D2W.kills,
+       dry2.err || ('fighting '+D2W.on+', session '+D2W.session+'; a minute on: kills '+D2W.kills+' -> '+D2N.kills+', deaths '+D2N.deaths));
+    ok('not even for a moment: the fight is ended before the resume looks, so it is never taken up and dropped again',
+       D2W.took===0 && DW.took===0 && G.woke.took===1, 'taken up '+D2W.took+' and '+DW.took+' times out of food, '+G.woke.took+' time with food to spare');
+    ok('with food to spare the fight is taken up again exactly as before, and the log says nothing about food',
+       G.woke.on===true && G.woke.timerOn===true && G.woke.session==='demon' && G.woke.said.length===0 && G.woke.food>0,
+       'fighting '+G.woke.on+', session '+G.woke.session+', '+G.woke.food.toLocaleString('en-US')+' fish left');
+    ev('delete window.__slp');
+  }
+
   console.log('\n'+(fail? fail+' FAILED, '+pass+' passed'
                         : 'PASS — all '+pass+' raid-momentum checks'));
   process.exit(fail?1:0);
