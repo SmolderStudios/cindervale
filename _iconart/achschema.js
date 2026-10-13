@@ -16,14 +16,10 @@ const { JSDOM } = require('jsdom');
 const raw = fs.readFileSync(path.join(__dirname, '..', 'cindervale.html'), 'utf8');
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131.0 Electron/33.0 Safari/537.36';
 const ICONS = 'C:/Users/Jordan/Desktop/Cindervale/store/achievement icons';
-/* `--out <file>` writes the schema somewhere else, to read it before the one in the
-   store folder is replaced. The icon check still looks in the store folder. */
-const _outAt = process.argv.indexOf('--out');
-const OUT = _outAt > 0 && process.argv[_outAt + 1] ? path.resolve(process.argv[_outAt + 1]) : path.join(ICONS, 'STEAM_SETUP.txt');
-/* The ids that existed in the PREVIOUS release, pulled straight out of git rather
-   than typed: the 62 of build 0.9.127.11 at commit 65126d8 (it was the 33 of
-   112b647 for the update before). Anything not in here is new in this update and
-   is a row that still has to be created on the partner site. */
+const OUT = path.join(ICONS, 'STEAM_SETUP.txt');
+/* The ids that existed in the PREVIOUS release, pulled straight out of git at
+   commit 112b647 rather than typed. Anything not in here is new in this update
+   and is a row that still has to be created on the partner site. */
 const PREV = new Set(JSON.parse(fs.readFileSync(path.join(__dirname, 'ach_previous.json'), 'utf8')));
 
 (async () => {
@@ -54,7 +50,7 @@ const PREV = new Set(JSON.parse(fs.readFileSync(path.join(__dirname, 'ach_previo
   L.push('NEW marks a row that did not exist before this update: ' + fresh.length +
          ' to create, ' + (A.length - fresh.length) + ' already in the previous set.');
   L.push('If the earlier ' + (A.length - fresh.length) + ' are already entered on the partner site, only the');
-  L.push('NEW rows need adding, each with its own two icons.');
+  L.push('NEW rows need adding - but re-upload every icon, all 124 were redrawn.');
   L.push('');
 
   const miss = [];

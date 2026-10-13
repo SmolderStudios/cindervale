@@ -35,14 +35,12 @@ const OUT = 'C:/Users/Jordan/Desktop/Cindervale/store/achievement icons';
 const arg = k => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : null; };
 const SIZE = +(arg('--size') || 64);
 
-/* One accent per category, so the nine groups read as a designed set. Magic is the
-   Sorcery column's own colour, which is paler than Collection's purple. */
+/* One accent per category, so the eight groups read as a designed set. */
 const CAT = {
   early:      '#c98a3c',
   skilling:   '#6fae4b',
   combat:     '#c0433c',
   ranged:     '#5fb9a6',
-  magic:      '#b9a4f0',
   sailing:    '#4d9bb0',
   guild:      '#8f96b8',
   collection: '#9a63c8',

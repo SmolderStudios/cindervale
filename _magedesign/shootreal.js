@@ -5,8 +5,7 @@
  *     node _magedesign/shootreal.js gear         the gear half (finds, raid robes, Dawnveil,
  *                                                Faultline) -> shots/gear/*.png
  *     node _magedesign/shootreal.js away         slice 9 (Welcome Back after the quiver ran
- *                                                dry, the six achievements, the guild seat)
- *                                                -> shots/away/*.png
+ *                                                dry, and the guild seat) -> shots/away/*.png
  *
  * shoot.js photographs the design: build 0.9.127.3 with overlay.js and ui.js on
  * top. This is its twin for the build that has Magic in it. A working copy of
@@ -514,7 +513,7 @@ function SCENES_IN_PAGE() {
       info.room = barRoom();
     }
     if (scene === 'stats') { selectedSkill = 'mining'; viewTab = 'stats'; try { renderAll(); } catch (e) { info.err = String(e); } }
-    /* ── slice 9: away, the achievements, and the guild seat. These land in shots/away. ──
+    /* ── slice 9: away, and the guild seat. These land in shots/away. ──
        Welcome Back is not drawn from a made-up list of rows: the save is given a fight
        it left running eight hours ago, and the game's own grantOffline() settles it
        and opens the panel. */
@@ -544,21 +543,6 @@ function SCENES_IN_PAGE() {
       ['helm', 'chest', 'legs', 'gloves', 'boots'].forEach(function (p, i) { state.combatEquipped[['helmet', 'chest', 'legs', 'gloves', 'boots'][i]] = 'troll_' + p; state.items['troll_' + p] = 1; });
     });
     if (scene === 'welcome_spare') away(8, function () { state.items.forge_rune = 40000; });
-    /* the six Magic achievements in the panel: three earned, three not */
-    if (scene === 'achievements') {
-      var now = Date.now();
-      state.achievements = state.achievements || {};
-      ['first_swing', 'apprentice', 'full_robes', 'four_elements', 'rune_99'].forEach(function (a) { if (ACH_BY_ID[a]) state.achievements[a] = now; });
-      state.achBackfilled = 1;
-      viewTab = 'ach'; _achCat = 'magic';
-      try { renderAll(); } catch (e) { info.err = String(e); }
-      var cards = document.querySelectorAll('#achView .ach-card');
-      info.cards = [].map.call(cards, function (c) { return c.querySelector('.ach-nm').textContent + ': ' + c.querySelector('.ach-ds').textContent + (c.classList.contains('got') ? ' (earned)' : ''); });
-      info.cats = [].map.call(document.querySelectorAll('#achView .ach-catbtn'), function (b) { return b.textContent; });
-      var bar = document.querySelector('#achView .ach-catbar');
-      info.catRows = bar ? Math.round(bar.getBoundingClientRect().height) : 0;
-      info.total = ACHIEVEMENTS.length;
-    }
     /* Runecrafting on The Ashen Circle's page: a member who carves runes, with a board
        the guild's own roller dealt */
     if (scene === 'guild_ashen' || scene === 'guild_list') {
@@ -636,7 +620,6 @@ const SCENES = {
   welcome_dry:    { sel: '#offlineModal .modal', dir: 'away' },
   welcome_arrows: { sel: '#offlineModal .modal', dir: 'away' },
   welcome_spare:  { sel: '#offlineModal .modal', dir: 'away' },
-  achievements:   { sel: '#achView', dir: 'away' },
   guild_ashen:    { sel: '#guildView', dir: 'away' },
   guild_list:     { sel: '#guildView', dir: 'away' }
 };
