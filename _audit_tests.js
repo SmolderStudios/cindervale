@@ -12356,6 +12356,15 @@ setTimeout(() => {
       g.skills=keep;
       o.untrained={same:JSON.stringify(now)===JSON.stringify(was), rc:now.reduce(function(n,b){ return n+b.filter(function(q){ return q.skill==='runecrafting'; }).length; },0),
         shop:[shopNow.skill,shopNow.amount,shopWas.skill,shopWas.amount], crate:[crateNow,crateWas], median:[medNow,medWas]};
+      /* and a NEW member, Alchemy and Foraging 15. This is the one a seat dealt in at
+         once would have moved: carving Ash Runes at level 1 gives more XP in a quarter
+         hour than Foraging does at 15, so the XP row would have gone to a skill they
+         have never touched. At 60 the row stays put whether the seat is counted or
+         not, which is why a member at 60 cannot be the only one asked. */
+      member(15,15,0,GD_REP[3]);
+      var lowNow=gdShopXp(g), lowRune=gdHourXp('runecrafting'), lowOwn=Math.max(gdHourXp('alchemy'), gdHourXp('foraging'));
+      g.skills=['alchemy','foraging']; var lowWas=gdShopXp(g); g.skills=keep;
+      o.untrainedLow={now:[lowNow.skill,lowNow.amount], was:[lowWas.skill,lowWas.amount], rune:lowRune, own:lowOwn};
 
       /* a member who carves: the board, level by level */
       o.levels=[1,15,30,50,70,90,99].map(function(lv){
@@ -12454,6 +12463,9 @@ setTimeout(() => {
     ok('and so is the shop: the same XP row, the same crate, and the same median every guild\'s XP row is held to',
        G.untrained.shop[0] === G.untrained.shop[2] && G.untrained.shop[1] === G.untrained.shop[3] && G.untrained.crate[0] === G.untrained.crate[1] && G.untrained.median[0] === G.untrained.median[1],
        JSON.stringify(G.untrained.shop) + ' ' + JSON.stringify(G.untrained.median));
+    ok('a new member\'s XP row stays in a skill they have, where an untrained Runecrafting would have out-earned it and taken the row',
+       G.untrainedLow.rune > G.untrainedLow.own && G.untrainedLow.now[0] !== 'runecrafting' && G.untrainedLow.now[0] === G.untrainedLow.was[0] && G.untrainedLow.now[1] === G.untrainedLow.was[1],
+       G.untrainedLow.now.join(' ') + ', where a first rune would give ' + G.untrainedLow.rune + ' against ' + G.untrainedLow.own);
     for (const L of G.levels) {
       ok('Runecrafting ' + L.lv + ': about a third of the board, three quests every time, no two with one name',
          L.share > 0.2 && L.share < 0.45 && L.short === 0 && L.clash === 0, L.rc + ' of ' + L.quests + ' quests, e.g. ' + L.sample.join(' / '));
