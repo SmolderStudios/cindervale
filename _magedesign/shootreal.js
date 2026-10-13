@@ -4,6 +4,9 @@
  *     node _magedesign/shootreal.js fight raid   only those
  *     node _magedesign/shootreal.js gear         the gear half (finds, raid robes, Dawnveil,
  *                                                Faultline) -> shots/gear/*.png
+ *     node _magedesign/shootreal.js away         slice 9 (Welcome Back after the quiver ran
+ *                                                dry, the six achievements, the guild seat)
+ *                                                -> shots/away/*.png
  *
  * shoot.js photographs the design: build 0.9.127.3 with overlay.js and ui.js on
  * top. This is its twin for the build that has Magic in it. A working copy of
@@ -511,6 +514,77 @@ function SCENES_IN_PAGE() {
       info.room = barRoom();
     }
     if (scene === 'stats') { selectedSkill = 'mining'; viewTab = 'stats'; try { renderAll(); } catch (e) { info.err = String(e); } }
+    /* ── slice 9: away, the achievements, and the guild seat. These land in shots/away. ──
+       Welcome Back is not drawn from a made-up list of rows: the save is given a fight
+       it left running eight hours ago, and the game's own grantOffline() settles it
+       and opens the panel. */
+    function away(hours, set) {
+      state.items.cooked_trout = 6000;
+      set();
+      refreshCombatStats();
+      var q = state.combatEquipped.quiver, had = state.items[q] || 0;
+      state.combatSession = { monId: 'ogre_houndmaster', style: 'attack', youHp: combat.youMaxHp, rare: false, at: Date.now() - hours * 3600000 };
+      state.lastSeen = Date.now() - hours * 3600000; state.action = null;
+      info.spell = usingMagic() ? spellName() : ''; info.had = had;
+      try { info.ret = grantOffline(); } catch (e) { info.err = String(e); }
+      info.left = state.items[q] || 0; info.session = !!state.combatSession;
+      var om = document.getElementById('offlineModal'); om.classList.remove('mm-hidden');
+      info.open = !om.classList.contains('hidden');
+      info.rows = [].map.call(om.querySelectorAll('.offline-row'), function (r) { return r.querySelector('.offline-label').textContent + ': ' + (r.querySelector('.offline-sub') || { textContent: '' }).textContent; });
+      /* a row whose words run past the panel is a row nobody can read */
+      info.clipped = [].filter.call(om.querySelectorAll('.offline-sub'), function (e) { return e.scrollWidth > e.clientWidth + 1; }).length;
+    }
+    /* a toast from the scene before would lie across the next picture */
+    var tst = document.getElementById('toast'); if (tst && !/^welcome_/.test(scene)) tst.classList.remove('show');
+    if (scene === 'welcome_dry') away(8, function () { state.items.forge_rune = 2400; });
+    if (scene === 'welcome_arrows') away(8, function () {
+      state.combatXp.ranged = XP_CUM[64];
+      state.items.frost_shortbow = 1; state.items.cobalt_arrow = 900;
+      state.combatEquipped = { weapon: 'frost_shortbow', quiver: 'cobalt_arrow', cape: 'cobalt_cape' };
+      ['helm', 'chest', 'legs', 'gloves', 'boots'].forEach(function (p, i) { state.combatEquipped[['helmet', 'chest', 'legs', 'gloves', 'boots'][i]] = 'troll_' + p; state.items['troll_' + p] = 1; });
+    });
+    if (scene === 'welcome_spare') away(8, function () { state.items.forge_rune = 40000; });
+    /* the six Magic achievements in the panel: three earned, three not */
+    if (scene === 'achievements') {
+      var now = Date.now();
+      state.achievements = state.achievements || {};
+      ['first_swing', 'apprentice', 'full_robes', 'four_elements', 'rune_99'].forEach(function (a) { if (ACH_BY_ID[a]) state.achievements[a] = now; });
+      state.achBackfilled = 1;
+      viewTab = 'ach'; _achCat = 'magic';
+      try { renderAll(); } catch (e) { info.err = String(e); }
+      var cards = document.querySelectorAll('#achView .ach-card');
+      info.cards = [].map.call(cards, function (c) { return c.querySelector('.ach-nm').textContent + ': ' + c.querySelector('.ach-ds').textContent + (c.classList.contains('got') ? ' (earned)' : ''); });
+      info.cats = [].map.call(document.querySelectorAll('#achView .ach-catbtn'), function (b) { return b.textContent; });
+      var bar = document.querySelector('#achView .ach-catbar');
+      info.catRows = bar ? Math.round(bar.getBoundingClientRect().height) : 0;
+      info.total = ACHIEVEMENTS.length;
+    }
+    /* Runecrafting on The Ashen Circle's page: a member who carves runes, with a board
+       the guild's own roller dealt */
+    if (scene === 'guild_ashen' || scene === 'guild_list') {
+      state.xp.alchemy = XP_CUM[72]; state.xp.foraging = XP_CUM[70];
+      /* a member already, so the picture has no "Joined" toast across it */
+      state.gd = {}; state.gd.ashen = { rep: 24000, q: [], rolled: 0, day: -1, skipped: 0, bought: {} }; state.gdTokens = 137;
+      /* the dice are held to a board that shows all three of the guild's skills, if it deals one */
+      var R0 = Math.random, sd = 5, tries = 0, best = null;
+      Math.random = function () { sd |= 0; sd = sd + 0x6D2B79F5 | 0; var t = Math.imul(sd ^ sd >>> 15, 1 | sd); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+      for (tries = 0; tries < 400; tries++) {
+        gdRollQuests('ashen', true);
+        var sk = {}; state.gd.ashen.q.forEach(function (x) { sk[x.skill] = 1; });
+        if (!best && sk.runecrafting) best = JSON.parse(JSON.stringify(state.gd.ashen.q));
+        if (sk.runecrafting && Object.keys(sk).length === 3) { best = JSON.parse(JSON.stringify(state.gd.ashen.q)); break; }
+      }
+      Math.random = R0;
+      if (best) state.gd.ashen.q = best;
+      info.tries = tries; info.quests = state.gd.ashen.q.map(function (x) { return x.size + ' ' + x.skill + ': ' + x.name; });
+      state.gd.ashen.q.forEach(function (x, i) { if (i === 0 && x.kind === 'do') x.have = Math.round(x.need * 0.4); });
+      viewTab = 'guild'; _gdOpen = scene === 'guild_ashen' ? 'ashen' : null;
+      try { renderAll(); } catch (e) { info.err = String(e); }
+      info.skills = GD_BY.ashen.skills.join(', ');
+      info.banner = (document.querySelector('#guildView .gd-bn-nm') || document.querySelector('#guildView .gd-a-ashen + .gd-b') || { textContent: '' }).textContent.replace(/\s+/g, ' ').trim();
+      info.perks = [].map.call(document.querySelectorAll('#guildView .gd-t, #guildView .gd-title, #guildView [class*="gd-ti"]'), function (e) { return e.textContent.replace(/\s+/g, ' ').trim(); }).slice(0, 8);
+      info.bonus = JSON.stringify(gdBonus('runecrafting'));
+    }
     return info;
   };
 }
@@ -557,13 +631,21 @@ const SCENES = {
   fight_draught: { full: true, dir: 'gear' },
   raid_log:     { sel: '#combatPanel', dir: 'gear' },
   spire_log:    { sel: '#combatPanel', dir: 'gear' },
-  fight_unique: { full: true, dir: 'gear' }
+  fight_unique: { full: true, dir: 'gear' },
+  /* slice 9, in shots/away */
+  welcome_dry:    { sel: '#offlineModal .modal', dir: 'away' },
+  welcome_arrows: { sel: '#offlineModal .modal', dir: 'away' },
+  welcome_spare:  { sel: '#offlineModal .modal', dir: 'away' },
+  achievements:   { sel: '#achView', dir: 'away' },
+  guild_ashen:    { sel: '#guildView', dir: 'away' },
+  guild_list:     { sel: '#guildView', dir: 'away' }
 };
 
 (async () => {
   /* no arguments: the scenes of shots/real. `gear`: the scenes of shots/gear. Or name them. */
   const args = process.argv.slice(2);
-  const want = args.length === 1 && args[0] === 'gear' ? Object.keys(SCENES).filter(k => SCENES[k].dir === 'gear')
+  const isDir = d => Object.keys(SCENES).some(k => SCENES[k].dir === d);
+  const want = args.length === 1 && isDir(args[0]) ? Object.keys(SCENES).filter(k => SCENES[k].dir === args[0])
     : args.length ? args : Object.keys(SCENES).filter(k => !SCENES[k].dir);
   const src = fs.readFileSync(path.join(ROOT, 'cindervale.html'), 'utf8');
   const STILL = '<style>.mage-still .cvsplat{animation:none !important;opacity:1 !important}</style>';

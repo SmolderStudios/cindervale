@@ -29712,11 +29712,15 @@ const GUILDS=[
    perkTxt:['You can take Emberforge quests','+3% smithing &amp; crafting speed','+4% Smithing &amp; Crafting XP',
             '+6% smithing &amp; crafting speed','+7% Smithing &amp; Crafting XP','+10% smithing &amp; crafting speed']},
 
-  {id:'ashen', name:'The Ashen Circle', sub:'Alchemists', skills:['alchemy','foraging'], req:{alchemy:15},
+  /* Runecrafting took a seat here in Magic slice 9: the Circle's quests, title perks
+     and bonuses cover it beside Alchemy and Foraging. `seat` names a skill that
+     joined a guild after the guild opened. See gdSkillsOpen() for what that holds
+     back, and for whom. */
+  {id:'ashen', name:'The Ashen Circle', sub:'Alchemists', skills:['alchemy','foraging','runecrafting'], seat:['runecrafting'], req:{alchemy:15},
    titles:['Novice','Herbalist','Distiller','Adept','Cinder Sage','Circlemaster'],
    perks:[null,{speed:0.03},{xp:0.04},{speed:0.06},{dbl:0.04},{dbl:0.08}],
-   perkTxt:['You can take Ashen Circle quests','+3% brewing &amp; foraging speed','+4% Alchemy &amp; Foraging XP',
-            '+6% brewing &amp; foraging speed','+4% chance of an extra potion or herb','+8% chance of an extra potion or herb']},
+   perkTxt:['You can take Ashen Circle quests','+3% brewing, foraging &amp; runecrafting speed','+4% Alchemy, Foraging &amp; Runecrafting XP',
+            '+6% brewing, foraging &amp; runecrafting speed','+4% chance of an extra potion, herb or Runecrafting batch','+8% chance of an extra potion, herb or Runecrafting batch']},
 
   {id:'facet', name:'The Gilded Facet', sub:'Jewellers', skills:['jeweler'], req:{jeweler:12},
    titles:['Apprentice','Setter','Cutter','Lapidary','Goldwright','Master of the Facet'],
@@ -29878,6 +29882,26 @@ function gdBonus(skill){
     }
   }
   return out;
+}
+/* The skills a guild is dealing in, for THIS character (Magic slice 9).
+
+   A skill named in a guild's `seat` joined after the guild opened, and the day it
+   did, every member had never trained it. Dealt in at once, it would have moved
+   the guild under them without a word: a third of the board would be quests for a
+   skill they have not started, the shop's XP row would land in it wherever a first
+   act out-earns their own (carving Ash Runes at level 1 beats Foraging at 15),
+   and, because every guild's XP row is held to a band around the median of what
+   the guilds' skills give, a new low number in that median took up to a fifth off
+   the row at every other guild as well.
+
+   So a seated skill is dealt in from the first XP a character has in it, and not
+   before. Until then the guild is, for that character, exactly the guild it was:
+   the same boards from the same dice, the same shop, the same median. The title
+   perks are not held back. They cover the skill from the first day (gdBonus reads
+   `skills`), because a bonus to something untrained takes nothing from anyone. */
+function gdSkillsOpen(g){
+  if(!g.seat||!g.seat.length) return g.skills;
+  return g.skills.filter(sk=>g.seat.indexOf(sk)<0 || ((state&&state.xp&&state.xp[sk])||0)>0);
 }
 /* Gold from everything the store buys from you. It sat in mods('thieving').extraSell,
    which no sale ever read, because thieving makes nothing you can sell. */
@@ -30048,7 +30072,11 @@ function gdKillableMonsters(){
    and not a step counter. */
 const GD_VERB={woodcutting:'Chop',mining:'Mine',fishing:'Catch',foraging:'Forage',
   smithing:'Smelt',cooking:'Cook',alchemy:'Brew',firemaking:'Burn',agility:'Run',
-  jeweler:'Make',crafting:'Craft',thieving:'Steal',fletching:'Fletch'};
+  jeweler:'Make',crafting:'Craft',thieving:'Steal',fletching:'Fletch',
+  /* Runes are carved, staves and wands bound, cloth woven, and those acts are named
+     as orders already ("Carve Forge Runes"). The verb is for the robes, whose acts
+     are named for the piece: "Make Linen Hood 40 times". */
+  runecrafting:'Make'};
 
 /* How many of ONE act is `mins` minutes of the player's own pace, read off the same
    actMs() the game itself runs on. A flat count cannot work across a skill: 200
@@ -30260,7 +30288,10 @@ function gdRollOne(g,size){
     return {kind:'kill',size,target:m.id,
       name:'Kill '+(10*mul)+' '+m.name,need:10*mul,have:0,done:false};
   }
-  const skill=g.skills[Math.floor(Math.random()*g.skills.length)];
+  /* One draw from the skills dealt in for this character: every skill of the guild,
+     less a seated one not yet trained (gdSkillsOpen). */
+  const _open=gdSkillsOpen(g);
+  const skill=_open[Math.floor(Math.random()*_open.length)];
   if(skill==='farming') return gdRollFarm(size);
   const acts=gdBestActs(skill);
   if(!acts.length) return null;
@@ -30740,7 +30771,11 @@ const GD_SHOP_KILLS=15;     // the combat guilds' row, in kills at your best tie
 function gdCrateItem(id){
   const g=GD_BY[id]; if(!g||!g.skills.length) return null;
   let best=null, bestLv=-1;
-  g.skills.forEach(function(sk){
+  /* Never out of a seated skill (Magic slice 9). The crate is 50 of one thing, and
+     the best thing Runecrafting makes is a piece of raid robes: 50 of those for 45
+     tokens is a raid nobody ran. A rune would be the other answer, and 50 runes is
+     a dozen casts. The Circle's crate stays the reagent chest it was. */
+  g.skills.filter(function(sk){ return !(g.seat&&g.seat.indexOf(sk)>=0); }).forEach(function(sk){
     gdOutActs(sk).forEach(function(a){
       const lv=(a.lvl||1);
       if(lv>bestLv){ bestLv=lv; best=gdActOut(a); }
@@ -30781,7 +30816,8 @@ const GD_SHOP_BAND=[0.7,1.5];
 function gdShopMedian(){
   const vals=[], seen={};
   GUILDS.forEach(function(g){
-    g.skills.forEach(function(sk){
+    /* gdSkillsOpen: a seated skill counts toward the median once it is trained */
+    gdSkillsOpen(g).forEach(function(sk){
       if(seen[sk]) return; seen[sk]=1;
       const x=gdHourXp(sk); if(x>0) vals.push(x);
     });
@@ -30805,7 +30841,7 @@ function gdShopXp(g){
       amount: best?gdShopBand(Math.round((best.xp||0)*GD_SHOP_KILLS)):0};
   }
   let skill=null, amount=0;
-  g.skills.forEach(function(sk){ const x=gdHourXp(sk); if(x>amount){ amount=x; skill=sk; } });
+  gdSkillsOpen(g).forEach(function(sk){ const x=gdHourXp(sk); if(x>amount){ amount=x; skill=sk; } });
   return {skill:skill, amount:gdShopBand(amount)};
 }
 function gdShopFor(id){

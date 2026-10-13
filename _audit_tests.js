@@ -12312,6 +12312,164 @@ setTimeout(() => {
     ok('Cindervale, which asks for every other achievement, asks for these too', M.everyAll === true && M.everyLess === false);
   }
 
+  section('Runecrafting takes a seat in The Ashen Circle (slice 9)');
+  {
+    /* A seat, not a new guild: the Circle's quests, title perks and bonuses cover
+       Runecrafting beside Alchemy and Foraging. Two things could go wrong without a
+       word. The seat could move the guild for a member who has never carved a rune
+       (a third of their board, their shop's XP row, and through the shop's median
+       every other guild's XP row). And the shop's crate, which hands over 50 of the
+       best thing the guild's skills make, could start handing over raid robes.
+
+       The board is dealt by the guild's own roller, 400 boards a level with the dice
+       seeded, and every Runecrafting quest on it is timed at the member's own pace. */
+    const G = JSON.parse(ev(`(function(){
+      function seeded(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; var t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+      var R=Math.random, o={}, g=GD_BY.ashen, MINS={small:3, standard:8, long:20};
+      o.skills=g.skills.join(); o.seat=(g.seat||[]).join(); o.perk=g.perkTxt.slice(); o.sub=g.sub;
+      o.others=GUILDS.filter(function(x){ return x.id!=='ashen' && (x.seat||x.skills.indexOf('runecrafting')>=0); }).map(function(x){ return x.id; });
+      function member(al, fo, rc, rep){
+        state=defaultState(); normalizeState();
+        for(var k in SKILLS) state.xp[k]=XP_CUM[50];
+        /* rc 0 is a member who has never carved a rune. rc 1 has carved one: level 1, and not 0 XP */
+        state.xp.alchemy=XP_CUM[al]; state.xp.foraging=XP_CUM[fo]; state.xp.runecrafting=rc>0?Math.max(1,XP_CUM[rc]):0;
+        state.gd={}; state.gd.ashen={rep:rep||0,q:[],rolled:0,day:-1,skipped:0,bought:{}};
+      }
+      function boards(n, seed){
+        Math.random=seeded(seed); var out=[];
+        for(var i=0;i<n;i++){ gdRollQuests('ashen',true); out.push(JSON.parse(JSON.stringify(state.gd.ashen.q))); }
+        Math.random=R; return out;
+      }
+      /* the title perks, through mods() */
+      member(60,60,60,0); var m0=mods('runecrafting'), a0=mods('alchemy');
+      member(60,60,60,GD_REP[5]); var m6=mods('runecrafting'), a6=mods('alchemy');
+      o.bonus=gdBonus('runecrafting'); o.bonusAlch=gdBonus('alchemy');
+      o.mods={speed:+(m6.speed-m0.speed).toFixed(4), dbl:+(m6.extraBar-m0.extraBar).toFixed(4), xp:+(m6.xpMult/m0.xpMult).toFixed(4),
+              aSpeed:+(a6.speed-a0.speed).toFixed(4), aDbl:+(a6.extraBar-a0.extraBar).toFixed(4), aXp:+(a6.xpMult/a0.xpMult).toFixed(4)};
+      member(60,60,0,GD_REP[5]); o.modsUntrained=+(mods('runecrafting').speed-m0.speed).toFixed(4);
+
+      /* a member who has never carved a rune: the guild they joined */
+      member(60,60,0,GD_REP[3]);
+      var now=boards(200, 71), shopNow=gdShopXp(g), crateNow=gdCrateItem('ashen'), medNow=gdShopMedian();
+      var keep=g.skills; g.skills=['alchemy','foraging'];
+      var was=boards(200, 71), shopWas=gdShopXp(g), crateWas=gdCrateItem('ashen'), medWas=gdShopMedian();
+      g.skills=keep;
+      o.untrained={same:JSON.stringify(now)===JSON.stringify(was), rc:now.reduce(function(n,b){ return n+b.filter(function(q){ return q.skill==='runecrafting'; }).length; },0),
+        shop:[shopNow.skill,shopNow.amount,shopWas.skill,shopWas.amount], crate:[crateNow,crateWas], median:[medNow,medWas]};
+
+      /* a member who carves: the board, level by level */
+      o.levels=[1,15,30,50,70,90,99].map(function(lv){
+        member(Math.max(15,lv),Math.max(15,lv),lv,GD_REP[2]);
+        var bs=boards(400, 500+lv), n=0, rc=0, short=0, clash=0, off=[], badName=[], kinds={}, small=[];
+        bs.forEach(function(q){
+          if(q.length<3) short++;
+          for(var a=0;a<q.length;a++) for(var b=a+1;b<q.length;b++) if(q[a].name===q[b].name) clash++;
+          q.forEach(function(x){
+            n++; if(x.skill!=='runecrafting') return; rc++; kinds[x.kind]=(kinds[x.kind]||0)+1;
+            var ms=0;
+            if(x.kind==='do'){
+              var act=getAct('runecrafting',x.act); ms=x.need*actMs(act,'runecrafting');
+              var out=gdActOut(act);
+              /* named for the card: the act as the card shows it, or the thing it makes */
+              if(x.name.indexOf(actShownName('runecrafting',act))<0 && !(out&&x.name.indexOf(ITEMS[out].name)>=0)) badName.push(x.name);
+              if(!/ (\\d+ times|once)$/.test(x.name)) badName.push(x.name);
+            } else {
+              var items=x.kind==='deliver'?(function(){ var t={}; t[x.target]=x.need; return t; })():x.items;
+              for(var it in items){
+                var mk=SKILLS.runecrafting.acts.filter(function(z){ return z.out&&z.out[it]; })[0];
+                if(!mk){ badName.push('no maker: '+it); continue; }
+                ms+=Math.ceil(items[it]/mk.out[it])*actMs(mk,'runecrafting');
+                /* a rune act makes a batch of 40 or more: an order for fewer than one batch is not an order */
+                if(isRune(it) && items[it]<mk.out[it]) small.push(x.name);
+              }
+            }
+            var mins=ms/60000, want=MINS[x.size];
+            if(mins<want*0.6 || mins>want*1.5) off.push(x.size+' '+x.name+' = '+mins.toFixed(1)+' min');
+          });
+        });
+        return {lv:lv, quests:n, rc:rc, share:+(rc/n).toFixed(3), short:short, clash:clash, off:off.slice(0,4), offN:off.length, badName:badName.slice(0,4), small:small.slice(0,4), kinds:kinds,
+                sample:bs[0].concat(bs[1]).filter(function(x){ return x.skill==='runecrafting'; }).map(function(x){ return x.name; }).slice(0,3)};
+      });
+
+      /* one errand is one errand: an order for a rune and the carving of it clash, and a skip never hands back what was skipped */
+      member(70,70,70,GD_REP[2]);
+      var act=SKILLS.runecrafting.acts.filter(function(a){ return a.cat==='runes' && a.lvl<=70; }).pop(), rune=gdActOut(act);
+      var qDo={kind:'do',size:'small',skill:'runecrafting',act:act.id,name:gdDoName('runecrafting',act,40),need:40,have:0,done:false};
+      var qDel={kind:'deliver',size:'small',skill:'runecrafting',target:rune,name:'Deliver 1600 '+ITEMS[rune].name,need:1600,have:0,done:false};
+      /* the wand that is bound out of that very rune, and a cloth that has nothing to do with it */
+      var other=SKILLS.runecrafting.acts.filter(function(a){ return a.cat==='wands' && a.inp && a.inp[rune]; })[0];
+      var qWand={kind:'do',size:'small',skill:'runecrafting',act:other.id,name:gdDoName('runecrafting',other,20),need:20,have:0,done:false};
+      var loom=SKILLS.runecrafting.acts.filter(function(a){ return a.cat==='cloth' && a.lvl<=70; }).pop();
+      var qCloth={kind:'do',size:'small',skill:'runecrafting',act:loom.id,name:gdDoName('runecrafting',loom,20),need:20,have:0,done:false};
+      o.clash={same:gdQuestsClash(qDo,qDel), chain:gdQuestsClash(qDo,qWand), differ:gdQuestsClash(qDo,qCloth), doName:qDo.name, wandName:qWand.name, clothName:qCloth.name};
+      var skipBad=0, skipN=0;
+      Math.random=seeded(909);
+      for(var s=0;s<200;s++){
+        state.gd.ashen.q=[JSON.parse(JSON.stringify(qDel)), JSON.parse(JSON.stringify(qWand)), {kind:'coin',size:'long',skill:'alchemy',name:'Bring 500 gold',need:50000,have:0,done:false}];
+        state.gd.ashen.skipped=0;
+        gdSkip('ashen',0);
+        var nq=state.gd.ashen.q[0];
+        if(nq.name!==qDel.name){ skipN++; if(gdQuestsClash(nq,qDel)) skipBad++; }
+      }
+      Math.random=R;
+      o.skip={moved:skipN, clashed:skipBad};
+
+      /* a carved rune counts toward a quest that names its act, and toward nothing else */
+      member(70,70,70,GD_REP[2]);
+      state.gd.ashen.q=[JSON.parse(JSON.stringify(qDo)), JSON.parse(JSON.stringify(qWand))];
+      for(var i in act.inp) state.items[i]=1e6;
+      completeAction(act,'runecrafting',7);
+      o.progress=[state.gd.ashen.q[0].have, state.gd.ashen.q[1].have];
+      /* and handing one in is worth minutes of the member's own Runecrafting */
+      state.gd.ashen.q[0].have=40; var xp0=state.xp.runecrafting, rep0=state.gd.ashen.rep, want=gdQuestXp(g,state.gd.ashen.q[0]);
+      /* this suite runs as the demo, which holds every level at 10: lift that for the hand-in */
+      var capFn=demoXpCap; demoXpCap=function(){ return XP_CAP; };
+      try{ gdClaim('ashen',0); } finally { demoXpCap=capFn; }
+      o.claim={xp:state.xp.runecrafting-xp0, want:want, rep:state.gd.ashen.rep-rep0, done:state.gd.ashen.q[0].done};
+
+      /* the shop: a carver's XP row can land in Runecrafting, and the crate never does */
+      member(40,40,95,GD_REP[3]);
+      var sx=gdShopXp(g), crate=gdCrateItem('ashen'), row=gdShopFor('ashen').filter(function(r){ return r.id==='xp'; })[0];
+      o.shop={skill:sx.skill, amount:sx.amount, desc:row.desc, crate:crate, crateName:(ITEMS[crate]||{}).name||'', crateIsReagent:!!(crate && !isRune(crate) && !ITEMS[crate].cgear && SKILLS.runecrafting.acts.every(function(a){ return !(a.out&&a.out[crate]); })),
+              topRc:(function(){ var t=null; gdOutActs('runecrafting').forEach(function(a){ if(!t||a.lvl>t.lvl) t=a; }); return t?ITEMS[gdActOut(t)].name:''; })()};
+      /* the list and the guild's own page name all three skills */
+      viewTab='guild'; _gdOpen=null; renderGuilds();
+      var card=[].filter.call(document.querySelectorAll('#guildView .gd-card'), function(c){ return /Ashen Circle/.test(c.textContent); })[0];
+      o.card=card?card.querySelector('.gd-sk').textContent:'';
+      _gdOpen='ashen'; renderGuilds();
+      o.page=(document.querySelector('#guildView .gd-bn-nm')||{textContent:''}).textContent;
+      _gdOpen=null; viewTab='acts';
+      state=defaultState(); normalizeState();
+      return JSON.stringify(o);
+    })()`));
+    ok('The Ashen Circle covers Alchemy, Foraging and Runecrafting, and Runecrafting is the one that took a seat', G.skills === 'alchemy,foraging,runecrafting' && G.seat === 'runecrafting', G.skills);
+    ok('no other guild has taken Runecrafting or a seat', G.others.length === 0, G.others.join(' '));
+    ok('its title perks reach Runecrafting through mods(), by what they give Alchemy',
+       G.bonus.speed === 0.09 && G.bonus.xp === 0.04 && Math.abs(G.bonus.dbl - 0.12) < 1e-9 && JSON.stringify(G.bonus) === JSON.stringify(G.bonusAlch)
+       && G.mods.speed === 0.09 && G.mods.dbl === 0.12 && G.mods.speed === G.mods.aSpeed && G.mods.dbl === G.mods.aDbl && G.mods.xp > 1.01,
+       'Circlemaster: +' + (G.mods.speed * 100) + '% speed, +' + (G.mods.dbl * 100) + '% double, XP x' + G.mods.xp);
+    ok('and they do so whether or not a rune has ever been carved', G.modsUntrained === 0.09, '+' + (G.modsUntrained * 100) + '% speed');
+    ok('every title perk that names the guild\'s skills names all three', G.perk.slice(1).every(p => /runecrafting|batch/i.test(p)) && G.perk.every(p => p.indexOf(String.fromCharCode(8212)) < 0), G.perk.slice(1).join(' | '));
+    ok('for a member who has never carved a rune the board is the board it was, quest for quest', G.untrained.same === true && G.untrained.rc === 0, G.untrained.rc + ' Runecrafting quests in 200 boards');
+    ok('and so is the shop: the same XP row, the same crate, and the same median every guild\'s XP row is held to',
+       G.untrained.shop[0] === G.untrained.shop[2] && G.untrained.shop[1] === G.untrained.shop[3] && G.untrained.crate[0] === G.untrained.crate[1] && G.untrained.median[0] === G.untrained.median[1],
+       JSON.stringify(G.untrained.shop) + ' ' + JSON.stringify(G.untrained.median));
+    for (const L of G.levels) {
+      ok('Runecrafting ' + L.lv + ': about a third of the board, three quests every time, no two with one name',
+         L.share > 0.2 && L.share < 0.45 && L.short === 0 && L.clash === 0, L.rc + ' of ' + L.quests + ' quests, e.g. ' + L.sample.join(' / '));
+      ok('  each one is the minutes its size says, at the member\'s own pace, and no rune order is for less than a batch',
+         L.offN === 0 && L.small.length === 0, L.off.concat(L.small).join(' | ') || JSON.stringify(L.kinds));
+      ok('  and is named for the card: the act as its card shows it, or what it makes, and a count of times', L.badName.length === 0, L.badName.join(' | '));
+    }
+    ok('an order for a rune and the carving of that rune are one errand, and so is binding the wand that rune goes into', G.clash.same === true && G.clash.chain === true, G.clash.doName + ' / ' + G.clash.wandName);
+    ok('carving a rune and weaving a cloth are two', G.clash.differ === false, G.clash.doName + ' / ' + G.clash.clothName);
+    ok('a skipped Runecrafting quest never comes back as itself', G.skip.moved > 150 && G.skip.clashed === 0, G.skip.moved + ' skips moved the board, ' + G.skip.clashed + ' gave the same errand back');
+    ok('carving counts toward the quest that names it and no other', G.progress[0] === 7 && G.progress[1] === 0, G.progress.join(' / '));
+    ok('and handing it in gives the minutes of Runecrafting XP the row promised', G.claim.done === true && G.claim.want > 0 && G.claim.xp >= G.claim.want * 0.99 && G.claim.rep === 120, '+' + G.claim.xp + ' xp, the row said ' + G.claim.want);
+    ok('a carver\'s XP row in the shop can be Runecrafting, and says so', G.shop.skill === 'runecrafting' && /minutes of Runecrafting XP/.test(G.shop.desc), G.shop.desc);
+    ok('the crate stays the reagent chest: never a rune, a robe or a staff, whatever the Runecrafting level', G.shop.crateIsReagent === true && G.shop.topRc !== G.shop.crateName, G.shop.crateName + ', where the best Runecrafting makes is ' + G.shop.topRc);
+    ok('the guild list and the guild\'s page both name Runecrafting', /Runecrafting/.test(G.card) && /Runecrafting/.test(G.page), G.card);
+  }
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));
   process.exit(fail ? 1 : 0);
 }, 2500);
