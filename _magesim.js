@@ -35,6 +35,14 @@
  * each of the column's thirteen nodes to one cast in the real tick with the dice
  * held, and 13h holds the whole column to hours of it.
  *
+ * Section 15 is the time away (slice 9), which the prototype never ran: the quiver
+ * is charged for the kills a fight left running earned, and caps them. It goes
+ * through the three ways the game itself settles that time and through nothing
+ * else: grantOffline() for a launch, tick() for a machine that slept with the
+ * fight live in front of it, and the Import Save button. The fighter's numbers,
+ * and everything about the archer but the arrows, are held to what build
+ * 0.9.127.11 at commit 65126d8 gave, in `built.away`.
+ *
  * In the golden file, `drops` is cut from _magedesign/design.js and `built` is
  * what the real file measured for things the prototype never ran.
  */
@@ -1903,6 +1911,189 @@ function PAGE() {
     return o;
   }
 
+  /* ── away: the time a fight is left running, through the game's own settle ────
+     Slice 9 put the quiver into offlineCombatResolve(): the kills the time away
+     earned are charged to it, and it caps them the way food does. Nothing here
+     calls that function. A launch goes through grantOffline(), a sleep through
+     tick() with a fight live in front of it, and Import Save through the button,
+     which are the three ways the game itself gets there.
+
+     `n` is what the build measures the instant before the settle, read off the
+     game's own functions. The checks do the sum from those and hold what the
+     settle did against it. */
+  var AWAY_FOOD = 'cooked_trout';
+  function awayBuild(key, lv, t, o) {
+    state = defaultState(); normalizeState(); state.xp.agility = XP_CUM[lv];
+    var lo = loadout(key, t);
+    if (o.quiver) lo.quiver = o.quiver;
+    wear(lo, lv);
+    var q = state.combatEquipped.quiver;
+    if (q && o.stock != null) { if (o.stock > 0) state.items[q] = o.stock; else delete state.items[q]; }
+    if (o.unload) delete state.combatEquipped.quiver;
+    state.items[AWAY_FOOD] = o.food == null ? 1e6 : o.food;
+    if (o.el) state.combatElement = o.el;
+    if (o.spell) state.combatSpell = o.spell;
+    if (o.cmast) state.cmast = JSON.parse(JSON.stringify(o.cmast));
+    if (o.tree) state.tree = JSON.parse(JSON.stringify(o.tree));
+    state.action = null;
+    refreshCombatStats();
+  }
+  function awayNumbers(monId) {
+    var mon = getMonster(monId), mg = usingMagic(), rg = usingRanged(), q = eqQuiver(), cm = cmastBonuses();
+    return { acc: playerAccuracy(), hit: playerMaxHit(), swing: combat.youSwingMs, def: playerDefence(), maxHp: maxHpFromStats(),
+      mon: { hp: mon.hp, def: mon.def, atk: mon.atk, str: mon.str, swingMs: mon.swingMs || 1100, xp: mon.xp, coins: mon.coins, weakEl: mon.weakEl || '', resistEl: mon.resistEl || '' },
+      kind: mg ? 'magic' : rg ? 'ranged' : 'melee', elem: mg ? elementMult(mon) * spellAffinity() : 1, el: mg ? spellElement() : '',
+      size: mg ? spellSize() : 1, spell: mg ? spellName() : '', keep: mg ? runeSaveRate() : rg ? arrowSaveRate(q) : 0,
+      back: !!(mg ? cm.runeRefundOnMiss : rg ? cm.ammoRefundOnMiss : 0), quiver: q || '', ready: !!readyAmmo(), have: q ? (state.items[q] || 0) : 0,
+      why: (mg || rg) && !readyAmmo() && typeof ammoStopReason === 'function' ? ammoStopReason() : '', plural: q ? ammoPlural(q) : '',
+      heal: (function () { var f = combatHealItems(), n = 0; f.forEach(function (x) { n += x.heal * x.cnt; }); return n; })(),
+      rate: OFFLINE_COMBAT_RATE, HIT_MIN: COMBAT_P.HIT_MIN, maxKills: OFFLINE_COMBAT_MAX_KILLS,
+      /* the guards are for running this section off a build from before slice 9, which is how built.away was measured */
+      arrowsOn: typeof OFFLINE_SPENDS_ARROWS !== 'undefined' && OFFLINE_SPENDS_ARROWS };
+  }
+  /* what moved, between a snapshot and now */
+  function awaySnap(monId) {
+    return { items: JSON.parse(JSON.stringify(state.items)), xp: JSON.parse(JSON.stringify(state.combatXp)), coins: state.coins || 0, kills: (state.monKills && state.monKills[monId]) || 0 };
+  }
+  function awayMoved(s0, monId, q) {
+    var o = { kills: ((state.monKills && state.monKills[monId]) || 0) - s0.kills, coins: (state.coins || 0) - s0.coins, xp: {}, lost: {}, got: 0 };
+    for (var k in state.combatXp) { var d = (state.combatXp[k] || 0) - (s0.xp[k] || 0); if (d) o.xp[k] = d; }
+    var ids = {}, id; for (id in s0.items) ids[id] = 1; for (id in state.items) ids[id] = 1;
+    for (id in ids) { var dd = (state.items[id] || 0) - (s0.items[id] || 0); if (dd < 0) o.lost[id] = -dd; else o.got += dd; }
+    o.spent = q ? (o.lost[q] || 0) : 0; o.ate = o.lost[AWAY_FOOD] || 0; o.left = q ? (state.items[q] || 0) : 0;
+    /* anything gone from the satchel that is neither the food nor what was loaded */
+    o.other = Object.keys(o.lost).filter(function (x) { return x !== q && x !== AWAY_FOOD; });
+    return o;
+  }
+  function awayRows(lines) {
+    return (lines || []).filter(function (l) { return l.label === 'Offline Combat' || l.label === 'Runes' || l.label === 'Arrows' || l.label === 'Bolts'; })
+      .map(function (l) { return { label: l.label, sub: l.sub, xp: l.xp || 0, icon: l.iconId || '', art: /^<(img|svg)/.test(String(iconHTML(l.iconId) || '')) }; });
+  }
+  /* A launch: the game was closed with the fight running, `hours` ago. */
+  function awayLaunch(key, lv, t, monId, hours, o) {
+    o = o || {};
+    var D = Date.now, R = Math.random, out = { key: key, hours: hours }, keepShow = window.showOfflineSummary;
+    try {
+      awayBuild(key, lv, t, o);
+      var fake = D.call(Date) + (window.__clockShift || 0); Date.now = function () { return fake; };
+      Math.random = seeded(o.seed || 4100);
+      out.n = awayNumbers(monId);
+      state.combatSession = { monId: monId, style: state.combatStyle, youHp: combat.youMaxHp, rare: false, at: fake - hours * 3600000 };
+      state.lastSeen = fake - hours * 3600000;
+      hush(true);
+      var lines = null, toasts = [];
+      window.showOfflineSummary = function (a, l) { lines = l; }; window.toast = function (x) { toasts.push(String(x)); };
+      var s0 = awaySnap(monId);
+      out.ret = grantOffline() || null;
+      out.m = awayMoved(s0, monId, out.n.quiver);
+      out.session = !!state.combatSession; out.rows = awayRows(lines); out.toasts = toasts;
+      /* what a relaunch does next: take the fight up again if there is one */
+      out.resumed = !!resumeCombatSession(); try { stopCombatTimer(); } catch (e) {}
+    } catch (e) { out.err = String(e && e.stack || e).slice(0, 400); }
+    finally {
+      hush(false); Date.now = D; Math.random = R; window.showOfflineSummary = keepShow;
+      try { stopCombatTimer(); } catch (e) {} combat.active = false; combat.raid = null;
+      state = defaultState(); normalizeState();
+    }
+    return out;
+  }
+  /* A sleep: the fight is live, the machine stops for `gapMin` minutes, and the next
+     tick() settles it. `o.save` writes the session back from the live fight in the
+     middle of the settle, which is what a save from inside it does. `o.raid` sleeps
+     in a raid, which is never settled as a fight. */
+  function awaySleep(key, lv, t, monId, gapMin, o) {
+    o = o || {};
+    var D = Date.now, R = Math.random, out = { key: key, gapMin: gapMin }, keep = { show: window.showOfflineSummary, menu: mmAtMenu, slot: mmSlot };
+    try {
+      awayBuild(key, lv, t, o);
+      var mon = getMonster(monId);
+      mmAtMenu = false; mmSlot = 1; enterCombat(); state.cmbSubTab = 'arena'; state.cmbView = 'fight'; combat.log = [];
+      var fake = D.call(Date) + (window.__clockShift || 0); Date.now = function () { return fake; };
+      Math.random = seeded(o.seed || 4200);
+      if (o.raid) { startRaid(o.raid); } else { selectZone(mon.zone); selectMonster(monId); engageCombat(); }
+      stopCombatTimer();
+      out.engaged = !!combat.active; out.inRaid = !!combat.raid;
+      hush(true);
+      var lines = null, toasts = [], settles = 0;
+      window.showOfflineSummary = function (a, l) { lines = l; settles++; if (o.save) snapCombatSession(); };
+      window.toast = function (x) { toasts.push(String(x)); };
+      var kills = function () { return (state.monKills && state.monKills[monId]) || 0; };
+      _lastTickWall = 0; tick();
+      /* thirty seconds of the fight, so what is slept on is a fight in progress */
+      var i;
+      for (i = 0; i < 300 && combat.active; i++) { fake += 100; combatTick(); combat.youHp = combat.youMaxHp; if (i % 3 === 2) tick(); }
+      tick();
+      out.fightingBefore = !!combat.active;
+      out.n = awayNumbers(monId);
+      var s0 = awaySnap(monId), q = out.n.quiver;
+      fake += gapMin * 60000;
+      tick();
+      out.settles = settles;
+      out.m = awayMoved(s0, monId, q);
+      out.active = !!combat.active; out.raidStill = !!combat.raid; out.session = !!state.combatSession;
+      out.rows = awayRows(lines); out.toasts = toasts;
+      out.log = combat.log.slice(-1).map(function (l) { return String(l.t).replace(/<[^>]+>/g, ''); })[0] || '';
+      /* and the minute after: nothing may take the fight up again, and a save must not either */
+      var k1 = kills(), left1 = q ? (state.items[q] || 0) : 0, attacks = 0;
+      for (i = 0; i < 600; i++) { fake += 100; var sw = combat.youSwingStart; combatTick(); if (combat.youSwingStart !== sw) attacks++; if (combat.active) combat.youHp = combat.youMaxHp; if (i % 3 === 2) tick(); }
+      snapCombatSession();
+      out.after = { active: !!combat.active, kills: kills() - k1, attacks: attacks, spent: left1 - (q ? (state.items[q] || 0) : 0), session: !!state.combatSession, settles: settles };
+    } catch (e) { out.err = String(e && e.stack || e).slice(0, 400); }
+    finally {
+      hush(false); Date.now = D; Math.random = R; window.showOfflineSummary = keep.show;
+      try { stopCombatTimer(); } catch (e) {} combat.active = false; combat.raid = null; combat.raidDebuff = null; combat.bossfx = null; combat.monfx = null;
+      combatMode = false; mmAtMenu = keep.menu; mmSlot = keep.slot;
+      try { _lastTickWall = 0; } catch (e) {}
+      state = defaultState(); normalizeState();
+    }
+    return out;
+  }
+  /* Import Save, pressed while a fight is live: a save whose own fight ran its quiver
+     dry while it was away is loaded over the character on screen. */
+  function awayImport(key, lv, t, monId, hours, o) {
+    o = o || {};
+    var D = Date.now, R = Math.random, out = { key: key }, keep = { show: window.showOfflineSummary, menu: mmAtMenu, slot: mmSlot };
+    try {
+      var fake = D.call(Date) + (window.__clockShift || 0); Date.now = function () { return fake; };
+      Math.random = seeded(o.seed || 4300);
+      /* the save to load */
+      awayBuild(key, lv, t, o);
+      out.n = awayNumbers(monId);
+      state.combatSession = { monId: monId, style: state.combatStyle, youHp: combat.youMaxHp, rare: false, at: fake - hours * 3600000 };
+      state.lastSeen = fake - hours * 3600000;
+      var code = btoa(unescape(encodeURIComponent(JSON.stringify(state))));
+      /* the character on screen, in a fight of its own */
+      awayBuild('melee', lv, t, {});
+      var mon = getMonster(monId);
+      mmAtMenu = false; mmSlot = 1; enterCombat(); state.cmbSubTab = 'arena'; state.cmbView = 'fight';
+      selectZone(mon.zone); selectMonster(monId); engageCombat(); stopCombatTimer();
+      out.fightingBefore = !!combat.active;
+      hush(true);
+      var lines = null; window.showOfflineSummary = function (a, l) { lines = l; };
+      showSaveModal('import'); document.getElementById('smArea').value = code; document.getElementById('smAction').click();
+      out.loaded = eqCombatWeapon(); out.active = !!combat.active; out.session = !!state.combatSession;
+      out.left = out.n.quiver ? (state.items[out.n.quiver] || 0) : 0; out.rows = awayRows(lines);
+      out.log = combat.log.slice(-1).map(function (l) { return String(l.t).replace(/<[^>]+>/g, ''); })[0] || '';
+      document.getElementById('saveModal').classList.add('hidden');
+    } catch (e) { out.err = String(e && e.stack || e).slice(0, 400); }
+    finally {
+      hush(false); Date.now = D; Math.random = R; window.showOfflineSummary = keep.show;
+      try { stopCombatTimer(); } catch (e) {} combat.active = false; combat.raid = null; combatMode = false; mmAtMenu = keep.menu; mmSlot = keep.slot;
+      try { _lastTickWall = 0; } catch (e) {}
+      state = defaultState(); normalizeState();
+    }
+    return out;
+  }
+  /* the source, for the two things a run cannot show: that arrows hang on one switch,
+     and that the fight asks one function why it cannot attack */
+  function awaySource() {
+    var f = String(offlineCombatResolve), t = String(combatTick);
+    return { arrowsOn: typeof OFFLINE_SPENDS_ARROWS !== 'undefined' && OFFLINE_SPENDS_ARROWS, readsSwitch: (f.match(/OFFLINE_SPENDS_ARROWS/g) || []).length,
+      tickAsks: /ammoStopReason\(\)/.test(t), resolveAsks: /ammoStopReason\(\)/.test(f),
+      /* a monster that casts drops its runes, which would hide what a fight on it spent */
+      runeDroppers: Object.keys(MONSTER_DROPS).filter(function (m) { return MONSTER_DROPS[m].some(function (x) { return isRune(x.id); }); }) };
+  }
+
   function consts() {
     return { HIT_MIN: COMBAT_P.HIT_MIN, BURN_CHANCE: BURN_CHANCE, BURN_DUR_MS: BURN_DUR_MS, BURN_TICK_MS: BURN_TICK_MS, XP_SCALE: XP_SCALE,
       WEAK: ELEMENT_WEAK_MULT, RESIST: ELEMENT_RESIST_MULT,
@@ -1917,6 +2108,7 @@ function PAGE() {
   window.SIM = { levelCheck: levelCheck, saves: saves, consts: consts, parity: parity, ladder: ladder, dressed: dressed, economy: economy, skillXp: skillXp,
     reagents: reagents, structure: structure, nodes: nodes, spells: spells, spellSizes: spellSizes, castRates: castRates, casting: casting, bar: bar, gold: gold, elements: elements, elTables: elTables, elementFx: elementFx, fighters: fighters, robes: robes,
     journey: journey, veteran: veteran, liveFight: liveFight, liveSkill: liveSkill, livePick: livePick, liveRaid: liveRaid, finds: finds, findWorth: findWorth, best: best, walls: walls, gemBrew: gemBrew, sorcery: sorcery,
+    awayLaunch: awayLaunch, awaySleep: awaySleep, awayImport: awayImport, awaySource: awaySource,
     raids: function () { return RAIDS.map(function (r) { return { id: r.id, name: r.name, endless: !!r.endless, stages: (r.stages || []).length }; }); } };
 }
 
@@ -2937,6 +3129,201 @@ setTimeout(() => {
       check(w >= 25 && w <= 65 && x.lethal <= x.slow, `${x.label}${x.asc ? ' (ascended)' : ''}: the wall is between floors 25 and 65, and lethality is the limit, not the length of the fight`, 'lethal on floor ' + x.lethal + ', four minutes on floor ' + x.slow);
     }
     same('all twelve walls are the prototype\'s, to the digit: a mage\'s is floor 30, and floor 45 ascended', R.walls, GOLD.walls);
+  }
+
+  /* 15. away (slice 9): the quiver is charged for the time a fight is left running */
+  {
+    console.log('\n15. AWAY  ·  a fight left running, settled by the game\'s own grantOffline(), tick() and Import Save, on a held clock');
+    const HRS = 8, LV = 50, T = 5, MON = 'ogre_houndmaster', MD = C.monsters.find(m => m.id === MON);
+    const cl = x => Math.max(0.03, Math.min(0.97, x));
+    /* The sum offlineCombatResolve() makes, from the numbers the build read off the
+       game the instant before the settle. Written in the order the function works
+       in, so a floor() lands on the same side here as it does there. */
+    const model = (n, hours) => {
+      const avg = n.HIT_MIN + (1 - n.HIT_MIN) / 2, swing = Math.max(200, n.swing || 1100), fswing = Math.max(200, n.mon.swingMs || 1100);
+      const p = cl(n.acc / (n.acc + n.mon.def)), fp = cl(n.mon.atk / (n.mon.atk + n.def));
+      const dps = (p * Math.max(1, n.hit * avg) * n.elem) / (swing / 1000), fdps = (fp * Math.max(1, n.mon.str * avg)) / (fswing / 1000);
+      const ttk = (n.mon.hp / dps) * 1000, dmgKill = fdps * (ttk / 1000);
+      const byTime = Math.floor(Math.max(0, hours * 3600000) * n.rate / ttk);
+      const byFood = dmgKill > 0 ? Math.floor((n.maxHp - 1 + n.heal) / dmgKill) : Infinity;
+      const uses = n.kind === 'magic' || (n.kind === 'ranged' && n.arrowsOn);
+      const spendP = (1 - n.keep) * (n.back ? p : 1), castsKill = ttk / swing, perKill = uses ? castsKill * n.size * spendP : 0;
+      const byAmmo = uses && perKill > 0 ? Math.floor(n.have / perKill) : Infinity;
+      const kills = Math.min(byTime, byFood, byAmmo), dry = byAmmo < Math.min(byTime, byFood);
+      return { p, ttk, castsKill, perKill, spendP, byTime, byFood, byAmmo, kills, dry, spent: !uses ? 0 : dry ? n.have : Math.min(n.have, Math.round(kills * perKill)) };
+    };
+    const launch = (key, o, lv, t, mon, hrs) => J(`SIM.awayLaunch('${key}',${lv || LV},${t || T},'${mon || MON}',${hrs || HRS},${JSON.stringify(o || {})})`);
+    const A = R.away = {};
+    const errs = [];
+    const run = (name, key, o, lv, t, mon, hrs) => { const v = launch(key, o, lv, t, mon, hrs); v.name = name; v.M = v.n ? model(v.n, hrs || HRS) : null; v.rows = v.rows || []; v.nRows = v.rows.length; while (v.rows.length < 2) v.rows.push({ label: '', sub: '', xp: 0, icon: '', art: false }); A[name] = v; if (v.err) errs.push(name + ': ' + v.err); return v; };
+    const dur = ms => { const s = Math.floor(ms / 1000), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60); return h > 0 ? h + 'h ' + m + 'm' : m + 'm'; };
+
+    /* ── a launch ── */
+    const mage = run('mage', 'staff', { el: 'shadow' });
+    /* 705 and not 700: 81 kills cost 699.6, so 700 would come back empty whether or not
+       the casts after the last kill were charged. Five more show which. */
+    const short = run('mageShort', 'staff', { el: 'shadow', stock: 705 });
+    const bolt = run('mageBolt', 'staff', { el: 'shadow', spell: 'bolt' });
+    const keeper = run('mageKeeper', 'staff', { el: 'shadow', cmast: { s_t1: 4, s_t2_l: 5, s_t2_r: 5, s_t3_l: 1, s_t3_r: 1, s_t4_l: 5, s_t4_r: 5, s_t5_r: 1 } });
+    const none = run('mageUnloaded', 'staff', { unload: true });
+    const empty = run('mageEmpty', 'staff', { stock: 0 });
+    const wrong = run('mageArrows', 'staff', { quiver: 'cobalt_arrow' });
+    const tooGood = run('mageTooGood', 'staff', { quiver: 'starfall_rune' }, LV, 1);
+    const two = run('mageTwoRunes', 'staff', { el: 'shadow', stock: 2 });
+    const hungry = run('mageHungry', 'staff', { el: 'shadow', food: 12 });
+    const bow = run('archer', 'bow', {});
+    const bowShort = run('archerShort', 'bow', { stock: 250 });
+    const bowThrift = run('archerSalvager', 'bow', { tree: { fletching: { fl_salvage: 5 } } });
+    const bowEmpty = run('archerEmpty', 'bow', { stock: 0 });
+    const xbow = run('crossbow', 'xbowBuckler', {});
+    const sword = run('fighter', 'melee', {});
+    const swordHungry = run('fighterHungry', 'melee', { food: 12 });
+    if (errs.length) errs.forEach(e => console.log('   ' + e));
+    check(errs.length === 0, 'every settle ran', errs.length + ' threw');
+
+    console.log(`\n   A LAUNCH  ·  Lv ${LV} in tier ${T}, ${HRS} hours away on the ${MD.name}, at the base rate (${Math.round(mage.n.rate * 100)}% of the live pace)`);
+    console.log('   ' + padr('', 30) + pad('kills', 7) + pad('by time', 9) + pad('by food', 9) + pad('by quiver', 11) + pad('had', 10) + pad('spent', 8) + pad('the sum', 9) + pad('a kill', 8) + '   what Welcome Back says');
+    const line = (label, v) => {
+      if (!v.M) return;
+      const inf = x => x === Infinity ? '' : x.toLocaleString();
+      console.log('   ' + padr(label, 30) + pad(v.m.kills, 7) + pad(inf(v.M.byTime), 9) + pad(v.M.byFood > 1e6 ? 'plenty' : inf(v.M.byFood), 9) + pad(v.M.byAmmo > 1e6 ? (v.n.kind === 'melee' ? '' : 'plenty') : inf(v.M.byAmmo), 11)
+        + pad(v.n.kind === 'melee' ? '' : v.n.have >= 1e6 ? 'plenty' : v.n.have.toLocaleString(), 10) + pad(v.n.kind === 'melee' ? '' : v.m.spent.toLocaleString(), 8) + pad(v.n.kind === 'melee' ? '' : v.M.spent.toLocaleString(), 9) + pad(v.M.perKill ? v.M.perKill.toFixed(2) : '', 8)
+        + '   ' + v.rows.filter(r => r.label).map(r => r.label + ': ' + r.sub).join('  |  '));
+    };
+    line('staff, Shadow Blast', mage); line('  705 runes', short); line('  casting Shadow Bolt', bolt); line('  Rune Thrift, Rune Keeper', keeper); line('  2 runes', two); line('  12 fish', hungry);
+    line('shortbow', bow); line('  250 arrows', bowShort); line('  Salvager 5', bowThrift); line('crossbow and buckler', xbow);
+    line('sword and shield', sword); line('  12 fish', swordHungry);
+
+    const id = v => v.m.spent === Math.min(v.n.have, Math.round(v.m.kills * v.M.castsKill * v.n.size * (1 - v.n.keep) * (v.n.back ? v.M.p : 1)));
+    check(mage.m.kills === mage.M.byTime && mage.m.kills > 100 && mage.M.byAmmo > mage.M.byTime, 'a mage with runes to spare gets every kill the time away holds', mage.m.kills + ' kills');
+    check(mage.n.size === 2 && mage.n.spell === 'Shadow Blast' && id(mage) && mage.m.spent > 0 && mage.m.left === mage.n.have - mage.m.spent,
+      'and is charged kills x casts a kill x runes a cast, less what was kept', `${mage.m.kills} x ${mage.M.castsKill.toFixed(2)} x ${mage.n.size} x ${(1 - mage.n.keep).toFixed(3)} = ${mage.m.spent.toLocaleString()} ${mage.n.plural}`);
+    check(mage.session && mage.resumed && mage.ret && mage.ret.fightEnded === false && mage.ret.why === '', 'the fight is taken up again');
+    check(mage.m.other.length === 0 && mage.m.ate > 0, 'nothing leaves the satchel but the runes and the food', mage.m.other.join(', '));
+    const rr = mage.rows.find(r => r.label === 'Runes'), rc = mage.rows.find(r => r.label === 'Offline Combat');
+    check(mage.nRows === 2 && rc && rc.sub === `${MD.name} ×${mage.m.kills.toLocaleString()}` && rr && rr.icon === mage.n.quiver && rr.art
+      && rr.sub.indexOf(`${mage.m.spent.toLocaleString()} ${mage.n.plural} spent on Shadow Blast`) === 0,
+      'Welcome Back has a row for the runes: how many, of which, on which spell', rr ? rr.sub : 'no row');
+    const keptN = rr ? +((/ (\S+) casts? kept theirs$/.exec(rr.sub) || [])[1] || '0').replace(/,/g, '') : -1;
+    const wantKept = Math.round(mage.m.spent / (mage.n.size * (1 - mage.n.keep)) - mage.m.spent / mage.n.size);
+    check(mage.n.keep > 0 && keptN === wantKept && keptN > 0, 'and it says how many casts kept theirs: the casts made, less the ones that spent', keptN + ' of ' + Math.round(mage.m.spent / (mage.n.size * (1 - mage.n.keep))).toLocaleString() + ' casts, robes keep ' + (mage.n.keep * 100).toFixed(1) + '%');
+
+    check(short.M.dry && short.m.kills === short.M.byAmmo && short.m.kills > 0 && short.m.kills < short.M.byTime, 'a quiver that cannot cover the time away caps the kills', short.m.kills + ' kills of the ' + short.M.byTime + ' the time held');
+    check(short.m.kills * short.M.perKill <= short.n.have && (short.m.kills + 1) * short.M.perKill > short.n.have, 'the kills never cost more than the quiver held, and one more would have',
+      `${short.m.kills} kills cost ${(short.m.kills * short.M.perKill).toFixed(1)} of ${short.n.have}`);
+    check(short.m.spent === short.n.have && short.m.left === 0, 'it comes back empty: the casts after the last kill were made too', short.m.spent + ' spent, ' + short.m.left + ' left');
+    check(!short.session && !short.resumed && short.ret.fightEnded === true && short.ret.why === `You ran out of ${short.n.plural} while you were away.`, 'and the fight is over, not taken up again', short.ret.why);
+    const sr = short.rows.find(r => r.label === 'Offline Combat') || { sub: '' };
+    const wantStop = dur(Math.min(HRS * 3600000, (short.n.have / (short.n.size * short.M.spendP)) * short.n.swing / short.n.rate));
+    check(sr.sub === `${MD.name} ×${short.m.kills} · stopped after ${wantStop}, you ran out of ${short.n.plural}` && short.toasts.join('|') === `Ran out of ${short.n.plural}. The fight stopped early.`,
+      'Welcome Back says the fight stopped, how far into the time away, and what ran out', sr.sub);
+
+    check(bolt.n.size === 1 && bolt.n.spell === 'Shadow Bolt' && id(bolt) && bolt.n.hit < mage.n.hit && bolt.M.perKill < mage.M.perKill && bolt.m.spent < mage.m.spent,
+      'the spell that was left casting is the one charged for: a Bolt is one rune a cast, hits softer and costs less a kill', `Bolt ${bolt.M.perKill.toFixed(2)} runes a kill, Blast ${mage.M.perKill.toFixed(2)}`);
+    check(keeper.n.back === true && keeper.n.keep > mage.n.keep && id(keeper) && keeper.M.perKill < mage.M.perKill * (keeper.M.p + 0.01),
+      'Rune Thrift and Rune Keeper are counted: runes kept on the roll, and handed back by a cast that missed', `keeps ${(keeper.n.keep * 100).toFixed(1)}%, ${(keeper.M.p * 100).toFixed(1)}% of casts land: ${keeper.M.perKill.toFixed(2)} runes a kill, was ${mage.M.perKill.toFixed(2)}`);
+    check(hungry.m.kills === hungry.M.byFood && hungry.m.kills < hungry.M.byTime && id(hungry) && hungry.m.left > 0 && hungry.ret.fightEnded === true && hungry.ret.why === '' && !hungry.session,
+      'when the food is the tighter limit the runes are charged for the kills the food allowed, and it is the food that ended the fight', `${hungry.m.kills} kills, ${hungry.m.spent} runes`);
+
+    const nothing = v => v.m.kills === 0 && v.m.coins === 0 && Object.keys(v.m.xp).length === 0 && v.m.ate === 0 && v.m.spent === 0 && v.m.got === 0;
+    const said = v => !v.session && !v.resumed && v.ret.fightEnded === true && v.ret.why === v.n.why && v.nRows === 1 && v.rows[0].sub === 'No kills. ' + v.n.why;
+    check(nothing(none) && said(none) && none.n.why === 'You have no runes loaded.', 'a staff with nothing loaded: no kills, the fight is over, and Welcome Back says why in the fight\'s own words', none.rows[0] && none.rows[0].sub);
+    check(nothing(empty) && said(empty) && /^You are out of .+ Runes\.$/.test(empty.n.why), 'a staff with the stack gone', empty.rows[0] && empty.rows[0].sub);
+    check(nothing(wrong) && said(wrong) && / does not cast Cobalt Arrows\.$/.test(wrong.n.why), 'a staff with arrows in the quiver', wrong.rows[0] && wrong.rows[0].sub);
+    check(nothing(tooGood) && said(tooGood) && / cannot cast Starfall Runes\. /.test(tooGood.n.why), 'a staff too plain for the rune loaded', tooGood.rows[0] && tooGood.rows[0].sub);
+    check(nothing(bowEmpty) && said(bowEmpty) && /^You are out of .+ Arrows\.$/.test(bowEmpty.n.why), 'and a bow with no arrows left: the same, where it used to fight on with nothing to shoot', bowEmpty.rows[0] && bowEmpty.rows[0].sub);
+    check(two.M.byAmmo === 0 && two.M.byTime > 0 && two.m.kills === 0 && two.m.spent === 2 && two.m.left === 0 && !two.session && two.ret.fightEnded
+      && two.nRows === 2 && two.rows[0].sub === `No kills. You ran out of ${two.n.plural} before the first one.` && two.ret.why === `You ran out of ${two.n.plural} while you were away.`,
+      'two runes are not a kill: they are cast, nothing dies, and the fight is over', two.rows.map(r => r.sub).join(' | '));
+
+    check(bow.m.kills === bow.M.byTime && id(bow) && bow.n.size === 1 && bow.n.keep === 0 && bow.m.spent === Math.round(bow.m.kills * bow.M.castsKill) && bow.session && bow.resumed,
+      'an archer is charged an arrow a shot for the kills, and the fight is taken up again', `${bow.m.kills} kills, ${bow.m.spent.toLocaleString()} ${bow.n.plural}`);
+    check(bow.nRows === 2 && bow.rows[1].label === 'Arrows' && bow.rows[1].sub === `${bow.m.spent.toLocaleString()} ${bow.n.plural} spent`, 'with a row for the arrows', bow.rows[1] && bow.rows[1].sub);
+    check(bowShort.m.kills === bowShort.M.byAmmo && bowShort.m.kills < bowShort.M.byTime && bowShort.m.spent === 250 && bowShort.m.left === 0 && !bowShort.session && bowShort.ret.fightEnded
+      && /stopped after .+, you ran out of .+ Arrows$/.test(bowShort.rows[0].sub), 'and stops when the arrows are gone', bowShort.rows[0].sub);
+    check(bowThrift.n.keep > 0.29 && id(bowThrift) && bowThrift.m.spent < bow.m.spent * 0.72 && / shots kept theirs$/.test(bowThrift.rows[1].sub), 'Salvager is counted: arrows kept on the roll are not charged', bowThrift.rows[1].sub);
+    check(xbow.m.kills === xbow.M.byTime && id(xbow) && xbow.rows[1].label === 'Bolts' && / Bolts spent$/.test(xbow.rows[1].sub), 'a crossbow is charged its bolts', xbow.rows[1].sub);
+
+    /* the fighter, and everything about the archer but the arrows: what build 0.9.127.11
+       (65126d8, the build before the quiver was charged) gave for the same save */
+    const was = v => ({ kills: v.m.kills, xp: v.m.xp, coins: v.m.coins, ate: v.m.ate, got: v.m.got, session: v.session, ended: !!(v.ret && v.ret.fightEnded), toasts: v.toasts });
+    const GA = (GOLD.built && GOLD.built.away) || {};
+    same('a fighter comes out to the digit as before: kills, XP, gold, drops, food', was(sword), GA.fighter);
+    same('and so does a fighter who runs out of food', was(swordHungry), GA.fighterHungry);
+    check(sword.nRows === 1 && sword.m.other.length === 0 && sword.n.kind === 'melee' && swordHungry.ret.why === '', 'a fighter has no row for a quiver, and nothing is taken but food');
+    same('an archer with arrows to spare gets the kills, XP, gold and drops an archer got before: only the arrows are new', was(bow), GA.archer);
+    const src = J('SIM.awaySource()');
+    check(src.arrowsOn === true && src.readsSwitch === 1, 'arrows and bolts hang on one switch, OFFLINE_SPENDS_ARROWS, read in one place', 'read ' + src.readsSwitch + ' time');
+    check(src.tickAsks && src.resolveAsks, 'the fight and the settle ask the same function why a weapon cannot attack');
+
+    /* ── the weakness ── */
+    const quiet = m => m.weakEl && m.resistEl && !m.boss && src.runeDroppers.indexOf(m.id) < 0;
+    const both = C.monsters.find(m => quiet(m) && m.lvl <= 60 && m.lvl >= 40) || C.monsters.find(quiet);
+    const els = ['fire', 'frost', 'storm', 'shadow'], plainEl = els.find(e => e !== both.weakEl && e !== both.resistEl);
+    const lvW = Math.max(60, both.lvl), wk = run('weak', 'staff', { el: both.weakEl }, lvW, 5, both.id), pl = run('plain', 'staff', { el: plainEl }, lvW, 5, both.id), rs = run('resist', 'staff', { el: both.resistEl }, lvW, 5, both.id);
+    console.log(`\n   THE WEAKNESS  ·  the Lv ${lvW} staff on the ${both.name}, which is weak to ${both.weakEl} and resists ${both.resistEl}`);
+    for (const v of [wk, pl, rs]) console.log('   ' + padr(v.n.spell, 16) + pad('x' + v.n.elem.toFixed(2), 7) + pad(v.m.kills + ' kills', 12) + pad(v.M.perKill.toFixed(2) + ' runes a kill', 22));
+    check(wk.n.elem === C.WEAK && rs.n.elem === C.RESIST && pl.n.elem === 1 && [wk, pl, rs].every(v => v.m.kills === v.M.byTime && id(v)) && wk.m.kills > pl.m.kills && pl.m.kills > rs.m.kills,
+      'the element is counted while away: 15% more against a monster weak to it, 15% less against one that resists', `${wk.m.kills} / ${pl.m.kills} / ${rs.m.kills} kills`);
+    check(Math.abs(wk.m.kills / pl.m.kills - C.WEAK) < 0.01 && Math.abs(rs.m.kills / pl.m.kills - C.RESIST) < 0.01 && wk.M.perKill < pl.M.perKill && pl.M.perKill < rs.M.perKill,
+      'and a monster that dies in fewer casts costs fewer runes', (wk.m.kills / pl.m.kills * 100).toFixed(1) + '% and ' + (rs.m.kills / pl.m.kills * 100).toFixed(1) + '% of the kills');
+
+    if (!QUICK) {
+      /* ── a sleep: the fight is live in front of it ── */
+      const sleep = (key, gap, o) => { const v = J(`SIM.awaySleep('${key}',${(o && o.lv) || LV},${(o && o.t) || T},'${(o && o.mon) || MON}',${gap},${JSON.stringify(o || {})})`); if (v.n) v.M = model(v.n, gap / 60); if (v.err) console.log('   ' + v.err); return v; };
+      const GAP = 180;
+      const sDry = A.sleepDry = sleep('staff', GAP, { el: 'shadow', stock: 400 });
+      const sSave = A.sleepDrySaved = sleep('staff', GAP, { el: 'shadow', stock: 400, save: true });
+      const sOn = A.sleepOn = sleep('staff', GAP, { el: 'shadow' });
+      const sBow = A.sleepBowDry = sleep('bow', GAP, { stock: 200, save: true });
+      const sSword = A.sleepFighter = sleep('melee', GAP, { save: true });
+      const sRaid = A.sleepRaid = sleep('staff', GAP, { el: 'shadow', stock: 5000, raid: 'sunken_barrow', lv: 99, t: 7 });
+      console.log(`\n   A SLEEP  ·  the same builds in a live fight, then ${GAP / 60} hours with the machine asleep, settled by the next tick()`);
+      console.log('   ' + padr('', 34) + pad('had', 8) + pad('kills', 7) + pad('spent', 7) + pad('left', 7) + '   ' + padr('fight after', 13) + padr('the minute after', 26) + 'the last line of the log');
+      const sl = (label, v) => console.log('   ' + padr(label, 34) + pad(v.n.have >= 1e6 ? 'plenty' : v.n.kind === 'melee' ? '' : v.n.have, 8) + pad(v.m.kills, 7) + pad(v.n.kind === 'melee' ? '' : v.m.spent, 7) + pad(v.n.kind === 'melee' ? '' : (v.m.left >= 1e5 ? 'plenty' : v.m.left), 7)
+        + '   ' + padr(v.active ? 'running' : 'stopped', 13) + padr(v.after.attacks + ' attacks, ' + v.after.kills + ' kills', 26) + v.log);
+      sl('staff, 400 runes', sDry); sl('  with a save inside the settle', sSave); sl('staff, runes to spare', sOn); sl('shortbow, 200 arrows, a save', sBow); sl('sword and shield, a save', sSword); sl('staff, in The Sunken Barrow', sRaid);
+      const all = [sDry, sSave, sOn, sBow, sSword, sRaid];
+      check(all.every(v => !v.err && v.engaged && v.fightingBefore && v.settles === 1 && v.after.settles === 1), 'every sleep was settled, once');
+      const stopped = v => v.M.dry && v.m.kills === v.M.byAmmo && v.m.spent === v.n.have && v.m.left === 0 && v.active === false && v.session === false
+        && v.log === `✖ You ran out of ${v.n.plural} while you were away. The fight stops.`;
+      const stays = v => v.after.active === false && v.after.attacks === 0 && v.after.kills === 0 && v.after.session === false;
+      check(stopped(sDry) && stays(sDry), 'the quiver runs out while asleep: the kills it covered are counted, it is empty, and the fight in front of you is stopped', sDry.log);
+      check(stopped(sSave) && stays(sSave), 'a save from inside the settle writes the session back from the live fight, and it is stopped all the same: not one attack in the minute after');
+      check(stopped(sBow) && stays(sBow), 'an archer whose arrows run out while asleep is stopped the same way', sBow.log);
+      check(sOn.active && sOn.session && sOn.m.kills === sOn.M.byTime && id(sOn) && sOn.m.left > 0 && sOn.after.active && sOn.after.attacks > 15 && sOn.after.spent > 0,
+        'with runes to spare the fight carries on, charged for the kills the sleep was given', `${sOn.m.kills} kills, ${sOn.m.spent} runes, then ${sOn.after.attacks} casts in the next minute`);
+      check(sSword.active && sSword.session && sSword.m.kills === sSword.M.byTime && sSword.m.other.length === 0 && sSword.after.active && sSword.after.attacks > 15, 'a fighter sleeps and wakes as before', sSword.m.kills + ' kills');
+      check(sRaid.inRaid && sRaid.raidStill && sRaid.active && sRaid.m.spent === 0 && sRaid.m.kills === 0 && !sRaid.rows.some(r => r.label === 'Offline Combat' || r.label === 'Runes'),
+        'a raid is never settled as a fight, so a sleep in one charges no runes', sRaid.m.left + ' runes before and after');
+
+      /* ── Import Save over a live fight ── */
+      const imp = A.importDry = J(`SIM.awayImport('staff',${LV},${T},'${MON}',${HRS},${JSON.stringify({ el: 'shadow', stock: 400 })})`);
+      if (imp.err) console.log('   ' + imp.err);
+      check(imp.fightingBefore && /_staff$/.test(imp.loaded) && imp.active === false && imp.session === false && imp.left === 0
+        && imp.log === `✖ You ran out of ${imp.n.plural} while you were away. The fight stops.` && imp.rows.some(r => / stopped after /.test(r.sub)),
+        'Import Save over a live fight, with a save whose quiver ran dry while it was away: the fight on screen stops too', imp.log);
+      /* the same call ends it for food, which Import Save never did: the fight on
+         screen used to run on under a Welcome Back panel that said it had stopped */
+      const impF = A.importHungry = J(`SIM.awayImport('melee',${LV},${T},'${MON}',${HRS},${JSON.stringify({ food: 12 })})`);
+      const impOk = A.importFine = J(`SIM.awayImport('staff',${LV},${T},'${MON}',${HRS},${JSON.stringify({ el: 'shadow' })})`);
+      if (impF.err || impOk.err) console.log('   ' + (impF.err || impOk.err));
+      check(impF.fightingBefore && impF.active === false && impF.session === false && impF.log === '✖ You ran out of food while you were away. The fight stops.',
+        'and a save that ran out of food while it was away stops it in the food\'s own words', impF.log);
+      check(impOk.fightingBefore && impOk.active === true && impOk.session === true && /_staff$/.test(impOk.loaded) && /^⚔ You take up the fight against the /.test(impOk.log),
+        'a save with runes and food to spare is loaded into its own fight, as before', impOk.log);
+
+      /* ── against the live tick ── the same build in the same fight, hour for hour */
+      const liveM = J(`SIM.liveFight('staff',${LV},${T},'${MON}',4,4400,false,'shadow')`), liveB = J(`SIM.liveFight('bow',${LV},${T},'${MON}',4,4401,false)`);
+      const lm = liveM.spentHr / liveM.killsHr, lb = liveB.spentHr / liveB.killsHr;
+      console.log(`\n   BESIDE THE LIVE FIGHT  ·  what a kill costs the quiver through combatTick(), 4 game hours, and what the time away charges for it`);
+      console.log(`   staff, Shadow Blast   live ${lm.toFixed(2)} runes a kill (${Math.round(liveM.killsHr)} kills an hour)   away ${mage.M.perKill.toFixed(2)}   ${(mage.M.perKill / lm * 100).toFixed(1)}%   and ${(mage.m.kills / HRS / liveM.killsHr * 100).toFixed(1)}% of the kills an hour`);
+      console.log(`   shortbow              live ${lb.toFixed(2)} arrows a kill (${Math.round(liveB.killsHr)} kills an hour)   away ${bow.M.perKill.toFixed(2)}   ${(bow.M.perKill / lb * 100).toFixed(1)}%   and ${(bow.m.kills / HRS / liveB.killsHr * 100).toFixed(1)}% of the kills an hour`);
+      console.log('   The time away takes a kill as its health over the average hit, so it has no last hit that overshoots; the live fight does, and its casts are whole.');
+      A.live = { mage: lm, bow: lb, mageKillsHr: liveM.killsHr, bowKillsHr: liveB.killsHr };
+      check(!liveM.err && !liveB.err && mage.M.perKill / lm > 0.75 && mage.M.perKill / lm <= 1.02 && bow.M.perKill / lb > 0.75 && bow.M.perKill / lb <= 1.02,
+        'a kill costs the quiver no more away than it does live, and not much less', `${(mage.M.perKill / lm * 100).toFixed(1)}% for runes, ${(bow.M.perKill / lb * 100).toFixed(1)}% for arrows`);
+    }
   }
   /* CV_DUMP=file writes everything this run measured, so a number that is meant to
      move can be cut into the golden file by hand. It never writes the golden file. */

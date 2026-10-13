@@ -23587,7 +23587,13 @@ $('smAction').addEventListener('click',()=>{
         toast("That doesn't look like a valid save code — nothing was changed.");
         return;
       }
-      grantOffline(); try{ resumeCombatSession(); }catch(e){} renderAll();
+      /* A fight can be live when a save is loaded over it. When the loaded save's
+         own fight ended while it was away (the food ran out, or the quiver did),
+         the one on screen ends with it, as it does after a sleep. Before, it ran
+         on under a Welcome Back panel that said it had stopped. */
+      const _imp=grantOffline();
+      if(_imp && _imp.fightEnded) stopFightOutOfFood(_imp.why);
+      try{ resumeCombatSession(); }catch(e){} renderAll();
       $('saveModal').classList.add('hidden');
       toast('Save loaded!');
     }catch(e){ toast('Invalid save code.'); }
@@ -24490,6 +24496,21 @@ function ammoStr(){
 /* "Kiln Runes", "Bronze Arrows": what the stop messages call a stack. The item is
    named in the singular, and "You are out of Kiln Rune." is what that printed. */
 function ammoPlural(id){ const n=(ITEMS[id]&&ITEMS[id].name)||'ammunition'; return /s$/.test(n)||n==='ammunition'?n:n+'s'; }
+/* Why a bow, a staff or a wand cannot attack, in one sentence: nothing loaded, the
+   wrong kind, too good for the weapon, or none left. The fight says it when it
+   stops, and the Welcome Back panel says the same sentence when the time away
+   began that way. Only asked when readyAmmo() has come back empty. */
+function ammoStopReason(){
+  const _q=eqQuiver(), _w=eqCombatWeapon(), _mg=usingMagic();
+  const _vb=_mg?'cast':'fire';
+  return !_q ? (_mg?'You have no runes loaded.':'Your quiver is empty.')
+    : (ITEMS[_q]&&ITEMS[_w]&&ITEMS[_q].ammo!==ITEMS[_w].ammo)
+      ? 'Your '+ITEMS[_w].name+' does not '+_vb+' '+ammoPlural(_q)+'.'
+      : (ITEMS[_q]&&ITEMS[_w]&&!ammoFitsWeapon(_w,_q))
+        ? 'Your '+ITEMS[_w].name+' cannot '+_vb+' '+ammoPlural(_q)+'. '
+          +(_mg?'Load a lower rune, or hold a better staff or wand.':'Use lower-tier ammo or a better bow.')
+        : 'You are out of '+ammoPlural(_q)+'.';
+}
 /* Which stat a kill's XP goes to. It was this exact ternary copy-pasted into five
    places, so a sixth would have missed ranged in silence. */
 /* Ranged styles, keyed by the SAME three slots melee uses, so state.combatStyle
@@ -27632,7 +27653,9 @@ function tick(){
            and did nothing, so the fight carried on with an empty satchel, under a
            Welcome Back panel saying it had stopped: three fish and six hours asleep
            on a Demon was two more kills and then a death. */
-        if(_settle && _settle.fightEnded) stopFightOutOfFood();
+        /* OUT OF RUNES OR ARROWS (Magic slice 9) ends it the same way and through the
+           same call. `why` is the sentence for the quiver, and empty for food. */
+        if(_settle && _settle.fightEnded) stopFightOutOfFood(_settle.why);
         try{ resumeCombatSession(); }catch(e){}
         /* The action's own clock is settled now. Without this the clamp below
            would pay a further two minutes at the online rate for time grantOffline
@@ -27838,11 +27861,48 @@ function offlineFallbackTakeover(fromSkill, fromActId){
    cap that is 17,280 credited seconds, so anything taking a second or more to
    kill never reaches it. */
 const OFFLINE_COMBAT_MAX_KILLS=20000;
+/* THE QUIVER IS THE OTHER LIMIT (Magic slice 9).
+
+   Until now this function had no ammunition in it at all: a mage away from the
+   game spent no runes and an archer no arrows, so the time away was the one
+   place a quiver never ran down. It is charged now, the way the satchel is
+   charged for food: the kills the time away earned cost the casts or shots it
+   takes to make them, at the spell that was left casting (spellSize()), less
+   what was kept (runeSaveRate() or arrowSaveRate(), and Rune Keeper or Quiver
+   Master for the ones that missed). The quiver caps the kills the way food does.
+   When it cannot cover the next kill it is emptied, because those last casts
+   were made, and the fight is over.
+
+   A fight with nothing loaded has no kills in it: the live fight stops on its
+   first attack, so the time away is the same.
+
+   For a mage the element's weakness or resistance is counted, and the element a
+   found staff is better with (elementMult() and spellAffinity(), the two the
+   live cast reads on one line). The four element effects are not: no burn, no
+   chill, no sure cast, no healing.
+
+   A sword, an axe or bare hands touch none of this, and a melee fight comes out
+   to the digit as it did before.
+
+   Runes are always charged. Arrows and bolts are charged while this is true; set
+   it to false and an archer away from the game spends nothing, as before. */
+const OFFLINE_SPENDS_ARROWS=true;
 function offlineCombatResolve(awayMs, om){
   const cs=state.combatSession;
   if(!cs || !(awayMs>0)) return null;
   const base=getMonster(cs.monId); if(!base) return null;
   if(typeof refreshCombatStats==='function') refreshCombatStats();
+
+  const _mg=usingMagic();
+  const _uses=_mg || (OFFLINE_SPENDS_ARROWS && usingRanged());
+  const _am=_uses?(readyAmmo()||''):'';
+  if(_uses && !_am){
+    state.combatSession=null;
+    return {kills:0, wanted:0, capped:false, ranOut:false, ammoOut:true, xp:0, coins:0, items:{}, mon:base.name,
+            ammo:{id:eqQuiver(), none:true, spent:0, kept:0, casts:0, spell:'', lastedMs:0, why:ammoStopReason()}};
+  }
+  /* Read now, while the quiver still holds what was left loaded. */
+  const _size=_mg?spellSize():1, _spell=_mg?spellName():'';
 
   const mon=(typeof rareModify==='function')?rareModify(base,false):base;
   const acc=(typeof playerAccuracy==='function')?playerAccuracy():1;
@@ -27857,13 +27917,30 @@ function offlineCombatResolve(awayMs, om){
   const avgFrac=COMBAT_P.HIT_MIN+(1-COMBAT_P.HIT_MIN)/2;
   const youHitP=Math.max(0.03, Math.min(0.97, acc/(acc+mon.def)));
   const foeHitP=Math.max(0.03, Math.min(0.97, mon.atk/(mon.atk+def)));
-  const youDps=(youHitP*Math.max(1,maxHit*avgFrac))/(youSwingMs/1000);
+  /* A cast that landed is worth 15% more on a monster weak to its element and 15%
+     less on one that resists it. 1 for every other weapon, which leaves the sum
+     below exactly what it was. */
+  const _elem=_mg?elementMult(mon)*spellAffinity():1;
+  const youDps=(youHitP*Math.max(1,maxHit*avgFrac)*_elem)/(youSwingMs/1000);
   const foeDps=(foeHitP*Math.max(1,mon.str*avgFrac))/(foeSwingMs/1000);
   if(!(youDps>0)) return null;
 
   const ttkMs=(mon.hp/youDps)*1000;
   if(!(ttkMs>0) || !isFinite(ttkMs)) return null;
   const dmgPerKill=foeDps*(ttkMs/1000);
+
+  /* What one kill costs the quiver: the attacks it takes, the runes each one
+     spends, and the share of them that spend at all. A cast or a shot keeps its
+     ammunition on the save roll, and with Rune Keeper or Quiver Master a miss
+     hands it back as well, so only the ones that land are left to spend. */
+  let _perKill=0, _spendP=1;
+  if(_am){
+    const _cmA=(typeof cmastBonuses==='function')?cmastBonuses():null;
+    const _keep=_mg?runeSaveRate():arrowSaveRate(_am);
+    const _back=!!(_cmA && (_mg?_cmA.runeRefundOnMiss:_cmA.ammoRefundOnMiss));
+    _spendP=(1-_keep)*(_back?youHitP:1);
+    _perKill=(ttkMs/youSwingMs)*_size*_spendP;
+  }
 
   /* Time you are credited with: the away window, capped, then scaled. */
   const usableMs=Math.max(0, awayMs)*OFFLINE_COMBAT_RATE;
@@ -27880,6 +27957,22 @@ function offlineCombatResolve(awayMs, om){
     const killsByFood=Math.floor(healPool/dmgPerKill);
     if(killsByFood<kills){ kills=killsByFood; ranOut=true; }
   }
+  /* And what the quiver can cover. When it is the tighter of the two, the food
+     was enough for these kills and the quiver is why the fight ended. */
+  const _have=_am?(state.items[_am]||0):0;
+  let ammoOut=false;
+  if(_am && _perKill>0){
+    const killsByAmmo=Math.floor(_have/_perKill);
+    if(killsByAmmo<kills){ kills=killsByAmmo; ammoOut=true; ranOut=false; }
+  }
+  if(kills<=0 && ammoOut){
+    /* Loaded, but not enough of it for one kill. Every one of them was cast or
+       shot and the monster was still standing. */
+    state.combatSession=null;
+    delete state.items[_am];
+    return {kills:0, wanted:0, capped:false, ranOut:false, ammoOut:true, xp:0, coins:0, items:{}, mon:base.name,
+            ammo:offlineAmmoSpent(_am,_have,_size,_spendP,youSwingMs,awayMs,_spell)};
+  }
   if(kills<=0){
     /* Nothing to eat and not enough HP for even one kill. Clear the session:
        resuming onto a body that cannot be healed just walks it into a death the
@@ -27890,6 +27983,19 @@ function offlineCombatResolve(awayMs, om){
   const wanted=kills;
   kills=Math.min(kills, OFFLINE_COMBAT_MAX_KILLS);
   const capped=kills<wanted;
+  /* Held at the kill cap, the quiver covered more kills than were counted. */
+  if(capped) ammoOut=false;
+
+  /* Spend it. Dry is the whole stack, because the casts after the last kill were
+     made too. A stack that comes out at nothing is dry as well: there is nothing
+     left to take the fight up again with. */
+  let _ammo=null;
+  if(_am){
+    const _spent=ammoOut?_have:Math.min(_have, Math.round(kills*_perKill));
+    if(_have-_spent<=0){ delete state.items[_am]; if(!ranOut) ammoOut=true; }
+    else state.items[_am]=_have-_spent;
+    _ammo=offlineAmmoSpent(_am,_spent,_size,_spendP,youSwingMs,awayMs,_spell);
+  }
 
   /* Eat for it, smallest food first - the same order smartHealPick() prefers. */
   let toHeal=Math.max(0, dmgPerKill*kills-(youMaxHp-1)), eaten=0;
@@ -27942,11 +28048,46 @@ function offlineCombatResolve(awayMs, om){
   if(kills>0&&typeof gdOnKill==='function') gdOnKill(base.id,kills);
 
   /* Out of food means the fight is over - do not silently resume it on a body
-     that cannot be healed. Otherwise the session stands and the fight picks up. */
-  if(ranOut) state.combatSession=null;
+     that cannot be healed. Otherwise the session stands and the fight picks up.
+     An empty quiver ends it the same way. */
+  if(ranOut || ammoOut) state.combatSession=null;
   else if(state.combatSession) state.combatSession.at=Date.now();
 
-  return {kills, wanted, capped, ranOut, xp:xpMain+xpHp, xpGained, coins, items, eaten, mon:base.name};
+  return {kills, wanted, capped, ranOut, ammoOut, ammo:_ammo, xp:xpMain+xpHp, xpGained, coins, items, eaten, mon:base.name};
+}
+/* What the time away cost the quiver, in the shape the Welcome Back panel reads.
+   `spendP` is the share of casts or shots that spend at all, so the casts made are
+   worked back from what was spent, and the ones that kept their ammunition are
+   the rest. `lastedMs` is how far into the time away the stack got: fighting
+   while away runs at OFFLINE_COMBAT_RATE of the live pace. */
+function offlineAmmoSpent(id,spent,size,spendP,swingMs,awayMs,spell){
+  const perCast=size*spendP;
+  const casts=perCast>0?spent/perCast:0;
+  return {id:id, none:false, spent:spent, casts:Math.round(casts),
+          kept:Math.max(0, Math.round(casts-spent/size)), spell:spell||'',
+          lastedMs:Math.min(awayMs, casts*swingMs/OFFLINE_COMBAT_RATE), why:''};
+}
+/* The two things the Welcome Back panel says about the quiver: on the Offline
+   Combat row, that the fight stopped when it ran out and how far in that was, and
+   on a row of its own, what was spent. With no kills the row says why. */
+function offlineAmmoLines(summary, oc){
+  const am=oc&&oc.ammo; if(!am) return;
+  const it=ITEMS[am.id]||{}, rune=isRune(am.id);
+  if(!(oc.kills>0)){
+    if(oc.ammoOut) summary.push({icon:'\u{2694}', iconId:'ui_sword', label:'Offline Combat', xp:0,
+      sub:am.none ? 'No kills. '+am.why : 'No kills. You ran out of '+ammoPlural(am.id)+' before the first one.'});
+  }else if(oc.ammoOut){
+    const row=summary[summary.length-1];
+    if(row) row.sub+=' \u{b7} stopped after '+fmtPlaytime(am.lastedMs)+', you ran out of '+ammoPlural(am.id);
+    if(typeof toast==='function') toast('Ran out of '+ammoPlural(am.id)+'. The fight stopped early.');
+  }
+  if(am.spent>0){
+    const n=am.spent.toLocaleString()+' '+(am.spent===1?(it.name||'ammunition'):ammoPlural(am.id));
+    const shots=rune?'cast':'shot';
+    summary.push({icon:'', iconId:am.id, label:rune?'Runes':(it.ammo==='bolt'?'Bolts':'Arrows'), xp:0,
+      sub:n+' spent'+(am.spell?' on '+am.spell:'')
+        +(am.kept>0?' \u{b7} '+am.kept.toLocaleString()+' '+shots+(am.kept===1?'':'s')+' kept theirs':'')});
+  }
 }
 
 /* ════ [JS-21f] offline grant & summary ══════════════════════════════════════════ */
@@ -28007,6 +28148,9 @@ function grantOffline(measured){
   } else if(_offCombat && _offCombat.ranOut){
     summary.push({icon:'\ud83c\udf56', iconId:'hitpoints', label:'Offline Combat', sub:'Stopped early \u2014 you ran out of food', xp:0});
   }
+  /* The quiver (Magic slice 9): what was spent, and that the fight stopped when
+     it ran out. Nothing for a weapon that uses no ammunition. */
+  offlineAmmoLines(summary, _offCombat);
   const _fought = !!(_offCombat && _offCombat.kills>0);
 
   /* ── 2. The night's work ───────────────────────────────────────────────────
@@ -28176,8 +28320,14 @@ function grantOffline(measured){
      a fight still running in front of it, and has to end it when the food ran out;
      a launch has nothing running and ignores this. Told here, and not left for the
      caller to read off state.combatSession, because a save anywhere in this
-     function writes the session straight back from the fight that is still live. */
-  return { fightEnded: !!(_offCombat && _offCombat.ranOut) };
+     function writes the session straight back from the fight that is still live.
+
+     An empty quiver ends the fight as well (Magic slice 9). `why` is the sentence
+     for it, and stays empty when it was the food. */
+  const _dry=!!(_offCombat && _offCombat.ammoOut && _offCombat.ammo);
+  return { fightEnded: !!(_offCombat && (_offCombat.ranOut || _offCombat.ammoOut)),
+           why: !_dry ? '' : (_offCombat.ammo.none ? _offCombat.ammo.why
+             : 'You ran out of '+ammoPlural(_offCombat.ammo.id)+' while you were away.') };
 }
 
 function showOfflineSummary(awayMs, lines, meta){
@@ -44538,8 +44688,12 @@ function fleeCombat(){
    live when grantOffline() has just decided it is over. Cleared as fleeCombat()
    clears a fight, and said the way an empty quiver is said. The session goes too,
    whatever a save may have written back into it, so nothing takes the fight up
-   again behind this. Never a raid: a raid is not settled as a fight at all. */
-function stopFightOutOfFood(){
+   again behind this. Never a raid: a raid is not settled as a fight at all.
+
+   `why` is for the other thing that can run dry (Magic slice 9): the quiver. It is
+   the sentence to log in place of the food one. Import Save calls this too, since
+   a fight can be live when a save is loaded over it. */
+function stopFightOutOfFood(why){
   if(!combat.active || combat.raid) return false;
   stopCombatTimer();
   combat.active=false;
@@ -44549,7 +44703,8 @@ function stopFightOutOfFood(){
   combat.youSwingStart=0;
   combat.foeSwingStart=0;
   state.combatSession=null;
-  cmbLog('\u2716 You ran out of food while you were away. The fight stops.','miss');
+  if(why) cmbLog('\u{2716} '+why+' The fight stops.','miss');
+  else cmbLog('\u2716 You ran out of food while you were away. The fight stops.','miss');
   renderCombat();
   refreshCombatTabIndicator();
   return true;
@@ -44917,17 +45072,9 @@ function combatTick(){
     if(usingRanged()||_mg){
       const _am=readyAmmo();
       if(!_am){
-        const _q=eqQuiver(), _w=eqCombatWeapon();
         stopCombatTimer(); combat.active=false;
         if(typeof refreshCombatTabIndicator==='function') refreshCombatTabIndicator();
-        const _vb=_mg?'cast':'fire';
-        const _why = !_q ? (_mg?'You have no runes loaded.':'Your quiver is empty.')
-          : (ITEMS[_q]&&ITEMS[_w]&&ITEMS[_q].ammo!==ITEMS[_w].ammo)
-            ? 'Your '+ITEMS[_w].name+' does not '+_vb+' '+ammoPlural(_q)+'.'
-            : (ITEMS[_q]&&ITEMS[_w]&&!ammoFitsWeapon(_w,_q))
-              ? 'Your '+ITEMS[_w].name+' cannot '+_vb+' '+ammoPlural(_q)+'. '
-                +(_mg?'Load a lower rune, or hold a better staff or wand.':'Use lower-tier ammo or a better bow.')
-              : 'You are out of '+ammoPlural(_q)+'.';
+        const _why=ammoStopReason();
         cmbLog('\u2716 '+_why+' The fight stops.','miss');
         if(typeof toast==='function') toast(_why);
         renderCombat();

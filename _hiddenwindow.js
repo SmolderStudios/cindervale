@@ -424,10 +424,14 @@ function tables(B) {
   }
 
   console.log('\n5. CLOSING THE GAME INSTEAD  ·  what one hour away counts for the same fight, by the game\'s own offline sums (' + pc(B[0].offline[0].rate, 1) + ' of the time)');
-  console.log('   Offline combat spends no arrows and no runes, cannot kill you, and gives the kill\'s XP without the XP for each hit.');
-  console.log('   ' + padr('', 26) + pad('kills', 8) + pad('food', 8) + B.map(b => pad((many ? b.label + ' ' : '') + 'seen', 14) + pad('hidden', 9)).join(''));
+  /* Until Magic slice 9 this line said offline combat spends no arrows and no runes,
+     and the column was not printed because it was always nothing. The quiver is
+     charged now, and a spell's element counts: three of the four monsters here
+     resist Fire, so the staff's kills on those are 15% under what they were. */
+  console.log('   Offline combat is charged for the arrows and the runes its kills take, counts a spell\'s element, cannot kill you, and gives the kill\'s XP without the XP for each hit.');
+  console.log('   ' + padr('', 26) + pad('kills', 8) + pad('food', 8) + pad('quiver', 8) + B.map(b => pad((many ? b.label + ' ' : '') + 'seen', 14) + pad('hidden', 9)).join(''));
   B[0].offline.forEach((r, ix) => {
-    console.log('   ' + padr(`Lv ${r.lv} ${label(r.key)}`, 26) + pad(num(r.killsHr), 8) + pad(num(r.foodHr), 8) + B.map(b => pad(num(b.seen[ix].killsHr) + ' kills', 14) + pad(num(b.hidden[ix].killsHr), 9)).join(''));
+    console.log('   ' + padr(`Lv ${r.lv} ${label(r.key)}`, 26) + pad(num(r.killsHr), 8) + pad(num(r.foodHr), 8) + pad(r.ammoHr ? num(r.ammoHr) : '', 8) + B.map(b => pad(num(b.seen[ix].killsHr) + ' kills', 14) + pad(num(b.hidden[ix].killsHr), 9)).join(''));
   });
 
   console.log('\n6. A MACHINE THAT SLEEPS  ·  a Lv 99 fight, a minute seen, ten minutes asleep, a minute seen, eight times each with different dice');
