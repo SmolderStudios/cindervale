@@ -543,6 +543,14 @@ function SCENES_IN_PAGE() {
       ['helm', 'chest', 'legs', 'gloves', 'boots'].forEach(function (p, i) { state.combatEquipped[['helmet', 'chest', 'legs', 'gloves', 'boots'][i]] = 'troll_' + p; state.items['troll_' + p] = 1; });
     });
     if (scene === 'welcome_spare') away(8, function () { state.items.forge_rune = 40000; });
+    /* a fight and a row earned beside it at the Offline efficiency (the all-skill
+       trickle), so the panel shows the fight's rate and the skills' rate as two chips */
+    if (scene === 'welcome_both') {
+      var keepMods = offlineMods;
+      offlineMods = function () { var m = keepMods(); m.allSkillXp = 0.015; return m; };
+      try { away(8, function () { state.items.forge_rune = 40000; }); } finally { offlineMods = keepMods; }
+      info.chips = [].map.call(document.querySelectorAll('#offlineAwayTime .off-tag.rate'), function (e) { return e.textContent; });
+    }
     /* Runecrafting on The Ashen Circle's page: a member who carves runes, with a board
        the guild's own roller dealt */
     if (scene === 'guild_ashen' || scene === 'guild_list') {
@@ -620,6 +628,7 @@ const SCENES = {
   welcome_dry:    { sel: '#offlineModal .modal', dir: 'away' },
   welcome_arrows: { sel: '#offlineModal .modal', dir: 'away' },
   welcome_spare:  { sel: '#offlineModal .modal', dir: 'away' },
+  welcome_both:   { sel: '#offlineModal .modal', dir: 'away' },
   guild_ashen:    { sel: '#guildView', dir: 'away' },
   guild_list:     { sel: '#guildView', dir: 'away' }
 };

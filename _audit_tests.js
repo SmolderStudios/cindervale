@@ -12374,6 +12374,65 @@ setTimeout(() => {
     ok('the guild list and the guild\'s page both name Runecrafting', /Runecrafting/.test(G.card) && /Runecrafting/.test(G.page), G.card);
   }
 
+  section('Welcome Back says the rate a fight really ran at (0.9.127.11)');
+  {
+    /* The chip under "You were away" printed the Offline efficiency (30% at base)
+       whatever had run, and a fight left running is paid at OFFLINE_COMBAT_RATE (20%),
+       which the Offline skill does not move. Each case runs grantOffline() with the
+       real panel and reads the chips it drew. */
+    const W = JSON.parse(ev(`(function(){
+      var o={}, keepToast=window.toast, keepMods=offlineMods, toasts=[];
+      var chips=function(){ return [].slice.call(document.querySelectorAll('#offlineAwayTime .off-tag.rate')).map(function(e){ return {t:e.textContent, tip:e.getAttribute('data-tip')}; }); };
+      var body=function(){ var b=document.getElementById('offlineSummaryBody'); return b?b.textContent:''; };
+      var away=function(monId, food, extra){
+        state=defaultState(); normalizeState(); state.action=null;
+        if(food) state.items.cooked_trout=food;
+        if(extra) extra();
+        refreshCombatStats();
+        var t=Date.now()-8*3600000;
+        if(monId) state.combatSession={monId:monId, style:state.combatStyle, youHp:combat.youMaxHp, rare:false, at:t};
+        state.lastSeen=t;
+        document.getElementById('offlineAwayTime').innerHTML='';
+        toasts.length=0; grantOffline();
+        return {chips:chips(), body:body(), toasts:toasts.slice(), rate:Math.round(OFFLINE_COMBAT_RATE*100), base:Math.round(offlineSlotRate()*100)};
+      };
+      window.toast=function(x){ toasts.push(String(x)); };
+      try{
+        var weak=MONSTERS[0].id;
+        o.fight=away(weak, 1e6);
+        /* the all-skill trickle is a row after the fight's, paid at the Offline efficiency */
+        offlineMods=function(){ var m=keepMods(); m.allSkillXp=0.015; return m; };
+        o.both=away(weak, 1e6);
+        offlineMods=keepMods;
+        o.skill=away(null, 0, function(){ state.action={skill:'woodcutting', actId:SKILLS.woodcutting.acts[0].id}; });
+        /* the food row needs a monster the time away could kill but a new character's
+           health cannot cover even once: too weak and the health covers a kill, too
+           strong and the time away gives none, which has no row at all */
+        var byLvl=MONSTERS.slice().sort(function(a,b){ return (a.lvl||0)-(b.lvl||0); });
+        for(var i=0;i<byLvl.length && !o.noFood;i++){ var r=away(byLvl[i].id, 0); if(/No kills/.test(r.body)){ o.noFood=r; o.noFoodMon=byLvl[i].name; } }
+        if(!o.noFood) o.noFood={body:'no monster gave a fight with no kills for want of food', chips:[], toasts:[]};
+      } finally { window.toast=keepToast; offlineMods=keepMods; state=defaultState(); normalizeState(); }
+      return JSON.stringify(o);
+    })()`));
+    const dash = String.fromCharCode(8212);
+    const one = (c, t) => c.length === 1 && c[0].t === t;
+    ok('a fight left running shows one chip, at the fight\'s own rate', one(W.fight.chips, W.fight.rate + '% of live rate') && W.fight.rate === 20,
+       JSON.stringify(W.fight.chips.map(c => c.t)));
+    ok('  and its tip says it is the fight\'s rate, not that the Offline skill raises it',
+       /fight left running gives 20%/.test(W.fight.chips[0] && W.fight.chips[0].tip) && !/Offline skill raise/.test(W.fight.chips[0] && W.fight.chips[0].tip), W.fight.chips[0] && W.fight.chips[0].tip);
+    ok('a fight with something earned beside it shows both, each named', W.both.chips.length === 2 && W.both.chips[0].t === 'Fight: 20% of live rate'
+       && W.both.chips[1].t === 'Skills: ' + W.both.base + '% of live rate' && /All-Skill/.test(W.both.body), JSON.stringify(W.both.chips.map(c => c.t)));
+    ok('a return from skilling alone reads exactly as it always has', one(W.skill.chips, W.skill.base + '% of live rate') && W.skill.base === 30
+       && /Levels in the Offline skill raise it/.test(W.skill.chips[0].tip), JSON.stringify(W.skill.chips.map(c => c.t)));
+    ok('a fight with no food for even one kill says so in plain words', /No kills\. You did not have enough food for one\./.test(W.noFood.body),
+       (W.noFoodMon ? W.noFoodMon + ': ' : '') + W.noFood.body.slice(0, 160));
+    ok('nothing on the panel or in its toasts has an em dash', [W.fight, W.both, W.skill, W.noFood].every(x => x.body.indexOf(dash) < 0
+       && x.toasts.every(t => t.indexOf(dash) < 0) && x.chips.every(c => (c.t + c.tip).indexOf(dash) < 0)),
+       [W.fight, W.both, W.skill, W.noFood].map(x => x.toasts.join(' / ')).join(' | '));
+    ok('the food and kill-cap toasts read as sentences', html.includes("Ran out of food. The fight stopped early.") && html.includes("kills. Try a tougher monster.")
+       && !html.includes("Ran out of food \\u2014") && !html.includes("kills \\u2014 try"));
+  }
+
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));
   process.exit(fail ? 1 : 0);
 }, 2500);

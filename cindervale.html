@@ -28144,16 +28144,17 @@ function grantOffline(measured){
                   xp:_offCombat.xp, items:_its});
     if(_offCombat.capped && typeof toast==='function')
       toast('\u2694 Offline combat capped at '+OFFLINE_COMBAT_MAX_KILLS.toLocaleString()
-            +' kills \u2014 try a tougher target.');
+            +' kills. Try a tougher monster.');
     if(_offCombat.ranOut && typeof toast==='function')
-      toast('\ud83c\udf56 Ran out of food \u2014 the fight stopped early.');
+      toast('\ud83c\udf56 Ran out of food. The fight stopped early.');
   } else if(_offCombat && _offCombat.ranOut){
-    summary.push({icon:'\ud83c\udf56', iconId:'hitpoints', label:'Offline Combat', sub:'Stopped early \u2014 you ran out of food', xp:0});
+    summary.push({icon:'\ud83c\udf56', iconId:'hitpoints', label:'Offline Combat', sub:'No kills. You did not have enough food for one.', xp:0});
   }
   /* The quiver (Magic slice 9): what was spent, and that the fight stopped when
      it ran out. Nothing for a weapon that uses no ammunition. */
   offlineAmmoLines(summary, _offCombat);
   const _fought = !!(_offCombat && _offCombat.kills>0);
+  const _rowsAfterFight = summary.length;   // anything pushed after this ran at the Offline efficiency
 
   /* ── 2. The night's work ───────────────────────────────────────────────────
      One block for every stance. Steady is the one-slot, one-times case of it;
@@ -28311,6 +28312,11 @@ function grantOffline(measured){
        two differ by a lot, and the chip claiming 54% while each thread crawled at
        32% would be a lie the panel had no way to walk back. */
     efficiency:_fought?om.rate:offlineSlotRate(),
+    /* A fight left running is paid at OFFLINE_COMBAT_RATE, which the Offline skill
+       does not move. The rows after the fight's (the farmhand, the all-skill trickle,
+       a skilling slot) ran at `efficiency`. */
+    combatRate:_fought?OFFLINE_COMBAT_RATE:0,
+    skillingRan:summary.length>_rowsAfterFight,
     stance:_stance.id, stanceName:_stance.name, slots:_slots.length,
     coinsGained:(state.coins||0)-coinsBefore,
     totalXp:summary.reduce((s,l)=>s+(l.xp||0),0),
@@ -28357,10 +28363,18 @@ function showOfflineSummary(awayMs, lines, meta){
      selector list (see "Hover tooltips"), and .off-tag is registered on it.
      data-tooltip is scoped to .inv-cat alone and would have rendered nothing. */
   if(meta.capped) head+='<span class="off-tag warn" data-tip="Your offline cap is '
-    +fmtDur(meta.capMs||awayMs)+'. Hours past it earn nothing — raise the cap in the Offline skill tree.">'
+    +fmtDur(meta.capMs||awayMs)+'. Hours past it earn nothing. Raise the cap in the Offline skill tree.">'
     +'only '+fmtDur(meta.capMs||awayMs)+' counted</span>';
-  head+='<span class="off-tag rate" data-tip="Offline gives a fraction of what the same time gives while you are playing. Levels in the Offline skill raise it.">'
-    +eff+'% of live rate</span>';
+  /* A fight runs at its own fixed rate, not at the Offline efficiency, so a return
+     from a fight said 30% when the fight had run at 20%. A fight gets its own chip,
+     and when the farmhand or a skill earned beside it both chips show. */
+  const _rateTag=(tip,txt)=>'<span class="off-tag rate" data-tip="'+tip+'">'+txt+'</span>';
+  const _skillTip='Offline gives a fraction of what the same time gives while you are playing. Levels in the Offline skill raise it.';
+  const _fightPct=meta.combatRate?Math.round(meta.combatRate*100):0;
+  const _fightTip='A fight left running gives '+_fightPct+'% of what the same time gives while you are playing.';
+  if(!_fightPct) head+=_rateTag(_skillTip, eff+'% of live rate');
+  else if(!meta.skillingRan) head+=_rateTag(_fightTip, _fightPct+'% of live rate');
+  else head+=_rateTag(_fightTip, 'Fight: '+_fightPct+'% of live rate')+_rateTag(_skillTip, 'Skills: '+eff+'% of live rate');
   /* Which stance ran. Only shown when it was not Steady — naming the default on
      every single return would be noise. */
   if(meta.stanceName && meta.stance && meta.stance!=='steady')
