@@ -89,6 +89,44 @@ node _iconart/banner.js sheets/rn_banner.png runecrafting --band 0.28,0.59 --q 0
   entry is replaced and named in the output, so one icon can be re-cut and swapped
   the same way; every entry the pack does not name stays byte for byte as it was.
 
+**Magic, the gear half, and the Sorcery plates (0.9.127.11).** 46 item icons off six
+sheets (`sheets/mg_finds_zone`, `mg_finds_raid`, `mg_sunder`, `mg_raidrobes`,
+`mg_dawnveil`, `mg_wyrd`) and 13 Combat Mastery plates off a seventh
+(`sheets/cmast_sorcery`). The item half went in the way the batch above did, with two
+differences:
+
+- **Ruled tables, cut one cell at a time.** Five of the six came back with a drawn
+  rule round every cell and no captions, and on sheet P the Gravecall Staff runs to
+  3 px from the frame, so an `--inset` that clears the rules eats art. `cutall.js`
+  has a `ruled(ids, xs, ys)` helper: the rules as measured, each cell a 1x1 cut that
+  starts 2 px past one rule and stops 3 px short of the next. A rule's soft edge is
+  one pixel wide on all five sheets, so that takes none of it.
+- **No captions to check against.** Each cut was checked against its own cell's
+  description in `PROMPTS-magic.md` instead; all six sheets came back in the
+  prompt's order.
+
+```bash
+node _iconart/cutall.js mg_finds_zone mg_finds_raid mg_sunder mg_raidrobes mg_dawnveil mg_wyrd
+node _iconart/keyline.js --only <the 46 ids>        # all 46 are in keyline.json
+node _iconart/pack.js --picks _iconart/picks_magic_gear.json --out pack.magic_gear.json
+node _iconart/mergeitems.js --pack pack.magic_gear.json --dry    # "live 944 icons, pack 46: 46 new, 0 replaced"
+node _iconart/mergeitems.js --pack pack.magic_gear.json
+node _iconart/cmastplates.js cut cmast_sorcery                   # -> cut/cmast/, pack.cmast_sorcery.json
+node _iconart/cmastplates.js merge --pack pack.cmast_sorcery.json --dry   # "live 50 plates, pack 13: 13 new"
+node _iconart/cmastplates.js merge --pack pack.cmast_sorcery.json
+```
+
+  The plates are not item art. ChatGPT gives them back already transparent (white
+  and grey on alpha 0, black in a viewer that hides alpha), so nothing is keyed:
+  `cmastplates.js` trims each cell to its alpha box, pads it square and writes 160 px
+  WebP at q 0.90, the same cut the fifty got from `_cmasticons.js` in the trailer
+  kit, with the cells measured rather than equal (the Sorcery sheet's columns are
+  uneven). It merges into `CMAST_ART.icons` by id and refuses to write unless the
+  fifty, the five frames and the background read back byte for byte.
+  `_cmastpreview/reart.js` (not in git) does the opposite: it swaps the whole
+  `CMAST_ART` payload for `_cmastpreview/art.json`, which holds only the fifty, so
+  running it now would take the thirteen back out.
+
 ## How the swap works
 
 `iconHTML(id)` returns `ICONS[id]` verbatim at every render site, so replacing an
@@ -139,6 +177,7 @@ what makes "regenerate one family, re-inject" safe to repeat.
 | `cutall.js`, `slice.js` | every sheet's grid and crops, and the slicer they drive |
 | `mergeitems.js` | add new ids to the live `ART_ITEM` block, the rest untouched |
 | `injectnodes.js`, `banner.js` | merge tree plates into `NODE_ART`, a banner into `SKILL_ART` |
+| `cmastplates.js` | cut Combat Mastery plates off a transparent sheet and merge them into `CMAST_ART.icons` |
 | `verify.js` | automated hue/value/contrast/coverage flags |
 | `sheet.js` | review PNG on the real satchel tile at real sizes |
 | `picker.js` | `pick.html`, the A/B chooser |

@@ -773,13 +773,19 @@ for its own build.
 
 # The gear half: finds, raid robes, Dawnveil, the gem and the draught
 
-Slices 5, 7 and 8 of `_magedesign/` added 46 items, and every one ships drawn:
-`[JS-ICONS-MAGE-DROPS]` for the staves, wands, raid robes, Dawnveil and the Sunder
-Rune, and the shared gem and potion generators for the Wyrdstone and the Arcane
-Draught. All 46 ids are named on `MAGE_PENDING` in `_audit_tests.js`, and an
-assertion under that list fails the day a listed id is no longer drawn, so take
-each id off as its sheet is injected. The contact sheet of what is in the game now
-is `_magedesign/shots/gear/sheet.png` (`node _magedesign/shootreal.js gear`).
+> **DONE in 0.9.127.11.** All six sheets came back (2026-10-14) and all 46 icons are
+> in `ART_ITEM`, merged with `mergeitems.js`; with the thirteen Sorcery plates below
+> they added 367 KB. `MAGE_PENDING` is empty again and `MAGE_GEAR` in
+> `_audit_tests.js` holds the 46 to painted art by name. What was run is in
+> **How they went in (0.9.127.11)** at the end and in `README.md`; the prompts are
+> kept as written, for a re-roll.
+
+Slices 5, 7 and 8 of `_magedesign/` added 46 items, and every one shipped drawn
+first: `[JS-ICONS-MAGE-DROPS]` for the staves, wands, raid robes, Dawnveil and the
+Sunder Rune, and the shared gem and potion generators for the Wyrdstone and the
+Arcane Draught. Those generators are still in the file as the fallback. The contact
+sheet of what is in the game now is `_magedesign/shots/gear/sheet.png`
+(`node _magedesign/shootreal.js gear`).
 
 | Family | Painted | Ships as | Sheet |
 |---|---|---|---|
@@ -1094,14 +1100,16 @@ arcane_draught_2
 
 # The Sorcery column: thirteen Mastery plates
 
+> **DONE in 0.9.127.11.** Sheet U came back (2026-10-14) and all thirteen plates are
+> in `CMAST_ART.icons`, cut and merged by `_iconart/cmastplates.js`; the fifty that
+> were there are byte for byte what they were. `SORC_PLATES_PENDING` is empty and the
+> audit holds all 63 plates to painted art.
+
 Slice 6 added the fifth column of Combat Mastery, Sorcery, and its bridge to
-Warfare: thirteen nodes, and every one ships on a drawn plate. They are in
-`SORC_PLATES` in `cindervale.html`, beside `CMAST_ICON_SVG`, and they fill only the
-ids `CMAST_ART.icons` has no painted plate for. Cut a painted plate into
-`CMAST_ART.icons` under the same id and the drawing stops being used, with no other
-edit. The thirteen ids are on `SORC_PLATES_PENDING` in `_audit_tests.js`, which
-fails the day a listed plate is painted and still listed, so take each id off as
-it lands. What is in the game now is at the bottom of
+Warfare: thirteen nodes, and every one shipped on a drawn plate first. The drawings
+are still in `SORC_PLATES` in `cindervale.html`, beside `CMAST_ICON_SVG`, and they
+fill only the ids `CMAST_ART.icons` has no painted plate for, so with the painted
+ones in none of them is shown. What is in the game now is at the bottom of
 `_magedesign/shots/gear/sheet.png`, and on the board in
 `_magedesign/shots/gear/mastery_board.png`.
 
@@ -1110,8 +1118,10 @@ it lands. What is in the game now is at the bottom of
 | Sorcery plates | 13 | `s_t1` to `s_cap`, `gs_t3`, `gs_t4` | U |
 
 **These are not item icons.** They go through the Combat Mastery pipeline, the one
-`_cmastpreview/ART-PROMPTS.md` describes and `_cmastpreview/reart.js` cuts, not the
-item pack. Three rules from that file decide everything about this sheet:
+`_cmastpreview/ART-PROMPTS.md` describes, not the item pack. The fifty were cut by
+`_cmasticons.js` in the trailer kit and put in whole by `_cmastpreview/reart.js`;
+these thirteen were cut the same way and merged by `_iconart/cmastplates.js`. Three
+rules from that file decide everything about this sheet:
 
 - **White and light grey on a transparent background, no colour anywhere.** The
   board tints every plate with its column's colour at render time (Sorcery is
@@ -1191,3 +1201,30 @@ gs_t3
 gs_t4
 ```
 </details>
+
+---
+
+## How they went in (0.9.127.11)
+
+All seven sheets came back on 2026-10-14 and none had to be redone. The commands are
+in `README.md`. What is worth knowing for the next batch:
+
+- **No captions on any of them.** So the label check was each cut against its own
+  cell's description above, one by one. All seven are in the prompt's order, the
+  raid sheet with its tenth cell empty and the plate sheet with its two spares.
+- **Five came back as ruled tables**, a drawn rule round every cell. Cut one cell at
+  a time by `ruled()` in `cutall.js`, from the rules as measured, because on sheet P
+  the Gravecall Staff runs to 3 px from the frame and any inset that clears the rule
+  would cut it.
+- **All 46 items keyed by `keyline.js`**, none fell back to the plain fill. The web
+  in the Webspinner Staff's hoop is bare paper in the painting, but its strands are
+  grey, not ink, so cutting its holes would take out 4 of its cells and leave the
+  rest white. It is kept white, as painted, and reads as a pale disc with a web on it.
+- **The plates came back transparent**, like the five sheets of the fifty, so they
+  were trimmed to their alpha, not keyed. They are 160 px WebP at q 0.90 like the
+  fifty, 7.1 to 10.0 KB each (the fifty run 3.4 to 10.1, mean 6.8), not the 4 KB the
+  rule above asks for, which the fifty never met either. They carry a faint warm
+  cast the fifty do not (mean chroma 3.2 against 0.4, red about three levels over
+  blue): that is in the painting, and nothing was done to it.
+- **Size.** 217 KB of item icons and 150 KB of plates: `cindervale.html` went from
+  13,271,018 bytes to 13,648,420.

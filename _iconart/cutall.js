@@ -30,6 +30,25 @@ const path = require('path');
 const fs = require('fs');
 
 const S = 'sheets/';
+
+/* A RULED sheet cut one cell at a time (the gear half of Magic, 0.9.127.11). `xs` and
+   `ys` are the rules as measured, each [first, last] pixel of its dark core; every
+   cell becomes its own 1x1 cut that starts 2 px past one rule and stops 3 px short of
+   the next. Measured on all six of those sheets: a rule's soft edge is one pixel
+   wide, so 2 px takes none of it, and less is cut from the art than any --inset
+   would take (on sheet P the Gravecall Staff runs to 3 px from the frame).
+   A `_spare` id is a cell the sheet leaves empty: it is skipped, not cut. */
+function ruled(ids, xs, ys) {
+  const L = ids.split(/\s+/).filter(Boolean), rows = [];
+  let k = 0;
+  for (let r = 0; r + 1 < ys.length; r++) for (let c = 0; c + 1 < xs.length && k < L.length; c++, k++) {
+    if (L[k].startsWith('_spare')) continue;
+    rows.push({ ids: L[k], crop: [xs[c][1] + 2, ys[r][1] + 2, xs[c + 1][0] - 2, ys[r + 1][0] - 2].join(','), grid: '1x1' });
+  }
+  if (k !== L.length) throw new Error('ruled(): ' + L.length + ' ids for ' + k + ' cells');
+  return rows;
+}
+
 const PLAN = [
 
   /* ---- plain sheets, rows evenly spaced ------------------------------------ */
@@ -236,6 +255,33 @@ const PLAN = [
     { ids: 'rn_sure rn_bind rn_brand rn_gm_speed',     crop: '0,606,1271,890', rowcols: [4] },
     { ids: 'rn_gm_xp rn_gm_save rn_endless rn_cape',   crop: '0,890,1271,1208', rowcols: [4] },
   ]},
+
+  /* ---- Magic, the gear half (0.9.127.11): six sheets, 46 icons ----------------
+     Sheets O to T of PROMPTS-magic.md. Five came back as ruled tables and one (the
+     Sunder Rune) as a single picture. None has captions, so each cell was checked
+     against its prompt's description instead: all six are in the prompt's order.
+     Rules measured with a 93%-dark line test; see ruled() above. */
+  { name: 'mg_finds_zone', sheet: 'mg_finds_zone.png', noeat: true, rows: ruled(
+    'gnawbone_wand briarwood_wand webspinner_staff fetish_staff gravecaller frostbrand_staff moonhowl_wand seers_eye mossheart_wand cinderspine ashglass_staff brimstone_sceptre',
+    [[0,0],[362,363],[724,724],[1086,1087],[1447,1447]], [[0,0],[361,361],[717,717],[1085,1085]]) },
+  /* Five across and two down, the last cell empty. */
+  { name: 'mg_finds_raid', sheet: 'mg_finds_raid.png', noeat: true, rows: ruled(
+    'gravecall_staff barrow_wand slagfire_staff emberglass_wand riftcaller nullspire_wand dawncaller starcall_wand faultline _spare',
+    [[0,0],[356,357],[710,710],[1063,1064],[1417,1418],[1772,1773]], [[0,0],[442,443],[885,886]]) },
+  { name: 'mg_sunder', sheet: 'mg_sunder.png', noeat: true, rows: [
+    { ids: 'sunder_rune', crop: '0,0,1322,1190', grid: '1x1' },
+  ]},
+  { name: 'mg_raidrobes', sheet: 'mg_raidrobes.png', noeat: true, rows: ruled(
+    'runebound_hood runebound_robe runebound_leggings runebound_wraps runebound_slippers '
+    + 'drakerune_hood drakerune_robe drakerune_leggings drakerune_wraps drakerune_slippers '
+    + 'riftwoven_hood riftwoven_robe riftwoven_leggings riftwoven_wraps riftwoven_slippers',
+    [[0,0],[307,308],[614,615],[921,921],[1228,1228],[1535,1535]], [[0,0],[341,341],[682,682],[1023,1023]]) },
+  { name: 'mg_dawnveil', sheet: 'mg_dawnveil.png', noeat: true, rows: ruled(
+    'dawnveil_hood dawnveil_robe dawnveil_leggings dawnveil_slippers',
+    [[0,1],[542,543],[1085,1086],[1628,1629],[2170,2171]], [[0,1],[722,723]]) },
+  { name: 'mg_wyrd', sheet: 'mg_wyrd.png', noeat: true, rows: ruled(
+    'wyrd_chip wyrd_polish wyrd_flaw arcane_draught_1 arcane_draught_2',
+    [[0,0],[434,434],[868,869],[1302,1303],[1737,1737],[2171,2171]], [[0,0],[723,723]]) },
 ];
 
 const only = process.argv.slice(2).filter(a => !a.startsWith('--'));

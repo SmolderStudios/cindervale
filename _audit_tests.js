@@ -3428,23 +3428,23 @@ setTimeout(() => {
        would now excuse a painted icon that fell back to its drawing. Slices 5 to 9
        add staves, wands, robes and a rune that will ship drawn first: name THOSE ids
        here when they land. Do not put the rule back. */
-    /* Slice 5 (0.9.127.11): the twelve staves and wands the zones drop. Drawn by
-       [JS-ICONS-MAGE-DROPS] until their sheet is painted, and named one by one. Take
-       an id off the day its painted icon is injected: the check under the list fails
-       if a listed id is no longer drawn, so it cannot go stale. */
-    const MAGE_PENDING = ['gnawbone_wand','briarwood_wand','webspinner_staff','fetish_staff','gravecaller','frostbrand_staff',
-                          'moonhowl_wand','seers_eye','mossheart_wand','cinderspine','ashglass_staff','brimstone_sceptre',
-      /* Slice 8: two a raid and Faultline, the Spire's rune, the three raid cloths as
-         fifteen robe pieces, and Dawnveil. */
+    /* Slices 5, 7 and 8 shipped their 46 icons drawn in 0.9.127.11 and were painted in
+       the same build, off sheets O to T of _iconart/PROMPTS-magic.md: cut by cutall.js,
+       keyed by keyline.js, merged with mergeitems.js. So the list is EMPTY again, for
+       the same reason as above: name the next drawn Magic id here by id. The 46 are
+       on MAGE_GEAR below instead, and held to painted art by name. */
+    const MAGE_PENDING = [];
+    /* The gear half, by name: the twelve staves and wands the zones drop (slice 5); two
+       a raid and Faultline, the Spire's rune, the three raid cloths as fifteen robe
+       pieces, and Dawnveil (slice 8); the gem and the brew (slice 7). */
+    const MAGE_GEAR = ['gnawbone_wand','briarwood_wand','webspinner_staff','fetish_staff','gravecaller','frostbrand_staff',
+      'moonhowl_wand','seers_eye','mossheart_wand','cinderspine','ashglass_staff','brimstone_sceptre',
       'gravecall_staff','barrow_wand','slagfire_staff','emberglass_wand','riftcaller','nullspire_wand','dawncaller','starcall_wand','faultline',
       'sunder_rune',
       'runebound_hood','runebound_robe','runebound_leggings','runebound_wraps','runebound_slippers',
       'drakerune_hood','drakerune_robe','drakerune_leggings','drakerune_wraps','drakerune_slippers',
       'riftwoven_hood','riftwoven_robe','riftwoven_leggings','riftwoven_wraps','riftwoven_slippers',
       'dawnveil_hood','dawnveil_robe','dawnveil_leggings','dawnveil_slippers',
-      /* Slice 7: the gem and the brew. Neither is a rune, a staff or cloth, so they are
-         here by name, the way the Hawkseye and the Hawkeye Draught are on HAWK_PENDING.
-         Both are drawn by the generators every other gem and potion came off. */
       'wyrd_chip','wyrd_polish','wyrd_flaw','arcane_draught_1','arcane_draught_2'];
     const SVG_OK = new Set(['radcliff_tally'].concat(RANGED_PENDING, SPIRE_PENDING, HAWK_PENDING, MAGE_PENDING));
 
@@ -3454,9 +3454,10 @@ setTimeout(() => {
        JSON.stringify({art: cov.art, svgTotal: cov.svg.length, unexpected, iconless: cov.none}));
     /* And by name, so it cannot pass by a Magic id simply not being an item any more:
        the 65 items, the four element marks (they are ICONS entries, not items, so the
-       sweep above never sees them), the skill's rail icon and the cape. */
+       sweep above never sees them), the skill's rail icon and the cape. The gear half
+       is left out of this count, which stays at 71, and is held by the check after it. */
     const magePainted = JSON.parse(ev(`(function(){
-      var ids=['runestone','runecrafting','cape_runecrafting'], pend=${JSON.stringify(MAGE_PENDING)};
+      var ids=['runestone','runecrafting','cape_runecrafting'], pend=${JSON.stringify(MAGE_PENDING.concat(MAGE_GEAR))};
       for(var id in ITEMS){ var it=ITEMS[id]; if(pend.indexOf(id)>=0) continue; if(isRune(id)||it.magic||(it.cloth&&id!=='stonewright_gauntlets')) ids.push(id); }
       CLOTH_TIERS.forEach(function(c){ if(ITEMS[c.key]) ids.push(c.key); });
       MAGIC_ELEMENTS.forEach(function(e){ ids.push('el_'+e.k); });
@@ -3466,6 +3467,17 @@ setTimeout(() => {
     ok('all 71 Magic and Runecrafting icons are painted: 65 items, four element marks, the skill and the cape',
        magePainted.n === 71 && magePainted.bad.length === 0 && magePainted.shown === true,
        magePainted.n + ' ids' + (magePainted.bad.length ? ', still drawn: ' + magePainted.bad.slice(0, 8).join(' ') : ''));
+    /* The 46 of the gear half, by name: each a real item, each painted, none drawn. */
+    const gearPainted = JSON.parse(ev(`(function(){
+      var ids=${JSON.stringify(MAGE_GEAR)};
+      var gone=ids.filter(function(id){ return !ITEMS[id]; });
+      var bad=ids.filter(function(id){ return !/^<img class="ev-icon art-item"/.test(String(ICONS[id]||'')); });
+      return JSON.stringify({n:ids.length, gone:gone, bad:bad,
+        shown:/art-item/.test(iconHTML('faultline'))&&/art-item/.test(iconHTML('riftwoven_robe'))&&/art-item/.test(iconHTML('wyrd_flaw'))&&/art-item/.test(iconHTML('sunder_rune'))});
+    })()`));
+    ok('all 46 icons of the gear half are painted: 21 found staves and wands, the Sunder Rune, 15 raid robe pieces, Dawnveil, the Wyrdstone and the Arcane Draught',
+       gearPainted.n === 46 && gearPainted.gone.length === 0 && gearPainted.bad.length === 0 && gearPainted.shown === true,
+       gearPainted.n + ' ids' + (gearPainted.gone.length ? ', not items: ' + gearPainted.gone.join(' ') : '') + (gearPainted.bad.length ? ', still drawn: ' + gearPainted.bad.slice(0, 8).join(' ') : ''));
     /* And the other way round: an id on the pending list has to be a real item that is
        still drawn. One that has been painted, or renamed away, comes off the list. */
     const magePend = JSON.parse(ev(`(function(){
@@ -11551,11 +11563,14 @@ setTimeout(() => {
           return !(it&&st&&it.magic&&it.cgear&&it.cslot==='weapon'&&it.rare&&it.ammo==='rune'&&it.ctier===d.tier&&st.atk===d.atk&&(st.mpow||0)===d.mpow
             &&!!it.twoHanded===(d.fam==='staff')&&isUniqueGear(d.id)&&combatGearReq(d.id).stat==='magic'&&!isRune(d.id)
             &&((d.aff?1:0)+(d.wfx?1:0)+(d.ubonus?1:0))===1); }).map(function(d){ return d.id; });
-        /* each its own shape: the drawing with its colours and gradient ids taken out */
+        /* each its own shape: the drawing with its colours and gradient ids taken out. Since
+           0.9.127.11 the painted icon is what shows, so this is the drawing that stands
+           behind it, made again from the table mageDropWeapon() drew it from at boot. */
         var shape=function(svg){ return String(svg).replace(/#[0-9a-fA-F]{3,8}/g,'#').replace(/mgi\\d+[gs]/g,'G'); };
-        var shapes=ids.map(function(id){ return shape(ICONS[id]); });
+        var drawing=function(d){ return _MAGE_DROP_ART[d.art](MAGE_DROP_PAL[d.art]); };
+        var shapes=D.map(function(d){ return shape(drawing(d)); });
         var crafted=[shape(_wandSVG(MAGE_WOOD_PAL.pine)), shape(_staffSVG(MAGE_WOOD_PAL.pine))];
-        o.drawn=ids.filter(function(id){ return !/^<svg class="ev-icon" viewBox="0 0 64 64">/.test(String(ICONS[id])); });
+        o.drawn=D.filter(function(d){ return !/^<svg class="ev-icon" viewBox="0 0 64 64">/.test(String(drawing(d))); }).map(function(d){ return d.id; });
         o.shapes=shapes.filter(function(s,i){ return shapes.indexOf(s)===i && crafted.indexOf(s)<0; }).length;
         /* the tables */
         var rows={}, wrong=[];
@@ -11656,8 +11671,8 @@ setTimeout(() => {
     })()`));
     ok('twelve found staves and wands, each a magic weapon of its tier with exactly one thing of its own',
        mf.n === 12 && mf.bad.length === 0, mf.bad.join(', ') || '12 finds');
-    ok('each is drawn as its own shape: twelve silhouettes, none of them the crafted wand or staff',
-       mf.drawn.length === 0 && mf.shapes === 12, mf.shapes + ' shapes' + (mf.drawn.length ? ', not drawn: ' + mf.drawn.join(' ') : ''));
+    ok('behind its painted icon, each has a drawing of its own shape: twelve silhouettes, none of them the crafted wand or staff',
+       mf.drawn.length === 0 && mf.shapes === 12, mf.shapes + ' shapes' + (mf.drawn.length ? ', no drawing: ' + mf.drawn.join(' ') : ''));
     ok('each is a row on the tables its zone already had: 0.5 to 1% from a named monster, 3% from the boss',
        mf.wrong.length === 0 && mf.rows === mf.listed && mf.rows === 18, mf.wrong.join(', ') || mf.rows + ' rows');
     ok('one a zone across twelve zones, and the Stormfeather Wand waits for the Aerie',
@@ -11753,12 +11768,14 @@ setTimeout(() => {
         /* the nine found in the raids and the Spire: shapes, cards, words */
         var W=MAGE_RAID_DROPS, ids=W.map(function(x){ return x.id; });
         var shape=function(svg){ return String(svg).replace(/#[0-9a-fA-F]{3,8}/g,'#').replace(/mgi\\d+[gs]/g,'G'); };
-        var all=MAGE_ZONE_DROPS.map(function(x){ return x.id; }).concat(ids), shapes=all.map(function(id){ return shape(ICONS[id]); });
+        /* the drawings behind the painted icons (0.9.127.11), made again from the tables boot
+           drew them from: mageDropWeapon(), the Dawnveil loop and the CLOTH_TIERS loop */
+        var shapes=MAGE_ZONE_DROPS.concat(W).map(function(d){ return shape(_MAGE_DROP_ART[d.art](MAGE_DROP_PAL[d.art])); });
         o.shapes=shapes.filter(function(s,i){ return shapes.indexOf(s)===i; }).length;
         /* a cloth with a glow draws one more circle than one without, so hold these against a crafted cloth that glows */
-        var veilShapes=DAWNVEIL.pieces.map(function(p){ return shape(ICONS[p[0]]); }), robeShapes=RB.map(function(p){ return shape(_ROBE_GEN[p](CLOTH_PAL.rimeweave)); });
+        var veilShapes=DAWNVEIL.pieces.map(function(p){ return shape(_DAWNVEIL_ART[p[6]](DAWNVEIL_PAL)); }), robeShapes=RB.map(function(p){ return shape(_ROBE_GEN[p](CLOTH_PAL.rimeweave)); });
         o.veilOwn=veilShapes.filter(function(s,i){ return veilShapes.indexOf(s)===i && robeShapes.indexOf(s)<0; }).length;
-        o.raidRobesShare=raidCloth.every(function(t){ return RB.every(function(p,i){ return shape(ICONS[t.key+'_'+p])===robeShapes[i]; }); });
+        o.raidRobesShare=raidCloth.every(function(t){ return RB.every(function(p,i){ return shape(_ROBE_GEN[p](CLOTH_PAL[t.key]))===robeShapes[i]; }); });
         o.weapons=W.filter(function(x){ var it=ITEMS[x.id], st=COMBAT_GEAR_STATS[x.id];
           return !(it&&it.magic&&it.rare&&it.ctier===x.tier&&st.atk===x.atk&&st.mpow===x.mpow&&isUniqueGear(x.id)&&combatGearReq(x.id).stat==='magic'&&/<b>[^<]+<\\/b>/.test(it.desc)); }).map(function(x){ return x.id; });
         var chips=function(id){ var e=document.createElement('div'); e.innerHTML=combatGearStatBlock(id); return e.textContent.replace(/\\s+/g,' '); };
@@ -11802,7 +11819,7 @@ setTimeout(() => {
     ok('a Sunder Rune is a rune that powers a Surge with 38, cannot be carved, and sells for 2 silver',
        rg.rune.is === true && rg.rune.cls === 4 && rg.rune.pow === 38 && rg.rune.sell === 2 && rg.rune.made === false && rg.rune.sizes.join() === '15,22,29,38', rg.rune.sizes.join(' '));
     ok('the nine found in the raids and the Spire are magic weapons of their tier, each with its card line in bold', rg.weapons.length === 0, rg.weapons.join(', '));
-    ok('twenty-one found staves and wands, twenty-one shapes; Dawnveil is its own four; raid robes are the five robe shapes',
+    ok('behind the painted icons, twenty-one found staves and wands are twenty-one drawn shapes; Dawnveil is its own four; raid robes are the five robe shapes',
        rg.shapes === 21 && rg.veilOwn === 4 && rg.raidRobesShare === true, rg.shapes + ' shapes, ' + rg.veilOwn + ' Dawnveil');
     ok('their cards say what they do: a second hit, Magic Power, an element, a stun, a burn', rg.cards.every(Boolean), rg.cards.join(' '));
     ok('and what a found staff or wand adds on its own is on the card without Shift held: Magic damage, crit chance, healing', rg.own.every(Boolean), rg.own.join(' '));
@@ -12099,20 +12116,37 @@ setTimeout(() => {
     }
     ok('nothing on the board repaints from a timer', !/set(?:Interval|Timeout)\([^)]{0,80}(?:cmast|Cmast)/.test(html));
 
-    /* The plates. Thirteen are drawn and wait for a painted sheet, the way the items on
-       MAGE_PENDING do. PENDING, not rejected: take an id off as its plate is painted. */
-    const SORC_PLATES_PENDING = ['s_t1', 's_t2_l', 's_t2_r', 's_t3_l', 's_t3_r', 's_t4_l', 's_t4_r', 's_t5_l', 's_t5_m', 's_t5_r', 's_cap', 'gs_t3', 'gs_t4'];
+    /* The plates. The thirteen of Sorcery shipped drawn in 0.9.127.11 and were painted
+       in the same build, off sheet U, cut and merged into CMAST_ART by
+       _iconart/cmastplates.js. So all 63 are painted, and SORC_PLATES_PENDING is kept
+       EMPTY: a plate that ships drawn first is named there by id until it is painted.
+       The drawings stay in SORC_PLATES as the fallback, and SORC_IDS names them. */
+    const SORC_IDS = ['s_t1', 's_t2_l', 's_t2_r', 's_t3_l', 's_t3_r', 's_t4_l', 's_t4_r', 's_t5_l', 's_t5_m', 's_t5_r', 's_cap', 'gs_t3', 'gs_t4'];
+    const SORC_PLATES_PENDING = [];
     {
       const none = S.plates.filter(p => p[1] === 'none').map(p => p[0]);
       const drawn = S.plates.filter(p => p[1] === 'drawn').map(p => p[0]);
+      const painted = S.plates.filter(p => p[1] === 'painted').map(p => p[0]);
       const stale = SORC_PLATES_PENDING.filter(id => !drawn.includes(id));
       const unlisted = drawn.filter(id => !SORC_PLATES_PENDING.includes(id));
       ok('every Mastery node has a plate', none.length === 0 && S.dom.onPlate === 63, none.join(' ') || S.dom.onPlate + ' on a plate');
-      ok('the fifty painted plates are still painted, and only the Sorcery ones are drawn', unlisted.length === 0 && S.plates.length - drawn.length === 50, unlisted.join(' '));
+      ok('every plate is painted, the fifty and the thirteen of Sorcery, and none is shown its drawing',
+         unlisted.length === 0 && S.plates.length === 63 && painted.length === 63 - SORC_PLATES_PENDING.length && SORC_IDS.every(id => painted.includes(id)),
+         unlisted.length ? 'drawn and not pending: ' + unlisted.join(' ') : painted.length + ' of ' + S.plates.length + ' painted');
       ok('every Sorcery plate waiting for painted art is still a drawing',
          stale.length === 0, stale.length ? 'painted or gone, take off SORC_PLATES_PENDING: ' + stale.join(' ') : SORC_PLATES_PENDING.length + ' pending');
-      ok('there is a drawing for each of the thirteen, and no two are the same',
-         S.plateKeys === SORC_PLATES_PENDING.slice().sort().join() && S.plateDistinct === 13, S.plateKeys);
+      ok('there is still a drawing behind each of the thirteen to fall back to, and no two are the same',
+         S.plateKeys === SORC_IDS.slice().sort().join() && S.plateDistinct === 13, S.plateKeys);
+      /* Cut the way the fifty were (_cmasticons.js): 160 px square WebP with alpha. Read
+         off the WebP header in the file itself, not through the page. */
+      const cmArt = JSON.parse(html.slice(html.indexOf('const CMAST_ART=') + 16, html.indexOf('\n', html.indexOf('const CMAST_ART='))).replace(/;\s*$/, ''));
+      const webpShape = uri => { const b = Buffer.from(String(uri).split(',')[1] || '', 'base64');
+        return b.slice(12, 16).toString() === 'VP8X' ? (1 + b.readUIntLE(24, 3)) + 'x' + (1 + b.readUIntLE(27, 3)) + ((b[20] & 0x10) ? ' alpha' : ' opaque') : 'not VP8X'; };
+      const sorcShape = SORC_IDS.filter(id => webpShape(cmArt.icons[id]) !== '160x160 alpha').map(id => id + ' ' + webpShape(cmArt.icons[id]));
+      const fiftyShape = Object.keys(cmArt.icons).filter(id => !SORC_IDS.includes(id)).map(id => webpShape(cmArt.icons[id]));
+      ok('the thirteen painted Sorcery plates are cut like the fifty: 160 px square WebP with alpha',
+         sorcShape.length === 0 && fiftyShape.length === 50 && fiftyShape.every(s => s === '160x160 alpha'),
+         sorcShape.join(' | ') || fiftyShape.length + ' others');
       ok('drawn the way the painted ones are: white and grey on nothing, no colour, so the column\'s tint is the only hue',
          S.plateHue.length === 0, S.plateHue.join(' '));
       ok('and small: thirteen drawings in under 12 KB', S.plateBytes < 12000, S.plateBytes + ' bytes');

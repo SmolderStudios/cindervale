@@ -340,12 +340,15 @@ function SCENES_IN_PAGE() {
         return 'T' + ITEMS[id].ctier + ' ' + (ITEMS[id].mfam || '') + ' · ' + out.join(', ');
       };
       var zoneF = finds.filter(isZoneFind), raidF = finds.filter(function (id) { return !isZoneFind(id); });
-      var runesD = Object.keys(ITEMS).filter(function (id) { return isRune(id) && drawn(id); });
-      var robeSets = CLOTH_TIERS.filter(function (c) { return drawn(c.key + '_robe'); });
+      /* Chosen by what they are, not by being drawn: they were picked out that way
+         while they waited for their sheets, and the day they were painted the rune,
+         the raid robes and the gem and draught dropped off this sheet. */
+      var runesD = ['sunder_rune'].filter(function (id) { return !!ITEMS[id]; });
+      var robeSets = CLOTH_TIERS.filter(function (c) { return !!c.raid; });
       var veil = Object.keys(ITEMS).filter(function (id) { return ITEMS[id].setKey === 'dawnveil'; });
-      var other = Object.keys(ITEMS).filter(function (id) { return !ITEMS[id]._variant && drawn(id) && (/^wyrd_/.test(id) || /^arcane_draught/.test(id)); });
+      var other = Object.keys(ITEMS).filter(function (id) { return !ITEMS[id]._variant && (/^wyrd_/.test(id) || /^arcane_draught/.test(id)); });
       var hg = '<h1>Magic, the gear half: every new icon, build ' + document.querySelector('.mm-ver').getAttribute('data-build') + '</h1>'
-        + '<p>Drawn by the game until its sheets are painted: <span id="mageSheetN"></span>. Each is shown at 76, 34 and 18 px. A found staff or wand is its own shape; raid robes are the five robe shapes in three new cloths; Dawnveil is its own four.</p>';
+        + '<p>Painted off sheets O to U of _iconart/PROMPTS-magic.md, with the drawings kept behind them as a fallback. In the game now: <span id="mageSheetN"></span>. Each is shown at 76, 34 and 18 px. A found staff or wand is its own shape; raid robes are the five robe shapes in three new cloths; Dawnveil is its own four.</p>';
       hg += secG('Found in the zones', 'one staff or wand a zone, each its own shape', zoneF, where);
       hg += secG('Found in the raids and the Spire', 'two a raid, and Faultline', raidF, where);
       hg += secG('The Spire rune', 'the rune stone, in the Spire\'s rose', runesD);
@@ -358,7 +361,7 @@ function SCENES_IN_PAGE() {
       plateNodes.forEach(function (n) { state.cmast[n.id] = n.max; });
       var plateDrawn = plateNodes.filter(function (n) { return /^data:image\/svg/.test(CMAST_ART.icons[n.id] || ''); }).length;
       var kindOf = function (n) { return n.capstone ? 'capstone' : n.powerful ? 'powerful' : n.hybrid ? 'bridge' : n.unique ? 'unique' : 'ranked, ' + n.max + ' points'; };
-      hg += '<h2>Combat Mastery: the Sorcery plates<small>eleven in the column and two on the bridge to Warfare, white on nothing like the fifty painted ones</small></h2><div class="row">'
+      hg += '<h2>Combat Mastery: the Sorcery plates<small>eleven in the column and two on the bridge to Warfare, white on nothing and painted, like the other fifty</small></h2><div class="row">'
         + plateNodes.map(function (n) {
             return '<div class="c pl"><div class="b"><div class="p1"><img src="' + CMAST_ART.icons[n.id] + '" alt=""></div>'
               + '<div class="cmast-grid pg" style="--u:1px">' + _cmastNodeHTML(n) + '</div><div class="cmast-grid pg" style="--u:.8px">' + _cmastNodeHTML(n) + '</div></div>'
