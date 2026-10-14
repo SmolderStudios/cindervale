@@ -1122,7 +1122,7 @@ item pack. Three rules from that file decide everything about this sheet:
   thick strokes. Draw for the thumbnail.
 - **4 KB each as WebP at most.** Thirteen is about 50 KB.
 
-**Paste the painted Marksman sheet (`cmast_2_marksman.png`) into the conversation
+**Paste the painted Marksman sheet (`Desktop/Cindervale/icons-inbox/marksman.png`) into the conversation
 first**, so the weight, the margins and the shading match the fifty plates that
 are already on the board.
 
