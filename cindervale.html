@@ -6949,8 +6949,13 @@ body:not(.is-demo) .demo-only{display:none !important}
    Both are position:fixed with CSS-px offsets, so the documentElement zoom scales
    them natively and neither needs _rootZoom() division. No dim layer anywhere —
    the game stays fully clickable while onboarding runs. ════════════════════════ */
+/* Ticket #240: the dock sat bottom-left, over the lower half of the skill list, so the
+   step that says "mine copper and tin, then smelt" covered Mining and Smithing. It sits
+   bottom-right now, in the empty space under the gear doll. The hint card shares that
+   corner, so while the dock is up the hint card stands on top of it (--qd-h, set by
+   renderQuestDock to the dock's height). */
 .quest-dock{
-  position:fixed; left:16px; bottom:16px; width:308px; z-index:3900;
+  position:fixed; right:16px; bottom:16px; width:308px; z-index:3900;
   border-radius:11px; overflow:hidden; font-family:'Crimson Pro',Georgia,serif;
   background:linear-gradient(178deg,#2e2114,#1b1208 78%);
   box-shadow:inset 0 1px 0 rgba(214,170,96,.2), inset 0 -1px 0 rgba(0,0,0,.55),
@@ -6986,7 +6991,7 @@ body:not(.is-demo) .demo-only{display:none !important}
   font-variant-numeric:tabular-nums; text-align:right; }
 
 .hint-card{
-  position:fixed; right:16px; bottom:16px; width:322px; z-index:3901; display:none;
+  position:fixed; right:16px; bottom:calc(16px + var(--qd-h, 0px)); width:322px; z-index:3901; display:none;
   padding:14px 16px 13px; border-radius:11px; font-family:'Crimson Pro',Georgia,serif;
   background:linear-gradient(178deg,#2e2114,#1b1208 78%);
   box-shadow:inset 0 1px 0 rgba(214,170,96,.2), inset 0 -1px 0 rgba(0,0,0,.55),
@@ -9065,7 +9070,7 @@ button.en-canchip.pick:disabled{opacity:.4;cursor:default}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.128.1">v0.9.128</div>
+  <div class="mm-ver" data-build="0.9.128.2">v0.9.128</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -40049,12 +40054,21 @@ let notifFilter='all';
    however much taller the list got above you. The filter buttons and Clear ask for the
    top, since there the top is the answer. */
 let _notifToTop=false;
+/* Ticket #241, Radcliff again: "Alerts scroll is still resetting to top." The #151 fix
+   held the panel's own scroll, but the rows sit in an inner list capped at 460px
+   (.notifs-scroll), and on a window tall enough for the panel to show all of that list
+   it is the inner list that scrolls. It is rebuilt with the rows, so it came back at
+   the top every repaint. Both are held now, each the same way. */
 function renderNotifications(){
   const box=$('notifsView'); if(!box) return;
+  const _in=box.querySelector('.notifs-scroll');
   const _top=box.scrollTop, _h=box.scrollHeight;
+  const _itop=_in?_in.scrollTop:0, _ih=_in?_in.scrollHeight:0;
   _renderNotifRows();
-  if(_notifToTop || _top<=0){ _notifToTop=false; box.scrollTop=0; return; }
-  box.scrollTop=_top+Math.max(0, box.scrollHeight-_h);
+  const _in2=box.querySelector('.notifs-scroll');
+  if(_notifToTop){ _notifToTop=false; box.scrollTop=0; if(_in2) _in2.scrollTop=0; return; }
+  if(_top>0) box.scrollTop=_top+Math.max(0, box.scrollHeight-_h);
+  if(_in2 && _itop>0) _in2.scrollTop=_itop+Math.max(0, _in2.scrollHeight-_ih);
 }
 function _renderNotifRows(){
   const box=$('notifsView'); box.innerHTML='';
@@ -54278,7 +54292,10 @@ function renderQuestDock(){
   /* The mmAtMenu clause tears the dock down on quit-to-menu. It is position:fixed on
      document.body at z-index 3900, so nothing in mmShowMenu() removes it and a player
      who quit mid-onboarding kept the objective card floating over the main menu. */
-  if(!onboardActive()||(typeof mmAtMenu!=='undefined'&&mmAtMenu)){ if(el) el.remove(); _dockCache=''; return; }
+  if(!onboardActive()||(typeof mmAtMenu!=='undefined'&&mmAtMenu)){
+    if(el){ el.remove(); document.documentElement.style.setProperty('--qd-h','0px'); }
+    _dockCache=''; return;
+  }
   if(!el){
     el=document.createElement('div'); el.id='questDock'; el.className='quest-dock';
     document.body.appendChild(el);
@@ -54312,6 +54329,8 @@ function renderQuestDock(){
   if(html===_dockCache) return;   // the 250ms tick must not thrash the DOM
   _dockCache=html; el.innerHTML=html;
   el.classList.toggle('collapsed',hidden);
+  /* the hint card shares this corner and stands on top of the dock (#240) */
+  document.documentElement.style.setProperty('--qd-h',(el.offsetHeight+10)+'px');
   const t=document.getElementById('qdToggle'); if(t) t.onclick=onboardToggle;
   const k=document.getElementById('qdSkip');   if(k) k.onclick=onboardSkip;
 }

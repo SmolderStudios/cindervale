@@ -12467,6 +12467,52 @@ setTimeout(() => {
        && !html.includes("Ran out of food \\u2014") && !html.includes("kills \\u2014 try"));
   }
 
+  section('Radcliff #240 and #241: the Getting Started panel and the alerts scroll (0.9.128.2)');
+  {
+    /* #240: the panel sat bottom-left over the lower skill list, so "mine copper and tin,
+       then smelt" covered Mining and Smithing. Measured in Chrome at his 1539x823 window:
+       on the right it covers no skill row and no button on steps 1 to 4. The hint card
+       shares the corner and stands on the panel, by the height renderQuestDock sets.
+       #241: the alerts rows scroll in an inner list (.notifs-scroll, 460px) that is rebuilt
+       with them; #151 only held the outer panel. jsdom has no layout, so each element is
+       given a scroll position here and a height from its rows. */
+    const dockCss = (html.match(/\n\.quest-dock\{[^}]*\}/) || [''])[0];
+    const hintCss = (html.match(/\n\.hint-card\{[^}]*\}/) || [''])[0];
+    ok('the Getting Started panel sits bottom-right, not over the skill list', /right:16px/.test(dockCss) && !/left:16px/.test(dockCss), dockCss.replace(/\s+/g, ' ').slice(0, 90));
+    ok('the hint card stands on top of it, by the panel\'s own height', /bottom:calc\(16px \+ var\(--qd-h, 0px\)\)/.test(hintCss), hintCss.replace(/\s+/g, ' ').slice(0, 110));
+    const D = JSON.parse(ev(`(function(){
+      var o={};
+      state=defaultState(); normalizeState(); state.onboard={step:1,done:false,hidden:false};
+      renderQuestDock(); o.up=document.documentElement.style.getPropertyValue('--qd-h');
+      onboardSkip(); o.gone=document.documentElement.style.getPropertyValue('--qd-h'); o.dock=!!document.getElementById('questDock');
+      /* the alerts: give every element a scroll position, and a height from its rows */
+      var P=HTMLElement.prototype, oldT=Object.getOwnPropertyDescriptor(Element.prototype,'scrollTop'), oldH=Object.getOwnPropertyDescriptor(Element.prototype,'scrollHeight');
+      Object.defineProperty(P,'scrollTop',{configurable:true,get:function(){return this.__st||0;},set:function(v){this.__st=v;}});
+      Object.defineProperty(P,'scrollHeight',{configurable:true,get:function(){return this.querySelectorAll('.notif-row').length*40;}});
+      try{
+        state=defaultState(); normalizeState(); state.notifications=[];
+        for(var i=0;i<90;i++) state.notifications.push({type:'level',icon:'ui_scroll',text:'Alert '+(90-i),time:Date.now()-i*60000,seen:true});
+        rightTab='notifs'; renderNotifications();
+        var box=document.getElementById('notifsView');
+        box.querySelector('.notifs-scroll').scrollTop=600;
+        renderNotifications(); o.kept=box.querySelector('.notifs-scroll').scrollTop;
+        state.notifications.unshift({type:'level',icon:'ui_scroll',text:'Alert 91',time:Date.now(),seen:false});
+        renderNotifications(); o.moved=box.querySelector('.notifs-scroll').scrollTop;
+        _notifToTop=true; renderNotifications(); o.top=box.querySelector('.notifs-scroll').scrollTop;
+      } finally {
+        delete P.scrollTop; delete P.scrollHeight;
+        if(oldT) Object.defineProperty(Element.prototype,'scrollTop',oldT); if(oldH) Object.defineProperty(Element.prototype,'scrollHeight',oldH);
+        state.notifications=[]; rightTab='gear'; state=defaultState(); normalizeState();
+      }
+      return JSON.stringify(o);
+    })()`));
+    ok('while the panel is up the hint card is told its height, and when it goes the hint card drops back to the corner',
+       /^\d+px$/.test(D.up) && D.gone === '0px' && D.dock === false, 'up ' + D.up + ', gone ' + D.gone);
+    ok('the alerts list stays where you scrolled it through a repaint (#241)', D.kept === 600, String(D.kept));
+    ok('  and when a new alert arrives on top it moves down by one row, so you are still reading the same one', D.moved === 640, String(D.moved));
+    ok('  and a filter or Clear still takes it to the top', D.top === 0, String(D.top));
+  }
+
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));
   process.exit(fail ? 1 : 0);
 }, 2500);
