@@ -5839,6 +5839,11 @@ body:not(.is-demo) .demo-only{display:none !important}
 /* While selling, the shelf stops looking like a picker. */
 .fm-seed.sell{border-color:#6a3a22}
 .fm-seed.sell:hover{border-color:#c8724a}
+/* A seed you hold but cannot plant yet (#247): in the vault, dimmed, with its level. */
+.fm-seed.lock{opacity:.55;cursor:var(--cur-help)}
+.fm-seed.lock:hover{border-color:var(--trim-d);color:var(--muted)}
+.fm-seed.lock.sell{opacity:1;cursor:var(--cur-pointer)}
+.fm-seed em{font-style:normal;font-family:var(--num);font-size:calc(10px*var(--tscale));color:#a0704a}
 .fm-noseed{font-size:calc(13.5px*var(--tscale));color:var(--muted);font-style:italic;padding:3px 2px}
 
 /* ── the field ── */
@@ -9070,7 +9075,7 @@ button.en-canchip.pick:disabled{opacity:.4;cursor:default}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.128.3">v0.9.128</div>
+  <div class="mm-ver" data-build="0.9.128.4">v0.9.128</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -11037,9 +11042,10 @@ const ITEMS={
   riftshard:     {name:'Riftshard',       icon:'🔮',sell:6800, rare:true, desc:'A splinter of a sealed rift, still humming with the void it once opened. A rare T9 reagent.'},
   dawnshard:     {name:'Dawnshard',       icon:'✨',sell:12000, rare:true, desc:"A shard of the Dawnbroken God's cooling blood — warm to the touch and faintly singing. The signature relic of The Empyrean Throne; a future Dawnsteel reagent."},
   /* ─── Sailing troves (0.9.60) — one per archipelago, pulled up on expeditions.
-     Rarity climbs with distance from Emberwatch. Passive effects land in a later
-     slice; for now they are collectable, sellable and Compendium-visible. ─── */
-  trove_shallows:{name:'Barnacled Coin-Purse', icon:'👛',sell:900, sea:1,   rare:true, desc:"Someone's wages, lost in the shallows a long time ago and grown over twice since. Sells for a pittance. Counts toward the relic set all the same."},
+     Rarity climbs with distance from Emberwatch. Each one held gives a bonus, up to
+     five (SAIL_TROVES), and the item tooltip says which. They can be sold, and a
+     sold one stops counting. ─── */
+  trove_shallows:{name:'Barnacled Coin-Purse', icon:'👛',sell:900, sea:1,   rare:true, desc:"Someone's wages, lost in the shallows a long time ago and grown over twice since."},
   trove_wracks:  {sea:1, name:'The Ninth Bell',       icon:'🔔',sell:4800,  rare:true, desc:"Cut from the ninth ship to die on Widow's Wrack. It rings a half-beat before bad weather, which the crew find useful and deeply unpleasant."},
   trove_mist:    {sea:1, name:'Hollowtide Almanac',   icon:'📖',sell:16000, rare:true, desc:"Salt-swollen and still legible. It predicts the great ebb to the hour, in a hand nobody at the Admiralty recognises."},
   trove_far:     {sea:1, name:'Scale of the Old Thing',icon:'🐉',sell:52000, rare:true, desc:"Broader than a shield and lighter than paper. Nothing marks it — not fire, not starsteel, not the void. It was shed, not taken."},
@@ -16981,7 +16987,7 @@ function trophyJewelBlock(itemId){
     parts.push('<span style="color:'+meta[1]+'">+'+Math.round(it.jbonus[k]*1000)/10+'% '+meta[0]+'</span>');
   }
   return '<div style="font-size:calc(12.5px*var(--tscale));line-height:1.5;margin-top:6px;padding-top:6px;border-top:1px solid #3a2a18">'
-    +'<span style="color:var(--ember);letter-spacing:.5px">'+iconHTML('ui_spark')+' Always active</span><br>'
+    +'<span style="color:var(--ember);letter-spacing:.5px">'+iconHTML('ui_spark')+' While worn</span><br>'
     +parts.join(' &nbsp; ')+'</div>';
 }
 function jewelryEnchantBlock(itemId){
@@ -18594,14 +18600,14 @@ const TREES = {
     {id:'th_speed',  name:'Light Fingers', icon:'',  max:12,req:0,  desc:r=>`Reduces task time by ${(r*1.3).toFixed(1)}%`,      next:r=>`+1.3% faster → ${(r*1.3).toFixed(1)}%`},
     {id:'th_coins',  name:'Deep Pockets',  icon:'',  max:12,req:0,  desc:r=>`+${r*3}% coins from a successful steal`,           next:r=>`+3% coins → ${r*3}%`},
     {id:'th_xp',     name:'Street Wisdom', icon:'',     max:10,req:10,  desc:r=>`+${r*3}% Thieving XP`,                             next:r=>`+3% XP → ${r*3}%`},
-    {id:'th_goods',  name:'Sticky Fingers',icon:'',  max:12,req:15, desc:r=>`+${r}% chance a steal also gives stolen goods`,           next:r=>`+1% goods → ${r}%`},
+    {id:'th_goods',  name:'Sticky Fingers',icon:'',  max:12,req:15, desc:r=>`+${r}% chance a successful steal also takes one of that target's goods, the items on its card`, next:r=>`+1% goods → ${r}%`},
     {id:'th_caught', name:'Slippery',      icon:'', max:10,req:25, desc:r=>`+${(r*0.8).toFixed(1)}% chance a steal succeeds`, next:r=>`+0.8% success → ${(r*0.8).toFixed(1)}%`},
     {id:'th_master1',name:'Cutpurse',      icon:'',max:1, req:20, desc:r=>r?'Coins from every steal +20%':'Coins from every steal +20%', next:()=>'+20% coins from every steal'},
     {id:'th_master2',name:'Better Prices', icon:'',max:1, req:40, desc:r=>r?'Stolen goods sell for +25%':'Stolen goods sell for +25%',   next:()=>'+25% on every stolen good'},
     {id:'th_master3',name:'Second Pocket', icon:'',max:1, req:60, desc:r=>'10% chance for an extra steal that gives loot, not XP', next:()=>'10% chance for an extra steal (loot only)'},
     {id:'th_gm_speed', name:'Master Thief',icon:'', max:9,req:75, desc:r=>`Reduces task time by a further ${(r*1.8).toFixed(1)}%`, next:r=>`+1.8% faster → ${(r*1.8).toFixed(1)}%`},
     {id:'th_gm_success',name:'Ghost',      icon:'',max:8,req:80, desc:r=>`+${r*2}% chance a steal succeeds`,               next:r=>`+2% success → ${r*2}%`},
-    {id:'th_gm_goods', name:'Magpie',      icon:'', max:8,req:85, desc:r=>`+${r*2}% chance a steal also gives stolen goods`,        next:r=>`+2% goods → ${r*2}%`},
+    {id:'th_gm_goods', name:'Magpie',      icon:'', max:8,req:85, desc:r=>`+${r*2}% chance a successful steal also takes one of that target's goods, the items on its card`, next:r=>`+2% goods → ${r*2}%`},
     {id:'th_gm_2x_xp', name:'Fast Talker', icon:'', max:1,req:90, desc:r=>r?'Thieving XP x1.5':'Thieving XP x1.5',           next:()=>'Thieving XP x1.5'},
     {id:'th_gm_cape',  name:'Untouchable', icon:'',  max:1,req:99, reqCape:true, desc:r=>'Failed steals only take half as long', next:()=>'Failed steals only take half as long · requires the Thieving Cape'},
   ],
@@ -19912,8 +19918,14 @@ function renderFarming(){
      Sell toggle here is that path coming back: while it is on, clicking a seed
      opens the ordinary sell dialog instead of choosing it to plant, so nothing
      about selling behaves differently, it just lives where the seeds do. */
-  var owned=CROPS.filter(function(c){ return lvl>=cropReqLvl(c)&&seedQty(c.id)>0; })
-                 .sort(function(a,b){ return b.lvl-a.lvl; });
+  /* Ticket #247: a seed above your Farming level was held and counted in the total
+     but shown nowhere, so a flax seed drop could not be found. Every seed you hold
+     is on the shelf now: the ones you can plant first, best crop first, then the
+     ones you cannot yet, dimmed with the level they need. They can still be sold. */
+  var canPlant=function(c){ return lvl>=cropReqLvl(c); };
+  var owned=CROPS.filter(function(c){ return seedQty(c.id)>0; })
+                 .sort(function(a,b){ var pa=canPlant(a), pb=canPlant(b);
+                   return pa!==pb ? (pa?-1:1) : (pa ? b.lvl-a.lvl : cropReqLvl(a)-cropReqLvl(b)); });
   var sel=fmSelectedSeed();
   var seedTotal=0;
   CROPS.forEach(function(c){ seedTotal+=seedQty(c.id); });
@@ -19943,12 +19955,14 @@ function renderFarming(){
     var shelf=document.createElement('div');
     shelf.className='fm-seeds';
     owned.forEach(function(c){
-      var b=document.createElement('button');
-      b.className='fm-seed'+(sel&&sel.id===c.id&&!_fmSellSeeds?' on':'')+(_fmSellSeeds?' sell':'');
+      var b=document.createElement('button'), ok=canPlant(c);
+      b.className='fm-seed'+(sel&&sel.id===c.id&&!_fmSellSeeds&&ok?' on':'')+(_fmSellSeeds?' sell':'')+(ok?'':' lock');
       b.setAttribute('data-item',c.id);
       b.innerHTML=iconHTML(cropDisplayIconId(c)||c.id)+'<span>'+c.name+'</span>'
-        +'<i>\u00d7'+seedQty(c.id).toLocaleString()+'</i>';
+        +'<i>\u00d7'+seedQty(c.id).toLocaleString()+'</i>'
+        +(ok?'':'<em>Farming '+cropReqLvl(c)+'</em>');
       b.addEventListener('click',function(){
+        if(!ok&&!_fmSellSeeds){ toast('You can plant '+c.name+' at Farming '+cropReqLvl(c)+'.'); return; }
         if(_fmSellSeeds){
           /* Same dialog the satchel opens, same clamp, same confirm — only the
              place you click it from is new. */
@@ -19997,8 +20011,12 @@ function renderFarming(){
 
     if(!unlocked){
       var away=p.unlockLvl-lvl;
-      var lo=XP_CUM[lvl]||0, hi=XP_CUM[Math.min(MAX_LEVEL,p.unlockLvl)]||lo;
-      var pct=hi>lo?Math.max(0,Math.min(100,Math.round(((state.xp.farming||0)-0)/hi*100))):0;
+      /* Tickets #249/#250: the bar was total XP over the XP of the unlock level, so at
+         Farming 5 of 10 it read a quarter while the line under it counts levels. It
+         counts levels now, with the part of the current level done, so it matches. */
+      var lo=XP_CUM[lvl]||0, nx=XP_CUM[Math.min(MAX_LEVEL,lvl+1)]||lo;
+      var frac=nx>lo?Math.max(0,Math.min(1,((state.xp.farming||0)-lo)/(nx-lo))):0;
+      var pct=p.unlockLvl>1?Math.max(0,Math.min(100,Math.round((lvl-1+frac)/(p.unlockLvl-1)*100))):0;
       card.innerHTML='<div class="fm-top"><span class="fm-well">'+iconHTML('farming')+'</span>'
         +'<span class="fm-nm"><b>'+p.label+'</b><i>locked</i></span></div>'
         +'<div class="fm-hero" style="font-size:calc(19px*var(--tscale))">Lv '+p.unlockLvl+'</div>'
@@ -20452,7 +20470,7 @@ function _bodyItemDescBase(id){
   if(it&&it.trophyJewel&&it.jbonus){
     return Object.keys(it.jbonus).map(function(k){
       return '+'+Math.round(it.jbonus[k]*1000)/10+'% '+((JBONUS_LABEL[k]||[k])[0]);
-    }).join(' · ')+' · always active';
+    }).join(' · ')+' · while worn';
   }
   if(!JEWELRY_GEM_TIER[id]){
     var _si=SHOP.find(function(s){return s.id===id;});
@@ -41412,9 +41430,22 @@ function showItemTooltip(itemId, x, y, note){
   if(typeof JEWELRY_GEM_TIER!=='undefined' && JEWELRY_GEM_TIER[itemId]){
     html+=jewelryEnchantBlock(itemId);
   }
-  // Trophy jewelry — show its innate bonus as an always-on effect block.
+  /* Trophy jewelry: its innate bonus. It counts only while the piece is worn, and
+     the block said Always active, which read as worn or not (#244). */
   if(it.trophyJewel && it.jbonus){
     html+=trophyJewelBlock(itemId);
+  }
+  /* A sailing relic: what each one held gives, and that selling one takes it away.
+     The card said only that it sells for a pittance (#245). */
+  if(typeof SAIL_TROVES!=='undefined'){
+    const _tv=SAIL_TROVES.find(function(t){ return t.id===itemId; });
+    if(_tv){
+      const _n=sailTroveCount(itemId);
+      html+='<div style="font-size:calc(12.5px*var(--tscale));line-height:1.5;margin-top:6px;padding-top:6px;border-top:1px solid #3a2a18">'
+        +'<span style="color:#7fc9a8">'+_tv.fmt(_tv.per)+' for each one you hold, up to '+_tv.cap+'</span><br>'
+        +'You hold '+_n+' of '+_tv.cap+': '+(_n?_tv.fmt(_tv.per*_n):'nothing yet')+'. Keep them in your satchel. Selling one takes its bonus away; copies past '+_tv.cap+' do nothing.'
+        +'</div>';
+    }
   }
   // Socket gem — show tier + bonus description
   if(it.socketGem && typeof SOCKET_GEMS!=='undefined' && SOCKET_GEMS[itemId]){
@@ -49940,16 +49971,25 @@ function sailCommReward(c){
   return {gold:Math.round((320+Math.pow(lvl,1.75)*1.6)*(c.need>6?1.25:1)),
           xp:  Math.round(140+Math.pow(lvl,1.62)*1.15)};
 }
-function sailCommMake(){
-  const lvl=sailLvl();
+/* Ticket #253: the board could deal an errand it already had (two Return Triumphant
+   at once). One the board holds is never dealt again: the same kind for the same
+   thing, and a Return Triumphant is one errand whatever its count. A kind that only
+   comes up with a duplicate is tried a few more times, then passed over. */
+function sailCommClash(a,b){ return !!(a&&b&&a.k===b.k&&a.arg===b.arg); }
+function sailCommMake(board){
+  const lvl=sailLvl(), held=board||[];
   /* Try the kinds in a shuffled order — some cannot generate at low level (no
      salvage island in reach yet) and must be skipped rather than producing a
      commission the player has no way to progress. */
   const kinds=SAIL_COMM_ORDER.slice();
   for(let i=kinds.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); const t=kinds[i]; kinds[i]=kinds[j]; kinds[j]=t; }
   for(const k of kinds){
-    const c=SAIL_COMM_KINDS[k].make(lvl);
-    if(c){ c.prog=0; c.v=2; return c; }
+    for(let t=0;t<6;t++){
+      const c=SAIL_COMM_KINDS[k].make(lvl);
+      if(!c) break;
+      if(held.some(function(h){ return sailCommClash(h,c); })) continue;
+      c.prog=0; c.v=2; return c;
+    }
   }
   return null;
 }
@@ -49978,7 +50018,7 @@ function sailCommBoard(){
   if(!s.comms||!Array.isArray(s.comms)) s.comms=[];
   if(s.comms.some(c=>c&&c.v!==2)) sailCommRefit(s);
   while(s.comms.length<SAIL_COMM_SLOTS){
-    const c=sailCommMake();
+    const c=sailCommMake(s.comms);
     if(!c) break;
     s.comms.push(c);
   }
@@ -53210,7 +53250,7 @@ function renderSail(){
       +'A <b>Successful</b> or <b>Triumphant</b> voyage gets one chance at the relic for that region, at the island\'s '
       +'<b>Rare find</b> chance — doubled on a Triumphant return.</p>'
       +'<p class="sl-note" style="margin:0 0 10px">Nothing to equip or activate — just holding one applies its bonus. '
-      +'Each copy stacks, up to five; extras past that do nothing. They cannot be bought, sold or used up.</p>';
+      +'Each copy stacks, up to five; extras past that do nothing. Selling one takes its bonus away, so sell only copies past five.</p>';
     SAIL_TROVES.forEach(tv=>{
       const n=sailTroveCount(tv.id), raw=(state.items&&state.items[tv.id])|0;
       const it=ITEMS[tv.id], has=n>0, maxed=n>=tv.cap;
