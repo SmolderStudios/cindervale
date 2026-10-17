@@ -12550,6 +12550,56 @@ setTimeout(() => {
     }
   }
 
+  section('Radcliff #244 to #254: seeds, patch bars, sailing, relics, trophies, Sticky Fingers (0.9.128.4)');
+  {
+    const R = JSON.parse(ev(`(function(){
+      var o={};
+      /* #247: a seed above your level is on the shelf, after the ones you can plant, dimmed, with its level */
+      state=defaultState(); normalizeState(); state.xp.farming=XP_CUM[3]; state.patches={}; _farmInteractAt=0; _fmSellSeeds=false;
+      var low=CROPS.filter(function(c){ return cropReqLvl(c)<=3; })[0], high=CROPS.filter(function(c){ return cropReqLvl(c)>3; })[0];
+      state.seeds={}; state.seeds[high.id]=4; state.seeds[low.id]=6; state.farmSeed=null;
+      selectedSkill='farming'; renderFarming();
+      var chips=[].slice.call(document.querySelectorAll('.fm-seed'));
+      o.chips=chips.map(function(c){ return {id:c.getAttribute('data-item'), lock:c.classList.contains('lock'), t:c.textContent.replace(/\\s+/g,' ').trim()}; });
+      o.highLvl=cropReqLvl(high); o.low=low.id; o.high=high.id;
+      var hc=chips.filter(function(c){ return c.getAttribute('data-item')===high.id; })[0];
+      if(hc) hc.click(); o.pickedLocked=state.farmSeed===high.id;
+      /* #249: a locked patch's bar counts levels, with the part of the current level done */
+      state=defaultState(); normalizeState(); state.xp.farming=XP_CUM[5]+Math.round((XP_CUM[6]-XP_CUM[5])/2); state.patches={}; _farmInteractAt=0;
+      selectedSkill='farming'; renderFarming();
+      var lockP=PATCHES.filter(function(p){ return p.unlockLvl>5; })[0];
+      var cards=[].slice.call(document.querySelectorAll('.fm-p.lock'));
+      var bar=cards.length?cards[0].querySelector('.fm-bar i'):null;
+      o.bar=bar?parseFloat(bar.style.width):-1; o.barWant=Math.round((4.5)/(lockP.unlockLvl-1)*100); o.unlock=lockP.unlockLvl;
+      /* #253: the board never deals an errand it already holds */
+      state=defaultState(); normalizeState(); state.xp.sailing=XP_CUM[40];
+      var clashes=0, triumphs=0;
+      for(var i=0;i<300;i++){ var held=[{k:'triumph',arg:0,need:2,prog:0,v:2}]; var c=sailCommMake(held); if(c&&c.k==='triumph') triumphs++;
+        var b2=[sailCommMake([]),null]; b2[1]=sailCommMake([b2[0]]); if(b2[0]&&b2[1]&&sailCommClash(b2[0],b2[1])) clashes++; }
+      o.triumphs=triumphs; o.clashes=clashes;
+      /* #244 and #245: what the cards say */
+      var tip=function(id){ showItemTooltip(id,10,10); var e=document.getElementById('itemTooltip'); var t=e?e.textContent.replace(/\\s+/g,' ').trim():''; hideTooltip(); return t; };
+      state=defaultState(); normalizeState(); state.items.trove_shallows=2;
+      o.trophy=tip('warren_signet'); o.trove=tip('trove_shallows');
+      state=defaultState(); normalizeState();
+      return JSON.stringify(o);
+    })()`));
+    const hi = R.chips.filter(c => c.id === R.high)[0], lo = R.chips.filter(c => c.id === R.low)[0];
+    ok('#247 a seed you cannot plant yet is in the vault, dimmed, with the level it needs',
+       R.chips.length === 2 && hi && hi.lock && hi.t.indexOf('Farming ' + R.highLvl) >= 0 && lo && !lo.lock, JSON.stringify(R.chips));
+    ok('  after the ones you can plant, and a click does not choose it to plant', R.chips[0].id === R.low && R.pickedLocked === false, JSON.stringify(R.chips.map(c => c.id)));
+    ok('#249 a locked patch\'s bar counts levels: halfway through Farming 5 on a Farming ' + R.unlock + ' patch', R.bar === R.barWant, R.bar + '% against ' + R.barWant + '%');
+    ok('#253 the sailing board never deals an errand it holds: 300 draws beside a Return Triumphant, none another',
+       R.triumphs === 0 && R.clashes === 0, R.triumphs + ' triumphs, ' + R.clashes + ' clashes');
+    ok('#244 trophy jewellery says its bonus counts while worn, not always', /While worn/.test(R.trophy) && !/Always active/i.test(R.trophy)
+       && html.includes("' · while worn'") && !html.includes("' · always active'"), R.trophy.slice(0, 120));
+    ok('#245 a relic\'s card says what each one held gives, and that selling one takes it away',
+       /for each one you hold, up to 5/.test(R.trove) && /You hold 2 of 5/.test(R.trove) && /Selling one takes its bonus away/.test(R.trove), R.trove.slice(0, 200));
+    ok('  and the Relics tab no longer says they cannot be sold', !html.includes('They cannot be bought, sold or used up') && html.includes('Selling one takes its bonus away, so sell only copies past five'));
+    ok('#254 Sticky Fingers and Magpie say whose goods a steal takes',
+       (html.match(/chance a successful steal also takes one of that target's goods, the items on its card/g) || []).length === 2 && !html.includes('a steal also gives stolen goods'));
+  }
+
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));
   process.exit(fail ? 1 : 0);
 }, 2500);
