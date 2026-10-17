@@ -9070,7 +9070,7 @@ button.en-canchip.pick:disabled{opacity:.4;cursor:default}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.128.2">v0.9.128</div>
+  <div class="mm-ver" data-build="0.9.128.3">v0.9.128</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -33144,7 +33144,13 @@ function _fmtMonChance(c){
 function _mlDrops(id){ return (typeof MONSTER_DROPS!=='undefined'&&MONSTER_DROPS[id])||[]; }
 function _mlHave(mid,did){ return (state.monDrops&&state.monDrops[mid]&&state.monDrops[mid][did])||0; }
 function _mlKills(id){ return (state.monKills&&state.monKills[id])||0; }
-function _mlGot(id){ const ds=_mlDrops(id); let n=0; for(const d of ds) if(_mlHave(id,d.id)>0) n++; return n; }
+/* Ticket #242, Radcliff: a drop found on one monster counts as found on every monster
+   that drops it, so filling the log does not mean grinding thousands of Cave Rats for
+   an item already landed elsewhere. Each monster still counts its own drops: the
+   number on a row is what that monster gave. Nothing outside this log reads it. */
+function _mlAny(){ const s=new Set(), md=state.monDrops||{}; for(const m in md){ const o=md[m]; for(const k in o) if(o[k]>0) s.add(k); } return s; }
+function _mlFound(mid,did,any){ return _mlHave(mid,did)>0 || (any||_mlAny()).has(did); }
+function _mlGot(id){ const ds=_mlDrops(id), any=_mlAny(); let n=0; for(const d of ds) if(_mlFound(id,d.id,any)) n++; return n; }
 /* A drop is "rare" for pip purposes at 2% or below — the band the tier-gating
    materials live in, so a hollow pip reads as "this one is a grind". */
 function _mlIsRare(d){ return d.chance<=0.02; }
@@ -33154,10 +33160,10 @@ function _mlPct(a,b){ return b>0?Math.round(a/b*100):0; }
    opening all sixteen tabs. */
 function _mlZoneStat(zid){
   const mons=monstersInZone(zid);
-  let got=0,tot=0,seen=0;
+  let got=0,tot=0,seen=0; const any=_mlAny();
   for(const m of mons){
     if(_mlKills(m.id)) seen++;
-    for(const d of _mlDrops(m.id)){ tot++; if(_mlHave(m.id,d.id)) got++; }
+    for(const d of _mlDrops(m.id)){ tot++; if(_mlFound(m.id,d.id,any)) got++; }
   }
   return {got,tot,seen,mons:mons.length,pct:_mlPct(got,tot)};
 }
@@ -33190,9 +33196,9 @@ function _mlProgHTML(){
    me anything" is answerable by looking, not by clicking all of them. */
 function _mlPipsHTML(id){
   const ds=_mlDrops(id);
-  if(!ds.length) return '';
+  if(!ds.length) return ''; const any=_mlAny();
   return '<span class="mlog-pips">'+ds.map(d=>
-    `<i class="mlog-pip${_mlIsRare(d)?' rare':''}${_mlHave(id,d.id)?' got':''}"></i>`).join('')+'</span>';
+    `<i class="mlog-pip${_mlIsRare(d)?' rare':''}${_mlFound(id,d.id,any)?' got':''}"></i>`).join('')+'</span>';
 }
 
 function buildMonLogHTML(){
@@ -33281,20 +33287,23 @@ function buildMonLogHTML(){
     const b=MONSTERS.find(m=>m.zone===sel.zone&&m.boss&&m.bossReq);
     return b?b.bossReq:null;
   })();
+  const anyFound = _mlAny();
   const dropList = dropTbl.map(d=>{
     const it = ITEMS[d.id];
     const got = sDrops[d.id]||0;
-    const has = got>0;
+    const has = got>0 || anyFound.has(d.id);   // #242: found on another monster counts here too
+    const elsewhere = !got && has;
     /* One readable row each. The old chips packed "1/4 ×241 ✓" into a strip that
        truncated the item name and never said which number meant what. */
-    const qtyTag = (d.id===zoneKey&&!sel.boss)?'opens the boss lair'
-      :Array.isArray(d.qty)?`${d.qty[0]}–${d.qty[1]} at a time`:(d.once?'first kill only':'');
+    const qtyTag = [(d.id===zoneKey&&!sel.boss)?'opens the boss lair'
+      :Array.isArray(d.qty)?`${d.qty[0]}–${d.qty[1]} at a time`:(d.once?'first kill only':''),
+      elsewhere?'found on another monster':''].filter(Boolean).join(' · ');
     const disc = !!(state.discovered&&state.discovered[d.id]);
     return `<div class="mlog-drop${has?' got':' miss'}${_mlIsRare(d)?' rare':''}" data-mldrop="${d.id}" data-disc="${disc?1:0}" style="cursor:var(--cur-help)">
       <span class="mld-ic">${iconHTML(d.id)}</span>
       <span class="mld-nm">${it?it.name:d.id}${qtyTag?`<small>${qtyTag}</small>`:''}</span>
       <span class="mld-rate">${_fmtMonChance(effDropChance(d.chance,true))}<em>chance</em></span>
-      <span class="mld-cnt">${has?got.toLocaleString():'—'}<em>collected</em></span>
+      <span class="mld-cnt">${has?got.toLocaleString():'—'}<em>collected here</em></span>
     </div>`;
   }).join('') || '<div class="mlog-drop-empty">No drop table for this monster.</div>';
 
