@@ -12513,6 +12513,43 @@ setTimeout(() => {
     ok('  and a filter or Clear still takes it to the top', D.top === 0, String(D.top));
   }
 
+  section('Radcliff #242: a drop found on one monster is found on every monster that drops it (0.9.128.3)');
+  {
+    const M = JSON.parse(ev(`(function(){
+      var o={};
+      state=defaultState(); normalizeState();
+      /* an item two monsters of one zone drop */
+      var pair=null;
+      outer: for(var i=0;i<ZONES.length;i++){ var ms=monstersInZone(ZONES[i].id);
+        for(var a=0;a<ms.length;a++) for(var b=0;b<ms.length;b++){ if(a===b) continue;
+          var da=_mlDrops(ms[a].id).map(function(d){return d.id;}), db=_mlDrops(ms[b].id).map(function(d){return d.id;});
+          var shared=da.filter(function(x){ return db.indexOf(x)>=0 && db.length>1; })[0];
+          if(shared){ pair={zone:ZONES[i].id, from:ms[a].id, to:ms[b].id, item:shared}; break outer; } } }
+      o.pair=pair; if(!pair) return JSON.stringify(o);
+      state.monDrops={}; state.monDrops[pair.from]={}; state.monDrops[pair.from][pair.item]=3;
+      o.foundOther=_mlFound(pair.to,pair.item); o.haveOther=_mlHave(pair.to,pair.item); o.gotOther=_mlGot(pair.to);
+      o.zone=_mlZoneStat(pair.zone).got;
+      o.zoneWant=monstersInZone(pair.zone).filter(function(m){ return _mlDrops(m.id).some(function(d){ return d.id===pair.item; }); }).length;
+      state.monLogZone=pair.zone; state.monLogSel=pair.to;
+      var d=document.createElement('div'); d.innerHTML=buildMonLogHTML();
+      var row=d.querySelector('.mlog-detail [data-mldrop="'+pair.item+'"], [data-mldrop="'+pair.item+'"]');
+      o.rowGot=!!(row&&row.classList.contains('got')); o.rowText=row?row.textContent.replace(/\\s+/g,' ').trim():'';
+      var others=[].slice.call(d.querySelectorAll('[data-mldrop]')).filter(function(r){ return r.getAttribute('data-mldrop')!==pair.item; });
+      o.othersMiss=others.every(function(r){ return !r.classList.contains('got'); });
+      state=defaultState(); normalizeState();
+      return JSON.stringify(o);
+    })()`));
+    ok('there is a drop two monsters of one zone share, to test with', !!M.pair, JSON.stringify(M.pair));
+    if (M.pair) {
+      ok('found on one, it counts as found on the other, which has given none of it', M.foundOther === true && M.haveOther === 0 && M.gotOther === 1,
+         M.pair.item + ': found ' + M.foundOther + ', given ' + M.haveOther + ', counted ' + M.gotOther);
+      ok('the zone counts it on every monster there that drops it', M.zoneWant >= 2 && M.zone === M.zoneWant, M.zone + ' of ' + M.zoneWant);
+      ok('the other monster\'s row is ticked, says where it came from, and counts 0 of its own',
+         M.rowGot && /found on another monster/.test(M.rowText) && /\b0\s*collected here/.test(M.rowText), M.rowText);
+      ok('and nothing it does not share is ticked', M.othersMiss === true);
+    }
+  }
+
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));
   process.exit(fail ? 1 : 0);
 }, 2500);
