@@ -9075,7 +9075,7 @@ button.en-canchip.pick:disabled{opacity:.4;cursor:default}
        GitHub Pages and never repeats — version.json carries the same string, and
        the wrapper's `remoteVer !== localVer` is what makes auto-update fire. Bug
        reports send the build, so two web builds of one release stay tellable apart. -->
-  <div class="mm-ver" data-build="0.9.128.4">v0.9.128</div>
+  <div class="mm-ver" data-build="0.9.128.5">v0.9.128</div>
   <div class="mm-copy">© Smolder Studios</div>
 </div>
 
@@ -11043,8 +11043,8 @@ const ITEMS={
   dawnshard:     {name:'Dawnshard',       icon:'✨',sell:12000, rare:true, desc:"A shard of the Dawnbroken God's cooling blood — warm to the touch and faintly singing. The signature relic of The Empyrean Throne; a future Dawnsteel reagent."},
   /* ─── Sailing troves (0.9.60) — one per archipelago, pulled up on expeditions.
      Rarity climbs with distance from Emberwatch. Each one held gives a bonus, up to
-     five (SAIL_TROVES), and the item tooltip says which. They can be sold, and a
-     sold one stops counting. ─── */
+     five (SAIL_TROVES), and the item tooltip says which. The five that count cannot
+     be sold (reservedForRelic in sellableQty); copies past five can. ─── */
   trove_shallows:{name:'Barnacled Coin-Purse', icon:'👛',sell:900, sea:1,   rare:true, desc:"Someone's wages, lost in the shallows a long time ago and grown over twice since."},
   trove_wracks:  {sea:1, name:'The Ninth Bell',       icon:'🔔',sell:4800,  rare:true, desc:"Cut from the ninth ship to die on Widow's Wrack. It rings a half-beat before bad weather, which the crew find useful and deeply unpleasant."},
   trove_mist:    {sea:1, name:'Hollowtide Almanac',   icon:'📖',sell:16000, rare:true, desc:"Salt-swollen and still legible. It predicts the great ebb to the hour, in a hand nobody at the Admiralty recognises."},
@@ -12370,11 +12370,18 @@ function trimLoadoutCopies(id){
 }
 /* Satchel quantity the player is actually allowed to sell — the worn copy is
    held back. Every sell path must clamp to this, not to the raw stack. */
+/* Sailing relics: the copies that count, up to the cap, are kept and only spares past
+   it can be sold (Jordan, after Radcliff's #245: selling a counted one took its bonus
+   away while the Relics tab said they could not be sold). SAIL_TROVES is a const
+   further down the file, so it is read inside a try. */
+function reservedForRelic(id){
+  try{ const tv=SAIL_TROVES.find(function(t){ return t.id===id; }); return tv?tv.cap:0; }catch(e){ return 0; }
+}
 function sellableQty(id){
   /* bagQty, not state.items: seeds live in the vault since 0.9.122.17 and reading
      the satchel here would price every one of them at zero and make them
      unsellable. */
-  return Math.max(0,(typeof bagQty==='function'?bagQty(id):(state.items&&state.items[id]||0))-reservedForEquip(id));
+  return Math.max(0,(typeof bagQty==='function'?bagQty(id):(state.items&&state.items[id]||0))-reservedForEquip(id)-reservedForRelic(id));
 }
 
 /* An item left the player's possession (sold / fully consumed): pop every gem
@@ -34019,7 +34026,7 @@ function _bagMenuHTML(id){
     let sells='';
     if(sv>0){
       if(lk) sells=row('',lock,'Locked, so it can\'t be sold','',true);
-      else if(cap<=0) sells=row('',coin,'Sell','take it off first',true);
+      else if(cap<=0) sells=row('',coin,'Sell',reservedForRelic(id)?('the first '+reservedForRelic(id)+' are kept'):'take it off first',true);
       else {
         sells=row('sell1',coin,'Sell 1',fmtCoins(sv,true));
         if(cap>1) sells+=row('sellall',coin,'Sell all '+cap.toLocaleString(),fmtCoins(sv*cap,true))
@@ -34237,7 +34244,11 @@ function bagSelect(id){
 function bagSell(id,want){
   if(bagLocked(id)){ toast('That is locked. Unlock it to sell it.'); return; }
   const cap=sellableQty(id);
-  if(cap<=0){ toast('Take it off first. That is the one you are wearing.'); renderRightPanel(); return; }
+  if(cap<=0){
+    const _rk=reservedForRelic(id);
+    toast(_rk?('Your relics give their bonus from the satchel. The first '+_rk+' are kept; only copies past '+_rk+' can be sold.'):'Take it off first. That is the one you are wearing.');
+    renderRightPanel(); return;
+  }
   const qty=Math.min(want,cap);
   if(!(qty>0)) return;
   const sv=effectiveItemSell(id);
@@ -34341,7 +34352,7 @@ function _bagDockHTML(id,cat){
     if(bagLocked(id)){
       btns.push('<button type="button" class="bag-btn sell" disabled title="It is locked. Unlock it to sell it.">'+iconHTML('ui_lock')+' Sell</button>');
     } else if(sellable<=0){
-      btns.push('<button type="button" class="bag-btn sell" disabled title="You are wearing it. Take it off to sell it.">Sell</button>');
+      btns.push('<button type="button" class="bag-btn sell" disabled title="'+(reservedForRelic(id)?('A relic gives its bonus from the satchel. The first '+reservedForRelic(id)+' are kept; copies past that can be sold.'):'You are wearing it. Take it off to sell it.')+'">Sell</button>');
     } else {
       btns.push('<button type="button" class="bag-btn sell" data-bag="sell" data-n="1">Sell 1</button>');
       if(sellable>1){
@@ -41443,7 +41454,7 @@ function showItemTooltip(itemId, x, y, note){
       const _n=sailTroveCount(itemId);
       html+='<div style="font-size:calc(12.5px*var(--tscale));line-height:1.5;margin-top:6px;padding-top:6px;border-top:1px solid #3a2a18">'
         +'<span style="color:#7fc9a8">'+_tv.fmt(_tv.per)+' for each one you hold, up to '+_tv.cap+'</span><br>'
-        +'You hold '+_n+' of '+_tv.cap+': '+(_n?_tv.fmt(_tv.per*_n):'nothing yet')+'. Keep them in your satchel. Selling one takes its bonus away; copies past '+_tv.cap+' do nothing.'
+        +'You hold '+_n+' of '+_tv.cap+': '+(_n?_tv.fmt(_tv.per*_n):'nothing yet')+'. The first '+_tv.cap+' are kept and cannot be sold; copies past '+_tv.cap+' do nothing and can be sold.'
         +'</div>';
     }
   }
@@ -53250,7 +53261,7 @@ function renderSail(){
       +'A <b>Successful</b> or <b>Triumphant</b> voyage gets one chance at the relic for that region, at the island\'s '
       +'<b>Rare find</b> chance — doubled on a Triumphant return.</p>'
       +'<p class="sl-note" style="margin:0 0 10px">Nothing to equip or activate — just holding one applies its bonus. '
-      +'Each copy stacks, up to five; extras past that do nothing. Selling one takes its bonus away, so sell only copies past five.</p>';
+      +'Each copy stacks, up to five. The five that count are kept and cannot be sold; copies past five do nothing and can be sold.</p>';
     SAIL_TROVES.forEach(tv=>{
       const n=sailTroveCount(tv.id), raw=(state.items&&state.items[tv.id])|0;
       const it=ITEMS[tv.id], has=n>0, maxed=n>=tv.cap;
