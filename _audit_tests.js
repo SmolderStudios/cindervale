@@ -12593,9 +12593,28 @@ setTimeout(() => {
        R.triumphs === 0 && R.clashes === 0, R.triumphs + ' triumphs, ' + R.clashes + ' clashes');
     ok('#244 trophy jewellery says its bonus counts while worn, not always', /While worn/.test(R.trophy) && !/Always active/i.test(R.trophy)
        && html.includes("' · while worn'") && !html.includes("' · always active'"), R.trophy.slice(0, 120));
-    ok('#245 a relic\'s card says what each one held gives, and that selling one takes it away',
-       /for each one you hold, up to 5/.test(R.trove) && /You hold 2 of 5/.test(R.trove) && /Selling one takes its bonus away/.test(R.trove), R.trove.slice(0, 200));
-    ok('  and the Relics tab no longer says they cannot be sold', !html.includes('They cannot be bought, sold or used up') && html.includes('Selling one takes its bonus away, so sell only copies past five'));
+    ok('#245 a relic\'s card says what each one held gives, and that the five that count are kept',
+       /for each one you hold, up to 5/.test(R.trove) && /You hold 2 of 5/.test(R.trove) && /The first 5 are kept and cannot be sold/.test(R.trove), R.trove.slice(0, 220));
+    ok('  and the Relics tab says the same', !html.includes('They cannot be bought, sold or used up')
+       && html.includes('The five that count are kept and cannot be sold; copies past five do nothing and can be sold.'));
+    /* Jordan's call on #245: the copies that count are kept, only spares past five sell. */
+    const K = JSON.parse(ev(`(function(){
+      var o={}, keep=window.toast, said=[]; window.toast=function(x){ said.push(String(x)); };
+      try{
+        state=defaultState(); normalizeState(); state.coins=0;
+        state.items.trove_shallows=3; o.cap3=sellableQty('trove_shallows'); bagSell('trove_shallows',99);
+        o.left3=state.items.trove_shallows; o.coins3=state.coins; o.said=said.slice();
+        state.items.trove_shallows=7; o.cap7=sellableQty('trove_shallows'); bagSell('trove_shallows',99);
+        o.left7=state.items.trove_shallows; o.coins7=state.coins; o.bonus=sailTroveBonus('gold');
+        state.items.copper_ore=4; o.other=sellableQty('copper_ore');
+      } finally { window.toast=keep; state=defaultState(); normalizeState(); }
+      return JSON.stringify(o);
+    })()`));
+    ok('#245 the five relics that count cannot be sold: holding 3, none can, and a sell attempt says why',
+       K.cap3 === 0 && K.left3 === 3 && K.coins3 === 0 && K.said.some(t => /first 5 are kept/.test(t)), JSON.stringify(K));
+    ok('  holding 7, the 2 past five sell and the 5 stay, still giving the full bonus',
+       K.cap7 === 2 && K.left7 === 5 && K.coins7 > 0 && Math.abs(K.bonus - 0.15) < 1e-9, JSON.stringify(K));
+    ok('  and nothing else is held back', K.other === 4, String(K.other));
     ok('#254 Sticky Fingers and Magpie say whose goods a steal takes',
        (html.match(/chance a successful steal also takes one of that target's goods, the items on its card/g) || []).length === 2 && !html.includes('a steal also gives stolen goods'));
   }
