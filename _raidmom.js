@@ -564,6 +564,99 @@ setTimeout(()=>{
     ev('delete window.__slp');
   }
 
+  section('A weapon swap in the Spire never leaves a raid with no fight (#280, 0.9.128.6)');
+  {
+    /* "I changed weapons in the Sundered Spire and I'm now stuck. I became disengaged
+       ... cannot engage due to not having 103 combat ... cannot leave the raid." A
+       staff with no runes or a bow with no arrows stopped the fight and left the raid
+       open: Engage was refused on floor 30 up, the way back said "In a raid", and
+       there was no Disengage to press. */
+    ev(`
+      window.__t280={keepToast:toast, keepLog:cmbLog, logs:[]};
+      toast=function(){};
+      cmbLog=function(m){ __t280.logs.push(String(m)); return __t280.keepLog.apply(this,arguments); };
+      __t280.setup=function(floor, quiver){
+        state=defaultState(); normalizeState();
+        for(const k of ['attack','strength','defence','hitpoints','ranged','magic']) state.combatXp[k]=XP_CUM[99];
+        const pick=t=>Object.keys(ITEMS).filter(id=>{const i=ITEMS[id]; return i.cgear&&i.cslot==='weapon'&&i.ctier>=9&&t(i);})[0];
+        __t280.MELEE=pick(i=>!i.ranged&&!i.magic&&!i.twoHanded); __t280.STAFF=pick(i=>i.magic); __t280.BOW=pick(i=>i.ranged&&i.ammo==='arrow');
+        __t280.ARROW=Object.keys(ITEMS).filter(id=>ITEMS[id].ammo==='arrow'&&!ITEMS[id].ranged&&!ITEMS[id].magic&&ammoFitsWeapon(__t280.BOW,id))[0];
+        for(const id of [__t280.MELEE,__t280.STAFF,__t280.BOW]) state.items[id]=1;
+        state.items[__t280.ARROW]=500;
+        state.combatEquipped={weapon:__t280.MELEE}; if(quiver) state.combatEquipped.quiver=__t280.ARROW;
+        refreshCombatStats();
+        startRaid(SPR_ID);
+        combat.raid.stage=floor-1; combat.raid.floor=floor;
+        _beginRaidStage(getRaid(SPR_ID), floor-1, false);
+        __t280.logs.length=0;
+      };
+      __t280.attack=function(){ combat.youSwingStart=0; combat.foeSwingStart=Date.now(); combatTick(); };
+      __t280.foeAttack=function(){ combat.youSwingStart=Date.now(); combat.foeSwingStart=0; combatTick(); };
+      __t280.limbo=function(){ return !!combat.raid && !combat.active; };
+    `);
+    const swaps=[
+      ['the gear doll, satchel or slot picker: a staff with no runes', "__t280.setup(40); equipBodyItem(__t280.STAFF,'weapon','combat');"],
+      ['the Magic loadout with no runes', "__t280.setup(40); state.combatPresets={magic:{weapon:__t280.STAFF}}; equipCombatPreset('magic',true);"],
+      ['a bow with an empty quiver', "__t280.setup(40); equipBodyItem(__t280.BOW,'weapon','combat');"],
+      ['a staff with arrows still loaded', "__t280.setup(40,true); equipBodyItem(__t280.STAFF,'weapon','combat');"],
+    ];
+    for(const [name,js] of swaps){
+      ev(js+' __t280.attack();');
+      ok(name+': the raid still has a fight', !ev('__t280.limbo()'), 'fighting '+ev('combat.active')+', raid '+ev('!!combat.raid'));
+    }
+    ev("__t280.setup(40); equipBodyItem(__t280.STAFF,'weapon','combat'); __t280.hp0=combat.foeHp; __t280.attack(); __t280.attack(); __t280.attack();");
+    ok('it says why once, not on every attack, and nothing is dealt', ev("__t280.logs.filter(m=>/runes/.test(m)).length")===1 && ev('combat.foeHp===__t280.hp0'),
+       ev('JSON.stringify(__t280.logs)'));
+    ev("combat.youHp=combat.youMaxHp; __t280.you0=combat.youHp; __t280.n=0; for(let i=0;i<20&&combat.active;i++){ __t280.foeAttack(); if(combat.foeSwingStart>0) __t280.n++; combat.youHp=Math.max(combat.youHp,__t280.you0/2); }");
+    ok('and the monster keeps attacking you', ev('__t280.n')===20 && ev('combat.youHp<__t280.you0'), ev('__t280.n')+' of 20');
+    ev("__t280.setup(40); combat.active=false; stopCombatTimer(); renderCombat();");
+    ok('however a raid fight stops, the arena offers Disengage', ev("!!document.getElementById('cmbFlee') && !document.getElementById('cmbEngage')"));
+    ev("__t280.logs.length=0; (function(){ const b=document.getElementById('cmbFlee'); if(b) b.click(); })()");
+    ok('and it leaves the Spire, saying the cleared floors are kept, never "No loot"',
+       ev('!combat.raid && !combat.active') && ev("__t280.logs.some(m=>/leave the Spire on floor 40\\. You keep everything/.test(m)) && !__t280.logs.some(m=>/forfeit/.test(m))")
+       && ev('!!(_raidResult&&_raidResult.spire&&_raidResult.floor===40)'), ev('JSON.stringify(__t280.logs)'));
+    ev("__t280.setup(10); combat.active=false; stopCombatTimer(); combat.youHp=5; engageCombat();");
+    ok('Engage inside a raid does not start a fight that refills your health', ev('combat.youHp===5'), 'health '+ev('combat.youHp'));
+    ev("state=defaultState(); normalizeState(); for(const k of ['attack','strength','defence','hitpoints','ranged','magic']) state.combatXp[k]=XP_CUM[99]; state.items[__t280.STAFF]=1; state.combatEquipped={weapon:__t280.STAFF}; refreshCombatStats(); combat.raid=null; combat.monId='cave_rat'; engageCombat(); __t280.attack();");
+    ok('outside a raid a fight with nothing to cast still stops', ev('!combat.active && !combat.raid'));
+    ev('fleeCombat(); toast=__t280.keepToast; cmbLog=__t280.keepLog; delete window.__t280; state=defaultState(); normalizeState();');
+  }
+
+  section('A sleep worth less than one kill keeps the monster as it stood (#271, 0.9.128.6)');
+  {
+    /* "I started fighting the rat brood mother. Came back ... I got no credit for any
+       kills ... it does seem to be running and consuming food and potions." A hidden
+       window that slept past two minutes was settled by tick(), and the resume put
+       the monster back at full health; under one kill at the Offline rate paid
+       nothing, so a window that kept sleeping never finished a kill. */
+    const R=JSON.parse(ev(`(function(){
+      var keep={menu:mmAtMenu, slot:mmSlot, toast:toast, sum:window.showOfflineSummary, D:Date.now, ls:window.lsSet};
+      var o={};
+      try{
+        state=defaultState(); normalizeState();
+        state.combatXp={attack:XP_CUM[8],strength:XP_CUM[8],defence:XP_CUM[8],hitpoints:XP_CUM[12],ranged:0,magic:0};
+        state.items={bronze_sword:1, cooked_sardine:50}; state.combatEquipped={weapon:'bronze_sword'};
+        refreshCombatStats();
+        toast=function(){}; if(window.showOfflineSummary) window.showOfflineSummary=function(){}; window.lsSet=function(){ return true; };
+        mmAtMenu=false; mmSlot=3;
+        var T=keep.D.call(Date); Date.now=function(){ return T; };
+        combat.monId='brood_rat'; state.zone=getMonster('brood_rat').zone; engageCombat();
+        combat.foeHp=Math.round(combat.foeMaxHp/3); o.before=combat.foeHp; o.max=combat.foeMaxHp;
+        var k0=(state.monKills.brood_rat||0);
+        _lastTickWall=T; T+=130000; tick();
+        o.after=combat.foeHp; o.active=!!combat.active; o.kills=(state.monKills.brood_rat||0)-k0; o.offline=state.offlineXp||0;
+      } catch(e){ o.err=String(e&&e.stack||e).slice(0,300); }
+      finally{
+        Date.now=keep.D; toast=keep.toast; if(keep.sum) window.showOfflineSummary=keep.sum; window.lsSet=keep.ls;
+        try{ stopCombatTimer(); }catch(e){} combat.active=false; mmAtMenu=keep.menu; mmSlot=keep.slot; _lastTickWall=0;
+        state=defaultState(); normalizeState();
+      }
+      return JSON.stringify(o);
+    })()`));
+    ok('a 130 s sleep that pays no kill leaves the wounded monster as it stood, and the fight goes on',
+       !R.err && R.kills===0 && R.after===R.before && R.before<R.max && R.active, JSON.stringify(R));
+  }
+
   console.log('\n'+(fail? fail+' FAILED, '+pass+' passed'
                         : 'PASS — all '+pass+' raid-momentum checks'));
   process.exit(fail?1:0);

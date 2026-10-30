@@ -3690,7 +3690,10 @@ setTimeout(() => {
       state.gd.delvers={rep:0,q:[{kind:'do',size:'small',skill:'mining',name:'Gather 25 mining items',need:25,have:9,done:false}],
         rolled:Date.now(),skipped:0,bought:{}};
       gdNormalize();
-      const keptToday = state.gd.delvers.day===today && !gdRefreshDue() && state.gd.delvers.q[0].have===9;
+      /* Since 0.9.128.6 a short board is topped up (#262), so this one-quest board
+         gains two more; what matters is that it is not rolled again. */
+      const keptToday = state.gd.delvers.day===today && (gdRefreshDue(), state.gd.delvers.day===today)
+        && state.gd.delvers.q[0].have===9 && state.gd.delvers.q[0].name==='Gather 25 mining items';
       state.gd.timber={rep:0,q:[],rolled:Date.now()-3*86400000,skipped:0,bought:{}};
       gdNormalize();
       return JSON.stringify({keptToday:keptToday, staleDue:state.gd.timber.day<today});
@@ -6488,7 +6491,7 @@ setTimeout(() => {
        without the flip the row is below the clip, without the width it overhangs
        the right edge. */
     ok('Grandmaster tooltips flip upward (#91)',
-       html.includes('.ofp-node.gm[data-tip]:hover::after{top:auto;bottom:calc(100% + 6px)}'),
+       html.includes('.ofp-node.ofp-gm[data-tip]:hover::after{top:auto;bottom:calc(100% + 6px)}'),
        'rule missing');
     ok('and are clamped to the node width so they cannot overhang',
        html.includes('.ofp-node[data-tip]:hover::after{left:0;right:0;min-width:0;max-width:none}'),
@@ -12617,6 +12620,145 @@ setTimeout(() => {
     ok('  and nothing else is held back', K.other === 4, String(K.other));
     ok('#254 Sticky Fingers and Magpie say whose goods a steal takes',
        (html.match(/chance a successful steal also takes one of that target's goods, the items on its card/g) || []).length === 2 && !html.includes('a steal also gives stolen goods'));
+  }
+
+  section('Radcliff #255 to #293: guild quests in reach, enchanted jewellery, the Offline tree, alchemy, repaints (0.9.128.6)');
+  {
+    /* #259, #262, #273, #279, #283: a guild never names a thing whose inputs are out
+       of reach. The big sweep above puts every skill at one level, which is why these
+       got through: here each skill sits where Radcliff's did. */
+    const Q = JSON.parse(ev(`(function(){
+      function setup(lv, kills){
+        state=defaultState(); normalizeState();
+        for(var k in SKILLS) state.xp[k]=XP_CUM[lv[k]||1];
+        state.monKills={}; (kills||[]).forEach(function(m){ state.monKills[m]=3; });
+        state.gd={}; GUILDS.forEach(function(g){ state.gd[g.id]={rep:0,q:[],rolled:0,day:-1,skipped:0,bought:{}}; });
+      }
+      function named(ids, n){
+        var seen={};
+        for(var i=0;i<n;i++) GUILDS.forEach(function(g){
+          if(g.combat) return;
+          var q=gdRollOne(g,['small','standard','long'][i%3]); if(!q) return;
+          var hit=q.kind==='deliver'?[q.target]:q.kind==='supply'?Object.keys(q.items||{}):[];
+          if(q.kind==='do'&&q.act){ var a=getAct(q.skill,q.act); hit=Object.keys((a&&a.out)||{}).concat(Object.keys((a&&a.inp)||{})); }
+          hit.forEach(function(id){ if(ids.indexOf(id)>=0) seen[q.name]=1; });
+        });
+        return Object.keys(seen);
+      }
+      var o={};
+      setup({mining:13, smithing:25, fletching:25, crafting:25, jeweler:25}, []); o.iron=named(['iron_bar','iron_ore'],300);
+      setup({mining:20, smithing:15, crafting:15}, ['cave_rat']);              o.steel=named(['steel_bar'],300);
+      setup({farming:12}, []);                                                o.herb=named(['wild_herb','herb_seed'],300);
+      setup({cooking:20, fishing:20}, ['cave_rat']);                          o.fowl=named(['raw_fowl','roast_fowl'],300);
+      setup({cooking:20, fishing:20}, ['cave_rat','briar_lynx']);             o.fowlKilled=named(['roast_fowl'],300).length>0;
+      var ev40={}; for(var sk in SKILLS) ev40[sk]=40;
+      setup(ev40, MONSTERS.slice(0,18).map(function(m){ return m.id; }));
+      o.short=[]; GUILDS.forEach(function(g){ if(g.combat) return; gdRollQuests(g.id,true); if(state.gd[g.id].q.length<3) o.short.push(g.id); });
+      /* The Gilded Facet has nothing before Mining 15 (the first sapphire), says so,
+         and fills the moment the sapphire is in reach rather than at midnight. */
+      setup({}, []); gdRollQuests('facet',true); o.facet0=state.gd.facet.q.length;
+      _gdOpen='facet'; viewTab='guild'; state.gd.facet.day=gdDayIndex();
+      var box=document.getElementById('guildView'); if(box){ renderGuilds(); o.msg=(box.querySelector('.gd-none')||{}).textContent||''; }
+      state.xp.mining=XP_CUM[15]; gdRefreshDue(); o.facet15=state.gd.facet.q.length;
+      _gdOpen=null; viewTab='acts';
+      /* #287: a skip never hands back a twin of another quest on the board. */
+      setup({jeweler:20, crafting:20, mining:20, smithing:20}, []);
+      var twins=0, skips=0, kept=0, ex=[];
+      for(var j=0;j<600;j++){
+        var r=state.gd.facet; gdRollQuests('facet',true); if(r.q.length<2) continue;
+        var idx=j%r.q.length; r.skipped=0; gdSkip('facet',idx);
+        if(r.skipped<1){ kept++; continue; } skips++;
+        /* Only the quest the skip dealt: a thin pool may still settle a fresh board
+           on twins (gdRollQuests), which is a separate, deliberate call. */
+        for(var b=0;b<r.q.length;b++)
+          if(b!==idx&&!r.q[b].done&&gdQuestsClash(r.q[idx],r.q[b])){ twins++; if(ex.length<3) ex.push(r.q[idx].name+' / '+r.q[b].name); }
+      }
+      o.skip={skips:skips, kept:kept, twins:twins, ex:ex};
+      return JSON.stringify(o);
+    })()`));
+    ok('#262 Mining 13: no quest names Iron Bars or anything made of them', Q.iron.length === 0, Q.iron.slice(0, 3).join(' | '));
+    ok('#279 #273 Smithing 15 with no goblin killed: no quest asks for Steel Bars', Q.steel.length === 0, Q.steel.slice(0, 3).join(' | '));
+    ok('#259 Farming 12 with no way to a herb seed: no Wild Herb quest', Q.herb.length === 0, Q.herb.slice(0, 3).join(' | '));
+    ok('#283 no Roast Fowl quest before a fowl-dropping monster has been killed, and it comes back after',
+       Q.fowl.length === 0 && Q.fowlKilled, Q.fowl.slice(0, 3).join(' | ') + ' / after a kill: ' + Q.fowlKilled);
+    ok('  an even Lv 40 character still fills all eight skilling boards', Q.short.length === 0, Q.short.join(', '));
+    ok('  the Gilded Facet says why it has nothing before Mining 15, and fills at 15 without waiting for midnight',
+       Q.facet0 === 0 && /cannot get at your levels/.test(Q.msg) && Q.facet15 > 0, Q.facet0 + ' quests, "' + Q.msg + '", then ' + Q.facet15);
+    ok('#287 a skip never leaves two quests for one errand on the board', Q.skip.twins === 0 && Q.skip.skips > 100,
+       JSON.stringify(Q.skip));
+
+    /* #290 to #292: an enchanted ring, amulet or pendant is offered in the slot
+       picker. Its id is a hidden property of ITEM_BODY_SLOTS, so a for-in missed it. */
+    const J = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState();
+      state.items.sapphire_ring=2; state.items.sapphire_amulet=1;
+      var vr=splitToVariant('sapphire_ring'), va=splitToVariant('sapphire_amulet');
+      var o={vr:vr, va:va,
+        ringL:gearSlotOptions('ring_l','skilling',null), ringC:gearSlotOptions('ring_r','combat',null),
+        neck:gearSlotOptions('amulet','skilling',null), preset:_presetCandidates('ring_l','combat')};
+      state=defaultState(); normalizeState();
+      return JSON.stringify(o);
+    })()`));
+    ok('#291 an enchanted ring is offered for either hand, beside the plain one',
+       !!J.vr && J.ringL.indexOf(J.vr) >= 0 && J.ringC.indexOf(J.vr) >= 0 && J.ringL.indexOf('sapphire_ring') >= 0, JSON.stringify(J));
+    ok('#290 an enchanted amulet is offered for the neck', !!J.va && J.neck.indexOf(J.va) >= 0, JSON.stringify(J.neck));
+    ok('  and a loadout preset can name the enchanted ring', J.preset.indexOf(J.vr) >= 0, JSON.stringify(J.preset));
+
+    /* #275: the Grandmaster cards are namespaced. A bare `gm` took the gear marks'
+       .gm{pointer-events:none} and the four buttons could not be clicked at all. */
+    const G = JSON.parse(ev(`(function(){
+      state=defaultState(); normalizeState(); state.offlineXp=OFFLINE_XP_CUM[OFFLINE_MAX_LEVEL];
+      _ofpTab='tree'; var old=document.getElementById('offlineConfigOverlay'); if(old) old.remove();
+      openOfflineOverlay();
+      var bk=document.getElementById('offlineConfigOverlay');
+      var o={gm:bk.querySelectorAll('.ofp-node.gm').length, ofp:bk.querySelectorAll('.ofp-node.ofp-gm').length};
+      bk.scrollTop=500; var b=bk.querySelector('.ofp-node.ofp-gm .ofp-buy'); if(b) b.click();
+      o.rank=offlineTreeRank('of_gm_rate');
+      var nb=document.getElementById('offlineConfigOverlay'); if(nb) nb.remove();
+      state=defaultState(); normalizeState();
+      return JSON.stringify(o);
+    })()`));
+    ok('#275 no Offline tree card carries the bare gm class the gear marks switch the mouse off for',
+       G.gm === 0 && G.ofp === 4 && G.rank === 1, JSON.stringify(G));
+    ok('  and the gear marks rule is the one that would have caught it', /\n\.gm\{[^}]*pointer-events:none/.test(html));
+
+    /* #268, #285, #269, #270: a potion card says when its next tier unlocks, and the
+       rate stays on the button while it brews. */
+    const A = JSON.parse(ev(`(function(){
+      var L=null; for(var k in ALCH_LADDER_OF){ var x=ALCH_LADDER_OF[k].L; if(x.tiers.filter(Boolean).length>=2){ L=x; break; } }
+      var tiers=L.tiers.filter(Boolean), lvl=alchRecipesFor(tiers[0])[0].lvl;
+      state=defaultState(); normalizeState(); state.xp.alchemy=XP_CUM[lvl];
+      var p={id:tiers[0]}, m=mods('alchemy');
+      var nx=alchCard(p,lvl,m).querySelector('.al-next');
+      var up=tiers.map(function(id){ return {id:id, need:alchRecipesFor(id)[0].lvl}; }).filter(function(t){ return t.need>lvl; })
+        .sort(function(a,b){ return a.need-b.need; })[0];
+      var rec=alchBestRecipe(alchRecipesFor(p.id),lvl);
+      state.items={}; Object.keys(rec.inp||{}).forEach(function(i){ state.items[i]=50; });
+      state.action={skill:'alchemy',actId:rec.id,start:Date.now()};
+      var run=alchCard(p,lvl,m).querySelector('.al-btn');
+      state=defaultState(); normalizeState();
+      return JSON.stringify({next:nx?nx.textContent:'', want:up?ITEMS[up.id].name+' unlocks at Alchemy '+up.need:'(none)', btn:run?run.textContent:''});
+    })()`));
+    ok('#268 #285 a potion card names its next tier and the level it unlocks at', A.next === A.want, A.next + ' / ' + A.want);
+    ok('#269 #270 the running card still shows its xp an hour', /Brewing/.test(A.btn) && /xp\/hr/.test(A.btn), A.btn);
+
+    /* #256: the timers that repainted on their own wait for a held button too. */
+    const T = JSON.parse(ev(`(function(){
+      var n=0, f=function(){ n++; };
+      _ptrDownAt=Date.now(); timerRepaint(f); var held=n, owed=_repaintOwed;
+      _ptrDownAt=0; _repaintOwed=false; timerRepaint(f);
+      return JSON.stringify({held:held, owed:owed, after:n});
+    })()`));
+    ok('#256 a repaint from a timer waits while a button is held, and is owed to the next flush',
+       T.held === 0 && T.owed === true && T.after === 1, JSON.stringify(T));
+    ok('  the farmhand, a ready patch, a guild board and a ship coming home all go through it',
+       (html.match(/timerRepaint\(/g) || []).length >= 6 && !/if\(sailCheckArrival\(\)\)\{ if\(sailMode\) renderSail\(\); renderRightPanel\(\); \}/.test(html));
+
+    /* #282 and #272: both seen in Chrome; what jsdom can hold is that the rules are there. */
+    ok('#282 the auto-eat tip sizes to its text instead of to the 40px chip',
+       /\.cveat\[data-tip\]:hover::after\{[^}]*width:max-content;max-width:280px/.test(html));
+    ok('#272 a rebuilt at-sea ring is pinned to the page clock so its pulse does not restart',
+       html.includes("p.querySelectorAll('.sl-mk.atsea .d').forEach(d=>{") && html.includes('if(a) a.startTime=0;'));
   }
 
   console.log('\n' + (fail ? fail + ' FAILED, ' + pass + ' passed' : 'PASS — all ' + pass + ' audit regressions still fixed'));
